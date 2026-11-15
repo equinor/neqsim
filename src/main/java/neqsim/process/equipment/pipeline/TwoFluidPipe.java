@@ -433,8 +433,8 @@ public class TwoFluidPipe extends Pipeline {
   /** Inlet boundary condition type. */
   private BoundaryCondition inletBCType = BoundaryCondition.STREAM_CONNECTED;
 
-  /** Outlet boundary condition type. */
-  private BoundaryCondition outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+  /** Outlet boundary mode shared by the configuration methods and transient steps. */
+  private volatile BoundaryCondition outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
 
   /** Outlet pressure (Pa). */
   private double outletPressure;
@@ -478,7 +478,7 @@ public class TwoFluidPipe extends Pipeline {
   private boolean includeEnergyEquation = false;
 
   /** Include mass transfer (flash/condensation). */
-  private boolean includeMassTransfer = false;
+  private volatile boolean includeMassTransfer = false;
 
   /** Enable heat transfer from surroundings. */
   private boolean enableHeatTransfer = false;
@@ -1599,17 +1599,39 @@ public class TwoFluidPipe extends Pipeline {
     // Fix inlet section pressure to boundary condition
     sections[0].setPressure(P_inlet);
 
-    // Get inlet phase fractions from first section (initial estimate)
-    double inletAlphaL = sections[0].getLiquidHoldup();
-    double inletAlphaG = sections[0].getGasHoldup();
-    double inletRhoG = sections[0].getGasDensity();
-    double inletRhoL = sections[0].getLiquidDensity();
-
-    // Calculate INITIAL phase mass flow rates from inlet (may change with condensation)
-    double rhoMixInlet = inletAlphaG * inletRhoG + inletAlphaL * inletRhoL;
-    double gasQualityInlet = inletAlphaG * inletRhoG / rhoMixInlet;
-    double mDotGas = massFlow * gasQualityInlet;
-    double mDotLiq = massFlow * (1.0 - gasQualityInlet);
+    // The steady primitive state must satisfy the phase balances that the transient will
+    // advance. Without phase-transfer sources, the prescribed feed phase rates are constant
+    // along the line; an equilibrium flash may still update local properties, but it must not
+    // silently repartition transported mass between phases.
+    SystemInterface steadyInletPhaseState = getInletStream().getFluid();
+    if (referenceFluid != null) {
+      steadyInletPhaseState = steadyInletPhaseState.clone();
+      steadyInletPhaseState.setPressure(P_inlet / 1.0e5, "bara");
+      steadyInletPhaseState.setTemperature(sections[0].getTemperature(), "K");
+      ThermodynamicOperations inletEquilibriumOperations = new ThermodynamicOperations(steadyInletPhaseState);
+      inletEquilibriumOperations.TPflash();
+      steadyInletPhaseState.initProperties();
+    }
+    double[] inletPhaseMassFractions = calculateInletPhaseMassFractions(steadyInletPhaseState);
+    double sourceFreeOilMassFlow = massFlow * inletPhaseMassFractions[1];
+    double sourceFreeWaterMassFlow = massFlow * inletPhaseMassFractions[2];
+    double mDotGas;
+    double mDotLiq;
+    if (includeMassTransfer) {
+      // Retain the equilibrium-transfer initialization. Subsequent flashes may change these
+      // local rates through explicit conservative sources in the transient model.
+      double inletAlphaL = sections[0].getLiquidHoldup();
+      double inletAlphaG = sections[0].getGasHoldup();
+      double inletRhoG = sections[0].getGasDensity();
+      double inletRhoL = sections[0].getLiquidDensity();
+      double rhoMixInlet = inletAlphaG * inletRhoG + inletAlphaL * inletRhoL;
+      double gasQualityInlet = inletAlphaG * inletRhoG / rhoMixInlet;
+      mDotGas = massFlow * gasQualityInlet;
+      mDotLiq = massFlow * (1.0 - gasQualityInlet);
+    } else {
+      mDotGas = massFlow * inletPhaseMassFractions[0];
+      mDotLiq = sourceFreeOilMassFlow + sourceFreeWaterMassFlow;
+    }
 
     // Store local mass flow arrays for condensation tracking
     double[] localMDotGas = new double[numberOfSections];
@@ -1839,7 +1861,8 @@ public class TwoFluidPipe extends Pipeline {
           propertiesBefore[i][5] = sections[i].getLiquidViscosity();
           propertiesBefore[i][6] = sections[i].getSurfaceTension();
         }
-        updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+        updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq, sourceFreeOilMassFlow,
+            sourceFreeWaterMassFlow);
         double maxPropertyChange = 0.0;
         for (int i = 0; i < numberOfSections; i++) {
           double[] densities = {sections[i].getGasDensity(), sections[i].getOilDensity(),
@@ -1935,7 +1958,7 @@ public class TwoFluidPipe extends Pipeline {
         // tolerance, use the reconciled state as the next iterate instead of returning a false
         // positive and handing a different state to the transient solver.
         double[] finalConsistencyResiduals = reconcileSteadyThermodynamicsAndHoldup(massFlow, localMDotGas,
-            localMDotLiq, area);
+            localMDotLiq, sourceFreeOilMassFlow, sourceFreeWaterMassFlow, area);
         thermodynamicResidual = finalConsistencyResiduals[0];
         liquidHoldupResidual = Math.max(liquidHoldupResidual, finalConsistencyResiduals[1]);
         liquidSplitResidual = Math.max(liquidSplitResidual, finalConsistencyResiduals[2]);
@@ -1968,7 +1991,7 @@ public class TwoFluidPipe extends Pipeline {
     // solve, but keep its residuals visible and never promote it to convergence after the loop.
     if (!ssConverged) {
       double[] finalConsistencyResiduals = reconcileSteadyThermodynamicsAndHoldup(massFlow, localMDotGas, localMDotLiq,
-          area);
+          sourceFreeOilMassFlow, sourceFreeWaterMassFlow, area);
       thermodynamicResidual = finalConsistencyResiduals[0];
       liquidHoldupResidual = Math.max(liquidHoldupResidual, finalConsistencyResiduals[1]);
       liquidSplitResidual = Math.max(liquidSplitResidual, finalConsistencyResiduals[2]);
@@ -2031,15 +2054,18 @@ public class TwoFluidPipe extends Pipeline {
    * @param massFlow total pipe mass flow in kg/s
    * @param localMDotGas local gas mass-flow profile in kg/s
    * @param localMDotLiq local liquid mass-flow profile in kg/s
+   * @param sourceFreeOilMassFlow inlet oil mass flow retained when phase transfer is disabled, kg/s
+   * @param sourceFreeWaterMassFlow inlet water mass flow retained when phase transfer is disabled, kg/s
    * @param area internal pipe area in m2
    * @return thermodynamic, total-liquid-holdup, and water-holdup residuals
    */
   private double[] reconcileSteadyThermodynamicsAndHoldup(double massFlow, double[] localMDotGas, double[] localMDotLiq,
-      double area) {
+      double sourceFreeOilMassFlow, double sourceFreeWaterMassFlow, double area) {
     double thermodynamicResidual = 0.0;
     if (referenceFluid != null) {
       double[][] propertiesBefore = snapshotSteadyThermodynamicProperties(localMDotGas);
-      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq, sourceFreeOilMassFlow,
+          sourceFreeWaterMassFlow);
       thermodynamicResidual = calculateSteadyThermodynamicResidual(propertiesBefore, localMDotGas, massFlow);
     }
 
@@ -2201,8 +2227,11 @@ public class TwoFluidPipe extends Pipeline {
    * @param massFlow Total mass flow rate [kg/s]
    * @param localMDotGas Array to store local gas mass flow rates [kg/s]
    * @param localMDotLiq Array to store local liquid mass flow rates [kg/s]
+   * @param sourceFreeOilMassFlow inlet oil mass flow retained when phase transfer is disabled [kg/s]
+   * @param sourceFreeWaterMassFlow inlet water mass flow retained when phase transfer is disabled [kg/s]
    */
-  private void updateThermodynamicsWithCondensation(double massFlow, double[] localMDotGas, double[] localMDotLiq) {
+  private void updateThermodynamicsWithCondensation(double massFlow, double[] localMDotGas, double[] localMDotLiq,
+      double sourceFreeOilMassFlow, double sourceFreeWaterMassFlow) {
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
       try {
@@ -2283,8 +2312,10 @@ public class TwoFluidPipe extends Pipeline {
           sec.setWaterViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
         }
 
-        // Calculate mass fractions and update local mass flow rates
-        if (totalMassWeighted > 0) {
+        // Calculate mass fractions and update local mass flow rates only when the
+        // transient owns matching conservative phase-transfer sources. Otherwise the
+        // local flash supplies properties while the inlet phase rates remain invariant.
+        if (includeMassTransfer && totalMassWeighted > 0) {
           gasMassFraction = gasMassContrib / totalMassWeighted;
           liqMassFraction = liqMassContrib / totalMassWeighted;
 
@@ -2301,21 +2332,40 @@ public class TwoFluidPipe extends Pipeline {
         //
         // Instead, only update the water/oil SPLIT within the liquid phase,
         // preserving the total liquid holdup from momentum balance.
-        if (volTotal > 0 && volLiq > 0) {
+        if (!includeMassTransfer) {
+          // A source-free transient transports the inlet oil and water masses even when
+          // an equilibrium property flash would locally remove one of those phases. Use
+          // their density-consistent transported volumes without changing phase presence.
+          double volOil = sourceFreeOilMassFlow / Math.max(sec.getOilDensity(), 1.0e-12);
+          double volWater = sourceFreeWaterMassFlow / Math.max(sec.getWaterDensity(), 1.0e-12);
+          double transportedLiquidVolume = volOil + volWater;
+          double transportedWaterFraction = transportedLiquidVolume > 0.0 ? volWater / transportedLiquidVolume : 0.0;
+          sec.setInputWaterVolumeFraction(transportedWaterFraction);
+          double waterCut = sec.getWaterCut();
+          if (!Double.isFinite(waterCut) || waterCut <= 0.0 && transportedWaterFraction > 0.0
+              || waterCut >= 1.0 && transportedWaterFraction < 1.0) {
+            sec.setWaterCut(transportedWaterFraction);
+            sec.setOilFractionInLiquid(1.0 - transportedWaterFraction);
+            double existingAlphaL = sec.getLiquidHoldup();
+            sec.setWaterHoldup(existingAlphaL * transportedWaterFraction);
+            sec.setOilHoldup(existingAlphaL * (1.0 - transportedWaterFraction));
+          }
+        } else if (volTotal > 0 && volLiq > 0) {
           // Update water/oil split if both are present (preserve total liquid holdup)
           if (hasOil && hasWater) {
             double volOil = phaseVolumetricFlow(flash, "oil");
             double volWater = phaseVolumetricFlow(flash, "aqueous");
             // Transported fraction. The in-situ split is closed against it in
             // updateWaterOilHoldups, which may differ from it through slip.
-            sec.setInputWaterVolumeFraction(volWater / (volOil + volWater));
+            double transportedLiquidVolume = volOil + volWater;
+            sec.setInputWaterVolumeFraction(transportedLiquidVolume > 0.0 ? volWater / transportedLiquidVolume : 0.0);
             // The flash provides a transported composition, not the in-situ slip split.
             // Resetting an interior split on every flash prevents the hydraulic fixed point
             // from converging. Seed only a newly appearing second liquid; its split is then
             // closed by the next momentum sweep and included in the convergence residual.
             double waterCut = sec.getWaterCut();
             if (!Double.isFinite(waterCut) || waterCut <= 0.0 || waterCut >= 1.0) {
-              waterCut = volWater / volLiq;
+              waterCut = transportedLiquidVolume > 0.0 ? volWater / transportedLiquidVolume : 0.0;
               sec.setWaterCut(waterCut);
               sec.setOilFractionInLiquid(1.0 - waterCut);
               double existingAlphaL = sec.getLiquidHoldup();
@@ -2378,8 +2428,8 @@ public class TwoFluidPipe extends Pipeline {
           sec.setWaterHoldup(sec.getLiquidHoldup());
           sec.setOilHoldup(0.0);
         }
-      } catch (Exception e) {
-        logger.warn("Flash calculation failed for section {} at position {}", i, sec.getPosition());
+      } catch (RuntimeException exception) {
+        logger.warn("Flash calculation failed for section {} at position {}", i, sec.getPosition(), exception);
       }
     }
   }
@@ -6758,15 +6808,15 @@ public class TwoFluidPipe extends Pipeline {
     lagrangianSlugTracker = candidate.lagrangianSlugTracker;
     slugTrackingMode = candidate.slugTrackingMode;
     inletBCType = candidate.inletBCType;
-    outletBCType = candidate.outletBCType;
     outletPressure = candidate.outletPressure;
+    outletPressureSet = candidate.outletPressureSet;
     outletBoundaryFluid = candidate.outletBoundaryFluid;
+    outletBCType = candidate.outletBCType;
     inletBoundaryFluid = candidate.inletBoundaryFluid;
     activeInletBoundaryFluid = candidate.activeInletBoundaryFluid;
     pressureInletReservoirCache = null;
     pressureInletReservoirCachePressure = Double.NaN;
     pressureInletFlashCount = candidate.pressureInletFlashCount;
-    outletPressureSet = candidate.outletPressureSet;
     inletPressure = candidate.inletPressure;
     inletPressureSet = candidate.inletPressureSet;
     inletMassFlow = candidate.inletMassFlow;
@@ -6972,11 +7022,19 @@ public class TwoFluidPipe extends Pipeline {
     boolean useImplicitVoidWave = equations.isEnableInterfacialPressure() && implicitInterfacialPressureCoupling;
     equations.setImplicitInterfacialPressure(useImplicitVoidWave);
 
-    if (steadyConsistentTransient && !steadyConsistencyCalibrated && !coupledPressureMomentumEnabled) {
+    boolean prescribedInletFlow = inletBCType == BoundaryCondition.STREAM_CONNECTED
+        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet;
+    boolean calibrateCoupledMomentum = outletBCType == BoundaryCondition.CONSTANT_PRESSURE
+        && usesCoupledOutletFacePressure() && isSteadyStateConverged() && prescribedInletFlow && !includeMassTransfer
+        && !includeEnergyEquation;
+    double boundaryMassFlow = inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet ? inletMassFlow
+        : getInletStream().getFlowRate("kg/sec");
+    if (steadyConsistentTransient && !steadyConsistencyCalibrated
+        && (!coupledPressureMomentumEnabled || calibrateCoupledMomentum)) {
       // Calibrate only while the boundaries still carry the steady state; a boundary change made
       // before the first step is the disturbance to simulate, not part of the steady residual.
       boolean steadyBoundaries = inletBCType != BoundaryCondition.CLOSED && outletBCType != BoundaryCondition.CLOSED
-          && Math.abs(getInletStream().getFlowRate("kg/sec") - steadyCalibrationInletFlow) <= 1.0e-9
+          && Math.abs(boundaryMassFlow - steadyCalibrationInletFlow) <= 1.0e-9
               * Math.max(1.0, Math.abs(steadyCalibrationInletFlow))
           && Math.abs(outletPressure - steadyCalibrationOutletPressure) <= 1.0e-9
               * Math.max(1.0, Math.abs(steadyCalibrationOutletPressure));
@@ -6986,8 +7044,7 @@ public class TwoFluidPipe extends Pipeline {
       steadyConsistencyCalibrated = true;
     }
     if (equations.hasSteadyMomentumCorrection() && steadyCalibrationInletFlow > 0.0) {
-      double flowRatio = Math.min(3.0,
-          Math.max(0.0, getInletStream().getFlowRate("kg/sec") / steadyCalibrationInletFlow));
+      double flowRatio = Math.min(3.0, Math.max(0.0, boundaryMassFlow / steadyCalibrationInletFlow));
       equations.setSteadyMomentumCorrectionScale(flowRatio * flowRatio);
     }
 
@@ -7237,8 +7294,10 @@ public class TwoFluidPipe extends Pipeline {
         }
         timeIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, voidWaveSlipCoefficients, areas, gasDensities,
             oilDensities, waterDensities, dx, useImplicitVoidWave);
-        boolean outletFixed = !useConservativeEnergyRecovery && (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
-            || outletBCType == BoundaryCondition.CHARACTERISTIC);
+        // An explicit fixed-pressure outlet already supplies boundary traction. Pinning the last cell
+        // as well makes its remaining EOS volume error appear as fictitious outlet phase transfer.
+        boolean outletFixed = !useConservativeEnergyRecovery && (outletBCType == BoundaryCondition.CHARACTERISTIC
+            || outletBCType == BoundaryCondition.CONSTANT_PRESSURE && !usesCoupledOutletFacePressure());
         timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
             waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, transientOutletCellPressure(),
             outletFixed, coupledPressureMomentumEnabled);
@@ -8265,6 +8324,16 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Checks how the coupled split solver applies a constant-pressure outlet.
+   *
+   * @return true if explicit face geometry and a prescribed pressure place the constraint at the face
+   */
+  private boolean usesCoupledOutletFacePressure() {
+    return coupledPressureMomentumEnabled && !useConservativeEnergyRecovery && cellFaceElevationProfile != null
+        && outletPressureSet;
+  }
+
+  /**
    * Apply boundary conditions.
    */
   private void applyBoundaryConditions() {
@@ -8281,10 +8350,11 @@ public class TwoFluidPipe extends Pipeline {
     }
     equations.setInletBoundaryState(null);
     equations.setOutletBoundaryState(null);
-    if (isTransientMode && coupledPressureMomentumEnabled && (inletBCType == BoundaryCondition.STREAM_CONNECTED
-        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)) {
-      // A prescribed feed belongs on an external face. Replacing the evolving cell's
-      // density by feed-pressure density repeatedly creates a false volume deficit.
+    if (isTransientMode && (coupledPressureMomentumEnabled || cellFaceElevationProfile != null)
+        && (inletBCType == BoundaryCondition.STREAM_CONNECTED
+            || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)) {
+      // The external face carries the prescribed feed. Editing the first cell instead can
+      // change its inventory-derived flux and miss the specified rate at individual RK stages.
       double feedMassFlow = inletBCType == BoundaryCondition.CONSTANT_FLOW ? inletMassFlow
           : getInletStream().getFlowRate("kg/sec");
       equations.setInletBoundaryState(createPrescribedInletFace(inlet, feedMassFlow));
@@ -8479,7 +8549,7 @@ public class TwoFluidPipe extends Pipeline {
         outletFace.setPressure(outletPressureSet ? outletPressure : outletBoundaryFluid.getPressure("Pa"));
         equations.setOutletBoundaryState(outletFace);
       }
-      if (!(isTransientMode && useConservativeEnergyRecovery)) {
+      if (!(isTransientMode && (useConservativeEnergyRecovery || usesCoupledOutletFacePressure()))) {
         outlet.setPressure(transientOutletCellPressure());
       }
     } else if (outletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
@@ -10884,10 +10954,10 @@ public class TwoFluidPipe extends Pipeline {
    * setOutletPressure(), or defaults to 1 bara if not set.
    */
   public void openOutlet() {
-    this.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
     if (!outletPressureSet) {
       this.outletPressure = 1e5; // Default to 1 bara
     }
+    this.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
   }
 
   /**
@@ -11320,11 +11390,11 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param include true to include mass transfer
    */
-  public void setIncludeMassTransfer(boolean include) {
-    this.includeMassTransfer = include;
+  public synchronized void setIncludeMassTransfer(boolean include) {
     if (equations != null) {
       equations.setIncludeMassTransfer(include);
     }
+    this.includeMassTransfer = include;
   }
 
   /**
@@ -12111,7 +12181,8 @@ public class TwoFluidPipe extends Pipeline {
    * in an hour on a 5 km gas-oil slug line; a 7 per cent outlet-flow deficit on a gas-condensate line). The correction
    * is calibrated once, at the first transient step after {@link #run(UUID)} that still carries the steady boundary
    * conditions, and scales with the square of the inlet mass flow relative to calibration, as a friction force does. It
-   * is not applied with the coupled pressure-momentum solver.
+   * is also applied to converged coupled split states with prescribed inlet flow and outlet-face pressure, without
+   * phase-transfer or energy sources. Other coupled solver routes retain their own initialization.
    * </p>
    *
    * <p>

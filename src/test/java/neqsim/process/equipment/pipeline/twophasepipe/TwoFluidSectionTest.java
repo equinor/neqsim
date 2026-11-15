@@ -98,6 +98,30 @@ public class TwoFluidSectionTest {
   }
 
   @Test
+  void testDispersedOilWaterAreaUsesDropletSurface() {
+    section.setOilDensity(720.0);
+    section.setWaterDensity(1000.0);
+    section.setOilViscosity(3.0e-3);
+    section.setWaterViscosity(1.0e-3);
+    section.setOilHoldup(0.24);
+    section.setWaterHoldup(0.06);
+    section.setLiquidHoldup(0.30);
+    section.setWaterCut(0.20);
+    section.setOilFractionInLiquid(0.80);
+    section.setLiquidVelocity(3.0);
+    section.updateThreePhaseProperties();
+
+    assertNotNull(section.getOilWaterResult());
+    assertTrue(section.getOilWaterResult().maxDropletDiameter > 0.0);
+    double dispersedHoldup = section.getOilWaterResult().oilContinuous ? section.getWaterHoldup()
+        : section.getOilHoldup();
+    double expectedArea = 6.0 * section.getArea() * dispersedHoldup
+        / Math.min(section.getOilWaterResult().maxDropletDiameter, section.getDiameter());
+    assertEquals(expectedArea, section.calcOilWaterInterfacialAreaPerLength(), 1.0e-12);
+    assertTrue(expectedArea > section.getDiameter() * 0.5 * section.getLiquidHoldup());
+  }
+
+  @Test
   void testAreaCalculation() {
     double expectedArea = Math.PI * 0.1 * 0.1 / 4.0;
     assertEquals(expectedArea, section.getArea(), TOLERANCE);

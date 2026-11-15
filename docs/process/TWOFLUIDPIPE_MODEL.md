@@ -931,6 +931,7 @@ Key calculations:
 - **Phase inversion** (Decarre & Fabre, 1997): water fraction at which continuous phase switches
 - **Critical dispersion velocity** (Brauner, 2003): minimum velocity for full turbulent dispersion
 - **Maximum droplet diameter** (Hinze, 1955): $d_{max} = \text{We}_{crit}^{3/5} \sigma^{3/5} / (\rho_c^{3/5} \epsilon^{2/5})$
+- **Dispersed interfacial area**: $a_{ow}=6A\alpha_d/d_{max}$ per pipe length for spherical droplets; stratified states retain a line-scale interface
 - **Effective emulsion viscosity**: Brinkman correlation for the dispersed/continuous mixture
 - **Water dropout risk**: flags sections where water may separate and accumulate
 
@@ -944,6 +945,7 @@ Each `TwoFluidSection` exposes the oil-water results:
 | `getOilWaterResult()` | `OilWaterResult` | Full result (regime, viscosity, inversion, droplet size, etc.) |
 | `isWaterWetting()` | `boolean` | True if water wets the pipe wall (corrosion risk) |
 | `isWaterDropoutRisk()` | `boolean` | True if water may separate and accumulate |
+| `calcOilWaterInterfacialAreaPerLength()` | `double` | Regime-consistent oil-water area in m2/m |
 | `getOilWaterInterfacialTension()` | `double` | Oil-water IFT (N/m) |
 | `setOilWaterInterfacialTension(double)` | — | Override IFT (default: 0.03 N/m) |
 | `getOilWaterDetector()` | `OilWaterFlowRegimeDetector` | Access the detector for tuning |
@@ -1567,13 +1569,17 @@ Existing friction, holdup, slip and terrain closure defaults are retained. Corre
 thermodynamic states can change an explicitly pressure-constrained result, so previous benchmark
 values for those cases require re-evaluation on the tested revision.
 
-Periodic steady flashes update the transported oil/water volume fractions while preserving the
-hydraulic in-situ split already obtained from the slip closure. A newly appearing second liquid
-is seeded from the flash; subsequent momentum sweeps determine its in-situ fraction. If one liquid
-disappears, the remaining liquid retains the total hydraulic holdup for the next closure update.
-The slip calculation recovers the prescribed liquid mass flux before splitting the transported
-volume flow between oil and water. It then synchronizes bulk liquid velocity and momentum with
-the phase momenta, preventing slip from changing the prescribed total liquid mass flow.
+Periodic steady flashes update properties while preserving the hydraulic in-situ split already
+obtained from the slip closure. With phase transfer disabled, equilibrium inlet gas, oil and water
+mass rates remain invariant along the steady line; density changes update transported phase volume
+fractions without inventing a phase source before the transient starts. With phase transfer
+enabled, local equilibrium repartitioning is retained and the transient carries matching
+conservative sources. A newly appearing second liquid is seeded from the flash; subsequent momentum
+sweeps determine its in-situ fraction. If one liquid disappears, the remaining liquid retains the
+total hydraulic holdup for the next closure update. The slip calculation recovers the prescribed
+liquid mass flux before splitting the transported volume flow between oil and water. It then
+synchronizes bulk liquid velocity and momentum with the phase momenta, preventing slip from changing
+the prescribed total liquid mass flow.
 
 ```java
 pipe.setOutletPressure(55.0, "bara");
@@ -1627,6 +1633,12 @@ coupled solver applies prescribed feed conditions on an external face. The uncou
 its inlet momentum treatment while preserving the cell densities at the solved pressure, instead
 of resetting them from the feed-pressure EOS. This prevents an unchanged, near-zero-time handoff from producing an inventory or holdup jump that scales with pipe
 volume.
+
+For dispersed oil-water states, the transient momentum exchange uses the detected dispersed phase
+and Hinze droplet size rather than a pipe-scale line interface. The explicit source, its timestep
+bound and the conservative friction split use the same area owner. This closes the mechanical
+handoff on the synthetic fixed-boundary flowline/riser fixture; it is numerical verification and
+does not replace independent experimental qualification of oil-water slip or slugging.
 
 At an exact oil-only or water-only liquid endpoint, the active phase velocity is synchronized with
 the final bulk-liquid velocity before the conservative state is built. Inspect the phase-resolved
