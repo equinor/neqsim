@@ -32,6 +32,32 @@ class SlugUnitModelTest {
       + "U2x1Z1VuaXRNb2RlbAAAAAAAAAPoAgABWgAXZnJvbnRNaXhpbmdMb3NzSW5jbHVkZWR4cAA=";
 
   /**
+   * Checks interior areas, complementary segment geometry and both vanishing-phase limits.
+   */
+  @Test
+  void circularSegmentAngleReconstructsHoldup() {
+    assertEquals(0.0, SlugUnitModel.centralAngle(0.0));
+    assertEquals(Math.PI, SlugUnitModel.centralAngle(0.5), 2.0e-15);
+    assertEquals(2.0 * Math.PI, SlugUnitModel.centralAngle(1.0));
+    double previousAngle = 0.0;
+    for (int i = 1; i < 1000; i++) {
+      double holdup = i / 1000.0;
+      double angle = SlugUnitModel.centralAngle(holdup);
+      assertTrue(angle > previousAngle);
+      assertEquals(holdup, (angle - Math.sin(angle)) / (2.0 * Math.PI), 2.0e-15);
+      assertEquals(2.0 * Math.PI, angle + SlugUnitModel.centralAngle(1.0 - holdup), 2.0e-15);
+      previousAngle = angle;
+    }
+    for (double traceHoldup : new double[] {Double.MIN_VALUE, 1.0e-280, 1.0e-100, 1.0e-18}) {
+      double traceAngle = Math.cbrt(12.0 * Math.PI) * Math.cbrt(traceHoldup);
+      assertEquals(traceAngle, SlugUnitModel.centralAngle(traceHoldup), traceAngle * 1.0e-10);
+    }
+    double gasAngle = 2.0 * Math.PI - SlugUnitModel.centralAngle(Math.nextDown(1.0));
+    double gasLimit = Math.cbrt(12.0 * Math.PI * (1.0 - Math.nextDown(1.0)));
+    assertEquals(gasLimit, gasAngle, gasLimit * 3.0e-10);
+  }
+
+  /**
    * Legacy saves preserve both their front-mixing choice and their original unscaled velocities.
    *
    * @throws IOException if the serialized fixture cannot be read
