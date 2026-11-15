@@ -18,9 +18,56 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-/** Regression coverage for initialized, composable outlet states after flow normalization (#3685). */
+/** Regression coverage for initialized, composable outlet states and outlet pressure reporting. */
 class TwoFluidPipeOutletThermodynamicsTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidPipeOutletThermodynamicsTest.class);
+
+  /**
+   * The physical outlet pressure is independent of the last midpoint's sampling location.
+   *
+   * @param cells number of vertical riser cells
+   */
+  @ParameterizedTest
+  @ValueSource(ints = {5, 10})
+  void pressureGetterMatchesThePublishedFaceOnAStandingRiser(int cells) {
+    SystemInterface fluid = new SystemSrkEos(293.15, 70.0);
+    fluid.addComponent("water", 1.0);
+    Stream feed = new Stream("Water feed", fluid);
+    feed.setFlowRate(5.0, "kg/sec");
+    feed.run();
+
+    TwoFluidPipe riser = new TwoFluidPipe("Vertical water riser", feed);
+    riser.setLength(100.0);
+    riser.setDiameter(0.15);
+    riser.setNumberOfSections(cells);
+    riser.setEnableJouleThomson(false);
+    double[] elevations = new double[cells + 1];
+    for (int face = 0; face <= cells; face++) {
+      elevations[face] = 100.0 * face / cells;
+    }
+    riser.setCellFaceElevationProfile(elevations);
+    riser.run();
+
+    assertTrue(riser.isSteadyStateConverged());
+    double outletBara = riser.getOutletStream().getPressure("bara");
+    assertTrue(riser.getPressureProfile()[cells - 1] / 1.0e5 - outletBara > 0.4,
+        "The riser must resolve a hydrostatic head between the last midpoint and the outlet face");
+    assertEquals(outletBara, riser.getOutletPressure("bara"), 0.0);
+    assertEquals(outletBara, riser.getOutletPressure(), 0.0);
+  }
+
+  /** Both input conventions give the configured absolute pressure through the bara getter before a run. */
+  @Test
+  void uninitializedPressureGetterConvertsTheSpecifiedOutletToBara() {
+    Stream feed = new Stream("Reference feed", new SystemSrkEos(293.15, 70.0));
+    TwoFluidPipe pipe = new TwoFluidPipe("Uninitialized pipe", feed);
+
+    assertEquals(70.0, pipe.getOutletPressure(), 0.0);
+    pipe.setOutletPressure(63.0, "bara");
+    assertEquals(63.0, pipe.getOutletPressure(), 0.0);
+    pipe.setOutletPressure(6.2e6);
+    assertEquals(62.0, pipe.getOutletPressure(), 0.0);
+  }
 
   @Test
   void wetWellPublishesThreePhasesAndPropertiesWithoutASecondFlash() {
@@ -175,6 +222,7 @@ class TwoFluidPipeOutletThermodynamicsTest extends neqsim.NeqSimTest {
     assertEquals(1.0, betaSum, 1.0e-10);
     int last = pipe.getPressureProfile().length - 1;
     assertEquals(pipe.getPressureProfile()[last] / 1.0e5, actual.getPressure(), 1.0e-10);
+    assertEquals(actual.getPressure("bara"), pipe.getOutletPressure(), 0.0);
     assertEquals(pipe.getTemperatureProfile("K")[last], actual.getTemperature(), 1.0e-10);
   }
 

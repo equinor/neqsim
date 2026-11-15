@@ -109,6 +109,11 @@ After `pipe.run()`, the following methods provide one value per pipe section:
 | `getHeatTransferProfile()` | W/(m2 K) | Heat-transfer coefficient profile, when configured |
 | `getSurfaceTemperatureProfile()` | K | Ambient/surface temperature profile, when configured |
 
+With explicit cell-face elevations, `getOutletPressure()` returns the published outlet
+face pressure in bara, as does `getOutletPressure("bara")`. The final element of
+`getPressureProfile()` reports the last cell midpoint pressure in Pa. Use the outlet
+pressure for the downstream connection and the profile for comparisons at cell locations.
+
 Example Java extraction:
 
 ```java

@@ -13532,7 +13532,13 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get outlet pressure.
+   * Get the published outlet stream pressure in bara.
+   *
+   * <p>
+   * With explicit cell-face elevations, the outlet is at the physical boundary. The last entry of
+   * {@link #getPressureProfile()} gives the pressure at the last cell midpoint. Before initialization this method
+   * returns the specified outlet pressure, or the inlet pressure if no outlet pressure is specified.
+   * </p>
    *
    * @return Outlet pressure [bara]
    */
@@ -13540,11 +13546,11 @@ public class TwoFluidPipe extends Pipeline {
   public double getOutletPressure() {
     if (sections == null || sections.length == 0) {
       if (outletPressure > 0) {
-        return outletPressure;
+        return outletPressure / 1.0e5;
       }
       return getInletStream().getPressure("bara");
     }
-    return sections[sections.length - 1].getPressure() / 1e5; // Pa to bara
+    return getOutletPressure("bara");
   }
 
   // ============ API 14E Erosional Velocity Methods ============
