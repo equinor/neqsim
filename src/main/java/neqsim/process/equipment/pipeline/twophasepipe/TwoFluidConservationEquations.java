@@ -573,7 +573,8 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /**
    * Oil-water regime of each cell at calibration; the relative oil-water part of the correction only holds while a cell
-   * keeps it. Null entries mean that no oil-water closure was active.
+   * keeps it. Null entries mean that no oil-water closure was active. Every access is synchronized; the array is
+   * replaced whole and never mutated after calibration.
    */
   private OilWaterFlowRegime[] steadyMomentumOilWaterRegime;
 
@@ -670,14 +671,15 @@ public class TwoFluidConservationEquations implements Serializable {
       return;
     }
     int[] momentumIndex = {IDX_GAS_MOMENTUM, IDX_OIL_MOMENTUM, IDX_WATER_MOMENTUM};
+    OilWaterFlowRegime[] oilWaterRegimes = calibratedOilWaterRegimes();
     for (int cell = 0; cell < sections.length; cell++) {
       if (steadyMomentumRegime != null && sections[cell].getFlowRegime() != steadyMomentumRegime[cell]) {
         continue;
       }
       double[] state = sections[cell].getStateVector();
       double[] correction = steadyMomentumCorrection[cell].clone();
-      if (steadyMomentumOilWaterRegime != null
-          && sections[cell].getOilWaterFlowRegime() != steadyMomentumOilWaterRegime[cell]) {
+      if (oilWaterRegimes != null && oilWaterRegimes.length == sections.length
+          && sections[cell].getOilWaterFlowRegime() != oilWaterRegimes[cell]) {
         correction = retainCombinedLiquidCorrection(correction, state);
       }
       for (int phase = 0; phase < 3; phase++) {
@@ -687,6 +689,15 @@ public class TwoFluidConservationEquations implements Serializable {
         dUdt[cell][momentumIndex[phase]] += correction[phase] * steadyMomentumCorrectionScale;
       }
     }
+  }
+
+  /**
+   * Get the oil-water regimes recorded at calibration.
+   *
+   * @return calibrated oil-water regime per cell, or null when not calibrated; the caller must not modify it
+   */
+  private synchronized OilWaterFlowRegime[] calibratedOilWaterRegimes() {
+    return steadyMomentumOilWaterRegime;
   }
 
   /**
