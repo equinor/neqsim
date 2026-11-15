@@ -2897,7 +2897,8 @@ public class TPmultiflash extends TPflash {
       setDoubleArrays();
       for (int refinement = 0; refinement < 50; refinement++) {
         residual = solveBeta();
-        if (Double.isFinite(residual) && residual <= 1.0e-10) {
+        if (Double.isFinite(residual) && residual <= 1.0e-10
+            && applyConservativeNonReactiveIonicCompositions() <= 1.0e-10) {
           return;
         }
       }
@@ -2906,6 +2907,56 @@ public class TPmultiflash extends TPflash {
       logger.debug("Restored non-reactive ionic phase refinement failed: {}", ex.getMessage());
     }
     restorePhaseSplit(restoredState);
+  }
+
+  /**
+   * Applies the converged full-inventory compositions without renormalizing individual phases.
+   *
+   * <p>
+   * The beta equations define every species amount as {@code z_i / (E_i phi_i,p)}. For ions, the inverse fugacity
+   * coefficient is exactly zero outside the aqueous phase, so the same expression conserves their inventory while
+   * confining them to water. Applying a second aqueous-neutral scale would break that identity. The beta-gradient
+   * closure ensures each resulting phase composition is normalized at convergence.
+   * </p>
+   *
+   * @return maximum phase-normalization or component-inventory residual
+   */
+  private double applyConservativeNonReactiveIonicCompositions() {
+    calcE();
+    double maximumPhaseResidual = 0.0;
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      double phaseSum = 0.0;
+      for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
+        double overallFraction = getFlashOverallFraction(component);
+        double phaseFraction =
+            overallFraction * inverseFugacityCoefficient(phase, component) / Erow[component];
+        if (!Double.isFinite(phaseFraction) || phaseFraction < -1.0e-12) {
+          throw new IllegalStateException("Invalid full-inventory phase fraction for "
+              + system.getPhase(phase).getComponent(component).getComponentName() + ": " + phaseFraction);
+        }
+        phaseFraction = Math.max(phaseFraction, 1.0e-50);
+        system.getPhase(phase).getComponent(component).setx(phaseFraction);
+        phaseSum += phaseFraction;
+      }
+      maximumPhaseResidual = Math.max(maximumPhaseResidual, Math.abs(phaseSum - 1.0));
+    }
+    if (maximumPhaseResidual > 1.0e-8) {
+      throw new IllegalStateException(
+          "Full-inventory phase compositions are not normalized: " + maximumPhaseResidual);
+    }
+
+    system.init(1);
+    double maximumInventoryResidual = 0.0;
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+      double recoveredFraction = 0.0;
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        recoveredFraction +=
+            system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+      }
+      maximumInventoryResidual = Math.max(maximumInventoryResidual,
+          Math.abs(recoveredFraction - getFlashOverallFraction(component)));
+    }
+    return Math.max(maximumPhaseResidual, maximumInventoryResidual);
   }
 
   /**
