@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.processmodel.ProcessModel;
@@ -53,6 +54,13 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
         .capacitive(80.0, 35.0, 45000.0, 330.0, 360.0);
     return new RealGasPipeDecompression("real-capacitive-wall-linepack", gas(80.0), 40.0, 0.15, 1.0, 101325.0, 0.01,
         0.20, boundary, cells, cfl);
+  }
+
+  private static RealGasPipeDecompression materialWallPipe(int cells, double cfl) {
+    RealGasPipeDecompression.WallThermalBoundary boundary = RealGasPipeDecompression.WallThermalBoundary
+        .cylindricalLumpedWall(0.15, 0.01, 7850.0, 500.0, 45.0, 80.0, 35.0, 330.0, 360.0);
+    return new RealGasPipeDecompression("real-material-wall-linepack", gas(80.0), 40.0, 0.15, 1.0, 101325.0, 0.01, 0.20,
+        boundary, cells, cfl);
   }
 
   @Test
@@ -332,6 +340,68 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void cylindricalMaterialWallDerivesGeometryAndClosesEnergyUnderRefinement() throws Exception {
+    double[] cfls = new double[] {0.45, 0.30, 0.20};
+    double[] environmentHeat = new double[cfls.length];
+    double[] wallTemperature = new double[cfls.length];
+    StringBuilder receipt = new StringBuilder("cfl,environment_heat_J,mean_wall_temperature_K,energy_residual_J\n");
+    for (int i = 0; i < cfls.length; i++) {
+      RealGasPipeDecompression pipe = materialWallPipe(12, cfls[i]);
+      Map<String, String> provenance = pipe.getReleaseProvenance();
+      assertEquals(0.17, Double.parseDouble(provenance.get("pipeWallOuterDiameterM")), 1.0e-15);
+      assertEquals(80.0 * 0.15 / 0.17, Double.parseDouble(provenance.get("pipeHeatTransferCoefficientWPerM2K")),
+          1.0e-12);
+      assertEquals(7850.0 * 500.0 * (0.17 * 0.17 - 0.15 * 0.15) / (4.0 * 0.17),
+          Double.parseDouble(provenance.get("pipeWallArealHeatCapacityJPerM2K")), 1.0e-9);
+      assertEquals(80.0 * 0.005 / 45.0, Double.parseDouble(provenance.get("pipeWallLumpedBiotNumber")), 1.0e-15);
+      assertEquals(Math.PI * 0.17 * 40.0, Double.parseDouble(provenance.get("pipeExternalAreaM2")), 1.0e-12);
+
+      pipe.runTransient(0.20, UUID.randomUUID());
+      environmentHeat[i] = pipe.getCumulativeHeatTransferJ();
+      wallTemperature[i] = mean(pipe.getWallTemperatureProfileK());
+      double residual = pipe.getRemainingEnergyJ() + pipe.getReleasedEnergyJ() - pipe.getInitialEnergyJ()
+          - pipe.getCumulativeHeatTransferJ();
+      assertEquals(0.0, residual, Math.abs(pipe.getInitialEnergyJ()) * 3.0e-10);
+      receipt.append(cfls[i]).append(',').append(environmentHeat[i]).append(',').append(wallTemperature[i]).append(',')
+          .append(residual).append('\n');
+    }
+    assertTrue(Math.abs(environmentHeat[2] - environmentHeat[1]) < Math.abs(environmentHeat[1] - environmentHeat[0]),
+        receipt.toString());
+    assertTrue(Math.abs(wallTemperature[2] - wallTemperature[1]) < Math.abs(wallTemperature[1] - wallTemperature[0]),
+        receipt.toString());
+    write("source-term-benchmarks", "real-gas-pipe-material-wall-cfl-refinement.csv", receipt.toString());
+  }
+
+  @Test
+  void cylindricalMaterialWallFramesAreSchemaValidForBothProcessContainers() throws Exception {
+    for (boolean useModel : new boolean[] {false, true}) {
+      RealGasPipeDecompression pipe = materialWallPipe(8, 0.30);
+      ProcessSystem process = new ProcessSystem();
+      process.add(pipe);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("pipeline", process);
+        session = new SourceTermSession("real-material-wall-linepack", model);
+        session.addInventorySource("rupture", "pipeline", "real-material-wall-linepack");
+      } else {
+        session = new SourceTermSession("real-material-wall-linepack", process);
+        session.addInventorySource("rupture", "real-material-wall-linepack");
+      }
+      session.runSteadyState();
+      SourceTermFrame frame = session.step(0.20).get(0);
+      SourceTermFrame.verifyEnvelope(frame.toJson());
+      JsonObject provenance = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("provenance");
+      assertEquals("CYLINDRICAL_LUMPED_MATERIAL_WALL_FIXED_ENVIRONMENT",
+          provenance.get("pipeHeatTransferBoundary").getAsString());
+      assertEquals(7850.0, provenance.get("pipeWallDensityKgPerM3").getAsDouble(), 0.0);
+      assertEquals(0.1, provenance.get("pipeWallLumpedBiotLimit").getAsDouble(), 0.0);
+      assertTrue(provenance.get("pipeWallLumpedBiotNumber").getAsDouble() < 0.1);
+      write("source-term-contract-fixtures", "real-gas-material-wall-pipe-" + useModel + ".json", frame.toJson());
+    }
+  }
+
+  @Test
   void documentedDistributedHeatConstructorIsExecutable() {
     SystemInterface fluid = gas(80.0);
     ProcessSystem process = new ProcessSystem();
@@ -358,6 +428,14 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
         () -> RealGasPipeDecompression.WallThermalBoundary.capacitive(0.0, 35.0, 45000.0, 330.0, 360.0));
     assertThrows(IllegalArgumentException.class,
         () -> RealGasPipeDecompression.WallThermalBoundary.capacitive(80.0, 35.0, -1.0, 330.0, 360.0));
+    assertThrows(IllegalArgumentException.class, () -> RealGasPipeDecompression.WallThermalBoundary
+        .cylindricalLumpedWall(0.15, 0.01, 7850.0, 500.0, 0.0, 80.0, 35.0, 330.0, 360.0));
+    assertThrows(IllegalArgumentException.class, () -> RealGasPipeDecompression.WallThermalBoundary
+        .cylindricalLumpedWall(0.15, 0.02, 7850.0, 500.0, 1.0, 1000.0, 35.0, 330.0, 360.0));
+    RealGasPipeDecompression.WallThermalBoundary mismatched = RealGasPipeDecompression.WallThermalBoundary
+        .cylindricalLumpedWall(0.15, 0.01, 7850.0, 500.0, 45.0, 80.0, 35.0, 330.0, 360.0);
+    assertThrows(IllegalArgumentException.class, () -> new RealGasPipeDecompression("mismatched-wall", gas(80.0), 40.0,
+        0.16, 1.0, 101325.0, 0.01, 0.20, mismatched, 8, 0.30));
   }
 
   @Test

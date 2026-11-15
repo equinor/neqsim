@@ -430,9 +430,42 @@ stored wall energy, environment heat and gas--wall heat separately. Explicit the
 limits supplement the acoustic CFL and vessel-donor limits. The original adiabatic and massless
 constant-$U$ constructors are unchanged.
 
+When cylindrical geometry and wall properties are known, the material adapter derives the
+outer-area basis and heat capacity while retaining the same conservative wall state:
+
+```java
+RealGasPipeDecompression.WallThermalBoundary materialWall =
+    RealGasPipeDecompression.WallThermalBoundary.cylindricalLumpedWall(
+        0.15, 0.01, 7850.0, 500.0, 45.0,
+        80.0, 35.0, 330.0, 360.0);
+RealGasPipeDecompression materialWallCoupled = new RealGasPipeDecompression(
+    "material-wall-coupled-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, materialWall, 12, 0.30);
+// Di, thickness: m; density: kg/m3; cp: J/(kg K); conductivity: W/(m K)
+// Inner/outer film coefficients: W/(m2 K); temperatures: K.
+```
+
+For inner diameter $D_i$, thickness $t$ and outer diameter $D_o=D_i+2t$, the adapter
+converts the inner-area film coefficient and annular wall capacity to the outer-area basis:
+
+$$U_{i,o}=h_i\frac{D_i}{D_o}$$
+
+$$C_{w,A_o}=\rho_wc_{p,w}\frac{D_o^2-D_i^2}{4D_o}$$
+
+The pipe constructor requires the adapter's $D_i$ to match its flow diameter. A fail-closed
+lumped-capacitance guard uses the long-cylinder material-volume-to-total-surface characteristic
+length $L_c=(D_o-D_i)/4$ and requires
+
+$$Bi=\frac{\max(h_i,h_o)L_c}{k_w}<0.1$$
+
+Geometry, material inputs, effective coefficients, $L_c$ and $Bi$ are retained in frame
+provenance. The guard only establishes applicability of one uniform radial wall temperature; it
+does not solve radial conduction or validate the supplied material/film properties.
+
 This adds finite upstream storage, pressure feedback and optional distributed constant-$U$ wall
-heat exchange or a prescribed finite-capacitance wall. It does not predict either coefficient,
-wall material/capacity, external temperature, fire/ambient/soil/seawater heat transfer, radial wall
+heat exchange or a finite-capacitance wall. The cylindrical adapter derives capacity and area
+conversion from caller-supplied geometry/material properties but does not predict either film
+coefficient, material properties, external temperature, fire/ambient/soil/seawater heat transfer, radial wall
 conduction, vessel nozzle loss, internal vessel waves, phase separation, wall elasticity, a second
 rupture end, non-equilibrium multiphase transport, solids, or qualification. The vessel and every
 pipe cell must remain one equilibrium gas phase; otherwise the whole caller step fails closed.
