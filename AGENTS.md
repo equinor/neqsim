@@ -194,5 +194,14 @@ Full rules: AGENT_REFERENCE.md Part B.
 ## Continuous improvement
 
 Improving the agents and skills used — and their hand-offs — is part of every task. Fix missing
-patterns, API signatures and gotchas in the owning `SKILL.md`/`*.agent.md`, add cross-references
-both ways, and keep site-specific detail in the enterprise repos.
+patterns, API signatures and gotchas in the owning `SKILL.md`/`*.agent.md` and add cross-references
+both ways.
+
+**Where new agents, skills and tooling go (mandatory):**
+- Equinor- or company-specific content (internal systems, shares, asset data, TRs, policy) goes in
+  `neqsim-enterprise-skills` / `neqsim-enterprise-agents`.
+- Anything that is not NeqSim Java functionality (Python methods, file readers, data adapters,
+  screening helpers, orchestrating agents) goes in `neqsim-community-skills` / `neqsim-community-agents`.
+- This repo only takes NeqSim Java functionality, plus `.github/` skills or agents that call it.
+  Do not mirror community or enterprise skills here. Full guide:
+  [where-does-this-go.md](https://github.com/equinor/neqsim-community-skills/blob/main/docs/where-does-this-go.md).
