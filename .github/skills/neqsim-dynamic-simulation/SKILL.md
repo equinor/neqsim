@@ -757,17 +757,18 @@ refinement.
 The unsplit transactional callback exposes directional gas/oil/water face diagnostics: separate
 forward/reverse mass transport, donor advective momentum, pressure traction, physical cell lengths,
 and phase mass sources. The experimental directional-complementarity option augments the nonlinear
-vector with signed mass magnitude, advective momentum and a donor multiplier per internal phase
-face, conservatively replaces the free flux, and carries solved faces into prepared-step
-verification. Exactly absent donors use exact donor-presence and zero-momentum rows; do not add an
+vector with nonnegative mass magnitude, advective momentum and a donor multiplier per internal
+phase face and direction, conservatively replaces the free flux, and carries solved faces into prepared-step
+verification. Physical AUSM transport and pressure correction retain separate donors. Exactly absent donors use
+conflict-free exact donor-presence anchors, zero-flow rows and zero-momentum rows; do not add an
 inventory floor. This is not yet a qualified phase-transition path: the six unchanged 0.1 s lanes
 pass. The nonlinear path may now land exactly on a zero phase/face bound, project only outward
-search components at an already active exact bound, select the donor from the unmodified signed
-free flux between frozen Jacobians, and release an exact donor row when the selected donor is
-present. Rejected line-search trials use independent active-set copies. These are conservative
-transition mechanics, not a tolerance, inventory clip, or fitted donor smear. Exact disappearance
-and opposite-donor unit cases pass, but the directly affected nine unchanged five-second lanes
-still fail line search at 0.63125--1.83515625 s and the complete 15-case gate remains failed. Retain
+search components at an already active exact bound, and release each donor row independently.
+Rejected line-search trials use independent active-set copies. These are conservative transition
+mechanics, not a tolerance, inventory clip, or fitted donor smear. Exact disappearance, simultaneous
+opposing streams and phase-free multi-cell cases pass. All no-pressure-interpolation five-second lanes
+complete; pressure-interpolated baseline and augmented lanes still stop at 1.075--1.8427734375 s, so
+the complete gate remains failed. Retain
 all five-second, 180 s and 600 s gates.
 
 For current unsplit preparation without transient pressure interpolation, passive wall and

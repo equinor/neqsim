@@ -30,7 +30,9 @@ class UnsplitPressureInterpolationTest {
   @ParameterizedTest
   @EnumSource(TimeIntegrationMethod.class)
   void openSinglePhaseOutletJacobianAgreesWithAVolumePreservingDirection(TimeIntegrationMethod method) {
-    TwoFluidSection[] accepted = sections(4, false, 0.0, false);
+    // A nonzero smooth pressure mode avoids asking a finite-difference Jacobian for an arbitrary derivative at the
+    // exact zero-correction donor switch. The zero-correction transport contract is verified independently.
+    TwoFluidSection[] accepted = sections(4, false, 10.0, false);
     for (TwoFluidSection section : accepted) {
       section.setGasVelocity(0.2);
       section.updateConservativeVariables();
