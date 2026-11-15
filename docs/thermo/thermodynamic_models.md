@@ -940,7 +940,7 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 | `SystemSolidHelmholtzEos` | Solid reference | Extensible pure single-component solid Helmholtz system |
 | `SystemVegaEos` | Reference | Vega equation |
 | `SystemAmmoniaEos` | Reference | Ammonia-specific |
-| `SystemBnsEos` | Reference | BNS equation |
+| `SystemBnsEos` | Reference | Volume-corrected BNS gas properties with fitted LBC viscosity and optional helium. See [fluid creation](fluid_creation_guide.md#53-other-reference-equations). |
 | `SystemUNIFAC` | GE | UNIFAC |
 | `SystemUNIFACpsrk` | GE | UNIFAC-PSRK |
 | `SystemNRTL` | GE | NRTL |

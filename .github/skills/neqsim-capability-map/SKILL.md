@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-10-03"
+last_verified: "2026-11-15"
 ---
 
 # NeqSim Capability Map
@@ -92,7 +92,7 @@ and campaign #3153 completion gates.
 |-------|-----------|-------|
 | `SystemBWRSEos` | Benedict-Webb-Rubin-Starling | Only CH4 + C2H6 parameterized |
 | `SystemIdealGas` | Ideal gas law | Teaching / reference |
-| `SystemBnsEos` | BNS EOS | Specialized |
+| `SystemBnsEos` | BNS EOS with optional helium and fitted LBC viscosity | [Specialized gas properties](../../../docs/thermo/fluid_creation_guide.md#53-other-reference-equations) |
 | `SystemUMRPRUEos` | UMRPRU group contribution | Predictive mixing rules |
 | `SystemNRTL` | Activity coefficient (NRTL) | Liquid-liquid equilibrium |
 | `SystemUNIFAC` | Activity coefficient (UNIFAC) | Group contribution |
