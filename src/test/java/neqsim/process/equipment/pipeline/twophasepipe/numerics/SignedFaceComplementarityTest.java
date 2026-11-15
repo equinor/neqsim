@@ -3,7 +3,6 @@ package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -13,15 +12,23 @@ import org.junit.jupiter.params.provider.ValueSource;
 /** Conservation, phase-limit and structural tests for signed face complementarity. */
 class SignedFaceComplementarityTest {
   @Test
-  void simultaneousTwoDonorFluxRejectsOneDirectionComplementarity() {
-    DirectionalPhaseFaceFlux gas = new DirectionalPhaseFaceFlux(0.4, 0.2, 1.2, -0.3, 7.0, 0.2, 0.3, 0.6, -1.5);
+  void simultaneousTwoDonorFluxRetainsBothNormalizedStreams() {
+    DirectionalPhaseFaceFlux gas = new DirectionalPhaseFaceFlux(0.4, 0.2, 1.2, 1.0, 7.0, 0.2, 0.3, 0.6, -1.5);
     DirectionalPhaseFaceFlux[][] faces = {{gas, new DirectionalPhaseFaceFlux(0.0, 0.0, 8.0, 1.0, 1.0, 0.0, 0.0),
         new DirectionalPhaseFaceFlux(0.0, 0.0, 9.0, 1.0, 1.0, 0.0, 0.0)}};
     UnsplitTransientSolver.Evaluation free = evaluation(new double[2][6], faces, new double[] {1.0, 1.0});
     double[][] endpoint = {{0.2, 1.0, 1.0, 0.6, 0.0, 0.0, 0.0}, {0.3, 1.0, 1.0, -1.5, 0.0, 0.0, 0.0}};
-    IllegalStateException exception = assertThrows(IllegalStateException.class,
-        () -> SignedFaceComplementarity.initialize(free, endpoint));
-    assertTrue(exception.getMessage().contains("simultaneous two-sided"));
+    SignedFaceComplementarity.State state = SignedFaceComplementarity.initialize(free, endpoint);
+    SignedFaceComplementarity.Evaluation corrected = SignedFaceComplementarity.evaluate(free, endpoint, state);
+
+    DirectionalPhaseFaceFlux solved = corrected.getSolvedFaces()[0][0];
+    assertEquals(0.4, solved.getForwardMassFlowKgPerSecond(), 0.0);
+    assertEquals(0.2, solved.getReverseMassFlowKgPerSecond(), 0.0);
+    assertEquals(1.2, solved.getForwardAdvectiveMomentumN(), 0.0);
+    assertEquals(1.0, solved.getReverseAdvectiveMomentumN(), 0.0);
+    for (double residual : corrected.getResidual()) {
+      assertEquals(0.0, residual, 1.0e-15);
+    }
   }
 
   @Test
@@ -51,7 +58,8 @@ class SignedFaceComplementarityTest {
     UnsplitTransientSolver.Evaluation free = evaluation(new double[2][6], faces, new double[] {1.0, 1.0});
     double[][] endpoint = {{0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0}, {0.3, 1.0, 1.0, -1.5, 0.0, 0.0, 0.0}};
     SignedFaceComplementarity.State state = SignedFaceComplementarity.initialize(free, endpoint);
-    assertTrue(state.isConstrained(0, 0));
+    assertTrue(state.isConstrained(0, 0, SignedFaceComplementarity.FORWARD));
+    assertFalse(state.isConstrained(0, 0, SignedFaceComplementarity.REVERSE));
     double[] values = state.getValues();
     values[SignedFaceComplementarity.MASS_FLOW] = 0.0;
     values[SignedFaceComplementarity.ADVECTIVE_MOMENTUM] = 0.0;
@@ -79,25 +87,26 @@ class SignedFaceComplementarityTest {
   }
 
   @Test
-  void reversingFreeFluxSelectsPresentOppositeDonorAndReleasesConstraint() {
-    DirectionalPhaseFaceFlux[][] forwardFaces = {faces(0.4, 1.2, 0.0, 0.3, 0.0, -1.5)};
+  void independentDonorRowsReleaseWithoutSwitchingTheOppositeStream() {
+    DirectionalPhaseFaceFlux[][] counterFaces = {twoSidedFaces(0.4, 0.2, 0.0, -1.0, 0.0, 0.3, 0.0, -1.5)};
     double[][] endpoint = {{0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0}, {0.3, 1.0, 1.0, -1.5, 0.0, 0.0, 0.0}};
     SignedFaceComplementarity.State state = SignedFaceComplementarity
-        .initialize(evaluation(new double[2][6], forwardFaces, new double[] {1.0, 1.0}), endpoint);
-    assertTrue(state.isConstrained(0, 0));
-    assertEquals(1, state.getDirection(0, 0));
+        .initialize(evaluation(new double[2][6], counterFaces, new double[] {1.0, 1.0}), endpoint);
+    assertTrue(state.isConstrained(0, 0, SignedFaceComplementarity.FORWARD));
+    assertFalse(state.isConstrained(0, 0, SignedFaceComplementarity.REVERSE));
 
-    DirectionalPhaseFaceFlux[][] reverseFaces = {faces(-0.4, -1.2, 0.0, 0.3, 0.0, -1.5)};
+    double[][] presentEndpoint = {{0.2, 1.0, 1.0, 0.6, 0.0, 0.0, 0.0}, endpoint[1]};
+    DirectionalPhaseFaceFlux[][] presentFaces = {twoSidedFaces(0.4, 0.2, 1.2, -1.0, 0.2, 0.3, 0.6, -1.5)};
     boolean changed = SignedFaceComplementarity
-        .refreshActiveSet(evaluation(new double[2][6], reverseFaces, new double[] {1.0, 1.0}), endpoint, state);
+        .refreshActiveSet(evaluation(new double[2][6], presentFaces, new double[] {1.0, 1.0}), presentEndpoint, state);
 
     assertTrue(changed);
-    assertEquals(-1, state.getDirection(0, 0));
-    assertFalse(state.isConstrained(0, 0));
+    assertFalse(state.isConstrained(0, 0, SignedFaceComplementarity.FORWARD));
+    assertFalse(state.isConstrained(0, 0, SignedFaceComplementarity.REVERSE));
   }
 
   @Test
-  void structuralScheduleUsesFiftyThreeConflictFreeColors() {
+  void structuralScheduleUsesSeventyOneConflictFreeColors() {
     for (int cellCount : new int[] {16, 24}) {
       boolean[] seen = new boolean[SignedFaceComplementarity.TOTAL_COLOR_COUNT];
       for (int column = 0; column < SignedFaceComplementarity.dimension(cellCount); column++) {
@@ -110,9 +119,11 @@ class SignedFaceComplementarityTest {
       }
       for (int face = 0; face < cellCount - 1; face++) {
         for (int variable = 0; variable < SignedFaceComplementarity.VARIABLES_PER_FACE; variable++) {
-          int left = SignedFaceComplementarity.column(cellCount, face, variable / 3, variable % 3);
+          int phase = variable / SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
+          int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
+          int left = SignedFaceComplementarity.column(cellCount, face, phase, localVariable);
           if (face + 1 < cellCount - 1) {
-            int right = SignedFaceComplementarity.column(cellCount, face + 1, variable / 3, variable % 3);
+            int right = SignedFaceComplementarity.column(cellCount, face + 1, phase, localVariable);
             assertNotEquals(SignedFaceComplementarity.color(cellCount, left),
                 SignedFaceComplementarity.color(cellCount, right));
           }
@@ -149,6 +160,49 @@ class SignedFaceComplementarityTest {
     assertEquals(0.0, result.getDirectionalPhaseFaceFluxes()[0][0].getSignedMassFlowKgPerSecond(), 1.0e-10);
     assertEquals(2.0, result.getState()[0][0] + result.getState()[0][1] + result.getState()[0][2]
         + result.getState()[1][0] + result.getState()[1][1] + result.getState()[1][2], 1.0e-12);
+  }
+
+  @Test
+  void augmentedSolverKeepsAMultiCellPhaseFreeRegionStructurallyNonsingular() {
+    double[][] initial = {{0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0}, {0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0}};
+    double[] pressure = {2.0e5, 2.0e5, 2.0e5};
+    UnsplitTransientSolver.Model model = (state, selectedPressure, closureState, closurePressure, time, outletPressure,
+        outletPressureFixed) -> {
+      double[][] rates = {{-0.1, 0.0, 0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+          {0.1, 0.0, 0.0, 0.0, 0.0, 0.0}};
+      DirectionalPhaseFaceFlux[][] ledgers = new DirectionalPhaseFaceFlux[2][3];
+      for (int face = 0; face < ledgers.length; face++) {
+        ledgers[face][0] = new DirectionalPhaseFaceFlux(0.1, 0.0, 0.0, state[face][0], state[face + 1][0],
+            state[face][3], state[face + 1][3]);
+        ledgers[face][1] = new DirectionalPhaseFaceFlux(0.0, 0.0, 0.0, state[face][1], state[face + 1][1],
+            state[face][4], state[face + 1][4]);
+        ledgers[face][2] = new DirectionalPhaseFaceFlux(0.0, 0.0, 0.0, state[face][2], state[face + 1][2],
+            state[face][5], state[face + 1][5]);
+      }
+      double[][] densities = new double[3][3];
+      for (int phase = 0; phase < 3; phase++) {
+        for (int cell = 0; cell < 3; cell++) {
+          densities[phase][cell] = closurePressure[cell] / 2.0e5;
+        }
+      }
+      return new UnsplitTransientSolver.Evaluation(rates, densities, ledgers, new double[] {1.0, 1.0, 1.0},
+          new double[3][3]);
+    };
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setDirectionalComplementarityEnabled(true);
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    solver.setRelativeTolerance(1.0e-10);
+    UnsplitTransientSolver.Result result = solver.solve(initial, pressure, new double[] {1.0, 1.0, 1.0}, 0.1, 0.0,
+        Double.NaN, false, model);
+
+    assertTrue(result.isConverged(), result.getTerminationReason().name());
+    assertEquals(0.49, result.getState()[0][0], 1.0e-12);
+    assertEquals(0.5, result.getState()[1][0], 1.0e-12);
+    assertEquals(0.51, result.getState()[2][0], 1.0e-12);
+    for (double[] cell : result.getState()) {
+      assertEquals(0.0, cell[2], 0.0);
+    }
   }
 
   @ParameterizedTest
@@ -189,6 +243,17 @@ class SignedFaceComplementarityTest {
     return new DirectionalPhaseFaceFlux[] {
         new DirectionalPhaseFaceFlux(gasMassFlow, gasMomentum, 7.0, leftGasMass, rightGasMass, leftGasMomentum,
             rightGasMomentum),
+        new DirectionalPhaseFaceFlux(0.0, 0.0, 8.0, 1.0, 1.0, 0.0, 0.0),
+        new DirectionalPhaseFaceFlux(0.0, 0.0, 9.0, 1.0, 1.0, 0.0, 0.0)};
+  }
+
+  /** Build explicit two-sided gas plus stationary oil/water ledgers at one face. */
+  private static DirectionalPhaseFaceFlux[] twoSidedFaces(double forwardMassFlow, double reverseMassFlow,
+      double forwardMomentum, double reverseMomentum, double leftGasMass, double rightGasMass, double leftGasMomentum,
+      double rightGasMomentum) {
+    return new DirectionalPhaseFaceFlux[] {
+        new DirectionalPhaseFaceFlux(forwardMassFlow, reverseMassFlow, forwardMomentum, reverseMomentum, 7.0,
+            leftGasMass, rightGasMass, leftGasMomentum, rightGasMomentum),
         new DirectionalPhaseFaceFlux(0.0, 0.0, 8.0, 1.0, 1.0, 0.0, 0.0),
         new DirectionalPhaseFaceFlux(0.0, 0.0, 9.0, 1.0, 1.0, 0.0, 0.0)};
   }
