@@ -206,8 +206,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     return new Result(trial.co2PartialPressureBara, trial.co2FugacityBara, nativeMolePercent, molecularMolePercent,
         pseudoSaltMolePercent, co2Molality, waterActivity, actualNaclMassPercent, actualKclMassPercent,
         actualCacl2MassPercent, waterMassKg, co2Moles, actualNaclMoles, actualKclMoles, actualCacl2Moles,
-        trial.co2FeedMoles, trial.phaseTypes, trial.componentBalanceResidualMol,
-        trial.molecularLogFugacityResidual);
+        trial.co2FeedMoles, trial.phaseTypes, trial.componentBalanceResidualMol, trial.molecularLogFugacityResidual);
   }
 
   /**
@@ -646,8 +645,9 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     /**
      * Returns the effective CO2 fugacity divided by the salt-free aqueous CO2 mole fraction.
      *
-     * <p>This model diagnostic has units of bara and is not represented as a dilute-limit Henry
-     * constant at the dense source states.
+     * <p>
+     * This model diagnostic has units of bara and is not represented as a dilute-limit Henry constant at the dense
+     * source states.
      *
      * @return effective fugacity over mole fraction in bara
      */
@@ -656,8 +656,8 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     }
 
     /**
-     * Checks the exact log-space decomposition of dissolved CO2 into fugacity exposure and the
-     * effective aqueous response.
+     * Checks the exact log-space decomposition of dissolved CO2 into fugacity exposure and the effective aqueous
+     * response.
      *
      * @param pureWater matched no-salt model state
      * @return log identity residual, ideally zero
@@ -694,13 +694,12 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
           + componentBalanceResidualMol + "," + molecularLogFugacityResidual + "," + constrained.phaseTypes + ","
           + constrained.molecularMolePercent + "," + (constrained.molecularMolePercent - molecularMolePercent) + ","
           + constrained.waterActivity + "," + (constrained.waterActivity - waterActivity) + ","
-          + constrained.molecularLogFugacityResidual + "," + pureWater.molecularMolePercent + "," + dissolvedRatio
-          + "," + co2FugacityBara + "," + pureWater.co2FugacityBara + "," + fugacityRatio + ","
-          + effectiveFOverXBara() + "," + pureWater.effectiveFOverXBara() + "," + effectiveRatio + ","
-          + Math.log(dissolvedRatio) + "," + Math.log(fugacityRatio) + "," + Math.log(effectiveRatio) + ","
-          + decompositionIdentityResidual(pureWater) + "," + pureWater.waterActivity + ","
-          + (waterActivity - pureWater.waterActivity) + "," + pureWater.componentBalanceResidualMol + ","
-          + pureWater.molecularLogFugacityResidual;
+          + constrained.molecularLogFugacityResidual + "," + pureWater.molecularMolePercent + "," + dissolvedRatio + ","
+          + co2FugacityBara + "," + pureWater.co2FugacityBara + "," + fugacityRatio + "," + effectiveFOverXBara() + ","
+          + pureWater.effectiveFOverXBara() + "," + effectiveRatio + "," + Math.log(dissolvedRatio) + ","
+          + Math.log(fugacityRatio) + "," + Math.log(effectiveRatio) + "," + decompositionIdentityResidual(pureWater)
+          + "," + pureWater.waterActivity + "," + (waterActivity - pureWater.waterActivity) + ","
+          + pureWater.componentBalanceResidualMol + "," + pureWater.molecularLogFugacityResidual;
     }
   }
 }
