@@ -257,51 +257,101 @@ fluid.setMultiPhaseCheck(True)
 
 ## Getting Started
 
-### Step 1: Create a Waxy Fluid
+### Executable wax-screening workflow
 
+The following program uses the repository regression fluid to demonstrate a bounded numerical
+WAT and unsmoothed wax-fraction screen. Replace the synthetic composition and heavy-end
+characterization with representative fluid data before engineering use.
+The synthetic TBP and plus fractions need temporary component registration during wax setup.
+The example restores the previous database setting once the fluid is initialized.
+
+<!-- wax-characterization-example: complete-screen -->
 ```java
-SystemSrkEos fluid = new SystemSrkEos(323.15, 50.0);
-fluid.addComponent("methane", 0.40);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.08);
-fluid.addComponent("n-butane", 0.05);
-fluid.addComponent("n-pentane", 0.04);
-fluid.addComponent("n-hexane", 0.03);
-fluid.addTBPfraction("C7", 0.10, 95.0 / 1000, 0.72);
-fluid.addTBPfraction("C10", 0.08, 135.0 / 1000, 0.78);
-fluid.addTBPfraction("C15", 0.06, 210.0 / 1000, 0.82);
-fluid.addTBPfraction("C20", 0.04, 280.0 / 1000, 0.85);
-fluid.addTBPfraction("C30", 0.02, 420.0 / 1000, 0.88);
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.pvtsimulation.flowassurance.WaxCurveCalculator;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.database.NeqSimDataBase;
+
+public final class WaxCharacterizationScreeningExample {
+  private static final Logger logger =
+      LogManager.getLogger(WaxCharacterizationScreeningExample.class);
+
+  private WaxCharacterizationScreeningExample() {}
+
+  private static SystemInterface createFluid() {
+    boolean previousTemporaryTables = NeqSimDataBase.createTemporaryTables();
+    NeqSimDataBase.setCreateTemporaryTables(true);
+    try {
+      SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+      fluid.addComponent("methane", 6.78);
+      fluid.addTBPfraction("C19", 10.13, 0.170, 0.7814);
+      fluid.addPlusFraction("C20", 10.62, 0.381, 0.850871882888);
+      fluid.setMixingRule(2);
+      fluid.enableWaxModel("Pedersen");
+      return fluid;
+    } finally {
+      NeqSimDataBase.setCreateTemporaryTables(previousTemporaryTables);
+    }
+  }
+
+  public static void main(String[] args) {
+    double pressureBara = 5.0;
+    WaxCurveCalculator calculator = new WaxCurveCalculator(createFluid());
+    calculator.setPressure(pressureBara);
+    calculator.setEnforceMonotonicity(false);
+
+    double refinedWatC = calculator.calculateWAT();
+    if (!Double.isFinite(refinedWatC)) {
+      throw new IllegalStateException("Numerical WAT was not resolved");
+    }
+
+    calculator.setTemperatureRange(refinedWatC - 5.0, refinedWatC + 5.0, 1.0);
+    calculator.calculate();
+    if (calculator.getFailCount() != 0) {
+      throw new IllegalStateException("Wax curve contains failed flash points");
+    }
+
+    double[] rawFractions = calculator.getRawWaxFractions();
+    String[] failures = calculator.getFailureMessages();
+    assert rawFractions.length == failures.length;
+    for (int point = 0; point < rawFractions.length; point++) {
+      assert failures[point] == null;
+      assert Double.isFinite(rawFractions[point]);
+      assert rawFractions[point] >= 0.0 && rawFractions[point] < 1.0;
+    }
+
+    double gridWatC = calculator.getWaxAppearanceTemperatureC();
+    assert Double.isFinite(gridWatC);
+    assert Math.abs(gridWatC - refinedWatC) <= 1.1;
+
+    double operatingTemperatureC = refinedWatC - 10.0;
+    Map<Double, Double> operatingFractions = calculator.calculateAtMultiplePressures(
+        new double[] {pressureBara}, operatingTemperatureC);
+    double waxMassFraction = operatingFractions.get(pressureBara);
+    double subcoolingC = refinedWatC - operatingTemperatureC;
+    assert Double.isFinite(waxMassFraction);
+    assert waxMassFraction > 0.0 && waxMassFraction < 1.0;
+    assert subcoolingC > 0.0;
+
+    logger.info(
+        "Numerical WAT={} C, wax mass fraction={} at {} C and {} bara, subcooling={} C",
+        refinedWatC,
+        waxMassFraction,
+        operatingTemperatureC,
+        pressureBara,
+        subcoolingC);
+  }
+}
 ```
 
-### Step 2: Characterize Wax
+The example deliberately preserves raw results. A failed flash, nonfinite value, or unbracketed
+WAT is a failed screen rather than a wax-free result. WAT, equilibrium wax mass fraction, and
+subcooling are indicators; they do not by themselves assign a deposition or plugging risk class.
 
-```java
-fluid.setMixingRule(2);
-
-// Characterize wax-forming fractions
-fluid.getWaxModel().addTBPWax();
-
-// Select model (optional, defaults to Pedersen)
-fluid.setWaxModelType("Pedersen");
-
-// Enable wax phase
-fluid.addSolidComplexPhase("wax");
-fluid.setMultiphaseWaxCheck(true);
-fluid.setMultiPhaseCheck(true);
-fluid.init(0);
-fluid.init(1);
-```
-
-### Step 3: Calculate WAT
-
-```java
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.calcWAT();
-double watC = fluid.getTemperature() - 273.15;
-```
+### Numerical WAT contract
 
 `calcWAT()` now locates the numerical wax onset with independent, freshly initialized
 TP flashes at the current pressure. It brackets the transition through a wax mass
@@ -395,47 +445,23 @@ a validation of solid density/caloric properties, or a guarantee of global
 stability for arbitrary compositions. Preserve unsmoothed results when diagnosing
 a disappearing phase; material closure alone does not establish phase stability.
 
-### Step 4: Wax Fraction vs Temperature
+### Curve and operating-point interpretation
 
-```java
-// Using WaxCurveCalculator (recommended)
-import neqsim.pvtsimulation.flowassurance.WaxCurveCalculator;
-
-WaxCurveCalculator calc = new WaxCurveCalculator(fluid);
-calc.setPressure(50.0);
-calc.setTemperatureRange(-10.0, 80.0, 2.0);
-calc.calculate();
-
-double wat = calc.getWaxAppearanceTemperatureC();
-double[] temps = calc.getTemperaturesC();
-double[] fractions = calc.getWaxWeightFractions();
-```
+The complete program above calculates both a raw wax curve and an independent operating-point
+wax fraction. Keep raw values and failure provenance in any report; optional monotonic smoothing
+is presentation postprocessing and is not thermodynamic or experimental validation.
 
 ---
 
 ## Wax Curve Calculation
 
-### Simple wax setup
+### Wax setup
 
-For ordinary wax-equilibrium work, use the high-level setup helper instead of
-manually wiring characterization, wax pseudo-components, database refresh,
-solid-phase registration, phase checks and initialization:
-
-```java
-SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
-fluid.addComponent("methane", 6.78);
-fluid.addTBPfraction("C19", 10.13, 0.170, 0.7814);
-fluid.addPlusFraction("C20", 10.62, 0.381, 0.850871882888);
-fluid.setMixingRule(2);
-fluid.enableWaxModel("Coutinho");
-```
-
-`enableWaxModel(...)` characterizes an unresolved plus fraction when present,
-creates the wax-forming pseudo-components, refreshes component data, installs
-the wax phase, enables the required phase checks and initializes the fluid. It
-does **not** change the EOS or mixing rule, so those remain explicit engineering
-choices. The lower-level setup methods remain available for research workflows
-that need control over individual characterization steps.
+Use `enableWaxModel(...)` as shown in the complete program when the fluid contains an unresolved
+plus fraction. It characterizes the heavy end, refreshes component data, installs the wax phase,
+enables the required checks, and initializes the fluid without changing the selected EOS or
+mixing rule. Lower-level setup remains appropriate only when a research workflow needs explicit
+control over each characterization step.
 
 ### WaxCurveCalculator
 
@@ -472,22 +498,11 @@ absolute zero, the upper bound must exceed the lower, and the step must be
 positive. The minimum effective step remains 0.1 C and the grid is limited to
 10001 points.
 
-```java
-WaxCurveCalculator calc = new WaxCurveCalculator(fluid);
-calc.setPressure(100.0);
-calc.setTemperatureRange(-10.0, 80.0, 1.0);
-calc.setEnforceMonotonicity(false); // preserve raw trends for model comparison
-calc.calculate();
+The complete program above uses this API with monotonicity disabled, retains the raw curve,
+checks every failure entry, and evaluates an explicit operating point. Use the same sequence for
+model comparison and condensate studies.
 
-// Results
-double watC = calc.getWaxAppearanceTemperatureC();
-double[] temperaturesCurve = calc.getTemperaturesC();
-double[] waxWtFractions = calc.getWaxWeightFractions();
 
-// Multi-pressure evaluation
-double[] pressures = {50.0, 100.0, 200.0};
-Map<Double, Double> results = calc.calculateAtMultiplePressures(pressures, 10.0);
-```
 
 
 ### Waxy-condensate research case: Hong et al. (2026)
@@ -599,30 +614,20 @@ fitted = list(sim.getWaxFraction())
 
 ## Flow Assurance Applications
 
-### Pipeline Wax Deposition Risk
+### Pipeline wax-screening interpretation
 
-```java
-// Check if operating below WAT
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.calcWAT();
-double wat = fluid.getTemperature() - 273.15;
-double outletTemp = 15.0; // seabed temperature
-
-if (outletTemp < wat) {
-    double subcooling = wat - outletTemp;
-    String risk = subcooling > 20 ? "HIGH" :
-                  subcooling > 10 ? "MEDIUM" : "LOW";
-    System.out.println("WAT: " + wat + " C, Subcooling: " + subcooling + " C, Risk: " + risk);
-}
-```
+Compare the operating temperature with the numerical WAT and report the subcooling in °C, as the
+complete program demonstrates. Do not map subcooling alone to HIGH, MEDIUM, or LOW risk. A
+deposition or restart assessment also needs representative characterization, laboratory WAT and
+wax-fraction data, thermal/hydraulic history, wall conditions, shear, deposition and aging
+models, gel strength, shutdown duration, restart hydraulics, pigging strategy, and chemical
+performance evidence.
 
 ### Multi-Pressure Pipeline Profile
 
-```java
-WaxCurveCalculator calc = new WaxCurveCalculator(fluid);
-double[] pressures = {50, 80, 100, 150, 200};
-Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures, 10.0);
-```
+Use `calculateAtMultiplePressures(...)` only after validating every pressure and inspecting each
+returned value. The complete program shows the one-pressure form; extend the array for a pressure
+profile and treat any `NaN` as a failed point, not zero wax.
 
 ---
 
