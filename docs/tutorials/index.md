@@ -49,8 +49,8 @@ status is not a current-`master` rerun or engineering qualification.
 
 | Tutorial | Scope | Sources |
 |----------|-------|---------|
-| **100-hour CSTR experiment** | Three-phase CSTR setup, geometry, residence time, tabular results, and visualization | [Notebook](CO2_CSTR_Experiment_Tutorial.ipynb) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/tutorials/CO2_CSTR_Experiment_Tutorial.ipynb) |
-| **Interactive kinetics and thermodynamics guide** | SRK-backed impurity screening, explicit fallback boundary, dynamic cases, and sensitivities | [Notebook](CO2_Impurity_Kinetics_Tutorial.ipynb) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/tutorials/CO2_Impurity_Kinetics_Tutorial.ipynb) |
+| **100-hour CSTR experiment** | Three-phase CSTR setup, geometry, residence time, tabular results, and visualization | [Notebook](https://github.com/equinor/neqsim/blob/master/docs/tutorials/CO2_CSTR_Experiment_Tutorial.ipynb) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/tutorials/CO2_CSTR_Experiment_Tutorial.ipynb) |
+| **Interactive kinetics and thermodynamics guide** | SRK-backed impurity screening, explicit fallback boundary, dynamic cases, and sensitivities | [Notebook](https://github.com/equinor/neqsim/blob/master/docs/tutorials/CO2_Impurity_Kinetics_Tutorial.ipynb) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/tutorials/CO2_Impurity_Kinetics_Tutorial.ipynb) |
 
 Both notebooks use the shared [CO2 kinetics support module](neqsim_co2_kinetics.py).
 Reproducible experiment drivers are available for the

@@ -77,6 +77,17 @@ CO2_KINETICS_ASSETS = (
     DOCS / "tutorials/run_user_20bar_minus24C_experiment.py",
 )
 CO2_KINETICS_NOTEBOOKS = CO2_KINETICS_ASSETS[:2]
+CO2_KINETICS_LINK_TARGETS = {
+    CO2_KINETICS_ASSETS[0]: (
+        "https://github.com/equinor/neqsim/blob/master/docs/tutorials/"
+        "CO2_CSTR_Experiment_Tutorial.ipynb"
+    ),
+    CO2_KINETICS_ASSETS[1]: (
+        "https://github.com/equinor/neqsim/blob/master/docs/tutorials/"
+        "CO2_Impurity_Kinetics_Tutorial.ipynb"
+    ),
+    **{asset: asset.name for asset in CO2_KINETICS_ASSETS[2:]},
+}
 TUTORIAL_INDEX = DOCS / "tutorials/index.md"
 
 TASK_SOLVING_TUTORIAL = DOCS / "tutorials/solve-engineering-task.md"
@@ -397,7 +408,9 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
         for asset in CO2_KINETICS_ASSETS:
             with self.subTest(asset=asset.name):
                 self.assertTrue(asset.is_file())
-                self.assertEqual(1, section.count(f"({asset.name})"))
+                self.assertEqual(
+                    1, section.count(f"({CO2_KINETICS_LINK_TARGETS[asset]})")
+                )
 
         for notebook_path in CO2_KINETICS_NOTEBOOKS:
             with self.subTest(notebook=notebook_path.name):
