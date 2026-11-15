@@ -2882,13 +2882,14 @@ public class TPmultiflash extends TPflash {
    *
    * <p>
    * The ion-free stability and split calculation determines the material phase set efficiently, but adding salt changes
-   * aqueous molecular fugacities. Refine that same phase set with ions confined to the aqueous role. A failed bounded
-   * refinement restores the prior conservative endpoint, so unrelated electrolyte flashes retain their established
-   * fallback behavior.
+   * aqueous molecular fugacities. Refine that same phase set with ions confined to the aqueous role. Hydrate checks use
+   * the conservative ion-restored fluid split in their temperature iterations. A failed bounded refinement restores the
+   * prior conservative endpoint.
    * </p>
    */
   private void refineRestoredNonReactiveIonicEquilibrium() {
-    if (system.isChemicalSystem() || system.getNumberOfPhases() < 2 || !hasPositiveIonicOverallFraction()) {
+    if (system.isChemicalSystem() || system.getHydrateCheck() || system.getNumberOfPhases() < 2
+        || !hasPositiveIonicOverallFraction()) {
       return;
     }
     PhaseSplitSnapshot restoredState = new PhaseSplitSnapshot(system);

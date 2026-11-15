@@ -112,8 +112,9 @@ avoids seeding a trial phase from a single ion and allows the multiphase solver
 to assess additional phases. Phase discovery first uses a normalized molecular
 feed. The solver then restores the complete ionic inventory to the aqueous phase
 and re-equilibrates molecular partitioning under the resulting salt activity,
-with ions excluded from gas and oil. If that bounded refinement cannot converge,
-the conservative pre-refinement endpoint is retained.
+with ions excluded from gas and oil. Hydrate checks use the conservative
+ion-restored fluid split during temperature iterations. An ordinary TP flash
+also retains that split if the bounded refinement fails to converge.
 
 For an already-equilibrated neutral two-phase endpoint containing at least 1 mol% water,
 TP flash can remove roundoff in the phase amounts by recovering the unique lever-rule
