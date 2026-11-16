@@ -926,14 +926,15 @@ work the ordinary solve should have done (equinor/neqsim#5036).
 Solver reset and phase-stability recovery are separate concerns. A fresh inner
 TP flash must not depend on the preceding trial, while its stability analysis
 must still find the lowest-Gibbs phase topology. For methane-rich hydrocarbon
-feeds below 50 bar with at least four active components, a condensable heavy
-tail of at least one mole percent, and a critical-temperature span of at least
-300 K, strongly separated Wilson sums trigger the existing five supplementary
-tangent-plane trials. A phase split is accepted only when a non-trivial trial
-converges to negative reduced TPD and the resulting state passes initialization;
-otherwise the original single-phase state is restored. This recovers the
-UMR-PRU methane/ethane/n-pentane/nC16 TV endpoint in a newly constructed TP
-flash without restoring cross-trial Newton history.
+feeds in an unconstrained cubic-EOS flash below 50 bar, strongly separated
+Wilson sums can trigger up to five supplementary tangent-plane trials. A
+non-trivial trial with negative reduced TPD supplies a liquid composition.
+The solver withdraws a feasible liquid amount from the feed and relaxes the
+material-balanced split with a fresh Gibbs-energy Newton solve. Only a
+distinct, normalized split with closed component balances, equal fugacities,
+and lower Gibbs energy supplies K-values to the ordinary TP iteration. This
+recovers the UMR-PRU methane/ethane/n-pentane/nC16 TV endpoint in a newly
+constructed TP flash.
 
 **Measurement behind the stage order (2026-11-16).** The cases were:
 

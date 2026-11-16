@@ -3762,7 +3762,7 @@ public class TPflash extends Flash {
    * @return true when phase fractions, compositions, material balance, and equilibrium residuals are finite and satisfy
    * the strict two-phase endpoint tolerances
    */
-  private boolean isBalancedEquilibriumCandidate(SystemInterface candidate) {
+  static boolean isBalancedEquilibriumCandidate(SystemInterface candidate) {
     if (candidate.getNumberOfPhases() < 1 || candidate.getNumberOfPhases() > 2) {
       return false;
     }
@@ -4055,7 +4055,7 @@ public class TPflash extends Flash {
    * @return maximum absolute difference between feed and phase-recombined composition, or positive infinity for a
    * non-finite feed or phase state
    */
-  private double maximumComponentMaterialBalanceResidual(SystemInterface candidate) {
+  private static double maximumComponentMaterialBalanceResidual(SystemInterface candidate) {
     double maximumResidual = 0.0;
     for (int componentIndex = 0; componentIndex < candidate.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double feedComposition = candidate.getPhase(0).getComponent(componentIndex).getz();
@@ -4453,7 +4453,7 @@ public class TPflash extends Flash {
    * @param candidate candidate system to inspect
    * @return true when all phase pairs have distinct active-component compositions
    */
-  private boolean hasDistinctPhaseCompositions(SystemInterface candidate) {
+  private static boolean hasDistinctPhaseCompositions(SystemInterface candidate) {
     for (int firstPhase = 0; firstPhase < candidate.getNumberOfPhases(); firstPhase++) {
       for (int secondPhase = firstPhase + 1; secondPhase < candidate.getNumberOfPhases(); secondPhase++) {
         double l1Difference = 0.0;

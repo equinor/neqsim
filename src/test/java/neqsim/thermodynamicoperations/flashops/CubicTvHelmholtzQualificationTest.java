@@ -25,6 +25,27 @@ class CubicTvHelmholtzQualificationTest {
   private static final double R = 8.3144621;
 
   /**
+   * Reconstructs cold TP states on either side of the independently qualified TV pressure.
+   *
+   * @param pressure pressure in bara
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {18.5, 20.0})
+  void freshTpFindsLowerGibbsSplitAtNearbyPressures(double pressure) {
+    SystemInterface fluid = frozenFeed(293.15, pressure);
+    fluid.init(0);
+    fluid.init(1);
+    double homogeneousGibbs = Math.min(fluid.getPhase(0).getGibbsEnergy(), fluid.getPhase(1).getGibbsEnergy());
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertTrue(TPflash.isBalancedEquilibriumCandidate(fluid));
+    assertTrue(fluid.getGibbsEnergy() < homogeneousGibbs - 25000.0,
+        "the cold TP split must lower Gibbs energy by over 25 kJ");
+  }
+
+  /**
    * Checks nearby temperatures against an independent EOS Helmholtz expression and its temperature derivative.
    *
    * @param temperature temperature in kelvin
@@ -32,12 +53,7 @@ class CubicTvHelmholtzQualificationTest {
   @ParameterizedTest
   @ValueSource(doubles = {293.05, 293.15, 293.25})
   void lowerHelmholtzEndpointClosesEnergyAndMaterial(double temperature) {
-    SystemInterface fluid = new SystemUMRPRUMCEos(temperature, 20.0);
-    String[] names = {"methane", "ethane", "n-pentane", "nC16"};
-    for (int i = 0; i < names.length; i++) {
-      fluid.addComponent(names[i], FEED[i]);
-    }
-    fluid.setMixingRule(2);
+    SystemInterface fluid = frozenFeed(temperature, 20.0);
     new ThermodynamicOperations(fluid).TVflash(0.998, "m3");
     fluid.init(3);
     assertEquals(2, fluid.getNumberOfPhases());
@@ -76,6 +92,23 @@ class CubicTvHelmholtzQualificationTest {
       }
       assertEquals(FEED[i], recovered, 1.0e-10);
     }
+  }
+
+  /**
+   * Builds the frozen four-component TV qualification feed at the requested state.
+   *
+   * @param temperature temperature in kelvin
+   * @param pressure pressure in bara
+   * @return fresh system with the frozen molar amounts
+   */
+  private static SystemInterface frozenFeed(double temperature, double pressure) {
+    SystemInterface fluid = new SystemUMRPRUMCEos(temperature, pressure);
+    String[] names = {"methane", "ethane", "n-pentane", "nC16"};
+    for (int i = 0; i < names.length; i++) {
+      fluid.addComponent(names[i], FEED[i]);
+    }
+    fluid.setMixingRule(2);
+    return fluid;
   }
 
   /** Repeats the original addition history while asserting the independent residual-energy reference. */
