@@ -57,6 +57,9 @@ For complete compressor/scrubber/cooler studies, follow the
 Own the actual sensor/controller/actuator chain, anti-surge/capacity priorities,
 canonical apply/readback, cause/effect and permissive/reset/bypass records. Test
 actual recycle flow and compressor operating margin along with valve commands.
+Use the complete `CompressorAutomationAcceptancePolicy` for scenario limits and
+retain its fingerprint and aggregate acceptance summary; never tune acceptance
+bounds from the response being judged.
 Direct reads of compressor-derived map quantities are computed model inputs;
 do not credit a proposed FT/PT/TT installation as an executed signal path.
 Keep no-demand, expected fault failures, numerical closure and protection

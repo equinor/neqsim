@@ -245,6 +245,7 @@ public final class CompressorAutomationStudy {
     private final Train source;
     private final CaseDefinition definition;
     private final ConfigurationObserver observer;
+    private final CompressorAutomationAcceptancePolicy acceptancePolicy;
     private final DynamicSafetyScenario scenario;
     private Train configured;
     private DynamicSafetyScenarioResult nativeResult;
@@ -255,11 +256,16 @@ public final class CompressorAutomationStudy {
      * @param source actual pristine canonical source train
      * @param definition explicit case definition
      * @param observer optional configured-copy inspection hook
+     * @param acceptancePolicy complete immutable acceptance policy
      */
-    private CaseBundle(Train source, CaseDefinition definition, ConfigurationObserver observer) {
+    private CaseBundle(Train source, CaseDefinition definition, ConfigurationObserver observer,
+        CompressorAutomationAcceptancePolicy acceptancePolicy) {
       this.source = source;
       this.definition = definition;
       this.observer = observer;
+      this.acceptancePolicy = acceptancePolicy;
+      Map<String, CompressorAutomationAcceptancePolicy.CriterionPolicy> acceptance = acceptanceFor(acceptancePolicy,
+          definition);
       String id = "COMPRESSOR-" + definition.profile + "-DT-" + definition.timeStepSeconds;
       DynamicSafetyScenario.Builder builder = DynamicSafetyScenario.builder(id, id)
           .durationSeconds(definition.durationSeconds).timeStepSeconds(definition.timeStepSeconds)
@@ -279,53 +285,44 @@ public final class CompressorAutomationStudy {
             return new EvidenceCollector(configured, definition);
           });
       boolean controlCase = controlCase(definition.profile);
-      double window = definition.durationSeconds - definition.eventSeconds;
-      builder.addCriterion(DynamicScenarioCriterion
-          .builder("DISCHARGE_ENVELOPE", "Sampled receiver pressure", "bara",
+      builder.addCriterion(applyAcceptance(acceptance.get("DISCHARGE_ENVELOPE"), definition,
+          DynamicScenarioCriterion.builder("DISCHARGE_ENVELOPE", "Sampled receiver pressure", "bara",
               "CompressorAutomationStudy.discharge-pressure.v1",
-              process -> fromProcess(process).dischargeScrubber.getPressure())
-          .acceptanceRange(1.0, 68.0).deadlineSeconds(window)
-          .evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS).build());
+              process -> fromProcess(process).dischargeScrubber.getPressure())));
       if (controlCase) {
-        builder.addCriterion(DynamicScenarioCriterion.builder("SURGE_MARGIN", "Actual in-envelope map margin",
-            "fraction", "CompressorAutomationStudy.map-margin.v1", process -> {
-              Train train = fromProcess(process);
-              return train.physicalMarginQualified() ? train.compressor.getValidatedDistanceToSurge() : -1.0;
-            }).acceptanceRange(0.0, null).deadlineSeconds(window)
-            .evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS).build());
-        builder.addCriterion(DynamicScenarioCriterion
-            .builder("NO_UNWANTED_TRIP", "No control-case shutdown", "boolean", "CompressorAutomationStudy.no-trip.v1",
-                process -> fromProcess(process).inletValve.isEnergized() ? 1.0 : 0.0)
-            .acceptanceRange(1.0, 1.0).deadlineSeconds(window)
-            .evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS).build());
+        builder.addCriterion(
+            applyAcceptance(acceptance.get("SURGE_MARGIN"), definition, DynamicScenarioCriterion.builder("SURGE_MARGIN",
+                "Actual in-envelope map margin", "fraction", "CompressorAutomationStudy.map-margin.v1", process -> {
+                  Train train = fromProcess(process);
+                  return train.physicalMarginQualified() ? train.compressor.getValidatedDistanceToSurge() : -1.0;
+                })));
+        builder.addCriterion(applyAcceptance(acceptance.get("NO_UNWANTED_TRIP"), definition,
+            DynamicScenarioCriterion.builder("NO_UNWANTED_TRIP", "No control-case shutdown", "boolean",
+                "CompressorAutomationStudy.no-trip.v1",
+                process -> fromProcess(process).inletValve.isEnergized() ? 1.0 : 0.0)));
         if (definition.profile != Profile.NORMAL) {
-          builder.addCriterion(DynamicScenarioCriterion
-              .builder("RECYCLE_FLOW", "Actual positive recycle demand response", "kg/sec",
+          builder.addCriterion(applyAcceptance(acceptance.get("RECYCLE_FLOW"), definition,
+              DynamicScenarioCriterion.builder("RECYCLE_FLOW", "Actual positive recycle demand response", "kg/sec",
                   "CompressorAutomationStudy.recycle-flow.v1",
-                  process -> fromProcess(process).antiSurgeValve.getOutletStream().getFlowRate("kg/sec"))
-              .acceptanceRange(0.01, null).deadlineSeconds(5.0).build());
+                  process -> fromProcess(process).antiSurgeValve.getOutletStream().getFlowRate("kg/sec"))));
         }
       } else {
-        builder.addCriterion(DynamicScenarioCriterion
-            .builder("SHAFT_STOP", "Actual native shaft stop", "rpm", "CompressorAutomationStudy.shaft-speed.v1",
-                process -> fromProcess(process).compressor.getSpeed())
-            .acceptanceRange(0.0, 1.0).deadlineSeconds(4.0).build());
-        builder.addCriterion(DynamicScenarioCriterion
-            .builder("INLET_ISOLATED", "Actual feed isolation", "percent",
+        builder.addCriterion(applyAcceptance(acceptance.get("SHAFT_STOP"), definition,
+            DynamicScenarioCriterion.builder("SHAFT_STOP", "Actual native shaft stop", "rpm",
+                "CompressorAutomationStudy.shaft-speed.v1", process -> fromProcess(process).compressor.getSpeed())));
+        builder.addCriterion(applyAcceptance(acceptance.get("INLET_ISOLATED"), definition,
+            DynamicScenarioCriterion.builder("INLET_ISOLATED", "Actual feed isolation", "percent",
                 "CompressorAutomationStudy.inlet-position.v1",
-                process -> fromProcess(process).inletValve.getPercentValveOpening())
-            .acceptanceRange(0.0, 0.1).deadlineSeconds(2.0).build());
-        builder.addCriterion(DynamicScenarioCriterion
-            .builder("EXPORT_ISOLATED", "Actual export isolation", "percent",
+                process -> fromProcess(process).inletValve.getPercentValveOpening())));
+        builder.addCriterion(applyAcceptance(acceptance.get("EXPORT_ISOLATED"), definition,
+            DynamicScenarioCriterion.builder("EXPORT_ISOLATED", "Actual export isolation", "percent",
                 "CompressorAutomationStudy.export-position.v1",
-                process -> fromProcess(process).exportValve.getPercentValveOpening())
-            .acceptanceRange(0.0, 0.1).deadlineSeconds(2.0).build());
-        builder.addCriterion(DynamicScenarioCriterion
-            .builder("RECYCLE_FAIL_OPEN", "Actual fail-open recycle", "percent",
+                process -> fromProcess(process).exportValve.getPercentValveOpening())));
+        builder.addCriterion(applyAcceptance(acceptance.get("RECYCLE_FAIL_OPEN"), definition,
+            DynamicScenarioCriterion.builder("RECYCLE_FAIL_OPEN", "Actual fail-open recycle", "percent",
                 "CompressorAutomationStudy.asv-trip-position.v1",
-                process -> fromProcess(process).antiSurgeValve.getPercentValveOpening())
-            .acceptanceRange(99.9, 100.0).deadlineSeconds(2.0).build());
-        builder.addCriterion(
+                process -> fromProcess(process).antiSurgeValve.getPercentValveOpening())));
+        builder.addCriterion(applyAcceptance(acceptance.get("HOLD_FINAL_ELEMENTS"), definition,
             DynamicScenarioCriterion.builder("HOLD_FINAL_ELEMENTS", "Hold actual shutdown state after four seconds",
                 "boolean", "CompressorAutomationStudy.post-deadline-hold.v1", process -> {
                   Train train = fromProcess(process);
@@ -335,33 +332,27 @@ public final class CompressorAutomationStudy {
                   return train.compressor.getSpeed() <= 1.0 && train.inletValve.getPercentValveOpening() <= 0.1
                       && train.exportValve.getPercentValveOpening() <= 0.1
                       && train.antiSurgeValve.getPercentValveOpening() >= 99.9 ? 1.0 : 0.0;
-                }).acceptanceRange(1.0, 1.0).deadlineSeconds(window)
-                .evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS).build());
+                })));
       }
-      builder.addCriterion(DynamicScenarioCriterion
-          .builder("GAS_CV_APPLICABILITY", "Actual gas-valve inlet phase applicability", "boolean",
-              "CompressorAutomationStudy.gas-phase.v1", process -> fromProcess(process).gasCvApplicable() ? 1.0 : 0.0)
-          .acceptanceRange(1.0, 1.0).deadlineSeconds(window)
-          .evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS).build());
-      builder
-          .addCriterion(DynamicScenarioCriterion
-              .builder("SUCTION_ENERGY", "Separate native suction cumulative energy", "boolean",
-                  "CompressorAutomationStudy.suction-energy.v1",
-                  process -> fromProcess(process).suctionScrubber.assessTransientEnergyBalance(1.0e-5).name()
-                      .equals("PASS") ? 1.0 : 0.0)
-              .acceptanceRange(1.0, 1.0).deadlineSeconds(window).required(false)
-              .evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS).build());
-      builder.addCriterion(DynamicScenarioCriterion
-          .builder("DISCHARGE_ENERGY", "Separate native discharge cumulative energy", "boolean",
-              "CompressorAutomationStudy.discharge-energy.v1",
-              process -> fromProcess(process).dischargeScrubber.assessTransientEnergyBalance(1.0e-5).name()
-                  .equals("PASS") ? 1.0 : 0.0)
-          .acceptanceRange(1.0, 1.0).deadlineSeconds(window).required(false)
-          .evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS).build());
+      builder.addCriterion(applyAcceptance(acceptance.get("GAS_CV_APPLICABILITY"), definition,
+          DynamicScenarioCriterion.builder("GAS_CV_APPLICABILITY", "Actual gas-valve inlet phase applicability",
+              "boolean", "CompressorAutomationStudy.gas-phase.v1",
+              process -> fromProcess(process).gasCvApplicable() ? 1.0 : 0.0)));
+      builder.addCriterion(applyAcceptance(acceptance.get("SUCTION_ENERGY"), definition,
+          DynamicScenarioCriterion.builder("SUCTION_ENERGY", "Separate native suction cumulative energy", "boolean",
+              "CompressorAutomationStudy.suction-energy.v1",
+              process -> fromProcess(process).suctionScrubber.assessTransientEnergyBalance(1.0e-5).name().equals("PASS")
+                  ? 1.0
+                  : 0.0)));
+      builder.addCriterion(applyAcceptance(acceptance.get("DISCHARGE_ENERGY"), definition,
+          DynamicScenarioCriterion.builder("DISCHARGE_ENERGY", "Separate native discharge cumulative energy", "boolean",
+              "CompressorAutomationStudy.discharge-energy.v1", process -> fromProcess(process).dischargeScrubber
+                  .assessTransientEnergyBalance(1.0e-5).name().equals("PASS") ? 1.0 : 0.0)));
       for (String reference : definition.evidenceReferences) {
         builder.addEvidenceReference(reference);
       }
       builder.addRequirementId(requirementId(definition.profile));
+      builder.addEvidenceReference("ACCEPTANCE-POLICY-SHA256:" + acceptancePolicy.getFingerprint());
       for (ProcessEquipmentInterface unit : source.process.getUnitOperations()) {
         builder.addEquipmentTag(unit.getName());
       }
@@ -452,12 +443,49 @@ public final class CompressorAutomationStudy {
       result.put("durationSeconds", bundle.definition.durationSeconds);
       result.put("eventSeconds", bundle.definition.eventSeconds);
       result.put("faultOverrides", bundle.definition.getFaultOverrides());
+      result.put("acceptancePolicyFingerprint", bundle.acceptancePolicy.getFingerprint());
       result.put("nativeResult", bundle.nativeResult.toMap());
       result.put("samples", getSamples());
       result.put("quantitativeMetrics", performanceMetrics(getSamples(), bundle.configured, bundle.definition));
       result.put("qualification", "SYNTHETIC_MAP_AND_DRIVER_PROFILE; CONTROLLED_STANDARDS_VENDOR_SIL_APPROVAL_HOLD");
       return jsonSafe(result);
     }
+  }
+
+  /**
+   * Indexes and resolves the complete acceptance policy for one concrete case before any output or physical step.
+   *
+   * @param policy complete immutable policy
+   * @param definition concrete scenario timing and profile
+   * @return stable ordered criterion policies keyed by identity
+   */
+  private static Map<String, CompressorAutomationAcceptancePolicy.CriterionPolicy> acceptanceFor(
+      CompressorAutomationAcceptancePolicy policy, CaseDefinition definition) {
+    Map<String, CompressorAutomationAcceptancePolicy.CriterionPolicy> result = new LinkedHashMap<String, CompressorAutomationAcceptancePolicy.CriterionPolicy>();
+    for (CompressorAutomationAcceptancePolicy.CriterionPolicy criterion : policy
+        .getProfilePolicy(definition.getProfile()).getCriteria()) {
+      criterion.resolveDeadline(definition);
+      result.put(criterion.getId(), criterion);
+    }
+    return result;
+  }
+
+  /**
+   * Applies public acceptance settings to an observation whose identity, unit and extractor remain owned by the model.
+   *
+   * @param policy acceptance-only settings for the observation
+   * @param definition concrete case timing
+   * @param builder native observation builder with fixed identity, unit and extractor
+   * @return validated native criterion
+   */
+  private static DynamicScenarioCriterion applyAcceptance(CompressorAutomationAcceptancePolicy.CriterionPolicy policy,
+      CaseDefinition definition, DynamicScenarioCriterion.Builder builder) {
+    if (policy == null || builder == null) {
+      throw new IllegalArgumentException("Complete acceptance settings and a native observation are required");
+    }
+    return builder.acceptanceRange(policy.getLowerLimit(), policy.getUpperLimit())
+        .deadlineSeconds(policy.resolveDeadline(definition)).required(policy.isRequired())
+        .evaluationMode(policy.getEvaluationMode()).build();
   }
 
   /**
@@ -469,10 +497,24 @@ public final class CompressorAutomationStudy {
    * @return native case bundle
    */
   public static CaseBundle createCase(Train source, CaseDefinition definition, ConfigurationObserver observer) {
-    if (source == null || definition == null) {
-      throw new IllegalArgumentException("Source and definition are required");
+    return createCase(source, definition, observer, CompressorAutomationAcceptancePolicy.defaultPolicy());
+  }
+
+  /**
+   * Creates a native case using an explicit complete acceptance policy without changing physical model execution.
+   *
+   * @param source actual canonical-configured source train
+   * @param definition declared case timing and faults
+   * @param observer optional exact configured-copy inspection
+   * @param acceptancePolicy complete immutable acceptance policy
+   * @return native case bundle
+   */
+  public static CaseBundle createCase(Train source, CaseDefinition definition, ConfigurationObserver observer,
+      CompressorAutomationAcceptancePolicy acceptancePolicy) {
+    if (source == null || definition == null || acceptancePolicy == null) {
+      throw new IllegalArgumentException("Source, definition and acceptance policy are required");
     }
-    return new CaseBundle(source, definition, observer);
+    return new CaseBundle(source, definition, observer, acceptancePolicy);
   }
 
   /**
@@ -484,6 +526,19 @@ public final class CompressorAutomationStudy {
    */
   public static Result run(Train source, CaseDefinition definition) {
     return createCase(source, definition, null).run();
+  }
+
+  /**
+   * Runs one physical case using an explicit complete acceptance policy.
+   *
+   * @param source actual canonical-configured source train
+   * @param definition declared case timing and faults
+   * @param acceptancePolicy complete immutable acceptance policy
+   * @return actual native result and unchanged physical samples
+   */
+  public static Result run(Train source, CaseDefinition definition,
+      CompressorAutomationAcceptancePolicy acceptancePolicy) {
+    return createCase(source, definition, null, acceptancePolicy).run();
   }
 
   /** @return all declared profiles, without inferring that fault cases pass protection checks */

@@ -29,6 +29,7 @@ import com.google.gson.stream.JsonToken;
 import neqsim.process.controllerdevice.AntiSurgeController;
 import neqsim.process.engineering.pid.PidDesignModel;
 import neqsim.process.engineering.pid.PidElement;
+import neqsim.process.util.scenario.CompressorAutomationAcceptancePolicy;
 import neqsim.process.util.scenario.CompressorAutomationStudy;
 import neqsim.process.util.scenario.CompressorAutomationStudy.CaseDefinition;
 import neqsim.process.util.scenario.CompressorAutomationStudy.Design;
@@ -99,22 +100,6 @@ public class CompressorAutomationWorkflowTest {
     assertEquals(Profile.values().length, CompressorAutomationWorkflow.defaultCases().size());
     assertThrows(UnsupportedOperationException.class, () -> CompressorAutomationWorkflow.defaultCases().clear());
     assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.main(new String[0]));
-  }
-
-  /**
-   * Executes every API call in the documented bounded programmatic example.
-   *
-   * @throws IOException if the workflow cannot publish its isolated evidence
-   */
-  @Test
-  void documentedProgrammaticBoundedCaseRuns() throws IOException {
-    Design design = CompressorAutomationWorkflow.designFromJson("{\"feedFlowKgPerSecond\":6.0}");
-    List<CaseDefinition> cases = Arrays.asList(new CaseDefinition(Profile.NORMAL, 0.2, 8.0, 1.0));
-    Path output = temporary.resolve("documented-programmatic-example");
-    Map<String, Object> status = CompressorAutomationWorkflow.run(design, null, cases, output);
-
-    assertEquals(0, ((Number) status.get("nativeExecutionErrorCount")).intValue());
-    assertEquals(1, ((Number) status.get("nativeProfileCount")).intValue());
   }
 
   /**
@@ -246,6 +231,52 @@ public class CompressorAutomationWorkflowTest {
     assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.run(design, null,
         Arrays.asList(new CaseDefinition(Profile.NORMAL, 0.1, 12.0, 1.0)), relief, rejected));
     assertFalse(Files.exists(rejected));
+  }
+
+  /**
+   * Publishes a strict aggregate acceptance study and proves policy-only verdict changes retain the physical trace.
+   *
+   * @throws IOException if actual artifacts cannot be written or read
+   */
+  @Test
+  void explicitAcceptancePolicyProducesTraceableFailWithoutChangingPhysics() throws IOException {
+    Design design = new Design();
+    CaseDefinition normal = new CaseDefinition(Profile.NORMAL, 0.2, 8.0, 1.0);
+    CompressorAutomationAcceptancePolicy defaults = CompressorAutomationAcceptancePolicy.defaultPolicy();
+    CompressorAutomationAcceptancePolicy revised = defaults.withOverrides(Profile.NORMAL,
+        defaults.getCriterion(Profile.NORMAL, "DISCHARGE_ENVELOPE").withAcceptanceRange(1.0, 1.0));
+    CompressorAutomationAcceptancePolicy late = defaults.withOverrides(Profile.NORMAL,
+        defaults.getCriterion(Profile.NORMAL, "DISCHARGE_ENVELOPE").withDeadlineSeconds(20.0));
+    Path invalidPath = temporary.resolve("acceptance-invalid");
+    assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.runWithAcceptancePolicy(design,
+        null, Arrays.asList(normal), late, invalidPath));
+    assertFalse(Files.exists(invalidPath));
+
+    Path baselinePath = temporary.resolve("acceptance-baseline");
+    Map<String, Object> baseline = CompressorAutomationWorkflow.runWithAcceptancePolicy(design, null,
+        Arrays.asList(normal), defaults, baselinePath);
+    Path revisedPath = temporary.resolve("acceptance-revised");
+    Map<String, Object> changed = CompressorAutomationWorkflow.runWithAcceptancePolicy(design, null,
+        Arrays.asList(normal), revised, revisedPath);
+
+    assertEquals("PASS", baseline.get("acceptanceStudyStatus"));
+    assertEquals("FAIL", changed.get("acceptanceStudyStatus"));
+    assertFalse(baseline.get("acceptancePolicyFingerprint").equals(changed.get("acceptancePolicyFingerprint")));
+    JsonObject baselineSummary = read(baselinePath.resolve("acceptance-study-summary.json"));
+    JsonObject changedSummary = read(revisedPath.resolve("acceptance-study-summary.json"));
+    JsonObject baselineCase = baselineSummary.getAsJsonArray("cases").get(0).getAsJsonObject();
+    JsonObject changedCase = changedSummary.getAsJsonArray("cases").get(0).getAsJsonObject();
+    assertEquals(baselineCase.get("physicalTrajectoryFingerprint").getAsString(),
+        changedCase.get("physicalTrajectoryFingerprint").getAsString());
+    assertFalse(baselineCase.get("nativeResultFingerprint").getAsString()
+        .equals(changedCase.get("nativeResultFingerprint").getAsString()));
+    assertEquals("REQ-COMPRESSOR-NORMAL", changedCase.getAsJsonArray("requirementIds").get(0).getAsString());
+    assertTrue(changedCase.getAsJsonArray("equipmentTags").size() > 0);
+    assertTrue(changedCase.getAsJsonArray("unresolvedActions").size() >= 2);
+    assertEquals(changed.get("acceptanceStudySha256"),
+        sha256(Files.readAllBytes(revisedPath.resolve("acceptance-study-summary.json"))));
+    assertStrictJson(text(revisedPath.resolve("acceptance-policy.json")));
+    assertStrictJson(text(revisedPath.resolve("acceptance-study-summary.json")));
   }
 
   /**

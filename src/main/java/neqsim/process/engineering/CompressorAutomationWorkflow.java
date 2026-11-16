@@ -17,6 +17,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -45,6 +46,7 @@ import neqsim.process.safety.scenario.DynamicSafetyScenarioResult;
 import neqsim.process.safety.scenario.DynamicScenarioCriterion;
 import neqsim.process.safety.sif.ClosedLoopSafetyFunction;
 import neqsim.process.safety.sif.SafetyFunctionChannel;
+import neqsim.process.util.scenario.CompressorAutomationAcceptancePolicy;
 import neqsim.process.util.scenario.CompressorAutomationStudy;
 import neqsim.process.util.scenario.CompressorAutomationStudy.CaseBundle;
 import neqsim.process.util.scenario.CompressorAutomationStudy.CaseDefinition;
@@ -131,8 +133,53 @@ public final class CompressorAutomationWorkflow {
   public static Map<String, Object> run(Design design, PidDesignModel canonicalProposal,
       List<CaseDefinition> definitions, CompressorReliefDisposalStudy.Design reliefDesign, Path directory)
       throws IOException {
-    if (design == null || definitions == null || definitions.isEmpty() || directory == null) {
-      throw new IllegalArgumentException("A design, nonempty case selection and new output directory are required");
+    return runWithAcceptancePolicy(design, canonicalProposal, definitions,
+        CompressorAutomationAcceptancePolicy.defaultPolicy(), reliefDesign, directory);
+  }
+
+  /**
+   * Executes governed compressor cases using a caller-declared acceptance policy and no relief/disposal extension.
+   *
+   * @param design design assumptions copied before use
+   * @param canonicalProposal optional edited canonical graph, or null to import actual native objects
+   * @param definitions explicit unique case definitions
+   * @param acceptancePolicy complete immutable acceptance-only policy
+   * @param directory new output directory, never overwritten
+   * @return detached status map
+   * @throws IOException if artifact publication fails
+   * @throws IllegalArgumentException if input, policy, fault scope or output identity is invalid
+   */
+  public static Map<String, Object> runWithAcceptancePolicy(Design design, PidDesignModel canonicalProposal,
+      List<CaseDefinition> definitions, CompressorAutomationAcceptancePolicy acceptancePolicy, Path directory)
+      throws IOException {
+    return runWithAcceptancePolicy(design, canonicalProposal, definitions, acceptancePolicy, null, directory);
+  }
+
+  /**
+   * Executes governed compressor cases with explicit acceptance policy and optional integrated relief/disposal study.
+   *
+   * <p>
+   * The policy controls only criterion bounds, deadlines, evaluation mode and required status. Native observation
+   * identities, units, physical trajectories and initiating events remain owned by the compressor study.
+   * </p>
+   *
+   * @param design design assumptions copied before use
+   * @param canonicalProposal optional edited canonical graph, or null to import actual native objects
+   * @param definitions explicit unique case definitions
+   * @param acceptancePolicy complete immutable acceptance-only policy
+   * @param reliefDesign optional explicit relief, blowdown and flare connection basis
+   * @param directory new output directory, never overwritten
+   * @return detached status map
+   * @throws IOException if artifact publication fails
+   * @throws IllegalArgumentException if input, policy, relief source, fault scope or output identity is invalid
+   */
+  public static Map<String, Object> runWithAcceptancePolicy(Design design, PidDesignModel canonicalProposal,
+      List<CaseDefinition> definitions, CompressorAutomationAcceptancePolicy acceptancePolicy,
+      CompressorReliefDisposalStudy.Design reliefDesign, Path directory) throws IOException {
+    if (design == null || definitions == null || definitions.isEmpty() || acceptancePolicy == null
+        || directory == null) {
+      throw new IllegalArgumentException(
+          "A design, nonempty case selection, complete acceptance policy and new output directory are required");
     }
     Path output = directory.toAbsolutePath().normalize();
     Path parent = output.getParent();
@@ -150,6 +197,7 @@ public final class CompressorAutomationWorkflow {
       if (definition == null || !caseKeys.add(caseKey(definition))) {
         throw new IllegalArgumentException("Case definitions must be nonnull and have unique profile/timestep IDs");
       }
+      acceptancePolicy.validateForCase(definition);
       blockedOutletCases += definition.getProfile() == Profile.BLOCKED_OUTLET ? 1 : 0;
     }
     if (reliefDesign != null && blockedOutletCases != 1) {
@@ -184,11 +232,13 @@ public final class CompressorAutomationWorkflow {
     status.put("fitnessForConstruction", Boolean.FALSE);
     status.put("projectId", project.getProjectId());
     status.put("acceptedDesign", GSON.fromJson(GSON.toJson(accepted), Map.class));
+    status.put("acceptancePolicyFingerprint", acceptancePolicy.getFingerprint());
     status.put("reliefDisposalEnabled", Boolean.valueOf(reliefDesign != null));
     try {
       status.put("runtimeClasses", runtimeClasses(governed));
       write(output.resolve("workflow-status.json"), status);
       write(output.resolve("design-input.json"), status.get("acceptedDesign"));
+      write(output.resolve("acceptance-policy.json"), acceptancePolicy.toMap());
       write(output.resolve("steady-state.json"), steadySnapshot(original));
       write(output.resolve("imported-native-proposal.json"), imported.toMap());
       write(output.resolve("canonical-pid.json"), canonical.toMap());
@@ -210,7 +260,7 @@ public final class CompressorAutomationWorkflow {
           declared = declared.withEvidenceReference(function.getEvidenceReference());
         }
         ReceiptObserver observer = new ReceiptObserver(project, canonical, bindings, control, functions);
-        CaseBundle bundle = CompressorAutomationStudy.createCase(governed, declared, observer);
+        CaseBundle bundle = CompressorAutomationStudy.createCase(governed, declared, observer, acceptancePolicy);
         String requirementId = CompressorAutomationStudy.requirementId(requested.getProfile());
         if (registeredScenarioRequirements.add(requirementId)) {
           project.addRequirement(new EngineeringRequirement(requirementId, governed.getCompressor().getName(),
@@ -224,6 +274,7 @@ public final class CompressorAutomationWorkflow {
       EngineeringSimulationResult simulation = EngineeringSimulationRunner.runStrict(project);
       List<Map<String, Object>> feedback = new ArrayList<Map<String, Object>>();
       List<Map<String, Object>> crosswalk = new ArrayList<Map<String, Object>>();
+      List<Map<String, Object>> acceptanceCases = new ArrayList<Map<String, Object>>();
       List<Map<String, Object>> integratedStudies = new ArrayList<Map<String, Object>>();
       int passed = 0;
       int errors = 0;
@@ -267,6 +318,7 @@ public final class CompressorAutomationWorkflow {
             sha256(Files.readAllBytes(caseDirectory.resolve("native-result.json"))));
         row.put("strictFullTraceFileSha256", sha256(Files.readAllBytes(caseDirectory.resolve("full-trace.json"))));
         row.put("controlConfigurationFingerprint", execution.control.getFingerprint());
+        row.put("acceptancePolicyFingerprint", acceptancePolicy.getFingerprint());
         row.put("nativeRequiredCriteriaPassed", Boolean.valueOf(nativeResult.isPassed()));
         List<?> nativeErrors = (List<?>) nativeResult.toMap().get("errors");
         row.put("nativeErrors", new ArrayList<Object>(nativeErrors));
@@ -293,6 +345,11 @@ public final class CompressorAutomationWorkflow {
         } else {
           row.put("reliefDisposalStatus", reliefDesign == null ? "NOT_REQUESTED" : "NOT_APPLICABLE");
         }
+        Map<String, Object> acceptanceCase = acceptanceCase(execution.definition, result, nativeResult, row,
+            acceptancePolicy);
+        row.put("acceptanceStatus", acceptanceCase.get("status"));
+        row.put("physicalTrajectoryFingerprint", acceptanceCase.get("physicalTrajectoryFingerprint"));
+        acceptanceCases.add(acceptanceCase);
         crosswalk.add(row);
         passed += nativeResult.isPassed() ? 1 : 0;
         errors += nativeErrors.isEmpty() ? 0 : 1;
@@ -300,6 +357,8 @@ public final class CompressorAutomationWorkflow {
       write(output.resolve("engineering-simulation-results.json"), simulation.toMap());
       write(output.resolve("dynamic-pid-feedback.json"), map("safetyFunctionResults", feedback));
       write(output.resolve("native-evidence-crosswalk.json"), map("cases", crosswalk));
+      Map<String, Object> acceptanceStudy = acceptanceStudy(project, acceptancePolicy, acceptanceCases);
+      write(output.resolve("acceptance-study-summary.json"), acceptanceStudy);
       if (reliefDesign != null) {
         Map<String, Object> integrated = new LinkedHashMap<String, Object>();
         integrated.put("schemaVersion", "neqsim_compressor_integrated_safety_study.v1");
@@ -343,6 +402,9 @@ public final class CompressorAutomationWorkflow {
       status.put("sourceRef", System.getProperty("neqsim.sourceRef", "UNPINNED_WORKSPACE_BUILD"));
       status.put("javaVersion", System.getProperty("java.version"));
       status.put("canonicalControlEditsApplied", Boolean.valueOf(canonicalProposal != null));
+      status.put("acceptanceStudy", "acceptance-study-summary.json");
+      status.put("acceptanceStudyStatus", acceptanceStudy.get("status"));
+      status.put("acceptanceStudySha256", sha256(Files.readAllBytes(output.resolve("acceptance-study-summary.json"))));
       status.put("integratedReliefStudyCount", Integer.valueOf(integratedStudies.size()));
       if (reliefDesign != null) {
         status.put("integratedSafetyStudy", "integrated-safety-study.json");
@@ -656,6 +718,155 @@ public final class CompressorAutomationWorkflow {
       }
       values.put(setting, declared.get(source));
     }
+  }
+
+  /**
+   * Builds one requirement-to-result acceptance row from the exact native result and physical sample history.
+   *
+   * @param definition declared case identity and timing
+   * @param result completed typed compressor result
+   * @param nativeResult exact native scenario result
+   * @param crosswalk exact file and configuration checksums
+   * @param policy complete acceptance policy
+   * @return detached ordered case acceptance row
+   */
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> acceptanceCase(CaseDefinition definition, CompressorAutomationStudy.Result result,
+      DynamicSafetyScenarioResult nativeResult, Map<String, Object> crosswalk,
+      CompressorAutomationAcceptancePolicy policy) {
+    Map<String, Object> output = new LinkedHashMap<String, Object>();
+    output.put("caseId", caseKey(definition));
+    output.put("profile", definition.getProfile().name());
+    output.put("scenarioId", nativeResult.getScenarioId());
+    output.put("requirementIds", new ArrayList<String>(nativeResult.getRequirementIds()));
+    output.put("equipmentTags", new ArrayList<String>(nativeResult.getEquipmentTags()));
+    output.put("acceptancePolicyFingerprint", policy.getFingerprint());
+    output.put("nativeResultFingerprint", crosswalk.get("nativeResultFingerprint"));
+    output.put("controlConfigurationFingerprint", crosswalk.get("controlConfigurationFingerprint"));
+    output.put("physicalTrajectoryFingerprint",
+        sha256(GSON.toJson(result.getSamples()).getBytes(StandardCharsets.UTF_8)));
+    output.put("fileEvidence", new LinkedHashMap<String, Object>(crosswalk));
+    Map<String, Object> resultMap = result.toMap();
+    output.put("quantitativeMetrics", resultMap.get("quantitativeMetrics"));
+    List<Map<String, Object>> criteria = new ArrayList<Map<String, Object>>();
+    List<Map<String, Object>> actions = new ArrayList<Map<String, Object>>();
+    boolean requiredFailure = false;
+    boolean requiredNotEvaluated = false;
+    for (Map.Entry<String, DynamicSafetyScenarioResult.CriterionResult> entry : nativeResult.getCriterionResults()
+        .entrySet()) {
+      Map<String, Object> nativeCriterion = entry.getValue().toMap();
+      Map<String, Object> criterionDefinition = (Map<String, Object>) nativeCriterion.get("criterion");
+      List<Object> times = (List<Object>) nativeCriterion.get("timeSeconds");
+      boolean evaluated = times != null && !times.isEmpty();
+      boolean passed = Boolean.TRUE.equals(nativeCriterion.get("passed"));
+      boolean required = Boolean.TRUE.equals(criterionDefinition.get("required"));
+      String status = !evaluated ? "NOT_EVALUATED" : passed ? "PASS" : "FAIL";
+      Map<String, Object> criterion = new LinkedHashMap<String, Object>();
+      criterion.put("criterionId", entry.getKey());
+      criterion.put("unit", criterionDefinition.get("unit"));
+      criterion.put("lowerLimit", criterionDefinition.get("lowerLimit"));
+      criterion.put("upperLimit", criterionDefinition.get("upperLimit"));
+      criterion.put("deadlineSeconds", criterionDefinition.get("deadlineSeconds"));
+      criterion.put("evaluationMode", criterionDefinition.get("evaluationMode"));
+      criterion.put("required", Boolean.valueOf(required));
+      criterion.put("status", status);
+      criterion.put("firstSatisfiedSeconds", nativeCriterion.get("firstSatisfiedSeconds"));
+      criterion.put("firstViolationSeconds", nativeCriterion.get("firstViolationSeconds"));
+      criterion.put("monitoredSampleCount", nativeCriterion.get("monitoredSampleCount"));
+      criterion.put("monitoredMinimum", nativeCriterion.get("monitoredMinimum"));
+      criterion.put("monitoredMaximum", nativeCriterion.get("monitoredMaximum"));
+      criterion.put("evidencePath", "native-result.json:criteria." + entry.getKey());
+      criteria.add(criterion);
+      requiredFailure |= required && "FAIL".equals(status);
+      requiredNotEvaluated |= required && "NOT_EVALUATED".equals(status);
+      if (!"PASS".equals(status)) {
+        actions.add(action("ACTION-" + definition.getProfile().name() + "-" + entry.getKey(), entry.getKey(),
+            "Required=" + required + "; native criterion status=" + status,
+            required ? "Resolve before accepting the scenario" : "Review optional diagnostic before design use"));
+      }
+    }
+    List<?> nativeErrors = (List<?>) nativeResult.toMap().get("errors");
+    if (!nativeErrors.isEmpty()) {
+      requiredNotEvaluated = true;
+      actions.add(action("ACTION-" + definition.getProfile().name() + "-EXECUTION", null,
+          "Native execution errors retained: " + nativeErrors,
+          "Resolve execution errors and rerun; no acceptance verdict may be inferred"));
+    }
+    String status = requiredNotEvaluated ? "NOT_EVALUATED" : requiredFailure ? "FAIL" : "PASS";
+    actions.add(action("ACTION-" + definition.getProfile().name() + "-ENGINEERING-REVIEW", null,
+        "Simulation evidence is not accountable hazard, SIL, vendor or construction approval",
+        "Complete controlled engineering review with applicable project and risk evidence"));
+    output.put("criteria", criteria);
+    output.put("nativeErrors", new ArrayList<Object>(nativeErrors));
+    output.put("status", status);
+    output.put("reviewState", "PASS".equals(status) ? "CALCULATED_REVIEW_REQUIRED" : "CALCULATED_ACTION_REQUIRED");
+    output.put("unresolvedActions", actions);
+    return output;
+  }
+
+  /**
+   * Builds one unresolved-action record without deriving an accountable design decision from simulation alone.
+   *
+   * @param actionId stable synthetic action identity
+   * @param criterionId optional criterion identity
+   * @param reason evidence-based reason
+   * @param disposition required follow-up
+   * @return ordered action record
+   */
+  private static Map<String, Object> action(String actionId, String criterionId, String reason, String disposition) {
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    result.put("actionId", actionId);
+    result.put("criterionId", criterionId);
+    result.put("reason", reason);
+    result.put("disposition", disposition);
+    result.put("closed", Boolean.FALSE);
+    return result;
+  }
+
+  /**
+   * Builds the aggregate traceable acceptance-study summary for the selected native cases.
+   *
+   * @param project governed engineering project
+   * @param policy complete acceptance policy
+   * @param cases ordered case acceptance rows
+   * @return detached aggregate summary
+   */
+  private static Map<String, Object> acceptanceStudy(EngineeringProject project,
+      CompressorAutomationAcceptancePolicy policy, List<Map<String, Object>> cases) {
+    int passed = 0;
+    int failed = 0;
+    int notEvaluated = 0;
+    for (Map<String, Object> candidate : cases) {
+      String status = String.valueOf(candidate.get("status"));
+      passed += "PASS".equals(status) ? 1 : 0;
+      failed += "FAIL".equals(status) ? 1 : 0;
+      notEvaluated += "NOT_EVALUATED".equals(status) ? 1 : 0;
+    }
+    String status = notEvaluated > 0 ? "NOT_EVALUATED" : failed > 0 ? "FAIL" : "PASS";
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    result.put("schemaVersion", "neqsim.compressor_automation_acceptance_study.v1");
+    result.put("projectId", project.getProjectId());
+    result.put("projectRevision", project.getRevision());
+    result.put("acceptancePolicyFingerprint", policy.getFingerprint());
+    result.put("policyFile", "acceptance-policy.json");
+    result.put("traceabilityChain",
+        "requirementIds -> equipmentTags -> scenarioId -> criterionId/quantitativeMetrics -> native/file fingerprints -> reviewState/unresolvedActions");
+    result.put("status", status);
+    result.put("passCount", Integer.valueOf(passed));
+    result.put("failCount", Integer.valueOf(failed));
+    result.put("notEvaluatedCount", Integer.valueOf(notEvaluated));
+    result.put("reviewState", "PASS".equals(status) ? "CALCULATED_REVIEW_REQUIRED" : "CALCULATED_ACTION_REQUIRED");
+    result.put("fitnessForConstruction", Boolean.FALSE);
+    result.put("cases", new ArrayList<Map<String, Object>>(cases));
+    result.put("rerunInvalidationInputs",
+        Arrays.asList("acceptancePolicyFingerprint", "projectRevision", "controlConfigurationFingerprint",
+            "nativeResultFingerprint", "physicalTrajectoryFingerprint", "strictNativeResultFileSha256",
+            "strictFullTraceFileSha256"));
+    result.put("limitations", Arrays.asList(
+        "PASS verifies only declared modeled response against the caller-declared policy",
+        "NOT_EVALUATED is retained for missing physical samples or native execution errors",
+        "SIL, voting, independence, detector coverage, vendor limits and construction approval require reviewed evidence"));
+    return result;
   }
 
   /**
