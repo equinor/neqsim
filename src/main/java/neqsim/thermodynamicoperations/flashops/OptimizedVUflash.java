@@ -335,14 +335,24 @@ public class OptimizedVUflash extends Flash {
    * @return true when pressure, temperature, volume and energy are finite and both specifications are met
    */
   private boolean isSolutionAcceptable() {
+    return isSolutionAcceptable(system);
+  }
+
+  /**
+   * Checks whether a thermodynamic state satisfies the accepted volume and internal-energy specification.
+   *
+   * @param state equilibrated state to check
+   * @return true when pressure, temperature, volume and energy are finite and both specifications are met
+   */
+  private boolean isSolutionAcceptable(SystemInterface state) {
     try {
-      double pressure = system.getPressure();
-      double temperature = system.getTemperature();
+      double pressure = state.getPressure();
+      double temperature = state.getTemperature();
       if (!Double.isFinite(pressure) || !Double.isFinite(temperature) || pressure <= 0.0 || temperature <= 0.0) {
         return false;
       }
-      double volume = system.getVolume();
-      double enthalpy = system.getEnthalpy();
+      double volume = state.getVolume();
+      double enthalpy = state.getEnthalpy();
       if (!Double.isFinite(volume) || !Double.isFinite(enthalpy) || Vspec <= 0.0) {
         return false;
       }
@@ -655,22 +665,28 @@ public class OptimizedVUflash extends Flash {
       SystemInterface seed = system.clone();
       SystemInterface trial = coldEquilibrium(seed, initialPressure, initialTemperature);
       double[] residual = equilibriumResidual(trial);
+      // Each accepted step strictly reduces the residual norm, so trial is always the best state found so far.
       for (int iteration = 0; iteration < RECOVERY_MAX_ITERATIONS && !meetsPolishTolerances(residual); iteration++) {
         double[] step = equilibriumNewtonStep(seed, trial, residual);
         if (step == null) {
-          return false;
+          break;
         }
-        trial = decreaseEquilibriumResidual(seed, trial, step, Math.hypot(residual[0], residual[1]));
-        if (trial == null) {
-          return false;
+        SystemInterface next = decreaseEquilibriumResidual(seed, trial, step, Math.hypot(residual[0], residual[1]));
+        if (next == null) {
+          // No further decrease: typically the finite-difference noise floor of the TP flash, well inside the
+          // acceptance criterion. Keep the best state rather than discarding it.
+          break;
         }
+        trial = next;
         residual = equilibriumResidual(trial);
       }
-      if (!meetsPolishTolerances(residual)) {
+      // Iterate towards the tight polish tolerances but publish with the same acceptance criterion as every other
+      // VU path, so a stalled or iteration-limited search that already closes both specifications is not lost.
+      if (!isSolutionAcceptable(trial)) {
         return false;
       }
       installEquilibrium(system, trial);
-      return meetsPolishTolerances(equilibriumResidual(system)) && isSolutionAcceptable();
+      return isSolutionAcceptable();
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
     }

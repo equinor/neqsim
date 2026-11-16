@@ -897,7 +897,10 @@ pressure and temperature using independent cold TP equilibria. The differences
 between these equilibria include changes in phase fractions and composition.
 Inner TP flashes retain the specified component inventory when a trace phase
 is removed. The recovered state must satisfy both volume and internal-energy specifications
-before publication. The recovery uses the existing polish tolerances. Flashes
+before publication. The search iterates towards the polish tolerances, but if it
+stalls at the TP-flash noise floor or reaches its iteration limit, the best state
+is still published when it meets the same acceptance criterion as the other VU
+paths. Flashes
 that converge earlier return through the existing path. Runtime diagnostics
 `wasEquilibriumRecoveryUsed()` and `getEquilibriumRecoveryFlashCount()`
 distinguish that bounded fallback from the ordinary solve without changing its

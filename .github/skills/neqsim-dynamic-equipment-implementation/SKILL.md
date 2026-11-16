@@ -52,6 +52,9 @@ For any new transient implementation:
    - Energy accumulation = inlet enthalpy rates minus outlet enthalpy rates plus heat/work terms.
    - Clamp tiny negative mole inventories to zero; do not allow negative total volume, negative pressure, or invalid phase amounts.
 8. Re-flash the updated inventory with the appropriate flash operation (`TPflash`, `TVflash`, `PHflash`, or `VUflash`) and call `initProperties()` or the class-equivalent physical-property initialization before reading transport properties.
+   After a `VUflash`, check `OptimizedVUflash.isLastRunConverged()`. When a vessel step is slow, `wasColdFallbackUsed()`,
+   `wasEquilibriumPolishUsed()`, `wasEquilibriumRecoveryUsed()` and `getEquilibriumRecoveryFlashCount()` show which
+   fallback stage closed the volume/energy specification and how many detached TP flashes it cost.
 9. Update every outlet stream from the new state and preserve mass/energy consistency.
 10. For explicit inventory integration, override `getMaxStableTransientTimeStep()` (from `ProcessEquipmentInterface`,
     default positive infinity) with the largest stable step for the current state, valid before and after transient
