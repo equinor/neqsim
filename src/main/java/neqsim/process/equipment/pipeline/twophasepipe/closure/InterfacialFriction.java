@@ -498,6 +498,30 @@ public class InterfacialFriction implements Serializable {
   }
 
   /**
+   * Evaluate bubble drag from the independently transported gas volume fraction.
+   *
+   * <p>
+   * Using the gas fraction directly retains positive trace inertia when the liquid fraction rounds to one. The force
+   * remains proportional to gas holdup and vanishes only at the exactly absent endpoint.
+   * </p>
+   *
+   * @param vG gas velocity in m/s
+   * @param vL liquid velocity in m/s
+   * @param rhoG gas density in kg/m3
+   * @param rhoL liquid density in kg/m3
+   * @param muG gas viscosity in Pa s
+   * @param muL liquid viscosity in Pa s
+   * @param alphaG independently represented gas volume fraction
+   * @param diameter pipe diameter in m
+   * @param sigma surface tension in N/m
+   * @return configured bubble drag and interface area per length
+   */
+  public InterfacialFrictionResult calculateBubbleWithGasHoldup(double vG, double vL, double rhoG, double rhoL,
+      double muG, double muL, double alphaG, double diameter, double sigma) {
+    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, alphaG, diameter, sigma, useCorrectedBubbleDrag);
+  }
+
+  /**
    * Calculate interfacial friction for bubble flow.
    *
    * <p>
@@ -512,15 +536,31 @@ public class InterfacialFriction implements Serializable {
    * @param muL liquid viscosity in Pa·s
    * @param alphaL liquid holdup (volume fraction)
    * @param D pipe diameter in m
+   * @param surfaceTension surface tension in N/m
    * @return interfacial friction calculation result
    */
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
       double alphaL, double D, double surfaceTension) {
-    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, surfaceTension, useCorrectedBubbleDrag);
+    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, 1.0 - alphaL, D, surfaceTension, useCorrectedBubbleDrag);
   }
 
+  /**
+   * Evaluate the configured force law without subtracting the liquid fraction from unity.
+   *
+   * @param vG gas velocity in m/s
+   * @param vL liquid velocity in m/s
+   * @param rhoG gas density in kg/m3
+   * @param rhoL liquid density in kg/m3
+   * @param muG gas viscosity in Pa s
+   * @param muL liquid viscosity in Pa s
+   * @param alphaG gas volume fraction
+   * @param D pipe diameter in m
+   * @param surfaceTension surface tension in N/m
+   * @param useCorrectedDrag true for the dimensionally corrected force scaling
+   * @return interfacial force representation
+   */
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
-      double alphaL, double D, double surfaceTension, boolean useCorrectedDrag) {
+      double alphaG, double D, double surfaceTension, boolean useCorrectedDrag) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
@@ -529,8 +569,7 @@ public class InterfacialFriction implements Serializable {
     double d_b = getBubbleSizeClosure().estimateDiameter(D, rhoL, rhoG, GRAVITY, surfaceTension);
 
     // Interfacial area concentration
-    double alphaG = 1.0 - alphaL;
-    if (alphaG < 1e-10) {
+    if (alphaG <= 0.0) {
       return result;
     }
 
@@ -624,7 +663,7 @@ public class InterfacialFriction implements Serializable {
           liquidViscosity, liquidHoldup, diameter, surfaceTension);
     }
     InterfacialFrictionResult result = calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-        liquidViscosity, liquidHoldup, diameter, surfaceTension, true);
+        liquidViscosity, 1.0 - liquidHoldup, diameter, surfaceTension, true);
     return result.interfacialShear * result.interfacialAreaPerLength;
   }
 

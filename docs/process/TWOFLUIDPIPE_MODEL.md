@@ -2280,6 +2280,23 @@ its bubble diameter. At equal densities, the existing confinement limit of one t
 pipe diameter determines the size. This keeps the drag finite as a trace phase enters a cell
 and the densities cross. Its direction continues to oppose slip.
 
+## Drag at positive trace gas inventories
+
+The bubble and dispersed-bubble contributions to the finite-volume friction operator
+use the independently represented gas holdup. They retain drag for every positive
+represented gas fraction, including when liquid holdup rounds to one. The former
+`1e-10` gas-holdup cutoff incorrectly removed drag from a positive gas inventory;
+in the conservative-energy well replay, that allowed trace gas velocities above
+300 m/s. Exactly absent gas still has zero interfacial force. Regime blending and
+the selected compatibility/corrected drag coefficient are retained.
+
+The conservative source regression checks both pure and blended bubble closures
+with gas mass from `1e-8` to `1e-200` kg/m: slip contracts, masses and total energy
+stay fixed, and the internal exchange preserves total momentum. This repairs a
+trace-force defect; it does not establish a stationary multiphase handoff or
+quantitatively validate well holdup. See issue #5066 for sustained replays.
+
+
 The unresolved bulk gas/liquid drag now distributes its liquid reaction by conservative oil and
 water mass, consistently with the mass-weighted bulk liquid velocity. With liquid force `FL`, the
 phase forces are `FL*mO/(mO+mW)` and `FL*mW/(mO+mW)`. For consistent recovered velocities their mechanical power is

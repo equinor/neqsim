@@ -2542,18 +2542,13 @@ public class TwoFluidConservationEquations implements Serializable {
   private InterfacialFriction.InterfacialFrictionResult calculateInterfacialFriction(TwoFluidSection sec,
       Map<PipeSection.FlowRegime, Double> weights) {
     if (weights == null) {
-      return interfacialFriction.calculate(sec.getFlowRegime(), sec.getGasVelocity(), sec.getLiquidVelocity(),
-          sec.getGasDensity(), sec.getLiquidDensity(), sec.getGasViscosity(), sec.getLiquidViscosity(),
-          sec.getLiquidHoldup(), sec.getDiameter(), sec.getSurfaceTension());
+      return calculateRegimeInterfacialFriction(sec, sec.getFlowRegime());
     }
 
     InterfacialFriction.InterfacialFrictionResult blended = new InterfacialFriction.InterfacialFrictionResult();
     double weightedForcePerLength = 0.0;
     for (Map.Entry<PipeSection.FlowRegime, Double> entry : weights.entrySet()) {
-      InterfacialFriction.InterfacialFrictionResult component = interfacialFriction.calculate(entry.getKey(),
-          sec.getGasVelocity(), sec.getLiquidVelocity(), sec.getGasDensity(), sec.getLiquidDensity(),
-          sec.getGasViscosity(), sec.getLiquidViscosity(), sec.getLiquidHoldup(), sec.getDiameter(),
-          sec.getSurfaceTension());
+      InterfacialFriction.InterfacialFrictionResult component = calculateRegimeInterfacialFriction(sec, entry.getKey());
       weightedForcePerLength += entry.getValue() * component.interfacialShear * component.interfacialAreaPerLength;
       blended.interfacialAreaPerLength += entry.getValue() * component.interfacialAreaPerLength;
     }
@@ -2561,6 +2556,25 @@ public class TwoFluidConservationEquations implements Serializable {
       blended.interfacialShear = weightedForcePerLength / blended.interfacialAreaPerLength;
     }
     return blended;
+  }
+
+  /**
+   * Preserve independently represented trace gas in each bubble contribution, including blended regimes.
+   *
+   * @param sec current phase state
+   * @param regime individual closure regime
+   * @return native interfacial force representation
+   */
+  private InterfacialFriction.InterfacialFrictionResult calculateRegimeInterfacialFriction(TwoFluidSection sec,
+      PipeSection.FlowRegime regime) {
+    if (isDispersedBubbleRegime(regime)) {
+      return interfacialFriction.calculateBubbleWithGasHoldup(sec.getGasVelocity(), sec.getLiquidVelocity(),
+          sec.getGasDensity(), sec.getLiquidDensity(), sec.getGasViscosity(), sec.getLiquidViscosity(),
+          sec.getGasHoldup(), sec.getDiameter(), sec.getSurfaceTension());
+    }
+    return interfacialFriction.calculate(regime, sec.getGasVelocity(), sec.getLiquidVelocity(), sec.getGasDensity(),
+        sec.getLiquidDensity(), sec.getGasViscosity(), sec.getLiquidViscosity(), sec.getLiquidHoldup(),
+        sec.getDiameter(), sec.getSurfaceTension());
   }
 
   /**

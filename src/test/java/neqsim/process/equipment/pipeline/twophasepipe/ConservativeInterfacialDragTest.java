@@ -22,6 +22,34 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFrictio
  * @version 1.0
  */
 class ConservativeInterfacialDragTest {
+  /** Positive trace gas retains finite slip relaxation below the complement and legacy cutoff limits. */
+  @Test
+  void traceBubbleDragRetainsAccelerationWithoutInventingInventory() {
+    for (boolean blend : new boolean[] {false, true}) {
+      double referenceSlip = Double.NaN;
+      for (double mass : new double[] {1e-8, 1e-16, 1e-30, 1e-100, 1e-200}) {
+        TwoFluidSection section = section(mass, 400.0, 0.0, 10.0, 0.0, 0.0);
+        section.setFlowRegime(FlowRegime.DISPERSED_BUBBLE);
+        if (blend) {
+          Map<FlowRegime, Double> weights = new EnumMap<>(FlowRegime.class);
+          weights.put(FlowRegime.BUBBLE, 0.4);
+          weights.put(FlowRegime.DISPERSED_BUBBLE, 0.6);
+          section.setRegimeWeights(weights);
+        }
+        double[] before = section.getStateVector();
+        double[] after = equations(true).applyConservativeFriction(new double[][] {before},
+            new TwoFluidSection[] {section}, 0.1)[0];
+        audit(before, after);
+        double slip = after[3] / mass - after[4] / after[1];
+        assertTrue(slip > 0.0 && slip < 9.0, "A positive trace bubble must retain its drag acceleration");
+        if (Double.isFinite(referenceSlip)) {
+          assertEquals(referenceSlip, slip, 1e-7);
+        }
+        referenceSlip = slip;
+      }
+    }
+  }
+
   /** A newly condensed annular trace must not acquire an explicit finite-inertia impulse. */
   @Test
   void appearingTraceContractsSlipWithoutIncreasingKineticEnergyOrCreatingMass() {
