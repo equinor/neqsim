@@ -23,17 +23,16 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * Each stage runs only if the previous one did not close the volume and internal-energy specification, cheapest
- * first:
+ * Each stage runs only if the previous one did not close the volume and internal-energy specification, cheapest first:
  * </p>
  * <ol>
  * <li>Q-function Newton iteration, abandoned after {@value #STAGNATION_LIMIT} iterations without a new best residual
  * and returning its best iterate rather than its last one.</li>
  * <li>A cold retry of that iteration when a warm-started initialization was requested.</li>
- * <li>Detached equilibrium recovery: a two-variable Newton on independent cold TP equilibria from the incoming
- * state ({@link #wasEquilibriumRecoveryUsed()}).</li>
- * <li>The constant-volume equilibrium polish ({@link #wasEquilibriumPolishUsed()}), the most robust and most
- * expensive stage.</li>
+ * <li>Detached equilibrium recovery: a two-variable Newton on independent cold TP equilibria from the incoming state
+ * ({@link #wasEquilibriumRecoveryUsed()}).</li>
+ * <li>The constant-volume equilibrium polish ({@link #wasEquilibriumPolishUsed()}), the most robust and most expensive
+ * stage.</li>
  * </ol>
  *
  * @author GitHub Copilot
