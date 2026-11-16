@@ -867,7 +867,10 @@ When calling `separator.runTransient(dt, id)` directly, keep `dt` below that val
 
 Near the bubble point (a small gas cap in an almost liquid-filled vessel) the VU flash falls back to an
 equilibrium polish stage (`OptimizedVUflash.wasEquilibriumPolishUsed()`), which solves the volume
-specification for pressure along a constant-volume path; this keeps high-level operation converging.
+specification for pressure along a constant-volume path. For rejected states a
+second equilibrium search near the incoming pressure and temperature can recover
+a gas–oil–water vessel step. The accepted state still has to close both the
+volume and internal-energy specifications.
 
 The reported level stops at the minimum headspace (5 % of the vessel volume, a level of about 0.90 for
 a horizontal vessel and 0.95 for a vertical one). A vessel that keeps receiving more liquid than it

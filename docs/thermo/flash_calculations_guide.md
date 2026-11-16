@@ -891,7 +891,14 @@ derivatives require level two; the VU update does not consume composition-deriva
 matrices. Returned enthalpy and internal energy therefore refer to the final
 TP state, rather than caloric caches retained from a preceding iterate.
 
-The existing update equations, damping, bounds and stopping criteria are retained.
+The main solve retains its update equations, damping, bounds and stopping criteria.
+If the constant-volume polish also fails, the solver searches near the incoming
+pressure and temperature using independent cold TP equilibria. The differences
+between these equilibria include changes in phase fractions and composition.
+Inner TP flashes retain the specified component inventory when a trace phase
+is removed. The recovered state must satisfy both volume and internal-energy specifications
+before publication. The recovery uses the existing polish tolerances. Flashes
+that converge earlier return through the existing path.
 Applications requiring stricter volume/energy closure must check both residuals
 and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).
 `VUCaloricStateQualificationTest` checks independently configured SRK/PR,
