@@ -1533,7 +1533,7 @@ def test_capabilities():
     guides = evidence.get("guides", {})
     limitations = evidence.get("knownLimitations", {})
     check("evidence inventory freezes 74 Java test classes",
-          tests.get("javaTestClassCount") == 74,
+          tests.get("javaTestClassCount") == 75,
           str(tests))
     check("evidence inventory freezes 102 protocol scenarios",
           tests.get("protocolScenarioCount") == 102,
