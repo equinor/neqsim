@@ -1085,12 +1085,13 @@ public final class PidNativeControlSystem {
     if (!(value instanceof Map)) {
       throw new IllegalArgumentException("Canonical element lacks native configuration: " + element.getTag());
     }
+    Map<?, ?> declaredValues = (Map<?, ?>) value;
     Map<String, Object> values = GSON.fromJson(GSON.toJson(value), Map.class);
     if ((element.getType() == PidElementType.MEASUREMENT || element.getType() == PidElementType.INDICATOR)
-        && values.containsKey(LEGACY_ONLINE_SIGNAL_KEY)) {
-      if (Boolean.TRUE.equals(values.get(LEGACY_ONLINE_SIGNAL_KEY))) {
+        && declaredValues.containsKey(LEGACY_ONLINE_SIGNAL_KEY)) {
+      if (!Boolean.FALSE.equals(declaredValues.get(LEGACY_ONLINE_SIGNAL_KEY))) {
         throw new IllegalArgumentException(
-            "Legacy external online signal is no longer supported for instrument " + element.getTag());
+            "Only legacy onlineSignal=false is supported for instrument " + element.getTag());
       }
       values.remove(LEGACY_ONLINE_SIGNAL_KEY);
     }
