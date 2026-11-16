@@ -141,9 +141,7 @@ public final class TwoSidedRealGasPipeRupture {
   }
 
   /** @return live left-branch process equipment */
-  @SuppressFBWarnings(
-      value = "EI_EXPOSE_REP",
-      justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
   public Branch getLeftBranch() {
     return leftBranch;
   }
@@ -338,9 +336,7 @@ public final class TwoSidedRealGasPipeRupture {
     }
 
     /** @return live conservative branch solver for detailed diagnostics */
-    @SuppressFBWarnings(
-        value = "EI_EXPOSE_REP",
-        justification = "Diagnostics must observe the live solver owned by this branch; copying would detach its state")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Diagnostics must observe the live solver owned by this branch; copying would detach its state")
     public RealGasPipeDecompression getSegment() {
       return segment;
     }
