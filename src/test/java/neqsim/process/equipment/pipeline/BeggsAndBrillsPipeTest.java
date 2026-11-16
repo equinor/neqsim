@@ -162,7 +162,8 @@ public class BeggsAndBrillsPipeTest {
     double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
     Assertions.assertEquals(pressureOut, 13.366143179275166, 1);
-    Assertions.assertEquals(temperatureOut, 38.8, 0.1);
+    // Include the enthalpy consumed by lifting the fluid 750 m.
+    Assertions.assertEquals(35.5142, temperatureOut, 0.1);
     // At the outlet (13.4 bara) the no-slip liquid fraction is 0.099 and the
     // mixture Froude number is 792, well above L1 = 157, so the published Beggs
     // and Brill map gives DISTRIBUTED. The previous INTERMITTENT expectation came
@@ -216,11 +217,11 @@ public class BeggsAndBrillsPipeTest {
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
 
     Assertions.assertEquals(pressureOut, 34.4716898025371, 1);
-    Assertions.assertEquals(temperatureOut, 79.80343, 1);
+    Assertions.assertEquals(78.78696, temperatureOut, 1);
     Assertions.assertEquals(pipe.getPressureDrop(), 15.5283101974629, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressure(10), 34.4716898025371, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 1.5468048987983438, 1.0);
-    Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 79.80343029302054, 1.0);
+    Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 78.78696, 1.0);
     Assertions.assertEquals(pipe.getSegmentFlowRegime(10), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
     Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 224.31571593591167, 20.0);
     Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 3.357338501138603, 1.0);
@@ -278,22 +279,23 @@ public class BeggsAndBrillsPipeTest {
     double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
 
-    Assertions.assertEquals(temperatureOut, 75.0748, 1);
+    // Descending fluid recovers gravitational potential energy as enthalpy.
+    Assertions.assertEquals(78.35434, temperatureOut, 1);
     Assertions.assertEquals(pressureOut, 124.04439, 1);
 
     Assertions.assertEquals(pipe.getPressureDrop(), 25.955604559293917, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressure(10), 124.04439544070608, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressure(0), 150, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 2.9204245897598162, 1.0);
-    Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 75.07486781297496, 1.0);
+    Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 78.35434, 1.0);
     Assertions.assertEquals(pipe.getSegmentFlowRegime(10), PipeBeggsAndBrills.FlowRegime.SINGLE_PHASE);
-    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 73.54613545016805, 1.0);
+    Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 72.38775, 1.0);
     Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 0.0, 1.0);
     Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 33.85480591912372, 1.0);
     Assertions.assertEquals(pipe.getSegmentMixtureSuperficialVelocity(10), 33.85480591912372, 1.0);
     Assertions.assertEquals(pipe.getSegmentMixtureViscosity(10), 0.14329203901478244, 1.0);
     Assertions.assertEquals(pipe.getSegmentLiquidHoldup(10), 0.0, 0.01);
-    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2.0148037804739866E7, 1.0);
+    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2.0090144821444444E7, 1.0);
     Assertions.assertEquals(pipe.getSegmentLength(10), 1500.0, 1.0);
     Assertions.assertEquals(pipe.getSegmentElevation(10), -1000, 1.0);
     Assertions.assertEquals(pipe.getNumberOfIncrements(), 10, 0.1);
@@ -371,7 +373,8 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
 
     Assertions.assertEquals(15.000000000083332, temperatureOut3, 1);
-    Assertions.assertEquals(18.3429, pressureOut3, 1);
+    // Gravity changes the cooling/condensation path and therefore the integrated pressure loss.
+    Assertions.assertEquals(29.41778, pressureOut3, 1);
   }
 
   @Test

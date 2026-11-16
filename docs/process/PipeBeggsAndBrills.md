@@ -323,7 +323,23 @@ Calculate:
 
 ## Energy Equation Components
 
-The energy balance can include three optional components:
+Non-isothermal segments include gravitational potential energy: the static-enthalpy
+change contains `-g * delta_z` per unit mass, with `g = 9.80665 m/s²` and positive
+`delta_z` upward. An adiabatic, unheated segment therefore conserves `h + g*z`
+within the model's existing neglect of kinetic-energy change. Isothermal mode
+continues to impose temperature through an implicit external heat boundary.
+
+The analytical temperature fallback includes gravitational cooling/heating. A
+finite PH-flash endpoint that closes the requested enthalpy is retained even when
+phase change places its temperature outside a constant-Cp estimate. Tests cover
+upward, downward and horizontal water lines, direct electrical heat, and a flashing
+well at 1, 20 and 40 increments. The 2 km upward well loses 19,613.3 J/kg of enthalpy.
+
+PH flashing already includes the thermodynamic temperature response to pressure.
+The legacy optional JT and friction-heating additions below remain separate options;
+the gravity-balance regression uses their default disabled settings.
+
+The energy balance can also include three optional components:
 
 ### 1. Wall Heat Transfer
 

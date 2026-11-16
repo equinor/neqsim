@@ -1970,7 +1970,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       system.setPressure(pressureOut);
       if (!runIsothermal) {
         double inletTempBeforeHeat = system.getTemperature();
-        double analyticalDeltaT = calcTemperatureDifference(system);
+        double analyticalDeltaT = calcTemperatureDifference(system) - 9.80665 * elevation / system.getCp("J/kgK");
         if (directElectricalHeatingPowerPerMeter != 0.0) {
           // DEH lifts the increment above the wall-heat-transfer band checked below
           double mCp = system.getFlowRate("kg/sec") * system.getCp("J/kgK");
@@ -1982,13 +1982,19 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
         // Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
         // or to other unphysical values) on some JVM/locale combinations, e.g. for
         // pure-water increments at borderline turbulent Re. If the enthalpy round-trip
-        // produced a temperature outside the physically allowed analytical band
-        // [Tin, Tin + dT_analytical], fall back to the analytical solution and re-init.
+        // has not closed enthalpy and lies outside the analytical temperature estimate,
+        // fall back to that estimate and re-init. A valid PH endpoint may leave the band.
         double Tafter = system.getTemperature();
         double Tanalytical = inletTempBeforeHeat + analyticalDeltaT;
         double bandLow = Math.min(inletTempBeforeHeat, Tanalytical) - 1.0;
         double bandHigh = Math.max(inletTempBeforeHeat, Tanalytical) + 1.0;
-        if (Tafter < 100.0 || Tafter > 2000.0 || Tafter < bandLow || Tafter > bandHigh) {
+        double calculatedEnthalpy = system.getEnthalpy();
+        boolean enthalpyClosed = Double.isFinite(calculatedEnthalpy)
+            && Math.abs(calculatedEnthalpy - enthalpyInlet) <= 1e-8 * Math.max(1.0, Math.abs(enthalpyInlet));
+        // A converged PH endpoint may lie outside a constant-Cp temperature estimate,
+        // especially when elevation and phase change both contribute.
+        if (!Double.isFinite(Tafter) || Tafter < 100.0 || Tafter > 2000.0
+            || !enthalpyClosed && (Tafter < bandLow || Tafter > bandHigh)) {
           system.setTemperature(Tanalytical);
           testOps.TPflash();
           enthalpyInlet = system.getEnthalpy();
@@ -2594,6 +2600,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <p>
    * This method calculates the enthalpy change due to:
    * <ul>
+   * <li>Gravitational potential energy, with static enthalpy decreasing as elevation increases</li>
    * <li>Wall heat transfer (LMTD method) - when not adiabatic</li>
    * <li>Joule-Thomson effect - cooling/heating due to pressure change (calculated from thermodynamics)</li>
    * <li>Friction heating - viscous dissipation</li>
@@ -2613,6 +2620,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public double calcHeatBalance(double enthalpy, SystemInterface system, ThermodynamicOperations testOps) {
     double Cp = system.getCp("J/kgK");
     double massFlowRate = system.getFlowRate("kg/sec");
+
+    // Elevation converts static enthalpy into gravitational potential energy.
+    enthalpy -= massFlowRate * 9.80665 * elevation;
 
     // 1. Wall heat transfer (LMTD-based calculation)
     if (!runAdiabatic) {
