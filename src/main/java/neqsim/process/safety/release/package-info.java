@@ -39,6 +39,8 @@
  * single-gas transient decompression and line packing with optional finite upstream gas-vessel coupling and prescribed
  * distributed constant-U or finite-capacitance wall heat exchange, including cylindrical material/geometry adapters for
  * fail-closed lumped capacity or conservative two-node radial conduction</li>
+ * <li>{@link neqsim.process.safety.release.TwoSidedRealGasPipeRupture} - Two distinct, directional EOS-backed branch
+ * inventories and source frames for an adiabatic full-bore rupture inside a finite gas pipe</li>
  * </ul>
  *
  * <p>
@@ -61,7 +63,9 @@
  * outer-area conversion and capacity from explicit wall geometry and material properties. The lumped factory rejects Bi
  * &gt;= 0.1; the two-node factory resolves one conservative radial gradient through cylindrical resistance. Both
  * exclude predictive thermal correlations, higher-order radial convergence, pipe elasticity and solid-bearing
- * transport. Separate short-opening models can either apply a caller-declared gas/liquid velocity ratio or predict
+ * transport. The two-sided topology composes two adiabatic EOS-backed branches around an interior rupture plane and
+ * preserves the opposing jets as separate frames; it does not model pipe-wall motion or pressure coupling across the
+ * open break. Separate short-opening models can either apply a caller-declared gas/liquid velocity ratio or predict
  * vertical-upward bubbly/dispersed slip with a bounded Zuber-Findlay/Harmathy closure. A third model applies
  * caller-parameterized first-order phase-split relaxation before the same drift-flux closure. A fourth resolves
  * component-specific phase-partition relaxation and emits phase compositions while retaining exact component

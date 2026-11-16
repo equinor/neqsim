@@ -445,10 +445,24 @@ risk abort the whole caller step without committing partial state.
 
 Tests retain exact pipe-plus-discharge mass and total-energy closure, fixed composition, atomic
 isolation, both process-container paths, a dilute-gas comparison with the perfect-gas solver, and
-an 8/12/16-cell refinement receipt. This is software evidence only. The model excludes heat
-transfer, wall elasticity, a finite upstream vessel, two-sided rupture, finite-rate phase transfer,
-multiphase slip/entrainment and solid-bearing transport, and it has no independent experimental
-qualification.
+spatial/CFL refinement receipts. Optional boundaries cover a finite rigid well-mixed upstream gas
+vessel and prescribed constant-$U$, finite-capacitance, lumped-cylinder or two-node radial wall
+sensitivities with explicit energy accounting.
+
+`TwoSidedRealGasPipeRupture` divides an initially uniform finite pipe at an interior rupture plane
+and creates two independently conservative `RealGasPipeDecompression` branches. Cell counts are
+allocated in proportion to branch length while retaining at least eight cells per branch. The
+left and right equipment are added to the same `ProcessSystem`; the helper registers both in a
+single-process `SourceTermSession` or in a named `ProcessModel` area. Each branch retains its own
+thermodynamic station, inventory and provenance. The frame directions are respectively
+`POSITIVE_PIPE_AXIS` and `NEGATIVE_PIPE_AXIS`; consumers must not add the opposing jets into one
+scalar source state. Whole-pipe mass and total energy close by summing the two branches.
+
+This is software evidence only. The topology assumes an instantaneous full-bore opening into one
+constant-pressure receiver, rigid adiabatic single-gas branches and closed remote ends. It excludes
+pipe elasticity and fluid-structure coupling, finite crack-opening dynamics, heat transfer,
+pressure coupling across the open rupture plane, finite-rate phase transfer, multiphase
+slip/entrainment and solid-bearing transport, and it has no independent experimental qualification.
 
 ## Homogeneous-equilibrium equations and station semantics
 
