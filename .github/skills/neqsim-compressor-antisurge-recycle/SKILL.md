@@ -1,9 +1,9 @@
 ---
 name: neqsim-compressor-antisurge-recycle
 calculation_basis: "neqsim-java"
-version: 0.5.0
+version: 0.6.0
 description: "Anti-surge recycle for centrifugal compressors in NeqSim: chart generation, AntiSurgeRecycleCalculator, dynamic AntiSurgeController, CompressorAntiSurgeApplication binding, MinimumSpeedRecycleControllerStructure split-range control, speed-solve convergence and recycle power/CO2 savings. USE WHEN: a task must protect a compressor from surge with a recycle loop, coordinate speed and recycle at minimum speed, or value avoided recycle."
-last_verified: "2026-11-07"
+last_verified: "2026-11-16"
 requires:
   python_packages: []
   java_packages:
@@ -43,6 +43,12 @@ refinement tests, source-bound DEXPI 2.0.1/P&ID exports, and automation-engineer
 registers/narratives. Proposed devices and direct compressor-derived inputs are
 separate from executed measurement paths. A controller command alone is not
 recycle-flow or surge-protection evidence.
+
+For acceptance studies, use `CompressorAutomationAcceptancePolicy` and the
+workflow's `runWithAcceptancePolicy` entrypoint. Retain the complete ordered
+profile/criterion policy, its fingerprint and `acceptance-study-summary.json`.
+Policy-only edits may change a verdict but must not change the physical sample
+history; unknown identities, unit mismatches and incomplete policies fail closed.
 
 ## When to Use
 
