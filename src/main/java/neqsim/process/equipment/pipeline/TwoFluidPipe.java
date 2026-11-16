@@ -8042,6 +8042,9 @@ public class TwoFluidPipe extends Pipeline {
    * Update thermodynamic properties using flash calculations.
    */
   private void updateThermodynamics() {
+    boolean preserveSingleLiquidAcoustics = coupledPressureMomentumEnabled && !includeMassTransfer
+        && !componentTransportEnabled && !includeEnergyEquation
+        && !(enableHeatTransfer && heatTransferCoefficient > 0.0) && directElectricalHeatingPowerPerMeter == 0.0;
     for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
       TwoFluidSection sec = sections[sectionIndex];
       try {
@@ -8063,6 +8066,16 @@ public class TwoFluidPipe extends Pipeline {
           ThermodynamicOperations ops = new ThermodynamicOperations(flash);
           ops.TPflash();
           flash.initProperties();
+        }
+
+        // An equilibrium split changes the liquid composition even when no mass transfers.
+        // For a single liquid on the coupled isothermal route, retain the density and
+        // sound speed of the acoustic state instead of projecting against that split.
+        if (preserveSingleLiquidAcoustics && flash.getNumberOfPhases() > 1 && sec.getGasMassPerLength() == 0.0
+            && (sec.getOilMassPerLength() > 0.0 && sec.getWaterMassPerLength() == 0.0 && flash.hasPhaseType("oil")
+                || sec.getWaterMassPerLength() > 0.0 && sec.getOilMassPerLength() == 0.0
+                    && flash.hasPhaseType("aqueous"))) {
+          continue;
         }
 
         // Update phase properties

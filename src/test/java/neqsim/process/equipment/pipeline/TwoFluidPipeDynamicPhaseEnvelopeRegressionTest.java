@@ -15,6 +15,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -23,6 +24,68 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
   private static final double INITIAL_MASS_FLOW = 0.3;
   private static final String[] PHASE_NAMES = {"gas", "oil", "aqueous"};
   private static final Phase[] REPORT_PHASES = {Phase.GAS, Phase.OIL, Phase.WATER};
+
+  /** Check that an equilibrium gas split cannot destabilize source-free acoustic transport of oil. */
+  @Test
+  void liquidFullWellPreservesAcousticDensityAcrossEquilibriumFlashRefresh() throws Exception {
+    SystemInterface fluid = new SystemPrEos(353.15, 200.0);
+    String[] names = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10"};
+    double[] amounts = {0.5, 1.0, 45.0, 5.0, 5.0, 2.0, 3.0, 2.0, 2.0, 5.0, 8.0, 10.0, 6.0, 5.5};
+    for (int component = 0; component < names.length; component++) {
+      fluid.addComponent(names[component], amounts[component]);
+    }
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    Stream feed = new Stream("well feed", fluid);
+    feed.setFlowRate(20000.0, "kg/hr");
+    feed.run();
+    assertFalse(feed.getFluid().hasPhaseType("gas"));
+
+    TwoFluidPipe pipe = new TwoFluidPipe("liquid-full well", feed);
+    pipe.setLength(2000.0);
+    pipe.setDiameter(0.1);
+    pipe.setRoughness(1.0e-5);
+    pipe.setNumberOfSections(20);
+    double[] elevations = new double[21];
+    for (int face = 0; face < elevations.length; face++) {
+      elevations[face] = face * 100.0;
+    }
+    pipe.setCellFaceElevationProfile(elevations);
+    pipe.setOutletPressure(102.9531305, "bara");
+    pipe.setEnableAdaptiveTimestepping(true);
+    pipe.setThermodynamicUpdateInterval(1);
+    pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
+    pipe.run();
+    assertTrue(pipe.isSteadyStateConverged());
+    TwoFluidSection top = sections(pipe)[19];
+    assertTrue(localEquilibriumState(pipe, top).hasPhaseType("gas"));
+    assertEquals(0.0, top.getGasMassPerLength(), 0.0);
+    double[] initialPressure = pipe.getPressureProfile();
+
+    for (int step = 0; step < 20; step++) {
+      pipe.runTransient(0.01, UUID.randomUUID());
+      assertProfilesClose(initialPressure, pipe.getPressureProfile(), 1.0e4,
+          "Repeated equilibrium flashes must not amplify held-boundary pressure errors");
+    }
+    assertEquals(0.2, pipe.getSimulationTime(), 1.0e-12);
+    assertEquals(20000.0, pipe.getOutletStream().getFlowRate("kg/hr"), 200.0);
+    assertTrue(pipe.isCoupledPressureMomentumEnabled());
+    assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected());
+
+    feed.setFlowRate(15000.0, "kg/hr");
+    feed.run();
+    for (int step = 0; step < 15; step++) {
+      pipe.runTransient(1.0, UUID.randomUUID());
+      TwoFluidMassBalanceReport balance = pipe.getLastMassBalanceReport();
+      assertEquals(0.0, balance.getInitialMassKg(Phase.GAS), 0.0);
+      assertEquals(0.0, balance.getFinalMassKg(Phase.GAS), 0.0);
+      assertTrue(balance.isWithinTolerance(Phase.OIL, 1.0e-8, 1.0e-10));
+    }
+    assertEquals(15.2, pipe.getSimulationTime(), 1.0e-10);
+    assertTrue(pipe.getOutletStream().getFlowRate("kg/hr") < 19500.0);
+    assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected());
+  }
 
   enum PhaseCombination {
     GAS(true, false, false), OIL(false, true, false), WATER(false, false, true), GAS_OIL(true, true, false),

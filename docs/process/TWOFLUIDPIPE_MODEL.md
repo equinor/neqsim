@@ -2035,6 +2035,12 @@ export boundary may instead require a check valve or a supplied external inflow 
 the former budget of 12 stopped the Tengesdal progress case at about $6\times10^{-7}$ relative
 cell-volume residual, above the $10^{-7}$ default gate.
 
+For isothermal coupled transport without phase or component transfer, a cell carrying a single
+liquid keeps its acoustic properties if the property flash would introduce a second phase. The
+pressure correction still updates the transported liquid density with its acoustic compressibility.
+Equilibrium properties for a different phase composition would otherwise change the calculated cell
+volume at every refresh even though the transported phase inventory has no transfer source.
+
 After a transient window, also read the sticky diagnostics
 `isTransientCoupledPressureMomentumFailureDetected()`,
 `isTransientCoupledPressureMomentumCorrectionLimited()`, and
