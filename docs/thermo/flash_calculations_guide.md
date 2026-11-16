@@ -914,24 +914,34 @@ is removed. `wasEquilibriumRecoveryUsed()`, `getEquilibriumRecoveryFlashCount()`
 and `wasEquilibriumPolishUsed()` report which stage closed a solve. A zero
 count means the ordinary Newton solve closed it.
 
-**Measurement behind the stage order (2026-11-16).** Cases: 118 TP-flash
-targets (a three-phase hydrocarbon–water fluid, a gas condensate, an SRK-CPA
-water system and a near-bubble-point oil), started 25–40 bar or 30–40 K away.
-Plus a 300-step three-phase vessel trajectory with random inventory and energy
-changes. All configurations converged on every case. With recovery first, the
-polish was never needed. Total wall time:
+`OptimizedVUflash` reuses one inner TP operation for every trial state. It
+discards that operation's cached second-order Newton solver before each trial
+(`Flash.discardSecondOrderSolver()`), so each inner result is independent of
+the previous trial. Without this, the first Newton step of a trial re-applied
+the previous trial's phase split. In a three-phase separator state this merged
+gas and oil into a higher-Gibbs-energy state, the VU iteration cycled between
+two- and three-phase states for all 100 iterations, and the fallbacks did the
+work the ordinary solve should have done (equinor/neqsim#5036).
 
-| Configuration | 118 offset cases | 300-step vessel run |
-| --- | --- | --- |
-| Polish before recovery, no stagnation exit (before) | 19.3 s, worst 6.1 s | 13.8 s, worst 3.4 s |
-| Recovery before polish, stagnation exit | 5.8 s, worst 0.27 s | 6.0 s, worst 0.17 s |
+**Measurement behind the stage order (2026-11-16).** The cases were:
 
-Most of the gain came from a TP-flash fix in the same change: the second-order
-solver cached on a reused `TPflash` now re-seeds its Newton unknowns (see
-[TP flash algorithm](../thermodynamicoperations/TPflash_algorithm)). Before
-that fix, a stale phase split from the previous inner flash could merge gas and
-oil. The VU iteration then cycled between two- and three-phase states, and the
-fallbacks did the work the ordinary solve should have done.
+- 118 TP-flash targets started 25–40 bar or 30–40 K away: a three-phase
+  hydrocarbon–water fluid, a gas condensate, an SRK-CPA water system and a
+  near-bubble-point oil;
+- a 300-step three-phase vessel trajectory with random inventory and energy
+  changes.
+
+Each configuration converged on every case, with the same accuracy. In the
+final configuration no fallback was needed:
+
+| Configuration | 118 offset cases | 300-step vessel run | Fallback stage runs |
+| --- | --- | --- | --- |
+| Before: polish first, no stagnation exit, stale inner Newton state | 9.8 s, worst 3.0 s | 6.3 s, worst 1.4 s | 18 |
+| After: inner solver discarded, stagnation exit, recovery first | 2.5 s, worst 0.16 s | 3.4 s, worst 0.13 s | 0 |
+
+With the stale inner state forced back in, running recovery before polish
+alone cut the 118 offset cases from 12.5 s to 7.6 s (worst 3.9 s to 0.94 s),
+and the polish was never needed.
 
 Applications requiring stricter volume/energy closure must check both residuals
 and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).

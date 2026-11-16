@@ -105,16 +105,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * Re-bind this solver to a (possibly updated) system reference and refresh the cached feed composition and Newton
-   * unknowns, without re-allocating the EJML matrices. The component count must match — call
-   * {@link #getNumberOfComponents()} first.
-   *
-   * <p>
-   * The unknowns {@code u = beta * y} must be re-seeded from the system's current phase split on every re-bind, exactly
-   * as the constructor does. A solver cached on a reused {@link TPflash} otherwise starts its first Newton step from
-   * the previous flash's solution (a different pressure, temperature or phase pair) and {@link #init()} writes that
-   * stale split back onto the system, which can merge two phases into a higher-Gibbs-energy state.
-   * </p>
+   * Re-bind this solver to a (possibly updated) system reference and refresh the cached feed composition, without
+   * re-allocating the EJML matrices. The component count must match — call {@link #getNumberOfComponents()} first.
    *
    * @param system system to solve
    */
@@ -126,10 +118,6 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       z[i] = system.getPhase(0).getComponent(i).getz();
     }
-    if (uVector == null || uVector.length != numberOfComponents) {
-      uVector = new double[numberOfComponents];
-    }
-    setu();
   }
 
   /**

@@ -283,7 +283,7 @@ public class OptimizedVUflash extends Flash {
         system.setTemperature(nyTemp);
 
         // Single TP flash per iteration
-        tpFlash.run();
+        runInnerFlash();
         // A TP flash refreshes fixed-T/P equilibrium; initialize caloric derivatives on its resulting state.
         // Reuse this level-two state in the next iteration rather than adding a second initialization there.
         system.init(2);
@@ -366,6 +366,21 @@ public class OptimizedVUflash extends Flash {
   }
 
   /**
+   * Run the inner TP flash at the system's current pressure and temperature.
+   *
+   * <p>
+   * The inner operation is reused for every trial state of this solve, so its cached second-order solver is discarded
+   * first. Otherwise the first Newton step of a trial re-applies the phase split of the previous trial. In a gas, oil
+   * and water vessel state that merged gas and oil into a higher-Gibbs-energy state and made the Newton iteration cycle
+   * between phase sets (equinor/neqsim#5036).
+   * </p>
+   */
+  private void runInnerFlash() {
+    tpFlash.discardSecondOrderSolver();
+    tpFlash.run();
+  }
+
+  /**
    * Re-flash the system at a previously visited Newton iterate from a cold start, so that the restored phase split does
    * not depend on the K-values of the iterate that was abandoned.
    *
@@ -378,7 +393,7 @@ public class OptimizedVUflash extends Flash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       system.setPressure(pressure);
       system.setTemperature(temperature);
-      tpFlash.run();
+      runInnerFlash();
       system.init(2);
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
@@ -436,7 +451,7 @@ public class OptimizedVUflash extends Flash {
     lastTemperature = Double.NaN;
     isWellBehaved = true;
     neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInitialFlash);
-    tpFlash.run();
+    runInnerFlash();
     neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInnerFlashes);
     solveQ();
   }
@@ -555,7 +570,7 @@ public class OptimizedVUflash extends Flash {
   private double flashVolumeResidual(double pressure, double temperature) {
     system.setPressure(pressure);
     system.setTemperature(temperature);
-    tpFlash.run();
+    runInnerFlash();
     system.init(2);
     return (system.getVolume() - Vspec) / Vspec;
   }

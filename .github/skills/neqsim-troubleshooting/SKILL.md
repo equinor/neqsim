@@ -31,9 +31,12 @@ and the outer flash cycles or needs fallbacks (`OptimizedVUflash.wasEquilibriumR
 
 **Check:** compare `getGibbsEnergy()` of the reused result with a fresh flash of a clone. A higher value from the reused
 instance means state leaked between runs. Bisect the instance fields by resetting them to a fresh instance's values
-before each run. The 2026-11-16 case was the cached `SysNewtonRhapsonTPflash`: `setSystem` did not re-seed
-`u = beta*y`, so the first Newton step reapplied the previous flash's split. Every cached solver's re-bind method must
-reset all per-solve state its constructor sets.
+before each run. The 2026-11-16 case was the second-order `SysNewtonRhapsonTPflash` cached on the `TPflash`.
+`setSystem` keeps `u = beta*y` (it carries the accepted step within a run), so the first Newton step of a later run
+reapplied the previous flash's split. An outer flash that needs history-independent inner results calls
+`Flash.discardSecondOrderSolver()` before each inner run, as `OptimizedVUflash` does. Do not discard it inside
+`TPflash.run()` itself: `TVFlashTest.testTVflash` (UMR-PRU) only reaches its lower-Gibbs split through the carried
+state, because a fresh TP flash misses that split.
 
 ## NaN / Zero Enthalpy After Clone + Re-Flash
 
