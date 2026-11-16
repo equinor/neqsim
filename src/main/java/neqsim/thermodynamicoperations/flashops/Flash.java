@@ -402,10 +402,8 @@ public abstract class Flash extends BaseOperation {
     // result is genuinely uncertain. Wilson K is only an approximation — the actual
     // EOS K-values can differ significantly for asymmetric systems.
     boolean tmNearZero = (Math.abs(tm[0]) < 0.1 || Math.abs(tm[1]) < 0.1);
-    boolean stronglySeparatedLowPressureSplit =
-        lowPressureHighVolatilityFeed && sumwVapor > 2.4 && sumwLiquid > 2.4;
-    if (!trivialSolution && !nearBubblePoint && !nearDewPoint && !tmNearZero
-        && !stronglySeparatedLowPressureSplit) {
+    boolean stronglySeparatedLowPressureSplit = lowPressureHighVolatilityFeed && sumwVapor > 2.4 && sumwLiquid > 2.4;
+    if (!trivialSolution && !nearBubblePoint && !nearDewPoint && !tmNearZero && !stronglySeparatedLowPressureSplit) {
       return false;
     }
     // Skip retry for near-pure component systems: for a single component,
@@ -444,8 +442,7 @@ public abstract class Flash extends BaseOperation {
     // When Wilson K ≈ 1 for all components (near-critical), simple amplification
     // of ln(K) ≈ 0 produces trivial initial guesses. In this case, use
     // heavy/light component weighting to generate non-trivial trial compositions.
-    boolean useCompositionPerturbation =
-        wilsonKNearUnity || trivialSolution || stronglySeparatedLowPressureSplit;
+    boolean useCompositionPerturbation = wilsonKNearUnity || trivialSolution || stronglySeparatedLowPressureSplit;
 
     // Number of trials: 2 standard (amplified K vapor/liquid) + 2 perturbation
     // (heavy-enriched / light-enriched) when near-critical or trivial solution
