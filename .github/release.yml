@@ -1,0 +1,30 @@
+changelog:
+  categories:
+    - title: "Features"
+      labels:
+        - enhancement
+        - feat
+        - feature
+    - title: "Fixes"
+      labels:
+        - bug
+        - fix
+        - fixes
+    - title: "Security"
+      labels:
+        - security
+    - title: "Refactoring"
+      labels:
+        - refactor
+        - refactoring
+    - title: "Documentation"
+      labels:
+        - documentation
+        - docs
+    - title: "Maintenance"
+      labels:
+        - dependencies
+        - github_actions
+    - title: "Other changes"
+      labels:
+        - "*"
