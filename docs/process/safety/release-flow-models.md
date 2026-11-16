@@ -466,7 +466,8 @@ split exactly at delay and full-opening boundaries. The end-of-frame fraction an
 profile code, delay and duration are retained in provenance. Tests cover exact branch
 synchronization, mass/total-energy closure and external caller-step refinement. The refinement
 test writes `target/source-term-benchmarks/two-sided-finite-opening-timestep-refinement.csv` with
-the caller step, released mass and closure residuals.
+the caller step, released mass and closure residuals. The receipt is numerical regression evidence,
+not independent physical qualification.
 
 This is software evidence only. The finite-opening profile multiplies the declared maximum
 discharge coefficient and is a prescribed sensitivity, not a fracture model. The topology retains
