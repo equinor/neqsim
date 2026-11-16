@@ -5,6 +5,13 @@ description: The NeqSim `TwoFluidPipe` model implements a transient multiphase-f
 
 # TwoFluidPipe Model Documentation
 
+> **Well-to-topside replay.** The public `#5036` choke/riser/separator replay is
+> documented in
+> [`../benchmarks/well_to_topside_slug_control.md`](../benchmarks/well_to_topside_slug_control.md).
+> It uses the fixed pressure outlet qualified on both 60- and 120-cell meshes;
+> live separator-pressure feedback to `setOutletPressure` remains outside that
+> qualification boundary.
+
 ## Release scope and current validation
 
 The canonical status vocabulary, row-by-row evidence, executable example, and

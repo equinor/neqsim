@@ -1145,8 +1145,15 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("analysis",
+        enumProp("Pipeline analysis route", Arrays.asList("beggsAndBrill", "twoFluid", "wellToTopsideSlugControl")));
     properties.put("solver",
         enumProp("Pipeline solver (default: beggsBrill)", Arrays.asList("beggsBrill", "twoFluid")));
+    properties.put("durationSeconds", numberProp("Well-to-topside replay duration in seconds (default: 90)"));
+    properties.put("timeStepSeconds", numberProp("Well-to-topside reporting time step in seconds (default: 0.25)"));
+    properties.put("sampleIntervalSeconds",
+        numberProp("Well-to-topside time-series sampling interval in seconds (default: 1)"));
+    properties.put("meshRefinement", intProp("Well-to-topside mesh refinement: 1 for 60 cells or 2 for 120 cells"));
     properties.put("detailLevel",
         enumProp("Two-fluid response detail (default: FULL)", Arrays.asList("FULL", "SUMMARY", "MINIMUM", "HIDE")));
     properties.put("model", enumProp("Thermodynamic model", Arrays.asList("SRK", "PR", "CPA")));
@@ -1201,7 +1208,16 @@ public final class SchemaCatalog {
     properties.put("pipe", pipe);
 
     schema.put("properties", properties);
-    schema.put("required", Arrays.asList("components", "pipe"));
+    Map<String, Object> replayRoute = new LinkedHashMap<String, Object>();
+    Map<String, Object> replayProperties = new LinkedHashMap<String, Object>();
+    Map<String, Object> replayAnalysis = new LinkedHashMap<String, Object>();
+    replayAnalysis.put("const", "wellToTopsideSlugControl");
+    replayProperties.put("analysis", replayAnalysis);
+    replayRoute.put("properties", replayProperties);
+    replayRoute.put("required", Arrays.asList("analysis"));
+    Map<String, Object> ordinaryRoute = new LinkedHashMap<String, Object>();
+    ordinaryRoute.put("required", Arrays.asList("components", "pipe"));
+    schema.put("anyOf", Arrays.asList(replayRoute, ordinaryRoute));
 
     return GSON.toJson(schema);
   }

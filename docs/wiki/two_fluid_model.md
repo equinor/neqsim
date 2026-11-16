@@ -20,6 +20,15 @@ eliminates the rapid outlet-rate increase, but a longer unchanged-boundary repla
 still loses throughflow. Phase-transfer initialization and sustained dynamic
 holdup remain unqualified; a short finite run is not evidence of a steady handoff.
 
+## Well-to-topside slug-control replay
+
+The runnable wellhead-choke, flowline/riser and three-phase inlet-separator
+reference case is described in
+[`../benchmarks/well_to_topside_slug_control.md`](../benchmarks/well_to_topside_slug_control.md).
+Its pipe-to-separator transfer uses the exactly qualified fixed pressure face;
+the replay does not claim that a time-varying downstream pressure boundary is
+qualified.
+
 ## Release scope and current validation
 
 The canonical status vocabulary, row-by-row evidence, executable example, and

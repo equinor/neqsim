@@ -8,6 +8,11 @@ last_verified: "2026-11-16"
 
 Guide for transient/dynamic process simulation in NeqSim.
 
+For the canonical synthetic wellhead-choke, two-fluid riser and three-phase
+inlet-separator control replay, call `runPipeline` with analysis
+`wellToTopsideSlugControl`. Preserve the exact fixed outlet-pressure boundary;
+live separator-pressure feedback is not yet qualified by the `#5036` evidence.
+
 ## Extend the existing unit operation
 
 Add transient behavior to the existing equipment class through its mode/configuration APIs.

@@ -542,6 +542,12 @@ For workflow-style agents, the same runner can be reached through `runPipeline`
 when the payload sets `mode`, `analysis`, or `studyType` to `waterHammer`,
 `liquidHammer`, or `hydraulicTransient`.
 
+The synthetic wellhead-choke/riser/inlet-separator replay is selected with
+`analysis: "wellToTopsideSlugControl"`. The response contains both open-loop
+and regulated metrics plus sampled time series. Use the committed input in
+`docs/benchmarks/data/well_to_topside_slug_control_input.json`; do not route
+this case through a second scheduler or topology implementation.
+
 > **Assistant:** The gas density is **62.3 kg/m3** at 80 bara and 35 °C.
 >
 > | Property | Value | Unit |
