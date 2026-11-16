@@ -519,6 +519,15 @@
         "alpha": 0.06
       }
     ],
+    "n_butane_water_assessment": {
+      "status": "Staged declared-input assessment, physical qualification open",
+      "resources": "hv-water-nbutane/",
+      "test": "HuronVidalWaterButaneAssessmentTest",
+      "measurements": "Reamer et al. 1952 paired endpoints via Liège 2006 Appendix 5; separate Le Breton and McKetta 1964 aqueous data via IUPAC SDS 24 and Liège",
+      "inside_source_emphasis_rows": {"Reamer_paired": 10, "Le_Breton_aqueous": 3},
+      "AARD_percent": {"Reamer_rich_water": 4.70, "Reamer_aqueous_n_butane": 88.17, "Le_Breton_aqueous_n_butane": 73.98},
+      "limits": "Water-pressure control leaves large aqueous errors. Three dense native rich roots are labeled GAS in measured two-liquid region. Original Reamer table status, point uncertainty, exact source pure inputs and fitted composition envelope remain unresolved."
+    },
     "nitrogen_water_assessment": {
       "measurement_dois": [
         "10.1021/je049676q",
