@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +66,8 @@ class TwoFluidPipeDynamicStepContractTest {
   @Test
   void substepBudgetDoesNotReportAnIncompleteIntervalAsSuccessful() {
     TwoFluidPipe pipe = createPipe();
+    pipe.getInletStream().setFlowRate(0.2, "kg/sec");
+    pipe.getInletStream().run();
     pipe.setMaximumTransientSubsteps(1);
     assertEquals(1, pipe.getMaximumTransientSubsteps());
     UUID attemptedId = UUID.randomUUID();
@@ -73,9 +76,40 @@ class TwoFluidPipeDynamicStepContractTest {
     assertTrue(failure.getMessage().contains("advanced"));
     assertEquals(0.0005, pipe.getSimulationTime(), 1.0e-16);
     assertEquals(pipe.getSimulationTime(), pipe.getTime(), 0.0);
-    assertEquals(pipe.getSimulationTime(), pipe.getLastMassBalanceReport().getElapsedTimeSeconds(), 0.0);
+    TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+    assertEquals(1, report.getAcceptedSubsteps());
+    assertEquals(pipe.getSimulationTime(), report.getElapsedTimeSeconds(), 0.0);
+    double acceptedOutletFlow = report.getOutletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL)
+        / report.getElapsedTimeSeconds();
+    assertNotEquals(pipe.getInletStream().getFlowRate("kg/sec"), acceptedOutletFlow, 1.0e-6);
+    assertEquals(acceptedOutletFlow, pipe.getOutletStream().getFlowRate("kg/sec"), 1.0e-12);
     assertNotEquals(attemptedId, pipe.getCalculationIdentifier());
     assertThrows(IllegalArgumentException.class, () -> pipe.setMaximumTransientSubsteps(0));
+  }
+
+  /** A rejected interval with no accepted transport must preserve the previously published outlet. */
+  @Test
+  void rejectedIntervalWithZeroAcceptedSubstepsMustPreserveOutletFluid() {
+    TwoFluidPipe pipe = createPipe();
+    pipe.runTransient(0.001, UUID.randomUUID());
+    double previousTime = pipe.getSimulationTime();
+    SystemInterface previousOutletFluid = pipe.getOutletStream().getFluid();
+    double previousOutletFlow = pipe.getOutletStream().getFlowRate("kg/sec");
+
+    pipe.getInletStream().setFlowRate(0.2, "kg/sec");
+    pipe.getInletStream().run();
+    assertNotEquals(pipe.getInletStream().getFlowRate("kg/sec"), previousOutletFlow, 1.0e-6);
+    pipe.setEnableAdaptiveTimestepping(true);
+    pipe.setAdaptiveMaxPressure(1.0); // Force rejection independently of the pressure solver.
+    pipe.setMaximumTransientSubsteps(1);
+
+    assertThrows(IllegalStateException.class, () -> pipe.runTransient(0.001, UUID.randomUUID()));
+    TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+    assertEquals(0, report.getAcceptedSubsteps());
+    assertEquals(0.0, report.getElapsedTimeSeconds(), 0.0);
+    assertEquals(previousTime, pipe.getSimulationTime(), 0.0);
+    assertSame(previousOutletFluid, pipe.getOutletStream().getFluid());
+    assertEquals(previousOutletFlow, pipe.getOutletStream().getFlowRate("kg/sec"), 0.0);
   }
 
   @Test

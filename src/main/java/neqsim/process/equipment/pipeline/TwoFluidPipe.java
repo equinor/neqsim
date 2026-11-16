@@ -5721,9 +5721,9 @@ public class TwoFluidPipe extends Pipeline {
    * Run transient simulation for specified time step.
    *
    * <p>
-   * The default legacy route retains completed substeps on an incomplete interval. Selecting a complete transaction,
-   * conservative energy recovery or an experimental unsplit solver instead leaves the entire accepted interval
-   * unchanged on failure.
+   * The default legacy route retains completed substeps on an incomplete interval. When no substep is accepted, the
+   * connected outlet retains its previously published fluid. Selecting a complete transaction, conservative energy
+   * recovery or an experimental unsplit solver instead leaves the entire accepted interval unchanged on failure.
    * </p>
    *
    * @param dt Requested time step (s)
@@ -7633,9 +7633,10 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
-    // Publish the accepted interval-average outlet flux after constructing its
-    // conservative report. Result profiles use the same accepted final state.
-    updateOutletStream();
+    // An empty report is diagnostic only. Publishing it would fall back to the current inlet rate.
+    if (acceptedSubsteps > 0) {
+      updateOutletStream();
+    }
     updateResultArrays();
 
     if (equations.isOutletBackflowClamped() && !transientOutletBackflowClamped) {
