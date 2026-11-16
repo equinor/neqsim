@@ -891,7 +891,58 @@ derivatives require level two; the VU update does not consume composition-deriva
 matrices. Returned enthalpy and internal energy therefore refer to the final
 TP state, rather than caloric caches retained from a preceding iterate.
 
-The existing update equations, damping, bounds and stopping criteria are retained.
+The main solve keeps its update equations, damping, bounds and stopping
+criteria. If it has not found a new best volume/energy residual for 25
+iterations it stops, and it always returns its best iterate rather than its
+last one. If that iterate does not meet the acceptance criterion, the
+fallback stages run cheapest first:
+
+1. **Detached equilibrium recovery**: a two-variable Newton step on pressure
+   and temperature from the incoming state. Its slopes come from independent
+   cold TP equilibria, so they include changes in phase fractions and
+   composition. The system is left untouched unless the recovered state meets
+   the acceptance criterion. It iterates towards the polish tolerances, but if
+   it stalls at the TP-flash noise floor or reaches its iteration limit, the
+   best state is still accepted when it meets the criterion.
+2. **Constant-volume polish**: a bracketing pressure search for the volume,
+   nested in a secant search on temperature for the energy. It is the most
+   robust stage and the most expensive one (128 and 190 TP flashes in the
+   two failed three-phase separator solves measured below).
+
+Inner TP flashes retain the specified component inventory when a trace phase
+is removed. `wasEquilibriumRecoveryUsed()`, `getEquilibriumRecoveryFlashCount()`
+and `wasEquilibriumPolishUsed()` report which stage closed a solve. A zero
+count means the ordinary Newton solve closed it.
+
+`OptimizedVUflash` reuses one inner TP operation for every trial state. It
+discards that operation's cached second-order Newton solver before each trial
+(`Flash.discardSecondOrderSolver()`), so each inner result is independent of
+the previous trial. Without this, the first Newton step of a trial re-applied
+the previous trial's phase split. In a three-phase separator state this merged
+gas and oil into a higher-Gibbs-energy state, the VU iteration cycled between
+two- and three-phase states for all 100 iterations, and the fallbacks did the
+work the ordinary solve should have done (equinor/neqsim#5036).
+
+**Measurement behind the stage order (2026-11-16).** The cases were:
+
+- 118 TP-flash targets started 25–40 bar or 30–40 K away: a three-phase
+  hydrocarbon–water fluid, a gas condensate, an SRK-CPA water system and a
+  near-bubble-point oil;
+- a 300-step three-phase vessel trajectory with random inventory and energy
+  changes.
+
+Each configuration converged on every case, with the same accuracy. In the
+final configuration no fallback was needed:
+
+| Configuration | 118 offset cases | 300-step vessel run | Fallback stage runs |
+| --- | --- | --- | --- |
+| Before: polish first, no stagnation exit, stale inner Newton state | 9.8 s, worst 3.0 s | 6.3 s, worst 1.4 s | 18 |
+| After: inner solver discarded, stagnation exit, recovery first | 2.5 s, worst 0.16 s | 3.4 s, worst 0.13 s | 0 |
+
+With the stale inner state forced back in, running recovery before polish
+alone cut the 118 offset cases from 12.5 s to 7.6 s (worst 3.9 s to 0.94 s),
+and the polish was never needed.
+
 Applications requiring stricter volume/energy closure must check both residuals
 and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).
 `VUCaloricStateQualificationTest` checks independently configured SRK/PR,

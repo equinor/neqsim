@@ -6,6 +6,7 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -20,6 +21,19 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Damped Newton updates with bounded steps</li>
  * <li>Caloric initialization on the returned TP state, reused by the next iteration</li>
  * </ul>
+ *
+ * <p>
+ * Each stage runs only if the previous one did not close the volume and internal-energy specification, cheapest first:
+ * </p>
+ * <ol>
+ * <li>Q-function Newton iteration, abandoned after {@value #STAGNATION_LIMIT} iterations without a new best residual
+ * and returning its best iterate rather than its last one.</li>
+ * <li>A cold retry of that iteration when a warm-started initialization was requested.</li>
+ * <li>Detached equilibrium recovery: a two-variable Newton on independent cold TP equilibria from the incoming state
+ * ({@link #wasEquilibriumRecoveryUsed()}).</li>
+ * <li>The constant-volume equilibrium polish ({@link #wasEquilibriumPolishUsed()}), the most robust and most expensive
+ * stage.</li>
+ * </ol>
  *
  * @author GitHub Copilot
  * @version $Id: $Id
@@ -43,6 +57,12 @@ public class OptimizedVUflash extends Flash {
   private static final double FAST_CONV_TOL = 1e-6; // Relaxed tolerance for fast convergence
   private static final double DERIVATIVE_THRESHOLD = 1e-12;
   private static final int MAX_ITERATIONS = 100;
+  /**
+   * Consecutive Newton iterations without a new best specification residual after which the iteration is abandoned. A
+   * converging run improves its best residual almost every iteration; a run that has not done so for this many
+   * iterations is cycling (for example between two phase sets) and the remaining iterations are wasted work.
+   */
+  private static final int STAGNATION_LIMIT = 25;
   private static final double MIN_DAMPING = 0.05;
   private static final double MAX_DAMPING = 0.8;
   /** Relative volume residual accepted as a converged VU solution. */
@@ -68,8 +88,18 @@ public class OptimizedVUflash extends Flash {
   private static final double POLISH_VOLUME_TOL = 1.0e-9;
   /** Scaled internal-energy tolerance of the equilibrium polish stage. */
   private static final double POLISH_ENERGY_TOL = 1.0e-9;
+  /** Maximum Newton iterations for detached equilibrium recovery. */
+  private static final int RECOVERY_MAX_ITERATIONS = 10;
+  /** Maximum residual-reducing step attempts per recovery iteration. */
+  private static final int RECOVERY_MAX_BACKTRACKS = 8;
+  /** Near-singularity threshold for the Jacobian of the two scaled recovery residuals. */
+  private static final double RECOVERY_MIN_DETERMINANT = 1.0e-14;
   /** Whether the most recent run needed the equilibrium polish stage. */
   private volatile boolean equilibriumPolishUsed = false;
+  /** Whether the most recent run attempted detached equilibrium recovery. */
+  private volatile boolean equilibriumRecoveryUsed = false;
+  /** Number of detached TP flashes used by the most recent equilibrium recovery. */
+  private final AtomicInteger equilibriumRecoveryFlashCount = new AtomicInteger();
 
   /**
    * Constructor for OptimizedVUflash.
@@ -98,7 +128,7 @@ public class OptimizedVUflash extends Flash {
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec, boolean warmStartInitialization) {
     this.system = system;
-    this.tpFlash = new TPflash(system);
+    this.tpFlash = createFixedInventoryFlash(system);
     this.Vspec = Vspec;
     this.Uspec = Uspec;
     this.warmStartInitialization = warmStartInitialization;
@@ -209,6 +239,11 @@ public class OptimizedVUflash extends Flash {
     // Track convergence quality
     double lastError = Double.MAX_VALUE;
     int stagnationCount = 0;
+    // Best iterate by specification residual, restored if the iteration does not converge.
+    double bestResidual = Double.POSITIVE_INFINITY;
+    double bestPres = Double.NaN;
+    double bestTemp = Double.NaN;
+    int iterationsSinceBest = 0;
 
     try {
       // Volume, Cp and temperature/pressure derivatives require level two, not composition derivatives.
@@ -248,7 +283,7 @@ public class OptimizedVUflash extends Flash {
         system.setTemperature(nyTemp);
 
         // Single TP flash per iteration
-        tpFlash.run();
+        runInnerFlash();
         // A TP flash refreshes fixed-T/P equilibrium; initialize caloric derivatives on its resulting state.
         // Reuse this level-two state in the next iteration rather than adding a second initialization there.
         system.init(2);
@@ -270,6 +305,16 @@ public class OptimizedVUflash extends Flash {
         if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
           isWellBehaved = true;
           lastRunConverged = true;
+          break;
+        }
+
+        double specificationResidual = Math.max(volErr, hErr);
+        if (specificationResidual < bestResidual) {
+          bestResidual = specificationResidual;
+          bestPres = nyPres;
+          bestTemp = nyTemp;
+          iterationsSinceBest = 0;
+        } else if (++iterationsSinceBest >= STAGNATION_LIMIT) {
           break;
         }
 
@@ -304,6 +349,11 @@ public class OptimizedVUflash extends Flash {
       } else {
         logger.warn("OptimizedVUflash did not converge after " + iterations + " iterations");
         isWellBehaved = false;
+        if (Double.isFinite(bestPres) && (bestPres != nyPres || bestTemp != nyTemp)) {
+          // Hand the best iterate, not the last one, to the acceptance check and the fallback stages.
+          restoreIterate(bestPres, bestTemp);
+          nyPres = bestPres;
+        }
       }
     } catch (Exception e) {
       lastIterationCount = iterations;
@@ -316,6 +366,41 @@ public class OptimizedVUflash extends Flash {
   }
 
   /**
+   * Run the inner TP flash at the system's current pressure and temperature.
+   *
+   * <p>
+   * The inner operation is reused for every trial state of this solve, so its cached second-order solver is discarded
+   * first. Otherwise the first Newton step of a trial re-applies the phase split of the previous trial. In a gas, oil
+   * and water vessel state that merged gas and oil into a higher-Gibbs-energy state and made the Newton iteration cycle
+   * between phase sets (equinor/neqsim#5036).
+   * </p>
+   */
+  private void runInnerFlash() {
+    tpFlash.discardSecondOrderSolver();
+    tpFlash.run();
+  }
+
+  /**
+   * Re-flash the system at a previously visited Newton iterate from a cold start, so that the restored phase split does
+   * not depend on the K-values of the iterate that was abandoned.
+   *
+   * @param pressure iterate pressure in bara
+   * @param temperature iterate temperature in K
+   */
+  private void restoreIterate(double pressure, double temperature) {
+    boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      system.setPressure(pressure);
+      system.setTemperature(temperature);
+      runInnerFlash();
+      system.init(2);
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
+    }
+  }
+
+  /**
    * Checks whether the state currently held by the system actually satisfies the volume and internal-energy
    * specification. {@link #solveQ()} leaves the system at its last iterate even when the Newton iteration diverges, so
    * the caller must verify the result before accepting it - an unverified iterate becomes the initial state of the next
@@ -324,14 +409,24 @@ public class OptimizedVUflash extends Flash {
    * @return true when pressure, temperature, volume and energy are finite and both specifications are met
    */
   private boolean isSolutionAcceptable() {
+    return isSolutionAcceptable(system);
+  }
+
+  /**
+   * Checks whether a thermodynamic state satisfies the accepted volume and internal-energy specification.
+   *
+   * @param state equilibrated state to check
+   * @return true when pressure, temperature, volume and energy are finite and both specifications are met
+   */
+  private boolean isSolutionAcceptable(SystemInterface state) {
     try {
-      double pressure = system.getPressure();
-      double temperature = system.getTemperature();
+      double pressure = state.getPressure();
+      double temperature = state.getTemperature();
       if (!Double.isFinite(pressure) || !Double.isFinite(temperature) || pressure <= 0.0 || temperature <= 0.0) {
         return false;
       }
-      double volume = system.getVolume();
-      double enthalpy = system.getEnthalpy();
+      double volume = state.getVolume();
+      double enthalpy = state.getEnthalpy();
       if (!Double.isFinite(volume) || !Double.isFinite(enthalpy) || Vspec <= 0.0) {
         return false;
       }
@@ -356,7 +451,7 @@ public class OptimizedVUflash extends Flash {
     lastTemperature = Double.NaN;
     isWellBehaved = true;
     neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInitialFlash);
-    tpFlash.run();
+    runInnerFlash();
     neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInnerFlashes);
     solveQ();
   }
@@ -369,6 +464,8 @@ public class OptimizedVUflash extends Flash {
     double startTemperature = system.getTemperature();
     coldFallbackUsed = false;
     equilibriumPolishUsed = false;
+    equilibriumRecoveryUsed = false;
+    equilibriumRecoveryFlashCount.set(0);
     try {
       // Every Newton-loop TP flash may reuse K-values. The initialization flash does so only when
       // the caller identifies the state as the previous point on a continuous dynamic trajectory.
@@ -384,10 +481,19 @@ public class OptimizedVUflash extends Flash {
         solutionAcceptable = isSolutionAcceptable();
       }
       if (!solutionAcceptable && isFiniteState()) {
-        // The Q-function Newton step uses frozen-composition derivatives. Close to a bubble point (a small gas cap
-        // in a liquid-filled vessel) these understate dV/dP several-fold because they ignore evaporation, so the
-        // damped iteration oscillates and stalls a few per mille from the solution, or jumps into the single-phase
-        // region where V(P) is almost flat. Polish from the last iterate along the constant-volume path.
+        // The Q-function Newton step uses frozen-composition derivatives, which miss phase-fraction and composition
+        // changes. Try the cheap fallback first: a two-variable Newton on independent cold TP equilibria from the
+        // incoming state. It leaves the system untouched unless it publishes an accepted state.
+        try {
+          solutionAcceptable = recoverFromInitialEquilibrium(startPressure, startTemperature);
+        } catch (RuntimeException failure) {
+          logger.debug("Detached equilibrium VU recovery failed", failure);
+        }
+      }
+      if (!solutionAcceptable && isFiniteState()) {
+        // Close to a bubble point (a small gas cap in a liquid-filled vessel) the frozen derivatives understate dV/dP
+        // several-fold, and the detached Newton can stall at the kink in V(P). Polish from the best Newton iterate
+        // along the constant-volume path; this bracketing search is the most robust but also the most expensive stage.
         equilibriumPolishUsed = true;
         polishOnConstantVolumePath();
         solutionAcceptable = isSolutionAcceptable();
@@ -430,6 +536,31 @@ public class OptimizedVUflash extends Flash {
   }
 
   /**
+   * Returns whether the most recent solve attempted detached equilibrium recovery after the regular VU solve and
+   * constant-volume polish both missed their acceptance criteria.
+   *
+   * @return true when detached equilibrium recovery was attempted
+   */
+  public boolean wasEquilibriumRecoveryUsed() {
+    return equilibriumRecoveryUsed;
+  }
+
+  /**
+   * Returns the number of detached TP flashes used by the most recent equilibrium recovery.
+   *
+   * <p>
+   * The value is zero when recovery was not attempted. Recovery is bounded by one seed flash plus four central
+   * difference flashes and at most {@value #RECOVERY_MAX_BACKTRACKS} backtracking flashes for each of at most
+   * {@value #RECOVERY_MAX_ITERATIONS} Newton iterations.
+   * </p>
+   *
+   * @return detached TP flash count
+   */
+  public int getEquilibriumRecoveryFlashCount() {
+    return equilibriumRecoveryFlashCount.get();
+  }
+
+  /**
    * Flashes the system at the given pressure and temperature.
    *
    * @param pressure pressure in bara
@@ -439,7 +570,7 @@ public class OptimizedVUflash extends Flash {
   private double flashVolumeResidual(double pressure, double temperature) {
     system.setPressure(pressure);
     system.setTemperature(temperature);
-    tpFlash.run();
+    runInnerFlash();
     system.init(2);
     return (system.getVolume() - Vspec) / Vspec;
   }
@@ -584,6 +715,204 @@ public class OptimizedVUflash extends Flash {
     } catch (RuntimeException ex) {
       logger.warn("OptimizedVUflash equilibrium polish failed: " + ex.getMessage());
     }
+  }
+
+  /**
+   * Recover a nearby equilibrium from the incoming pressure and temperature after the other VU paths fail.
+   *
+   * <p>
+   * Using a new cold TP trial for every evaluation keeps a trial's phase selection from seeding the next one. The
+   * derivatives include changes in the equilibrium phase fractions and compositions.
+   * </p>
+   *
+   * @param initialPressure incoming pressure in bara
+   * @param initialTemperature incoming temperature in K
+   * @return whether the recovered state satisfies both specifications
+   */
+  boolean recoverFromInitialEquilibrium(double initialPressure, double initialTemperature) {
+    equilibriumRecoveryUsed = true;
+    equilibriumRecoveryFlashCount.set(0);
+    if (!validateInputs() || !Double.isFinite(Vspec) || !withinFlashBounds(initialPressure, initialTemperature)) {
+      return false;
+    }
+    boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      SystemInterface seed = system.clone();
+      SystemInterface trial = coldEquilibrium(seed, initialPressure, initialTemperature);
+      double[] residual = equilibriumResidual(trial);
+      // Each accepted step strictly reduces the residual norm, so trial is always the best state found so far.
+      for (int iteration = 0; iteration < RECOVERY_MAX_ITERATIONS && !meetsPolishTolerances(residual); iteration++) {
+        double[] step = equilibriumNewtonStep(seed, trial, residual);
+        if (step == null) {
+          break;
+        }
+        SystemInterface next = decreaseEquilibriumResidual(seed, trial, step, Math.hypot(residual[0], residual[1]));
+        if (next == null) {
+          // No further decrease: typically the finite-difference noise floor of the TP flash, well inside the
+          // acceptance criterion. Keep the best state rather than discarding it.
+          break;
+        }
+        trial = next;
+        residual = equilibriumResidual(trial);
+      }
+      // Iterate towards the tight polish tolerances but publish with the same acceptance criterion as every other
+      // VU path, so a stalled or iteration-limited search that already closes both specifications is not lost.
+      if (!isSolutionAcceptable(trial)) {
+        return false;
+      }
+      installEquilibrium(system, trial);
+      return isSolutionAcceptable();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
+    }
+  }
+
+  /**
+   * Compute a local Newton update using central differences of explicitly flashed states.
+   *
+   * @param seed system supplying the component inventory for detached trials
+   * @param trial current trial state
+   * @param residual current scaled volume and energy residuals
+   * @return pressure and temperature steps in bara and K, or null if this local Jacobian cannot be used
+   */
+  private double[] equilibriumNewtonStep(SystemInterface seed, SystemInterface trial, double[] residual) {
+    double pressure = trial.getPressure();
+    double temperature = trial.getTemperature();
+    double pressureIncrement = Math.max(0.002, 5.0e-4 * pressure);
+    double temperatureIncrement = Math.max(0.002, 1.0e-4 * temperature);
+    if (!withinFlashBounds(pressure - pressureIncrement, temperature - temperatureIncrement)
+        || !withinFlashBounds(pressure + pressureIncrement, temperature + temperatureIncrement)) {
+      return null;
+    }
+    double[] highPressure = equilibriumResidual(coldEquilibrium(seed, pressure + pressureIncrement, temperature));
+    double[] lowPressure = equilibriumResidual(coldEquilibrium(seed, pressure - pressureIncrement, temperature));
+    double[] highTemperature = equilibriumResidual(coldEquilibrium(seed, pressure, temperature + temperatureIncrement));
+    double[] lowTemperature = equilibriumResidual(coldEquilibrium(seed, pressure, temperature - temperatureIncrement));
+    double volumePressure = (highPressure[0] - lowPressure[0]) / (2.0 * pressureIncrement);
+    double energyPressure = (highPressure[1] - lowPressure[1]) / (2.0 * pressureIncrement);
+    double volumeTemperature = (highTemperature[0] - lowTemperature[0]) / (2.0 * temperatureIncrement);
+    double energyTemperature = (highTemperature[1] - lowTemperature[1]) / (2.0 * temperatureIncrement);
+    double determinant = volumePressure * energyTemperature - volumeTemperature * energyPressure;
+    if (!Double.isFinite(determinant) || Math.abs(determinant) < RECOVERY_MIN_DETERMINANT) {
+      return null;
+    }
+    return new double[] {(-residual[0] * energyTemperature + volumeTemperature * residual[1]) / determinant,
+        (-volumePressure * residual[1] + residual[0] * energyPressure) / determinant};
+  }
+
+  /**
+   * Backtrack until an equilibrium trial reduces the combined scaled residual.
+   *
+   * @param seed system supplying the component inventory for detached trials
+   * @param trial current trial state
+   * @param step proposed pressure and temperature change in bara and K
+   * @param currentNorm scaled residual norm at the current trial
+   * @return improving trial state, or null when no improving bounded step is found
+   */
+  private SystemInterface decreaseEquilibriumResidual(SystemInterface seed, SystemInterface trial, double[] step,
+      double currentNorm) {
+    double scale = 1.0;
+    for (int attempt = 0; attempt < RECOVERY_MAX_BACKTRACKS; attempt++) {
+      double pressure = trial.getPressure() + scale * step[0];
+      double temperature = trial.getTemperature() + scale * step[1];
+      if (withinFlashBounds(pressure, temperature)) {
+        SystemInterface candidate = coldEquilibrium(seed, pressure, temperature);
+        double[] residual = equilibriumResidual(candidate);
+        if (Math.hypot(residual[0], residual[1]) < currentNorm) {
+          return candidate;
+        }
+      }
+      scale *= 0.5;
+    }
+    return null;
+  }
+
+  /**
+   * Check the same pressure and temperature bounds used by the regular VU solver.
+   *
+   * @param pressure trial pressure in bara
+   * @param temperature trial temperature in K
+   * @return whether both variables are within bounds
+   */
+  private static boolean withinFlashBounds(double pressure, double temperature) {
+    return pressure >= MIN_PRESSURE && pressure <= MAX_PRESSURE && temperature >= MIN_TEMPERATURE
+        && temperature <= MAX_TEMPERATURE;
+  }
+
+  /**
+   * Configure an inner TP operation that retains the inventory of the outer VU specification.
+   *
+   * @param fluid fluid owned by the TP operation
+   * @return inner flash that retains component amounts during trace-phase cleanup
+   */
+  private static TPflash createFixedInventoryFlash(SystemInterface fluid) {
+    TPflash flash = new TPflash(fluid);
+    flash.setPreserveFeedInventoryOnPhaseRemoval(true);
+    return flash;
+  }
+
+  /**
+   * Flash an independent fluid and initialize its caloric properties.
+   *
+   * @param seed fluid providing the component inventory
+   * @param pressure trial pressure in bara
+   * @param temperature trial temperature in K
+   * @return trial thermodynamic state
+   */
+  private SystemInterface coldEquilibrium(SystemInterface seed, double pressure, double temperature) {
+    equilibriumRecoveryFlashCount.incrementAndGet();
+    SystemInterface trial = seed.clone();
+    trial.setPressure(pressure);
+    trial.setTemperature(temperature);
+    createFixedInventoryFlash(trial).run();
+    trial.init(2);
+    return trial;
+  }
+
+  /**
+   * Compute specification errors on the same scaled basis as the equilibrium polish.
+   *
+   * @param trial equilibrated trial state
+   * @return dimensionless volume and internal-energy residuals
+   */
+  private double[] equilibriumResidual(SystemInterface trial) {
+    return new double[] {(trial.getVolume() - Vspec) / Vspec,
+        (trial.getInternalEnergy() - Uspec) / Math.max(Math.abs(Uspec), 1.0)};
+  }
+
+  /**
+   * Check the two specifications separately before publishing a recovered state.
+   *
+   * @param residual dimensionless volume and internal-energy residuals
+   * @return whether both residuals are within tolerance
+   */
+  private static boolean meetsPolishTolerances(double[] residual) {
+    return Math.abs(residual[0]) < POLISH_VOLUME_TOL && Math.abs(residual[1]) < POLISH_ENERGY_TOL;
+  }
+
+  /**
+   * Install a converged trial while retaining the caller's thermodynamic system identity.
+   *
+   * @param destination caller's thermodynamic system
+   * @param candidate converged equilibrium state for the same component inventory
+   */
+  static void installEquilibrium(SystemInterface destination, SystemInterface candidate) {
+    destination.setPressure(candidate.getPressure());
+    destination.setTemperature(candidate.getTemperature());
+    destination.setNumberOfPhases(candidate.getNumberOfPhases());
+    // Include inactive logical positions so later phase appearance can reuse each physical slot exactly once.
+    for (int phase = 0; phase < candidate.getMaxNumberOfPhases(); phase++) {
+      destination.setPhaseIndex(phase, candidate.getPhaseIndex(phase));
+    }
+    for (int phase = 0; phase < candidate.getNumberOfPhases(); phase++) {
+      int slot = candidate.getPhaseIndex(phase);
+      destination.setPhase(candidate.getPhase(phase).clone(), slot);
+      destination.setPhaseType(phase, candidate.getPhase(phase).getType());
+      destination.setBeta(phase, candidate.getBeta(phase));
+    }
+    destination.normalizeBeta();
+    destination.init(2);
   }
 
   /**

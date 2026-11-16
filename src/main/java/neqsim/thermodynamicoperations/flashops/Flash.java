@@ -218,6 +218,21 @@ public abstract class Flash extends BaseOperation {
 
   int lowestGibbsEnergyPhase = 0;
   SysNewtonRhapsonTPflash secondOrderSolver;
+
+  /**
+   * Discards the cached second-order TP solver, so that the next run of this operation seeds its Newton stage from the
+   * system's current phase split rather than from the split of its previous run.
+   *
+   * <p>
+   * Within one run the cached solver carries the accepted Newton step from call to call. Across runs its unknowns
+   * describe the previous flash, at another pressure, temperature or phase pair. An outer flash that re-runs one inner
+   * TP operation at many states, and needs each inner result to be independent of the previous one, calls this first.
+   * </p>
+   */
+  void discardSecondOrderSolver() {
+    secondOrderSolver = null;
+  }
+
   /** Set true to do solid phase check and calculations. */
   protected boolean solidCheck = false;
   protected boolean stabilityCheck = false;

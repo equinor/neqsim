@@ -1,7 +1,7 @@
 ---
 name: neqsim-troubleshooting
 description: "Troubleshooting playbook for common NeqSim failures. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
-last_verified: "2026-11-14"
+last_verified: "2026-11-16"
 ---
 
 # NeqSim Troubleshooting Playbook
@@ -21,6 +21,22 @@ Ranked recovery strategies for common failure modes. Try steps in order — stop
 | 5 | Slightly perturb T or P (1 K or 0.1 bar) and re-flash | Exact phase boundary conditions can trap the solver |
 | 6 | For mixtures with water + hydrocarbons, use CPA: `SystemSrkCPAstatoil` with mixing rule `10` | SRK/PR cannot model hydrogen bonding — water phase behavior is wrong |
 | 7 | Check component names against `src/main/resources/data/COMP.csv` | Misspelled component names silently fail or load wrong parameters |
+
+### A reused flash gives a different answer from a fresh one
+
+**Symptom:** a fresh `new TPflash(clone).run()` finds the expected phases, but the same state flashed by a long-lived
+operation (the inner TP flash of a VU, PH or PS flash, a dynamic vessel) loses a phase. Its Gibbs energy is *higher*,
+and the outer flash cycles or needs fallbacks (`OptimizedVUflash.wasEquilibriumRecoveryUsed()` /
+`wasEquilibriumPolishUsed()` true on ordinary steps).
+
+**Check:** compare `getGibbsEnergy()` of the reused result with a fresh flash of a clone. A higher value from the reused
+instance means state leaked between runs. Bisect the instance fields by resetting them to a fresh instance's values
+before each run. The 2026-11-16 case was the second-order `SysNewtonRhapsonTPflash` cached on the `TPflash`.
+`setSystem` keeps `u = beta*y` (it carries the accepted step within a run), so the first Newton step of a later run
+reapplied the previous flash's split. An outer flash that needs history-independent inner results calls
+`Flash.discardSecondOrderSolver()` before each inner run, as `OptimizedVUflash` does. Do not discard it inside
+`TPflash.run()` itself: `TVFlashTest.testTVflash` (UMR-PRU) only reaches its lower-Gibbs split through the carried
+state, because a fresh TP flash misses that split.
 
 ## NaN / Zero Enthalpy After Clone + Re-Flash
 

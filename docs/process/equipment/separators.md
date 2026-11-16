@@ -865,9 +865,21 @@ returns `0.1` times that time constant, and `ProcessSystem.runTransient` sub-ste
 below it (see [ProcessSystem: Automatic transient sub-stepping](../processmodel/process_system.md#automatic-transient-sub-stepping)).
 When calling `separator.runTransient(dt, id)` directly, keep `dt` below that value yourself.
 
-Near the bubble point (a small gas cap in an almost liquid-filled vessel) the VU flash falls back to an
-equilibrium polish stage (`OptimizedVUflash.wasEquilibriumPolishUsed()`), which solves the volume
-specification for pressure along a constant-volume path; this keeps high-level operation converging.
+If the ordinary VU Newton solve misses the volume/energy specification, it
+returns its best iterate and two fallbacks run, cheapest first. A detached
+equilibrium recovery searches from the incoming pressure and temperature
+(`OptimizedVUflash.wasEquilibriumRecoveryUsed()`,
+`getEquilibriumRecoveryFlashCount()`). Then an equilibrium polish solves the
+volume for pressure along a constant-volume path
+(`OptimizedVUflash.wasEquilibriumPolishUsed()`). The polish is what closes
+states near the bubble point, such as a small gas cap in an almost
+liquid-filled vessel. Either way the accepted state must close both
+specifications.
+
+In a healthy gas–oil–water run both fallbacks stay at zero. A nonzero count on
+a slow vessel step points at the inner TP flash; see the
+[flash guide](../../thermo/flash_calculations_guide) for the stage order and
+the measurement behind it.
 
 The reported level stops at the minimum headspace (5 % of the vessel volume, a level of about 0.90 for
 a horizontal vessel and 0.95 for a vertical one). A vessel that keeps receiving more liquid than it
