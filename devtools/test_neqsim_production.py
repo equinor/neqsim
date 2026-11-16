@@ -2462,6 +2462,35 @@ def test_guard_rejects_non_finite_candidate_data(tmp_path, field, value, reason)
     assert reason in json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
 
 
+def test_guard_holds_breached_limit_at_current_value_only_when_configured(tmp_path):
+    proposal = _valid_proposal()
+    proposal["predicted"] = {"rvp_bara": 0.668}           # above the effective limit 0.65, below today's 0.67
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.kpis = {"rvp_bara": 0.67}
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert "violates:rvp" in json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+
+    held = dict(RVP, no_worse_than_current=True, current_tolerance=0.002)
+    assert production.held_limit(held, 0.67) == pytest.approx(0.672)
+    assert production.held_limit(held, 0.60) == pytest.approx(0.65)      # inside the limit: no relaxation
+    ctx = _guard_context(tmp_path, _valid_proposal())
+    ctx.proposals[0]["predicted"] = {"rvp_bara": 0.668}
+    ctx.goal["constraints"] = [held]
+    ctx.kpis = {"rvp_bara": 0.67}
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    guard = json.loads((tmp_path / "guard.json").read_text())
+    assert guard["held_at_current"]["rvp"]["held_at"] == pytest.approx(0.672)
+
+    ctx = _guard_context(tmp_path, _valid_proposal())
+    ctx.proposals[0]["predicted"] = {"rvp_bara": 0.68}  # worse than today: still withheld
+    ctx.goal["constraints"] = [held]
+    ctx.kpis = {"rvp_bara": 0.67}
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+
+
 def test_guard_rejects_invalid_limit_and_minimum_gain(tmp_path):
     proposal = _valid_proposal()
     ctx = _guard_context(tmp_path, proposal)
