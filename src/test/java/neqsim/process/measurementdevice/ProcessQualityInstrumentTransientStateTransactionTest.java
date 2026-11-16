@@ -198,13 +198,6 @@ class ProcessQualityInstrumentTransientStateTransactionTest extends neqsim.NeqSi
       assertTrue(issue.contains("subclass-owned mutable state"));
     }
 
-    MolarMassAnalyser online = new MolarMassAnalyser(source);
-    online.setIsOnlineSignal(true, "plant", "tag");
-    ProcessSystem onlineProcess = new ProcessSystem("online blocker");
-    onlineProcess.add(online);
-    assertFalse(onlineProcess.getTransientTransactionCoverage().isComplete());
-    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0).contains("external I/O"));
-
     MolarMassAnalyser first = new MolarMassAnalyser(source);
     MolarMassAnalyser second = new MolarMassAnalyser(source);
     MolarMassAnalyser.MolarMassAnalyserState foreign = first.captureTransientState();

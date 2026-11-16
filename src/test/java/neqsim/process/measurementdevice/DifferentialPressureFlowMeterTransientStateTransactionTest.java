@@ -233,13 +233,6 @@ class DifferentialPressureFlowMeterTransientStateTransactionTest extends neqsim.
       assertTrue(issue.contains("subclass-owned mutable state"));
     }
 
-    ConeFlowMeter online = new ConeFlowMeter("online", source);
-    online.setIsOnlineSignal(true, "plant", "tag");
-    ProcessSystem onlineProcess = new ProcessSystem("online blocker");
-    onlineProcess.add(online);
-    assertFalse(onlineProcess.getTransientTransactionCoverage().isComplete());
-    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0).contains("external I/O"));
-
     OrificeFlowMeter first = new OrificeFlowMeter("first", source);
     OrificeFlowMeter second = new OrificeFlowMeter("second", source);
     configureMeter(first, 11L);

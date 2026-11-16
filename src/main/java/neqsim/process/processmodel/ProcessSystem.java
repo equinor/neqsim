@@ -6859,10 +6859,6 @@ public class ProcessSystem extends SimulationBaseClass {
       System.out.println("Measurements Device Name: " + measurementDevices.get(i).getName());
       System.out.println(
           "Value: " + measurementDevices.get(i).getMeasuredValue() + " " + measurementDevices.get(i).getUnit());
-      if (measurementDevices.get(i).isOnlineSignal()) {
-        System.out.println("Online value: " + measurementDevices.get(i).getOnlineSignal().getValue() + " "
-            + measurementDevices.get(i).getOnlineSignal().getUnit());
-      }
     }
   }
 

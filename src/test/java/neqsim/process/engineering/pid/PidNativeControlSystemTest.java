@@ -123,6 +123,29 @@ class PidNativeControlSystemTest {
     assertEquals(0.2, fixture.controller.getSurgeMarginSetPoint(), 0.0);
   }
 
+  /** Checks packages exported before the online-signal removal still validate, while an enabled legacy signal fails. */
+  @Test
+  void legacyOnlineSignalKeyIsToleratedWhenFalseAndRejectedWhenTrue() {
+    Fixture fixture = new Fixture();
+    Map<String, Object> configuration = values(tag(fixture.pid, "30-FT-100"));
+    configuration.put("onlineSignal", Boolean.FALSE);
+    tag(fixture.pid, "30-FT-100").attribute("nativeControlConfiguration", configuration);
+    PidSimulationBindings rebound = PidNativeControlSystem.bind(fixture.project, fixture.pid);
+    ProcessSystem copy = fixture.process.copy();
+    PidNativeControlSystem.ConfiguredControlSystem receipt = PidNativeControlSystem
+        .applyCanonicalConfiguration(fixture.project, fixture.pid, rebound, copy);
+    receipt.assertSameConfiguration(
+        PidNativeControlSystem.validateConfigured(fixture.project, fixture.pid, rebound, copy));
+    assertFalse(receipt.toMap().toString().contains("onlineSignal"));
+
+    configuration.put("onlineSignal", Boolean.TRUE);
+    tag(fixture.pid, "30-FT-100").attribute("nativeControlConfiguration", configuration);
+    PidSimulationBindings enabled = PidNativeControlSystem.bind(fixture.project, fixture.pid);
+    ProcessSystem other = fixture.process.copy();
+    assertThrows(IllegalArgumentException.class,
+        () -> PidNativeControlSystem.applyCanonicalConfiguration(fixture.project, fixture.pid, enabled, other));
+  }
+
   /** Checks the protected source can never be passed as a configurable copy. */
   @Test
   void sourceAliasesAndIgnoredActuatorChangesAreRejected() {

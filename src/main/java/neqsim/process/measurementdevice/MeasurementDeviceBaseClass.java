@@ -15,7 +15,6 @@ import java.util.Random;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.alarm.AlarmEvent;
 import neqsim.process.alarm.AlarmState;
-import neqsim.process.measurementdevice.online.OnlineSignal;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
@@ -37,8 +36,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   private double minimumValue = 0.0;
 
   private boolean logging = false;
-  private OnlineSignal onlineSignal = null;
-  private boolean isOnlineSignal = false;
   private double onlineMeasurementValue = 0.0;
   private String onlineMeasurementValueUnit = "";
 
@@ -77,59 +74,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   public MeasurementDeviceBaseClass(String name, String unit) {
     super(name);
     setUnit(unit);
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @deprecated Since 3.25.0. Acquire historian samples externally and use
-   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis.
-   */
-  @Deprecated
-  @Override
-  public OnlineSignal getOnlineSignal() {
-    return onlineSignal;
-  }
-
-  /**
-   * Setter for the field <code>onlineSignal</code>.
-   *
-   * @param onlineSignal the onlineSignal to set
-   * @deprecated Since 3.25.0. Acquire historian samples externally and use
-   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis. Existing connection behavior remains
-   * available during the deprecation period.
-   */
-  @Deprecated
-  public void setOnlineSignal(OnlineSignal onlineSignal) {
-    this.onlineSignal = onlineSignal;
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @deprecated Since 3.25.0. Acquire historian samples externally and use
-   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis.
-   */
-  @Deprecated
-  @Override
-  public boolean isOnlineSignal() {
-    return isOnlineSignal;
-  }
-
-  /**
-   * Setter for the field <code>isOnlineSignal</code>.
-   *
-   * @param isOnlineSignal the isOnlineSignal to set
-   * @param plantName a {@link java.lang.String} object
-   * @param transmitterame a {@link java.lang.String} object
-   * @deprecated Since 3.25.0. Acquire historian samples externally and use
-   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis. Existing connection behavior remains
-   * available during the deprecation period.
-   */
-  @Deprecated
-  public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
-    this.isOnlineSignal = isOnlineSignal;
-    onlineSignal = new OnlineSignal(plantName, transmitterame);
   }
 
   /** {@inheritDoc} */
@@ -433,10 +377,11 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * Setter for the field <code>onlineMeasurementValue</code>.
+   * Sets the externally acquired historian sample used by {@link #doConditionAnalysis()}. Historian connectivity,
+   * timestamps and sample quality are handled by the application integration layer.
    *
-   * @param value a double
-   * @param unit a {@link java.lang.String} object
+   * @param value measured value from the plant historian
+   * @param unit engineering unit of {@code value}
    */
   public void setOnlineMeasurementValue(double value, String unit) {
     onlineMeasurementValue = value;
@@ -601,9 +546,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * @return {@code null} for snapshot-ready local measurements, otherwise a blocking diagnostic
    */
   protected String getMeasurementTransientStateCoverageIssue() {
-    if (onlineSignal != null || isOnlineSignal) {
-      return "online measurement binding may perform external I/O and has no rejected-step commit/defer contract";
-    }
     return null;
   }
 
@@ -619,11 +561,10 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
       random = currentRandom;
     }
     return new MeasurementDeviceTransientState(getName(), getTagNumber(), unit, maximumValue, minimumValue, logging,
-        onlineSignal, isOnlineSignal, onlineMeasurementValue, onlineMeasurementValueUnit,
-        new ArrayList<Double>(delayBuffer), delaySteps, noiseStdDev, serializeRandom(currentRandom),
-        firstOrderTimeConstant, filteredPreviousValue, conditionAnalysis, conditionAnalysisMessage,
-        conditionAnalysisMaxDeviation, faultType, faultParameter, faultAccumulator, alarmConfig, alarmState.copy(), tag,
-        tagRole, fieldValue, fieldValueSet);
+        onlineMeasurementValue, onlineMeasurementValueUnit, new ArrayList<Double>(delayBuffer), delaySteps, noiseStdDev,
+        serializeRandom(currentRandom), firstOrderTimeConstant, filteredPreviousValue, conditionAnalysis,
+        conditionAnalysisMessage, conditionAnalysisMaxDeviation, faultType, faultParameter, faultAccumulator,
+        alarmConfig, alarmState.copy(), tag, tagRole, fieldValue, fieldValueSet);
   }
 
   /**
@@ -641,8 +582,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     maximumValue = snapshot.maximumValue;
     minimumValue = snapshot.minimumValue;
     logging = snapshot.logging;
-    onlineSignal = snapshot.onlineSignal;
-    isOnlineSignal = snapshot.onlineSignalEnabled;
     onlineMeasurementValue = snapshot.onlineMeasurementValue;
     onlineMeasurementValueUnit = snapshot.onlineMeasurementValueUnit;
     delayBuffer.clear();
@@ -710,8 +649,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     private final double maximumValue;
     private final double minimumValue;
     private final boolean logging;
-    private final OnlineSignal onlineSignal;
-    private final boolean onlineSignalEnabled;
     private final double onlineMeasurementValue;
     private final String onlineMeasurementValueUnit;
     private final List<Double> delayBuffer;
@@ -734,20 +671,18 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     private final boolean fieldValueSet;
 
     private MeasurementDeviceTransientState(String name, String tagNumber, String unit, double maximumValue,
-        double minimumValue, boolean logging, OnlineSignal onlineSignal, boolean onlineSignalEnabled,
-        double onlineMeasurementValue, String onlineMeasurementValueUnit, List<Double> delayBuffer, int delaySteps,
-        double noiseStdDev, byte[] randomState, double firstOrderTimeConstant, double filteredPreviousValue,
-        boolean conditionAnalysis, String conditionAnalysisMessage, double conditionAnalysisMaxDeviation,
-        SensorFaultType faultType, double faultParameter, double faultAccumulator, AlarmConfig alarmConfig,
-        AlarmState alarmState, String tag, InstrumentTagRole tagRole, double fieldValue, boolean fieldValueSet) {
+        double minimumValue, boolean logging, double onlineMeasurementValue, String onlineMeasurementValueUnit,
+        List<Double> delayBuffer, int delaySteps, double noiseStdDev, byte[] randomState, double firstOrderTimeConstant,
+        double filteredPreviousValue, boolean conditionAnalysis, String conditionAnalysisMessage,
+        double conditionAnalysisMaxDeviation, SensorFaultType faultType, double faultParameter, double faultAccumulator,
+        AlarmConfig alarmConfig, AlarmState alarmState, String tag, InstrumentTagRole tagRole, double fieldValue,
+        boolean fieldValueSet) {
       this.name = name;
       this.tagNumber = tagNumber;
       this.unit = unit;
       this.maximumValue = maximumValue;
       this.minimumValue = minimumValue;
       this.logging = logging;
-      this.onlineSignal = onlineSignal;
-      this.onlineSignalEnabled = onlineSignalEnabled;
       this.onlineMeasurementValue = onlineMeasurementValue;
       this.onlineMeasurementValueUnit = onlineMeasurementValueUnit;
       this.delayBuffer = delayBuffer;

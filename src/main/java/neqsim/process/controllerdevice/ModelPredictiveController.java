@@ -2245,17 +2245,6 @@ public class ModelPredictiveController extends NamedBaseClass
       return "MPC subclass " + getClass().getName()
           + " must provide a complete transient-state snapshot before transactional execution";
     }
-    if (transmitter != null && transmitter.isOnlineSignal()) {
-      return "MPC transmitter '" + transmitter.getName()
-          + "' uses online/external I/O without a rejected-step commit/defer contract";
-    }
-    for (QualityConstraint constraint : qualityConstraints) {
-      MeasurementDeviceInterface measurement = constraint.getMeasurement();
-      if (measurement != null && measurement.isOnlineSignal()) {
-        return "MPC quality constraint '" + constraint.getName() + "' uses online/external I/O through measurement '"
-            + measurement.getName() + "'";
-      }
-    }
     return null;
   }
 

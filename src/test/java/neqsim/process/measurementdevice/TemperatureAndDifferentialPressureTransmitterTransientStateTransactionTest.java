@@ -192,18 +192,6 @@ class TemperatureAndDifferentialPressureTransmitterTransientStateTransactionTest
     assertEquals(2, subclassCoverage.getBlockingIssues().size());
     assertTrue(subclassCoverage.getBlockingIssues().get(0).contains("subclass-owned mutable state"));
     assertThrows(IllegalStateException.class, subclassProcess::beginTransientStepTransaction);
-
-    TemperatureTransmitter onlineTemperature = new TemperatureTransmitter("online TT",
-        createStream("online source", 300.0, 20.0));
-    onlineTemperature.setIsOnlineSignal(true, "test plant", "test tag");
-    ProcessSystem onlineProcess = new ProcessSystem("online transmitter coverage");
-    onlineProcess.add(onlineTemperature);
-    TransientTransactionCoverage onlineCoverage = onlineProcess.getTransientTransactionCoverage();
-    assertEquals(1, onlineCoverage.getProcessElementCount());
-    assertEquals(1, onlineCoverage.getParticipantCount());
-    assertFalse(onlineCoverage.isComplete());
-    assertTrue(onlineCoverage.getBlockingIssues().get(0).contains("external I/O"));
-    assertThrows(IllegalStateException.class, onlineProcess::beginTransientStepTransaction);
   }
 
   private static void configureSignalDynamics(MeasurementDeviceBaseClass transmitter, long seed) {
