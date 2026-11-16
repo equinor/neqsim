@@ -1,11 +1,11 @@
 package neqsim.process.safety.release;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -22,8 +22,9 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * This topology is adiabatic and single-gas. It does not couple pressure across the open rupture plane, model pipe
- * elasticity, infer crack opening, or add non-equilibrium multiphase transport. The caller owns native
+ * This topology is adiabatic and single-gas. It uses instantaneous full opening by default and can apply one prescribed
+ * delayed linear area ramp to both branches. It does not couple pressure across the open rupture plane, model pipe
+ * elasticity, infer crack propagation or opening, or add non-equilibrium multiphase transport. The caller owns native
  * {@link ProcessSystem} or process-model execution and can sum the exposed branch inventories for whole-pipe mass and
  * energy accounting.
  * </p>
@@ -66,7 +67,39 @@ public final class TwoSidedRealGasPipeRupture {
   public TwoSidedRealGasPipeRupture(String name, SystemInterface initialGas, double totalLengthM,
       double ruptureDistanceFromLeftM, double diameterM, double dischargeCoefficient, double backPressurePa,
       double darcyFrictionFactor, int totalCells, double cfl) {
+    this(name, initialGas, totalLengthM, ruptureDistanceFromLeftM, diameterM, dischargeCoefficient, backPressurePa,
+        darcyFrictionFactor, totalCells, cfl, RealGasPipeDecompression.ReleaseOpeningProfile.instantaneous());
+  }
+
+  /**
+   * Creates a two-sided real-gas rupture with a prescribed finite-opening history.
+   *
+   * <p>
+   * Both branches share the same immutable area-fraction profile and evaluate it within their conservative CFL
+   * substeps. The profile is a declared boundary sensitivity. It does not infer crack propagation, wall fracture,
+   * elastic wave speed or pressure coupling across the open rupture plane.
+   * </p>
+   *
+   * @param name stable topology name used to derive equipment and source identities
+   * @param initialGas initial uniform equilibrium gas and selected EOS
+   * @param totalLengthM total pipe length in m
+   * @param ruptureDistanceFromLeftM rupture distance from the left closed end in m
+   * @param diameterM internal pipe diameter in m
+   * @param dischargeCoefficient maximum effective full-bore area factor in (0,1]
+   * @param backPressurePa constant absolute receiver pressure at the rupture plane in Pa
+   * @param darcyFrictionFactor specified Darcy friction factor in [0,1]
+   * @param totalCells total finite-volume cells shared by the two branches, from 16 through 800
+   * @param cfl Courant number in (0,0.7]
+   * @param openingProfile immutable prescribed opening-area history shared by both branches
+   * @throws NullPointerException if the initial gas or opening profile is null
+   * @throws IllegalArgumentException for an invalid name, rupture position or cell allocation
+   */
+  public TwoSidedRealGasPipeRupture(String name, SystemInterface initialGas, double totalLengthM,
+      double ruptureDistanceFromLeftM, double diameterM, double dischargeCoefficient, double backPressurePa,
+      double darcyFrictionFactor, int totalCells, double cfl,
+      RealGasPipeDecompression.ReleaseOpeningProfile openingProfile) {
     Objects.requireNonNull(initialGas, "initialGas");
+    Objects.requireNonNull(openingProfile, "openingProfile");
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Rupture topology name is required");
     }
@@ -86,6 +119,8 @@ public final class TwoSidedRealGasPipeRupture {
         ruptureDistanceFromLeftM, diameterM, dischargeCoefficient, backPressurePa, darcyFrictionFactor, leftCells, cfl);
     RealGasPipeDecompression right = new RealGasPipeDecompression(name + "-right-branch", initialGas, rightLengthM,
         diameterM, dischargeCoefficient, backPressurePa, darcyFrictionFactor, rightCells, cfl);
+    left.setReleaseOpeningProfile(openingProfile);
+    right.setReleaseOpeningProfile(openingProfile);
     leftBranch = new Branch(left, "LEFT", AxialDirection.POSITIVE_PIPE_AXIS, totalLengthM, ruptureDistanceFromLeftM,
         ruptureDistanceFromLeftM);
     rightBranch = new Branch(right, "RIGHT", AxialDirection.NEGATIVE_PIPE_AXIS, totalLengthM, ruptureDistanceFromLeftM,
@@ -140,14 +175,14 @@ public final class TwoSidedRealGasPipeRupture {
     session.addInventorySource(getRightSourceId(), areaName, rightBranch.getName());
   }
 
-  /** @return live left-branch process equipment */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
+  /** @return left-branch process equipment */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The caller must configure and register the same live branch equipment owned by this topology")
   public Branch getLeftBranch() {
     return leftBranch;
   }
 
-  /** @return live right-branch process equipment */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
+  /** @return right-branch process equipment */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The caller must configure and register the same live branch equipment owned by this topology")
   public Branch getRightBranch() {
     return rightBranch;
   }
@@ -205,6 +240,16 @@ public final class TwoSidedRealGasPipeRupture {
   /** @return sum of the two current outward mass-flow rates in kg/s */
   public double getTotalMassFlowRateKgS() {
     return leftBranch.getReleaseResult().getMassFlowRateKgS() + rightBranch.getReleaseResult().getMassFlowRateKgS();
+  }
+
+  /** @return current prescribed opening fraction shared by both branches in [0,1] */
+  public double getReleaseOpeningFraction() {
+    double leftFraction = leftBranch.segment.getReleaseOpeningFraction();
+    double rightFraction = rightBranch.segment.getReleaseOpeningFraction();
+    if (leftFraction != rightFraction) {
+      throw new IllegalStateException("Two-sided rupture branches have inconsistent opening times");
+    }
+    return leftFraction;
   }
 
   /**
@@ -333,8 +378,8 @@ public final class TwoSidedRealGasPipeRupture {
       return branchLengthM;
     }
 
-    /** @return live conservative branch solver for detailed diagnostics */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Diagnostics must observe the live solver owned by this branch; copying would detach its state")
+    /** @return underlying conservative branch solver for detailed diagnostics */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Branch diagnostics and inventory accounting must refer to the connected live solver")
     public RealGasPipeDecompression getSegment() {
       return segment;
     }

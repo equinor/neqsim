@@ -36,11 +36,13 @@
  * <li>{@link neqsim.process.safety.release.IdealGasPipeDecompression} - Conservative one-dimensional perfect-gas
  * transient decompression and line packing</li>
  * <li>{@link neqsim.process.safety.release.RealGasPipeDecompression} - Conservative one-dimensional EOS-backed
- * single-gas transient decompression and line packing with optional finite upstream gas-vessel coupling and prescribed
- * distributed constant-U or finite-capacitance wall heat exchange, including cylindrical material/geometry adapters for
- * fail-closed lumped capacity or conservative two-node radial conduction</li>
+ * single-gas transient decompression and line packing with optional finite upstream gas-vessel coupling, prescribed
+ * delayed linear effective-area opening and distributed constant-U or finite-capacitance wall heat exchange, including
+ * cylindrical material/geometry adapters for fail-closed lumped capacity or conservative two-node radial
+ * conduction</li>
  * <li>{@link neqsim.process.safety.release.TwoSidedRealGasPipeRupture} - Two distinct, directional EOS-backed branch
- * inventories and source frames for an adiabatic full-bore rupture inside a finite gas pipe</li>
+ * inventories and source frames for an adiabatic full-bore rupture inside a finite gas pipe, with instantaneous default
+ * opening or one shared prescribed delayed linear effective-area ramp</li>
  * </ul>
  *
  * <p>
@@ -63,23 +65,24 @@
  * outer-area conversion and capacity from explicit wall geometry and material properties. The lumped factory rejects Bi
  * &gt;= 0.1; the two-node factory resolves one conservative radial gradient through cylindrical resistance. Both
  * exclude predictive thermal correlations, higher-order radial convergence, pipe elasticity and solid-bearing
- * transport. The two-sided topology composes two adiabatic EOS-backed branches around an interior rupture plane and
- * preserves the opposing jets as separate frames; it does not model pipe-wall motion or pressure coupling across the
- * open break. Separate short-opening models can either apply a caller-declared gas/liquid velocity ratio or predict
- * vertical-upward bubbly/dispersed slip with a bounded Zuber-Findlay/Harmathy closure. A third model applies
- * caller-parameterized first-order phase-split relaxation before the same drift-flux closure. A fourth resolves
- * component-specific phase-partition relaxation and emits phase compositions while retaining exact component
- * conservation. A fifth predicts external-film component relaxation times from explicit Ranz-Marshall inputs for
- * spherical gas bubbles, while failing closed for out-of-range dimensionless groups and liquid-droplet hydrodynamics. A
- * sixth predicts a conservative spherical-bubble diameter, resolved phase velocities and gas residence time from
- * explicit transfer-zone geometry before iterating the Ranz-Marshall and component-transfer calculations to a checked
- * fixed point. These models retain explicit phase-area and kinetic-energy closure; none predicts interfacial heat
- * transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe models fail closed if an equilibrium
- * phase appears. The inventory heat boundary accepts caller-imposed power or conductance with provenance; it does not
- * predict fire heat flux or wall inertia. The opt-in non-equilibrium inventory retains gas/liquid component partitions
- * and thermodynamic latent-energy effects. Its default path assumes one common phase temperature; an explicit
- * sensitivity path retains separate phase energies and temperatures with prescribed interfacial conductance. Neither
- * path predicts coefficients, nucleation, entrainment or population balance.
+ * transport. The two-sided topology composes two adiabatic EOS-backed branches around an interior rupture plane,
+ * preserves the opposing jets as separate frames and can impose one prescribed delayed linear effective-area ramp; it
+ * does not predict fracture/opening, pipe-wall motion or pressure coupling across the open break. Separate
+ * short-opening models can either apply a caller-declared gas/liquid velocity ratio or predict vertical-upward
+ * bubbly/dispersed slip with a bounded Zuber-Findlay/Harmathy closure. A third model applies caller-parameterized
+ * first-order phase-split relaxation before the same drift-flux closure. A fourth resolves component-specific
+ * phase-partition relaxation and emits phase compositions while retaining exact component conservation. A fifth
+ * predicts external-film component relaxation times from explicit Ranz-Marshall inputs for spherical gas bubbles, while
+ * failing closed for out-of-range dimensionless groups and liquid-droplet hydrodynamics. A sixth predicts a
+ * conservative spherical-bubble diameter, resolved phase velocities and gas residence time from explicit transfer-zone
+ * geometry before iterating the Ranz-Marshall and component-transfer calculations to a checked fixed point. These
+ * models retain explicit phase-area and kinetic-energy closure; none predicts interfacial heat transfer, entrainment,
+ * annular jets or solid-bearing flow. Both real-gas pipe models fail closed if an equilibrium phase appears. The
+ * inventory heat boundary accepts caller-imposed power or conductance with provenance; it does not predict fire heat
+ * flux or wall inertia. The opt-in non-equilibrium inventory retains gas/liquid component partitions and thermodynamic
+ * latent-energy effects. Its default path assumes one common phase temperature; an explicit sensitivity path retains
+ * separate phase energies and temperatures with prescribed interfacial conductance. Neither path predicts coefficients,
+ * nucleation, entrainment or population balance.
  *
  * <p>
  * Example usage:

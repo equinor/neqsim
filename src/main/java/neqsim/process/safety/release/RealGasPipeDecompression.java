@@ -30,7 +30,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * with separate gas-side and environment-side coefficients. A cylindrical material wall can retain either one lumped
  * temperature or conservative inner/outer radial temperature nodes. Specified Darcy friction acts only on momentum. The
  * exact vessel/pipe interface flux, wall-energy transaction and outlet mass/total-enthalpy flux are committed
- * atomically, while the outlet flux is exported to the source-term frame.
+ * atomically, while the outlet flux is exported to the source-term frame. The opening is instantaneous by default; an
+ * opt-in immutable profile can prescribe a delayed linear ramp of effective opening area within the conservative CFL
+ * substeps.
  * </p>
  *
  * <p>
@@ -39,9 +41,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * capacity is either prescribed directly or derived from explicit cylindrical geometry, density and specific heat. The
  * one-node material factory uses a fail-closed lumped-Biot guard; the two-node factory resolves a low-order radial
  * gradient using cylindrical resistance. Predictive fire/ambient correlations, higher-order radial conduction, pipe
- * elasticity, two-sided-rupture coupling, non-equilibrium slip, entrainment and solid-bearing transport are outside
- * this model. The optional upstream vessel is a lumped boundary, not a vessel nozzle, internal-wave or phase-separation
- * model. Numerical validation is not facility qualification.
+ * elasticity, predictive crack propagation or opening, two-sided-rupture coupling, non-equilibrium slip, entrainment
+ * and solid-bearing transport are outside this model. A prescribed opening profile is a sensitivity boundary, not a
+ * fracture or fluid-structure model. The optional upstream vessel is a lumped boundary, not a vessel nozzle,
+ * internal-wave or phase-separation model. Numerical validation is not facility qualification.
  * </p>
  */
 public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass implements CoupledReleaseSource {
@@ -90,6 +93,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   private double lastGasWallHeatTransferRateW;
   private int lastSubsteps;
   private boolean releaseEnabled = true;
+  private ReleaseOpeningProfile releaseOpeningProfile = ReleaseOpeningProfile.instantaneous();
   private UUID lastTransientId;
   private double lastTransientDurationS;
   private ReleaseFlowResult currentResult;
@@ -259,7 +263,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   public synchronized void run(UUID id) {
     Objects.requireNonNull(id, "id");
     CellState[] states = cellStates(density, momentum, energy);
-    Flux outlet = boundaryFlux(states[states.length - 1]);
+    Flux outlet = boundaryFlux(states[states.length - 1], getTime());
     lastMassFlowKgS = outlet.mass * areaM2;
     lastEnergyFlowW = outlet.energy * areaM2;
     lastHeatTransferRateW = nextHeatTransferRate(states);
@@ -302,7 +306,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     int substeps = 0;
     CellState[] states = cellStates(candidateDensity, candidateMomentum, candidateEnergy);
     CellState upstream = upstreamState(candidateUpstreamMass, candidateUpstreamEnergy, states[0]);
-    Flux outlet = boundaryFlux(states[states.length - 1]);
+    Flux outlet = boundaryFlux(states[states.length - 1], getTime());
     while (elapsed < dt) {
       if (Thread.currentThread().isInterrupted()) {
         throw new IllegalStateException("REAL_GAS_PIPE_DECOMPRESSION_INTERRUPTED");
@@ -311,11 +315,13 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
         throw new IllegalStateException("REAL_GAS_PIPE_DECOMPRESSION_SUBSTEP_LIMIT");
       }
       double step = Math.min(dt - elapsed, stableStep(states, upstream, candidateUpstreamMass));
+      step = Math.min(step, releaseOpeningProfile.getMaximumSubstepSeconds(getTime() + elapsed));
       if (!(step > 0.0) || elapsed + step <= elapsed) {
         throw new IllegalStateException("REAL_GAS_PIPE_DECOMPRESSION_TIMESTEP_UNREPRESENTABLE");
       }
       Step next = advance(candidateDensity, candidateMomentum, candidateEnergy, candidateWallTemperature,
-          candidateOuterWallTemperature, states, upstream, candidateUpstreamMass, candidateUpstreamEnergy, step);
+          candidateOuterWallTemperature, states, upstream, candidateUpstreamMass, candidateUpstreamEnergy, step,
+          getTime() + elapsed + 0.5 * step);
       candidateDensity = next.density;
       candidateMomentum = next.momentum;
       candidateEnergy = next.energy;
@@ -331,6 +337,9 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       states = next.states;
       upstream = next.upstream;
       elapsed += step;
+    }
+    if (!releaseOpeningProfile.isInstantaneous()) {
+      outlet = boundaryFlux(states[states.length - 1], getTime() + dt);
     }
     close(totalMass(candidateDensity) + candidateUpstreamMass + candidateReleasedMass, initialMassKg, initialMassKg,
         "REAL_GAS_PIPE_TOTAL_MASS_CLOSURE_FAILED");
@@ -365,14 +374,14 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
   private Step advance(double[] rho, double[] mom, double[] totalEnergy, double[] wallTemperatures,
       double[] outerWallTemperatures, CellState[] states, CellState upstream, double upstreamMass,
-      double upstreamEnergy, double dt) {
+      double upstreamEnergy, double dt, double boundaryTimeS) {
     int cells = rho.length;
     Flux[] faces = new Flux[cells + 1];
     faces[0] = hasUpstreamVessel() ? flux(upstream, states[0]) : flux(states[0].reflected(), states[0]);
     for (int face = 1; face < cells; face++) {
       faces[face] = flux(states[face - 1], states[face]);
     }
-    faces[cells] = boundaryFlux(states[cells - 1]);
+    faces[cells] = boundaryFlux(states[cells - 1], boundaryTimeS);
     double scale = dt / (lengthM / cells);
     double[] nextRho = new double[cells];
     double[] nextMom = new double[cells];
@@ -524,8 +533,9 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     return cellState(massKg / upstreamVesselVolumeM3, 0.0, energyJ / upstreamVesselVolumeM3);
   }
 
-  private Flux boundaryFlux(CellState inside) {
-    if (!releaseEnabled || inside.pressurePa <= backPressurePa * (1.0 + 1.0e-10)) {
+  private Flux boundaryFlux(CellState inside, double timeS) {
+    double openingFraction = releaseOpeningProfile.getOpeningFraction(timeS);
+    if (!releaseEnabled || openingFraction == 0.0 || inside.pressurePa <= backPressurePa * (1.0 + 1.0e-10)) {
       return flux(inside, inside.reflected());
     }
     SystemInterface receiverFluid = compositionReference.clone();
@@ -541,8 +551,9 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     if (candidate.mass <= 0.0 || !Double.isFinite(candidate.energy)) {
       return new Flux(0.0, inside.pressurePa, 0.0);
     }
-    return new Flux(candidate.mass * dischargeCoefficient, candidate.momentum * dischargeCoefficient,
-        candidate.energy * dischargeCoefficient);
+    double effectiveCoefficient = dischargeCoefficient * openingFraction;
+    return new Flux(candidate.mass * effectiveCoefficient, candidate.momentum * effectiveCoefficient,
+        candidate.energy * effectiveCoefficient);
   }
 
   private static Flux flux(CellState left, CellState right) {
@@ -636,6 +647,12 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
                 + "; closed upstream end and constant-pressure receiver"));
     diagnostics.add(new Diagnostic("EOS_FINITE_VOLUME_LINE_PACKING", "EOS=" + compositionReference.getModelName()
         + ", cells=" + states.length + ", CFL=" + cfl + ", Darcy friction=" + darcyFrictionFactor));
+    if (!releaseOpeningProfile.isInstantaneous()) {
+      diagnostics.add(new Diagnostic("PRESCRIBED_FINITE_OPENING",
+          "Opening=" + releaseOpeningProfile.getProfileCode() + ", delay=" + releaseOpeningProfile.getDelaySeconds()
+              + " s, duration=" + releaseOpeningProfile.getDurationSeconds()
+              + " s; prescribed sensitivity, not fracture or fluid-structure physics"));
+    }
     diagnostics.add(
         new Diagnostic("SOLID_RISK_ASSESSED", "Mixture-specific equilibrium-solid and hydrate checks passed for all "
             + states.length + " cells" + (hasUpstreamVessel() ? " and the upstream vessel" : "")));
@@ -774,6 +791,50 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     setCalculationIdentifier(null);
   }
 
+  /**
+   * Configures the prescribed rupture-opening history before transient execution starts.
+   *
+   * <p>
+   * The profile scales the declared full-bore discharge coefficient inside every accepted CFL substep. It is a
+   * prescribed boundary condition, not a pipe-fracture or fluid-structure model. Configuration is intentionally frozen
+   * after inventory time advances or mass is released so a live frame cannot silently change model history.
+   * </p>
+   *
+   * @param profile immutable prescribed opening profile
+   * @throws NullPointerException if {@code profile} is null
+   * @throws IllegalStateException if transient execution or release has already started
+   */
+  public synchronized void setReleaseOpeningProfile(ReleaseOpeningProfile profile) {
+    Objects.requireNonNull(profile, "profile");
+    if (getTime() != 0.0 || releasedMassKg != 0.0) {
+      throw new IllegalStateException("Release opening profile must be configured before transient execution");
+    }
+    ReleaseOpeningProfile previous = releaseOpeningProfile;
+    releaseOpeningProfile = profile;
+    try {
+      CellState[] states = cellStates(density, momentum, energy);
+      CellState upstream = upstreamState(upstreamVesselMassKg, upstreamVesselEnergyJ, states[0]);
+      Flux outlet = boundaryFlux(states[states.length - 1], 0.0);
+      lastMassFlowKgS = outlet.mass * areaM2;
+      lastEnergyFlowW = outlet.energy * areaM2;
+      currentResult = result(states, upstream, outlet.mass);
+      setCalculationIdentifier(null);
+    } catch (RuntimeException exception) {
+      releaseOpeningProfile = previous;
+      throw exception;
+    }
+  }
+
+  /** @return immutable prescribed rupture-opening profile */
+  public synchronized ReleaseOpeningProfile getReleaseOpeningProfile() {
+    return releaseOpeningProfile;
+  }
+
+  /** @return current prescribed fraction of the declared full-bore area in [0,1] */
+  public synchronized double getReleaseOpeningFraction() {
+    return releaseOpeningProfile.getOpeningFraction(getTime());
+  }
+
   /** @return stable frame provenance basis */
   @Override
   public String getReleaseBasis() {
@@ -845,6 +906,11 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
                 : "EOS_VU_FINITE_VOLUME_LOCAL_LAX_FRIEDRICHS_V1");
     provenance.put("pipeThermodynamicModel", compositionReference.getModelName());
     provenance.put("inventoryTimeS", Double.toString(getTime()));
+    provenance.put("releaseOpeningProfile", releaseOpeningProfile.getProfileCode());
+    provenance.put("releaseOpeningDelayS", Double.toString(releaseOpeningProfile.getDelaySeconds()));
+    provenance.put("releaseOpeningDurationS", Double.toString(releaseOpeningProfile.getDurationSeconds()));
+    provenance.put("releaseOpeningFraction", Double.toString(releaseOpeningProfile.getOpeningFraction(getTime())));
+    provenance.put("releaseOpeningCoefficientBasis", "MAXIMUM_DISCHARGE_COEFFICIENT_TIMES_PRESCRIBED_FRACTION");
     provenance.put("inventoryVolumeM3", Double.toString(areaM2 * lengthM + upstreamVesselVolumeM3));
     provenance.put("upstreamBoundary", hasUpstreamVessel() ? "RIGID_ADIABATIC_WELL_MIXED_GAS_VESSEL" : "CLOSED_END");
     if (hasUpstreamVessel()) {
@@ -1029,6 +1095,120 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   /** @return fixed overall component mass fractions in input order */
   public double[] getComponentMassFractions() {
     return massFractions.clone();
+  }
+
+  /**
+   * Immutable prescribed opening history for the release boundary.
+   *
+   * <p>
+   * The profile scales the maximum discharge coefficient and is evaluated at the midpoint of every accepted
+   * finite-volume substep. It supplies deterministic finite-opening sensitivity without claiming crack propagation,
+   * pipe-wall fracture, fluid-structure coupling or pressure feedback across a two-sided break.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class ReleaseOpeningProfile implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private static final int MINIMUM_RAMP_SUBSTEPS = 20;
+    private final String profileCode;
+    private final double delaySeconds;
+    private final double durationSeconds;
+
+    /**
+     * Creates a validated immutable profile.
+     *
+     * @param profileCode stable machine-readable profile code
+     * @param delaySeconds time before opening starts in s
+     * @param durationSeconds ramp duration in s; zero denotes an instantaneous full opening
+     */
+    private ReleaseOpeningProfile(String profileCode, double delaySeconds, double durationSeconds) {
+      this.profileCode = profileCode;
+      this.delaySeconds = delaySeconds;
+      this.durationSeconds = durationSeconds;
+    }
+
+    /**
+     * Creates the backward-compatible fully open boundary.
+     *
+     * @return instantaneous full-opening profile
+     */
+    public static ReleaseOpeningProfile instantaneous() {
+      return new ReleaseOpeningProfile("INSTANTANEOUS_FULL_OPENING", 0.0, 0.0);
+    }
+
+    /**
+     * Creates a delayed linear ramp from closed to the declared full-bore area.
+     *
+     * @param delaySeconds nonnegative time before the opening starts in s
+     * @param durationSeconds positive time from zero to full opening in s
+     * @return immutable prescribed linear-opening profile
+     * @throws IllegalArgumentException for nonfinite or invalid time inputs
+     */
+    public static ReleaseOpeningProfile linearRamp(double delaySeconds, double durationSeconds) {
+      if (!Double.isFinite(delaySeconds) || delaySeconds < 0.0) {
+        throw new IllegalArgumentException("Opening delay must be finite and nonnegative");
+      }
+      ReleaseFlowRequest.positive(durationSeconds, "opening duration");
+      return new ReleaseOpeningProfile("DELAYED_LINEAR_AREA_RAMP", delaySeconds, durationSeconds);
+    }
+
+    /**
+     * Evaluates the prescribed open-area fraction.
+     *
+     * @param timeSeconds inventory time in s
+     * @return fraction of the declared maximum effective area in [0,1]
+     * @throws IllegalArgumentException for negative or nonfinite time
+     */
+    public double getOpeningFraction(double timeSeconds) {
+      if (!Double.isFinite(timeSeconds) || timeSeconds < 0.0) {
+        throw new IllegalArgumentException("Opening-profile time must be finite and nonnegative");
+      }
+      if (isInstantaneous()) {
+        return 1.0;
+      }
+      if (timeSeconds <= delaySeconds) {
+        return 0.0;
+      }
+      return Math.min(1.0, (timeSeconds - delaySeconds) / durationSeconds);
+    }
+
+    /**
+     * Bounds numerical substeps at the delay and through the ramp independently of the caller reporting interval.
+     *
+     * @param timeSeconds current inventory time in s
+     * @return positive maximum substep in s, or positive infinity outside a finite ramp
+     */
+    private double getMaximumSubstepSeconds(double timeSeconds) {
+      if (isInstantaneous() || timeSeconds >= delaySeconds + durationSeconds) {
+        return Double.POSITIVE_INFINITY;
+      }
+      if (timeSeconds < delaySeconds) {
+        return delaySeconds - timeSeconds;
+      }
+      return Math.min(durationSeconds / MINIMUM_RAMP_SUBSTEPS, delaySeconds + durationSeconds - timeSeconds);
+    }
+
+    /** @return stable machine-readable profile code */
+    public String getProfileCode() {
+      return profileCode;
+    }
+
+    /** @return nonnegative delay before opening starts in s */
+    public double getDelaySeconds() {
+      return delaySeconds;
+    }
+
+    /** @return ramp duration in s; zero for an instantaneous full opening */
+    public double getDurationSeconds() {
+      return durationSeconds;
+    }
+
+    /** @return true for the backward-compatible immediately open boundary */
+    private boolean isInstantaneous() {
+      return durationSeconds == 0.0;
+    }
   }
 
   /** Immutable prescribed thermal boundary for the finite-volume pipe wall. */
