@@ -1,4 +1,4 @@
-"""Protect curated thermo landing-page navigation and local link targets."""
+"""Protect curated thermo landing-page and reference-manual navigation."""
 
 from pathlib import Path
 import re
@@ -8,6 +8,7 @@ import unittest
 DOCS = Path(__file__).resolve().parent
 THERMO = DOCS / "thermo"
 LANDING_PAGE = THERMO / "README.md"
+REFERENCE_INDEX = DOCS / "REFERENCE_MANUAL_INDEX.md"
 REQUIRED_GUIDES = {
     "component_list.md",
     "fluid_classification.md",
@@ -24,6 +25,7 @@ class ThermoLandingPageNavigationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.landing = LANDING_PAGE.read_text(encoding="utf-8")
+        cls.reference = REFERENCE_INDEX.read_text(encoding="utf-8")
         cls.targets = [
             target.split("#", 1)[0]
             for target in MARKDOWN_LINK.findall(cls.landing)
@@ -40,6 +42,11 @@ class ThermoLandingPageNavigationTest(unittest.TestCase):
             with self.subTest(guide=guide):
                 self.assertTrue((THERMO / guide).is_file())
                 self.assertIn(Path(guide).stem, linked_stems)
+
+    def test_required_guides_are_in_reference_manual(self):
+        for guide in REQUIRED_GUIDES:
+            with self.subTest(guide=guide):
+                self.assertIn(f"(thermo/{guide})", self.reference)
 
     def test_every_local_landing_page_target_exists(self):
         for target in self.targets:
