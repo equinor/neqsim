@@ -464,7 +464,9 @@ linear effective-area fraction shared by both branches. Each conservative CFL su
 the fraction at its midpoint; finite ramps are divided into at least 20 internal intervals and
 split exactly at delay and full-opening boundaries. The end-of-frame fraction and the immutable
 profile code, delay and duration are retained in provenance. Tests cover exact branch
-synchronization, mass/total-energy closure and external caller-step refinement.
+synchronization, mass/total-energy closure and external caller-step refinement. The refinement
+test writes `target/source-term-benchmarks/two-sided-finite-opening-timestep-refinement.csv` with
+the caller step, released mass and closure residuals.
 
 This is software evidence only. The finite-opening profile multiplies the declared maximum
 discharge coefficient and is a prescribed sensitivity, not a fracture model. The topology retains
