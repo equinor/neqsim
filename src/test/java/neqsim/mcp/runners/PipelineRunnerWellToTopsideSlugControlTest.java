@@ -29,6 +29,7 @@ class PipelineRunnerWellToTopsideSlugControlTest {
         .getAsJsonObject();
     assertEquals("success", result.get("status").getAsString(), result.toString());
     assertEquals("neqsim-5036-well-to-topside", result.getAsJsonObject("data").get("caseId").getAsString());
+    assertEquals("qualified fixed pressure", result.getAsJsonObject("data").get("outletBoundaryMode").getAsString());
     assertTrue(result.getAsJsonObject("data").getAsJsonObject("openLoop").getAsJsonArray("timeSeries").size() >= 4);
     assertTrue(result.getAsJsonObject("data").getAsJsonObject("regulated").getAsJsonArray("timeSeries").size() >= 4);
   }
