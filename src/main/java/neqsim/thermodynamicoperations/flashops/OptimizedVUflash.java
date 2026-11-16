@@ -6,6 +6,7 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -77,9 +78,9 @@ public class OptimizedVUflash extends Flash {
   /** Whether the most recent run needed the equilibrium polish stage. */
   private volatile boolean equilibriumPolishUsed = false;
   /** Whether the most recent run attempted detached equilibrium recovery. */
-  private boolean equilibriumRecoveryUsed = false;
+  private volatile boolean equilibriumRecoveryUsed = false;
   /** Number of detached TP flashes used by the most recent equilibrium recovery. */
-  private int equilibriumRecoveryFlashCount = 0;
+  private final AtomicInteger equilibriumRecoveryFlashCount = new AtomicInteger();
 
   /**
    * Constructor for OptimizedVUflash.
@@ -380,7 +381,7 @@ public class OptimizedVUflash extends Flash {
     coldFallbackUsed = false;
     equilibriumPolishUsed = false;
     equilibriumRecoveryUsed = false;
-    equilibriumRecoveryFlashCount = 0;
+    equilibriumRecoveryFlashCount.set(0);
     try {
       // Every Newton-loop TP flash may reuse K-values. The initialization flash does so only when
       // the caller identifies the state as the previous point on a continuous dynamic trajectory.
@@ -470,7 +471,7 @@ public class OptimizedVUflash extends Flash {
    * @return detached TP flash count
    */
   public int getEquilibriumRecoveryFlashCount() {
-    return equilibriumRecoveryFlashCount;
+    return equilibriumRecoveryFlashCount.get();
   }
 
   /**
@@ -644,7 +645,7 @@ public class OptimizedVUflash extends Flash {
    */
   boolean recoverFromInitialEquilibrium(double initialPressure, double initialTemperature) {
     equilibriumRecoveryUsed = true;
-    equilibriumRecoveryFlashCount = 0;
+    equilibriumRecoveryFlashCount.set(0);
     if (!validateInputs() || !Double.isFinite(Vspec) || !withinFlashBounds(initialPressure, initialTemperature)) {
       return false;
     }
@@ -768,7 +769,7 @@ public class OptimizedVUflash extends Flash {
    * @return trial thermodynamic state
    */
   private SystemInterface coldEquilibrium(SystemInterface seed, double pressure, double temperature) {
-    equilibriumRecoveryFlashCount++;
+    equilibriumRecoveryFlashCount.incrementAndGet();
     SystemInterface trial = seed.clone();
     trial.setPressure(pressure);
     trial.setTemperature(temperature);
