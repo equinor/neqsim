@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.SteadyStateConvergenceReport.TerminationReason;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -105,8 +106,14 @@ class TwoFluidPipeThreePhaseConvergenceReportTest {
     }
     meanLiquidHoldup /= sections;
     meanOilOverWaterSlip /= sections;
-    assertTrue(meanOilOverWaterSlip > 1.0e-3,
-        "uphill gravity must retard water relative to oil, slip=" + meanOilOverWaterSlip);
+    // This 10-degree line is annular. Gas shear disperses oil and water, the regime detector reports a dispersed
+    // oil-water state in every section, and the steady split must agree with it: no stratified slip (#5046).
+    for (int section = 0; section < sections; section++) {
+      OilWaterFlowRegime oilWater = pipe.getSectionSnapshots()[section].getOilWaterFlowRegime();
+      assertTrue(oilWater == OilWaterFlowRegime.DISPERSED_WATER_IN_OIL
+          || oilWater == OilWaterFlowRegime.DISPERSED_OIL_IN_WATER, "section " + section + " is " + oilWater);
+    }
+    assertEquals(0.0, meanOilOverWaterSlip, 1.0e-9, "dispersed annular liquids must not slip");
     return new ThreePhaseResult(pressure[sections - 1], meanLiquidHoldup);
   }
 

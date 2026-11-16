@@ -688,6 +688,46 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
+   * Velocity that sets oil-water turbulent mixing for the oil-water regime detector and the steady oil-water slip
+   * split.
+   *
+   * <p>
+   * In stratified and intermittent gas-liquid flow the oil-water layers are sheared mainly by the liquid's own motion:
+   * the film between slugs can stay segregated, so the bulk liquid velocity is the mixing scale (Trallero, Brauner). In
+   * annular, churn, bubbly and mist flow the gas drives the liquid turbulence: an annular film is thin and sheared by
+   * the gas core, churn liquid is chaotic, and bubbly or mist liquid is a turbulent continuum or droplets. None of
+   * these forms a line-scale oil-water interface, so these regimes use the larger of the bulk liquid velocity and the
+   * magnitude of the total volumetric flux {@code j = alpha_g u_g + alpha_l u_l}. Using the liquid velocity alone there
+   * lets a small rate reduction reclassify a gas-agitated riser as stratified oil-water, collapse the oil-water
+   * interfacial area and drive a self-sustaining water counterflow (equinor/neqsim#5046).
+   * </p>
+   *
+   * @return nonnegative mixing velocity in m/s
+   */
+  public double calcOilWaterMixingVelocity() {
+    double liquidVelocity = Math.abs(getLiquidVelocity());
+    if (!isGasAgitatedLiquid(getFlowRegime())) {
+      return liquidVelocity;
+    }
+    double volumetricFlux = getGasHoldup() * getGasVelocity() + getLiquidHoldup() * getLiquidVelocity();
+    if (!Double.isFinite(volumetricFlux)) {
+      return liquidVelocity;
+    }
+    return Math.max(liquidVelocity, Math.abs(volumetricFlux));
+  }
+
+  /**
+   * Whether a gas-liquid regime mixes oil and water at the gas-liquid mixture scale.
+   *
+   * @param regime gas-liquid flow regime, may be null
+   * @return true for annular, churn, bubble, dispersed-bubble and mist flow
+   */
+  static boolean isGasAgitatedLiquid(FlowRegime regime) {
+    return regime == FlowRegime.ANNULAR || regime == FlowRegime.CHURN || regime == FlowRegime.BUBBLE
+        || regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.MIST;
+  }
+
+  /**
    * Calculate effective liquid properties for three-phase flow.
    *
    * <p>
@@ -705,7 +745,7 @@ public class TwoFluidSection extends PipeSection {
       // Use flow regime detector for physics-based viscosity and continuous phase
       if (oilViscosity > 0 && waterViscosity > 0) {
         double muL;
-        double vMix = getLiquidVelocity();
+        double vMix = calcOilWaterMixingVelocity();
 
         if (oilWaterDetector == null) {
           oilWaterDetector = new OilWaterFlowRegimeDetector();

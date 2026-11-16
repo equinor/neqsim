@@ -325,14 +325,59 @@ initial inventory.
 
 | Cells | Reporting step (s) | Total outlet | Gas / oil / water outlet | Inlet face (bara) | Max phase inventory drift |
 | ---: | ---: | ---: | --- | ---: | ---: |
-| 60 | 0.25 | 20.671 | 4.050 / 13.005 / 3.616 | 70.144 | 0.067% |
-| 60 | 0.125 | 20.662 | 4.048 / 13.001 / 3.612 | 70.147 | 0.067% |
-| 120 | 0.25 | 20.148 | 4.004 / 12.717 / 3.426 | 70.256 | 0.051% |
+| 60 | 0.25 | 20.491 | 4.081 / 13.165 / 3.246 | 69.521 | 0.068% |
+| 60 | 0.125 | 20.490 | 4.080 / 13.164 / 3.246 | 69.521 | 0.068% |
+| 120 | 0.25 | 20.381 | 4.050 / 12.961 / 3.369 | 69.528 | 0.049% |
 
 All accepted outlet phase transfers remain nonnegative and each interval's phase ledger closes
 to `1e-8 kg`. This qualifies the fixed-boundary, source-free handoff and the bounded choke-opening
 regression on this synthetic fixture. It does not validate slug frequency, separator response,
-phase-transfer kinetics, or field/commercial parity.
+phase-transfer kinetics, or field/commercial parity. The table was rerun on 2026-11-15 after the
+gas-agitated oil-water mixing change below; the riser no longer starts with a stratified oil-water
+slip, so the steady water inventory and inlet-face pressure are lower than in the earlier table.
+
+### Production-choke step on the riser fixture
+
+A pressure-coupled `ThrottlingValve` (80 bara upstream, calibrated to 20 kg/s at 65% opening) feeds
+the same pipe, and every outer step returns the riser inlet-face pressure to the valve. The
+opening is held or stepped at 10 s; outlet phase backflow stays disabled and no interphase
+source is active. "Zero" means interval-averaged water outflow at or below `1e-8 kg/s`
+(equinor/neqsim#5046).
+
+| Case | Before: first / cumulative zero water outflow by 150 s | After: water outflow at 150 s (kg/s) | After: riser leg liquid change (kg) |
+| --- | --- | ---: | ---: |
+| 65% held, 60 cells, 0.25 s | none | 3.570 | -209 |
+| 65% to 61%, 60 cells, 0.25 s | none | 2.044 | +168 |
+| 65% to 58%, 60 cells, 0.25 s | 13.000 s / 15.250 s | 1.007 | +414 |
+| 65% to 58%, 60 cells, 0.125 s | 12.750 s / 15.375 s | 1.006 | +414 |
+| 65% to 58%, 120 cells, 0.25 s | 13.250 s / 28.000 s | 0.846 | +523 |
+
+Two coupled defects caused the interruption; neither was physical liquid redistribution or the
+outlet boundary:
+
+1. The oil-water regime detector judged mixing by the bulk liquid velocity even in an annular
+   riser. The choke step slowed the liquid below the Brauner dispersion velocity, the riser was
+   reclassified from dispersed to stratified oil-water, and the oil-water interfacial area
+   collapsed from droplet scale to a line interface.
+2. The steady-consistency momentum correction (`setSteadyConsistentTransient(true)`, the default)
+   stores a fixed per-phase force that holds the steady state. The steady split carried an oil-water
+   slip ratio near 2.8 in the riser that the transient drag could not sustain, so the stored force
+   pushed oil up by about 5.7 m/s2 and water by about 1.0 m/s2 per unit mass. Once the drag that
+   balanced the difference collapsed, the stored force drove water back down at about -3 m/s against
+   oil rising at +3.5 m/s.
+
+Annular, churn, bubbly and mist cells now judge oil-water mixing by the total volumetric flux in both
+the detector and the steady slip split (`TwoFluidSection.calcOilWaterMixingVelocity()`). Stratified
+and slug cells keep the liquid velocity, so the horizontal three-phase in-situ water benchmark is
+unchanged. The detector is re-run after the gas-liquid regime is classified when a cell changes
+between gas-agitated and other regimes, so one evaluation does not mix two oil-water states. The
+stored correction keeps only the combined liquid force once a cell's oil-water regime differs from
+calibration. The mixing change is the fix: alone it removes every zero interval (58% step, 60
+cells: 1.070 kg/s water at 150 s). The correction gate alone does not (first zero at 13.25 s,
+78.75 s cumulative); it is a consistency guard. After the fix, all phases leave the riser through
+150 s in every case. The stepped cases hold more liquid in the riser and the uphill mid-line legs as gas slows.
+That is the physical holdup response; it lowers the liquid outflow transiently without stopping
+it. `TwoFluidPipeThreePhaseChokeStepTest` and `OilWaterGasAgitatedMixingTest` cover the invariant.
 
 For external-simulator comparisons, distinguish phase-fraction or PVT tuning from hydraulic
 holdup tuning. Matching pressure with a holdup multiplier does not establish matching free-gas

@@ -626,7 +626,11 @@ response by finite differences of flashed specific enthalpy, including latent he
 through phase changes. It also accounts for elevation work. The transient thermal
 handoff uses the steady reference fluid. By default, the transient momentum
 operator calibrates a correction at an unchanged steady boundary to hold the
-initial state; `setSteadyConsistentTransient(false)` disables it. A liquid-full
+initial state; `setSteadyConsistentTransient(false)` disables it. A cell drops
+the whole correction when its gas-liquid regime changes, and drops the relative
+oil-water part (keeping the combined liquid force, split by mass) when only its
+oil-water regime changes, because that part balanced an oil-water drag that no
+longer applies (equinor/neqsim#5046). A liquid-full
 line selects the coupled pressure-momentum solve unless
 `setEnableCoupledPressureMomentum(...)` was explicitly set. Recheck phase and
 energy balances when either option is changed for a specific application.
@@ -930,6 +934,12 @@ Key calculations:
 
 - **Phase inversion** (Decarre & Fabre, 1997): water fraction at which continuous phase switches
 - **Critical dispersion velocity** (Brauner, 2003): minimum velocity for full turbulent dispersion
+- **Mixing velocity** $v_m$: the bulk liquid velocity in stratified and slug flow; in annular, churn,
+  bubbly and mist flow the larger of that and the total volumetric flux
+  $j=\alpha_g u_g+\alpha_l u_l$, because gas shear rather than the liquid's own motion mixes the
+  liquids there (`TwoFluidSection.calcOilWaterMixingVelocity()`). The steady oil-water slip split
+  uses the same velocity in its Froude number, so a steady state handed to the transient does not
+  carry a stratified slip in a cell the detector reports as dispersed.
 - **Maximum droplet diameter** (Hinze, 1955): $d_{max} = \text{We}_{crit}^{3/5} \sigma^{3/5} / (\rho_c^{3/5} \epsilon^{2/5})$
 - **Dispersed interfacial area**: $a_{ow}=6A\alpha_d/d_{max}$ per pipe length for spherical droplets; stratified states retain a line-scale interface
 - **Effective emulsion viscosity**: Brinkman correlation for the dispersed/continuous mixture
@@ -3276,10 +3286,11 @@ Remaining limitations:
   split did not converge; `isSteadyStateConverged()` was correctly false. That 73.8 km case has
   not been rerun for the pressure-boundary and oil/water-split corrections described here. Compact
   regression coverage does not resolve this historical case or qualify its reported pressure drop.
-- The reproducible 3 km, 10-degree uphill gas/oil/water fixture converges with positive
-  oil-over-water slip and closed phase volumes and mass flow on both 30 and 60 cells. Arrival
-  pressure changes from 13.327868 bar to 13.250389 bar (0.585% relative), while mean liquid holdup
-  changes from 0.237521 to 0.236780 (0.313%). This replay uses the calculated gas-oil tension of
+- The reproducible 3 km, 10-degree uphill gas/oil/water fixture is annular with dispersed oil and
+  water in every section, so it converges without oil-water slip and with closed phase volumes and
+  mass flow on both 30 and 60 cells. Arrival pressure changes from 15.840032 bar to 15.694024 bar
+  (0.922% relative), while mean liquid holdup changes from 0.228349 to 0.228033 (0.138%). Rerun
+  2026-11-15 after the gas-agitated mixing change; the earlier slipping split held more water. This replay uses the calculated gas-oil tension of
   13.5265 mN/m, independently bound cloned fluids and the continuous film-bridging closure,
   replacing the earlier initialization-error fallback of 20 mN/m. These are numerical-refinement results for a synthetic
   regression fixture, not experimental qualification or evidence for the unavailable 73.8 km case.
