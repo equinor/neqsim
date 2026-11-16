@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -139,12 +140,18 @@ public final class TwoSidedRealGasPipeRupture {
     session.addInventorySource(getRightSourceId(), areaName, rightBranch.getName());
   }
 
-  /** @return left-branch process equipment */
+  /** @return live left-branch process equipment */
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP",
+      justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
   public Branch getLeftBranch() {
     return leftBranch;
   }
 
-  /** @return right-branch process equipment */
+  /** @return live right-branch process equipment */
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP",
+      justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
   public Branch getRightBranch() {
     return rightBranch;
   }
@@ -330,7 +337,10 @@ public final class TwoSidedRealGasPipeRupture {
       return branchLengthM;
     }
 
-    /** @return underlying conservative branch solver for detailed diagnostics */
+    /** @return live conservative branch solver for detailed diagnostics */
+    @SuppressFBWarnings(
+        value = "EI_EXPOSE_REP",
+        justification = "Diagnostics must observe the live solver owned by this branch; copying would detach its state")
     public RealGasPipeDecompression getSegment() {
       return segment;
     }
