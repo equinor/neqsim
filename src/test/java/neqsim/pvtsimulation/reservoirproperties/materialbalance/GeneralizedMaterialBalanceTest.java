@@ -1,8 +1,10 @@
 package neqsim.pvtsimulation.reservoirproperties.materialbalance;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.blackoil.BlackOilPVTTable.Record;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance.SinglePhasePvt;
 
 /**
  * Independent surface-component and reservoir-volume checks for the generalized balance.
@@ -105,6 +107,97 @@ class GeneralizedMaterialBalanceTest {
     GeneralizedMaterialBalance.Result cap = history(1.0e7, 2.0e9, true).fitKnownGasCap(0.5);
     Assertions.assertEquals(1.04e7, cap.getOoip(), 1.0e-6);
     Assertions.assertEquals(3.0e9, cap.getOgip(), 1.0e-4);
+  }
+
+  /** Checks both original phases with forward inventories and a volume holdout at a distinct pressure. */
+  @Test
+  void fitsIndependentInitialSinglePhaseHistories() {
+    checkSinglePhaseHistory(SinglePhasePvt.oil(350.0, 1.6, 100.0), 1.0e7, 1.0e9, 1.6e7);
+    checkSinglePhaseHistory(SinglePhasePvt.gas(350.0, 0.004, 0.0002), 4.0e5, 2.0e9, 8.0e6);
+  }
+
+  /**
+   * Builds measured net withdrawals by accounting for the present reservoir phases forward, then fits only two rows.
+   *
+   * @param initial original PVT of the sole phase
+   * @param initialOil original total stock-tank oil in Sm3
+   * @param initialGas original total standard gas in Sm3
+   * @param initialVolume original hydrocarbon reservoir volume in m3
+   */
+  private void checkSinglePhaseHistory(SinglePhasePvt initial, double initialOil, double initialGas,
+      double initialVolume) {
+    GeneralizedMaterialBalance balance = GeneralizedMaterialBalance.fromSinglePhase(initial);
+    boolean gas = initial.isGas();
+    Record[] rows = {pvt(260.0, 80.0, 1.5, 0.005, 0.00016), pvt(210.0, 60.0, 1.4, 0.008, 0.00012),
+        pvt(160.0, 40.0, 1.3, 0.012, 0.00008)};
+    double volumeTolerance = 1.0e-10 * initialVolume;
+    for (int i = 0; i < rows.length; i++) {
+      Record current = rows[i];
+      double fraction = 0.001 * (i + 1);
+      double influx = 0.002 * initialVolume * (i + 1);
+      double netWater = -0.001 * initialVolume * (i + 1);
+      double remainingVolume = initialVolume * (1.0 - fraction) - influx + netWater * current.Bw;
+      double liquidShare = gas ? 0.01 * (i + 1) : 0.84 - 0.08 * i;
+      double liquid = remainingVolume * liquidShare / current.Bo;
+      double vapor = remainingVolume * (1.0 - liquidShare) / current.Bg;
+      double netOil = initialOil - liquid - current.Rv * vapor;
+      double netGas = initialGas - vapor - current.Rs * liquid;
+      if (i < 2) {
+        balance.addObservation(current, netOil, netGas, netWater, influx, fraction);
+      } else {
+        GeneralizedMaterialBalance copy = SerializationUtils.clone(balance);
+        GeneralizedMaterialBalance.Result result = gas ? copy.fitInitiallyGas() : copy.fitInitiallyOil();
+        Assertions.assertEquals(initialOil, result.getOoip(), 1.0e-10 * initialOil);
+        Assertions.assertEquals(initialGas, result.getOgip(), 1.0e-10 * initialGas);
+        Assertions.assertEquals(2, result.getResiduals().length);
+        Assertions.assertEquals(0.0, result.getRmsResidual(), volumeTolerance);
+        double remainingOil = result.getOoip() - netOil;
+        double remainingGas = result.getOgip() - netGas;
+        double holdoutVapor = (remainingGas - current.Rs * remainingOil) / (1.0 - current.Rs * current.Rv);
+        double holdoutLiquid = remainingOil - current.Rv * holdoutVapor;
+        Assertions.assertTrue(holdoutLiquid > 0.0 && holdoutVapor > 0.0);
+        Assertions.assertEquals(remainingVolume, holdoutLiquid * current.Bo + holdoutVapor * current.Bg,
+            volumeTolerance);
+        Assertions.assertEquals(gas ? 0.0 : initialOil, result.getInitialFreeOil(), 1.0e-10 * initialOil);
+        Assertions.assertEquals(gas ? initialGas : 0.0, result.getInitialFreeGas(), 1.0e-10 * initialGas);
+        Assertions.assertEquals(gas ? Double.POSITIVE_INFINITY : 0.0, result.getGasCapRatio());
+        if (!gas) {
+          Assertions.assertEquals(result.getOoip(), copy.fitKnownGasCap(0.0).getOoip());
+        }
+      }
+    }
+  }
+
+  /** Keeps phase selection and current-row degeneracy explicit. */
+  @Test
+  void rejectsInvalidInitialPropertiesModesAndCurrentSplits() {
+    Assertions.assertThrows(IllegalArgumentException.class, () -> SinglePhasePvt.oil(0.0, 1.0, 0.0));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> SinglePhasePvt.gas(300.0, Double.NaN, 0.0));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> SinglePhasePvt.gas(300.0, 0.01, -1.0));
+    GeneralizedMaterialBalance oil = GeneralizedMaterialBalance.fromSinglePhase(SinglePhasePvt.oil(300, 1.0, 0.0));
+    Assertions.assertEquals("Fit must use the declared initial hydrocarbon phase",
+        Assertions.assertThrows(IllegalArgumentException.class, oil::fitInitiallyGas).getMessage());
+    Assertions.assertEquals("Fit must use the declared initial hydrocarbon phase",
+        Assertions.assertThrows(IllegalArgumentException.class, oil::fitOilAndGas).getMessage());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> oil.fitKnownGasCap(0.1));
+    GeneralizedMaterialBalance gas = GeneralizedMaterialBalance.fromSinglePhase(SinglePhasePvt.gas(300, 0.01, 0.0));
+    Assertions.assertEquals("Fit must use the declared initial hydrocarbon phase",
+        Assertions.assertThrows(IllegalArgumentException.class, gas::fitInitiallyOil).getMessage());
+    Assertions.assertEquals("Fit must use the declared initial hydrocarbon phase",
+        Assertions.assertThrows(IllegalArgumentException.class, () -> gas.fitKnownGasCap(0.0)).getMessage());
+    Assertions.assertThrows(IllegalArgumentException.class,
+        () -> gas.addObservation(pvt(200.0, 100.0, 1.0, 0.01, 0.01), 0.0, 0.0, 0.0, 0.0, 0.0));
+  }
+
+  /** Preserves small supplied compressibility support at exact cancellation of the hydrocarbon terms. */
+  @Test
+  void retainsSmallSupportWhenHydrocarbonExpansionIsZero() {
+    GeneralizedMaterialBalance balance = GeneralizedMaterialBalance.fromSinglePhase(SinglePhasePvt.oil(300, 1.5, 1));
+    for (int step = 1; step <= 2; step++) {
+      double fraction = Math.scalb(1.0, -61 + step);
+      balance.addObservation(pvt(300 - 10 * step, 0.5, 1, 1, 0), 3072 * fraction, 0, 0, 0, fraction);
+    }
+    Assertions.assertEquals(1024.0, balance.fitInitiallyOil().getOoip(), 1.0e-7);
   }
 
   /** Checks numerical scaling across very different inventory magnitudes. */
