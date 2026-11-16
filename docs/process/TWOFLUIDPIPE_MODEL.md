@@ -2657,7 +2657,9 @@ composition and phase change remain outside the initial isothermal route.
 `setTransactionalTransientEnabled(true)` stages the existing transient algorithm on an isolated
 pipe graph. A failed interval, component/thermal check or outlet publication preserves accepted
 cells, inventories, reports, histories, trackers, identifiers and all three clocks. The default
-remains false, retaining the existing partial-interval failure contract. Successful publication
+remains false. On an incomplete interval, the default route publishes the interval-average
+outlet flux of any accepted substeps. If none are accepted, the outlet retains its previously
+published fluid and the balance report records zero accepted time. Successful publication
 preserves connected stream, upstream-volume, multilayer-calculator and thermal-layer identities.
 Other owned submodels are new accepted snapshots: reacquire them through their getters after a
 successful call. Section cloning preserves configured transient oil/water detectors. Adaptive
