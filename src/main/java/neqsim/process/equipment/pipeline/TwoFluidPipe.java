@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1028,7 +1030,23 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Current adaptive dt multiplier (starts at 1.0, reduced on instability, slowly grows back).
    */
-  private transient double adaptiveDtFactor = 1.0;
+  private double adaptiveDtFactor = 1.0;
+
+  /**
+   * Restore adaptive stepping for checkpoints written before the multiplier was serialized.
+   *
+   * @param input serialized pipe state
+   * @throws IOException if the state cannot be read
+   * @throws ClassNotFoundException if a serialized class is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    // Older streams omit this formerly transient field and therefore restore zero.
+    if (adaptiveDtFactor == 0.0) {
+      adaptiveDtFactor = 1.0;
+    }
+    pressureInletReservoirCachePressure = Double.NaN;
+  }
 
   /**
    * Minimum adaptive dt factor to prevent timestep from becoming infinitesimally small.

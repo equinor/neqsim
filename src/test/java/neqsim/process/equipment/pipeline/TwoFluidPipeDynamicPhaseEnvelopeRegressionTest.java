@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -24,6 +28,96 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
   private static final double INITIAL_MASS_FLOW = 0.3;
   private static final String[] PHASE_NAMES = {"gas", "oil", "aqueous"};
   private static final Phase[] REPORT_PHASES = {Phase.GAS, Phase.OIL, Phase.WATER};
+
+  /**
+   * Qualify a finite held-boundary interval, rather than only the infinitesimal initialization limit.
+   *
+   * @param mixture phases present in the reference fixture
+   */
+  @ParameterizedTest
+  @EnumSource(PhaseCombination.class)
+  void heldBoundariesRemainStableForAllPhaseCombinations(PhaseCombination mixture) {
+    TwoFluidPipe pipe = createPipe(mixture, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
+    double[] initialPressure = pipe.getPressureProfile();
+    double[] initialHoldup = pipe.getLiquidHoldupProfile();
+    for (int step = 0; step < 100; step++) {
+      pipe.runTransient(0.1, UUID.randomUUID());
+      assertEquals(INITIAL_MASS_FLOW, pipe.getOutletStream().getFlowRate("kg/sec"), 0.01 * INITIAL_MASS_FLOW,
+          mixture + " held-boundary rate drift exceeds one percent");
+      assertProfilesClose(initialPressure, pipe.getPressureProfile(), 600.0,
+          mixture + " pressure drift exceeds 0.01 percent of the 60 bara reference");
+      assertProfilesClose(initialHoldup, pipe.getLiquidHoldupProfile(), 0.001,
+          mixture + " absolute holdup drift exceeds 0.001");
+      assertPhaseBalanceAndBounds(pipe, mixture);
+    }
+    assertEquals(10.0, pipe.getSimulationTime(), 1.0e-12);
+  }
+
+  /**
+   * Verify that a checkpoint preserves adaptive history and the subsequent conservative trajectory.
+   *
+   * @param mixture phases present in the reference fixture
+   * @throws Exception if reflection or serialization fails
+   */
+  @ParameterizedTest
+  @EnumSource(PhaseCombination.class)
+  void serializedAdaptivePipeMatchesUninterruptedTrajectory(PhaseCombination mixture) throws Exception {
+    TwoFluidPipe original = createPipe(mixture, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
+    original.runTransient(0.02, UUID.randomUUID());
+    Field multiplier = TwoFluidPipe.class.getDeclaredField("adaptiveDtFactor");
+    multiplier.setAccessible(true);
+    multiplier.setDouble(original, 0.5);
+    TwoFluidPipe restored = checkpointRoundTrip(original);
+    assertEquals(original.getAdaptiveDtFactor(), restored.getAdaptiveDtFactor(), 0.0);
+    assertEquals(original.getSimulationTime(), restored.getSimulationTime(), 0.0);
+    assertEquals(original.getTotalMassInventory(), restored.getTotalMassInventory(), 0.0);
+    for (int step = 0; step < 10; step++) {
+      original.runTransient(0.02, UUID.randomUUID());
+      restored.runTransient(0.02, UUID.randomUUID());
+      assertEquals(original.getSimulationTime(), restored.getSimulationTime(), 1.0e-14);
+      assertProfilesClose(original.getPressureProfile(), restored.getPressureProfile(), 1.0e-7,
+          mixture + " checkpoint pressure trajectory");
+      assertProfilesClose(original.getLiquidHoldupProfile(), restored.getLiquidHoldupProfile(), 1.0e-12,
+          mixture + " checkpoint holdup trajectory");
+      assertEquals(original.getTotalMassInventory(), restored.getTotalMassInventory(), 1.0e-10);
+      assertPhaseBalanceAndBounds(restored, mixture);
+    }
+  }
+
+  /**
+   * Older streams omitted the adaptive multiplier; its Java deserialization default is zero.
+   *
+   * @throws Exception if reflection or serialization fails
+   */
+  @Test
+  void missingLegacyAdaptiveMultiplierRestartsAtUnity() throws Exception {
+    TwoFluidPipe pipe = createPipe(PhaseCombination.GAS_OIL_WATER, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
+    Field multiplier = TwoFluidPipe.class.getDeclaredField("adaptiveDtFactor");
+    multiplier.setAccessible(true);
+    multiplier.setDouble(pipe, 0.0);
+    TwoFluidPipe restored = checkpointRoundTrip(pipe);
+    assertEquals(1.0, restored.getAdaptiveDtFactor(), 0.0);
+    restored.runTransient(0.02, UUID.randomUUID());
+    assertEquals(0.02, restored.getSimulationTime(), 1.0e-14);
+    assertPhaseBalanceAndBounds(restored, PhaseCombination.GAS_OIL_WATER);
+  }
+
+  /**
+   * Round-trip the complete pipe graph through the public Java serialization contract.
+   *
+   * @param pipe accepted pipe state
+   * @return independent restored pipe
+   * @throws Exception if serialization fails
+   */
+  private static TwoFluidPipe checkpointRoundTrip(TwoFluidPipe pipe) throws Exception {
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(pipe);
+    }
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      return (TwoFluidPipe) input.readObject();
+    }
+  }
 
   /** Check that an equilibrium gas split cannot destabilize source-free acoustic transport of oil. */
   @Test

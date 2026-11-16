@@ -109,3 +109,30 @@ independent benchmark data and is not removed by the drag fix.
 Keep #5066 open until its acceptance criteria and exact-head CI are satisfied. Follow
 #5036/#3298 for broader initialization and transient-model qualification. Passing this
 fixture does not qualify all optional legacy solvers, boundary combinations or slugging regimes.
+
+## Checkpoint restart
+
+`TwoFluidPipe` serializes its adaptive timestep multiplier together with the accepted
+pipe state. Restoring a checkpoint preserves a previously reduced multiplier rather
+than resetting the integration history. Older checkpoints, which did not store
+this field, initialize it to unity; their next step still obeys the current CFL
+bound and rejection checks. This does not reset inventories, pressure, holdup or
+simulation time.
+
+The regression suite compares ten continued steps after a Java serialization
+round-trip against an uninterrupted reference for gas, oil, water, gas/oil,
+gas/water, oil/water and gas/oil/water fixtures. These short mechanical transport
+checks establish restart consistency, not long-duration phase-change qualification.
+
+### Source-free phase matrix
+
+A separate horizontal 40 m, 0.2 m diameter, four-cell fixture uses SRK at
+298.15 K and 60 bara, methane/n-decane/water as applicable, and 0.3 kg/s feed.
+All seven nonempty combinations of gas, oil and water are checked after steady
+convergence and throughout 10 s of IMEX stepping at 0.1 s. Acceptance requires
+outlet flow within 1%, pressure drift below 600 Pa, absolute liquid-holdup drift
+below 0.001, phase inventory bounds and phase-mass balance at every step.
+Observed maxima across the matrix were 0.665% rate drift, 35.67 Pa pressure
+drift and 0.000117 holdup drift. These checks freeze property refresh and exclude
+phase transfer and thermal effects to isolate mechanical transport. They do not
+qualify a flashing riser, moving outlet pressure or an arbitrary operating range.
