@@ -334,6 +334,9 @@ finite PH-flash endpoint that closes the requested enthalpy is retained even whe
 phase change places its temperature outside a constant-Cp estimate. Tests cover
 upward, downward and horizontal water lines, direct electrical heat, and a flashing
 well at 1, 20 and 40 increments. The 2 km upward well loses 19,613.3 J/kg of enthalpy.
+Horizontal gas expansion can also produce valid PH cooling outside that estimate:
+zero elevation does not imply constant temperature. `PipelineTest` checks specific
+enthalpy and mass conservation together with expansion cooling and outlet pressure.
 
 PH flashing already includes the thermodynamic temperature response to pressure.
 The legacy optional JT and friction-heating additions below remain separate options;
