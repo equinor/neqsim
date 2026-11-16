@@ -269,6 +269,8 @@ $$u_g=w_lu_r+\sqrt{u_h^2-w_gw_lu_r^2},\qquad u_l=u_g-u_r,$$
 then derives the mass flux from phase continuity. It requires both velocities positive, liquid
 area fraction at most 0.20, $Eo\le4$, $We\le12$, $Re<200$ and every $Sc_i<250$. Component
 inventories, phase area, kinetic energy and stagnation energy must close; no value is clamped.
+The declared relative speed is specifically gas velocity minus droplet velocity and must be
+positive; reverse or recirculating droplets are outside this adapter rather than reinterpreted.
 
 ```java
 Map<String, Double> gasDiffusivitiesM2S = new TreeMap<String, Double>();
