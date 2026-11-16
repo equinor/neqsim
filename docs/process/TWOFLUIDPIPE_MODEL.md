@@ -2275,6 +2275,11 @@ jumped from 0.05035 to 27.64 N/m. Repeated residuals and full/colored Jacobians 
 the branch-contaminated Newton direction could not meet sufficient decrease even with a much
 longer line search. The direction correction alone still does not pass the five-second riser gate.
 
+The slug-body interfacial drag uses the magnitude of the phase-density contrast to estimate
+its bubble diameter. At equal densities, the existing confinement limit of one tenth of the
+pipe diameter determines the size. This keeps the drag finite as a trace phase enters a cell
+and the densities cross. Its direction continues to oppose slip.
+
 The unresolved bulk gas/liquid drag now distributes its liquid reaction by conservative oil and
 water mass, consistently with the mass-weighted bulk liquid velocity. With liquid force `FL`, the
 phase forces are `FL*mO/(mO+mW)` and `FL*mW/(mO+mW)`. For consistent recovered velocities their mechanical power is

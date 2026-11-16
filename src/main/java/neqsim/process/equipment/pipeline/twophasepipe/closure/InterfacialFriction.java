@@ -433,9 +433,12 @@ public class InterfacialFriction implements Serializable {
     result.slipVelocity = vG - vL;
 
     // In slug body, phases are mixed - use bubble swarm approach
-    // Interfacial area based on bubble diameter (Hinze correlation for max stable bubble)
-    double d_b = 2.0 * Math.pow(0.725 * 0.02 / ((rhoL - rhoG) * GRAVITY), 0.5); // ~5mm bubbles
-    d_b = Math.min(d_b, D / 10.0);
+    // The capillary size uses the magnitude of the buoyancy contrast. At equal
+    // densities the buoyancy length is unbounded and pipe confinement sets the size.
+    double densityContrast = Math.abs(rhoL - rhoG);
+    double diameterLimit = D / 10.0;
+    double d_b = densityContrast == 0.0 ? diameterLimit
+        : Math.min(2.0 * Math.sqrt(0.725 * 0.02 / (densityContrast * GRAVITY)), diameterLimit);
 
     // Interfacial area concentration for dispersed bubbles: a = 6 * (1-alphaL) / d_b
     double alphaG = 1.0 - alphaL;
