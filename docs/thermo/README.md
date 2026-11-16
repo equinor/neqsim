@@ -36,6 +36,9 @@ thermo/
 
 ### Core Guides
 
+- [Component Reference List](component_list): Searchable NeqSim component names, aliases, CAS numbers, and equation-of-state availability.
+- [Reservoir Fluid Classification](fluid_classification): Screen reservoir fluids using C7+, GOR, and phase-envelope classification routes.
+- [Reading Fluid Properties](reading_fluid_properties): Initialize and read thermodynamic and transport properties with explicit units and API boundaries.
 - [CPA Water Caloric Alpha](cpa_water_caloric): Opt-in liquid-water heat-capacity improvement, IAPWS-95 calibration, thermodynamic consistency and validation limits.
 - [Homogeneous-equilibrium Acoustic Speed](equilibrium_sound_speed): Explicit isentropic EOS-density derivative for single-phase and vapor-liquid fluids, with closure, step convergence and phase-boundary diagnostics; distinct from legacy phase averaging.
 - [Thermodynamic Models Guide](thermodynamic_models): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
@@ -60,6 +63,8 @@ thermo/
 
 ### Reference Documentation
 
+- [Henry-Law Reference States and Aqueous Gas-Solubility Evidence](henry_law_reference): Pure-water correlations, GE/Pitzer standard-state mapping, provenance, and validation boundaries.
+- [Empirical Solid Fugacity References](empirical_solid_fugacity): Liquid and sublimation-pressure reference choices, density units, domain checks, and solid-selection behavior.
 - [Mathematical Models](mathematical_models): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
 - [GERG-2008 and EOS-CG](gerg2008_eoscg): Detailed guide to the reference equations of state for natural gas and CCS applications.
 - [EOS-CG CO2/SO2 Mixture](eoscg_co2_so2): Executable mixture flash with phase densities, pressure closure, component balances, and a bounded numerical validation range.
