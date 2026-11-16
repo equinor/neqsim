@@ -144,7 +144,7 @@ class TVFlashTest {
         double logFugacityRatio = Math.log(vaporComposition
             * freshState.getPhase(0).getComponent(component).getFugacityCoefficient()
             / (liquidComposition * freshState.getPhase(1).getComponent(component).getFugacityCoefficient()));
-        assertEquals(0.0, logFugacityRatio, 1.0e-6);
+        assertEquals(0.0, logFugacityRatio, 1.0e-8);
       }
     }
 
