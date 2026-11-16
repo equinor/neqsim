@@ -732,6 +732,16 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | Safety Roadmap       | [docs/safety/SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP.md)     | Safety simulation roadmap   |
 | Layered Architecture | [docs/safety/layered_safety_architecture.md](safety/layered_safety_architecture.md) | Layered safety architecture |
 | Process Safety       | [docs/process/safety/README.md](process/safety/README.md)                                 | Process safety module       |
+| Closed-loop SIF verification | [docs/process/safety/closed-loop-sif-verification.md](process/safety/closed-loop-sif-verification.md) | Executed detection, voting, logic delay, and final-element response |
+| HAZOP/LOPA to SRS handoff | [docs/process/safety/hazop-lopa-srs-handoff.md](process/safety/hazop-lopa-srs-handoff.md) | IPL eligibility, LOPA arithmetic, and unapproved draft SRS traceability |
+| Integrated facility response | [docs/process/safety/integrated-facility-safety-response.md](process/safety/integrated-facility-safety-response.md) | Joined ESD, trip, relief, blowdown, flare, and process-limit evidence |
+| Live source-term sessions | [docs/process/safety/live-source-term-sessions.md](process/safety/live-source-term-sessions.md) | Versioned source frames from steady and transient process models |
+| Model-explicit release flow | [docs/process/safety/release-flow-models.md](process/safety/release-flow-models.md) | Equilibrium, finite-rate, drift-flux, and ideal/real-gas release models |
+| Safety change revalidation | [docs/process/safety/safety-change-revalidation-and-benchmarks.md](process/safety/safety-change-revalidation-and-benchmarks.md) | Lifecycle revalidation and controlled independent benchmarks |
+| SIF reliability and degraded modes | [docs/process/safety/sif-reliability-and-degraded-modes.md](process/safety/sif-reliability-and-degraded-modes.md) | PFD/PFH uncertainty, bypass, maintenance, failure, and proof-test states |
+| Source-term exchange contract | [docs/process/safety/source-term-contract.md](process/safety/source-term-contract.md) | Neutral JSON/NDJSON contract, SI quantities, diagnostics, and provenance |
+| Source-term platform status | [docs/process/safety/source-term-platform-status.md](process/safety/source-term-platform-status.md) | Delivered capabilities, evidence boundaries, and remaining acceptance criteria |
+| Source-term uncertainty | [docs/process/safety/source-term-uncertainty.md](process/safety/source-term-uncertainty.md) | Weighted joint scenarios, reproducible frames, quantiles, and validation |
 
 ### Chapter 30: Alarm Systems
 
