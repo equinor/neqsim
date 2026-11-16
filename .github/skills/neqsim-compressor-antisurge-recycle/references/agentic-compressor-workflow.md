@@ -45,6 +45,7 @@ current public signatures before constructing Java/JPype objects. The route is
 | Entry point | Responsibility |
 | --- | --- |
 | `neqsim.process.engineering.CompressorAutomationWorkflow` | Public packaged runner for strict design input, configured native cases, automation registers and coordinated DEXPI/P&ID export |
+| `neqsim.process.util.scenario.CompressorAutomationAcceptancePolicy` | Complete ordered bounds, deadlines, evaluation modes, required status and canonical policy fingerprint without physical-model mutation |
 | `neqsim.process.util.scenario.CompressorAutomationStudy` | Native train construction, exposed process/units/measurements/controllers/protection and repeatable steady/dynamic cases |
 | `neqsim.process.engineering.pid.PidNativeControlSystem` | Actual control-instrument import/binding and canonical configuration apply/readback on an isolated native copy |
 | `PidSafetyFunctionImporter` / `PidSafetyFunctionValidator` | Supported actual native safety-channel/action import and strict configured-response evidence |
@@ -66,6 +67,12 @@ are distinct artifacts. The default CLI executes every public profile; an
 explicit programmatic subset is disclosed by `allPublicProfilesSelected` and
 must not be described as the full acceptance matrix.
 
+Use `runWithAcceptancePolicy` for caller-declared acceptance. Start from
+`defaultPolicy()`, replace only existing settings with `withOverrides`, and
+retain `acceptance-policy.json` plus `acceptance-study-summary.json`. Do not
+derive or silently revise bounds from the simulated response. A policy-only
+PASS/FAIL change must retain the exact physical trajectory fingerprint.
+
 Passing an optional canonical P&ID applies supported control settings to the
 native copies and reruns current evidence. Unsupported safety-policy changes
 fail readback: change explicit native `Design` trip inputs and regenerate the
@@ -81,7 +88,7 @@ settings in the configured-copy factory; never rerun a hard-coded original
 configuration after changing the P&ID.
 
 After the normal repository Maven bootstrap, the focused software gate is
-`./mvnw -Dtest=CompressorAutomationStudyTest,PidNativeControlSystemTest,CompressorAutomationWorkflowTest test`.
+`./mvnw -Dtest=CompressorAutomationAcceptancePolicyTest,CompressorAutomationStudyTest,PidNativeControlSystemTest,CompressorAutomationWorkflowTest test`.
 When changing controller/actuator ownership, also run
 `./mvnw -Dtest=ControlsBenchmarkSuiteTest,AntiSurgeDynamicBenchmarkTest,DynamicCompressorNotebookRegressionTest test`.
 Standalone surrogates must advance the real valve and feed its actual position
