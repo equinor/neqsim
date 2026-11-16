@@ -1,6 +1,6 @@
 ---
 title: "Compressor automation engineering workflow"
-description: "Run a public natural-gas compressor model, canonical control and safety proposal, native dynamic acceptance cases and DEXPI 2.0.1 P&ID export."
+description: "Run a public natural-gas compressor model with explicit acceptance policy, canonical control and safety proposal, native dynamic cases and DEXPI 2.0.1 P&ID export."
 ---
 
 # Compressor automation engineering workflow
@@ -40,29 +40,6 @@ directory and never replace previous evidence. The main class runs every public 
 0.1 s using the model's declared 20 s duration and event at 2 s. Programmatic callers can supply an
 explicit list of `CaseDefinition` objects; `allPublicProfilesSelected` discloses subsets.
 
-### Programmatic bounded-case run
-
-The method-body example below runs one explicit healthy case instead of the full public matrix.
-The output path must not exist; use a new path for every rerun so prior evidence cannot be replaced.
-
-```java
-Design design = CompressorAutomationWorkflow.designFromJson(
-    "{\"feedFlowKgPerSecond\":6.0}");
-List<CaseDefinition> cases = Arrays.asList(
-    new CaseDefinition(Profile.NORMAL, 0.2, 8.0, 1.0));
-Path output = Paths.get("target/compressor-programmatic-example");
-Map<String, Object> status =
-    CompressorAutomationWorkflow.run(design, null, cases, output);
-
-System.out.println(status.get("nativeExecutionErrorCount"));
-System.out.println(status.get("nativeProfileCount"));
-```
-
-Expected output is `0` native execution errors and `1` selected native profile. The four
-`CaseDefinition` inputs are profile, timestep in seconds, duration in seconds and event time in
-seconds. A bounded case is useful for integration and regression work, but it does not replace the
-full public profile matrix or the engineering review gates below.
-
 The public matrix includes healthy and load-rejection control, slow/stuck recycle, held flow-signal
 faults, cooling loss, high pressure/temperature/level signals, manual ESD, unavailable driver or
 isolation/recycle final elements, a physically closing blocked export, and loss of control air to
@@ -90,6 +67,29 @@ The default mixture and map are public synthetic assumptions. Changing a design 
 that synthetic reference template; it is not a vendor-map similarity assessment or proof that an
 installed machine accepts a different duty. Vendor curves, margins, gas cases and driver limits
 must replace the assumptions in a controlled application.
+
+## Explicit scenario acceptance policy
+
+`CompressorAutomationAcceptancePolicy.defaultPolicy()` exposes the previous native criterion
+settings as a complete immutable public policy. Every public profile has one ordered criterion
+list. Each entry declares its stable criterion identity, exact unit, lower/upper bounds,
+event-relative deadline basis, evaluation mode and required/optional status. Case-horizon
+deadlines resolve explicitly from `durationSeconds - eventSeconds`; fixed deadlines are seconds
+after the initiating event.
+
+Programmatic callers use `runWithAcceptancePolicy` to execute a complete policy. They may replace
+existing criterion settings with `withOverrides`, but cannot change the native observation
+extractor, identity or unit. Unknown identities, unit mismatches, duplicate overrides, missing
+profiles/criteria, non-finite or inverted bounds and deadlines beyond a selected case horizon are
+rejected before the output directory or any physical step is created. The legacy `run` overloads
+delegate to the explicit default policy and retain their behavior.
+
+The canonical policy fingerprint is present in `acceptance-policy.json`, each native scenario,
+case result, crosswalk row and aggregate acceptance study. Policy-only changes are therefore
+reviewable and invalidate the acceptance evidence without masquerading as a physical-model
+revision. The workflow separately fingerprints the configured-copy physical sample history. The
+regression contract requires identical physical samples for identical design/event inputs even
+when a limit deliberately changes a scenario from PASS to FAIL.
 
 ## Canonical revision and fresh execution
 
@@ -121,12 +121,14 @@ on the same process graph. Coordinate configuration and execution with one owner
 | Artifact | Meaning |
 |---|---|
 | `design-input.json`, `steady-state.json` | Accepted inputs; actual stream P/T/mass/enthalpy readback and native work/heat duties |
+| `acceptance-policy.json` | Complete ordered caller-declared bounds, deadlines, modes, required status and canonical policy fingerprint |
 | `canonical-pid.json` | The proposal selected for this run; corresponding current bindings are in the native package |
 | `automation-registers.json` | Source-backed I/O, control loops, cause/effect and unresolved requirements |
 | `case-*/scenario.json`, `configuration.json` | Exact declared case and frozen actual control/safety settings |
 | `case-*/result.json`, `full-trace.json` | Native case output, quantitative metrics and actual ordered configured-copy physical samples |
 | `case-*/native-result.raw.txt` | Exact native result text, preserved independently from strict JSON normalization |
 | `native-evidence-crosswalk.json` | Native-result fingerprint and separate strict output-file SHA-256 values |
+| `acceptance-study-summary.json` | Requirement/tag/scenario/criterion/result/review traceability, status, metrics, checksums and unresolved actions |
 | `case-BLOCKED_OUTLET-*/relief-disposal.json` | Optional physical receiver depressurization and disposal result from the exact completed blocked-outlet copy |
 | `integrated-safety-study.json` | Optional requirement/tag/scenario/native-result/relief-result/review crosswalk with strict file checksums |
 | `dynamic-pid-feedback.json` | Current per-function demand/no-demand/failed/incomplete evidence without SIL credit |
@@ -151,6 +153,41 @@ receiver geometry, extracts the actual gas phase for blocked-outlet PSV screenin
 whole multiphase receiver inventory through the existing dynamic blowdown/flare calculation. It
 does not mutate the compressor result or introduce a second source-term correlation. Continuous-
 time peaks between samples remain outside this fixed-step evidence.
+
+The aggregate acceptance status uses only required criteria. A required criterion with physical
+samples is PASS or FAIL from the native evaluator. A required criterion without samples, or a case
+with retained native execution errors, is `NOT_EVALUATED`; the workflow never relabels it as FAIL
+or substitutes a passing value. Optional diagnostic failures remain visible actions without
+silently changing the required verdict. Every case retains at least the accountable engineering
+review action because simulation alone does not establish hazard completeness, SIL, installed
+independence, vendor qualification or construction approval. The summary lists the exact policy,
+project, control-configuration, native-result, physical-trajectory and strict-file fingerprints
+whose change requires a rerun and review.
+
+### Acceptance-policy separation proof
+
+The public DYN-C041 regression ran the `NORMAL` profile for 8.0 s with a 0.2 s
+physical step and event at 1.0 s. The explicit default discharge envelope
+(1.0–68.0 bara) passed. Replacing only its upper bound with 1.0 bara changed the
+required result to FAIL at event-relative time 0.0 s. Both runs retained the
+same exact configured-copy physical-trajectory fingerprint,
+`4216bf7286fe52c3fd6434ad34a95c4506c55be6c7b4ea9157afdbca2b5c20c6`.
+
+| Evidence | Default policy | Revised pressure limit |
+|---|---:|---:|
+| Aggregate status | PASS | FAIL |
+| Monitored pressure range | 59.99105–59.99842 bara | 59.99105–59.99842 bara |
+| Pressure IAE | 0.0401064 bar·s | 0.0401064 bar·s |
+| Surge-margin range | 0.497843–0.499310 | 0.497843–0.499310 |
+| Sampled constraint violations in physical KPI report | 0 | 0 |
+| Required discharge-envelope result | PASS | FAIL (36 monitored samples) |
+| Open actions | 1 engineering-review hold | 1 criterion action + 1 engineering-review hold |
+
+The native-result and aggregate-summary fingerprints changed with the policy as
+required, while exported mass (35.1893 kg after the event), temperatures,
+levels, routing and every stored physical sample remained identical. This is a
+software/traceability qualification of policy separation, not an assertion that
+the synthetic pressure limits are project requirements.
 
 For the default synthetic design, accepted-step runs at 0.1 s gave the following new-profile
 evidence. The event was at 1.0 s; blocked export ran to 12.0 s and control-air loss to 6.2 s.
@@ -230,10 +267,13 @@ requirements need controlled editions and accountable review. Missing vendor cur
 monitoring, installed independence, relief/disposal design, restart permissives and SRS/SIL/PLC
 application or construction approval remain explicit HOLDs.
 
-`CompressorAutomationWorkflowTest` verifies strict input handling, actual steady readback, native
-configured-copy execution, changed canonical anti-surge readback, separate raw/strict hashes, and
-strict JSON artifacts. The native physical model and P&ID/control tests provide their own distinct
-physics, identity, fault and layout coverage.
+`CompressorAutomationAcceptancePolicyTest` verifies complete ordered coverage, deterministic
+fingerprinting, invalid-policy rejection and exact physical-sample equality across a deliberate
+policy-only PASS-to-FAIL change. `CompressorAutomationWorkflowTest` verifies strict input handling,
+actual steady readback, native configured-copy execution, changed canonical anti-surge readback,
+separate raw/strict hashes, strict JSON artifacts and the aggregate acceptance-study checksums.
+The native physical model and P&ID/control tests provide their own distinct physics, identity,
+fault and layout coverage.
 
 See [P&ID synthesis](../../pid-design-synthesis.md),
 [closed-loop verification](closed-loop-sif-verification.md), and
