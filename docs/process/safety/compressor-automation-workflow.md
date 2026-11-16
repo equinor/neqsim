@@ -140,6 +140,9 @@ Agent-facing JSON is strict: undefined native floating-point values become `null
 and native kind retained in `nonFiniteValues`, never a substituted zero. Authoritative map-margin
 validity/reason flags remain in the native samples. Exact native text/fingerprints and normalized
 file hashes are separate quantities and must not be described as byte-identical representations.
+The generated MCP engineering-coverage inventory exposes the public acceptance-policy type to the
+compressor skill and control/rotating-equipment agents; the inventory is routing evidence, not a
+safety approval or an additional acceptance criterion.
 
 Each result computes peak/minimum, overshoot, undershoot, integral absolute error and sustained
 settling time from accepted-step samples using the declared policy. It also reports sampled
