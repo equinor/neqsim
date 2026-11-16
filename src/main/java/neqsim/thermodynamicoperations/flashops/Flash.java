@@ -232,6 +232,7 @@ public abstract class Flash extends BaseOperation {
   void discardSecondOrderSolver() {
     secondOrderSolver = null;
   }
+
   /** Set true to do solid phase check and calculations. */
   protected boolean solidCheck = false;
   protected boolean stabilityCheck = false;
