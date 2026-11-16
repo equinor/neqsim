@@ -458,10 +458,19 @@ thermodynamic station, inventory and provenance. The frame directions are respec
 `POSITIVE_PIPE_AXIS` and `NEGATIVE_PIPE_AXIS`; consumers must not add the opposing jets into one
 scalar source state. Whole-pipe mass and total energy close by summing the two branches.
 
-This is software evidence only. The topology assumes an instantaneous full-bore opening into one
-constant-pressure receiver, rigid adiabatic single-gas branches and closed remote ends. It excludes
-pipe elasticity and fluid-structure coupling, finite crack-opening dynamics, heat transfer,
-pressure coupling across the open rupture plane, finite-rate phase transfer, multiphase
+The default is an instantaneous full-bore opening. An immutable
+`ReleaseOpeningProfile.linearRamp(delaySeconds, durationSeconds)` can instead prescribe a delayed
+linear effective-area fraction shared by both branches. Each conservative CFL substep evaluates
+the fraction at its midpoint; finite ramps are divided into at least 20 internal intervals and
+split exactly at delay and full-opening boundaries. The end-of-frame fraction and the immutable
+profile code, delay and duration are retained in provenance. Tests cover exact branch
+synchronization, mass/total-energy closure and external caller-step refinement.
+
+This is software evidence only. The finite-opening profile multiplies the declared maximum
+discharge coefficient and is a prescribed sensitivity, not a fracture model. The topology retains
+one constant-pressure receiver, rigid adiabatic single-gas branches and closed remote ends. It
+excludes pipe elasticity and fluid-structure coupling, predictive crack propagation/opening, heat
+transfer, pressure coupling across the open rupture plane, finite-rate phase transfer, multiphase
 slip/entrainment and solid-bearing transport, and it has no independent experimental qualification.
 
 ## Homogeneous-equilibrium equations and station semantics

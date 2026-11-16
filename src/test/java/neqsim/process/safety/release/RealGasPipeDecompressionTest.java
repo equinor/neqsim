@@ -88,6 +88,41 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void prescribedOpeningRampIsConservativeAndFailsClosedAfterStart() {
+    RealGasPipeDecompression pipe = pipe(12);
+    RealGasPipeDecompression.ReleaseOpeningProfile profile = RealGasPipeDecompression.ReleaseOpeningProfile
+        .linearRamp(0.02, 0.04);
+    pipe.setReleaseOpeningProfile(profile);
+    assertEquals(0.0, pipe.getReleaseOpeningFraction(), 0.0);
+    assertEquals(0.0, pipe.getReleaseResult().getMassFlowRateKgS(), 0.0);
+
+    pipe.runTransient(0.01, UUID.randomUUID());
+    assertEquals(0.0, pipe.getReleasedMassKg(), 0.0);
+    assertEquals(0.0, pipe.getReleaseResult().getMassFlowRateKgS(), 0.0);
+
+    pipe.runTransient(0.02, UUID.randomUUID());
+    assertEquals(0.25, pipe.getReleaseOpeningFraction(), 1.0e-12);
+    assertTrue(pipe.getReleasedMassKg() > 0.0);
+    assertTrue(pipe.getReleaseResult().getMassFlowRateKgS() > 0.0);
+
+    pipe.runTransient(0.04, UUID.randomUUID());
+    assertEquals(1.0, pipe.getReleaseOpeningFraction(), 0.0);
+    assertEquals(pipe.getInitialMassKg(), pipe.getRemainingMassKg() + pipe.getReleasedMassKg(),
+        pipe.getInitialMassKg() * 3.0e-10);
+    assertEquals(pipe.getInitialEnergyJ(), pipe.getRemainingEnergyJ() + pipe.getReleasedEnergyJ(),
+        Math.abs(pipe.getInitialEnergyJ()) * 3.0e-10);
+    Map<String, String> provenance = pipe.getReleaseProvenance();
+    assertEquals("DELAYED_LINEAR_AREA_RAMP", provenance.get("releaseOpeningProfile"));
+    assertEquals("1.0", provenance.get("releaseOpeningFraction"));
+    assertThrows(IllegalStateException.class,
+        () -> pipe.setReleaseOpeningProfile(RealGasPipeDecompression.ReleaseOpeningProfile.instantaneous()));
+    assertThrows(IllegalArgumentException.class,
+        () -> RealGasPipeDecompression.ReleaseOpeningProfile.linearRamp(-1.0, 0.1));
+    assertThrows(IllegalArgumentException.class,
+        () -> RealGasPipeDecompression.ReleaseOpeningProfile.linearRamp(0.0, 0.0));
+  }
+
+  @Test
   void diluteLimitTracksPerfectGasFiniteVolumeBoundary() {
     SystemInterface dilute = gas(1.3);
     RealGasPipeDecompression real = new RealGasPipeDecompression("real", dilute, 20.0, 0.1, 1.0, 101325.0, 0.0, 12,

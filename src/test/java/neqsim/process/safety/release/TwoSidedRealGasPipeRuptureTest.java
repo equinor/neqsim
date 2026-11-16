@@ -7,6 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.process.processmodel.ProcessModel;
@@ -28,6 +32,11 @@ class TwoSidedRealGasPipeRuptureTest extends neqsim.NeqSimTest {
 
   private static TwoSidedRealGasPipeRupture rupture(double locationM, int cells) {
     return new TwoSidedRealGasPipeRupture("full-bore", gas(), 100.0, locationM, 0.15, 1.0, 101325.0, 0.01, cells, 0.30);
+  }
+
+  private static TwoSidedRealGasPipeRupture rampedRupture(double locationM, int cells) {
+    return new TwoSidedRealGasPipeRupture("ramped-full-bore", gas(), 100.0, locationM, 0.15, 1.0, 101325.0, 0.01, cells,
+        0.30, RealGasPipeDecompression.ReleaseOpeningProfile.linearRamp(0.02, 0.06));
   }
 
   @Test
@@ -93,6 +102,45 @@ class TwoSidedRealGasPipeRuptureTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void prescribedFiniteOpeningKeepsBranchesSynchronizedAndConservative() throws Exception {
+    double[] timeSteps = new double[] {0.04, 0.02, 0.01};
+    double[] released = new double[timeSteps.length];
+    StringBuilder receipt = new StringBuilder("caller_dt_s,released_mass_kg,mass_residual_kg,energy_residual_J\n");
+    for (int i = 0; i < timeSteps.length; i++) {
+      TwoSidedRealGasPipeRupture rupture = rampedRupture(35.0, 24);
+      ProcessSystem process = new ProcessSystem();
+      rupture.addTo(process);
+      SourceTermSession session = new SourceTermSession("opening-refinement-" + i, process);
+      rupture.registerSources(session);
+      session.runSteadyState();
+      assertEquals(0.0, rupture.getReleaseOpeningFraction(), 0.0);
+      int steps = (int) Math.round(0.12 / timeSteps[i]);
+      for (int step = 0; step < steps; step++) {
+        session.step(timeSteps[i]);
+      }
+      released[i] = rupture.getReleasedMassKg();
+      assertEquals(1.0, rupture.getReleaseOpeningFraction(), 0.0);
+      assertEquals(rupture.getLeftBranch().getSegment().getReleaseOpeningFraction(),
+          rupture.getRightBranch().getSegment().getReleaseOpeningFraction(), 0.0);
+      assertEquals(rupture.getInitialMassKg(), rupture.getRemainingMassKg() + rupture.getReleasedMassKg(),
+          rupture.getInitialMassKg() * 3.0e-10);
+      assertEquals(rupture.getInitialEnergyJ(), rupture.getRemainingEnergyJ() + rupture.getReleasedEnergyJ(),
+          Math.abs(rupture.getInitialEnergyJ()) * 3.0e-10);
+      assertEquals("DELAYED_LINEAR_AREA_RAMP",
+          rupture.getLeftBranch().getReleaseProvenance().get("releaseOpeningProfile"));
+      receipt.append(timeSteps[i]).append(',').append(released[i]).append(',')
+          .append(rupture.getRemainingMassKg() + rupture.getReleasedMassKg() - rupture.getInitialMassKg()).append(',')
+          .append(rupture.getRemainingEnergyJ() + rupture.getReleasedEnergyJ() - rupture.getInitialEnergyJ())
+          .append('\n');
+    }
+    double minimum = Math.min(released[0], Math.min(released[1], released[2]));
+    double maximum = Math.max(released[0], Math.max(released[1], released[2]));
+    assertTrue((maximum - minimum) / released[2] < 2.0e-4,
+        "finite-opening released=" + released[0] + "," + released[1] + "," + released[2]);
+    write("source-term-benchmarks", "two-sided-finite-opening-timestep-refinement.csv", receipt.toString());
+  }
+
+  @Test
   void framesRemainDistinctAndSchemaValidForBothProcessContainers() {
     for (boolean useModel : new boolean[] {false, true}) {
       TwoSidedRealGasPipeRupture rupture = rupture(35.0, 24);
@@ -138,5 +186,11 @@ class TwoSidedRealGasPipeRuptureTest extends neqsim.NeqSimTest {
         () -> new TwoSidedRealGasPipeRupture("rupture", gas(), 100.0, 50.0, 0.15, 1.0, 101325.0, 0.01, 801, 0.30));
     assertThrows(IllegalArgumentException.class,
         () -> new TwoSidedRealGasPipeRupture(" ", gas(), 100.0, 50.0, 0.15, 1.0, 101325.0, 0.01, 24, 0.30));
+  }
+
+  private static void write(String directoryName, String filename, String value) throws Exception {
+    Path directory = Paths.get("target", directoryName);
+    Files.createDirectories(directory);
+    Files.write(directory.resolve(filename), value.getBytes(StandardCharsets.UTF_8));
   }
 }
