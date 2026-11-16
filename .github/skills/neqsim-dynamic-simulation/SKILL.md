@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-15"
+last_verified: "2026-11-16"
 ---
 
 # Dynamic Simulation Guidance
@@ -19,6 +19,17 @@ initialization, both mode transitions, cache invalidation, conservation, repeate
 rollback and serialized continuation. For the heat exchanger automation workflow, configure the
 existing `HeatExchanger` and call `setDynamicModelEnabled(true)` before its initial run. See
 [the coordinated workflow](../../../docs/process/equipment/heat_exchanger_automation.md).
+
+## Pipeline phase-contact pressure balance
+
+`TwoFluidPipe` now enables the consistent phase-pressure operator by default,
+independently of Bestion stabilization. A stationary gas/oil/water contact at
+uniform pressure must have zero momentum rate. The default-pipe regression checks
+this at 2 and 200 bar. This numerical consistency fix does not qualify sustained
+phase-transfer well dynamics: issue #5066 still records loss of throughflow and
+trace-phase velocity failures. Check both held boundaries and rate changes, mass
+balance, phase inventories and mesh/time refinement before interpreting holdup.
+See [the model guide](../../../docs/wiki/two_fluid_model.md#pressure-balance-at-phase-contacts).
 
 ## When to Use Dynamic Simulation
 

@@ -3,8 +3,38 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.Test;
+import java.lang.reflect.Field;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 
 class TwoFluidVariableAreaPressureRegressionTest {
+  /**
+   * Default pipe equations must preserve a stationary phase contact without optional stabilization.
+   *
+   * @throws Exception if the pipe equation owner cannot be inspected
+   */
+  @Test
+  void defaultPipePreservesStationaryPhaseContacts() throws Exception {
+    TwoFluidPipe pipe = new TwoFluidPipe("stationary contact");
+    Field field = TwoFluidPipe.class.getDeclaredField("equations");
+    field.setAccessible(true);
+    TwoFluidConservationEquations equations = (TwoFluidConservationEquations) field.get(pipe);
+    assertFalse(equations.isEnableInterfacialPressure());
+    for (double pressure : new double[] {2.0e5, 2.0e7}) {
+      TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, 1.0), cell(1.5, 1.0, 0.1, 0.4), cell(2.5, 1.0, 0.1, 0.0)};
+      for (TwoFluidSection section : cells) {
+        section.setPressure(pressure);
+      }
+      double[][] rhs = equations.calcRHS(cells, 1.0);
+      for (int index = 0; index < cells.length; index++) {
+        for (int phase = 0; phase < 3; phase++) {
+          assertEquals(0.0, rhs[index][phase], 1.0e-12);
+          assertEquals(0.0, rhs[index][phase + 3], 1.0e-9,
+              "Constant pressure must not accelerate a stationary contact");
+        }
+      }
+    }
+  }
+
   @Test
   void stationaryPhaseContactsBalanceWithoutInterfacialStabilization() {
     TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, 1.0), cell(2.0, 2.0, 0.2, 0.4), cell(4.5, 3.0, 0.15, 0.0)};

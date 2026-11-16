@@ -1134,6 +1134,9 @@ public class TwoFluidPipe extends Pipeline {
    */
   private void initSubModels() {
     equations = new TwoFluidConservationEquations();
+    // Pressure traction must balance a stationary phase contact even when Bestion
+    // stabilization is disabled. This is a consistency term, not an extra drag law.
+    equations.setConsistentPhasePressureEnabled(true);
     timeIntegrator = new TimeIntegrator(TimeIntegrator.Method.RK4);
     timeIntegrator.setCoupledPressureMomentumGasDensityModel(GasDensityModel.POLYTROPIC);
     timeIntegrator.setCoupledPressureMomentumCheckerboardCorrectionEnabled(true);
@@ -12266,8 +12269,10 @@ public class TwoFluidPipe extends Pipeline {
    * system are ill-posed in liquid-rich flow and can develop sustained backflow, after which the outflow of that phase
    * pins at exactly zero while the inlet keeps feeding it and the inventory grows without bound. When this is true the
    * transient profile is not a solution and must be discarded, in the same way as
-   * {@link #isSteadyStatePressureFloorLimited()} for the steady solve. Gas-dominated lines do not show it;
-   * {@link #setEnableInterfacialPressure(boolean)} removes it at the cost of a much smaller CFL number.
+   * {@link #isSteadyStatePressureFloorLimited()} for the steady solve. The consistent phase-pressure operator removes
+   * artificial contact forces, but does not guarantee a stable multiphase handoff.
+   * {@link #setEnableInterfacialPressure(boolean)} adds Bestion stabilization; its effectiveness and time-step
+   * requirements must be qualified for the simulated case.
    * </p>
    *
    * @return true when at least one phase reversed at the outlet since the last steady-state solve
