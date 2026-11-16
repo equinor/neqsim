@@ -98,8 +98,8 @@ class TVFlashTest {
    */
   private static neqsim.thermo.system.SystemInterface createFreshTpFlash(
       neqsim.thermo.system.SystemInterface reference) {
-    neqsim.thermo.system.SystemInterface fresh =
-        new neqsim.thermo.system.SystemUMRPRUMCEos(reference.getTemperature(), reference.getPressure());
+    neqsim.thermo.system.SystemInterface fresh = new neqsim.thermo.system.SystemUMRPRUMCEos(reference.getTemperature(),
+        reference.getPressure());
     for (int component = 0; component < reference.getNumberOfComponents(); component++) {
       fresh.addComponent(reference.getComponent(component).getComponentName(),
           reference.getComponent(component).getNumberOfmoles());
@@ -141,9 +141,9 @@ class TVFlashTest {
       double vaporComposition = freshState.getPhase(0).getComponent(component).getx();
       double liquidComposition = freshState.getPhase(1).getComponent(component).getx();
       if (vaporComposition > 1.0e-12 && liquidComposition > 1.0e-12) {
-        double logFugacityRatio = Math.log(vaporComposition
-            * freshState.getPhase(0).getComponent(component).getFugacityCoefficient()
-            / (liquidComposition * freshState.getPhase(1).getComponent(component).getFugacityCoefficient()));
+        double logFugacityRatio = Math
+            .log(vaporComposition * freshState.getPhase(0).getComponent(component).getFugacityCoefficient()
+                / (liquidComposition * freshState.getPhase(1).getComponent(component).getFugacityCoefficient()));
         assertEquals(0.0, logFugacityRatio, 1.0e-8);
       }
     }
