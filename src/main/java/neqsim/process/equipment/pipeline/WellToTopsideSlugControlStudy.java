@@ -111,8 +111,8 @@ public final class WellToTopsideSlugControlStudy {
 
   /** Paired replay and matched-production comparison metrics. */
   public static final class ComparisonResult {
-    private final String caseId = "neqsim-5036-well-to-topside";
-    private final String outletBoundaryMode = "qualified fixed pressure";
+    private final String caseId;
+    private final String outletBoundaryMode;
     private final ReplayResult openLoop;
     private final ReplayResult regulated;
     private final double meanProductionRelativeDifference;
@@ -121,7 +121,9 @@ public final class WellToTopsideSlugControlStudy {
     private final double totalLiquidLevelRangeRelativeChange;
     private final double oilWaterInterfaceRangeRelativeChange;
 
-    private ComparisonResult(ReplayResult open, ReplayResult closed) {
+    private ComparisonResult(String replayCaseId, String boundaryMode, ReplayResult open, ReplayResult closed) {
+      caseId = replayCaseId;
+      outletBoundaryMode = boundaryMode;
       openLoop = open;
       regulated = closed;
       meanProductionRelativeDifference = relativeDifference(open.meanProduction_kg_s, closed.meanProduction_kg_s);
@@ -151,7 +153,7 @@ public final class WellToTopsideSlugControlStudy {
       double sampleIntervalSeconds) {
     ReplayResult open = runReplay(false, durationSeconds, timeStepSeconds, meshRefinement, sampleIntervalSeconds);
     ReplayResult regulated = runReplay(true, durationSeconds, timeStepSeconds, meshRefinement, sampleIntervalSeconds);
-    return new ComparisonResult(open, regulated);
+    return new ComparisonResult("neqsim-5036-well-to-topside", "qualified fixed pressure", open, regulated);
   }
 
   /**
