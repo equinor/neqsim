@@ -102,6 +102,22 @@ public class CompressorAutomationWorkflowTest {
   }
 
   /**
+   * Executes every API call in the documented bounded programmatic example.
+   *
+   * @throws IOException if the workflow cannot publish its isolated evidence
+   */
+  @Test
+  void documentedProgrammaticBoundedCaseRuns() throws IOException {
+    Design design = CompressorAutomationWorkflow.designFromJson("{\"feedFlowKgPerSecond\":6.0}");
+    List<CaseDefinition> cases = Arrays.asList(new CaseDefinition(Profile.NORMAL, 0.2, 8.0, 1.0));
+    Path output = temporary.resolve("documented-programmatic-example");
+    Map<String, Object> status = CompressorAutomationWorkflow.run(design, null, cases, output);
+
+    assertEquals(0, ((Number) status.get("nativeExecutionErrorCount")).intValue());
+    assertEquals(1, ((Number) status.get("nativeProfileCount")).intValue());
+  }
+
+  /**
    * Executes actual native cases, then proves an edited proposal reaches fresh runtime readback and artifacts.
    *
    * @throws IOException if actual artifacts cannot be written or read

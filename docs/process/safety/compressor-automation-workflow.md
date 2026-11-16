@@ -40,6 +40,29 @@ directory and never replace previous evidence. The main class runs every public 
 0.1 s using the model's declared 20 s duration and event at 2 s. Programmatic callers can supply an
 explicit list of `CaseDefinition` objects; `allPublicProfilesSelected` discloses subsets.
 
+### Programmatic bounded-case run
+
+The method-body example below runs one explicit healthy case instead of the full public matrix.
+The output path must not exist; use a new path for every rerun so prior evidence cannot be replaced.
+
+```java
+Design design = CompressorAutomationWorkflow.designFromJson(
+    "{\"feedFlowKgPerSecond\":6.0}");
+List<CaseDefinition> cases = Arrays.asList(
+    new CaseDefinition(Profile.NORMAL, 0.2, 8.0, 1.0));
+Path output = Paths.get("target/compressor-programmatic-example");
+Map<String, Object> status =
+    CompressorAutomationWorkflow.run(design, null, cases, output);
+
+System.out.println(status.get("nativeExecutionErrorCount"));
+System.out.println(status.get("nativeProfileCount"));
+```
+
+Expected output is `0` native execution errors and `1` selected native profile. The four
+`CaseDefinition` inputs are profile, timestep in seconds, duration in seconds and event time in
+seconds. A bounded case is useful for integration and regression work, but it does not replace the
+full public profile matrix or the engineering review gates below.
+
 The public matrix includes healthy and load-rejection control, slow/stuck recycle, held flow-signal
 faults, cooling loss, high pressure/temperature/level signals, manual ESD, unavailable driver or
 isolation/recycle final elements, a physically closing blocked export, and loss of control air to
