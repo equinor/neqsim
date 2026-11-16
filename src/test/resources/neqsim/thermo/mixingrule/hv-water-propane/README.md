@@ -107,14 +107,55 @@ as above. The nine pairs of flashes passed all six model assertions and
 matched both independent endpoints. Maximum balance, normalization and
 log-fugacity residuals were 1.85 × 10⁻¹⁵, 1.11 × 10⁻¹⁶ and 9.91 × 10⁻¹².
 
-The comparison supports keeping the tuple staged. The publisher's
-original propane vapor-water table and its point uncertainty remain
-missing. [Alassi et al.][alassi] provides liquid-propane experiments,
-with and without hydrates, for a different phase regime. Salt-free
-vapor/aqueous results cannot establish liquid-propane partition, ice,
-brine, hydrate dissociation or an extrapolation domain.
+## Water in the propane-rich phase
+
+[Liège's thesis][liege], Appendix 4 pp. 137–138 (PDF pages 151–152),
+reproduces the propane-rich composition reported by Kobayashi and Katz
+(1953). The [observation file](kobayashi-katz-rich-observations.csv) retains
+all 22 rows at 230, 260 and 300 °F, 252–2803 psia, verified against both
+rendered pages. The 2023 psia, 260 °F repeat retains both reported mole
+fractions. The table gives water directly as a mole fraction and propane
+in ppm. The replay checks their decimal sum. This route bypasses the mass
+per standard volume ambiguity in Yushchenko's thesis Appendix G. The
+original ACS pages and rich-phase measurement uncertainties remain
+unavailable. The DTU PDF inspected had SHA-256
+`5f37e4225830657439208ee4bc5e547b8e23af263d67ceccaa8c7a1ad8779801`.
+
+The reproduction groups these readings under propane-rich liquid. Their
+temperatures are above pure propane's critical temperature, and the
+modeled propane-rich roots range from $Z=0.336$ to $0.864$, including
+dense states. Report them as propane-rich water observations. The
+calculated aqueous endpoints at these coordinates have no paired
+measured aqueous values in these tables. The 2016 fit cites the same
+1953 experiment. Source overlap and missing point uncertainties prevent
+an independent forward accuracy acceptance claim.
+
+Add `--dataset kobayashi-katz-rich` to the Python replay to reproduce the
+[declared-input results](kobayashi-katz-rich-assessment.csv). Combine it
+with `--match-water-pressure` for the [IAPWS pressure control](kobayashi-katz-rich-water-pressure-control.csv).
+The 21 in-window observations give 6.26% AARD (signed errors −17.79% to
++20.55%) and 7.89% with the local pure-water pressure control. Replacing
+only propane properties with [Yushchenko's thesis][yushchenko] Table 1.1
+values (369.80 K, 42.46 bara, 0.1524) via `--thesis-propane` gives 6.25%
+unadjusted and 7.88% with water pressure matched. The author's water pure
+inputs remain unavailable. Both controls preserve the directed binary tuple.
+
+The [native flash receipt](kobayashi-katz-rich-native-assessment.csv) uses
+equimolar synthetic feeds on master `84db257c53beb2a65ebd5dde0e074a8705ec6909`.
+At the 22 rows, native calculations match both independent
+phase endpoints and compressibility factors within 5 × 10⁻⁸ relative
+(10⁻¹³ floor), with the same six thermodynamic assertions as above in fresh
+and retained reversed-order sequences. Maximum balance, normalization and
+log-fugacity residuals were 2.45 × 10⁻¹⁵, 1.12 × 10⁻¹⁶ and 2.33 × 10⁻¹¹.
+
+The profile remains staged. [Alassi et al.][alassi] supplies a separate
+liquid-propane and hydrate measurement regime. This salt-free comparison
+covers neither inhibitor partition nor independent hydrate dissociation.
+Ice, brine and extrapolation also require separate evidence.
 
 [tuple]: https://doi.org/10.1016/j.fluid.2015.09.029
 [compilation]: https://srdata.nist.gov/solubility/IUPAC/SDS-24/SDS-24-pages_39.pdf
 [propane-psat]: https://webbook.nist.gov/cgi/cbook.cgi?Name=propane&cTP=on
 [alassi]: https://doi.org/10.1016/j.jngse.2022.104732
+[liege]: https://backend.orbit.dtu.dk/ws/files/2494315/Xavier%20Liege%2C%20ph.d..pdf
+[yushchenko]: https://mai.ru/upload/iblock/fca/kandidatskaya-dissertatsiya_yushchenko-t.s..pdf

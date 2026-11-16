@@ -800,7 +800,7 @@
     "limits": "First liquid point outside compiler U95; two points below MEG alpha fit range; no PR transfer/reverse partition/hydrate/ice/brine qualification"
   },
   "PR_water_propane_reverse_assessment": {
-    "status": "staged research, measured reverse direction only",
+    "status": "staged research, separate aqueous and propane-rich measurements",
     "tuple_doi": "10.1016/j.fluid.2015.09.029",
     "measurement_doi": "10.1021/ie50518a051",
     "measurement_version": "IUPAC SDS-24 compiler page 46, PDF page 8, visually verified",
@@ -818,7 +818,17 @@
       "uncertainty": "IUPAC page 40 estimates 1% pressure and 2% relative aqueous composition error. Temperature error and point confidence intervals are unavailable. IUPAC evaluation classifies the dataset as tentative.",
       "observations_file": "hv-water-propane/azarnoosh-mcketta-observations.csv"
     },
-    "vapor_water": "calculated endpoint only; primary measured values and uncertainty unresolved",
+    "propane_rich_water_assessment": {
+      "source": "Kobayashi and Katz (1953), reproduced in Liège (2006) Appendix 4, pp. 137–138, PDF pages 151–152. Reported rich-phase mole fractions were image-verified in the reproduction.",
+      "observations_file": "hv-water-propane/kobayashi-katz-rich-observations.csv",
+      "observations": 22,
+      "within_nominal_fitted_TP": 21,
+      "temperature_K": [383.15, 422.0388888888889],
+      "absolute_pressure_bar": [17.37478837878336, 193.26004692749902],
+      "in_window_AARD_percent": 6.255949958395845,
+      "in_window_AARD_with_local_water_pressure_control_percent": 7.890965787504777,
+      "limits": "Original table, point uncertainty, and phase labels unavailable. Reproduction calls the phase propane-rich liquid. The fit cites this experiment. Observations are at separate coordinates from the aqueous datasets."
+    },
     "protocol": "hv-water-propane/README.md"
   },
   "frost_methane_bidirectional": {
