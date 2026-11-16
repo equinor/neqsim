@@ -16,6 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class OptimizedVUflashThreePhaseRecoveryTest {
+  private static final int MAXIMUM_RECOVERY_FLASH_COUNT = 1 + 10 * (4 + 8);
   private static final String[] COMPONENTS = {"methane", "ethane", "propane", "n-pentane", "n-heptane", "nC10",
       "water"};
   // The standard path and the recovery path may converge to the same state on different JVMs.
@@ -82,6 +83,44 @@ class OptimizedVUflashThreePhaseRecoveryTest {
   private static void assertRecovered(double[] moles, double totalMoles, double initialPressure,
       double initialTemperature, double targetVolume, double targetEnergy, double referencePressure,
       double referenceTemperature) {
+    SystemInterface directFluid = createFluid(moles, totalMoles, initialPressure, initialTemperature);
+    OptimizedVUflash directRecovery = new OptimizedVUflash(directFluid, targetVolume, targetEnergy);
+    boolean directWarmStart = ThermodynamicModelSettings.isUseWarmStartKValues();
+    assertTrue(directRecovery.recoverFromInitialEquilibrium(initialPressure, initialTemperature),
+        "The detached recovery algorithm must close the captured state directly");
+    assertEquals(directWarmStart, ThermodynamicModelSettings.isUseWarmStartKValues());
+    assertTrue(directRecovery.wasEquilibriumRecoveryUsed());
+    assertTrue(directRecovery.getEquilibriumRecoveryFlashCount() > 0);
+    assertTrue(directRecovery.getEquilibriumRecoveryFlashCount() <= MAXIMUM_RECOVERY_FLASH_COUNT);
+    assertRecoveredState(directFluid, moles, targetVolume, targetEnergy, referencePressure, referenceTemperature);
+
+    SystemInterface fluid = createFluid(moles, totalMoles, initialPressure, initialTemperature);
+    boolean originalWarmStart = ThermodynamicModelSettings.isUseWarmStartKValues();
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.VUflash(targetVolume, targetEnergy, "m3", "J");
+    OptimizedVUflash flash = (OptimizedVUflash) operations.getOperation();
+    assertTrue(flash.isLastRunConverged(), "The physical three-phase VU state must be recovered");
+    assertEquals(originalWarmStart, ThermodynamicModelSettings.isUseWarmStartKValues());
+    if (flash.wasEquilibriumRecoveryUsed()) {
+      assertTrue(flash.getEquilibriumRecoveryFlashCount() > 0);
+      assertTrue(flash.getEquilibriumRecoveryFlashCount() <= MAXIMUM_RECOVERY_FLASH_COUNT);
+    } else {
+      assertEquals(0, flash.getEquilibriumRecoveryFlashCount());
+    }
+    assertRecoveredState(fluid, moles, targetVolume, targetEnergy, referencePressure, referenceTemperature);
+  }
+
+  /**
+   * Build the captured three-phase vessel state before its VU solve.
+   *
+   * @param moles conserved component inventory in mol
+   * @param totalMoles vessel total after its last inventory update in mol
+   * @param initialPressure incoming pressure in bara
+   * @param initialTemperature incoming temperature in K
+   * @return initialized vessel fluid
+   */
+  private static SystemInterface createFluid(double[] moles, double totalMoles, double initialPressure,
+      double initialTemperature) {
     SystemInterface fluid = new SystemSrkEos(initialTemperature, initialPressure);
     for (int component = 0; component < COMPONENTS.length; component++) {
       fluid.addComponent(COMPONENTS[component], moles[component]);
@@ -89,18 +128,26 @@ class OptimizedVUflashThreePhaseRecoveryTest {
     fluid.setMixingRule("classic");
     fluid.setMultiPhaseCheck(true);
     fluid.init(0);
-    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-    operations.TPflash();
+    new ThermodynamicOperations(fluid).TPflash();
     fluid.init(2);
     assertEquals(3, fluid.getNumberOfPhases());
     // Reproduce a vessel entering the VU step with a prior equilibrium and a refreshed mole inventory.
     fluid.setTotalNumberOfMoles(totalMoles);
+    return fluid;
+  }
 
-    boolean originalWarmStart = ThermodynamicModelSettings.isUseWarmStartKValues();
-    operations.VUflash(targetVolume, targetEnergy, "m3", "J");
-    OptimizedVUflash flash = (OptimizedVUflash) operations.getOperation();
-    assertTrue(flash.isLastRunConverged(), "The physical three-phase VU state must be recovered");
-    assertEquals(originalWarmStart, ThermodynamicModelSettings.isUseWarmStartKValues());
+  /**
+   * Verify the accepted state, phase set and conserved inventory.
+   *
+   * @param fluid recovered vessel fluid
+   * @param moles conserved component inventory in mol
+   * @param targetVolume vessel volume in m3
+   * @param targetEnergy vessel internal energy in J
+   * @param referencePressure pressure from a detached reference solve in bara
+   * @param referenceTemperature temperature from a detached reference solve in K
+   */
+  private static void assertRecoveredState(SystemInterface fluid, double[] moles, double targetVolume,
+      double targetEnergy, double referencePressure, double referenceTemperature) {
     assertEquals(targetVolume, fluid.getVolume("m3"), RELATIVE_TOLERANCE * targetVolume);
     assertEquals(targetEnergy, fluid.getInternalEnergy(), RELATIVE_TOLERANCE * Math.abs(targetEnergy));
     assertEquals(referencePressure, fluid.getPressure("bara"), STATE_TOLERANCE);

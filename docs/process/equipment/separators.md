@@ -870,7 +870,11 @@ equilibrium polish stage (`OptimizedVUflash.wasEquilibriumPolishUsed()`), which 
 specification for pressure along a constant-volume path. For rejected states a
 second equilibrium search near the incoming pressure and temperature can recover
 a gas–oil–water vessel step. The accepted state still has to close both the
-volume and internal-energy specifications.
+volume and internal-energy specifications. Inspect
+`OptimizedVUflash.wasEquilibriumRecoveryUsed()` and
+`getEquilibriumRecoveryFlashCount()` when diagnosing a slow vessel step. The
+detached search has a fixed iteration and TP-flash bound; a zero count means the
+ordinary solve or constant-volume polish accepted the state first.
 
 The reported level stops at the minimum headspace (5 % of the vessel volume, a level of about 0.90 for
 a horizontal vessel and 0.95 for a vertical one). A vessel that keeps receiving more liquid than it

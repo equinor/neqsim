@@ -76,6 +76,10 @@ public class OptimizedVUflash extends Flash {
   private static final double RECOVERY_MIN_DETERMINANT = 1.0e-14;
   /** Whether the most recent run needed the equilibrium polish stage. */
   private volatile boolean equilibriumPolishUsed = false;
+  /** Whether the most recent run attempted detached equilibrium recovery. */
+  private boolean equilibriumRecoveryUsed = false;
+  /** Number of detached TP flashes used by the most recent equilibrium recovery. */
+  private int equilibriumRecoveryFlashCount = 0;
 
   /**
    * Constructor for OptimizedVUflash.
@@ -375,6 +379,8 @@ public class OptimizedVUflash extends Flash {
     double startTemperature = system.getTemperature();
     coldFallbackUsed = false;
     equilibriumPolishUsed = false;
+    equilibriumRecoveryUsed = false;
+    equilibriumRecoveryFlashCount = 0;
     try {
       // Every Newton-loop TP flash may reuse K-values. The initialization flash does so only when
       // the caller identifies the state as the previous point on a continuous dynamic trajectory.
@@ -440,6 +446,31 @@ public class OptimizedVUflash extends Flash {
    */
   public boolean wasEquilibriumPolishUsed() {
     return equilibriumPolishUsed;
+  }
+
+  /**
+   * Returns whether the most recent solve attempted detached equilibrium recovery after the regular VU solve and
+   * constant-volume polish both missed their acceptance criteria.
+   *
+   * @return true when detached equilibrium recovery was attempted
+   */
+  public boolean wasEquilibriumRecoveryUsed() {
+    return equilibriumRecoveryUsed;
+  }
+
+  /**
+   * Returns the number of detached TP flashes used by the most recent equilibrium recovery.
+   *
+   * <p>
+   * The value is zero when recovery was not attempted. Recovery is bounded by one seed flash plus four central
+   * difference flashes and at most {@value #RECOVERY_MAX_BACKTRACKS} backtracking flashes for each of at most
+   * {@value #RECOVERY_MAX_ITERATIONS} Newton iterations.
+   * </p>
+   *
+   * @return detached TP flash count
+   */
+  public int getEquilibriumRecoveryFlashCount() {
+    return equilibriumRecoveryFlashCount;
   }
 
   /**
@@ -611,30 +642,37 @@ public class OptimizedVUflash extends Flash {
    * @param initialTemperature incoming temperature in K
    * @return whether the recovered state satisfies both specifications
    */
-  private boolean recoverFromInitialEquilibrium(double initialPressure, double initialTemperature) {
+  boolean recoverFromInitialEquilibrium(double initialPressure, double initialTemperature) {
+    equilibriumRecoveryUsed = true;
+    equilibriumRecoveryFlashCount = 0;
     if (!validateInputs() || !Double.isFinite(Vspec) || !withinFlashBounds(initialPressure, initialTemperature)) {
       return false;
     }
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
-    SystemInterface seed = system.clone();
-    SystemInterface trial = coldEquilibrium(seed, initialPressure, initialTemperature);
-    double[] residual = equilibriumResidual(trial);
-    for (int iteration = 0; iteration < RECOVERY_MAX_ITERATIONS && !meetsPolishTolerances(residual); iteration++) {
-      double[] step = equilibriumNewtonStep(seed, trial, residual);
-      if (step == null) {
+    boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      SystemInterface seed = system.clone();
+      SystemInterface trial = coldEquilibrium(seed, initialPressure, initialTemperature);
+      double[] residual = equilibriumResidual(trial);
+      for (int iteration = 0; iteration < RECOVERY_MAX_ITERATIONS && !meetsPolishTolerances(residual); iteration++) {
+        double[] step = equilibriumNewtonStep(seed, trial, residual);
+        if (step == null) {
+          return false;
+        }
+        trial = decreaseEquilibriumResidual(seed, trial, step, Math.hypot(residual[0], residual[1]));
+        if (trial == null) {
+          return false;
+        }
+        residual = equilibriumResidual(trial);
+      }
+      if (!meetsPolishTolerances(residual)) {
         return false;
       }
-      trial = decreaseEquilibriumResidual(seed, trial, step, Math.hypot(residual[0], residual[1]));
-      if (trial == null) {
-        return false;
-      }
-      residual = equilibriumResidual(trial);
+      installEquilibrium(system, trial);
+      return meetsPolishTolerances(equilibriumResidual(system)) && isSolutionAcceptable();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
     }
-    if (!meetsPolishTolerances(residual)) {
-      return false;
-    }
-    installEquilibrium(system, trial);
-    return meetsPolishTolerances(equilibriumResidual(system)) && isSolutionAcceptable();
   }
 
   /**
@@ -729,7 +767,8 @@ public class OptimizedVUflash extends Flash {
    * @param temperature trial temperature in K
    * @return trial thermodynamic state
    */
-  private static SystemInterface coldEquilibrium(SystemInterface seed, double pressure, double temperature) {
+  private SystemInterface coldEquilibrium(SystemInterface seed, double pressure, double temperature) {
+    equilibriumRecoveryFlashCount++;
     SystemInterface trial = seed.clone();
     trial.setPressure(pressure);
     trial.setTemperature(temperature);

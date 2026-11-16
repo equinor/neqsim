@@ -898,7 +898,10 @@ between these equilibria include changes in phase fractions and composition.
 Inner TP flashes retain the specified component inventory when a trace phase
 is removed. The recovered state must satisfy both volume and internal-energy specifications
 before publication. The recovery uses the existing polish tolerances. Flashes
-that converge earlier return through the existing path.
+that converge earlier return through the existing path. Runtime diagnostics
+`wasEquilibriumRecoveryUsed()` and `getEquilibriumRecoveryFlashCount()`
+distinguish that bounded fallback from the ordinary solve without changing its
+acceptance criteria.
 Applications requiring stricter volume/energy closure must check both residuals
 and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).
 `VUCaloricStateQualificationTest` checks independently configured SRK/PR,
