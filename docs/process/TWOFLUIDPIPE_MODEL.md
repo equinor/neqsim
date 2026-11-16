@@ -3595,3 +3595,6 @@ A supporting 100 s run with the outer reporting/advance interval reduced from 0.
 43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
 not yet numerically or experimentally qualified for severe-slug predictions.
 
+
+The [vertical-well qualification](twofluid_vertical_well_qualification.md) provides the complete
+synthetic input, executable replay, conservation evidence and limits of this transient case.
