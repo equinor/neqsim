@@ -546,7 +546,7 @@ initialization and rollback checks remain mandatory.
 `TVFlashTest.testTVflash` reconstructs the later state twice without cached
 solver history. Both fresh calculations must recover two phases, normalized
 phase fractions and compositions, component material balance within `1e-8`,
-interphase log-fugacity equality within `1e-6`, deterministic Gibbs energy and
+interphase log-fugacity equality within `1e-8`, deterministic Gibbs energy and
 phase fraction, and no Gibbs increase relative to the history-assisted TV
 state.
 
