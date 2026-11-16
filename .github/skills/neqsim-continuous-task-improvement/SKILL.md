@@ -1,7 +1,7 @@
 ---
 name: neqsim-continuous-task-improvement
 description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/cycle/solve/resume/update/backtest/schedule/loop/promote/report/ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, rerun only affected calculations on new evidence, backtest and tune drift settings, track model parameters with an EnKF/EnIF calibrate stage, rank actions by value of information, or issue a reviewed Final Report."
-last_verified: "2026-10-18"
+last_verified: "2026-11-17"
 ---
 
 # Continuous Task Improvement (Living Tasks)
@@ -281,6 +281,19 @@ writes to a control system and every proposal carries `requires_approval`.
   `margin` tightens the limit (use the lab-vs-model scatter for a product spec; for equipment use
   `demonstrated_limit(history, quantile, design)` = larger of design and experience). A hard constraint
   with no `limit` is **unconfirmed** and withholds all advice. Slack becomes the KPI `slack_<name>`.
+  When the plant already runs past a limit (an equipment load above design, a product spec already
+  exceeded), every proposal would be withheld. Set `no_worse_than_current: true` (and optionally
+  `current_tolerance`) on that constraint: the guard then holds predictions to the measured value of the
+  same KPI in this cycle (`ctx.kpis`), so advice can move other levers without making the breach worse.
+  The `constraints` stage still reports the breach; `guard.json` lists the relaxed limits in
+  `held_at_current`. Measured on Snorre A (Nov 2026): without it, a 0.002 bara RVP excursion withheld a
+  verified +393 Sm3/d plan.
+- **Daily report from a stage.** A script stage placed after `guard` can write `continuous/daily/<date>.json`
+  (headline, verdict, what_changed, new_evidence, decisions, open_points) from the guard-passed proposals
+  (`p.get("guard") == "passed"`); write it only in live, non-dry-run cycles so backtests do not overwrite
+  the report. Proposals that need a human decision but are not setpoints (an equipment-limit review, a
+  routing switch) belong in the entry's `decisions`, not in `ctx.proposals`: the ledger rejects
+  non-guard-passed proposals once the guard has run.
 - **Proposals** must carry finite numeric `setpoints`, `expected_gain`, `predicted` (a value for every
   hard-constrained KPI), and `optimizer_evidence`. Evidence must name the current `ctx.cycle_id` and set
   `simulation_converged`, `candidate_feasible`, `candidate_finite`, `constraint_evidence_complete`, `state_restore_complete`,

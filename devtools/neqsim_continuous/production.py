@@ -73,6 +73,24 @@ def slack(constraint, value):
     return limit - value if constraint.get("op", "<=") in UPPER else value - limit
 
 
+def held_limit(constraint, current):
+    """Limit a proposal is held to: the effective limit, or "no worse than today" when the plant already breaches it.
+
+    With ``no_worse_than_current: true`` on a goal constraint and a measured ``current`` value that is already past the
+    effective limit, an upper limit becomes ``current + current_tolerance`` (a lower limit ``current -
+    current_tolerance``). Advice can then still move other levers without making that breach worse. Without the flag,
+    or when the plant is inside the limit, this is the effective limit.
+    """
+    limit = effective_limit(constraint)
+    if limit is None or not constraint.get("no_worse_than_current") or not _number(current):
+        return limit
+    tolerance = constraint.get("current_tolerance", 0.0)
+    tolerance = float(tolerance) if _number(tolerance) and tolerance >= 0 else 0.0
+    if constraint.get("op", "<=") in UPPER:
+        return max(limit, float(current) + tolerance)
+    return min(limit, float(current) - tolerance)
+
+
 def evaluate_constraints(constraints, values):
     """Evaluate goal constraints against KPI values; one row per constraint.
 
@@ -2487,6 +2505,12 @@ def guard(ctx, spec):
     hard = [c for c in (ctx.goal.get("constraints") or [])
             if isinstance(c, dict) and c.get("kpi") and c.get("hard", True) and effective_limit(c) is not None]
     accepted, withheld = [], []
+    current = getattr(ctx, "kpis", None) or {}
+    held = {}
+    for constraint in hard:
+        limit = held_limit(constraint, current.get(constraint["kpi"]))
+        if limit != effective_limit(constraint):
+            held[constraint.get("name") or constraint["kpi"]] = {"limit": effective_limit(constraint), "held_at": limit}
     for proposal in ctx.proposals:
         reasons = list(ctx.guard_blocks)
         if invalid_min_gain:
@@ -2528,7 +2552,10 @@ def guard(ctx, spec):
                       and settings.get("require_map_driver_migration_evidence") is True)))
         for constraint in hard:
             name = constraint.get("name") or constraint["kpi"]
-            room = slack(constraint, predicted.get(constraint["kpi"]))
+            value = predicted.get(constraint["kpi"])
+            limit = held.get(name, {}).get("held_at", effective_limit(constraint))
+            room = None if not _number(value) else (
+                limit - value if constraint.get("op", "<=") in UPPER else value - limit)
             if room is None:
                 reasons.append("no_prediction:{}".format(name))
             elif room < 0:
@@ -2540,7 +2567,8 @@ def guard(ctx, spec):
     ctx.proposals = accepted
     ctx.guarded_proposals = {_proposal_snapshot(proposal) for proposal in accepted}
     write_json(os.path.join(ctx.cycle_dir, "guard.json"), {"accepted": [p.get("title") for p in accepted],
-                                                            "withheld": withheld, "blocks": list(ctx.guard_blocks)})
+                                                            "withheld": withheld, "blocks": list(ctx.guard_blocks),
+                                                            "held_at_current": held})
     _section(ctx, "Proposals withheld", ["{} ({})".format(w["title"], ", ".join(w["reasons"])) for w in withheld])
     triggers = ["proposals_withheld"] if withheld else []
     return StageResult("guard", "ok", outputs=["guard.json"], triggers=triggers,
