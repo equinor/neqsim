@@ -147,9 +147,7 @@ public final class TwoSidedRealGasPipeRupture {
   }
 
   /** @return live right-branch process equipment */
-  @SuppressFBWarnings(
-      value = "EI_EXPOSE_REP",
-      justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The branch is live process equipment added by addTo; copying would detach its transient state")
   public Branch getRightBranch() {
     return rightBranch;
   }
