@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,10 @@ class OptimizedVUflashThreePhaseRecoveryTest {
   private static final double RELATIVE_TOLERANCE = 1.0e-6;
   private static final double STATE_TOLERANCE = 5.0e-5;
 
-  /** A small inventory update near a valid three-phase state previously failed volume closure by 1.83%. */
+  /**
+   * A small inventory update near a valid three-phase state previously failed volume closure by 1.83%: a stale Newton
+   * state in the reused inner TP flash merged gas and oil, and the Q-function iteration cycled between phase sets.
+   */
   @Test
   void closesBothSpecificationsAfterThreePhaseInventoryUpdate() {
     double[] moles = {37705.789308905780, 5446.1472769755470, 5294.7532396646775, 15522.445191714109,
@@ -84,7 +88,8 @@ class OptimizedVUflashThreePhaseRecoveryTest {
       double initialTemperature, double targetVolume, double targetEnergy, double referencePressure,
       double referenceTemperature) {
     SystemInterface directFluid = createFluid(moles, totalMoles, initialPressure, initialTemperature);
-    OptimizedVUflash directRecovery = new OptimizedVUflash(directFluid, targetVolume, targetEnergy);
+    // The constructor takes NeqSim's internal volume unit (1e-5 m3), as ThermodynamicOperations.VUflash converts it.
+    OptimizedVUflash directRecovery = new OptimizedVUflash(directFluid, targetVolume * 1.0e5, targetEnergy);
     boolean directWarmStart = ThermodynamicModelSettings.isUseWarmStartKValues();
     assertTrue(directRecovery.recoverFromInitialEquilibrium(initialPressure, initialTemperature),
         "The detached recovery algorithm must close the captured state directly");
@@ -101,12 +106,11 @@ class OptimizedVUflashThreePhaseRecoveryTest {
     OptimizedVUflash flash = (OptimizedVUflash) operations.getOperation();
     assertTrue(flash.isLastRunConverged(), "The physical three-phase VU state must be recovered");
     assertEquals(originalWarmStart, ThermodynamicModelSettings.isUseWarmStartKValues());
-    if (flash.wasEquilibriumRecoveryUsed()) {
-      assertTrue(flash.getEquilibriumRecoveryFlashCount() > 0);
-      assertTrue(flash.getEquilibriumRecoveryFlashCount() <= MAXIMUM_RECOVERY_FLASH_COUNT);
-    } else {
-      assertEquals(0, flash.getEquilibriumRecoveryFlashCount());
-    }
+    // With a correctly re-seeded inner TP flash the ordinary Newton solve closes these states; no fallback is needed.
+    assertFalse(flash.wasEquilibriumRecoveryUsed(), "ordinary VU solve must close the captured state");
+    assertFalse(flash.wasEquilibriumPolishUsed(), "ordinary VU solve must close the captured state");
+    assertEquals(0, flash.getEquilibriumRecoveryFlashCount());
+    assertTrue(flash.getLastIterationCount() <= 20, "iterations=" + flash.getLastIterationCount());
     assertRecoveredState(fluid, moles, targetVolume, targetEnergy, referencePressure, referenceTemperature);
   }
 

@@ -517,6 +517,18 @@ $$J_{ij} = \frac{\partial f_i}{\partial u_j} = \frac{1}{\beta}\left(\frac{\delta
 
 See [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) for the full implementation.
 
+**Solver reuse.** `TPflash` caches this solver and calls `setSystem` instead
+of re-allocating the Jacobian buffers on later Newton steps and later runs of
+the same instance. `setSystem` refreshes the feed composition **and**
+re-seeds the unknowns $\mathbf{u} = \beta \mathbf{y}$ from the system's
+current phase split, exactly as the constructor does. Without the re-seed,
+the first Newton step of a reused instance starts from the previous flash's
+solution, at another pressure and temperature and possibly another phase pair.
+`init()` then writes that stale split back onto the system. In a three-phase
+VU flash this merged gas and oil into one phase with higher Gibbs energy.
+`SysNewtonRhapsonTPflashRebindTest` checks that re-binding preserves the
+current split.
+
 ---
 
 ## 2. Stability Analysis

@@ -22,6 +22,20 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Caloric initialization on the returned TP state, reused by the next iteration</li>
  * </ul>
  *
+ * <p>
+ * Each stage runs only if the previous one did not close the volume and internal-energy specification, cheapest
+ * first:
+ * </p>
+ * <ol>
+ * <li>Q-function Newton iteration, abandoned after {@value #STAGNATION_LIMIT} iterations without a new best residual
+ * and returning its best iterate rather than its last one.</li>
+ * <li>A cold retry of that iteration when a warm-started initialization was requested.</li>
+ * <li>Detached equilibrium recovery: a two-variable Newton on independent cold TP equilibria from the incoming
+ * state ({@link #wasEquilibriumRecoveryUsed()}).</li>
+ * <li>The constant-volume equilibrium polish ({@link #wasEquilibriumPolishUsed()}), the most robust and most
+ * expensive stage.</li>
+ * </ol>
+ *
  * @author GitHub Copilot
  * @version $Id: $Id
  */
@@ -44,6 +58,12 @@ public class OptimizedVUflash extends Flash {
   private static final double FAST_CONV_TOL = 1e-6; // Relaxed tolerance for fast convergence
   private static final double DERIVATIVE_THRESHOLD = 1e-12;
   private static final int MAX_ITERATIONS = 100;
+  /**
+   * Consecutive Newton iterations without a new best specification residual after which the iteration is abandoned. A
+   * converging run improves its best residual almost every iteration; a run that has not done so for this many
+   * iterations is cycling (for example between two phase sets) and the remaining iterations are wasted work.
+   */
+  private static final int STAGNATION_LIMIT = 25;
   private static final double MIN_DAMPING = 0.05;
   private static final double MAX_DAMPING = 0.8;
   /** Relative volume residual accepted as a converged VU solution. */
@@ -220,6 +240,11 @@ public class OptimizedVUflash extends Flash {
     // Track convergence quality
     double lastError = Double.MAX_VALUE;
     int stagnationCount = 0;
+    // Best iterate by specification residual, restored if the iteration does not converge.
+    double bestResidual = Double.POSITIVE_INFINITY;
+    double bestPres = Double.NaN;
+    double bestTemp = Double.NaN;
+    int iterationsSinceBest = 0;
 
     try {
       // Volume, Cp and temperature/pressure derivatives require level two, not composition derivatives.
@@ -284,6 +309,16 @@ public class OptimizedVUflash extends Flash {
           break;
         }
 
+        double specificationResidual = Math.max(volErr, hErr);
+        if (specificationResidual < bestResidual) {
+          bestResidual = specificationResidual;
+          bestPres = nyPres;
+          bestTemp = nyTemp;
+          iterationsSinceBest = 0;
+        } else if (++iterationsSinceBest >= STAGNATION_LIMIT) {
+          break;
+        }
+
         // Adaptive damping and tolerance
         if (totalError < lastError) {
           damping = Math.min(MAX_DAMPING, damping * 1.1); // Increase damping
@@ -315,6 +350,11 @@ public class OptimizedVUflash extends Flash {
       } else {
         logger.warn("OptimizedVUflash did not converge after " + iterations + " iterations");
         isWellBehaved = false;
+        if (Double.isFinite(bestPres) && (bestPres != nyPres || bestTemp != nyTemp)) {
+          // Hand the best iterate, not the last one, to the acceptance check and the fallback stages.
+          restoreIterate(bestPres, bestTemp);
+          nyPres = bestPres;
+        }
       }
     } catch (Exception e) {
       lastIterationCount = iterations;
@@ -324,6 +364,26 @@ public class OptimizedVUflash extends Flash {
     }
 
     return nyPres;
+  }
+
+  /**
+   * Re-flash the system at a previously visited Newton iterate from a cold start, so that the restored phase split does
+   * not depend on the K-values of the iterate that was abandoned.
+   *
+   * @param pressure iterate pressure in bara
+   * @param temperature iterate temperature in K
+   */
+  private void restoreIterate(double pressure, double temperature) {
+    boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      system.setPressure(pressure);
+      system.setTemperature(temperature);
+      tpFlash.run();
+      system.init(2);
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
+    }
   }
 
   /**
@@ -407,20 +467,22 @@ public class OptimizedVUflash extends Flash {
         solutionAcceptable = isSolutionAcceptable();
       }
       if (!solutionAcceptable && isFiniteState()) {
-        // The Q-function Newton step uses frozen-composition derivatives. Close to a bubble point (a small gas cap
-        // in a liquid-filled vessel) these understate dV/dP several-fold because they ignore evaporation, so the
-        // damped iteration oscillates and stalls a few per mille from the solution, or jumps into the single-phase
-        // region where V(P) is almost flat. Polish from the last iterate along the constant-volume path.
-        equilibriumPolishUsed = true;
-        polishOnConstantVolumePath();
-        solutionAcceptable = isSolutionAcceptable();
-      }
-      if (!solutionAcceptable && isFiniteState()) {
+        // The Q-function Newton step uses frozen-composition derivatives, which miss phase-fraction and composition
+        // changes. Try the cheap fallback first: a two-variable Newton on independent cold TP equilibria from the
+        // incoming state. It leaves the system untouched unless it publishes an accepted state.
         try {
           solutionAcceptable = recoverFromInitialEquilibrium(startPressure, startTemperature);
         } catch (RuntimeException failure) {
           logger.debug("Detached equilibrium VU recovery failed", failure);
         }
+      }
+      if (!solutionAcceptable && isFiniteState()) {
+        // Close to a bubble point (a small gas cap in a liquid-filled vessel) the frozen derivatives understate dV/dP
+        // several-fold, and the detached Newton can stall at the kink in V(P). Polish from the best Newton iterate
+        // along the constant-volume path; this bracketing search is the most robust but also the most expensive stage.
+        equilibriumPolishUsed = true;
+        polishOnConstantVolumePath();
+        solutionAcceptable = isSolutionAcceptable();
       }
       lastRunConverged = solutionAcceptable;
       if (!solutionAcceptable) {

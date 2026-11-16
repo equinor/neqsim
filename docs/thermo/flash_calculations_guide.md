@@ -891,20 +891,48 @@ derivatives require level two; the VU update does not consume composition-deriva
 matrices. Returned enthalpy and internal energy therefore refer to the final
 TP state, rather than caloric caches retained from a preceding iterate.
 
-The main solve retains its update equations, damping, bounds and stopping criteria.
-If the constant-volume polish also fails, the solver searches near the incoming
-pressure and temperature using independent cold TP equilibria. The differences
-between these equilibria include changes in phase fractions and composition.
+The main solve keeps its update equations, damping, bounds and stopping
+criteria. If it has not found a new best volume/energy residual for 25
+iterations it stops, and it always returns its best iterate rather than its
+last one. If that iterate does not meet the acceptance criterion, the
+fallback stages run cheapest first:
+
+1. **Detached equilibrium recovery**: a two-variable Newton step on pressure
+   and temperature from the incoming state. Its slopes come from independent
+   cold TP equilibria, so they include changes in phase fractions and
+   composition. The system is left untouched unless the recovered state meets
+   the acceptance criterion. It iterates towards the polish tolerances, but if
+   it stalls at the TP-flash noise floor or reaches its iteration limit, the
+   best state is still accepted when it meets the criterion.
+2. **Constant-volume polish**: a bracketing pressure search for the volume,
+   nested in a secant search on temperature for the energy. It is the most
+   robust stage and the most expensive one (128 and 190 TP flashes in the
+   two failed three-phase separator solves measured below).
+
 Inner TP flashes retain the specified component inventory when a trace phase
-is removed. The recovered state must satisfy both volume and internal-energy specifications
-before publication. The search iterates towards the polish tolerances, but if it
-stalls at the TP-flash noise floor or reaches its iteration limit, the best state
-is still published when it meets the same acceptance criterion as the other VU
-paths. Flashes
-that converge earlier return through the existing path. Runtime diagnostics
-`wasEquilibriumRecoveryUsed()` and `getEquilibriumRecoveryFlashCount()`
-distinguish that bounded fallback from the ordinary solve without changing its
-acceptance criteria.
+is removed. `wasEquilibriumRecoveryUsed()`, `getEquilibriumRecoveryFlashCount()`
+and `wasEquilibriumPolishUsed()` report which stage closed a solve. A zero
+count means the ordinary Newton solve closed it.
+
+**Measurement behind the stage order (2026-11-16).** Cases: 118 TP-flash
+targets (a three-phase hydrocarbon–water fluid, a gas condensate, an SRK-CPA
+water system and a near-bubble-point oil), started 25–40 bar or 30–40 K away.
+Plus a 300-step three-phase vessel trajectory with random inventory and energy
+changes. All configurations converged on every case. With recovery first, the
+polish was never needed. Total wall time:
+
+| Configuration | 118 offset cases | 300-step vessel run |
+| --- | --- | --- |
+| Polish before recovery, no stagnation exit (before) | 19.3 s, worst 6.1 s | 13.8 s, worst 3.4 s |
+| Recovery before polish, stagnation exit | 5.8 s, worst 0.27 s | 6.0 s, worst 0.17 s |
+
+Most of the gain came from a TP-flash fix in the same change: the second-order
+solver cached on a reused `TPflash` now re-seeds its Newton unknowns (see
+[TP flash algorithm](../thermodynamicoperations/TPflash_algorithm)). Before
+that fix, a stale phase split from the previous inner flash could merge gas and
+oil. The VU iteration then cycled between two- and three-phase states, and the
+fallbacks did the work the ordinary solve should have done.
+
 Applications requiring stricter volume/energy closure must check both residuals
 and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).
 `VUCaloricStateQualificationTest` checks independently configured SRK/PR,
