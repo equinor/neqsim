@@ -33,16 +33,16 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
   /** @return numerical model version, including guarded phase, solid-risk and external evidence records */
   @Override
   public String getModelVersion() {
-    return "1.2.1";
+    return "1.2.2";
   }
 
   /** {@inheritDoc} */
   @Override
   public ReleaseModelEvidence getEvidence() {
-    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.1",
+    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.2",
         Arrays.asList("SHORT_ORIFICE", "EQUILIBRIUM_PHASE_TRANSFER", "MULTICOMPONENT_EOS"),
-        Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "EXPERIMENTAL_RATE_MISMATCH",
-            "NO_ENGINEERING_QUALIFICATION"),
+        Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "EXPERIMENTAL_INPUT_PHASE_MISMATCH",
+            "MEASUREMENT_UNCERTAINTY_NOT_REPORTED", "NO_ENGINEERING_QUALIFICATION"),
         Arrays.asList(
             new ReleaseModelEvidence.Record("hem-component-energy-closure", ReleaseModelEvidence.Type.CONSERVATION,
                 "src/test/java/neqsim/process/safety/release/ReleaseFlowModelTest.java",
@@ -53,8 +53,9 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
             new ReleaseModelEvidence.Record("witlox-step-propane-2007", ReleaseModelEvidence.Type.EXPERIMENTAL,
                 "DOI 10.1016/j.jhazmat.2006.06.126; "
                     + "src/test/resources/neqsim/process/safety/release/witlox-step-propane-2007.csv",
-                "Published STEP propane flashing-jet rate; executable comparison records a large HEM underprediction "
-                    + "and unreported measurement uncertainty",
+                "Published STEP propane liquid-withdrawal rate; executable applicability evidence records that the "
+                    + "declared liquid withdrawal is not comparable to the current gas-only equilibrium upstream "
+                    + "state, and that measurement uncertainty is not reported",
                 true)));
   }
 

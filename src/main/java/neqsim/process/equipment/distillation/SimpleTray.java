@@ -196,13 +196,19 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     return stream.getThermoSystem().getEnthalpy();
   }
 
+  /**
+   * Return the heat input used to form the tray PH flash specification.
+   *
+   * @return heat input in W, including any connected energy specification
+   */
+  double getSpecifiedHeatInput() {
+    return isSetEnergyStream() ? heatInput - energyStream.getDuty() : heatInput;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double calcMixStreamEnthalpy() {
-    double enthalpy = heatInput;
-    if (isSetEnergyStream()) {
-      enthalpy -= energyStream.getDuty();
-    }
+    double enthalpy = getSpecifiedHeatInput();
 
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {

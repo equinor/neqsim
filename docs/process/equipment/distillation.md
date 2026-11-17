@@ -503,6 +503,8 @@ zero-iteration cache hit. Tolerances for disabled energy and MESH gates, and out
 when no tear variable is configured, do not participate in the cache key. The next invocation
 executes the solver path after an active-gate change and either meets the new contract or reports
 non-convergence explicitly.
+Changes to tray heat input or a connected energy-stream duty also invalidate exact reuse.
+A compatible previous tray state remains available to initialize the updated solve.
 For MESH recovery, the reuse fingerprint is recorded after the final qualified correction so
 the next unchanged call retains the adopted products and tray network.
 
@@ -841,6 +843,48 @@ solvers.
    `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` for residual audit.
 4. Add product purity or component recovery specs.
 5. Rate internals and enable hydraulic pressure-drop coupling only after a stable base case exists.
+
+### Vacuum MEG regeneration
+
+A salt-free SRK–CPA regression uses 6,000 kg/h of 75 wt% MEG and water at 80 °C and 0.8 bara.
+The partial condenser controls the molar reflux ratio at 0.45. The reboiler controls duty.
+Use `setSeedTemperature` for initial tray temperatures so they do not become terminal
+specifications. Specifying both terminal temperatures can make the overhead unable to remove
+the water entering the column.
+
+[`MegVacuumRegenerationTest`](../../../src/test/java/neqsim/process/equipment/distillation/MegVacuumRegenerationTest.java)
+checks a feed tray between a reboiler and partial condenser at 1.30 MW, a nearby 1.32 MW
+point from both retained and cold states, and a three-tray case with 0.46 kg/h residual
+methane at 1.25 MW. The direct solver must report `RIGOROUS_CONVERGED`, satisfy the active
+material, energy, MESH and specification gates, and reach internal-flow stationarity.
+Audit energy across each adiabatic tray as well as the whole column. In this case the
+bracketed tray PH flash ([#4981](https://github.com/equinor/neqsim/pull/4981)) resolves the
+interior tray energy residual observed on 3.29.0.
+
+#### Water–MEG equilibrium and vapor carryover
+
+At fixed measured temperature and liquid composition,
+[`MegWaterVacuumVleAssessmentTest`](../../../src/test/java/neqsim/thermodynamicoperations/flashops/saturationops/MegWaterVacuumVleAssessmentTest.java)
+evaluates the default SRK–CPA model with mixing rule 10 against selected binary data from
+[Lancia, Musmarra and Pepe (1996), tables 1, 4 and 7](https://doi.org/10.1252/jcej.29.449).
+The source reports water mole fractions in both phases. MEG vapor concentration is the
+complement of the measured vapor water mole fraction. Pressure and composition errors
+are evaluated separately at the computed bubble point.
+
+| Temperature (°C) | Measured bubble pressure (kPa) | CPA bubble pressure (kPa) | Measured vapor MEG (mol%) | CPA vapor MEG (mol%) |
+| ---: | ---: | ---: | ---: | ---: |
+| 98 | 65.92 | 64.64 | 0.8 | 0.92 |
+| 98 | 81.07 | 77.12 | 0.3 | 0.41 |
+| 110 | 71.44 | 78.76 | 2.2 | 2.11 |
+| 110 | 79.71 | 85.50 | 1.1 | 1.73 |
+| 122 | 70.43 | 83.01 | 5.9 | 4.89 |
+| 122 | 83.72 | 98.61 | 4.1 | 3.62 |
+
+The largest pressure deviation is 17.9%. At 110 °C and 79.71 kPa measured pressure, the
+calculated vapor MEG is about 57% higher on a relative basis. The test envelopes preserve
+a reproducible comparison for model development. Use measured vapor composition and
+holdout pressures when qualifying a parameter change. The staged solver cases are
+synthetic, and the literature comparison covers salt-free binary equilibrium.
 
 ### Absorber or Stripper
 

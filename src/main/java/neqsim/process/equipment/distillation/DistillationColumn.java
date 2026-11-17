@@ -3707,6 +3707,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     signature = updateColumnConfigurationSignature(signature);
+    // Duty changes invalidate exact reuse, but the previous tray state can still initialize a nearby solve.
+    for (SimpleTray tray : trays) {
+      signature = updateNaphtaliSandholmInputSignature(signature, tray.getSpecifiedHeatInput());
+    }
 
     return signature;
   }
