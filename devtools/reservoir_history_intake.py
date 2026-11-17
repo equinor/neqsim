@@ -3,9 +3,12 @@
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
+from fractions import Fraction
 
 from pvt_data import PVTStudyError, identity
-from pvt_measurement_bounds import _decimal, _interval, _required_text, _serialize, _subtract
+from pvt_measurement_bounds import (
+    DOWN, UP, _decimal, _interval, _product, _required_text, _serialize, _subtract,
+)
 
 
 PRESSURE_KINDS = {
@@ -158,3 +161,92 @@ def audit_reservoir_history(study):
         previous_day, previous_amounts = day, amounts
     return {"schema": "reservoir_history_intake.v1", "input_sha256": identity(study),
             "raw_input": deepcopy(study), "rows": reports, "windows": windows}
+
+
+def _composition_bounds(composition):
+    """Enclose each mole fraction subject to the complete mixture summing to one."""
+    _required_text(composition, ("source_reference", "basis_reference"))
+    if composition.get("averaging") not in ("mole_weighted", "constant"):
+        raise PVTStudyError("Composition averaging must be mole_weighted or constant over the interval")
+    values = composition.get("components")
+    if not isinstance(values, dict) or not values:
+        raise PVTStudyError("Interval composition requires the complete named component set")
+    bounds = {}
+    for name, item in values.items():
+        if not isinstance(name, str) or not name.strip() or name != name.strip():
+            raise PVTStudyError("Component names must be nonblank without surrounding whitespace")
+        interval = _interval(item, "mol/mol", allow_zero=True)
+        if interval is None or interval[1] > 1:
+            raise PVTStudyError("Mole fractions must have explicit bounds between zero and one")
+        bounds[name] = interval
+    # Exact sums decide feasibility. Directed contexts enclose subsequent marginal calculations.
+    lower = sum((Fraction(value[0]) for value in bounds.values()), Fraction(0))
+    upper = sum((Fraction(value[1]) for value in bounds.values()), Fraction(0))
+    if lower > 1 or upper < 1:
+        return None
+    tightened = {}
+    for name, (lo, hi) in bounds.items():
+        other_upper = Decimal(0)
+        other_lower = Decimal(0)
+        for other, value in bounds.items():
+            if other != name:
+                other_upper = UP.add(other_upper, value[1])
+                other_lower = DOWN.add(other_lower, value[0])
+        tightened[name] = (
+            max(lo, DOWN.subtract(Decimal(1), other_upper)),
+            min(hi, UP.subtract(Decimal(1), other_lower)),
+        )
+    return tightened
+
+
+def audit_component_moles(study):
+    """Project eligible total-mole windows to outward-rounded named component bounds.
+
+    Each end row may provide interval_compositions by stream. A composition
+    describes the complete mole-weighted interval mixture or a composition
+    constant throughout that interval, on that stream's declared
+    total-mole basis. Fractions are constrained jointly by sum(x)=1. Bounds
+    retain covariance limitations and are not independent tank trial values.
+    No volume conversion, renormalization, interpolation or EOS fitting occurs.
+    """
+    report = audit_reservoir_history(study)
+    report["schema"] = "reservoir_component_intake.v1"
+    streams = study["streams"]
+    for row, window in zip(study["rows"][1:], report["windows"]):
+        compositions = row.get("interval_compositions", {})
+        if not isinstance(compositions, dict) or compositions.keys() - streams.keys():
+            raise PVTStudyError("Interval compositions must reference declared streams")
+        projected = {}
+        for name, spec in streams.items():
+            composition = compositions.get(name)
+            fractions = None
+            reasons = []
+            if composition is None:
+                reasons.append("missing_interval_composition")
+            else:
+                if not isinstance(composition, dict):
+                    raise PVTStudyError("Interval composition must be a mapping")
+                if composition.get("basis_reference") != spec["basis_reference"]:
+                    raise PVTStudyError("Composition and stream mole bases must match")
+                fractions = _composition_bounds(composition)
+                if fractions is None:
+                    reasons.append("incompatible_composition_sum")
+            if spec["unit"] != "mol":
+                reasons.append("requires_total_moles")
+            if not window["eligible_for_flow_handoff"]:
+                reasons.append("ineligible_flow_window")
+            item = {"direction": spec["direction"], "status": "unresolved" if reasons else "eligible",
+                    "reasons": reasons, "component_moles": {}}
+            if "incompatible_composition_sum" in reasons:
+                item["status"] = "incompatible"
+            if not reasons:
+                increment = tuple(_decimal(value) for value in window["increments"][name]["bounds"])
+                item["component_moles"] = {
+                    component: {"unit": "mol", "bounds": _serialize(_product(increment, fraction))}
+                    for component, fraction in fractions.items()
+                }
+            projected[name] = item
+        window["component_streams"] = projected
+        window["eligible_for_component_handoff"] = all(
+            value["status"] == "eligible" for value in projected.values())
+    return report

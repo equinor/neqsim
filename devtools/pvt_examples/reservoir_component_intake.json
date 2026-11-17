@@ -1,0 +1,104 @@
+{
+  "protocol": "CUMULATIVE_RESERVOIR_HISTORY",
+  "reservoir_reference": "Synthetic isolated tank",
+  "source_reference": "Constructed source audit example",
+  "data_use_reference": "Original synthetic data",
+  "bounds_reference": "Constructed closed decimal bounds, not measurement uncertainty",
+  "date_basis_reference": "UTC midnight at the start of the stated date",
+  "pressure_datum_reference": "Synthetic field-average pressure at 2000 m TVDSS",
+  "streams": {
+    "well-A gas": {
+      "direction": "production",
+      "unit": "mol",
+      "basis_reference": "Synthetic complete wellstream total moles"
+    },
+    "well-B water": {
+      "direction": "injection",
+      "unit": "mol",
+      "basis_reference": "Synthetic pure-water injected total moles"
+    }
+  },
+  "rows": [
+    {
+      "id": "start",
+      "source_reference": "Synthetic observer at the starting boundary",
+      "date": "2024-02-28",
+      "cumulative": {
+        "well-A gas": {
+          "unit": "mol",
+          "lower": "0",
+          "upper": "0"
+        },
+        "well-B water": {
+          "unit": "mol",
+          "lower": "0",
+          "upper": "0"
+        }
+      }
+    },
+    {
+      "id": "match",
+      "source_reference": "Synthetic end of first interval",
+      "date": "2024-02-29",
+      "pressure": {
+        "source_reference": "Synthetic field-average calibration observation",
+        "kind": "field_average",
+        "datum_reference": "Synthetic field-average pressure at 2000 m TVDSS",
+        "role": "calibration",
+        "value": {
+          "unit": "bara",
+          "lower": "199",
+          "upper": "199"
+        },
+        "sigma": {
+          "unit": "bar",
+          "lower": "0.2",
+          "upper": "0.2"
+        }
+      },
+      "cumulative": {
+        "well-A gas": {
+          "unit": "mol",
+          "lower": "10",
+          "upper": "11"
+        },
+        "well-B water": {
+          "unit": "mol",
+          "lower": "2",
+          "upper": "2"
+        }
+      },
+      "interval_compositions": {
+        "well-A gas": {
+          "source_reference": "Synthetic interval-average whole-wellstream composition",
+          "basis_reference": "Synthetic complete wellstream total moles",
+          "components": {
+            "methane": {
+              "unit": "mol/mol",
+              "lower": "0.8",
+              "upper": "1.0"
+            },
+            "ethane": {
+              "unit": "mol/mol",
+              "lower": "0.1",
+              "upper": "0.2"
+            }
+          },
+          "averaging": "mole_weighted"
+        },
+        "well-B water": {
+          "source_reference": "Synthetic independently specified injection composition",
+          "basis_reference": "Synthetic pure-water injected total moles",
+          "components": {
+            "water": {
+              "unit": "mol/mol",
+              "lower": "1",
+              "upper": "1"
+            }
+          },
+          "averaging": "mole_weighted"
+        }
+      }
+    }
+  ]
+}
