@@ -153,6 +153,11 @@ match for a proprietary E300 reservoir fluid. Issue
 3.18.0, so reproduce against the current version before attributing a remaining
 heater phase-selection difference to the same defect.
 
+During transient simulation, each populated draw retains its configured withdrawal rate and is refreshed from
+the corresponding vessel phase. The extracted stream keeps that phase's identity and intensive properties as its
+amount is scaled to the withdrawal rate. A downstream pressure-driven gas valve can therefore use the draw's
+compressibility and actual volume consistently across the steady-to-transient handoff.
+
 ### Creating a Three-Phase Separator
 
 ```java
