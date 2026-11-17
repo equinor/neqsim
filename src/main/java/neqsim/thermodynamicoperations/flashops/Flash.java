@@ -760,8 +760,7 @@ public abstract class Flash extends BaseOperation {
           break;
         }
       }
-      // Synchronize phase amounts with the Newton solver's final iterate before validating it.
-      solver.init();
+      solver.initForSeedValidation();
       double candidateGibbs = candidate.getGibbsEnergy();
       if (!Double.isFinite(candidateGibbs) || !Double.isFinite(referenceGibbs)
           || candidateGibbs >= referenceGibbs - Math.abs(referenceGibbs) * 1.0e-8

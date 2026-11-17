@@ -166,6 +166,22 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * init.
    */
   public void init() {
+    initWithLevel(3);
+  }
+
+  /**
+   * Synchronizes the converged phase amounts and computes the fugacities and Gibbs energy for seed validation.
+   */
+  void initForSeedValidation() {
+    initWithLevel(1);
+  }
+
+  /**
+   * Synchronizes the phase compositions and K-values with the current Newton iterate before initializing the system.
+   *
+   * @param initLevel thermodynamic system initialization level
+   */
+  private void initWithLevel(int initLevel) {
     double betaSum = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       betaSum += uVector[i];
@@ -180,8 +196,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
     }
 
-    // Full system init: computes fugacities, T/P/composition derivatives
-    system.init(3);
+    system.init(initLevel);
   }
 
   /**
