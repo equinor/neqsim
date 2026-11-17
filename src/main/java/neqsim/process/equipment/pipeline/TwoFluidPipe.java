@@ -7502,12 +7502,16 @@ public class TwoFluidPipe extends Pipeline {
             postRejected = true;
             break;
           }
-          String limiterRejection = describeEngagedVelocityLimiter(U_new[cell], sec.getPosition());
-          if (limiterRejection != null) {
-            lastStepRejection = limiterRejection;
-            transientVelocityLimiterRejections++;
-            postRejected = true;
-            break;
+          // Conservative EOS recovery installs momentum / mass after component transport.
+          // Only legacy primitive recovery publishes the bounded predictor velocity.
+          if (!useConservativeEnergyRecovery) {
+            String limiterRejection = describeEngagedVelocityLimiter(U_new[cell], sec.getPosition());
+            if (limiterRejection != null) {
+              lastStepRejection = limiterRejection;
+              transientVelocityLimiterRejections++;
+              postRejected = true;
+              break;
+            }
           }
         }
 

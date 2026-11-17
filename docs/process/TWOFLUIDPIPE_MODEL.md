@@ -3006,7 +3006,7 @@ Algorithm per macro-step:
 1. **CFL recompute** from current velocities (not fixed at initialization)
 2. **Pre-check**: reject if NaN or negative mass detected; rollback state, halve `dtFactor`
 3. **Post-check**: reject if pressure exceeds its ceiling or a recovered velocity exceeds 300 m/s
-4. **Velocity-limiter check**: reject if the candidate state would make primitive recovery clip a phase that holds at
+4. **Velocity-limiter check**: on the legacy primitive-recovery path, reject if the candidate would clip a phase that holds at
    least 5 % of its cell mass (gas at 100 m/s, oil or water at 50 m/s); see below
 5. **Recovery**: after each stable step, `dtFactor` grows by x1.05 back toward 1.0
 6. **Floor**: `dtFactor` cannot go below 0.01 to prevent stalling
@@ -3023,6 +3023,11 @@ The check now rejects such a substep and retries it with a smaller step. Phases 
 mass keep the historical clipping, which trace phases rely on. When no step is stable the call stops with an
 `IllegalStateException` whose last rejection names the cell, phase and velocity. Cases that never clip are unchanged
 bit for bit. `getTransientVelocityLimiterRejectionCount()` reports the retries since the last `run()`.
+
+Conservative energy recovery reconstructs the endpoint velocity of each occupied phase from its
+momentum divided by its mass. The legacy velocity bounds apply only to the intermediate primitive
+state on this path. In the rich-gas pressure ramp from 150 to 10 bara, the accepted outlet gas
+velocity can exceed 100 m/s while the component and energy balances close.
 
 At zero prescribed inlet rate, the boundary face takes its phase properties from the adjacent
 pipe cell and sets every phase velocity to zero. A closed choke can therefore deliver an empty

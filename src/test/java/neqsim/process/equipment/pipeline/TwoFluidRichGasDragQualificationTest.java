@@ -303,11 +303,18 @@ class TwoFluidRichGasDragQualificationTest {
     for (int cells : new int[] {12, 24}) {
       double dt = cells == 12 ? 0.25 : 0.125;
       TwoFluidPipe pipe = createRichGasPipe(cells, false);
+      boolean observedUnclippedGas = false;
       for (int step = 1; step <= (int) Math.round(120.0 / dt); step++) {
         double elapsed = step * dt;
         pipe.setOutletPressure(150.0 - 140.0 * elapsed / 120.0, "bara");
         pipe.runTransient(dt, null);
         assertEquals(elapsed, pipe.getSimulationTime(), 1e-9);
+        if (!observedUnclippedGas && pipe.getGasVelocityProfile()[cells - 1] > 100.0) {
+          TwoFluidSection outlet = pipe.getSectionSnapshots()[cells - 1];
+          assertEquals(outlet.getGasMomentumPerLength() / outlet.getGasMassPerLength(), outlet.getGasVelocity(),
+              1.0e-10);
+          observedUnclippedGas = true;
+        }
         assertFalse(pipe.isTransientOutletBackflowClamped());
         assertTrue(pipe.getLastComponentConservationReport().isConverged());
         assertTrue(pipe.getLastConservativeEnergyReport().isWithinTolerance(1e-3, 1e-7));
@@ -315,6 +322,8 @@ class TwoFluidRichGasDragQualificationTest {
           assertTrue(pipe.getLastMassBalanceReport().isWithinTolerance(phase, 1e-6, 1e-8));
         }
       }
+      assertTrue(observedUnclippedGas, "The blowdown must cross the legacy gas velocity bound");
+      assertEquals(0L, pipe.getTransientVelocityLimiterRejectionCount());
     }
   }
 
