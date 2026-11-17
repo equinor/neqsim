@@ -41,6 +41,8 @@ public final class GeneralizedMaterialBalance implements Serializable {
   private static final double MAX_CONDITION_NUMBER = 1.0e8;
   /** Initial PVT on the common separator basis. */
   private final Record initialPvt;
+  /** Phase-explicit original PVT; null for legacy two-phase anchors. */
+  private final SinglePhasePvt singlePhaseInitial;
   /** Rows {oil expansion, gas expansion, net withdrawal minus influx, net oil, net gas}. */
   private final List<double[]> observations = new ArrayList<double[]>();
 
@@ -52,6 +54,30 @@ public final class GeneralizedMaterialBalance implements Serializable {
   public GeneralizedMaterialBalance(Record initialPvt) {
     coefficients(initialPvt);
     this.initialPvt = initialPvt;
+    this.singlePhaseInitial = null;
+  }
+
+  /**
+   * Creates a history from observed properties of the sole original hydrocarbon phase.
+   *
+   * @param initialPvt original oil or gas PVT on the common separator basis
+   * @return balance accepting subsequent two-phase observations
+   */
+  public static GeneralizedMaterialBalance fromSinglePhase(SinglePhasePvt initialPvt) {
+    if (initialPvt == null) {
+      throw new IllegalArgumentException("Single-phase initial PVT is required");
+    }
+    return new GeneralizedMaterialBalance(initialPvt);
+  }
+
+  /**
+   * Stores an initial phase without evaluating a two-phase split.
+   *
+   * @param initialPvt properties of the original hydrocarbon phase
+   */
+  private GeneralizedMaterialBalance(SinglePhasePvt initialPvt) {
+    this.initialPvt = null;
+    this.singlePhaseInitial = initialPvt;
   }
 
   /**
@@ -79,8 +105,17 @@ public final class GeneralizedMaterialBalance implements Serializable {
     requireFinite(waterInflux, "water influx");
     requireFinite(expansionFraction, "expansion fraction");
     double[] c = coefficients(pvt);
-    double eo = c[0] + initialPvt.Rs * c[1] - initialPvt.Bo + initialPvt.Bo * expansionFraction;
-    double eg = initialPvt.Rv * c[0] + c[1] - initialPvt.Bg + initialPvt.Bg * expansionFraction;
+    double eo;
+    double eg;
+    if (singlePhaseInitial == null) {
+      eo = c[0] + initialPvt.Rs * c[1] - initialPvt.Bo + initialPvt.Bo * expansionFraction;
+      eg = initialPvt.Rv * c[0] + c[1] - initialPvt.Bg + initialPvt.Bg * expansionFraction;
+    } else {
+      double initialVolume = singlePhaseInitial.volumeFactor;
+      double support = initialVolume * expansionFraction;
+      eo = singlePhaseInitial.gas ? 0.0 : c[0] + singlePhaseInitial.surfaceRatio * c[1] - initialVolume + support;
+      eg = singlePhaseInitial.gas ? singlePhaseInitial.surfaceRatio * c[0] + c[1] - initialVolume + support : 0.0;
+    }
     double withdrawal = c[0] * netOilProduced + c[1] * netGasProduced + pvt.Bw * netWaterProduced - waterInflux;
     requireFinite(eo, "oil expansion");
     requireFinite(eg, "gas expansion");
@@ -117,6 +152,12 @@ public final class GeneralizedMaterialBalance implements Serializable {
     if (gasCapRatio < 0.0) {
       throw new IllegalArgumentException("gas-cap ratio must be non-negative");
     }
+    if (singlePhaseInitial != null) {
+      if (gasCapRatio > 0.0) {
+        throw new IllegalArgumentException("A gas cap requires both original hydrocarbon phases");
+      }
+      return fitInitiallyOil();
+    }
     double ratio = gasCapRatio * initialPvt.Bo / initialPvt.Bg;
     requireFinite(ratio, "initial free-gas/free-oil surface ratio");
     return fit(0, ratio);
@@ -139,6 +180,9 @@ public final class GeneralizedMaterialBalance implements Serializable {
    * @return fit result
    */
   private Result fit(int mode, double gasPerOil) {
+    if (singlePhaseInitial != null && mode != (singlePhaseInitial.gas ? 1 : 0)) {
+      throw new IllegalArgumentException("Fit must use the declared initial hydrocarbon phase");
+    }
     int columns = mode == 2 ? 2 : 1;
     int count = observations.size();
     if (count < Math.max(2, columns)) {
@@ -190,8 +234,18 @@ public final class GeneralizedMaterialBalance implements Serializable {
     if (oil < 0.0 || gas < 0.0 || oil + gas == 0.0) {
       throw new IllegalArgumentException("unphysical fitted volumes; check history, PVT and drive assumptions");
     }
-    double totalOil = oil + initialPvt.Rv * gas;
-    double totalGas = gas + initialPvt.Rs * oil;
+    double totalOil;
+    double totalGas;
+    double gasCapRatio;
+    if (singlePhaseInitial == null) {
+      totalOil = oil + initialPvt.Rv * gas;
+      totalGas = gas + initialPvt.Rs * oil;
+      gasCapRatio = oil > 0.0 ? gas * initialPvt.Bg / (oil * initialPvt.Bo) : Double.POSITIVE_INFINITY;
+    } else {
+      totalOil = singlePhaseInitial.gas ? singlePhaseInitial.surfaceRatio * gas : oil;
+      totalGas = singlePhaseInitial.gas ? gas : singlePhaseInitial.surfaceRatio * oil;
+      gasCapRatio = singlePhaseInitial.gas ? Double.POSITIVE_INFINITY : 0.0;
+    }
     requireFinite(totalOil, "total OOIP");
     requireFinite(totalGas, "total OGIP");
     double[] residuals = new double[count];
@@ -204,7 +258,7 @@ public final class GeneralizedMaterialBalance implements Serializable {
       residuals[i] = row[2] - oil * row[0] - gas * row[1];
       requireFinite(residuals[i], "balance residual");
     }
-    return new Result(oil, gas, initialPvt, residuals, condition);
+    return new Result(oil, gas, totalOil, totalGas, gasCapRatio, residuals, condition);
   }
 
   /**
@@ -242,6 +296,97 @@ public final class GeneralizedMaterialBalance implements Serializable {
     }
   }
 
+  /** Immutable PVT for the sole original hydrocarbon phase at reservoir temperature. */
+  public static final class SinglePhasePvt implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final double pressureBara;
+    private final double volumeFactor;
+    private final double surfaceRatio;
+    private final boolean gas;
+
+    /**
+     * Validates the present phase and pressure on the common separator basis.
+     *
+     * @param pressureBara original reservoir pressure in bara
+     * @param volumeFactor formation volume factor in reservoir m3 per Sm3 of the main surface component
+     * @param surfaceRatio secondary-to-main surface volume ratio in Sm3/Sm3
+     * @param gas true for the gas phase, false for the oil phase
+     */
+    private SinglePhasePvt(double pressureBara, double volumeFactor, double surfaceRatio, boolean gas) {
+      requireFinite(pressureBara, "initial pressure");
+      requireFinite(volumeFactor, "initial formation volume factor");
+      requireFinite(surfaceRatio, "initial surface volume ratio");
+      if (pressureBara <= 0.0 || volumeFactor <= 0.0 || surfaceRatio < 0.0) {
+        throw new IllegalArgumentException(
+            "Initial pressure and FVF must be positive and the surface ratio nonnegative");
+      }
+      this.pressureBara = pressureBara;
+      this.volumeFactor = volumeFactor;
+      this.surfaceRatio = surfaceRatio;
+      this.gas = gas;
+    }
+
+    /**
+     * Represents an original oil phase with its dissolved gas.
+     *
+     * @param pressureBara original reservoir pressure in bara
+     * @param bo original oil formation volume factor in reservoir m3/Sm3 of stock-tank oil
+     * @param rs original solution gas volume in Sm3 gas per Sm3 stock-tank oil
+     * @return original oil PVT
+     */
+    public static SinglePhasePvt oil(double pressureBara, double bo, double rs) {
+      return new SinglePhasePvt(pressureBara, bo, rs, false);
+    }
+
+    /**
+     * Represents an original gas phase with its vaporized oil.
+     *
+     * @param pressureBara original reservoir pressure in bara
+     * @param bg original gas formation volume factor in reservoir m3/Sm3 of gas
+     * @param rv original vaporized oil volume in Sm3 stock-tank oil per Sm3 gas
+     * @return original gas PVT
+     */
+    public static SinglePhasePvt gas(double pressureBara, double bg, double rv) {
+      return new SinglePhasePvt(pressureBara, bg, rv, true);
+    }
+
+    /**
+     * Returns the initial pressure for alignment with measured history.
+     *
+     * @return original average reservoir pressure in bara
+     */
+    public double getPressureBara() {
+      return pressureBara;
+    }
+
+    /**
+     * Identifies the original hydrocarbon phase.
+     *
+     * @return true for gas and false for oil
+     */
+    public boolean isGas() {
+      return gas;
+    }
+
+    /**
+     * Returns the original formation volume factor of the present phase.
+     *
+     * @return reservoir m3 per Sm3 of gas for gas, or per Sm3 of stock-tank oil for oil
+     */
+    public double getVolumeFactor() {
+      return volumeFactor;
+    }
+
+    /**
+     * Returns the secondary-to-main surface volume ratio for the present phase.
+     *
+     * @return Rv for gas (Sm3 oil per Sm3 gas) or Rs for oil (Sm3 gas per Sm3 oil)
+     */
+    public double getSurfaceRatio() {
+      return surfaceRatio;
+    }
+  }
+
   /**
    * Immutable fit result; total in-place volumes include dissolved gas and vaporized oil.
    *
@@ -263,20 +408,21 @@ public final class GeneralizedMaterialBalance implements Serializable {
      *
      * @param oil initial free-oil surface component (Sm3)
      * @param gas initial free-gas surface component (Sm3)
-     * @param initial initial PVT
+     * @param totalOil initial total surface oil (Sm3)
+     * @param totalGas initial total surface gas (Sm3)
+     * @param gasCapRatio ratio of initial reservoir gas and oil phase volumes
      * @param residuals volume residuals (reservoir m3)
      * @param condition scaled design-matrix condition number
      */
-    private Result(double oil, double gas, Record initial, double[] residuals, double condition) {
+    private Result(double oil, double gas, double totalOil, double totalGas, double gasCapRatio, double[] residuals,
+        double condition) {
       this.freeOil = oil;
       this.freeGas = gas;
-      this.ooip = oil + initial.Rv * gas;
-      this.ogip = gas + initial.Rs * oil;
-      this.gasCapRatio = oil > 0.0 ? gas * initial.Bg / (oil * initial.Bo) : Double.POSITIVE_INFINITY;
+      this.ooip = totalOil;
+      this.ogip = totalGas;
+      this.gasCapRatio = gasCapRatio;
       this.residuals = residuals.clone();
       this.conditionNumber = condition;
-      requireFinite(ooip, "total OOIP");
-      requireFinite(ogip, "total OGIP");
     }
 
     /**
