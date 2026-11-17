@@ -1,7 +1,7 @@
 ---
 name: neqsim-pipeline-and-terminal-networks
 description: "Guides agents through NeqSim pipeline and terminal networks. USE WHEN: users ask to solve a looped gathering/export network, optimize well and choke settings, apply nominations or quality limits, track gas linepack or transient composition, blend crude, or schedule terminal tanks and cargoes. Anchors: LoopedPipeNetwork, NetworkOptimizer, TransientGasNetwork, TransientCompositionalPipeNetwork, NetworkQualityProfile, OilNetworkSchedule."
-last_verified: "2026-10-20"
+last_verified: "2026-11-16"
 ---
 
 # Pipeline and Terminal Networks
@@ -315,3 +315,13 @@ For transient gas, follow `TransientGasNetworkTest`: define nodes and pipe cells
 - `neqsim-process-modeling` — process-system `Manifold` routing and equipment wiring.
 - `neqsim-flow-assurance` — hydrate, corrosion, and pipeline threat assessment.
 - `neqsim-api-patterns` — fluid initialization and units.
+
+### Beggs-Brill elevation energy balance
+
+Non-isothermal `PipeBeggsAndBrills` segments include `-g * delta_z` in static enthalpy.
+Use the adiabatic `h + g*z` check when comparing vertical wells to `TwoFluidPipe`;
+isothermal runs instead impose temperature. `PipeBeggsAndBrillsGravityEnergyTest`
+covers ascent, descent, horizontal control, electrical heat and coarse/refined
+flashing wells. A converged PH endpoint must not be replaced merely because it
+falls outside a constant-Cp temperature estimate. The optional extra JT/friction
+terms are disabled in this regression. See the [energy guide](../../../docs/process/PipeBeggsAndBrills.md#energy-equation-components).
