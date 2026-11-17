@@ -211,6 +211,15 @@ import, and NeqSim supported-profile assessment for each XML. A restarted packag
 `REVIEW_REQUIRED`, `fitnessForConstruction=false`, or
 `nativeWholePlantDexpiExchange=false`; altered approval fields fail closed.
 
+The single-area professional P&ID package has a separate controlled intake contract in
+`ProfessionalPidPackageReader`. It verifies the deterministic package manifest before restoring the
+canonical `PidDesignModel` and revision-bound `PidSimulationBindings`, then reassesses the exact native
+2.0.1 file and retains supported-import diagnostics. Re-exporting that same canonical model and
+comparing the two verified reads establishes supported semantic equivalence; it does not establish
+byte identity, arbitrary third-party model reconstruction, unknown-extension preservation, named-tool
+round-trip qualification or construction approval. Any unsupported or incomplete native relationship
+prevents a lossless equivalence result.
+
 After assessment, use the bounded reader when a caller needs exact per-area XML and connection
 evidence without extracting archive paths or trusting the embedded manifest:
 

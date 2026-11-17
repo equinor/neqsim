@@ -197,6 +197,33 @@ voting, thermodynamic state, or missing geometry. Those remain explicit model in
 engineering decisions. `DexpiSimulationBuilder` remains a compatibility/scaffolding path; its
 category-based auto-instrument renaming is not the production binding contract.
 
+### Governed professional-package intake and semantic comparison
+
+`ProfessionalPidPackageReader.read(project, packageDirectory)` reopens the complete professional
+package rather than asking each caller to coordinate the four intake steps manually. It first verifies
+the SHA-256 and size of every `package-manifest.json` entry and rejects missing, changed, duplicate,
+path-escaping or unlisted files. It then restores `pid-design-model.json`, verifies
+`pid-simulation-bindings.json` against the caller-restored executable project, assesses the exact
+`plant.dexpi.xml`, and retains both the supported-subset import diagnostics and the native tag/signal/
+actuation verification evidence.
+
+The ordinary `read(...)` path is evidence-preserving: an incomplete native proposal projection or
+unsupported import remains a stable package-level diagnostic and sets `hasImportLosses()`. Use
+`readStrict(...)` only when that supported intake must fail closed on every such diagnostic. The
+reader never treats an intact package manifest as semantic equivalence.
+
+After exporting the restored canonical model and bindings to a new directory,
+`ProfessionalPidPackageReader.compare(first, second)` compares the canonical P&ID, revision-bound
+bindings, verified native relationships and supported import evidence. It returns `EQUIVALENT` only
+when those supported semantics match and neither intake reports a loss. Byte-level DEXPI and package
+manifest fingerprints remain separate evidence. Unknown or unsupported source content is not silently
+promoted to a round-trip pass.
+
+This controlled package path is bidirectional for the documented NeqSim professional-package subset.
+It is not arbitrary vendor DEXPI-to-process reconstruction and does not preserve unknown external
+extensions that the supported reader cannot represent. Those remain explicit diagnostics and require
+an owning #2899/#1332 semantic extension before qualification.
+
 `ImportResult.getActuatingFunctions()` exposes source-ordered `ActuatingFunction` and
 `ActuatingElectricalFunction` occurrences as immutable `DexpiActuatingFunctionInfo` records. Each
 record retains the explicit source kind, ID, component class, function number, enclosing

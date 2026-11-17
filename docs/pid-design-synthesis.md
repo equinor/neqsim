@@ -54,6 +54,13 @@ before writing files. Existing two-argument builder calls retain their legacy
 2.0 basis and compatibility behavior. On reopening, recreate the same project ID,
 revision and edition, restore `PidDesignModel.fromJson(...)`, and restore
 `PidSimulationBindings.fromJson(project, pid, bindingJson)` before simulation.
+`ProfessionalPidPackageReader.read(...)` performs that controlled reopening from
+the package, including complete manifest integrity, native DEXPI 2.0.1 relationship
+checks and supported-import diagnostics. Use `readStrict(...)` when any diagnostic
+must fail closed. Re-export to a new directory and compare the two verified reads
+with `ProfessionalPidPackageReader.compare(...)`; equivalence covers the canonical
+model, bindings and supported native semantics, while unsupported content remains
+an explicit non-equivalent result.
 
 `generationStatus=INCOMPLETE_NATIVE_PROPOSAL_PROJECTION` means proposal tags
 are missing from the native exchange. Close those mappings before treating
