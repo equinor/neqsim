@@ -520,7 +520,7 @@ complete evidence. Outputs from unselected tests and unrelated files under
 `target/` are not collected.
 
 `selected_evidence_complete` applies only to the selected assessments in that
-shard, not the full nine-assessment matrix or the rest of CI. A shard with no selected
+shard, not the full eleven-assessment matrix or the rest of CI. A shard with no selected
 assessment has a count of zero. Check every producer across all shards and the
 original test results before using a combined matrix. Every manifest keeps
 `qualification` as `not_assessed`: artifact retention and structural validation
@@ -552,6 +552,10 @@ compensated here.
 - Dholabhai et al. (1993), [DOI 10.1021/je00012a045](https://doi.org/10.1021/je00012a045).
 - Coelho, Franco and Firoozabadi (2025), *Industrial & Engineering Chemistry Research* 64, 8492–8505,
   [DOI 10.1021/acs.iecr.5c00134](https://doi.org/10.1021/acs.iecr.5c00134), equation 22.
+- Mousavi, Chapoy and Burgass (2024), *Greenhouse Gases: Science and Technology* 14, 791-828,
+  [DOI 10.1002/ghg.2298](https://doi.org/10.1002/ghg.2298), Tables 5 and A11-A13/A24, CC BY 4.0.
+- Mousavi Belfeh Teymouri (2017), *Phase equilibria measurements and modelling of CO2-rich fluids/brine systems*,
+  Heriot-Watt University, [handle 10399/3409](http://hdl.handle.net/10399/3409), Chapter 3 section 3.2.1.
 
 ## Explicit salt-free KCl solubility holdout (Mousavi-Chapoy-Burgass 2024)
 
@@ -627,3 +631,63 @@ value, hydrate equation, phase-equilibrium tolerance, or empirical temperature
 offset. It remains diagnostic evidence only; physical qualification still
 requires independent review and supporting mixed-brine activity/solubility
 evidence.
+
+## Four-salt mixed-brine dissolved-CO2 holdout
+
+Mousavi, Chapoy and Burgass (2024) Table A24 supplies 18 CC BY measurements for
+one NaCl/KCl/CaCl2/MgCl2 brine at 323.15, 373.15 and 423.15 K and 100.21-571.03
+bar. The source reports salt-free aqueous CO2 mole fraction with displayed
+uncertainty `0.0001`. These points are independent held-out evidence for the
+dissolved-CO2 and water-activity leg; they are not hydrate endpoints.
+
+The article's Table 5 gram recipe is interpreted with the calcium chloride
+dihydrate and magnesium chloride hexahydrate documented in the associated
+Heriot-Watt experimental thesis. The crystal water is added to the solvent
+inventory before the explicit formula-unit inventories are normalized by final
+water. This gives 4.303472167068 m NaCl, 0.045481557865 m KCl,
+0.265697223919 m CaCl2 and 0.148809209564 m MgCl2, with chloride and positive
+charge both 5.177966591898 m and ionic strength 5.592473025381 m. Treating the
+reported one-decimal anhydrous mass fractions as exact remains a separate
+composition-sensitivity control; it is not the primary preparation basis.
+
+`MixedBrineCO2SolubilityMousaviChapoyBurgass2024AssessmentTest` reuses the
+explicit-ion Electrolyte-CPA/mixing-rule-10 path. It retains default and
+constrained root calculations, matched pure-water water activity, dissolved
+molecular CO2, CO2-rich-phase fugacity, effective aqueous `f/x`, component and
+charge closure, ion confinement and the exact log-space contribution identity.
+Experimental residuals are reported without fitting or converting the source
+uncertainty into an acceptance tolerance. The assessment changes no production
+equation, parameter, hydrate term, solver tolerance, empirical offset or
+accuracy qualification. See the
+[source and reproduction notes](../../src/test/resources/data/chemistry_benchmarks/co2_mixed_brine_solubility_mousavi_chapoy_burgass2024_table_a24.md).
+
+On the pinned benchmark, the default molecular-CO2 AAD is 161.9804% at
+323.15 K, 138.1925% at 373.15 K and 106.8022% at 423.15 K, with positive
+model-minus-source residuals throughout. Constraining the CO2-rich root closes
+the molecular fugacity residual below `1.04e-11`, yet gives AADs of 185.0128%,
+138.1925% and 106.8022%, respectively. The three dense-CO2 323.15 K points
+therefore contain a separate root-selection contribution, but root closure does
+not remove the physical solubility discrepancy.
+
+The constrained matched-pure-water decomposition is also directionally
+diagnostic. Mean log dissolved-CO2 brine/pure-water ratios are +0.1362, +0.1899
+and +0.1361 across the three temperatures. The corresponding mean log
+guest-fugacity ratios are only +0.0015, +0.0041 and +0.0106, while mean log
+effective-`f/x` ratios are -0.1347, -0.1858 and -0.1255. Thus the modeled
+four-salt aqueous phase salts CO2 in relative to matched water even though its
+water-activity proxy is depressed. This localizes the dominant discrepancy to
+the high-ionic-strength aqueous CO2/electrolyte response, not the hydrate
+occupancy model or guest fugacity. The rule-10 CPA binary table supplies
+`cpakij_SRK=1` for K+/CO2 but zero for Na+/CO2, Cl-/CO2, Ca++/CO2 and Mg++/CO2;
+the benchmark does not establish replacements for those parameters or a mixed-
+salt term. Independent parameter provenance is required before a production
+model change can be scientifically accepted.
+
+These numerical summaries are from the pinned JDK 17 slow-test runtime. A
+separate forced slow run on Temurin 8 compiled the complete production and test
+source graph, then rejected the default 323.15 K/571.03 bar state at the
+unchanged component-inventory gate with a 1.271804 mol residual. The Java 8
+product matrix excludes slow assessments, while the required slow matrix runs
+on the modern JDK. No value from the rejected Java 8 state contributes to the
+AAD or decomposition summaries above; the result is retained as a solver-
+portability boundary rather than hidden by a relaxed tolerance.
