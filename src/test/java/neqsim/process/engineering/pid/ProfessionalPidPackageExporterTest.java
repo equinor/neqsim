@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import com.google.gson.JsonObject;
@@ -101,11 +102,35 @@ public class ProfessionalPidPackageExporterTest extends NeqSimTest {
     EngineeringProject restored = NorsokOffshoreEngineeringBuilder.from("Restored P&ID reference", loaded, "2.0.1")
         .projectId(project.getProjectId()).registerProposedInstruments(false).build()
         .setRevision(project.getRevision());
-    PidDesignModel restoredPid = PidDesignModel.fromJson(text(target.resolve("pid-design-model.json")));
-    PidSimulationBindings restoredBindings = PidSimulationBindings.fromJson(restored, restoredPid,
-        text(target.resolve("pid-simulation-bindings.json")));
-    assertEquals("20-PCV-001", restoredBindings.getSimulationName(gasControlTag));
-    assertTrue(new PidSimulationSession(restored, restoredPid, restoredBindings).runSteadyState().solved());
+    ProfessionalPidPackageReader.Result intake = ProfessionalPidPackageReader.read(restored, target);
+    assertEquals("20-PCV-001", intake.getBindings().getSimulationName(gasControlTag));
+    assertTrue(new PidSimulationSession(restored, intake.getModel(), intake.getBindings()).runSteadyState().solved());
+    assertEquals(64, intake.getPackageManifestSha256().length());
+    assertEquals(64, intake.getSemanticFingerprint().length());
+    assertFalse(intake.getImportEvidence().hasLosses());
+    assertEquals(15, intake.getImportEvidence().getInstruments().size());
+    assertEquals(4, intake.getImportEvidence().getActuatingFunctions().size());
+    assertEquals(16, intake.getImportEvidence().getInformationFlows().size());
+    assertTrue(intake.hasImportLosses());
+    assertEquals(1, intake.getDiagnostics().size());
+    assertTrue(intake.getDiagnostics().get(0).contains("20-PSHH-001 -> 20-BDV-001"));
+    assertThrows(IllegalArgumentException.class, () -> ProfessionalPidPackageReader.readStrict(restored, target));
+
+    Path roundTrip = ProfessionalPidPackageExporter.export(restored, intake.getModel(), intake.getBindings(),
+        metadata(), temporaryDirectory.resolve("pid-round-trip"));
+    ProfessionalPidPackageReader.Result roundTripIntake = ProfessionalPidPackageReader.read(restored, roundTrip);
+    assertEquals(intake.getSemanticFingerprint(), roundTripIntake.getSemanticFingerprint());
+    ProfessionalPidPackageReader.SemanticComparison comparison = ProfessionalPidPackageReader.compare(intake,
+        roundTripIntake);
+    assertEquals(intake.hasImportLosses(), roundTripIntake.hasImportLosses());
+    assertEquals(!intake.hasImportLosses(), comparison.isEquivalent());
+    if (intake.hasImportLosses()) {
+      assertTrue(comparison.getDifferences().contains("UNSUPPORTED_DEXPI_CONTENT"));
+    }
+
+    restored.setRevision("B");
+    assertThrows(IllegalArgumentException.class, () -> ProfessionalPidPackageReader.read(restored, target));
+    restored.setRevision(project.getRevision());
     JsonObject readiness = JsonParser.parseString(text(target.resolve("professional-pid-readiness.json")))
         .getAsJsonObject();
     assertEquals("2.0.1", readiness.get("dexpiVersion").getAsString());
@@ -120,6 +145,38 @@ public class ProfessionalPidPackageExporterTest extends NeqSimTest {
     assertEquals(pressure, process.getUnit("20-PCV-001").getOutletStreams().get(0).getPressure(), 1.0e-12);
     assertThrows(IllegalArgumentException.class,
         () -> ProfessionalPidPackageExporter.export(project, pid, bindings, metadata(), target));
+    Files.write(target.resolve("pid-design-model.json"), "\n".getBytes(StandardCharsets.UTF_8),
+        StandardOpenOption.APPEND);
+    assertThrows(IllegalArgumentException.class, () -> ProfessionalPidPackageReader.read(restored, target));
+  }
+
+  /**
+   * Reopens a bounded physical-only native projection through the strict lossless intake.
+   *
+   * @throws Exception if the controlled package cannot be generated or read
+   */
+  @Test
+  void reopensLosslessBoundPhysicalSubsetStrictly() throws Exception {
+    ProcessSystem process = process();
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Bound physical DEXPI subset", process, "2.0.1")
+        .projectId("PID-201-STRICT").registerProposedInstruments(false).build().setRevision("A");
+    PidDesignModel pid = new PidDesignModel(project.getProjectId(), "BOUND-PHYSICAL-SUBSET");
+    pid.add(new PidElement("PID-PCV-001", "20-PCV-001", PidElementType.CONTROL_VALVE).equipment("20-PCV-001")
+        .description("Bound pressure-control valve"));
+    PidSimulationBindings bindings = PidSimulationBindings.from(project, pid);
+    bindings.bindEquipment("20-PCV-001", "20-PCV-001");
+    Path target = ProfessionalPidPackageExporter.export(project, pid, bindings, metadata(),
+        temporaryDirectory.resolve("strict-physical-subset"));
+
+    ProfessionalPidPackageReader.Result first = ProfessionalPidPackageReader.readStrict(project, target);
+    assertFalse(first.hasImportLosses());
+    assertEquals(1, first.getDexpiEvidence().getVerifiedTags().size());
+    assertEquals("20-PCV-001", first.getDexpiEvidence().getVerifiedTags().get(0));
+    Path reexported = ProfessionalPidPackageExporter.export(project, first.getModel(), first.getBindings(), metadata(),
+        temporaryDirectory.resolve("strict-physical-subset-round-trip"));
+    ProfessionalPidPackageReader.Result second = ProfessionalPidPackageReader.readStrict(project, reexported);
+    assertEquals(first.getSemanticFingerprint(), second.getSemanticFingerprint());
+    assertTrue(ProfessionalPidPackageReader.compare(first, second).isEquivalent());
   }
 
   /**

@@ -171,10 +171,16 @@ The authored vector families remain in use; no PCA payload/glyph import is impli
     matching P&ID/project definition. Load the process with
     `ProcessSystem.loadFromNeqsim(...)`, check for failure, and reconstruct the
     same project ID/revision with proposed-instrument registration disabled.
-    Restore the P&ID with `PidDesignModel.fromJson(...)`, then restore bindings
-    with `PidSimulationBindings.fromJson(project, pid, bindingJson)` before
-    constructing the new session. Recomputed fingerprints must match; a saved
-    file or binding report alone does not establish current-model equivalence.
+    Prefer `ProfessionalPidPackageReader.read(...)` to verify the full package
+    manifest and restore the canonical P&ID, bindings, native DEXPI 2.0.1
+    relationship evidence and supported-import diagnostics together. Use its
+    strict variant only when every diagnostic must block intake. The underlying
+    manual contract remains `PidDesignModel.fromJson(...)` followed by
+    `PidSimulationBindings.fromJson(project, pid, bindingJson)`. Recomputed
+    fingerprints must match; a saved file or binding report alone does not
+    establish current-model equivalence. Re-export to a new directory and use
+    the reader's semantic comparison before calling a supported round trip
+    equivalent; unsupported content must remain non-equivalent.
 11. Define a `DynamicSafetyScenario` with explicit configuration, event, logic,
     measured criteria, timing and exercised P&ID scope. Use the session's strict
     dynamic path, which checks the configured isolated model before transient

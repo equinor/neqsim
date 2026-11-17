@@ -214,6 +214,14 @@ Use `plant-pydexpi.xml` for pyDEXPI import and inspect
 validity, pyDEXPI import and commercial-CAE round-trip are distinct gates.
 Do not flatten large vendor maps into P&ID attributes.
 
+For controlled professional-package intake, use
+`ProfessionalPidPackageReader.read(...)` after restoring the exact executable
+project ID and revision. It verifies the package manifest, canonical model,
+bindings and native DEXPI 2.0.1 relationships together. Use `readStrict(...)`
+only for a supported lossless subset, and compare a regenerated package with
+`ProfessionalPidPackageReader.compare(...)`. Unsupported or incomplete source
+semantics must remain explicit non-equivalence diagnostics.
+
 Do not call the Proteus graphical file DEXPI 2.0. Antisurge recycle topology is
 connected discharge-to-suction; PSV/BDV proposals use dedicated equipment
 nozzles and a separate relief/blowdown network. Treat every
