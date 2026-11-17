@@ -1,0 +1,15 @@
+source,temperature_degF,total_pressure_psia,rich_phase,aqueous_nbutane_ppm,rich_water_x_times_1000
+reamer-dtu,280,400,vapor,191,99.1
+reamer-dtu,160,400,liquid,88,2
+reamer-dtu,160,800,liquid,89,2
+reamer-dtu,160,1500,liquid,91,2
+reamer-dtu,220,400,liquid,140,8
+reamer-dtu,220,800,liquid,143,7.4
+reamer-dtu,220,1500,liquid,144,6.9
+reamer-dtu,280,800,liquid,221,24.4
+reamer-dtu,280,1000,liquid,222,22.6
+reamer-dtu,280,1500,liquid,226,19.6
+le-breton-iupac,280,360.7,vapor,144.0,
+le-breton-iupac,280,401.7,vapor,157.0,
+le-breton-iupac,280,430.7,vapor,164.15,
+le-breton-iupac,280,450.7,vapor,168.6,

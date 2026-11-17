@@ -30,13 +30,18 @@ def configure():
     model.MC = [None, None]
 
 
-def match_water_pressure(temperature):
-    """Set a temperature-local water alpha parameter at IAPWS saturation pressure."""
+def water_saturation_pressure(temperature):
+    """Return IAPWS water saturation pressure in bara."""
     tr = temperature / 647.096
     tau = 1 - tr
     coefficients = (-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719, 1.80122502)
     powers = (1, 1.5, 3, 3.5, 4, 7.5)
-    pressure = 220.64 * math.exp(sum(a * tau**b for a, b in zip(coefficients, powers)) / tr)
+    return 220.64 * math.exp(sum(a * tau**b for a, b in zip(coefficients, powers)) / tr)
+
+
+def match_water_pressure(temperature):
+    """Set a temperature-local water alpha parameter at IAPWS saturation pressure."""
+    pressure = water_saturation_pressure(temperature)
 
     def equal_fugacity(m):
         model.MC = [(str(m), "0", "0"), None]

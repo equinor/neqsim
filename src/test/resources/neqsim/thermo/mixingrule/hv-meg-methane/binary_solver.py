@@ -97,12 +97,12 @@ def phi(x, temp, pressure, gas, step):
     if abs(eos-pressure)>5e-7: raise ValueError('Pressure closure')
     return result,z,abs(eos-pressure)
 
-def solve(t,p,step):
+def solve(t,p,step,*,rich_gas=True):
     """Solve two log-fugacity equalities in dilute-component logarithms."""
     def residual(u):
         yw,xn=map(math.exp,u)
         if not (0<yw<.5 and 0<xn<.5): raise ValueError('Outside declared dilute domain')
-        g,zg,eg=phi([yw,1-yw],t,p,True,step)
+        g,zg,eg=phi([yw,1-yw],t,p,rich_gas,step)
         l,zl,el=phi([1-xn,xn],t,p,False,step)
         return [math.log(yw/(1-xn))+g[0]-l[0], math.log((1-yw)/xn)+g[1]-l[1]],(yw,xn,zg,zl,max(eg,el))
     u=[math.log(.005),math.log(.0002)]
