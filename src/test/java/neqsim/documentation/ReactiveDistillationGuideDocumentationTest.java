@@ -22,23 +22,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Compiles and executes the exact complete Java quick start published by the reactive distillation
- * guide.
+ * Compiles and executes the exact complete Java quick start published by the reactive distillation guide.
  *
  * @author NeqSim Development Team
  * @version 1.0
  */
 class ReactiveDistillationGuideDocumentationTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "process", "reactive_distillation.md");
-  private static final String MARKER =
-      "<!-- reactive-distillation-quick-start: complete -->";
+  private static final Path GUIDE = Paths.get("docs", "process", "reactive_distillation.md");
+  private static final String MARKER = "<!-- reactive-distillation-quick-start: complete -->";
   private static final String CLASS_NAME = "ReactiveDistillationGuideExample";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
-  private static final Pattern PYTHON_SECTION = Pattern.compile(
-      "### Python \\(Jupyter\\).*?```python\\r?\\n(.*?)\\r?\\n```",
-      Pattern.DOTALL);
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final Pattern PYTHON_SECTION = Pattern
+      .compile("### Python \\(Jupyter\\).*?```python\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -65,15 +60,19 @@ class ReactiveDistillationGuideDocumentationTest {
     }
   }
 
-  /** Verifies that the companion Python example keeps the supported gateway and preferred setter. */
+  /**
+   * Verifies that the companion Python example keeps the supported gateway and preferred setter.
+   *
+   * @throws Exception if the guide cannot be read
+   */
   @Test
   void pythonExampleUsesSupportedGatewayAndPreferredSetter() throws Exception {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
     Matcher section = PYTHON_SECTION.matcher(markdown);
     assertTrue(section.find(), "Missing Python reactive-distillation example");
+    String source = section.group(1);
     assertFalse(section.find(), "Python reactive-distillation example must be unique");
 
-    String source = section.group(1);
     assertTrue(source.contains("from neqsim import jneqsim"));
     assertTrue(source.contains("jneqsim.process.equipment.distillation.DistillationColumn"));
     assertTrue(source.contains(".setOutletTemperature("));
@@ -98,16 +97,12 @@ class ReactiveDistillationGuideDocumentationTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
-    String classpath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(diagnostics, manager, null,
-              Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
-                  classpath, "-d", classes.toString()),
-              null, manager.getJavaFileObjects(javaFile.toFile()))
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
           .call();
       assertTrue(successful, diagnostics.toString());
     }
