@@ -1,7 +1,7 @@
 ---
 name: neqsim-distillation-design
 description: "Distillation column design rules for NeqSim. USE WHEN: setting up distillation columns, troubleshooting convergence, selecting internals (trays/packing), sizing columns, or analyzing column performance. Covers DistillationColumn setup, solver selection, feed tray optimization, reflux ratio, and internals selection per industry standards."
-last_verified: "2026-11-14"
+last_verified: "2026-11-17"
 ---
 
 # Distillation Design Rules
@@ -31,15 +31,15 @@ feedStream.setTemperature(50.0, "C");
 feedStream.setPressure(15.0, "bara");
 feedStream.run();
 
-// Create column (name, stages, hasCondenser, hasReboiler)
+// Create column (name, simpleTrayCount, hasReboiler, hasCondenser)
 DistillationColumn column = new DistillationColumn("Deethanizer", 15, true, true);
 column.addFeedStream(feedStream, 8);  // Feed on stage 8
 
 // Specifications
 column.setCondenserTemperature(273.15 - 30.0);  // Kelvin
 column.getReboiler().setHeatInput(1e6);          // Watts
-// OR set reflux ratio:
-// column.getCondenser().setRefluxRatio(2.5);
+// Alternatively replace the condenser temperature specification with:
+// column.setCondenserRefluxRatio(2.5);
 
 column.run();
 ```
@@ -104,6 +104,23 @@ Rules that follow from the measurements:
   cost sweeps without helping; disable it for that column).
 - This evidence does not cover CPA or other associating fluids, absorbers without reboiler, side
   draws or pumparounds. Measure before recommending a solver there, and add the result here.
+
+### Vacuum MEG regeneration
+
+For salt-free water–MEG, use explicit reboiler duty and partial-condenser molar reflux ratio.
+Initialize terminal temperatures through `setSeedTemperature`, then require
+`RIGOROUS_CONVERGED`, closed energy across each adiabatic tray, and stationary internal
+flows. In the November 17 tests, direct substitution with the bracketed tray PH flash
+closed the one-tray binary case, a nearby duty change, and a three-tray case with trace
+methane. This evidence applies to those SRK–CPA cases near 0.8 bara. For duty sweeps, verify
+the published reboiler duty after each change and compare a nearby retained-state solve
+with a fresh solve.
+
+When reporting MEG loss, compare vapor MEG composition with data near the relevant
+pressure and temperature. Keep the column conservation result and the vapor-composition
+error visible in the engineering report. The
+[MEG benchmark in the equipment guide](../../../docs/process/equipment/distillation.md#vacuum-meg-regeneration)
+lists the measured points and the SRK–CPA error before fitting.
 
 ### All solver types
 

@@ -39,6 +39,7 @@ Read only the skill that matches the request, plus the general ones:
 | Sweetening, amine loading, reboiler duty | `neqsim-acid-gas-treating` | `SimpleAmineAbsorber`, `SimpleAmineRegenerator`, `RateBasedAbsorber` |
 | CO2 membrane, PSA purity and recovery | `neqsim-acid-gas-treating` | `MembraneSeparator`, `PressureSwingAdsorptionBed` |
 | TEG dehydration | community `teg-dehydration-agent`, else `neqsim-acid-gas-treating` | `SimpleTEGAbsorber` |
+| MEG regeneration, vacuum reboiler and condenser, vapor carryover | `neqsim-distillation-design` | `DistillationColumn`, `SystemSrkCPAstatoil` |
 | Crude assay, blend, sulfur/viscosity limit | `neqsim-refinery-crude-processing` | `OilAssayCharacterisation`, `RefineryAssayBlend` |
 | Hydrotreating H2, utility and economics screen | `neqsim-refinery-crude-processing` | `RefineryHydrotreatingSulfurNitrogenBalance` |
 | Column diameter, flooding, HETP, solver choice | `neqsim-column-internals-and-rate-based` | `ColumnInternalsDesigner`, `PackedColumn`, `RateBasedPackedColumn` |
@@ -56,7 +57,7 @@ Read only the skill that matches the request, plus the general ones:
 ## Hand-offs
 
 - Upstream gas conditioning, compression, flowsheet assembly: `@process-model`
-- Hydrate, corrosion, scale, MEG: `@flow-assurance`, `@production-chemistry`
+- Hydrate inhibition, corrosion, scale and MEG reclamation chemistry: `@flow-assurance`, `@production-chemistry`
 - Vessel and column mechanical sizing and cost: `@mechanical-design`
 - Hydrogen, SMR, CCS capture chains: `@ccs-hydrogen`
 - Relief, blowdown or toxic release from the unit: `@safety-depressuring`, `@consequence-analysis`
