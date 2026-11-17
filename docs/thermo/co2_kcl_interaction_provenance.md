@@ -482,7 +482,7 @@ unresolved.
 The Core Build, Test, and Javadoc workflow retains an
 `electrolyte-assessment-evidence-<shard>` artifact from every Java 21 slow-test
 shard, including after failed test runs. Download the artifacts from the same
-workflow run; the nine assessments may be distributed over different shards.
+workflow run; the twelve assessments may be distributed over different shards.
 Surefire reports remain in their existing, separate artifacts.
 
 Each bundle includes a `manifest.json` and only the allowlisted assessment CSVs
@@ -494,13 +494,16 @@ produced by tests selected for that shard:
 | Archer salt-only, pressure-only and CO2-addition sequence | 10 |
 | He–Morse dissolved CO2, complete five-temperature series | 26 |
 | Burgass-Tohidi KCl and mixed-brine CO2 observable mappings | 20 |
+| Mousavi-Chapoy-Burgass KCl salt-free dissolved CO2 | 26 |
+| Mousavi-Chapoy-Burgass four-salt Table A24 holdout | 18 |
+| Mousavi-Chapoy-Burgass dense pure-water and NaCl series | 34 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
 | Carroll evaluated salt-free CO2, three setup constructions | 57 |
 | Full Dholabhai family, all supported measured recipes | 110 |
 | Matched measured-state aqueous/guest partition, same Dholabhai recipes | 110 |
 
-The combined bundle has 380 diagnostic rows, not 380 independent measurements.
+The combined bundle has 458 diagnostic rows, not 458 independent measurements.
 The two 110-row assessments deliberately use the same 110 measured endpoints.
 
 The manifest records the actual checkout commit separately from the GitHub
@@ -520,7 +523,7 @@ complete evidence. Outputs from unselected tests and unrelated files under
 `target/` are not collected.
 
 `selected_evidence_complete` applies only to the selected assessments in that
-shard, not the full eleven-assessment matrix or the rest of CI. A shard with no selected
+shard, not the full twelve-assessment matrix or the rest of CI. A shard with no selected
 assessment has a count of zero. Check every producer across all shards and the
 original test results before using a combined matrix. Every manifest keeps
 `qualification` as `not_assessed`: artifact retention and structural validation
@@ -680,8 +683,56 @@ the high-ionic-strength aqueous CO2/electrolyte response, not the hydrate
 occupancy model or guest fugacity. The rule-10 CPA binary table supplies
 `cpakij_SRK=1` for K+/CO2 but zero for Na+/CO2, Cl-/CO2, Ca++/CO2 and Mg++/CO2;
 the benchmark does not establish replacements for those parameters or a mixed-
-salt term. Independent parameter provenance is required before a production
-model change can be scientifically accepted.
+salt term. This CPA binary-interaction layer is not the only active ion response:
+mixing rule 10 also applies short-range Furst `Wij` terms. Under untouched shared
+defaults, CO2 with Na+, Ca++, Mg++ and Cl- uses the legacy NaCl-oriented
+`W0=1.27e-4 m3/mol`, while CO2/K+ uses the Onda-backed
+`W0=-2.2981e-4 m3/mol` with `W1=W2=0`. Explicit pair or global overrides retain
+priority. A zero CPA BIP therefore does not imply zero CO2-ion response.
+
+Electroneutral chloride data identify only salt-level combinations. For NaCl,
+KCl, CaCl2 and MgCl2 the observable linear terms are respectively
+`W_Na+W_Cl`, `W_K+W_Cl`, `W_Ca+2W_Cl` and `W_Mg+2W_Cl`; their design matrix has
+rank four for five ion coefficients, with gauge direction `(1,1,2,2,-1)`.
+Table A24 is charge balanced and is invariant along the same direction, so it
+cannot justify an absolute allocation to individual ion terms. Independent
+parameter provenance and a declared gauge convention are required before a
+production model change can be scientifically accepted.
+
+## Dense pure-water and NaCl follow-through
+
+Mousavi, Chapoy and Burgass (2024) Tables A1 and A8-A10 add eight dense
+pure-water and 26 NaCl measurements on the same salt-free mole-fraction basis
+as the KCl and mixed-brine series. The no-fit
+`WaterNaClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest` reports current
+Electrolyte-CPA residuals, default/constrained roots, matched pure-water water
+activity, guest fugacity and effective aqueous `f/x`. It does not recalibrate
+the Onda KCl coefficient or use the already inspected mixed-brine/hydrate
+holdouts for selection. See the
+[source notes](../../src/test/resources/data/chemistry_benchmarks/co2_water_nacl_solubility_mousavi_chapoy_burgass2024.md).
+
+On the pinned benchmark, the constrained pure-water AAD is 5.6652% (eight A1
+rows), with a -2.7607% signed bias. The corresponding NaCl AADs are 21.9058%
+at 10 mass%, 34.1426% at 15 mass% and 68.1650% at 22 mass%; every NaCl
+residual is positive. Thus the salt-free dense-CO2 reference is comparatively
+well reproduced, while the aqueous NaCl response increasingly underpredicts
+salting out as concentration rises. The modeled mean log dissolved-CO2 ratios
+relative to matched pure water are -0.1248, -0.1676 and -0.1657 over the three
+concentrations. Mean guest-fugacity contributions are only +0.0015, +0.0022
+and +0.0060, whereas mean effective-`f/x` contributions are +0.1263, +0.1698
+and +0.1717. The discrepancy is therefore an aqueous activity/fugacity
+response limitation rather than a pure-water or CO2-rich guest-fugacity error.
+
+The default solver reproduces 33 of the 34 states. At the 22 mass%, 323.15 K,
+57.241 MPa point it does not retain both an aqueous and a non-aqueous phase;
+the constrained root remains closed and is reported explicitly rather than
+relaxing a phase or balance check. No production coefficient is fitted here.
+The dense NaCl source identifies a NaCl-level response, but cannot allocate it
+uniquely between Na+ and Cl-. A production update still requires an independent
+NaCl source family for a frozen holdout and an explicit allocation convention
+or salt-pair formulation; independent CaCl2/MgCl2 VLE and mixed-ion water
+activity are also needed before the Table A24 four-salt response can be
+attributed without confounding ion and mixing terms.
 
 These numerical summaries are from the pinned JDK 17 slow-test runtime. A
 separate forced slow run on Temurin 8 compiled the complete production and test
