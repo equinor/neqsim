@@ -1273,7 +1273,7 @@ commercial-simulator comparison.
 ### Mineral Scale (thermodynamics + kinetics + brine mixing)
 
 For commingled formation waters with dissolved silica, follow the
-[produced-water route](../neqsim-production-chemistry/SKILL.md#produced-water-blending-and-silica)
+[produced-water route](../neqsim-produced-water-compatibility/SKILL.md)
 with the NeqSim and PHREEQC Pitzer example. Compare the CO₂ boundary conditions
 and amorphous silica, crystalline silica and metal silicate results at each station.
 

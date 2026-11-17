@@ -30,7 +30,9 @@ def validate_case(case):
         if len({entry["name"] for entry in records}) != len(records):
             raise ValueError("Formation and node names must be unique within their lists")
     nodes = case["nodes"]
-    if any(a["pressure_bara"] < b["pressure_bara"] for a, b in zip(nodes, nodes[1:])):
+    if case.get("mode", "process") == "process" and any(
+        a["pressure_bara"] < b["pressure_bara"] for a, b in zip(nodes, nodes[1:])
+    ):
         raise ValueError("Node pressures must stay constant or decrease")
     for blend in case["additional_blends"]:
         if len(blend) != len(formations) or not math.isclose(sum(blend), 1, abs_tol=1e-10):
@@ -130,6 +132,7 @@ def process_blend(case, fractions):
         results.append({**rates, "co2_fugacity_bar": fugacity,
                         "aqueous_solvent_water_kg_s": aqueous_water_kg_s,
                         "aqueous_solvent_water_fraction": min(1.0, water_retention),
+                        "water_retention_source": "process_flash",
                         "neqsim_component_closure_rel": max(closure, closure_at_node)})
     return results
 
@@ -243,29 +246,57 @@ def chemistry_summary(formations, fractions, node, fugacity, water_retention, da
     }
 
 
+def station_state(node, water_rate):
+    retention = node.get("aqueous_solvent_water_fraction", 1.0)
+    return {
+        "gas_kg_s": None,
+        "oil_kg_s": None,
+        "aqueous_kg_s": None,
+        "co2_fugacity_bar": node.get("co2_fugacity_bar"),
+        "aqueous_solvent_water_kg_s": None if water_rate is None else retention * water_rate,
+        "aqueous_solvent_water_fraction": retention,
+        "water_retention_source": ("station_input" if "aqueous_solvent_water_fraction" in node
+                                   else "assumed_full_retention"),
+        "neqsim_component_closure_rel": None,
+    }
+
+
 def run_study(case, database):
     validate_case(case)
     database = Path(database).resolve(strict=True)
     checksum = hashlib.sha256(database.read_bytes()).hexdigest()
     if checksum != PITZER_SHA256:
         raise ValueError("Use the qualified PHREEQC v3.7.3 pitzer.dat. See README.md for the source.")
+    mode = case.get("mode", "process")
+    water_rate = case.get("water_kg_s")
+    if mode == "station":
+        measured_states = [station_state(node, water_rate) for node in case["nodes"]]
     results = []
     for index, blend in enumerate(build_blends(case), 1):
-        process = process_blend(case, blend)
+        if mode == "process":
+            states = process_blend(case, blend)
+            fixed_boundary = "fixed_eos_co2"
+        else:
+            states = measured_states
+            fixed_boundary = "fixed_station_co2"
         fractions = {f"solvent_water_fraction_{f['name']}": fraction
                      for f, fraction in zip(case["formations"], blend)}
-        for node, state in zip(case["nodes"], process):
-            for boundary, fugacity in (("fixed_eos_co2", state["co2_fugacity_bar"]), ("closed_dic", None)):
-                chemistry = chemistry_summary(case["formations"], blend, node, fugacity,
+        for node, state in zip(case["nodes"], states):
+            fugacity = state["co2_fugacity_bar"]
+            boundaries = [(fixed_boundary, fugacity)] if fugacity is not None else []
+            boundaries.append(("closed_dic", None))
+            for boundary, boundary_fugacity in boundaries:
+                chemistry = chemistry_summary(case["formations"], blend, node, boundary_fugacity,
                                               state["aqueous_solvent_water_fraction"], database)
+                solid = chemistry["equilibrium_solid_mg_sio2_kg_feed_water"]
+                solid_rate = None if water_rate is None else solid * water_rate * 0.0036
                 results.append({"blend_id": index, **fractions, **node, **state, "boundary": boundary,
-                                **chemistry, "equilibrium_solid_kg_h": chemistry[
-                                    "equilibrium_solid_mg_sio2_kg_feed_water"
-                                ] * case["water_kg_s"] * 0.0036})
+                                **chemistry, "equilibrium_solid_kg_h": solid_rate})
     return {
         "status": "equilibrium_screening",
+        "mode": mode,
         "iphreeqc_version": "3.7.3 (phreeqpy default bundled library)",
-        "neqsim_version": version("neqsim"),
+        "neqsim_version": version("neqsim") if mode == "process" else None,
         "phreeqpy_version": version("phreeqpy"),
         "pitzer_database_sha256": checksum,
         "case": case,

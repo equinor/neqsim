@@ -158,9 +158,7 @@
           "reference_pressure_bara",
           "alkalinity_mmol_kg_water",
           "silica_mg_sio2_kg_water",
-          "ions_mol_kg_water",
-          "gas_mol_per_kg_water",
-          "oil_mol_per_kg_water"
+          "ions_mol_kg_water"
         ],
         "additionalProperties": false
       },
@@ -185,6 +183,18 @@
             "type": "number",
             "minimum": 1,
             "maximum": 100
+          },
+          "co2_fugacity_bar": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "description": "Station-mode CO2 fugacity in bar. Omit for closed aqueous DIC only."
+          },
+          "aqueous_solvent_water_fraction": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "description": "Station-mode retained fraction of incoming solvent water. Defaults to 1."
           }
         },
         "required": [
@@ -223,15 +233,87 @@
       "exclusiveMinimum": 0,
       "maximum": 500,
       "description": "Total incoming solvent-water mass rate in kg/s."
+    },
+    "mode": {
+      "enum": [
+        "process",
+        "station"
+      ],
+      "default": "process",
+      "description": "Process mode flashes gas/oil/water. Station mode uses water assays and specified conditions."
     }
   },
   "required": [
     "formations",
     "nodes",
     "blend_steps",
-    "additional_blends",
-    "water_kg_s"
+    "additional_blends"
   ],
   "additionalProperties": false,
-  "$schema": "https://json-schema.org/draft/2020-12/schema"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "if": {
+    "required": [
+      "mode"
+    ],
+    "properties": {
+      "mode": {
+        "const": "station"
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "formations": {
+        "items": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "gas_mol_per_kg_water"
+                ]
+              },
+              {
+                "required": [
+                  "oil_mol_per_kg_water"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "else": {
+    "required": [
+      "water_kg_s"
+    ],
+    "properties": {
+      "formations": {
+        "items": {
+          "required": [
+            "gas_mol_per_kg_water",
+            "oil_mol_per_kg_water"
+          ]
+        }
+      },
+      "nodes": {
+        "items": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "co2_fugacity_bar"
+                ]
+              },
+              {
+                "required": [
+                  "aqueous_solvent_water_fraction"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
 }

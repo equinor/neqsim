@@ -1,6 +1,6 @@
 # Produced-water compatibility with NeqSim and PHREEQC
 
-A synthetic three-formation study of gas, oil and produced water. The example uses
+Two synthetic produced-water compatibility cases cover three-phase process conditions and supplied station conditions. The example uses
 NeqSim 3.29.0 and PhreeqPy 0.6.0 with its bundled IPhreeqc 3.7.3. It was exercised
 on Linux with Java 21 and Python 3.12. The Python study is a stand-alone example.
 The native NeqSim API computes silica SI from externally speciated activities.
@@ -13,7 +13,8 @@ as `pitzer.dat`. The program checks the SHA-256 stored in `study.py`.
 
 ```bash
 python -m pip install -r requirements.txt
-python study.py case.json --database pitzer.dat --output results
+python study.py case.json --database pitzer.dat --output process-results
+python study.py station_case.json --database pitzer.dat --output station-results
 PRODUCED_WATER_PITZER_DATABASE="$PWD/pitzer.dat" python -m unittest discover -v
 ```
 
@@ -22,7 +23,22 @@ The CLI writes `result.json` with the exact input and provenance and
 the same calculation as a local MCP stdio server, run `mcp_server.py` with the
 same interpreter and the `PRODUCED_WATER_PITZER_DATABASE` environment variable.
 The two calls expose the schema and a study summary. Supply up to five blend IDs
-to retrieve detailed rows through MCP. The CLI writes the complete dataset.
+to retrieve detailed rows through MCP. The CLI writes the complete dataset. The MCP entry point routes native library
+diagnostics to stderr so stdout carries the protocol.
+
+## Study modes
+
+| Mode | Required basis | CO₂ boundaries and results |
+|------|----------------|---------------------------|
+| `process` (default) | Water assays, gas and oil component inventories for each formation, incoming solvent-water rate and ordered process stations | Closed aqueous DIC and fixed EOS-derived gas fugacity at every station. Reports gas, oil and aqueous phase flows and NeqSim component balance. |
+| `station` | Water assays and station temperature and pressure. Gas and oil inventories are omitted. | Closed aqueous DIC at each station. A supplied `co2_fugacity_bar` adds a fixed-fugacity scenario. A supplied `aqueous_solvent_water_fraction` accounts for water removed from the brine. The default is full water retention. |
+
+Station mode executes PHREEQC without starting the JVM. Distinct stations can be
+independent measurements or scenarios. Use a condition-matched CO₂ fugacity in bar.
+The result records the water-retention source. If `water_kg_s` is absent, the
+mass-normalized silica potential is still calculated and `equilibrium_solid_kg_h`
+is null. NeqSim phase flow and component-balance outputs are null in station mode.
+The MCP tool summarizes only the boundaries that ran.
 
 ## Inputs and boundaries
 
@@ -43,11 +59,11 @@ to retrieve detailed rows through MCP. The CLI writes the complete dataset.
   represent operating conditions. Salts affect the aqueous calculations in PHREEQC.
   NeqSim sends the equilibrium gas CO₂ fugacity and solvent-water retention to the
   brine calculation. There is no material transfer back to NeqSim.
-- At each node, PHREEQC mixes the speciated feed assays, applies the local T/P and
+- In both modes, PHREEQC mixes the speciated feed assays, applies the local T/P and
   solvent-water change, and calculates aqueous speciation. The closed aqueous DIC
   mode conserves aqueous inorganic carbon. The fixed-fugacity mode exchanges CO₂
   with an external reservoir. The code iterates the PHREEQC imposed CO₂ partial
-  pressure until the returned fugacity agrees with NeqSim's.
+  pressure until the returned fugacity agrees with the EOS value or station input.
 - First evaluate saturation indices with solids absent. Then allow only amorphous
   silica to precipitate. This is a local equilibrium removal potential. It is
   calculated from the original blended inventory at every node and must not be
@@ -66,7 +82,8 @@ Pitzer parameter completeness or model accuracy for an asset's multicomponent br
 
 The study tests process component closure, dissolved-ion and elemental silicon
 closure, aqueous DIC conservation in the closed mode, CO₂ fugacity agreement in the
-open mode, and saturation after amorphous silica precipitation. The 25 °C pure-water
+fixed-fugacity mode, and saturation after amorphous silica precipitation. The station
+mode test runs with and without a water rate and verifies that no process flash is called. The 25 °C pure-water
 solubility sanity check compares with the measured average of 0.00218 mol/kg H₂O
 reported by [Marshall (1980)](https://doi.org/10.1016/0016-7037(80)90281-1).
 The [USGS PHREEQC manual](https://doi.org/10.3133/tm6A43) describes input and conventions.

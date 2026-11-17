@@ -18,11 +18,15 @@ Both approaches share improved Ksp correlations, pressure corrections, and T-dep
 ## Silica in commingled produced water
 
 Use the [produced-water compatibility example](https://github.com/equinor/neqsim/tree/master/examples/produced-water-compatibility)
-for a three-formation gas, oil and brine blend sweep. The SRK-CPA process model
-passes solvent-water retention and gas CO₂ fugacity to PHREEQC Pitzer. The
-example preserves both closed aqueous inorganic carbon and fixed-fugacity
-scenarios. It reports pre-precipitation SI and local equilibrium amorphous
-silica removal potential, and records solvent-water fractions and closure.
+for a formation-water blend sweep. In process mode the SRK-CPA flowsheet
+passes solvent-water retention and gas CO₂ fugacity to PHREEQC Pitzer.
+Station mode uses water assays and supplied temperatures and pressures, with
+optional CO₂ fugacity and solvent-water retention. Both modes support closed
+aqueous DIC. They also calculate fixed-fugacity scenarios where a fugacity is
+available. Results include pre-precipitation SI, local equilibrium amorphous
+silica removal potential, solvent-water blend fractions and model checks.
+The [produced-water compatibility workflow](https://github.com/equinor/neqsim/blob/master/.github/skills/neqsim-produced-water-compatibility/SKILL.md)
+covers assay normalization, scenario selection and reporting.
 
 `SilicaScaleSaturation.saturationIndex` accepts the decimal log activities of
 neutral H₄SiO₄ and water and the matching decimal log dissolution constant.

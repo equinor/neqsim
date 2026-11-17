@@ -1,7 +1,10 @@
 import json
 import math
 import os
+import subprocess
+import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from jsonschema import ValidationError
@@ -31,6 +34,65 @@ class CompatibilityStudyTest(unittest.TestCase):
         self.case["formations"][0]["ions_mol_kg_water"]["iron"] = 1e-4
         with self.assertRaises(ValidationError):
             validate_case(self.case)
+
+    def test_station_mode_uses_only_requested_boundaries(self):
+        case = json.loads(Path(__file__).with_name("station_case.json").read_text())
+        with patch("study.process_blend", side_effect=AssertionError("Unexpected process flash")):
+            result = run_study(case, DATABASE)
+            rated_rows = run_study({**case, "water_kg_s": 10}, DATABASE)["rows"]
+        self.assertEqual(result["mode"], "station")
+        self.assertIsNone(result["neqsim_version"])
+        self.assertEqual(len(result["rows"]), 18)
+        for row, rated in zip(result["rows"], rated_rows):
+            self.assertIsNone(row["gas_kg_s"])
+            self.assertIsNone(row["oil_kg_s"])
+            self.assertIsNone(row["neqsim_component_closure_rel"])
+            self.assertIsNone(row["equilibrium_solid_kg_h"])
+            self.assertIsNone(row["aqueous_solvent_water_kg_s"])
+            self.assertAlmostEqual(rated["equilibrium_solid_kg_h"],
+                                   rated["equilibrium_solid_mg_sio2_kg_feed_water"] * 0.036)
+            if row["name"] == "Outlet sample":
+                self.assertEqual(row["boundary"], "closed_dic")
+                self.assertIsNone(row["co2_fugacity_bar"])
+                self.assertEqual(row["aqueous_solvent_water_fraction"], 1)
+                self.assertEqual(row["water_retention_source"], "assumed_full_retention")
+            else:
+                self.assertAlmostEqual(row["aqueous_solvent_water_fraction"], 0.985)
+                self.assertEqual(row["water_retention_source"], "station_input")
+            if row["boundary"] == "fixed_station_co2":
+                self.assertAlmostEqual(row["log10_co2_fugacity_atm"], math.log10(0.6 / 1.01325), delta=1e-7)
+            else:
+                self.assertLess(row["closed_dic_closure_mol_kg_water"], 1e-8)
+        self.assertEqual({row["boundary"] for row in result["rows"]},
+                         {"fixed_station_co2", "closed_dic"})
+        self.assertGreater(rated_rows[0]["equilibrium_solid_kg_h"], 0)
+
+    def test_modes_reject_conflicting_inputs(self):
+        with self.assertRaises(ValidationError):
+            validate_case({**self.case, "mode": "station"})
+        self.case["nodes"][0]["co2_fugacity_bar"] = 2.5
+        with self.assertRaises(ValidationError):
+            validate_case(self.case)
+
+    def test_mcp_stdio_separates_native_diagnostics(self):
+        script = """
+import os
+from mcp_server import main, server
+
+def simulated_transport(transport):
+    assert transport == 'stdio'
+    os.write(1, b'native JVM warning\\n')
+    print('protocol response')
+
+server.run = simulated_transport
+main()
+"""
+        completed = subprocess.run(
+            [sys.executable, "-c", script], cwd=Path(__file__).resolve().parent,
+            capture_output=True, text=True, check=True, timeout=30,
+        )
+        self.assertEqual(completed.stdout.strip(), "protocol response")
+        self.assertIn("native JVM warning", completed.stderr)
 
     def test_amorphous_silica_solubility_against_marshall_1980(self):
         # Marshall, GCA (1980), doi:10.1016/0016-7037(80)90281-1:

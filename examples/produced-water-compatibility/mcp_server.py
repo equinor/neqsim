@@ -1,6 +1,7 @@
 """Read-only local MCP entry points for the produced-water compatibility study."""
 
 import os
+import sys
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -31,10 +32,12 @@ def screen_produced_water(case: dict[str, Any], blend_ids: list[int] | None = No
     result.pop("case")
     if blend_ids and set(blend_ids) - {row["blend_id"] for row in rows}:
         raise ValueError("Requested blend ID is outside this case")
+    by_node_boundary = {}
+    for row in rows:
+        by_node_boundary.setdefault(row["name"], {}).setdefault(row["boundary"], []).append(row)
     summary = []
     for node in case["nodes"]:
-        for boundary in ("fixed_eos_co2", "closed_dic"):
-            subset = [row for row in rows if row["name"] == node["name"] and row["boundary"] == boundary]
+        for boundary, subset in by_node_boundary[node["name"]].items():
             maxima = {}
             for mineral in MINERALS:
                 field = f"si_{mineral}"
@@ -50,5 +53,15 @@ def screen_produced_water(case: dict[str, Any], blend_ids: list[int] | None = No
             "rows": [row for row in rows if row["blend_id"] in (blend_ids or ())]}
 
 
-if __name__ == "__main__":
+def main():
+    sys.stdout.flush()
+    stdout_fd = sys.stdout.fileno()
+    protocol_fd = os.dup(stdout_fd)
+    # Native JVM diagnostics can write directly to fd 1. FastMCP uses sys.stdout.
+    os.dup2(sys.stderr.fileno(), stdout_fd)
+    sys.stdout = os.fdopen(protocol_fd, "w", encoding="utf-8", buffering=1)
     server.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()

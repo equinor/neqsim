@@ -39,24 +39,10 @@ exposes `getStandardsApplied()` and `toMap()` / `toJson()` so results drop strai
 
 ## Produced-water blending and silica
 
-Use [the compatibility study](../../../examples/produced-water-compatibility/README.md)
-for recombined formation waters and their gas/oil feeds. Confirm dissolved silica
-as Si or SiO₂ and convert the measurements to the supplied solvent-water basis.
-Keep pH tied to its assay temperature and absolute pressure. Reconcile major-ion
-charge balance and keep measured values traceable.
-
-1. Specify process stations, pure water end members, pairwise blends and any
-   operating ternary blend. Mix analytical inventories by solvent-water mass.
-   Compute pH by speciation at each station.
-2. Run the NeqSim/PHREEQC CLI, or call `produced_water_case_schema` and
-   `screen_produced_water` from the example's local MCP server. Compare closed
-   DIC with fixed process gas CO₂ fugacity. Inspect charge and material closure.
-3. Report amorphous silica separately from quartz, chalcedony and magnesium
-   silicates. Screen carbonate and sulfate minerals at the same points. Use
-   amorphous equilibrium solid potential only for the stated boundary and point.
-4. Use `SilicaScaleSaturation` when qualified external H₄SiO₄ and water activities
-   and consistent mineral equilibrium constants are already available. The
-   reference constants in that API are at one atmosphere.
+Follow [neqsim-produced-water-compatibility](../neqsim-produced-water-compatibility/SKILL.md)
+for assay normalization, model selection, blend matrices, model checks and
+reporting. Use the inhibitor workflow here when the study also requires
+treatment selection or dosage.
 
 ## Applicable Standards
 
