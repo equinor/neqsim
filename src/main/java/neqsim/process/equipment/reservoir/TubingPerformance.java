@@ -36,6 +36,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li><b>ISOTHERMAL</b> - Constant temperature throughout tubing</li>
  * <li><b>LINEAR_GRADIENT</b> - Linear temperature profile from BH to WH</li>
  * <li><b>RAMEY</b> - Ramey (1962) steady-state geothermal model</li>
+ * <li><b>HASAN_KABIR_ENERGY</b> - Currently delegates to the same Ramey (1962) calculation as
+ * {@code RAMEY} (see that enum constant's own Javadoc); it does not yet add Joule-Thomson or
+ * friction-heating terms</li>
  * </ul>
  *
  * <h2>Usage Example - VLP Curve Generation</h2>
@@ -158,7 +161,18 @@ public class TubingPerformance extends TwoPortEquipment {
     RAMEY,
 
     /**
-     * Hasan-Kabir energy balance - Coupled flow and heat transfer. Includes Joule-Thomson effect and friction heating.
+     * Hasan-Kabir energy balance - intended to model coupled flow and heat transfer, including the
+     * Joule-Thomson effect and friction heating.
+     *
+     * <p>
+     * <b>Not yet implemented:</b> {@link TubingPerformance#calculateTemperatureAtDepth} currently
+     * delegates this case to the same calculation as {@link #RAMEY} (see
+     * {@code calculateRameyTemperature}), so selecting this model today produces an identical
+     * temperature profile to {@code RAMEY} -- without the Joule-Thomson or friction-heating terms this
+     * Javadoc describes. Selecting {@code RAMEY} directly is equivalent and makes the current behavior
+     * explicit; use this constant once the coupled energy-balance calculation it names is actually
+     * implemented.
+     * </p>
      */
     HASAN_KABIR_ENERGY
   }
