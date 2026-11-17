@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1028,7 +1030,23 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Current adaptive dt multiplier (starts at 1.0, reduced on instability, slowly grows back).
    */
-  private transient double adaptiveDtFactor = 1.0;
+  private double adaptiveDtFactor = 1.0;
+
+  /**
+   * Restore adaptive stepping for checkpoints written before the multiplier was serialized.
+   *
+   * @param input serialized pipe state
+   * @throws IOException if the state cannot be read
+   * @throws ClassNotFoundException if a serialized class is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    // Older streams omit this formerly transient field and therefore restore zero.
+    if (adaptiveDtFactor == 0.0) {
+      adaptiveDtFactor = 1.0;
+    }
+    pressureInletReservoirCachePressure = Double.NaN;
+  }
 
   /**
    * Minimum adaptive dt factor to prevent timestep from becoming infinitesimally small.
@@ -5724,9 +5742,9 @@ public class TwoFluidPipe extends Pipeline {
    * Run transient simulation for specified time step.
    *
    * <p>
-   * The default legacy route retains completed substeps on an incomplete interval. Selecting a complete transaction,
-   * conservative energy recovery or an experimental unsplit solver instead leaves the entire accepted interval
-   * unchanged on failure.
+   * The default legacy route retains completed substeps on an incomplete interval. When no substep is accepted, the
+   * connected outlet retains its previously published fluid. Selecting a complete transaction, conservative energy
+   * recovery or an experimental unsplit solver instead leaves the entire accepted interval unchanged on failure.
    * </p>
    *
    * @param dt Requested time step (s)
@@ -7636,9 +7654,10 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
-    // Publish the accepted interval-average outlet flux after constructing its
-    // conservative report. Result profiles use the same accepted final state.
-    updateOutletStream();
+    // An empty report is diagnostic only. Publishing it would fall back to the current inlet rate.
+    if (acceptedSubsteps > 0) {
+      updateOutletStream();
+    }
     updateResultArrays();
 
     if (equations.isOutletBackflowClamped() && !transientOutletBackflowClamped) {
@@ -8045,6 +8064,9 @@ public class TwoFluidPipe extends Pipeline {
    * Update thermodynamic properties using flash calculations.
    */
   private void updateThermodynamics() {
+    boolean preserveSingleLiquidAcoustics = coupledPressureMomentumEnabled && !includeMassTransfer
+        && !componentTransportEnabled && !includeEnergyEquation
+        && !(enableHeatTransfer && heatTransferCoefficient > 0.0) && directElectricalHeatingPowerPerMeter == 0.0;
     for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
       TwoFluidSection sec = sections[sectionIndex];
       try {
@@ -8066,6 +8088,16 @@ public class TwoFluidPipe extends Pipeline {
           ThermodynamicOperations ops = new ThermodynamicOperations(flash);
           ops.TPflash();
           flash.initProperties();
+        }
+
+        // An equilibrium split changes the liquid composition even when no mass transfers.
+        // For a single liquid on the coupled isothermal route, retain the density and
+        // sound speed of the acoustic state instead of projecting against that split.
+        if (preserveSingleLiquidAcoustics && flash.getNumberOfPhases() > 1 && sec.getGasMassPerLength() == 0.0
+            && (sec.getOilMassPerLength() > 0.0 && sec.getWaterMassPerLength() == 0.0 && flash.hasPhaseType("oil")
+                || sec.getWaterMassPerLength() > 0.0 && sec.getOilMassPerLength() == 0.0
+                    && flash.hasPhaseType("aqueous"))) {
+          continue;
         }
 
         // Update phase properties

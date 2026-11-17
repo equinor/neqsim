@@ -10,6 +10,8 @@ import com.google.gson.JsonParser;
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Test;
 import neqsim.blackoil.BlackOilPVTTable.Record;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance.SinglePhasePvt;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
 import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
 import neqsim.pvtsimulation.simulation.DifferentialLiberation;
@@ -217,6 +219,44 @@ class CalibratedPvtModelTest {
     assertThrows(IllegalArgumentException.class, () -> cce.materialBalance(pressure, zero, gas, zero, zero, zero));
     assertThrows(IllegalArgumentException.class,
         () -> history.materialBalance(pressure, new double[1], gas, zero, zero, zero));
+  }
+
+  /** Exercises the measured-history entry point with an original gas phase and two selected two-phase rows. */
+  @Test
+  void measuredHistoryUsesSinglePhaseOriginalPressureAndCumulativeOrigin() {
+    CalibratedPvtModel bundle = model();
+    SinglePhasePvt original = SinglePhasePvt.gas(300.0, 0.004, 0.0002);
+    double[] separatorPressure = {50, 1.01325};
+    double[] separatorTemperature = {303.15, 288.15};
+    Record[] rows = {new Record(200, 50, 1.2, Double.NaN, 0.006, Double.NaN, 0.0001, 1, Double.NaN),
+        new Record(100, 20, 1.1, Double.NaN, 0.010, Double.NaN, 0.00006, 1, Double.NaN)};
+    MaterialBalancePvtHistory history = MaterialBalancePvtHistory.fromSinglePhase(bundle,
+        MaterialBalancePvtHistory.Path.CVD, "independent synthetic two-phase rows", 323.15, separatorPressure,
+        separatorTemperature, original, rows);
+    assertThrows(IllegalArgumentException.class,
+        () -> MaterialBalancePvtHistory.fromSinglePhase(bundle, MaterialBalancePvtHistory.Path.DLE,
+            "invalid original state", 323.15, separatorPressure, separatorTemperature, original, rows));
+    assertThrows(IllegalArgumentException.class,
+        () -> MaterialBalancePvtHistory.fromSinglePhase(bundle, MaterialBalancePvtHistory.Path.CVD,
+            "invalid original pressure", 323.15, separatorPressure, separatorTemperature,
+            SinglePhasePvt.gas(175, 0.004, 0.0002), rows));
+    MaterialBalancePvtHistory restored = SerializationUtils.clone(history);
+    assertEquals(300, restored.getSinglePhaseInitial().get().getPressureBara());
+    assertEquals(2, restored.getRecords().length);
+    assertEquals(200, restored.getRecords()[0].p);
+    assertEquals("independent synthetic two-phase rows", restored.getPathReference());
+    double[] pressure = {300, 200, 100};
+    double[] oil = {0, 200000 - 100000 - 0.0001 * (3880000.0 / 0.006), 56792};
+    double[] gas = {0, 1.0e9 - 5000000 - 3880000.0 / 0.006, 610800000};
+    double[] zero = {0, 0, 0};
+    GeneralizedMaterialBalance.Result fit = restored.materialBalance(pressure, oil, gas, zero, zero, zero)
+        .fitInitiallyGas();
+    assertEquals(1.0e9, fit.getOgip(), 0.1);
+    assertEquals(200000, fit.getOoip(), 0.00002);
+    assertThrows(IllegalArgumentException.class,
+        () -> restored.materialBalance(new double[] {299, 200, 100}, oil, gas, zero, zero, zero));
+    assertThrows(IllegalArgumentException.class,
+        () -> restored.materialBalance(new double[] {200, 100}, oil, gas, zero, zero, zero));
   }
 
   /** Invalid path evidence and numeric rows cannot enter an inverse history calculation. */

@@ -2042,6 +2042,12 @@ export boundary may instead require a check valve or a supplied external inflow 
 the former budget of 12 stopped the Tengesdal progress case at about $6\times10^{-7}$ relative
 cell-volume residual, above the $10^{-7}$ default gate.
 
+For isothermal coupled transport without phase or component transfer, a cell carrying a single
+liquid keeps its acoustic properties if the property flash would introduce a second phase. The
+pressure correction still updates the transported liquid density with its acoustic compressibility.
+Equilibrium properties for a different phase composition would otherwise change the calculated cell
+volume at every refresh even though the transported phase inventory has no transfer source.
+
 After a transient window, also read the sticky diagnostics
 `isTransientCoupledPressureMomentumFailureDetected()`,
 `isTransientCoupledPressureMomentumCorrectionLimited()`, and
@@ -2281,6 +2287,28 @@ upward geometric branch switched between slug and bubble flow. The resulting int
 jumped from 0.05035 to 27.64 N/m. Repeated residuals and full/colored Jacobians were identical;
 the branch-contaminated Newton direction could not meet sufficient decrease even with a much
 longer line search. The direction correction alone still does not pass the five-second riser gate.
+
+The slug-body interfacial drag uses the magnitude of the phase-density contrast to estimate
+its bubble diameter. At equal densities, the existing confinement limit of one tenth of the
+pipe diameter determines the size. This keeps the drag finite as a trace phase enters a cell
+and the densities cross. Its direction continues to oppose slip.
+
+## Drag at positive trace gas inventories
+
+The bubble and dispersed-bubble contributions to the finite-volume friction operator
+use the independently represented gas holdup. They retain drag for every positive
+represented gas fraction, including when liquid holdup rounds to one. The former
+`1e-10` gas-holdup cutoff incorrectly removed drag from a positive gas inventory;
+in the conservative-energy well replay, that allowed trace gas velocities above
+300 m/s. Exactly absent gas still has zero interfacial force. Regime blending and
+the selected compatibility/corrected drag coefficient are retained.
+
+The conservative source regression checks both pure and blended bubble closures
+with gas mass from `1e-8` to `1e-200` kg/m: slip contracts, masses and total energy
+stay fixed, and the internal exchange preserves total momentum. This repairs a
+trace-force defect; it does not establish a stationary multiphase handoff or
+quantitatively validate well holdup. See issue #5066 for sustained replays.
+
 
 The unresolved bulk gas/liquid drag now distributes its liquid reaction by conservative oil and
 water mass, consistently with the mass-weighted bulk liquid velocity. With liquid force `FL`, the
@@ -2664,7 +2692,9 @@ composition and phase change remain outside the initial isothermal route.
 `setTransactionalTransientEnabled(true)` stages the existing transient algorithm on an isolated
 pipe graph. A failed interval, component/thermal check or outlet publication preserves accepted
 cells, inventories, reports, histories, trackers, identifiers and all three clocks. The default
-remains false, retaining the existing partial-interval failure contract. Successful publication
+remains false. On an incomplete interval, the default route publishes the interval-average
+outlet flux of any accepted substeps. If none are accepted, the outlet retains its previously
+published fluid and the balance report records zero accepted time. Successful publication
 preserves connected stream, upstream-volume, multilayer-calculator and thermal-layer identities.
 Other owned submodels are new accepted snapshots: reacquire them through their getters after a
 successful call. Section cloning preserves configured transient oil/water detectors. Adaptive
@@ -3580,3 +3610,6 @@ A supporting 100 s run with the outer reporting/advance interval reduced from 0.
 43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
 not yet numerically or experimentally qualified for severe-slug predictions.
 
+
+The [vertical-well qualification](twofluid_vertical_well_qualification.md) provides the complete
+synthetic input, executable replay, conservation evidence and limits of this transient case.

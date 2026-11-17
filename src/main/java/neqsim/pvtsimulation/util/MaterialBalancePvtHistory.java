@@ -1,8 +1,10 @@
 package neqsim.pvtsimulation.util;
 
 import java.io.Serializable;
+import java.util.Optional;
 import neqsim.blackoil.BlackOilPVTTable.Record;
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance.SinglePhasePvt;
 
 /**
  * Pressure-aligned, explicitly attributed PVT handoff from independent laboratory calibration to measured history.
@@ -42,6 +44,7 @@ public final class MaterialBalancePvtHistory implements Serializable {
   private final double[] separatorPressures;
   private final double[] separatorTemperatures;
   private final Record[] records;
+  private final SinglePhasePvt singlePhaseInitial;
 
   /**
    * Freezes PVT records, their laboratory-calibrated model and separator/depletion provenance.
@@ -56,8 +59,51 @@ public final class MaterialBalancePvtHistory implements Serializable {
    */
   public MaterialBalancePvtHistory(CalibratedPvtModel model, Path path, String pathReference, double temperatureK,
       double[] separatorPressuresBara, double[] separatorTemperaturesK, Record[] records) {
+    this(model, path, pathReference, temperatureK, separatorPressuresBara, separatorTemperaturesK, null, records);
+  }
+
+  /**
+   * Freezes an externally evaluated path with a single original hydrocarbon phase and later two-phase records.
+   *
+   * @param model original/tuned model checkpoints with calibration provenance
+   * @param path protocol used to evaluate the records
+   * @param pathReference evaluation report, software revision and depletion/separator interpretation evidence
+   * @param temperatureK isothermal reservoir temperature in K
+   * @param separatorPressuresBara ordered separator stages ending at 1.01325 bara
+   * @param separatorTemperaturesK stage temperatures ending at 288.15 K
+   * @param initial original oil or gas PVT on the same basis
+   * @param observations subsequent pressure-aligned two-phase observations with Rs/Rv/Bo/Bg/Bw
+   * @return PVT path for measured histories with an explicit original state
+   */
+  public static MaterialBalancePvtHistory fromSinglePhase(CalibratedPvtModel model, Path path, String pathReference,
+      double temperatureK, double[] separatorPressuresBara, double[] separatorTemperaturesK, SinglePhasePvt initial,
+      Record[] observations) {
+    if (initial == null) {
+      throw new IllegalArgumentException("Single-phase initial PVT is required");
+    }
+    if (path == Path.DLE && initial.isGas()) {
+      throw new IllegalArgumentException("Differential liberation requires an initially present oil phase");
+    }
+    return new MaterialBalancePvtHistory(model, path, pathReference, temperatureK, separatorPressuresBara,
+        separatorTemperaturesK, initial, observations);
+  }
+
+  /**
+   * Validates and copies the declared path with either form of original PVT.
+   *
+   * @param model original/tuned model checkpoints with calibration provenance
+   * @param path protocol used to evaluate the records
+   * @param pathReference external evaluation and depletion/separator interpretation evidence
+   * @param temperatureK isothermal reservoir temperature in K
+   * @param separatorPressuresBara ordered separator pressures in bara
+   * @param separatorTemperaturesK ordered separator temperatures in K
+   * @param initial optional phase-explicit original PVT
+   * @param records two-phase records, including the original state when initial is omitted
+   */
+  private MaterialBalancePvtHistory(CalibratedPvtModel model, Path path, String pathReference, double temperatureK,
+      double[] separatorPressuresBara, double[] separatorTemperaturesK, SinglePhasePvt initial, Record[] records) {
     if (model == null || path == null || !Double.isFinite(temperatureK) || temperatureK <= 0.0 || records == null
-        || records.length < 3) {
+        || records.length < (initial == null ? 3 : 2)) {
       throw new IllegalArgumentException("Model, path, temperature and initial plus two historical PVT rows required");
     }
     requireSeparatorBasis(separatorPressuresBara, separatorTemperaturesK);
@@ -68,16 +114,25 @@ public final class MaterialBalancePvtHistory implements Serializable {
     this.separatorPressures = separatorPressuresBara.clone();
     this.separatorTemperatures = separatorTemperaturesK.clone();
     this.records = records.clone();
+    this.singlePhaseInitial = initial;
+    double previousPressure = initial == null ? Double.POSITIVE_INFINITY : initial.getPressureBara();
     for (int i = 0; i < this.records.length; i++) {
       new GeneralizedMaterialBalance(this.records[i]);
-      if (i > 0 && path != Path.COMPOSITIONAL_HISTORY && this.records[i].p >= this.records[i - 1].p) {
+      if (path != Path.COMPOSITIONAL_HISTORY && this.records[i].p >= previousPressure) {
         throw new IllegalArgumentException("Depletion/expansion PVT schedule must decrease strictly");
       }
+      previousPressure = this.records[i].p;
     }
   }
 
   /**
-   * Constructs the existing generalized balance from a complete measured net-withdrawal history.
+   * Constructs the generalized balance from measured pressures and cumulative net withdrawals.
+   *
+   * <p>
+   * Each array starts at the original reservoir state. With a phase-explicit anchor the remaining entries correspond to
+   * the selected two-phase PVT rows. Include production and injection before the first selected row in the cumulative
+   * volumes.
+   * </p>
    *
    * @param pressuresBara measured average reservoir pressures including the initial state
    * @param netOilSm3 cumulative produced-minus-injected total surface oil from the initial state
@@ -92,9 +147,10 @@ public final class MaterialBalancePvtHistory implements Serializable {
     if (path == Path.CONSTANT_COMPOSITION) {
       throw new IllegalArgumentException("Constant-composition flash tables are not depletion-history PVT");
     }
+    int offset = singlePhaseInitial == null ? 0 : 1;
     double[][] history = {pressuresBara, netOilSm3, netGasSm3, netWaterSm3, influxM3, expansionFraction};
     for (double[] values : history) {
-      if (values == null || values.length != records.length) {
+      if (values == null || values.length != records.length + offset) {
         throw new IllegalArgumentException("Every measured-history array must align with the complete PVT path");
       }
       for (double value : values) {
@@ -108,17 +164,35 @@ public final class MaterialBalancePvtHistory implements Serializable {
         throw new IllegalArgumentException("Initial cumulative withdrawals and support must be zero");
       }
     }
-    GeneralizedMaterialBalance balance = new GeneralizedMaterialBalance(records[0]);
+    GeneralizedMaterialBalance balance;
+    if (singlePhaseInitial == null) {
+      balance = new GeneralizedMaterialBalance(records[0]);
+    } else {
+      requireAlignedPressure(pressuresBara[0], singlePhaseInitial.getPressureBara(), 0);
+      balance = GeneralizedMaterialBalance.fromSinglePhase(singlePhaseInitial);
+    }
     for (int i = 0; i < records.length; i++) {
-      if (Math.abs(pressuresBara[i] - records[i].p) > 1.0e-8 * Math.max(1.0, records[i].p)) {
-        throw new IllegalArgumentException("Measured pressure does not match PVT path at row " + i);
-      }
-      if (i > 0) {
-        balance.addObservation(records[i], netOilSm3[i], netGasSm3[i], netWaterSm3[i], influxM3[i],
-            expansionFraction[i]);
+      int row = i + offset;
+      requireAlignedPressure(pressuresBara[row], records[i].p, row);
+      if (row > 0) {
+        balance.addObservation(records[i], netOilSm3[row], netGasSm3[row], netWaterSm3[row], influxM3[row],
+            expansionFraction[row]);
       }
     }
     return balance;
+  }
+
+  /**
+   * Checks a measured pressure against its original or subsequent PVT row.
+   *
+   * @param measured measured average reservoir pressure in bara
+   * @param reference PVT pressure in bara
+   * @param row index in the measured array, starting at the original state
+   */
+  private static void requireAlignedPressure(double measured, double reference, int row) {
+    if (Math.abs(measured - reference) > 1.0e-8 * Math.max(1.0, reference)) {
+      throw new IllegalArgumentException("Measured pressure does not match PVT path at row " + row);
+    }
   }
 
   /**
@@ -178,10 +252,19 @@ public final class MaterialBalancePvtHistory implements Serializable {
   /**
    * Returns a copy of the array of immutable PVT records.
    *
-   * @return records including the original state
+   * @return two-phase records, including the original state for a path with no phase-explicit anchor
    */
   public Record[] getRecords() {
     return records.clone();
+  }
+
+  /**
+   * Returns the original single hydrocarbon phase for an explicitly anchored path.
+   *
+   * @return original oil or gas PVT, or empty when the original state is in the two-phase records
+   */
+  public Optional<SinglePhasePvt> getSinglePhaseInitial() {
+    return Optional.ofNullable(singlePhaseInitial);
   }
 
   /**

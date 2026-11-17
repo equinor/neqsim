@@ -150,6 +150,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | **Component List**       | [docs/thermo/component_list.md](thermo/component_list.md)                     | **Complete searchable list of all ~150+ components with CAS numbers and EoS availability** |
 | Component Database       | [docs/thermo/component_database_guide.md](thermo/component_database_guide.md) | Component properties and database                                                          |
 | Pure-water Henry Database | [docs/thermo/henry_water_database.md](thermo/henry_water_database.md) | Database-backed pure-water Henry coefficients, provenance, units, and validity limits |
+| Henry-Law Reference States | [docs/thermo/henry_law_reference.md](thermo/henry_law_reference.md) | IAPWS pure-water Henry correlations, GE/Pitzer standard-state mapping, provenance, and validation boundaries |
 | Component Package        | [docs/thermo/component/README.md](thermo/component/README.md)                       | Component class documentation                                                              |
 | Mathematical Models      | [docs/thermo/mathematical_models.md](thermo/mathematical_models.md)           | Underlying mathematical models                                                             |
 
@@ -160,6 +161,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | CPA Water Heat Capacity | [Caloric alpha option](thermo/cpa_water_caloric.md) | Opt-in IAPWS-95-fitted CPA water alpha, benchmarks and validity limits |
 | Thermodynamic Models      | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models.md) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage  |
 | Solid Helmholtz Models    | [docs/thermo/solid_helmholtz_models.md](thermo/solid_helmholtz_models.md) | Experimental pure solid argon and para-hydrogen state and freezing-point workflows with validity boundaries |
+| Empirical Solid Fugacity  | [docs/thermo/empirical_solid_fugacity.md](thermo/empirical_solid_fugacity.md) | Liquid and sublimation-pressure reference selection, density units, domain checks, and solid-selection behavior |
 | Mercury Thermodynamics    | [docs/thermo/mercury_thermodynamics.md](thermo/mercury_thermodynamics.md) | Mercury-focused SRK-TwuCoon-Statoil-EOS usage, TPflash setup, and thesis-linked BIP/correlation guidance |
 | **Søreide-Whitson Model** | [docs/thermo/SoreideWhitsonModel.md](thermo/SoreideWhitsonModel.md)   | **Gas solubility in brine** - Modified PR EoS with salinity effects, used in NeqSimLive for produced water emissions |
 | GERG-2008                 | [docs/thermo/gerg2008_eoscg.md](thermo/gerg2008_eoscg.md)             | GERG-2008, GERG-2008-H2, GERG-2008-NH3, and EOS-CG equations of state                                               |

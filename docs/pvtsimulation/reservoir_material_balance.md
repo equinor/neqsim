@@ -171,7 +171,10 @@ tank model, not a full compositional reservoir simulator or MBAL file reader.
    CVD/DLE path or a changing-composition injection history. Validate that
    approximation rather than silently substituting it for the tuned EOS.
 4. Construct `GeneralizedMaterialBalance` with an initial
-   `BlackOilPVTTable.Record`. Call `addObservation` for each aligned average
+   `BlackOilPVTTable.Record` for two original hydrocarbon phases, or use
+   `fromSinglePhase(SinglePhasePvt.oil(pi, bo, rs))` or
+   `fromSinglePhase(SinglePhasePvt.gas(pi, bg, rv))` for a sole original
+   oil or gas phase. Call `addObservation` for each selected two-phase average
    pressure/PVT/production observation. Pass cumulative **produced minus
    injected** oil, gas and water, all referenced to the original state. Oil
    and gas are total stock-tank/separator components, including oil recovered
@@ -197,6 +200,14 @@ Measured field data do not need to be inserted into a simulated tank's recorder.
 | `fitInitiallyGas()` | No initial free oil | Total OGIP and vaporized-oil-inclusive OOIP |
 | `fitKnownGasCap(m)` | Known initial free-gas/free-oil reservoir-volume ratio | Both total inventories |
 | `fitOilAndGas()` | Both initial free phases; independent expansion signals required | Both total inventories and inferred gas-cap ratio |
+
+The explicit oil anchor holds total surface components `(N, Rs_i N)` at
+initial reservoir volume `Bo_i N`. The explicit gas anchor holds
+`(Rv_i G, G)` at volume `Bg_i G`. Their initial phase does not require
+any properties of the absent hydrocarbon phase. Use the corresponding
+`fitInitiallyOil()` or `fitInitiallyGas()`. A zero known gas cap is also
+valid on the oil anchor. These fits check total withdrawal against the
+fitted initial component inventories.
 
 ### Immutable calibration and pressure-path handoff
 
@@ -256,8 +267,13 @@ residual report is not automatic model acceptance.
 
 `MaterialBalancePvtHistory` then retains the checkpoint bundle, isothermal reservoir
 temperature, ordered separator path, a path-validation evidence reference, and
-pressure-aligned `BlackOilPVTTable.Record` values including the original state.
-Declare `CVD`, `DLE`, `COMPOSITIONAL_HISTORY` or `CONSTANT_COMPOSITION` explicitly.
+pressure-aligned `BlackOilPVTTable.Record` values. The two-phase constructor
+includes the original state in the records. For an undersaturated oil or
+pre-dew gas original state, use `MaterialBalancePvtHistory.fromSinglePhase`
+with an explicit `SinglePhasePvt` and at least two later two-phase records
+on the same basis. `getSinglePhaseInitial()` provides the original phase in
+that case and `getRecords()` provides the later rows.
+Declare the laboratory or compositional path explicitly.
 Records must be evaluated from the accepted tuned model on that path, either
 externally or through the bounded `DepletionPvtHistoryGenerator` route below. The container checks numeric validity, sequence and basis; it does not generate
 generalized CVD PVT or independently verify caller-supplied records against the EOS.
@@ -265,11 +281,20 @@ generalized CVD PVT or independently verify caller-supplied records against the 
 Its `materialBalance` method accepts measured average pressures and cumulative net
 oil/gas/water withdrawals, reservoir-volume influx and dimensionless expansion
 support. All arrays must include the original zero-withdrawal/support state and
-match the PVT pressures. CVD/DLE paths decrease strictly; externally evaluated
+match the selected PVT pressures. With a single-phase anchor, omit intermediate
+single-phase rows from the fit and retain their production/injection in the
+cumulative observations. The original pressure remains the first array entry,
+followed by the selected two-phase pressures. A gas-only original state cannot
+start a DLE path. CVD/DLE paths decrease strictly; externally evaluated
 compositional paths can include repressurization. Constant-composition tables are
 rejected for depletion matching. The result is the existing `GeneralizedMaterialBalance`
 builder; laboratory calibration and EOS parameters remain separate from volume fitting.
 Substantial injection composition changes still require compositional replay.
+The explicit anchor is available for externally evaluated PVT. The existing
+two-phase generalized-PVT generator and reservoir surveillance adapter still
+take complete two-phase records; native protocols provide their own
+phase-explicit replay. Critical-degenerate splits and arbitrary single-phase
+history observations remain outside the generalized fit.
 
 The [handoff tests](../../src/test/java/neqsim/pvtsimulation/util/CalibratedPvtModelTest.java)
 compare full protocol replay with separately executed existing PVT solvers and
@@ -278,6 +303,42 @@ consistency and analytical conservation, not independent laboratory/field accura
 The bounded native-depletion generator, physical aquifer and discrete uncertainty
 extensions are described below. Independent laboratory/field qualification and
 broader compositional/phase-path coverage remain open under [issue #4740](https://github.com/equinor/neqsim/issues/4740).
+
+#### Published numerical check at the original pressure
+
+Walsh's [gas-condensate and volatile-oil examples](https://www.ipt.ntnu.no/~curtis/courses/Reservoir-Recovery/2018-TPG4150/Handouts/Material-Balance/Required/1995-PETSOC-Walsh-MB.pdf),
+Tables 1–4, give numerical PVT and model-generated production on the
+authors' common separator-adjusted surface basis. Use the published basis
+within each case. In particular, the gas-condensate PVT includes the effect
+of a two-stage separator with a 4.1 MPa high-pressure stage. These are
+numerical examples from the paper, with no EOS calibration performed here.
+
+To replay them, set reference original stock-tank oil to one unit. Set reference
+standard gas to `1/Rv_i` for the 40 MPa gas anchor and `Rs_i` for the
+34.5 MPa oil anchor. Convert MPa to bara by multiplying by 10. Convert the
+tabulated gas formation-volume factor and vaporized-oil ratio to m³/m³
+using their column multipliers. Multiply the tabulated recovery fractions by
+the corresponding original component amounts. Use the first six two-phase
+rows for fitting and retain the later rows for checking. Aquifer influx,
+rock/connate-water expansion and net water withdrawal are zero in this check.
+The routine requires a positive `Bw` input for each later row. Its value
+drops out here because the water withdrawal is zero.
+
+For an independent calculation, solve the two surface-component equations
+for the remaining oil and gas phase volumes, multiply by the respective
+formation-volume factors, and subtract the fitted original reservoir volume
+to evaluate the later rows. Normalize those residuals by the paper's reference
+original hydrocarbon pore volume. The fit and all later rows in this replay use
+prescribed pressures and withdrawals.
+
+| Case | Fitted / reference original in-place volume | Fitted RMS (% of reference HCPV) | Held-out volume residuals (% of reference HCPV) |
+| --- | ---: | ---: | --- |
+| Gas condensate | 1.00138 | 0.0547 | +0.168 to +0.222 through 9 MPa. At 5.5 MPa, −50.174 using 90.5% gas recovery as transcribed from the available scan. |
+| Volatile oil | 0.99648 | 0.0794 | −1.829 to +0.134 across 15 later rows. |
+
+At 5.5 MPa the gas-condensate row's cumulative GOR implies roughly 80.5%
+gas recovery. Using 80.5% as a separate sensitivity gives a +0.676% volume
+residual. The source discrepancy remains visible in the benchmark.
 
 ### Conservation equations and diagnostics
 

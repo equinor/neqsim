@@ -27,6 +27,8 @@
  * phase-partition relaxation with bounded vertical drift flux</li>
  * <li>{@link neqsim.process.safety.release.RanzMarshallFiniteRateReleaseModel} - Explicit Ranz-Marshall external-film
  * component transfer coupled to bounded vertical gas-bubble drift flux</li>
+ * <li>{@link neqsim.process.safety.release.RanzMarshallDropletFiniteRateReleaseModel} - Explicit Ranz-Marshall
+ * external-gas-film component transfer coupled to bounded prescribed liquid-droplet slip</li>
  * <li>{@link neqsim.process.safety.release.PredictiveBubbleTransferZoneReleaseModel} - Bounded spherical-bubble
  * diameter, phase-velocity and residence-time prediction coupled to Ranz-Marshall transfer</li>
  * <li>{@link neqsim.process.safety.release.IdealGasFannoPipeReleaseModel} - Assessed quasi-steady ideal-gas pipe
@@ -72,17 +74,18 @@
  * bubbly/dispersed slip with a bounded Zuber-Findlay/Harmathy closure. A third model applies caller-parameterized
  * first-order phase-split relaxation before the same drift-flux closure. A fourth resolves component-specific
  * phase-partition relaxation and emits phase compositions while retaining exact component conservation. A fifth
- * predicts external-film component relaxation times from explicit Ranz-Marshall inputs for spherical gas bubbles, while
- * failing closed for out-of-range dimensionless groups and liquid-droplet hydrodynamics. A sixth predicts a
- * conservative spherical-bubble diameter, resolved phase velocities and gas residence time from explicit transfer-zone
- * geometry before iterating the Ranz-Marshall and component-transfer calculations to a checked fixed point. These
- * models retain explicit phase-area and kinetic-energy closure; none predicts interfacial heat transfer, entrainment,
- * annular jets or solid-bearing flow. Both real-gas pipe models fail closed if an equilibrium phase appears. The
- * inventory heat boundary accepts caller-imposed power or conductance with provenance; it does not predict fire heat
- * flux or wall inertia. The opt-in non-equilibrium inventory retains gas/liquid component partitions and thermodynamic
- * latent-energy effects. Its default path assumes one common phase temperature; an explicit sensitivity path retains
- * separate phase energies and temperatures with prescribed interfacial conductance. Neither path predicts coefficients,
- * nucleation, entrainment or population balance.
+ * predicts external-film component relaxation times from explicit Ranz-Marshall inputs for spherical gas bubbles. A
+ * separate adapter accepts explicit spherical liquid-droplet diameter, gas-film properties, relative speed and
+ * residence time, then fails closed outside dilute area, Eotvos, Weber, Reynolds and Schmidt limits. A seventh predicts
+ * a conservative spherical-bubble diameter, resolved phase velocities and gas residence time from explicit
+ * transfer-zone geometry before iterating the Ranz-Marshall and component-transfer calculations to a checked fixed
+ * point. These models retain explicit phase-area and kinetic-energy closure; none predicts droplet hydrodynamics,
+ * interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe models fail closed if
+ * an equilibrium phase appears. The inventory heat boundary accepts caller-imposed power or conductance with
+ * provenance; it does not predict fire heat flux or wall inertia. The opt-in non-equilibrium inventory retains
+ * gas/liquid component partitions and thermodynamic latent-energy effects. Its default path assumes one common phase
+ * temperature; an explicit sensitivity path retains separate phase energies and temperatures with prescribed
+ * interfacial conductance. Neither path predicts coefficients, nucleation, entrainment or population balance.
  *
  * <p>
  * Example usage:

@@ -49,6 +49,7 @@ identity, version and diagnostics with every frame:
 | `FiniteRateDriftFluxReleaseModel` | Sensitivity screening for delayed gas/liquid phase-split response at a vertical short opening. | Applies an exact first-order relaxation between upstream and equilibrium phase mass fractions, then solves the bounded drift-flux closure. Relaxation time, residence time, surface tension and parameter provenance are mandatory. |
 | `ComponentSelectiveFiniteRateReleaseModel` | Sensitivity screening for component-dependent gas/liquid phase-partition response at a vertical short opening. | Applies an exact first-order relaxation to each component's gas-held mass, reconstructs phase compositions with exact component conservation, then solves the bounded drift-flux closure. A relaxation time for every component, residence time, surface tension and parameter provenance are mandatory. |
 | `RanzMarshallFiniteRateReleaseModel` | Component-selective external-film sensitivity for explicit spherical gas bubbles. | Predicts component relaxation times from caller-declared diameter, liquid properties, relative speed and diffusivities, then uses the bounded drift-flux closure. Residence time remains explicit. |
+| `RanzMarshallDropletFiniteRateReleaseModel` | Component-selective external-gas-film sensitivity for explicit spherical liquid droplets. | Uses caller-declared droplet diameter, gas properties, gas-to-droplet relative speed and residence time. It closes phase area, kinetic energy and component inventories and fails outside dilute spherical-droplet limits. |
 | `PredictiveBubbleTransferZoneReleaseModel` | Bounded vertical spherical-bubble transfer-zone screening. | Predicts a conservative bubble diameter, phase-relative speed and residence time from explicit SI geometry and resolved drift-flux velocities, then iterates Ranz-Marshall transfer and component/energy-conservative release to a checked fixed point. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
@@ -256,12 +257,37 @@ ReleaseFlowModel model = new RanzMarshallFiniteRateReleaseModel(
     transfer);
 ```
 
-The correlation object can calculate coefficients for liquid droplets in a continuous gas, but
-the release adapter deliberately reports `LIQUID_DROPLET_HYDRODYNAMICS_UNSUPPORTED`: the current
-hydrodynamic closure represents gas bubbles in a continuous liquid and is not reused with the
-phase roles reversed. The model also excludes interfacial heat and latent-heat kinetics, internal
-dispersed-phase resistance, Stefan-flow corrections, predictive residence time, breakup,
-coalescence, entrainment, annular/high-Weber flow and solids. Ranz and Marshall,
+`RanzMarshallFiniteRateReleaseModel` remains specific to gas bubbles and reports
+`LIQUID_DROPLET_HYDRODYNAMICS_UNSUPPORTED` for droplet correlations. Use the separate
+`RanzMarshallDropletFiniteRateReleaseModel` only when a defensible droplet diameter, continuous-gas
+properties, gas-to-droplet relative speed and residence time are available. For gas mass fraction
+$w_g$, liquid mass fraction $w_l$, homogeneous velocity $u_h$ and declared slip $u_r=u_g-u_l>0$,
+the droplet adapter resolves
+
+$$u_g=w_lu_r+\sqrt{u_h^2-w_gw_lu_r^2},\qquad u_l=u_g-u_r,$$
+
+then derives the mass flux from phase continuity. It requires both velocities positive, liquid
+area fraction at most 0.20, $Eo\le4$, $We\le12$, $Re<200$ and every $Sc_i<250$. Component
+inventories, phase area, kinetic energy and stagnation energy must close; no value is clamped.
+The declared relative speed is specifically gas velocity minus droplet velocity and must be
+positive; reverse or recirculating droplets are outside this adapter rather than reinterpreted.
+
+```java
+Map<String, Double> gasDiffusivitiesM2S = new TreeMap<String, Double>();
+gasDiffusivitiesM2S.put("methane", 2.0e-6);
+gasDiffusivitiesM2S.put("propane", 1.0e-6);
+RanzMarshallMassTransferCorrelation droplets = new RanzMarshallMassTransferCorrelation(
+    RanzMarshallMassTransferCorrelation.Morphology.LIQUID_DROPLETS,
+    2.0e-4, 25.0, 1.0e-5, 0.05, gasDiffusivitiesM2S,
+    "project-droplet-basis:v1");
+ReleaseFlowModel dropletSensitivity = new RanzMarshallDropletFiniteRateReleaseModel(
+    0.020, 0.10, droplets);
+```
+
+The droplet adapter is a prescribed sensitivity, not predictive droplet hydrodynamics. Both
+adapters exclude interfacial heat and latent-heat kinetics, internal dispersed-phase resistance,
+Stefan-flow corrections, predictive residence time, breakup, coalescence, entrainment,
+annular/high-Weber flow and solids. Ranz and Marshall,
 *Chemical Engineering Progress* 48 (1952), 141–146 and 173–180, is independent correlation
 provenance, not release-rate or facility qualification. Results remain `UNQUALIFIED` pending
 experimental multiphase evidence and accountable domain review.

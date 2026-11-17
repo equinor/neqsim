@@ -7,6 +7,12 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * Regression checks for the pressure and energy balances of pipeline models.
+ *
+ * @author Even Solbraa
+ * @version 1.0
+ */
 public class PipelineTest {
   /**
    * Creates and initializes a feed stream for the pipeline regression cases.
@@ -31,6 +37,7 @@ public class PipelineTest {
     return stream;
   }
 
+  /** Compares pipeline pressures and verifies adiabatic horizontal gas expansion. */
   @Test
   public void testMain() {
     double flow = 60.0;
@@ -68,7 +75,7 @@ public class PipelineTest {
     beggsBrilsPipe.setLength(length);
     beggsBrilsPipe.setElevation(elevation);
     beggsBrilsPipe.setDiameter(diameter);
-    beggsBrilsPipe.setRunIsothermal(false);
+    beggsBrilsPipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
 
     ProcessSystem operations = new ProcessSystem();
     operations.add(pipelineFeed);
@@ -81,6 +88,13 @@ public class PipelineTest {
 
     Assertions.assertEquals(123.876927, pipeline.getOutletPressure("bara"), 0.1);
     Assertions.assertEquals(120.711887695240, simplePipeline.getOutletPressure(), 0.1);
-    Assertions.assertEquals(127.47985584212711, beggsBrilsPipe.getOutletPressure(), 0.2);
+    SystemInterface beggsBrillsOutlet = beggsBrilsPipe.getOutletStream().getFluid();
+    Assertions.assertEquals(beggsBrillsFeed.getFluid().getEnthalpy("J/kg"), beggsBrillsOutlet.getEnthalpy("J/kg"), 0.02,
+        "An adiabatic horizontal line must conserve specific enthalpy when kinetic energy is neglected");
+    Assertions.assertEquals(beggsBrillsFeed.getFlowRate("kg/sec"), beggsBrillsOutlet.getFlowRate("kg/sec"), 1e-8);
+    Assertions.assertTrue(beggsBrillsOutlet.getTemperature() < beggsBrillsFeed.getTemperature() - 1.0,
+        "A converged PH flash must retain gas expansion cooling outside the constant-Cp temperature band");
+    // The old pressure snapshot discarded valid PH cooling through the analytical fallback.
+    Assertions.assertEquals(128.51219576372148, beggsBrilsPipe.getOutletPressure(), 0.2);
   }
 }

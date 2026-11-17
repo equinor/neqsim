@@ -1111,6 +1111,15 @@ These measurements share a literature lineage with the fit. The profile
 remains staged pending independent forward qualification and the original
 water pure inputs.
 
+The [staged PR water/n-butane assessment](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nbutane/README.md)
+checks ten paired vapor/liquid or liquid/liquid tabulations and three independent
+in-window aqueous observations. With declared NeqSim pure inputs, AARD is 4.70%
+for water in the n-butane-rich phase and 88.17% for the reverse direction in the
+paired data. The independent aqueous series gives 73.98% AARD. A local pure-water
+saturation pressure control changes aqueous AARD by less than 0.3 percentage
+points in either set. Three dense rich roots receive a native `GAS` label in
+the reported two-liquid region. The tuple remains staged.
+
 
 The [nitrogen/water source-version audit](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nitrogen/thesis-2004/README.md)
 preserves 87 image-transcribed primary-thesis observations alongside the unchanged
