@@ -28,8 +28,7 @@ import org.junit.jupiter.api.io.TempDir;
  * @version 1.0
  */
 class AsphalteneCharacterizationDocumentationTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "thermo", "characterization", "asphaltene_characterization.md");
+  private static final Path GUIDE = Paths.get("docs", "thermo", "characterization", "asphaltene_characterization.md");
   private static final String MARKER = "<!-- asphaltene-characterization-quick-start: complete -->";
   private static final String CLASS_NAME = "AsphalteneCharacterizationExample";
   private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
