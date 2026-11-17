@@ -542,17 +542,22 @@ sums are both above 2.4. This path applies to unconstrained cubic-EOS VLE with
 composition derivatives. A converged negative reduced tangent-plane distance
 supplies a trial liquid composition. The algorithm withdraws a feasible liquid
 fraction from the feed while keeping all component amounts positive. A bounded,
-independently initialized Newton solve must produce distinct normalized phases,
-material balance and log-fugacity equality within `1e-8`, and lower Gibbs
-energy than the better homogeneous root. It then supplies K-values to the
-normal TP iteration and its initialization and rollback checks.
+independently initialized Newton solve generates a candidate split. Near
+equilibrium the change in Gibbs energy during a line search can be at
+floating-point resolution while the fugacity residuals are still measurable.
+For Gibbs changes within the line search's roundoff allowance, a feasible
+Newton step must reduce the maximum log-fugacity residual. The final candidate must have distinct
+normalized phases, material balance and log-fugacity equality within `1e-8`,
+and lower Gibbs energy than the better homogeneous root before supplying
+K-values to the normal TP iteration.
 
 `TVFlashTest.testTVflash` reconstructs the later state twice without cached
 solver history. Both fresh calculations must recover two phases, normalized
 phase fractions and compositions, component material balance within `1e-8`,
 interphase log-fugacity equality within `1e-8`, deterministic Gibbs energy and
 phase fraction, and no Gibbs increase relative to the history-assisted TV
-state.
+state. The same assertions cover adjacent representable pressure values around
+the TV endpoint to exercise rounding sensitivity in the Newton line search.
 
 ---
 

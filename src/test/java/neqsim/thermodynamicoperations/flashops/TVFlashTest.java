@@ -81,25 +81,35 @@ class TVFlashTest {
 
     // A fresh TP flash at this final state used to collapse to a higher-Gibbs single phase. The
     // TV loop found the lower-energy split only because it carried Newton state between flashes.
-    neqsim.thermo.system.SystemInterface firstFreshFlash = createFreshTpFlash(testSystem);
-    neqsim.thermo.system.SystemInterface repeatedFreshFlash = createFreshTpFlash(testSystem);
+    double pressure = testSystem.getPressure();
+    neqsim.thermo.system.SystemInterface firstFreshFlash = createFreshTpFlash(testSystem, pressure);
+    neqsim.thermo.system.SystemInterface repeatedFreshFlash = createFreshTpFlash(testSystem, pressure);
     assertFreshTpEquilibrium(testSystem, firstFreshFlash);
     assertFreshTpEquilibrium(testSystem, repeatedFreshFlash);
     assertEquals(firstFreshFlash.getGibbsEnergy(), repeatedFreshFlash.getGibbsEnergy(),
         Math.max(1.0, Math.abs(firstFreshFlash.getGibbsEnergy())) * 1.0e-8);
     assertEquals(firstFreshFlash.getBeta(0), repeatedFreshFlash.getBeta(0), 1.0e-8);
+
+    // A few last-place pressure bits can change the Newton line search without changing the
+    // physical equilibrium. Exercise that neighborhood without weakening the fugacity checks.
+    for (int offset = -32; offset <= 32; offset++) {
+      if (offset != 0) {
+        assertFreshTpEquilibrium(testSystem, createFreshTpFlash(testSystem, pressure + offset * Math.ulp(pressure)));
+      }
+    }
   }
 
   /**
    * Recreates the final TV state without carrying any TP-flash solver history.
    *
-   * @param reference converged TV state whose temperature, pressure, and inventory are copied
+   * @param reference converged TV state whose temperature and inventory are copied
+   * @param pressure TP flash pressure in bara
    * @return independently constructed and flashed TP state
    */
-  private static neqsim.thermo.system.SystemInterface createFreshTpFlash(
-      neqsim.thermo.system.SystemInterface reference) {
+  private static neqsim.thermo.system.SystemInterface createFreshTpFlash(neqsim.thermo.system.SystemInterface reference,
+      double pressure) {
     neqsim.thermo.system.SystemInterface fresh = new neqsim.thermo.system.SystemUMRPRUMCEos(reference.getTemperature(),
-        reference.getPressure());
+        pressure);
     for (int component = 0; component < reference.getNumberOfComponents(); component++) {
       fresh.addComponent(reference.getComponent(component).getComponentName(),
           reference.getComponent(component).getNumberOfmoles());
@@ -118,7 +128,7 @@ class TVFlashTest {
    */
   private static void assertFreshTpEquilibrium(neqsim.thermo.system.SystemInterface historyState,
       neqsim.thermo.system.SystemInterface freshState) {
-    assertEquals(2, freshState.getNumberOfPhases());
+    assertEquals(2, freshState.getNumberOfPhases(), "Fresh TP phase count at " + freshState.getPressure() + " bara");
     double betaSum = 0.0;
     for (int phase = 0; phase < freshState.getNumberOfPhases(); phase++) {
       betaSum += freshState.getBeta(phase);

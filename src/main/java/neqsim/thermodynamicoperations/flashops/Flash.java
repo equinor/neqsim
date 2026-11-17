@@ -715,7 +715,8 @@ public abstract class Flash extends BaseOperation {
    * Using the normalized trial directly as {@code K = z / xTrial} fixes the Rachford–Rice root at beta = 1. The
    * unnormalized tangent-plane weights can instead put every K below unity. Withdraw a quarter of the maximum feasible
    * amount of the liquid trial from the feed and relax that interior split using a fresh Gibbs-energy Newton solver.
-   * Only transfer K-values from a distinct, balanced, lower-Gibbs equilibrium.
+   * Allow a decrease in the fugacity residual to guide Newton steps once Gibbs-energy changes are at floating-point
+   * resolution. Only transfer K-values from a distinct, balanced, lower-Gibbs equilibrium.
    * </p>
    *
    * @param trialComposition normalized composition of the unstable liquid trial
@@ -751,7 +752,7 @@ public abstract class Flash extends BaseOperation {
       candidate.init(1);
       SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(candidate, 2, feed.length);
       for (int step = 0; step < 24; step++) {
-        double change = solver.solve();
+        double change = solver.solveWithResidualFallback();
         if (!Double.isFinite(change)) {
           return false;
         }
