@@ -170,13 +170,13 @@ public final class ComponentSelectiveFiniteRateReleaseModel implements ReleaseFl
     return diagnostics;
   }
 
-  private void requireComponentBasis(ReleaseState upstream) {
+  void requireComponentBasis(ReleaseState upstream) {
     if (!upstream.getComponentMassFractions().keySet().equals(componentRelaxationTimesS.keySet())) {
       throw new UnsupportedOperationException("Relaxation-time components must exactly match the fluid components");
     }
   }
 
-  private ReleaseState relaxedState(ReleaseState upstream, ReleaseState equilibriumStation) {
+  ReleaseState relaxedState(ReleaseState upstream, ReleaseState equilibriumStation) {
     if (!hasGasAndLiquid(equilibriumStation)) {
       throw new UnsupportedOperationException("Equilibrium station must contain one gas and one liquid phase");
     }
@@ -239,7 +239,7 @@ public final class ComponentSelectiveFiniteRateReleaseModel implements ReleaseFl
     throw new UnsupportedOperationException("Liquid phase is required");
   }
 
-  private boolean hasGasAndLiquid(ReleaseState state) {
+  boolean hasGasAndLiquid(ReleaseState state) {
     if (state == null || state.getPhaseMassFractions().size() != 2 || !state.getPhaseMassFractions().containsKey("GAS")
         || state.getPhaseComponentMassFractions().isEmpty()) {
       return false;
@@ -252,7 +252,7 @@ public final class ComponentSelectiveFiniteRateReleaseModel implements ReleaseFl
     }
   }
 
-  private double reconstructedComponentError(ReleaseState upstream, ReleaseState station) {
+  double reconstructedComponentError(ReleaseState upstream, ReleaseState station) {
     double maximum = 0.0;
     for (String component : upstream.getComponentMassFractions().keySet()) {
       double reconstructed = 0.0;
@@ -264,7 +264,7 @@ public final class ComponentSelectiveFiniteRateReleaseModel implements ReleaseFl
     return maximum;
   }
 
-  private double stagnationEnergyError(ReleaseState upstream, ReleaseState station) {
+  double stagnationEnergyError(ReleaseState upstream, ReleaseState station) {
     double kineticEnergyJkg = 0.0;
     for (Map.Entry<String, Double> entry : station.getPhaseMassFractions().entrySet()) {
       double velocityMs = station.getPhaseVelocitiesMs().get(entry.getKey());
