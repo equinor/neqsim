@@ -39,38 +39,47 @@ DistillationColumn
 
 ### Java
 
+<!-- reactive-distillation-quick-start: complete -->
+
 ```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// WGS system: CO + H2O ⇌ CO2 + H2
-SystemInterface fluid = new SystemSrkEos(273.15 + 250.0, 10.0);
-fluid.addComponent("CO", 0.40);
-fluid.addComponent("water", 0.40);
-fluid.addComponent("CO2", 0.10);
-fluid.addComponent("hydrogen", 0.10);
-fluid.setMixingRule("classic");
+public final class ReactiveDistillationGuideExample {
+  private ReactiveDistillationGuideExample() {}
 
-Stream feed = new Stream("WGS feed", fluid);
-feed.setFlowRate(500.0, "kg/hr");
-feed.setTemperature(250.0, "C");
-feed.setPressure(10.0, "bara");
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 250.0, 10.0);
+    fluid.addComponent("CO", 0.40);
+    fluid.addComponent("water", 0.40);
+    fluid.addComponent("CO2", 0.10);
+    fluid.addComponent("hydrogen", 0.10);
+    fluid.setMixingRule("classic");
 
-// Create column with reboiler only (no condenser)
-DistillationColumn column = new DistillationColumn("WGS Column", 3, true, false);
-column.setReactive(true);  // All middle trays become reactive
-column.addFeedStream(feed, 2);
-column.getReboiler().setOutTemperature(273.15 + 350.0);
-column.setTopPressure(10.0);
-column.setBottomPressure(10.0);
-column.run();
+    Stream feed = new Stream("WGS feed", fluid);
+    feed.setFlowRate(500.0, "kg/hr");
+    feed.setTemperature(250.0, "C");
+    feed.setPressure(10.0, "bara");
+    feed.run();
 
-// Products
-double h2InGas = column.getGasOutStream().getFluid()
-    .getPhase(0).getComponent("hydrogen").getx();
-System.out.println("H2 mole fraction in gas: " + h2InGas);
+    DistillationColumn column = new DistillationColumn("WGS Column", 2, true, false);
+    column.setReactive(true);
+    column.addFeedStream(feed, 2);
+    column.getReboiler().setOutletTemperature(273.15 + 350.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(100);
+    column.run();
+
+    double h2InGas = column.getGasOutStream().getFluid()
+        .getPhase(0).getComponent("hydrogen").getx();
+    if (!Double.isFinite(h2InGas) || h2InGas <= 0.10 || h2InGas >= 1.0) {
+      throw new IllegalStateException("Unexpected hydrogen mole fraction: " + h2InGas);
+    }
+  }
+}
 ```
 
 ### Partial Reactive Section
@@ -114,7 +123,7 @@ feed.setPressure(10.0, "bara")
 column = DistillationColumn("WGS Column", 3, True, False)
 column.setReactive(True)
 column.addFeedStream(feed, 2)
-column.getReboiler().setOutTemperature(273.15 + 350.0)
+column.getReboiler().setOutletTemperature(273.15 + 350.0)
 column.setTopPressure(10.0)
 column.setBottomPressure(10.0)
 column.run()
