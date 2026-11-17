@@ -5,6 +5,30 @@ description: "This document describes the two-fluid model implementation in NeqS
 
 # Two-Fluid Transient Multiphase Flow Model
 
+## Pressure balance at phase contacts
+
+`TwoFluidPipe` enables the consistent phase-pressure operator by default. A stationary
+change of gas, oil or water fraction at uniform pressure must not accelerate either
+phase: the nonconservative pressure term cancels the holdup-gradient contribution
+in the phase momentum flux. This consistency requirement is independent of optional
+Bestion interfacial-pressure stabilization. Disabling that stabilization does not
+remove the phase-contact balance.
+
+This change does not qualify the legacy phase-transfer well transient. In the
+synthetic 2 km well tracked in issue #5066, removing the artificial pressure force
+eliminates the rapid outlet-rate increase, but a longer unchanged-boundary replay
+still loses throughflow. Phase-transfer initialization and sustained dynamic
+holdup remain unqualified; a short finite run is not evidence of a steady handoff.
+
+## Well-to-topside slug-control replay
+
+The runnable wellhead-choke, flowline/riser and three-phase inlet-separator
+reference case is described in
+[`../benchmarks/well_to_topside_slug_control.md`](../benchmarks/well_to_topside_slug_control.md).
+Its pipe-to-separator transfer uses the exactly qualified fixed pressure face;
+the replay does not claim that a time-varying downstream pressure boundary is
+qualified.
+
 ## Release scope and current validation
 
 The canonical status vocabulary, row-by-row evidence, executable example, and

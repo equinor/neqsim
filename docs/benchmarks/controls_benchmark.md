@@ -3,6 +3,14 @@ title: "Canonical Controls Benchmark"
 description: "Source-linked deterministic qualification of six NeqSim controller, protection, and actuator-coordination cases with transparent dynamic surrogate models."
 ---
 
+## Wellhead anti-slug control
+
+The [well-to-topside slug-control replay](well_to_topside_slug_control.md)
+compares open-loop and bounded wellhead-choke control at matched mean production.
+Both cases use identical separator pressure, total-liquid and oil/water-interface
+loops, and publish one-second replay samples. This is numerical reference
+evidence rather than experimental validation.
+
 The canonical controls benchmark gives NeqSim one reproducible CI suite for six
 dynamic control capabilities: level, pressure, cascade temperature, split-range
 capacity, anti-surge protection, and compressor speed/recycle coordination. It

@@ -10,6 +10,11 @@ Consolidated guide for all flow assurance threats — hydrate, wax, asphaltene, 
 hydraulics, water/liquid hammer screening, slugging, and thermal management — with
 NeqSim code patterns.
 
+Use the `runPipeline` analysis `wellToTopsideSlugControl` for the published
+well-to-topside anti-slug replay. It reuses the canonical choke, two-fluid pipe,
+three-phase separator and controller APIs and returns both control modes with
+time series. Treat it as numerical reference evidence, not field validation.
+
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the
 > `neqsim-flow-assurance-study-report` skill. This skill stays the calculation reference.
