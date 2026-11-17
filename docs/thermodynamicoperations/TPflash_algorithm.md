@@ -335,6 +335,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
 | Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
+| Low-pressure heavy-tail stability retry | Unconstrained cubic-EOS VLE, `P < 50 bar`, at least four active hydrocarbon/inert components, `z_methane >= 0.5`, `sum(z_i; T_ci > T + 80 K) >= 0.01`, active `Delta T_c >= 300 K`, and both Wilson sums `> 2.4` | Run up to five tangent-plane trials, including heavy/light composition perturbations. Use a non-trivial negative-TPD trial to start a material-balanced Newton solve. Transfer K-values only from a distinct equilibrium with lower Gibbs energy, closed component balances, and log-fugacity residual below `1e-8`. |
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i)` is non-finite or above `1e-8`, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the guarded candidate must then pass the strict feasibility and lower-Gibbs gates. |
 | Water-rich cross-algorithm fallback | water feed `>= 0.01` and current `max abs(Delta ln(f_i)) >= 1e-8`, material-balance failure, or multiphase collapse to one hydrocarbon phase | Evaluate the existing cold candidate through the alternate path first. If an invalid ordinary two-phase split remains after that candidate is rejected, preserve its compositions as the seed for one fully initialized `TPmultiflash` trial. A multiphase endpoint collapsed to one phase may try the ordinary path, including the same seeded refinement when the cold ordinary result is invalid, but accepts only a result that restores an AQUEOUS phase; ordinary gas appearance remains outside this aqueous-recovery fallback. Genuine OIL+AQUEOUS liquid-liquid endpoints remain on the multiphase path. Prevent reciprocal recursion and replace the endpoint only when the candidate has exactly two distinct bounded phases, normalized beta and compositions, material balance and fugacity residuals below `1e-8`, and a Gibbs reduction larger than `max(1e-6 J, 1e-8 abs(G))`. Already-feasible two-phase endpoints incur only the residual acceptance scan. |
 | CPA high-water hydrocarbon-liquid stability screen | ordinary one-phase AQUEOUS CPA endpoint, water feed `>= 0.01`, `f_water / p_water_sat >= 0.8`, and at least 0.01 hydrocarbon feed with `T_c > T + 80 K` | Use the water saturation, composition, and critical-temperature checks only as a performance gate for one cloned multiphase stability calculation. Accept only an exactly-two-phase, distinct, bounded, normalized result with material-balance and log-fugacity residuals below `1e-8` and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. Chemical, ionic, solid, wax, non-CPA, explicit-multiphase, gas, and non-aqueous endpoints retain their existing paths. |
@@ -528,14 +529,35 @@ history-independent. An outer flash that needs each inner result to be
 independent calls `Flash.discardSecondOrderSolver()` before the run, as
 `OptimizedVUflash` does for every trial state.
 
-*Known limitation (2026-11-16).* Discarding the solver in every
-`TPflash.run()` was tried and rejected in this change. For the UMR-PRU
-methane/n-pentane/nC16 system in `TVFlashTest.testTVflash`, a fresh TP flash
-at the later states returns one phase with a higher Gibbs energy than the
-two-phase state. The TV flash only reaches the lower-energy split (checked
-against an independent Helmholtz reference) because the carried Newton state
-preserves it. Fixing the TP stability analysis for that case is a separate
-change.
+**Fresh-state stability recovery (2026-11-16).** Discarding the solver in every
+`TPflash.run()` remains intentionally rejected because it changes legitimate
+within-run Newton continuation. The previously documented UMR-PRU
+methane/ethane/n-pentane/nC16 case is instead recovered in stability analysis.
+A fresh TP flash now runs composition-perturbation tangent-plane trials when
+all of the following hold: pressure is below 50 bar; at least four active
+components are hydrocarbon or inert; methane is at least 0.5 mole fraction;
+components with `T_c > T + 80 K` total at least 0.01 mole fraction; the active
+critical-temperature span is at least 300 K; and the Wilson vapor and liquid
+sums are both above 2.4. This path applies to unconstrained cubic-EOS VLE with
+composition derivatives. A converged negative reduced tangent-plane distance
+supplies a trial liquid composition. The algorithm withdraws a feasible liquid
+fraction from the feed while keeping all component amounts positive. A bounded,
+independently initialized Newton solve generates a candidate split. Near
+equilibrium the change in Gibbs energy during a line search can be at
+floating-point resolution while the fugacity residuals are still measurable.
+For Gibbs changes within the line search's roundoff allowance, a feasible
+Newton step must reduce the maximum log-fugacity residual. The final candidate must have distinct
+normalized phases, material balance and log-fugacity equality within `1e-8`,
+and lower Gibbs energy than the better homogeneous root before supplying
+K-values to the normal TP iteration.
+
+`TVFlashTest.testTVflash` reconstructs the later state twice without cached
+solver history. Both fresh calculations must recover two phases, normalized
+phase fractions and compositions, component material balance within `1e-8`,
+interphase log-fugacity equality within `1e-8`, deterministic Gibbs energy and
+phase fraction, and no Gibbs increase relative to the history-assisted TV
+state. The same assertions cover adjacent representable pressure values around
+the TV endpoint to exercise rounding sensitivity in the Newton line search.
 
 ---
 

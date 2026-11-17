@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.thermo.system.SystemInterface;
@@ -165,6 +166,22 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * init.
    */
   public void init() {
+    initWithLevel(3);
+  }
+
+  /**
+   * Synchronizes the converged phase amounts and computes the fugacities and Gibbs energy for seed validation.
+   */
+  void initForSeedValidation() {
+    initWithLevel(1);
+  }
+
+  /**
+   * Synchronizes the phase compositions and K-values with the current Newton iterate before initializing the system.
+   *
+   * @param initLevel thermodynamic system initialization level
+   */
+  private void initWithLevel(int initLevel) {
     double betaSum = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       betaSum += uVector[i];
@@ -179,8 +196,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
     }
 
-    // Full system init: computes fugacities, T/P/composition derivatives
-    system.init(3);
+    system.init(initLevel);
   }
 
   /**
@@ -256,12 +272,33 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @return a double
    */
   public double solve() {
+    return solve(false);
+  }
+
+  /**
+   * Takes a Newton step for a stability seed, using residual improvement to resolve Gibbs line-search comparisons near
+   * floating-point precision.
+   *
+   * @return relative change in phase amounts, or zero if no step is accepted
+   */
+  double solveWithResidualFallback() {
+    return solve(true);
+  }
+
+  /**
+   * Takes one Newton step with a feasibility-preserving line search.
+   *
+   * @param useResidualFallback whether to resolve indistinguishable Gibbs changes using the fugacity residual
+   * @return relative change in phase amounts
+   */
+  private double solve(boolean useResidualFallback) {
     ensureSolverInitialized();
     iter++;
     init();
 
     double qCurrent = computeQ();
     setfvec();
+    double currentResidual = useResidualFallback ? CommonOps_DDRM.elementMaxAbs(fvecVector) : 0.0;
     setJac();
 
     // Levenberg-Marquardt regularization for stability
@@ -289,6 +326,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     double alpha = 1.0;
     double c1 = 1e-4;
     int maxBacktrack = 8;
+    double gibbsRoundoff = useResidualFallback ? 8.0 * Math.ulp(qCurrent) : 0.0;
+    boolean accepted = false;
     for (int bt = 0; bt < maxBacktrack; bt++) {
       for (int i = 0; i < numberOfComponents; i++) {
         uTrialVector[i] = uVector[i] - alpha * dxVector.get(i, 0);
@@ -298,8 +337,15 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
         try {
           setTrialAndComputeFugacities(uTrialVector);
           double qTrial = computeQ();
-          // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
-          if (qTrial <= qCurrent - c1 * alpha * slope) {
+          double requiredDecrease = c1 * alpha * slope;
+          accepted = qTrial <= qCurrent - requiredDecrease;
+          // Near equilibrium Q changes quadratically, while fugacity residuals change linearly.
+          if (useResidualFallback && slope > 0.0 && requiredDecrease <= gibbsRoundoff
+              && Math.abs(qTrial - qCurrent) <= gibbsRoundoff) {
+            setfvec();
+            accepted = CommonOps_DDRM.elementMaxAbs(fvecVector) < currentResidual;
+          }
+          if (accepted) {
             break;
           }
         } catch (Exception ex) {
@@ -308,6 +354,10 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       }
 
       alpha *= 0.5;
+    }
+    if (useResidualFallback && !accepted) {
+      init();
+      return 0.0;
     }
 
     // Update u with accepted step

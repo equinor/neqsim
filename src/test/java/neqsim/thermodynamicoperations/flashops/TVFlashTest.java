@@ -78,6 +78,90 @@ class TVFlashTest {
     for (int phase = 0; phase < testSystem.getNumberOfPhases(); phase++) {
       assertEquals(testSystem.getPressure(), ((PhaseEos) testSystem.getPhase(phase)).calcPressure(), 1.0e-8);
     }
+
+    // A fresh TP flash at this final state used to collapse to a higher-Gibbs single phase. The
+    // TV loop found the lower-energy split only because it carried Newton state between flashes.
+    double pressure = testSystem.getPressure();
+    neqsim.thermo.system.SystemInterface firstFreshFlash = createFreshTpFlash(testSystem, pressure);
+    neqsim.thermo.system.SystemInterface repeatedFreshFlash = createFreshTpFlash(testSystem, pressure);
+    assertFreshTpEquilibrium(testSystem, firstFreshFlash);
+    assertFreshTpEquilibrium(testSystem, repeatedFreshFlash);
+    assertEquals(firstFreshFlash.getGibbsEnergy(), repeatedFreshFlash.getGibbsEnergy(),
+        Math.max(1.0, Math.abs(firstFreshFlash.getGibbsEnergy())) * 1.0e-8);
+    assertEquals(firstFreshFlash.getBeta(0), repeatedFreshFlash.getBeta(0), 1.0e-8);
+
+    // A few last-place pressure bits can change the Newton line search without changing the
+    // physical equilibrium. Exercise that neighborhood without weakening the fugacity checks.
+    for (int offset = -32; offset <= 32; offset++) {
+      if (offset != 0) {
+        assertFreshTpEquilibrium(testSystem, createFreshTpFlash(testSystem, pressure + offset * Math.ulp(pressure)));
+      }
+    }
+  }
+
+  /**
+   * Recreates the final TV state without carrying any TP-flash solver history.
+   *
+   * @param reference converged TV state whose temperature and inventory are copied
+   * @param pressure TP flash pressure in bara
+   * @return independently constructed and flashed TP state
+   */
+  private static neqsim.thermo.system.SystemInterface createFreshTpFlash(neqsim.thermo.system.SystemInterface reference,
+      double pressure) {
+    neqsim.thermo.system.SystemInterface fresh = new neqsim.thermo.system.SystemUMRPRUMCEos(reference.getTemperature(),
+        pressure);
+    for (int component = 0; component < reference.getNumberOfComponents(); component++) {
+      fresh.addComponent(reference.getComponent(component).getComponentName(),
+          reference.getComponent(component).getNumberOfmoles());
+    }
+    fresh.setMixingRule(EosMixingRuleType.CLASSIC);
+    new ThermodynamicOperations(fresh).TPflash();
+    fresh.init(1);
+    return fresh;
+  }
+
+  /**
+   * Verifies topology, material balance, fugacity equality, and Gibbs-energy consistency of an independent TP flash.
+   *
+   * @param historyState lower-Gibbs two-phase state reached by the TV path
+   * @param freshState independently constructed TP state at the same temperature, pressure, and inventory
+   */
+  private static void assertFreshTpEquilibrium(neqsim.thermo.system.SystemInterface historyState,
+      neqsim.thermo.system.SystemInterface freshState) {
+    assertEquals(2, freshState.getNumberOfPhases(), "Fresh TP phase count at " + freshState.getPressure() + " bara");
+    double betaSum = 0.0;
+    for (int phase = 0; phase < freshState.getNumberOfPhases(); phase++) {
+      betaSum += freshState.getBeta(phase);
+      double compositionSum = 0.0;
+      for (int component = 0; component < freshState.getNumberOfComponents(); component++) {
+        compositionSum += freshState.getPhase(phase).getComponent(component).getx();
+      }
+      assertEquals(1.0, compositionSum, 1.0e-10);
+    }
+    assertEquals(1.0, betaSum, 1.0e-12);
+
+    for (int component = 0; component < freshState.getNumberOfComponents(); component++) {
+      double reconstructedFeedFraction = 0.0;
+      for (int phase = 0; phase < freshState.getNumberOfPhases(); phase++) {
+        reconstructedFeedFraction += freshState.getBeta(phase)
+            * freshState.getPhase(phase).getComponent(component).getx();
+      }
+      assertEquals(freshState.getComponent(component).getz(), reconstructedFeedFraction, 1.0e-8);
+
+      double vaporComposition = freshState.getPhase(0).getComponent(component).getx();
+      double liquidComposition = freshState.getPhase(1).getComponent(component).getx();
+      if (vaporComposition > 1.0e-12 && liquidComposition > 1.0e-12) {
+        double logFugacityRatio = Math
+            .log(vaporComposition * freshState.getPhase(0).getComponent(component).getFugacityCoefficient()
+                / (liquidComposition * freshState.getPhase(1).getComponent(component).getFugacityCoefficient()));
+        assertEquals(0.0, logFugacityRatio, 1.0e-8);
+      }
+    }
+
+    double gibbsScale = Math.max(1.0, Math.abs(historyState.getGibbsEnergy()));
+    org.junit.jupiter.api.Assertions.assertTrue(
+        freshState.getGibbsEnergy() <= historyState.getGibbsEnergy() + gibbsScale * 1.0e-6,
+        "Fresh TP flash must recover the lower-Gibbs split");
   }
 
   @Test

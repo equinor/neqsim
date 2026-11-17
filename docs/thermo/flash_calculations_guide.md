@@ -923,6 +923,21 @@ gas and oil into a higher-Gibbs-energy state, the VU iteration cycled between
 two- and three-phase states for all 100 iterations, and the fallbacks did the
 work the ordinary solve should have done (equinor/neqsim#5036).
 
+Solver reset and phase-stability recovery are separate concerns. A fresh inner
+TP flash must not depend on the preceding trial, while its stability analysis
+must still find the lowest-Gibbs phase topology. For methane-rich hydrocarbon
+feeds in an unconstrained cubic-EOS flash below 50 bar, strongly separated
+Wilson sums can trigger up to five supplementary tangent-plane trials. A
+non-trivial trial with negative reduced TPD supplies a liquid composition.
+The solver withdraws a feasible liquid amount from the feed and relaxes the
+material-balanced split with a fresh Gibbs-energy Newton solve. Near numerical
+resolution, the line search uses a decrease in the fugacity residual to
+distinguish steps with indistinguishable Gibbs energies. Only a
+distinct, normalized split with closed component balances, equal fugacities,
+and lower Gibbs energy supplies K-values to the ordinary TP iteration. This
+recovers the UMR-PRU methane/ethane/n-pentane/nC16 TV endpoint in a newly
+constructed TP flash.
+
 **Measurement behind the stage order (2026-11-16).** The cases were:
 
 - 118 TP-flash targets started 25–40 bar or 30–40 K away: a three-phase
