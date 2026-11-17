@@ -107,6 +107,7 @@ and CSV output. Existing flashing and mixture tests remain in the same mandatory
 | Dilute methane, 300 K, 0.1 bara, back-pressure ratios 0.05/0.30/0.70/0.90/0.98 | `ReleaseFlowBenchmarkTest.diluteGasBackpressureSweepMatchesIndependentPerfectGasEquation` | Choked/subcritical decision and rate within 1.5% of the constant-gamma equation. |
 | Methane, 300 K, 50 bara | `ReleaseFlowModelTest.documentationExampleAndEnergyClosure` | Entropy, stagnation-energy and phase-mass closure. |
 | Flashing propane, 300 K, 20 to 3 bara | `ReleaseFlowModelTest.liquidFlashingUsesMassFractionsAndPreservesInventory` | Two-phase expansion, mass fractions and conserved composition. |
+| Published STEP propane, 302.95 K, 10.75 bara to 0.91 atm, 5 mm opening | `HomogeneousEquilibriumExternalBenchmarkTest.publishedStepCaseRecordsUnqualifiedRateMismatch` | Independent experimental rate evidence. HEM underpredicts the reported 0.2 kg/s by about 70%; the source table reports no measurement uncertainty, so the machine receipt remains `OUTSIDE_PUBLISHED_RATE` / `UNQUALIFIED`. |
 | Methane/ethane gas | `ReleaseFlowModelTest.mixtureGasAndUnresolvedFlashingBoundaryAreDistinguished` | Multicomponent gas support; explicit rejection of an unresolved flashing-mixture root. |
 | Dense CO2, 310 K, 120 to 110 bara | `ReleaseFlowBenchmarkTest.denseFluidHighBackpressureAndCo2SolidRiskAreExplicit` | A resolved dense-fluid case and conservation; **not** independent dense-fluid rate accuracy. |
 | CO2 at 210 K | Same dense-fluid test | Solid-risk rejection without a fabricated rate. |

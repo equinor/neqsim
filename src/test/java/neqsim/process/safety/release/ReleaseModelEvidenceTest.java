@@ -31,7 +31,9 @@ class ReleaseModelEvidenceTest extends neqsim.NeqSimTest {
       assertFalse(evidence.getApplicability().isEmpty());
       assertFalse(evidence.getLimitations().isEmpty());
       assertFalse(evidence.getRecords().isEmpty());
-      assertEquals(model instanceof IdealGasFannoPipeReleaseModel, evidence.hasIndependentEvidence());
+      assertEquals(
+          model instanceof IdealGasFannoPipeReleaseModel || model instanceof HomogeneousEquilibriumReleaseModel,
+          evidence.hasIndependentEvidence());
       assertNotSame(evidence.getApplicability(), evidence.getApplicability());
       assertNotSame(evidence.getLimitations(), evidence.getLimitations());
       assertNotSame(evidence.getRecords(), evidence.getRecords());
@@ -43,7 +45,7 @@ class ReleaseModelEvidenceTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void independentlyPublishedFannoEvidenceDoesNotSelfPromoteQualification() {
+  void independentlyPublishedReleaseEvidenceDoesNotSelfPromoteQualification() {
     SystemInterface gas = new SystemSrkEos(315.0, 4.0);
     gas.addComponent("nitrogen", 1.0);
     gas.setMixingRule("classic");

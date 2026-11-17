@@ -1,7 +1,7 @@
 ---
 name: neqsim-release-source-terms
 description: "This skill guides agents through NeqSim release-source-term calculations. USE WHEN: estimating a leak or rupture rate, selecting an orifice or pipe-decompression model, building a time-resolved source term, or handing release conditions to fire or dispersion analysis. Anchors: ReleaseFlowRequest, ReleaseFlowResult, HomogeneousEquilibriumReleaseModel, ReleaseInventory, SourceTermSession."
-last_verified: "2026-11-16"
+last_verified: "2026-11-17"
 ---
 
 # Release Source Terms
@@ -105,6 +105,7 @@ Map the selected station and component/phase mass fractions into the input contr
 
 - `ReleaseFlowResult` numerical validity is not engineering qualification. Inspect status, diagnostics, model identity/version and evidence before consuming any rate.
 - HEM explicitly assumes equilibrium phase transfer, zero slip, no pipe friction, no heat transfer and no solid-bearing flow. It can return `UNSUPPORTED`/`INVALID`; do not read rate on failure.
+- HEM version 1.2.1 retains the independent STEP propane flashing-jet comparison from Witlox et al. (2007). With the published 10.75 bar, 302.95 K, 5 mm and 0.91 atm inputs, even a discharge-coefficient upper bound of 1.0 underpredicts the reported 0.2 kg/s rate by about 70%. Measurement uncertainty is not reported in the source table. Treat `EXPERIMENTAL_RATE_MISMATCH` as adverse evidence, not a calibration target or qualification.
 - The pressure in `ReleaseFlowRequest` is absolute Pa. `backPressurePa` is not barg. The supplied fluid is cloned, and its total moles only set composition/state.
 - Short-orifice models reject requests containing finite pipe length. For Fanno models, set both pipe length and Darcy factor positive; request validation requires both zero or both positive.
 - `SourceTermSession` ordinary sources are hypothetical and do not withdraw inventory. Only `CoupledReleaseSource` equipment owns real inventory depletion. A session lock cannot protect concurrent edits through another process reference.
@@ -117,7 +118,7 @@ Map the selected station and component/phase mass fractions into the input contr
 
 ## Validation / benchmarks
 
-The source tree includes analytic ideal-gas choked/high-backpressure tests, HEM conservation and phase-flashing regressions, dilute real-gas Fanno comparison against the ideal-gas limit, and model-specific sensitivity tests. Use these as software regression evidence, not universal accuracy claims. At task level, check mass/energy/entropy closure, zero-forward-flow behavior, monotonic response to backpressure/diameter where expected, and sensitivity to model assumptions. Record the exact NeqSim version and a source-specific validation case.
+The source tree includes analytic ideal-gas choked/high-backpressure tests, HEM conservation and phase-flashing regressions, the adverse STEP propane experimental comparison, dilute real-gas Fanno comparison against the ideal-gas limit, and model-specific sensitivity tests. Use these as bounded evidence, not universal accuracy claims. At task level, check mass/energy/entropy closure, zero-forward-flow behavior, monotonic response to backpressure/diameter where expected, and sensitivity to model assumptions. Record the exact NeqSim version and a source-specific validation case.
 
 There is no direct MCP runner for `ReleaseFlowModel` or `SourceTermSession` in `neqsim.mcp.runners` at this verification. Consequence MCP tools operate downstream; transfer a validated source frame explicitly. Do not present a risk or consequence estimate as a certified safety study.
 

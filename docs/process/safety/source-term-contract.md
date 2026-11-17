@@ -51,8 +51,9 @@ Version 1 emits `evidenceLevel: UNQUALIFIED`. Calculated frames also carry an op
 references. Existing v1 frames without that extension remain schema-compatible. The
 `independentEvidence` flag is true only when at least one retained record was produced outside
 the model implementation. The ideal-gas Fanno manifest includes the public NASA GFSSP analytical
-case; the other current built-in manifests retain repository-owned evidence only. Every model
-still emits `UNQUALIFIED`: external analytical evidence and regression tests do not create
+case. The HEM manifest includes the published STEP flashing-propane rate, but explicitly records
+the current large underprediction and missing measurement uncertainty as adverse evidence. Every
+model still emits `UNQUALIFIED`: external analytical or experimental evidence and regression tests do not create
 independently reviewed engineering qualification. Consumers must validate both schema and
 application-specific physical/balance requirements before using a frame.
 
