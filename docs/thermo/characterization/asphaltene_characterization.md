@@ -107,58 +107,42 @@ $$CII = \frac{Saturates + Asphaltenes}{Aromatics + Resins}$$
 
 ### Creating a Characterization
 
+Use the constructor when all four SARA mass fractions are known. They must sum to 1.0 within
+the class tolerance. For a reusable object, update all fractions together so validation is applied
+to the complete assay.
+
 ```java
 import neqsim.thermo.characterization.AsphalteneCharacterization;
 
-// Create from SARA fractions (weight fractions, must sum to 1.0)
-AsphalteneCharacterization asphChar = new AsphalteneCharacterization(
-    0.45,   // Saturates
-    0.30,   // Aromatics
-    0.20,   // Resins
-    0.05    // Asphaltenes
-);
+AsphalteneCharacterization asphChar =
+    new AsphalteneCharacterization(0.45, 0.30, 0.20, 0.05);
 
-// Or create empty and set values
-AsphalteneCharacterization asphChar2 = new AsphalteneCharacterization();
-asphChar2.setSaturates(0.45);
-asphChar2.setAromatics(0.30);
-asphChar2.setResins(0.20);
-asphChar2.setAsphaltenes(0.05);
+AsphalteneCharacterization reusable = new AsphalteneCharacterization();
+reusable.setSARAFractions(0.45, 0.30, 0.20, 0.05);
 ```
 
 ### Calculating Stability Indices
 
 ```java
-// Calculate Colloidal Instability Index
-double cii = asphChar.calcColloidalInstabilityIndex();
-System.out.println("CII: " + cii);
-
-// Check stability
-if (cii < AsphalteneCharacterization.CII_STABLE_LIMIT) {
-    System.out.println("Asphaltenes are stable");
-} else if (cii < AsphalteneCharacterization.CII_UNSTABLE_LIMIT) {
-    System.out.println("Asphaltenes are metastable - monitor carefully");
-} else {
-    System.out.println("Asphaltenes are unstable - high precipitation risk");
-}
-
-// Calculate resin-to-asphaltene ratio
-double raRatio = asphChar.calcResinAsphalteneRatio();
-System.out.println("R/A ratio: " + raRatio);
+double cii = asphChar.getColloidalInstabilityIndex();
+double resinToAsphaltene = asphChar.getResinToAsphalteneRatio();
+String assessment = asphChar.evaluateStability();
 ```
+
+The CII and resin-to-asphaltene ratio are screening quantities derived from the supplied SARA
+assay. The returned assessment applies the current class thresholds; it is not a calibrated
+precipitation-onset or deposition prediction.
 
 ### Setting C7+ Properties
 
-```java
-// Set C7+ fraction properties for better characterization
-asphChar.setMwC7plus(350.0);        // g/mol
-asphChar.setDensityC7plus(850.0);   // kg/m³
+Set the C7+ molecular weight in g/mol and density in kg/m3 together before requesting the
+correlation estimates.
 
-// Estimate asphaltene properties
-double mwAsph = asphChar.estimateAsphalteneMW();
-double mwResin = asphChar.estimateResinMW();
-System.out.println("Estimated asphaltene MW: " + mwAsph + " g/mol");
-System.out.println("Estimated resin MW: " + mwResin + " g/mol");
+```java
+asphChar.setC7plusProperties(350.0, 850.0);
+
+double estimatedAsphalteneMw = asphChar.estimateAsphalteneMolecularWeight();
+double estimatedResinMw = asphChar.estimateResinMolecularWeight();
 ```
 
 ---
@@ -167,206 +151,93 @@ System.out.println("Estimated resin MW: " + mwResin + " g/mol");
 
 ### Asphaltene Association Parameters
 
-For CPA modeling, asphaltenes are treated as associating molecules:
+The characterization object exposes the asphaltene and resin molecular weights plus the
+asphaltene self-association energy and volume:
 
 ```java
-// Set CPA parameters
-asphChar.setAsphalteneMW(1700.0);              // g/mol
-asphChar.setResinMW(800.0);                     // g/mol
-asphChar.setAsphalteneAssociationEnergy(3500.0); // K
+asphChar.setMwAsphaltene(1700.0);
+asphChar.setMwResin(800.0);
+asphChar.setAsphalteneAssociationEnergy(3500.0);
 asphChar.setAsphalteneAssociationVolume(0.05);
-asphChar.setResinAsphalteneAssociationEnergy(2500.0); // K (cross-association)
 
-// Get parameters for CPA model
-double epsilon = asphChar.getAsphalteneAssociationEnergy();  // K
+double epsilon = asphChar.getAsphalteneAssociationEnergy();
 double kappa = asphChar.getAsphalteneAssociationVolume();
 ```
 
-### Association Scheme
-
-Asphaltenes are typically modeled with:
-- Self-association sites (asphaltene-asphaltene bonding)
-- Cross-association sites (resin-asphaltene bonding)
-
-| Interaction | Energy (K) | Volume |
-|-------------|------------|--------|
-| Asphaltene-Asphaltene | 3000-4000 | 0.03-0.07 |
-| Resin-Asphaltene | 2000-3000 | 0.02-0.05 |
+The class applies its resin association treatment internally when
+`addAsphalteneComponents(system, totalC7plusMoles)` is used. It does not expose a separate
+public cross-association setter. Treat the default values as starting points and qualify or fit
+them against representative onset or precipitation data before engineering use.
 
 ---
 
 ## Usage Examples
 
-### Complete Characterization Workflow
+### Complete SARA Screening Workflow
 
+<!-- asphaltene-characterization-quick-start: complete -->
 ```java
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.characterization.AsphalteneCharacterization;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Step 1: Create asphaltene characterization from SARA data
-AsphalteneCharacterization asphChar = new AsphalteneCharacterization(
-    0.42,  // Saturates
-    0.32,  // Aromatics
-    0.22,  // Resins  
-    0.04   // Asphaltenes
-);
+public final class AsphalteneCharacterizationExample {
+    private AsphalteneCharacterizationExample() {
+    }
 
-// Step 2: Set additional properties
-asphChar.setMwC7plus(380.0);
-asphChar.setDensityC7plus(870.0);
-asphChar.setAsphalteneMW(1800.0);
-asphChar.setResinMW(850.0);
+    public static void main(String[] args) {
+        AsphalteneCharacterization characterization =
+                new AsphalteneCharacterization(0.42, 0.32, 0.22, 0.04);
+        characterization.setC7plusProperties(380.0, 870.0);
 
-// Step 3: Calculate stability indices
-double cii = asphChar.calcColloidalInstabilityIndex();
-double raRatio = asphChar.calcResinAsphalteneRatio();
+        double cii = characterization.getColloidalInstabilityIndex();
+        if (!Double.isFinite(cii) || Math.abs(cii - 0.8518518518518519) > 1.0e-12) {
+            throw new IllegalStateException("Unexpected colloidal instability index");
+        }
 
-System.out.println("=== Asphaltene Stability Analysis ===");
-System.out.println("CII: " + String.format("%.3f", cii));
-System.out.println("R/A ratio: " + String.format("%.2f", raRatio));
-System.out.println("Stability: " + asphChar.getStabilityClassification());
+        double resinToAsphaltene = characterization.getResinToAsphalteneRatio();
+        if (!Double.isFinite(resinToAsphaltene)
+                || Math.abs(resinToAsphaltene - 5.5) > 1.0e-12) {
+            throw new IllegalStateException("Unexpected resin-to-asphaltene ratio");
+        }
 
-// Step 4: Create fluid system with asphaltene pseudo-component
-SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(373.15, 200.0);
+        double asphalteneMw = characterization.estimateAsphalteneMolecularWeight();
+        double resinMw = characterization.estimateResinMolecularWeight();
+        if (!Double.isFinite(asphalteneMw)
+                || Math.abs(asphalteneMw - 2793.0) > 1.0e-9
+                || !Double.isFinite(resinMw)
+                || Math.abs(resinMw - 1396.5) > 1.0e-9) {
+            throw new IllegalStateException("Unexpected C7+ correlation estimate");
+        }
 
-// Add light components
-fluid.addComponent("methane", 0.35);
-fluid.addComponent("ethane", 0.08);
-fluid.addComponent("propane", 0.05);
-fluid.addComponent("n-hexane", 0.12);
-
-// Add characterized fractions including asphaltene
-fluid.addTBPfraction("Saturates", 0.20, 0.300, 0.78);
-fluid.addTBPfraction("Aromatics", 0.12, 0.350, 0.88);
-fluid.addTBPfraction("Resins", 0.06, asphChar.getResinMW()/1000, 0.98);
-fluid.addComponent("asphaltene", 0.02);  // As pseudo-component
-
-fluid.setMixingRule(10);  // CPA mixing rule
-
-// Step 5: Run flash calculation
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-
-// Check for asphaltene precipitation
-if (fluid.hasPhaseType("solid") || fluid.hasPhaseType("asphaltene")) {
-    System.out.println("Asphaltene precipitation predicted!");
-    double precipAmount = fluid.getPhase("solid").getMolarMass() * 
-                         fluid.getPhase("solid").getNumberOfMolesInPhase();
-    System.out.println("Precipitated amount: " + precipAmount + " kg");
+        String assessment = characterization.evaluateStability();
+        if (!assessment.contains("MODERATE RISK")
+                || !assessment.contains("good peptization")) {
+            throw new IllegalStateException("Unexpected screening classification");
+        }
+    }
 }
 ```
 
-### Pressure-Induced Precipitation
+The example is an executable SARA screening contract. It demonstrates current API names, units,
+correlation output, and classification thresholds without interpreting a generic thermodynamic
+`solid` phase as asphaltene.
 
-```java
-// Analyze asphaltene stability vs pressure (common during depressurization)
-double temperature = 100.0 + 273.15;  // K
-double[] pressures = {400, 350, 300, 250, 200, 150, 100, 50};  // bara
+### Pressure Depletion and Gas Injection
 
-System.out.println("Pressure (bara) | Asphaltene Phase | Amount");
-System.out.println("----------------------------------------------");
-
-for (double pressure : pressures) {
-    SystemSrkCPAstatoil system = fluid.clone();
-    system.setTemperature(temperature);
-    system.setPressure(pressure);
-    
-    ThermodynamicOperations ops = new ThermodynamicOperations(system);
-    ops.TPflash();
-    
-    String phase = system.hasPhaseType("solid") ? "Precipitated" : "Dissolved";
-    double amount = system.hasPhaseType("solid") ? 
-        system.getPhase("solid").getNumberOfMolesInPhase() : 0.0;
-    
-    System.out.printf("%8.0f        | %12s     | %.4f%n", 
-        pressure, phase, amount);
-}
-```
-
-### Gas Injection Effect
-
-```java
-// Evaluate asphaltene stability during CO2/gas injection
-SystemSrkCPAstatoil baseFluid = createReservoirFluid();
-AsphalteneCharacterization asphChar = new AsphalteneCharacterization(
-    0.40, 0.30, 0.25, 0.05
-);
-
-double[] injectionRatios = {0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30};
-
-System.out.println("CO2 Injection Effect on Asphaltene Stability");
-System.out.println("--------------------------------------------");
-
-for (double ratio : injectionRatios) {
-    SystemSrkCPAstatoil fluid = baseFluid.clone();
-    
-    // Add injection gas
-    double totalMoles = fluid.getTotalNumberOfMoles();
-    fluid.addComponent("CO2", totalMoles * ratio / (1 - ratio));
-    
-    // Flash at reservoir conditions
-    fluid.setTemperature(373.15);
-    fluid.setPressure(250.0);
-    
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.TPflash();
-    
-    boolean precipitated = fluid.hasPhaseType("solid");
-    System.out.printf("CO2: %5.1f%% | Precipitation: %s%n",
-        ratio * 100, precipitated ? "YES" : "NO");
-}
-```
+A generic TP flash does not by itself establish an asphaltene phase, precipitation amount, or
+onset pressure. Pressure-depletion and gas-injection studies require a configured asphaltene
+model, fluid-specific pseudo-components or CPA parameters, and calibration against representative
+experimental data. Continue with the
+[asphaltene modeling guide](../../pvtsimulation/flowassurance/asphaltene_modeling.md),
+[CPA calculations](../../pvtsimulation/flowassurance/asphaltene_cpa_calculations.md), and
+[parameter fitting](../../pvtsimulation/flowassurance/asphaltene_parameter_fitting.md).
 
 ---
 
 ## De Boer Screening
 
-### Overview
-
-The De Boer plot is a screening method for asphaltene precipitation risk based on:
-- Reservoir pressure and saturation pressure
-- In-situ density difference
-
-### De Boer Correlation
-
-$$\Delta\rho = \rho_{res} - \rho_{sat}$$
-
-The risk is assessed by plotting $P_{res} - P_{sat}$ vs $\Delta\rho$:
-
-| Region | Risk Level |
-|--------|------------|
-| Below lower curve | Low risk |
-| Between curves | Moderate risk |
-| Above upper curve | High risk |
-
-### Implementation
-
-```java
-// De Boer screening calculation
-double reservoirPressure = 350.0;  // bara
-double saturationPressure = 180.0;  // bara (bubble point)
-double reservoirDensity = 650.0;    // kg/m³
-double saturationDensity = 580.0;   // kg/m³ (at bubble point)
-
-double deltaP = reservoirPressure - saturationPressure;
-double deltaRho = reservoirDensity - saturationDensity;
-
-// De Boer risk assessment
-String risk;
-if (deltaP > 200 && deltaRho > 100) {
-    risk = "HIGH - Asphaltene precipitation very likely";
-} else if (deltaP > 100 || deltaRho > 50) {
-    risk = "MODERATE - Monitor conditions carefully";
-} else {
-    risk = "LOW - Unlikely to have problems";
-}
-
-System.out.println("De Boer Screening Results:");
-System.out.println("ΔP (res - sat): " + deltaP + " bar");
-System.out.println("Δρ (res - sat): " + deltaRho + " kg/m³");
-System.out.println("Risk: " + risk);
-```
+Use the dedicated [De Boer screening guide](../../pvtsimulation/flowassurance/asphaltene_deboer_screening.md)
+and its executable example rather than copying threshold logic into an application. De Boer is an
+empirical screening method; it does not replace fluid-specific onset or deposition qualification.
 
 ---
 
