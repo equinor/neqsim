@@ -5422,7 +5422,9 @@ public class TwoFluidPipe extends Pipeline {
     transientCoupledPressureMomentumFailureDetected = false;
     transientCoupledPressureMomentumCorrectionLimited = false;
     transientPressureLimitCount = 0;
-    transientVelocityLimiterRejections = 0;
+    synchronized (this) {
+      transientVelocityLimiterRejections = 0;
+    }
     firstTransientPressureLimitTime = Double.NaN;
     minimumTransientPressureDamping = 1.0;
     transientCoupledPressureMomentumRejectedSubsteps = 0;
@@ -6805,7 +6807,7 @@ public class TwoFluidPipe extends Pipeline {
     transientCoupledPressureMomentumFailureDetected = candidate.transientCoupledPressureMomentumFailureDetected;
     transientCoupledPressureMomentumCorrectionLimited = candidate.transientCoupledPressureMomentumCorrectionLimited;
     transientPressureLimitCount = candidate.transientPressureLimitCount;
-    transientVelocityLimiterRejections = candidate.transientVelocityLimiterRejections;
+    transientVelocityLimiterRejections = candidate.getTransientVelocityLimiterRejectionCount();
     firstTransientPressureLimitTime = candidate.firstTransientPressureLimitTime;
     minimumTransientPressureDamping = candidate.minimumTransientPressureDamping;
     transientCoupledPressureMomentumRejectedSubsteps = candidate.transientCoupledPressureMomentumRejectedSubsteps;
@@ -6999,6 +7001,9 @@ public class TwoFluidPipe extends Pipeline {
     }
     if (!Double.isFinite(simulationTime + dt) || simulationTime + dt <= simulationTime) {
       throw new IllegalArgumentException("Transient time step cannot advance the finite simulation clock");
+    }
+    if (equations.isMaterialWaveRusanovEnabled() && !coupledPressureMomentumEnabled) {
+      throw new IllegalStateException("Material-wave Rusanov requires coupled pressure-momentum");
     }
     isTransientMode = true;
     selectCoupledPressureForLiquidFullLine();
@@ -7411,6 +7416,10 @@ public class TwoFluidPipe extends Pipeline {
       // converts dissipated phase kinetic energy into internal energy exactly once.
       U_new = applyConservativeFrictionSourceStep(U_new, dtFinal);
 
+      if (equations.isMaterialWaveRusanovEnabled() && hasValidConservativeState(U_new)) {
+        TwoFluidConservationEquations.applyAcousticFaceTraction(U_new, sections, dtFinal);
+      }
+
       // 4. Every mode must reject an invalid raw predictor before recovery can
       // borrow another phase's mass or silently replace a nonfinite value. Fixed
       // stepping fails at the last accepted state; adaptive stepping may retry.
@@ -7474,7 +7483,8 @@ public class TwoFluidPipe extends Pipeline {
       if (enableAdaptiveTimestepping) {
         boolean postRejected = false;
 
-        for (TwoFluidSection sec : sections) {
+        for (int cell = 0; cell < sections.length; cell++) {
+          TwoFluidSection sec = sections[cell];
           double p = sec.getPressure();
           if (p > adaptiveMaxPressure || Double.isNaN(p) || p <= 0) {
             lastStepRejection = "inadmissible pressure " + p + " Pa at x=" + sec.getPosition() + " m";
@@ -7492,14 +7502,12 @@ public class TwoFluidPipe extends Pipeline {
             postRejected = true;
             break;
           }
-        }
-
-        if (!postRejected) {
-          String limiterRejection = describeEngagedVelocityLimiter(U_new, sectionPositions());
+          String limiterRejection = describeEngagedVelocityLimiter(U_new[cell], sec.getPosition());
           if (limiterRejection != null) {
             lastStepRejection = limiterRejection;
             transientVelocityLimiterRejections++;
             postRejected = true;
+            break;
           }
         }
 
@@ -7842,12 +7850,6 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Validate and correct state vector to prevent numerical instabilities.
-   *
-   * @param U_new New state to validate
-   * @param U_prev Previous state for fallback
-   */
-  /**
    * Describe a phase velocity that primitive recovery would clip, or return null.
    *
    * <p>
@@ -7859,54 +7861,38 @@ public class TwoFluidPipe extends Pipeline {
    * mass keep the historical clipping, which the explicit time-step selection relies on for trace phases.
    * </p>
    *
-   * @param state candidate conservative state, one row per cell, using the
-   *        {@link TwoFluidConservationEquations} mass and momentum indices
-   * @param positions cell-centre positions in m used in the message, one per row of {@code state}
-   * @return rejection text naming the cell and phase, or null when no resolved phase reaches its bound
+   * @param state conservative cell state ordered by the conservation equations
+   * @param position cell centre in metres
+   * @return diagnostic when a resolved velocity reaches its recovery bound, otherwise null
    */
-  static String describeEngagedVelocityLimiter(double[][] state, double[] positions) {
-    int[][] pairs = {{TwoFluidConservationEquations.IDX_GAS_MASS, TwoFluidConservationEquations.IDX_GAS_MOMENTUM},
-        {TwoFluidConservationEquations.IDX_OIL_MASS, TwoFluidConservationEquations.IDX_OIL_MOMENTUM},
-        {TwoFluidConservationEquations.IDX_WATER_MASS, TwoFluidConservationEquations.IDX_WATER_MOMENTUM}};
-    String[] names = {"gas", "oil", "water"};
-    for (int cell = 0; cell < state.length; cell++) {
-      if (pairs[2][1] >= state[cell].length) {
+  static String describeEngagedVelocityLimiter(double[] state, double position) {
+    double cellMass = state[TwoFluidConservationEquations.IDX_GAS_MASS]
+        + state[TwoFluidConservationEquations.IDX_OIL_MASS] + state[TwoFluidConservationEquations.IDX_WATER_MASS];
+    if (!(cellMass > 0.0)) {
+      return null;
+    }
+    for (int phase = 0; phase < 3; phase++) {
+      double mass = state[TwoFluidConservationEquations.IDX_GAS_MASS + phase];
+      if (mass <= 1.0e-12 || mass < VELOCITY_LIMITER_MINIMUM_MASS_FRACTION * cellMass) {
         continue;
       }
-      double cellMass = state[cell][pairs[0][0]] + state[cell][pairs[1][0]] + state[cell][pairs[2][0]];
-      if (!(cellMass > 0.0) || !Double.isFinite(cellMass)) {
-        continue;
-      }
-      for (int phase = 0; phase < 3; phase++) {
-        double mass = state[cell][pairs[phase][0]];
-        if (!(mass >= VELOCITY_LIMITER_MINIMUM_MASS_FRACTION * cellMass)) {
-          continue;
-        }
-        double velocity = state[cell][pairs[phase][1]] / mass;
-        double bound = phase == 0 ? GAS_VELOCITY_RECOVERY_BOUND : LIQUID_VELOCITY_RECOVERY_BOUND;
-        if (!(Math.abs(velocity) < bound)) {
-          return "velocity limiter engaged at x=" + (cell < positions.length ? positions[cell] : Double.NaN) + " m: "
-              + names[phase] + "=" + velocity + " m/s, cell mass fraction=" + mass / cellMass;
-        }
+      double velocity = state[TwoFluidConservationEquations.IDX_GAS_MOMENTUM + phase] / mass;
+      double bound = phase == 0 ? GAS_VELOCITY_RECOVERY_BOUND : LIQUID_VELOCITY_RECOVERY_BOUND;
+      if (Math.abs(velocity) >= bound) {
+        String name = phase == 0 ? "gas" : phase == 1 ? "oil" : "water";
+        return "velocity limiter engaged at x=" + position + " m: " + name + "=" + velocity
+            + " m/s, cell mass fraction=" + mass / cellMass;
       }
     }
     return null;
   }
 
   /**
-   * Collect the current cell-centre positions.
+   * Validate and correct state vector to prevent numerical instabilities.
    *
-   * @return positions in m, one per section
+   * @param U_new New state to validate
+   * @param U_prev Previous state for fallback
    */
-  private double[] sectionPositions() {
-    double[] positions = new double[sections.length];
-    for (int cell = 0; cell < sections.length; cell++) {
-      positions[cell] = sections[cell].getPosition();
-    }
-    return positions;
-  }
-
-
   private void validateAndCorrectState(double[][] U_new, double[][] U_prev) {
     for (int i = 0; i < U_new.length; i++) {
       double[] previous = U_prev != null && i < U_prev.length ? U_prev[i] : null;
@@ -8703,7 +8689,7 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Build a feed face without modifying any physical cell inventory or equation-of-state state. */
   private TwoFluidSection createPrescribedInletFace(TwoFluidSection cell, double massFlow) {
-    if (massFlow < 0.0) {
+    if (massFlow <= 0.0) {
       return createPrescribedInletOutflowFace(cell, massFlow);
     }
     return createPrescribedInletFace(cell, massFlow, getInletStream().getFluid());
@@ -8713,9 +8699,9 @@ public class TwoFluidPipe extends Pipeline {
    * Build a signed inlet outflow face from the first physical cell.
    *
    * <p>
-   * A negative prescribed inlet rate removes the phases actually present in the pipe. It must not flash the external
-   * feed and manufacture a boundary mixture. One common face velocity preserves the cell phase split and reproduces the
-   * configured total mass rate exactly.
+   * At shut-in the face retains cell properties and transports zero mass. A negative prescribed inlet rate removes the
+   * phases actually present in the pipe. It must not flash the external feed and manufacture a boundary mixture. One
+   * common face velocity preserves the cell phase split and reproduces the configured total mass rate exactly.
    * </p>
    *
    * @param cell first physical pipe cell
@@ -11691,6 +11677,24 @@ public class TwoFluidPipe extends Pipeline {
     equations.setRusanovInternalFluxEnabled(enabled);
   }
 
+  /**
+   * Select a two-donor local Lax-Friedrichs transport flux using the maximum occupied phase speed at each face. The
+   * coupled pressure-momentum solve supplies the acoustic response. Stationary phase contacts have zero mass diffusion
+   * and countercurrent donors carry their own momentum, enthalpy and composition.
+   *
+   * @param enabled true to select material-wave Rusanov, false to restore AUSM+
+   * @see #setEnableCoupledPressureMomentum(boolean)
+   * @see #setEnableWaterOilSlip(boolean)
+   */
+  public void setMaterialWaveRusanovEnabled(boolean enabled) {
+    equations.setMaterialWaveRusanovEnabled(enabled);
+  }
+
+  /** @return whether the material-wave Rusanov predictor is selected */
+  public boolean isMaterialWaveRusanovEnabled() {
+    return equations.isMaterialWaveRusanovEnabled();
+  }
+
   /** @return true when the optional Rusanov internal-face operator is selected */
   public boolean isRusanovInternalFluxEnabled() {
     return equations.isRusanovInternalFluxEnabled();
@@ -11943,14 +11947,14 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Section primitive recovery bounds gas velocity to 100 m/s and oil and water velocity to 50 m/s. A phase holding at
-   * least 5 % of a cell's mass that reaches its bound marks an unstable substep. With adaptive time stepping the substep
-   * is retried with a smaller step; a nonzero count with a completed run means the retry succeeded. Fixed-step runs do
-   * not apply the check.
+   * least 5 % of a cell's mass that reaches its bound marks an unstable substep. With adaptive time stepping the
+   * substep is retried with a smaller step; a nonzero count with a completed run means the retry succeeded. Fixed-step
+   * runs do not apply the check.
    * </p>
    *
    * @return rejected substeps since the last {@code run()}
    */
-  public long getTransientVelocityLimiterRejectionCount() {
+  public synchronized long getTransientVelocityLimiterRejectionCount() {
     return transientVelocityLimiterRejections;
   }
 

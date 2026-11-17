@@ -107,6 +107,14 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Opt-in two-sided local Lax-Friedrichs operator for independently resolved internal phase faces. */
   private boolean rusanovInternalFluxEnabled;
 
+  /** Internal face transport operator. */
+  private enum InternalPhaseFlux {
+    AUSM_PLUS, ACOUSTIC_RUSANOV, MATERIAL_RUSANOV
+  }
+
+  /** A null selector reads the original boolean from previously serialized pipes. */
+  private volatile InternalPhaseFlux internalPhaseFlux;
+
   /** Pressure-gradient interpolation impulse in seconds; zero retains the original spatial operator. */
   private double pressureInterpolationTimeScale;
 
@@ -2933,6 +2941,11 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseState gasL = createGasState(left);
       PhaseState gasR = createGasState(right);
 
+      if (isMaterialWaveRusanovEnabled()) {
+        setMaterialDonorInertia(gasL, left.getGasHoldup(), left.getGasMassPerLength(), left.getArea());
+        setMaterialDonorInertia(gasR, right.getGasHoldup(), right.getGasMassPerLength(), right.getArea());
+      }
+
       // Calculate gas flux using the selected internal-face operator.
       double gradientDefect = pressureGradientDefects == null ? 0.0 : pressureGradientDefects[i];
       PhaseFlux gasFlux = calcInternalPhaseFlux(gasL, gasR, A,
@@ -2951,6 +2964,12 @@ public class TwoFluidConservationEquations implements Serializable {
         PhaseState oilR = createLiquidPhaseState(right, false);
         PhaseState waterL = createLiquidPhaseState(left, true);
         PhaseState waterR = createLiquidPhaseState(right, true);
+        if (isMaterialWaveRusanovEnabled()) {
+          setMaterialDonorInertia(oilL, left.getOilHoldup(), left.getOilMassPerLength(), left.getArea());
+          setMaterialDonorInertia(oilR, right.getOilHoldup(), right.getOilMassPerLength(), right.getArea());
+          setMaterialDonorInertia(waterL, left.getWaterHoldup(), left.getWaterMassPerLength(), left.getArea());
+          setMaterialDonorInertia(waterR, right.getWaterHoldup(), right.getWaterMassPerLength(), right.getArea());
+        }
         PhaseFlux oilFlux = calcInternalPhaseFlux(oilL, oilR, A,
             pressureInterpolationVelocity(oilL, oilR, gradientDefect));
         PhaseFlux waterFlux = calcInternalPhaseFlux(waterL, waterR, A,
@@ -3133,16 +3152,37 @@ public class TwoFluidConservationEquations implements Serializable {
     }
   }
 
+  /**
+   * Reconstruct a transport donor from its conservative inertia and recovered pressure-traction area. During a split
+   * stage the thermodynamic phase volumes need not yet fill the cell. The transported density times holdup must still
+   * reproduce the phase mass divided by the pipe area.
+   *
+   * @param donor temporary face state
+   * @param holdup recovered phase area fraction
+   * @param mass phase inventory in kg/m
+   * @param area cell area in square metres
+   */
+  private static void setMaterialDonorInertia(PhaseState donor, double holdup, double mass, double area) {
+    donor.holdup = holdup;
+    if (mass > 0.0 && !(holdup > 0.0)) {
+      throw new IllegalStateException("Material-wave flux needs a positive donor area for a present phase");
+    }
+    if (holdup > 0.0) {
+      donor.density = mass / (holdup * area);
+    }
+  }
+
   /** Select the internal phase operator while preserving the default AUSM+ path. */
   private PhaseFlux calcInternalPhaseFlux(PhaseState left, PhaseState right, double area,
       double faceVelocityCorrection) {
-    return rusanovInternalFluxEnabled ? fluxCalculator.calcRusanovFlux(left, right, area)
+    return isRusanovInternalFluxEnabled()
+        ? fluxCalculator.calcRusanovFlux(left, right, area, isMaterialWaveRusanovEnabled())
         : fluxCalculator.calcPhaseFlux(left, right, area, faceVelocityCorrection);
   }
 
   /** Reject numerical combinations whose donor contracts are not representable. */
   private void validateInternalFluxConfiguration() {
-    if (!rusanovInternalFluxEnabled) {
+    if (!isRusanovInternalFluxEnabled()) {
       return;
     }
     if (!enableWaterOilSlip) {
@@ -3963,6 +4003,57 @@ public class TwoFluidConservationEquations implements Serializable {
     return state;
   }
 
+  /**
+   * Apply the velocity-jump part of the linear acoustic Riemann traction conservatively at internal faces. For phase
+   * line impedances Z = mass per length times sound speed, the face resistance is Zl Zr / (Zl + Zr). A backward Euler
+   * tridiagonal solve prevents the acoustic viscosity from imposing an additional explicit time-step constraint. Zero
+   * phase inertia disconnects the face. Equal velocities and stationary contacts have exactly zero traction. Face work
+   * uses the average of the two endpoint velocities.
+   *
+   * @param state admissible conservative trial, updated in place
+   * @param cells cell geometry and frozen acoustic properties
+   * @param dt trial duration in seconds
+   */
+  public static void applyAcousticFaceTraction(double[][] state, TwoFluidSection[] cells, double dt) {
+    int count = state.length;
+    double[] resistance = new double[count + 1];
+    double[] lower = new double[count];
+    double[] diagonal = new double[count];
+    double[] upper = new double[count];
+    double[] rhs = new double[count];
+    for (int phase = 0; phase < 3; phase++) {
+      int momentum = TwoFluidConservationEquations.IDX_GAS_MOMENTUM + phase;
+      double previousImpedance = 0.0;
+      for (int cell = 0; cell < count; cell++) {
+        double sound = phase == 0 ? cells[cell].getGasSoundSpeed() : cells[cell].getLiquidSoundSpeed();
+        double impedance = state[cell][phase] > 0.0 ? state[cell][phase] * sound : 0.0;
+        if (!Double.isFinite(impedance) || state[cell][phase] > 0.0 && impedance <= 0.0) {
+          throw new IllegalStateException(
+              "Acoustic traction requires positive finite impedance in each occupied phase");
+        }
+        resistance[cell] = previousImpedance > 0.0 && impedance > 0.0 ? dt / (1.0 / previousImpedance + 1.0 / impedance)
+            : 0.0;
+        previousImpedance = impedance;
+      }
+      for (int cell = 0; cell < count; cell++) {
+        double mass = state[cell][phase] * cells[cell].getLength();
+        lower[cell] = -resistance[cell];
+        upper[cell] = -resistance[cell + 1];
+        diagonal[cell] = mass > 0.0 ? mass - lower[cell] - upper[cell] : 1.0;
+        rhs[cell] = mass > 0.0 ? state[cell][momentum] * cells[cell].getLength() : 0.0;
+      }
+      double[] velocity = neqsim.mathlib.generalmath.TDMAsolve.solve(lower, diagonal, upper, rhs);
+      for (int cell = 1; cell < count; cell++) {
+        double impulse = resistance[cell] * (velocity[cell - 1] - velocity[cell]);
+        double work = impulse * (0.5 * velocity[cell - 1] + 0.5 * velocity[cell]);
+        state[cell - 1][momentum] -= impulse / cells[cell - 1].getLength();
+        state[cell][momentum] += impulse / cells[cell].getLength();
+        state[cell - 1][TwoFluidConservationEquations.IDX_ENERGY] -= work / cells[cell - 1].getLength();
+        state[cell][TwoFluidConservationEquations.IDX_ENERGY] += work / cells[cell].getLength();
+      }
+    }
+  }
+
   /** Build a liquid phase state with its own transported mass and velocity. */
   private PhaseState createLiquidPhaseState(TwoFluidSection sec, boolean water) {
     double density = water ? sec.getWaterDensity() : sec.getOilDensity();
@@ -4568,12 +4659,27 @@ public class TwoFluidConservationEquations implements Serializable {
    * @param enabled true to use the qualified two-donor internal operator
    */
   public void setRusanovInternalFluxEnabled(boolean enabled) {
-    rusanovInternalFluxEnabled = enabled;
+    internalPhaseFlux = enabled ? InternalPhaseFlux.ACOUSTIC_RUSANOV : InternalPhaseFlux.AUSM_PLUS;
+  }
+
+  /**
+   * Select the material-wave Rusanov operator for the coupled pressure-momentum predictor.
+   *
+   * @param enabled true to select material-wave transport, false to return to AUSM+
+   */
+  public void setMaterialWaveRusanovEnabled(boolean enabled) {
+    internalPhaseFlux = enabled ? InternalPhaseFlux.MATERIAL_RUSANOV : InternalPhaseFlux.AUSM_PLUS;
+  }
+
+  /** @return whether the Rusanov dissipation uses material speeds */
+  public boolean isMaterialWaveRusanovEnabled() {
+    return internalPhaseFlux == InternalPhaseFlux.MATERIAL_RUSANOV;
   }
 
   /** @return true when internal phase faces use the optional Rusanov operator */
   public boolean isRusanovInternalFluxEnabled() {
-    return rusanovInternalFluxEnabled;
+    InternalPhaseFlux selected = internalPhaseFlux;
+    return selected == null ? rusanovInternalFluxEnabled : selected != InternalPhaseFlux.AUSM_PLUS;
   }
 
   public MUSCLReconstructor getReconstructor() {

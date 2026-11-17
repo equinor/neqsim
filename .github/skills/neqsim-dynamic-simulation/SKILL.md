@@ -66,7 +66,11 @@ would clip gas at 100 m/s or oil/water at 50 m/s in a phase holding at least
 5 % of the cell mass is retried; if no step is stable the run throws
 `IllegalStateException` ("velocity limiter engaged ..."). Treat that as a
 numerical failure, not a result. Check `getTransientVelocityLimiterRejectionCount()`
-and consider `setEnableStiffBubbleDrag(true)` for riser shut-in studies.
+after a successful step. For hydraulic shut-in/restart studies with reversing
+phase flows, configure coupled pressure-momentum, independent oil/water faces
+and `setMaterialWaveRusanovEnabled(true)`. Check per-phase mass balances and
+repeat on a finer mesh. See the “Coupled hydraulic transport for shut-in and
+restart” section in `docs/process/TWOFLUIDPIPE_MODEL.md`.
 
 Each timestep:
 1. Flowsheet-wide settings are applied. Each setter unit receives exactly one

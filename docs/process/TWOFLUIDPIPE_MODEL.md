@@ -3005,11 +3005,11 @@ Adaptive timestepping provides robustness for challenging geometries. Enable via
 Algorithm per macro-step:
 1. **CFL recompute** from current velocities (not fixed at initialization)
 2. **Pre-check**: reject if NaN or negative mass detected; rollback state, halve `dtFactor`
-3. **Post-check**: reject if pressure exceeds ceiling or velocities exceed 500 m/s
+3. **Post-check**: reject if pressure exceeds its ceiling or a recovered velocity exceeds 300 m/s
 4. **Velocity-limiter check**: reject if the candidate state would make primitive recovery clip a phase that holds at
    least 5 % of its cell mass (gas at 100 m/s, oil or water at 50 m/s); see below
-5. **Recovery**: after each stable step, `dtFactor` grows by x1.02 back toward 1.0
-6. **Floor**: `dtFactor` cannot go below 0.001 to prevent stalling
+5. **Recovery**: after each stable step, `dtFactor` grows by x1.05 back toward 1.0
+6. **Floor**: `dtFactor` cannot go below 0.01 to prevent stalling
 
 #### Clipped velocities and well shut-in
 
@@ -3024,12 +3024,51 @@ mass keep the historical clipping, which trace phases rely on. When no step is s
 `IllegalStateException` whose last rejection names the cell, phase and velocity. Cases that never clip are unchanged
 bit for bit. `getTransientVelocityLimiterRejectionCount()` reports the retries since the last `run()`.
 
-A closed choke delivers a stream whose phases hold zero moles. The prescribed inlet face keeps the donor-cell density
-and enthalpy for such phases; it no longer requests mass-specific enthalpy from an empty phase.
+At zero prescribed inlet rate, the boundary face takes its phase properties from the adjacent
+pipe cell and sets every phase velocity to zero. A closed choke can therefore deliver an empty
+stream without supplying a composition or mass-specific enthalpy. Liquid and gas already in the
+line can still leave through an open outlet.
 
-Known limitation: after a long shut-in, the liquid column at the riser base can ring by several bar with the gas
-sloshing at several m/s. `setEnableStiffBubbleDrag(true)` damps the shut-in period, but a restart can still exhaust
-the retries. The run then stops with the limiter message instead of returning unphysical values.
+#### Coupled hydraulic transport for shut-in and restart
+
+For a flowline where a disappearing film or a liquid column reverses direction, the following
+settings select the material-wave Rusanov predictor and implicit acoustic face traction on the
+existing `TwoFluidPipe`. Configure the pipe geometry, inlet and outlet pressure before calling
+`run()`. A finite-volume cell can carry gas, oil, water or any subset of these phases.
+
+```java
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.setEnableWaterOilSlip(true);
+pipe.setEnableInterfacialPressure(true);
+pipe.setEnableAdaptiveTimestepping(true);
+pipe.setTimeIntegrationMethod(TimeIntegrator.Method.EULER);
+pipe.setMaterialWaveRusanovEnabled(true);
+pipe.run();
+pipe.runTransient(0.5, UUID.randomUUID());
+```
+
+At each internal face, the transport speed for phase $k$ is the larger of the two occupied
+donors' absolute phase velocities. Opposing flows carry their own phase mass, momentum and
+enthalpy. A stationary density or holdup jump transports zero mass. The pressure correction
+handles compression. The velocity-jump part of the acoustic traction uses the two phase line
+impedances $Z=m'_k c_k$ (kg/s), with $m'_k$ the phase mass per unit length. Its face coefficient is
+$Z_L Z_R/(Z_L+Z_R)$ where both cells contain the phase, and zero otherwise. A backward Euler
+tridiagonal solve exchanges equal and opposite impulses between adjacent cells. The associated
+face work conserves integrated total energy. This first-order numerical dissipation depends on
+cell size and can attenuate sharp transients.
+
+The acoustic Rusanov operator remains available through `setRusanovInternalFluxEnabled(true)`.
+Either selector switches the active flux. Setting either to `false` restores AUSM+. The two-donor
+routes require independent oil and water faces. Reconstructed slug faces and the unsplit
+complementarity solver have separate transport contracts.
+
+The shut-in regression uses a 5.4 km line with a 305 m final rise and a 56.401 bara outlet.
+Feed drops from 20 kg/s to zero at 20 s and returns to 20 kg/s at 190 s. The test runs through
+300 s on 60 and 120 nonuniform cells, checking gas, oil and water balances at each requested
+step. The short horizontal-line regression checks all seven nonempty combinations of gas, oil
+and water. These are numerical robustness checks. Experimental slug frequency and amplitude,
+thermal phase change and high-Mach shocks require separate qualification. The default AUSM+
+route can still reach its velocity limiter after a long shut-in.
 
 ### Steady-State Solver Tuning
 

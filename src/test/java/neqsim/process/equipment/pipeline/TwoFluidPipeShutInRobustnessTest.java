@@ -8,8 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -19,8 +22,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Well shut-in robustness of the transient two-fluid pipe.
  *
  * <p>
- * A closed wellhead choke delivers a stream whose phases hold zero moles. The prescribed inlet face must accept it,
- * and a draining riser must not be blown down through the fixed-pressure outlet by a velocity that primitive recovery
+ * A closed wellhead choke delivers a stream whose phases hold zero moles. The prescribed inlet face must accept it, and
+ * a draining riser must not be blown down through the fixed-pressure outlet by a velocity that primitive recovery
  * silently clipped.
  * </p>
  *
@@ -109,7 +112,7 @@ class TwoFluidPipeShutInRobustnessTest {
 
   @Test
   void velocityLimiterRejectsOnlyResolvedPhasesAtTheirRecoveryBound() {
-    double[] positions = {10.0, 30.0};
+
     int width = TwoFluidConservationEquations.IDX_WATER_MOMENTUM + 1;
 
     double[][] calm = new double[2][width];
@@ -117,25 +120,25 @@ class TwoFluidPipeShutInRobustnessTest {
     setPhase(calm[0], 1, 10.0, -2.0);
     setPhase(calm[1], 0, 1.0, 99.0);
     setPhase(calm[1], 1, 10.0, 49.0);
-    assertNull(TwoFluidPipe.describeEngagedVelocityLimiter(calm, positions), "Velocities inside the bounds pass");
+    assertNull(TwoFluidPipe.describeEngagedVelocityLimiter(calm[0], 10.0), "Velocities inside the bounds pass");
 
     double[][] resolvedOil = copy(calm);
     setPhase(resolvedOil[1], 1, 10.0, -50.0);
-    String message = TwoFluidPipe.describeEngagedVelocityLimiter(resolvedOil, positions);
+    String message = TwoFluidPipe.describeEngagedVelocityLimiter(resolvedOil[1], 30.0);
     assertNotNull(message, "A resolved liquid at the 50 m/s bound marks an unstable substep");
     assertTrue(message.contains("oil") && message.contains("x=30.0"), message);
 
     double[][] fastGas = copy(calm);
     setPhase(fastGas[0], 0, 1.0, 100.0);
-    assertNotNull(TwoFluidPipe.describeEngagedVelocityLimiter(fastGas, positions), "Gas at 100 m/s is rejected");
+    assertNotNull(TwoFluidPipe.describeEngagedVelocityLimiter(fastGas[0], 10.0), "Gas at 100 m/s is rejected");
 
     double[][] traceWater = copy(calm);
     // 0.1 kg/m in an 11.1 kg/m cell is below the 5 % mass share: the historical trace-phase clipping applies.
     setPhase(traceWater[1], 2, 0.1, 80.0);
-    assertNull(TwoFluidPipe.describeEngagedVelocityLimiter(traceWater, positions), "Trace phases keep clipping");
+    assertNull(TwoFluidPipe.describeEngagedVelocityLimiter(traceWater[1], 30.0), "Trace phases keep clipping");
 
     double[][] empty = new double[1][width];
-    assertNull(TwoFluidPipe.describeEngagedVelocityLimiter(empty, new double[] {0.0}), "An empty cell is ignored");
+    assertNull(TwoFluidPipe.describeEngagedVelocityLimiter(empty[0], 0.0), "An empty cell is ignored");
   }
 
   @Test
@@ -157,41 +160,110 @@ class TwoFluidPipeShutInRobustnessTest {
   }
 
   /**
-   * Shut in the 5.4 km well-to-topside flowline and riser and check that the draining riser is never silently blown
-   * down.
+   * Run a short shut-in and restart for every nonempty subset of gas, oil and water.
    *
-   * <p>
-   * Before the velocity-limiter check, a liquid film in the top riser cell reached the clipped 50 m/s, the gas then
-   * reached the clipped 100 m/s, and the top cells blew down from 56 to 6 bara through the 56.4 bara outlet while the
-   * well was closed. The run completed and reported those values. With the check, a substep that would clip a resolved
-   * phase is retried with a smaller step; if no step is stable the run stops with an {@link IllegalStateException}
-   * naming the cell. Liquid-column pressure ringing after shut-in can still exhaust the retries, so the test accepts a
-   * loud stop but never a silent blowdown.
-   * </p>
+   * @param phases bit mask for methane, heptane and water, respectively
    */
+  @ParameterizedTest
+  @ValueSource(ints = {1, 2, 4, 3, 5, 6, 7})
+  void materialWaveRestartPreservesPhaseInventories(int phases) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    String[] components = {"methane", "n-heptane", "water"};
+    double[] amounts = {0.6, 0.2, 0.2};
+    for (int i = 0; i < components.length; i++) {
+      if ((phases & (1 << i)) != 0) {
+        fluid.addComponent(components[i], amounts[i]);
+      }
+    }
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1.0, "kg/sec");
+    feed.run();
+    assertEquals(Integer.bitCount(phases), feed.getFluid().getNumberOfPhases());
+    TwoFluidPipe pipe = new TwoFluidPipe("horizontal line", feed);
+    pipe.setLength(100.0);
+    pipe.setDiameter(0.2);
+    pipe.setNumberOfSections(4);
+    pipe.setCellFaceElevationProfile(new double[5]);
+    useStudyNumerics(pipe);
+    pipe.setOutletPressure(50.0, "bara");
+    pipe.setMaterialWaveRusanovEnabled(true);
+    pipe.run();
+    Phase[] phaseNames = {Phase.GAS, Phase.OIL, Phase.WATER};
+    for (double rate : new double[] {1.0, 0.0, 0.0, 1.0}) {
+      feed.setFlowRate(rate, "kg/sec");
+      feed.run();
+      pipe.runTransient(0.1, UUID.randomUUID());
+      TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+      assertEquals(0.1 * rate, report.getInletMassKg(Phase.TOTAL), 1.0e-9);
+      for (int i = 0; i < phaseNames.length; i++) {
+        Phase phase = phaseNames[i];
+        assertEquals(0.0, report.getResidualKg(phase), 1.0e-7, phase.toString());
+        if ((phases & (1 << i)) == 0) {
+          assertEquals(0.0, report.getFinalMassKg(phase), 0.0, phase.toString());
+        } else {
+          assertTrue(report.getFinalMassKg(phase) > 0.0, phase.toString());
+        }
+      }
+      for (double pressure : pipe.getPressureProfile()) {
+        assertTrue(Double.isFinite(pressure) && pressure > 0.0);
+      }
+    }
+  }
+
+  /** An exact two-cell impedance problem has a known velocity jump, phase momentum and total energy. */
   @Test
+  void acousticTractionConservesInventoryMomentumAndEnergy() {
+    TwoFluidSection[] cells = {new TwoFluidSection(0.5, 1.0, 0.2, 0.0), new TwoFluidSection(2.0, 2.0, 0.2, 0.0)};
+    for (TwoFluidSection cell : cells) {
+      cell.setGasSoundSpeed(4.0);
+      cell.setLiquidSoundSpeed(1000.0);
+    }
+    // Both gas inventories are 2 kg. The line impedances are 8 and 4 kg/s.
+    double[][] state = {{2.0, 0.0, 1.0, 6.0, 0.0, 1.0, 100.0}, {1.0, 2.0, 0.0, -1.0, 6.0, 0.0, 100.0}};
+    TwoFluidConservationEquations.applyAcousticFaceTraction(state, cells, 0.75);
+    // dt * Z_left * Z_right / (Z_left + Z_right) = 2 kg. Backward Euler contracts the jump by 1/3.
+    assertEquals(4.0 / 3.0, state[0][3] / 2.0 - state[1][3], 1e-12);
+    assertEquals(4.0, state[0][3] + 2.0 * state[1][3], 1e-12);
+    assertEquals(300.0, state[0][6] + 2.0 * state[1][6], 1e-12);
+    assertEquals(2.0, state[0][0], 0.0);
+    assertEquals(1.0, state[1][0], 0.0);
+    assertEquals(6.0, state[1][4], 0.0);
+    assertEquals(1.0, state[0][5], 0.0);
+  }
+
+  /**
+   * Complete shut-in and restart on the 5.4 km well-to-topside terrain.
+   *
+   * @param refinement subdivision of the 60-cell terrain
+   */
+  @ParameterizedTest
+  @ValueSource(ints = {1, 2})
   @Tag("slow")
-  void shutInRiserIsNotBlownDownThroughTheFixedPressureOutlet() {
+  void shutInRiserCompletesRestartAgainstFixedPressureOutlet(int refinement) {
     Stream well = wellStream(20.0);
     well.setPressure(70.0, "bara");
     well.run();
     double[] legLengths = {800, 900, 850, 1100, 1350, 400};
     double[] elevations = {-260, -278, -252, -289, -270, -280, 25};
     int[] legCells = {8, 9, 9, 11, 13, 10};
-    double[] lengths = new double[60];
-    double[] faces = new double[61];
+    double[] lengths = new double[60 * refinement];
+    double[] faces = new double[lengths.length + 1];
     faces[0] = elevations[0];
     int index = 0;
     for (int leg = 0; leg < legCells.length; leg++) {
-      for (int cell = 1; cell <= legCells[leg]; cell++) {
-        lengths[index] = legLengths[leg] / legCells[leg];
-        faces[++index] = elevations[leg] + (double) cell / legCells[leg] * (elevations[leg + 1] - elevations[leg]);
+      int count = legCells[leg] * refinement;
+      for (int cell = 1; cell <= count; cell++) {
+        lengths[index] = legLengths[leg] / count;
+        faces[++index] = elevations[leg] + (double) cell / count * (elevations[leg + 1] - elevations[leg]);
       }
     }
     TwoFluidPipe pipe = new TwoFluidPipe("flowline and riser", well);
     pipe.setLength(5400.0);
     pipe.setDiameter(0.2032);
     pipe.setRoughness(4.5e-5);
+    pipe.setMaterialWaveRusanovEnabled(true);
     pipe.setSectionLengths(lengths);
     pipe.setCellFaceElevationProfile(faces);
     useStudyNumerics(pipe);
@@ -201,18 +273,18 @@ class TwoFluidPipeShutInRobustnessTest {
     double timeStep = 0.5;
     double minimumOutletCellPressure = Double.POSITIVE_INFINITY;
     double maximumGasOutflow = 0.0;
-    for (int step = 1; step * timeStep <= 190.0; step++) {
+    for (int step = 1; step * timeStep <= 300.0; step++) {
       double time = step * timeStep;
-      well.setFlowRate(time >= 20.0 ? 0.0 : 20.0, "kg/sec");
+      boolean shutIn = time >= 20.0 && time < 190.0;
+      well.setFlowRate(shutIn ? 0.0 : 20.0, "kg/sec");
       well.run();
-      try {
-        pipe.runTransient(timeStep, id);
-      } catch (IllegalStateException unstable) {
-        assertTrue(unstable.getMessage().contains("velocity limiter engaged"),
-            "A stop during shut-in must name the engaged velocity limiter: " + unstable.getMessage());
-        break;
+      pipe.runTransient(timeStep, id);
+      TwoFluidMassBalanceReport balance = pipe.getLastMassBalanceReport();
+      assertEquals(shutIn ? 0.0 : 20.0 * timeStep, balance.getInletMassKg(Phase.TOTAL), 1.0e-8);
+      for (Phase phase : new Phase[] {Phase.GAS, Phase.OIL, Phase.WATER}) {
+        assertEquals(0.0, balance.getResidualKg(phase), 1.0e-6, phase.toString());
       }
-      if (time > 30.0) {
+      if (time > 30.0 && shutIn) {
         double[] pressure = pipe.getPressureProfile();
         minimumOutletCellPressure = Math.min(minimumOutletCellPressure, pressure[pressure.length - 1] / 1.0e5);
         maximumGasOutflow = Math.max(maximumGasOutflow,
