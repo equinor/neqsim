@@ -1,2 +1,2 @@
-caseId,fluid,storagePressurePa,storageTemperatureK,orificeDiameterM,dischargeCoefficientUpperBound,ambientPressurePa,measuredMassFlowKgS,measurementUncertaintyStatus,provenance
-STEP_PROPANE_01,propane,1075000.0,302.95,0.005,1.0,92199.375,0.2,NOT_REPORTED,"Witlox et al.; Journal of Hazardous Materials 142 (2007) 797-809; Table 1; DOI 10.1016/j.jhazmat.2006.06.126"
+caseId,fluid,storagePressurePa,storageTemperatureK,orificeDiameterM,dischargeCoefficientUpperBound,ambientPressurePa,measuredMassFlowKgS,withdrawalPhase,measurementUncertaintyStatus,provenance
+STEP_PROPANE_01,propane,1075000.0,302.95,0.005,1.0,92199.375,0.2,MATERIAL_LIQUID,NOT_REPORTED,"Witlox et al.; Journal of Hazardous Materials 142 (2007) 797-809; Table 1; DOI 10.1016/j.jhazmat.2006.06.126"
