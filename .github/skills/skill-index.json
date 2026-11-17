@@ -2202,6 +2202,24 @@
  "hybrid power supply": [
   "neqsim-energy-systems-and-electrification"
  ],
+ "produced water compatibility": [
+  "neqsim-produced-water-compatibility"
+ ],
+ "formation water commingling": [
+  "neqsim-produced-water-compatibility"
+ ],
+ "water blending mineral saturation": [
+  "neqsim-produced-water-compatibility"
+ ],
+ "silica scaling": [
+  "neqsim-produced-water-compatibility"
+ ],
+ "silicate scaling": [
+  "neqsim-produced-water-compatibility"
+ ],
+ "barite formation water": [
+  "neqsim-produced-water-compatibility"
+ ],
  "produced water treatment": [
   "neqsim-produced-water-and-solids-separation"
  ],

@@ -35,6 +35,10 @@ Complete flowsheets and unit operations:
 [TEG dehydration](../docs/tutorials/teg_dehydration_tutorial.md) and
 [gas-oil separation](../docs/tutorials/gosp_tutorial.md).
 
+For formation-water commingling, see the [produced-water compatibility
+study](produced-water-compatibility/README.md) with a three-phase process model,
+PHREEQC mineral scale calculations, case data, CLI and local MCP tools.
+
 ### Thermodynamics & Properties
 Fluid phase behavior and physical properties:
 - Phase envelopes

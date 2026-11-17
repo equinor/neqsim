@@ -60,6 +60,7 @@ midpoint lanes.
 | Model predictive control, step-response model, virtual flow meter, soft sensor, data reconciliation, cascade or split-range structure | `@control-system` | `@plant-data` for historian data; loads `neqsim-advanced-control-mpc-and-virtual-sensing` |
 | Process synthesis, superstructure, flowsheet candidate generation, route screening | `@optimize` | `@process-model` to evaluate the survivors; loads `neqsim-process-synthesis-research` |
 | LNG tank ageing, rollover, boil-off, LNG ship voyage | `@lng-value-chain` | `@process-model` for BOG handling flowsheet |
+| Produced-water compatibility, formation-water commingling, seawater mixing, silica/silicates, barite or calcite scale | `@production-chemistry` | Use `neqsim-produced-water-compatibility`. Bring in `@flow-assurance` for the operating path and `@process-model` when phase splits and CO₂ fugacity are needed. |
 | Electrolyte, brine, produced water, scale, MEG, ions, pH | `@thermo-fluid` | loads `neqsim-electrolyte-systems` skill |
 | JUnit test, unit test, regression test | `@neqsim-test` | — |
 | Add or fix `runTransient` / dynamic behaviour in a NeqSim equipment class (Java), inventory volume, controller state, transient regression test | `@dynamic-equipment` | `@neqsim-test` for extra tests; `@control-system` to use the equipment in a controlled flowsheet |

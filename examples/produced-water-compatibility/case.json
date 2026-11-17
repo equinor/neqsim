@@ -1,0 +1,17 @@
+{
+  "formations": [
+    {"name": "A", "ph": 6.5, "reference_c": 80, "reference_pressure_bara": 1.01325, "alkalinity_mmol_kg_water": 8, "silica_mg_sio2_kg_water": 300,
+     "ions_mol_kg_water": {"Na": 1.40, "K": 0.025, "Ca": 0.045, "Mg": 0.018, "Ba": 0.0010, "Sr": 0.002, "S(6)": 0.00001, "Cl": 1.55098},
+     "gas_mol_per_kg_water": {"methane": 35, "ethane": 3, "propane": 1.8, "CO2": 1.8}, "oil_mol_per_kg_water": {"n-heptane": 2.2, "n-decane": 3.0}},
+    {"name": "B", "ph": 7.5, "reference_c": 80, "reference_pressure_bara": 1.01325, "alkalinity_mmol_kg_water": 4, "silica_mg_sio2_kg_water": 52,
+     "ions_mol_kg_water": {"Na": 0.56, "K": 0.012, "Ca": 0.018, "Mg": 0.012, "Ba": 0.000002, "Sr": 0.0002, "S(6)": 0.018, "Cl": 0.592404},
+     "gas_mol_per_kg_water": {"methane": 22, "ethane": 3.2, "propane": 2.2, "CO2": 0.7}, "oil_mol_per_kg_water": {"n-heptane": 3.5, "n-decane": 4.2}},
+    {"name": "C", "ph": 6.6, "reference_c": 80, "reference_pressure_bara": 1.01325, "alkalinity_mmol_kg_water": 12, "silica_mg_sio2_kg_water": 125,
+     "ions_mol_kg_water": {"Na": 2.65, "K": 0.05, "Ca": 0.065, "Mg": 0.036, "Ba": 0.00015, "Sr": 0.003, "S(6)": 0.0005, "Cl": 2.8953},
+     "gas_mol_per_kg_water": {"methane": 26, "ethane": 2, "propane": 1.5, "CO2": 5.8}, "oil_mol_per_kg_water": {"n-heptane": 1.5, "n-decane": 2.8}}
+  ],
+  "nodes": [{"name": "Header", "temperature_c": 80, "pressure_bara": 50}, {"name": "Intermediate", "temperature_c": 55, "pressure_bara": 15}, {"name": "Cool outlet", "temperature_c": 25, "pressure_bara": 2}],
+  "blend_steps": 10,
+  "additional_blends": [[0.3333333333333333, 0.3333333333333333, 0.3333333333333333], [0.7, 0.15, 0.15], [0.15, 0.7, 0.15], [0.15, 0.15, 0.7]],
+  "water_kg_s": 10
+}
