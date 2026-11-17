@@ -15,7 +15,7 @@ last_verified: "2026-10-03"
 - Evaluate gas/liquid mass transfer over a pipeline with the evaporation/dissolution studies.
 - Estimate dissolved-gas release from produced water with the degassing utility.
 
-This skill owns separation and treatment equipment. It does not own chemical selection or dose optimization. Route demulsifier dose-response, lag, compatibility, and recommended dose to `neqsim-production-chemistry`; reuse its result rather than repeating that model here. Build ion composition and scale chemistry with `neqsim-electrolyte-systems`.
+This skill owns separation and treatment equipment. It does not own chemical selection or dose optimization. Route demulsifier dose-response, lag, compatibility, and recommended dose to `neqsim-production-chemistry`; reuse its result rather than repeating that model here. Build ion composition with `neqsim-electrolyte-systems`. For formation-water and injection-water blend studies, use [neqsim-produced-water-compatibility](../neqsim-produced-water-compatibility/SKILL.md).
 
 ## Class map
 

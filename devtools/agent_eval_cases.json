@@ -190,6 +190,18 @@
       "expect_skills_top5": ["neqsim-column-internals-and-rate-based"]
     },
     {
+      "id": "formation-water-silica-study",
+      "prompt": "Study produced water compatibility when commingling gas, oil and three formation waters. Calculate silica and silicate scaling and barite versus blend ratio, and prepare a report.",
+      "expect_agent_top3": ["production-chemistry"],
+      "expect_skills_top5": ["neqsim-produced-water-compatibility"]
+    },
+    {
+      "id": "assay-based-water-blending-study",
+      "prompt": "Screen formation water commingling from water assays at measured pH, CO2 fugacity, temperature and pressure. Compare calcite, sulfate and silica saturation before reinjection.",
+      "expect_agent_top3": ["production-chemistry"],
+      "expect_skills_top5": ["neqsim-produced-water-compatibility"]
+    },
+    {
       "id": "produced-water-train",
       "prompt": "produced water hydrocyclone and gas flotation train to hit 30 mg/L oil in water",
       "expect_agent_top3": ["gas-processing-refining", "production-chemistry"],

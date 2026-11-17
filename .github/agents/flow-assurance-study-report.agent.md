@@ -28,6 +28,13 @@ Distinct from `@flow-assurance` (calculations) and the community `flow-assurance
 coordination with OLGA comparison): this agent produces the deliverable package; it does not run transient or
 slugging simulations.
 
+## Produced-water mineral compatibility
+
+For a standalone water-blend report, use the calculation and reporting outputs
+in [neqsim-produced-water-compatibility](../skills/neqsim-produced-water-compatibility/SKILL.md).
+For a wider pipeline study, carry the governing blend, mineral, station, CO₂
+boundary, validation and qualification limits into the threat register and plots.
+
 ## Workflow
 
 ### 1. Interview - ask only what cannot be found

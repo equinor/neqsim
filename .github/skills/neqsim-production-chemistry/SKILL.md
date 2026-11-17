@@ -1,6 +1,6 @@
 ---
 name: neqsim-production-chemistry
-description: "Production-chemistry patterns for NeqSim. USE WHEN: selecting or dosing scale/corrosion/hydrate/wax/asphaltene inhibitors, H2S or oxygen scavengers, biocide, demulsifier, antifoam, pH adjuster or acid; checking chemical-chemical or chemical-fluid COMPATIBILITY; computing minimum dose, residual SI, inhibited corrosion rate or scavenger breakthrough; placing an injection point; or chemical root-cause of a deposit, emulsion, pH excursion or H2S breakthrough."
+description: "NeqSim workflows for selecting and dosing scale, corrosion, hydrate, wax and asphaltene inhibitors, scavengers, biocides, demulsifiers, antifoam and pH adjusters. Use for chemical cocktail compatibility, dose and performance, produced-water and formation-water blending, silica and silicate scaling, or chemical root-cause analysis."
 last_verified: "2026-09-07"
 ---
 
@@ -36,6 +36,13 @@ exposes `getStandardsApplied()` and `toMap()` / `toJson()` so results drop strai
   [neqsim-emulsion-separation](../neqsim-emulsion-separation/SKILL.md) and use
   `@emulsion-separation` to compare dispersed-water load and coalescence-limited
   capacity. Its estimated kinetics do not establish a product-specific dose.
+
+## Produced-water blending and silica
+
+Follow [neqsim-produced-water-compatibility](../neqsim-produced-water-compatibility/SKILL.md)
+for assay normalization, model selection, blend matrices, model checks and
+reporting. Use the inhibitor workflow here when the study also requires
+treatment selection or dosage.
 
 ## Applicable Standards
 

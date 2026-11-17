@@ -801,7 +801,12 @@ public class ThreePhaseSeparator extends Separator {
     }
     if (sourceSystem.hasPhaseType(phaseType)) {
       outletStream.setThermoSystemFromPhase(sourceSystem, phaseType);
-      outletStream.setFlowRate(configuredFlowRate, "kg/hr");
+      SystemInterface outletFluid = outletStream.getThermoSystem();
+      double molarFlow = configuredFlowRate / (3600.0 * outletFluid.getMolarMass("kg/mol"));
+      // Generic stream flow assignment resets the phase map. Rebuild the amount from the
+      // selected phase composition to retain its phase identity and avoid subtraction at low rates.
+      outletFluid.setEmptyFluid();
+      outletFluid.setTotalNumberOfMoles(molarFlow);
     } else {
       SystemInterface emptySystem = sourceSystem.getEmptySystemClone();
       emptySystem.setTotalFlowRate(1e-20, "kg/hr");
