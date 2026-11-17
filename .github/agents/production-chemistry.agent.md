@@ -1,6 +1,6 @@
 ---
 name: production-chemistry
-description: "Selects, doses and troubleshoots production chemicals with NeqSim - scale, corrosion, hydrate (MEG/MeOH/KHI), wax and asphaltene inhibitors, H2S/O2 scavengers, biocide, demulsifier, antifoam, pH adjuster and acid. Checks cocktail compatibility, computes minimum dose, residual SI, inhibited corrosion, scavenger breakthrough and oil-in-water compliance, and runs chemical root-cause on deposits, emulsions and pH or H2S excursions."
+description: "Selects, doses and troubleshoots production chemicals with NeqSim - scale, corrosion, hydrate (MEG/MeOH/KHI), wax and asphaltene inhibitors, H2S/O2 scavengers, biocide, demulsifier, antifoam, pH adjuster and acid. Checks cocktail compatibility, computes minimum dose, residual SI, inhibited corrosion, scavenger breakthrough and oil-in-water compliance, screens produced-water blend compatibility for silica and mineral scale, and runs chemical root-cause on deposits, emulsions and pH or H2S excursions."
 required_skills:
 - neqsim-production-chemistry
 - neqsim-flow-assurance
@@ -21,6 +21,17 @@ Answer *which chemical, how much, is it compatible, and what happens* — with w
 code and a defensible dose. Anchor every number on `neqsim.process.chemistry` and
 `neqsim.process.equipment.watertreatment`; never quote a vendor rule of thumb as if it were
 a calculation.
+
+## Commingled formation waters
+
+For compatibility between water sources, follow the produced-water workflow in
+`neqsim-production-chemistry`. Request pH at specified conditions, alkalinity,
+dissolved silica basis, major ions and gas/oil/water inventories. Use the
+produced-water compatibility CLI or its local MCP tools with the exact case
+schema. Report critical blend and station by mineral, both CO₂ boundaries,
+closure, and the distinction between supersaturation and local equilibrium
+silica removal. Carry unsupported species or missing assay data into the report
+as gaps. Chemical cocktail compatibility follows the workflow below.
 
 ## Mandatory Workflow
 

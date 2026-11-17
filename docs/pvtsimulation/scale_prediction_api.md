@@ -15,6 +15,32 @@ Both approaches share improved Ksp correlations, pressure corrections, and T-dep
 
 ---
 
+## Silica in commingled produced water
+
+Use the [produced-water compatibility example](https://github.com/equinor/neqsim/tree/master/examples/produced-water-compatibility)
+for a three-formation gas, oil and brine blend sweep. The SRK-CPA process model
+passes solvent-water retention and gas CO₂ fugacity to PHREEQC Pitzer. The
+example preserves both closed aqueous inorganic carbon and fixed-fugacity
+scenarios. It reports pre-precipitation SI and local equilibrium amorphous
+silica removal potential, and records solvent-water fractions and closure.
+
+`SilicaScaleSaturation.saturationIndex` accepts the decimal log activities of
+neutral H₄SiO₄ and water and the matching decimal log dissolution constant.
+For the dissolution of SiO₂(s) into H₄SiO₄(aq), with two water molecules consumed,
+SI is log₁₀(aH₄SiO₄) − 2 log₁₀(aH₂O) − log₁₀(K). Pass the dissociation
+constant for the solid being screened. `log10DissolutionConstantAtOneAtmosphere`
+provides a 25–100 °C reference for amorphous silica, chalcedony and quartz
+from [PHREEQC 3.7.3 pitzer.dat](https://github.com/phreeqc-dev/phreeqc3/blob/v3.7.3/database/pitzer.dat).
+For other pressures, pass the pressure-corrected constant from the same
+geochemical model as the activities. The native API's five benchmark cases
+cover dilute water and NaCl brines up to 2.5 mol/kg water at 1 atm.
+
+Native electrolyte speciation still lacks a registered dissolved silica
+reaction system. Total Si, SiO₂ mass concentration and aqueous H₄SiO₄ activity
+have different meanings. Obtain the species activity from an aqueous model
+that supports the case. Positive SI indicates supersaturation. Deposition
+kinetics, solids carry-over, and injection impairment need additional evidence.
+
 ## Full-Pitzer barite mixing qualification
 
 Na–Ba–Cl–SO4 formation-water mixtures remain unsupported for qualified full-Pitzer barite

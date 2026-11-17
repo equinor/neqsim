@@ -195,12 +195,13 @@
     },
     {
       "package": "neqsim.pvtsimulation.flowassurance",
-      "title": "Hydrates wax and asphaltenes",
-      "keywords": "flow assurance hydrate wax asphaltene deposition screening erosion",
+      "title": "Flow assurance phase behavior and mineral scale",
+      "keywords": "flow assurance hydrate wax asphaltene deposition screening erosion mineral scale produced water formation water compatibility silica silicate brine mixing",
       "agent": "flow-assurance",
       "skill": "neqsim-flow-assurance",
       "docs": [
-        "docs/pvtsimulation/flowassurance/README.md"
+        "docs/pvtsimulation/flowassurance/README.md",
+        "docs/pvtsimulation/scale_prediction_api.md"
       ]
     },
     {

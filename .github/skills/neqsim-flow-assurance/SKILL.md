@@ -1272,7 +1272,12 @@ commercial-simulator comparison.
 
 ### Mineral Scale (thermodynamics + kinetics + brine mixing)
 
-NeqSim offers **two routes** to mineral scale. Pick by how much you know about
+For commingled formation waters with dissolved silica, follow the
+[produced-water route](../neqsim-production-chemistry/SKILL.md#produced-water-blending-and-silica)
+with the NeqSim and PHREEQC Pitzer example. Compare the CO₂ boundary conditions
+and amorphous silica, crystalline silica and metal silicate results at each station.
+
+For common carbonate and sulfate minerals, pick by how much you know about
 the brine and whether you need a rigorous precipitated amount.
 
 **(A) Screening SI from an ion analysis (fast, no flash).** Activity-corrected
