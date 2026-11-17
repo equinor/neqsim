@@ -141,6 +141,12 @@ DisturbanceVariable feedTemperature = mpc.addDV("Feed", "temperature");
 feedTemperature.setUnit("K");
 ```
 
+For the built-in `ProcessLinkedMPC.calculate()`, a zone-controlled variable contributes zero tracking
+error while its measurement is inside the zone. Outside the zone, the error is measured from the
+nearest boundary. A fixed setpoint still uses the error from the configured target. The built-in move
+calculation uses steady-state gains. Use the exported model with a horizon-based optimizer to enforce
+predicted CV limits or generate a trajectory of future MV moves.
+
 `addMV`, `addCV`, and `addDV` take the name of a registered process unit. Set the
 unit on the returned variable. The current bound-variable readers support stream
 flow, pressure, and temperature; they do not read arbitrary separator level or

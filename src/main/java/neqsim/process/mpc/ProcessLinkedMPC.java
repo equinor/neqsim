@@ -194,7 +194,8 @@ public class ProcessLinkedMPC implements Serializable {
   }
 
   /**
-   * Add a controlled variable with zone control.
+   * Add a controlled variable with zone control. The local move calculation uses zero tracking error inside the zone
+   * and targets the nearest boundary outside it.
    *
    * @param equipmentName the equipment name
    * @param propertyName the property name
@@ -553,7 +554,8 @@ public class ProcessLinkedMPC implements Serializable {
 
       for (int j = 0; j < controlledVariables.size(); j++) {
         ControlledVariable cv = controlledVariables.get(j);
-        double error = cv.getSetpoint() - cv.readValue();
+        double measurement = cv.readValue();
+        double error = cv.getEffectiveSetpoint() - measurement;
         double gain = gains[j][i];
         double weight = cv.getWeight();
 
