@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-16"
+last_verified: "2026-11-17"
 ---
 
 # Dynamic Simulation Guidance
@@ -59,6 +59,14 @@ explicit timestep and calculation identifier).
 Pass a finite, positive timestep. Process and model entry points reject zero,
 negative, NaN, and infinite values before any area or equipment state changes.
 Adaptive stepping rejects invalid requests rather than clamping them.
+
+`TwoFluidPipe` well shut-in and restart: a closed choke may feed a zero-mole
+stream, which the inlet face accepts. With adaptive stepping, a substep that
+would clip gas at 100 m/s or oil/water at 50 m/s in a phase holding at least
+5 % of the cell mass is retried; if no step is stable the run throws
+`IllegalStateException` ("velocity limiter engaged ..."). Treat that as a
+numerical failure, not a result. Check `getTransientVelocityLimiterRejectionCount()`
+and consider `setEnableStiffBubbleDrag(true)` for riser shut-in studies.
 
 Each timestep:
 1. Flowsheet-wide settings are applied. Each setter unit receives exactly one

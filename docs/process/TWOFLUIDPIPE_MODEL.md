@@ -3006,8 +3006,30 @@ Algorithm per macro-step:
 1. **CFL recompute** from current velocities (not fixed at initialization)
 2. **Pre-check**: reject if NaN or negative mass detected; rollback state, halve `dtFactor`
 3. **Post-check**: reject if pressure exceeds ceiling or velocities exceed 500 m/s
-4. **Recovery**: after each stable step, `dtFactor` grows by x1.02 back toward 1.0
-5. **Floor**: `dtFactor` cannot go below 0.001 to prevent stalling
+4. **Velocity-limiter check**: reject if the candidate state would make primitive recovery clip a phase that holds at
+   least 5 % of its cell mass (gas at 100 m/s, oil or water at 50 m/s); see below
+5. **Recovery**: after each stable step, `dtFactor` grows by x1.02 back toward 1.0
+6. **Floor**: `dtFactor` cannot go below 0.001 to prevent stalling
+
+#### Clipped velocities and well shut-in
+
+`TwoFluidSection` bounds recovered velocities to 100 m/s for gas and 50 m/s for oil and water. Those bounds lie below the
+post-check limit, so before the velocity-limiter check an unstable substep was clipped and accepted. In a shut-in
+5.4 km flowline and riser with a fixed 56.4 bara outlet, a draining film in the top riser cell reached the oil bound,
+the gas then reached the gas bound, and the top cells blew down from 56 to 6 bara through the outlet while the well
+was closed. The run completed and reported those values.
+
+The check now rejects such a substep and retries it with a smaller step. Phases holding less than 5 % of the cell
+mass keep the historical clipping, which trace phases rely on. When no step is stable the call stops with an
+`IllegalStateException` whose last rejection names the cell, phase and velocity. Cases that never clip are unchanged
+bit for bit. `getTransientVelocityLimiterRejectionCount()` reports the retries since the last `run()`.
+
+A closed choke delivers a stream whose phases hold zero moles. The prescribed inlet face keeps the donor-cell density
+and enthalpy for such phases; it no longer requests mass-specific enthalpy from an empty phase.
+
+Known limitation: after a long shut-in, the liquid column at the riser base can ring by several bar with the gas
+sloshing at several m/s. `setEnableStiffBubbleDrag(true)` damps the shut-in period, but a restart can still exhaust
+the retries. The run then stops with the limiter message instead of returning unphysical values.
 
 ### Steady-State Solver Tuning
 
@@ -3103,6 +3125,7 @@ still be read after successful calls.
 | `isTransientCoupledPressureMomentumFailureDetected()` | At least one coupled nonlinear correction was rejected |
 | `isTransientCoupledPressureMomentumCorrectionLimited()` | At least one nonlinear pressure correction reached its limiter |
 | `getTransientCoupledPressureMomentumRejectedSubsteps() > 0` | Coupled substeps were retried at a smaller adaptive factor |
+| `getTransientVelocityLimiterRejectionCount() > 0` | Substeps were retried because a resolved phase reached its recovered-velocity bound |
 
 ```java
 pipe.runTransient(dt, null);

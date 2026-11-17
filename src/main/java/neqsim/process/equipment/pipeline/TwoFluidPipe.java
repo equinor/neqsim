@@ -330,6 +330,18 @@ public class TwoFluidPipe extends Pipeline {
   /** CFL number for time stepping (0 &lt; CFL &lt; 1). */
   private double cflNumber = 0.5;
 
+  /** Gas velocity bound applied by section primitive recovery in m/s. */
+  private static final double GAS_VELOCITY_RECOVERY_BOUND = 100.0;
+
+  /** Oil and water velocity bound applied by section primitive recovery in m/s. */
+  private static final double LIQUID_VELOCITY_RECOVERY_BOUND = 50.0;
+
+  /** Smallest share of the cell mass for which a clipped recovered velocity rejects an adaptive substep. */
+  private static final double VELOCITY_LIMITER_MINIMUM_MASS_FRACTION = 0.05;
+
+  /** Adaptive substeps rejected because primitive recovery would have clipped a resolved velocity. */
+  private long transientVelocityLimiterRejections;
+
   // ============ Sub-models ============
 
   /** Conservation equations solver. */
@@ -5410,6 +5422,7 @@ public class TwoFluidPipe extends Pipeline {
     transientCoupledPressureMomentumFailureDetected = false;
     transientCoupledPressureMomentumCorrectionLimited = false;
     transientPressureLimitCount = 0;
+    transientVelocityLimiterRejections = 0;
     firstTransientPressureLimitTime = Double.NaN;
     minimumTransientPressureDamping = 1.0;
     transientCoupledPressureMomentumRejectedSubsteps = 0;
@@ -6792,6 +6805,7 @@ public class TwoFluidPipe extends Pipeline {
     transientCoupledPressureMomentumFailureDetected = candidate.transientCoupledPressureMomentumFailureDetected;
     transientCoupledPressureMomentumCorrectionLimited = candidate.transientCoupledPressureMomentumCorrectionLimited;
     transientPressureLimitCount = candidate.transientPressureLimitCount;
+    transientVelocityLimiterRejections = candidate.transientVelocityLimiterRejections;
     firstTransientPressureLimitTime = candidate.firstTransientPressureLimitTime;
     minimumTransientPressureDamping = candidate.minimumTransientPressureDamping;
     transientCoupledPressureMomentumRejectedSubsteps = candidate.transientCoupledPressureMomentumRejectedSubsteps;
@@ -7480,6 +7494,15 @@ public class TwoFluidPipe extends Pipeline {
           }
         }
 
+        if (!postRejected) {
+          String limiterRejection = describeEngagedVelocityLimiter(U_new, sectionPositions());
+          if (limiterRejection != null) {
+            lastStepRejection = limiterRejection;
+            transientVelocityLimiterRejections++;
+            postRejected = true;
+          }
+        }
+
         if (postRejected) {
           sections = previousSections;
           currentStep--;
@@ -7824,6 +7847,66 @@ public class TwoFluidPipe extends Pipeline {
    * @param U_new New state to validate
    * @param U_prev Previous state for fallback
    */
+  /**
+   * Describe a phase velocity that primitive recovery would clip, or return null.
+   *
+   * <p>
+   * {@link TwoFluidSection#extractPrimitiveVariables()} bounds recovered gas velocities to 100 m/s and liquid
+   * velocities to 50 m/s. Those bounds sit below the 300 m/s admissibility check, so without this test an unstable
+   * substep is silently clipped instead of being retried with a smaller step. A clipped velocity in a resolved phase
+   * drives a fixed-pressure outlet out of balance: in a shut-in riser it blew the top cells down from 56 to 6 bara
+   * against a 56 bara boundary. Phases holding less than {@value #VELOCITY_LIMITER_MINIMUM_MASS_FRACTION} of the cell
+   * mass keep the historical clipping, which the explicit time-step selection relies on for trace phases.
+   * </p>
+   *
+   * @param state candidate conservative state, one row per cell, using the
+   *        {@link TwoFluidConservationEquations} mass and momentum indices
+   * @param positions cell-centre positions in m used in the message, one per row of {@code state}
+   * @return rejection text naming the cell and phase, or null when no resolved phase reaches its bound
+   */
+  static String describeEngagedVelocityLimiter(double[][] state, double[] positions) {
+    int[][] pairs = {{TwoFluidConservationEquations.IDX_GAS_MASS, TwoFluidConservationEquations.IDX_GAS_MOMENTUM},
+        {TwoFluidConservationEquations.IDX_OIL_MASS, TwoFluidConservationEquations.IDX_OIL_MOMENTUM},
+        {TwoFluidConservationEquations.IDX_WATER_MASS, TwoFluidConservationEquations.IDX_WATER_MOMENTUM}};
+    String[] names = {"gas", "oil", "water"};
+    for (int cell = 0; cell < state.length; cell++) {
+      if (pairs[2][1] >= state[cell].length) {
+        continue;
+      }
+      double cellMass = state[cell][pairs[0][0]] + state[cell][pairs[1][0]] + state[cell][pairs[2][0]];
+      if (!(cellMass > 0.0) || !Double.isFinite(cellMass)) {
+        continue;
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        double mass = state[cell][pairs[phase][0]];
+        if (!(mass >= VELOCITY_LIMITER_MINIMUM_MASS_FRACTION * cellMass)) {
+          continue;
+        }
+        double velocity = state[cell][pairs[phase][1]] / mass;
+        double bound = phase == 0 ? GAS_VELOCITY_RECOVERY_BOUND : LIQUID_VELOCITY_RECOVERY_BOUND;
+        if (!(Math.abs(velocity) < bound)) {
+          return "velocity limiter engaged at x=" + (cell < positions.length ? positions[cell] : Double.NaN) + " m: "
+              + names[phase] + "=" + velocity + " m/s, cell mass fraction=" + mass / cellMass;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Collect the current cell-centre positions.
+   *
+   * @return positions in m, one per section
+   */
+  private double[] sectionPositions() {
+    double[] positions = new double[sections.length];
+    for (int cell = 0; cell < sections.length; cell++) {
+      positions[cell] = sections[cell].getPosition();
+    }
+    return positions;
+  }
+
+
   private void validateAndCorrectState(double[][] U_new, double[][] U_prev) {
     for (int i = 0; i < U_new.length; i++) {
       double[] previous = U_prev != null && i < U_prev.length ? U_prev[i] : null;
@@ -8665,10 +8748,16 @@ public class TwoFluidPipe extends Pipeline {
     double[] volumes = new double[3];
     double totalSpecificVolume = 0.0;
     double liquidEnthalpy = 0.0;
-    double liquidMassFraction = fractions[1] + fractions[2];
+    double liquidMassFraction = 0.0;
     for (int phase = 0; phase < 3; phase++) {
-      if (fluid.hasPhaseType(names[phase])) {
-        densities[phase] = fluid.getPhase(names[phase]).getDensity("kg/m3");
+      // A shut-in feed (closed choke, zero-rate well) keeps its phase objects but holds no moles.
+      // Such a phase defines neither density nor specific enthalpy; the face then keeps the
+      // donor-cell values, which carry no flux because the face velocity is zero.
+      if (fluid.hasPhaseType(names[phase]) && hasPositivePhaseMass(fluid.getPhase(names[phase]))) {
+        double feedDensity = fluid.getPhase(names[phase]).getDensity("kg/m3");
+        if (feedDensity > 0.0 && Double.isFinite(feedDensity)) {
+          densities[phase] = feedDensity;
+        }
         double enthalpy = fluid.getPhase(names[phase]).getEnthalpy("J/kg");
         if (phase == 0) {
           face.setGasEnthalpy(enthalpy);
@@ -8678,6 +8767,7 @@ public class TwoFluidPipe extends Pipeline {
                 phase == 2 ? enthalpy : face.getWaterEnthalpy());
           }
           liquidEnthalpy += fractions[phase] * enthalpy;
+          liquidMassFraction += fractions[phase];
         }
       }
       if (!(densities[phase] > 0.0) || !Double.isFinite(densities[phase])) {
@@ -8716,6 +8806,22 @@ public class TwoFluidPipe extends Pipeline {
     face.setPressure(inletFacePressureFromCells(cell));
     face.updateConservativeVariables();
     return face;
+  }
+
+  /**
+   * Check whether a feed phase holds enough mass to define intensive properties.
+   *
+   * <p>
+   * A closed wellhead choke or a zero-rate stream keeps its phase objects with zero moles. Intensive properties per
+   * unit mass are then undefined, and {@code getEnthalpy("J/kg")} throws.
+   * </p>
+   *
+   * @param phase feed phase
+   * @return true when the phase mass is finite and positive
+   */
+  private static boolean hasPositivePhaseMass(neqsim.thermo.phase.PhaseInterface phase) {
+    double mass = phase.getNumberOfMolesInPhase() * phase.getMolarMass();
+    return mass > 0.0 && Double.isFinite(mass);
   }
 
   /**
@@ -11830,6 +11936,22 @@ public class TwoFluidPipe extends Pipeline {
   /** @return count of bounded Newton iterations, including rejected attempts, since the last run() */
   public long getTransientPressureLimitCount() {
     return transientPressureLimitCount;
+  }
+
+  /**
+   * Get the number of adaptive substeps rejected because a resolved phase velocity reached its recovery bound.
+   *
+   * <p>
+   * Section primitive recovery bounds gas velocity to 100 m/s and oil and water velocity to 50 m/s. A phase holding at
+   * least 5 % of a cell's mass that reaches its bound marks an unstable substep. With adaptive time stepping the substep
+   * is retried with a smaller step; a nonzero count with a completed run means the retry succeeded. Fixed-step runs do
+   * not apply the check.
+   * </p>
+   *
+   * @return rejected substeps since the last {@code run()}
+   */
+  public long getTransientVelocityLimiterRejectionCount() {
+    return transientVelocityLimiterRejections;
   }
 
   /** @return first limited attempted-substep start time in seconds, or NaN if no limit occurred */
