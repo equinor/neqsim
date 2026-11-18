@@ -6,6 +6,11 @@ description: "Detailed mathematical and algorithmic documentation for the PT pha
 
 NeqSim traces the PT phase envelope using Michelsen's continuation method (Michelsen & Mollerup, *Thermodynamic Models: Fundamentals & Computational Aspects*, 2nd ed., 2007). This document describes the mathematical formulation, the Newton-Raphson solver, critical point detection, quality line tracing, and the adaptive step-size control implemented in `PTPhaseEnvelopeMichelsen` and `SysNewtonRhapsonPhaseEnvelope`.
 
+For a characterized fluid, specify the units of each cut before tracing the envelope.
+For example, `fluid.addTBPfraction2("C10", 0.02, 0.142, 174.0, "C")` supplies 0.02 mol,
+0.142 kg/mol and 174 °C (447.15 K). The four-argument overload expects kelvin. The inferred
+specific gravity and critical properties influence where the phase boundary lies.
+
 ## 1. Problem Formulation
 
 At every point on the phase boundary, the following $n_c + 2$ equations hold simultaneously:
