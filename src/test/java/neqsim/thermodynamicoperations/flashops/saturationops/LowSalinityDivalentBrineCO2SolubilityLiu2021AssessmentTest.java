@@ -27,12 +27,10 @@ import org.junit.jupiter.api.Test;
  * @version 1.0
  */
 class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
-  private static final Logger logger =
-      LogManager.getLogger(LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest.class);
-  private static final String RESOURCE =
-      "/data/chemistry_benchmarks/co2_water_cacl2_mgcl2_solubility_liu2021.csv";
-  private static final String OUTPUT =
-      "target/co2-water-cacl2-mgcl2-solubility-liu2021-assessment.csv";
+  private static final Logger logger = LogManager
+      .getLogger(LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest.class);
+  private static final String RESOURCE = "/data/chemistry_benchmarks/co2_water_cacl2_mgcl2_solubility_liu2021.csv";
+  private static final String OUTPUT = "target/co2-water-cacl2-mgcl2-solubility-liu2021-assessment.csv";
   private static final double CO2_FEED_MOLES = 10.0;
   private static final double CO2_MOLAR_MASS_KG_PER_MOL = 0.0440095;
   private static final double CACL2_MOLAR_MASS_KG_PER_MOL = 0.11098;
@@ -54,23 +52,18 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       }
     }
 
-    Map<String, KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result> pureWaterByState =
-        new HashMap<String, KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result>();
+    Map<String, KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result> pureWaterByState = new HashMap<String, KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result>();
     List<String> report = new ArrayList<String>();
-    report.add(
-        "point_id,salt_type,evidence_role,salinity_ppm,salt_mass_fraction_percent,temperature_K,"
-            + "pressure_atm,total_pressure_MPa,source_co2_mol_per_kg_solution,"
-            + "model_co2_mol_per_kg_solution,relative_residual,"
-            + "matched_pure_water_source_co2_mol_per_kg_solution,"
-            + "matched_pure_water_model_co2_mol_per_kg_solution,"
-            + "source_apparent_salt_effect_kg_per_mol,"
-            + "model_apparent_salt_effect_kg_per_mol,source_salt_direction,"
-            + "model_co2_fugacity_bara,matched_pure_water_co2_fugacity_bara,"
-            + "model_water_activity,matched_pure_water_water_activity,"
-            + "decomposition_identity_residual,component_balance_residual_mol,"
-            + "molecular_log_fugacity_residual,phase_types,"
-            + "constrained_model_co2_mol_per_kg_solution,"
-            + "constrained_molecular_log_fugacity_residual");
+    report.add("point_id,salt_type,evidence_role,salinity_ppm,salt_mass_fraction_percent,temperature_K,"
+        + "pressure_atm,total_pressure_MPa,source_co2_mol_per_kg_solution,"
+        + "model_co2_mol_per_kg_solution,relative_residual," + "matched_pure_water_source_co2_mol_per_kg_solution,"
+        + "matched_pure_water_model_co2_mol_per_kg_solution," + "source_apparent_salt_effect_kg_per_mol,"
+        + "model_apparent_salt_effect_kg_per_mol,source_salt_direction,"
+        + "model_co2_fugacity_bara,matched_pure_water_co2_fugacity_bara,"
+        + "model_water_activity,matched_pure_water_water_activity,"
+        + "decomposition_identity_residual,component_balance_residual_mol,"
+        + "molecular_log_fugacity_residual,phase_types," + "constrained_model_co2_mol_per_kg_solution,"
+        + "constrained_molecular_log_fugacity_residual");
 
     int pureCount = 0;
     int cacl2Count = 0;
@@ -78,18 +71,12 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
     int constrainedCount = 0;
     int sourceSaltingOutCount = 0;
     for (SourceReference reference : references) {
-      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result =
-          KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.calculate(
-              reference.toModelReference(), CO2_FEED_MOLES);
+      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+          .calculate(reference.toModelReference(), CO2_FEED_MOLES);
       double model = modelMolPerKgSolution(result);
-      assertTrue(
-          Double.isFinite(model) && model > 0.0,
-          reference.pointId + " finite positive model result");
-      assertTrue(
-          result.componentBalanceResidualMol <= 1.0e-10,
-          reference.pointId + " component balance closure");
-      assertTrue(
-          Double.isFinite(result.molecularLogFugacityResidual),
+      assertTrue(Double.isFinite(model) && model > 0.0, reference.pointId + " finite positive model result");
+      assertTrue(result.componentBalanceResidualMol <= 1.0e-10, reference.pointId + " component balance closure");
+      assertTrue(Double.isFinite(result.molecularLogFugacityResidual),
           reference.pointId + " finite default fugacity diagnostic");
 
       KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result pureWater;
@@ -111,8 +98,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       assertNotNull(sourcePure, reference.pointId + " matched pure-water source state");
       double modelPure = modelMolPerKgSolution(pureWater);
       double decompositionResidual = result.decompositionIdentityResidual(pureWater);
-      assertTrue(
-          Math.abs(decompositionResidual) < 1.0e-12,
+      assertTrue(Math.abs(decompositionResidual) < 1.0e-12,
           reference.pointId + " dissolved-CO2 decomposition identity");
 
       double sourceSaltEffect = Double.NaN;
@@ -121,8 +107,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       if (!reference.isPureWater()) {
         double saltMoles = saltFormulaMoles(result, reference.saltType);
         assertTrue(saltMoles > 0.0, reference.pointId + " positive salt formula inventory");
-        sourceSaltEffect =
-            Math.log(sourcePure.doubleValue() / reference.sourceCo2MolPerKgSolution) / saltMoles;
+        sourceSaltEffect = Math.log(sourcePure.doubleValue() / reference.sourceCo2MolPerKgSolution) / saltMoles;
         modelSaltEffect = Math.log(modelPure / model) / saltMoles;
         sourceSaltDirection = sourceSaltEffect > 0.0 ? "SALTING_OUT" : "SALTING_IN_OR_EQUAL";
         if (sourceSaltEffect > 0.0) {
@@ -132,53 +117,27 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
 
       double constrainedModel = Double.NaN;
       double constrainedResidual = Double.NaN;
-      if (!reference.isPureWater()
-          && reference.salinityPpm == 15000
+      if (!reference.isPureWater() && reference.salinityPpm == 15000
           && Math.abs(reference.pressureAtm - 170.1) < 1.0e-12) {
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result constrained =
-            KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.calculate(
-                reference.toModelReference(), CO2_FEED_MOLES, true);
+        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result constrained = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+            .calculate(reference.toModelReference(), CO2_FEED_MOLES, true);
         constrainedModel = modelMolPerKgSolution(constrained);
         constrainedResidual = constrained.molecularLogFugacityResidual;
-        assertTrue(
-            constrainedResidual < 1.0e-8,
-            reference.pointId + " constrained molecular fugacity closure");
+        assertTrue(constrainedResidual < 1.0e-8, reference.pointId + " constrained molecular fugacity closure");
         constrainedCount++;
       }
 
-      report.add(
-          String.format(
-              Locale.ROOT,
-              "%s,%s,%s,%d,%.8f,%.1f,%.1f,%.8f,%.12g,%.12g,%.12g,%.12g,%.12g,"
-                  + "%.12g,%.12g,%s,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,"
-                  + "%.12g,%.12g",
-              reference.pointId,
-              reference.saltType,
-              reference.isPureWater() ? "REFERENCE" : "IDENTIFIABILITY_SCREEN",
-              reference.salinityPpm,
-              reference.saltMassFractionPercent,
-              reference.temperatureK,
-              reference.pressureAtm,
-              reference.totalPressureMpa,
-              reference.sourceCo2MolPerKgSolution,
-              model,
-              (model - reference.sourceCo2MolPerKgSolution)
-                  / reference.sourceCo2MolPerKgSolution,
-              sourcePure.doubleValue(),
-              modelPure,
-              sourceSaltEffect,
-              modelSaltEffect,
-              sourceSaltDirection,
-              result.co2FugacityBara,
-              pureWater.co2FugacityBara,
-              result.waterActivity,
-              pureWater.waterActivity,
-              decompositionResidual,
-              result.componentBalanceResidualMol,
-              result.molecularLogFugacityResidual,
-              result.phaseTypes,
-              constrainedModel,
-              constrainedResidual));
+      report.add(String.format(Locale.ROOT,
+          "%s,%s,%s,%d,%.8f,%.1f,%.1f,%.8f,%.12g,%.12g,%.12g,%.12g,%.12g,"
+              + "%.12g,%.12g,%s,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s," + "%.12g,%.12g",
+          reference.pointId, reference.saltType, reference.isPureWater() ? "REFERENCE" : "IDENTIFIABILITY_SCREEN",
+          reference.salinityPpm, reference.saltMassFractionPercent, reference.temperatureK, reference.pressureAtm,
+          reference.totalPressureMpa, reference.sourceCo2MolPerKgSolution, model,
+          (model - reference.sourceCo2MolPerKgSolution) / reference.sourceCo2MolPerKgSolution, sourcePure.doubleValue(),
+          modelPure, sourceSaltEffect, modelSaltEffect, sourceSaltDirection, result.co2FugacityBara,
+          pureWater.co2FugacityBara, result.waterActivity, pureWater.waterActivity, decompositionResidual,
+          result.componentBalanceResidualMol, result.molecularLogFugacityResidual, result.phaseTypes, constrainedModel,
+          constrainedResidual));
     }
 
     assertEquals(84, references.size());
@@ -187,8 +146,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
     assertEquals(36, mgcl2Count);
     assertEquals(8, constrainedCount);
     assertEquals(85, report.size());
-    assertTrue(
-        sourceSaltingOutCount < cacl2Count + mgcl2Count,
+    assertTrue(sourceSaltingOutCount < cacl2Count + mgcl2Count,
         "retain source rows that contradict the aggregate salting-out trend");
 
     Files.createDirectories(Paths.get("target"));
@@ -204,13 +162,10 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
    * @param result model result on a final one-kilogram aqueous-water basis
    * @return dissolved CO2 moles per kilogram of aqueous solution
    */
-  private static double modelMolPerKgSolution(
-      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result) {
-    double saltMassKg =
-        result.cacl2Moles * CACL2_MOLAR_MASS_KG_PER_MOL
-            + result.mgcl2Moles * MGCL2_MOLAR_MASS_KG_PER_MOL;
-    double solutionMassKg =
-        result.waterMassKg + saltMassKg + result.co2Moles * CO2_MOLAR_MASS_KG_PER_MOL;
+  private static double modelMolPerKgSolution(KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result) {
+    double saltMassKg = result.cacl2Moles * CACL2_MOLAR_MASS_KG_PER_MOL
+        + result.mgcl2Moles * MGCL2_MOLAR_MASS_KG_PER_MOL;
+    double solutionMassKg = result.waterMassKg + saltMassKg + result.co2Moles * CO2_MOLAR_MASS_KG_PER_MOL;
     return result.co2Moles / solutionMassKg;
   }
 
@@ -221,8 +176,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
    * @param saltType source salt label
    * @return salt formula-unit moles
    */
-  private static double saltFormulaMoles(
-      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result,
+  private static double saltFormulaMoles(KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result,
       String saltType) {
     if ("CaCl2".equals(saltType)) {
       return result.cacl2Moles;
@@ -240,19 +194,13 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
    * @throws Exception if the fixture cannot be read or parsed
    */
   private static List<SourceReference> loadReferences() throws Exception {
-    InputStream stream =
-        LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest.class.getResourceAsStream(
-            RESOURCE);
+    InputStream stream = LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest.class.getResourceAsStream(RESOURCE);
     assertNotNull(stream, RESOURCE);
     List<SourceReference> references = new ArrayList<SourceReference>();
-    try (BufferedReader reader =
-        new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       String header = reader.readLine();
-      assertEquals(
-          "point_id,source_file,salt_type,salinity_ppm,salt_mass_fraction_percent,"
-              + "temperature_K,pressure_atm,total_pressure_MPa,"
-              + "source_co2_mol_per_kg_solution",
-          header);
+      assertEquals("point_id,source_file,salt_type,salinity_ppm,salt_mass_fraction_percent,"
+          + "temperature_K,pressure_atm,total_pressure_MPa," + "source_co2_mol_per_kg_solution", header);
       String line;
       while ((line = reader.readLine()) != null) {
         if (line.trim().isEmpty()) {
@@ -260,16 +208,9 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         }
         String[] fields = line.split(",", -1);
         assertEquals(9, fields.length, line);
-        references.add(
-            new SourceReference(
-                fields[0],
-                fields[2],
-                Integer.parseInt(fields[3]),
-                Double.parseDouble(fields[4]),
-                Double.parseDouble(fields[5]),
-                Double.parseDouble(fields[6]),
-                Double.parseDouble(fields[7]),
-                Double.parseDouble(fields[8])));
+        references.add(new SourceReference(fields[0], fields[2], Integer.parseInt(fields[3]),
+            Double.parseDouble(fields[4]), Double.parseDouble(fields[5]), Double.parseDouble(fields[6]),
+            Double.parseDouble(fields[7]), Double.parseDouble(fields[8])));
       }
     }
     assertEquals(84, references.size());
@@ -299,15 +240,8 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
      * @param totalPressureMpa source total pressure converted to MPa
      * @param sourceCo2MolPerKgSolution source dissolved CO2 in mol/kg solution
      */
-    private SourceReference(
-        String pointId,
-        String saltType,
-        int salinityPpm,
-        double saltMassFractionPercent,
-        double temperatureK,
-        double pressureAtm,
-        double totalPressureMpa,
-        double sourceCo2MolPerKgSolution) {
+    private SourceReference(String pointId, String saltType, int salinityPpm, double saltMassFractionPercent,
+        double temperatureK, double pressureAtm, double totalPressureMpa, double sourceCo2MolPerKgSolution) {
       this.pointId = pointId;
       this.saltType = saltType;
       this.salinityPpm = salinityPpm;
@@ -323,21 +257,11 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
      *
      * @return model reference with no experimental-accuracy field populated
      */
-    private KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference
-        toModelReference() {
+    private KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference toModelReference() {
       double cacl2MassPercent = "CaCl2".equals(saltType) ? saltMassFractionPercent : 0.0;
       double mgcl2MassPercent = "MgCl2".equals(saltType) ? saltMassFractionPercent : 0.0;
-      return new KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference(
-          pointId,
-          "Liu2021",
-          0.0,
-          0.0,
-          cacl2MassPercent,
-          mgcl2MassPercent,
-          temperatureK,
-          totalPressureMpa,
-          0.0,
-          0.0);
+      return new KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference(pointId, "Liu2021", 0.0, 0.0,
+          cacl2MassPercent, mgcl2MassPercent, temperatureK, totalPressureMpa, 0.0, 0.0);
     }
 
     /**
