@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.flare.Flare.CapacityCheckResult;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.safety.depressurization.DepressurizationSimulator.DepressurizationResult;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource.BlowdownSource;
 import neqsim.process.safety.depressurization.MultiVesselBlowdownStudy.MultiVesselBlowdownResult;
@@ -16,7 +15,6 @@ import neqsim.process.safety.rupture.SafetyStudyReadiness;
 import neqsim.process.util.fire.ReliefValveSizing;
 import neqsim.process.util.fire.ReliefValveSizing.PSVSizingResult;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Readiness-gated dynamic blowdown, PSV sizing, and flare-load study runner.
@@ -102,16 +100,21 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     }
     Map<String, Object> bdvDischarge = new LinkedHashMap<String, Object>();
     Map<String, Object> psvSizing = new LinkedHashMap<String, Object>();
+    Map<String, BlowdownFlareLoad.Discharge> discharges = new LinkedHashMap<>();
     for (BlowdownSource source : dataSource.getSources()) {
       DepressurizationSimulator simulator = createSimulator(source);
-      DepressurizationResult result = simulator.run();
+      BlowdownFlareLoad.Discharge discharge = new BlowdownFlareLoad.Discharge(source.getFluid());
+      if (discharges.put(source.getSourceId(), discharge) != null) {
+        throw new IllegalArgumentException("Duplicate blowdown source: " + source.getSourceId());
+      }
+      DepressurizationResult result = simulator.run(discharge);
       sourceResults.put(source.getSourceId(), result);
       multiVesselStudy.addSourceResult(source.getSourceId(), result);
       bdvDischarge.put(source.getSourceId(), bdvDischarge(source, result));
       psvSizing.put(source.getSourceId(), psvSizing(source));
     }
     MultiVesselBlowdownResult combined = multiVesselStudy.run();
-    Map<String, Object> flareLoad = flareLoadMap(dataSource, combined);
+    Map<String, Object> flareLoad = flareLoadMap(dataSource, discharges);
 
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     map.put("schemaVersion", "dynamic_blowdown_flare_result.v2");
@@ -206,31 +209,16 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
    * Builds flare load map from the combined load result.
    *
    * @param dataSource study data source
-   * @param combined combined blowdown result
+   * @param discharges actual simultaneous source withdrawals, indexed by source identifier
    * @return flare load map
    */
   private Map<String, Object> flareLoadMap(DynamicBlowdownFlareStudyDataSource dataSource,
-      MultiVesselBlowdownResult combined) {
-    double peakMassFlow = combined.getPeakTotalMassFlowKgPerS();
-    SystemInterface flareFluid = representativeFluid(dataSource);
-    Flare flare = representativeFlare(dataSource, flareFluid, peakMassFlow);
-    double peakHeatDutyW = flare.getHeatDuty();
-    double peakMolarFlow = flareFluid.getMolarMass() > 0.0 ? peakMassFlow / flareFluid.getMolarMass() : 0.0;
-    double co2RateKgPerS = flare.getCO2Emission();
-    double totalMassKg = integrate(combined.getTimeS(), combined.getTotalMassFlowKgPerS());
-    double heatPerKg = peakMassFlow > 1.0e-12 ? peakHeatDutyW / peakMassFlow : 0.0;
-    double co2PerKg = peakMassFlow > 1.0e-12 ? co2RateKgPerS / peakMassFlow : 0.0;
-    CapacityCheckResult capacity = flare.evaluateCapacity(peakHeatDutyW, peakMassFlow, peakMolarFlow);
-
-    Map<String, Object> map = new LinkedHashMap<String, Object>();
-    map.put("peakMassFlowKgPerS", Double.valueOf(peakMassFlow));
-    map.put("peakTimeS", Double.valueOf(combined.getPeakTimeS()));
-    map.put("peakHeatDutyW", Double.valueOf(peakHeatDutyW));
-    map.put("peakHeatDutyMW", Double.valueOf(peakHeatDutyW * 1.0e-6));
-    map.put("peakCO2EmissionKgPerS", Double.valueOf(co2RateKgPerS));
-    map.put("totalMassToFlareKg", Double.valueOf(totalMassKg));
-    map.put("cumulativeHeatReleasedGJ", Double.valueOf(totalMassKg * heatPerKg * 1.0e-9));
-    map.put("cumulativeCO2EmissionKg", Double.valueOf(totalMassKg * co2PerKg));
+      Map<String, BlowdownFlareLoad.Discharge> discharges) {
+    BlowdownFlareLoad load = new BlowdownFlareLoad(discharges, dataSource.getHeaderPressureBara(), timeStepSeconds);
+    Flare flare = configuredFlare(dataSource);
+    double peakHeatDutyW = load.heat.peak;
+    CapacityCheckResult capacity = flare.evaluateCapacity(peakHeatDutyW, load.gasMass.peak, load.gasMoles.peak);
+    Map<String, Object> map = load.toMap();
     map.put("radiationHeatFluxAt30mWPerM2", Double.valueOf(flare.estimateRadiationHeatFlux(peakHeatDutyW, 30.0)));
     map.put("radiationDistanceForThresholdM",
         Double.valueOf(flare.radiationDistanceForFlux(peakHeatDutyW, radiationThresholdWPerM2)));
@@ -240,21 +228,13 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
   }
 
   /**
-   * Creates a representative flare at peak load.
+   * Configure capacity and radiation calculations for the tip.
    *
-   * @param dataSource data source
-   * @param flareFluid flare fluid
-   * @param peakMassFlow peak mass flow in kg/s
-   * @return configured and run flare
+   * @param dataSource study parameters
+   * @return configured tip
    */
-  private Flare representativeFlare(DynamicBlowdownFlareStudyDataSource dataSource, SystemInterface flareFluid,
-      double peakMassFlow) {
-    Stream stream = new Stream("peak flare load", flareFluid);
-    stream.setPressure(dataSource.getHeaderPressureBara(), "bara");
-    stream.setTemperature(dataSource.getHeaderTemperatureK(), "K");
-    stream.setFlowRate(Math.max(peakMassFlow, 1.0e-9), "kg/sec");
-    stream.run();
-    Flare flare = new Flare("Emergency Flare", stream);
+  private Flare configuredFlare(DynamicBlowdownFlareStudyDataSource dataSource) {
+    Flare flare = new Flare("Emergency Flare");
     flare.setTipDiameter(dataSource.getFlareTipDiameterM());
     flare.setFlameHeight(dataSource.getFlareFlameHeightM());
     flare.setRadiantFraction(dataSource.getFlareRadiantFraction());
@@ -268,7 +248,6 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
         && dataSource.getFlareDesignMolarFlowMolePerS() > 0.0) {
       flare.setDesignMolarFlowCapacity(dataSource.getFlareDesignMolarFlowMolePerS(), "mole/sec");
     }
-    flare.run();
     return flare;
   }
 
@@ -418,48 +397,6 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
     map.put("molarUtilization", finiteOrNull(capacity.getMolarUtilization()));
     map.put("overloaded", Boolean.valueOf(capacity.isOverloaded()));
     return map;
-  }
-
-  /**
-   * Gets a representative fluid for flare-load conversion.
-   *
-   * @param dataSource data source
-   * @return initialized fluid clone
-   */
-  private SystemInterface representativeFluid(DynamicBlowdownFlareStudyDataSource dataSource) {
-    return initializedClone(dataSource.getSources().get(0).getFluid());
-  }
-
-  /**
-   * Creates and initializes a fluid clone.
-   *
-   * @param fluid source fluid
-   * @return initialized clone
-   */
-  private SystemInterface initializedClone(SystemInterface fluid) {
-    SystemInterface clone = fluid.clone();
-    ThermodynamicOperations ops = new ThermodynamicOperations(clone);
-    ops.TPflash();
-    clone.initProperties();
-    return clone;
-  }
-
-  /**
-   * Integrates a time-series by trapezoidal rule.
-   *
-   * @param timeS time values in s
-   * @param values values to integrate
-   * @return integral in value-seconds
-   */
-  private double integrate(List<Double> timeS, List<Double> values) {
-    double sum = 0.0;
-    for (int i = 1; i < timeS.size() && i < values.size(); i++) {
-      double dt = timeS.get(i) - timeS.get(i - 1);
-      if (dt > 0.0) {
-        sum += 0.5 * (values.get(i) + values.get(i - 1)) * dt;
-      }
-    }
-    return sum;
   }
 
   /**

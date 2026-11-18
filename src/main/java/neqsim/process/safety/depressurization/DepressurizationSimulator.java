@@ -278,6 +278,16 @@ public class DepressurizationSimulator implements Serializable {
    * @return result containing time, pressure, temperature, mass and metal-temperature trajectories
    */
   public DepressurizationResult run() {
+    return run(null);
+  }
+
+  /**
+   * Run the vessel balance, optionally retaining the material and enthalpy actually withdrawn in each interval.
+   *
+   * @param discharge optional discharge history in the vessel component order
+   * @return vessel time-series result
+   */
+  DepressurizationResult run(BlowdownFlareLoad.Discharge discharge) {
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
     fluid.initProperties();
@@ -433,6 +443,11 @@ public class DepressurizationSimulator implements Serializable {
       double newU = uBefore + dU;
       // Update fluid state by VU flash (constant volume, new internal energy).
       // Vapour withdrawal removes the vapour composition; bulk withdrawal scales every component.
+      double[] withdrawnFractions = null;
+      if (discharge != null) {
+        withdrawnFractions = useVapour ? fluid.getPhase(vapourIndex).getMolarComposition()
+            : fluid.getMolarComposition();
+      }
       if (useVapour) {
         double removedMoles = removePhaseMoles(vapourIndex, dm / mw);
         dm = removedMoles * mw;
@@ -441,6 +456,9 @@ public class DepressurizationSimulator implements Serializable {
         newU = uBefore + (-hSpec * dm) + (directFireHeat * timeStep) + (qWall * timeStep);
       } else if (mass > 0.0) {
         scaleMoles(newMass / mass);
+      }
+      if (discharge != null) {
+        discharge.add(withdrawnFractions, dm / (mw * timeStep), hSpec * dm / timeStep);
       }
       try {
         ops.VUflash(vesselVolume, newU, "m3", "J");

@@ -223,8 +223,8 @@ Both runs close the source inventory balance to the reported double precision (0
 meet the configured half-pressure and 7 barg screening criteria, remain below the declared header
 Mach and flare capacities, and reproduce identically on repeated execution. Halving the timestep
 changes released mass by 0.0433%, half-pressure time by 0.301% and 7 barg time by 0.280%.
-The flare-load time-grid integration remains a separate quantity: at 1.0 s it is 0.3069 kg below
-the source discharged mass (0.0730%), and is reported rather than clipped into closure.
+The flare handoff integrates interval withdrawals at the header and separately reports vapor sent
+to the tip and condensed mass sent to knockout.
 
 The calculation verdict is `CALCULATED_REVIEW_REQUIRED` because scenario credibility/concurrency,
 detailed diagrams and line lists, vendor BDV/PSV data, MDMT, detailed flare-network hydraulics and
