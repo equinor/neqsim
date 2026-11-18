@@ -25,6 +25,9 @@ simulation, an approved P&ID, or a construction release.
 
 ## Understand the exchange profiles
 
+For equipment dimensions, preliminary nominal line selection and controlled pipe sizes on
+the drawing and native exchange, see [P&ID sizing](../pid-design-synthesis.md#show-equipment-and-line-sizes-on-a-professional-pid).
+
 ### Native DEXPI 2.0.1 and professional P&ID requests
 
 Select `Dexpi201XmlWriter` explicitly for the 2.0.1 Plant model. Supply controlled

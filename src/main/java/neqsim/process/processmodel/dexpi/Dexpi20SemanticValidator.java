@@ -49,9 +49,10 @@ public final class Dexpi20SemanticValidator {
           "Process/Process.SplittingMaterial")));
 
   /** Reviewed native 2.0.1 instrumentation relationships exercised by the connected P&amp;ID projector. */
-  private static final Set<String> SUPPORTED_201_TYPES = Collections
-      .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Plant/Instrumentation.SignalLineFunction",
-          "Plant/ProcessEquipment.HeatExchanger", "Plant/Instrumentation.ActuatingFunction",
+  private static final Set<String> SUPPORTED_201_TYPES = Collections.unmodifiableSet(new LinkedHashSet<String>(
+      Arrays.asList("Plant/Instrumentation.SignalLineFunction", "Plant/ProcessEquipment.HeatExchanger",
+          "Plant/ProcessEquipment.Chamber", "Plant/ProcessEquipment.Impeller", "Core/DataTypes.SingleLanguageString",
+          "Core/DataTypes.MultiLanguageString", "Plant/Instrumentation.ActuatingFunction",
           "Plant/Instrumentation.ActuatingSystem", "Plant/Instrumentation.OperatedValveReference")));
 
   private Dexpi20SemanticValidator() {
@@ -286,11 +287,22 @@ public final class Dexpi20SemanticValidator {
     return null;
   }
 
+  /**
+   * Identifies tagged equipment, excluding owned nozzles and mechanical parts.
+   * 
+   * @param type native model type
+   * @return whether the type represents a tagged equipment item
+   */
+  static boolean isTaggedEquipment(String type) {
+    return type.startsWith("Plant/ProcessEquipment.") && !type.endsWith("Nozzle")
+        && !"Plant/ProcessEquipment.Chamber".equals(type) && !"Plant/ProcessEquipment.Impeller".equals(type);
+  }
+
   private static void validateEquipment(NodeList objects, List<String> errors, List<String> warnings) {
     for (int i = 0; i < objects.getLength(); i++) {
       Element object = (Element) objects.item(i);
       String type = object.getAttribute("type");
-      if (!type.startsWith("Plant/ProcessEquipment.") || type.endsWith("Nozzle")) {
+      if (!isTaggedEquipment(type)) {
         continue;
       }
       if (directStringData(object, "TagName") == null) {

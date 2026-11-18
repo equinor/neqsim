@@ -124,10 +124,11 @@ public final class ProfessionalPidPackageExporter {
     Path staging = Files.createTempDirectory(target.getParent(), ".neqsim-professional-pid-");
     try {
       PidEngineeringPackageExporter.export(project, model, staging);
+      PidSizing sizing = new PidSizing(project);
       Dexpi20ConformanceAssessment.Report conformance = DexpiEngineeringExporter.exportDexpi201(project,
-          staging.resolve("plant.dexpi.xml"), metadata, false);
+          staging.resolve("plant.dexpi.xml"), metadata, false, sizing);
       Dexpi201PidMaterializer.Result projected = Dexpi201PidMaterializer.materialize(project, model, bindings,
-          staging.resolve("plant.dexpi.xml"));
+          staging.resolve("plant.dexpi.xml"), sizing);
       conformance = projected.getAssessment();
       writeJson(staging.resolve("dexpi-2.0.1-conformance.json"), conformance.toJson());
 
@@ -148,7 +149,7 @@ public final class ProfessionalPidPackageExporter {
           && layouts.getSheets().isEmpty()) {
         professional = new ProfessionalPidDiagramRenderer(project, model, bindings, documents, conventions,
             metadata.getExportDateTime());
-        rendering = professional.render();
+        rendering = professional.render(sizing);
         writeJson(staging.resolve("pid-drawing-content-report.json"), professional.getContentReportJson());
         writeJson(staging.resolve("pid-physical-projection.json"), professional.getPhysicalProjection().toJson());
       } else {
@@ -169,6 +170,9 @@ public final class ProfessionalPidPackageExporter {
               new GsonBuilder().setPrettyPrinting().create().toJson(specification));
         }
         sheetFiles.put(svg.getKey(), "drawings/" + name);
+      }
+      if (project.getPidSizingSchedule() != null) {
+        writeJson(staging.resolve("pid-sizing.json"), new GsonBuilder().setPrettyPrinting().create().toJson(sizing));
       }
       writeJson(staging.resolve("engineering-graph.json"), graph.toJson());
       writeJson(staging.resolve("pid-document-set.json"), documents.toJson());

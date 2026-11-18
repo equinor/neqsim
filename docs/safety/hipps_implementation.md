@@ -74,12 +74,13 @@ The current source-backed sequence is:
    seconds.
 7. Record `isTripped()`, `hasEscalated()`, `getState()`, valve opening, detector
    states, and the calculation context.
-8. Clear detector states before calling `reset()`; the method fails closed while any
-   detector remains tripped.
+8. Verify healthy, clear pressure samples before calling `reset()`. Issue a separate
+   reopening command after the process restart permissives are satisfied.
 
-The implementation closes the linked valve by setting its opening to zero when voting
-trips. It does not calculate valve hydraulics, actuator reliability, or process pressure
-decay. Those behaviors need an appropriately bounded transient process model.
+The vote commands every linked valve to close. For a dynamic HIPPS valve the
+target and actual position are distinct. The normal valve actuator step applies
+its stroke model. Couple the resulting throughput to the protected inventory
+and record its pressure trajectory.
 
 The
 [ProcessSafetyOverviewDocumentationTest](../../src/test/java/neqsim/process/safety/ProcessSafetyOverviewDocumentationTest.java)

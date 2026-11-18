@@ -618,6 +618,30 @@ public class MechanicalDesign implements java.io.Serializable {
     }
   }
 
+  /**
+   * Copies the design together with its process equipment for non-mutating engineering calculations. Retains
+   * project-selected data providers, which are normally transient.
+   *
+   * @return detached design with the source configuration
+   */
+  public MechanicalDesign copyForSizing() {
+    MechanicalDesign copy = org.apache.commons.lang3.SerializationUtils.clone(this);
+    copy.designDataSources = new ArrayList<>(designDataSources);
+    return copy;
+  }
+
+  /**
+   * Restores the default provider selection when an isolated or saved model is read.
+   * 
+   * @param input serialized design
+   * @throws java.io.IOException if reading fails
+   * @throws ClassNotFoundException if a design class is unavailable
+   */
+  private void readObject(java.io.ObjectInputStream input) throws java.io.IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    designDataSources = new ArrayList<>();
+  }
+
   private List<MechanicalDesignDataSource> getActiveDesignDataSources() {
     if (designDataSources.isEmpty()) {
       List<MechanicalDesignDataSource> defaults = new ArrayList<>();

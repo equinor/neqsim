@@ -55,3 +55,15 @@ nonnegative outlet sign is not a substitute.
 
 This is a deterministic numerical reference study. It is not experimental or
 field validation, and it does not establish commercial simulator parity.
+
+## Two wells and a platform inlet choke
+
+The [production restart decision study](../../examples/production-decision/README.md)
+places the choke between the riser and the separator. It adds pressure-dependent
+well inflow, a live separator pressure boundary, recompression with recycle,
+fluid alternatives, withheld refinements and a field-history comparison.
+The original wellhead-choke replay remains available through
+`runPipeline`. Its `quantityEvidence` response records the mesh, requested
+timestep, prescribed outlet boundary, accepted pipe phase residual, peak riser
+liquid rate and mean inlet production for each control mode. A single call
+performs no cross-mesh comparison. The rates use kg/s and the residual uses kg.

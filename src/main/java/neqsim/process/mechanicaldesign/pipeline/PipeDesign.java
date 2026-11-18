@@ -357,6 +357,16 @@ public class PipeDesign {
   }
 
   /**
+   * Checks whether the pipe dimension catalogue contains the given schedule.
+   * 
+   * @param schedule schedule designation
+   * @return whether this catalogue supports the schedule
+   */
+  public static boolean isSupportedSchedule(String schedule) {
+    return scheduleLookup.containsKey(schedule);
+  }
+
+  /**
    * Searches for and finds the nearest standard pipe size to a given specification. Acceptable inputs: - Outer diameter
    * Do - Inner diameter Di - NPS - optionally specify the schedule (default "40")
    *

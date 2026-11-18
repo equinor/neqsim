@@ -1,5 +1,6 @@
 package neqsim.process.processmodel.dexpi;
 
+import neqsim.process.engineering.pid.PidSizing;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -193,6 +194,7 @@ public final class Dexpi20XmlWriter {
     }
     Dexpi20PlantExportMetadata metadata = options == null ? null : options.getMetadata();
     boolean specification201 = options != null && options.isSpecification201();
+    PidSizing sizing = specification201 ? options.getSizing() : null;
     boolean explicitBoundaryConnectors = options != null && options
         .getBoundaryConnectionMode() == Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS;
     try {
@@ -230,6 +232,7 @@ public final class Dexpi20XmlWriter {
       Map<StreamInterface, String> outletNodes = new IdentityHashMap<StreamInterface, String>();
       Map<String, String> inletNodes = new LinkedHashMap<String, String>();
       Map<String, String> nodeOwners = new LinkedHashMap<String, String>();
+      Set<String> namedOutletNodes = new LinkedHashSet<String>();
       Map<String, String> boundaryOutletNodes = new LinkedHashMap<String, String>();
       int equipmentNumber = 1;
       int nodeNumber = 1;
@@ -251,6 +254,7 @@ public final class Dexpi20XmlWriter {
                     || "Plant/Piping.RuptureDisc".equals(equipmentType) ? "PositionNumber" : "PipingComponentNumber")
                 : "TagName",
             unit.getName());
+        Dexpi201SizingWriter.equipment(equipment, unit.getName(), sizing);
         Element nozzles = components(document, equipment, pipingComponent ? "Nodes" : "Nozzles");
 
         List<StreamInterface> actualInlets = unit.getInletStreams();
@@ -285,6 +289,9 @@ public final class Dexpi20XmlWriter {
             nodeOwners.put(outletNode, outletNozzleId);
             if (outlets.get(i) != null) {
               outletNodes.put(outlets.get(i), outletNode);
+              if (sizing != null && outlets.get(i).getName() != null) {
+                namedOutletNodes.add(outletNode);
+              }
               boundaryOutletNodes.put(outletNode,
                   boundaryLabel(outlets.get(i), unit.getName() + " product " + (i + 1)));
             } else {
@@ -311,7 +318,7 @@ public final class Dexpi20XmlWriter {
         List<StreamInterface> inlets = unit.getInletStreams();
         if ((inlets == null || inlets.isEmpty()) && explicitBoundaryConnectors && targetNode != null) {
           appendBoundarySegment(document, segments, segmentNumber++, true, targetNode, nodeOwners.get(targetNode),
-              unit.getName() + " feed");
+              unit.getName() + " feed", null);
         } else if (inlets != null) {
           for (int inletIndex = 0; inletIndex < inlets.size(); inletIndex++) {
             StreamInterface inlet = inlets.get(inletIndex);
@@ -322,12 +329,12 @@ public final class Dexpi20XmlWriter {
             if (sourceNode == null || targetNode == null) {
               if (explicitBoundaryConnectors && targetNode != null) {
                 appendBoundarySegment(document, segments, segmentNumber++, true, targetNode, nodeOwners.get(targetNode),
-                    boundaryLabel(inlet, unit.getName() + " feed"));
+                    boundaryLabel(inlet, unit.getName() + " feed"), inlet == null ? null : sizing);
               }
               continue;
             }
             appendSegment(document, segments, segmentNumber++, sourceNode, targetNode, nodeOwners.get(sourceNode),
-                nodeOwners.get(targetNode));
+                nodeOwners.get(targetNode), inlet == null ? null : inlet.getName(), sizing);
             connectedOutletNodes.add(sourceNode);
           }
         }
@@ -336,7 +343,8 @@ public final class Dexpi20XmlWriter {
         for (Map.Entry<String, String> boundary : boundaryOutletNodes.entrySet()) {
           if (!connectedOutletNodes.contains(boundary.getKey())) {
             appendBoundarySegment(document, segments, segmentNumber++, false, boundary.getKey(),
-                nodeOwners.get(boundary.getKey()), boundary.getValue());
+                nodeOwners.get(boundary.getKey()), boundary.getValue(),
+                namedOutletNodes.contains(boundary.getKey()) ? sizing : null);
           }
         }
       }
@@ -389,7 +397,7 @@ public final class Dexpi20XmlWriter {
     return components;
   }
 
-  private static void data(Document document, Element parent, String property, String value) {
+  static void data(Document document, Element parent, String property, String value) {
     Element data = document.createElement("Data");
     data.setAttribute("property", property);
     Element string = document.createElement("String");
@@ -439,7 +447,7 @@ public final class Dexpi20XmlWriter {
   }
 
   private static void appendBoundarySegment(Document document, Element segments, int number, boolean inbound,
-      String equipmentNode, String equipmentItem, String label) {
+      String equipmentNode, String equipmentItem, String label, PidSizing sizing) {
     Element segment = object(document, "PipingNetworkSegment" + number, "Plant/Piping.PipingNetworkSegment");
     Element items = components(document, segment, "Items");
     String connectorId = "BoundaryConnector" + number;
@@ -468,11 +476,12 @@ public final class Dexpi20XmlWriter {
     references(document, segment, "TargetItem", targetItem);
     references(document, segment, "TargetNode", targetNode);
     data(document, segment, "SegmentNumber", Integer.toString(number));
+    Dexpi201SizingWriter.line(segment, label, sizing);
     segments.appendChild(segment);
   }
 
   private static void appendSegment(Document document, Element segments, int number, String sourceNode,
-      String targetNode, String sourceItem, String targetItem) {
+      String targetNode, String sourceItem, String targetItem, String label, PidSizing sizing) {
     Element segment = object(document, "PipingNetworkSegment" + number, "Plant/Piping.PipingNetworkSegment");
     Element connections = components(document, segment, "Connections");
     Element pipe = object(document, "Pipe" + number, "Plant/Piping.Pipe");
@@ -488,6 +497,7 @@ public final class Dexpi20XmlWriter {
     references(document, segment, "SourceNode", sourceNode);
     references(document, segment, "TargetNode", targetNode);
     data(document, segment, "SegmentNumber", Integer.toString(number));
+    Dexpi201SizingWriter.line(segment, label, sizing);
     segments.appendChild(segment);
   }
 

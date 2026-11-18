@@ -25,6 +25,7 @@ See [neqsim/](neqsim/) for standalone Java code you can copy into your projects.
 
 ### Process Simulation
 Complete flowsheets and unit operations:
+- [Oil stabilization and recompression commissioning](stabilization-commissioning/README.md)
 - Gas compression trains
 - TEG dehydration systems
 - Gas-Oil Separation Plants (GOSP)

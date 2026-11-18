@@ -1,6 +1,7 @@
 package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -30,6 +31,12 @@ class PipelineRunnerWellToTopsideSlugControlTest {
     assertEquals("success", result.get("status").getAsString(), result.toString());
     assertEquals("neqsim-5036-well-to-topside", result.getAsJsonObject("data").get("caseId").getAsString());
     assertEquals("qualified fixed pressure", result.getAsJsonObject("data").get("outletBoundaryMode").getAsString());
+    JsonObject evidence = result.getAsJsonObject("quantityEvidence");
+    assertEquals(60, evidence.get("meshCells").getAsInt());
+    assertFalse(evidence.get("pairedRefinementExecuted").getAsBoolean());
+    assertFalse(evidence.get("independentFieldComparison").getAsBoolean());
+    assertEquals(result.getAsJsonObject("data").getAsJsonObject("regulated").get("liquidPeak_kg_s"),
+        evidence.getAsJsonObject("regulated").get("peakRiserLiquidKgPerSecond"));
     assertTrue(result.getAsJsonObject("data").getAsJsonObject("openLoop").getAsJsonArray("timeSeries").size() >= 4);
     assertTrue(result.getAsJsonObject("data").getAsJsonObject("regulated").getAsJsonArray("timeSeries").size() >= 4);
   }

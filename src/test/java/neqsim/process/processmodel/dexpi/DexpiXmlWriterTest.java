@@ -611,6 +611,10 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     assertTrue(xml.contains("String=\"6000 mm\""), "Tan-to-tan length should be converted from metres to 6000 mm");
     assertTrue(xml.contains("String=\"20 mm\""), "Wall thickness should be converted from metres to 20 mm");
 
+    assertTrue(xml.contains("Name=\"InnerDiameter\" Unit=\"mm\" Value=\"2000\""));
+    assertTrue(xml.contains("Name=\"WallThickness\" Unit=\"mm\" Value=\"20\""));
+    assertTrue(xml.contains("Name=\"TanTanLength\" Unit=\"mm\" Value=\"6000\""));
+
     // The placeholder design temperature (100.0 K -> -173.1 C) must not leak into the bar label.
     assertFalse(xml.contains("-173.1"), "Placeholder design temperature (-173.1 C) should be suppressed");
   }

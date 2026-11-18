@@ -17,6 +17,10 @@ and dynamic tests based on the final drawing."
    project-entered values. Record missing input as HOLD with owner and rationale.
    For a new 2.0.1 project use the three-argument
    `NorsokOffshoreEngineeringBuilder.from(name, process, "2.0.1")` overload.
+   For a sized P&ID, set the screening schedule with `project.setPidSizingSchedule("40")`
+   or the project schedule. Supply controlled stream tags, sizes and piping classes through
+   `LineDesignInput`. Compare the tagged sizes in the issued SVG/PDF, `pid-sizing.json`
+   and native segment/chamber/equipment properties. Retain preliminary and HOLD markings.
    The professional exporter requires this edition in the standards register;
    legacy two-argument builder calls retain their existing 2.0 basis.
 3. Establish battery limits, sheet format, project tag conventions, jurisdiction

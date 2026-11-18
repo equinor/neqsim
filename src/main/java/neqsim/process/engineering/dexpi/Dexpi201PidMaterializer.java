@@ -1,5 +1,7 @@
 package neqsim.process.engineering.dexpi;
 
+import neqsim.process.engineering.pid.PidSizing;
+import neqsim.process.processmodel.dexpi.Dexpi201SizingWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -153,6 +155,26 @@ public final class Dexpi201PidMaterializer {
     if (project == null || model == null || bindings == null || file == null) {
       throw new IllegalArgumentException("project, model, bindings and file are required");
     }
+    return materialize(project, model, bindings, file, new PidSizing(project));
+  }
+
+  /**
+   * Materializes attachments with the engineering sizes used for the native process lines.
+   * 
+   * @param project source project
+   * @param model source proposal model
+   * @param bindings executable bindings
+   * @param file native Plant XML
+   * @param sizing drawing and exchange sizing
+   * @return projection assessment
+   * @throws IOException if materialization fails
+   */
+  public static Result materialize(EngineeringProject project, PidDesignModel model, PidSimulationBindings bindings,
+      Path file, PidSizing sizing) throws IOException {
+    Path outputName = file == null ? null : file.getFileName();
+    if (project == null || outputName == null || sizing == null || model == null || bindings == null) {
+      throw new IllegalArgumentException("project, sizing and a destination filename are required");
+    }
     bindings.assertCurrent(project, model);
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -165,7 +187,7 @@ public final class Dexpi201PidMaterializer {
         throw new IllegalArgumentException("Native P&ID projection requires the exact DEXPI 2.0.1 Plant profile");
       }
       Context context = new Context(project.getEngineeringProcessSystem(), model, document,
-          PidPhysicalProjection.resolve(project.getEngineeringProcessSystem(), model, bindings));
+          PidPhysicalProjection.resolve(project.getEngineeringProcessSystem(), model, bindings), sizing);
       context.project();
       TransformerFactory transforms = TransformerFactory.newInstance();
       transforms.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -174,7 +196,7 @@ public final class Dexpi201PidMaterializer {
       removeWhitespace(document.getDocumentElement());
       transformer.transform(new DOMSource(document), new StreamResult(file.toFile()));
       Result result = new Result(context, Dexpi201XmlWriter.assess(file));
-      Files.write(file.resolveSibling(file.getFileName().toString() + ".pid-projection.json"),
+      Files.write(file.resolveSibling(outputName + ".pid-projection.json"),
           result.toJson().getBytes(StandardCharsets.UTF_8));
       return result;
     } catch (IllegalArgumentException ex) {
@@ -186,6 +208,7 @@ public final class Dexpi201PidMaterializer {
 
   /** Source-backed mutable document transformation used only for one export. */
   private static final class Context {
+    private final PidSizing sizing;
     private final ProcessSystem process;
     private final PidDesignModel model;
     private final Document document;
@@ -213,9 +236,12 @@ public final class Dexpi201PidMaterializer {
      * @param source source process
      * @param pid source P&amp;ID
      * @param xml existing native document
+     * @param sizing resolved case sizing
      * @param attachments shared attachment register
      */
-    private Context(ProcessSystem source, PidDesignModel pid, Document xml, PidPhysicalProjection attachments) {
+    private Context(ProcessSystem source, PidDesignModel pid, Document xml, PidPhysicalProjection attachments,
+        PidSizing sizing) {
+      this.sizing = sizing;
       process = source;
       model = pid;
       document = xml;
@@ -622,6 +648,7 @@ public final class Dexpi201PidMaterializer {
           + (attachment.getSourceNozzleTag().isEmpty() ? "Branch" : "Node");
       Element segment = object("PidAuxiliarySegment_" + safe(element.getId()), "Plant/Piping.PipingNetworkSegment");
       setData(segment, "SegmentNumber", attachment.getMaterialLineTag());
+      Dexpi201SizingWriter.line(segment, attachment.getMaterialLineTag(), sizing);
       Element system = object("PidAuxiliarySystem_" + safe(element.getId()), "Plant/Piping.PipingNetworkSystem");
       setData(system, "LineNumber", attachment.getMaterialLineTag());
       components(system, "Segments").appendChild(segment);

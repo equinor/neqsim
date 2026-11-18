@@ -191,11 +191,34 @@ public class PipelineRunner {
     try {
       JsonObject result = new JsonObject();
       result.addProperty("status", "success");
-      result.add("data", GSON
-          .toJsonTree(WellToTopsideSlugControlStudy.runComparison(duration, timeStep, meshRefinement, sampleInterval)));
+      JsonObject data = GSON
+          .toJsonTree(WellToTopsideSlugControlStudy.runComparison(duration, timeStep, meshRefinement, sampleInterval))
+          .getAsJsonObject();
+      result.add("data", data);
+      JsonObject evidence = new JsonObject();
+      evidence.addProperty("benchmark", "neqsim-5036-well-to-topside");
+      evidence.addProperty("boundary", data.get("outletBoundaryMode").getAsString());
+      evidence.addProperty("meshCells", 60 * meshRefinement);
+      evidence.addProperty("timeStepSeconds", timeStep);
+      evidence.addProperty("independentFieldComparison", false);
+      evidence.addProperty("pairedRefinementExecuted", false);
+      evidence.addProperty("suppliedWellPressureDisturbance", true);
+      for (String mode : new String[] {"openLoop", "regulated"}) {
+        JsonObject replay = data.getAsJsonObject(mode);
+        JsonObject quantities = new JsonObject();
+        quantities.add("pipePhaseResidualKg", replay.get("maximumPipeResidual_kg"));
+        quantities.add("peakRiserLiquidKgPerSecond", replay.get("liquidPeak_kg_s"));
+        quantities.add("meanInletProductionKgPerSecond", replay.get("meanProduction_kg_s"));
+        evidence.add(mode, quantities);
+      }
+      result.add("quantityEvidence", evidence);
       ResultProvenance provenance = new ResultProvenance();
       provenance.setCalculationType("well-to-topside slug-control replay");
       provenance.setThermodynamicModel("SRK");
+      provenance.setMixingRule("classic");
+      provenance.addAssumption("The riser outlet pressure is prescribed independently of the separator.");
+      provenance.addLimitation("Phase inventory residuals measure numerical balance. Assess liquid peaks and "
+          + "control rankings on independent meshes, time steps and observed trajectories.");
       provenance.setConverged(true);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       result.add("provenance", GSON.toJsonTree(provenance));
