@@ -266,6 +266,10 @@ bottom-hole stream. The next example explicitly includes 3000 m of vertical tubi
 select the matching `setVLPSolverMode` as described in the well guide. Check the operating-point
 convergence flag and the physical pressure residual before accepting an integrated solution.
 
+In `neqsim.process.equipment.reservoir.TubingPerformance`, selecting `HASAN_KABIR_ENERGY`
+produces the same temperature profile as `RAMEY`. This calculation omits the Joule–Thomson
+effect and frictional heating. The `HASAN_KABIR` pressure-drop correlation is configured independently.
+
 ## Choke Modeling
 
 Use `ThrottlingValve` for a specified downstream pressure. This performs an isenthalpic pressure

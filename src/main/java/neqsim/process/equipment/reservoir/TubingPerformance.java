@@ -36,6 +36,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li><b>ISOTHERMAL</b> - Constant temperature throughout tubing</li>
  * <li><b>LINEAR_GRADIENT</b> - Linear temperature profile from BH to WH</li>
  * <li><b>RAMEY</b> - Ramey (1962) steady-state geothermal model</li>
+ * <li>{@link TemperatureModel#HASAN_KABIR_ENERGY} - Uses the Ramey temperature calculation</li>
  * </ul>
  *
  * <h2>Usage Example - VLP Curve Generation</h2>
@@ -158,7 +159,8 @@ public class TubingPerformance extends TwoPortEquipment {
     RAMEY,
 
     /**
-     * Hasan-Kabir energy balance - Coupled flow and heat transfer. Includes Joule-Thomson effect and friction heating.
+     * Reserved for a coupled Hasan-Kabir energy balance. Currently uses the same temperature calculation as
+     * {@link #RAMEY}, without Joule-Thomson or friction-heating terms.
      */
     HASAN_KABIR_ENERGY
   }
