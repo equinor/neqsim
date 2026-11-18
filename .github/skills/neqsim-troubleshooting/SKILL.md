@@ -1,12 +1,29 @@
 ---
 name: neqsim-troubleshooting
-description: "Troubleshooting playbook for common NeqSim failures. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
-last_verified: "2026-11-16"
+description: "Troubleshoot oil and gas process operating problems and NeqSim simulation failures. Route measured plant disturbances to the root-cause agent. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
+last_verified: "2026-11-18"
 ---
 
 # NeqSim Troubleshooting Playbook
 
-Ranked recovery strategies for common failure modes. Try steps in order — stop when the issue is resolved.
+## Start from the reported symptom
+
+For oil and gas process troubleshooting, first establish whether the observation
+comes from an instrument, a simulation, or both. Preserve timestamps, units,
+operating mode and the last stable period. Route a measured disturbance to
+`@root-cause` with the [equipment RCA workflow](../neqsim-root-cause-analysis/SKILL.md).
+Choose evidence that can distinguish competing causes.
+
+| Observation | Evidence to acquire first | What it can distinguish |
+| --- | --- | --- |
+| Separator filling or export flow shortfall | Meter directions, all products and boundary crossings, total mass inventories and their uncertainty | Normal accumulation, an unmetered outflow and a flowmeter bias. Use the joint inventory balance. |
+| Compressor flow and recycle valve cycling | Synchronized suction and discharge pressure, flow, speed, recycle command and actual position, plus the applicable map | Recycle-loop interaction, a propagated feed disturbance and a local compressor upset. Check event order and control mode. |
+| Heat exchanger outlet temperature rising | Hot and cold flows, all four terminal temperatures, pressure drops, bypass position and utility inlet conditions | Changing load or utility temperature, bypass mixing and loss of heat-transfer performance. |
+| Downstream liquid carryover | Independent level or inventory, inlet loading, demister differential pressure and downstream liquid evidence | Upstream liquid surges, separator loading and faulty level indication. |
+
+For a numerical failure, reproduce the case from the recorded feed and equipment
+settings and use the solver-specific sections below. If a model reproduces a
+plant symptom, record which independent measurement could test its proposed cause.
 
 ## Flash Non-Convergence
 

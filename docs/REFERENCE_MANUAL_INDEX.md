@@ -891,7 +891,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 | Document                   | Path                                                                               | Description                                                               |
 | -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis.md)         | RCA framework architecture, confidence scoring, usage examples            |
+| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis.md)         | Equipment RCA, inventory balances, flowmeter bias and fault isolation            |
 
 #### Key Classes in Diagnostics Framework
 

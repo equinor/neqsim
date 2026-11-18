@@ -3,9 +3,13 @@ package neqsim.mcp.runners;
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -15,6 +19,8 @@ import com.google.gson.JsonParser;
 import neqsim.process.diagnostics.AnomalyScanner;
 import neqsim.process.diagnostics.CausalTopologyModel;
 import neqsim.process.diagnostics.DiagnosisCase;
+import neqsim.process.diagnostics.ProcessBalanceDiagnosis;
+import neqsim.process.diagnostics.RcaProcessWindow;
 import neqsim.process.diagnostics.RelationshipGraph;
 import neqsim.process.diagnostics.RootCauseAnalyzer;
 import neqsim.process.diagnostics.RootCauseReport;
@@ -41,6 +47,8 @@ import neqsim.process.processmodel.SimulationResult;
  * <li>{@code designLimits} — optional map of parameter to [min, max] design limits</li>
  * <li>{@code stidData} — optional map of STID design values</li>
  * <li>{@code simulationEnabled} — whether to run simulation verification (default true)</li>
+ * <li>{@code massBalance} — optional synchronized inventory and directed meter measurements with absolute error
+ * bounds</li>
  * <li>{@code diagnosisCase} — optional reproducibility, provenance, and operating-context metadata</li>
  * </ul>
  *
@@ -91,6 +99,8 @@ public final class RootCauseRunner {
           autonomous = false;
         }
       }
+
+      final JsonElement balance = input.has("massBalance") ? assessMassBalance(input.get("massBalance")) : null;
 
       // Build process from JSON
       String processJsonStr = getRequiredString(input, "processJson");
@@ -199,6 +209,9 @@ public final class RootCauseRunner {
       result.add("anomalies", anomaliesToJson(rca));
       result.add("relationships", relationshipsToJson(rca));
       result.add("causalEdges", causalEdgesToJson(rca));
+      if (balance != null) {
+        result.add("massBalance", balance);
+      }
       return GSON.toJson(result);
 
     } catch (IllegalArgumentException e) {
@@ -208,6 +221,119 @@ public final class RootCauseRunner {
     } catch (Exception e) {
       return errorJson("Root cause analysis failed: " + e.getMessage());
     }
+  }
+
+  /**
+   * Evaluates an optional, independent mass-balance evidence window.
+   *
+   * @param input JSON object containing inventories, meters and synchronized samples
+   * @return diagnosis as nested JSON evidence
+   * @throws IllegalArgumentException for a malformed input or inconsistent topology
+   */
+  private static JsonElement assessMassBalance(JsonElement input) {
+    JsonObject block = balanceObject(input, "massBalance", "sampleIntervalSeconds", "signals",
+        "inventoryChangeBoundsKg", "meters");
+    final double interval = balanceNumber(block.get("sampleIntervalSeconds"), "sampleIntervalSeconds");
+    Map<String, Double> bounds = new LinkedHashMap<String, Double>();
+    JsonObject inventories = balanceObject(block.get("inventoryChangeBoundsKg"), "inventoryChangeBoundsKg");
+    for (Map.Entry<String, JsonElement> entry : inventories.entrySet()) {
+      bounds.put(entry.getKey(), balanceNumber(entry.getValue(), entry.getKey()));
+    }
+
+    Set<String> tags = new LinkedHashSet<String>(bounds.keySet());
+    List<ProcessBalanceDiagnosis.Meter> meters = new ArrayList<ProcessBalanceDiagnosis.Meter>();
+    for (JsonElement item : balanceArray(block.get("meters"), "meters")) {
+      JsonObject meter = balanceObject(item, "meter", "tag", "from", "to", "errorKgPerS");
+      String tag = balanceTag(meter.get("tag"), "tag");
+      if (!tags.add(tag)) {
+        throw new IllegalArgumentException("massBalance: duplicate tag " + tag);
+      }
+      String from = meter.get("from").isJsonNull() ? null : balanceTag(meter.get("from"), "from");
+      String to = meter.get("to").isJsonNull() ? null : balanceTag(meter.get("to"), "to");
+      meters.add(
+          new ProcessBalanceDiagnosis.Meter(tag, from, to, balanceNumber(meter.get("errorKgPerS"), "errorKgPerS")));
+    }
+
+    JsonObject signals = balanceObject(block.get("signals"), "signals");
+    if (!signals.keySet().equals(tags)) {
+      throw new IllegalArgumentException("massBalance: signals must match exactly the inventory and meter tags");
+    }
+    RcaProcessWindow.Builder window = RcaProcessWindow.builder("massBalance", interval);
+    for (Map.Entry<String, JsonElement> entry : signals.entrySet()) {
+      JsonArray samples = balanceArray(entry.getValue(), entry.getKey());
+      double[] values = new double[samples.size()];
+      for (int i = 0; i < values.length; i++) {
+        values[i] = balanceNumber(samples.get(i), entry.getKey());
+      }
+      window.signal(entry.getKey(), values);
+    }
+    return GSON.toJsonTree(ProcessBalanceDiagnosis.assess(window.build(), bounds, meters));
+  }
+
+  /**
+   * Reads an object and, for fixed-format records, checks for both missing and unknown fields.
+   *
+   * @param value JSON node
+   * @param name diagnostic field name
+   * @param fields expected record fields, or empty for a tag-keyed map
+   * @return validated object
+   * @throws IllegalArgumentException for unexpected shape
+   */
+  private static JsonObject balanceObject(JsonElement value, String name, String... fields) {
+    if (value == null || !value.isJsonObject()) {
+      throw new IllegalArgumentException("massBalance: " + name + " must be an object");
+    }
+    JsonObject object = value.getAsJsonObject();
+    List<String> expected = Arrays.asList(fields);
+    if (!expected.isEmpty() && (object.size() != expected.size() || !object.keySet().containsAll(expected))) {
+      throw new IllegalArgumentException("massBalance: " + name + " must contain exactly " + expected);
+    }
+    return object;
+  }
+
+  /**
+   * Reads a required array.
+   *
+   * @param value JSON node
+   * @param name diagnostic field name
+   * @return input array
+   * @throws IllegalArgumentException for an unexpected type
+   */
+  private static JsonArray balanceArray(JsonElement value, String name) {
+    if (value == null || !value.isJsonArray()) {
+      throw new IllegalArgumentException("massBalance: " + name + " must be an array");
+    }
+    return value.getAsJsonArray();
+  }
+
+  /**
+   * Reads a finite JSON number without coercing strings or booleans.
+   *
+   * @param value JSON node
+   * @param name diagnostic field name
+   * @return numeric value
+   * @throws IllegalArgumentException for an invalid number
+   */
+  private static double balanceNumber(JsonElement value, String name) {
+    if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber() || !Double.isFinite(value.getAsDouble())) {
+      throw new IllegalArgumentException("massBalance: " + name + " must be a finite number");
+    }
+    return value.getAsDouble();
+  }
+
+  /**
+   * Reads a nonempty JSON tag string.
+   *
+   * @param value JSON node
+   * @param name diagnostic field name
+   * @return tag string
+   * @throws IllegalArgumentException for an invalid tag
+   */
+  private static String balanceTag(JsonElement value, String name) {
+    if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString() || value.getAsString().trim().isEmpty()) {
+      throw new IllegalArgumentException("massBalance: " + name + " must be a nonempty string");
+    }
+    return value.getAsString();
   }
 
   /**

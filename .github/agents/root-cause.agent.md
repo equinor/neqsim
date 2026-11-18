@@ -1,6 +1,7 @@
 ---
 name: root-cause
-description: "Performs root cause analysis on process equipment - compressor trips and vibration, pump/compressor efficiency loss, separator carryover, exchanger fouling and U-value loss, cooling-water/medium degradation, valve and capacity limits - combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, OREDA), historian data, STID design conditions and NeqSim simulation into ranked hypotheses with Bayesian confidence."
+last_verified: "2026-11-18"
+description: "Troubleshoots oil and gas process disturbances, flowmeter bias and missing throughput across connected equipment. Performs root cause analysis on process equipment - compressor trips and vibration, pump/compressor efficiency loss, separator carryover, exchanger fouling and U-value loss, cooling-water/medium degradation, valve and capacity limits - combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, OREDA), historian data, STID design conditions and NeqSim simulation into ranked hypotheses with Bayesian confidence."
 required_skills:
 - neqsim-root-cause-analysis
 - neqsim-flow-accelerated-corrosion
@@ -45,6 +46,15 @@ matching failure-mode counts with `RootCauseAnalyzer.addIncidentHistoryPrior(...
 skill's "Incident and Recurrence History" section. History is a capped prior, not a cause.
 An installed plugin may supply an incident-history evidence agent; record it in
 `agent_workflow_plan.evidence_sources` (`used`, `not_applicable` or `no_access` with a reason).
+
+For missing throughput, unexplained inventory movement, or suspected flowmeter bias,
+recover the measured control volumes and meter directions from the P&ID. Follow the
+inventory balance section of `neqsim-root-cause-analysis` to add `massBalance` to
+the RCA request. Report residuals, budgets and each compatible fault with its
+rate range. For an ambiguous separator loss, identify the independent gas, oil
+or water measurement that would distinguish it from a meter error. If a needed
+inventory or bound is unavailable, record that gap and continue with the other
+RCA evidence.
 
 ## Operating Principles
 

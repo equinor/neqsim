@@ -1349,6 +1349,34 @@
       }
     },
     {
+      "id": "inventory-balance-fault-isolation",
+      "title": "Inventory-compensated flow discrepancy and single-fault isolation",
+      "domain": "process",
+      "tool": "runRootCauseAnalysis",
+      "apis": [
+        "neqsim.process.diagnostics.ProcessBalanceDiagnosis"
+      ],
+      "skills": [
+        "neqsim-root-cause-analysis"
+      ],
+      "agents": [
+        "root-cause"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/diagnostics/ProcessBalanceDiagnosisTest.java",
+        "src/test/java/neqsim/process/diagnostics/ProcessBalanceFlowsheetTest.java",
+        "src/test/java/neqsim/process/diagnostics/ProcessBalanceCutSetTest.java",
+        "src/test/java/neqsim/mcp/runners/RootCauseMassBalanceTest.java"
+      ],
+      "limitations": "Synchronized mass flows and inventories, known boundaries and caller-supplied absolute error bounds. Single mean meter bias or unmetered outflow screened against joint bounded-error balances. Field performance unqualified.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "laboratory-cvd-material-balance",
       "title": "Source-identified laboratory CVD component accounting",
       "domain": "pvt",
@@ -2667,7 +2695,7 @@
     {"id":"neqsim.mathlib.nonlinearsolver.NumericalIntegration","kind":"class","source":"src/main/java/neqsim/mathlib/nonlinearsolver/NumericalIntegration.java","sourceDigest":"aedda8471b6304e3131d9675ecb3323e5c62b08acb40e3df8c446ed15a43806b","domain":"mathlib","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.mathlib.nonlinearsolver.SysNewtonRhapson","kind":"class","source":"src/main/java/neqsim/mathlib/nonlinearsolver/SysNewtonRhapson.java","sourceDigest":"d4693801a4f5d2f27d667bc508ee2166b719e6db161484f1f9e87cee6a102153","domain":"mathlib","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.mcp.catalog.ExampleCatalog","kind":"class","source":"src/main/java/neqsim/mcp/catalog/ExampleCatalog.java","sourceDigest":"3ce9786a2c860bf4fd0e4b9031c9ae0ee604ed63eab2f7405214d8ddc5655780","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
-    {"id":"neqsim.mcp.catalog.SchemaCatalog","kind":"class","source":"src/main/java/neqsim/mcp/catalog/SchemaCatalog.java","sourceDigest":"203f61cab6e50a8556690136afc9173641325737b022c6883ced88cf73f861b6","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
+    {"id":"neqsim.mcp.catalog.SchemaCatalog","kind":"class","source":"src/main/java/neqsim/mcp/catalog/SchemaCatalog.java","sourceDigest":"73f8ea0baa20d2861d46dc9defddaa8eaec595c61444f49ea80635b9424bbffa","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.catalog.SchemaChecker","kind":"class","source":"src/main/java/neqsim/mcp/catalog/SchemaChecker.java","sourceDigest":"f0df94a2e3a593537808f8fc2bfdfd962cb8de0b31c1100bcf8aff4587c577a7","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.model.ApiEnvelope","kind":"class","source":"src/main/java/neqsim/mcp/model/ApiEnvelope.java","sourceDigest":"2b49947da59608ddc1b5bdc9ccde65e040f45de329f929dcf3bf4fa279cf83f1","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.model.DiagnosticIssue","kind":"class","source":"src/main/java/neqsim/mcp/model/DiagnosticIssue.java","sourceDigest":"406039154e50b838bb5006f7cf6ad75b712005cc2e377c003119477249ea3265","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
@@ -2730,7 +2758,7 @@
     {"id":"neqsim.mcp.runners.ReservoirRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/ReservoirRunner.java","sourceDigest":"cb3d7c22fa8e3449d6045ad20da4fd37f80f6b7040262dd828fde7869b65ed7d","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.ResponseSizeGuard","kind":"class","source":"src/main/java/neqsim/mcp/runners/ResponseSizeGuard.java","sourceDigest":"4fefc74c7f424d1ab3a19d83f95de33534cbc1d4e352572ee5850c3ec902a0eb","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.RiskMatrixRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/RiskMatrixRunner.java","sourceDigest":"a25f949d682e230287630498d9b2cc589621fbc70e5dcb10638d70bd56d5d541","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
-    {"id":"neqsim.mcp.runners.RootCauseRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/RootCauseRunner.java","sourceDigest":"2a45ad4ad1a2ee5c21ee39e5fe97b496155caff3fb5f18461cae1c142eb27462","domain":"mcp","skills":["neqsim-plant-data","neqsim-root-cause-analysis"],"agents":["continuous-improvement","emulsion-separation","plant-data","root-cause","solve-task"],"capabilities":[],"disposition":"infrastructure"},
+    {"id":"neqsim.mcp.runners.RootCauseRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/RootCauseRunner.java","sourceDigest":"87b5fd5ab278c2df9b6cf40c6f88477cc2567a69c34fec81116427ccc5b0c085","domain":"mcp","skills":["neqsim-plant-data","neqsim-root-cause-analysis"],"agents":["continuous-improvement","emulsion-separation","plant-data","root-cause","solve-task"],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.SILRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/SILRunner.java","sourceDigest":"6d18b77dbf8c0e26fb31d6218a0107f8af5badedca9ac7e86177c32e2e43a465","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.SafetySystemPerformanceRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/SafetySystemPerformanceRunner.java","sourceDigest":"e2f9b0e994e33f14f822439a5b23d020d6c541295c4bc5bc951ee042e2cd9499","domain":"mcp","skills":["neqsim-operational-risk-and-safety-validation"],"agents":["safety-depressuring","standards-review"],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.SecurityRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/SecurityRunner.java","sourceDigest":"4a8bcecdb494d45964d555189f423b21db211707f6b71ebd4f96e80bc3dc51e6","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
@@ -3029,6 +3057,7 @@
     {"id":"neqsim.process.diagnostics.Hypothesis","kind":"class","source":"src/main/java/neqsim/process/diagnostics/Hypothesis.java","sourceDigest":"451fec4bfe168aa1e135e943da823f8356524117ff060c0a11980cfd0951517d","domain":"process","skills":["neqsim-capability-map","neqsim-root-cause-analysis"],"agents":["capability-scout","emulsion-separation","engineering-deliverables","mechanical-design","root-cause","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.diagnostics.HypothesisGenerator","kind":"class","source":"src/main/java/neqsim/process/diagnostics/HypothesisGenerator.java","sourceDigest":"6fc4beede69ed858e7f30ad08f5b6478ed3f54c2062c11de8145b59dc575ea49","domain":"process","skills":["neqsim-capability-map","neqsim-root-cause-analysis"],"agents":["capability-scout","emulsion-separation","engineering-deliverables","mechanical-design","root-cause","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.diagnostics.OscillationAnalyzer","kind":"class","source":"src/main/java/neqsim/process/diagnostics/OscillationAnalyzer.java","sourceDigest":"24723121a2710c8615846735f9823699469022069cc96077510625244f08bb11","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.diagnostics.ProcessBalanceDiagnosis","kind":"class","source":"src/main/java/neqsim/process/diagnostics/ProcessBalanceDiagnosis.java","sourceDigest":"2165e7d585271974c662d5d477be19a49a39a3afb43c5667c49b1b5571f0aa06","domain":"process","skills":["neqsim-root-cause-analysis"],"agents":["emulsion-separation","root-cause","solve-task"],"capabilities":["inventory-balance-fault-isolation"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.diagnostics.RcaDiagnosis","kind":"class","source":"src/main/java/neqsim/process/diagnostics/RcaDiagnosis.java","sourceDigest":"e7d05567286ccc4d87dabbbc1711a1f6cd0e27f39f8f76eba80b20282e1cf920","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.diagnostics.RcaDiagnosisEngine","kind":"class","source":"src/main/java/neqsim/process/diagnostics/RcaDiagnosisEngine.java","sourceDigest":"2f1a77ddb189f5d71fa102079f8b16f069b339fd67981e9cec3e9ef5c14c3fec","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.diagnostics.RcaEvidence","kind":"class","source":"src/main/java/neqsim/process/diagnostics/RcaEvidence.java","sourceDigest":"267f3698a7fbad0674a48cb3d270bf64fecb8bf3bf0f193b5ae1559572185e9f","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
