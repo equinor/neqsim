@@ -3,6 +3,7 @@ package neqsim.process.util.fire;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import neqsim.process.safety.depressurization.PsvValveModel;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -102,22 +103,30 @@ public class ReliefValveSizingTest {
   }
 
   @Test
-  void testMassFlowCapacity() {
-    double orificeArea = 1e-3; // m² (~1.5 in²)
-    double setPressure = 20e5;
-    double overpressure = 0.10;
-    double backPressure = 1e5;
-    double temperature = 300.0;
-    double molecularWeight = 0.016;
-    double Z = 0.95;
-    double gamma = 1.3;
-    double Kd = 0.975;
+  void gasCapacityMatchesIndependentNozzleValuesAndOpenPsv() {
+    double relievingPressure = 5.0e6;
+    double criticalPressure = relievingPressure * Math.pow(2.0 / 2.3, 1.3 / 0.3);
+    // Independent isentropic nozzle values for 100 mm2, Kd=0.975, M=0.020 kg/mol, Z=1 and 300 K.
+    double[] backPressures = {1.0e5, criticalPressure * 0.999999, criticalPressure * 1.000001, 4.0e6};
+    double[] expectedKgPerS = {0.92110368, 0.92110368, 0.92110368, 0.76684207};
+    for (int i = 0; i < backPressures.length; i++) {
+      double capacity = ReliefValveSizing.calculateMassFlowCapacity(1.0e-4, relievingPressure, 0.0, backPressures[i],
+          300.0, 0.020, 1.0, 1.3, 0.975);
+      assertEquals(expectedKgPerS[i], capacity, 1.0e-6);
 
-    double capacity = ReliefValveSizing.calculateMassFlowCapacity(orificeArea, setPressure, overpressure, backPressure,
-        temperature, molecularWeight, Z, gamma, Kd);
+      PsvValveModel valve = new PsvValveModel(relievingPressure, 0.07, 0.975, 1.0e-4, backPressures[i]);
+      valve.update(relievingPressure);
+      assertEquals(valve.massFlowKgPerS(relievingPressure, 300.0, 0.020, 1.3, 1.0), capacity, 3.0e-5);
+    }
+  }
 
-    assertTrue(capacity > 0, "Capacity should be positive");
-    assertTrue(capacity > 0.1, "Should have reasonable flow capacity for this size");
+  @Test
+  void forwardGasCapacityIsZeroAtOrAboveRelievingPressure() {
+    // 40 bara set pressure with 25% overpressure gives 50 bara at the inlet.
+    for (double backPressure : new double[] {5.0e6, 5.1e6}) {
+      assertEquals(0.0, ReliefValveSizing.calculateMassFlowCapacity(1.0e-4, 4.0e6, 0.25, backPressure, 300.0, 0.020,
+          1.0, 1.3, 0.975));
+    }
   }
 
   @Test

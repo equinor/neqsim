@@ -149,6 +149,19 @@ Use these explicit result getters:
 - `getDischargeCoefficient()`, `getBackPressureCorrectionFactor()`, and
   `getCombinationCorrectionFactor()`.
 
+### Forward gas capacity
+
+`calculateMassFlowCapacity` evaluates isentropic nozzle discharge using effective area in m², molecular
+weight in kg/mol and absolute pressures in Pa. It uses the choked expression below the critical downstream
+pressure ratio and the subcritical expression above it. Forward capacity is zero when back pressure
+reaches or exceeds the relieving pressure.
+
+For 100 mm², 50 bara relieving pressure, 300 K, 0.020 kg/mol, $Z=1$, $k=1.3$ and $K_d=0.975$, the
+capacity is 0.92110 kg/s at 1 bara back pressure and 0.76684 kg/s at 40 bara. Earlier versions used a
+kilomole gas constant with kg/mol inputs and understated forward capacity by approximately 31.6.
+Recalculate historical results that used this method with the documented units. Required-area screening
+uses a separate equation.
+
 ## Liquid screening
 
 `calculateLiquidReliefArea(...)` requires volumetric flow at relieving conditions, density, absolute pressures,
