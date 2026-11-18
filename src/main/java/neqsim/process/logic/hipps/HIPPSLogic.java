@@ -99,7 +99,8 @@ public class HIPPSLogic implements ProcessLogic {
     if (isolationValves == null) {
       isolationValves = new ArrayList<>();
       if (isolationValve != null) {
-        addIsolationValve(isolationValve);
+        isolationValves.add(isolationValve);
+        isolationValve = null;
       }
     }
   }
@@ -127,7 +128,6 @@ public class HIPPSLogic implements ProcessLogic {
    * @param valve isolation valve (typically full-bore ball valve)
    */
   public void setIsolationValve(ThrottlingValve valve) {
-    isolationValve = null;
     isolationValves.clear();
     if (valve != null) {
       addIsolationValve(valve);
@@ -142,9 +142,6 @@ public class HIPPSLogic implements ProcessLogic {
   public void addIsolationValve(ThrottlingValve valve) {
     if (valve == null || isolationValves.contains(valve)) {
       throw new IllegalArgumentException("Each final element must be distinct");
-    }
-    if (isolationValves.isEmpty()) {
-      isolationValve = valve;
     }
     isolationValves.add(valve);
     configureStroke(valve);

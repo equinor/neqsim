@@ -139,9 +139,9 @@ class HippsDocumentationContractTest(unittest.TestCase):
                     "MeasurementDeviceInterface transmitter)"
                 ),
                 "public void setVotingLogic(VotingLogic logic)",
-                "public void runTransient(double dt, UUID id)",
+                "public synchronized void runTransient(double dt, UUID id)",
                 "public void setSILRating(int sil)",
-                "public void reset()",
+                "public synchronized void reset()",
             ),
             "HIPPSLogic": (
                 "public HIPPSLogic(String name, VotingLogic votingLogic)",

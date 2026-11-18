@@ -81,7 +81,7 @@ public class HIPPSValve extends ThrottlingValve {
   private VotingLogic votingLogic = VotingLogic.TWO_OUT_OF_THREE;
 
   /** Indicates if HIPPS has tripped. */
-  private boolean hasTripped = false;
+  private volatile boolean hasTripped = false;
 
   /** Time required for valve to close (seconds). */
   private double closureTime = 3.0; // Typical SIL-rated actuator: 2-5 seconds
@@ -93,10 +93,10 @@ public class HIPPSValve extends ThrottlingValve {
   private boolean tripEnabled = true;
 
   /** Timestamp of last trip event (for diagnostics). */
-  private double lastTripTime = -1.0;
+  private volatile double lastTripTime = -1.0;
 
   /** Cumulative time in simulation (for diagnostics). */
-  private double cumulativeTime = 0.0;
+  private volatile double cumulativeTime = 0.0;
 
   /** Count of spurious trips (for diagnostics). */
   private int spuriousTripCount = 0;
@@ -105,10 +105,10 @@ public class HIPPSValve extends ThrottlingValve {
   private int tripCount;
 
   /** A simulated loss of motion holds measured position while preserving the requested target. */
-  private boolean actuatorStuck;
+  private volatile boolean actuatorStuck;
 
   /** Flag indicating if partial stroke test is active. */
-  private boolean partialStrokeTestActive = false;
+  private volatile boolean partialStrokeTestActive = false;
 
   /** Target opening for partial stroke test. */
   private double partialStrokeTestTarget = 0.0;
@@ -158,7 +158,8 @@ public class HIPPSValve extends ThrottlingValve {
    */
   public HIPPSValve(String name) {
     super(name);
-    setClosureTime(closureTime);
+    super.setClosingTravelTime(closureTime);
+    super.setTravelModel(ValveTravelModel.LINEAR_RATE_LIMIT);
     // HIPPS valves start fully open
     setPercentValveOpening(100.0);
   }
@@ -171,7 +172,8 @@ public class HIPPSValve extends ThrottlingValve {
    */
   public HIPPSValve(String name, StreamInterface inletStream) {
     super(name, inletStream);
-    setClosureTime(closureTime);
+    super.setClosingTravelTime(closureTime);
+    super.setTravelModel(ValveTravelModel.LINEAR_RATE_LIMIT);
     // HIPPS valves start fully open
     setPercentValveOpening(100.0);
   }
@@ -279,6 +281,15 @@ public class HIPPSValve extends ThrottlingValve {
   }
 
   /**
+   * Reports the count of transitions into the trip latch, including trips from an external solver.
+   *
+   * @return cumulative trip count
+   */
+  public synchronized int getTripCount() {
+    return tripCount;
+  }
+
+  /**
    * Gets the time of last trip event.
    *
    * @return time in seconds, or -1 if never tripped
@@ -318,7 +329,7 @@ public class HIPPSValve extends ThrottlingValve {
    * <p>
    * The valve will not automatically reopen after reset - it must be manually opened via setPercentValveOpening().
    */
-  public void reset() {
+  public synchronized void reset() {
     if (!evaluateVotingLogic()) {
       hasTripped = false;
     }
@@ -394,7 +405,7 @@ public class HIPPSValve extends ThrottlingValve {
    *
    * @param strokeFraction fraction of full stroke to test (0.0-0.9, e.g., 0.15 for 15%)
    */
-  public void performPartialStrokeTest(double strokeFraction) {
+  public synchronized void performPartialStrokeTest(double strokeFraction) {
     if (hasTripped) {
       throw new IllegalStateException("Cannot start a partial stroke while isolation is latched");
     }
@@ -480,7 +491,7 @@ public class HIPPSValve extends ThrottlingValve {
    * @param id unique identifier for this calculation
    */
   @Override
-  public void runTransient(double dt, UUID id) {
+  public synchronized void runTransient(double dt, UUID id) {
     if (!Double.isFinite(dt) || dt < 0.0) {
       throw new IllegalArgumentException("HIPPS timestep must be finite and nonnegative");
     }
@@ -506,7 +517,7 @@ public class HIPPSValve extends ThrottlingValve {
    * Latches a shutdown demand from an external logic solver and takes priority over partial-stroke testing. Transient
    * equipment advances its actual stem through the normal valve actuator step.
    */
-  public void trip() {
+  public synchronized void trip() {
     if (!hasTripped) {
       hasTripped = true;
       lastTripTime = cumulativeTime;
@@ -534,7 +545,7 @@ public class HIPPSValve extends ThrottlingValve {
    *
    * @param available false to hold the current stem position despite an isolation demand
    */
-  public void setActuatorAvailable(boolean available) {
+  public synchronized void setActuatorAvailable(boolean available) {
     actuatorStuck = !available;
   }
 
@@ -549,7 +560,7 @@ public class HIPPSValve extends ThrottlingValve {
 
   /** {@inheritDoc} */
   @Override
-  public void runController(double dt, UUID id) {
+  public synchronized void runController(double dt, UUID id) {
     if (actuatorStuck || dt == 0.0) {
       setCalculationIdentifier(id);
       return;
@@ -559,7 +570,7 @@ public class HIPPSValve extends ThrottlingValve {
 
   /** {@inheritDoc} */
   @Override
-  public void setPercentValveOpening(double opening) {
+  public synchronized void setPercentValveOpening(double opening) {
     if (hasTripped) {
       commandOpening(0.0);
     } else {
@@ -569,7 +580,7 @@ public class HIPPSValve extends ThrottlingValve {
 
   /** {@inheritDoc} */
   @Override
-  public void setTargetPercentValveOpening(double opening) {
+  public synchronized void setTargetPercentValveOpening(double opening) {
     super.setTargetPercentValveOpening(hasTripped ? 0.0 : opening);
   }
 
@@ -621,7 +632,7 @@ public class HIPPSValve extends ThrottlingValve {
           .append(String.format("%.2f", pt.getMeasuredValue("bara"))).append(" bara)\n");
     }
     sb.append("\nOperational History:\n");
-    sb.append("  Total Trips: ").append(tripCount).append("\n");
+    sb.append("  Total Trips: ").append(getTripCount()).append("\n");
     sb.append("  Spurious Trips: ").append(spuriousTripCount).append("\n");
     sb.append("  Last Trip: ").append(lastTripTime >= 0 ? String.format("%.1f s", lastTripTime) : "Never").append("\n");
     sb.append("  Runtime: ").append(String.format("%.1f", cumulativeTime)).append(" s\n");
