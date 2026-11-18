@@ -33,6 +33,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
 import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareInput;
+import neqsim.process.safety.api14c.Api14cDeviceDeclaration;
 import neqsim.process.safety.esd.EmergencyShutdownTestResult;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.scenario.DynamicSafetyScenario;
@@ -76,10 +77,35 @@ public final class EngineeringProject implements Serializable {
   private transient EngineeringDesignLoopResult latestEngineeringDesignLoopResult;
   private transient EngineeringSimulationResult latestEngineeringSimulationResult;
   private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
+  private List<Api14cDeviceDeclaration> api14cDevices;
   private MaterialsReviewInput materialsReviewInput;
   private EngineeringProductionReadinessBasis productionReadinessBasis;
   private transient InletCompressionExportSliceQualification.Result latestVerticalSliceQualification;
   private transient ProductionVerticalSliceExecutionManifest latestVerticalSliceExecutionManifest;
+
+  /**
+   * Records a documented protection function for the offshore safety review.
+   * 
+   * @param device tagged device and source reference
+   * @return this project
+   */
+  public EngineeringProject addApi14cDevice(Api14cDeviceDeclaration device) {
+    ProcessEquipmentInterface equipment = device == null ? null : processSystem.getUnit(device.getEquipmentTag());
+    if (equipment == null || equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+      throw new IllegalArgumentException("A device must identify existing protected equipment");
+    }
+    if (api14cDevices == null) {
+      api14cDevices = new ArrayList<Api14cDeviceDeclaration>();
+    }
+    api14cDevices.add(device);
+    return this;
+  }
+
+  /** @return documented devices, empty for projects created before device declarations were available */
+  public List<Api14cDeviceDeclaration> getApi14cDevices() {
+    return api14cDevices == null ? Collections.<Api14cDeviceDeclaration>emptyList()
+        : Collections.unmodifiableList(api14cDevices);
+  }
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
     this(UUID.randomUUID().toString(), name, processSystem, designBasis);

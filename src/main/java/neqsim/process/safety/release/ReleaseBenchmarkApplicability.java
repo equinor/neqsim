@@ -1,7 +1,9 @@
 package neqsim.process.safety.release;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import neqsim.process.safety.release.ReleaseFlowResult.Station;
@@ -35,33 +37,49 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
     /** The declared phase exists, but the resolved upstream state is materially multiphase. */
     MIXED_UPSTREAM,
     /** A solid or otherwise unsupported native phase prevents a phase-only comparison. */
-    UNSUPPORTED_UPSTREAM_PHASE
+    UNSUPPORTED_UPSTREAM_PHASE,
+    /** The release calculation failed or rejected the requested physical path. */
+    RESULT_UNUSABLE
   }
 
   private final ExpectedPhase expectedPhase;
   private final Status status;
   private final double expectedPhaseMassFraction;
   private final Map<String, Double> resolvedPhaseMassFractions;
+  private final List<String> resultDiagnosticCodes;
 
   private ReleaseBenchmarkApplicability(ExpectedPhase expectedPhase, Status status, double expectedPhaseMassFraction,
-      Map<String, Double> resolvedPhaseMassFractions) {
+      Map<String, Double> resolvedPhaseMassFractions, List<String> resultDiagnosticCodes) {
     this.expectedPhase = expectedPhase;
     this.status = status;
     this.expectedPhaseMassFraction = expectedPhaseMassFraction;
     this.resolvedPhaseMassFractions = Collections
         .unmodifiableMap(new TreeMap<String, Double>(resolvedPhaseMassFractions));
+    this.resultDiagnosticCodes = Collections.unmodifiableList(new ArrayList<String>(resultDiagnosticCodes));
   }
 
   /**
-   * Assesses whether a usable release result represents the published withdrawal phase.
+   * Assesses whether a release result represents the published withdrawal phase.
    *
-   * @param result usable release result retaining an upstream station
+   * <p>
+   * Unusable model results return {@link Status#RESULT_UNUSABLE} and retain their diagnostic codes. No station or rate
+   * is recovered from a failed result.
+   *
+   * @param result release result
    * @param expectedPhase phase withdrawn in the external experiment
    * @return immutable applicability assessment
    */
   public static ReleaseBenchmarkApplicability assess(ReleaseFlowResult result, ExpectedPhase expectedPhase) {
-    if (result == null || !result.isUsable() || expectedPhase == null) {
-      throw new IllegalArgumentException("A usable result and expected phase are required");
+    if (result == null || expectedPhase == null) {
+      throw new IllegalArgumentException("A result and expected phase are required");
+    }
+    List<String> diagnosticCodes = new ArrayList<String>();
+    for (ReleaseFlowResult.Diagnostic diagnostic : result.getDiagnostics()) {
+      diagnosticCodes.add(diagnostic.getCode());
+    }
+    if (!result.isUsable()) {
+      return new ReleaseBenchmarkApplicability(expectedPhase, Status.RESULT_UNUSABLE, Double.NaN,
+          Collections.<String, Double>emptyMap(), diagnosticCodes);
     }
     ReleaseState upstream = result.getStations().get(Station.UPSTREAM_STAGNATION);
     if (upstream == null) {
@@ -82,7 +100,7 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
     } else {
       status = Status.COMPARABLE;
     }
-    return new ReleaseBenchmarkApplicability(expectedPhase, status, expectedFraction, phases);
+    return new ReleaseBenchmarkApplicability(expectedPhase, status, expectedFraction, phases, diagnosticCodes);
   }
 
   private static double value(Map<String, Double> values, String key) {
@@ -100,7 +118,7 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
     return status;
   }
 
-  /** @return resolved mass fraction of the expected material phase */
+  /** @return resolved mass fraction of the expected material phase, or NaN when the model result is unusable */
   public double getExpectedPhaseMassFraction() {
     return expectedPhaseMassFraction;
   }
@@ -108,6 +126,11 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
   /** @return immutable native upstream phase mass fractions */
   public Map<String, Double> getResolvedPhaseMassFractions() {
     return resolvedPhaseMassFractions;
+  }
+
+  /** @return immutable calculation diagnostic codes retained for the applicability decision */
+  public List<String> getResultDiagnosticCodes() {
+    return resultDiagnosticCodes;
   }
 
   /** @return whether a rate-error comparison is physically applicable */

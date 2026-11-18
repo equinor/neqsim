@@ -122,8 +122,8 @@ public class ReliefValveSizingTest {
 
   @Test
   void forwardGasCapacityIsZeroAtOrAboveRelievingPressure() {
-    // 40 bara set pressure with 25% overpressure gives 50 bara at the inlet.
-    for (double backPressure : new double[] {5.0e6, 5.1e6}) {
+    // Overpressure is a fraction of the 38.98675 barg set pressure.
+    for (double backPressure : new double[] {4974668.75, 5.1e6}) {
       assertEquals(0.0, ReliefValveSizing.calculateMassFlowCapacity(1.0e-4, 4.0e6, 0.25, backPressure, 300.0, 0.020,
           1.0, 1.3, 0.975));
     }
@@ -253,4 +253,18 @@ public class ReliefValveSizingTest {
 
     assertTrue(issues.contains("21%"), "Should flag that fire case needs 21% overpressure");
   }
+
+  /** Pressure ratios use gauge set pressure; no size is available against an equal outlet pressure. */
+  @Test
+  void pressureBasisAndForwardSizingBoundary() {
+    double outletPa = 121325.0 + 2000.0;
+    assertEquals(outletPa, ReliefValveSizing.relievingPressurePa(121325.0, 0.10), 1e-9);
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> ReliefValveSizing
+        .calculateRequiredArea(1.0, 121325.0, 0.10, outletPa, 300.0, 0.020, 1.0, 1.3, false, false));
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+        () -> ReliefValveSizing.calculateLiquidReliefArea(0.01, 800.0, 121325.0, 0.10, outletPa, 0.001, false));
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> ReliefValveSizing
+        .calculateTwoPhaseReliefArea(1.0, 121325.0, 0.10, outletPa, 300.0, 0.3, 12.0, 800.0, 2e5, 2e3));
+  }
+
 }

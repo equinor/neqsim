@@ -78,6 +78,23 @@ public final class StandardRequirementPackRegistry {
             capability("sif-reliability", Kind.CALCULATION_SCREENING,
                 "neqsim.process.engineering.safety.SafetyFunctionReliabilityStudy",
                 "Quantitative reliability study only; systematic capability and functional-safety management are excluded.")));
+    register(packs,
+        pack(StandardType.API_RP_14C, capability(
+            "equipment-device-screen", Kind.REVIEW_WORKFLOW, "neqsim.process.safety.api14c.Api14cSafeChartBuilder",
+            "Equipment-category screening requires project applicability and documented exceptions."),
+            capability("tagged-protection-review", Kind.REVIEW_WORKFLOW,
+                "neqsim.process.engineering.SimulationEngineeringDesignRunner",
+                "Links declared devices to installed PSV checks and shutdown sequences. Field testing remains external.")));
+    register(packs, pack(StandardType.API_520_PART_2, capability("installed-device-screen", Kind.CALCULATION_SCREENING,
+        "neqsim.process.engineering.SimulationEngineeringDesignRunner",
+        "Required-flow inlet and outlet piping screens. Rated-flow installation and vendor verification remain external.")));
+    register(packs, pack(StandardType.API_521,
+        capability("relief-scenario-screen", Kind.CALCULATION_SCREENING,
+            "neqsim.process.engineering.calculation.Api521ReliefDesignKernel",
+            "Sizes supplied credible scenarios and distinguishes maximum area from maximum mass load."),
+        capability("disposal-load-screen", Kind.CALCULATION_SCREENING,
+            "neqsim.process.safety.overpressure.ReliefDisposalNetwork",
+            "Aggregates declared simultaneous loads. Network hydraulics and credible concurrency require review.")));
     register(packs, pack(StandardType.API_520_PART_1,
         capability("relief-sizing", Kind.CALCULATION_SCREENING, "neqsim.process.util.fire.ReliefValveSizing",
             "Gas, liquid, and two-phase sizing equations; scenario completeness and valve certification are excluded."),

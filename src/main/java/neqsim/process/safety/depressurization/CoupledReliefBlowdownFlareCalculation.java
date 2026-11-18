@@ -91,7 +91,7 @@ public final class CoupledReliefBlowdownFlareCalculation
     for (ReliefStudyEntry entry : input.getReliefStudies()) {
       OverpressureStudyResult relief = entry.getStudy().evaluate();
       reliefResults.add(relief);
-      ReliefScenario governing = relief.getGoverningScenario();
+      ReliefScenario governing = relief.getMaximumLoadScenario();
       if (governing == null) {
         capacityAcceptable = false;
         findings.add(entry.getStudy().getItem().getName() + " has no credible governing relief scenario.");

@@ -10,6 +10,11 @@ last_verified: "2026-10-30"
 
 Use this skill for risk simulations and structured evidence reviews that are not the core HAZOP/LOPA/SIL, relief, fire-rupture or consequence calculations. Use the routing table below to avoid repeating existing skill workflows.
 
+For offshore RP 14C reviews, attach source-backed `Api14cDeviceDeclaration` entries to the engineering project.
+Check `apiRp14cProtectionReview` in the engineering calculation handoff for undeclared device types, unclassified
+equipment, matching PSV sizing and installation checks, shutdown actions and actual test verdicts. Keep the
+project equipment tag, device tag, sequence ID and source reference together when reporting a finding.
+
 ## Class map
 
 | Class | Package | What it does | Verified API |

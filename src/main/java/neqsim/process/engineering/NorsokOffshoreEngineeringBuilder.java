@@ -215,6 +215,10 @@ public final class NorsokOffshoreEngineeringBuilder {
             "SIS lifecycle, SRS, SIL determination and verification"))
         .addStandard(new EngineeringStandard("ISO 10418", "2019", "Offshore process safety systems",
             "Analysis and design of surface process safeguarding"))
+        .addStandard(new EngineeringStandard("API RP 14C", "8th ed. with Errata 1",
+            "Offshore production safety systems", "Equipment protection and safety function review"))
+        .addStandard(new EngineeringStandard("API 520 Part II", "7th ed.", "Installation of pressure-relieving devices",
+            "Installed relief-device piping screening"))
         .addStandard(new EngineeringStandard("API 521", "7th ed. 2020", "Pressure-relieving and depressurizing systems",
             "Relief and depressurization assessments"))
         .addStandard(new EngineeringStandard("API 520 Part I", "10th ed.",

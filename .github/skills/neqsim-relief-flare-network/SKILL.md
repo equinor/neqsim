@@ -21,6 +21,11 @@ certified-coefficient basis from a dynamic model's Cv. Select accumulation, blow
 back-pressure and radiation limits from the applicable project/code/vendor basis;
 the example fractions below are study inputs, not universal acceptance limits.
 
+For a shared PSV, inspect `OverpressureStudyResult.getScenarioResults()` and report both the area-governing
+`getGoverningScenario()` and the disposal `getMaximumLoadScenario()`. Re-evaluate older results. Carry each
+case's properties and installed piping checks into the relief register. Match offshore equipment tags and declared
+PSV tags in the engineering report's `apiRp14cProtectionReview` section.
+
 ## When to Use
 
 - Sizing a single PSV (gas / liquid / two-phase / fire case)
@@ -121,7 +126,7 @@ The selected standard area is a screening result, not a vendor capacity certific
 double Q_fire_W = ReliefValveSizing.calculateAPI521FireHeatInput(
     80.0, // wetted area, m2
     true, // adequate drainage
-    true  // firefighting flag; current helper applies no firefighting credit
+    true  // prompt firefighting is credited for this scenario
 );
 ```
 
@@ -168,9 +173,8 @@ double area = ReliefValveSizing.calculateTwoPhaseReliefArea(
 For a full overpressure-protection study on one protected item — enumerate
 credible relief contingencies, pick the governing case, size the PSV, and check
 acceptance — use `neqsim.process.safety.overpressure`. Each cause calculator is
-fluent and returns an immutable `ReliefScenario`; the engine selects the
-maximum-rate credible scenario and sizes accordingly (vapour via `ReliefValveSizing`
-API 520; liquid via the API 520 liquid method; two-phase via the omega method).
+fluent and returns an immutable `ReliefScenario`; the engine sizes all credible demands with the applicable vapour, liquid or
+two-phase method and selects the largest required area. The highest mass rate controls the individual disposal load.
 
 ```java
 import neqsim.process.safety.overpressure.*;
@@ -342,7 +346,7 @@ modeling.
 | --------------------------------------------------------- | -------------------------------------------------------------------- |
 | Treating a sample accumulation fraction as code approval   | Establish the contingency, applicable code/edition and pressure basis; declare the approved criterion |
 | Wetted area = total surface                               | Establish actual wetted geometry, fire exposure and applicable standard limits |
-| Inventing drainage, insulation or firefighting credit      | Verify project evidence and the exact helper implementation; the static fire helper applies no firefighting credit |
+| Inventing drainage, insulation or firefighting credit      | Verify project evidence and the exact helper implementation; the smaller coefficient requires adequate drainage and prompt firefighting |
 | Adding all PSV capacities for header                      | Use the governing **contingency**, not sum of nameplate capacities   |
 | Assuming a discharge coefficient from a service label     | Obtain the applicable certified/vendor coefficient and correction-factor basis |
 | Ignoring Mach and built-up pressure in the header          | Evaluate actual compressible hydraulics; a project Mach margin is not the sonic choking condition |
