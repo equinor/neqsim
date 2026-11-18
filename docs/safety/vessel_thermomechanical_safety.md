@@ -129,6 +129,9 @@ double dynamicArea = cmp.dynamicRequiredAreaM2;
 double peakP = cmp.peakDynamicPressurePa;
 ```
 
+Both calculations apply the overpressure fraction to gauge set pressure relative to 1.01325 bara.
+At 50 bara set pressure, 21% gives an absolute limit of 60.2872175 bara.
+
 The search samples areas from 0.001 to 10 times the steady area, then refines a
 passing interval by bisection. A feasible result identifies a tested area whose
 trajectory reached the requested horizon within the pressure limit, including

@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.util.fire.ReliefValveSizing;
 
 /**
@@ -15,9 +13,9 @@ import neqsim.process.util.fire.ReliefValveSizing;
  * <p>
  * This is the TR3001 section 4.6-4.7 relief-scenario engine: each credible cause (blocked outlet, check-valve leakage,
  * gas/liquid blow-by, control-valve failure, tube rupture, fire, etc.) is added as a {@link ReliefScenario}, and the
- * study determines the governing case by the largest credible required relief rate (API STD 521 section 4.4). The
- * pressure relief device is sized for the governing vapour case using {@link ReliefValveSizing}, and the result is
- * checked against the ASME VIII Div 1 / TR3001 section 2 accumulated-pressure limits.
+ * study sizes each credible positive demand, retains the largest required area and reports the maximum mass load
+ * separately. The pressure relief device is sized using the applicable phase model using {@link ReliefValveSizing}, and
+ * the result is checked against the ASME VIII Div 1 / TR3001 section 2 accumulated-pressure limits.
  * </p>
  *
  * @author ESOL
@@ -25,7 +23,6 @@ import neqsim.process.util.fire.ReliefValveSizing;
  */
 public final class OverpressureProtectionStudy implements Serializable {
   private static final long serialVersionUID = 1L;
-  private static final Logger logger = LogManager.getLogger(OverpressureProtectionStudy.class);
 
   private final ProtectedItem item;
   private final List<ReliefScenario> scenarios = new ArrayList<ReliefScenario>();
@@ -90,163 +87,169 @@ public final class OverpressureProtectionStudy implements Serializable {
    * @return the governing scenario, or null when no credible scenario exists
    */
   public ReliefScenario governingScenario() {
-    ReliefScenario governing = null;
+    return OverpressureStudyResult.maximumLoad(scenarios);
+  }
+
+  /**
+   * Sizes each credible positive relief demand. Equal areas retain declaration order. An unresolved credible demand
+   * prevents selection of a study-wide orifice, while its known mass load is retained for disposal screening.
+   *
+   * @return aggregate result and case-by-case sizing evidence
+   */
+  public OverpressureStudyResult evaluate() {
+    List<OverpressureStudyResult> cases = new ArrayList<OverpressureStudyResult>();
+    List<String> warnings = new ArrayList<String>();
+    OverpressureStudyResult largest = null;
+    boolean complete = true;
     for (ReliefScenario scenario : scenarios) {
       if (!scenario.isCredible()) {
         continue;
       }
-      if (governing == null || scenario.getReliefRateKgPerS() > governing.getReliefRateKgPerS()) {
-        governing = scenario;
+      OverpressureStudyResult candidate;
+      try {
+        candidate = sizeScenario(scenario);
+      } catch (IllegalArgumentException failure) {
+        candidate = new OverpressureStudyResult(item, scenario, Collections.singletonList(scenario), Double.NaN,
+            Double.NaN, null, Double.NaN, Double.NaN, false, null, Collections.singletonList(failure.getMessage()),
+            null);
+      }
+      cases.add(candidate);
+      for (String warning : candidate.getWarnings()) {
+        warnings.add(scenario.getName() + ": " + warning);
+      }
+      if (!Double.isFinite(candidate.getRequiredAreaM2()) || candidate.getRequiredAreaM2() <= 0.0) {
+        complete = false;
+      } else if (largest == null || candidate.getRequiredAreaM2() > largest.getRequiredAreaM2()) {
+        largest = candidate;
       }
     }
-    return governing;
+    if (cases.isEmpty()) {
+      warnings.add("No credible positive relief demand defined");
+    } else if (!complete) {
+      warnings.add("Resolve all credible relief demands before selecting an orifice");
+    }
+    return new OverpressureStudyResult(item, scenarios, cases, complete ? largest : null, warnings);
   }
 
   /**
-   * Evaluates the study: selects the governing case, sizes the relief device for the governing vapour case and checks
-   * the accumulated-pressure acceptance limit.
+   * Sizes one demand with its own phase and properties on the common protected-item pressure basis.
    *
-   * @return the {@link OverpressureStudyResult}
+   * @param governing scenario to size
+   * @return sizing and acceptance for this scenario
    */
-  public OverpressureStudyResult evaluate() {
+  private OverpressureStudyResult sizeScenario(ReliefScenario governing) {
     List<String> warnings = new ArrayList<String>();
-    ReliefScenario governing = governingScenario();
-
-    if (governing == null) {
-      warnings.add("No credible relief scenario defined; nothing to size");
-      logger.warn("Overpressure study for {} has no credible scenario", item.getName());
-      return new OverpressureStudyResult(item, null, scenarios, Double.NaN, Double.NaN, null, Double.NaN, Double.NaN,
-          false, null, warnings, null);
-    }
-
+    List<ReliefScenario> singleCase = Collections.singletonList(governing);
     boolean fireCase = governing.getCause() == ReliefCause.FIRE;
     double overpressureFraction = fireCase ? 0.21 : 0.10;
 
+    double peakPressureBara = ReliefValveSizing.relievingPressurePa(item.getReliefSetPressureBara() * 1e5,
+        overpressureFraction) / 1e5;
+    if (!positive(item.getMaximumAllowableWorkingPressureBara()) || !positive(item.getReliefSetPressureBara())
+        || item.getReliefSetPressureBara() > item.getMaximumAllowableWorkingPressureBara()
+        || !Double.isFinite(item.getBackPressureBara()) || item.getBackPressureBara() < 0.0
+        || !positive(peakPressureBara) || item.getBackPressureBara() >= peakPressureBara
+        || !positive(governing.getReliefRateKgPerS()) || governing.getCause() == null
+        || !hasSizingProperties(governing)) {
+      warnings.add("Missing or invalid pressure, relief demand, cause or relieving-phase property basis");
+      return new OverpressureStudyResult(item, governing, singleCase, Double.NaN, Double.NaN, null, Double.NaN,
+          Double.NaN, false, null, warnings, null);
+    }
+
+    double setPressurePa = item.getReliefSetPressureBara() * 1.0e5;
+    double backPressurePa = item.getBackPressureBara() * 1.0e5;
     ReliefValveSizing.PSVSizingResult sizing = null;
     double requiredAreaM2 = Double.NaN;
     double requiredAreaIn2 = Double.NaN;
     String recommendedOrifice = null;
     double selectedAreaIn2 = Double.NaN;
-    double selectedCapacity = Double.NaN;
-    boolean capacityAdequate = false;
 
     if (governing.getPhase() == ReliefPhase.VAPOUR) {
-      if (governing.getReliefRateKgPerS() <= 0.0) {
-        warnings.add("Governing relief rate is zero; relief device cannot be sized");
-      } else {
-        double setPressurePa = item.getReliefSetPressureBara() * 1.0e5;
-        double backPressurePa = item.getBackPressureBara() * 1.0e5;
-        double temperatureK = !Double.isNaN(governing.getReliefTemperatureK()) ? governing.getReliefTemperatureK()
-            : 288.15;
-        sizing = ReliefValveSizing.calculateRequiredArea(governing.getReliefRateKgPerS(), setPressurePa,
-            overpressureFraction, backPressurePa, temperatureK, governing.getMolarMassKgPerMol(),
-            governing.getCompressibility(), governing.getSpecificHeatRatio(), false, false);
-        requiredAreaM2 = sizing.getRequiredArea();
-        requiredAreaIn2 = sizing.getRequiredAreaIn2();
-        recommendedOrifice = sizing.getRecommendedOrifice();
-        selectedAreaIn2 = sizing.getSelectedAreaIn2();
-        // The API 520 sizing equation is linear in mass flow, so the capacity of the
-        // selected standard orifice scales with its area relative to the required area.
-        // This stays self-consistent within the sizing method (unlike re-deriving the
-        // capacity from the theoretical isentropic-nozzle equation, which uses a
-        // different coefficient basis and is not its inverse).
-        selectedCapacity = requiredAreaIn2 > 0.0 ? governing.getReliefRateKgPerS() * (selectedAreaIn2 / requiredAreaIn2)
-            : Double.NaN;
-        capacityAdequate = selectedAreaIn2 >= requiredAreaIn2;
-        if (!capacityAdequate) {
-          warnings.add("Required relief area exceeds the largest standard orifice; "
-              + "multiple or larger relief devices are required");
-        }
-        logger.info("Overpressure study for {}: governing case {} ({}), required orifice {} ({} in2)", item.getName(),
-            governing.getName(), governing.getCause().getLabel(), recommendedOrifice,
-            String.format("%.3f", selectedAreaIn2));
-      }
+      double temperatureK = governing.getReliefTemperatureK();
+      sizing = ReliefValveSizing.calculateRequiredArea(governing.getReliefRateKgPerS(), setPressurePa,
+          overpressureFraction, backPressurePa, temperatureK, governing.getMolarMassKgPerMol(),
+          governing.getCompressibility(), governing.getSpecificHeatRatio(), false, false);
+      requiredAreaM2 = sizing.getRequiredArea();
+      requiredAreaIn2 = sizing.getRequiredAreaIn2();
+      recommendedOrifice = sizing.getRecommendedOrifice();
+      selectedAreaIn2 = sizing.getSelectedAreaIn2();
     } else if (governing.getPhase() == ReliefPhase.LIQUID) {
-      if (governing.getReliefRateKgPerS() <= 0.0) {
-        warnings.add("Governing relief rate is zero; relief device cannot be sized");
-      } else {
-        double density = !Double.isNaN(governing.getDensityKgPerM3()) && governing.getDensityKgPerM3() > 0.0
-            ? governing.getDensityKgPerM3()
-            : (!Double.isNaN(governing.getLiquidDensityKgPerM3()) ? governing.getLiquidDensityKgPerM3() : Double.NaN);
-        if (Double.isNaN(density) || density <= 0.0) {
-          density = 700.0;
-          warnings.add("Liquid density not set; using default 700 kg/m3 for the liquid relief sizing");
-        }
-        double viscosity = !Double.isNaN(governing.getViscosityPaS()) && governing.getViscosityPaS() > 0.0
-            ? governing.getViscosityPaS()
-            : 5.0e-4;
-        double volumeFlow = governing.getReliefRateKgPerS() / density;
-        double setPressurePa = item.getReliefSetPressureBara() * 1.0e5;
-        double backPressurePa = item.getBackPressureBara() * 1.0e5;
-        ReliefValveSizing.LiquidPSVSizingResult liquidSizing = ReliefValveSizing.calculateLiquidReliefArea(volumeFlow,
-            density, setPressurePa, overpressureFraction, backPressurePa, viscosity, false);
-        requiredAreaM2 = liquidSizing.getRequiredAreaM2();
-        requiredAreaIn2 = liquidSizing.getRequiredAreaIn2();
-        recommendedOrifice = liquidSizing.getRecommendedOrifice();
-        selectedAreaIn2 = liquidSizing.getSelectedAreaIn2();
-        selectedCapacity = requiredAreaIn2 > 0.0 ? governing.getReliefRateKgPerS() * (selectedAreaIn2 / requiredAreaIn2)
-            : Double.NaN;
-        capacityAdequate = selectedAreaIn2 >= requiredAreaIn2;
-        if (!capacityAdequate) {
-          warnings.add("Required liquid relief area exceeds the largest standard orifice; "
-              + "multiple or larger relief devices are required");
-        }
-        logger.info("Overpressure study for {}: governing liquid case {} ({}), required orifice {} ({} in2)",
-            item.getName(), governing.getName(), governing.getCause().getLabel(), recommendedOrifice,
-            String.format("%.3f", selectedAreaIn2));
-      }
+      double density = positive(governing.getDensityKgPerM3()) ? governing.getDensityKgPerM3()
+          : governing.getLiquidDensityKgPerM3();
+      double viscosity = governing.getViscosityPaS();
+      double volumeFlow = governing.getReliefRateKgPerS() / density;
+      ReliefValveSizing.LiquidPSVSizingResult liquidSizing = ReliefValveSizing.calculateLiquidReliefArea(volumeFlow,
+          density, setPressurePa, overpressureFraction, backPressurePa, viscosity, false);
+      requiredAreaM2 = liquidSizing.getRequiredAreaM2();
+      requiredAreaIn2 = liquidSizing.getRequiredAreaIn2();
+      recommendedOrifice = liquidSizing.getRecommendedOrifice();
+      selectedAreaIn2 = liquidSizing.getSelectedAreaIn2();
     } else {
       // TWO_PHASE governing case sized with the Leung omega method (API 520 Appendix D).
-      if (governing.getReliefRateKgPerS() <= 0.0) {
-        warnings.add("Governing relief rate is zero; relief device cannot be sized");
-      } else if (Double.isNaN(governing.getGasMassFraction()) || Double.isNaN(governing.getGasDensityKgPerM3())
-          || Double.isNaN(governing.getLiquidDensityKgPerM3()) || Double.isNaN(governing.getLatentHeatJPerKg())
-          || Double.isNaN(governing.getLiquidHeatCapacityJPerKgK())) {
-        warnings.add("Two-phase governing case is missing omega-method inputs "
-            + "(gas fraction, gas/liquid density, latent heat, liquid Cp); two-phase sizing skipped");
-        logger.warn("Overpressure study for {}: two-phase omega inputs incomplete; sizing skipped", item.getName());
-      } else {
-        double setPressurePa = item.getReliefSetPressureBara() * 1.0e5;
-        double backPressurePa = item.getBackPressureBara() * 1.0e5;
-        double temperatureK = !Double.isNaN(governing.getReliefTemperatureK()) ? governing.getReliefTemperatureK()
-            : 288.15;
-        requiredAreaM2 = ReliefValveSizing.calculateTwoPhaseReliefArea(governing.getReliefRateKgPerS(), setPressurePa,
-            overpressureFraction, backPressurePa, temperatureK, governing.getGasMassFraction(),
-            governing.getGasDensityKgPerM3(), governing.getLiquidDensityKgPerM3(), governing.getLatentHeatJPerKg(),
-            governing.getLiquidHeatCapacityJPerKgK());
-        requiredAreaIn2 = requiredAreaM2 / 6.4516e-4;
-        selectedAreaIn2 = ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2[ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2.length
-            - 1];
-        recommendedOrifice = ReliefValveSizing.STANDARD_ORIFICE_LETTERS[ReliefValveSizing.STANDARD_ORIFICE_LETTERS.length
-            - 1];
-        for (int i = 0; i < ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2.length; i++) {
-          if (ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2[i] >= requiredAreaIn2) {
-            recommendedOrifice = ReliefValveSizing.STANDARD_ORIFICE_LETTERS[i];
-            selectedAreaIn2 = ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2[i];
-            break;
-          }
+      double temperatureK = governing.getReliefTemperatureK();
+      requiredAreaM2 = ReliefValveSizing.calculateTwoPhaseReliefArea(governing.getReliefRateKgPerS(), setPressurePa,
+          overpressureFraction, backPressurePa, temperatureK, governing.getGasMassFraction(),
+          governing.getGasDensityKgPerM3(), governing.getLiquidDensityKgPerM3(), governing.getLatentHeatJPerKg(),
+          governing.getLiquidHeatCapacityJPerKgK());
+      requiredAreaIn2 = requiredAreaM2 / 6.4516e-4;
+      selectedAreaIn2 = ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2[ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2.length
+          - 1];
+      recommendedOrifice = ReliefValveSizing.STANDARD_ORIFICE_LETTERS[ReliefValveSizing.STANDARD_ORIFICE_LETTERS.length
+          - 1];
+      for (int i = 0; i < ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2.length; i++) {
+        if (ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2[i] >= requiredAreaIn2) {
+          recommendedOrifice = ReliefValveSizing.STANDARD_ORIFICE_LETTERS[i];
+          selectedAreaIn2 = ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2[i];
+          break;
         }
-        selectedCapacity = requiredAreaIn2 > 0.0 ? governing.getReliefRateKgPerS() * (selectedAreaIn2 / requiredAreaIn2)
-            : Double.NaN;
-        capacityAdequate = selectedAreaIn2 >= requiredAreaIn2;
-        if (!capacityAdequate) {
-          warnings.add("Required two-phase relief area exceeds the largest standard orifice; "
-              + "multiple or larger relief devices are required");
-        }
-        logger.info("Overpressure study for {}: governing two-phase case {} ({}), required orifice {} ({} in2)",
-            item.getName(), governing.getName(), governing.getCause().getLabel(), recommendedOrifice,
-            String.format("%.3f", selectedAreaIn2));
       }
     }
 
-    double peakPressureBara = item.getReliefSetPressureBara() * (1.0 + overpressureFraction);
+    boolean capacityAdequate = positive(requiredAreaIn2) && selectedAreaIn2 >= requiredAreaIn2;
+    double selectedCapacity = positive(requiredAreaIn2)
+        ? governing.getReliefRateKgPerS() * (selectedAreaIn2 / requiredAreaIn2)
+        : Double.NaN;
+    if (!capacityAdequate) {
+      warnings.add("A single standard orifice cannot be selected for this relief demand");
+    }
+
     AcceptanceResult acceptance = acceptanceChecker.check(peakPressureBara, item, governing.getCause(),
         multipleDevices);
     if (!acceptance.isAccepted()) {
       warnings.add("Relieving pressure exceeds the allowable accumulated pressure: " + acceptance.getBasis());
     }
 
-    return new OverpressureStudyResult(item, governing, scenarios, requiredAreaM2, requiredAreaIn2, recommendedOrifice,
+    return new OverpressureStudyResult(item, governing, singleCase, requiredAreaM2, requiredAreaIn2, recommendedOrifice,
         selectedAreaIn2, selectedCapacity, capacityAdequate, acceptance, warnings, sizing);
+  }
+
+  /**
+   * Checks phase-specific inputs before invoking a sizing correlation.
+   * 
+   * @param scenario credible demand
+   * @return whether all required properties are in their physical domains
+   */
+  private static boolean hasSizingProperties(ReliefScenario scenario) {
+    if (scenario.getPhase() == ReliefPhase.VAPOUR) {
+      return positive(scenario.getReliefTemperatureK()) && positive(scenario.getMolarMassKgPerMol())
+          && positive(scenario.getCompressibility()) && Double.isFinite(scenario.getSpecificHeatRatio())
+          && scenario.getSpecificHeatRatio() > 1.0;
+    }
+    if (scenario.getPhase() == ReliefPhase.LIQUID) {
+      return (positive(scenario.getDensityKgPerM3()) || positive(scenario.getLiquidDensityKgPerM3()))
+          && positive(scenario.getViscosityPaS());
+    }
+    return scenario.getPhase() == ReliefPhase.TWO_PHASE && positive(scenario.getReliefTemperatureK())
+        && scenario.getGasMassFraction() >= 0.0 && scenario.getGasMassFraction() <= 1.0
+        && positive(scenario.getGasDensityKgPerM3()) && positive(scenario.getLiquidDensityKgPerM3())
+        && positive(scenario.getLatentHeatJPerKg()) && positive(scenario.getLiquidHeatCapacityJPerKgK());
+  }
+
+  /**
+   * @param value physical input
+   * @return whether finite and strictly positive
+   */
+  private static boolean positive(double value) {
+    return Double.isFinite(value) && value > 0.0;
   }
 }

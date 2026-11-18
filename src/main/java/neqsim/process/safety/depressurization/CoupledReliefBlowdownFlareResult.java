@@ -91,6 +91,9 @@ public final class CoupledReliefBlowdownFlareResult implements Serializable {
       result.put("governingPhase", governing.getPhase().name());
       result.put("reliefRateKgPerS", Double.valueOf(governing.getReliefRateKgPerS()));
     }
+    ReliefScenario load = studyResult.getMaximumLoadScenario();
+    result.put("maximumLoadScenario", load == null ? null : load.getName());
+    result.put("maximumLoadKgPerS", load == null ? null : Double.valueOf(load.getReliefRateKgPerS()));
     result.put("requiredAreaM2", finiteOrNull(studyResult.getRequiredAreaM2()));
     result.put("recommendedOrifice", studyResult.getRecommendedOrifice());
     result.put("capacityAdequate", Boolean.valueOf(studyResult.isCapacityAdequate()));

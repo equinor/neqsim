@@ -53,7 +53,7 @@ public final class ReliefDisposalNetwork {
    * @return this network for fluent chaining
    */
   public ReliefDisposalNetwork addRelief(OverpressureStudyResult result, boolean simultaneous) {
-    ReliefScenario governing = result.getGoverningScenario();
+    ReliefScenario governing = result.getMaximumLoadScenario();
     if (governing == null) {
       warnings.add("Study for " + result.getItem().getName() + " has no governing case; contribution skipped");
       return this;

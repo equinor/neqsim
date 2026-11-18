@@ -26,7 +26,16 @@ public final class Api521ReliefAssessment implements Serializable {
     private final String standardReference;
     private final List<String> assumptions;
 
-    private ScenarioSummary(ReliefScenario scenario) {
+    private final Double requiredAreaIn2;
+    private final Boolean accumulatedPressureAccepted;
+
+    private ScenarioSummary(ReliefScenario scenario, OverpressureStudyResult evaluated) {
+      requiredAreaIn2 = evaluated != null && Double.isFinite(evaluated.getRequiredAreaIn2())
+          ? Double.valueOf(evaluated.getRequiredAreaIn2())
+          : null;
+      accumulatedPressureAccepted = evaluated != null && evaluated.getAcceptance() != null
+          ? Boolean.valueOf(evaluated.getAcceptance().isAccepted())
+          : null;
       name = scenario.getName();
       cause = scenario.getCause().name();
       phase = scenario.getPhase().name();
@@ -85,6 +94,8 @@ public final class Api521ReliefAssessment implements Serializable {
       result.put("reliefRateKgPerS", Double.valueOf(reliefRateKgPerS));
       result.put("credible", Boolean.valueOf(credible));
       result.put("dynamicallyDetermined", Boolean.valueOf(dynamicallyDetermined));
+      result.put("requiredAreaIn2", requiredAreaIn2);
+      result.put("accumulatedPressureAccepted", accumulatedPressureAccepted);
       result.put("standardReference", standardReference);
       result.put("assumptions", new ArrayList<String>(assumptions));
       return result;
@@ -98,6 +109,8 @@ public final class Api521ReliefAssessment implements Serializable {
   private final String governingCause;
   private final String governingPhase;
   private final double governingReliefRateKgPerS;
+  private final String maximumLoadScenarioName;
+  private final Double maximumLoadKgPerS;
   private final double requiredAreaM2;
   private final double requiredAreaIn2;
   private final String recommendedOrifice;
@@ -113,8 +126,12 @@ public final class Api521ReliefAssessment implements Serializable {
     this.standardEdition = standardEdition;
     protectedItemName = result.getItem().getName();
     List<ScenarioSummary> scenarioSnapshots = new ArrayList<ScenarioSummary>();
+    Map<ReliefScenario, OverpressureStudyResult> evaluated = new java.util.IdentityHashMap<ReliefScenario, OverpressureStudyResult>();
+    for (OverpressureStudyResult detail : result.getScenarioResults()) {
+      evaluated.put(detail.getGoverningScenario(), detail);
+    }
     for (ReliefScenario scenario : result.getScenarios()) {
-      scenarioSnapshots.add(new ScenarioSummary(scenario));
+      scenarioSnapshots.add(new ScenarioSummary(scenario, evaluated.get(scenario)));
     }
     scenarios = Collections.unmodifiableList(scenarioSnapshots);
     ReliefScenario governing = result.getGoverningScenario();
@@ -122,6 +139,9 @@ public final class Api521ReliefAssessment implements Serializable {
     governingCause = governing == null ? null : governing.getCause().name();
     governingPhase = governing == null ? null : governing.getPhase().name();
     governingReliefRateKgPerS = governing == null ? Double.NaN : governing.getReliefRateKgPerS();
+    ReliefScenario load = result.getMaximumLoadScenario();
+    maximumLoadScenarioName = load == null ? null : load.getName();
+    maximumLoadKgPerS = load == null ? null : Double.valueOf(load.getReliefRateKgPerS());
     requiredAreaM2 = result.getRequiredAreaM2();
     requiredAreaIn2 = result.getRequiredAreaIn2();
     recommendedOrifice = result.getRecommendedOrifice();
@@ -172,6 +192,16 @@ public final class Api521ReliefAssessment implements Serializable {
   /** @return governing required relief rate in kg/s */
   public double getGoverningReliefRateKgPerS() {
     return governingReliefRateKgPerS;
+  }
+
+  /** @return maximum mass-load scenario, or null if unavailable */
+  public String getMaximumLoadScenarioName() {
+    return maximumLoadScenarioName;
+  }
+
+  /** @return largest credible load in kg/s, or NaN when unavailable */
+  public double getMaximumLoadKgPerS() {
+    return maximumLoadKgPerS == null ? Double.NaN : maximumLoadKgPerS.doubleValue();
   }
 
   /** @return calculated required area in square metres */
@@ -238,6 +268,8 @@ public final class Api521ReliefAssessment implements Serializable {
     result.put("governingCause", governingCause);
     result.put("governingPhase", governingPhase);
     result.put("governingReliefRateKgPerS", Double.valueOf(governingReliefRateKgPerS));
+    result.put("maximumLoadScenarioName", maximumLoadScenarioName);
+    result.put("maximumLoadKgPerS", maximumLoadKgPerS);
     result.put("requiredAreaM2", Double.valueOf(requiredAreaM2));
     result.put("requiredAreaIn2", Double.valueOf(requiredAreaIn2));
     result.put("recommendedOrifice", recommendedOrifice);
