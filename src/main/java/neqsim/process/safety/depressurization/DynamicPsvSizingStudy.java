@@ -215,7 +215,7 @@ public class DynamicPsvSizingStudy implements Serializable {
       } else {
         incomplete = trial;
       }
-      if (upper == maximumArea) {
+      if (upper >= maximumArea) {
         if (incomplete != null) {
           result.recordTrial(incomplete);
         } else {
