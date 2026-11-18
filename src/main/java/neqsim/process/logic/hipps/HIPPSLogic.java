@@ -1,9 +1,13 @@
 package neqsim.process.logic.hipps;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.valve.HIPPSValve;
+import neqsim.process.equipment.valve.ValveTravelModel;
 import neqsim.process.logic.LogicState;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.logic.sis.Detector;
@@ -13,24 +17,9 @@ import neqsim.process.logic.sis.VotingLogic;
  * High Integrity Pressure Protection System (HIPPS) Logic.
  *
  * <p>
- * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure in process equipment by rapidly closing
- * isolation valves when pressure exceeds a safe limit. HIPPS acts as the first line of defense before pressure relief
- * devices or Emergency Shutdown (ESD) systems are activated.
- *
- * <p>
- * Key features of HIPPS:
- * <ul>
- * <li>Rapid valve closure (typically &lt;2 seconds)</li>
- * <li>High reliability (SIL 2 or SIL 3 per IEC 61508/61511)</li>
- * <li>Redundant pressure sensors with voting logic</li>
- * <li>Prevents pressure relief valve (PSV) activation</li>
- * <li>Avoids flaring/venting to atmosphere</li>
- * <li>Lower operating costs than continuous PSV operation</li>
- * </ul>
- *
- * <p>
- * HIPPS typically operates at ~95% of maximum allowable operating pressure (MAOP), while ESD operates at ~98% MAOP as a
- * backup.
+ * The logic evaluates independent current-scan pressure values, latches an isolation command, and can escalate a
+ * persistent pressure demand to a separate shutdown sequence. Configure the pressure limits, actuator times, and
+ * degraded-voting response from the specific study basis.
  *
  * <p>
  * Example usage:
@@ -64,9 +53,13 @@ public class HIPPSLogic implements ProcessLogic {
   private static final long serialVersionUID = 1L;
   private final String name;
   private final VotingLogic votingLogic;
-  private final transient List<Detector> pressureSensors = new ArrayList<>();
+  private List<Detector> pressureSensors = new ArrayList<>();
 
+  private List<ThrottlingValve> isolationValves = new ArrayList<>();
+  /** Primary valve retained for streams written by the single-valve implementation. */
   private ThrottlingValve isolationValve;
+  private boolean tripOnLostVotingCapacity;
+  private double continuousDemandSeconds;
   private ProcessLogic escalationLogic; // ESD logic to activate if pressure remains high
   private double escalationDelay = 5.0; // Time in seconds before escalating to ESD
 
@@ -92,6 +85,26 @@ public class HIPPSLogic implements ProcessLogic {
   }
 
   /**
+   * Restores the legacy single valve. Old streams omitted the detector list and must be rewired.
+   *
+   * @param input stored HIPPS logic
+   * @throws IOException if the serialized data cannot be read
+   * @throws ClassNotFoundException if a stored equipment class is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (pressureSensors == null) {
+      pressureSensors = new ArrayList<>();
+    }
+    if (isolationValves == null) {
+      isolationValves = new ArrayList<>();
+      if (isolationValve != null) {
+        addIsolationValve(isolationValve);
+      }
+    }
+  }
+
+  /**
    * Adds a pressure sensor to the HIPPS voting group.
    *
    * @param sensor pressure detector/transmitter
@@ -102,6 +115,9 @@ public class HIPPSLogic implements ProcessLogic {
       throw new IllegalStateException("Cannot add more than " + votingLogic.getTotalSensors() + " sensors for "
           + votingLogic.getNotation() + " voting");
     }
+    if (sensor == null || pressureSensors.contains(sensor)) {
+      throw new IllegalArgumentException("Each vote requires a distinct detector");
+    }
     pressureSensors.add(sensor);
   }
 
@@ -111,7 +127,39 @@ public class HIPPSLogic implements ProcessLogic {
    * @param valve isolation valve (typically full-bore ball valve)
    */
   public void setIsolationValve(ThrottlingValve valve) {
-    this.isolationValve = valve;
+    isolationValve = null;
+    isolationValves.clear();
+    if (valve != null) {
+      addIsolationValve(valve);
+    }
+  }
+
+  /**
+   * Adds another final element driven by the same trip. Connect its material ports in the process model.
+   *
+   * @param valve additional modeled isolation valve
+   */
+  public void addIsolationValve(ThrottlingValve valve) {
+    if (valve == null || isolationValves.contains(valve)) {
+      throw new IllegalArgumentException("Each final element must be distinct");
+    }
+    if (isolationValves.isEmpty()) {
+      isolationValve = valve;
+    }
+    isolationValves.add(valve);
+    configureStroke(valve);
+    if (isTripped) {
+      commandIsolation(valve);
+    }
+  }
+
+  /**
+   * Chooses whether loss of the minimum number of valid votes itself demands isolation.
+   *
+   * @param enabled true to trip when the configured voting threshold cannot be attained
+   */
+  public void setTripOnLostVotingCapacity(boolean enabled) {
+    tripOnLostVotingCapacity = enabled;
   }
 
   /**
@@ -121,6 +169,9 @@ public class HIPPSLogic implements ProcessLogic {
    * @param delay time in seconds before escalating
    */
   public void linkToEscalationLogic(ProcessLogic escalationLogic, double delay) {
+    if (!Double.isFinite(delay) || delay < 0.0) {
+      throw new IllegalArgumentException("Escalation delay must be finite and nonnegative");
+    }
     this.escalationLogic = escalationLogic;
     this.escalationDelay = delay;
   }
@@ -131,7 +182,44 @@ public class HIPPSLogic implements ProcessLogic {
    * @param closureTime time in seconds (typically 1-2 seconds for HIPPS)
    */
   public void setValveClosureTime(double closureTime) {
+    if (!Double.isFinite(closureTime) || closureTime <= 0.0) {
+      throw new IllegalArgumentException("Closure time must be finite and positive");
+    }
     this.valveClosureTime = closureTime;
+    for (ThrottlingValve valve : isolationValves) {
+      configureStroke(valve);
+    }
+  }
+
+  /**
+   * Assigns the nominal full-stroke duration without replacing a configured actuator model.
+   *
+   * @param valve linked final element
+   */
+  private void configureStroke(ThrottlingValve valve) {
+    if (valve instanceof HIPPSValve) {
+      ((HIPPSValve) valve).setClosureTime(valveClosureTime);
+    } else {
+      valve.setClosingTravelTime(valveClosureTime);
+      if (valve.getTravelModel() == ValveTravelModel.NONE) {
+        valve.setTravelModel(ValveTravelModel.LINEAR_RATE_LIMIT);
+      }
+    }
+  }
+
+  /**
+   * Issues a latch to a HIPPS valve or a closure command to a generic valve.
+   *
+   * @param valve linked final element
+   */
+  private void commandIsolation(ThrottlingValve valve) {
+    if (valve instanceof HIPPSValve) {
+      ((HIPPSValve) valve).trip();
+    } else if (valve.getCalculateSteadyState()) {
+      valve.setPercentValveOpening(0.0);
+    } else {
+      valve.setTargetPercentValveOpening(0.0);
+    }
   }
 
   /**
@@ -163,50 +251,37 @@ public class HIPPSLogic implements ProcessLogic {
       return;
     }
 
-    // Check bypass constraint
-    int bypassedCount = 0;
-    int faultyCount = 0;
+    int available = 0;
     for (Detector sensor : pressureSensors) {
-      if (sensor.isBypassed()) {
-        bypassedCount++;
-      }
-      if (sensor.isFaulty()) {
-        faultyCount++;
+      if (!sensor.isBypassed() && !sensor.isFaulty() && Double.isFinite(sensor.getMeasuredValue())) {
+        available++;
       }
     }
-
-    if (bypassedCount > maxBypassedSensors) {
-      state = LogicState.FAILED;
-      return;
+    boolean insufficient = available < votingLogic.getRequiredTrips();
+    boolean degraded = votingLogic.getTotalSensors() - available > maxBypassedSensors || insufficient;
+    boolean liveDemand = hasLiveDemand();
+    if (!liveDemand) {
+      continuousDemandSeconds = 0.0;
     }
-
-    // Faulty sensors also degrade the voting group
-    if (bypassedCount + faultyCount > maxBypassedSensors) {
-      state = LogicState.FAILED;
-      return;
+    if (!isTripped && (liveDemand || (insufficient && tripOnLostVotingCapacity))) {
+      activate();
     }
+    state = degraded ? LogicState.FAILED : (isTripped ? LogicState.RUNNING : LogicState.IDLE);
+  }
 
-    // Count tripped sensors (excluding bypassed and faulty)
-    int trippedCount = 0;
+  /**
+   * Evaluates simultaneous channel pressure measurements independently of their alarm history.
+   *
+   * @return true when the current available samples meet the configured vote
+   */
+  private boolean hasLiveDemand() {
+    int votes = 0;
     for (Detector sensor : pressureSensors) {
-      if (!sensor.isBypassed() && !sensor.isFaulty() && sensor.isTripped()) {
-        trippedCount++;
+      if (sensor.isDemandPresent()) {
+        votes++;
       }
     }
-
-    // Evaluate voting condition
-    boolean shouldTrip = votingLogic.evaluate(trippedCount);
-
-    if (shouldTrip && !isTripped) {
-      // HIPPS trips - close isolation valve immediately
-      isTripped = true;
-      state = LogicState.RUNNING;
-
-      if (isolationValve != null) {
-        // Rapid closure for HIPPS
-        isolationValve.setPercentValveOpening(0.0);
-      }
-    }
+    return votingLogic.evaluate(votes);
   }
 
   /**
@@ -220,23 +295,15 @@ public class HIPPSLogic implements ProcessLogic {
       return;
     }
 
+    if (!Double.isFinite(timeStep) || timeStep < 0.0) {
+      throw new IllegalArgumentException("Timestep must be finite and nonnegative");
+    }
     timeSinceTrip += timeStep;
-
-    // Check if escalation to ESD is needed
-    if (!escalated && escalationLogic != null && timeSinceTrip >= escalationDelay) {
-      // Check if pressure is still high (voting still true)
-      int trippedCount = 0;
-      for (Detector sensor : pressureSensors) {
-        if (sensor.isTripped()) {
-          trippedCount++;
-        }
-      }
-
-      if (votingLogic.evaluate(trippedCount)) {
-        // Pressure still high after delay - escalate to ESD
-        escalated = true;
-        escalationLogic.activate();
-      }
+    boolean demand = hasLiveDemand();
+    continuousDemandSeconds = demand ? continuousDemandSeconds + timeStep : 0.0;
+    if (demand && !escalated && escalationLogic != null && continuousDemandSeconds >= escalationDelay) {
+      escalated = true;
+      escalationLogic.activate();
     }
   }
 
@@ -261,23 +328,33 @@ public class HIPPSLogic implements ProcessLogic {
    */
   @Override
   public boolean reset() {
-    // Check if all sensors are clear
+    if (isOverridden || pressureSensors.size() != votingLogic.getTotalSensors()) {
+      return false;
+    }
     for (Detector sensor : pressureSensors) {
-      if (sensor.isTripped()) {
+      if (sensor.isDemandPresent() || sensor.isFaulty() || sensor.isBypassed()
+          || !Double.isFinite(sensor.getMeasuredValue())) {
         return false;
       }
     }
-
+    for (ThrottlingValve valve : isolationValves) {
+      if (valve instanceof HIPPSValve && ((HIPPSValve) valve).getActiveTransmitterCount() > 0) {
+        return false;
+      }
+    }
+    for (Detector sensor : pressureSensors) {
+      sensor.reset();
+    }
+    for (ThrottlingValve valve : isolationValves) {
+      if (valve instanceof HIPPSValve) {
+        ((HIPPSValve) valve).reset();
+      }
+    }
     isTripped = false;
     timeSinceTrip = 0.0;
+    continuousDemandSeconds = 0.0;
     escalated = false;
     state = LogicState.IDLE;
-
-    // Re-open isolation valve (requires manual action in real system)
-    if (isolationValve != null) {
-      isolationValve.setPercentValveOpening(100.0);
-    }
-
     return true;
   }
 
@@ -334,8 +411,8 @@ public class HIPPSLogic implements ProcessLogic {
       isTripped = true;
       state = LogicState.RUNNING;
 
-      if (isolationValve != null) {
-        isolationValve.setPercentValveOpening(0.0);
+      for (ThrottlingValve valve : isolationValves) {
+        commandIsolation(valve);
       }
     }
   }
@@ -357,11 +434,7 @@ public class HIPPSLogic implements ProcessLogic {
 
   @Override
   public List<ProcessEquipmentInterface> getTargetEquipment() {
-    List<ProcessEquipmentInterface> equipment = new ArrayList<>();
-    if (isolationValve != null) {
-      equipment.add(isolationValve);
-    }
-    return equipment;
+    return new ArrayList<ProcessEquipmentInterface>(isolationValves);
   }
 
   @Override
@@ -376,13 +449,16 @@ public class HIPPSLogic implements ProcessLogic {
     } else if (isTripped) {
       sb.append(String.format("TRIPPED (%.1fs)", timeSinceTrip));
     } else {
-      sb.append("NORMAL");
+      sb.append(state == LogicState.FAILED ? "FAILED" : "NORMAL");
     }
 
+    if (state == LogicState.FAILED) {
+      sb.append(" [DEGRADED VOTING]");
+    }
     int trippedCount = 0;
     int bypassedCount = 0;
     for (Detector sensor : pressureSensors) {
-      if (sensor.isTripped()) {
+      if (sensor.isDemandPresent()) {
         trippedCount++;
       }
       if (sensor.isBypassed()) {
@@ -396,8 +472,8 @@ public class HIPPSLogic implements ProcessLogic {
     }
     sb.append(")");
 
-    if (isolationValve != null) {
-      sb.append(String.format(" - Valve: %.0f%%", isolationValve.getPercentValveOpening()));
+    for (ThrottlingValve valve : isolationValves) {
+      sb.append(String.format(" - %s: %.0f%%", valve.getName(), valve.getPercentValveOpening()));
     }
 
     return sb.toString();

@@ -16,7 +16,8 @@ package neqsim.process.logic.sis;
  * @author ESOL
  * @version 1.0
  */
-public class Detector {
+public class Detector implements java.io.Serializable {
+  private static final long serialVersionUID = 1L;
   private final String name;
   private final DetectorType type;
   private final AlarmLevel alarmLevel;
@@ -54,31 +55,23 @@ public class Detector {
   public void update(double measuredValue) {
     this.measuredValue = measuredValue;
 
-    if (isBypassed || isFaulty) {
-      return; // Don't evaluate if bypassed or faulty
-    }
-
-    // Check trip condition based on alarm level
-    boolean shouldTrip = false;
-    switch (alarmLevel) {
-    case LOW:
-    case LOW_LOW:
-      shouldTrip = measuredValue < setpoint;
-      break;
-    case HIGH:
-    case HIGH_HIGH:
-      shouldTrip = measuredValue > setpoint;
-      break;
-    }
-
-    if (shouldTrip && !isTripped) {
+    if (isDemandPresent() && !isTripped) {
       isTripped = true;
       tripTime = System.currentTimeMillis();
-    } else if (!shouldTrip && isTripped) {
-      // Auto-reset if condition clears (depends on detector configuration)
-      // In real SIS, manual reset is often required
-      // isTripped = false;
     }
+  }
+
+  /**
+   * Evaluates the current healthy sample against the configured limit, independently of the event latch.
+   *
+   * @return true while the current sample is beyond the trip limit
+   */
+  public boolean isDemandPresent() {
+    if (isBypassed || isFaulty || !Double.isFinite(measuredValue)) {
+      return false;
+    }
+    return alarmLevel == AlarmLevel.LOW || alarmLevel == AlarmLevel.LOW_LOW ? measuredValue < setpoint
+        : measuredValue > setpoint;
   }
 
   /**
@@ -99,7 +92,7 @@ public class Detector {
    * </p>
    */
   public void reset() {
-    if (!isBypassed && measuredValue < setpoint) { // Only reset if condition cleared
+    if (!isBypassed && !isFaulty && Double.isFinite(measuredValue) && !isDemandPresent()) {
       isTripped = false;
       tripTime = 0;
     }

@@ -18,6 +18,7 @@ uses the checkout's compiled Java classes. Run the commands in order.
 python examples/stabilization-commissioning/steady.py
 python examples/stabilization-commissioning/dynamic.py
 python examples/stabilization-commissioning/matched_replay.py
+python examples/stabilization-commissioning/hipps.py
 python examples/stabilization-commissioning/flare.py
 python examples/stabilization-commissioning/drawings.py
 python examples/stabilization-commissioning/verify.py
@@ -55,3 +56,21 @@ at 49 s plant time. The simultaneous HP/MP gas-cap discharge peaked at
 gas inventories and header state. Header linepack and pressure feedback, liquid
 flashing from the separator inventories, flare KO carryover, vendor compressor
 maps, and independent SAS emulator testing require additional models and data.
+
+
+## HIPPS pressure-protection replay
+
+`hipps.py` takes three readings from the native V-101 vessel at each scan.
+A synthetic 29 bara 2oo3 trip commands two independent stem models with 2 s
+and 3 s stroke times. Both act on the same feed. Each has linear Cv versus
+travel and equal nominal resistance. The series-flow calculation is a
+normalized resistance approximation for the wet feed. The condensate return
+continues at its steady rate. Persistent pressure voting starts a separate
+four-second inlet ESD stroke after a five-second escalation delay.
+
+Inspect `hipps.json` and the five CSV traces for the healthy case at two scan
+sizes, a single false-high channel under normal throughput, one stuck-open
+valve, and two stuck-open valves. The traces separate trip demand, both actual
+positions, feed flow, ESD travel, and protected pressure. Valve positions here
+are simulated feedback; the case has no independent field switch, vendor
+closure data, wave propagation or probabilistic SIL verification.

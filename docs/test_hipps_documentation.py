@@ -199,9 +199,9 @@ class HippsDocumentationContractTest(unittest.TestCase):
             "project-specific",
             "independent functional-safety assessment",
             "accountable approval",
-            "does not calculate valve hydraulics",
-            "commands the linked valve to 100-percent opening",
-            "reopening is a simulation convenience",
+            "current scan",
+            "leaves the isolation demand at zero",
+            "Reopening requires a separate command",
         )
         normalized = " ".join(self.all_pages.split())
         for phrase in required_phrases:
