@@ -573,3 +573,7 @@ balance residual cannot establish that the peak is resolved. Ask for a paired
 pressure/phase-rate trace or a compressor map when that evidence would change
 the decision. For blind evaluation, give the agent only the challenge-mode MCP
 server and score its saved choice separately.
+
+For installed-equipment comparisons, verify the signed steady well-rate and choke-pressure residuals before starting the controllers. The [reference case](../../../examples/production-decision/README.md) solves both to 1e-10 in kg/s and bar so an initialization discrepancy cannot disable the native steady momentum correction. Keep event and handoff protocol identical across a ranking. A rejected coarse trajectory also blocks selection when the fine runs happen to complete.
+
+Use the same compressor map hash for both policies and every refinement. The optional native chart path computes the speed required by the export duty and checks the flow range and suction envelope. Record whether the chart came from a vendor or was constructed for a sensitivity case.

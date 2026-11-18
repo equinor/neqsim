@@ -334,3 +334,7 @@ Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.go
 - [Model Calibration & Data Reconciliation Skill](../.github/skills/neqsim-model-calibration-and-data-reconciliation/SKILL.md) — Bounded parameter tuning, residual diagnostics, train/validation reporting
 - tagreader Python package
 - NeqSimAPI or the user's selected deployment target
+
+## Held-out restart events
+
+For the [production restart comparator](../../examples/production-decision/README.md#comparing-a-held-out-restart-event), match the gathering pressure tag to the pipe inlet face and the arrival thermometer to the platform upstream of the choke. Use absolute pressure. Keep phase-rate averaging windows, instrument tolerances, sensor identity and event timing in the observation manifest. Report requested and paired counts for each tag and preserve gaps. Separate field, laboratory and synthetic evidence when assessing the coupled network.

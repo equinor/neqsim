@@ -1003,3 +1003,7 @@ A steady NeqSim model has no time constants, and a historian trend has no thermo
 - **Gain check:** `steady_gains` and `compare_gains` check identified gains against the model; a mismatch points to tag, unit or flow-basis errors first.
 
 Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
+## Coupled production restart holdout
+
+Use the [event measurement workflow](../../../examples/production-decision/README.md#comparing-a-held-out-restart-event) for measured manifold and separator pressure, arrival temperature, levels and riser phase rates. Record rate averaging windows and align point observations to the end of the physical step. Declare origin, instrument tag, units, source and a tolerance for every observation. Review the coverage as well as the error: an unpaired pressure or arrival-temperature sample cannot support model qualification.

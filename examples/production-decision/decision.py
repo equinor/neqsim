@@ -55,13 +55,15 @@ def quantities(run):
 def run_basis(config):
     """Keep solver revision, horizon, energy owner and equipment rating basis together."""
     return (config["revision"], config["duration"], bool(config.get("energy_audit")),
-            config.get("basis", "matched"))
+            config.get("basis", "matched"), config.get("handoff_protocol", "legacy"),
+            config.get("event_id", "synthetic-two-well-restart"), config.get("chart_sha256"))
 
 
 def run_result(run):
     """Preserve a rejected trajectory as negative evidence at its own discretization."""
     if run.get("status") == "rejected":
-        return {"rejection": run["reason"]}
+        return {"rejection": run["reason"], **({"outlet_diagnostic": run["outlet_diagnostic"]}
+                                             if "outlet_diagnostic" in run else {})}
     return quantities(run)
 
 
@@ -91,7 +93,8 @@ def assess(runs):
                 result[fluid][policy] = {"status": "missing_refinement", "available": len(runs_by_grid)}
                 continue
             primary, fine_mesh, fine_step = [runs_by_grid[key][0] for key in GRIDS]
-            rejections = [{"mesh_cells": 60 * grid[0], "dt_s": grid[1], "reason": pair[0]["rejection"]}
+            rejections = [{"mesh_cells": 60 * grid[0], "dt_s": grid[1], "reason": pair[0]["rejection"],
+                           **({"outlet_diagnostic": pair[0]["outlet_diagnostic"]} if "outlet_diagnostic" in pair[0] else {})}
                           for grid, pair in runs_by_grid.items() if "rejection" in pair[0]]
             if rejections:
                 result[fluid][policy] = {"status": "rejected_trajectory", "rejections": rejections}
@@ -146,8 +149,9 @@ def assess(runs):
                                            policies["fixed"]["quantities"]["well_production_kg"]["values"])]
             tol = TOLERANCES["well_production_kg"]
             verdicts[fluid] = "ramp" if min(gains) > tol else "fixed" if max(gains) < -tol else "unresolved"
-    revision, duration, energy_audit, basis = next(iter(conditions))
-    return {"source_revision": revision, "duration_s": duration, "equipment_basis": basis,
+    revision, duration, energy_audit, basis, handoff, event_id, chart_digest = next(iter(conditions))
+    return {"source_revision": revision, "duration_s": duration, "equipment_basis": basis, "handoff_protocol": handoff, "event_id": event_id,
+            "compressor_chart_sha256": chart_digest,
             "boundary": "sampled pressure-fed IPR / live separator plus lagged choke drop",
             "conservative_energy_mode": energy_audit,
             "grids_cells_dt_s": [[60 * m, dt] for m, dt in GRIDS],
@@ -182,7 +186,9 @@ def challenge(runs, limit_kw, reveal=False, surge_map_available=True):
     if not surge_map_available:
         for output in visible.values():
             output.pop("screening_surge_margin", None)
-    prompt = {"installed_surge_evidence": "synthetic screening curve" if surge_map_available else "missing",
+    origin = runs[0]["configuration"].get("chart_origin")
+    surge_basis = (origin + " speed-line endpoints") if origin else "synthetic screening curve"
+    prompt = {"installed_surge_evidence": surge_basis if surge_map_available else "missing",
               "power_limit_kW": limit_kw, "coarse_results": visible,
               "question": "Select fixed or ramp for all fluids, or withhold. Maximize worst-case integrated well production subject to all four limits.",
               "other_limits": {k: v for k, v in LIMITS.items() if k != "power_kW"}}
@@ -192,9 +198,16 @@ def challenge(runs, limit_kw, reveal=False, surge_map_available=True):
     for policy in ("fixed", "ramp"):
         held = [row for (_, name), records in cases.items() if name == policy
                 for grid, row in records.items() if grid != GRIDS[0]]
-        if any("rejection" in row for row in held):
-            outcome[policy] = {"violations": [], "missing_evidence": ["accepted refined trajectory"],
-                               "rejections": [r["rejection"] for r in held if "rejection" in r],
+        rejected = [(grid, row["rejection"]) for (_, name), records in cases.items() if name == policy
+                    for grid, row in records.items() if "rejection" in row]
+        if rejected:
+            missing = []
+            if any(grid == GRIDS[0] for grid, _ in rejected):
+                missing.append("accepted coarse trajectory")
+            if any(grid != GRIDS[0] for grid, _ in rejected):
+                missing.append("accepted refined trajectory")
+            outcome[policy] = {"violations": [], "missing_evidence": missing,
+                               "rejections": [reason for _, reason in rejected],
                                "worst_production_kg": None, "power_prediction_error_kW": None}
             continue
         failures = set()

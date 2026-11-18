@@ -775,3 +775,5 @@ open-loop and regulated quantities. Each mode includes `pipePhaseResidualKg`,
 single-grid synthetic replay. The [two-well restart workflow](../../examples/production-decision/README.md)
 provides a separate local MCP server for a moving outlet boundary, cross-grid
 comparison and blind scoring.
+
+In review mode the local server also exposes `restart_observation_evidence` when `NEQSIM_RESTART_OBSERVATIONS` identifies a predeclared event manifest. The response retains requested and paired sample counts, measurement origin, file hash, errors and numerical rejections for each matching policy run. Challenge mode exposes coarse model evidence only. The assessment groups receipts by event, steady-handoff protocol and compressor-chart hash as well as solver revision and equipment basis.

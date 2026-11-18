@@ -62,6 +62,13 @@ def injection_holdout(path, n):
     errors_by_date = []
     for row in hold:
         p_res, p_bh = float(row["reservoir_bara"]), float(row["bottomhole_bara"])
+        delta = p_bh - p_res
+        margin = float(row["fracture_bara"]) - p_bh
+        observation = {"date": row["date"], "source": row["source"], "observed_kg_s": float(row["water_kg_s"]),
+                       "fracture_margin_bar": margin, "within_training_pressure_span": min(deltas) <= delta <= max(deltas)}
+        if margin <= 0:
+            errors_by_date.append({**observation, "status": "outside_unfractured_model", "predicted_kg_s": None})
+            continue
         water = n.thermo.system.SystemSrkEos(298.15, p_res)
         water.addComponent("water", 1.)
         water.setMixingRule("classic")
@@ -73,20 +80,29 @@ def injection_holdout(path, n):
         well.addLiquidInjectionZone("zone", supply, p_res, index, float(row["fracture_bara"]))
         well.setOutletPressure(p_bh, "bara")
         well.run()
-        errors_by_date.append({"date": row["date"], "source": row["source"], "observed_kg_s": float(row["water_kg_s"]),
-                               "predicted_kg_s": well.getOutletStream().getFlowRate("kg/sec"),
-                               "fracture_margin_bar": float(row["fracture_bara"]) - p_bh})
-    return {"fitted_mass_injectivity_kg_s_bar": index, "holdout": errors_by_date,
-            "errors_kg_s": errors([r["observed_kg_s"] for r in errors_by_date],
-                                  [r["predicted_kg_s"] for r in errors_by_date])}
+        errors_by_date.append({**observation, "status": "predicted",
+                               "predicted_kg_s": well.getOutletStream().getFlowRate("kg/sec")})
+    predicted = [r for r in errors_by_date if r["predicted_kg_s"] is not None]
+    return {"fitted_mass_injectivity_kg_s_bar": index, "training_pressure_difference_bar": [min(deltas), max(deltas)],
+            "holdout": errors_by_date, "requested": len(hold), "predicted": len(predicted),
+            "errors_kg_s": errors([r["observed_kg_s"] for r in predicted],
+                                  [r["predicted_kg_s"] for r in predicted]) if predicted else None}
 
 
 def evaluate(path, ipr):
     groups = {}
+    injector_gauges = {}
     seen = set()
     with path.open(encoding="utf-8-sig", newline="") as source:
         for r in csv.DictReader(source):
             well = r["NPD_WELL_BORE_NAME"]
+            if r["FLOW_KIND"] == "injection" and value(r, "BORE_WI_VOL") > 0:
+                counts = injector_gauges.setdefault(well, {"positive_injection_rows": 0,
+                                                           "paired_positive_downhole_pressure_rows": 0,
+                                                           "paired_positive_wellhead_pressure_rows": 0})
+                counts["positive_injection_rows"] += 1
+                counts["paired_positive_downhole_pressure_rows"] += value(r, "AVG_DOWNHOLE_PRESSURE") > 0
+                counts["paired_positive_wellhead_pressure_rows"] += value(r, "AVG_WHP_P") > 0
             if well not in ("15/9-F-12", "15/9-F-14", "15/9-F-4"):
                 continue
             date = datetime.strptime(r["DATEPRD"], "%d-%b-%y").date().isoformat()
@@ -144,6 +160,7 @@ def evaluate(path, ipr):
     if paired:
         results["sum_of_two_conditional_rates_Sm3_day"] = errors(
             [sum(o for o, _ in day) for day in paired], [sum(p for _, p in day) for day in paired])
+    results["all_dates_injector_gauge_coverage"] = injector_gauges
     return results
 
 

@@ -85,3 +85,103 @@ class TestLaboratoryManifest(unittest.TestCase):
         document["observations"][1]["pressure_bara"] = 50.
         with self.assertRaises(ValueError):
             validate_manifest(document, "reference")
+
+
+class TestRestartHoldout(unittest.TestCase):
+    def setUp(self):
+        self.run = receipt(1, .25, "fixed")
+        self.run["configuration"]["event_id"] = "test-start"
+        for i, row in enumerate(self.run["time_series"]):
+            row["manifold_bara"] = 70. + i
+            row["riser_water_kg_s"] = 2. + i
+        self.points = [{"quantity": "manifold_bara", "tag": "PT1", "start_s": .5, "end_s": .5,
+                        "value": 71., "tolerance": .1, "unit": "bara"},
+                       {"quantity": "riser_water_kg_s", "tag": "FT1", "start_s": 0., "end_s": .5,
+                        "value": 2.5, "tolerance": .01, "unit": "kg/s"}]
+        self.doc = {"event_id": "test-start", "source": "analytical control", "policy": "fixed",
+                    "origin": "synthetic", "observations": self.points}
+
+    def test_points_and_volume_integrated_rate(self):
+        from restart_observations import compare
+        result = compare(self.run, self.doc)
+        self.assertEqual("within_supplied_tolerances", result["status"])
+        self.assertEqual(0., result["by_quantity"]["riser_water_kg_s"]["mae"])
+        self.points[0]["value"] += 1.
+        self.assertEqual("outside_tolerance", compare(self.run, self.doc)["status"])
+
+    def test_missing_sensor_or_time_is_retained(self):
+        from restart_observations import compare
+        self.points[0].update(start_s=.375, end_s=.375)
+        result = compare(self.run, self.doc)
+        self.assertEqual("insufficient_coverage", result["status"])
+        self.assertEqual(0, result["by_quantity"]["manifold_bara"]["paired"])
+        self.assertFalse(result["complete_coverage"])
+
+    def test_event_units_duplicate_and_solver_rejection(self):
+        from restart_observations import compare
+        for changes in ({"event_id": "other"}, {"origin": "unknown"}, {"policy": "ramp"},
+                        {"observations": self.points * 2}):
+            with self.assertRaises(ValueError):
+                compare(self.run, {**self.doc, **changes})
+        self.points[1]["unit"] = "Sm3/d"
+        with self.assertRaises(ValueError):
+            compare(self.run, self.doc)
+        self.run.update(status="rejected", reason="physical guard")
+        self.assertEqual("rejected_trajectory", compare(self.run, self.doc)["status"])
+
+    def test_handoff_protocol_and_rejected_coarse_block_scoring(self):
+        runs = [receipt(m, dt, p) for m, dt in GRIDS for p in ("fixed", "ramp")]
+        runs[0]["configuration"]["handoff_protocol"] = "coupled-steady-v2"
+        with self.assertRaises(ValueError):
+            challenge(runs, 600.)
+        del runs[0]["configuration"]["handoff_protocol"]
+        runs[0].update(status="rejected", reason="coarse failure")
+        scored = score(runs, 600., "fixed")
+        self.assertIsNone(scored["production_regret_kg"])
+        self.assertIn("accepted coarse trajectory", scored["held_out"]["fixed"]["missing_evidence"])
+
+
+class TestWaterInjectionDomain(unittest.TestCase):
+    def test_fracture_threshold_holdouts_stay_visible(self):
+        import tempfile
+        from pathlib import Path
+        from field_history import injection_holdout
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "water.csv"
+            path.write_text("date,role,bottomhole_bara,reservoir_bara,water_kg_s,fracture_bara,source\n"
+                            "2026-01-01,calibration,150,140,1,190,control\n"
+                            "2026-01-02,calibration,160,140,2,190,control\n"
+                            "2026-01-03,calibration,170,140,3,190,control\n"
+                            "2026-01-04,holdout,190,140,5,190,control\n"
+                            "2026-01-05,holdout,200,140,6,190,control\n")
+            result = injection_holdout(path, None)
+            self.assertEqual(2, result["requested"])
+            self.assertEqual(0, result["predicted"])
+            self.assertIsNone(result["errors_kg_s"])
+            self.assertEqual([0., -10.], [r["fracture_margin_bar"] for r in result["holdout"]])
+
+
+class TestHostChart(unittest.TestCase):
+    def test_map_provenance_and_bracketing_lines(self):
+        from pathlib import Path
+        from unittest.mock import Mock
+        from host_chart import assess_point, load_chart
+
+        chart, digest = load_chart(Path(__file__).with_name("synthetic_host_chart.json"))
+        self.assertEqual(64, len(digest))
+        self.assertEqual("synthetic", chart["origin"])
+        machine, suction = Mock(), Mock()
+        machine.getSpeed.return_value = 11000.
+        machine.getPolytropicHead.return_value = 82.
+        machine.getOutletStream.return_value.getPressure.return_value = 100.
+        suction.getPressure.return_value = 54.
+        suction.getTemperature.return_value = 310.
+        suction.getFluid.return_value.getMolarMass.return_value = .02
+        point = assess_point(machine, chart, suction, 400.)
+        self.assertAlmostEqual(253., point["surge_flow_actual_m3_h"])
+        with self.assertRaisesRegex(ValueError, "bracketing"):
+            assess_point(machine, chart, suction, 240.)
+        suction.getPressure.return_value = 45.
+        with self.assertRaisesRegex(ValueError, "suction"):
+            assess_point(machine, chart, suction, 400.)

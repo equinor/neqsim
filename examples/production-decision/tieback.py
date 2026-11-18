@@ -14,6 +14,7 @@ from pathlib import Path
 
 import jpype
 
+from host_chart import assess_point, load_chart
 from pvt_evidence import check as check_density
 
 
@@ -66,7 +67,7 @@ def make_pipe(eq, feed, refinement):
     return pipe
 
 
-def host_snapshot(n, gas, rate, recycle_fraction=.15):
+def host_snapshot(n, gas, rate, recycle_fraction=.15, chart=None):
     """Steady compression with cooled, pressure-reduced discharge recycle at a sampled instant."""
     eq = n.process.equipment
     feed = eq.stream.Stream("Host fresh gas", gas.getFluid().clone())
@@ -80,6 +81,9 @@ def host_snapshot(n, gas, rate, recycle_fraction=.15):
     machine = eq.compressor.Compressor("Export compressor", mixer.getOutletStream())
     machine.setOutletPressure(100.0, "bara")
     machine.setIsentropicEfficiency(.78)
+    if chart:
+        machine.loadCompressorChartFromJsonString(json.dumps(chart))
+        machine.setSolveSpeed(True)
     split = eq.splitter.Splitter("Discharge split", machine.getOutletStream(), 2)
     split.setSplitFactors([1 - recycle_fraction, recycle_fraction])
     valve = eq.valve.ThrottlingValve("Recycle valve", split.getSplitStream(1))
@@ -100,8 +104,9 @@ def host_snapshot(n, gas, rate, recycle_fraction=.15):
     flow = mixer.getOutletStream().getFlowRate("m3/hr")
     energy_error = (split.getSplitStream(0).getFluid().getEnthalpy() - feed.getFluid().getEnthalpy()
                     - machine.getPower("W") - cooler.getDuty("W"))
+    duty = assess_point(machine, chart, mixer.getOutletStream(), flow) if chart else {"screening_surge_margin": flow / 325.0 - 1}
     return {"host_energy_residual_W": energy_error, "power_kW": machine.getPower("kW"), "gas_export_kg_s": export,
-            "suction_actual_m3_h": flow, "screening_surge_margin": flow / 325.0 - 1}
+            "suction_actual_m3_h": flow, **duty}
 
 
 def chemistry(n):
@@ -114,7 +119,30 @@ def chemistry(n):
     return list(brine.getMissingPhreeqcPitzerCatalogRows())
 
 
-def run(n, opt):
+# Stay inside the native first-step boundary identity tolerance (1e-9 relative).
+# Absolute residuals in bar and kg/s are appropriate for this installed fixture.
+HANDOFF_TOLERANCE = 1.e-10
+
+
+class OutletBackflowError(ValueError):
+    """Carry the rejected interval separately from the final cell and transferred mass."""
+
+    def __init__(self, pipe, phases, start, dt, separator, opening, pressure, initialization):
+        cell = pipe.getSectionSnapshots()[-1]
+        balance = pipe.getLastMassBalanceReport()
+        self.diagnostic = {
+            "condition": "forward_only_outlet_clamped", "start_s": start, "end_s": start + dt,
+            "separator_bara": separator, "choke_pct": opening, "imposed_outlet_bara": pressure,
+            "terminal_cell_velocity_m_s": dict(zip(("gas", "oil", "water"),
+                (cell.getGasVelocity(), cell.getOilVelocity(), cell.getWaterVelocity()))),
+            "interval_outlet_mass_kg": {phase.name().lower(): balance.getOutletMassKg(phase)
+                                       for phase in (phases.GAS, phases.OIL, phases.WATER)},
+            "steady_handoff": initialization}
+        super().__init__(f"Outlet backflow clamped in ({start}, {start + dt}] s at {pressure:.6f} bara")
+
+
+def run(n, opt, chart_info=None):
+    chart = chart_info[0] if chart_info else None
     eq = n.process.equipment
     fluid_basis = Path(opt.fluid_deck) if opt.fluid_deck else opt.eos
     feed = stream(n, "Gathering node", fluid_basis, 70., 20.)
@@ -140,6 +168,7 @@ def run(n, opt):
     q0 = 19.99999999999999  # kg/s at the reference choke rating
     rho0 = 171.53793465259855  # kg/m3 at the same rating
     p0 = 54.40099362
+    initialization = None
     if opt.basis == "matched":
         q0 = outlet.getFlowRate("kg/sec")
         rho0 = outlet.getFluid().getDensity("kg/m3")
@@ -147,7 +176,7 @@ def run(n, opt):
     else:
         # Balance the shared physical restrictions before handing over to
         # dynamics. Neither PI nor the installed choke coefficient is fitted here.
-        for _ in range(30):
+        for iteration in range(1, 31):
             inlet_pressure = pipe.getInletFacePressure("bara")
             rate = 0.
             for well, reservoir in wells:
@@ -159,7 +188,11 @@ def run(n, opt):
             outlet = pipe.getOutletStream()
             drop = 2. * (outlet.getFlowRate("kg/sec") / q0) ** 2 * rho0 / outlet.getFluid().getDensity("kg/m3")
             face = pipe.getOutletPressure("bara")
-            if abs(face - p0 - drop) < 1.e-5 and abs(rate - feed.getFlowRate("kg/sec")) < 1.e-5:
+            pressure_error = face - p0 - drop
+            rate_error = rate - feed.getFlowRate("kg/sec")
+            if max(abs(pressure_error), abs(rate_error)) < HANDOFF_TOLERANCE:
+                initialization = {"iterations": iteration, "choke_residual_bar": pressure_error,
+                                  "well_residual_kg_s": rate_error, "absolute_tolerance": HANDOFF_TOLERANCE}
                 break
             feed.setFlowRate(rate, "kg/sec")
             feed.run()
@@ -239,12 +272,7 @@ def run(n, opt):
         pipe.setOutletPressure(sep_p + drop, "bara")
         pipe.runTransient(opt.dt, run_id)
         if pipe.isTransientOutletBackflowClamped():
-            cell = pipe.getSectionSnapshots()[-1]
-            velocities = (cell.getGasVelocity(), cell.getOilVelocity(), cell.getWaterVelocity())
-            raise ValueError(f"Outlet backflow clamped at {t + opt.dt} s; "
-                             f"separator={sep_p:.6f} bara, choke={opening:.3f}%, "
-                             f"imposed riser boundary={sep_p + drop:.6f} bara; "
-                             f"end-step gas/oil/water cell velocities={velocities} m/s")
+            raise OutletBackflowError(pipe, phases, t, opt.dt, sep_p, opening, sep_p + drop, initialization)
         fluid = outlet.getFluid()
         n.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash()
         fluid.initProperties()
@@ -262,7 +290,7 @@ def run(n, opt):
         gas_rate = vessel.getGasOutletFlowFraction() * vessel.getGasOutStream().getFlowRate("kg/sec")
         oil_rate = vessel.getOilOutletFlowFraction() * vessel.getOilOutStream().getFlowRate("kg/sec")
         sample = (index + 1) % round(1 / opt.dt) == 0
-        host = host_snapshot(n, vessel.getGasOutStream(), gas_rate) if sample else {}
+        host = host_snapshot(n, vessel.getGasOutStream(), gas_rate, chart=chart) if sample else {}
         if opt.energy_audit:
             # Boundary includes both wells at the pipe inlet and ends at the three
             # separator outlets. The host recycle has a separate steady energy audit.
@@ -309,21 +337,35 @@ def run(n, opt):
             raise ValueError(f"Inventory ledger failed at {t + opt.dt}")
         rows.append({"end_s": t + opt.dt, "well_a_kg_s": well_rates[0], "well_b_kg_s": well_rates[1],
                      "opening_pct": opening, "riser_boundary_bara": sep_p + drop,
+                     "manifold_bara": pipe.getInletFacePressure("bara"),
+                     "arrival_K": outlet.getTemperature("K"),
                      "separator_bara": vessel.getPressure("bara"), "level_m": vessel.getOilLevel(),
                      "interface_m": vessel.getWaterLevel(), "oil_out_kg_s": oil_rate,
                      "riser_gas_kg_s": balance.getOutletMassKg(phases.GAS) / opt.dt,
                      "riser_oil_kg_s": balance.getOutletMassKg(phases.OIL) / opt.dt,
                      "riser_water_kg_s": balance.getOutletMassKg(phases.WATER) / opt.dt, **host})
-    config = {key: value for key, value in vars(opt).items() if key not in ("output", "fluid_deck", "density_evidence")}
-    config["design_basis"] = opt.basis
+    config = configuration(opt, chart_info)
     if opt.fluid_deck:
         config["eos"] = str(feed.getFluid().getModelName())
-        config["fluid_deck_sha256"] = hashlib.sha256(fluid_basis.read_bytes()).hexdigest()
-    return {"configuration": config, "feed_composition_sha256": fluid_digest, "density_evidence": density_evidence, "well_production_kg": cumulative, "max_phase_residual_kg": max_phase,
+    return {"configuration": config, "steady_handoff": initialization, "feed_composition_sha256": fluid_digest, "density_evidence": density_evidence, "well_production_kg": cumulative, "max_phase_residual_kg": max_phase,
             "max_component_residual_kg": max_component, "facility_energy_residual_J": None,
             "max_pipe_to_separator_energy_residual_J": max_network_energy if opt.energy_audit else None,
             "max_pipe_to_separator_component_residual_kg": max_network_component if opt.energy_audit else None,
             "missing_barite_interactions": chemistry(n), "time_series": rows}
+
+
+def configuration(opt, chart_info=None):
+    """Identify the same frozen case whether a numerical step succeeds or fails."""
+    config = {k: v for k, v in vars(opt).items() if k not in ("output", "fluid_deck", "density_evidence", "compressor_chart")}
+    if chart_info:
+        config["chart_sha256"] = chart_info[1]
+        config["chart_origin"] = chart_info[0]["origin"]
+        config["chart_source"] = chart_info[0]["source"]
+    config["design_basis"] = opt.basis
+    config["handoff_protocol"] = "coupled-steady-v2" if opt.basis == "installed" else "matched-v1"
+    if opt.fluid_deck:
+        config["fluid_deck_sha256"] = hashlib.sha256(Path(opt.fluid_deck).read_bytes()).hexdigest()
+    return config
 
 
 def main():
@@ -331,6 +373,7 @@ def main():
     parser.add_argument("--eos", choices=["Srk", "Pr"], default="Srk")
     parser.add_argument("--density-evidence", help="Sample-matched measured phase-density manifest")
     parser.add_argument("--energy-audit", action="store_true", help="Use conservative pipe energy recovery")
+    parser.add_argument("--compressor-chart", help="NeqSim JSON with declared surge endpoints and suction envelope")
     parser.add_argument("--fluid-deck", help="Frozen E300 feed deck including water and overall composition")
     parser.add_argument("--basis", choices=["installed", "matched"], default="installed",
                         help="Freeze installed ratings, or recalibrate to compare matched initial operating points")
@@ -340,6 +383,7 @@ def main():
     parser.add_argument("--duration", type=int, default=40)
     parser.add_argument("--output", required=True)
     parser.add_argument("--revision", required=True)
+    parser.add_argument("--event-id", default="synthetic-two-well-restart", help="Preassigned event identifier shared with a holdout manifest")
     args = parser.parse_args()
     if args.duration <= 20:
         parser.error("Duration must include the separator backpressure step at 20 s")
@@ -347,11 +391,15 @@ def main():
         parser.error("Output already exists; use a new receipt path")
     jpype.startJVM("-Xmx600m", "-XX:ActiveProcessorCount=2", convertStrings=True,
                    classpath=os.environ["NEQSIM_CLASSPATH"].split(os.pathsep))
+    chart = load_chart(args.compressor_chart) if args.compressor_chart else None
+    config = configuration(args, chart)
     try:
-        result = run(jpype.JPackage("neqsim"), args)
+        result = run(jpype.JPackage("neqsim"), args, chart)
     except Exception as exc:
         result = {"status": "rejected", "reason": str(exc),
-                  "configuration": {k: v for k, v in vars(args).items() if k != "output"}}
+                  "configuration": config}
+        if isinstance(exc, OutletBackflowError):
+            result["outlet_diagnostic"] = exc.diagnostic
     else:
         result["status"] = "completed"
     # A failed solve never publishes a successful-looking partial receipt. A

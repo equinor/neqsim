@@ -7,6 +7,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 from decision import assess, challenge, score
+from restart_observations import compare_file
 
 server = FastMCP("NeqSim production restart decision")
 
@@ -35,6 +36,18 @@ def score_restart_choice(power_limit_kw: float, choice: str, surge_map_available
     return score(completed_runs(), power_limit_kw, choice, surge_map_available)
 
 
+def restart_observation_evidence() -> dict:
+    """Compare the configured event measurements with each matching frozen replay."""
+    path = Path(os.environ["NEQSIM_RESTART_OBSERVATIONS"])
+    document = json.loads(path.read_text(encoding="utf-8"))
+    matching = [r for r in completed_runs() if r["configuration"].get("event_id") == document["event_id"]
+                and r["configuration"]["policy"] == document["policy"]]
+    if not matching:
+        raise ValueError("No matching frozen event and policy in the configured manifest")
+    return {"comparisons": [{"configuration": r["configuration"], "comparison": compare_file(r, path)}
+                            for r in matching]}
+
+
 if __name__ == "__main__":
     mode = os.environ.get("NEQSIM_RESTART_MODE", "review")
     if mode == "challenge":
@@ -42,6 +55,8 @@ if __name__ == "__main__":
     elif mode == "review":
         server.tool()(restart_quantity_evidence)
         server.tool()(score_restart_choice)
+        if os.environ.get("NEQSIM_RESTART_OBSERVATIONS"):
+            server.tool()(restart_observation_evidence)
     else:
         raise ValueError("NEQSIM_RESTART_MODE must be challenge or review")
     server.run(transport="stdio")

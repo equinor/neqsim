@@ -129,3 +129,7 @@ ALWAYS read these skills before proceeding:
 - Downstream: `@optimize-processmodel` → `@solve-task` (formal report) or
   `@engineering-deliverables` (turn the optimum into datasheets) or
   `@field-development` (fiscal interpretation of the per-year optima)
+
+## Two-well restart decisions
+
+For a choke policy on a shared riser use the [restart study](../../examples/production-decision/README.md). Freeze the well indices, equipment ratings, event and handoff protocol across candidates. Keep a rejected coarse run in the decision alongside rejected refinements. Before scoring, record the agent's choice using only challenge-mode evidence. Give independent measurements and the fine-grid results to the reviewer. Report whether peak power occurred before the policies diverged.
