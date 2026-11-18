@@ -1,7 +1,7 @@
 ---
 name: neqsim-phase-envelope
 description: "Generate, plot, interpret, validate, and troubleshoot NeqSim PT phase envelopes. USE WHEN: calculating phase envelopes, dew and bubble curves, cricondenbar, cricondentherm, critical points, retrograde regions, envelope segments, or fixing Michelsen continuation and singular-Jacobian failures caused by zero or trace components."
-last_verified: "2026-09-12"
+last_verified: "2026-11-18"
 ---
 
 # NeqSim PT Phase Envelopes
@@ -34,7 +34,10 @@ Read these sources before generating or changing code:
 
 Validate that temperature is in K, pressure is in bara, component amounts are finite and
 non-negative, and the mixing rule is set. Choose the EOS from the fluid chemistry, not from
-the desired plot shape.
+the desired plot shape. For characterized feeds, record the unit of each normal boiling
+point. Pass Celsius as the fifth argument `"C"` to `addTBPfraction2`; the four-argument
+form expects kelvin. When converting to UMR-CPA, use the system returned by `setModel("UMR-CPA")`
+and flash it before reading its equilibrium phases.
 
 ### 2. Handle zero and trace components correctly
 

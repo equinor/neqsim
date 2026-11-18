@@ -635,7 +635,7 @@ alternatives take a boiling point instead of the missing property:
 
 ```java
 // molar mass known, specific gravity unknown
-oil.addTBPfraction2("C10", 0.02, 0.142, 447.3);   // name, moles, molarMass [kg/mol], Tb [K]
+oil.addTBPfraction2("C10", 0.02, 0.142, 174.0, "C");  // 0.142 kg/mol, 174 °C = 447.15 K
 
 // specific gravity known, molar mass unknown
 oil.addTBPfraction3("C10", 0.02, 0.734, 447.3);   // name, moles, specificGravity [-], Tb [K]

@@ -6,6 +6,7 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacUMRPRU;
 import neqsim.thermo.component.ComponentGEUniquac;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
@@ -48,15 +49,20 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     super(phase, alpha, Dij, mixRule, intparam);
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
-      componentArray[i] = new ComponentGEUnifacUMRPRU(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-          phase.getComponent(i).getComponentNumber());
-      // For pseudo-components (_PC), copy correct molar mass and reinitialize UNIFAC groups
-      if (phase.getComponent(i).getName().contains("_PC")) {
-        componentArray[i].setMolarMass(phase.getComponent(i).getMolarMass());
-        ((ComponentGEUnifacUMRPRU) componentArray[i]).initPCUNIFACGroups();
+      ComponentInterface source = phase.getComponent(i);
+      String name = source.getComponentName();
+      boolean pseudoComponent = source.isIsTBPfraction() || source.isIsPlusFraction() || name.contains("_PC");
+      // A renamed cut still uses the pseudo-component group model, independent of its display name.
+      String lookupName = pseudoComponent && !name.contains("_PC") ? name + "_PC" : name;
+      ComponentGEUnifacUMRPRU component = new ComponentGEUnifacUMRPRU(lookupName, source.getNumberOfmoles(),
+          source.getNumberOfMolesInPhase(), source.getComponentNumber());
+      if (pseudoComponent) {
+        component.setMolarMass(source.getMolarMass());
+        component.initPCUNIFACGroups();
+        component.setComponentName(name);
       }
-      componentArray[i].setAttractiveTerm(phase.getComponent(i).getAttractiveTermNumber());
+      component.setAttractiveTerm(source.getAttractiveTermNumber());
+      componentArray[i] = component;
     }
     this.setMixingRule(EosMixingRuleType.CLASSIC);
   }

@@ -228,6 +228,13 @@ ops.TPflash();
 
 ### 4.5 UMR-CPA (`SystemUMRCPAEoS`)
 
+To switch an existing fluid, use the returned system from `fluid.setModel("UMR-CPA")`.
+The alias `UMR-CPA-EoS` also works, and both names are case-insensitive. The new system
+selects Huron–Vidal with `UNIFAC_UMRPRU` and retains the source multiphase and enhanced
+multiphase search settings. TBP and plus fractions keep their amounts, measured or fitted
+critical properties, normal boiling points, and fraction identities. Reflash the returned
+fluid at the specified temperature and pressure to obtain the UMR-CPA equilibrium.
+
 `SystemUMRCPAEoS` is a **fused UMR-CPA** model that combines three building blocks
 in a single equation of state:
 
