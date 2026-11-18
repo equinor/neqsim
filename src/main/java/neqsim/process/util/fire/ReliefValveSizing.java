@@ -1,5 +1,7 @@
 package neqsim.process.util.fire;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
+
 /**
  * Dynamic relief valve (PSV) sizing for fire scenarios per API 521.
  *
@@ -39,7 +41,7 @@ public final class ReliefValveSizing {
   private ReliefValveSizing() {
   }
 
-  /** Gas constant [J/(mol*K)]. */
+  /** Gas constant on the kilomole basis [J/(kmol*K)]. */
   public static final double R_GAS = 8314.0;
 
   /** Standard API 520 orifice areas [in²]. */
@@ -258,12 +260,15 @@ public final class ReliefValveSizing {
    * @param compressibility Compressibility factor Z
    * @param specificHeatRatio Cp/Cv ratio
    * @param dischargeCoefficient Discharge coefficient (typically 0.975)
-   * @return Mass flow capacity [kg/s]
+   * @return forward mass flow capacity [kg/s], zero when back pressure meets or exceeds relieving pressure
    */
   public static double calculateMassFlowCapacity(double orificeArea, double setPressure, double overpressureFraction,
       double backPressure, double temperature, double molecularWeight, double compressibility, double specificHeatRatio,
       double dischargeCoefficient) {
     double P1 = setPressure * (1.0 + overpressureFraction);
+    if (backPressure >= P1) {
+      return 0.0;
+    }
     double k = specificHeatRatio;
 
     // Critical pressure ratio
@@ -281,7 +286,7 @@ public final class ReliefValveSizing {
 
     // Mass flow rate
     return dischargeCoefficient * orificeArea * P1 * C
-        * Math.sqrt(molecularWeight / (compressibility * R_GAS * temperature));
+        * Math.sqrt(molecularWeight / (compressibility * ThermodynamicConstantsInterface.R * temperature));
   }
 
   /**
