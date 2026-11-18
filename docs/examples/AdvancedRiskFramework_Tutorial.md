@@ -1,5 +1,5 @@
 ---
-title: "Advanced Risk Framework Tutorial"
+title: "NeqSim Advanced Risk Framework Tutorial"
 description: "Executable NeqSim tutorial for condition-based reliability, safety instrumented functions, bow-tie screening, and responsible engineering interpretation."
 ---
 
