@@ -22,6 +22,9 @@ import neqsim.process.engineering.pid.PidDesignBasis;
 import neqsim.process.engineering.pid.PidDesignModel;
 import neqsim.process.engineering.pid.PidDesignSynthesizer;
 import neqsim.process.engineering.pid.PidSimulationBindings;
+import neqsim.process.engineering.pid.PidElement;
+import neqsim.process.engineering.pid.PidElementType;
+import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
@@ -220,14 +223,27 @@ public class ProfessionalPidDiagramRendererTest extends NeqSimTest {
     process.add(gasTee);
     SafetyValve gasRelief = new SafetyValve("RV-B", gasTee.getSplitStream(1));
     process.add(gasRelief);
+    process.add(new PressureTransmitter("PT-IN", isolation.getInletStreams().get(0)));
     process.run();
     EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Two relief branches", process, "2.0.1")
         .projectId("TRAINS").registerProposedInstruments(false).build();
     PidDesignModel pid = new PidDesignModel(project.getProjectId(), "SOURCE-COVERAGE");
+    PidElement shutdown = new PidElement("SD", "SD", PidElementType.SAFETY_FUNCTION).equipment("V2");
+    for (String name : new String[] {"V1", "V2", "V3"}) {
+      pid.add(new PidElement(name, name, PidElementType.SHUTDOWN_VALVE).equipment(name));
+      shutdown.connect(name);
+    }
+    pid.add(shutdown);
+    pid.add(new PidElement("PT-IN", "PT-IN", PidElementType.MEASUREMENT).equipment("ISOLATION").connect("SD"));
+    PidSimulationBindings bindings = PidSimulationBindings.from(project, pid);
+    for (String name : new String[] {"V1", "V2", "V3"}) {
+      bindings.bindEquipment(name, name);
+    }
+    bindings.bindMeasurement("PT-IN", "PT-IN");
     EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
         project.getProjectId(), project.getRevision(), "TR-001", project.getName(), ContentProfile.PID);
-    ProfessionalPidDiagramRenderer renderer = new ProfessionalPidDiagramRenderer(project, pid,
-        PidSimulationBindings.from(project, pid), documents, new EngineeringDiagramConventionRegister());
+    ProfessionalPidDiagramRenderer renderer = new ProfessionalPidDiagramRenderer(project, pid, bindings, documents,
+        new EngineeringDiagramConventionRegister());
     NativeEngineeringDiagramRenderer.Result result = renderer.render();
     assertTrue(result.isComplete(), new com.google.gson.Gson().toJson(result.getDiagnostics()));
     Map<String, String> materialEdges = new HashMap<String, String>();
@@ -242,7 +258,27 @@ public class ProfessionalPidDiagramRendererTest extends NeqSimTest {
         }
       }
     }
-    assertEquals(10, actual.size());
+    assertEquals(12, actual.size());
+    assertTrue(actual.contains("SD"));
+    assertTrue(actual.contains("PT-IN"));
+    assertFalse(renderer.getContentReportJson().contains("SIGNAL_CONTINUATION_INCOMPLETE"));
+    assertFalse(renderer.getContentReportJson().contains("PID_ATTACHMENT_HOLD"));
+    String sensorDetail = result.getSvgBySheetId().entrySet().stream()
+        .filter(entry -> entry.getValue().contains("detail-source:PT-IN")).findFirst().get().getValue();
+    assertTrue(sensorDetail.contains("INLET-TEE / PID-004"));
+    assertTrue(sensorDetail.contains("ISOLATION / PID-005"));
+    for (int i = 1; i <= 4; i++) {
+      String id = "SG-00" + i + "/PID-";
+      int printed = 0;
+      for (Map<String, Object> layout : renderer.getLayoutSpecifications().values()) {
+        for (Map<String, Object> label : (List<Map<String, Object>>) layout.get("labels")) {
+          if (label.get("text").toString().contains(id)) {
+            printed++;
+          }
+        }
+      }
+      assertEquals(2, printed, "Missing peer reference for " + id);
+    }
     assertEquals(process.getUnit("V1").getOutletStreams().get(0).getName(), materialEdges.get("V1 -> V2"));
     assertEquals(process.getUnit("V2").getOutletStreams().get(0).getName(), materialEdges.get("V2 -> V3"));
     String continued = process.getUnit("V3").getOutletStreams().get(0).getName();
