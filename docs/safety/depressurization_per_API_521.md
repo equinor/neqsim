@@ -57,6 +57,46 @@ double mdotMax = sim.peakMassFlow();      // for flare network sizing
 | Minimum metal temperature | ≥ MDMT (UCS-66) | API 521 §5.20.3 |
 | BDV downstream pressure | ≤ MAWP of flare header | API 521 §5.20.5 |
 
+## Steady dry-gas capacity at a coincident load
+
+Use `SteadyFlareGasNetwork` when several fixed-opening devices discharge a common dry gas into
+one header. Supply absolute pressures in bara, open nozzle areas in m², gas molar mass in kg/mol
+and simultaneous relief demands in kg/s. Represent each inlet and tailpipe by its inside diameter,
+equivalent length including fittings, and Darcy friction factor. Supply the static pressure and a
+rated flow/pressure point for a quadratic tip characteristic.
+
+```java
+import java.util.Collections;
+import neqsim.process.safety.depressurization.SteadyFlareGasNetwork;
+import neqsim.process.safety.depressurization.SteadyFlareGasNetwork.Pipe;
+
+// Illustrative geometry, nozzle and gas properties for a single operating point
+SteadyFlareGasNetwork network = new SteadyFlareGasNetwork("header",
+    new Pipe(0.14, 95.0, 0.02), "tip", 1.2, 1.2, 2.0, 300.0, 0.020, 1.0, 1.3);
+network.addDevice("PSV", 8.0, new Pipe(0.25, 0.0, 0.02), 0.0002, 0.95,
+    new Pipe(0.10, 120.0, 0.02), 1.6);
+SteadyFlareGasNetwork.Result rating = network.rate(Collections.singletonMap("PSV", 0.4));
+double availableKgS = rating.devices.get("PSV").availableKgS;
+double flangeBara = rating.devices.get("PSV").outletBara;
+```
+
+The solver balances each nozzle against its local inlet and discharge-flange pressures and balances
+the combined flow at the header. For each horizontal, isothermal pipe, the pressure-squared change
+in Pa² is `f (L/D) (mass flow / area)² ZRT/M`. A negative capacity margin gives the shortfall at
+the specified opening. A negative outlet-pressure margin gives the exceedance of the supplied
+device limit. Outlet rise is measured from the common zero-flow static pressure. The solver also reports a separate steady
+pre-opening pressure for each device by holding that device closed with the other openings fixed.
+Its incremental backpressure is the difference between the local outlet pressure and that baseline.
+For other event sequences, supply the corresponding openings in a separate case. Represent a closed device with zero open area. An omitted limit yields a null margin in the result and its JSON export.
+
+To rate a sampled blowdown peak, construct the network using source pressures and openings at
+that instant, match each device tag to its source, and call `history.ratePeakGasCapacity(network)`.
+The rate comparison uses the contributions at the common sampled peak. Other instants can govern
+individual branches. The method assumes constant gas properties, low-Mach pipe flow and one common
+junction. It rejects pipe outlet Mach above 0.3 and flows outside the rated tip range. Liquid
+carryover, KO drum losses, multiple headers, line packing and transient valve lift require a separate
+model and qualification.
+
 ## See also
 
 - [MDMT Assessment](mdmt_assessment.md)
