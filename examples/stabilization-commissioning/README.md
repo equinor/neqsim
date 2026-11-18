@@ -62,7 +62,8 @@ maps, and independent SAS emulator testing require additional models and data.
 
 `hipps.py` takes three readings from the native V-101 vessel at each scan.
 A synthetic 29 bara 2oo3 trip commands two independent stem models with 2 s
-and 3 s stroke times. Both act on the same feed. Each has linear Cv versus
+and 3 s stroke times. Every scan uses the canonical deterministic physical-step
+identity derived from the case, scan interval and zero-based step index. Both act on the same feed. Each has linear Cv versus
 travel and equal nominal resistance. The series-flow calculation is a
 normalized resistance approximation for the wet feed. The condensate return
 continues at its steady rate. Persistent pressure voting starts a separate

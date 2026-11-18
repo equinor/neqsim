@@ -49,7 +49,7 @@ def simulate(case, dt, steady_feed, steady_return):
     cutoff = 1e-9  # kg/s; numerical carrier for the inlet flash
     first_trip = first_seat = escalation = None
     rows = []
-    uuid = J("java.util.UUID")
+    step_identifier = J("neqsim.process.dynamics.TransientStepIdentifier")
     for i in range(round(45.0 / dt) + 1):
         t = i * dt
         p = vessel.getThermoSystem().getPressure("bara")
@@ -74,7 +74,8 @@ def simulate(case, dt, steady_feed, steady_return):
         vessel.setGasOutletFlowFraction(0.0 if case != "single_high" and t >= 1 else 1.0)
         feed.setFlowRate(flow, "kg/sec")
         mixer.run()
-        step_id = uuid.randomUUID()
+        scope = "stabilization-hipps-" + case + "-" + str(dt)
+        step_id = step_identifier.deterministicPhysicalStep(scope, i)
         esd.execute(dt)
         esdv.runTransient(dt, step_id)
         vessel.runTransient(dt, step_id)
