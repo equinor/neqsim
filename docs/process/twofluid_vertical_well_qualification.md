@@ -51,6 +51,12 @@ The revision argument is caller-supplied provenance; the script does not infer a
 revision from a jar filename. Record any uncommitted changes or combined PR overlays too.
 
 Repeat the held case with 40 cells and with `--dt 0.25`. Preserve the full JSON Lines output.
+The driver records the requested settings before the steady solve. Its
+`steady_initialization` record reports convergence, the solver termination reason and
+the number of refinement iterations. The default steady wall-clock budget is 20 s.
+If the solver reports `WALL_CLOCK_LIMIT`, increase `--steady-time-limit` (seconds) for
+the same input and mesh. This setting only changes the time available to the steady solver.
+The driver requires a converged initial condition before starting the transient.
 Only a final `type: summary` record verifies completion of the requested horizon. Exceptions,
 missing summary records and interrupted processes are incomplete runs. The script verifies
 accepted time, finite positive pressure/temperature, holdup within the recovery model’s 2e-9 endpoint tolerance and finite conservation

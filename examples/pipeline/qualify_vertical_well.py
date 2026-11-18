@@ -34,6 +34,8 @@ def main():
     parser.add_argument("--classpath", required=True)
     parser.add_argument("--revision", required=True)
     parser.add_argument("--cells", type=int, default=20)
+    parser.add_argument("--steady-time-limit", type=float, default=20.0,
+                        help="Steady initialization wall-clock budget in seconds (at least 1)")
     parser.add_argument("--dt", type=float, default=0.5)
     parser.add_argument("--duration", type=float, default=600.0)
     parser.add_argument("--step-at", type=float, default=None)
@@ -41,6 +43,8 @@ def main():
     args = parser.parse_args()
     if args.cells < 2 or args.sample_every < 1:
         parser.error("cells must be >= 2 and sample-every >= 1")
+    if not math.isfinite(args.steady_time_limit) or args.steady_time_limit < 1.0:
+        parser.error("steady-time-limit must be finite and at least 1 second")
     if not all(math.isfinite(x) and x > 0 for x in (args.dt, args.duration)):
         parser.error("dt and duration must be positive and finite")
     if args.step_at is not None and not 0 <= args.step_at < args.duration:
@@ -66,19 +70,24 @@ def main():
     pipe.setCellFaceElevationProfile(jpype.JArray(jpype.JDouble)(
         [2000.0 * i / args.cells for i in range(args.cells + 1)]))
     pipe.setOutletPressure(102.9531305, "bara")
-    pipe.setSteadyStateMaxWallClockTime(20.0)
+    pipe.setSteadyStateMaxWallClockTime(args.steady_time_limit)
     pipe.setEnableAdaptiveTimestepping(True)
     pipe.setThermodynamicUpdateInterval(1)
     pipe.setIncludeMassTransfer(True)
     pipe.setEnableInterfacialPressure(True)
     pipe.setImplicitInterfacialPressureCoupling(True)
-    pipe.run()
-    if not pipe.isSteadyStateConverged():
-        raise RuntimeError("Steady initialization did not converge")
-    pipe.prepareConservativeEnergyTransientFromSteadyState()
     emit({"type": "configuration", **vars(args), "components_molar_parts": COMPONENTS,
           "java": str(jpype.JClass("java.lang.System").getProperty("java.version")),
           "pressure_boundary_bara": 102.9531305})
+    pipe.run()
+    steady = pipe.getSteadyStateConvergenceReport()
+    reason = str(steady.getTerminationReason())
+    emit({"type": "steady_initialization", "termination_reason": reason,
+          "converged": bool(pipe.isSteadyStateConverged()), "iterations": steady.getIterations()})
+    if not pipe.isSteadyStateConverged():
+        raise RuntimeError(f"Steady initialization did not converge: {reason} "
+                           f"after {steady.getIterations()} iterations")
+    pipe.prepareConservativeEnergyTransientFromSteadyState()
     maxima = {"mass_kg": 0.0, "phase_mass_kg": 0.0, "volume_relative": 0.0,
               "component_relative": 0.0,
               "energy_relative": 0.0, "eos_energy_relative": 0.0}
