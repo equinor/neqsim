@@ -17,6 +17,10 @@ Continue the existing [program roadmap #4149](https://github.com/equinor/neqsim/
 implementations are merged, but complete system dynamics and independent/OEM
 qualification remain open. This review changes documentation and discovery only.
 
+For steady tandem-seal hydraulic calculations added after this audit, use the
+[compressor vent study guide](dry_gas_seal_vent_study.md). It covers pressure and
+process-origin load at the flare, atmospheric vent and bearing housing.
+
 ## Standards and equipment boundaries
 
 | Reference | Verified scope and edition basis | Use in a study |

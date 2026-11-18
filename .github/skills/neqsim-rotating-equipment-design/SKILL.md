@@ -1,7 +1,7 @@
 ---
 name: neqsim-rotating-equipment-design
 description: "NeqSim rotating-equipment studies. USE WHEN: dry gas seal or seal gas conditioning troubleshooting, regulator JT condensation, primary vent leakage, buffer/separation gas, API 692/ISO 6368 scope, startup and standby margins, compressor vendor maps/trains, turboexpanders, pump NPSH/API 610 or mechanical screening. APIs: DryGasSealAnalyzer, SealGasSupplyConditioning, DryGasSealMonitor, LabyrinthSealFlowCalculator, CompressorThermalModel."
-last_verified: "2026-10-27"
+last_verified: "2026-11-18"
 ---
 
 # Rotating Equipment Design
@@ -61,6 +61,7 @@ another machine's rules of thumb.
 
 Use these existing APIs after inspecting current constructors/methods:
 
+- `DryGasSealVentStudy`: run each seal-end failure configuration with project leakage and rated vent curves. Use `Vent.fromGasPipe` for low-Mach horizontal line sensitivity and `evaluate` for cavity pressures, forward/reverse loading and process-origin release. Preserve unresolved cases. See [vent studies](../../../docs/process/equipment/dry_gas_seal_vent_study.md).
 - `DryGasSealAnalyzer`: configure an owned gas clone with `setSealGas`, cavity/vent
   pressures, temperature, leakage and independent GCU supply throughput. Run
   `runFullAnalysis` and inspect complete/error evidence in `getResults`.
