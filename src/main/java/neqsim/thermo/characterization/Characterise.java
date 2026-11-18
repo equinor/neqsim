@@ -234,11 +234,15 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * characterisePlusFraction.
+   * Split and lump the selected plus fraction. A zero-mole plus fraction retains its name, properties and position so
+   * it can be populated and characterized later.
    */
   public void characterisePlusFraction() {
     system.init(0);
     if (plusFractionModel.hasPlusFraction()) {
+      if (system.getComponent(plusFractionModel.getPlusComponentNumber()).getNumberOfmoles() == 0.0) {
+        return;
+      }
       if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
         logger.error("plus fraction molar mass too heavy for " + plusFractionModel.getName());
         plusFractionModel = plusFractionModelSelector.getModel("Pedersen Heavy Oil");

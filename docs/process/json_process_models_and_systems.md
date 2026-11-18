@@ -12,6 +12,40 @@ For exporting a live `ProcessSystem` or `ProcessModel` to portable JSON, includi
 E300-characterized fluids, stream-specific fluids, recycle settings, and MCP checks, see
 [Process JSON Export and E300 Fluid Characterization](process_json_export_and_e300_fluids.md).
 
+## YAML files for ProcessSystem
+
+Use `ProcessSystem.fromYamlFile(path)` for a UTF-8 file or `ProcessSystem.fromYaml(text)`
+for a string. Both take one YAML document using the fields below. Named inlets, property units,
+fluid models, equipment construction and calculation results follow the JSON builder. Set
+`autoRun: true` to run the process when loading it. Inspect `SimulationResult.isSuccess()`
+before using the process. Parse errors carry `YAML_PARSE_ERROR` and file errors carry
+`YAML_READ_ERROR`. Duplicate keys and multiple documents are rejected.
+
+```yaml
+autoRun: true
+fluid:
+  model: SRK
+  temperature: 298.15
+  pressure: 50.0
+  components: {methane: 0.8, n-decane: 0.2}
+process:
+  - type: Stream
+    name: feed
+    properties:
+      flowRate: [240.0, kg/hr]
+  - type: Separator
+    name: inlet separator
+    inlet: feed
+  - type: ThrottlingValve
+    name: gas valve
+    inlet: inlet separator.gasOut
+    properties:
+      outletPressure: [15.0, bara]
+```
+
+Existing files written with `unit:` entries use the legacy instance method
+`loadProcessFromYaml(File)`. For new documents, use `type`, explicit equipment names and named inlets.
+
 ## Quick answer: is there a JSON verifier?
 
 Yes:

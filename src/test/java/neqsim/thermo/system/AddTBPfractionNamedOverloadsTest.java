@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.characterization.TbpClosure;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Verifies the named <code>addTBPfraction_*</code> overloads.
@@ -57,6 +59,40 @@ public class AddTBPfractionNamedOverloadsTest {
     int i = lastComponentIndex(fluid);
     assertEquals(molarMass, fluid.getPhase(0).getComponent(i).getMolarMass(), 1.0e-6);
     assertEquals(boilingPoint, fluid.getPhase(0).getComponent(i).getNormalBoilingPoint(), 0.5);
+  }
+
+  /** Check legacy kelvin and explicit units through characterization and a two-phase flash. */
+  @Test
+  void equivalentBoilingPointUnitsGiveTheSamePhaseSplit() {
+    SystemInterface reference = newFluid();
+    reference.addTBPfraction2("C10", 0.02, 0.142, 447.15);
+    reference.setMixingRule(2);
+    new ThermodynamicOperations(reference).TPflash();
+    assertEquals(2, reference.getNumberOfPhases());
+    for (String unit : new String[] {"C", "°C", "K"}) {
+      SystemInterface fluid = newFluid();
+      fluid.addTBPfraction2("C10", 0.02, 0.142, "K".equals(unit) ? 447.15 : 174.0, unit);
+      fluid.setMixingRule(2);
+      new ThermodynamicOperations(fluid).TPflash();
+      ComponentInterface expected = reference.getComponent("C10_PC");
+      ComponentInterface actual = fluid.getComponent("C10_PC");
+      assertEquals(expected.getNormalLiquidDensity(), actual.getNormalLiquidDensity(), EXACT_TOLERANCE);
+      assertEquals(expected.getTC(), actual.getTC(), EXACT_TOLERANCE);
+      assertEquals(expected.getPC(), actual.getPC(), EXACT_TOLERANCE);
+      assertEquals(expected.getAcentricFactor(), actual.getAcentricFactor(), EXACT_TOLERANCE);
+      assertEquals(2, fluid.getNumberOfPhases());
+      assertEquals(reference.getPhaseFraction("gas", "mole"), fluid.getPhaseFraction("gas", "mole"), EXACT_TOLERANCE);
+    }
+  }
+
+  /** Reject invalid temperatures before changing the inventory. */
+  @Test
+  void invalidBoilingPointUnitsAndValuesLeaveFluidIntact() {
+    SystemInterface fluid = newFluid();
+    assertThrows(IllegalArgumentException.class, () -> fluid.addTBPfraction2("C10", 0.02, 0.142, 174.0, "bara"));
+    assertThrows(IllegalArgumentException.class, () -> fluid.addTBPfraction2("C10", 0.02, 0.142, -273.15, "C"));
+    assertThrows(IllegalArgumentException.class, () -> fluid.addTBPfraction2("C10", 0.02, 0.142, Double.NaN, "K"));
+    assertEquals(1, fluid.getNumberOfComponents());
   }
 
   @Test

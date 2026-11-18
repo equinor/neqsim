@@ -201,8 +201,18 @@ def challenge(runs, limit_kw, reveal=False, surge_map_available=True):
         return prompt
     outcome = {}
     for policy in ("fixed", "ramp"):
-        held = [row for (_, name), records in cases.items() if name == policy
-                for grid, row in records.items() if grid != GRIDS[0]]
+        held = [(fluid, grid, row) for (fluid, name), records in cases.items() if name == policy
+                for grid, row in records.items() if grid != GRIDS[0] and "rejection" not in row]
+        breaches = []
+        for fluid, (mesh, dt), row in held:
+            for name, (direction, limit) in LIMITS.items():
+                if name == "power_kW":
+                    limit = limit_kw
+                if (direction == "max" and row[name] > limit) or (direction == "min" and row[name] < limit):
+                    breaches.append({"fluid": fluid, "mesh_cells": 60 * mesh, "dt_s": dt, "quantity": name,
+                                     "value": row[name], "direction": direction, "limit": limit})
+        result = {"violations": sorted({b["quantity"] for b in breaches}), "violation_evidence": breaches}
+        outcome[policy] = result
         rejected = [(grid, row["rejection"]) for (_, name), records in cases.items() if name == policy
                     for grid, row in records.items() if "rejection" in row]
         if rejected:
@@ -211,22 +221,14 @@ def challenge(runs, limit_kw, reveal=False, surge_map_available=True):
                 missing.append("accepted coarse trajectory")
             if any(grid != GRIDS[0] for grid, _ in rejected):
                 missing.append("accepted refined trajectory")
-            outcome[policy] = {"violations": [], "missing_evidence": missing,
-                               "rejections": [reason for _, reason in rejected],
-                               "worst_production_kg": None, "power_prediction_error_kW": None}
+            result.update(missing_evidence=missing, rejections=[reason for _, reason in rejected],
+                          worst_production_kg=None, power_prediction_error_kW=None)
             continue
-        failures = set()
-        for row in held:
-            for name, (direction, limit) in LIMITS.items():
-                if name == "power_kW":
-                    limit = limit_kw
-                if (direction == "max" and row[name] > limit) or (direction == "min" and row[name] < limit):
-                    failures.add(name)
         power_errors = [abs(rows[grid]["power_kW"] - rows[GRIDS[0]]["power_kW"])
                         for (_, name), rows in cases.items() if name == policy and "rejection" not in rows[GRIDS[0]]
                         for grid in GRIDS[1:]]
-        outcome[policy] = {"violations": sorted(failures), "power_prediction_error_kW": max(power_errors, default=None),
-                           "worst_production_kg": min(q["well_production_kg"] for q in held)}
+        result.update(power_prediction_error_kW=max(power_errors, default=None),
+                      worst_production_kg=min(row["well_production_kg"] for _, _, row in held))
     if not surge_map_available:
         for item in outcome.values():
             item.setdefault("missing_evidence", []).append("suction-flow surge limit at operating head and speed")

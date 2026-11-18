@@ -395,14 +395,18 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (getInletStream().getThermoSystem() != null) {
-      thermoSystem = getInletStream().getThermoSystem().clone();
-    } else {
+    StreamInterface inlet = getInletStream();
+    if (inlet.getThermoSystem() == null) {
       logger.error("Inlet stream thermo system is null");
       return;
     }
-
-    double inletMolarFlow = getInletStream().getThermoSystem().getFlowRate("mole/sec");
+    double inletMolarFlow = inlet.getThermoSystem().getFlowRate("mole/sec");
+    if (inlet.getCalculationIdentifier() == null && !isNegligibleFlow(inletMolarFlow)) {
+      // A flow-rate setter initializes EOS properties but does not establish the equilibrium inlet phase.
+      inlet.run(id);
+      inletMolarFlow = inlet.getThermoSystem().getFlowRate("mole/sec");
+    }
+    thermoSystem = inlet.getThermoSystem().clone();
     if (isBelowLowFlowThreshold()) {
       isActive(false);
       applyZeroFlowState(id);

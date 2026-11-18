@@ -1035,10 +1035,9 @@ List<String> violations = net.getCorrosionViolations();
 Models: de Waard-Milliams (log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2))
 and NORSOK M-506 (Vcorr = Kt * fCO2^0.62 * (S/19)^0.146).
 
-### Rigorous NORSOK M-506 from a brine (electrolyte pH + FeCO3 film)
+### Legacy CO2 corrosion screening from a brine (electrolyte pH + FeCO3 film)
 
-`NorsokM506CorrosionRate` (`neqsim.process.corrosion`) is the standalone NORSOK
-M-506 model (fugacity, in-situ pH, FeCO3 scaling temperature, wall shear, glycol,
+`NorsokM506CorrosionRate` (`neqsim.process.corrosion`) uses de Waard-Milliams screening equations (fugacity, in-situ pH, FeCO3 scaling temperature, wall shear, glycol,
 inhibitor). By default it estimates pH from a CO2-water correlation. To drive it
 from **rigorous electrolyte thermodynamics** instead, use `NorsokM506ElectrolyteBridge`
 — the M-506 analogue of `CO2CorrosionAnalyzer`:
@@ -1064,9 +1063,9 @@ model.setFeCO3SaturationRatio(sr);   // >1 = protective; -1 = disabled (default)
 double film = model.calculateFeCO3FilmFactor();  // 1.0 = no credit, <1 = protective
 ```
 
-For an auditable standards calculation, pass the resulting in-situ pH and optional saturation ratio
-to `NorsokM506CorrosionDesignKernel.Input`. The kernel is the preferred public path when the task
-names NORSOK M-506: it enforces the unamended 2017 edition and model envelope, preserves raw inputs
+For an auditable legacy screening calculation, pass the resulting in-situ pH and optional saturation ratio
+to `NorsokM506CorrosionDesignKernel.Input`. For the M-506 Rev. 2 unmitigated rate, use `NorsokM506Rev2.rateMmPerYear` with
+local shear and in-situ pH. The legacy kernel checks its registered 2017 edition identifier and model envelope, preserves raw inputs
 without setter clamping, and returns `CALCULATED_REVIEW_REQUIRED`. Continue to use the bridge to
 derive chemistry and the legacy model for sweeps, but do not present either route as a conformity
 assessment. The optional saturation-ratio film factor and projected wall loss are NeqSim screening
@@ -1104,7 +1103,7 @@ Regression test for the fallback: `neqsim.chemicalreactions.AcidGasPHTest`
 ### Per-segment corrosion + scale along a line (PipeSegmentIntegrity)
 
 `PipeSegmentIntegrity` (`neqsim.process.corrosion`) walks a temperature/pressure/
-velocity profile and reports, per segment, the NORSOK M-506 corrosion rate AND the
+velocity profile and reports, per segment, the legacy screening corrosion rate AND the
 CaCO3 scale saturation, then ranks the worst corrosion and worst scale segments —
 so mitigation can be located along the line. Feed it a run `PipeBeggsAndBrills`:
 

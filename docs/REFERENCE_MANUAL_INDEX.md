@@ -783,6 +783,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | Document            | Path                                                                                     | Description                |
 | ------------------- | ---------------------------------------------------------------------------------------- | -------------------------- |
 | ESD Dynamic Testing | [docs/safety/esd_testing_workflow.md](safety/esd_testing_workflow.md)                       | ESD dynamic testing with process logic, tagreader evidence, and criteria reports |
+| Executable Procedures | [docs/simulation/operating_procedure_execution.md](simulation/operating_procedure_execution.md) | Revisioned operator/automatic steps, physical feedback, timeout, recovery and deterministic evidence |
 | ESD Blowdown        | [docs/safety/ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM.md)                         | ESD blowdown system        |
 | Pressure Monitoring | [docs/safety/PRESSURE_MONITORING_ESD.md](safety/PRESSURE_MONITORING_ESD.md)                 | Pressure monitoring ESD    |
 | Fire Heat Transfer  | [docs/safety/fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements.md) | Fire heat transfer         |

@@ -180,12 +180,11 @@ does not update every phase and can invalidate the density/volume-shift characte
 reapply a database mixing rule to a tuned fluid simply to repair component indexing: that can
 discard fitted BIPs.
 
-**Component-removal limitation:** `removeComponent("water")` compacts the component list without
-remapping the EOS BIP matrix. If water is not the last component, a hydrocarbon pair would inherit
-the wrong interaction. A synthetic regression with water between pentane and methane detects a BIP
-change from 0.0123 to 0.5 in each allocated phase, which shifts dry VPCR4 by about 2%. The
-water-free clone used by `VPCR4_NO_WATER`, `RVP_ASTM_D323_73_79` and
-`RVP_ASTM_D6377_add_water_saturated` therefore:
+**Component removal and the dry basis.** Standard SRK and PR phases with classic mixing remap the
+interaction matrix when a component is removed. In the synthetic SRK regression, removing water
+between pentane and methane preserves their fitted BIP of 0.0123 and reproduces the dry VPCR4.
+For consistent treatment across fluid models, the water-free working copy used by
+`VPCR4_NO_WATER`, `RVP_ASTM_D323_73_79` and `RVP_ASTM_D6377_add_water_saturated` follows these steps.
 
 1. clones the fluid and resets it to its unflashed state (`init(0)`), so phase bookkeeping left by
    an earlier, possibly unconverged, wet flash cannot break the removal;

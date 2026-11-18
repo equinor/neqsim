@@ -1,11 +1,11 @@
 ---
 title: "Pipeline Corrosion Integration"
-description: "How to run NORSOK M-506 corrosion analysis and M-001 material selection integrated with pipeline mechanical design in NeqSim. Covers automatic stream extraction, convenience methods, and combined wall thickness + corrosion design."
+description: "How to run legacy CO2 corrosion screening and M-001 material selection integrated with pipeline mechanical design in NeqSim. Covers automatic stream extraction, convenience methods, and combined wall thickness + corrosion design."
 ---
 
 # Pipeline Corrosion Integration
 
-The NORSOK corrosion analysis module integrates directly with NeqSim's pipeline mechanical design system. After running a pipeline simulation, you can automatically extract operating conditions from the process stream and run a complete corrosion assessment.
+The NORSOK corrosion analysis module integrates directly with NeqSim's pipeline mechanical design system. After running a pipeline simulation, you can automatically extract operating conditions from the process stream and run the legacy de Waard-Milliams corrosion screen. For an explicit NORSOK M-506 Rev. 2 rate, supply local wall shear stress, in-situ pH and CO2 fugacity to `NorsokM506Rev2.rateMmPerYear`.
 
 ## Architecture
 
@@ -80,7 +80,7 @@ System.out.println("CA: " + pipe.getRecommendedCorrosionAllowanceMm() + " mm");
 
 | Method | Description |
 |--------|-------------|
-| `runCorrosionAnalysis()` | Run full M-506 + M-001 analysis from stream data |
+| `runCorrosionAnalysis()` | Run legacy corrosion screening and M-001 material selection from stream data |
 | `setDesignLifeYears(double)` | Set design life (default 25 years) |
 | `setInhibitorEfficiency(double)` | Set inhibitor efficiency (0.0 – 1.0) |
 | `setGlycolWeightFraction(double)` | Set glycol fraction (0.0 – 1.0) |

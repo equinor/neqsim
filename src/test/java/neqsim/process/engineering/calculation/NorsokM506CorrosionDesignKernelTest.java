@@ -93,6 +93,7 @@ class NorsokM506CorrosionDesignKernelTest {
     Map<String, Object> report = assessment.toMap();
 
     assertEquals(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED, result.getStatus());
+    assertEquals(neqsim.process.corrosion.NorsokM506CorrosionRate.LEGACY_RATE_MODEL, report.get("rateModel"));
     assertTrue(((Double) report.get("correctedCorrosionRateMmPerYear")).doubleValue() > 0.0);
   }
 

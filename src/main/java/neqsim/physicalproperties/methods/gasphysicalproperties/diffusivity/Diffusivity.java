@@ -113,11 +113,28 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
    */
   public Diffusivity(PhysicalProperties gasPhase) {
     super(gasPhase);
-    binaryDiffusionCoefficients = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-        .getNumberOfComponents()];
-    binaryLennardJonesOmega = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-        .getNumberOfComponents()];
-    effectiveDiffusionCoefficient = new double[gasPhase.getPhase().getNumberOfComponents()];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPhase(PhysicalProperties properties) {
+    super.setPhase(properties);
+    int count = properties.getPhase().getNumberOfComponents();
+    if (binaryDiffusionCoefficients == null || binaryDiffusionCoefficients.length != count) {
+      binaryDiffusionCoefficients = new double[count][count];
+      effectiveDiffusionCoefficient = new double[count];
+      binaryLennardJonesOmega = new double[count][count];
+      // The superclass constructor initializes the parameter tables on first binding.
+      if (binaryMolecularMass != null) {
+        binaryMolecularDiameter = new double[count][count];
+        binaryMolecularMass = new double[count][count];
+        binaryEnergyParameter = new double[count][count];
+        fillGasPairParameters(count);
+      }
+      if (useDiffusionLJOverride) {
+        initDiffusionLJParameters();
+      }
+    }
   }
 
   /**
@@ -193,32 +210,15 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
       logger.error("Cloning failed.", ex);
       throw new IllegalStateException("Unable to complete clone of Diffusivity", ex);
     }
-    properties.binaryDiffusionCoefficients = copyMatrix(binaryDiffusionCoefficients);
-    properties.binaryLennardJonesOmega = copyMatrix(binaryLennardJonesOmega);
-    properties.binaryMolecularDiameter = copyMatrix(binaryMolecularDiameter);
-    properties.binaryEnergyParameter = copyMatrix(binaryEnergyParameter);
-    properties.binaryMolecularMass = copyMatrix(binaryMolecularMass);
+    properties.binaryDiffusionCoefficients = copyCoefficientMatrix(binaryDiffusionCoefficients);
+    properties.binaryLennardJonesOmega = copyCoefficientMatrix(binaryLennardJonesOmega);
+    properties.binaryMolecularDiameter = copyCoefficientMatrix(binaryMolecularDiameter);
+    properties.binaryEnergyParameter = copyCoefficientMatrix(binaryEnergyParameter);
+    properties.binaryMolecularMass = copyCoefficientMatrix(binaryMolecularMass);
     if (this.effectiveDiffusionCoefficient != null && this.effectiveDiffusionCoefficient.length > 0) {
       properties.effectiveDiffusionCoefficient = this.effectiveDiffusionCoefficient.clone();
     }
     return properties;
-  }
-
-  /**
-   * Copy mutable gas-diffusion scratch rows while preserving absent arrays and rows.
-   *
-   * @param source source matrix, possibly null
-   * @return independently owned matrix, or null when absent
-   */
-  private static double[][] copyMatrix(double[][] source) {
-    if (source == null) {
-      return null;
-    }
-    double[][] copy = source.clone();
-    for (int row = 0; row < source.length; row++) {
-      copy[row] = source[row] == null ? null : source[row].clone();
-    }
-    return copy;
   }
 
   /** {@inheritDoc} */

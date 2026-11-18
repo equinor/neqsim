@@ -51,6 +51,24 @@ class TestDecision(unittest.TestCase):
         with self.assertRaises(ValueError):
             assess(self.runs)
 
+    def test_rejected_refinement_keeps_known_violations_from_other_fluids(self):
+        # The PR fine mesh completes at 650 kW. A separate SRK trajectory rejects.
+        pr = [receipt(m, dt, p) for m, dt in GRIDS for p in ("fixed", "ramp")]
+        for run in pr:
+            run["configuration"]["eos"] = "Pr"
+        for run in self.runs:
+            if run["configuration"]["policy"] == "ramp" and run["configuration"]["mesh"] == 2:
+                run.update(status="rejected", reason="outlet backflow")
+        scored = score(self.runs + pr, 600., "ramp")
+        ramp = scored["held_out"]["ramp"]
+        self.assertEqual(["power_kW"], scored["violations"])
+        self.assertEqual([{"fluid": "Pr", "mesh_cells": 120, "dt_s": .25, "quantity": "power_kW",
+                           "value": 650., "direction": "max", "limit": 600.}], ramp["violation_evidence"])
+        self.assertEqual(["outlet backflow"], ramp["rejections"])
+        self.assertIn("accepted refined trajectory", ramp["missing_evidence"])
+        self.assertIsNone(ramp["worst_production_kg"])
+        self.assertIsNone(scored["production_regret_kg"])
+
     def test_incomplete_and_duplicate(self):
         self.assertEqual("incomplete", assess(self.runs[:-1])["screening_decisions"]["Srk"])
         with self.assertRaises(ValueError):

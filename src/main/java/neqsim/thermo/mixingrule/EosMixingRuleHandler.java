@@ -113,6 +113,18 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
+   * Initialize a new handler with the scalar settings used by a reduced mixture.
+   *
+   * @param source handler supplying the mixing model and fitted scalar parameters
+   */
+  private EosMixingRuleHandler(EosMixingRuleHandler source) {
+    this();
+    mixingRuleGEModel = source.mixingRuleGEModel;
+    nEOSkij = source.nEOSkij;
+    bmixType = source.bmixType;
+  }
+
+  /**
    * Reject interaction matrices built for a different number of components.
    *
    * <p>
@@ -133,6 +145,64 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           + "After finalizing the components and chemicalReactionInit(), re-run createDatabase(true) and "
           + "setMixingRule(...) before init(...) or a flash; reapply any custom interaction parameters afterwards.");
     }
+  }
+
+  /**
+   * Copy the configured interaction data for a phase that is removing one species. Both matrix coordinates follow the
+   * retained component ordering. A separate handler prevents a working clone from modifying its caller's data.
+   *
+   * @param removed original component index
+   * @return independent handler for the retained species
+   */
+  public EosMixingRuleHandler withoutComponent(int removed) {
+    EosMixingRuleHandler result = new EosMixingRuleHandler(this);
+    result.intparam = removeRowAndColumn(intparam, removed, double[]::new);
+    result.intparamT = removeRowAndColumn(intparamT, removed, double[]::new);
+    result.intparamij = removeRowAndColumn(intparamij, removed, double[]::new);
+    result.intparamji = removeRowAndColumn(intparamji, removed, double[]::new);
+    result.intparamTType = removeRowAndColumn(intparamTType, removed, int[]::new);
+    result.WSintparam = removeRowAndColumn(WSintparam, removed, double[]::new);
+    result.HVDij = removeRowAndColumn(HVDij, removed, double[]::new);
+    result.HVDijT = removeRowAndColumn(HVDijT, removed, double[]::new);
+    result.HValpha = removeRowAndColumn(HValpha, removed, double[]::new);
+    result.NRTLDij = removeRowAndColumn(NRTLDij, removed, double[]::new);
+    result.NRTLDijT = removeRowAndColumn(NRTLDijT, removed, double[]::new);
+    result.NRTLalpha = removeRowAndColumn(NRTLalpha, removed, double[]::new);
+    result.wijCalcOrFitted = removeRowAndColumn(wijCalcOrFitted, removed, int[]::new);
+    result.classicOrHV = removeRowAndColumn(classicOrHV, removed, String[]::new);
+    result.classicOrWS = removeRowAndColumn(classicOrWS, removed, String[]::new);
+    if (wij != null) {
+      result.wij = new double[wij.length][][];
+      for (int k = 0; k < wij.length; k++) {
+        result.wij[k] = removeRowAndColumn(wij[k], removed, double[]::new);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Select the surviving rows and columns of an optional binary-parameter matrix.
+   *
+   * @param <T> row array type
+   * @param matrix square matrix in the original component order
+   * @param removed omitted index
+   * @param newRow row constructor
+   * @return compacted independent matrix, or null for an unconfigured parameter family
+   */
+  private static <T> T[] removeRowAndColumn(T[] matrix, int removed, java.util.function.IntFunction<T> newRow) {
+    if (matrix == null) {
+      return null;
+    }
+    int size = matrix.length - 1;
+    T[] result = java.util.Arrays.copyOf(matrix, size);
+    for (int i = 0; i < size; i++) {
+      T source = matrix[i < removed ? i : i + 1];
+      T row = newRow.apply(size);
+      System.arraycopy(source, 0, row, 0, removed);
+      System.arraycopy(source, removed + 1, row, removed, size - removed);
+      result[i] = row;
+    }
+    return result;
   }
 
   /**

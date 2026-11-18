@@ -798,6 +798,14 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
 
+    // Freshly composed feeds have a mole inventory before their bulk mole fractions and enthalpy are initialized.
+    for (StreamInterface inlet : streams) {
+      SystemInterface fluid = inlet.getThermoSystem();
+      if (!fluid.isInitialized() && fluid.getTotalNumberOfMoles() > 0.0) {
+        inlet.run(id);
+      }
+    }
+
     // Check if all streams have zero/negligible flow
     List<Integer> activeStreamIndices = getCanonicalStreamIndices(true);
     boolean hasFlow = !activeStreamIndices.isEmpty();

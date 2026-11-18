@@ -223,18 +223,21 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int i = 0; i < numberOfNodes - 1; i++) {
         // setting temperatures
         pipe.getNode(i).init();
-        pipe.getNode(i + 1).getBulkSystem()
-            .setTemperature((4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
-                * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature()
-                    - pipe.getNode(i).getBulkSystem().getPhases()[0].getTemperature())
-                / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()
-                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
-                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass() * pipe.getNode(i + 1).getVelocity()
-                    * pipe.getNode(i + 1).getGeometry().getDiameter()
-                    * pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getDensity())
-                + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient() * dpdx)
-                * (pipe.getNode(i + 1).getGeometry().getNodeLength() + pipe.getNode(i).getGeometry().getNodeLength())
-                * 0.5 + pipe.getNode(i).getBulkSystem().getTemperature());
+        // Integrate wall heat exchange with frozen cell properties. An explicit temperature step
+        // overshoots the ambient at low throughput, where a cell spans many thermal lengths.
+        double length = 0.5
+            * (pipe.getNode(i + 1).getGeometry().getNodeLength() + pipe.getNode(i).getGeometry().getNodeLength());
+        double heatCapacity = pipe.getNode(i).getBulkSystem().getPhase(0).getCp("J/kgK");
+        double heatTransferNumber = 4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0) * length
+            / (heatCapacity * pipe.getNode(i + 1).getVelocity() * pipe.getNode(i + 1).getGeometry().getDiameter()
+                * pipe.getNode(i + 1).getBulkSystem().getPhase(0).getDensity());
+        double exchangedFraction = -Math.expm1(-heatTransferNumber);
+        double inletTemperature = pipe.getNode(i).getBulkSystem().getTemperature();
+        double ambientTemperature = pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature();
+        double jtChange = pipe.getNode(i + 1).getBulkSystem().getPhase(0).getJouleThomsonCoefficient() * dpdx * length;
+        double meanAttenuation = heatTransferNumber == 0.0 ? 1.0 : exchangedFraction / heatTransferNumber;
+        pipe.getNode(i + 1).getBulkSystem().setTemperature(inletTemperature
+            + exchangedFraction * (ambientTemperature - inletTemperature) + jtChange * meanAttenuation);
         if (pipe.getNode(i + 1).getBulkSystem().getTemperature() < 10.5) {
           pipe.getNode(i + 1).getBulkSystem().setTemperature(10.5);
         }

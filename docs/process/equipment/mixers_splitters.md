@@ -7,6 +7,10 @@ Mixers combine material streams. Splitters divide one stream by flow or by compo
 introducing a hydraulic pressure-drop model. The public classes are in
 `neqsim.process.equipment.mixer` and `neqsim.process.equipment.splitter`.
 
+A direct `Mixer.run()` initializes newly composed, positive-inventory inlet streams using
+their configured stream specifications before applying the minimum mass-flow threshold.
+An empty feed contributes neither mass nor an inlet pressure.
+
 ## Complete executable example
 
 This Java 8 example mixes two gas feeds, checks the inlet-pressure diagnostic, creates a 70/30
