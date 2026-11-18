@@ -341,7 +341,6 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors.md)                         | Compressor models, drivers, speed-dependent power |
 | Seal Support-System Monitoring | [docs/process/equipment/dry_gas_seal_monitoring.md](process/equipment/dry_gas_seal_monitoring.md) | Timed advisory supply/vent/buffer/separation monitoring |
-| Compressor Seal Vent Studies | [docs/process/equipment/dry_gas_seal_vent_study.md](process/equipment/dry_gas_seal_vent_study.md) | Failure-case cavity pressures, vent sizing and process gas routed to flare, atmosphere and bearings |
 | Dry Gas Seal Engineering Review | [docs/process/equipment/dry_gas_seal_engineering_review.md](process/equipment/dry_gas_seal_engineering_review.md) | Literature, standards scope, current-model audit, troubleshooting and validation roadmap |
 | Compression Train Assessment | [docs/process/equipment/compression_train_assessment.md](process/equipment/compression_train_assessment.md) | Off-design acoustic coordinates, map queries and constrained net-export energy comparison |
 | Seal Condensation and Conditioning | [docs/process/equipment/dry_gas_seal_conditioning.md](process/equipment/dry_gas_seal_conditioning.md) | Sampled liquid-risk evidence, flow bases and separated-gas thermal duties |
@@ -783,6 +782,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | Document            | Path                                                                                     | Description                |
 | ------------------- | ---------------------------------------------------------------------------------------- | -------------------------- |
 | ESD Dynamic Testing | [docs/safety/esd_testing_workflow.md](safety/esd_testing_workflow.md)                       | ESD dynamic testing with process logic, tagreader evidence, and criteria reports |
+| Executable Procedures | [docs/simulation/operating_procedure_execution.md](simulation/operating_procedure_execution.md) | Revisioned operator/automatic steps, physical feedback, timeout, recovery and deterministic evidence |
 | ESD Blowdown        | [docs/safety/ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM.md)                         | ESD blowdown system        |
 | Pressure Monitoring | [docs/safety/PRESSURE_MONITORING_ESD.md](safety/PRESSURE_MONITORING_ESD.md)                 | Pressure monitoring ESD    |
 | Fire Heat Transfer  | [docs/safety/fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements.md) | Fire heat transfer         |
@@ -892,7 +892,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 | Document                   | Path                                                                               | Description                                                               |
 | -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis.md)         | Equipment RCA, inventory balances, flowmeter bias and fault isolation            |
+| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis.md)         | RCA framework architecture, confidence scoring, usage examples            |
 
 #### Key Classes in Diagnostics Framework
 
