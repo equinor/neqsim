@@ -53,7 +53,10 @@ references. Existing v1 frames without that extension remain schema-compatible. 
 the model implementation. The ideal-gas Fanno manifest includes the public NASA GFSSP analytical
 case. The HEM manifest includes the published STEP flashing-propane rate, but explicitly records
 that the declared liquid withdrawal is not comparable to the current gas-only equilibrium
-upstream state and that measurement uncertainty is missing. Every
+upstream state and that measurement uncertainty is missing. It also retains six published
+dense-liquid CO2 restriction cases with reported uncertainty. Their ambient expansions encounter
+the fail-closed solid-risk boundary, so failed frames contain diagnostics but no source payload and
+the comparison receipts intentionally omit calculated rates and errors. Every
 model still emits `UNQUALIFIED`: external analytical or experimental evidence and regression tests do not create
 independently reviewed engineering qualification. Consumers must validate both schema and
 application-specific physical/balance requirements before using a frame.
