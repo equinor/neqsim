@@ -72,8 +72,8 @@ simultaneous event and a governed `DynamicBlowdownFlareStudyDataSource`. It eval
 ```java
 CoupledReliefBlowdownFlareInput input =
     CoupledReliefBlowdownFlareInput.builder("flare-envelope-A")
-        .addReliefStudy(separatorReliefStudy, "FIRE-ZONE-20")
-        .addReliefStudy(scrubberReliefStudy, "FIRE-ZONE-20")
+        .addReliefStudy(separatorReliefStudy, "FIRE-ZONE-20", separatorRelievingGas)
+        .addReliefStudy(scrubberReliefStudy, "FIRE-ZONE-20", scrubberRelievingGas)
         .dynamicStudy(dynamicFlareStudy)
         .scenarioSelectionReviewed(true)
         .addEvidenceReference("HAZOP-20-REV-A")
