@@ -1,7 +1,7 @@
 ---
 name: neqsim-phase-envelope
 description: "Generate, plot, interpret, validate, and troubleshoot NeqSim PT phase envelopes. USE WHEN: calculating phase envelopes, dew and bubble curves, cricondenbar, cricondentherm, critical points, retrograde regions, envelope segments, or fixing Michelsen continuation and singular-Jacobian failures caused by zero or trace components."
-last_verified: "2026-09-12"
+last_verified: "2026-11-18"
 ---
 
 # NeqSim PT Phase Envelopes
@@ -67,7 +67,10 @@ double[] cricondentherm = ops.get("cricondentherm");
 ```
 
 Use `calcPTphaseEnvelope(true, lowPressureBara)` when the start side and lower pressure
-matter. Use the no-argument overload for the standard calculation.
+matter. Use the no-argument overload for the standard calculation. When maintaining direct callers of the legacy
+`PTphaseEnvelope` class, check both extremum coordinates for finite values before
+interpreting them or reading their associated compositions. A trace with no valid
+point publishes `NaN` for its temperature and pressure.
 
 ### 4. Consume structured segments by default
 

@@ -350,6 +350,15 @@ These extrema are tracked incrementally during tracing:
 
 Both include the phase compositions $\mathbf{x}$ and $\mathbf{y}$ at the extremum, accessible via `"cricondenbarX"`, `"cricondenbarY"`, `"cricondenthermX"`, `"cricondenthermY"`.
 
+Direct callers of the legacy `PTphaseEnvelope` operation receive `NaN` in both
+the temperature (K) and pressure (bara) coordinates of an extremum when
+neither branch yields a finite, positive pressure–temperature point. Check
+both coordinates before reading the corresponding phase compositions. Each
+call to `run()` starts a fresh trace. The public
+`ThermodynamicOperations.calcPTphaseEnvelope(...)` facade uses the Michelsen
+implementation described in this guide.
+
+
 ## 11. Direct Cricondenbar and Cricondentherm Refinement
 
 After the phase envelope has been traced, the discrete maximum-pressure and maximum-temperature estimates can be refined to machine precision using the Michelsen simultaneous Newton method (Michelsen, 1980; Michelsen & Mollerup, 2007, Chapter 12).

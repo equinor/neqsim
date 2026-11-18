@@ -50,8 +50,8 @@ public class PTphaseEnvelope extends BaseOperation {
   SystemInterface system;
   boolean bubblePointFirst = true;
   boolean hascopiedPoints = false;
-  double[] cricondenTherm = new double[3];
-  double[] cricondenBar = new double[3];
+  double[] cricondenTherm = {Double.NaN, Double.NaN, 0.0};
+  double[] cricondenBar = {Double.NaN, Double.NaN, 0.0};
   double[] cricondenThermX = new double[100];
   double[] cricondenThermY = new double[100];
   double[] cricondenBarX = new double[100];
@@ -148,9 +148,26 @@ public class PTphaseEnvelope extends BaseOperation {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    hascopiedPoints = false;
+    restart = true;
+    Tmin = 0.0;
+    traceBranch(phaseFraction, bubblePointFirst);
+  }
+
+  /**
+   * Trace one branch starting with no measured extrema.
+   *
+   * @param branchFraction specified vapor fraction for this branch
+   * @param bubbleBranch whether to initialize the bubble branch
+   */
+  private void traceBranch(double branchFraction, boolean bubbleBranch) {
+    cricondenTherm = new double[] {Double.NaN, Double.NaN, 0.0};
+    cricondenBar = new double[] {Double.NaN, Double.NaN, 0.0};
+    cricondenThermX = new double[100];
+    cricondenThermY = new double[100];
+    cricondenBarX = new double[100];
+    cricondenBarY = new double[100];
     speceq = 0; // initialization
-    double initialTemp = system.getTemperature();
-    double initialPres = system.getPressure();
     points[0] = new double[MAX_NUMBER_OF_POINTS]; // temperature points
     points[1] = new double[MAX_NUMBER_OF_POINTS]; // pressure points
 
@@ -167,11 +184,11 @@ public class PTphaseEnvelope extends BaseOperation {
         continue;
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-        if (bubblePointFirst
+        if (bubbleBranch
             && system.getPhase(0).getComponent(speceq).getTC() > system.getPhase(0).getComponent(i).getTC()) {
           speceq = system.getPhase(0).getComponent(i).getComponentNumber();
         }
-        if (!bubblePointFirst
+        if (!bubbleBranch
             && system.getPhase(0).getComponent(speceq).getTC() < system.getPhase(0).getComponent(i).getTC()) {
           speceq = system.getPhase(0).getComponent(i).getComponentNumber();
         }
@@ -185,7 +202,7 @@ public class PTphaseEnvelope extends BaseOperation {
     pres = lowPres;
     // temp =
     // system.getPhase(0).getComponent(speceq).getAntoineVaporTemperature(pres);
-    temp = tempKWilson(phaseFraction, pres);
+    temp = tempKWilson(branchFraction, pres);
 
     if (Double.isNaN(temp)) {
       temp = system.getPhase(0).getComponent(speceq).getTC() - 20.0;
@@ -201,7 +218,7 @@ public class PTphaseEnvelope extends BaseOperation {
 
     for (int attempt = 0; attempt < FIRST_POINT_ATTEMPTS; attempt++) {
       try {
-        if (phaseFraction < 0.5) {
+        if (branchFraction < 0.5) {
           temp += attempt * FIRST_POINT_STEP;
           system.setTemperature(temp);
           testOps.bubblePointTemperatureFlash();
@@ -222,7 +239,7 @@ public class PTphaseEnvelope extends BaseOperation {
     }
 
     // this part sets the first envelope point into the system
-    system.setBeta(phaseFraction);
+    system.setBeta(branchFraction);
     system.setPressure(pres);
     system.setTemperature(temp);
 
@@ -281,26 +298,12 @@ public class PTphaseEnvelope extends BaseOperation {
           }
 
           // new settings
-          phaseFraction = 1.0 - phaseFraction;
-          if (bubblePointFirst) {
-            bubblePointFirst = false;
-          } else {
-            bubblePointFirst = true;
-          }
-
-          // Reset cricondenTherm/Bar tracking arrays for the second branch
-          cricondenTherm = new double[3];
-          cricondenBar = new double[3];
-          cricondenThermX = new double[100];
-          cricondenThermY = new double[100];
-          cricondenBarX = new double[100];
-          cricondenBarY = new double[100];
-
+          double oppositeFraction = 1.0 - branchFraction;
           // Reset K-values using Wilson correlation so the second run
           // starts from valid initial estimates (the crash may have left
           // NaN K-values in the system which would cause the second run
           // to crash immediately)
-          double restartTemp = tempKWilson(phaseFraction, lowPres);
+          double restartTemp = tempKWilson(oppositeFraction, lowPres);
           if (Double.isNaN(restartTemp)) {
             restartTemp = system.getPhase(0).getComponent(speceq).getTC() - 20.0;
           }
@@ -313,7 +316,7 @@ public class PTphaseEnvelope extends BaseOperation {
           }
 
           int npSaved = np;
-          run();
+          traceBranch(oppositeFraction, !bubbleBranch);
           np = npSaved;
           /**/
           break;
@@ -356,7 +359,11 @@ public class PTphaseEnvelope extends BaseOperation {
 
       // stores critondenbar and cricondentherm
       // HERE the new cricoT and crico P values will be called instead
-      if (system.getTemperature() > cricondenTherm[0]) {
+      if (!Double.isFinite(system.getTemperature()) || system.getTemperature() <= 0.0
+          || !Double.isFinite(system.getPressure()) || system.getPressure() <= 0.0) {
+        break;
+      }
+      if (Double.isNaN(cricondenTherm[0]) || system.getTemperature() > cricondenTherm[0]) {
         cricondenTherm[1] = system.getPressure();
         cricondenTherm[0] = system.getTemperature();
         for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
@@ -366,7 +373,7 @@ public class PTphaseEnvelope extends BaseOperation {
       } else {
         nonLinSolver.ettercricoT = true;
       }
-      if (system.getPressure() > cricondenBar[1]) {
+      if (Double.isNaN(cricondenBar[1]) || system.getPressure() > cricondenBar[1]) {
         cricondenBar[0] = system.getTemperature();
         cricondenBar[1] = system.getPressure();
         for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
@@ -568,29 +575,19 @@ public class PTphaseEnvelope extends BaseOperation {
     // Merge cricondenTherm/Bar from first and second branches (keep the best)
     if (hascopiedPoints) {
       // Cricondentherm: keep whichever branch found the highest temperature
-      if (cricondenThermfirst[0] > cricondenTherm[0]) {
+      if (Double.isNaN(cricondenTherm[0]) || cricondenThermfirst[0] > cricondenTherm[0]) {
         cricondenTherm = cricondenThermfirst;
         cricondenThermX = cricondenThermXfirst;
         cricondenThermY = cricondenThermYfirst;
       }
       // Cricondenbar: keep whichever branch found the highest pressure
-      if (cricondenBarfirst[1] > cricondenBar[1]) {
+      if (Double.isNaN(cricondenBar[1]) || cricondenBarfirst[1] > cricondenBar[1]) {
         cricondenBar = cricondenBarfirst;
         cricondenBarX = cricondenBarXfirst;
         cricondenBarY = cricondenBarYfirst;
       }
     }
 
-    if (!Double.isFinite(cricondenBar[0]) || !Double.isFinite(cricondenBar[1])
-        || (cricondenBar[0] == 0.0 && cricondenBar[1] == 0.0)) {
-      cricondenBar[0] = initialTemp;
-      cricondenBar[1] = initialPres;
-    }
-    if (!Double.isFinite(cricondenTherm[0]) || !Double.isFinite(cricondenTherm[1])
-        || (cricondenTherm[0] == 0.0 && cricondenTherm[1] == 0.0)) {
-      cricondenTherm[0] = initialTemp;
-      cricondenTherm[1] = initialPres;
-    }
     for (int idx = 0; idx < points2.length; idx++) {
       points2[idx] = removeZeroValues(points2[idx]);
     }
@@ -649,7 +646,7 @@ public class PTphaseEnvelope extends BaseOperation {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);
     nf.applyPattern("####.#");
-    if (bubblePointFirst) {
+    if (bubblePointFirst != hascopiedPoints) {
       // bubble point side
       navn[0] = "bubble point 2";
       navn[1] = "dew point 2";
@@ -709,7 +706,7 @@ public class PTphaseEnvelope extends BaseOperation {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);
     nf.applyPattern("####.#");
-    if (bubblePointFirst) {
+    if (bubblePointFirst != hascopiedPoints) {
       // bubble point side
       navn[0] = "bubble point 2";
       navn[1] = "dew point 2";
