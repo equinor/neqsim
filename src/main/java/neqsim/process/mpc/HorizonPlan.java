@@ -71,12 +71,20 @@ public final class HorizonPlan implements Serializable {
     return result;
   }
 
-  /** @return solver outcome for the scan */
+  /**
+   * Get the solver outcome.
+   *
+   * @return solver outcome for the scan
+   */
   public Status getStatus() {
     return status;
   }
 
-  /** @return true if the first planned move is available for application */
+  /**
+   * Check whether the scan produced an applicable first move.
+   *
+   * @return true if the first planned move is available for application
+   */
   public boolean isSuccessful() {
     return status == Status.OPTIMAL;
   }
@@ -90,22 +98,38 @@ public final class HorizonPlan implements Serializable {
     return isSuccessful() ? plannedMvs[0].clone() : new double[0];
   }
 
-  /** @return absolute MV values by future sample and registration order */
+  /**
+   * Get a snapshot of the planned manipulated variables.
+   *
+   * @return absolute MV values by future sample and registration order
+   */
   public double[][] getPlannedMvs() {
     return copy(plannedMvs);
   }
 
-  /** @return predicted CV values by future sample and registration order */
+  /**
+   * Get a snapshot of the predicted controlled variables.
+   *
+   * @return predicted CV values by future sample and registration order
+   */
   public double[][] getPredictedCvs() {
     return copy(predictedCvs);
   }
 
-  /** @return nonnegative CV lower soft-limit violations in the units of each measurement */
+  /**
+   * Get the predicted violations of the lower soft limits.
+   *
+   * @return nonnegative CV lower soft-limit violations in the units of each measurement
+   */
   public double[][] getLowerSlack() {
     return copy(lowerSlack);
   }
 
-  /** @return nonnegative CV upper soft-limit violations in the units of each measurement */
+  /**
+   * Get the predicted violations of the upper soft limits.
+   *
+   * @return nonnegative CV upper soft-limit violations in the units of each measurement
+   */
   public double[][] getUpperSlack() {
     return copy(upperSlack);
   }
