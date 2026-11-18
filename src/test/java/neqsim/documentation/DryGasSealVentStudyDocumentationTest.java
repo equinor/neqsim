@@ -74,8 +74,9 @@ class DryGasSealVentStudyDocumentationTest extends NeqSimTest {
 
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
     assertTrue(fence.find(), "Missing Java fence after marker");
+    String source = fence.group(1);
     assertFalse(fence.find(), "The marked section must contain one Java program");
-    return fence.group(1);
+    return source;
   }
 
   /**
