@@ -88,3 +88,5 @@ fluid-model validity to `@thermo-fluid`, and regulator/controller dynamics to
 - Control tuning and anti-surge controller design: `@control-system`
 - Vendor-document extraction and curve digitising: `@technical-reader`
 - Historian comparison of measured polytropic efficiency: `@plant-data`
+
+In the [two-well restart case](../../examples/production-decision/README.md), use the optional native compressor chart for speed-solved recompression to 100 bara. Confirm actual suction-flow units, the gas and suction envelope, and that the first point of every speed line is a documented surge point. Report the minimum speed-resolved surge margin and whether the requested duty stayed inside both bracketing curves. The bundled chart is synthetic.

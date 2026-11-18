@@ -561,3 +561,19 @@ figure (observation → mechanism → implication → recommendation).
 - [ ] Did failed trials return a penalty (never crash the optimizer)?
 - [ ] Did you verify the new APIs are on the classpath (devtools or repackaged JAR)?
 - [ ] Java helpers (if any) compile on Java 8 — no `var`, `List.of`, `String.repeat`.
+
+## Restart decisions with a shared riser and host
+
+Use the [two-well restart study](../../../examples/production-decision/README.md)
+to compare a fixed platform choke with an opening trajectory. Inspect peak phase
+rates, well production, separator levels, suction flow and power separately on
+matched mesh, timestep and fluid cases. Check whether the largest load occurred
+before or after the control move. A completed simulation or a small component
+balance residual cannot establish that the peak is resolved. Ask for a paired
+pressure/phase-rate trace or a compressor map when that evidence would change
+the decision. For blind evaluation, give the agent only the challenge-mode MCP
+server and score its saved choice separately.
+
+For installed-equipment comparisons, verify the signed steady well-rate and choke-pressure residuals before starting the controllers. The [reference case](../../../examples/production-decision/README.md) solves both to 1e-10 in kg/s and bar so an initialization discrepancy cannot disable the native steady momentum correction. Keep event and handoff protocol identical across a ranking. A rejected coarse trajectory also blocks selection when the fine runs happen to complete.
+
+Use the same compressor map hash for both policies and every refinement. The optional native chart path computes the speed required by the export duty and checks the flow range and suction envelope. Record whether the chart came from a vendor or was constructed for a sensitivity case.
