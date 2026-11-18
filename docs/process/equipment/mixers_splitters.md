@@ -155,9 +155,11 @@ demands exceed the feed, NeqSim scales them to the available flow and gives rema
 flow.
 
 Positive-flow proportional branches preserve composition and, after property initialization,
-molar enthalpy and entropy. Their enthalpy and entropy rates sum to the feed rates. An exactly closed branch retains the inlet composition and pressure/temperature as a
-reference state. It carries zero moles and its system enthalpy and entropy rates are zero.
+molar enthalpy and entropy. Their enthalpy and entropy rates sum to the feed rates.
+An exactly closed branch retains the inlet composition, pressure and temperature as a reference state. It carries zero moles and its system enthalpy and entropy rates are zero.
 Use the extensive getters for balances. Molar and mass-specific values require positive flow.
+The closed-outlet caloric balance and condenser duty regression are tracked in
+[issue #4073](https://github.com/equinor/neqsim/issues/4073).
 
 ## Component-selective splitting
 
