@@ -1948,13 +1948,17 @@ public final class ProfessionalPidDiagramRenderer {
     for (StreamInterface branch : tee.getOutletStreams()) {
       ProcessEquipmentInterface valve = soleValveConsumer(branch);
       boolean relief = valve.getClass() == SafetyReliefValve.class || isActualAntiSurgeValve(valve);
+      // Reserve the full signal continuation width above the inline valve between the two branch risers.
+      double valveX = relief ? 620 : 530;
       Node symbol = proposals.containsKey(valve.getName())
-          ? proposalValve(scene, proposals.get(valve.getName()), relief ? 620 : 500, relief ? 100 : 140)
-          : scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve), relief ? 620 : 500,
-              relief ? 100 : 140, 16, 10, valve.getName());
+          ? proposalValve(scene, proposals.get(valve.getName()), valveX, relief ? 100 : 140)
+          : scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve), valveX, relief ? 100 : 140, 16, 10,
+              valve.getName());
       valveNodes.put(valve.getName(), symbol);
       scene.route(junction, relief ? "t" : "r", symbol, "l", branch.getName(), false,
-          relief ? points(junction.top(), new Point(470, 75), new Point(580, 75), new Point(580, 100), symbol.left())
+          relief
+              ? points(junction.top(), new Point(junction.x, 75), new Point(symbol.left().x - 14, 75),
+                  new Point(symbol.left().x - 14, symbol.y), symbol.left())
               : null);
       scene.lineLabel(branch.getName(), relief ? 565 : 465, relief ? 112 : 172, owner.getName());
       StreamInterface discharge = valve.getOutletStreams().get(0);
