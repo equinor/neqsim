@@ -324,7 +324,7 @@ public final class InletCompressionExportReferenceFacility {
         .build();
     project.addOverpressureStudy(reliefStudy).addBlowdownFlareStudy(dynamic)
         .addCoupledReliefBlowdownFlareStudy(CoupledReliefBlowdownFlareInput.builder("reference-coupled-safety")
-            .addReliefStudy(reliefStudy, "FIRE-ZONE-A").dynamicStudy(dynamic).scenarioSelectionReviewed(true)
+            .addReliefStudy(reliefStudy, "FIRE-ZONE-A", fluid).dynamicStudy(dynamic).scenarioSelectionReviewed(true)
             .addEvidenceReference(RELIEF_EVIDENCE).addEvidenceReference(HAZOP_EVIDENCE).build());
   }
 

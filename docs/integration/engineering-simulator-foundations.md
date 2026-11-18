@@ -67,7 +67,7 @@ simultaneous event and a governed `DynamicBlowdownFlareStudyDataSource`. It eval
 - transient multi-source blowdown peak and source contributions;
 - flare-header velocity and Mach acceptance;
 - flare heat, mass, and molar capacity; and
-- the governing steady or transient disposal-system load.
+- the peak of each event's coincident PSV and BDV discharges, with time and source contributions.
 
 ```java
 CoupledReliefBlowdownFlareInput input =
@@ -82,6 +82,27 @@ CoupledReliefBlowdownFlareInput input =
 EngineeringCalculationResult<CoupledReliefBlowdownFlareResult> result =
     new CoupledReliefBlowdownFlareCalculation().calculate(input, context);
 ```
+
+Use `addReliefScenario(study, scenarioName, event, startSeconds, endSeconds, relievingGas)`
+to schedule a specific credible contingency. Use `scheduleBlowdown(sourceId, event, startSeconds, endSeconds)`
+to assign a BDV profile to the same initiating event. An end time of `null` uses the complete simulated
+BDV history. The timeline combines discharges within each event. Distinct event names represent mutually
+exclusive cases. Existing unscheduled BDVs form a separate simultaneous blowdown case. An untimed PSV
+study contributes its maximum credible load from time zero. The optional relieving-gas composition
+supplies the thermal basis for the PSV. Each protected item can be registered once per event.
+
+Each accepted BDV interval uses the decrease in vessel inventory divided by elapsed time. A release includes
+its start and excludes its end. Consequently a PSV opening between BDV samples immediately contributes to
+that interval, and two windows that touch at an endpoint do not overlap. Read `getDisposalCases()` for the
+first time of peak mass flow, its contributing sources in kg/s, and separate mass, molar, heat and header
+Mach checks. Each check reports `WITHIN_LIMIT`, `EXCEEDED` or `NOT_EVALUATED`. A missing limit or demand
+basis leaves overall acceptance unresolved. The combined mass is the released load upstream of any
+knockout drum. Molar and combustion screens use the specified relieving gas and fixed BDV composition.
+For a fractionating BDV, the source constituents bound the maximum molar flow and combustion duty.
+Gas-tip mass, moles and duty may decrease in a knockout drum. Unless the combined stream is a single
+known component above its critical temperature at the specified header state, the gross load sets an
+upper bound. An upper bound above a tip limit requires downstream phase-separation assessment and
+reports `NOT_EVALUATED`. Each case reports the peak released mass separately from the gas-tip bounds. The header check uses the configured ideal-gas header state.
 
 Concurrency and credibility must come from the project hazard review. NeqSim compares and aggregates the supplied
 cases; it does not decide that they are credible or simultaneous.

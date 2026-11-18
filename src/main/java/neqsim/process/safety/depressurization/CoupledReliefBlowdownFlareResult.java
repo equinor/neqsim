@@ -19,18 +19,23 @@ public final class CoupledReliefBlowdownFlareResult implements Serializable {
   private final DynamicBlowdownFlareStudyHandoff dynamicHandoff;
   private final double governingMassFlowKgPerS;
   private final String governingBasis;
+  private final List<FlareDisposalCaseResult> disposalCases;
+  private final String governingEvent;
   private final boolean capacityAcceptable;
   private final List<String> findings;
 
   CoupledReliefBlowdownFlareResult(String studyId, List<OverpressureStudyResult> reliefResults,
       Map<String, Double> steadyLoadByConcurrencyGroupKgPerS, DynamicBlowdownFlareStudyHandoff dynamicHandoff,
-      double governingMassFlowKgPerS, String governingBasis, boolean capacityAcceptable, List<String> findings) {
+      FlareDisposalCaseResult governing, String governingBasis, List<FlareDisposalCaseResult> cases,
+      boolean capacityAcceptable, List<String> findings) {
     this.studyId = studyId;
     this.reliefResults = Collections.unmodifiableList(new ArrayList<OverpressureStudyResult>(reliefResults));
     this.steadyLoadByConcurrencyGroupKgPerS = Collections
         .unmodifiableMap(new LinkedHashMap<String, Double>(steadyLoadByConcurrencyGroupKgPerS));
     this.dynamicHandoff = dynamicHandoff;
-    this.governingMassFlowKgPerS = governingMassFlowKgPerS;
+    this.governingMassFlowKgPerS = governing.getPeakMassFlowKgPerS();
+    this.governingEvent = governing.getEvent();
+    this.disposalCases = Collections.unmodifiableList(new ArrayList<FlareDisposalCaseResult>(cases));
     this.governingBasis = governingBasis;
     this.capacityAcceptable = capacityAcceptable;
     this.findings = Collections.unmodifiableList(new ArrayList<String>(findings));
@@ -38,6 +43,16 @@ public final class CoupledReliefBlowdownFlareResult implements Serializable {
 
   public double getGoverningMassFlowKgPerS() {
     return governingMassFlowKgPerS;
+  }
+
+  /** @return event governing mass flow, or null for historical results */
+  public String getGoverningEvent() {
+    return governingEvent;
+  }
+
+  /** @return distinct disposal cases evaluated for this study */
+  public List<FlareDisposalCaseResult> getDisposalCases() {
+    return disposalCases == null ? Collections.<FlareDisposalCaseResult>emptyList() : disposalCases;
   }
 
   public String getGoverningBasis() {
@@ -70,6 +85,12 @@ public final class CoupledReliefBlowdownFlareResult implements Serializable {
     result.put("dynamicStudy", dynamicHandoff == null ? null : dynamicHandoff.toMap());
     result.put("governingMassFlowKgPerS", Double.valueOf(governingMassFlowKgPerS));
     result.put("governingBasis", governingBasis);
+    result.put("governingEvent", governingEvent);
+    List<Map<String, Object>> cases = new ArrayList<Map<String, Object>>();
+    for (FlareDisposalCaseResult event : getDisposalCases()) {
+      cases.add(event.toMap());
+    }
+    result.put("disposalCases", cases);
     result.put("capacityAcceptable", Boolean.valueOf(capacityAcceptable));
     result.put("findings", new ArrayList<String>(findings));
     result.put("scenarioCredibilityRequiresHazardReview", Boolean.TRUE);

@@ -2,7 +2,7 @@
 name: neqsim-pid-process-operations
 version: "1.9.0"
 description: "Prepare professional P&ID drawing packages with native DEXPI 2.0.1 from a NeqSim process model, add traceable instrumentation and safeguards, and bind final P&ID tags to steady-state simulations and dynamic tests. Also interpret P&ID symbols, import process topology, link historian tags, evaluate valve/equipment changes and prepare water-hammer or blowdown/flare handoffs."
-last_verified: "2026-11-03"
+last_verified: "2026-11-18"
 requires:
   python_packages: [pandas]
 ---
@@ -506,7 +506,9 @@ engineering-simulator contracts over mutating the live process:
    inputs, evidence, standards, uncertainty, and review state are explicit.
 4. Use `CoupledReliefBlowdownFlareCalculation` when steady relief groups and
    dynamic blowdown share a disposal system. Never infer credible causes or
-   concurrency groups from topology alone.
+   concurrency groups from topology alone. Assign each reviewed PSV scenario and BDV source to its
+   initiating event and opening window. Review `getDisposalCases()` for the governing timestamp, source
+   contributions, and each individual capacity status. Supply the relieving gas for a thermal limit.
 5. Use `DynamicSafetyScenarioRunner` for response-time verification. Build
    logic through a `LogicFactory` against equipment in the isolated process
    copy; never retain valve/controller references from the live base model.
