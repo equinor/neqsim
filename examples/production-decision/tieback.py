@@ -67,6 +67,16 @@ def make_pipe(eq, feed, refinement):
     return pipe
 
 
+class HostDutyUnavailable(ValueError):
+    """Evidence for an online compressor study with zero modeled gas export."""
+
+    def __init__(self, fresh, export, solved):
+        self.diagnostic = {"condition": "no_online_export_duty", "fresh_kg_s": fresh,
+                           "export_kg_s": export, "recycle_solved": bool(solved)}
+        super().__init__(f"No online compressor duty: fresh={fresh:.9g} kg/s, export={export:.9g} kg/s, "
+                         f"recycle solved={solved}")
+
+
 def host_snapshot(n, gas, rate, recycle_fraction=.15, chart=None):
     """Steady compression with cooled, pressure-reduced discharge recycle at a sampled instant."""
     eq = n.process.equipment
@@ -99,8 +109,16 @@ def host_snapshot(n, gas, rate, recycle_fraction=.15, chart=None):
         proc.add(unit)
     proc.run()
     export = split.getSplitStream(0).getFlowRate("kg/sec")
-    if not recycle.solved() or abs(rate - export) > 1e-5 * rate:
-        raise ValueError("Host recycle or fresh-gas/export balance failed")
+    if recycle.solved() and not recycle.isActive() and export == 0.0 and 0. <= rate * 3600. < recycle.getMinimumFlow():
+        # The native recycle has reached numerical zero flow. A pressure-target
+        # compressor snapshot has no online operating point in this condition.
+        raise HostDutyUnavailable(rate, export, True)
+    if not recycle.solved() or not math.isfinite(export) or abs(rate - export) > 1e-5 * rate:
+        raise ValueError(f"Host recycle solved={recycle.solved()}, iterations={recycle.getIterations()}, "
+                         f"fresh={rate:.9g} kg/s, export={export:.9g} kg/s, "
+                         f"flow/temperature/pressure/composition errors="
+                         f"{recycle.getErrorFlow():.6g}/{recycle.getErrorTemperature():.6g}/"
+                         f"{recycle.getErrorPressure():.6g}/{recycle.getErrorComposition():.6g}")
     flow = mixer.getOutletStream().getFlowRate("m3/hr")
     energy_error = (split.getSplitStream(0).getFluid().getEnthalpy() - feed.getFluid().getEnthalpy()
                     - machine.getPower("W") - cooler.getDuty("W"))
@@ -290,7 +308,15 @@ def run(n, opt, chart_info=None):
         gas_rate = vessel.getGasOutletFlowFraction() * vessel.getGasOutStream().getFlowRate("kg/sec")
         oil_rate = vessel.getOilOutletFlowFraction() * vessel.getOilOutStream().getFlowRate("kg/sec")
         sample = (index + 1) % round(1 / opt.dt) == 0
-        host = host_snapshot(n, vessel.getGasOutStream(), gas_rate, chart=chart) if sample else {}
+        host = {}
+        if sample:
+            try:
+                host = host_snapshot(n, vessel.getGasOutStream(), gas_rate, chart=chart)
+            except HostDutyUnavailable as exc:
+                exc.diagnostic.update(start_s=t, end_s=t + opt.dt)
+                raise
+            except ValueError as exc:
+                raise ValueError(f"Host withdrawal for ({t}, {t + opt.dt}] s: {exc}") from exc
         if opt.energy_audit:
             # Boundary includes both wells at the pipe inlet and ends at the three
             # separator outlets. The host recycle has a separate steady energy audit.
@@ -398,6 +424,8 @@ def main():
     except Exception as exc:
         result = {"status": "rejected", "reason": str(exc),
                   "configuration": config}
+        if isinstance(exc, HostDutyUnavailable):
+            result["host_diagnostic"] = exc.diagnostic
         if isinstance(exc, OutletBackflowError):
             result["outlet_diagnostic"] = exc.diagnostic
     else:

@@ -68,7 +68,13 @@ def compare(run, manifest):
         errors = [r["error"] for r in items if r["error"] is not None]
         missing |= len(errors) != len(items)
         outside |= any(r["error"] is not None and not r["within_tolerance"] for r in items)
+        coverage_by_tag = {}
+        for sample in items:
+            tag = coverage_by_tag.setdefault(sample["tag"], {"requested": 0, "paired": 0})
+            tag["requested"] += 1
+            tag["paired"] += sample["predicted"] is not None
         result["by_quantity"][key] = {"unit": UNITS[key], "paired": len(errors), "requested": len(items),
+                                      "coverage_by_tag": coverage_by_tag,
                                       "bias": statistics.mean(errors) if errors else None,
                                       "mae": statistics.mean(map(abs, errors)) if errors else None, "samples": items}
     result["status"] = ("outside_tolerance" if outside else "insufficient_coverage" if missing
@@ -77,11 +83,14 @@ def compare(run, manifest):
     return result
 
 
-def compare_file(run, path):
+def load_observations(path):
+    """Read and identify one immutable input snapshot for a batch of candidates."""
     raw = path.read_bytes()
-    result = compare(run, json.loads(raw))
-    result["observations_sha256"] = hashlib.sha256(raw).hexdigest()
-    return result
+    return json.loads(raw), hashlib.sha256(raw).hexdigest()
+
+
+def compare_snapshot(run, document, digest):
+    return {**compare(run, document), "observations_sha256": digest}
 
 
 if __name__ == "__main__":
@@ -89,4 +98,4 @@ if __name__ == "__main__":
     parser.add_argument("receipt", type=Path)
     parser.add_argument("observations", type=Path)
     args = parser.parse_args()
-    print(json.dumps(compare_file(json.loads(args.receipt.read_text()), args.observations), indent=2, allow_nan=False))
+    print(json.dumps(compare_snapshot(json.loads(args.receipt.read_text()), *load_observations(args.observations)), indent=2, allow_nan=False))
