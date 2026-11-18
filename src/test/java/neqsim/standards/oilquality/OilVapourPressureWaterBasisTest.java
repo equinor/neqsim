@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -160,30 +159,26 @@ class OilVapourPressureWaterBasisTest extends NeqSimTest {
     }
   }
 
-  /** Demonstrates why the characterization audit must reject an index-shifting removal. */
+  /** Checks every retained component pair after removing water from the middle of a classic SRK fluid. */
   @Test
-  void auditRejectsMiddleComponentRemovalWithChangedNamedBip() {
+  void removingMiddleWaterPreservesNamedInteractions() {
     SystemInterface source = createOil(true, true);
     SystemInterface dry = source.clone();
     dry.removeComponent("water");
     dry.init(0);
+    assertFalse(dry.hasComponent("water"));
+    assertEquals(source.getNumberOfComponents() - 1, dry.getNumberOfComponents());
     for (int phase = 0; phase < source.getMaxNumberOfPhases(); phase++) {
-      final int phaseIndex = phase;
-      assertThrows(IllegalStateException.class, () -> requireUnchangedBip(source, dry, phaseIndex));
-    }
-  }
-
-  /**
-   * Fails closed when removal changes the named pentane/methane interaction in this fixture.
-   *
-   * @param source original oil with water at index 1
-   * @param dry candidate dry oil with methane shifted from index 2 to index 1
-   * @param phase allocated phase index
-   * @throws IllegalStateException if the retained interaction is different
-   */
-  private void requireUnchangedBip(SystemInterface source, SystemInterface dry, int phase) {
-    if (bip(source, phase, 0, 2) != bip(dry, phase, 0, 1)) {
-      throw new IllegalStateException("Water removal changed the pentane/methane BIP; reject this dry basis");
+      assertEquals(0.0123, bip(source, phase, 0, 2), 0.0);
+      for (int i = 0; i < dry.getNumberOfComponents(); i++) {
+        String first = dry.getPhase(phase).getComponent(i).getComponentName();
+        int sourceI = source.getPhase(phase).getComponent(first).getComponentNumber();
+        for (int j = 0; j < dry.getNumberOfComponents(); j++) {
+          String second = dry.getPhase(phase).getComponent(j).getComponentName();
+          int sourceJ = source.getPhase(phase).getComponent(second).getComponentNumber();
+          assertEquals(bip(source, phase, sourceI, sourceJ), bip(dry, phase, i, j), 0.0);
+        }
+      }
     }
   }
 

@@ -212,6 +212,13 @@ low-pressure bubble segment without overlapping it, as in the SAFT-VR Mie
 methane/propane regression. Each pass follows its own continuation and pressure
 termination criteria.
 
+The Michelsen tracer removes negligible species from its private working fluid before solving the continuation equations.
+For standard SRK and PR phases with the classic rule, the reduced phase retains the interaction coefficients of each surviving pair, including
+user-fitted values. An explicitly zero nitrogen or H2S entry therefore gives the same envelope coordinates as omitting
+it in the characterized SRK case. The caller retains its original component list and pair parameters.
+Read the dew coordinates with `dewT` and `dewP`, and the bubble coordinates with `bubT` and `bubP`.
+These arrays include both continuation passes with NaN breaks. The legacy separate second-pass keys return null.
+
 ## 6. Critical Point Detection
 
 ### 6.1 Criterion
