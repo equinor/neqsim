@@ -155,10 +155,9 @@ demands exceed the feed, NeqSim scales them to the available flow and gives rema
 flow.
 
 Positive-flow proportional branches preserve composition and, after property initialization,
-molar enthalpy and entropy. Their enthalpy and entropy rates sum to the feed rates. A zero-flow
-branch remains a valid topology connection, but its molar thermodynamic getters are not qualified
-for caloric balances; issue #4073 retains that residual-property and condenser/reboiler duty
-boundary.
+molar enthalpy and entropy. Their enthalpy and entropy rates sum to the feed rates. An exactly closed branch retains the inlet composition and pressure/temperature as a
+reference state. It carries zero moles and its system enthalpy and entropy rates are zero.
+Use the extensive getters for balances. Molar and mass-specific values require positive flow.
 
 ## Component-selective splitting
 
@@ -183,7 +182,7 @@ empty branch a physical molar enthalpy or component inventory.
 - Inspect pressure-mismatch evidence instead of treating a mixer as a hydraulic model.
 - Confirm that splitter outlet rates sum to the feed rate.
 - Confirm every `ComponentSplitter` factor follows the feed component order.
-- Exclude zero-flow thermodynamic getters from caloric balances.
+- Sum extensive enthalpy and entropy rates across all proportional outlets, including closed outlets.
 - Add equipment to a `ProcessSystem` in upstream-to-downstream order.
 
 ## Related documentation
