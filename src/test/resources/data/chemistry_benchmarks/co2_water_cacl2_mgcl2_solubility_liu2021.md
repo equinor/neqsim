@@ -38,6 +38,12 @@ reagents were weighed, the actual ion inventories would differ materially from t
 rows cannot support quantitative divalent-ion calibration until the reagent forms and assay basis are established from a
 primary record. The generated output remains useful as a named-convention sensitivity and numerical diagnostic.
 
+The reported apparent coefficient is `ln(S0/S) / n_formula` on the model's one-kilogram final-aqueous-water
+basis, in kilograms of water per mole of salt formula units. It is not a per-ion, ionic-strength or generic mass-ppm
+coefficient. Under the anhydrous convention, 1.5 mass% corresponds to about 0.1372 mol CaCl2/kg water
+(`I = 0.4117 mol/kg`) and 0.1599 mol MgCl2/kg water (`I = 0.4798 mol/kg`), so equal ppm does not mean equal formula
+molality or ionic strength.
+
 No source value is corrected. This is important because the retained table contains finite values that contradict the
 aggregate salting-out trend, including CaCl2 10000 ppm at 353 K and 102 atm (0.085 mol/kg solution) and MgCl2
 15000 ppm at 333 K and 102 atm (0.101 mol/kg solution). These source-record anomalies are reported, not silently
