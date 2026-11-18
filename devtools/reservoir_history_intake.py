@@ -250,3 +250,135 @@ def audit_component_moles(study):
         window["eligible_for_component_handoff"] = all(
             value["status"] == "eligible" for value in projected.values())
     return report
+
+
+def _selected_value(value, lower, upper, label):
+    """Require a supplied decimal to lie within exact rational source bounds."""
+    number = Fraction(_decimal(value))
+    if not lower <= number <= upper:
+        raise PVTStudyError("Selected " + label + " is outside the source bounds")
+    return number
+
+
+def _exact_decimal(value):
+    """Serialize finite-decimal arithmetic without rounding component conservation."""
+    denominator = value.denominator
+    twos = fives = 0
+    while denominator % 2 == 0:
+        denominator //= 2
+        twos += 1
+    while denominator % 5 == 0:
+        denominator //= 5
+        fives += 1
+    if denominator != 1:
+        raise PVTStudyError("Selected amount has no exact finite-decimal representation")
+    places = max(twos, fives)
+    coefficient = abs(value.numerator) * 2 ** (places - twos) * 5 ** (places - fives)
+    digits = tuple(int(digit) for digit in str(coefficient))
+    return str(Decimal((int(value < 0), digits, -places)))
+
+
+def select_component_history(study, scenario):
+    """Validate an explicit joint scenario and return ordered molar tank-step inputs.
+
+    Selections specify every admitted interval, stream total, complete composition,
+    and end pressure/sigma. Exact rational checks use raw cumulative endpoints,
+    rather than the outward-rounded marginal report. The caller chooses the
+    scenario and its prior weight separately. Output decimal arrays preserve
+    conservation before the caller converts them to the Java double boundary.
+    """
+    report = audit_component_moles(study)
+    if not isinstance(scenario, dict):
+        raise PVTStudyError("Component scenario must be a mapping")
+    _required_text(scenario, ("reference", "source_sha256"))
+    if scenario["source_sha256"] != report["input_sha256"]:
+        raise PVTStudyError("Component scenario source identity does not match the history")
+    order = scenario.get("component_order")
+    if not isinstance(order, list) or not order or any(
+            not isinstance(name, str) or not name.strip() or name != name.strip() for name in order):
+        raise PVTStudyError("Scenario requires an explicit named component order")
+    if len(order) != len(set(order)):
+        raise PVTStudyError("Scenario component order contains duplicates")
+    selected_windows = scenario.get("windows")
+    if not isinstance(selected_windows, list) or len(selected_windows) != len(report["windows"]):
+        raise PVTStudyError("Scenario must select every source interval")
+    if not all(window["eligible_for_component_handoff"] for window in report["windows"]):
+        raise PVTStudyError("Scenario requires an eligible component flow window")
+    used_components = set()
+    accumulated = {name: Fraction(0) for name in study["streams"]}
+    origins = {name: (Fraction(_decimal(study["rows"][0]["cumulative"][name]["lower"])),
+                      Fraction(_decimal(study["rows"][0]["cumulative"][name]["upper"])))
+               for name in study["streams"]}
+    steps = []
+    for index, (window, selected) in enumerate(zip(report["windows"], selected_windows)):
+        if not isinstance(selected, dict) or selected.get("end_row") != window["end_row"]:
+            raise PVTStudyError("Scenario intervals must match the dated source order")
+        row = study["rows"][index + 1]
+        previous = study["rows"][index]
+        pressure = report["rows"][index + 1]["pressure"]
+        if pressure["status"] != "eligible":
+            raise PVTStudyError("Scenario requires an eligible field-average pressure and sigma")
+        stream_values = selected.get("streams")
+        if not isinstance(stream_values, dict) or stream_values.keys() != study["streams"].keys():
+            raise PVTStudyError("Scenario must select every named source stream")
+        totals = {direction: {name: Fraction(0) for name in order}
+                  for direction in ("production", "injection")}
+        named_streams = {}
+        for name, spec in study["streams"].items():
+            chosen = stream_values[name]
+            if not isinstance(chosen, dict):
+                raise PVTStudyError("Selected stream must be a mapping")
+            earlier = previous["cumulative"][name]
+            later = row["cumulative"][name]
+            lower = Fraction(_decimal(later["lower"])) - Fraction(_decimal(earlier["upper"]))
+            upper = Fraction(_decimal(later["upper"])) - Fraction(_decimal(earlier["lower"]))
+            total = _selected_value(chosen.get("total_moles"), lower, upper, "stream total")
+            accumulated[name] += total
+            origin_lower = max(origins[name][0], Fraction(_decimal(later["lower"])) - accumulated[name])
+            origin_upper = min(origins[name][1], Fraction(_decimal(later["upper"])) - accumulated[name])
+            if origin_lower > origin_upper:
+                raise PVTStudyError("Selected intervals are incompatible with shared cumulative endpoints")
+            origins[name] = origin_lower, origin_upper
+            source_fractions = row["interval_compositions"][name]["components"]
+            fractions = chosen.get("mole_fractions")
+            if not isinstance(fractions, dict) or fractions.keys() != source_fractions.keys():
+                raise PVTStudyError("Selected composition must include every source component")
+            selected_fractions = {}
+            for component, source in source_fractions.items():
+                if component not in totals[spec["direction"]]:
+                    raise PVTStudyError("Scenario component order omits a source component")
+                used_components.add(component)
+                selected_fractions[component] = _selected_value(
+                    fractions[component], Fraction(_decimal(source["lower"])),
+                    Fraction(_decimal(source["upper"])), "mole fraction")
+            if sum(selected_fractions.values(), Fraction(0)) != 1:
+                raise PVTStudyError("Selected mole fractions must sum exactly to one")
+            amounts = {component: total * fraction for component, fraction in selected_fractions.items()}
+            for component, amount in amounts.items():
+                totals[spec["direction"]][component] += amount
+            named_streams[name] = {
+                "direction": spec["direction"], "total_moles": _exact_decimal(total),
+                "component_moles": {key: _exact_decimal(value) for key, value in amounts.items()},
+            }
+        measured = row["pressure"]
+        chosen_pressure = _selected_value(
+            selected.get("pressure_bara"), Fraction(_decimal(measured["value"]["lower"])),
+            Fraction(_decimal(measured["value"]["upper"])), "pressure")
+        chosen_sigma = _selected_value(
+            selected.get("sigma_bara"), Fraction(_decimal(measured["sigma"]["lower"])),
+            Fraction(_decimal(measured["sigma"]["upper"])), "pressure sigma")
+        steps.append({
+            "end_row": window["end_row"], "duration_seconds": window["duration_days"] * 86400,
+            "streams": named_streams,
+            "produced_moles": [_exact_decimal(totals["production"][name]) for name in order],
+            "injected_moles": [_exact_decimal(totals["injection"][name]) for name in order],
+            "pressure_bara": _exact_decimal(chosen_pressure), "sigma_bara": _exact_decimal(chosen_sigma),
+            "holdout": measured["role"] == "holdout",
+        })
+    if used_components != set(order):
+        raise PVTStudyError("Scenario component order must contain exactly the source component set")
+    return {"schema": "reservoir_component_selection.v1", "source_sha256": report["input_sha256"],
+            "scenario_sha256": identity(scenario), "raw_input": deepcopy(study),
+            "raw_scenario": deepcopy(scenario), "component_order": list(order),
+            "cumulative_origin_bounds": {name: [_exact_decimal(lo), _exact_decimal(hi)]
+                                         for name, (lo, hi) in origins.items()}, "steps": steps}
