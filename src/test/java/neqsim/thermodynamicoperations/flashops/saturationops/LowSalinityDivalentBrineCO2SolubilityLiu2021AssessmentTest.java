@@ -80,8 +80,8 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       double model = modelMolPerKgSolution(result);
       assertTrue(Double.isFinite(model) && model > 0.0, reference.pointId + " finite positive model result");
       assertTrue(result.componentBalanceResidualMol <= 1.0e-10, reference.pointId + " component balance closure");
-      assertTrue(Double.isFinite(result.molecularLogFugacityResidual),
-          reference.pointId + " finite default fugacity diagnostic");
+      assertTrue(Math.abs(result.molecularLogFugacityResidual) < 1.0e-8,
+          reference.pointId + " default molecular fugacity closure");
 
       KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result pureWater;
       if (reference.isPureWater()) {
@@ -100,6 +100,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       }
       Double sourcePure = sourcePureByState.get(reference.stateKey());
       assertNotNull(sourcePure, reference.pointId + " matched pure-water source state");
+      assertEquals(pureWater.phaseTypes, result.phaseTypes, reference.pointId + " matched pure-water phase set");
       double modelPure = modelMolPerKgSolution(pureWater);
       double logDissolvedCo2MolecularRatio = Math.log(result.molecularMolePercent / pureWater.molecularMolePercent);
       double logGuestFugacityRatio = Math.log(result.co2FugacityBara / pureWater.co2FugacityBara);
