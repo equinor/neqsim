@@ -57,8 +57,9 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
     report.add("point_id,salt_type,evidence_role,salinity_ppm,salt_mass_fraction_percent,temperature_K,"
         + "pressure_atm,total_pressure_MPa,source_co2_mol_per_kg_solution,"
         + "model_co2_mol_per_kg_solution,relative_residual," + "matched_pure_water_source_co2_mol_per_kg_solution,"
-        + "matched_pure_water_model_co2_mol_per_kg_solution," + "source_apparent_salt_effect_kg_per_mol,"
-        + "model_apparent_salt_effect_kg_per_mol,source_salt_direction,"
+        + "matched_pure_water_model_co2_mol_per_kg_solution,"
+        + "source_apparent_salt_effect_kg_water_per_mol_formula_unit,"
+        + "model_apparent_salt_effect_kg_water_per_mol_formula_unit,source_salt_direction,"
         + "model_co2_fugacity_bara,matched_pure_water_co2_fugacity_bara,"
         + "model_water_activity,matched_pure_water_water_activity,"
         + "decomposition_identity_residual,component_balance_residual_mol,"
@@ -146,8 +147,8 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
     assertEquals(36, mgcl2Count);
     assertEquals(8, constrainedCount);
     assertEquals(85, report.size());
-    assertTrue(sourceSaltingOutCount < cacl2Count + mgcl2Count,
-        "retain source rows that contradict the aggregate salting-out trend");
+    assertEquals(65, sourceSaltingOutCount,
+        "retain the seven source rows that contradict the aggregate salting-out trend");
 
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get(OUTPUT), report, StandardCharsets.UTF_8);
@@ -208,6 +209,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         }
         String[] fields = line.split(",", -1);
         assertEquals(9, fields.length, line);
+        assertEquals("energies-1349243-supplementary.csv", fields[1], line);
         references.add(new SourceReference(fields[0], fields[2], Integer.parseInt(fields[3]),
             Double.parseDouble(fields[4]), Double.parseDouble(fields[5]), Double.parseDouble(fields[6]),
             Double.parseDouble(fields[7]), Double.parseDouble(fields[8])));
