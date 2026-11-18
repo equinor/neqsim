@@ -49,7 +49,6 @@ public class PTphaseEnvelope extends BaseOperation {
   Graph2b graph2 = null;
   SystemInterface system;
   boolean bubblePointFirst = true;
-  boolean hascopiedPoints = false;
   double[] cricondenTherm = {Double.NaN, Double.NaN, 0.0};
   double[] cricondenBar = {Double.NaN, Double.NaN, 0.0};
   double[] cricondenThermX = new double[100];
@@ -96,7 +95,6 @@ public class PTphaseEnvelope extends BaseOperation {
   public double[][] points2 = new double[4][];
   double[][] points3 = new double[8][];
   boolean moreLines = false;
-  boolean restart = true;
   int np = 0;
   // points[2] = new double[1000];
   int speceq = 0;
@@ -105,7 +103,6 @@ public class PTphaseEnvelope extends BaseOperation {
   int ncrfirst;
   double Tcfirst;
   double Pcfirst;
-  double Tmin = 0.0;
 
   double[] cricondenThermfirst = new double[3];
   double[] cricondenBarfirst = new double[3];
@@ -148,10 +145,8 @@ public class PTphaseEnvelope extends BaseOperation {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    hascopiedPoints = false;
-    restart = true;
-    Tmin = 0.0;
-    traceBranch(phaseFraction, bubblePointFirst);
+    copiedPoints = null;
+    traceBranch(phaseFraction, bubblePointFirst, Double.POSITIVE_INFINITY);
   }
 
   /**
@@ -159,8 +154,9 @@ public class PTphaseEnvelope extends BaseOperation {
    *
    * @param branchFraction specified vapor fraction for this branch
    * @param bubbleBranch whether to initialize the bubble branch
+   * @param stopTemperature upper temperature in K where the opposite branch meets the saved trace
    */
-  private void traceBranch(double branchFraction, boolean bubbleBranch) {
+  private void traceBranch(double branchFraction, boolean bubbleBranch, double stopTemperature) {
     cricondenTherm = new double[] {Double.NaN, Double.NaN, 0.0};
     cricondenBar = new double[] {Double.NaN, Double.NaN, 0.0};
     cricondenThermX = new double[100];
@@ -257,20 +253,14 @@ public class PTphaseEnvelope extends BaseOperation {
         // this catches the exceptions
         // double TT = system.getPhase(0).getTemperature();
         // double PP = system.getPhase(0).getPressure();
-      } catch (Exception e0) {
+      } catch (RuntimeException e0) {
         // the envelope crushed.
         // this part keeps the old values
         // restarts the envelope from the other side
         // and then stops
 
-        if (restart) {
-          restart = false;
-          // keep values
-          if (np > 1) {
-            Tmin = points[0][np - 2];
-          } else {
-            Tmin = system.getTemperature();
-          }
+        if (copiedPoints == null) {
+          double restartStopTemperature = np > 1 ? points[0][np - 2] : system.getTemperature();
           npfirst = Math.max(np - 1, 0);
           ncrfirst = nonLinSolver.getNpCrit();
           if (ncrfirst == 0) {
@@ -287,7 +277,6 @@ public class PTphaseEnvelope extends BaseOperation {
           cricondenThermXfirst = cricondenThermX.clone();
           cricondenThermYfirst = cricondenThermY.clone();
 
-          hascopiedPoints = true;
           copiedPoints = new double[5][np - 1];
           for (int i = 0; i < np - 1; i++) {
             copiedPoints[0][i] = points[0][i];
@@ -316,7 +305,7 @@ public class PTphaseEnvelope extends BaseOperation {
           }
 
           int npSaved = np;
-          traceBranch(oppositeFraction, !bubbleBranch);
+          traceBranch(oppositeFraction, !bubbleBranch, restartStopTemperature);
           np = npSaved;
           /**/
           break;
@@ -389,7 +378,7 @@ public class PTphaseEnvelope extends BaseOperation {
       if (system.getPressure() > maxPressure) {
         break;
       }
-      if (system.getTemperature() > Tmin && !restart) {
+      if (system.getTemperature() > stopTemperature) {
         break;
       }
 
@@ -414,7 +403,7 @@ public class PTphaseEnvelope extends BaseOperation {
       int ncrSecondRun = ncr;
       int ncr2SecondRun = ncr2;
 
-      if (hascopiedPoints) {
+      if (copiedPoints != null) {
         // if it enters here the envelope crashed and restarted
         // reallocate to have all values
         points2 = new double[8][];
@@ -478,7 +467,7 @@ public class PTphaseEnvelope extends BaseOperation {
         }
       }
 
-      if (hascopiedPoints) {
+      if (copiedPoints != null) {
         int ncrCopied;
         int ncr2Copied;
         if (ncrfirst > npfirst) {
@@ -569,11 +558,12 @@ public class PTphaseEnvelope extends BaseOperation {
         points2[2][0] = system.getTC();
         points2[3][0] = system.getPC();
       }
-    } catch (Exception e2) {
+    } catch (RuntimeException ex) {
+      logger.debug("Legacy envelope could not assemble all branch points", ex);
     }
 
     // Merge cricondenTherm/Bar from first and second branches (keep the best)
-    if (hascopiedPoints) {
+    if (copiedPoints != null) {
       // Cricondentherm: keep whichever branch found the highest temperature
       if (Double.isNaN(cricondenTherm[0]) || cricondenThermfirst[0] > cricondenTherm[0]) {
         cricondenTherm = cricondenThermfirst;
@@ -646,7 +636,7 @@ public class PTphaseEnvelope extends BaseOperation {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);
     nf.applyPattern("####.#");
-    if (bubblePointFirst != hascopiedPoints) {
+    if (bubblePointFirst != (copiedPoints != null)) {
       // bubble point side
       navn[0] = "bubble point 2";
       navn[1] = "dew point 2";
@@ -706,7 +696,7 @@ public class PTphaseEnvelope extends BaseOperation {
     DecimalFormat nf = new DecimalFormat();
     nf.setMaximumFractionDigits(1);
     nf.applyPattern("####.#");
-    if (bubblePointFirst != hascopiedPoints) {
+    if (bubblePointFirst != (copiedPoints != null)) {
       // bubble point side
       navn[0] = "bubble point 2";
       navn[1] = "dew point 2";
