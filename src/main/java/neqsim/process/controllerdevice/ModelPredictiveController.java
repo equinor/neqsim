@@ -2204,7 +2204,7 @@ public class ModelPredictiveController extends NamedBaseClass
    *
    * @param steps number of steps ahead to predict (must be positive)
    * @param dt sampling interval in seconds
-   * @return predicted measurements for each step into the future
+   * @return predictions at times {@code dt} through {@code steps * dt}, in the measurement unit
    */
   public double[] getPredictedTrajectory(int steps, double dt) {
     if (steps <= 0) {
@@ -2222,9 +2222,6 @@ public class ModelPredictiveController extends NamedBaseClass
     for (int i = 0; i < steps; i++) {
       measurement = decay * measurement + (1.0 - decay) * steadyState;
       trajectory[i] = measurement;
-    }
-    if (steps > 0) {
-      trajectory[steps - 1] = steadyState;
     }
     return trajectory;
   }

@@ -148,6 +148,23 @@ mpc.applyMoves()
 - Reconciliation failure returns a result with `isConverged()==false` and a message such as `No variables added`, `No constraints added`, or `Need more variables ...`; never report default values as reconciled measurements.
 - `SteadyStateDetector`'s R-statistic is a data-window screen. A steady-state verdict does not prove tag independence, sensor health, process stability outside the selected window, or calibration validity.
 
+## Sampled platform inlet choke MPC
+
+- For a scalar supervisory test, use `ModelPredictiveController` with a held
+  future choke command. Identify opening-to-liquid flow response from a bounded
+  transient perturbation with vessel PI loops active.
+- Drive the platform inlet choke from post-flash liquid flow. Keep the controller
+  scan independent of the pipe timestep. Supply the latest accepted measurement
+  and applied opening via `ingestPlantSample`, run the controller once per scan,
+  and hold the bounded command until the next scan.
+- Read `getPredictedTrajectory(N, dt)` at finite times `dt` through `N * dt`.
+  The last entry can differ from the model's steady-state prediction.
+- Compare with fixed opening and PI trim using identical initial conditions and
+  disturbances. Check realized liquid peaks, pressure, levels and applied
+  moves on a finer timestep and mesh. Record any change in controller ranking.
+- Use the [platform choke workflow](../../../docs/process/controllers.md#sampled-mpc-for-a-platform-inlet-choke)
+  for model assumptions and evaluation.
+
 ## Validation / benchmarks
 
 - Start from a converged steady state; test local gain signs and magnitudes against independent small positive/negative perturbations and the intended process direction.
