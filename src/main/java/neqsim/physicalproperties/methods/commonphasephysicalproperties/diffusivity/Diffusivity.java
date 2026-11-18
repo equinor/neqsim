@@ -118,12 +118,6 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
   /** {@inheritDoc} */
   @Override
   public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
-    /*
-     * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp + gasPhase.getPhase().getComponent(i).getx() *
-     * gasPhase.getPhase().getComponent(i).getdfugdn(j) * gasPhase.getPhase().getNumberOfMolesInPhase(); if
-     * (Double.isNaN(nonIdealCorrection)) nonIdealCorrection=1.0; return
-     * binaryDiffusionCoefficients[i][j]/nonIdealCorrection; // shuld be divided by non ideality factor
-     */
     return binaryDiffusionCoefficients[i][j];
   }
 }

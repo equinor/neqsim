@@ -42,6 +42,26 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void setMoleFractions(double[] x);
 
   /**
+   * Return an element of the isothermal, isobaric thermodynamic factor in independent mole-fraction coordinates.
+   * Increasing the column mole fraction displaces the reference species at constant total moles. The component
+   * fugacity-coefficient mole-number derivatives must be initialized at the current phase state (system init level 3).
+   *
+   * @param row independent species whose chemical potential drives transport
+   * @param column independent species whose mole fraction is varied
+   * @param reference dependent species whose mole fraction compensates the variation
+   * @return dimensionless reduced thermodynamic factor
+   * @throws IllegalArgumentException if either independent index is the reference index
+   */
+  default double getReducedThermodynamicFactor(int row, int column, int reference) {
+    if (row == reference || column == reference) {
+      throw new IllegalArgumentException("Independent thermodynamic-factor indices must differ from the reference");
+    }
+    ComponentInterface species = getComponent(row);
+    return (row == column ? 1.0 : 0.0)
+        + species.getx() * getNumberOfMolesInPhase() * (species.getdfugdn(column) - species.getdfugdn(reference));
+  }
+
+  /**
    * getPhaseFraction. Alias for getBeta()
    *
    * @return Beta value

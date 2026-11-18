@@ -659,11 +659,13 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * getFickDiffusionCoefficient.
+   * Get the model-specific pair Fick diffusivity. Liquid models using Vignes pair mixing apply the reduced
+   * thermodynamic factor for exchanging i with j at fixed other mole fractions. Initialize composition derivatives
+   * (system init level 3) and physical properties at the current phase state before calling.
    *
-   * @param i a int
-   * @param j a int
-   * @return a double
+   * @param i transported species
+   * @param j displaced species
+   * @return pair coefficient in m2/s
    */
   public double getFickDiffusionCoefficient(int i, int j) {
     return diffusivityCalc.getFickBinaryDiffusionCoefficient(i, j);
