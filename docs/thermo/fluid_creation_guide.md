@@ -675,6 +675,10 @@ components this route reproduces the specific gravity to better than 1 %, where 
 oil.addPlusFraction("C20", 0.10, 0.350, 0.88);
 ```
 
+A zero-mole plus fraction stays in the fluid with its original name and properties when
+`characterisePlusFraction()` runs. After adding material to that fraction, call the same
+method again to split and lump it.
+
 ### 10.3 TBP Characterization Models
 
 NeqSim provides several models for estimating critical properties from TBP data:

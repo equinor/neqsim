@@ -136,7 +136,7 @@ original row index. Four-entry low-level samples remain explicit singleton exper
 Always characterize C7+ properly:
 - Use `addTBPfraction()` for each carbon number fraction
 - Use `addPlusFraction()` for the heavy end
-- Call `getCharacterization().characterisePlusFraction()` before running PVT
+- Call `getCharacterization().characterisePlusFraction()` before running PVT. If the heavy end has zero moles, the entry remains available on the original slate. Repeat characterization after adding heavy-end inventory.
 
 ## EOS Parameter Fitting for PVT Matching
 When PVT simulation results don't match experimental data, tune EOS parameters:
