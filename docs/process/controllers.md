@@ -19,6 +19,7 @@ actuators from measured signals. These have different execution and connection r
 - [Calculators](#calculators)
 - [PID Controllers](#pid-controllers)
 - [Native Dynamic Control Blocks](#native-dynamic-control-blocks)
+- [Sampled MPC for a platform inlet choke](#sampled-mpc-for-a-platform-inlet-choke)
 - [Process Logic](#process-logic)
 
 ## Overview
@@ -536,6 +537,31 @@ clears the remembered identifier so a run can restart from its initial state.
 Subclasses must supply snapshots for their own mutable state to obtain transaction coverage.
 The transaction mechanism does not validate tuning or safety integrity, or defer external
 side effects from callbacks.
+
+## Sampled MPC for a platform inlet choke
+
+For a platform production study, connect the well and riser to the platform
+choke and then to the three-phase inlet separator. A separator liquid-load
+controller can trim the choke using the liquid rate after the choke flash.
+Keep pressure, total liquid height and interface level on their independent
+gas, oil and water outlet loops. Couple the choke pressure drop back to the
+riser boundary and verify that the accepted mass flow crosses the choke.
+
+Identify the local gain with a paired transient: hold the well input and the
+separator PI tuning fixed, perturb the choke opening, and compare post-flash
+liquid flow with a fixed-opening reference. A scalar `ModelPredictiveController`
+uses a first-order approximation and optimizes one held future command over
+the horizon. Run it at a fixed controller scan, with one measurement and the
+actual applied opening per scan. Hold its bounded output across the smaller
+plant integration steps. The `getPredictedTrajectory(N, dt)` diagnostic returns
+finite-time samples at `dt, 2*dt, ..., N*dt` under a held input.
+
+Use matched fixed-opening, PI and MPC replays with separate disturbances from
+identification. Report after-choke liquid peaks, vessel excursions, opening and
+move limits, and mass closure. Repeat at a finer plant timestep without
+retuning the controller or changing its scan, and at a finer pipe mesh.
+Brief numerical peaks can reverse a controller ranking even with a closed
+mass balance. Retain the unfiltered traces, control tuning and limitations.
 
 ## Process Logic
 

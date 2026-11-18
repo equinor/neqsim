@@ -67,6 +67,18 @@ qualification separate. Hand vendor maps/driver limits to `@rotating-equipment`,
 process/scrubber inventories to `@process-model`, protection requirements to
 `@safety-depressuring`, and final native drawings to `@pid-quality-review`.
 
+## Platform inlet choke MPC
+
+Keep the choke immediately upstream of the separator. Use the predicted liquid
+load after the choke flash, and retain the independent separator pressure,
+total-liquid and oil/water-interface PI loops. Check that the applied choke
+opening feeds back into the riser outlet pressure through the choke drop.
+Use the sampled [MPC workflow](../../docs/process/controllers.md#sampled-mpc-for-a-platform-inlet-choke)
+to compare fixed opening, PI trim and MPC with identical disturbances. Review
+raw flow peaks, levels, pressure, turn-down, opening and slew limits on a finer
+plant timestep at the same controller scan. Retain short peaks and failed runs
+when they change the comparison.
+
 ## Control Loop Design Workflow
 
 For two-circuit gas/water coolers, use the public
