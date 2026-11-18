@@ -153,20 +153,32 @@ public final class EmergencyShutdownTestRunner {
       List<ProcessLogic> enabledLogic, List<ProcessLogic> triggerLogic, EmergencyShutdownTestResult result) {
     double time = 0.0;
     boolean triggered = false;
-    UUID runId = UUID.randomUUID();
-    while (time < plan.getDurationSeconds() - 1.0e-12) {
-      if (!triggered && time >= plan.getTriggerTimeSeconds() - 1.0e-12) {
-        activateLogic(triggerLogic, result);
-        triggered = true;
+    while (time < plan.getDurationSeconds()) {
+      double end = Math.min(time + plan.getTimeStepSeconds(), plan.getDurationSeconds());
+      if (!triggered) {
+        if (time >= plan.getTriggerTimeSeconds()) {
+          activateLogic(triggerLogic, result);
+          triggered = true;
+        } else {
+          end = Math.min(end, plan.getTriggerTimeSeconds());
+        }
       }
-      executeLogic(enabledLogic, plan.getTimeStepSeconds(), result);
-      double step = Math.min(plan.getTimeStepSeconds(), plan.getDurationSeconds() - time);
+      double step = end - time;
+      if (step <= 0.0) {
+        result.addError("Timestep cannot advance the ESD test clock at t=" + time + " s.");
+        return;
+      }
+      executeLogic(enabledLogic, step, result);
+      if (!result.getErrors().isEmpty()) {
+        return;
+      }
       try {
-        process.runTransient(step, runId);
+        process.runTransient(step, UUID.randomUUID());
       } catch (RuntimeException ex) {
         result.addError("Transient simulation failed at t=" + time + " s: " + ex.getMessage());
+        return;
       }
-      time += step;
+      time = end;
       result.addSample(captureSample(time, process, plan, result), plan.getMonitoredUnits());
     }
   }
@@ -367,8 +379,7 @@ public final class EmergencyShutdownTestRunner {
    */
   private static void evaluateCriteria(EmergencyShutdownTestPlan plan, EmergencyShutdownTestResult result) {
     for (EmergencyShutdownTestCriterion criterion : plan.getCriteria()) {
-      result.addCriterionResult(criterion.evaluate(result.getSignalStats(), result.getLogicStates(), result.getErrors(),
-          result.getFieldComparisons()));
+      result.addCriterionResult(criterion.evaluateRun(plan, result));
     }
   }
 }

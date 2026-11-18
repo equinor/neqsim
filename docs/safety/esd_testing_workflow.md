@@ -159,3 +159,19 @@ This does not extend the forward pump curve through a full trip or connect the
 ESD runner automatically. Existing detection/logic/coordinator contracts own
 that integration; vendor disc/slam, phase change and asset qualification remain
 NOT_EVALUATED. Use accepted interval fluxes and refine contact/pressure together.
+
+### Sampled final-element response time
+
+Add a response deadline to a final-value criterion to check an actuator's
+measured travel after the configured trigger. For example,
+`finalAtMost("inlet-closed", "inletPosition", 5.0, "%").withResponseDeadline(4.0)`
+requires the reported position to reach 5% or below within four seconds and
+stay there at every later observation. The result reports elapsed seconds.
+The plan preserves the position limit, its unit and the response deadline.
+
+The runner splits a physical step at a scheduled trigger and at the test end.
+Choose a scan interval short enough to resolve the expected travel. A missing
+or nonfinite post-trigger reading, a run ending before the deadline, or a
+simulation error fails the timed criterion. A failed physical step contributes
+no later sample. See the [stabilization commissioning case](../../examples/stabilization-commissioning/README.md)
+for measured valve strokes and a matched separator pressure-trip replay.
