@@ -83,7 +83,8 @@ class ReliefValveSizingDocumentationContractTest(unittest.TestCase):
                 self.assertIn(contract, self.source)
 
         self.assertIn("static screening utility", self.guide)
-        self.assertIn("does not change the numerical factor", self.guide)
+        self.assertIn("adequate drainage and prompt firefighting are both credited", self.guide)
+        self.assertIn("when either credit is absent", self.guide)
 
     def test_stale_object_api_and_result_getters_are_absent(self):
         stale_calls = (
