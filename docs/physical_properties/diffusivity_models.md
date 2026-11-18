@@ -250,6 +250,14 @@ Component-count rebinding and other property-family storage are outside this
 increment. Default Chapman–Enskog equations and valid-input evaluation cost
 are unchanged by the clone repair.
 
+The common corresponding-states and solid diffusion methods also give each clone its own
+coefficient rows. A scalar Wilke–Lee or corresponding-states calculation uses local
+intermediate values. Recalculating or modifying a cloned method's returned pair matrix
+therefore preserves the coefficients stored by the source method. When a phase gains or loses
+components, its diffusion method rebuilds its pair and effective-coefficient storage on
+rebinding. Gas diffusion reapplies the selected Lennard-Jones parameter source to the new pairs.
+
+
 **Key features:**
 - Does not need Lennard-Jones parameters
 - Covers wide range of organic and inorganic species

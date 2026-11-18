@@ -1,7 +1,5 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.CommonPhysicalPropertyMethod;
 import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
@@ -15,11 +13,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 public class Diffusivity extends CommonPhysicalPropertyMethod implements DiffusivityInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(Diffusivity.class);
 
   double[][] binaryDiffusionCoefficients;
-  double[][] binaryLennardJonesOmega;
   double[] effectiveDiffusionCoefficient;
 
   /**
@@ -29,34 +24,26 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements Diffusi
    */
   public Diffusivity(PhysicalProperties phase) {
     super(phase);
-    binaryDiffusionCoefficients = new double[phase.getPhase().getNumberOfComponents()][phase.getPhase()
-        .getNumberOfComponents()];
-    binaryLennardJonesOmega = new double[phase.getPhase().getNumberOfComponents()][phase.getPhase()
-        .getNumberOfComponents()];
-    effectiveDiffusionCoefficient = new double[phase.getPhase().getNumberOfComponents()];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPhase(PhysicalProperties properties) {
+    super.setPhase(properties);
+    int count = properties.getPhase().getNumberOfComponents();
+    if (binaryDiffusionCoefficients == null || binaryDiffusionCoefficients.length != count) {
+      binaryDiffusionCoefficients = new double[count][count];
+      effectiveDiffusionCoefficient = new double[count];
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public Diffusivity clone() {
-    Diffusivity properties = null;
-
-    try {
-      properties = (Diffusivity) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
-    }
-    if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
-      properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
-      for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
-        if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
-          System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
-              this.binaryDiffusionCoefficients[i].length);
-        }
-      }
-    }
-    if (this.effectiveDiffusionCoefficient != null && this.effectiveDiffusionCoefficient.length > 0) {
-      properties.effectiveDiffusionCoefficient = this.effectiveDiffusionCoefficient.clone();
+    Diffusivity properties = (Diffusivity) super.clone();
+    properties.binaryDiffusionCoefficients = copyCoefficientMatrix(binaryDiffusionCoefficients);
+    if (effectiveDiffusionCoefficient != null) {
+      properties.effectiveDiffusionCoefficient = effectiveDiffusionCoefficient.clone();
     }
     return properties;
   }

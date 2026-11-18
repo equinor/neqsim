@@ -25,15 +25,21 @@ public abstract class GasPhysicalPropertyMethod extends PhysicalPropertyMethod {
    */
   public GasPhysicalPropertyMethod(PhysicalProperties gasPhase) {
     super(gasPhase);
-    binaryMolecularDiameter = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-        .getNumberOfComponents()];
-    binaryMolecularMass = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-        .getNumberOfComponents()];
-    binaryEnergyParameter = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-        .getNumberOfComponents()];
+    int count = gasPhase.getPhase().getNumberOfComponents();
+    binaryMolecularDiameter = new double[count][count];
+    binaryMolecularMass = new double[count][count];
+    binaryEnergyParameter = new double[count][count];
+    fillGasPairParameters(count);
+  }
 
-    for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
-      for (int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
+  /**
+   * Refresh component-dependent pair parameters for a new component count.
+   *
+   * @param count number of components in the bound phase
+   */
+  protected final void fillGasPairParameters(int count) {
+    for (int i = 0; i < count; i++) {
+      for (int j = 0; j < count; j++) {
         binaryMolecularMass[i][j] = 2.0 * Math.pow((1.0 / gasPhase.getPhase().getComponent(i).getMolarMass() / 1000.0
             + 1.0 / gasPhase.getPhase().getComponent(j).getMolarMass() / 1000.0), -1.0);
         binaryMolecularDiameter[i][j] = (gasPhase.getPhase().getComponent(i).getLennardJonesMolecularDiameter()
