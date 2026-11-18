@@ -1,6 +1,6 @@
 ---
 title: "NeqSim Advanced Risk Framework Tutorial"
-description: "Executable NeqSim tutorial for condition-based reliability, safety instrumented functions, bow-tie screening, and responsible engineering interpretation."
+description: "Notebook for NeqSim Advanced Risk Framework Tutorial, including NeqSim Python examples and workflow context."
 ---
 
 This tutorial introduces the risk-framework APIs that are present in the current NeqSim source tree.
