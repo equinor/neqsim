@@ -38,6 +38,12 @@ demand factors/cases, externally rated capacities, consistent gas reference cond
 pressure/vacuum limits, and evidence attestations. Do not relabel `FireProtectionDesign`, generic
 PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 
+## Subsea tie-back pressure protection
+
+For a well-to-platform case, use the [executable pressure-protection study](../../../examples/production-decision/tieback-protection.md).
+Record each zone's pressure datum and allowable transient pressure, valve feedback, actual boundary transfers and refinement sensitivity.
+Carry the numerical and drawing HOLD into the study. Evaluate channel independence and reliability with project data.
+
 ## Method 0b — Trapped-Liquid Fire Rupture Screening
 
 Load `neqsim-trapped-liquid-fire-rupture` when a safety study concerns a

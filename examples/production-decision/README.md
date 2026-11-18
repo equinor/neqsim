@@ -63,3 +63,5 @@ Pass `--compressor-chart PATH` to the case or matrix to solve for compressor spe
 For every sampled duty, the study reports speed, native head, suction conditions, actual volume flow and the surge flow interpolated between adjacent speed lines. It rejects extrapolated speed, flow outside either bracketing line, suction conditions outside the stated envelope or a missed discharge duty. The map hash and origin travel with the case. The 325 m³/h screen remains available when a chart is absent. Both routes evaluate steady host snapshots with 15% recycle. Dynamic surge response requires machine/driver inertia and an anti-surge control loop.
 
 For injection holdouts, the linear single-zone replay retains observations at or above fracture pressure as outside its domain. The error statistics identify how many eligible rows contributed. Predictions outside the calibration pressure span carry an extrapolation flag.
+
+For subsea PSD, HIPPS and host relief on the same distributed route, run the [tie-back pressure-protection study](tieback-protection.md).
