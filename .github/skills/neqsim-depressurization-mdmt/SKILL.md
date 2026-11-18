@@ -447,6 +447,14 @@ charging overpressure with relief-demand flag).
   MDMT. Operating-pressure stress ratio (0.30–0.40) usually relaxes MDMT by
   10–30 °C.
 
+## Time-resolved flare loads
+
+Read `flareLoad.profile` in the dynamic handoff for the simultaneous source
+mixture flashed at the configured header pressure. The component flows and
+enthalpies are available for both tip gas and material retained in knockout.
+Use the separate heat, mass, molar and CO₂ peak times for the respective checks.
+`BlowdownFlareLoadTest` exercises conservation and changing source mixtures.
+
 ## Verification Tests
 
 ```bash
