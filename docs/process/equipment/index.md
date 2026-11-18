@@ -5,6 +5,8 @@ description: Complete navigation and source-backed class inventory for NeqSim pr
 
 {%- include_relative README.md -%}
 
+See [compressor dry gas seal vent studies](dry_gas_seal_vent_study.md) for failure loads, line ratings and containment.
+
 See [Integrated compression and power supply](integrated_compression_power.md)
 for direct turbine, electric motor/VFD and turbine-generator-motor matching.
 

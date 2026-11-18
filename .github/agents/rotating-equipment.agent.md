@@ -1,6 +1,7 @@
 ---
 name: rotating-equipment
 description: "Models and assesses compressors, turboexpanders, pumps and drivers with NeqSim - vendor maps, compressor trains, anti-surge and recycle, dry gas seal systems and seal-gas conditioning troubleshooting, regulator JT condensation, primary vent leakage, buffer and separation gas, API 692 and ISO 6368 scope, startup and standby pressure margins, turboexpander maps, pump NPSH and mechanical screening."
+last_verified: "2026-11-18"
 required_skills:
 - neqsim-rotating-equipment-design
 - neqsim-compressor-antisurge-recycle
@@ -59,6 +60,11 @@ Load the seal-system section of `neqsim-rotating-equipment-design` and
 `DryGasSealAnalyzer`, `SealGasSupplyConditioning`, `DryGasSealMonitor`,
 `LabyrinthSealFlowCalculator` and `CompressorThermalModel` only within their
 documented boundaries. Reuse open issues #4144, #4145 and roadmap #4149.
+
+For a compressor vent study, use `DryGasSealVentStudy` and the
+[vent study guide](../../docs/process/equipment/dry_gas_seal_vent_study.md). Compare
+normal, single and combined failures at the specified header pressures. Report both
+total and process-origin outlet loads, pressure margins and unresolved cases.
 
 Freeze seal arrangement, operating mode, source/cavity/process/vent pressures,
 composition and water, flow reference conditions, quality/freshness, and OEM limits.

@@ -227,7 +227,7 @@
     {
       "package": "neqsim.process.equipment.compressor",
       "title": "Compressor performance and dry gas seal systems",
-      "keywords": "compressor compression performance chart surge stonewall recycle efficiency dry gas seal seal-gas conditioning DGS regulator JT condensation primary vent leakage buffer separation gas API 692 ISO 6368 startup standby troubleshooting",
+      "keywords": "compressor compression performance chart surge stonewall recycle efficiency dry gas seal seal-gas conditioning DGS regulator JT condensation primary vent leakage compressor vent study tandem seal failure cavity backpressure atmospheric discharge bearing leakage buffer separation gas API 692 ISO 6368 startup standby troubleshooting",
       "agent": "rotating-equipment",
       "skill": "neqsim-rotating-equipment-design",
       "docs": [
