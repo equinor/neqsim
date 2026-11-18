@@ -37,6 +37,22 @@ class NorsokP002LineSizingValidatorTest {
     assertTrue(result.toJson().contains("NORSOK P-002"));
   }
 
+  /** Checks actual bore selection, the maximum velocity and invalid inputs independently of the P&amp;ID writer. */
+  @Test
+  void roundsUpUsingTheScheduledBore() {
+    Stream feed = new Stream("feed", gasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+    double flow = feed.getFlowRate("m3/sec");
+    NorsokP002LineSizingValidator rule = new NorsokP002LineSizingValidator()
+        .setMaximumGasVelocityMPerS(4 * flow / (Math.PI * 0.05 * 0.05));
+    assertEquals(2.0, rule.recommendNominalPipeSize(feed.getFluid(), "40").getAsDouble(), 0);
+    assertEquals(2.5, rule.recommendNominalPipeSize(feed.getFluid(), "80").getAsDouble(), 0);
+    assertTrue(!rule.recommendNominalPipeSize(null, "40").isPresent());
+    rule.setMaximumGasVelocityMPerS(1e-15);
+    assertTrue(!rule.recommendNominalPipeSize(feed.getFluid(), "40").isPresent());
+  }
+
   /**
    * Creates a simple gas fluid for line-sizing tests.
    *

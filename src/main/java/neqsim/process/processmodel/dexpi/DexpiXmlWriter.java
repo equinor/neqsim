@@ -1088,16 +1088,16 @@ public final class DexpiXmlWriter {
     attrs.setAttribute("Set", "MechanicalDesign");
 
     if (md.getInnerDiameter() > 0) {
-      appendNumericAttribute(document, attrs, "InnerDiameter", md.getInnerDiameter(), "mm");
+      appendNumericAttribute(document, attrs, "InnerDiameter", md.getInnerDiameter() * 1000.0, "mm");
     }
     if (md.getOuterDiameter() > 0) {
-      appendNumericAttribute(document, attrs, "OuterDiameter", md.getOuterDiameter(), "mm");
+      appendNumericAttribute(document, attrs, "OuterDiameter", md.getOuterDiameter() * 1000.0, "mm");
     }
     if (md.getWallThickness() > 0) {
-      appendNumericAttribute(document, attrs, "WallThickness", md.getWallThickness(), "mm");
+      appendNumericAttribute(document, attrs, "WallThickness", md.getWallThickness() * 1000.0, "mm");
     }
     if (md.getTantanLength() > 0) {
-      appendNumericAttribute(document, attrs, "TanTanLength", md.getTantanLength(), "mm");
+      appendNumericAttribute(document, attrs, "TanTanLength", md.getTantanLength() * 1000.0, "mm");
     }
     String material = md.getConstrutionMaterial();
     if (material != null && !material.trim().isEmpty()) {

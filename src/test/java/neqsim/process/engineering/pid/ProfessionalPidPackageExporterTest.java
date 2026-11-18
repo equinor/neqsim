@@ -66,6 +66,68 @@ public class ProfessionalPidPackageExporterTest extends NeqSimTest {
   }
 
   /**
+   * Verifies the documented case across the issued PDF/SVG, native properties and independent screening evidence.
+   *
+   * @throws Exception if exporting or inspecting the package fails
+   */
+  @Test
+  void projectsCalculatedAndControlledSizes() throws Exception {
+    ProcessSystem process = process();
+    Separator separator = (Separator) process.getUnit("20-VG-001");
+    ((Stream) process.getUnit("20-FEED-001")).setFlowRate(20000.0, "kg/hr");
+    process.run();
+    double originalId = separator.getInternalDiameter();
+    separator.getGasOutStream().setName("20-G-002");
+    separator.getLiquidOutStream().setName("20-L-003");
+    process.getUnit("20-PCV-001").getOutletStreams().get(0).setName("20-G-004");
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Inlet separation", process, "2.0.1")
+        .projectId("PID-20-001").registerProposedInstruments(false).build().setRevision("A").setPidSizingSchedule("40");
+    project.addLineDesignInput(new LineDesignInput("20-FEED-001", "20-VG-001").setNominalPipeSize("DN 80"));
+    project.addLineDesignInput(new LineDesignInput("20-G-002", "20-VG-001").setPipingClass("HC-A"));
+    project.addLineDesignInput(new LineDesignInput("20-G-004", "20-PCV-001").setPipingClass("HC-A"));
+    project.addLineDesignInput(new LineDesignInput("20-L-003", "20-VG-001").setPipingClass("HC-A"));
+    PidDesignModel pid = PidDesignSynthesizer.synthesize(project, new PidDesignBasis("COMPLETE-PROPOSALS", "20"),
+        NorsokPidRuleCatalog.controlAndInstrumentation());
+    PidSimulationBindings bindings = PidSimulationBindings.from(project, pid);
+    Path target = ProfessionalPidPackageExporter.export(project, pid, bindings, metadata(),
+        temporaryDirectory.resolve("sized-pid"));
+    String svg = text(target.resolve("drawings/pid-sheet-001.svg"));
+    assertTrue(svg.contains("20-FEED-001 / DN 80 / CLASS:HOLD"));
+    assertTrue(svg.contains("20-L-003 / NPS "));
+    assertTrue(svg.contains("20-G-004 / NPS "));
+    JsonObject readiness = JsonParser.parseString(text(target.resolve("professional-pid-readiness.json")))
+        .getAsJsonObject();
+    assertTrue(readiness.get("drawingHasNoErrors").getAsBoolean(), readiness.get("drawingDiagnostics").toString());
+    assertTrue(svg.contains("PREL."));
+    assertTrue(svg.contains("T/T"));
+    assertEquals(originalId, separator.getInternalDiameter(), 0);
+    assertTrue(Dexpi201XmlWriter.assess(target.resolve("plant.dexpi.xml")).isSchemaAndProfileConformant());
+    javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    org.w3c.dom.Document doc = factory.newDocumentBuilder().parse(target.resolve("plant.dexpi.xml").toFile());
+    javax.xml.xpath.XPath xpath = javax.xml.xpath.XPathFactory.newInstance().newXPath();
+    String chamber = "//Object[Data[@property='TagName']/String='20-VG-001']/Components[@property='Chambers']/Object";
+    String diameter = chamber + "/Data[@property='InsideDiameter']/AggregatedDataValue";
+    JsonObject register = JsonParser.parseString(text(target.resolve("pid-sizing.json"))).getAsJsonObject();
+    double id = register.getAsJsonObject("equipment").getAsJsonObject("20-VG-001").get("INSIDE_DIAMETER").getAsDouble();
+    assertTrue(id > 0);
+    assertEquals(id, Double.parseDouble(xpath.evaluate(diameter + "/Data[@property='Value']/Double", doc)), 0);
+    assertEquals("Core/PhysicalQuantities.LengthUnit.Millimetre",
+        xpath.evaluate(diameter + "/Data[@property='Unit']/DataReference/@data", doc));
+    String segment = "//Object[@type='Plant/Piping.PipingNetworkSegment']";
+    String inlet = segment + "[Components/Object/Data[@property='PipeConnectorNumber']/String='20-FEED-001']";
+    assertEquals("DN 80", xpath.evaluate(inlet + "/Data[@property='NominalDiameterRepresentation']/String", doc));
+    assertEquals("0", xpath.evaluate("count(" + inlet + "/Data[@property='OnHold'])", doc));
+    String liquid = segment + "[Components/Object/Data[@property='PipeConnectorNumber']/String='20-L-003']";
+    String nps = xpath.evaluate(liquid + "/Data[@property='NominalDiameterRepresentation']/String", doc);
+    assertEquals("HC-A", xpath.evaluate(liquid + "/Data[@property='PipingClassCode']/String", doc));
+    assertTrue(nps.startsWith("NPS "));
+    assertTrue(svg.contains("20-L-003 / " + nps + " PREL."));
+    assertEquals("Plant/Enumerations.OnHoldClassification.OnHold",
+        xpath.evaluate(liquid + "/Data[@property='OnHold']/DataReference/@data", doc));
+  }
+
+  /**
    * Exercises the public workflow and independently inspects the resulting exchange, drawing and simulation files.
    *
    * @throws Exception if a required artifact cannot be generated or inspected

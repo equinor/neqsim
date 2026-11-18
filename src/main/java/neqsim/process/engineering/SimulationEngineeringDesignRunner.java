@@ -201,11 +201,18 @@ public final class SimulationEngineeringDesignRunner {
         item.add("declaredDesignConditions", GSON.toJsonTree(designConditions));
       }
       try {
-        unit.initMechanicalDesign();
+        // Generating a sized drawing must retain the geometry and configured design of the executable case.
+        boolean detached = project.getPidSizingSchedule() != null;
+        if (!detached) {
+          unit.initMechanicalDesign();
+        }
         MechanicalDesign mechanicalDesign = unit.getMechanicalDesign();
         if (mechanicalDesign == null) {
           item.addProperty("status", "NOT_CALCULATED_NO_MECHANICAL_DESIGN_MODEL");
         } else {
+          if (detached) {
+            mechanicalDesign = mechanicalDesign.copyForSizing();
+          }
           mechanicalDesign.calcDesign();
           item.addProperty("status", "CALCULATED_SCREENING_REVIEW_REQUIRED");
           item.addProperty("method", mechanicalDesign.getClass().getName());

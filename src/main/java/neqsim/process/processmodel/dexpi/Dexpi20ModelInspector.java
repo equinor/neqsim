@@ -81,7 +81,7 @@ public final class Dexpi20ModelInspector {
       for (int i = 0; i < objects.getLength(); i++) {
         Element object = (Element) objects.item(i);
         String type = object.getAttribute("type");
-        if (type.startsWith("Plant/ProcessEquipment.") && !type.endsWith("Nozzle")) {
+        if (Dexpi20SemanticValidator.isTaggedEquipment(type)) {
           String tag = directStringData(object, "TagName");
           if (tag != null) {
             equipment.put(tag, type);
