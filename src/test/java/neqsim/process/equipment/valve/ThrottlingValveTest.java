@@ -649,72 +649,53 @@ public class ThrottlingValveTest {
     assertTrue(calculatedOpeningHalfFlow > 0.0, "calculateValveOpeningFromFlowRate should return positive value");
   }
 
-  /**
-   * Regression test for GitHub issue #1918: gas valve Cv was severely underestimated when using ProcessSystem because
-   * the sizing formula used actual volumetric flow instead of standard volumetric flow per IEC 60534-2-1.
-   *
-   * <p>
-   * Test reproduces the exact scenario from the issue reporter: 50 bara, 25C, 90% CH4 / 10% C2H6, 10000 kg/hr. Expected
-   * Cv ~16.2 per IEC 60534 (verified against Python 'fluids' library).
-   * </p>
-   *
-   * <p>
-   * The reporter observed Cv=0.71 with ProcessSystem (wrong, using actual flow) vs Cv=11.86 with standalone
-   * valve.run(). After fix, both paths should give ~16.2 (correct per IEC 60534).
-   * </p>
-   */
+  /** The unrun feed in issue 1918 must size identically in direct and flowsheet execution. */
   @Test
   void testGasValveCvWithProcessSystem_Issue1918() {
-    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 25, 50);
+    for (boolean explicitIec : new boolean[] {false, true}) {
+      double direct = gasCvForFreshFeed(false, explicitIec);
+      double process = gasCvForFreshFeed(true, explicitIec);
+      assertEquals(process, direct, 1e-9);
+      if (explicitIec) {
+        // The original approximate reference uses Z=1. NeqSim uses the flashed SRK inlet Z.
+        assertEquals(16.2, direct, 1.5);
+      }
+    }
+  }
+
+  /**
+   * Run the reported cold feed without a preparatory stream flash.
+   *
+   * @param processRun whether to execute the stream and valve through a flowsheet
+   * @param explicitIec select IEC 60534 and the reference xT of 0.75
+   * @return the full-open gas valve Cv
+   */
+  private double gasCvForFreshFeed(boolean processRun, boolean explicitIec) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
     fluid.addComponent("methane", 0.9);
     fluid.addComponent("ethane", 0.1);
     fluid.setMixingRule("classic");
-    fluid.setTemperature(25, "C");
-    fluid.setPressure(50, "bar");
     fluid.setTotalFlowRate(10000.0, "kg/hr");
-
     Stream stream = new Stream("Inlet", fluid);
-    ThrottlingValve valve = new ThrottlingValve("Valve", stream);
-    ((ValveMechanicalDesign) valve.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
-    valve.getMechanicalDesign().getValveSizingMethod().setxT(0.75);
-    valve.setPercentValveOpening(100);
+    ControlValve valve = new ControlValve("Valve", stream);
+    if (explicitIec) {
+      valve.getMechanicalDesign().setValveSizingStandard("IEC 60534");
+      valve.getMechanicalDesign().getValveSizingMethod().setxT(0.75);
+    }
+    valve.setPercentValveOpening(100.0);
     valve.setOutletPressure(25.0);
-
-    // Run via ProcessSystem (was the broken path in #1918)
-    ProcessSystem p = new ProcessSystem();
-    p.add(stream);
-    p.add(valve);
-    p.run();
-
+    if (processRun) {
+      ProcessSystem process = new ProcessSystem();
+      process.add(stream);
+      process.add(valve);
+      process.run();
+    } else {
+      valve.run();
+    }
     valve.calcKv();
-    double cv = valve.getCv();
-
-    // IEC 60534 correct result: Cv ~ 16.2 (verified with Python fluids library, xT=0.75)
-    // Old buggy result was Cv ~0.71 via ProcessSystem (using actual flow instead of std flow)
-    assertEquals(16.2, cv, 1.5, "Gas valve Cv via ProcessSystem should match IEC 60534 (~16.2), not ~0.71");
-
-    // Also verify standalone valve.run() gives same result
-    neqsim.thermo.system.SystemInterface fluid2 = new neqsim.thermo.system.SystemSrkEos(273.15 + 25, 50);
-    fluid2.addComponent("methane", 0.9);
-    fluid2.addComponent("ethane", 0.1);
-    fluid2.setMixingRule("classic");
-    fluid2.setTemperature(25, "C");
-    fluid2.setPressure(50, "bar");
-    fluid2.setTotalFlowRate(10000.0, "kg/hr");
-
-    Stream stream2 = new Stream("Inlet2", fluid2);
-    ThrottlingValve valve2 = new ThrottlingValve("Valve2", stream2);
-    ((ValveMechanicalDesign) valve2.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
-    valve2.getMechanicalDesign().getValveSizingMethod().setxT(0.75);
-    valve2.setPercentValveOpening(100);
-    valve2.setOutletPressure(25.0);
-    stream2.run();
-    valve2.run();
-    valve2.calcKv();
-    double cv2 = valve2.getCv();
-
-    // Both should give the same result
-    assertEquals(cv, cv2, 1.0, "Cv from standalone run and ProcessSystem run should match");
+    assertEquals(10000.0, valve.getOutletStream().getFlowRate("kg/hr"), 1e-6);
+    assertEquals(25.0, valve.getOutletStream().getPressure("bara"), 1e-10);
+    return valve.getCv();
   }
 
   /**
