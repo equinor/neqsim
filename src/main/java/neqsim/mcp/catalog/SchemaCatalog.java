@@ -1346,6 +1346,8 @@ public final class SchemaCatalog {
     properties.put("historianCsv",
         stringProp("CSV text with header row time,<tag1>,<tag2>... from tagreader or historian export"));
 
+    properties.put("massBalance", massBalanceInputSchema());
+
     Map<String, Object> designLimits = new LinkedHashMap<String, Object>();
     designLimits.put("type", "object");
     designLimits.put("description", "Map of tag/parameter to [low, high] limits, for example {\"vibration\": [0, 8]}.");
@@ -1360,6 +1362,56 @@ public final class SchemaCatalog {
     schema.put("properties", properties);
     schema.put("required", Arrays.asList("equipmentName", "symptom", "processJson"));
     return GSON.toJson(schema);
+  }
+
+  /**
+   * Describes the synchronized measurements and oriented meter graph for balance evidence.
+   *
+   * @return JSON Schema for the optional root-cause massBalance property
+   */
+  private static Map<String, Object> massBalanceInputSchema() {
+    Map<String, Object> fields = new LinkedHashMap<String, Object>();
+    Map<String, Object> interval = numberProp("Spacing between synchronized samples, in seconds");
+    interval.put("exclusiveMinimum", 0);
+    fields.put("sampleIntervalSeconds", interval);
+
+    Map<String, Object> signals = objectProp("One equal-length series per inventory (kg) or flowmeter (signed kg/s)");
+    Map<String, Object> series = numberArraySchema("Instantaneous samples in time order");
+    series.put("minItems", 3);
+    signals.put("additionalProperties", series);
+    fields.put("signals", signals);
+
+    Map<String, Object> bounds = objectProp(
+        "Absolute error bounds on end minus start inventory, keyed by inventory tag");
+    Map<String, Object> inventoryBound = numberProp("Maximum error in inventory change, kg");
+    inventoryBound.put("minimum", 0);
+    bounds.put("additionalProperties", inventoryBound);
+    bounds.put("minProperties", 1);
+    fields.put("inventoryChangeBoundsKg", bounds);
+
+    Map<String, Object> meterFields = new LinkedHashMap<String, Object>();
+    meterFields.put("tag", stringProp("Flowmeter signal tag"));
+    Map<String, Object> endpoint = stringProp("Inventory signal tag, or null for an external boundary");
+    endpoint.put("type", Arrays.asList("string", "null"));
+    meterFields.put("from", endpoint);
+    meterFields.put("to", endpoint);
+    Map<String, Object> error = numberProp("Absolute error bound for a healthy meter, kg/s");
+    error.put("minimum", 0);
+    meterFields.put("errorKgPerS", error);
+    Map<String, Object> meter = objectProp("Oriented connection; at least one endpoint must be internal");
+    meter.put("properties", meterFields);
+    meter.put("required", Arrays.asList("tag", "from", "to", "errorKgPerS"));
+    meter.put("additionalProperties", false);
+    Map<String, Object> meters = typedArraySchema("All measured boundary flows, each supplied once");
+    meters.put("items", meter);
+    meters.put("minItems", 1);
+    fields.put("meters", meters);
+
+    Map<String, Object> block = objectProp("Independent evidence from inventory-corrected mass balances");
+    block.put("properties", fields);
+    block.put("required", Arrays.asList("sampleIntervalSeconds", "signals", "inventoryChangeBoundsKg", "meters"));
+    block.put("additionalProperties", false);
+    return block;
   }
 
   /**
@@ -1384,6 +1436,18 @@ public final class SchemaCatalog {
     properties.put("hypotheses",
         typedArraySchema("Ranked hypotheses with confidenceScore, priorProbability, likelihoodScore, "
             + "verificationScore, evidence, recommendedActions, and simulationSummary"));
+    final Map<String, Object> balance = objectProp(
+        "Inventory balance evidence independent of hypothesis confidence scores");
+    Map<String, Object> balanceFields = new LinkedHashMap<String, Object>();
+    balanceFields.put("status", enumProp("Single-fault screening outcome",
+        Arrays.asList("WITHIN_BOUNDS", "SINGLE_CANDIDATE", "AMBIGUOUS", "UNEXPLAINED")));
+    balanceFields.put("durationSeconds", numberProp("Time from first to last sample, s"));
+    balanceFields.put("residuals",
+        objectProp("Per inventory: netInflowKgPerS, accumulationKgPerS, residualKgPerS and boundKgPerS"));
+    balanceFields.put("candidates",
+        typedArraySchema("Compatible single faults with kind, tag, minimumKgPerS and maximumKgPerS"));
+    balance.put("properties", balanceFields);
+    properties.put("massBalance", balance);
     schema.put("properties", properties);
     schema.put("required", Collections.singletonList("status"));
     return GSON.toJson(schema);

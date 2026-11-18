@@ -2442,6 +2442,7 @@ public class NeqSimTools {
           + "optional 'historianCsv' (CSV with timestamp,param1,param2,...), "
           + "optional 'designLimits' ({param: [min, max]}), "
           + "optional 'stidData' ({param: value}), "
+          + "optional 'massBalance' (synchronized signals, sampleIntervalSeconds, inventoryChangeBoundsKg and directed meters), "
           + "optional 'simulationEnabled' (true/false, default true).") String rcaJson) {
     String policyBlocked = enforceToolAccess("runRootCauseAnalysis");
     if (policyBlocked != null) {

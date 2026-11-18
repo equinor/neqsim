@@ -1,8 +1,8 @@
 ---
 name: neqsim-root-cause-analysis
-version: "1.3.0"
-description: "Root cause analysis for process equipment - Bayesian-style diagnosis combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), historian evidence and NeqSim verification, including the control-loop correlation trap (difference both series, resolve direction from the lag sign). USE WHEN: diagnosing compressor trips, vibration, efficiency loss, separator carryover, exchanger fouling or any operational anomaly. Anchors on neqsim.process.diagnostics."
-last_verified: "2026-09-17"
+version: "1.4.0"
+description: "Oil and gas process troubleshooting for missing throughput, flowmeter bias and equipment faults. Combines reliability priors (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), historian evidence and NeqSim verification for Bayesian-style diagnosis. USE WHEN: diagnosing compressor trips, vibration, efficiency loss, separator carryover, exchanger fouling, or misleading control-loop correlations. Anchors on neqsim.process.diagnostics."
+last_verified: "2026-11-18"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.equipment.failure, neqsim.process.automation]
 ---
@@ -57,7 +57,9 @@ Rules that make the reduced mode safe to act on:
    candidate comes from one instrument or one system, say so; that is the most common
    way a triage conclusion turns out wrong.
 5. **Promote, do not restart.** When the plant is stable, re-run the same hypotheses
-   in full mode with simulation verification; the triage ranking becomes the prior.
+   in full mode with simulation verification. Carry forward the case, hypotheses and
+   evidence identifiers. Recompute from the original priors and count each observation
+   once, including observations reused from rapid triage.
 
 Rapid triage is the diagnose step of a live-disturbance response loop. The incident
 coordination, phase gating, and restoration-option evaluation around it live in the
@@ -206,6 +208,24 @@ print(str(report.toTextReport()))
 
 - **FLOW_DEVIATION**: Trim erosion, actuator malfunction, positioner calibration drift
 - **ABNORMAL_NOISE**: Cavitation, flashing, vibration from upstream piping
+
+## Inventory balance for missing throughput
+
+Use `neqsim.process.diagnostics.ProcessBalanceDiagnosis` or the optional
+`massBalance` evidence block of `runRootCauseAnalysis` when a flow discrepancy
+crosses a separator, export line, receiver or connected control volumes.
+Check the sign and units of every meter against the P&ID, identify each shared
+meter once, and align inventories (kg) and instantaneous rates (kg/s) on the
+same equally spaced timestamps. Establish the inventory-change and healthy
+meter error bounds from the measurement basis. Level, volumetric flow and
+standard gas flow require conversion before use. Missing inventories, tags,
+quality or uncertainty can make the balance inconclusive.
+
+Give the root-cause agent the signed net inflow, accumulation, residual and
+bound per volume, all candidate intervals and one independent check that would
+distinguish the surviving explanations. Use the worked request, status
+interpretation and references in the [RCA guide](../../../docs/diagnostics/root_cause_analysis.md#diagnosing-a-flow-discrepancy-across-connected-equipment).
+A single surviving signature depends on the declared topology and fault family.
 
 ## Evidence Analysis Methods
 
