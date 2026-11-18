@@ -30,19 +30,16 @@ import neqsim.NeqSimTest;
  * @version 1.0
  */
 class DryGasSealVentStudyDocumentationTest extends NeqSimTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "process", "equipment", "dry_gas_seal_vent_study.md");
+  private static final Path GUIDE = Paths.get("docs", "process", "equipment", "dry_gas_seal_vent_study.md");
   private static final String MARKER = "<!-- dry-gas-seal-vent-study: complete -->";
   private static final String CLASS_NAME = "DryGasSealVentStudyGuideExample";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
 
   @TempDir
   Path temporaryDirectory;
 
   /**
-   * Verifies that the literal combined-failure example compiles and runs with its engineering
-   * checks enabled.
+   * Verifies that the literal combined-failure example compiles and runs with its engineering checks enabled.
    *
    * @throws Exception if extraction, compilation, loading, or execution fails
    */
@@ -95,33 +92,15 @@ class DryGasSealVentStudyDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
-    String classpath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-proc:none",
-                      "-classpath",
-                      classpath,
-                      "-d",
-                      classes.toString()),
-                  null,
-                  manager.getJavaFileObjects(javaFile.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
+          .call();
       assertTrue(successful, diagnostics.getDiagnostics().toString());
     }
-    return new URLClassLoader(
-        new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }
