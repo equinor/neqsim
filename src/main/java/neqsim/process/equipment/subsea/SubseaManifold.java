@@ -425,7 +425,8 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     testMixer = new Mixer(getName() + " Test Header");
 
     for (ValveSkid skid : valveSkids) {
-      if (skid.isActive() && skid.getConnectedStream() != null) {
+      if (skid.isActive() && skid.getConnectedStream() != null
+          && skid.getConnectedStream().getFlowRate("kg/sec") != 0.0) {
         if ("production".equals(skid.getRouting())) {
           // Run through production valve
           if (skid.getProductionValve() != null && skid.getProductionValve().getPercentValveOpening() > 0) {
@@ -444,27 +445,39 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
       }
     }
 
-    // Run production header
-    if (productionMixer.getNumberOfInputStreams() > 0) {
-      productionMixer.run(id);
-      productionStream = productionMixer.getOutletStream();
-
-      // Apply header pressure drop
-      double prodDrop = calculateHeaderPressureDrop(productionHeaderSizeInches);
-      applyPressureDrop(productionStream, prodDrop);
-    }
-
-    // Run test header
-    if (hasTestHeader && testMixer.getNumberOfInputStreams() > 0) {
-      testMixer.run(id);
-      testStream = testMixer.getOutletStream();
-
-      // Apply header pressure drop
-      double testDrop = calculateHeaderPressureDrop(testHeaderSizeInches);
-      applyPressureDrop(testStream, testDrop);
-    }
-
+    productionStream = updateHeader(productionMixer, productionStream, productionHeaderSizeInches, id);
+    testStream = updateHeader(testMixer, testStream, testHeaderSizeInches, id);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Publish the current routed flow on the same stream that downstream equipment holds.
+   *
+   * @param mixer mixer rebuilt for the current lineup
+   * @param outlet previously published header stream, if any
+   * @param sizeInches header size in inches
+   * @param id calculation identifier
+   * @return published stream, or null for a header that has never received flow
+   */
+  private StreamInterface updateHeader(Mixer mixer, StreamInterface outlet, double sizeInches, UUID id) {
+    if (mixer.getNumberOfInputStreams() > 0) {
+      mixer.run(id);
+      StreamInterface mixed = mixer.getOutletStream();
+      applyPressureDrop(mixed, calculateHeaderPressureDrop(sizeInches));
+      if (outlet == null) {
+        outlet = mixed;
+      } else {
+        outlet.setFluid(mixed.getFluid());
+      }
+    } else if (outlet != null) {
+      SystemInterface empty = outlet.getFluid().clone();
+      empty.setEmptyFluid();
+      outlet.setFluid(empty);
+    }
+    if (outlet != null) {
+      outlet.setCalculationIdentifier(id);
+    }
+    return outlet;
   }
 
   /**

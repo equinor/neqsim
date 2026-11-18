@@ -20,6 +20,7 @@ accountable review remain mandatory.
 | Choose equipment, logic, or scenario APIs | [Process-safety API overview](../process/safety/README) |
 | Size or screen relief devices | [Relief-Valve Sizing Screening](relief_valve_sizing_api) |
 | Test ESD logic dynamically | [ESD dynamic testing workflow](esd_testing_workflow) |
+| Study a subsea tie-back from tree to receiving separator | [Well-to-platform pressure protection](https://github.com/equinor/neqsim/blob/master/examples/production-decision/tieback-protection.md) |
 | Model HIPPS voting and action | [HIPPS implementation](hipps_implementation) |
 | Generate safety scenarios | [Safety scenario generation](../process/safety/scenario-generation) |
 | Review releases and consequence inputs | [Release and dispersion scenarios](../process/safety/release-dispersion-scenarios) |
