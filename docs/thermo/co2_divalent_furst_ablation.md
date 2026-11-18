@@ -20,14 +20,14 @@ The baseline is the current mixing-rule-10
 `SystemElectrolyteCPAstatoil` calculation. For the ablated candidate, only the Furst
 CO2-ion terms are set to zero in every phase:
 
-$
+$$
 W_{\mathrm{CO_2},i}(T)=W^{(0)}_{\mathrm{CO_2},i}
 +W^{(1)}_{\mathrm{CO_2},i}\left(\frac{1}{T}-\frac{1}{T_0}\right)
 +W^{(2)}_{\mathrm{CO_2},i}\left(\frac{T_0-T}{T}
 +\ln\frac{T}{T_0}\right)=0,
 \qquad T_0=298.15\ \mathrm{K},\quad
 i\in\{\mathrm{Ca^{2+}},\mathrm{Mg^{2+}},\mathrm{Cl^-}\}.
-$
+$$
 
 The equation above is the implemented `EosMixingRuleHandler.getWij` convention. The EOS, association treatment, CPA binary interactions, all ion-water and ion-ion
 terms, phase-equilibrium solver, source composition, pressure, temperature, and
