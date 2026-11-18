@@ -33,6 +33,10 @@ NEQSIM_RESTART_MODE=challenge python examples/production-decision/mcp_server.py
 
 The challenge server exposes only `restart_challenge`. Give it a power limit, optionally omit the surge map, and save the agent's choice. Keep the raw files and review server outside the blind agent's workspace. Launch a separate server with `NEQSIM_RESTART_MODE=review` to call `score_restart_choice` or `restart_quantity_evidence`. The scorer checks held-out constraints, worst-case production regret and the appropriateness of abstaining. The numerical holdouts are alternative discretizations of the synthetic case. They supply no field ground truth. The CLI exposes the same operations through `decision.py --help`.
 
+The review output lists each observed host-limit breach by fluid, mesh and timestep, with its
+value and limit. If another trajectory rejects, those breaches remain in the score alongside
+the missing evidence. Worst-case production and regret require a complete comparison.
+
 ### Fluids and produced water
 
 The default feed has methane/ethane/propane/n-pentane/n-heptane/n-decane/water mole fractions of 0.42/0.04/0.03/0.07/0.07/0.05/0.32. SRK and PR use classic mixing. To replay a frozen candidate, pass `--fluid-deck` with an E300 deck containing its composition and water. The receipt includes the deck hash. A separate `--density-evidence` JSON can bind measured phase-density observations to the reported feed composition hash. Provide `fluid_sha256` and an `observations` list. Each observation has `id`, `source`, `phase`, `temperature_K`, `pressure_bara`, `density_kg_m3`, `tolerance_kg_m3` and a `role` of `calibration` or `holdout`. Freeze and independently review the observations and tolerances before evaluating candidates. Acceptance covers only the supplied density observations. The upstream [PVT study workflow](../../docs/pvtsimulation/pvt_fluid_study_report.md) owns laboratory calibration and export fidelity.
