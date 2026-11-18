@@ -97,6 +97,28 @@ junction. It rejects pipe outlet Mach above 0.3 and flows outside the rated tip 
 carryover, KO drum losses, multiple headers, line packing and transient valve lift require a separate
 model and qualification.
 
+### V-101 PSV-only reference at negligible losses
+
+`AdvancedV101PsvStudyTest.reliefRefinesAndReplaysWithoutMutatingCanonicalSource` feeds the
+native `PSV_RELIEF` outlet rate and its timestamps into `ratePeakGasCapacity` at both native
+timesteps. The gas properties come from an SRK flash of the recorded vessel inventory at the
+instant of peak flow. All line lengths are zero. The imposed tip curve is flat at 1.2 bara.
+
+| Quantity | 0.10 s step | 0.05 s step |
+|---|---:|---:|
+| Native and transferred peak flow at 3.20 s, kg/s | 5.49552 | 5.49705 |
+| Maximum protected vessel pressure, bara | 42.36369 at 2.40 s | 42.38967 at 2.45 s |
+| Inlet flange pressure at peak flow, bara | 42.03573 | 42.04747 |
+| Outlet flange, header and tip pressure, bara | 1.20000 | 1.20000 |
+| Assumed water-equivalent nozzle capacity, kg/s | 11.71485 | 11.71866 |
+
+The synthetic native valve has a rated Cv of 80. Converting its effective Cv at peak to
+a water-equivalent CdA gives 1316.32 mm² in both runs. This assumed nozzle passes about 113%
+more gas than the observed valve. Independent nozzle area or certified capacity evidence
+would be needed to use this comparison for equipment sizing. The handoff recovers the
+fixed outlet boundary and retains the sampled flow demand. It does not advance header
+or knockout-drum inventory or return pressure to the native transient.
+
 ## See also
 
 - [MDMT Assessment](mdmt_assessment.md)
