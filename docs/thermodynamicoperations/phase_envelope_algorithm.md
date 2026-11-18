@@ -6,13 +6,6 @@ description: "Detailed mathematical and algorithmic documentation for the PT pha
 
 NeqSim traces the PT phase envelope using Michelsen's continuation method (Michelsen & Mollerup, *Thermodynamic Models: Fundamentals & Computational Aspects*, 2nd ed., 2007). This document describes the mathematical formulation, the Newton-Raphson solver, critical point detection, quality line tracing, and the adaptive step-size control implemented in `PTPhaseEnvelopeMichelsen` and `SysNewtonRhapsonPhaseEnvelope`.
 
-The Michelsen tracer removes negligible species from its private working fluid before solving the continuation equations.
-For standard SRK and PR phases with the classic rule, the reduced phase retains the interaction coefficients of each surviving pair, including
-user-fitted values. An explicitly zero nitrogen or H2S entry therefore gives the same envelope coordinates as omitting
-it in the characterized SRK case. The caller retains its original component list and pair parameters.
-Read the dew coordinates with `dewT` and `dewP`, and the bubble coordinates with `bubT` and `bubP`.
-These arrays include both continuation passes with NaN breaks. The legacy separate second-pass keys return null.
-
 ## 1. Problem Formulation
 
 At every point on the phase boundary, the following $n_c + 2$ equations hold simultaneously:
@@ -213,6 +206,13 @@ temperature of the failed pass. A dew branch can be warmer than the entire
 low-pressure bubble segment without overlapping it, as in the SAFT-VR Mie
 methane/propane regression. Each pass follows its own continuation and pressure
 termination criteria.
+
+The Michelsen tracer removes negligible species from its private working fluid before solving the continuation equations.
+For standard SRK and PR phases with the classic rule, the reduced phase retains the interaction coefficients of each surviving pair, including
+user-fitted values. An explicitly zero nitrogen or H2S entry therefore gives the same envelope coordinates as omitting
+it in the characterized SRK case. The caller retains its original component list and pair parameters.
+Read the dew coordinates with `dewT` and `dewP`, and the bubble coordinates with `bubT` and `bubP`.
+These arrays include both continuation passes with NaN breaks. The legacy separate second-pass keys return null.
 
 ## 6. Critical Point Detection
 
