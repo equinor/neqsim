@@ -204,7 +204,7 @@ O501), artificial lift, water handling, and GHG emissions. See
 ### Rigorous corrosion + scale coupling
 For an EOS-consistent CO2 corrosion rate from a brine composition, use
 `NorsokM506ElectrolyteBridge` (rigorous in-situ pH + FeCO3 film feedback into
-the standard NORSOK M-506 model). For a per-segment corrosion+scale profile
+the legacy de Waard-Milliams screening model). For a per-segment corrosion+scale profile
 along a line use `PipeSegmentIntegrity` (`fromPipe(PipeBeggsAndBrills)`). For
 scale: `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (induction time,
 growth regime), `BrineMixingScaleEvaluator` (seawater/formation-water
@@ -218,7 +218,8 @@ dithiazine scavenger solids); `RootCauseAnalyser` appends this cleaning hint to
 every deposit candidate automatically. See the `neqsim-flow-assurance` skill
 (sections 5 and 5-scale) for patterns and gotchas.
 
-When the task explicitly requests NORSOK M-506, route the final calculation through
+For the NORSOK M-506 Rev. 2 unmitigated rate use `NorsokM506Rev2` with in-situ pH and
+local wall shear stress. For an auditable legacy screening calculation use
 `NorsokM506CorrosionDesignKernel` after deriving the pH/FeCO3 basis. Do not bypass its edition,
 applicability, or range blockers, and state that its projected wall loss is not a corrosion
 allowance. Mark the result as screening and keep purchased-standard, wetting, chemistry, localized

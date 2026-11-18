@@ -1,26 +1,50 @@
 ---
 title: "NORSOK M-506 CO2-corrosion screening"
-description: "Edition-aware NeqSim screening adapter for the existing NorsokM506CorrosionRate calculation."
+description: "Rev. 2 unmitigated CO2 corrosion correlation and the legacy engineering screening adapter."
 ---
 
 # NORSOK M-506 CO2-corrosion screening
 
-NeqSim exposes the existing `NorsokM506CorrosionRate` calculation through the common,
-edition-aware engineering kernel API:
+Choose the calculation that matches the basis of the study.
 
-- `NorsokM506CorrosionDesignKernel` is the preferred entry point for auditable studies.
+- `NorsokM506Rev2` evaluates the unmitigated Rev. 2 carbon-steel correlation.
+- `NorsokM506CorrosionDesignKernel` records findings and inputs for legacy screening studies.
 - `NorsokM506CorrosionAssessment` is an immutable, unit-explicit result snapshot.
 - `NorsokM506CorrosionRate` remains available for legacy mutable workflows and parameter sweeps.
 - `NorsokM506ElectrolyteBridge` remains the route for obtaining an electrolyte-model pH and optional
   FeCO3 saturation ratio from a brine.
 
-The kernel implements only the unamended `NORSOK-M-506 2017` basis. Standards Norway identified
+The kernel accepts only the unamended `NORSOK-M-506 2017` edition identifier. It evaluates the legacy de Waard-Milliams screening equations. Standards Norway identified
 that edition as current and under systematic review in May 2026; the catalog record was checked on
 2026-08-02 against the [publisher notice](https://standard.no/en/news/norsok-m-5062017-co2-corrosion-rate-calculation-model-is-on-systematic-review/).
 Because the review may produce a revision, future editions must be implemented and verified
 explicitly rather than silently relabeling this calculation.
 
-## Engineering boundary
+## Unmitigated rate from the 2005 edition
+
+For a water-wet carbon steel surface in sweet CO2 service, use
+`NorsokM506Rev2.rateMmPerYear(temperatureC, co2FugacityBar, inSituPH, wallShearStressPa)`
+for NORSOK M-506 Rev. 2 (June 2005), section 5.2, equations (1)–(3) and Tables 1–2.
+Supply 5–150 °C, 0.1–10 bar CO2 fugacity, pH 3.5–6.5 and 1–150 Pa wall shear.
+At 5 °C the rate is independent of shear. The temperature interpolation uses the
+two bracketing **rates**, including the pH factor at each knot. At a shared pH
+breakpoint the implementation uses the higher-pH branch.
+
+If the available input is a gas mole fraction, the configured mutable calculator's
+`calculateRev2UnmitigatedRate(inSituPH, wallShearStressPa)` computes fugacity
+using Rev. 2 section 8.1 before evaluating the rate. At 60 °C, 40 bara and 1 mol%
+CO2, equations (7)–(8) give a base-10 fugacity coefficient of 0.9034571. At pH 4
+and 19 Pa the resulting rate is **6.30919 mm/year**. Supplying an independently
+determined fugacity of 0.38275 bar gives **6.53795 mm/year** instead. The pressure
+cap of 250 bara applies only to the coefficient; partial pressure uses total pressure.
+
+This method evaluates the 2005 unmitigated uniform-corrosion correlation. The caller supplies
+the water-wetting, sour-service applicability, in-situ pH and local shear basis.
+Glycol, inhibitor, FeCO3 film and exposure-year projections belong to separate assessments.
+The existing `calculate()` and edition-aware screening kernel continue to publish the legacy
+screening rates under the `rateModel` identifier in their result maps.
+
+## Legacy screening kernel boundary
 
 This is a `SCREENING` implementation, not a conformity assessment or a material-selection
 decision. It adapts the simplified equations already present in NeqSim and has regression evidence,

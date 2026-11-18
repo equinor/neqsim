@@ -130,6 +130,7 @@ public final class NorsokM506CorrosionAssessment implements Serializable {
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("standardEdition", standardEdition);
+    result.put("rateModel", NorsokM506CorrosionRate.LEGACY_RATE_MODEL);
     result.put("co2PartialPressureBar", Double.valueOf(co2PartialPressureBar));
     result.put("co2FugacityBar", Double.valueOf(co2FugacityBar));
     result.put("effectivePH", Double.valueOf(effectivePH));

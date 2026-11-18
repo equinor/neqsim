@@ -11,7 +11,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Couples a rigorous electrolyte thermodynamic model into the {@link NorsokM506CorrosionRate} standard model.
+ * Couples a rigorous electrolyte thermodynamic model into the {@link NorsokM506CorrosionRate} legacy de Waard-Milliams
+ * screening model.
  *
  * <p>
  * The bare {@link NorsokM506CorrosionRate} model estimates the in-situ pH of the water phase from a correlation
@@ -198,7 +199,7 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
 
   /**
    * Runs the coupled analysis: flashes a clone of the electrolyte fluid, extracts the in-situ pH and gas composition,
-   * and calculates the NORSOK M-506 corrosion rate with the rigorous pH.
+   * and calculates the legacy screening corrosion rate with the electrolyte pH.
    *
    * <p>
    * The caller's fluid object is not modified; the flash is performed on {@link SystemInterface#clone()}.
