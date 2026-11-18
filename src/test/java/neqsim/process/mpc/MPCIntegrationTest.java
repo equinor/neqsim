@@ -406,6 +406,31 @@ public class MPCIntegrationTest {
     assertTrue(moves[0] >= 0.0 && moves[0] <= 1.0);
   }
 
+  /**
+   * Verify zero error inside a pressure zone and correction toward the nearest boundary outside it.
+   */
+  @Test
+  public void testProcessLinkedMPCUsesNearestZoneBoundary() {
+    ProcessLinkedMPC mpc = new ProcessLinkedMPC("zoneController", process);
+    mpc.addMV("feed", "pressure", 30.0, 70.0).setMoveWeight(0.1);
+    ControlledVariable pressure = mpc.addCVZone("feed", "pressure", 45.0, 55.0);
+    pressure.setUnit("bara");
+    mpc.identifyModel(15.0);
+
+    feed.setPressure(47.0, "bara");
+    assertEquals(47.0, mpc.calculate()[0], 1e-9);
+    feed.setPressure(53.0, "bara");
+    assertEquals(53.0, mpc.calculate()[0], 1e-9);
+
+    feed.setPressure(58.0, "bara");
+    assertEquals(58.0 - 0.3 * 3.0 / 1.1, mpc.calculate()[0], 1e-9);
+    feed.setPressure(42.0, "bara");
+    assertEquals(42.0 + 0.3 * 3.0 / 1.1, mpc.calculate()[0], 1e-9);
+
+    pressure.setSetpoint(50.0);
+    assertEquals(42.0 + 0.3 * 8.0 / 1.1, mpc.calculate()[0], 1e-9);
+  }
+
   @Test
   public void testProcessLinkedMPCSetpointChange() {
     ProcessLinkedMPC mpc = new ProcessLinkedMPC("pressureController", process);
