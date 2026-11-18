@@ -1,7 +1,7 @@
 ---
 name: root-cause
 last_verified: "2026-11-18"
-description: "Troubleshoots oil and gas process disturbances, flowmeter bias and missing throughput across connected equipment. Performs root cause analysis on process equipment - compressor trips and vibration, pump/compressor efficiency loss, separator carryover, exchanger fouling and U-value loss, cooling-water/medium degradation, valve and capacity limits - combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, OREDA), historian data, STID design conditions and NeqSim simulation into ranked hypotheses with Bayesian confidence."
+description: "Diagnoses oil and gas process disturbances, flowmeter bias and missing throughput across equipment. Covers compressor trips and vibration, pump and compressor efficiency loss, separator carryover, exchanger fouling, cooling-medium degradation, and valve and capacity limits. Ranks hypotheses with Bayesian confidence using reliability priors (IOGP/SINTEF, CCPS, IEEE 493, OREDA), historian data, STID design conditions and NeqSim simulation."
 required_skills:
 - neqsim-root-cause-analysis
 - neqsim-flow-accelerated-corrosion

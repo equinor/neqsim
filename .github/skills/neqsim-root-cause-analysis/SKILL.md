@@ -1,7 +1,7 @@
 ---
 name: neqsim-root-cause-analysis
 version: "1.4.0"
-description: "Oil and gas process troubleshooting, missing throughput, flowmeter bias and equipment root cause analysis - Bayesian-style diagnosis combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), historian evidence and NeqSim verification, including the control-loop correlation trap (difference both series, resolve direction from the lag sign). USE WHEN: diagnosing compressor trips, vibration, efficiency loss, separator carryover, exchanger fouling or any operational anomaly. Anchors on neqsim.process.diagnostics."
+description: "Oil and gas process troubleshooting for missing throughput, flowmeter bias and equipment faults. Combines reliability priors (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), historian evidence and NeqSim verification for Bayesian-style diagnosis. USE WHEN: diagnosing compressor trips, vibration, efficiency loss, separator carryover, exchanger fouling, or misleading control-loop correlations. Anchors on neqsim.process.diagnostics."
 last_verified: "2026-11-18"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.equipment.failure, neqsim.process.automation]
