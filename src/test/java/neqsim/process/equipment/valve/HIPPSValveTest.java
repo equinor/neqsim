@@ -219,6 +219,30 @@ class HIPPSValveTest {
     assertEquals(3, hippsValve.getActiveTransmitterCount()); // All 3 now active
   }
 
+  /** A local pressure demand aborts an ongoing partial stroke on the first transient scan. */
+  @Test
+  void localVotePreemptsPartialStrokeAndMovesMeasuredStem() {
+    HIPPSValve valve = new HIPPSValve("XV-A", feedStream);
+    valve.setOutletPressure(60.0);
+    valve.run();
+    valve.setCalculateSteadyState(false);
+    valve.setClosureTime(2.0);
+    valve.setVotingLogic(HIPPSValve.VotingLogic.ONE_OUT_OF_ONE);
+    PressureTransmitter transmitter = new PressureTransmitter("PT-A", feedStream);
+    transmitter.setAlarmConfig(AlarmConfig.builder().highHighLimit(90.0).delay(0.0).unit("bara").build());
+    valve.addPressureTransmitter(transmitter);
+    valve.performPartialStrokeTest(.15);
+    transmitter.evaluateAlarm(92, .25, 0);
+    valve.runTransient(.25, UUID.randomUUID());
+    assertTrue(valve.hasTripped());
+    assertFalse(valve.isPartialStrokeTestActive());
+    assertEquals(0.0, valve.getLastTripTime(), 0.0);
+    assertEquals(87.5, valve.getPercentValveOpening(), 1e-8);
+    valve.runTransient(1.75, UUID.randomUUID());
+    assertEquals(0.0, valve.getPercentValveOpening(), 1e-8);
+    assertEquals(0.0, valve.getOutletStream().getFlowRate("kg/hr"), 1e-8);
+  }
+
   @Test
   void testClosureTime() {
     hippsValve = new HIPPSValve("HIPPS-XV-005", feedStream);
@@ -249,7 +273,10 @@ class HIPPSValveTest {
     hippsValve.setPercentValveOpening(50.0);
     assertEquals(0.0, hippsValve.getPercentValveOpening(), 0.1); // Still closed
 
-    // Reset the HIPPS
+    // The pressure vote must clear before reset.
+    hippsValve.reset();
+    assertTrue(hippsValve.hasTripped());
+    PT1.evaluateAlarm(80.0, 1.0, 2.0);
     hippsValve.reset();
     assertFalse(hippsValve.hasTripped());
 

@@ -58,6 +58,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   private final String unit;
   private final String clause;
   private final String severity;
+  private final Double responseDeadlineSeconds;
   private final String description;
   private final String recommendation;
 
@@ -77,6 +78,28 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   private EmergencyShutdownTestCriterion(String id, CriterionType type, String logicalTag, String logicName,
       double targetValue, String unit, String clause, String severity, String description, String recommendation) {
+    this(id, type, logicalTag, logicName, targetValue, unit, clause, severity, description, recommendation, null);
+  }
+
+  /**
+   * Creates a criterion including optional sampled response-time evidence.
+   *
+   * @param id criterion identifier
+   * @param type criterion type
+   * @param logicalTag monitored signal
+   * @param logicName monitored logic
+   * @param targetValue signal threshold
+   * @param unit signal unit
+   * @param clause governing requirement
+   * @param severity failure severity
+   * @param description acceptance description
+   * @param recommendation action on failure
+   * @param responseDeadlineSeconds optional deadline after trigger
+   */
+  private EmergencyShutdownTestCriterion(String id, CriterionType type, String logicalTag, String logicName,
+      double targetValue, String unit, String clause, String severity, String description, String recommendation,
+      Double responseDeadlineSeconds) {
+    this.responseDeadlineSeconds = responseDeadlineSeconds;
     this.id = requireText(id, "id");
     if (type == null) {
       throw new IllegalArgumentException("type must not be null");
@@ -268,7 +291,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public EmergencyShutdownTestCriterion withClause(String clause) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
-        description, recommendation);
+        description, recommendation, responseDeadlineSeconds);
   }
 
   /**
@@ -279,7 +302,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public EmergencyShutdownTestCriterion withSeverity(String severity) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
-        description, recommendation);
+        description, recommendation, responseDeadlineSeconds);
   }
 
   /**
@@ -291,7 +314,64 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   public EmergencyShutdownTestCriterion withText(String description, String recommendation) {
     return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
-        description, recommendation);
+        description, recommendation, responseDeadlineSeconds);
+  }
+
+  /**
+   * Requires a final signal bound to be reached by a deadline and maintained at every later sample. The observed
+   * response is measured from the configured trigger to the start of the final in-bound sequence. Missing feedback or a
+   * test ending before the deadline fails the criterion.
+   *
+   * @param seconds finite nonnegative deadline relative to the trigger
+   * @return copied final-value criterion with a response deadline
+   */
+  public EmergencyShutdownTestCriterion withResponseDeadline(double seconds) {
+    if (type != CriterionType.FINAL_LESS_OR_EQUAL && type != CriterionType.FINAL_GREATER_OR_EQUAL) {
+      throw new IllegalStateException("Response deadlines require a final signal bound.");
+    }
+    if (!Double.isFinite(seconds) || seconds < 0.0 || !Double.isFinite(targetValue)) {
+      throw new IllegalArgumentException("A finite signal limit and nonnegative finite deadline are required.");
+    }
+    return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
+        description, recommendation, seconds);
+  }
+
+  /**
+   * Evaluates evidence against the trigger clock or the original aggregate criterion.
+   *
+   * @param plan test schedule
+   * @param result captured signals and logic states
+   * @return acceptance outcome
+   */
+  Result evaluateRun(EmergencyShutdownTestPlan plan, EmergencyShutdownTestResult result) {
+    if (responseDeadlineSeconds == null) {
+      return evaluate(result.getSignalStats(), result.getLogicStates(), result.getErrors(),
+          result.getFieldComparisons());
+    }
+    double trigger = plan.getTriggerTimeSeconds();
+    double settled = Double.NaN;
+    double lastTime = Double.NaN;
+    for (EmergencyShutdownTestResult.SignalSample sample : result.getTimeSeries()) {
+      lastTime = sample.getTimeSeconds();
+      if (lastTime < trigger) {
+        continue;
+      }
+      Double value = sample.getValues().get(logicalTag);
+      if (value == null || !Double.isFinite(value)) {
+        return new Result(this, false, Double.NaN, responseDeadlineSeconds,
+            "Missing or nonfinite feedback after trigger.");
+      }
+      if (!compare(value)) {
+        settled = Double.NaN;
+      } else if (Double.isNaN(settled)) {
+        settled = lastTime - trigger;
+      }
+    }
+    double deadline = trigger + responseDeadlineSeconds;
+    boolean covered = Double.isFinite(deadline) && lastTime >= Math.nextDown(deadline) && lastTime > trigger;
+    boolean passed = covered && trigger + settled <= Math.nextUp(deadline) && result.getErrors().isEmpty();
+    return new Result(this, passed, settled, responseDeadlineSeconds,
+        passed ? "Sampled feedback reached and maintained its bound." : "Response deadline or test coverage failed.");
   }
 
   /**
@@ -407,6 +487,9 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     map.put("unit", unit);
     map.put("clause", clause);
     map.put("severity", severity);
+    if (responseDeadlineSeconds != null) {
+      map.put("responseDeadlineSeconds", responseDeadlineSeconds);
+    }
     map.put("description", description);
     map.put("recommendation", recommendation);
     return map;
@@ -587,7 +670,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
       this.passed = passed;
       this.observedValue = observedValue;
       this.targetValue = targetValue;
-      this.unit = criterion.unit;
+      this.unit = criterion.responseDeadlineSeconds == null ? criterion.unit : "s";
       this.clause = criterion.clause;
       this.severity = criterion.severity;
       this.message = clean(message);

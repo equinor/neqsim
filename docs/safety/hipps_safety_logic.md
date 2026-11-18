@@ -30,64 +30,49 @@ optional in software, but a trip without a linked valve cannot isolate a modeled
 `update(double...)` requires exactly one value per configured detector. Each detector
 updates before the voting condition is evaluated.
 
-The current evaluation order is:
-
-1. If logic override is active, return without evaluating.
-2. Count bypassed and faulty detectors.
-3. Enter `FAILED` when their combined count exceeds the model's allowed count.
-4. Count tripped detectors that are neither bypassed nor faulty.
-5. Evaluate the configured `VotingLogic`.
-6. On the first satisfied vote, set the logic to tripped and `RUNNING`, then command
-   the linked valve to zero-percent opening.
-
-This is a deterministic software transition. It does not establish detector
-independence, diagnostic coverage, common-cause behavior, final-element capacity, or
-process-response adequacy.
+A vote uses the current scan. Two high readings on different channels at different
+times cannot trip a 2oo3 solver. Individual detector alarm histories and the
+solver trip remain latched separately. Each distinct healthy detector contributes
+at most one vote. Missing, nonfinite, bypassed and faulty readings reduce voting
+capacity. An unavailable voting quorum gives a `FAILED` diagnostic.
+`setTripOnLostVotingCapacity(true)` also commands isolation on quorum loss.
+Choose this response explicitly for a project's degraded-mode policy.
 
 ## Time and escalation
 
-`execute(double)` advances `timeSinceTrip` in seconds only after the logic has tripped
-and while override is not active.
+Link the primary valve with `setIsolationValve(ThrottlingValve)` and additional
+valves with `addIsolationValve(ThrottlingValve)`. Material streams or an explicit
+hydraulic boundary define the series connection. `setValveClosureTime(double)`
+configures the common stroke duration. Set an individual valve's stroke after
+linking it to represent unequal actuators. A transient HIPPS valve latches a
+zero target. Its normal actuator step advances actual position; steady equipment
+uses the instantaneous position. A generic throttling valve receives the target
+and requires separate coordination of any competing controller commands.
 
-`linkToEscalationLogic(ProcessLogic, double)` stores a secondary logic and a delay.
-After the delay, `execute(double)` recounts tripped sensors and calls
-`activate()` on the secondary logic if the vote remains satisfied. The model does not
-verify that the secondary layer is independent or that the delay is suitable.
-
-`setValveClosureTime(double)` stores a target on `HIPPSLogic`; current
-`HIPPSLogic` trip behavior commands zero opening immediately. Do not interpret the
-stored target as a simulated actuator travel profile. Model the linked valve and process
-transient explicitly when closure dynamics matter.
+`linkToEscalationLogic(ProcessLogic, double)` commands a secondary sequence once
+the current pressure vote stays high continuously for the configured delay.
+Call `update` at the start of each pressure scan, advance the plant and actuators
+over the interval, and call `execute(dt)` once for that interval. Clearing the vote
+restarts the escalation timer. Trapped gas can sustain a high pressure after the
+inlet seats, so record both valve positions and protected pressure when
+interpreting escalation.
 
 ## Override, fault, and bypass behavior
 
-`setOverride(true)` inhibits voting and execution and changes the logic state to
-`PAUSED`. Clearing override returns the state to `RUNNING` if already tripped or
-`IDLE` otherwise.
-
-A bypassed or faulty `Detector` does not contribute a trip vote. If degraded channels
-exceed the internal allowance, `HIPPSLogic` reports `FAILED`. These flags are
-scenario inputs; the class does not enforce a project bypass permit, compensating
-measure, proof-test workflow, or operating time limit.
-
-Treat override and bypass scenarios as explicit, reviewed cases. Never use these
-software switches as plant commands or evidence of operating authorization.
+Logic override inhibits new logic trips and escalation. Existing HIPPS valve
+latches continue to demand closure. A trip interrupts an active partial-stroke
+test. Model plant-specific override authorization, time limits and compensating
+measures in the operating procedure.
 
 ## Reset behavior
 
-`reset()` returns `false` while any detector remains tripped. After all detectors
-clear, a successful reset:
+Reset requires a full group of healthy, clear readings and cleared local valve
+pressure alarms. It releases the latch and leaves the isolation demand at zero.
+Reopening requires a separate command. On restart from old serialized logic,
+reconnect the pressure channels omitted by the old storage format.
 
-- clears the logic trip, elapsed trip time, and escalation flag;
-- returns the logic state to `IDLE`; and
-- commands the linked valve to 100-percent opening.
-
-The reopening is a simulation convenience. It is not a real reset permissive, operator
-authorization, or safe restart sequence. A project model that evaluates restart must
-represent process conditions, permissives, actuator state, and approval separately.
-
-`deactivate()` does not reset `HIPPSLogic`, and `isComplete()` remains false because
-the object represents continuously available monitoring rather than a finite sequence.
+`deactivate()` leaves the latch intact. `isComplete()` stays false for this
+continuously monitored function.
 
 ## Evidence to retain
 
