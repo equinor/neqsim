@@ -42,7 +42,10 @@ class TestDecision(unittest.TestCase):
 
     def test_solver_rejection_is_negative_evidence(self):
         self.runs[-1] = {"status": "rejected", "reason": "reversed phase", "configuration": self.runs[-1]["configuration"]}
-        self.assertEqual("rejected_trajectory", assess(self.runs)["fluid_results"]["Srk"]["ramp"]["status"])
+        self.runs[-1]["host_diagnostic"] = {"condition": "no_online_export_duty", "export_kg_s": 0.}
+        result = assess(self.runs)["fluid_results"]["Srk"]["ramp"]
+        self.assertEqual("rejected_trajectory", result["status"])
+        self.assertEqual(0., result["rejections"][0]["host_diagnostic"]["export_kg_s"])
         self.assertIn("accepted refined trajectory", score(self.runs, 600., "ramp")["held_out"]["ramp"]["missing_evidence"])
         self.runs[-1]["configuration"]["basis"] = "installed"
         with self.assertRaises(ValueError):
@@ -116,6 +119,7 @@ class TestRestartHoldout(unittest.TestCase):
         self.assertEqual("insufficient_coverage", result["status"])
         self.assertEqual(0, result["by_quantity"]["manifold_bara"]["paired"])
         self.assertFalse(result["complete_coverage"])
+        self.assertEqual({"requested": 1, "paired": 0}, result["by_quantity"]["manifold_bara"]["coverage_by_tag"]["PT1"])
 
     def test_event_units_duplicate_and_solver_rejection(self):
         from restart_observations import compare

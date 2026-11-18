@@ -62,8 +62,11 @@ def run_basis(config):
 def run_result(run):
     """Preserve a rejected trajectory as negative evidence at its own discretization."""
     if run.get("status") == "rejected":
-        return {"rejection": run["reason"], **({"outlet_diagnostic": run["outlet_diagnostic"]}
-                                             if "outlet_diagnostic" in run else {})}
+        rejection = {"rejection": run["reason"]}
+        for name in ("outlet_diagnostic", "host_diagnostic"):
+            if name in run:
+                rejection[name] = run[name]
+        return rejection
     return quantities(run)
 
 
@@ -93,9 +96,11 @@ def assess(runs):
                 result[fluid][policy] = {"status": "missing_refinement", "available": len(runs_by_grid)}
                 continue
             primary, fine_mesh, fine_step = [runs_by_grid[key][0] for key in GRIDS]
-            rejections = [{"mesh_cells": 60 * grid[0], "dt_s": grid[1], "reason": pair[0]["rejection"],
-                           **({"outlet_diagnostic": pair[0]["outlet_diagnostic"]} if "outlet_diagnostic" in pair[0] else {})}
-                          for grid, pair in runs_by_grid.items() if "rejection" in pair[0]]
+            rejections = []
+            for (mesh, dt), (case, _) in runs_by_grid.items():
+                if "rejection" in case:
+                    details = {key: value for key, value in case.items() if key != "rejection"}
+                    rejections.append({"mesh_cells": 60 * mesh, "dt_s": dt, "reason": case["rejection"], **details})
             if rejections:
                 result[fluid][policy] = {"status": "rejected_trajectory", "rejections": rejections}
                 continue
