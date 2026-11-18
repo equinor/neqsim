@@ -772,3 +772,26 @@ They do not identify high-concentration curvature. Electroneutral NaCl data iden
 cannot separate CPA binary interactions from Furst short-range `Wij` terms without layer-isolation controls. No
 coefficient is fitted or selected here. Table A24 and all hydrate measurements remain frozen holdouts. See the
 [source and selection notes](../../src/test/resources/data/chemistry_benchmarks/co2_water_nacl_solubility_liu2021.md).
+
+## Divalent single-salt identifiability screen
+
+The independent Liu et al. (2021) supplement also contains low-salinity CaCl2 and MgCl2 blocks on the same observable
+and temperature-pressure grid as the NaCl assessment. The predeclared 84-row subset retains twelve distilled-water
+references plus 36 states for each divalent salt at 0.1, 1.0 and 1.5 mass%. The source's thirty duplicated CaCl2 rows at
+373 K are deduplicated by exact state and value. No reported solubility is averaged or corrected. The mixed
+`mgcl2+cacl2` block is excluded because the primary article and supplement do not state the CaCl2/MgCl2 split; an
+electroneutral model state cannot be constructed without inventing that composition.
+
+Together with NaCl, the single-salt response equations identify only `Wk_Na + Wk_Cl`,
+`Wk_Ca + 2 Wk_Cl` and `Wk_Mg + 2 Wk_Cl` for each temperature-polynomial order `k`. Their design matrix has rank
+three for four ion coefficients, leaving one gauge degree of freedom. These data therefore cannot allocate an absolute
+chloride contribution or distinguish CPA binary interactions from Furst short-range terms. A production update requires
+a declared gauge or salt-pair formulation, layer-isolation calculations and a reproducible bounded fit.
+
+The assessment reports all retained source/model values, matched pure-water responses, apparent salt effects, water
+activity, guest fugacity, decomposition closure and constrained-root spot checks. It deliberately preserves finite
+source records that contradict the aggregate salting-out trend; they cannot enter a fit unless an objective source-only
+quality rule is declared before model selection. The Table A.24 mixed-brine series and independent hydrate families
+remain frozen holdouts. This increment changes no production parameter, equation, tolerance or temperature offset. See
+the [source notes](../../src/test/resources/data/chemistry_benchmarks/co2_water_cacl2_mgcl2_solubility_liu2021.md).
+
