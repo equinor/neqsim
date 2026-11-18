@@ -784,6 +784,11 @@ references plus 36 states for each divalent salt at 0.1, 1.0 and 1.5 mass%. The 
 `mgcl2+cacl2` block is excluded because the primary article and supplement do not state the CaCl2/MgCl2 split; an
 electroneutral model state cannot be constructed without inventing that composition.
 
+The article also gives 0.99 reagent purity without catalog, lot or hydration state. The executable state mapping
+therefore declares an anhydrous CaCl2/MgCl2 formula-mass convention; it is not source verification of divalent ion
+inventory. Hydrated reagent forms would change the inferred molality materially. This blocks quantitative parameter
+fitting or single-ion attribution until primary clarification is obtained.
+
 Together with NaCl, the single-salt response equations identify only `Wk_Na + Wk_Cl`,
 `Wk_Ca + 2 Wk_Cl` and `Wk_Mg + 2 Wk_Cl` for each temperature-polynomial order `k`. Their design matrix has rank
 three for four ion coefficients, leaving one gauge degree of freedom. These data therefore cannot allocate an absolute
@@ -792,8 +797,9 @@ a declared gauge or salt-pair formulation, layer-isolation calculations and a re
 
 The assessment reports all retained source/model values, matched pure-water responses, apparent salt effects, water
 activity, guest fugacity, decomposition closure and constrained-root spot checks. It deliberately preserves finite
-source records that contradict the aggregate salting-out trend; they cannot enter a fit unless an objective source-only
-quality rule is declared before model selection. The Table A.24 mixed-brine series and independent hydrate families
+source records that contradict the aggregate salting-out trend: seven salt rows are salting-in or equal, four of 24
+salinity sequences and three of 24 pressure sequences fail the expected monotonic direction. They cannot enter a fit
+unless an objective source-only quality rule is declared before model selection. The Table A.24 mixed-brine series and independent hydrate families
 remain frozen holdouts. This increment changes no production parameter, equation, tolerance or temperature offset. See
 the [source notes](../../src/test/resources/data/chemistry_benchmarks/co2_water_cacl2_mgcl2_solubility_liu2021.md).
 
