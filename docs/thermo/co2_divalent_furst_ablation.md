@@ -36,7 +36,7 @@ gauge-dependent, cation and chloride effects are removed as one block and are no
 interpreted separately.
 
 The predeclared ablation matrix contains 16 states: CaCl2 and MgCl2 at 15 000 ppm,
-20.4 and 170.1 atm, and 323.15, 353.15, 373.15, and 393.15 K. This covers the source
+20.4 and 170.1 atm, and 298, 333, 353, and 373 K. This covers the source
 temperature range and its lowest/highest pressures while limiting the slow-test cost.
 Every state must retain the baseline phase set, component balance residual no larger
 than $10^{-10}$ mol, and molecular log-fugacity residual below $10^{-8}$.
