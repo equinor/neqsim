@@ -482,7 +482,7 @@ unresolved.
 The Core Build, Test, and Javadoc workflow retains an
 `electrolyte-assessment-evidence-<shard>` artifact from every Java 21 slow-test
 shard, including after failed test runs. Download the artifacts from the same
-workflow run; the twelve assessments may be distributed over different shards.
+workflow run; the thirteen assessments may be distributed over different shards.
 Surefire reports remain in their existing, separate artifacts.
 
 Each bundle includes a `manifest.json` and only the allowlisted assessment CSVs
@@ -497,13 +497,14 @@ produced by tests selected for that shard:
 | Mousavi-Chapoy-Burgass KCl salt-free dissolved CO2 | 26 |
 | Mousavi-Chapoy-Burgass four-salt Table A24 holdout | 18 |
 | Mousavi-Chapoy-Burgass dense pure-water and NaCl series | 34 |
+| Liu independent low-salinity pure-water and NaCl series | 48 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
 | Carroll evaluated salt-free CO2, three setup constructions | 57 |
 | Full Dholabhai family, all supported measured recipes | 110 |
 | Matched measured-state aqueous/guest partition, same Dholabhai recipes | 110 |
 
-The combined bundle has 458 diagnostic rows, not 458 independent measurements.
+The combined bundle has 506 diagnostic rows, not 506 independent measurements.
 The two 110-row assessments deliberately use the same 110 measured endpoints.
 
 The manifest records the actual checkout commit separately from the GitHub
@@ -523,7 +524,7 @@ complete evidence. Outputs from unselected tests and unrelated files under
 `target/` are not collected.
 
 `selected_evidence_complete` applies only to the selected assessments in that
-shard, not the full twelve-assessment matrix or the rest of CI. A shard with no selected
+shard, not the full thirteen-assessment matrix or the rest of CI. A shard with no selected
 assessment has a count of zero. Check every producer across all shards and the
 original test results before using a combined matrix. Every manifest keeps
 `qualification` as `not_assessed`: artifact retention and structural validation
@@ -557,6 +558,8 @@ compensated here.
   [DOI 10.1021/acs.iecr.5c00134](https://doi.org/10.1021/acs.iecr.5c00134), equation 22.
 - Mousavi, Chapoy and Burgass (2024), *Greenhouse Gases: Science and Technology* 14, 791-828,
   [DOI 10.1002/ghg.2298](https://doi.org/10.1002/ghg.2298), Tables 5 and A11-A13/A24, CC BY 4.0.
+- Liu et al. (2021), *Energies* 14, 7222,
+  [DOI 10.3390/en14217222](https://doi.org/10.3390/en14217222), supplementary CSV, CC BY 4.0.
 - Mousavi Belfeh Teymouri (2017), *Phase equilibria measurements and modelling of CO2-rich fluids/brine systems*,
   Heriot-Watt University, [handle 10399/3409](http://hdl.handle.net/10399/3409), Chapter 3 section 3.2.1.
 
@@ -742,3 +745,30 @@ product matrix excludes slow assessments, while the required slow matrix runs
 on the modern JDK. No value from the rejected Java 8 state contributes to the
 AAD or decomposition summaries above; the result is retained as a solver-
 portability boundary rather than hidden by a relaxed tolerance.
+
+
+## Independent low-salinity NaCl discriminator
+
+Liu et al. (2021) provide an independent potentiometric-titration source family for distilled water and NaCl brines at
+298-373 K and pressures through 20 MPa. The article and supplement are CC BY 4.0. The article reports 553 total points,
+while the supplied CSV contains 554 data rows; that source-record discrepancy is retained explicitly. The present
+fixture uses only distilled-water and NaCl blocks, so the duplicated CaCl2 portion cannot affect it.
+
+`LowSalinityNaClCO2SolubilityLiu2021AssessmentTest` fixes a 48-row subset before model execution: four temperatures,
+distilled water plus 1000/10000/15000 mass ppm NaCl, and the second, sixth and ninth common pressure positions
+(20.4/102.0/170.1 atm). It excludes the near-atmospheric points, where the source reports its largest relative method
+error, and the uneven 200 atm endpoint. Source errors of 0.9-7.8% are study-level method errors, not pointwise accuracy
+tolerances.
+
+The source observable is mol CO2 per kilogram of titrated solution. The model mapping includes aqueous water, NaCl and
+dissolved CO2 mass in that denominator. Each salt state is paired with the independently measured and modeled pure-water
+state at the same temperature and pressure. The report retains source/model apparent salt effects, water activity,
+CO2-rich-phase fugacity, the exact dissolved-CO2 contribution identity, component closure and constrained-root checks at
+the four 15000 ppm/170.1 atm endpoints.
+
+These low-salinity states test the first-order NaCl response independently of the dense Mousavi-Chapoy-Burgass source.
+They do not identify high-concentration curvature. Electroneutral NaCl data identify only the salt-level combinations
+`Wk_Na + Wk_Cl` for each temperature-polynomial coefficient; they cannot allocate individual Na+ and Cl- terms. They also
+cannot separate CPA binary interactions from Furst short-range `Wij` terms without layer-isolation controls. No
+coefficient is fitted or selected here. Table A24 and all hydrate measurements remain frozen holdouts. See the
+[source and selection notes](../../src/test/resources/data/chemistry_benchmarks/co2_water_nacl_solubility_liu2021.md).
