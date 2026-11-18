@@ -11,9 +11,9 @@ import neqsim.process.util.fire.ReliefValveSizing;
  * Result of an {@link OverpressureProtectionStudy} evaluation for one protected item.
  *
  * <p>
- * The result records the governing relief scenario (largest credible relief rate), the full set of documented
- * scenarios, the pressure relief device sizing for the governing case, whether the selected standard orifice has
- * adequate capacity, and the accumulated-pressure acceptance check.
+ * The result records the governing relief scenario (largest required area), the full set of documented scenarios, the
+ * pressure relief device sizing for the governing case, whether the selected standard orifice has adequate capacity,
+ * and the accumulated-pressure acceptance check.
  * </p>
  *
  * @author ESOL
@@ -25,6 +25,7 @@ public final class OverpressureStudyResult implements Serializable {
   private final ProtectedItem item;
   private final ReliefScenario governingScenario;
   private final List<ReliefScenario> scenarios;
+  private final List<OverpressureStudyResult> scenarioResults;
   private final double requiredAreaM2;
   private final double requiredAreaIn2;
   private final String recommendedOrifice;
@@ -55,6 +56,7 @@ public final class OverpressureStudyResult implements Serializable {
       double requiredAreaM2, double requiredAreaIn2, String recommendedOrifice, double selectedAreaIn2,
       double selectedOrificeCapacityKgPerS, boolean capacityAdequate, AcceptanceResult acceptance,
       List<String> warnings, ReliefValveSizing.PSVSizingResult sizingResult) {
+    this.scenarioResults = Collections.emptyList();
     this.item = item;
     this.governingScenario = governingScenario;
     this.scenarios = Collections.unmodifiableList(new ArrayList<ReliefScenario>(scenarios));
@@ -70,6 +72,62 @@ public final class OverpressureStudyResult implements Serializable {
   }
 
   /**
+   * Creates the aggregate with a complete governing size only when every credible demand could be sized.
+   * 
+   * @param item protected equipment
+   * @param scenarios documented cases, including exclusions
+   * @param cases individual sizing results in declaration order
+   * @param governing largest area result, or null for an incomplete study
+   * @param warnings scenario-labelled findings
+   */
+  OverpressureStudyResult(ProtectedItem item, List<ReliefScenario> scenarios, List<OverpressureStudyResult> cases,
+      OverpressureStudyResult governing, List<String> warnings) {
+    this.item = item;
+    this.scenarios = Collections.unmodifiableList(new ArrayList<ReliefScenario>(scenarios));
+    this.scenarioResults = Collections.unmodifiableList(new ArrayList<OverpressureStudyResult>(cases));
+    this.warnings = Collections.unmodifiableList(new ArrayList<String>(warnings));
+    governingScenario = governing == null ? null : governing.governingScenario;
+    requiredAreaM2 = governing == null ? Double.NaN : governing.requiredAreaM2;
+    requiredAreaIn2 = governing == null ? Double.NaN : governing.requiredAreaIn2;
+    recommendedOrifice = governing == null ? null : governing.recommendedOrifice;
+    selectedAreaIn2 = governing == null ? Double.NaN : governing.selectedAreaIn2;
+    selectedOrificeCapacityKgPerS = governing == null ? Double.NaN : governing.selectedOrificeCapacityKgPerS;
+    capacityAdequate = governing != null && governing.capacityAdequate;
+    acceptance = governing == null ? null : governing.acceptance;
+    sizingResult = governing == null ? null : governing.sizingResult;
+  }
+
+  /** @return individual sizing attempts, empty for a historical result or a single-case detail */
+  public List<OverpressureStudyResult> getScenarioResults() {
+    return scenarioResults == null ? Collections.<OverpressureStudyResult>emptyList() : scenarioResults;
+  }
+
+  /** @return credible positive scenario with the largest mass load for disposal screening, or null */
+  public ReliefScenario getMaximumLoadScenario() {
+    return maximumLoad(scenarios);
+  }
+
+  /**
+   * @param candidates documented scenarios
+   * @return first credible scenario at maximum positive mass rate, or null for unknown or absent load
+   */
+  static ReliefScenario maximumLoad(List<ReliefScenario> candidates) {
+    ReliefScenario largest = null;
+    for (ReliefScenario candidate : candidates) {
+      if (candidate.isCredible()) {
+        double rate = candidate.getReliefRateKgPerS();
+        if (!Double.isFinite(rate) || rate < 0.0) {
+          return null;
+        }
+        if (rate > 0.0 && (largest == null || rate > largest.getReliefRateKgPerS())) {
+          largest = candidate;
+        }
+      }
+    }
+    return largest;
+  }
+
+  /**
    * Gets the protected item.
    *
    * @return the protected item
@@ -81,7 +139,7 @@ public final class OverpressureStudyResult implements Serializable {
   /**
    * Gets the governing (worst-case) relief scenario.
    *
-   * @return the governing scenario, or null when no credible scenario exists
+   * @return the governing scenario, or null when there is no complete study-wide size
    */
   public ReliefScenario getGoverningScenario() {
     return governingScenario;
@@ -184,6 +242,13 @@ public final class OverpressureStudyResult implements Serializable {
    * @return JSON representation of this result
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
+    com.google.gson.Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    com.google.gson.JsonObject record = gson.toJsonTree(this).getAsJsonObject();
+    ReliefScenario load = getMaximumLoadScenario();
+    if (load != null) {
+      record.addProperty("maximumLoadScenarioName", load.getName());
+      record.addProperty("maximumLoadKgPerS", load.getReliefRateKgPerS());
+    }
+    return gson.toJson(record);
   }
 }

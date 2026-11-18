@@ -184,19 +184,24 @@ public class DynamicPsvSizingStudy implements Serializable {
       z = 1.0;
     }
 
-    double allowablePressurePa = setPressurePa * (1.0 + overpressureFraction);
+    double allowablePressurePa = ReliefValveSizing.relievingPressurePa(setPressurePa, overpressureFraction);
 
     // --- Steady-state API 521 required area for the peak fire vapour rate ---
     double steadyReliefRate = fireHeatInputW / latentHeat;
+    SizingComparison result = new SizingComparison();
+    result.allowablePressurePa = allowablePressurePa;
+    result.steadyReliefRateKgPerS = steadyReliefRate;
+    result.timeStepSeconds = timeStep;
+    if (!Double.isFinite(allowablePressurePa) || !Double.isFinite(backPressurePa)
+        || backPressurePa >= allowablePressurePa) {
+      result.terminationReason = "No positive forward pressure differential at the allowable limit";
+      return result;
+    }
     ReliefValveSizing.PSVSizingResult steady = ReliefValveSizing.calculateRequiredArea(steadyReliefRate, setPressurePa,
         overpressureFraction, backPressurePa, tRelief, mw, z, gamma, false, false);
     double steadyAreaM2 = steady.getRequiredArea();
 
-    SizingComparison result = new SizingComparison();
-    result.allowablePressurePa = allowablePressurePa;
-    result.steadyReliefRateKgPerS = steadyReliefRate;
     result.steadyRequiredAreaM2 = steadyAreaM2;
-    result.timeStepSeconds = timeStep;
 
     // Locate a passing trajectory before refining. A large trial can empty the inventory
     // in one integration step even when a smaller valve is numerically well resolved.
@@ -350,7 +355,7 @@ public class DynamicPsvSizingStudy implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** Steady-state API 521 required orifice area in m². */
-    public double steadyRequiredAreaM2;
+    public double steadyRequiredAreaM2 = Double.NaN;
     /** Dynamically required orifice area in m². */
     public double dynamicRequiredAreaM2 = Double.NaN;
     /**

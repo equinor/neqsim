@@ -171,6 +171,58 @@ public class OverpressureProtectionStudyTest {
     OverpressureProtectionStudy study = new OverpressureProtectionStudy(item).addScenario(fire);
     OverpressureStudyResult result = study.evaluate();
     assertEquals(ReliefCause.FIRE, result.getGoverningScenario().getCause());
-    assertEquals(60.0 * 1.21, result.getAcceptance().getAllowableAccumulatedPressureBara(), 1.0e-9);
+    assertEquals(60.0 + (60.0 - 1.01325) * 0.21, result.getAcceptance().getAllowableAccumulatedPressureBara(), 1.0e-9);
   }
+
+  /** A lower-rate, light gas can control the required area while a heavier stream controls mass load. */
+  @Test
+  public void lighterGasCanControlValveArea() {
+    ProtectedItem vessel = new ProtectedItem("V-101", 50.0);
+    ReliefScenario heavy = new ReliefScenario.Builder("Heavy", ReliefCause.BLOCKED_OUTLET).reliefRateKgPerS(2.0)
+        .reliefTemperatureK(300.0).molarMassKgPerMol(0.032).build();
+    ReliefScenario light = new ReliefScenario.Builder("Light", ReliefCause.CONTROL_VALVE_FAILURE).reliefRateKgPerS(1.5)
+        .reliefTemperatureK(300.0).molarMassKgPerMol(0.008).build();
+    OverpressureStudyResult result = new OverpressureProtectionStudy(vessel).addScenario(heavy).addScenario(light)
+        .evaluate();
+    assertEquals(light, result.getGoverningScenario());
+    assertEquals(1.5 * new OverpressureProtectionStudy(vessel).addScenario(heavy).evaluate().getRequiredAreaM2(),
+        result.getRequiredAreaM2(), 1e-12);
+    assertEquals(2.0, new ReliefDisposalNetwork("Header").addRelief(result).calculate().getTotalSimultaneousKgPerS(),
+        1e-12);
+  }
+
+  /** Unknown properties leave the valve unresolved but preserve the known disposal load. */
+  @Test
+  public void incompleteCaseCannotBeHiddenByAnotherScenario() {
+    ProtectedItem item = new ProtectedItem("V-10", 30.0);
+    ReliefScenario known = new ReliefScenario.Builder("Known", ReliefCause.BLOCKED_OUTLET).reliefRateKgPerS(2.0)
+        .reliefTemperatureK(300.0).molarMassKgPerMol(0.020).build();
+    ReliefScenario unknown = new ReliefScenario.Builder("Unknown", ReliefCause.FIRE).reliefRateKgPerS(1.0).build();
+    OverpressureStudyResult result = new OverpressureProtectionStudy(item).addScenario(known).addScenario(unknown)
+        .evaluate();
+    assertFalse(result.isCapacityAdequate());
+    assertTrue(Double.isNaN(result.getRequiredAreaM2()));
+    assertEquals(known, result.getMaximumLoadScenario());
+    assertEquals(2, result.getScenarioResults().size());
+    assertTrue(result.getScenarioResults().get(0).getRequiredAreaM2() > 0.0);
+    assertTrue(result.getWarnings().get(0).contains("Unknown"));
+  }
+
+  /** Equal-area cases preserve declaration order and excluded high-rate cases cannot govern. */
+  @Test
+  public void tiesAndExclusionsAreDeterministic() {
+    ReliefScenario first = new ReliefScenario.Builder("First", ReliefCause.OTHER).reliefRateKgPerS(2.0)
+        .reliefTemperatureK(300.0).molarMassKgPerMol(0.020).build();
+    ReliefScenario second = new ReliefScenario.Builder("Second", ReliefCause.BLOCKED_OUTLET).reliefRateKgPerS(2.0)
+        .reliefTemperatureK(300.0).molarMassKgPerMol(0.020).build();
+    ReliefScenario excluded = new ReliefScenario.Builder("Excluded", ReliefCause.FIRE).reliefRateKgPerS(100.0)
+        .credible(false).build();
+    OverpressureStudyResult result = new OverpressureProtectionStudy(new ProtectedItem("V-10", 30.0))
+        .addScenario(excluded).addScenario(first).addScenario(second).evaluate();
+    assertEquals(first, result.getGoverningScenario());
+    assertEquals(first, result.getMaximumLoadScenario());
+    assertEquals(3, result.getScenarios().size());
+    assertEquals(2, result.getScenarioResults().size());
+  }
+
 }

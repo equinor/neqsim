@@ -23,6 +23,7 @@ public class Api14cSafeChartItem implements Serializable {
   private final Set<Api14cDeviceType> required;
   private final Set<Api14cDeviceType> present;
   private final Set<Api14cDeviceType> missing;
+  private String deviceBasis = "DECLARED";
 
   /**
    * Creates a SAFE-chart row.
@@ -44,6 +45,26 @@ public class Api14cSafeChartItem implements Serializable {
     Set<Api14cDeviceType> miss = new LinkedHashSet<Api14cDeviceType>(required);
     miss.removeAll(present);
     this.missing = Collections.unmodifiableSet(miss);
+  }
+
+  /**
+   * Creates a template row that assumes every screening device is present.
+   * 
+   * @param equipmentName equipment tag
+   * @param category screening category
+   * @param required screening device set
+   * @return a template row marked with the source of its device list
+   */
+  static Api14cSafeChartItem assumedTemplate(String equipmentName, Api14cEquipmentCategory category,
+      Set<Api14cDeviceType> required) {
+    Api14cSafeChartItem row = new Api14cSafeChartItem(equipmentName, category, required, required);
+    row.deviceBasis = "ASSUMED_TEMPLATE";
+    return row;
+  }
+
+  /** @return provenance of the displayed device list, or UNKNOWN for a historical row */
+  public String getDeviceBasis() {
+    return deviceBasis == null ? "UNKNOWN" : deviceBasis;
   }
 
   /**

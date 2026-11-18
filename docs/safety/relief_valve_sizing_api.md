@@ -128,8 +128,8 @@ The current implementation gives approximately:
 | --- | ---: |
 | Gas required area and selected standard orifice | $6.74\times10^{-5}$ m²; D |
 | Liquid required area and selected standard orifice | $2.71\times10^{-4}$ m²; G |
-| Two-phase required area | $5.88\times10^{-5}$ m² |
-| Fire heat input for 80 m² with drainage | 1570 kW |
+| Two-phase required area | $5.89\times10^{-5}$ m² |
+| Fire heat input for 80 m² with adequate drainage and prompt firefighting | 1570 kW |
 
 These values are regression examples for the stated inputs, not recommended design cases.
 
@@ -192,16 +192,45 @@ applicable two-phase scenario, or qualify homogeneous-equilibrium assumptions.
 ## Wetted-surface fire heat input
 
 Call `calculateAPI521FireHeatInput(wettedAreaM2, hasDrainage, hasFireFighting)` with all three arguments. The current
-implementation uses a fixed environmental factor of 1.0 and branches on `hasDrainage`, giving approximately
+implementation uses a fixed environmental factor of 1.0 and gives approximately
 
 $$Q=43192A_w^{0.82}\ \mathrm{W}$$
 
-with drainage, and
+when adequate drainage and prompt firefighting are both credited, and
 
 $$Q=70959A_w^{0.82}\ \mathrm{W}$$
 
-without drainage, for $A_w$ in m². The `hasFireFighting` argument is currently retained in the public signature but
-does not change the numerical factor. Do not infer a firefighting credit from that boolean.
+when either credit is absent, for $A_w$ in m². At 80 m² this gives 1.570 MW and 2.580 MW respectively.
+In previous versions the lower coefficient depended on drainage alone. Recalculate historical fire loads where
+prompt firefighting was unavailable. New `FireCaseRelief` instances require explicit credit for both conditions.
+
+## Sizing a valve shared by several relief cases
+
+`OverpressureProtectionStudy.evaluate()` calculates the required area for each credible demand using its own phase,
+rate and relieving properties. Access the per-case areas, assumptions, pressure checks and warnings through
+`getScenarioResults()`. The original case register retains exclusions. The largest required area selects the valve.
+Equal areas retain declaration order. A credible entry with a zero or invalid rate or missing required properties
+leaves the overall size unresolved. Document an excluded case explicitly when no relief demand applies.
+
+`getGoverningScenario()` on the evaluated result identifies the orifice-sizing case.
+`getMaximumLoadScenario()` identifies the maximum mass rate for disposal. The legacy
+`governingScenario()` on the study itself remains a mass-load lookup. Re-run historical serialized studies
+to obtain per-case evidence. The disposal rate still needs a project concurrency basis and network hydraulics.
+
+For two gases at 50 bara set pressure, 300 K, $Z=1$ and $k=1.3$, 2 kg/s at 0.032 kg/mol requires 0.242 in²,
+while 1.5 kg/s at 0.008 kg/mol requires 0.363 in². These cases share 10% overpressure and atmospheric backpressure.
+The second controls the orifice. The first supplies the maximum individual disposal load.
+
+The set pressure and MAWP inputs are absolute. The screening methods apply percentage overpressure and accumulation
+to gauge pressure relative to 1.01325 bara. For instance, a set pressure of 11.01325 bara and 10% overpressure
+give 12.01325 bara relieving pressure. Earlier helper versions multiplied absolute pressure directly.
+The accumulation check uses the assumed relieving pressure. An independent transient run is needed to establish the
+actual peak. Check the governing construction code for low-pressure allowances and staggered device settings.
+
+The installed-device section in the engineering calculation report checks each credible demand against the selected
+area and project piping-loss limits. It uses scenario mass flow and a fixed Darcy friction factor of 0.02.
+It records the gauge set-pressure denominator and relieving density. Rated-flow installation checks, certified
+valve data and local header backpressure require separate substantiation.
 
 ## Engineering limits
 

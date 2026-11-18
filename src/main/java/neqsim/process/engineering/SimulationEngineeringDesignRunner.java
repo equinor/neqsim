@@ -89,25 +89,22 @@ public final class SimulationEngineeringDesignRunner {
     JsonArray reliefResults = new JsonArray();
     Set<String> explicitlyStudiedTags = new HashSet<String>();
     Map<String, Set<ReliefCause>> successfullyEvaluatedReliefCauses = new LinkedHashMap<String, Set<ReliefCause>>();
+    Map<String, OverpressureStudyResult> evaluatedStudies = new LinkedHashMap<String, OverpressureStudyResult>();
     for (OverpressureProtectionStudy study : project.getOverpressureStudies()) {
-      explicitlyStudiedTags.add(study.getItem().getName());
+      boolean unique = explicitlyStudiedTags.add(study.getItem().getName());
       try {
         OverpressureStudyResult studyResult = study.evaluate();
+        evaluatedStudies.put(study.getItem().getName(), unique ? studyResult : null);
         addReliefResult(reliefResults, studyResult, "PROJECT_DEFINED_SCENARIOS");
-        if (!Double.isFinite(studyResult.getRequiredAreaM2())) {
-          continue;
-        }
-        Set<ReliefCause> causes = successfullyEvaluatedReliefCauses.get(study.getItem().getName());
-        if (causes == null) {
-          causes = new LinkedHashSet<ReliefCause>();
-          successfullyEvaluatedReliefCauses.put(study.getItem().getName(), causes);
-        }
-        for (ReliefScenario scenario : study.getScenarios()) {
-          if (hasCompleteReliefScenarioCalculationBasis(scenario)) {
-            causes.add(scenario.getCause());
+        Set<ReliefCause> causes = successfullyEvaluatedReliefCauses.computeIfAbsent(study.getItem().getName(),
+            key -> new LinkedHashSet<ReliefCause>());
+        for (OverpressureStudyResult evaluated : studyResult.getScenarioResults()) {
+          if (Double.isFinite(evaluated.getRequiredAreaM2()) && evaluated.getRequiredAreaM2() > 0.0) {
+            causes.add(evaluated.getGoverningScenario().getCause());
           }
         }
       } catch (Exception ex) {
+        evaluatedStudies.remove(study.getItem().getName());
         reliefResults.add(calculationFailure(study.getItem().getName(), "RELIEF_STUDY", ex));
       }
     }
@@ -116,9 +113,10 @@ public final class SimulationEngineeringDesignRunner {
     root.add("overpressureAndPsvSizing", reliefResults);
     JsonArray reliefCoverage = calculateReliefCoverage(project, successfullyEvaluatedReliefCauses);
     root.add("reliefScenarioCoverage", reliefCoverage);
-    JsonArray reliefDeviceResults = calculateInstalledReliefDevices(project);
+    JsonArray reliefDeviceResults = calculateInstalledReliefDevices(project, evaluatedStudies);
     root.add("installedReliefDeviceVerification", reliefDeviceResults);
-    root.add("reliefDisposalNetworkLoads", calculateReliefDisposalLoads(project));
+    root.add("reliefDisposalNetworkLoads", calculateReliefDisposalLoads(project, evaluatedStudies));
+    root.add("apiRp14cProtectionReview", Api14cProtectionReview.build(project, reliefDeviceResults, shutdownResults));
 
     JsonArray blowdownResults = new JsonArray();
     for (DynamicBlowdownFlareStudyDataSource input : project.getBlowdownFlareStudies()) {
@@ -161,27 +159,11 @@ public final class SimulationEngineeringDesignRunner {
     root.add("readinessSummary", readinessSummary(readiness));
     root.add("engineeringCoverageMatrix", GSON.toJsonTree(EngineeringCoverageMatrix.evaluate(project)));
     root.add("engineeringEvidenceStatus", calculateEvidenceStatus(project));
-    root.add("unresolvedEngineering", unresolvedEngineering(project, reliefCoverage, blowdownResults));
+    root.add("unresolvedEngineering",
+        unresolvedEngineering(project, reliefCoverage, blowdownResults, reliefDeviceResults));
     root.add("governance", governance());
     return new SimulationEngineeringDesignReport(root, calculatedEquipmentCount, reliefResults.size(),
         blowdownResults.size());
-  }
-
-  private static boolean hasCompleteReliefScenarioCalculationBasis(ReliefScenario scenario) {
-    if (scenario == null || !scenario.isCredible() || scenario.getCause() == null
-        || !(scenario.getReliefRateKgPerS() > 0.0)) {
-      return false;
-    }
-    if (scenario.getPhase() == ReliefPhase.VAPOUR) {
-      return scenario.getReliefTemperatureK() > 0.0 && scenario.getMolarMassKgPerMol() > 0.0
-          && scenario.getCompressibility() > 0.0 && scenario.getSpecificHeatRatio() > 1.0;
-    }
-    if (scenario.getPhase() == ReliefPhase.TWO_PHASE) {
-      return scenario.getGasMassFraction() >= 0.0 && scenario.getGasMassFraction() <= 1.0
-          && scenario.getGasDensityKgPerM3() > 0.0 && scenario.getLiquidDensityKgPerM3() > 0.0
-          && scenario.getLatentHeatJPerKg() > 0.0 && scenario.getLiquidHeatCapacityJPerKgK() > 0.0;
-    }
-    return scenario.getDensityKgPerM3() > 0.0 || scenario.getLiquidDensityKgPerM3() > 0.0;
   }
 
   private static int calculateMechanicalDesigns(EngineeringProject project, JsonArray results) {
@@ -380,80 +362,107 @@ public final class SimulationEngineeringDesignRunner {
     return results;
   }
 
-  private static JsonArray calculateInstalledReliefDevices(EngineeringProject project) {
+  private static JsonArray calculateInstalledReliefDevices(EngineeringProject project,
+      Map<String, OverpressureStudyResult> studies) {
     JsonArray results = new JsonArray();
     for (ReliefDeviceDesignInput input : project.getReliefDeviceDesignInputs()) {
       JsonObject item = GSON.toJsonTree(input.toMap()).getAsJsonObject();
-      OverpressureStudyResult studyResult = findReliefStudyResult(project, input.getEquipmentTag());
-      if (studyResult == null || studyResult.getGoverningScenario() == null) {
+      OverpressureStudyResult studyResult = studies.get(input.getEquipmentTag());
+      if (studyResult == null) {
         item.addProperty("status", "NOT_CALCULATED_MATCHING_RELIEF_STUDY_REQUIRED");
         results.add(item);
         continue;
       }
-      ReliefScenario scenario = studyResult.getGoverningScenario();
-      item.addProperty("governingScenario", scenario.getName());
-      item.addProperty("relievingPhase", scenario.getPhase().name());
-      if (scenario.getPhase() == neqsim.process.safety.overpressure.ReliefPhase.TWO_PHASE
-          && "NOT_APPLICABLE_OR_NOT_DEFINED".equals(input.getTwoPhaseMethod())) {
-        item.addProperty("status", "NOT_CALCULATED_TWO_PHASE_METHOD_REQUIRED");
-        results.add(item);
-        continue;
+      JsonArray cases = new JsonArray();
+      boolean accepted = studyResult.getGoverningScenario() != null;
+      for (OverpressureStudyResult evaluated : studyResult.getScenarioResults()) {
+        JsonObject row = installedCase(input, evaluated);
+        cases.add(row);
+        accepted &= "INSTALLED_RELIEF_SCREEN_ACCEPTED_REVIEW_REQUIRED".equals(row.get("status").getAsString());
+        if (evaluated.getGoverningScenario() == studyResult.getGoverningScenario()) {
+          for (Map.Entry<String, JsonElement> field : row.entrySet()) {
+            item.add(field.getKey(), field.getValue());
+          }
+        }
       }
-      double density = relievingDensity(scenario, studyResult.getItem().getReliefSetPressureBara());
-      if (!Double.isFinite(density) || density <= 0.0 || !input.getMissingFields().isEmpty()) {
-        item.addProperty("status", "NOT_CALCULATED_INCOMPLETE_INSTALLED_BASIS");
-        item.addProperty("relievingDensityKgPerM3", density);
-        results.add(item);
-        continue;
-      }
-      double inletLossBara = pipingPressureLossBara(scenario.getReliefRateKgPerS(), density, input.getInletDiameterM(),
-          input.getInletLengthM(), input.getInletResistanceCoefficient());
-      double outletLossBara = pipingPressureLossBara(scenario.getReliefRateKgPerS(), density,
-          input.getOutletDiameterM(), input.getOutletLengthM(), input.getOutletResistanceCoefficient());
-      double setPressure = studyResult.getItem().getReliefSetPressureBara();
-      double inletPercent = setPressure > 0.0 ? 100.0 * inletLossBara / setPressure : Double.NaN;
-      double outletPercent = setPressure > 0.0 ? 100.0 * outletLossBara / setPressure : Double.NaN;
-      boolean areaAdequate = input.getSelectedOrificeAreaIn2() >= studyResult.getRequiredAreaIn2();
-      boolean inletAdequate = inletPercent <= input.getAllowableInletLossPercent();
-      boolean outletAdequate = outletPercent <= input.getAllowableBuiltUpBackPressurePercent();
-      item.addProperty("requiredAreaIn2", studyResult.getRequiredAreaIn2());
-      item.addProperty("selectedAreaAdequate", areaAdequate);
-      item.addProperty("relievingDensityKgPerM3", density);
-      item.addProperty("estimatedInletLossBara", inletLossBara);
-      item.addProperty("estimatedInletLossPercentSetPressure", inletPercent);
-      item.addProperty("inletLossAcceptable", inletAdequate);
-      item.addProperty("estimatedBuiltUpBackPressureBara", outletLossBara);
-      item.addProperty("estimatedBuiltUpBackPressurePercentSetPressure", outletPercent);
-      item.addProperty("builtUpBackPressureAcceptable", outletAdequate);
+      item.add("scenarioChecks", cases);
       item.addProperty("status",
-          areaAdequate && inletAdequate && outletAdequate ? "INSTALLED_RELIEF_SCREEN_ACCEPTED_REVIEW_REQUIRED"
-              : "INSTALLED_RELIEF_SCREEN_NOT_ACCEPTED");
-      item.addProperty("method", "STEADY_DARCY_WEISBACH_SCREEN_FRICTION_FACTOR_0_02");
-      item.addProperty("applicabilityNote",
-          "Screening estimate only. Confirm compressible/two-phase pressure drop, "
-              + "reaction forces, acoustic effects, allowable backpressure and disposal-header hydraulics in the "
-              + "approved relief-system design.");
+          accepted ? "INSTALLED_RELIEF_SCREEN_ACCEPTED_REVIEW_REQUIRED" : "INSTALLED_RELIEF_SCREEN_NOT_ACCEPTED");
       results.add(item);
     }
     return results;
   }
 
-  private static OverpressureStudyResult findReliefStudyResult(EngineeringProject project, String equipmentTag) {
-    for (OverpressureProtectionStudy study : project.getOverpressureStudies()) {
-      if (equipmentTag.equals(study.getItem().getName())) {
-        try {
-          return study.evaluate();
-        } catch (Exception ex) {
-          return null;
-        }
-      }
+  /**
+   * Calculates the installed area and piping losses for one demand.
+   * 
+   * @param input device data sheet and line geometry
+   * @param studyResult single scenario calculation
+   * @return case-specific screening record
+   */
+  private static JsonObject installedCase(ReliefDeviceDesignInput input, OverpressureStudyResult studyResult) {
+    JsonObject item = new JsonObject();
+    ReliefScenario scenario = studyResult.getGoverningScenario();
+    item.addProperty("governingScenario", scenario.getName());
+    if (!Double.isFinite(studyResult.getRequiredAreaIn2()) || studyResult.getRequiredAreaIn2() <= 0.0) {
+      item.addProperty("status", "NOT_CALCULATED_INCOMPLETE_SIZING_BASIS");
+      return item;
     }
-    return null;
+    item.addProperty("relievingPhase", scenario.getPhase().name());
+    if (scenario.getPhase() == neqsim.process.safety.overpressure.ReliefPhase.TWO_PHASE
+        && "NOT_APPLICABLE_OR_NOT_DEFINED".equals(input.getTwoPhaseMethod())) {
+      item.addProperty("status", "NOT_CALCULATED_TWO_PHASE_METHOD_REQUIRED");
+      return item;
+    }
+    double density = relievingDensity(scenario, studyResult.getAcceptance().getPeakPressureBara());
+    if (!Double.isFinite(density) || density <= 0.0 || !input.getMissingFields().isEmpty()) {
+      item.addProperty("status", "NOT_CALCULATED_INCOMPLETE_INSTALLED_BASIS");
+      item.addProperty("relievingDensityKgPerM3", density);
+      return item;
+    }
+    double inletLossBara = pipingPressureLossBara(scenario.getReliefRateKgPerS(), density, input.getInletDiameterM(),
+        input.getInletLengthM(), input.getInletResistanceCoefficient());
+    double outletLossBara = pipingPressureLossBara(scenario.getReliefRateKgPerS(), density, input.getOutletDiameterM(),
+        input.getOutletLengthM(), input.getOutletResistanceCoefficient());
+    double setPressure = studyResult.getItem().getReliefSetPressureBara()
+        - neqsim.thermo.ThermodynamicConstantsInterface.referencePressure;
+    item.addProperty("setPressureBarg", setPressure);
+    item.addProperty("pipingFlowBasis", "REQUIRED_SCENARIO_MASS_FLOW");
+    double inletPercent = setPressure > 0.0 ? 100.0 * inletLossBara / setPressure : Double.NaN;
+    double outletPercent = setPressure > 0.0 ? 100.0 * outletLossBara / setPressure : Double.NaN;
+    boolean areaAdequate = input.getSelectedOrificeAreaIn2() >= studyResult.getRequiredAreaIn2();
+    boolean inletAdequate = inletPercent <= input.getAllowableInletLossPercent();
+    boolean outletAdequate = outletPercent <= input.getAllowableBuiltUpBackPressurePercent();
+    item.addProperty("requiredAreaIn2", studyResult.getRequiredAreaIn2());
+    item.addProperty("selectedAreaAdequate", areaAdequate);
+    item.addProperty("relievingDensityKgPerM3", density);
+    item.addProperty("estimatedInletLossBara", inletLossBara);
+    item.addProperty("estimatedInletLossPercentSetPressure", inletPercent);
+    item.addProperty("inletLossAcceptable", inletAdequate);
+    item.addProperty("estimatedBuiltUpBackPressureBara", outletLossBara);
+    item.addProperty("estimatedBuiltUpBackPressurePercentSetPressure", outletPercent);
+    item.addProperty("builtUpBackPressureAcceptable", outletAdequate);
+    item.addProperty("status",
+        areaAdequate && inletAdequate && outletAdequate ? "INSTALLED_RELIEF_SCREEN_ACCEPTED_REVIEW_REQUIRED"
+            : "INSTALLED_RELIEF_SCREEN_NOT_ACCEPTED");
+    item.addProperty("method", "STEADY_DARCY_WEISBACH_SCREEN_FRICTION_FACTOR_0_02");
+    item.addProperty("applicabilityNote",
+        "Screening estimate only. Confirm compressible/two-phase pressure drop, "
+            + "reaction forces, acoustic effects, allowable backpressure and disposal-header hydraulics in the "
+            + "approved relief-system design.");
+    return item;
   }
 
   private static double relievingDensity(ReliefScenario scenario, double pressureBara) {
     if (Double.isFinite(scenario.getDensityKgPerM3()) && scenario.getDensityKgPerM3() > 0.0) {
       return scenario.getDensityKgPerM3();
+    }
+    if (scenario.getPhase() == ReliefPhase.LIQUID) {
+      return scenario.getLiquidDensityKgPerM3();
+    }
+    if (scenario.getPhase() == ReliefPhase.TWO_PHASE) {
+      return 1.0 / (scenario.getGasMassFraction() / scenario.getGasDensityKgPerM3()
+          + (1.0 - scenario.getGasMassFraction()) / scenario.getLiquidDensityKgPerM3());
     }
     if (Double.isFinite(scenario.getGasDensityKgPerM3()) && scenario.getGasDensityKgPerM3() > 0.0) {
       return scenario.getGasDensityKgPerM3();
@@ -475,29 +484,30 @@ public final class SimulationEngineeringDesignRunner {
     return lossCoefficient * densityKgPerM3 * velocity * velocity / 2.0 / 1.0e5;
   }
 
-  private static JsonArray calculateReliefDisposalLoads(EngineeringProject project) {
+  private static JsonArray calculateReliefDisposalLoads(EngineeringProject project,
+      Map<String, OverpressureStudyResult> studies) {
     Map<String, Double> groupLoads = new LinkedHashMap<String, Double>();
     Map<String, List<String>> groupContributors = new LinkedHashMap<String, List<String>>();
     for (ReliefDeviceDesignInput input : project.getReliefDeviceDesignInputs()) {
-      OverpressureStudyResult studyResult = findReliefStudyResult(project, input.getEquipmentTag());
-      if (studyResult == null || studyResult.getGoverningScenario() == null || input.getConcurrencyGroup().isEmpty()) {
+      OverpressureStudyResult studyResult = studies.get(input.getEquipmentTag());
+      if (studyResult == null || studyResult.getMaximumLoadScenario() == null
+          || input.getConcurrencyGroup().isEmpty()) {
         continue;
       }
-      Double load = groupLoads.get(input.getConcurrencyGroup());
-      groupLoads.put(input.getConcurrencyGroup(), Double.valueOf(
-          (load == null ? 0.0 : load.doubleValue()) + studyResult.getGoverningScenario().getReliefRateKgPerS()));
-      List<String> contributors = groupContributors.get(input.getConcurrencyGroup());
-      if (contributors == null) {
-        contributors = new java.util.ArrayList<String>();
-        groupContributors.put(input.getConcurrencyGroup(), contributors);
+      List<String> contributors = groupContributors.computeIfAbsent(input.getConcurrencyGroup(),
+          group -> new java.util.ArrayList<String>());
+      if (contributors.contains(input.getEquipmentTag())) {
+        continue;
       }
+      groupLoads.merge(input.getConcurrencyGroup(), studyResult.getMaximumLoadScenario().getReliefRateKgPerS(),
+          Double::sum);
       contributors.add(input.getEquipmentTag());
     }
     JsonArray results = new JsonArray();
     for (Map.Entry<String, Double> entry : groupLoads.entrySet()) {
       JsonObject item = new JsonObject();
       item.addProperty("concurrencyGroup", entry.getKey());
-      item.addProperty("simultaneousMassFlowKgPerS", entry.getValue().doubleValue());
+      item.addProperty("simultaneousMassFlowKgPerS", entry.getValue());
       item.add("contributors", GSON.toJsonTree(groupContributors.get(entry.getKey())));
       item.addProperty("status", "CALCULATED_LOAD_REVIEW_NETWORK_HYDRAULICS_REQUIRED");
       results.add(item);
@@ -693,6 +703,11 @@ public final class SimulationEngineeringDesignRunner {
     wrapper.addProperty("basis", basis);
     wrapper.addProperty("approvalStatus", "REVIEW_REQUIRED");
     wrapper.add("result", parseJson(result.toJson()));
+    ReliefScenario load = result.getMaximumLoadScenario();
+    if (load != null) {
+      wrapper.addProperty("maximumLoadScenario", load.getName());
+      wrapper.addProperty("maximumLoadKgPerS", load.getReliefRateKgPerS());
+    }
     results.add(wrapper);
   }
 
@@ -914,7 +929,7 @@ public final class SimulationEngineeringDesignRunner {
   }
 
   private static JsonArray unresolvedEngineering(EngineeringProject project, JsonArray reliefCoverage,
-      JsonArray blowdown) {
+      JsonArray blowdown, JsonArray installedDevices) {
     JsonArray gaps = new JsonArray();
     int requiredRelief = sumInt(reliefCoverage, "requiredScenarioCount");
     int evaluatedRelief = sumInt(reliefCoverage, "evaluatedScenarioCount");
@@ -924,10 +939,11 @@ public final class SimulationEngineeringDesignRunner {
               + " hazard-review-required relief scenarios have calculation coverage.",
           "Complete the credible API 521 cause register and evaluate every required scenario."));
     }
-    if (!hasCompleteInstalledReliefDesigns(project)) {
-      gaps.add(
-          gap("INSTALLED_RELIEF_SYSTEM", "No installed PSV or relief-device inlet/outlet piping design was attached.",
-              "Add selected orifice, inlet/outlet geometry, concurrency group and controlled design evidence."));
+    if (installedDevices.size() == 0 || countStatus(installedDevices,
+        "INSTALLED_RELIEF_SCREEN_ACCEPTED_REVIEW_REQUIRED") != installedDevices.size()) {
+      gaps.add(gap("INSTALLED_RELIEF_SYSTEM",
+          "One or more installed-device checks are missing, incomplete or exceed the supplied limits.",
+          "Add selected orifice, inlet/outlet geometry, concurrency group and controlled design evidence."));
     }
     if (blowdown.size() == 0) {
       gaps.add(gap("BLOWDOWN_FLARE_INPUT", "No readiness-gated dynamic blowdown/flare study was attached.",
@@ -1003,18 +1019,6 @@ public final class SimulationEngineeringDesignRunner {
     for (LineDesignInput input : project.getLineDesignInputs()) {
       if (!input.getMissingFields().isEmpty()
           || !(project.getProcessSystem().getUnit(input.getEquipmentTag()) instanceof PipeLineInterface)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean hasCompleteInstalledReliefDesigns(EngineeringProject project) {
-    if (project.getReliefDeviceDesignInputs().isEmpty()) {
-      return false;
-    }
-    for (ReliefDeviceDesignInput input : project.getReliefDeviceDesignInputs()) {
-      if (!input.getMissingFields().isEmpty() || findReliefStudyResult(project, input.getEquipmentTag()) == null) {
         return false;
       }
     }

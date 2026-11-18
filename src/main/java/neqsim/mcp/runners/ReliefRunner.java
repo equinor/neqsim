@@ -283,7 +283,8 @@ public final class ReliefRunner {
 
   private static void validateBackPressure(double setPressureBara, double overpressureFraction,
       double backPressureBara) {
-    double relievingPressureBara = setPressureBara * (1.0 + overpressureFraction);
+    double relievingPressureBara = ReliefValveSizing.relievingPressurePa(setPressureBara * 1e5, overpressureFraction)
+        / 1e5;
     if (backPressureBara >= relievingPressureBara) {
       throw new IllegalArgumentException("backPressure_bara must be below calculated relieving pressure");
     }

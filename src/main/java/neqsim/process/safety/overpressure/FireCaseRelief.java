@@ -12,9 +12,9 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * The fire heat absorption is obtained from
  * {@link ReliefValveSizing#calculateAPI521FireHeatInput(double, boolean, boolean)} as Q = C1 &times; F &times;
- * A<sub>ws</sub><sup>0.82</sup>, where C1 is 21000 BTU/hr&middot;ft<sup>2</sup> with adequate drainage and 34500
- * BTU/hr&middot;ft<sup>2</sup> without. The relief rate is the vapour generation rate Q / h<sub>vap</sub>, where
- * h<sub>vap</sub> is the latent heat of vaporization at the relieving pressure.
+ * A<sub>ws</sub><sup>0.82</sup>, where C1 is 21000 BTU/hr&middot;ft<sup>2</sup> with adequate drainage and prompt
+ * firefighting and 34500 BTU/hr&middot;ft<sup>2</sup> without. The relief rate is the vapour generation rate Q /
+ * h<sub>vap</sub>, where h<sub>vap</sub> is the latent heat of vaporization at the relieving pressure.
  * </p>
  *
  * <p>
@@ -31,8 +31,8 @@ public final class FireCaseRelief {
   private double wettedAreaM2 = Double.NaN;
   private double vesselDiameterM = Double.NaN;
   private double wettedHeightM = Double.NaN;
-  private boolean hasDrainage = true;
-  private boolean hasFireFighting = true;
+  private boolean hasDrainage;
+  private boolean hasFireFighting;
   private double latentHeatJPerKg = Double.NaN;
   private double reliefPressureBara = Double.NaN;
   private double reliefTemperatureK = Double.NaN;
@@ -96,7 +96,7 @@ public final class FireCaseRelief {
   /**
    * Sets whether firefighting facilities are credited.
    *
-   * @param hasFireFighting true if firefighting equipment is available
+   * @param hasFireFighting true if prompt firefighting is credited
    * @return this calculator for chaining
    */
   public FireCaseRelief setHasFireFighting(boolean hasFireFighting) {
@@ -179,8 +179,9 @@ public final class FireCaseRelief {
     double reliefRate = latent > 0.0 ? heatInputW / latent : 0.0;
 
     ReliefScenario.Builder builder = new ReliefScenario.Builder(name, ReliefCause.FIRE).phase(ReliefPhase.VAPOUR)
-        .reliefRateKgPerS(reliefRate).latentHeatJPerKg(latent).addAssumption("Fire heat input per API 521 Table 4 ("
-            + (hasDrainage ? "21000" : "34500") + " BTU/hr/ft^2 basis); relief rate = Q/latent heat");
+        .reliefRateKgPerS(reliefRate).latentHeatJPerKg(latent)
+        .addAssumption("Fire heat input per API 521 Table 4 (" + (hasDrainage && hasFireFighting ? "21000" : "34500")
+            + " BTU/hr/ft^2 basis); relief rate = Q/latent heat");
 
     if (fluid != null) {
       double pres = !Double.isNaN(reliefPressureBara) ? reliefPressureBara : fluid.getPressure("bara");

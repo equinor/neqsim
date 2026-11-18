@@ -98,12 +98,19 @@ public class DynamicPsvSizingStudyTest {
     assertEquals(fine.dynamicRequiredAreaM2, coarse.dynamicRequiredAreaM2, 0.01 * fine.dynamicRequiredAreaM2);
   }
 
-  /** The allowable pressure must equal set pressure times (1 + overpressure). */
+  /** The allowable absolute pressure adds a fraction of gauge set pressure. */
   @Test
   public void allowablePressureMatchesDefinition() {
     DynamicPsvSizingStudy study = new DynamicPsvSizingStudy(gasFluid(), 5.0, 500000.0, 50.0e5, 0.21, 1.0e5);
     DynamicPsvSizingStudy.SizingComparison result = study.run();
-    assertEquals(50.0e5 * 1.21, result.allowablePressurePa, 50.0e5 * 1.21 * 1.0e-9);
+    assertEquals(6028721.75, result.allowablePressurePa, 1e-6);
+  }
+
+  /** The dynamic valve model rejects outlet pressures above its set pressure at construction. */
+  @Test
+  void backpressureAboveSetPressureIsRejected() {
+    assertThrows(IllegalArgumentException.class,
+        () -> new DynamicPsvSizingStudy(gasFluid(), 5.0, 500000.0, 50e5, 0.21, 61e5));
   }
 
   /** A null fluid must be rejected at construction. */
