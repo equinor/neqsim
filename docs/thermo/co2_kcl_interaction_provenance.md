@@ -482,7 +482,7 @@ unresolved.
 The Core Build, Test, and Javadoc workflow retains an
 `electrolyte-assessment-evidence-<shard>` artifact from every Java 21 slow-test
 shard, including after failed test runs. Download the artifacts from the same
-workflow run; the thirteen assessments may be distributed over different shards.
+workflow run; the fourteen assessments may be distributed over different shards.
 Surefire reports remain in their existing, separate artifacts.
 
 Each bundle includes a `manifest.json` and only the allowlisted assessment CSVs
@@ -498,13 +498,15 @@ produced by tests selected for that shard:
 | Mousavi-Chapoy-Burgass four-salt Table A24 holdout | 18 |
 | Mousavi-Chapoy-Burgass dense pure-water and NaCl series | 34 |
 | Liu independent low-salinity pure-water and NaCl series | 48 |
+| Liu independent low-salinity pure-water, CaCl2 and MgCl2 series | 84 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
 | Carroll evaluated salt-free CO2, three setup constructions | 57 |
 | Full Dholabhai family, all supported measured recipes | 110 |
 | Matched measured-state aqueous/guest partition, same Dholabhai recipes | 110 |
 
-The combined bundle has 506 diagnostic rows, not 506 independent measurements.
+The combined bundle has 590 diagnostic rows, not 590 independent measurements.
+The two Liu assessments deliberately reuse the same twelve distilled-water source states.
 The two 110-row assessments deliberately use the same 110 measured endpoints.
 
 The manifest records the actual checkout commit separately from the GitHub
@@ -524,7 +526,7 @@ complete evidence. Outputs from unselected tests and unrelated files under
 `target/` are not collected.
 
 `selected_evidence_complete` applies only to the selected assessments in that
-shard, not the full thirteen-assessment matrix or the rest of CI. A shard with no selected
+shard, not the full fourteen-assessment matrix or the rest of CI. A shard with no selected
 assessment has a count of zero. Check every producer across all shards and the
 original test results before using a combined matrix. Every manifest keeps
 `qualification` as `not_assessed`: artifact retention and structural validation
