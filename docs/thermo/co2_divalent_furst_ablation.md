@@ -1,3 +1,8 @@
+---
+title: "CO2-ion Furst layer ablation for low-salinity divalent brines"
+description: "Controlled no-fit diagnostic of the CO2-ion Furst contribution to CaCl2 and MgCl2 salting trends."
+---
+
 # CO2-ion Furst layer ablation for low-salinity divalent brines
 
 ## Scope
