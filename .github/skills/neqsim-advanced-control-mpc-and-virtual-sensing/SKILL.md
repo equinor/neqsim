@@ -1,7 +1,7 @@
 ---
 name: neqsim-advanced-control-mpc-and-virtual-sensing
 description: "Guides agents through ProcessLinkedMPC, ProcessLinearizer, ModelPredictiveController, VirtualFlowMeter, SoftSensor, and DataReconciliationEngine. USE WHEN: identifying a process model for MPC, exporting state-space or industrial controller models, estimating unmetered flow or properties, checking controller structures, detecting steady state, reconciling noisy measurements, or screening controller performance."
-last_verified: "2026-10-03"
+last_verified: "2026-11-18"
 ---
 
 # Advanced Control, MPC, and Virtual Sensing
@@ -10,6 +10,7 @@ last_verified: "2026-10-03"
 
 Use this skill when NeqSim's existing dynamic/process model needs a controller-facing model, bounded receding-horizon control, a physics-based soft measurement, or steady-state data reconciliation.
 
+- For the process-linked constrained horizon, provide sampled MV/DV responses via `setHorizonResponses`, inspect the `HorizonPlan` returned by `getLastHorizonPlan()` for predicted limits and slack, and apply only the first move each scan. With identification alone, `calculate()` uses steady gains. The delayed-response and synthetic export/injection regressions demonstrate horizon dependence and preview behavior.
 - `ProcessLinkedMPC` links configured manipulated, controlled, disturbance, and state variables to one existing `ProcessSystem`; it identifies local dynamics and computes/apply moves.
 - `ProcessLinearizer`, `StepResponseGenerator`, `StateSpaceExporter`, `IndustrialMPCExporter`, and `SubrModlExporter` create model-identification and integration artifacts.
 - `ModelPredictiveController` is a controller-device implementation with a first-order prediction model, constraints, feed-quality prediction, and optional moving-horizon estimation. It is not a DCS emulator.

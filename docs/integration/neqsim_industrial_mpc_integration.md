@@ -143,9 +143,37 @@ feedTemperature.setUnit("K");
 
 For the built-in `ProcessLinkedMPC.calculate()`, a zone-controlled variable contributes zero tracking
 error while its measurement is inside the zone. Outside the zone, the error is measured from the
-nearest boundary. A fixed setpoint still uses the error from the configured target. The built-in move
-calculation uses steady-state gains. Use the exported model with a horizon-based optimizer to enforce
-predicted CV limits or generate a trajectory of future MV moves.
+nearest boundary. A fixed setpoint still uses the error from the configured target. The default move
+calculation uses steady-state gains. For a constrained plan, supply sampled responses with
+`setHorizonResponses` and configure the prediction and control horizons.
+
+### Sampled-response control
+
+Register one `StepResponse` for each MV–CV and measured DV–CV pair by its full variable names.
+Supply explicit zero-gain paths where appropriate. Use the same engineering units and sample period
+as the bound variables. Each record contains absolute output samples, the pre-step baseline and the
+signed input step. The first prediction is one sample into the future. The controller holds the
+final coefficient past the end of each trace, so collect the response through settling. Configure
+responses at a steady starting point, or allow the input history to fill before interpreting forecasts.
+
+At each scan, `calculate()` holds the measured disturbances. Alternatively,
+`calculate(double[][])` accepts absolute DV values by interval and registration order. Row zero
+applies over the interval starting now. The last row is held to the prediction horizon. The
+controller anchors predictions to the current CV measurements and accounts for delayed effects of
+earlier measured MV and DV changes. Configure an independent process simulation or measurements
+at the same scan interval. Repeated calculations before application only revise the plan.
+
+`getLastHorizonPlan()` reports absolute MV settings, predicted CVs, and separate lower and upper
+slack in engineering units for every sample. The solver combines setpoint or zone tracking with
+move suppression, soft CV penalties and preferred MV values. MV absolute and signed per-scan
+limits apply throughout. The last independent move is held after the control horizon. The current
+solver accepts soft CV operating limits; configuring hard CV bounds raises a configuration error.
+An infeasible MV sequence or an uncertified solve raises an exception and leaves no applicable move.
+Inspect the status on the last plan. `applyMoves()` applies only the first setting and advances the
+input history once. `clearHorizonResponses()` clears the plan and returns to the identified
+steady-gain method. The process-linked horizon calculation uses the supplied linear responses.
+See the [export and injection example](mpc_integration.md#export-versus-injection-with-a-scheduled-takeaway-reduction)
+for its timing and operating trade-offs.
 
 `addMV`, `addCV`, and `addDV` take the name of a registered process unit. Set the
 unit on the returned variable. The current bound-variable readers support stream
