@@ -32,10 +32,19 @@ The assessment maps the model result to
 
 `n_CO2 / (m_water + m_salt + m_CO2)`.
 
+The model-state construction uses the anhydrous formula molar masses 110.98 g/mol for CaCl2 and 95.211 g/mol for
+MgCl2. The article states 0.99 mass-fraction purity but gives no supplier catalog, lot or hydration state. If hydrated
+reagents were weighed, the actual ion inventories would differ materially from this convention. Consequently, these
+rows cannot support quantitative divalent-ion calibration until the reagent forms and assay basis are established from a
+primary record. The generated output remains useful as a named-convention sensitivity and numerical diagnostic.
+
 No source value is corrected. This is important because the retained table contains finite values that contradict the
 aggregate salting-out trend, including CaCl2 10000 ppm at 353 K and 102 atm (0.085 mol/kg solution) and MgCl2
 15000 ppm at 333 K and 102 atm (0.101 mol/kg solution). These source-record anomalies are reported, not silently
-discarded, fitted or replaced.
+discarded, fitted or replaced. Across the retained 72 salt rows, seven are salting-in or equal relative to matched water;
+four of 24 fixed-temperature/pressure sequences fail monotonic decrease with salinity, and three of 24 fixed
+temperature/salinity sequences fail monotonic increase with pressure. These are source-only checks, not model-based
+exclusions.
 
 ## Scientific role and identifiability boundary
 
