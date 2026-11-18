@@ -7,11 +7,11 @@ import neqsim.process.mechanicaldesign.designstandards.StandardEdition;
 import neqsim.process.mechanicaldesign.designstandards.StandardSupportLevel;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 
-/** Pure, edition-aware adapter around the existing NORSOK M-506 corrosion calculator. */
+/** Edition-aware screening adapter around the legacy de Waard-Milliams corrosion calculator. */
 public final class NorsokM506CorrosionDesignKernel
     implements EquipmentDesignKernel<NorsokM506CorrosionDesignKernel.Input, NorsokM506CorrosionAssessment> {
   private static final long serialVersionUID = 1000L;
-  private static final String IMPLEMENTED_EDITION = "2017";
+  private static final String REGISTERED_EDITION = "2017";
 
   /** Immutable, unit-explicit corrosion screening input. */
   public static final class Input implements Serializable {
@@ -374,7 +374,7 @@ public final class NorsokM506CorrosionDesignKernel
   @Override
   public boolean supports(StandardEdition edition) {
     return edition != null && edition.getStandardType() == standard()
-        && IMPLEMENTED_EDITION.equalsIgnoreCase(edition.getEdition()) && edition.getAmendments().isEmpty();
+        && REGISTERED_EDITION.equalsIgnoreCase(edition.getEdition()) && edition.getAmendments().isEmpty();
   }
 
   /** {@inheritDoc} */
@@ -412,8 +412,9 @@ public final class NorsokM506CorrosionDesignKernel
     }
     if (!supports(input.getEdition())) {
       readiness.addBlocker("M506_EDITION_NOT_IMPLEMENTED",
-          "The kernel implements the unamended 2017 edition, not " + input.getEdition().getDisplayName(),
-          "Select the implemented edition or add separately validated edition criteria");
+          "The legacy screening adapter accepts only the unamended 2017 edition identifier. Requested "
+              + input.getEdition().getDisplayName(),
+          "Select the registered edition or add separately validated edition criteria");
     }
     if (!inRange(input.getTemperatureC(), 5.0, 150.0)) {
       readiness.addBlocker("M506_TEMPERATURE_OUT_OF_RANGE", "Temperature must be finite and within 5 to 150 degC",
@@ -502,7 +503,7 @@ public final class NorsokM506CorrosionDesignKernel
           "Document and independently approve the project calculation basis");
     }
     readiness.addWarning("M506_SCREENING_ONLY",
-        "The adapter is a deterministic screening calculation, not a NORSOK conformity assessment",
+        "Rates use de Waard-Milliams with legacy NeqSim corrections; the M-506 reference is an edition basis",
         "Verify the purchased standard, wetting basis, chemistry, materials, localized corrosion, inhibitor "
             + "availability, and project acceptance criteria");
     return readiness.build();

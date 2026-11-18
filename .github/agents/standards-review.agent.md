@@ -57,9 +57,9 @@ Use these classes before writing custom checks:
    missing document, missing geometry input, failed design margin, or required
    NeqSim implementation gap.
 
-For NORSOK M-506, require the common kernel rather than treating the legacy mutable calculator as
-compliance evidence. The registered method supports only the unamended 2017 edition and remains
-`SCREENING`. Keep wetting, water chemistry, localized corrosion, sour service, inhibitor
+For a Rev. 2 section 5.2 rate, inspect the inputs and results of `NorsokM506Rev2`.
+The common kernel accepts the unamended 2017 edition identifier and evaluates legacy
+de Waard-Milliams screening equations. Keep wetting, water chemistry, localized corrosion, sour service, inhibitor
 availability, material selection, purchased-standard review, and project acceptance criteria as
 explicit open evidence. The FeCO3 saturation-ratio film factor and projected uniform wall loss are
 NeqSim extensions and must not be reported as standard acceptance decisions.

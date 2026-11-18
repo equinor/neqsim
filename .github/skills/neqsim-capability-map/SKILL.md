@@ -337,8 +337,9 @@ transport properties (viscosity, thermal conductivity, density).
 
 | Class | Assessment | Package |
 |-------|-----------|---------|
-| `NorsokM506CorrosionRate` | NORSOK M-506 CO2 corrosion (fugacity, in-situ pH, FeCO3 film, shear, glycol/inhibitor) | `process.corrosion` |
-| `NorsokM506ElectrolyteBridge` | Drives NORSOK M-506 from a `SystemElectrolyteCPAstatoil` brine (rigorous pH + FeCO3 supersaturation) | `process.corrosion` |
+| `NorsokM506Rev2` | NORSOK M-506 Rev. 2 unmitigated corrosion rate for water-wet carbon steel | `process.corrosion` |
+| `NorsokM506CorrosionRate` | Legacy de Waard-Milliams CO2 corrosion screening (fugacity, in-situ pH, FeCO3 film, shear, glycol/inhibitor) | `process.corrosion` |
+| `NorsokM506ElectrolyteBridge` | Drives legacy corrosion screening from a `SystemElectrolyteCPAstatoil` brine (rigorous pH + FeCO3 supersaturation) | `process.corrosion` |
 | `CO2CorrosionAnalyzer` | de Waard-Milliams from an electrolyte fluid | `pvtsimulation.flowassurance` |
 | `PipeSegmentIntegrity` | Per-segment CO2 corrosion + CaCO3 scale profile along a line (`fromPipe`) | `process.corrosion` |
 | `RobustAqueousPH` | Always-finite, source-tagged in-situ pH with explicit pCO2 basis (rigorous else CO2-water correlation) | `process.corrosion` |
@@ -704,7 +705,7 @@ Always load the skill before using the classes; it records the verified API and 
 | Phase envelope? | ✅ | `ops.calcPTphaseEnvelope()` |
 | Hydrate temperature? | ✅ | `ops.hydrateEquilibriumTemperature()` |
 | Wax appearance? | ✅ | `ops.calcWAT()` |
-| CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` (screening); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (rigorous, brine-driven) |
+| CO2 corrosion rate? | ✅ | `NorsokM506Rev2` (Rev. 2 unmitigated rate); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (legacy screen with optional electrolyte pH) |
 | H2S sour classification? | ✅ | `DeWaardMilliamsCorrosion.isSourService()` |
 | Per-segment corrosion+scale profile? | ✅ | `PipeSegmentIntegrity.fromPipe(...)` |
 | Flow-accelerated corrosion in a closed heating/cooling loop? | ✅ | `FlowAcceleratedCorrosion` (screening index; NORSOK M-506 does **not** apply to a CO2-free loop) |

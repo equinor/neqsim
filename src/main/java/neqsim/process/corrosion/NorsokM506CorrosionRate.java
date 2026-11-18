@@ -9,41 +9,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * CO2 corrosion rate prediction model per NORSOK M-506 (2005/2017).
+ * CO2 corrosion calculations for water-wet carbon steel.
  *
  * <p>
- * Implements the NORSOK M-506 standard "CO2 corrosion rate calculation model" for internal corrosion of carbon steel
- * pipelines and process piping in CO2-containing environments with free water. The model is based on the de
- * Waard-Milliams-Lotz equations with NORSOK-specific corrections.
+ * {@link #calculate()} and the stored result getters use the historical NeqSim de Waard-Milliams screening model with
+ * NeqSim pH, flow, scale, glycol and inhibitor adjustments. For the separate bare-steel correlation in NORSOK M-506
+ * Rev. 2 (June 2005), section 5.2, use {@link #calculateRev2UnmitigatedRate(double, double)}.
  * </p>
- *
- * <p>
- * The model calculates:
- * </p>
- * <ul>
- * <li>CO2 fugacity from partial pressure using a simplified Peng-Robinson correction</li>
- * <li>In-situ pH of CO2-saturated water considering temperature, fugacity, bicarbonate concentration, and ionic
- * strength</li>
- * <li>Baseline corrosion rate from the de Waard-Milliams equation (different regimes for T below and above 20 degrees
- * C)</li>
- * <li>pH correction factor (Fpht) with asymmetric formula per NORSOK M-506</li>
- * <li>Scaling temperature (Tscale) for protective FeCO3 film formation</li>
- * <li>Wall shear stress and flow correction factor</li>
- * <li>Glycol/MEG correction for reduced water activity</li>
- * <li>Inhibitor efficiency</li>
- * <li>Corrosion allowance for pipeline design</li>
- * </ul>
- *
- * <p>
- * Applicable range per NORSOK M-506:
- * </p>
- * <ul>
- * <li>Temperature: 5 to 150 degrees C</li>
- * <li>CO2 partial pressure: up to 10 bar</li>
- * <li>pH: 3.5 to 6.5</li>
- * <li>Total pressure: up to 1000 bar</li>
- * <li>Carbon steel only (for CRA materials, see {@link NorsokM001MaterialSelection})</li>
- * </ul>
  *
  * <p>
  * Usage example:
@@ -74,6 +46,9 @@ public class NorsokM506CorrosionRate implements Serializable {
 
   /** Serialization version UID. */
   private static final long serialVersionUID = 1001L;
+
+  /** Model identifier for the rates published by calculate() and its result getters. */
+  public static final String LEGACY_RATE_MODEL = "de Waard-Milliams with NeqSim screening corrections";
 
   // --- Constants ---
 
@@ -131,7 +106,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    * When supplied and greater than 1, the aqueous phase is supersaturated in FeCO3 and a protective siderite film can
    * form even below the NORSOK scaling temperature. This closes the corrosion-scaling feedback loop: iron released by
    * corrosion raises the FeCO3 saturation, which in turn suppresses further corrosion. When unset (-1) the model uses
-   * the temperature-only scale correction and behaviour is identical to the standard NORSOK M-506 model.
+   * the temperature-only legacy scale correction.
    * </p>
    */
   private double feCO3SaturationRatio = -1.0;
@@ -410,7 +385,7 @@ public class NorsokM506CorrosionRate implements Serializable {
   // --- Core calculation methods ---
 
   /**
-   * Runs all calculation steps per NORSOK M-506.
+   * Runs the legacy NeqSim de Waard-Milliams screening calculation.
    *
    * <p>
    * Calculates CO2 fugacity, in-situ pH, baseline rate, all correction factors, and the final corrected corrosion rate.
@@ -454,10 +429,24 @@ public class NorsokM506CorrosionRate implements Serializable {
   }
 
   /**
-   * Calculates the CO2 fugacity coefficient using simplified Peng-Robinson.
+   * Evaluate the bare-steel NORSOK M-506 Rev. 2 rate using the configured temperature, pressure and gas CO2 fraction.
+   * This independent calculation returns its result directly and leaves the stored legacy screening results unchanged.
+   *
+   * @param inSituPH supplied water pH at operating conditions (3.5 to 6.5)
+   * @param wallShearStressPa supplied local wall shear stress (1 to 150 Pa)
+   * @return unmitigated corrosion rate in mm/year
+   * @throws IllegalArgumentException if the operating inputs or calculated fugacity are outside the correlation range
+   */
+  public double calculateRev2UnmitigatedRate(double inSituPH, double wallShearStressPa) {
+    double fugacity = NorsokM506Rev2.fugacityBar(temperatureC, totalPressureBara, co2MoleFraction);
+    return NorsokM506Rev2.rateMmPerYear(temperatureC, fugacity, inSituPH, wallShearStressPa);
+  }
+
+  /**
+   * Calculates the fugacity coefficient used in the legacy screening model.
    *
    * <p>
-   * Per NORSOK M-506:
+   * Legacy screening equation:
    * </p>
    *
    * <pre>
@@ -568,7 +557,7 @@ public class NorsokM506CorrosionRate implements Serializable {
   }
 
   /**
-   * Calculates the baseline (uncorrected) corrosion rate per NORSOK M-506.
+   * Calculates the legacy de Waard-Milliams baseline corrosion rate.
    *
    * <p>
    * Uses the de Waard-Milliams (1991) equation:
@@ -581,8 +570,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * </pre>
    *
    * <p>
-   * where CR is in mm/yr, T in Kelvin, fCO2 (CO2 fugacity) in bar. This equation is valid for the full temperature
-   * range of 5 to 150 degrees C per NORSOK M-506.
+   * where CR is in mm/yr, T in Kelvin, fCO2 (CO2 fugacity) in bar. The historical screening model uses this expression
+   * across its temperature range.
    * </p>
    *
    * @return baseline corrosion rate in mm/yr
@@ -604,7 +593,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the scaling temperature where protective FeCO3 scale begins to form.
    *
    * <p>
-   * Per NORSOK M-506:
+   * Legacy screening equation:
    * </p>
    *
    * <pre>
@@ -635,7 +624,7 @@ public class NorsokM506CorrosionRate implements Serializable {
   }
 
   /**
-   * Calculates the pH correction factor (Fpht) per NORSOK M-506.
+   * Calculates the legacy screening pH correction factor (Fpht).
    *
    * <p>
    * The correction is asymmetric around the CO2-saturated pH:
@@ -675,7 +664,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the scale correction factor (Fscale) for protective FeCO3 film.
    *
    * <p>
-   * Per NORSOK M-506, when the operating temperature exceeds the scaling temperature, a protective FeCO3 scale forms
+   * In the legacy model, when the operating temperature exceeds the scaling temperature, a protective FeCO3 scale forms
    * that reduces the corrosion rate:
    * </p>
    * <ul>
@@ -696,7 +685,7 @@ public class NorsokM506CorrosionRate implements Serializable {
       // The reduction increases with temperature above Tscale
       double excessTemp = temperatureC - tScale;
       double tScaleK = tScale + 273.15;
-      // Exponential reduction per NORSOK M-506 approach
+      // Exponential reduction in the legacy screening approach
       double scaleFactor = Math.exp(-0.04 * excessTemp * excessTemp / (tScaleK * 0.1));
       temperatureFactor = Math.max(0.01, Math.min(scaleFactor, 1.0));
     }
@@ -781,9 +770,9 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the flow correction factor based on wall shear stress.
    *
    * <p>
-   * Higher flow velocity increases mass transfer of CO2 to the wall and can remove protective scales. Per NORSOK M-506,
-   * the flow correction is based on wall shear stress relative to a reference stress of 1 Pa. The correction is capped
-   * at a factor of 5 per the standard.
+   * Higher flow velocity increases mass transfer of CO2 to the wall and can remove protective scales. In the legacy
+   * model, the flow correction is based on wall shear stress relative to a reference stress of 1 Pa. The correction is
+   * capped at a factor of 5.
    * </p>
    *
    * @return flow correction factor (1.0 to 5.0)
@@ -804,7 +793,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the glycol (MEG/DEG) correction factor.
    *
    * <p>
-   * Per NORSOK M-506, glycol reduces water activity and thus the corrosion rate. The correction follows an empirical
+   * In the legacy model, glycol reduces water activity and thus the corrosion rate. The correction follows an empirical
    * relationship:
    * </p>
    * <ul>
@@ -1062,7 +1051,7 @@ public class NorsokM506CorrosionRate implements Serializable {
   }
 
   /**
-   * Checks whether the model is within the applicable range per NORSOK M-506.
+   * Checks whether the model is within the legacy screening range.
    *
    * @return map of range checks with parameter name to boolean (true = within range)
    */
@@ -1219,7 +1208,8 @@ public class NorsokM506CorrosionRate implements Serializable {
 
     // Model info
     Map<String, Object> modelInfo = new LinkedHashMap<String, Object>();
-    modelInfo.put("standard", "NORSOK M-506 (2005/2017)");
+    modelInfo.put("standard", "Legacy screening, separate from NORSOK M-506 Rev. 2 section 5.2");
+    modelInfo.put("rateModel", LEGACY_RATE_MODEL);
     modelInfo.put("title", "CO2 Corrosion Rate Calculation Model");
     modelInfo.put("baseModel", "de Waard-Milliams-Lotz (1991/1993)");
     modelInfo.put("applicableMaterial", "Carbon steel");
