@@ -6,9 +6,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Reader;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8593,7 +8599,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Load a process from a YAML file.
+   * Append equipment from the legacy YAML layout using {@code unit} and implicit connections. For named equipment,
+   * explicit connections and the canonical flowsheet schema, see {@link #fromYamlFile(Path)}.
    *
    * @param yamlFile the YAML file to load
    */
@@ -8620,6 +8627,41 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public static SimulationResult fromJson(String json) {
     return new JsonProcessBuilder().build(json);
+  }
+
+  /**
+   * Build the same named equipment, fluid definitions and stream connections as {@link #fromJson(String)} from YAML.
+   * Use {@code autoRun: true} in the definition to also execute the flowsheet.
+   *
+   * @param yaml one YAML mapping in the JSON process schema
+   * @return built or executed process, or structured errors
+   */
+  public static SimulationResult fromYaml(String yaml) {
+    if (yaml == null) {
+      return SimulationResult.error("YAML_PARSE_ERROR", "YAML input is null", "Provide a process definition");
+    }
+    try {
+      return ProcessLoader.buildCanonicalYaml(new StringReader(yaml));
+    } catch (IOException ex) {
+      return SimulationResult.error("YAML_READ_ERROR", ex.getMessage(), "Provide a readable process definition");
+    }
+  }
+
+  /**
+   * Read a UTF-8 YAML file in the canonical process schema and apply {@link #fromYaml(String)} semantics.
+   *
+   * @param path path to the flowsheet definition
+   * @return built or executed process, or structured errors
+   */
+  public static SimulationResult fromYamlFile(Path path) {
+    if (path == null) {
+      return SimulationResult.error("YAML_READ_ERROR", "YAML file path is null", "Provide a readable UTF-8 file");
+    }
+    try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+      return ProcessLoader.buildCanonicalYaml(reader);
+    } catch (IOException ex) {
+      return SimulationResult.error("YAML_READ_ERROR", ex.getMessage(), "Provide a readable UTF-8 file");
+    }
   }
 
   public static ProcessJsonValidator.ValidationReport validateJson(String json) {
