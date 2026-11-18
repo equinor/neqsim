@@ -151,8 +151,9 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   /**
    * Calculates one source state after removing only the Furst CO2-ion interaction terms.
    *
-   * <p>This diagnostic preserves the EOS, association, CPA binary interactions, phase solver, and
-   * all non-CO2 electrolyte terms. It is an ablation, not a fitted parameterization.
+   * <p>
+   * This diagnostic preserves the EOS, association, CPA binary interactions, phase solver, and all non-CO2 electrolyte
+   * terms. It is an ablation, not a fitted parameterization.
    *
    * @param reference source state
    * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
@@ -385,8 +386,9 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   /**
    * Zeros only the Furst CO2-ion W0/W1/W2 interactions in every phase.
    *
-   * <p>Ion-specific attribution remains gauge-dependent; therefore this diagnostic removes the
-   * complete CO2-ion layer as a block and does not interpret individual cation or chloride terms.
+   * <p>
+   * Ion-specific attribution remains gauge-dependent; therefore this diagnostic removes the complete CO2-ion layer as a
+   * block and does not interpret individual cation or chloride terms.
    *
    * @param fluid initialized electrolyte system
    */
@@ -396,8 +398,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       if (!(phase instanceof PhaseModifiedFurstElectrolyteEos)) {
         throw new AssertionError("mixing rule 10 did not create a modified Furst electrolyte phase");
       }
-      ElectrolyteMixingRulesInterface rule =
-          ((PhaseModifiedFurstElectrolyteEos) phase).getElectrolyteMixingRule();
+      ElectrolyteMixingRulesInterface rule = ((PhaseModifiedFurstElectrolyteEos) phase).getElectrolyteMixingRule();
       int co2Index = phase.getComponent("CO2").getComponentNumber();
       for (String ion : new String[] {"Na+", "K+", "Ca++", "Mg++", "Cl-"}) {
         if (phase.hasComponent(ion)) {
