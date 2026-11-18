@@ -3,8 +3,6 @@ title: Compressor dry gas seal vent studies
 description: "Calculate tandem seal cavity pressures, flare and atmospheric loads, and bearing-side process gas leakage under normal and fault conditions."
 ---
 
-# Compressor dry gas seal vent studies
-
 Use `neqsim.process.equipment.compressor.DryGasSealVentStudy` to answer a design
 question for one compressor end. Given a leakage load and installed path capacities,
 what pressure is required in each cavity, and where does process gas go?
@@ -41,12 +39,55 @@ The following synthetic example uses an elevated primary-face leak and a
 lower-resistance secondary face. Pressures are absolute. Flows are mass rates.
 The primary and secondary vent ratings begin at 1.1 bara and 1.0 bara respectively.
 
+<!-- dry-gas-seal-vent-study: complete -->
+
 ```java
-Vent flare = new Vent(new double[] {1.1, 4.1}, new double[] {0, 0.030});
-Vent atmosphere = new Vent(new double[] {1.0, 4.0}, new double[] {0, 0.030});
-DryGasSealVentStudy failed = new DryGasSealVentStudy(flare, atmosphere,
-    new double[] {-0.020, 0, 0.020}, new double[] {-0.4, 0, 0.4});
-Result combined = failed.evaluate(50, 0.010, 0.0002, 0.0003);
+import neqsim.process.equipment.compressor.DryGasSealVentStudy;
+import neqsim.process.equipment.compressor.DryGasSealVentStudy.Result;
+import neqsim.process.equipment.compressor.DryGasSealVentStudy.Vent;
+
+public final class DryGasSealVentStudyGuideExample {
+  private DryGasSealVentStudyGuideExample() {}
+
+  public static void main(String[] args) {
+    Vent flare = new Vent(new double[] {1.1, 4.1}, new double[] {0.0, 0.030});
+    Vent atmosphere = new Vent(new double[] {1.0, 4.0}, new double[] {0.0, 0.030});
+    DryGasSealVentStudy failed =
+        new DryGasSealVentStudy(
+            flare,
+            atmosphere,
+            new double[] {-0.020, 0.0, 0.020},
+            new double[] {-0.4, 0.0, 0.4});
+
+    Result combined = failed.evaluate(50.0, 0.010, 0.0002, 0.0003);
+    if (!Double.isFinite(combined.primaryBara)
+        || !Double.isFinite(combined.secondaryBara)) {
+      throw new IllegalStateException("Seal cavity pressure is not finite");
+    }
+
+    double totalInputKgS = 0.010 + 0.0002 + 0.0003;
+    double totalOutletKgS =
+        combined.flareKgS + combined.atmosphereKgS + combined.bearingKgS;
+    if (Math.abs(totalOutletKgS - totalInputKgS) > 1.0e-12) {
+      throw new IllegalStateException("Total cavity mass balance did not close");
+    }
+
+    double processOutletKgS =
+        combined.flareProcessKgS
+            + combined.atmosphereProcessKgS
+            + combined.bearingProcessKgS;
+    if (Math.abs(processOutletKgS - 0.010) > 1.0e-12) {
+      throw new IllegalStateException("Process-origin mass balance did not close");
+    }
+    if (combined.atmosphereProcessKgS <= 0.0048
+        || combined.atmosphereProcessKgS >= 0.0049) {
+      throw new IllegalStateException("Unexpected atmospheric process-gas load");
+    }
+    if (combined.minimumPressureMarginBar(4.0, 1.5, 1.0, 1.0) >= 0.0) {
+      throw new IllegalStateException("Expected the secondary pressure rating to be exceeded");
+    }
+  }
+}
 ```
 
 `Vent` and `Result` are nested types of `DryGasSealVentStudy`. The example in
