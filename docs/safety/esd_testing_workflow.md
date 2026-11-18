@@ -170,6 +170,11 @@ stay there at every later observation. The result reports elapsed seconds.
 The plan preserves the position limit, its unit and the response deadline.
 
 The runner splits a physical step at a scheduled trigger and at the test end.
+Each accepted physical step receives the canonical deterministic identity derived
+from the plan name, exact timing values and zero-based step index. Replaying the
+same plan therefore reproduces every identifier while adjacent steps remain
+distinct. This preserves controller and equipment idempotency without hiding a
+new physical advance behind a reused calculation identifier.
 Choose a scan interval short enough to resolve the expected travel. A missing
 or nonfinite post-trigger reading, a run ending before the deadline, or a
 simulation error fails the timed criterion. A failed physical step contributes

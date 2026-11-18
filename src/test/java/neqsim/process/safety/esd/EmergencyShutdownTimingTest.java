@@ -50,6 +50,17 @@ class EmergencyShutdownTimingTest {
     assertEquals(Arrays.asList(1.0, .25, 1.0, .5), physicalSteps);
     assertEquals(Arrays.asList(1.0, .5), logicSteps);
     assertEquals(4, new HashSet<UUID>(ids).size());
+    List<UUID> replayIds = new ArrayList<UUID>();
+    ProcessSystem replay = new ProcessSystem() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void runTransient(double dt, UUID id) {
+        replayIds.add(id);
+      }
+    };
+    EmergencyShutdownTestRunner.run(replay, plan);
+    assertEquals(ids, replayIds);
     assertEquals(2.75, result.getTimeSeries().get(4).getTimeSeconds(), 0.0);
   }
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.operations.OperationalTagBinding;
 import neqsim.process.operations.OperationalTagMap;
@@ -153,6 +154,8 @@ public final class EmergencyShutdownTestRunner {
       List<ProcessLogic> enabledLogic, List<ProcessLogic> triggerLogic, EmergencyShutdownTestResult result) {
     double time = 0.0;
     boolean triggered = false;
+    long physicalStepIndex = 0L;
+    String physicalStepScope = physicalStepScope(plan);
     while (time < plan.getDurationSeconds()) {
       double end = Math.min(time + plan.getTimeStepSeconds(), plan.getDurationSeconds());
       if (!triggered) {
@@ -173,14 +176,27 @@ public final class EmergencyShutdownTestRunner {
         return;
       }
       try {
-        process.runTransient(step, UUID.randomUUID());
+        process.runTransient(step,
+            TransientStepIdentifier.deterministicPhysicalStep(physicalStepScope, physicalStepIndex));
       } catch (RuntimeException ex) {
         result.addError("Transient simulation failed at t=" + time + " s: " + ex.getMessage());
         return;
       }
+      physicalStepIndex++;
       time = end;
       result.addSample(captureSample(time, process, plan, result), plan.getMonitoredUnits());
     }
+  }
+
+  /**
+   * Builds the stable identity scope used for deterministic physical-step identifiers.
+   *
+   * @param plan test schedule defining the replay clock
+   * @return stable scope containing the plan name and exact timing values
+   */
+  private static String physicalStepScope(EmergencyShutdownTestPlan plan) {
+    return "esd-test:" + plan.getName() + ":" + Double.toHexString(plan.getDurationSeconds()) + ":"
+        + Double.toHexString(plan.getTimeStepSeconds()) + ":" + Double.toHexString(plan.getTriggerTimeSeconds());
   }
 
   /**
