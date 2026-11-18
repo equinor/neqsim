@@ -113,6 +113,18 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
+   * Initialize a new handler with the scalar settings used by a reduced mixture.
+   *
+   * @param source handler supplying the mixing model and fitted scalar parameters
+   */
+  private EosMixingRuleHandler(EosMixingRuleHandler source) {
+    this();
+    mixingRuleGEModel = source.mixingRuleGEModel;
+    nEOSkij = source.nEOSkij;
+    bmixType = source.bmixType;
+  }
+
+  /**
    * Reject interaction matrices built for a different number of components.
    *
    * <p>
@@ -143,10 +155,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
    * @return independent handler for the retained species
    */
   public EosMixingRuleHandler withoutComponent(int removed) {
-    EosMixingRuleHandler result = new EosMixingRuleHandler();
-    result.mixingRuleGEModel = mixingRuleGEModel;
-    result.nEOSkij = nEOSkij;
-    result.bmixType = bmixType;
+    EosMixingRuleHandler result = new EosMixingRuleHandler(this);
     result.intparam = removeRowAndColumn(intparam, removed, double[]::new);
     result.intparamT = removeRowAndColumn(intparamT, removed, double[]::new);
     result.intparamij = removeRowAndColumn(intparamij, removed, double[]::new);
