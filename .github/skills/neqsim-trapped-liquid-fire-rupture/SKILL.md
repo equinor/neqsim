@@ -2,7 +2,7 @@
 name: neqsim-trapped-liquid-fire-rupture
 version: "1.0.0"
 description: "Fire rupture studies for blocked-in liquid-filled pipe segments and blowdown pipe heat-up / strain-rate time-to-rupture. USE WHEN: a task involves trapped or blocked-in liquid, thermal expansion rupture, fire exposure without relief, PFP demand, flange/pipe rupture screening, a supplied blowdown pressure profile, or a Word/HTML safety study from P&IDs, line lists, piping specs, material certificates and fire documents. Anchors on neqsim.process.safety.rupture."
-last_verified: "2026-06-23"
+last_verified: "2026-11-18"
 requires:
   java_packages:
     - neqsim.process.safety.rupture
@@ -37,7 +37,7 @@ When the blowdown pressure profile has not yet been generated, first use the
 dynamic flare/blowdown layer from `neqsim-depressurization-mdmt`: assemble
 `LineEquipmentListEvidence` and `DynamicBlowdownFlareStudyDataSource`, run
 `DynamicBlowdownFlareStudyRunner`, and use the returned source pressure profiles
-and `dynamic_blowdown_flare_load_handoff.v1` as the governed basis for the
+and `dynamic_blowdown_flare_load_handoff.v2` as the governed basis for the
 pipe-fire rupture profile and flare/consequence handoff.
 
 Use the workflow generically. Do not encode operator-specific criteria in public

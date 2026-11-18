@@ -2,7 +2,7 @@
 name: neqsim-depressurization-mdmt
 version: "1.0.0"
 description: "Emergency depressurization (blowdown) per API 521 and MDMT assessment per ASME UCS-66 / API 579 / EN 13445 with a VU-flash transient model. USE WHEN: sizing a blowdown valve, producing a P-vs-time curve under fire or depressurization, checking MDMT against blowdown end-temperature, supplying relief/flare source terms, or separating blowdown from trapped-liquid rupture. Anchors on DepressurizationSimulator and MDMTCalculator."
-last_verified: "2026-09-16"
+last_verified: "2026-11-18"
 requires:
   java_packages:
     - neqsim.process.safety.depressurization
@@ -273,6 +273,10 @@ For agentic engineering studies that start from STID/P&ID drawings, line lists,
 equipment lists, and TR2000 pipe/valve/material evidence, use the governed data
 source and runner instead of stitching transient notebooks together by hand.
 
+The example assumes `fireReliefScenario` is a reviewed vapour `ReliefScenario` with the
+external-fire demand and properties evaluated at the declared relieving conditions. Omit
+`psvContingency` for a blowdown-only study. BDV discharge is reported separately.
+
 Key classes:
 
 - `LineEquipmentListEvidence` — reviewed line-list and equipment-list rows used
@@ -285,7 +289,7 @@ Key classes:
   `ReliefValveSizing`, and estimates peak/cumulative flare heat, emissions,
   radiation distance, and capacity utilization.
 - `DynamicBlowdownFlareStudyHandoff` — versioned JSON package containing
-  `dynamic_blowdown_flare_result.v1` and `dynamic_blowdown_flare_load_handoff.v1`.
+  `dynamic_blowdown_flare_result.v2` and `dynamic_blowdown_flare_load_handoff.v2`.
 
 ```java
 LineEquipmentListEvidence lineEq = LineEquipmentListEvidence.builder("line-eq-001")
@@ -304,6 +308,7 @@ DynamicBlowdownFlareStudyDataSource.BlowdownSource source =
         .backPressureBara(1.5)
         .api521FireCase(120.0, true, true)
         .psvBasis(85.0, 0.21, false, false)
+        .psvContingency(fireReliefScenario, 1.5, "V-100 external-fire relief calculation")
         .build();
 
 DynamicBlowdownFlareStudyDataSource data = DynamicBlowdownFlareStudyDataSource.builder("BD-FLARE-001")
