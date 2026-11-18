@@ -92,3 +92,50 @@ and 5,587 ft subsea. Keep them separate. Intermediate pressures were
 obtained from pressure-versus-production plots. The tables can inform a
 conventional material-balance benchmark. They lack documented pressure
 sigma and held-out produced composition for the compositional match.
+
+## Named component amounts from total moles
+
+Use the optional `audit_component_moles` audit after admitting the dated
+cumulative history. Each end row supplies `interval_compositions` keyed by
+stream name. Each composition requires a source reference, the same
+`basis_reference` as its total-mole stream, and a complete `components`
+mapping with nonnegative `mol/mol` bounds. Set `averaging` to
+`mole_weighted` for a cumulative mole-weighted composition or `constant`
+when composition is constant throughout the interval. A time-average
+composition requires a separately established mole-weighted conversion.
+
+The audit checks whether the composition bounds intersect the unit simplex.
+For each component it tightens the marginal range using all other component
+bounds and the requirement that their sum is one. It multiplies these
+ranges by the admitted total-mole increment with outward decimal rounding.
+The output preserves each named stream and its production or injection
+direction. Missing composition, unavailable total moles, invalid dates
+and ambiguous withdrawal increments block the affected component handoff.
+An incompatible composition sum is reported without changing source values.
+These are marginal bounds with shared total and composition constraints.
+Selecting every upper bound simultaneously generally violates conservation.
+
+The [synthetic component fixture](../../devtools/pvt_examples/reservoir_component_intake.json)
+contains a 10–11 mol production interval and 2 mol water injection.
+The methane input range 0.8–1.0 contracts to 0.8–0.9 because the ethane
+fraction is 0.1–0.2. Component mole ranges are therefore methane 8.0–9.9,
+ethane 1.0–2.2 and water 2. This fixture establishes independent arithmetic
+consistency. Laboratory sample/experiment provenance, separator-to-total-mole
+conversion and measured field accuracy require their own evidence.
+
+```python
+import json
+from pathlib import Path
+
+from reservoir_history_intake import audit_component_moles
+
+path = Path("devtools/pvt_examples/reservoir_component_intake.json")
+report = audit_component_moles(json.loads(path.read_text(encoding="utf-8")))
+stream = report["windows"][0]["component_streams"]["well-A gas"]
+print(list(stream["component_moles"]))
+```
+
+Use feasible component amounts when constructing the existing
+`CompositionalReservoirHistory.Step` named production and injection ledgers.
+This audit returns bounds for that selection. It does not choose nominal
+amounts or create tank trials from independent marginal endpoints.
