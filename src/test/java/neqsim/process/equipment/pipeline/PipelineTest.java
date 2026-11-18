@@ -37,6 +37,30 @@ public class PipelineTest {
     return stream;
   }
 
+  /** Checks that low throughput does not destabilize the conservative pipe's steady thermal initialization. */
+  @Test
+  public void conservativeLowFlowAcrossLongCellsPreservesTemperatureAndThroughput() {
+    Stream feed = createFeedStream("low-flow feed", 1.0, 20.0, 200.0);
+    OnePhasePipeLine pipeline = new OnePhasePipeLine("warm wall", feed);
+    pipeline.setNumberOfLegs(1);
+    pipeline.setPipeDiameters(new double[] {1.0, 1.0});
+    pipeline.setLegPositions(new double[] {0.0, 700000.0});
+    pipeline.setHeightProfile(new double[] {0.0, 0.0});
+    pipeline.setPipeWallRoughness(new double[] {5e-6, 5e-6});
+    pipeline.setOuterTemperatures(new double[] {293.15, 293.15});
+    pipeline.setPipeOuterHeatTransferCoefficients(new double[] {15.0, 15.0});
+    pipeline.setPipeWallHeatTransferCoefficients(new double[] {15.0, 15.0});
+    pipeline.setConservativeCompositionalTracking(true);
+    pipeline.run();
+
+    Assertions.assertTrue(pipeline.getConvergenceReport().isConverged());
+    Assertions.assertTrue(pipeline.getOutletPressure("bara") > 199.0 && pipeline.getOutletPressure("bara") < 200.0);
+    Assertions.assertEquals(1.0, pipeline.getOutletStream().getFlowRate("MSm3/day"), 1e-5);
+    for (double temperatureK : pipeline.getTemperatureProfile("K")) {
+      Assertions.assertEquals(293.15, temperatureK, 0.05);
+    }
+  }
+
   /** Compares pipeline pressures and verifies adiabatic horizontal gas expansion. */
   @Test
   public void testMain() {
