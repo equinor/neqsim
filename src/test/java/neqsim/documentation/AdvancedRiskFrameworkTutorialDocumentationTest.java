@@ -25,10 +25,8 @@ import neqsim.NeqSimTest;
 
 /** Compiles and executes the exact Java program published in the advanced risk tutorial. */
 class AdvancedRiskFrameworkTutorialDocumentationTest extends NeqSimTest {
-  private static final String GUIDE =
-      "docs/examples/AdvancedRiskFramework_Tutorial.md";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final String GUIDE = "docs/examples/AdvancedRiskFramework_Tutorial.md";
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS = Pattern
       .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
@@ -37,8 +35,7 @@ class AdvancedRiskFrameworkTutorialDocumentationTest extends NeqSimTest {
 
   @Test
   void publishedProgramCompilesAndRunsWithAssertions() throws Exception {
-    Path repositoryRoot =
-        Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve(GUIDE));
     Matcher fences = JAVA_FENCE.matcher(guide);
 
@@ -49,10 +46,8 @@ class AdvancedRiskFrameworkTutorialDocumentationTest extends NeqSimTest {
     assertTrue(source.contains("BowTieModel"));
     assertTrue(source.contains("getProbabilityOfFailure(8760.0)"));
     assertTrue(source.contains("assert Math.abs(riskReductionFactor - 200.0)"));
-    assertTrue(source.contains(
-        "assert Math.abs(bowTie.getMitigatedFrequency() - 5.0e-5)"));
-    assertTrue(source.contains(
-        "LogManager.getLogger(AdvancedRiskFrameworkExample.class)"));
+    assertTrue(source.contains("assert Math.abs(bowTie.getMitigatedFrequency() - 5.0e-5)"));
+    assertTrue(source.contains("LogManager.getLogger(AdvancedRiskFrameworkExample.class)"));
     assertFalse(source.contains("System.out"));
     assertFalse(source.contains("SISIntegratedRiskModel(\"HP Separator"));
     assertFalse(source.contains("BowTieAnalyzer"));
@@ -78,31 +73,23 @@ class AdvancedRiskFrameworkTutorialDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath = System.getProperty(
-        "surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList(
-        "-source", "8", "-target", "8", "-classpath", classPath,
-        "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager = compiler.getStandardFileManager(
-        diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful = compiler.getTask(
-          null, manager, diagnostics, options, null,
-          manager.getJavaFileObjects(javaSource.toFile())).call();
-      assertTrue(
-          Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] {outputDirectory.toUri().toURL()},
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
       try {
-        example.getMethod("main", String[].class)
-            .invoke(null, (Object) new String[0]);
+        example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
       } catch (InvocationTargetException exception) {
         throw new AssertionError(name + " failed", exception.getCause());
       }
