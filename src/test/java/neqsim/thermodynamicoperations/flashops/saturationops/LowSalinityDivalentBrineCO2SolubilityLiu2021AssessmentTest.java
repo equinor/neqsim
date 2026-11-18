@@ -67,13 +67,20 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         + "model_effective_f_over_x_bara,matched_pure_water_effective_f_over_x_bara," + "log_effective_f_over_x_ratio,"
         + "decomposition_identity_residual,component_balance_residual_mol,"
         + "molecular_log_fugacity_residual,phase_types," + "constrained_model_co2_mol_per_kg_solution,"
-        + "constrained_molecular_log_fugacity_residual");
+        + "constrained_molecular_log_fugacity_residual,"
+        + "ablation_model_co2_mol_per_kg_solution,"
+        + "ablation_apparent_salt_effect_kg_water_per_mol_formula_unit,"
+        + "ablation_log_dissolved_co2_molecular_ratio,ablation_log_guest_fugacity_ratio,"
+        + "ablation_log_effective_f_over_x_ratio,ablation_water_activity,"
+        + "ablation_component_balance_residual_mol,ablation_molecular_log_fugacity_residual,"
+        + "ablation_phase_types,ablation_minus_baseline_model_co2_mol_per_kg_solution");
 
     int pureCount = 0;
     int cacl2Count = 0;
     int mgcl2Count = 0;
     int constrainedCount = 0;
     int sourceSaltingOutCount = 0;
+    int ablationCount = 0;
     for (SourceReference reference : references) {
       KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
           .calculate(reference.toModelReference(), CO2_FEED_MOLES);
@@ -137,10 +144,45 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         constrainedCount++;
       }
 
+      double ablationModel = Double.NaN;
+      double ablationSaltEffect = Double.NaN;
+      double ablationLogDissolvedRatio = Double.NaN;
+      double ablationLogGuestFugacityRatio = Double.NaN;
+      double ablationLogEffectiveFOverXRatio = Double.NaN;
+      double ablationWaterActivity = Double.NaN;
+      double ablationComponentResidual = Double.NaN;
+      double ablationFugacityResidual = Double.NaN;
+      String ablationPhaseTypes = "";
+      double ablationMinusBaselineModel = Double.NaN;
+      if (isAblationState(reference)) {
+        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result ablated =
+            KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+                .calculateWithoutFurstCo2IonInteractions(reference.toModelReference(), CO2_FEED_MOLES);
+        ablationModel = modelMolPerKgSolution(ablated);
+        double saltMoles = saltFormulaMoles(ablated, reference.saltType);
+        ablationSaltEffect = Math.log(modelPure / ablationModel) / saltMoles;
+        ablationLogDissolvedRatio = Math.log(ablated.molecularMolePercent / pureWater.molecularMolePercent);
+        ablationLogGuestFugacityRatio = Math.log(ablated.co2FugacityBara / pureWater.co2FugacityBara);
+        ablationLogEffectiveFOverXRatio =
+            Math.log(ablated.effectiveFOverXBara() / pureWaterEffectiveFOverXBara);
+        ablationWaterActivity = ablated.waterActivity;
+        ablationComponentResidual = ablated.componentBalanceResidualMol;
+        ablationFugacityResidual = ablated.molecularLogFugacityResidual;
+        ablationPhaseTypes = ablated.phaseTypes;
+        ablationMinusBaselineModel = ablationModel - model;
+        assertTrue(ablationComponentResidual <= 1.0e-10,
+            reference.pointId + " ablation component balance closure");
+        assertTrue(ablationFugacityResidual < 1.0e-8,
+            reference.pointId + " ablation molecular fugacity closure");
+        assertEquals(result.phaseTypes, ablationPhaseTypes, reference.pointId + " ablation phase set");
+        ablationCount++;
+      }
+
       report.add(String.format(Locale.ROOT,
           "%s,%s,%s,%d,%.8f,%.1f,%.1f,%.8f,%.12g,%.12g,%.12g,%.12g,%.12g,"
               + "%.12g,%.12g,%s,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,"
-              + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g,%.12g",
+              + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g,%.12g,"
+              + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g",
           reference.pointId, reference.saltType, reference.isPureWater() ? "REFERENCE" : "IDENTIFIABILITY_SCREEN",
           reference.salinityPpm, reference.saltMassFractionPercent, reference.temperatureK, reference.pressureAtm,
           reference.totalPressureMpa, reference.sourceCo2MolPerKgSolution, model,
@@ -150,7 +192,9 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
           pureWater.molecularMolePercent, logDissolvedCo2MolecularRatio, logGuestFugacityRatio, effectiveFOverXBara,
           pureWaterEffectiveFOverXBara, logEffectiveFOverXRatio, decompositionResidual,
           result.componentBalanceResidualMol, result.molecularLogFugacityResidual, result.phaseTypes, constrainedModel,
-          constrainedResidual));
+          constrainedResidual, ablationModel, ablationSaltEffect, ablationLogDissolvedRatio,
+          ablationLogGuestFugacityRatio, ablationLogEffectiveFOverXRatio, ablationWaterActivity,
+          ablationComponentResidual, ablationFugacityResidual, ablationPhaseTypes, ablationMinusBaselineModel));
     }
 
     assertEquals(84, references.size());
@@ -158,6 +202,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
     assertEquals(36, cacl2Count);
     assertEquals(36, mgcl2Count);
     assertEquals(8, constrainedCount);
+    assertEquals(16, ablationCount);
     assertEquals(85, report.size());
     assertEquals(65, sourceSaltingOutCount,
         "retain the seven source rows that contradict the aggregate salting-out trend");
@@ -198,6 +243,19 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       return result.mgcl2Moles;
     }
     return 0.0;
+  }
+
+  /**
+   * Selects the predeclared layer-ablation matrix: both divalent salts at 15 000 ppm,
+   * the lowest and highest source pressures, and all four source temperatures.
+   *
+   * @param reference source state
+   * @return whether the state belongs to the ablation matrix
+   */
+  private static boolean isAblationState(SourceReference reference) {
+    return !reference.isPureWater() && reference.salinityPpm == 15000
+        && (Math.abs(reference.pressureAtm - 20.4) < 1.0e-12
+            || Math.abs(reference.pressureAtm - 170.1) < 1.0e-12);
   }
 
   /**
