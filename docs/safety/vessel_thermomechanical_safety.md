@@ -120,15 +120,28 @@ DynamicPsvSizingStudy study =
 study.setBlowdownFraction(0.1).setDischargeCoefficient(0.975);
 
 SizingComparison cmp = study.run();
+if (cmp.status != DynamicPsvSizingStudy.SizingStatus.FEASIBLE) {
+  throw new IllegalStateException(cmp.status + " at " + cmp.elapsedSeconds + " s: " + cmp.terminationReason);
+}
 double ratio = cmp.oversizingRatio;          // steady / dynamic required area (> 1 => conservative)
 double steadyArea = cmp.steadyRequiredAreaM2;
 double dynamicArea = cmp.dynamicRequiredAreaM2;
 double peakP = cmp.peakDynamicPressurePa;
 ```
 
-The dynamically required orifice area is found by bisection as the smallest area
-that keeps the peak vessel pressure at or below the allowable accumulated
-pressure, then compared against the steady-state API 521 area from
+The search samples areas from 0.001 to 10 times the steady area, then refines a
+passing interval by bisection. A feasible result identifies a tested area whose
+trajectory reached the requested horizon within the pressure limit, including
+the last partial step. The answer depends on the timestep and search bounds.
+`NO_FEASIBLE_AREA_IN_SEARCH` means every sampled candidate exceeded the limit.
+`INCOMPLETE` identifies an unresolved trajectory or invalid search basis.
+For either outcome, the required dynamic area and oversizing ratio are NaN.
+Inspect `attemptedAreaM2`, `peakDynamicPressurePa`, `elapsedSeconds`,
+`timeStepSeconds` and `terminationReason`. Historical serialized results
+without an outcome require a rerun. Earlier versions could return the last
+attempted area after an unsuccessful search or early integration exit.
+
+The steady reference comes from
 `ReliefValveSizing.calculateRequiredArea`. The cycling dynamics use ideal-gas
 energy bookkeeping seeded from a single NeqSim flash for molar mass, heat-capacity
 ratio, and compressibility.
