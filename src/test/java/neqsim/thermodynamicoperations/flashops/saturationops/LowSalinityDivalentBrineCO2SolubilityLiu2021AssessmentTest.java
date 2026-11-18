@@ -67,8 +67,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         + "model_effective_f_over_x_bara,matched_pure_water_effective_f_over_x_bara," + "log_effective_f_over_x_ratio,"
         + "decomposition_identity_residual,component_balance_residual_mol,"
         + "molecular_log_fugacity_residual,phase_types," + "constrained_model_co2_mol_per_kg_solution,"
-        + "constrained_molecular_log_fugacity_residual,"
-        + "ablation_model_co2_mol_per_kg_solution,"
+        + "constrained_molecular_log_fugacity_residual," + "ablation_model_co2_mol_per_kg_solution,"
         + "ablation_apparent_salt_effect_kg_water_per_mol_formula_unit,"
         + "ablation_log_dissolved_co2_molecular_ratio,ablation_log_guest_fugacity_ratio,"
         + "ablation_log_effective_f_over_x_ratio,ablation_water_activity,"
@@ -155,25 +154,21 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       String ablationPhaseTypes = "";
       double ablationMinusBaselineModel = Double.NaN;
       if (isAblationState(reference)) {
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result ablated =
-            KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
-                .calculateWithoutFurstCo2IonInteractions(reference.toModelReference(), CO2_FEED_MOLES);
+        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result ablated = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+            .calculateWithoutFurstCo2IonInteractions(reference.toModelReference(), CO2_FEED_MOLES);
         ablationModel = modelMolPerKgSolution(ablated);
         double saltMoles = saltFormulaMoles(ablated, reference.saltType);
         ablationSaltEffect = Math.log(modelPure / ablationModel) / saltMoles;
         ablationLogDissolvedRatio = Math.log(ablated.molecularMolePercent / pureWater.molecularMolePercent);
         ablationLogGuestFugacityRatio = Math.log(ablated.co2FugacityBara / pureWater.co2FugacityBara);
-        ablationLogEffectiveFOverXRatio =
-            Math.log(ablated.effectiveFOverXBara() / pureWaterEffectiveFOverXBara);
+        ablationLogEffectiveFOverXRatio = Math.log(ablated.effectiveFOverXBara() / pureWaterEffectiveFOverXBara);
         ablationWaterActivity = ablated.waterActivity;
         ablationComponentResidual = ablated.componentBalanceResidualMol;
         ablationFugacityResidual = ablated.molecularLogFugacityResidual;
         ablationPhaseTypes = ablated.phaseTypes;
         ablationMinusBaselineModel = ablationModel - model;
-        assertTrue(ablationComponentResidual <= 1.0e-10,
-            reference.pointId + " ablation component balance closure");
-        assertTrue(ablationFugacityResidual < 1.0e-8,
-            reference.pointId + " ablation molecular fugacity closure");
+        assertTrue(ablationComponentResidual <= 1.0e-10, reference.pointId + " ablation component balance closure");
+        assertTrue(ablationFugacityResidual < 1.0e-8, reference.pointId + " ablation molecular fugacity closure");
         assertEquals(result.phaseTypes, ablationPhaseTypes, reference.pointId + " ablation phase set");
         ablationCount++;
       }
@@ -246,16 +241,15 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
   }
 
   /**
-   * Selects the predeclared layer-ablation matrix: both divalent salts at 15 000 ppm,
-   * the lowest and highest source pressures, and all four source temperatures.
+   * Selects the predeclared layer-ablation matrix: both divalent salts at 15 000 ppm, the lowest and highest source
+   * pressures, and all four source temperatures.
    *
    * @param reference source state
    * @return whether the state belongs to the ablation matrix
    */
   private static boolean isAblationState(SourceReference reference) {
     return !reference.isPureWater() && reference.salinityPpm == 15000
-        && (Math.abs(reference.pressureAtm - 20.4) < 1.0e-12
-            || Math.abs(reference.pressureAtm - 170.1) < 1.0e-12);
+        && (Math.abs(reference.pressureAtm - 20.4) < 1.0e-12 || Math.abs(reference.pressureAtm - 170.1) < 1.0e-12);
   }
 
   /**
