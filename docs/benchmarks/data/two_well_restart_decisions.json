@@ -1,0 +1,570 @@
+{
+  "physics_revision": "26caacd2523667c701226cb9a181bfe8d448f8b9",
+  "scope": "synthetic qualification benchmark with separate field evidence",
+  "units": "bara, s, kg, kg/s, kW; screening surge margin is a fraction",
+  "matrix": [
+    {
+      "eos": "Pr",
+      "policy": "fixed",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 2.875 s; separator=54.668777 bara, choke=58.000%, imposed riser boundary=56.460035 bara; end-step gas/oil/water cell velocities=(7.623373008112128, 0.6160283870284455, -0.0013203590872857707) m/s"
+    },
+    {
+      "eos": "Pr",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 3.0 s; separator=54.683368 bara, choke=58.000%, imposed riser boundary=56.452252 bara"
+    },
+    {
+      "eos": "Pr",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 2.5 s; separator=54.646324 bara, choke=58.000%, imposed riser boundary=56.544232 bara; end-step gas/oil/water cell velocities=(7.467436616852175, 0.5960774957329881, -0.014860418979854514) m/s"
+    },
+    {
+      "eos": "Pr",
+      "policy": "ramp",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 2.875 s; separator=54.668777 bara, choke=58.000%, imposed riser boundary=56.460035 bara; end-step gas/oil/water cell velocities=(7.623373008112128, 0.6160283870284455, -0.0013203590872857707) m/s"
+    },
+    {
+      "eos": "Pr",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 3.0 s; separator=54.683368 bara, choke=58.000%, imposed riser boundary=56.452252 bara"
+    },
+    {
+      "eos": "Pr",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 2.5 s; separator=54.646324 bara, choke=58.000%, imposed riser boundary=56.544232 bara; end-step gas/oil/water cell velocities=(7.467436616852175, 0.5960774957329881, -0.014860418979854514) m/s"
+    },
+    {
+      "eos": "Srk",
+      "policy": "fixed",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "installed",
+      "status": "completed",
+      "well_production_kg": 753.7294501,
+      "post_restart_oil_peak_kg_s": 12.4507925,
+      "riser_oil_kg_s": 13.0502782,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3685375,
+      "power_kW": 575.8057282,
+      "riser_water_kg_s": 3.3516309,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7193659,
+      "separator_bara": 54.6555335,
+      "riser_gas_kg_s": 5.9557619,
+      "screening_surge_margin": 0.1359596,
+      "max_component_residual_kg": 2.699274137540897e-11,
+      "max_phase_residual_kg": 3.5605962622753395e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "installed",
+      "status": "completed",
+      "well_production_kg": 753.7209149,
+      "post_restart_oil_peak_kg_s": 12.4562936,
+      "riser_oil_kg_s": 13.0090102,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3690031,
+      "power_kW": 577.0901195,
+      "riser_water_kg_s": 3.3421479,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7299039,
+      "separator_bara": 54.6593717,
+      "riser_gas_kg_s": 5.9732742,
+      "screening_surge_margin": 0.1368627,
+      "max_component_residual_kg": 2.813849153682213e-11,
+      "max_phase_residual_kg": 2.674838128768897e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 2.75 s; separator=54.701725 bara, choke=58.000%, imposed riser boundary=56.663497 bara"
+    },
+    {
+      "eos": "Srk",
+      "policy": "ramp",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "installed",
+      "status": "completed",
+      "well_production_kg": 753.7265086,
+      "post_restart_oil_peak_kg_s": 12.4721611,
+      "riser_oil_kg_s": 13.0502782,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3685375,
+      "power_kW": 575.8057282,
+      "riser_water_kg_s": 3.3516309,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7193659,
+      "separator_bara": 54.6555335,
+      "riser_gas_kg_s": 5.9557619,
+      "screening_surge_margin": 0.1333781,
+      "max_component_residual_kg": 3.3280211919617386e-11,
+      "max_phase_residual_kg": 2.5557334026871104e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "installed",
+      "status": "completed",
+      "well_production_kg": 753.7177236,
+      "post_restart_oil_peak_kg_s": 12.4764075,
+      "riser_oil_kg_s": 13.0090102,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3690031,
+      "power_kW": 577.0901195,
+      "riser_water_kg_s": 3.3421479,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7299039,
+      "separator_bara": 54.6593717,
+      "riser_gas_kg_s": 5.9732742,
+      "screening_surge_margin": 0.1343022,
+      "max_component_residual_kg": 2.415201372230058e-11,
+      "max_phase_residual_kg": 2.674838128768897e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "installed",
+      "status": "rejected",
+      "reason": "Outlet backflow clamped at 2.75 s; separator=54.701725 bara, choke=58.000%, imposed riser boundary=56.663497 bara"
+    },
+    {
+      "eos": "Pr",
+      "policy": "fixed",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.8149047,
+      "post_restart_oil_peak_kg_s": 12.6166479,
+      "riser_oil_kg_s": 13.1465356,
+      "interface_m": 0.3001099,
+      "oil_out_kg_s": 12.3885281,
+      "power_kW": 548.9308765,
+      "riser_water_kg_s": 3.3499347,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.6739041,
+      "separator_bara": 54.64322,
+      "riser_gas_kg_s": 5.8808124,
+      "screening_surge_margin": 0.1074674,
+      "max_component_residual_kg": 2.249356256811552e-11,
+      "max_phase_residual_kg": 2.762301498648867e-11
+    },
+    {
+      "eos": "Pr",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.8069679,
+      "post_restart_oil_peak_kg_s": 12.6230497,
+      "riser_oil_kg_s": 13.1050865,
+      "interface_m": 0.3001099,
+      "oil_out_kg_s": 12.3890723,
+      "power_kW": 550.2059787,
+      "riser_water_kg_s": 3.3324223,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.6848773,
+      "separator_bara": 54.6476465,
+      "riser_gas_kg_s": 5.8948541,
+      "screening_surge_margin": 0.1084976,
+      "max_component_residual_kg": 2.906130891489056e-11,
+      "max_phase_residual_kg": 2.6931790131357047e-11
+    },
+    {
+      "eos": "Pr",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.5875385,
+      "post_restart_oil_peak_kg_s": 12.426556,
+      "riser_oil_kg_s": 13.0151157,
+      "interface_m": 0.3001099,
+      "oil_out_kg_s": 12.3890723,
+      "power_kW": 549.0133569,
+      "riser_water_kg_s": 3.3463798,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.6736917,
+      "separator_bara": 54.6410983,
+      "riser_gas_kg_s": 5.7769116,
+      "screening_surge_margin": 0.1041973,
+      "max_component_residual_kg": 4.670197562006706e-11,
+      "max_phase_residual_kg": 3.2031266528065316e-11
+    },
+    {
+      "eos": "Pr",
+      "policy": "ramp",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.8129636,
+      "post_restart_oil_peak_kg_s": 12.664893,
+      "riser_oil_kg_s": 13.1465356,
+      "interface_m": 0.3001099,
+      "oil_out_kg_s": 12.3885281,
+      "power_kW": 548.9308765,
+      "riser_water_kg_s": 3.3499347,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.6739041,
+      "separator_bara": 54.64322,
+      "riser_gas_kg_s": 5.8808124,
+      "screening_surge_margin": 0.1042106,
+      "max_component_residual_kg": 3.274680526743623e-11,
+      "max_phase_residual_kg": 2.7781554834405142e-11
+    },
+    {
+      "eos": "Pr",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.8049856,
+      "post_restart_oil_peak_kg_s": 12.670908,
+      "riser_oil_kg_s": 13.1050865,
+      "interface_m": 0.3001099,
+      "oil_out_kg_s": 12.3890723,
+      "power_kW": 550.2059787,
+      "riser_water_kg_s": 3.3324223,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.6848773,
+      "separator_bara": 54.6476465,
+      "riser_gas_kg_s": 5.8948541,
+      "screening_surge_margin": 0.1052307,
+      "max_component_residual_kg": 2.906130891489056e-11,
+      "max_phase_residual_kg": 2.920819142104847e-11
+    },
+    {
+      "eos": "Pr",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.586457,
+      "post_restart_oil_peak_kg_s": 12.4916465,
+      "riser_oil_kg_s": 13.0151157,
+      "interface_m": 0.3001099,
+      "oil_out_kg_s": 12.3890723,
+      "power_kW": 549.0133569,
+      "riser_water_kg_s": 3.3463798,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.6736917,
+      "separator_bara": 54.6410983,
+      "riser_gas_kg_s": 5.7769116,
+      "screening_surge_margin": 0.1009041,
+      "max_component_residual_kg": 3.167477391485818e-11,
+      "max_phase_residual_kg": 3.7207126268867796e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "fixed",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.7294501,
+      "post_restart_oil_peak_kg_s": 12.4507925,
+      "riser_oil_kg_s": 13.0502782,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3685375,
+      "power_kW": 575.8057282,
+      "riser_water_kg_s": 3.3516309,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7193659,
+      "separator_bara": 54.6555335,
+      "riser_gas_kg_s": 5.9557619,
+      "screening_surge_margin": 0.1359596,
+      "max_component_residual_kg": 2.4168445023065033e-11,
+      "max_phase_residual_kg": 3.5605962622753395e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.7209149,
+      "post_restart_oil_peak_kg_s": 12.4562936,
+      "riser_oil_kg_s": 13.0090102,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3690031,
+      "power_kW": 577.0901195,
+      "riser_water_kg_s": 3.3421479,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7299039,
+      "separator_bara": 54.6593717,
+      "riser_gas_kg_s": 5.9732742,
+      "screening_surge_margin": 0.1368627,
+      "max_component_residual_kg": 2.4034441103992776e-11,
+      "max_phase_residual_kg": 2.674838128768897e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "fixed",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.5245099,
+      "post_restart_oil_peak_kg_s": 14.8100092,
+      "riser_oil_kg_s": 15.2293867,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.4061503,
+      "power_kW": 573.8691377,
+      "riser_water_kg_s": 3.5473111,
+      "level_m": 1.1004028,
+      "gas_export_kg_s": 4.7007124,
+      "separator_bara": 54.6430865,
+      "riser_gas_kg_s": 7.2643556,
+      "screening_surge_margin": 0.13348,
+      "max_component_residual_kg": 3.135491866146367e-11,
+      "max_phase_residual_kg": 3.788835911677779e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "ramp",
+      "dt": 0.125,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.7265086,
+      "post_restart_oil_peak_kg_s": 12.4721611,
+      "riser_oil_kg_s": 13.0502782,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3685375,
+      "power_kW": 575.8057282,
+      "riser_water_kg_s": 3.3516309,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7193659,
+      "separator_bara": 54.6555335,
+      "riser_gas_kg_s": 5.9557619,
+      "screening_surge_margin": 0.1333781,
+      "max_component_residual_kg": 3.3280211919617386e-11,
+      "max_phase_residual_kg": 2.5557334026871104e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 60,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.7177236,
+      "post_restart_oil_peak_kg_s": 12.4764075,
+      "riser_oil_kg_s": 13.0090102,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.3690031,
+      "power_kW": 577.0901195,
+      "riser_water_kg_s": 3.3421479,
+      "level_m": 1.1002014,
+      "gas_export_kg_s": 4.7299039,
+      "separator_bara": 54.6593717,
+      "riser_gas_kg_s": 5.9732742,
+      "screening_surge_margin": 0.1343022,
+      "max_component_residual_kg": 2.415201372230058e-11,
+      "max_phase_residual_kg": 2.674838128768897e-11
+    },
+    {
+      "eos": "Srk",
+      "policy": "ramp",
+      "dt": 0.25,
+      "cells": 120,
+      "basis": "matched",
+      "status": "completed",
+      "well_production_kg": 753.5228807,
+      "post_restart_oil_peak_kg_s": 13.0504238,
+      "riser_oil_kg_s": 15.2293867,
+      "interface_m": 0.300647,
+      "oil_out_kg_s": 12.4061503,
+      "power_kW": 573.8691377,
+      "riser_water_kg_s": 3.540383,
+      "level_m": 1.1004028,
+      "gas_export_kg_s": 4.7007124,
+      "separator_bara": 54.6430865,
+      "riser_gas_kg_s": 7.2643556,
+      "screening_surge_margin": 0.1303201,
+      "max_component_residual_kg": 3.871092335572257e-11,
+      "max_phase_residual_kg": 3.788835911677779e-11
+    }
+  ],
+  "blind_score_550_kW_matched": {
+    "choice": "withhold",
+    "held_out": {
+      "fixed": {
+        "violations": [
+          "power_kW"
+        ],
+        "power_prediction_error_kW": 3.220981708432987,
+        "worst_production_kg": 753.5245099437426
+      },
+      "ramp": {
+        "violations": [
+          "power_kW"
+        ],
+        "power_prediction_error_kW": 3.220981708432987,
+        "worst_production_kg": 753.5228806502565
+      }
+    },
+    "violations": [],
+    "appropriate_abstention": true,
+    "production_regret_kg": null
+  },
+  "blind_score_600_kW_installed": {
+    "choice": "withhold",
+    "held_out": {
+      "fixed": {
+        "violations": [],
+        "missing_evidence": [
+          "accepted refined trajectory"
+        ],
+        "rejections": [
+          "Outlet backflow clamped at 2.875 s; separator=54.668777 bara, choke=58.000%, imposed riser boundary=56.460035 bara; end-step gas/oil/water cell velocities=(7.623373008112128, 0.6160283870284455, -0.0013203590872857707) m/s",
+          "Outlet backflow clamped at 2.5 s; separator=54.646324 bara, choke=58.000%, imposed riser boundary=56.544232 bara; end-step gas/oil/water cell velocities=(7.467436616852175, 0.5960774957329881, -0.014860418979854514) m/s",
+          "Outlet backflow clamped at 2.75 s; separator=54.701725 bara, choke=58.000%, imposed riser boundary=56.663497 bara"
+        ],
+        "worst_production_kg": null,
+        "power_prediction_error_kW": null
+      },
+      "ramp": {
+        "violations": [],
+        "missing_evidence": [
+          "accepted refined trajectory"
+        ],
+        "rejections": [
+          "Outlet backflow clamped at 2.875 s; separator=54.668777 bara, choke=58.000%, imposed riser boundary=56.460035 bara; end-step gas/oil/water cell velocities=(7.623373008112128, 0.6160283870284455, -0.0013203590872857707) m/s",
+          "Outlet backflow clamped at 2.5 s; separator=54.646324 bara, choke=58.000%, imposed riser boundary=56.544232 bara; end-step gas/oil/water cell velocities=(7.467436616852175, 0.5960774957329881, -0.014860418979854514) m/s",
+          "Outlet backflow clamped at 2.75 s; separator=54.701725 bara, choke=58.000%, imposed riser boundary=56.663497 bara"
+        ],
+        "worst_production_kg": null,
+        "power_prediction_error_kW": null
+      }
+    },
+    "violations": [],
+    "appropriate_abstention": true,
+    "production_regret_kg": null
+  },
+  "volve_holdout": {
+    "15/9-F-12": {
+      "training_days": 52,
+      "holdout_days": 27,
+      "mean_rate_baseline_Sm3_day": {
+        "n": 27,
+        "mae": 1237.912257810529,
+        "bias": 893.2077660847608
+      },
+      "leave_seven_observations_out_PI_range": [
+        150.09271657277188,
+        233.45169942061963
+      ],
+      "effective_PI_Sm3_day_bar": 173.17132677279528,
+      "effective_pressure_intercept_bar_on_source_basis": 286.72732168769204,
+      "conditional_liquid_rate_Sm3_day": {
+        "n": 27,
+        "mae": 1058.133966894508,
+        "bias": 1058.133966894508
+      },
+      "training_flowing_pressure_span_bar": [
+        245.4,
+        271.248
+      ]
+    },
+    "15/9-F-14": {
+      "training_days": 18,
+      "holdout_days": 16,
+      "mean_rate_baseline_Sm3_day": {
+        "n": 16,
+        "mae": 851.2430555555557,
+        "bias": -851.2430555555557
+      },
+      "leave_seven_observations_out_PI_range": [
+        119.75495498683432,
+        165.64248276473825
+      ],
+      "effective_PI_Sm3_day_bar": 132.06710964479367,
+      "effective_pressure_intercept_bar_on_source_basis": 273.1981310912965,
+      "conditional_liquid_rate_Sm3_day": {
+        "n": 16,
+        "mae": 318.51980104504673,
+        "bias": 69.1812395924226
+      },
+      "training_flowing_pressure_span_bar": [
+        246.954,
+        260.867
+      ]
+    },
+    "15/9-F-4": {
+      "training_days": 41,
+      "holdout_days": 24,
+      "mean_rate_baseline_Sm3_day": {
+        "n": 24,
+        "mae": 928.8791754478518,
+        "bias": 555.8331790004936
+      },
+      "positive_training_downhole_pressure_count": 0,
+      "injectivity_evidence": "Requires paired injection and reservoir pressures"
+    },
+    "sum_of_two_conditional_rates_Sm3_day": {
+      "n": 16,
+      "mae": 874.922825748654,
+      "bias": 855.4292488937123
+    },
+    "paired_injection": {
+      "fitted_mass_injectivity_kg_s_bar": 0.1,
+      "holdout": [
+        {
+          "date": "2026-01-04",
+          "source": "synthetic analytical test",
+          "observed_kg_s": 5.0,
+          "predicted_kg_s": 5.0,
+          "fracture_margin_bar": 10.0
+        }
+      ],
+      "errors_kg_s": {
+        "n": 1,
+        "mae": 0.0,
+        "bias": 0.0
+      }
+    }
+  }
+}

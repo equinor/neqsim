@@ -763,3 +763,15 @@ SIL/PFD/SIF or lifecycle validity, PSV adequacy, controller/transient validity,
 independence or common cause, standards applicability or conformance, safe
 operating limits, plant or control authority, certification, or accountable
 engineering/process-safety approval.
+
+## Pipeline control replay evidence
+
+For `runPipeline` with `analysis="wellToTopsideSlugControl"`, the runner returns
+`quantityEvidence` alongside `data` and `provenance`. It gives the benchmark,
+fixed outlet boundary, mesh cells, requested step in seconds and separate
+open-loop and regulated quantities. Each mode includes `pipePhaseResidualKg`,
+`peakRiserLiquidKgPerSecond` and `meanInletProductionKgPerSecond`.
+`pairedRefinementExecuted` and `independentFieldComparison` are false for this
+single-grid synthetic replay. The [two-well restart workflow](../../examples/production-decision/README.md)
+provides a separate local MCP server for a moving outlet boundary, cross-grid
+comparison and blind scoring.

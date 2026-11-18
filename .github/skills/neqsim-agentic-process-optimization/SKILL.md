@@ -561,3 +561,15 @@ figure (observation → mechanism → implication → recommendation).
 - [ ] Did failed trials return a penalty (never crash the optimizer)?
 - [ ] Did you verify the new APIs are on the classpath (devtools or repackaged JAR)?
 - [ ] Java helpers (if any) compile on Java 8 — no `var`, `List.of`, `String.repeat`.
+
+## Restart decisions with a shared riser and host
+
+Use the [two-well restart study](../../../examples/production-decision/README.md)
+to compare a fixed platform choke with an opening trajectory. Inspect peak phase
+rates, well production, separator levels, suction flow and power separately on
+matched mesh, timestep and fluid cases. Check whether the largest load occurred
+before or after the control move. A completed simulation or a small component
+balance residual cannot establish that the peak is resolved. Ask for a paired
+pressure/phase-rate trace or a compressor map when that evidence would change
+the decision. For blind evaluation, give the agent only the challenge-mode MCP
+server and score its saved choice separately.
