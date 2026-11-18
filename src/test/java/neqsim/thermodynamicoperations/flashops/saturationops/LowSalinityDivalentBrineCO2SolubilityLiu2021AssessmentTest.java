@@ -64,8 +64,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         + "model_water_activity,matched_pure_water_water_activity,"
         + "model_molecular_co2_mole_percent,matched_pure_water_model_molecular_co2_mole_percent,"
         + "log_dissolved_co2_molecular_ratio,log_guest_fugacity_ratio,"
-        + "model_effective_f_over_x_bara,matched_pure_water_effective_f_over_x_bara,"
-        + "log_effective_f_over_x_ratio,"
+        + "model_effective_f_over_x_bara,matched_pure_water_effective_f_over_x_bara," + "log_effective_f_over_x_ratio,"
         + "decomposition_identity_residual,component_balance_residual_mol,"
         + "molecular_log_fugacity_residual,phase_types," + "constrained_model_co2_mol_per_kg_solution,"
         + "constrained_molecular_log_fugacity_residual");
@@ -140,7 +139,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       report.add(String.format(Locale.ROOT,
           "%s,%s,%s,%d,%.8f,%.1f,%.1f,%.8f,%.12g,%.12g,%.12g,%.12g,%.12g,"
               + "%.12g,%.12g,%s,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,"
-              + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g,%.12g",
+              + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g,%.12g",
           reference.pointId, reference.saltType, reference.isPureWater() ? "REFERENCE" : "IDENTIFIABILITY_SCREEN",
           reference.salinityPpm, reference.saltMassFractionPercent, reference.temperatureK, reference.pressureAtm,
           reference.totalPressureMpa, reference.sourceCo2MolPerKgSolution, model,
@@ -148,8 +147,9 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
           modelPure, sourceSaltEffect, modelSaltEffect, sourceSaltDirection, result.co2FugacityBara,
           pureWater.co2FugacityBara, result.waterActivity, pureWater.waterActivity, result.molecularMolePercent,
           pureWater.molecularMolePercent, logDissolvedCo2MolecularRatio, logGuestFugacityRatio, effectiveFOverXBara,
-          pureWaterEffectiveFOverXBara, logEffectiveFOverXRatio, decompositionResidual, result.componentBalanceResidualMol,
-          result.molecularLogFugacityResidual, result.phaseTypes, constrainedModel, constrainedResidual));
+          pureWaterEffectiveFOverXBara, logEffectiveFOverXRatio, decompositionResidual,
+          result.componentBalanceResidualMol, result.molecularLogFugacityResidual, result.phaseTypes, constrainedModel,
+          constrainedResidual));
     }
 
     assertEquals(84, references.size());
