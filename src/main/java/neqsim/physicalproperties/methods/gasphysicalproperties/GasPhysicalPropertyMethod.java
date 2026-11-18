@@ -25,7 +25,11 @@ public abstract class GasPhysicalPropertyMethod extends PhysicalPropertyMethod {
    */
   public GasPhysicalPropertyMethod(PhysicalProperties gasPhase) {
     super(gasPhase);
-    initializeGasPairParameters(gasPhase.getPhase().getNumberOfComponents());
+    int count = gasPhase.getPhase().getNumberOfComponents();
+    binaryMolecularDiameter = new double[count][count];
+    binaryMolecularMass = new double[count][count];
+    binaryEnergyParameter = new double[count][count];
+    fillGasPairParameters(count);
   }
 
   /**
@@ -33,10 +37,7 @@ public abstract class GasPhysicalPropertyMethod extends PhysicalPropertyMethod {
    *
    * @param count number of components in the bound phase
    */
-  protected final void initializeGasPairParameters(int count) {
-    binaryMolecularDiameter = new double[count][count];
-    binaryMolecularMass = new double[count][count];
-    binaryEnergyParameter = new double[count][count];
+  protected final void fillGasPairParameters(int count) {
     for (int i = 0; i < count; i++) {
       for (int j = 0; j < count; j++) {
         binaryMolecularMass[i][j] = 2.0 * Math.pow((1.0 / gasPhase.getPhase().getComponent(i).getMolarMass() / 1000.0

@@ -126,7 +126,10 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
       binaryLennardJonesOmega = new double[count][count];
       // The superclass constructor initializes the parameter tables on first binding.
       if (binaryMolecularMass != null) {
-        initializeGasPairParameters(count);
+        binaryMolecularDiameter = new double[count][count];
+        binaryMolecularMass = new double[count][count];
+        binaryEnergyParameter = new double[count][count];
+        fillGasPairParameters(count);
       }
       if (useDiffusionLJOverride) {
         initDiffusionLJParameters();
