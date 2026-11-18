@@ -140,4 +140,19 @@ class SteadyFlareGasNetworkTest {
     fast.addDevice("PSV", 8, NO_LOSS, 2e-4, 0.95, NO_LOSS, null);
     assertThrows(IllegalStateException.class, () -> fast.rate(Collections.singletonMap("PSV", 0.1)));
   }
+
+  /** Both devices flowing gives Mach 0.258, but a lone open lateral in the pre-opening case reaches 0.305. */
+  @Test
+  void verifiesMachOnTheSeparatePreOpeningState() {
+    Pipe tail = new Pipe(0.06, 0.0, 0.02);
+    SteadyFlareGasNetwork network = new SteadyFlareGasNetwork("H", new Pipe(0.15, 200, 0.02), "T", 1.2, 1.6, 2, 300,
+        0.02, 1, 1.3);
+    network.addDevice("A", 2, NO_LOSS, 0.001, 0.95, tail, null);
+    network.addDevice("B", 2, NO_LOSS, 0.001, 0.95, tail, null);
+    Map<String, Double> demand = new LinkedHashMap<>();
+    demand.put("A", 0.1);
+    demand.put("B", 0.1);
+    assertThrows(IllegalStateException.class, () -> network.rate(demand));
+  }
+
 }

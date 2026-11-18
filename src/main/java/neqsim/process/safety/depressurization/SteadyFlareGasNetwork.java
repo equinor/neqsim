@@ -139,12 +139,34 @@ public final class SteadyFlareGasNetwork {
       double outlet = branch.tail.upstream(junction, flow);
       double inletMach = branch.inlet.checkedMach(flow, upstream);
       double tailMach = branch.tail.checkedMach(flow, junction);
-      double preOpening = flow == 0.0 ? junction : junctionPressure(balancedFlow(branch, toleranceKgS, iterations));
+      double preOpening = flow == 0.0 ? junction : preOpeningPressure(branch, toleranceKgS, iterations);
       ratings.put(entry.getKey(), new DeviceRating(branch, demandsKgS.get(entry.getKey()), flow, upstream, outlet,
           junction, staticBara, preOpening, inletMach, tailMach));
       sum += flow;
     }
     return new Result(this, junction, tip, total, total - sum, headerMach, ratings);
+  }
+
+  /**
+   * Calculate and qualify the all-other-devices-operating baseline for a device before opening.
+   *
+   * @param closed device held closed
+   * @param tolerance absolute mass residual, kg/s
+   * @param iterations iteration budget for each balance
+   * @return qualified local pre-opening pressure, bara
+   */
+  private double preOpeningPressure(Branch closed, double tolerance, int iterations) {
+    double total = balancedFlow(closed, tolerance, iterations);
+    double junction = junctionPressure(total);
+    header.checkedMach(total, tipPressure(total));
+    for (Branch other : branches.values()) {
+      if (other != closed) {
+        double flow = other.flow(junction, tolerance / (2.0 * branches.size()), iterations);
+        other.inlet.checkedMach(flow, other.inlet.downstream(other.source, flow));
+        other.tail.checkedMach(flow, junction);
+      }
+    }
+    return junction;
   }
 
   /**
