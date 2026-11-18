@@ -31,6 +31,23 @@ public abstract class PhysicalPropertyMethod implements PhysicalPropertyMethodIn
     setPhase(phase);
   }
 
+  /**
+   * Copy mutable coefficient rows while preserving absent arrays and rows.
+   *
+   * @param source source matrix, possibly null
+   * @return independently owned matrix, or null when absent
+   */
+  protected static double[][] copyCoefficientMatrix(double[][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][] copy = source.clone();
+    for (int row = 0; row < source.length; row++) {
+      copy[row] = source[row] == null ? null : source[row].clone();
+    }
+    return copy;
+  }
+
   /** {@inheritDoc} */
   @Override
   public PhysicalPropertyMethod clone() {
