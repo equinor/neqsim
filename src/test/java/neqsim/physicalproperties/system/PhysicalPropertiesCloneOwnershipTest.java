@@ -12,9 +12,13 @@ import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
+import neqsim.thermo.Fluid;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -86,6 +90,63 @@ class PhysicalPropertiesCloneOwnershipTest extends neqsim.NeqSimTest {
       assertMethodOwners(copied);
       assertMethodOwners(original);
       assertMethodOwners(original.clone());
+    }
+  }
+
+  /** Adding zero-amount species must allow cloning before physical-property reinitialization. */
+  @Test
+  void cloneAirAfterAddingZeroAmountComponents() {
+    SystemInterface air = new Fluid().create("air");
+    air.addComponent("CO2", 0.0);
+    air.addComponent("water", 0.0);
+    SystemInterface copy = air.clone();
+    assertEquals(4, copy.getNumberOfComponents());
+    copy.init(0);
+    copy.init(2);
+    copy.initPhysicalProperties();
+    double diffusion = copy.getPhase(0).getPhysicalProperties().getDiffusionCoefficient("CO2", "water");
+    assertTrue(Double.isFinite(diffusion) && diffusion > 0.0);
+    assertEquals(0.0, air.getComponent("water").getNumberOfmoles(), 0.0);
+  }
+
+  /**
+   * Check independently mutable diffusion rows, including subclass scratch arrays used by scalar evaluations.
+   *
+   * @param model diffusion model to clone
+   * @throws IllegalAccessException if an instance array cannot be inspected
+   */
+  @ParameterizedTest
+  @ValueSource(strings = {"CSP", "Wilke Lee", "Siddiqi Lucas", "solid"})
+  void diffusionCloneOwnsEveryPairRow(String model) throws IllegalAccessException {
+    PhysicalProperties properties = createPhase().getPhysicalProperties();
+    if ("solid".equals(model)) {
+      properties.diffusivityCalc = new neqsim.physicalproperties.methods.solidphysicalproperties.diffusivity.Diffusivity(
+          properties);
+    } else {
+      properties.setDiffusionCoefficientModel(model);
+    }
+    DiffusivityInterface original = properties.diffusivityCalc;
+    double[][] originalPairs = original.calcDiffusionCoefficients(0, 0);
+    double before = originalPairs[0][1];
+    DiffusivityInterface copied = properties.clone().diffusivityCalc;
+    double[][] copiedPairs = copied.calcDiffusionCoefficients(0, 0);
+    assertEquals(before, copiedPairs[0][1], 0.0);
+    copiedPairs[0][1] = before + 1.0;
+    assertEquals(before, original.getMaxwellStefanBinaryDiffusionCoefficient(0, 1), 0.0);
+
+    for (Class<?> type = original.getClass(); type != null; type = type.getSuperclass()) {
+      for (Field field : type.getDeclaredFields()) {
+        if (field.getType() == double[][].class) {
+          field.setAccessible(true);
+          double[][] source = (double[][]) field.get(original);
+          if (source != null) {
+            double[][] clone = (double[][]) field.get(copied);
+            for (int row = 0; row < source.length; row++) {
+              assertNotSame(source[row], clone[row], field.getName());
+            }
+          }
+        }
+      }
     }
   }
 

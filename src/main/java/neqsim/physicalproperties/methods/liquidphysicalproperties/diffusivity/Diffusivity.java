@@ -27,9 +27,17 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
    */
   public Diffusivity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
-    binaryDiffusionCoefficients = new double[liquidPhase.getPhase().getNumberOfComponents()][liquidPhase.getPhase()
-        .getNumberOfComponents()];
-    effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPhase(PhysicalProperties properties) {
+    super.setPhase(properties);
+    int count = properties.getPhase().getNumberOfComponents();
+    if (binaryDiffusionCoefficients == null || binaryDiffusionCoefficients.length != count) {
+      binaryDiffusionCoefficients = new double[count][count];
+      effectiveDiffusionCoefficient = new double[count];
+    }
   }
 
   /**
