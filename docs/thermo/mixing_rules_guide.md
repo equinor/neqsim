@@ -110,6 +110,11 @@ for the reaction-specific ordering and regression coverage.
 
 ---
 
+With the **CLASSIC (type 2)** rule, removing a component from a standard SRK or PR phase
+compacts both indices of its interaction tables. Database and user-fitted coefficients
+remain attached to the same surviving species pairs. Removing species on a cloned fluid
+detaches those tables so edits to the reduced fluid do not change the source fluid.
+
 ## 3. Classic Mixing Rules
 
 ### 3.1 NO (kij = 0) - Type 1
