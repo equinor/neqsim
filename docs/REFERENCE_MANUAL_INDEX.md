@@ -341,6 +341,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors.md)                         | Compressor models, drivers, speed-dependent power |
 | Seal Support-System Monitoring | [docs/process/equipment/dry_gas_seal_monitoring.md](process/equipment/dry_gas_seal_monitoring.md) | Timed advisory supply/vent/buffer/separation monitoring |
+| Compressor Seal Vent Studies | [docs/process/equipment/dry_gas_seal_vent_study.md](process/equipment/dry_gas_seal_vent_study.md) | Failure-case cavity pressures, vent sizing and process gas routed to flare, atmosphere and bearings |
 | Dry Gas Seal Engineering Review | [docs/process/equipment/dry_gas_seal_engineering_review.md](process/equipment/dry_gas_seal_engineering_review.md) | Literature, standards scope, current-model audit, troubleshooting and validation roadmap |
 | Compression Train Assessment | [docs/process/equipment/compression_train_assessment.md](process/equipment/compression_train_assessment.md) | Off-design acoustic coordinates, map queries and constrained net-export energy comparison |
 | Seal Condensation and Conditioning | [docs/process/equipment/dry_gas_seal_conditioning.md](process/equipment/dry_gas_seal_conditioning.md) | Sampled liquid-risk evidence, flow bases and separated-gas thermal duties |
@@ -892,7 +893,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 | Document                   | Path                                                                               | Description                                                               |
 | -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis.md)         | RCA framework architecture, confidence scoring, usage examples            |
+| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis.md)         | Equipment RCA, inventory balances, flowmeter bias and fault isolation            |
 
 #### Key Classes in Diagnostics Framework
 
