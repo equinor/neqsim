@@ -113,6 +113,11 @@ effects with the appropriate equipment or network formulation.
 
 ## Cv, Kv, and valve opening
 
+When running a valve directly with a fresh flowing inlet stream, the valve runs the
+inlet specification before evaluating its phase and sizing properties. Direct and
+flowsheet runs therefore use the same equilibrium inlet for a given sizing method,
+opening and pressure-drop ratio factor.
+
 `Cv` uses the US convention and `Kv` the SI convention. NeqSim stores the
 coefficient internally as Kv and converts with $C_v = 1.156K_v$.
 
