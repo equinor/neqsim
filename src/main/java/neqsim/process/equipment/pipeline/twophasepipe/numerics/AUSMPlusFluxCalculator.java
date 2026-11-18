@@ -479,6 +479,19 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * @throws IllegalArgumentException if area, occupied phase states or computed outputs are invalid or nonfinite
    */
   public PhaseFlux calcRusanovFlux(PhaseState left, PhaseState right, double area) {
+    return calcRusanovFlux(left, right, area, false);
+  }
+
+  /**
+   * Evaluate the two-donor flux with acoustic or material-wave dissipation.
+   *
+   * @param left left donor state
+   * @param right right donor state
+   * @param area face area in square metres
+   * @param materialWavesOnly use the phase advection speed when a separate coupled pressure solve carries acoustics
+   * @return conservative face flux including pressure traction and directional donor contributions
+   */
+  public PhaseFlux calcRusanovFlux(PhaseState left, PhaseState right, double area, boolean materialWavesOnly) {
     if (!(area > 0.0) || !Double.isFinite(area)) {
       throw new IllegalArgumentException("Rusanov flux requires positive finite area");
     }
@@ -493,8 +506,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
     }
 
     // Maximum wave speed
-    double speedLeft = presentLeft ? Math.abs(left.velocity) + left.soundSpeed : 0.0;
-    double speedRight = presentRight ? Math.abs(right.velocity) + right.soundSpeed : 0.0;
+    double speedLeft = presentLeft ? Math.abs(left.velocity) + (materialWavesOnly ? 0.0 : left.soundSpeed) : 0.0;
+    double speedRight = presentRight ? Math.abs(right.velocity) + (materialWavesOnly ? 0.0 : right.soundSpeed) : 0.0;
     double sMax = Math.max(speedLeft, speedRight);
     double uLeft = presentLeft ? left.velocity : 0.0;
     double uRight = presentRight ? right.velocity : 0.0;

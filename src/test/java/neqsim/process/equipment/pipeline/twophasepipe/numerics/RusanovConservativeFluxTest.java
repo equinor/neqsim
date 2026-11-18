@@ -51,6 +51,25 @@ class RusanovConservativeFluxTest {
     }
   }
 
+  /** A stationary material contact is preserved even with a density or holdup discontinuity. */
+  @Test
+  void materialFluxPreservesStationaryContactsAndCountercurrentDonors() {
+    PhaseState left = ideal(50.0, 0.0, 1e6, 0.2);
+    PhaseState right = ideal(800.0, 0.0, 1e6, 0.8);
+    PhaseFlux contact = calculator.calcRusanovFlux(left, right, 1.0, true);
+    assertEquals(0.0, contact.forwardMassFlux, 0.0);
+    assertEquals(0.0, contact.reverseMassFlux, 0.0);
+    assertEquals(0.0, contact.energyFlux, 0.0);
+    assertEquals(0.5e6, contact.momentumFlux, 1e-9);
+    left.velocity = 2.0;
+    right.velocity = -1.0;
+    PhaseFlux moving = calculator.calcRusanovFlux(left, right, 1.0, true);
+    assertEquals(20.0, moving.forwardMassFlux, 1e-12);
+    assertEquals(960.0, moving.reverseMassFlux, 1e-12);
+    assertEquals(-940.0, moving.massFlux, 1e-12);
+    assertEquals(1000.0, moving.momentumFlux - contact.momentumFlux, 1e-9);
+  }
+
   /** Exactly absent properties are unused; a positive trace follows the same conservative formula. */
   @Test
   void exactAbsenceAndPositiveTraces() {
