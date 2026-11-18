@@ -22,8 +22,11 @@ import neqsim.process.engineering.NorsokOffshoreEngineeringBuilder;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.BlowdownValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.dexpi.Dexpi201XmlWriter;
@@ -210,6 +213,73 @@ public class ProfessionalPidPackageExporterTest extends NeqSimTest {
     Files.write(target.resolve("pid-design-model.json"), "\n".getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.APPEND);
     assertThrows(IllegalArgumentException.class, () -> ProfessionalPidPackageReader.read(restored, target));
+  }
+
+  /**
+   * Reimports the separator PSHH-to-BDV demand only when both physical I/O identities exist.
+   *
+   * @throws Exception if the physical safeguard cannot be exported and inspected
+   */
+  @Test
+  void reimportsBoundPressureTripAndBlowdownDemandStrictly() throws Exception {
+    ProcessSystem process = process();
+    Separator separator = (Separator) process.getUnit("20-VG-001");
+    ThrottlingValve pressureControlValve = (ThrottlingValve) process.getUnit("20-PCV-001");
+    Splitter gasBranch = new Splitter("20-SPL-001", separator.getGasOutStream(), 2);
+    gasBranch.setSplitFactors(new double[] {1.0, 0.0});
+    gasBranch.run();
+    pressureControlValve.setInletStream(gasBranch.getSplitStream(0));
+    PressureTransmitter pressureTransmitter = new PressureTransmitter("20-PT-002", gasBranch.getSplitStream(0));
+    pressureTransmitter.setUnit("bara");
+    BlowdownValve blowdownValve = new BlowdownValve("20-BDV-001", gasBranch.getSplitStream(1));
+    blowdownValve.setCv(2.0);
+    blowdownValve.setOutletPressure(1.5, "bara");
+    process.add(gasBranch);
+    process.add(pressureTransmitter);
+    process.add(blowdownValve);
+    process.run();
+
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Physical separator safeguard", process, "2.0.1")
+        .projectId("PID-201-PHYSICAL-SAFEGUARD").registerProposedInstruments(false).build().setRevision("A");
+    PidDesignModel pid = PidDesignSynthesizer.synthesize(project, new PidDesignBasis("COMPLETE-PROPOSALS", "20"),
+        NorsokPidRuleCatalog.completeProposals());
+    for (PidElement element : pid.getElements()) {
+      if ("20-PT-002".equals(element.getTag())) {
+        element.attribute("sensingLocation", "VESSEL");
+      }
+    }
+    PidSimulationBindings bindings = PidSimulationBindings.from(project, pid).bindMeasurement("20-PT-002", "20-PT-002")
+        .bindEquipment("20-BDV-001", "20-BDV-001");
+
+    Path target = ProfessionalPidPackageExporter.export(project, pid, bindings, metadata(),
+        temporaryDirectory.resolve("physical-safeguard"));
+    ProfessionalPidPackageReader.Result first = ProfessionalPidPackageReader.read(project, target);
+
+    assertFalse(first.hasImportLosses());
+    ProfessionalPidPackageReader.readStrict(project, target);
+    JsonObject projection = JsonParser.parseString(text(target.resolve("plant.dexpi.xml.pid-projection.json")))
+        .getAsJsonObject();
+    boolean signalProjected = false;
+    for (JsonElement element : projection.getAsJsonArray("signalLinks")) {
+      JsonObject row = element.getAsJsonObject();
+      signalProjected |= "20-PSHH-001".equals(row.get("sourceTag").getAsString())
+          && "20-BDV-001".equals(row.get("targetTag").getAsString())
+          && "PROJECTED".equals(row.get("status").getAsString());
+    }
+    assertTrue(signalProjected);
+    assertTrue(projection.getAsJsonObject("nativeIdsByPidTag").has("20-BDV-001"));
+    assertTrue(first.getDexpiEvidence().getVerifiedSignals().stream()
+        .anyMatch(row -> "20-PSHH-001".equals(row.get("sourceTag")) && "20-BDV-001".equals(row.get("targetTag"))));
+    assertTrue(first.getDexpiEvidence().getVerifiedActuations().stream().anyMatch(
+        row -> "20-BDV-001".equals(row.get("functionTag")) && "20-BDV-001".equals(row.get("simulationFinalElement"))));
+    assertEquals("20-PT-002", first.getBindings().getSimulationName("20-PT-002"));
+    assertEquals("20-BDV-001", first.getBindings().getSimulationName("20-BDV-001"));
+
+    Path reexported = ProfessionalPidPackageExporter.export(project, first.getModel(), first.getBindings(), metadata(),
+        temporaryDirectory.resolve("physical-safeguard-round-trip"));
+    ProfessionalPidPackageReader.Result second = ProfessionalPidPackageReader.readStrict(project, reexported);
+    assertEquals(first.getSemanticFingerprint(), second.getSemanticFingerprint());
+    assertTrue(ProfessionalPidPackageReader.compare(first, second).isEquivalent());
   }
 
   /**
