@@ -572,7 +572,9 @@ before or after the control move. A completed simulation or a small component
 balance residual cannot establish that the peak is resolved. Ask for a paired
 pressure/phase-rate trace or a compressor map when that evidence would change
 the decision. For blind evaluation, give the agent only the challenge-mode MCP
-server and score its saved choice separately.
+server and score its saved choice separately. Review `violation_evidence` for the fluid,
+mesh, timestep and host limit of each observed breach. A rejection on another configuration
+keeps the production ranking unresolved while preserving the completed trajectories' findings.
 
 For installed-equipment comparisons, verify the signed steady well-rate and choke-pressure residuals before starting the controllers. The [reference case](../../../examples/production-decision/README.md) solves both to 1e-10 in kg/s and bar so an initialization discrepancy cannot disable the native steady momentum correction. Keep event and handoff protocol identical across a ranking. A rejected coarse trajectory also blocks selection when the fine runs happen to complete.
 
