@@ -30,8 +30,16 @@ gives the package directory for the latest export and any re-import losses.
 Each export preserves the previous drawing revision in its own directory.
 The package contains the DEXPI XML, vector sheets, cause/effect records,
 instrument register, simulation bindings and drawing completeness report.
-Synthesized proposals and their generated tags need reconciliation with the
-executable logic and its signal names. The reader reports unresolved bindings.
+The evaluated 55% turndown drawing inserts a real zero-flow gas branch for
+the closed `20-BDV-001` while preserving the live pressure-control path. A
+real protective `20-PT-002` measures that zero-pressure-drop live branch at
+V-101 pressure, and the design model explicitly identifies its physical
+sensing location as the vessel. Their explicit bindings make the generated
+`20-PSHH-001 -> 20-BDV-001` demand and the BDV
+final-element identity re-importable without creating an ambiguous second
+consumer of the vessel outlet. The complete package intentionally remains a
+non-strict intake because other synthesized proposals still require
+reconciliation with executable logic before they can be credited.
 
 ## What the commissioning results measure
 
