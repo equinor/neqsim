@@ -42,6 +42,44 @@ the source process before export and inspect these outputs:
 | `dynamic-capability-report.json` | Base-model dynamic capability/activation audit |
 | `professional-pid-readiness.json` | Drawing, exchange, projection and review findings |
 
+### Show equipment and line sizes on a professional P&ID
+
+Before exporting a converged case, call `project.setPidSizingSchedule("40")` to use
+Schedule 40 for preliminary sizing. The professional A1 sheets place the designation
+beside each material line and the tagged equipment dimensions in a dedicated equipment data box.
+The vector PDF and SVG use the same drawing commands. The package includes
+`pid-sizing.json` for comparing the drawing with the native DEXPI quantities.
+
+The 20,000 kg/h inlet-separation regression produces a 1,098 mm shell ID and a
+5,491 mm tangent length. Its gas and liquid branches screen at NPS 3½ and
+NPS 1½ respectively. The inlet carries its supplied DN 80 designation.
+Open the [vector drawing](assets/images/sized-separator-pid.svg) to inspect the instrument
+taps, size labels on both sides of the pressure valve, and equipment data box.
+
+![Sized inlet-separator P&ID](assets/images/sized-separator-pid.svg)
+
+| Equipment or line | Drawing callout | DEXPI 2.0.1 representation |
+| --- | --- | --- |
+| Separator | Shell inside diameter and tangent-to-tangent length in mm | Owned `Chamber.InsideDiameter` and `Chamber.Length` |
+| Two-stream exchanger | Design heat-transfer area including the configured area margin | `DesignHeatTransferArea` in square metres |
+| Pump | Rated flow and head | `DesignVolumeFlowRate` and `DesignPressureHead` |
+| Centrifugal compressor | Inlet impeller diameter when the mechanical feasibility checks pass | Owned `Impeller.Diameter` |
+| Process line | Stream tag, DN or NPS designation, piping class when supplied | `PipingNetworkSegment.NominalDiameterRepresentation`, nominal type/value and `PipingClassCode` |
+
+`LineDesignInput` values take priority. A per-line schedule overrides the project schedule.
+The overload accepting a configured `NorsokP002LineSizingValidator` uses the project velocity and erosion limits.
+The velocity screen uses the summed actual phase volume flow and mixture density. It selects
+the smallest tabulated **inside bore** satisfying the service velocity ceiling and erosional
+limit, then reports its **nominal size**. Calculated line designations carry `PREL.`
+on the drawing and `OnHold` in DEXPI. Supply the nominal size for relief lines
+from the applicable relief case. Missing piping classes and unavailable dimensions carry a HOLD.
+Review the design flow envelope, pressure loss, minimum velocity, mechanical wall, vibration
+and project piping class before accepting a proposed size.
+
+Mechanical calculations run on detached design objects, preserving the source process geometry.
+Each export uses the current solved case. Omitting the schedule retains controlled-only line sizing.
+Explicitly pinned legacy drawing layouts retain their existing annotation profile.
+
 The saved process can be loaded with `ProcessSystem.loadFromNeqsim(...)`;
 check for a failed load and preserve the matching model, project and binding
 definition when resuming studies. The saved process does not implement an

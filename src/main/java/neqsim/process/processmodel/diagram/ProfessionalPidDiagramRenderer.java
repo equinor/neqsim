@@ -1,5 +1,6 @@
 package neqsim.process.processmodel.diagram;
 
+import neqsim.process.engineering.pid.PidSizing;
 import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +68,7 @@ public final class ProfessionalPidDiagramRenderer {
   private final EngineeringDiagramDocumentSet documents;
   /** Native serializer. */
   private final NativeEngineeringDiagramRenderer nativeRenderer;
+  private PidSizing sizing;
   /** Actual process. */
   private final ProcessSystem process;
   /** Caller-controlled issue date/time; never a fabricated approval date. */
@@ -176,8 +178,22 @@ public final class ProfessionalPidDiagramRenderer {
    * @return native vector result
    */
   public NativeEngineeringDiagramRenderer.Result render() {
+    return render(new PidSizing(project));
+  }
+
+  /**
+   * Renders a drawing set with the sizes used for its native exchange.
+   * 
+   * @param caseSizing case sizing snapshot
+   * @return native vector result
+   */
+  public NativeEngineeringDiagramRenderer.Result render(PidSizing caseSizing) {
+    sizing = caseSizing;
     if (!pages.isEmpty()) {
       throw new IllegalStateException("Create a renderer for each controlled generation");
+    }
+    for (Map.Entry<String, String> entry : sizing.getEquipmentHolds().entrySet()) {
+      hold("EQUIPMENT_SIZING", entry.getKey(), "Mechanical design", entry.getValue());
     }
     List<ProcessEquipmentInterface> primary = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
@@ -688,10 +704,14 @@ public final class ProfessionalPidDiagramRenderer {
       for (PidElement element : inline) {
         Node node = proposalValve(scene, element, 500 + index++ * 100, y);
         valveNodes.put(element.getTag(), node);
-        scene.route(last, startSide, node, "l", stream.getName(), false,
+        scene.route(last, startSide, node, "l", physicalStream, false,
             last == body ? sourceRoute(body, startSide, node.left(), y) : null);
         last = node;
         startSide = "r";
+        if (physicalValves.contains(element.getTag())
+            && !equipment.get(element.getTag()).getOutletStreams().isEmpty()) {
+          physicalStream = equipment.get(element.getTag()).getOutletStreams().get(0).getName();
+        }
       }
       for (String actual : physicalValves) {
         if (inlineTags.contains(actual)) {
@@ -815,6 +835,7 @@ public final class ProfessionalPidDiagramRenderer {
     }
     drawNozzles(scene, unit, body, valveNodes);
     drawAuxiliaryContinuations(scene, unit);
+    equipmentSize(scene, unit);
     if (unit instanceof neqsim.process.equipment.compressor.Compressor) {
       scene.text(25, 480,
           "Normal shaft power: "
@@ -1000,12 +1021,30 @@ public final class ProfessionalPidDiagramRenderer {
         }
       }
     }
+    if (!overview) {
+      equipmentSize(scene, unit);
+    }
     scene.spec.put("exchangerMaterialSegments", material);
     scene.text(130, 385, "Two independent material circuits; separate property models and actual source ports.", 3,
         null);
     scene.text(130, 398, "Normal operating values remain distinct from line design inputs and construction approval.",
         3, null);
     scene.finish();
+  }
+
+  /**
+   * Adds a size callout in the equipment data band of the sheet.
+   * 
+   * @param scene drawing sheet
+   * @param unit subject equipment
+   */
+  private void equipmentSize(Scene scene, ProcessEquipmentInterface unit) {
+    String label = sizing.equipmentLabel(unit.getName());
+    if (!label.isEmpty()) {
+      scene.page.commands.add(Command.rect(486, 16, 337, 28, "#111111", "none", .25, "equipment-data", ""));
+      scene.text(490, 24, "EQUIPMENT DATA   /   " + unit.getName(), 3, null);
+      scene.text(490, 38, label, 4, null);
+    }
   }
 
   /**
@@ -2362,6 +2401,9 @@ public final class ProfessionalPidDiagramRenderer {
       text(25, 38, title, 4, null);
       text(25, 55, "ISO 15519 / ISO 10628 basis | A1 | solid: material / sensing | dashed: control | NOT TO SCALE", 3,
           null);
+      if ("pid".equals(kind) && project.getPidSizingSchedule() != null) {
+        text(490, 55, "PREL. = preliminary size   |   HOLD = project input required", 3, null);
+      }
       page.commands.add(Command.rect(20, 535, WIDTH - 30, 49, "#111111", "none", .5, "title-block", ""));
       text(25, 546, "DRAWING: " + project.getProjectId() + "-" + kind.toUpperCase(Locale.ROOT) + "  /  SHEET: " + number
           + "  /  REV: " + project.getRevision(), 3.5, null);
@@ -2657,10 +2699,11 @@ public final class ProfessionalPidDiagramRenderer {
           break;
         }
       }
-      String value = stream + " / DN:HOLD / CLASS:HOLD";
-      if (found != null && !found.getNominalPipeSize().isEmpty() && !found.getPipingClass().isEmpty()) {
-        value = stream + " / " + found.getNominalPipeSize() + " / " + found.getPipingClass();
-      }
+      String nominal = sizing.nominal(stream);
+      String clazz = sizing.pipingClass(stream);
+      String value = stream + " / " + (nominal.isEmpty() ? "DN:HOLD" : nominal)
+          + (sizing.calculatedSchedule(stream).isEmpty() ? "" : " PREL.") + " / "
+          + (clazz.isEmpty() ? "CLASS:HOLD" : clazz);
       if (assessedLines.add(stream) && (found == null || !found.getMissingFields().isEmpty())) {
         hold("LINE_DESIGN_INPUT", stream, "ISO 10628-1:2014 4.4.2",
             "Nominal size, piping class, material, design conditions and line-list evidence are required");

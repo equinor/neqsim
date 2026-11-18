@@ -1,5 +1,7 @@
 package neqsim.process.engineering.dexpi;
 
+import neqsim.process.processmodel.dexpi.Dexpi20PlantExportOptions;
+import neqsim.process.engineering.pid.PidSizing;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -182,13 +184,37 @@ public final class DexpiEngineeringExporter {
     if (project == null || file == null || metadata == null) {
       throw new IllegalArgumentException("project, file and metadata must not be null");
     }
+    return exportDexpi201(project, file, metadata, includeRequirementProposals, new PidSizing(project));
+  }
+
+  /**
+   * Writes an engineering export using the same sizing snapshot as the drawing set.
+   * 
+   * @param project engineering source
+   * @param file native destination
+   * @param metadata controlled export metadata
+   * @param includeRequirementProposals include requirement-derived proposals
+   * @param sizing sizing snapshot of this project
+   * @return assessment of the final XML
+   * @throws IOException if writing fails
+   */
+  public static neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment.Report exportDexpi201(
+      EngineeringProject project, Path file, neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata metadata,
+      boolean includeRequirementProposals, PidSizing sizing) throws IOException {
+    Path outputName = file == null ? null : file.getFileName();
+    if (project == null || outputName == null || sizing == null || metadata == null) {
+      throw new IllegalArgumentException("project, sizing and a destination filename are required");
+    }
     if (project.validate().hasErrors()) {
       throw new IllegalStateException("Engineering project has blocking validation errors");
     }
     neqsim.process.processmodel.dexpi.Dexpi201XmlWriter.writeAndAssess(project.getEngineeringProcessSystem(),
-        file.toFile(), metadata);
+        file.toFile(),
+        Dexpi20PlantExportOptions.builder(metadata).specification201(true).sizing(sizing)
+            .boundaryConnectionMode(Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS)
+            .build());
     Dexpi20EngineeringMaterializer.materialize(project, file, includeRequirementProposals);
-    Path evidence = file.resolveSibling(file.getFileName().toString() + ".engineering-projection.json");
+    Path evidence = file.resolveSibling(outputName + ".engineering-projection.json");
     Map<String, Object> projection = Dexpi20EngineeringMaterializer.projectionEvidence(project,
         includeRequirementProposals);
     projection.put("requirementProposalProjectionPolicy",

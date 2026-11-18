@@ -28,6 +28,7 @@ import neqsim.process.engineering.production.EngineeringProductionReadinessBasis
 import neqsim.process.engineering.verticalslice.InletCompressionExportSliceQualification;
 import neqsim.process.engineering.verticalslice.ProductionVerticalSliceExecutionManifest;
 import neqsim.process.materials.MaterialsReviewInput;
+import neqsim.process.mechanicaldesign.pipeline.NorsokP002LineSizingValidator;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
@@ -49,6 +50,8 @@ public final class EngineeringProject implements Serializable {
   private static final long serialVersionUID = 1000L;
   private final String projectId;
   private final String name;
+  private String pidSizingSchedule;
+  private NorsokP002LineSizingValidator pidLineSizingRule;
   private String revision = "working";
   private final ProcessSystem processSystem;
   private final EngineeringDesignBasis designBasis;
@@ -285,6 +288,43 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable modules configured for iterative process-to-engineering design */
   public List<EngineeringDesignModule> getEngineeringDesignModules() {
     return Collections.unmodifiableList(engineeringDesignModules);
+  }
+
+  /**
+   * Enables preliminary equipment and material line sizing on professional P&amp;IDs and native DEXPI 2.0.1 engineering
+   * exports. Sizes are calculated from the current solved case at export time.
+   *
+   * @param schedule default pipe schedule, or null to disable calculated sizes
+   * @return this project
+   */
+  public EngineeringProject setPidSizingSchedule(String schedule) {
+    return setPidSizingSchedule(schedule, null);
+  }
+
+  /**
+   * Supplies project-specific velocity and erosion screening limits together with the schedule.
+   * 
+   * @param schedule pipe schedule, or null to disable calculated sizes
+   * @param rule configured line sizing rule, or null for the default screening limits
+   * @return this project
+   */
+  public EngineeringProject setPidSizingSchedule(String schedule, NorsokP002LineSizingValidator rule) {
+    if (schedule != null && !neqsim.process.mechanicaldesign.pipeline.PipeDesign.isSupportedSchedule(schedule)) {
+      throw new IllegalArgumentException("Unsupported pipe schedule: " + schedule);
+    }
+    pidSizingSchedule = schedule;
+    pidLineSizingRule = rule;
+    return this;
+  }
+
+  /** @return project line screening rule or a new validator with the default limits */
+  public NorsokP002LineSizingValidator getPidLineSizingRule() {
+    return pidLineSizingRule == null ? new NorsokP002LineSizingValidator() : pidLineSizingRule;
+  }
+
+  /** @return default schedule for preliminary P&amp;ID sizing, or null if disabled */
+  public String getPidSizingSchedule() {
+    return pidSizingSchedule;
   }
 
   /** Adds a controlled line-list row associated with pipeline equipment. */
@@ -838,6 +878,10 @@ public final class EngineeringProject implements Serializable {
       lineList.add(gson.toJsonTree(input.toMap()));
     }
     root.add("lineList", lineList);
+    if (pidSizingSchedule != null) {
+      root.addProperty("pidSizingSchedule", pidSizingSchedule);
+      root.add("pidLineSizingRule", gson.toJsonTree(getPidLineSizingRule()));
+    }
     root.add("reliefScenarioBases", gson.toJsonTree(reliefScenarioBases));
     root.add("safetyFunctionDesigns", gson.toJsonTree(safetyFunctionDesigns));
     root.add("shutdownSequences", gson.toJsonTree(shutdownSequences));
