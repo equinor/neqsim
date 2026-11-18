@@ -372,6 +372,25 @@ transferability must be checked against independent measurements for the
 intended mixture.
 Do not infer accuracy from convergence, finite properties, or phase count.
 
+Direct activity-phase qualification must also bind the complete input set. After constructing
+`PhaseGENRTLmodifiedHV`, call `setParams(phase, alpha, Dij, DijT, rules, kij)` with all
+matrices in the owning EOS phase's component order. Supply an explicit zero `DijT`
+matrix for a zero-offset model. The legacy constructors initialize database tables;
+constructor arguments alone do not establish a complete explicit binding. `setParams`
+retains the supplied references without a database reload, so callers must finish
+configuration before evaluation and avoid concurrent mutation. Configure the fitted
+pure-component properties and alpha model on the EOS phase separately.
+`HuronVidalPhasePureRequestTest` executes complete binding and raw-selector
+compatibility controls. The related `HuronVidalModelConsistencyTest` asserts native
+identities and refined derivatives for both EOS families with asymmetric nonzero offsets.
+
+The same constructors are used by the Wong–Sandler adapter. A global constructor
+migration therefore requires separate WS parameter-convention, derivative and
+equilibrium qualification. It must not silently transfer WS or ordinary NRTL
+coefficients into an HV fit. Normal HV system initialization already binds its
+complete handler matrices before evaluation; this low-level constructor boundary
+does not explain the measured inhibitor-partition errors reported below.
+
 `HuronVidalLiteratureReproductionTest` preserves an explicit source-compatible
 SRK-HV MEG/n-heptane configuration and seven measured states at 1 bara. It
 reproduces the published mean absolute relative errors of 6.7% for heptane in MEG
@@ -532,6 +551,15 @@ allocations, full equilibrium vectors and rejected row-cache/selector proposals.
 Those proposals passed numerical checks yet failed the performance gate, so
 they are held outside production. Lower request counts alone do not establish
 lower full-flash cost or justify a runtime change.
+
+The phase-level evaluator shares the nested classical row attraction across one
+complete activity evaluation. Its two arrays are local to that invocation; pure
+and all-HV cases do not allocate them. Standalone component calls and custom
+activity subclasses retain their original entry points. The equations, sums,
+pair selections, EOS/alpha inputs and first/second temperature derivative requests
+are unchanged. See the [phase row-reuse contract and qualification protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-phase-row-performance/README.md)
+for independent numerical controls, the frozen multi-JVM matrix, allocation
+tradeoffs and the separate legacy-constructor/Wong-Sandler qualification boundary.
 
 The [quarantined CO2-in-MEG source receipts](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/README.md)
 retain both manuscript/archive phase labels and duplicate measurements. Their

@@ -49,6 +49,61 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
   }
 
   /**
+   * Evaluates the complete dimensionless excess-Gibbs sum with call-local classical row attraction reuse.
+   *
+   * <p>
+   * The workspace belongs only to this invocation. No component, phase or cloned handler retains it. Custom activity
+   * components use their original virtual entry points for the whole sum. Pure attractions are requested lazily; an
+   * all-HV matrix never evaluates an unused pure alpha model.
+   * </p>
+   *
+   * @param phase cubic phase supplying composition and pure-component models
+   * @param activities corresponding activity components
+   * @param count active component count
+   * @param temperature evaluation temperature in kelvin
+   * @param pressure evaluation pressure in bara
+   * @param pt selected phase root
+   * @param nonrandomness directed nonrandomness coefficients
+   * @param energies directed interaction energies in kelvin
+   * @param offsets directed dimensionless temperature offsets
+   * @param kij classical interaction coefficients
+   * @param rules pair selections with their historical exact nested-loop semantics
+   * @return sum of component mole fractions times log activity coefficients
+   */
+  public static double excessGibbsSum(PhaseInterface phase, ComponentInterface[] activities, int count,
+      double temperature, double pressure, PhaseType pt, double[][] nonrandomness, double[][] energies,
+      double[][] offsets, double[][] kij, String[][] rules) {
+    boolean standard = true;
+    for (int i = 0; i < count; i++) {
+      if (activities[i].getClass() != ComponentGENRTLmodifiedHV.class) {
+        standard = false;
+        break;
+      }
+    }
+    boolean classicalRows = false;
+    for (int i = 0; standard && count > 1 && !classicalRows && i < count; i++) {
+      for (int j = 0; j < count; j++) {
+        if (!rules[i][j].equals("HV")) {
+          classicalRows = true;
+          break;
+        }
+      }
+    }
+    double[] rowPure = classicalRows ? new double[count] : null;
+    boolean[] rowReady = classicalRows ? new boolean[count] : null;
+    double sum = 0.0;
+    for (int i = 0; i < count; i++) {
+      ComponentGENRTLmodifiedHV activity = (ComponentGENRTLmodifiedHV) activities[i];
+      double coefficient = standard
+          ? activity.getGammaWithRowPureTerms(phase, count, temperature, pressure, pt, nonrandomness, energies, offsets,
+              kij, rules, rowPure, rowReady)
+          : activity.getGamma(phase, count, temperature, pressure, pt, nonrandomness, energies, offsets, kij, rules);
+      sum += phase.getComponent(i).getx() * Math.log(coefficient);
+    }
+    return sum;
+  }
+
+  /**
    * Evaluates modified NRTL with invocation-local reuse of classical column pure terms.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -65,6 +120,30 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT, double[][] intparam, String[][] mixRule) {
+    return getGammaWithRowPureTerms(phase, numberOfComponents, temperature, pressure, pt, HValpha, HVgij, HVgijT,
+        intparam, mixRule, null, null);
+  }
+
+  /**
+   * Evaluates one activity coefficient with an optional workspace scoped to a single complete phase evaluation.
+   *
+   * @param phase cubic phase supplying the pure functions
+   * @param numberOfComponents active count
+   * @param temperature kelvin
+   * @param pressure bara
+   * @param pt phase root
+   * @param HValpha directed nonrandomness
+   * @param HVgij directed energies in kelvin
+   * @param HVgijT dimensionless offsets
+   * @param intparam classical binary coefficients
+   * @param mixRule pair selections
+   * @param rowPure lazy row energies, or null to preserve the standalone entry point
+   * @param rowReady initialized row entries, or null without reuse
+   * @return activity coefficient
+   */
+  private double getGammaWithRowPureTerms(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT, double[][] intparam,
+      String[][] mixRule, double[] rowPure, boolean[] rowReady) {
     int type = phase.getInitType();
     double A = 0;
     double B = 0;
@@ -298,7 +377,15 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
             columnPureReady = true;
           }
           gjj = columnPure;
-          gii = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
+          if (rowPure == null) {
+            gii = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
+          } else {
+            if (!rowReady[l]) {
+              rowPure[l] = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
+              rowReady[l] = true;
+            }
+            gii = rowPure[l];
+          }
           gij = -2.0 * Math.sqrt(comp_Array[l].getb() * comp_Array[j].getb())
               / (comp_Array[l].getb() + comp_Array[j].getb()) * Math.sqrt(gii * gjj) * (1.0 - intparam[l][j]);
           tau = (gij - gjj) / (R * temperature);

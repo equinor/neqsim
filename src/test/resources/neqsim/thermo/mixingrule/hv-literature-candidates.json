@@ -857,5 +857,13 @@
     "test": "HuronVidalFrostAssessmentTest",
     "resource": "hv-frost/",
     "boundary": "No activation, fit or extension to gas/oil/water, ice, hydrates or brine. Original source-author pure profiles still unresolved"
+  },
+  "explicit_activity_binding": {
+    "api": "PhaseGENRTLmodifiedHV.setParams(phase, alpha, Dij, DijT, rules, kij)",
+    "scope": "Complete explicit HV input binding in the owning EOS component order; zero offsets must be explicit; pure critical and alpha inputs remain on the EOS phase.",
+    "constructor_caution": "Legacy superclass initialization reloads database matrices. Constructor-only arguments are not a complete source-profile binding. Global migration also affects the WS adapter and requires separate convention/derivative/equilibrium qualification.",
+    "ownership": "setParams retains supplied references; supported system clones bind detached handler tables; finish configuration before worker evaluation.",
+    "executable_contract": "HuronVidalPhasePureRequestTest",
+    "parameter_changes": "none; no tuple, EOS/pure alpha convention, provenance, validity range or default activation changed"
   }
 }
