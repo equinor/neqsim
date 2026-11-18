@@ -11,14 +11,20 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.dynamics.TransientStepTransaction;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.SafetyReliefValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.depressurization.DepressurizationSimulator.DepressurizationResult;
+import neqsim.process.safety.depressurization.MultiVesselBlowdownStudy;
+import neqsim.process.safety.depressurization.SteadyFlareGasNetwork;
 import neqsim.process.safety.scenario.AdvancedV101PsvStudy.CaseBundle;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Real connected PSV response, backup interaction, negative controls, cycle chronology and refinement.
@@ -129,6 +135,8 @@ class AdvancedV101PsvStudyTest {
     CaseBundle fine = run("PSV_RELIEF", 0.05);
     assertTrue(passed(coarse));
     assertTrue(passed(fine));
+    assertSteadyPeakBoundary(coarse, 0.1);
+    assertSteadyPeakBoundary(fine, 0.05);
     assertTrue(Math.abs(max(coarse, "vesselPressureBara") - max(fine, "vesselPressureBara")) < 0.15);
     Map<String, Double> settings = AdvancedV101PsvStudy.defaultSettings();
     ProcessSystem source = AdvancedV101PsvStudy.buildSource(settings);
@@ -137,6 +145,65 @@ class AdvancedV101PsvStudyTest {
     CaseBundle replay = AdvancedV101PsvStudy.createCase(source, settings, "PSV_RELIEF", 0.1);
     assertEquals(coarse.toMap().get("nativeResult"), replay.runStrict().toMap());
     assertEquals(initial, sourcePsv.getOpenFraction());
+  }
+
+  /**
+   * Rate the recorded PSV-only peak as a dry-gas snapshot with zero line and tip pressure loss. The fixture specifies
+   * Cv, so the SI nozzle comparison uses an explicitly assumed water-equivalent CdA.
+   *
+   * @param reference completed native case
+   * @param dt source and handoff sampling step in seconds
+   */
+  private static void assertSteadyPeakBoundary(CaseBundle reference, double dt) {
+    String tag = "20-PSV-001";
+    DepressurizationResult source = new DepressurizationResult();
+    Map<String, Object> peak = reference.getRows().get(0);
+    for (Map<String, Object> row : reference.getRows()) {
+      source.time.add(number(row, "timeSeconds"));
+      double flow = number(row, "relievingMassFlowKgPerS");
+      source.massFlowKgPerS.add(flow);
+      if (flow > number(peak, "relievingMassFlowKgPerS")) {
+        peak = row;
+      }
+    }
+    MultiVesselBlowdownStudy.MultiVesselBlowdownResult history = new MultiVesselBlowdownStudy().setGridStep(dt)
+        .addSourceResult(tag, source).run();
+    assertEquals(number(peak, "timeSeconds"), history.getPeakTimeS(), 1e-9);
+    assertEquals(number(peak, "relievingMassFlowKgPerS"), history.getPeakTotalMassFlowKgPerS(), 1e-9);
+
+    // Reconstruct peak vessel gas from the nine observed component inventories and the native SRK basis.
+    SystemInterface fluid = new SystemSrkEos(number(peak, "20-V-101.temperatureK"), number(peak, "vesselPressureBara"));
+    Separator vessel = (Separator) reference.getConfiguredProcess().getUnit("20-V-101");
+    for (String component : vessel.getThermoSystem().getComponentNames()) {
+      fluid.addComponent(component, number(peak, "20-V-101." + component + "Mol"));
+    }
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
+    PhaseInterface gas = fluid.getPhase("gas");
+    SteadyFlareGasNetwork.Pipe line = new SteadyFlareGasNetwork.Pipe(1.0, 0.0, 0.02);
+    double boundary = reference.getSettings().get("psvBackpressureBara");
+    SteadyFlareGasNetwork network = new SteadyFlareGasNetwork("header", line, "tip", boundary, boundary, 100.0,
+        fluid.getTemperature(), gas.getMolarMass(), gas.getZ(), gas.getGamma());
+    // US gallon/min at one psi with 999 kg/m3 water. The native effective Cv already includes lift and Kd.
+    double cdArea = number(peak, "effectiveCapacityCv") * (0.003785411784 / 60.0)
+        / Math.sqrt(2.0 * 6894.757293168 / 999.0);
+    double inlet = number(peak, "pressureBara");
+    network.addDevice(tag, inlet, line, cdArea, 1.0, line, null);
+    SteadyFlareGasNetwork.Result rating = history.ratePeakGasCapacity(network);
+    assertEquals(number(peak, "relievingMassFlowKgPerS"), rating.devices.get(tag).demandKgS, 1e-9);
+    assertEquals(inlet, rating.devices.get(tag).inletBara, 1e-9);
+    assertEquals(number(peak, "backpressureBara"), rating.devices.get(tag).outletBara, 1e-9);
+    assertEquals(boundary, rating.headerBara, 1e-9);
+    assertEquals(boundary, rating.tipBara, 1e-9);
+    assertEquals(0.0, rating.massResidualKgS, 1e-8);
+    double gamma = gas.getGamma();
+    double criticalRatio = Math.pow(2.0 / (gamma + 1.0), gamma / (gamma - 1.0));
+    assertTrue(boundary / inlet < criticalRatio);
+    double sonic = Math.sqrt(gamma * gas.getMolarMass() / (gas.getZ() * 8.3144621 * fluid.getTemperature()));
+    double idealNozzle = cdArea * inlet * 100000.0 * sonic
+        * Math.pow(2.0 / (gamma + 1.0), (gamma + 1.0) / (2.0 * (gamma - 1.0)));
+    assertEquals(idealNozzle, rating.totalKgS, 1e-7);
   }
 
   /** The runtime-only helper participates honestly with the native splitter in a complete branch-subgraph rollback. */
