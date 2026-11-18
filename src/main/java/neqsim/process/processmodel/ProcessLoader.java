@@ -1,9 +1,15 @@
 package neqsim.process.processmodel;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -16,6 +22,29 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class ProcessLoader {
+  /** Reader for one mapping in the canonical flowsheet schema. */
+  private static final ObjectReader CANONICAL_YAML = new ObjectMapper(new YAMLFactory()).readerFor(JsonNode.class)
+      .with(DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY, DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
+
+  /**
+   * Parse a YAML representation of the JSON process schema and invoke the same equipment builder.
+   *
+   * @param input YAML document reader
+   * @return structured builder result or YAML parse error
+   * @throws IOException if reading the source fails
+   */
+  static SimulationResult buildCanonicalYaml(Reader input) throws IOException {
+    try {
+      JsonNode document = CANONICAL_YAML.readTree(input);
+      if (document == null || !document.isObject()) {
+        return SimulationResult.error("YAML_PARSE_ERROR", "Expected one YAML mapping", "Provide a process definition");
+      }
+      return ProcessSystem.fromJson(document.toString());
+    } catch (JsonProcessingException ex) {
+      return SimulationResult.error("YAML_PARSE_ERROR", ex.getOriginalMessage(), "Provide one valid YAML mapping");
+    }
+  }
+
   /**
    * Loads a process from a YAML file or YAML string and initializes the process system.
    *

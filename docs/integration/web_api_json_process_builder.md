@@ -18,6 +18,7 @@ features are designed for web services and Python-based applications that call N
 | `SimulationResult` | Structured success/error envelope with error codes, remediation hints, and report JSON |
 | `ProcessSimulationSession` | Multi-user session manager with template-based copy-on-create and automatic expiry |
 | `ProcessSystem.fromJson()` | Convenience entry points on `ProcessSystem` for JSON build and run |
+| `ProcessSystem.fromYaml() / fromYamlFile()` | Build the same flowsheet from a YAML document or UTF-8 file, including the `autoRun` option |
 | `ProcessSystem.resolveStreamReference()` | Resolves dot-notation stream references (e.g., `"HP Sep.gasOut"`) |
 | `ProcessSystem.wireStream()` | Connects equipment by name using the wiring API |
 | `ProcessDiagramExporter` | Exports built processes to Graphviz DOT, SVG, PNG, or PDF visuals |
