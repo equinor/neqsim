@@ -1,8 +1,6 @@
 package neqsim.process.safety.depressurization;
 
 import java.io.Serializable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.util.fire.ReliefValveSizing;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -40,7 +38,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class DynamicPsvSizingStudy implements Serializable {
   private static final long serialVersionUID = 1L;
-  private static final Logger logger = LogManager.getLogger(DynamicPsvSizingStudy.class);
   private static final double GAS_CONSTANT = 8.314;
 
   private final SystemInterface fluid;
@@ -66,16 +63,19 @@ public class DynamicPsvSizingStudy implements Serializable {
    * @param setPressurePa PSV set pressure in Pa absolute; must be positive
    * @param overpressureFraction allowable accumulation fraction (0.21 for fire); must be positive
    * @param backPressurePa downstream absolute pressure in Pa; must be positive
-   * @throws IllegalArgumentException if {@code fluid} is null or an argument is not positive
+   * @throws IllegalArgumentException for a null fluid, nonfinite or nonpositive inputs, or back pressure at or above
+   * set pressure
    */
   public DynamicPsvSizingStudy(SystemInterface fluid, double vesselVolume, double fireHeatInputW, double setPressurePa,
       double overpressureFraction, double backPressurePa) {
     if (fluid == null) {
       throw new IllegalArgumentException("fluid must not be null");
     }
-    if (vesselVolume <= 0.0 || fireHeatInputW <= 0.0 || setPressurePa <= 0.0 || overpressureFraction <= 0.0
-        || backPressurePa <= 0.0) {
-      throw new IllegalArgumentException("dimensions, fire heat, pressures and overpressure must be positive");
+    if (!Double.isFinite(vesselVolume) || !Double.isFinite(fireHeatInputW) || !Double.isFinite(setPressurePa)
+        || !Double.isFinite(overpressureFraction) || !Double.isFinite(backPressurePa) || vesselVolume <= 0.0
+        || fireHeatInputW <= 0.0 || setPressurePa <= 0.0 || overpressureFraction <= 0.0 || backPressurePa <= 0.0
+        || backPressurePa >= setPressurePa) {
+      throw new IllegalArgumentException("Expected finite positive inputs and back pressure below set pressure");
     }
     this.fluid = fluid;
     this.vesselVolume = vesselVolume;
@@ -93,7 +93,7 @@ public class DynamicPsvSizingStudy implements Serializable {
    * @throws IllegalArgumentException if out of range
    */
   public DynamicPsvSizingStudy setBlowdownFraction(double blowdownFraction) {
-    if (blowdownFraction <= 0.0 || blowdownFraction >= 1.0) {
+    if (!Double.isFinite(blowdownFraction) || blowdownFraction <= 0.0 || blowdownFraction >= 1.0) {
       throw new IllegalArgumentException("blowdownFraction must be between 0 and 1");
     }
     this.blowdownFraction = blowdownFraction;
@@ -108,7 +108,7 @@ public class DynamicPsvSizingStudy implements Serializable {
    * @throws IllegalArgumentException if not positive
    */
   public DynamicPsvSizingStudy setDischargeCoefficient(double dischargeCoefficient) {
-    if (dischargeCoefficient <= 0.0) {
+    if (!Double.isFinite(dischargeCoefficient) || dischargeCoefficient <= 0.0) {
       throw new IllegalArgumentException("dischargeCoefficient must be positive");
     }
     this.dischargeCoefficient = dischargeCoefficient;
@@ -123,7 +123,7 @@ public class DynamicPsvSizingStudy implements Serializable {
    * @throws IllegalArgumentException if not positive
    */
   public DynamicPsvSizingStudy setLatentHeat(double latentHeat) {
-    if (latentHeat <= 0.0) {
+    if (!Double.isFinite(latentHeat) || latentHeat <= 0.0) {
       throw new IllegalArgumentException("latentHeat must be positive");
     }
     this.latentHeat = latentHeat;
@@ -138,7 +138,7 @@ public class DynamicPsvSizingStudy implements Serializable {
    * @throws IllegalArgumentException if not positive
    */
   public DynamicPsvSizingStudy setTimeStep(double dt) {
-    if (dt <= 0.0) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
       throw new IllegalArgumentException("dt must be positive");
     }
     this.timeStep = dt;
@@ -153,7 +153,7 @@ public class DynamicPsvSizingStudy implements Serializable {
    * @throws IllegalArgumentException if not positive
    */
   public DynamicPsvSizingStudy setMaxTime(double tMax) {
-    if (tMax <= 0.0) {
+    if (!Double.isFinite(tMax) || tMax <= 0.0) {
       throw new IllegalArgumentException("tMax must be positive");
     }
     this.maxTime = tMax;
@@ -192,42 +192,60 @@ public class DynamicPsvSizingStudy implements Serializable {
         overpressureFraction, backPressurePa, tRelief, mw, z, gamma, false, false);
     double steadyAreaM2 = steady.getRequiredArea();
 
-    // --- Dynamic required area by bisection over orifice area ---
-    double lo = steadyAreaM2 * 1.0e-3;
-    double hi = steadyAreaM2 * 3.0;
-    double peakAtHi = simulatePeakPressure(hi, tRelief, mw, gamma, z);
-    if (peakAtHi > allowablePressurePa) {
-      // Even a large orifice cannot hold the pressure; expand the upper bound once.
-      hi = steadyAreaM2 * 10.0;
-      peakAtHi = simulatePeakPressure(hi, tRelief, mw, gamma, z);
-    }
-    double dynamicAreaM2 = hi;
-    double peakDynamicPa = peakAtHi;
-    for (int iter = 0; iter < 40; iter++) {
-      double mid = 0.5 * (lo + hi);
-      double peak = simulatePeakPressure(mid, tRelief, mw, gamma, z);
-      if (peak <= allowablePressurePa) {
-        hi = mid;
-        dynamicAreaM2 = mid;
-        peakDynamicPa = peak;
-      } else {
-        lo = mid;
-      }
-      if ((hi - lo) <= 1.0e-9 * steadyAreaM2) {
-        break;
-      }
-    }
-
-    double oversizingRatio = dynamicAreaM2 > 0.0 ? steadyAreaM2 / dynamicAreaM2 : Double.NaN;
-
     SizingComparison result = new SizingComparison();
-    result.steadyRequiredAreaM2 = steadyAreaM2;
-    result.dynamicRequiredAreaM2 = dynamicAreaM2;
-    result.oversizingRatio = oversizingRatio;
     result.allowablePressurePa = allowablePressurePa;
-    result.peakDynamicPressurePa = peakDynamicPa;
     result.steadyReliefRateKgPerS = steadyReliefRate;
-    logger.debug("steady area {} m2, dynamic area {} m2, oversizing {}", steadyAreaM2, dynamicAreaM2, oversizingRatio);
+    result.steadyRequiredAreaM2 = steadyAreaM2;
+    result.timeStepSeconds = timeStep;
+
+    // Locate a passing trajectory before refining. A large trial can empty the inventory
+    // in one integration step even when a smaller valve is numerically well resolved.
+    double lower = steadyAreaM2 * 1.0e-3;
+    double upper = steadyAreaM2 * 1.0e-3;
+    double maximumArea = steadyAreaM2 * 10.0;
+    if (!Double.isFinite(maximumArea) || upper <= 0.0) {
+      result.terminationReason = "Invalid steady area for dynamic search";
+      return result;
+    }
+    Trial incomplete = null;
+    Trial trial = simulatePeakPressure(upper, tRelief, mw, gamma, z);
+    while (!trial.passes(allowablePressurePa)) {
+      if (trial.peakPressurePa > allowablePressurePa) {
+        lower = upper;
+      } else {
+        incomplete = trial;
+      }
+      if (upper >= maximumArea) {
+        if (incomplete != null) {
+          result.recordTrial(incomplete);
+        } else {
+          result.status = SizingStatus.NO_FEASIBLE_AREA_IN_SEARCH;
+          result.recordTrial(trial);
+        }
+        return result;
+      }
+      upper = Math.min(2.0 * upper, maximumArea);
+      trial = simulatePeakPressure(upper, tRelief, mw, gamma, z);
+    }
+
+    Trial passing = trial;
+    for (int iter = 0; iter < 40 && upper - lower > 1.0e-9 * steadyAreaM2; iter++) {
+      double mid = 0.5 * (lower + upper);
+      Trial candidate = simulatePeakPressure(mid, tRelief, mw, gamma, z);
+      if (candidate.passes(allowablePressurePa)) {
+        upper = mid;
+        passing = candidate;
+      } else if (candidate.peakPressurePa > allowablePressurePa) {
+        lower = mid;
+      } else {
+        result.recordTrial(candidate);
+        return result;
+      }
+    }
+    result.recordTrial(passing);
+    result.status = SizingStatus.FEASIBLE;
+    result.dynamicRequiredAreaM2 = passing.areaM2;
+    result.oversizingRatio = steadyAreaM2 / passing.areaM2;
     return result;
   }
 
@@ -239,9 +257,9 @@ public class DynamicPsvSizingStudy implements Serializable {
    * @param mw molar mass in kg/mol
    * @param gamma heat-capacity ratio
    * @param z compressibility factor
-   * @return peak vessel pressure in Pa over the transient
+   * @return peak pressure, elapsed time and completion evidence for this area
    */
-  private double simulatePeakPressure(double orificeAreaM2, double initialTempK, double mw, double gamma, double z) {
+  private Trial simulatePeakPressure(double orificeAreaM2, double initialTempK, double mw, double gamma, double z) {
     PsvValveModel psv = new PsvValveModel(setPressurePa, blowdownFraction, dischargeCoefficient, orificeAreaM2,
         backPressurePa);
     double cvMass = (GAS_CONSTANT / mw) / (gamma - 1.0);
@@ -252,29 +270,74 @@ public class DynamicPsvSizingStudy implements Serializable {
     double mass = n * mw;
     double peak = pStart;
     double time = 0.0;
-    while (time < maxTime && mass > 1.0e-6) {
-      double p = n * z * GAS_CONSTANT * t / vesselVolume;
-      if (p > peak) {
-        peak = p;
+    while (time < maxTime) {
+      double step = Math.min(timeStep, maxTime - time);
+      if (mass <= 1.0e-6 || time + step <= time) {
+        return new Trial(orificeAreaM2, peak, time, "Inventory or timestep resolution exhausted");
       }
+      double p = n * z * GAS_CONSTANT * t / vesselVolume;
       psv.update(p);
-      double mDot = psv.isOpen() ? psv.massFlowKgPerS(p, t, mw, gamma, z) : 0.0;
-      double dm = Math.min(mDot * timeStep, mass);
-      double uOld = mass * cvMass * t;
-      double uNew = uOld + fireHeatInputW * timeStep - cpMass * t * dm;
+      double mDot = psv.massFlowKgPerS(p, t, mw, gamma, z);
+      double dm = mDot * step;
       double massNew = mass - dm;
       if (massNew <= 1.0e-9) {
-        break;
+        return new Trial(orificeAreaM2, peak, time, "Discharge exhausted available inventory");
       }
+      double uNew = mass * cvMass * t + fireHeatInputW * step - cpMass * t * dm;
       t = uNew / (massNew * cvMass);
-      if (t <= 0.0 || Double.isNaN(t)) {
-        break;
-      }
       mass = massNew;
       n = mass / mw;
-      time += timeStep;
+      double endPressure = n * z * GAS_CONSTANT * t / vesselVolume;
+      if (!Double.isFinite(endPressure) || endPressure <= 0.0) {
+        return new Trial(orificeAreaM2, peak, time, "Invalid thermodynamic state");
+      }
+      time += step;
+      peak = Math.max(peak, endPressure);
     }
-    return peak;
+    return new Trial(orificeAreaM2, peak, time, null);
+  }
+
+  /** Outcome of one area trial. A null interruption means the full horizon was evaluated. */
+  private static final class Trial {
+    final double areaM2;
+    final double peakPressurePa;
+    final double elapsedSeconds;
+    final String interruption;
+
+    /**
+     * Retains the last valid state of a candidate simulation.
+     *
+     * @param areaM2 tested area in square metres
+     * @param peakPressurePa largest observed pressure in Pa
+     * @param elapsedSeconds elapsed simulated seconds
+     * @param interruption reason for early termination, or null at the specified horizon
+     */
+    Trial(double areaM2, double peakPressurePa, double elapsedSeconds, String interruption) {
+      this.areaM2 = areaM2;
+      this.peakPressurePa = peakPressurePa;
+      this.elapsedSeconds = elapsedSeconds;
+      this.interruption = interruption;
+    }
+
+    /**
+     * Evaluates the full-horizon pressure criterion.
+     *
+     * @param limitPa allowable peak pressure in Pa
+     * @return whether the trajectory completed within the pressure limit
+     */
+    boolean passes(double limitPa) {
+      return interruption == null && peakPressurePa <= limitPa;
+    }
+  }
+
+  /** Qualification of the bounded area search at the configured timestep and horizon. */
+  public enum SizingStatus {
+    /** A complete candidate stayed within the pressure limit. */
+    FEASIBLE,
+    /** All sampled candidates exceeded the limit within the bounded search. */
+    NO_FEASIBLE_AREA_IN_SEARCH,
+    /** A numerical interruption or invalid search input prevented a sizing result. */
+    INCOMPLETE
   }
 
   /**
@@ -289,16 +352,38 @@ public class DynamicPsvSizingStudy implements Serializable {
     /** Steady-state API 521 required orifice area in m². */
     public double steadyRequiredAreaM2;
     /** Dynamically required orifice area in m². */
-    public double dynamicRequiredAreaM2;
+    public double dynamicRequiredAreaM2 = Double.NaN;
     /**
      * Steady-to-dynamic oversizing ratio (greater than one indicates steady-state conservatism).
      */
-    public double oversizingRatio;
+    public double oversizingRatio = Double.NaN;
     /** Allowable accumulated pressure in Pa. */
     public double allowablePressurePa;
-    /** Peak vessel pressure in Pa with the dynamically required orifice. */
-    public double peakDynamicPressurePa;
+    /** Maximum observed pressure in Pa for the reported trial, including partial trials. */
+    public double peakDynamicPressurePa = Double.NaN;
     /** Steady-state fire relieving rate in kg/s. */
     public double steadyReliefRateKgPerS;
+    /** Search outcome. Historical serialized results without this field are unverified. */
+    public SizingStatus status = SizingStatus.INCOMPLETE;
+    /** Tested area associated with the reported peak, in m². */
+    public double attemptedAreaM2 = Double.NaN;
+    /** Nominal integration timestep in seconds. */
+    public double timeStepSeconds;
+    /** Time reached by the reported trial in seconds. */
+    public double elapsedSeconds;
+    /** Reason the reported trajectory stopped. */
+    public String terminationReason;
+
+    /**
+     * Copies evidence from the candidate associated with the search outcome.
+     *
+     * @param trial reported trajectory
+     */
+    private void recordTrial(Trial trial) {
+      attemptedAreaM2 = trial.areaM2;
+      peakDynamicPressurePa = trial.peakPressurePa;
+      elapsedSeconds = trial.elapsedSeconds;
+      terminationReason = trial.interruption == null ? "Reached simulation horizon" : trial.interruption;
+    }
   }
 }

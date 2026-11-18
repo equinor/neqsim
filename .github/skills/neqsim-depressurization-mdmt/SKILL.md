@@ -385,6 +385,9 @@ import neqsim.process.safety.depressurization.DynamicPsvSizingStudy;
 DynamicPsvSizingStudy.SizingComparison cmp =
     new DynamicPsvSizingStudy(gas, 1.0, 150000.0, 11.0e5, 0.21, 1.0e5)
         .setBlowdownFraction(0.1).setDischargeCoefficient(0.975).run();
+if (cmp.status != DynamicPsvSizingStudy.SizingStatus.FEASIBLE) {
+  throw new IllegalStateException(cmp.status + ": " + cmp.terminationReason);
+}
 double oversizing = cmp.oversizingRatio; // > 1 => steady-state conservative
 
 // Fast filling of a Type IV hydrogen cylinder — liner temperature limits (§4.2)
