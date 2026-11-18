@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -84,8 +86,7 @@ class CoincidentFlareLoadTest {
     fluid.addComponent("ethane", 1.0);
     BlowdownSource source = BlowdownSource.builder("wet gas", fluid).build();
     FlareDischargeTimeline event = new FlareDischargeTimeline();
-    event.addBlowdown(source, null, Map.of("vapourWithdrawalUsed", true, "profile",
-        Map.of("timeS", List.of(0.0, 2.0), "massKg", List.of(10.0, 8.0))));
+    event.addBlowdown(source, null, acceptedInterval(true, 2.0, 10.0, 8.0));
     DynamicBlowdownFlareStudyDataSource configuration = DynamicBlowdownFlareStudyDataSource.builder("limits")
         .addSource(source).flareDesignCapacity(55e6, 2.0, 40.0).build();
     FlareDisposalCaseResult result = event.evaluate("trip", configuration);
@@ -114,8 +115,7 @@ class CoincidentFlareLoadTest {
     double rate = wet.getMolarMass();
     BlowdownSource source = BlowdownSource.builder("wet", wet).build();
     FlareDischargeTimeline event = new FlareDischargeTimeline();
-    event.addBlowdown(source, null, Map.of("vapourWithdrawalUsed", false, "profile",
-        Map.of("timeS", List.of(0.0, 1.0), "massKg", List.of(1.0, 1.0 - rate))));
+    event.addBlowdown(source, null, acceptedInterval(false, 1.0, 1.0, 1.0 - rate));
     DynamicBlowdownFlareStudyDataSource config = DynamicBlowdownFlareStudyDataSource.builder("wet").addSource(source)
         .flareHeader(0.3, 2.0, 300.0, 0.02, 1.3).flareDesignCapacity(1.633e6, 0.04, 0.9).build();
     FlareDisposalCaseResult result = event.evaluate("wet", config);
@@ -134,6 +134,17 @@ class CoincidentFlareLoadTest {
     assertThrows(IllegalArgumentException.class, () -> builder(50.0).scheduleBlowdown("V1", "trip", 2.0, 2.0));
     assertThrows(IllegalArgumentException.class,
         () -> builder(50.0).addReliefScenario(relief, "typo", "trip", 0.0, 1.0, gas));
+  }
+
+  private static Map<String, Object> acceptedInterval(boolean fractionating, double duration, double startMass,
+      double endMass) {
+    Map<String, List<Double>> profile = new LinkedHashMap<>();
+    profile.put("timeS", Arrays.asList(0.0, duration));
+    profile.put("massKg", Arrays.asList(startMass, endMass));
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("vapourWithdrawalUsed", fractionating);
+    result.put("profile", profile);
+    return result;
   }
 
   private double firstAcceptedRate(CoupledReliefBlowdownFlareResult result) {
