@@ -83,8 +83,7 @@ class RvpAddWaterSaturatedTest extends NeqSimTest {
   }
 
   /**
-   * Water in the middle of the component list is kept as a trace instead of removed, so retained BIPs stay on their
-   * pairs. Removing it would shift methane onto the pentane/water BIP slot and change dry VPCR4 by about 2%.
+   * Both direct removal in classic SRK and the standard's trace-water path preserve the dry VPCR4 reference.
    */
   @Test
   void waterNotLastKeepsHydrocarbonBipsForNoWaterVariants() {
@@ -94,7 +93,7 @@ class RvpAddWaterSaturatedTest extends NeqSimTest {
     removed.init(0);
     Standard_ASTM_D6377 removedStandard = new Standard_ASTM_D6377(removed);
     removedStandard.calculate();
-    assertNotEquals(DRY_VPCR4_BARA, removedStandard.getRvpResult(RvpMethod.VPCR4).getValue(), 1.0e-2);
+    assertEquals(DRY_VPCR4_BARA, removedStandard.getRvpResult(RvpMethod.VPCR4).getValue(), 1.0e-9);
 
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(wetMiddle);
     standard.calculate();

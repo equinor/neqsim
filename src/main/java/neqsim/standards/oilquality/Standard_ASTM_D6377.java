@@ -22,10 +22,10 @@ import neqsim.util.exception.IsNaNException;
  * <p>
  * {@link #calculate()} mutates the supplied fluid state. A clone protects temperature, pressure and composition during
  * this workflow, but BIP arrays can be shared across clones: do not mutate model parameters through a clone. The
- * water-free variants remove water only when it is the last component and otherwise keep it as a 1e-15 trace, because
- * component removal does not remap BIPs when retained component indices shift. A finite positive {@link RvpResult}
- * alone does not certify convergence to the corrected volume-ratio target, except for
- * {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED}, which checks it.
+ * water-free variants remove water only when it is the last component and otherwise keep it as a 1e-15 trace, to
+ * preserve component indices across supported fluid models. A finite positive {@link RvpResult} alone does not certify
+ * convergence to the corrected volume-ratio target, except for {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED},
+ * which checks it.
  *
  * <p>
  * For a declared water-contact storage basis, {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED} returns
@@ -484,13 +484,10 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * Returns a water-free working copy of a fluid for the dry VPCR4 flash.
    *
    * <p>
-   * Removing a component compacts the component list without remapping the EOS binary interaction parameter (BIP)
-   * matrix. Removing water is therefore only safe when it is the last component, because no retained index shifts. When
-   * water sits elsewhere, removal would silently give hydrocarbon pairs the wrong BIPs, so water is kept as a trace of
-   * mole fraction {@value #TRACE_WATER_MOLE_FRACTION} instead. At that level the water contribution to the flash is
-   * negligible (VPCR4 agrees with the truly water-free fluid to about 13 significant digits) and every BIP stays on its
-   * original pair. The working copy is reset to its unflashed state before water is touched. The source fluid is not
-   * modified.
+   * Removing water from the last slot preserves the indices of all retained components. For other positions the
+   * standard keeps water at a mole fraction of {@value #TRACE_WATER_MOLE_FRACTION}, preserving those indices across
+   * fluid models. Direct removal remaps interactions in standard SRK and PR phases with classic mixing. The working
+   * copy is reset to its unflashed state before changing water content.
    * </p>
    *
    * @param source fluid that may contain water
