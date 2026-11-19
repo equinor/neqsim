@@ -24,7 +24,8 @@ def simulate(directory):
     jobs = [(case, case, []) for case in CASES]
     jobs += [(case, case + "-.25-2", ["--mesh", "2"])
              for case in ("normal", "psd_failed", "all_isolation_failed")]
-    jobs += [("psd_failed", "psd_failed-.125-1", ["--dt", ".125"]),
+    jobs += [("normal", "normal-.125-1", ["--dt", ".125"]),
+             ("psd_failed", "psd_failed-.125-1", ["--dt", ".125"]),
              ("all_isolation_failed", "all_isolation_failed-rated", ["--fully-rated"])]
     for case, name, options in jobs:
         output = directory / (name + ".json")
@@ -41,13 +42,43 @@ def load(path, case, dt=.25, cells=60):
     duration = 45. if case in SHORT_CASES else 90.
     check(data["duration_s"] == duration and len(rows) == round(duration / dt) + 1
           and all(row["s"] == i * dt for i, row in enumerate(rows)), f"Incomplete trace in {path}")
+    zones = data["basis"]["zones"]
+    check(zones and len(zones) == len(data["zones"])
+          and all(all(z[k] == summary[k] for k in z) for z, summary in zip(zones, data["zones"])),
+          f"Pressure zones differ from the declared basis in {path}")
+    check(all(len(row["zone_peaks_bara"]) == len(zones)
+              and all(math.isfinite(row[key]) and row[key] > 0 for key in ("subsea_bara", "riser_bara"))
+              for row in rows), f"Incomplete pressure history in {path}")
     for j, zone in enumerate(data["zones"]):
         values = [row["zone_peaks_bara"][j] for row in rows]
         check(all(math.isfinite(x) and x > 0 for x in values)
               and max(values) == zone["peak_bara"], f"Pressure evidence mismatch in {path}")
-    check(max(data["phase_residual_kg"], data["component_residual_kg"]) <= 1e-6,
+    check(all(0. <= data[key] <= 1e-6 for key in ("phase_residual_kg", "component_residual_kg")),
           f"Inventory did not close in {path}")
     return data
+
+
+def compare_protection(reference, refined):
+    """Compare physical endpoints and valve seating at common sample times."""
+    check(refined["case"] == reference["case"] and refined["basis"] == reference["basis"],
+          "Mixed pressure protection cases or designs")
+    rows = {row["s"]: row for row in refined["trace"]}
+    differences = {}
+    for key in ("subsea_bara", "riser_bara"):
+        error, time = max(((abs(row[key] - rows[row["s"]][key]), row["s"]) for row in reference["trace"]),
+                          key=lambda pair: pair[0])
+        differences[key] = {"max_abs_bar": error, "at_s": time}
+    timings = {}
+    for event in ("hipps_trip_s", "hipv_a_seated_s", "hipv_b_seated_s"):
+        check(event in reference["events"] and event in refined["events"], f"Missing trip or seat feedback: {event}")
+        timings[event] = abs(refined["events"][event] - reference["events"][event])
+    peaks = [abs(z["peak_bara"] - r["peak_bara"]) for z, r in zip(refined["zones"], reference["zones"])]
+    within = (max(peaks) <= .5 and max(timings.values()) <= .5
+              and all(d["max_abs_bar"] <= .5 for d in differences.values()))
+    return {"dt_s": refined["dt_s"], "cells": refined["mesh_cells"],
+            "hipps_trip_difference_s": timings["hipps_trip_s"], "event_differences_s": timings,
+            "route_peak_differences_bar": peaks, "endpoint_history_differences": differences,
+            "within_tolerances": within}
 
 
 def assess(directory):
@@ -73,7 +104,10 @@ def assess(directory):
     check(relief["dynamic_host"]["psv_cycles"] >= 1
           and relief["dynamic_host"]["relief_to_3_bara_header_kg"] > 0., "Missing host relief")
     quiet = load(directory / "normal-.25-2.json", "normal", cells=120)
-    check(not quiet["events"], "Mesh refinement activated a trip in normal operation")
+    quiet_fine = load(directory / "normal-.125-1.json", "normal", dt=.125)
+    for normal in (quiet, quiet_fine):
+        check(normal["basis"] == cases["normal"]["basis"] and not normal["events"],
+              "Normal refinement changed protection basis or activated a trip")
     unprotected = load(directory / "all_isolation_failed-.25-2.json", "all_isolation_failed", cells=120)
     check(unprotected["zones"][1]["margin_bar"] < 0., "LC1 exceedance lost on finer mesh")
     rated = load(directory / "all_isolation_failed-rated.json", "all_isolation_failed")
@@ -83,15 +117,8 @@ def assess(directory):
     comparisons = []
     for suffix, dt, cells in (("-.125-1", .125, 60), ("-.25-2", .25, 120)):
         d = load(directory / ("psd_failed" + suffix + ".json"), "psd_failed", dt, cells)
-        check(d["basis"] == reference["basis"], "Mixed pressure protection designs")
-        comparisons.append({"dt_s": dt, "cells": cells,
-                            "hipps_trip_difference_s": abs(d["events"]["hipps_trip_s"]
-                                                          - reference["events"]["hipps_trip_s"]),
-                            "route_peak_differences_bar": [abs(z["peak_bara"] - r["peak_bara"])
-                                for z, r in zip(d["zones"], reference["zones"])]})
-    # Explicit numerical screening tolerances for this fixture only.
-    within = all(c["hipps_trip_difference_s"] <= .5 and max(c["route_peak_differences_bar"]) <= .5
-                 for c in comparisons)
+        comparisons.append(compare_protection(reference, d))
+    within = all(c["within_tolerances"] for c in comparisons)
     return {"functional_checks": "PASS", "numerical_screening": "PASS" if within else "HOLD",
             "timing_tolerance_s": .5, "zone_peak_tolerance_bar": .5, "comparisons": comparisons,
             "cases": {k: {x: v for x, v in d.items() if x != "trace"} for k, d in cases.items()}}

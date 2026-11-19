@@ -51,6 +51,22 @@ class TestDecision(unittest.TestCase):
         with self.assertRaises(ValueError):
             assess(self.runs)
 
+    def test_assessment_retains_evidence_with_missing_and_rejected_grids(self):
+        fine_step = self.runs.pop()
+        result = assess(self.runs)["fluid_results"]["Srk"]["ramp"]
+        self.assertEqual("missing_refinement", result["status"])
+        self.assertEqual(["power_kW"], result["violations"])
+        breach, = result["violation_evidence"]
+        self.assertEqual((120, .25, 650., 600.), (breach["mesh_cells"], breach["dt_s"], breach["value"], breach["limit"]))
+        fine_step.update(status="rejected", reason="outlet clamp")
+        self.runs.append(fine_step)
+        assessment = assess(self.runs)
+        result = assessment["fluid_results"]["Srk"]["ramp"]
+        self.assertEqual("rejected_trajectory", result["status"])
+        self.assertEqual([breach], result["violation_evidence"])
+        self.assertEqual("outlet clamp", result["rejections"][0]["reason"])
+        self.assertEqual("incomplete", assessment["screening_decisions"]["Srk"])
+
     def test_rejected_refinement_keeps_known_violations_from_other_fluids(self):
         # The PR fine mesh completes at 650 kW. A separate SRK trajectory rejects.
         pr = [receipt(m, dt, p) for m, dt in GRIDS for p in ("fixed", "ramp")]
