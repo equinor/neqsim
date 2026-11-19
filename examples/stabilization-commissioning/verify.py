@@ -49,6 +49,32 @@ for case in read("matched-v101"):
     assert 0 < case["frozen_trip_after_block_s"] < 60
 flare = read("flare")
 assert flare["peak_total_kg_s"] > 0 and flare["peak_header_mach"] > 0
+procedures = read("procedures")
+for name in ("turndown_dt_0_50", "turndown_dt_0_25", "controlled_shutdown",
+             "authorized_restart"):
+    assert procedures[name]["state"] == "COMPLETED"
+    assert procedures[name]["completionTimeSeconds"] is not None
+    assert procedures[name]["positionOvershootPercentagePoints"] == 0
+assert procedures["controlled_shutdown"]["completionTimeSeconds"] == 4.0
+assert procedures["authorized_restart"]["completionTimeSeconds"] == 4.0
+assert procedures["turndownCompletionSensitivitySeconds"] <= 0.25
+assert procedures["turndownPositionIaeSensitivityPercentagePointSeconds"] < 1.0
+assert procedures["deterministicReplayMatches"]
+assert procedures["inhibited_restart"]["state"] == "FAILED"
+assert procedures["inhibited_restart"]["failureReason"] == (
+    "Timeout waiting for operator authorization"
+)
+assert procedures["inhibited_restart"]["finalOpeningPercent"] == 0
+assert procedures["stuck_shutdown"]["state"] == "FAILED"
+assert procedures["stuck_shutdown"]["failureReason"] == "Step completion timeout"
+assert procedures["stuck_shutdown"]["finalOpeningPercent"] == 100
+assert all(case["maxExternalMassResidualPercentOfDesignFeed"] < 3.0
+           for case in procedures.values() if isinstance(case, dict))
+assert all(abs(case["integratedUnclosedDynamicMassKg"]) < 0.7
+           for case in procedures.values() if isinstance(case, dict))
 assert read("drawing-intake")["schema_and_profile_conformant"]
 assert all(abs(x-y)<.2 for x,y in zip(summary["refinement"]["min_margin"],summary["turndown"]["min_margin"]))
-print("PASS: three steady cases, nine active recycles at turndown, balances, all dynamic cases, first-outs, actuator travel, native V-101 replay and timestep refinement.")
+print(
+    "PASS: steady and dynamic reference cases, physical procedures, deterministic replay, "
+    "actuator faults, native V-101 replay and timestep refinement."
+)

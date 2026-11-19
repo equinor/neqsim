@@ -20,6 +20,7 @@ python examples/stabilization-commissioning/dynamic.py
 python examples/stabilization-commissioning/matched_replay.py
 python examples/stabilization-commissioning/hipps.py
 python examples/stabilization-commissioning/flare.py
+python examples/stabilization-commissioning/procedures.py
 python examples/stabilization-commissioning/drawings.py
 python examples/stabilization-commissioning/verify.py
 ```
@@ -50,6 +51,7 @@ reconciliation with executable logic before they can be credited.
 | Trip and isolation | Three blocked outlets, single faulty pressure transmitter, scrubber liquid slug and three machinery signal injections. A native 2oo3 voter with a one-second persistence timer drives a latched, simulated shutdown. Test actual modeled positions and distinguish injected signals from physical process disturbances. |
 | V-101 matched replay | Initialize a native constant-volume/energy separator and a frozen-phase comparator with the same phase masses and volumes. Both receive the same feed, condensate return and three phase withdrawals at every step. The native trip drives the common valve strokes. The return stays at its converged rate. CSV traces expose every boundary. |
 | Flare handoff | Use the first sample with latched trip and inlet, transfer and export valve positions all zero. Initialize two native gas-cap depressurizations using the reduced train's HP/MP pressures and gas volumes at isolation. Preserve steady gas compositions and temperatures. Open both restrictions together; sum the time-dependent discharges into a fixed 1.5 bara header. |
+| Operating procedures | Execute turndown, controlled shutdown and operator-authorized restart against the closed native flowsheet. `CHV-100` uses a four-second rate-limited actuator and measured stem feedback. Stuck-shutdown and inhibited-restart cases must time out without falsely completing. A repeated shutdown uses the same deterministic physical-step identities. |
 
 At a 0.25 s step, the native V-101 trip occurred **22.25 s after blockage**,
 versus **21.00 s** with frozen phases. At 0.5 s the times were 22.50 and 21.00 s.
@@ -64,6 +66,27 @@ at 49 s plant time. The simultaneous HP/MP gas-cap discharge peaked at
 gas inventories and header state. Header linepack and pressure feedback, liquid
 flashing from the separator inventories, flare KO carryover, vendor compressor
 maps, and independent SAS emulator testing require additional models and data.
+
+## Executable operating procedures
+
+`procedures.py` applies the revisioned `OperatingProcedure` contract to the
+same closed 100 t/h reference train. It records command ownership, measured
+`CHV-100` target and position, procedure events, admitted feed, product flows,
+position IAE, completion time, and the external mass residual at every physical
+scan. The healthy turndown, shutdown and authorized restart cases use the same
+four-second full-stroke actuator. The stuck-shutdown case applies 150 percentage
+points of stiction and must issue its recovery command; the inhibited restart
+must fail before issuing an opening command.
+
+The 0.50 s and 0.25 s turndown replays provide scan-size sensitivity, while a
+second 0.50 s shutdown must reproduce the complete JSON record. These are
+synthetic deterministic commissioning tests, not an approved operating
+procedure or site acceptance test. Most equipment in this reference flowsheet
+remains algebraic during `runTransient`; the reported external residual and its
+time integral are therefore explicit model-closure diagnostics, not a physical
+vessel-inventory calculation. Cold-start thermal inventory, trip recovery,
+operator-display integration, and coupled flare-header feedback remain outside
+this batch.
 
 
 ## HIPPS pressure-protection replay
