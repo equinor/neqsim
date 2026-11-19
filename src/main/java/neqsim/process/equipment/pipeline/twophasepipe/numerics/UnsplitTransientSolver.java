@@ -297,6 +297,7 @@ public final class UnsplitTransientSolver implements Serializable {
     private final int iterations;
     private final int modelEvaluations;
     private final double maximumScaledResidual;
+    private final int maximumScaledResidualIndex;
     private final double minimumAcceptedStepLength;
     private final boolean activeSetStable;
     private final boolean converged;
@@ -305,14 +306,15 @@ public final class UnsplitTransientSolver implements Serializable {
     private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
 
     private Result(double[][] state, double[] pressure, int iterations, int modelEvaluations,
-        double maximumScaledResidual, double minimumAcceptedStepLength, boolean activeSetStable, boolean converged,
-        TerminationReason terminationReason, double timeIntegrationWeight,
+        double maximumScaledResidual, int maximumScaledResidualIndex, double minimumAcceptedStepLength,
+        boolean activeSetStable, boolean converged, TerminationReason terminationReason, double timeIntegrationWeight,
         DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes) {
       this.state = copyMatrixArray(state);
       this.pressure = pressure.clone();
       this.iterations = iterations;
       this.modelEvaluations = modelEvaluations;
       this.maximumScaledResidual = maximumScaledResidual;
+      this.maximumScaledResidualIndex = maximumScaledResidualIndex;
       this.minimumAcceptedStepLength = minimumAcceptedStepLength;
       this.activeSetStable = activeSetStable;
       this.converged = converged;
@@ -347,6 +349,11 @@ public final class UnsplitTransientSolver implements Serializable {
     /** @return maximum absolute scaled residual */
     public double getMaximumScaledResidual() {
       return maximumScaledResidual;
+    }
+
+    /** @return flattened cell-equation index owning the maximum scaled residual, or -1 for an empty system */
+    public int getMaximumScaledResidualIndex() {
+      return maximumScaledResidualIndex;
     }
 
     /** @return smallest accepted Newton line-search length */
@@ -600,8 +607,9 @@ public final class UnsplitTransientSolver implements Serializable {
     if (converged) {
       terminationReason = TerminationReason.CONVERGED;
     }
-    return new Result(state, pressure, iterations, countedModel.evaluations, residualNorm, minimumAcceptedStep,
-        activeSetStable, converged, terminationReason, timeWeight, null);
+    return new Result(state, pressure, iterations, countedModel.evaluations, residualNorm,
+        maximumAbsoluteIndex(current.residual), minimumAcceptedStep, activeSetStable, converged, terminationReason,
+        timeWeight, null);
   }
 
   /** Solve the opt-in augmented cell/face system with frozen one-sided donor-presence rows. */
@@ -718,8 +726,9 @@ public final class UnsplitTransientSolver implements Serializable {
     if (converged) {
       terminationReason = TerminationReason.CONVERGED;
     }
-    return new Result(state, pressure, iterations, countedModel.evaluations, residualNorm, minimumAcceptedStep,
-        activeSetStable, converged, terminationReason, timeWeight, current.solvedFaces);
+    return new Result(state, pressure, iterations, countedModel.evaluations, residualNorm,
+        maximumAbsoluteIndex(current.residual), minimumAcceptedStep, activeSetStable, converged, terminationReason,
+        timeWeight, current.solvedFaces);
   }
 
   /** Evaluate the free model once at the selected time level. */
@@ -1493,6 +1502,20 @@ public final class UnsplitTransientSolver implements Serializable {
       maximum = Math.max(maximum, Math.abs(value));
     }
     return maximum;
+  }
+
+  /** Return the first flattened residual index attaining the maximum absolute value. */
+  private static int maximumAbsoluteIndex(double[] values) {
+    int index = -1;
+    double maximum = -1.0;
+    for (int candidate = 0; candidate < values.length; candidate++) {
+      double magnitude = Math.abs(values[candidate]);
+      if (magnitude > maximum) {
+        maximum = magnitude;
+        index = candidate;
+      }
+    }
+    return index;
   }
 
   /**
