@@ -232,14 +232,14 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
         report = section_after_heading(page, "### Step 3: Generate Reports")
 
         for marker in (
-            "| Python 3.11+ |",
+            "| Python 3.10+ |",
             "| Java JDK 17+ |",
             "Source compatibility is not the same as the runtime prerequisite.",
         ):
             with self.subTest(prerequisite=marker):
                 self.assertIn(marker, prerequisites)
 
-        self.assertIn('requires-python = ">=3.11"', pyproject)
+        self.assertIn('requires-python = ">=3.10"', pyproject)
         self.assertIn("requires Java 17 or newer", quickstart)
         self.assertIn("neqsim report .", report)
         self.assertIn("Install JDK 17+ and set `JAVA_HOME`", page)

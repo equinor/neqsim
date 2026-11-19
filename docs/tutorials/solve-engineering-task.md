@@ -44,12 +44,12 @@ Before you start, make sure you have:
 
 | Requirement | Install Command | Purpose |
 |-------------|----------------|---------|
-| Python 3.11+ | [python.org](https://python.org) | Runs the task toolkit, notebooks, and reports |
+| Python 3.10+ | [python.org](https://python.org) | Runs the task toolkit, notebooks, and reports; Python 3.11+ is recommended for the Pillow security fix |
 | Java JDK 17+ | [adoptium.net](https://adoptium.net) | Runs NeqSim and builds Java 8-compatible sources |
 | Git | [git-scm.com](https://git-scm.com) | Clone the repo |
 | VS Code + Copilot Chat | VS Code marketplace | AI assistance (optional) |
 
-The task-solving toolkit declares Python 3.11 or newer in `devtools/pyproject.toml`.
+The task-solving toolkit declares Python 3.10 or newer in `devtools/pyproject.toml`.
 NeqSim's Java sources remain Java 8 compatible, but the supported Python gateway requires a
 Java 17 or newer runtime. Source compatibility is not the same as the runtime prerequisite.
 

@@ -6,25 +6,51 @@ from the repository root.
 
 ## Set up with uv
 
-Python 3.11–3.14 is required. Upgrade Python 3.10 environments before syncing or
-running the installer scripts. Pillow 13.0.0 or newer is required to fix
-[CVE-2026-96639 / GHSA-v9pv-5gc8-w2m6](https://github.com/python-pillow/Pillow/security/advisories/GHSA-v9pv-5gc8-w2m6);
-Pillow 13 no longer supports Python 3.10. The minimum applies to both the locked
-uv project and editable pip installs.
+Python 3.10 or newer is supported. Python 3.10 resolves to the newest Pillow 12.x
+release because Pillow 13 dropped Python 3.10 support; this compatibility path
+does not receive the Pillow 13 fix for
+[CVE-2026-96639 / GHSA-v9pv-5gc8-w2m6](https://github.com/python-pillow/Pillow/security/advisories/GHSA-v9pv-5gc8-w2m6).
+Use Python 3.11 or newer to receive the Pillow 13 security fix. These constraints
+apply to both the locked uv project and editable pip installs.
 
 Install `uv`, then sync the devtools environment from the repository root:
 
 ```bash
-uv sync --project devtools
+uv sync --project devtools --locked
 uv run --project devtools --locked neqsim --help
 ```
 
 Use the test dependency group when running devtools tests:
 
 ```bash
-uv sync --project devtools --group test
+uv sync --project devtools --locked --group test
 uv run --project devtools --locked --group test python -m pytest devtools/
 ```
+
+Declare dependency changes in `pyproject.toml` and keep the committed lockfile
+in sync with uv:
+
+```bash
+uv lock --project devtools
+uv lock --project devtools --upgrade  # refresh compatible package versions
+uv sync --project devtools --locked
+```
+
+CI uses `--locked`, so it fails rather than silently resolving dependencies
+when `uv.lock` is stale.
+
+## Versioning and releases
+
+The package version is maintained in `devtools/pyproject.toml`. Bump it when
+preparing a new devtools package release, not for every code or dependency
+change. While the version is below `1.0.0`, use a patch bump for fixes and
+dependency refreshes that preserve user-facing behavior, and a minor bump for
+new user-facing features or breaking CLI, API, or installation changes. Once
+the package reaches `1.0.0`, follow SemVer: patch for compatible fixes, minor
+for backward-compatible features, and major for breaking changes. Before
+publishing, build and test the package from the updated project metadata; the
+generated `devtools/neqsim_dev_setup.egg-info/` files are local build artifacts
+and should not be committed.
 
 The `install.sh` and `install.ps1` scripts remain available for users who need
 to install the CLI into an existing Python environment. For repository
@@ -34,7 +60,7 @@ development and CI, use the uv project and committed lockfile.
 
 On a locked-down / corporate PC (e.g. no administrator rights), everything
 below installs into your **user profile** and needs **no elevation**.
-Prerequisites — Git, Python 3.11–3.14, a JDK, and VS Code — must already be
+Prerequisites — Git, Python 3.10 or newer, a JDK, and VS Code — must already be
 provisioned per-user (via your software portal or `winget --scope user`).
 
 ```powershell
@@ -238,7 +264,7 @@ and the [Skills & Agents Guide](../docs/integration/skills_guide.md#private-skil
 **Recommended:** sync the uv project from the repository root:
 
 ```bash
-uv sync --project devtools
+uv sync --project devtools --locked
 uv run --project devtools --locked neqsim --help
 ```
 
@@ -268,7 +294,7 @@ environments. They find a working interpreter and install the package there:
 > install.cmd uv         :: install with the fast 'uv' package manager
 > ```
 >
-> Equivalent one-liner (no script at all): `uv sync --project devtools`.
+> Equivalent one-liner (no script at all): `uv sync --project devtools --locked`.
 > The `-InstallJdk` option is `install.ps1`-only; on a GPO-locked machine
 > install a JDK separately. With uv, use `uv run --project devtools --locked neqsim`
 > instead of relying on a shell PATH entry.
@@ -285,7 +311,7 @@ uv installer path bootstraps it before installing the package:
 **Manual alternative.** From the repository root, sync the uv project:
 
 ```bash
-uv sync --project devtools
+uv sync --project devtools --locked
 ```
 
 Run the CLI without activating the project environment with
@@ -344,7 +370,7 @@ captures PATH at launch and a new integrated terminal is not enough.
 
 **Using the project environment:**
 ```bash
-uv sync --project devtools
+uv sync --project devtools --locked
 uv run --project devtools --locked neqsim --help
 ```
 `uv run` selects the project environment automatically in every terminal.
@@ -421,7 +447,7 @@ for a full explanation of the architecture and internals.
 | `unisim_reader.py` | UniSim/HYSYS .usc COM reader → NeqSim Python/notebook/EOT/JSON. Full-mode conversion with E300 full-fluid export, registry-driven operation mapping, port-specific forward refs, and auto-recycle wiring. |
 | `test_unisim_outputs.py` | Pure-Python regression tests for UniSim converter output modes, E300 fluid export, operation handler strategies, and mapping summaries (no COM needed) |
 | `explore_unisim_com.py` | Diagnostic: dump UniSim COM object model from any .usc file |
-| `pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires the `pdf` extra (`uv sync --project devtools --extra pdf`). |
+| `pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires the `pdf` extra (`uv sync --project devtools --locked --extra pdf`). |
 | `neqsim_runner/` | Supervised simulation execution — isolated subprocesses with own JVM, auto-retry, checkpointing, rate limiting, and context-window-exhaustion resilience. See [`neqsim_runner/README.md`](neqsim_runner/README.md). |
 
 ## Solving Engineering Tasks

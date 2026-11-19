@@ -166,15 +166,18 @@ jobs:
       - name: Run report generator integration test (script)
         run: uv run --project devtools --locked --group test devtools/test_report_gen.py
 
-  devtools-tests-python311:
-    name: Run devtools Python tests (Python 3.11 floor)
+  devtools-tests-python-floor:
+    name: Run devtools Python tests (Python ${{ matrix.python-version }} floor)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
     steps:
       - uses: actions/checkout@v7
 
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
           cache-dependency-glob: devtools/uv.lock
 

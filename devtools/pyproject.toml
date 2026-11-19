@@ -4,46 +4,61 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-dev-setup"
-version = "0.2.0"
+version = "0.3.0"
 description = "NeqSim task-solving toolkit: JVM bootstrap, task folders, runner, validators, report generator"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 # `neqsim` supplies the packaged JAR that neqsim_dev_setup falls back to when
 # no source checkout is present (agent-plugin installs).
 dependencies = [
-    "jpype1",
-    "pyyaml>=5.1",
-    "neqsim>=3.18",
-    "python-docx>=1.1",
-    "matplotlib>=3.7",
+    "jpype1>=1.7.1",
+    "pyyaml>=6.0.3",
+    "neqsim>=3.29.0",
+    "python-docx>=1.2.0",
+    "matplotlib>=3.10.9",
     # Report generators (process, flow assurance, SURF, PVT, layout) render drawings to
     # PDF/PNG and fail closed without them, so they are not optional.
-    "pymupdf>=1.22.0",
-    "reportlab>=4.0",
-    "openpyxl>=3.1",
-    # Enforce the security floor for pip installs as well as the uv lockfile.
-    "pillow>=13.0.0",
+    "pymupdf>=1.28.2",
+    "reportlab>=5.1.0",
+    "openpyxl>=3.1.5",
+    # Pillow 13 fixes CVE-2026-96639 but dropped Python 3.10; keep 3.10
+    # compatibility with the newest supported Pillow 12 release. Python 3.11+
+    # retains the 13.x security floor.
+    "pillow>=12.3.0; python_version < '3.11'",
+    "pillow>=13.0.0; python_version >= '3.11'",
 ]
 
 [dependency-groups]
-test = ["pytest", "scikit-learn", "trimesh", "jsonschema==4.26.0"]
-install-smoke = ["pip"]
-optimization-docs = ["numpy", "scipy", "pandas", "matplotlib", "nlopt"]
+test = [
+    "pytest>=9.2.0",
+    "scikit-learn>=1.7.2",
+    "trimesh>=5.2.1",
+    "jsonschema==4.26.0",
+    "tomli>=2.5.0; python_version < '3.11'",
+]
+install-smoke = ["pip>=26.3"]
+optimization-docs = [
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
+    "pandas>=2.3.3",
+    "matplotlib>=3.10.9",
+    "nlopt>=2.11.0",
+]
 optimization-notebooks = [
     { include-group = "optimization-docs" },
-    "nbformat",
-    "nbclient",
-    "nbconvert",
-    "ipykernel",
+    "nbformat>=5.11.1",
+    "nbclient>=0.11.0",
+    "nbconvert>=7.17.2",
+    "ipykernel>=7.3.0",
 ]
 
 [project.optional-dependencies]
 combustion = ["cantera==3.2.0"]
-pdf = ["pymupdf>=1.22.0", "reportlab>=4.0"]
+pdf = ["pymupdf>=1.28.2", "reportlab>=5.1.0"]
 ocr = [
-    "pymupdf>=1.22.0",
-    "ocrmypdf>=15.0.0",
-    "pytesseract>=0.3.10",
-    "pdf2image>=1.16.0",
+    "pymupdf>=1.28.2",
+    "ocrmypdf>=16.13.0",
+    "pytesseract>=0.3.13",
+    "pdf2image>=1.17.0",
 ]
 
 [project.scripts]
