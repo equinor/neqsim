@@ -21,6 +21,7 @@ python examples/stabilization-commissioning/matched_replay.py
 python examples/stabilization-commissioning/hipps.py
 python examples/stabilization-commissioning/flare.py
 python examples/stabilization-commissioning/procedures.py
+python examples/stabilization-commissioning/sas.py
 python examples/stabilization-commissioning/drawings.py
 python examples/stabilization-commissioning/verify.py
 ```
@@ -52,6 +53,7 @@ reconciliation with executable logic before they can be credited.
 | V-101 matched replay | Initialize a native constant-volume/energy separator and a frozen-phase comparator with the same phase masses and volumes. Both receive the same feed, condensate return and three phase withdrawals at every step. The native trip drives the common valve strokes. The return stays at its converged rate. CSV traces expose every boundary. |
 | Flare handoff | Use the first sample with latched trip and inlet, transfer and export valve positions all zero. Initialize two native gas-cap depressurizations using the reduced train's HP/MP pressures and gas volumes at isolation. Preserve steady gas compositions and temperatures. Open both restrictions together; sum the time-dependent discharges into a fixed 1.5 bara header. |
 | Operating procedures | Execute turndown, controlled shutdown and operator-authorized restart against the closed native flowsheet. `CHV-100` uses a four-second rate-limited actuator and measured stem feedback. Stuck-shutdown and inhibited-restart cases must time out without falsely completing. A repeated shutdown uses the same deterministic physical-step identities. |
+| SAS and virtual FAT | Feed one revisioned I/O map and identical conditioned scan frames to native HIPPS/ESD logic and an independent offline emulator. Compare vote/latch order, degraded policy, demanded and actual final positions, F&G demand, reset permissives, separate restart, partial-stroke interruption and failed final elements. |
 
 At a 0.25 s step, the native V-101 trip occurred **22.25 s after blockage**,
 versus **21.00 s** with frozen phases. At 0.5 s the times were 22.50 and 21.00 s.
@@ -86,7 +88,34 @@ remains algebraic during `runTransient`; the reported external residual and its
 time integral are therefore explicit model-closure diagnostics, not a physical
 vessel-inventory calculation. Cold-start thermal inventory, trip recovery,
 operator-display integration, and coupled flare-header feedback remain outside
-this batch.
+that batch.
+
+## SAS and offline-emulator comparison
+
+`sas.py` executes native `HIPPSLogic`, two physical `HIPPSValve` stem models,
+an `ESDLogic` inlet isolation and an independently coded scan-based emulator
+against identical I/O frames. The public map binds three pressure channels,
+the 2oo3 function, two solenoid commands and measured stem positions, the F&G
+demand and the inlet ESD. Each pressure channel has a declared 0.50 s transport
+delay and 0.25 s first-order filter. Invalid samples are marked faulty in the
+native detectors and unavailable in the emulator; they are never counted as
+normal votes.
+
+The matrix covers blocked-outlet demand, one false-high channel, alarm-only and
+trip-on-loss-of-quorum policies, one failed HIPPS final element, a pressure trip
+that interrupts an active partial-stroke test, reset denial under demand,
+permissive reset after restoring the outlet and observing a live clear indication, operator-authorized
+separate restart and an independent F&G inlet-isolation demand. The 0.50 s
+healthy case is repeated byte-for-byte and refined to 0.25 s. `sas.json`
+contains every conditioned scan, native/emulator state, command, measured
+position, alarm order and the executed restart procedure.
+
+This is deterministic synthetic virtual-FAT evidence. The independent emulator
+is not a certified PLC/DCS runtime. The normalized series-valve boundary is a
+reduced hydraulic surrogate, and reset/restart restores the normal outlet
+boundary rather than modeling project depressurization. These results
+do not establish SIL, SRS, site FAT or operating approval. Coupled flare-header
+feedback, vendor logic, operator displays and cold-start inventory remain open.
 
 
 ## HIPPS pressure-protection replay

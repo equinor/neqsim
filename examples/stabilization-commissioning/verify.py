@@ -72,9 +72,31 @@ assert all(case["maxExternalMassResidualPercentOfDesignFeed"] < 3.0
            for case in procedures.values() if isinstance(case, dict))
 assert all(abs(case["integratedUnclosedDynamicMassKg"]) < 0.7
            for case in procedures.values() if isinstance(case, dict))
+sas = read("sas")
+compared = [case for case in sas.values() if isinstance(case, dict) and "case" in case]
+assert all(case["tripMismatchScans"] == 0 for case in compared)
+assert all(case["maxFinalElementPositionDifferencePercentagePoints"] <= 1e-9
+           for case in compared)
+assert all(case["maxEsdPositionDifferencePercentagePoints"] <= 1e-9
+           for case in compared)
+assert all(case["alarmOrderNative"] == case["alarmOrderEmulator"] for case in compared)
+assert sas["single_high"]["nativeTripSeconds"] is None
+assert sas["lost_quorum_alarm"]["nativeTripSeconds"] is None
+assert sas["lost_quorum_alarm"]["trace"][-1]["native_state"] == "FAILED"
+assert sas["lost_quorum_trip"]["nativeTripSeconds"] is not None
+assert sas["failed_final"]["nativeFirstSeatSeconds"] is not None
+assert sas["failed_final"]["finalFeedKgPerSecond"] <= 1e-9
+assert sas["pst_interrupt"]["pstStartedSeconds"] < sas["pst_interrupt"]["pstInterruptedSeconds"]
+assert not sas["reset_restart"]["resetDenied"]["native"]
+assert sas["reset_restart"]["resetAllowed"]["native"]
+assert sas["reset_restart"]["procedure"]["state"] == "COMPLETED"
+assert sas["fg_demand"]["nativeTripSeconds"] is None
+assert sas["fg_demand"]["trace"][-1]["native_esd_pct"] == 0
+assert sas["tripTimeStepSensitivitySeconds"] <= 0.5
+assert sas["deterministicReplayMatches"]
 assert read("drawing-intake")["schema_and_profile_conformant"]
 assert all(abs(x-y)<.2 for x,y in zip(summary["refinement"]["min_margin"],summary["turndown"]["min_margin"]))
 print(
     "PASS: steady and dynamic reference cases, physical procedures, deterministic replay, "
-    "actuator faults, native V-101 replay and timestep refinement."
+    "actuator faults, native V-101 replay, SAS/emulator equivalence and timestep refinement."
 )
