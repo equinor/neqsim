@@ -41,16 +41,45 @@ temperature range and its lowest/highest pressures while limiting the slow-test 
 Every state must retain the baseline phase set, component balance residual no larger
 than $10^{-10}$ mol, and molecular log-fugacity residual below $10^{-8}$.
 
+## Midpoint sensitivity
+
+A follow-up diagnostic applies the fixed algebraic midpoint to the complete block in
+every phase:
+
+$
+W_{mathrm{CO_2},i}^{(alpha)}(T)=alpha W_{mathrm{CO_2},i}(T),
+qquad alpha=0.5.
+$
+
+The midpoint was selected after the endpoint results were known, so it is a
+post-endpoint curvature diagnostic rather than a blind preregistered test. It is not a
+fit or a candidate production parameter. Scaling $W^{(0)}$, $W^{(1)}$, and $W^{(2)}$
+together preserves the declared gauge and leaves all other model terms unchanged.
+
+The same 16 states are retained, including the two 353 K and 20.4 atm source-magnitude
+anomalies. Those rows are labeled in the generated evidence and are not corrected or
+excluded. Curvature in the apparent salt effect is reported as
+
+$
+C=E(0.5)-rac{E(0)+E(1)}{2},
+$
+
+where $E(0)$ is the zero-block ablation and $E(1)$ is the current baseline. The
+diagnostic can test endpoint nonlinearity and salt-family incompatibility at one
+concentration, four temperatures, and two pressures. It cannot identify an optimum
+scale or establish behavior across concentration.
+
 ## Reported observables
 
-The generated CSV retains the baseline source/model decomposition and adds ablated:
+The generated CSV retains the baseline source/model decomposition and adds zero-block and midpoint diagnostics:
 
 - dissolved CO2 on the source mol-per-kilogram-solution basis;
 - apparent salt effect, $\ln(m_{\mathrm{CO_2}}^0/m_{\mathrm{CO_2}})/n_s$;
 - dissolved-CO2, guest-fugacity, and effective-(f/x) log ratios against matched
   pure water;
 - water activity, phase identity, component balance, and fugacity closure;
-- ablated-minus-baseline dissolved CO2.
+- ablated-minus-baseline dissolved CO2;
+- midpoint curvature, evidence label, decomposition identity, and the same numerical closure observables.
 
 The comparison is diagnostic. A production formulation or parameter update requires
 the hydration/catalog/assay convention, the seven anomalous Liu rows, the mixed-brine
