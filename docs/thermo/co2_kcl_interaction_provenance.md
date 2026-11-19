@@ -803,3 +803,46 @@ unless an objective source-only quality rule is declared before model selection.
 remain frozen holdouts. This increment changes no production parameter, equation, tolerance or temperature offset. See
 the [source notes](../../src/test/resources/data/chemistry_benchmarks/co2_water_cacl2_mgcl2_solubility_liu2021.md).
 
+
+
+## Source-separated complete-block identifiability scan
+
+`CO2ElectrolyteFurstScaleIdentifiabilityAssessmentTest` freezes three roles before
+model execution:
+
+- eight Liu et al. (2021) 1.0 and 1.5 mass percent NaCl states at 298 and 373 K
+  and 102.0 and 170.1 atm are the low-salinity calibration discriminator;
+- nine Mousavi-Chapoy-Burgass NaCl states span 10, 15 and 22 mass percent and
+  323.15, 373.15 and 423.15 K as an independent dense-concentration validation
+  family;
+- nine Mousavi-Chapoy-Burgass KCl states cover the same concentration and
+  temperature grid as a salt-identity validation family.
+
+The scan evaluates only the already defined complete CO2-ion Furst block at
+`lambda = 0, 0.5, 1`:
+
+$$
+W_{\mathrm{CO_2},i}^{(k)}(T;\lambda)
+ = \lambda W_{\mathrm{CO_2},i}^{(k)}(T),\qquad
+k\in\{0,1,2\}.
+$$
+
+All active CO2-ion pairs are scaled together. This preserves the declared
+single-ion gauge and leaves the cubic EOS, association, CPA binary
+interactions, non-CO2 electrolyte terms, phase-equilibrium tolerances and
+source values unchanged. The constrained GAS/OIL root comparison is used at
+every scan state so a root-selection failure cannot masquerade as parameter
+sensitivity. Each row retains component and molecular-fugacity closure, water
+activity, dissolved CO2, guest-side fugacity, effective aqueous
+`f/x`, and the exact log-space decomposition.
+
+The three values are an ablation/midpoint/baseline sensitivity matrix, not a
+bounded fit and not candidate production parameters. In particular, the scan
+cannot identify individual-ion allocations, distinguish Furst terms from CPA
+binary interactions, or qualify temperature dependence. The Table A.24
+four-salt series, all Dholabhai hydrate families, Archer water activity,
+He-Morse, Yasunishi-Yoshida and Burgass-Tohidi evidence remain untouched
+holdouts. A production update requires a source-separated improvement on the
+calibration discriminator, both single-salt validation families and those
+holdouts, with parameter uncertainty, physical consistency, convergence,
+non-regression and timing checks.
