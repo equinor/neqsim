@@ -128,6 +128,37 @@ class SteadyFlareGasNetworkTest {
     }
   }
 
+  /** A frozen drum rating contributes its measured gas-path loss to both simultaneous and pre-opening pressures. */
+  @Test
+  void knockoutRatingFeedsBackToBothBranches() {
+    SteadyFlareGasNetwork network = new SteadyFlareGasNetwork("H", NO_LOSS, "T", 1.2, 1.2, 10, 300, 0.02, 1, 1.3);
+    network.addDevice("A", 1.55, NO_LOSS, .0003, .95, NO_LOSS, null);
+    network.addDevice("B", 1.55, NO_LOSS, .0003, .95, NO_LOSS, null);
+    Map<String, Double> demands = new LinkedHashMap<>();
+    demands.put("A", 0.05);
+    demands.put("B", 0.05);
+    Result without = network.rate(demands);
+    double[] flow = {0, .05, .5};
+    double[] drop = {0, .01, .235};
+    network.setKnockoutPressureDrop("V-KO", flow, drop);
+    drop[2] = 9;
+    Result with = network.rate(demands);
+    assertTrue(with.totalKgS > .05 && with.totalKgS < without.totalKgS);
+    assertEquals(1.2 + .01 + .5 * (with.totalKgS - .05), with.headerOutletBara, 1e-9);
+    assertEquals(with.headerOutletBara, with.devices.get("A").outletBara, 1e-9);
+    assertEquals("V-KO", with.knockoutDrum.tag);
+    assertTrue(with.toJson().contains("\"dropBar\":[0.0,0.01,0.235]"));
+    assertTrue(with.devices.get("B").steadyPreOpeningBara > 1.2);
+    assertThrows(IllegalArgumentException.class, () -> network.addDevice("V-KO", 2, NO_LOSS, 0, 1, NO_LOSS, null));
+    assertThrows(IllegalArgumentException.class, () -> network.setKnockoutPressureDrop("A", flow, drop));
+    assertThrows(IllegalArgumentException.class,
+        () -> network.setKnockoutPressureDrop("V-KO", flow, new double[] {0, .02, .01}));
+    network.setKnockoutPressureDrop("V-KO", new double[] {0, .001}, new double[] {0, 0});
+    assertThrows(IllegalStateException.class, () -> network.rate(demands));
+    network.setKnockoutPressureDrop("V-KO", flow, new double[] {0, 0, 0});
+    assertEquals(without.totalKgS, network.rate(demands).totalKgS, 2e-8);
+  }
+
   /** Missing demand, extrapolated tip and high pipe Mach cannot produce an accepted result. */
   @Test
   void rejectsIncompleteAndOutOfRangeRatings() {

@@ -84,6 +84,13 @@ and simultaneous relief demands in kg/s. Represent each inlet and tailpipe by it
 equivalent length including fittings, and Darcy friction factor. Supply the static pressure and a
 rated flow/pressure point for a quadratic tip characteristic.
 
+For a knockout drum installed between the common header pipe and tip, supply its tag and a
+dry-gas port-to-port rating with `setKnockoutPressureDrop`. The paired gas flows (kg/s) and
+pressure differences (bar) start at zero. The solver interpolates within this curve at the
+combined flow for both the operating and pre-opening states. The common pipe discharges at
+`headerOutletBara` and the drum discharges directly at `tipBara`. The JSON includes the
+installed rating under `knockoutDrum`. Use a curve applicable to the modeled gas and drum condition.
+
 ```java
 import java.util.Collections;
 import neqsim.process.safety.depressurization.SteadyFlareGasNetwork;
@@ -113,7 +120,7 @@ that instant, match each device tag to its source, and call `history.ratePeakGas
 The rate comparison uses the contributions at the common sampled peak. Other instants can govern
 individual branches. The method assumes constant gas properties, low-Mach pipe flow and one common
 junction. It rejects pipe outlet Mach above 0.3 and flows outside the rated tip range. Liquid
-carryover, KO drum losses, multiple headers, line packing and transient valve lift require a separate
+carryover, wet KO drum losses and holdup, multiple headers, line packing and transient valve lift require a separate
 model and qualification.
 
 ### V-101 PSV-only reference at negligible losses
