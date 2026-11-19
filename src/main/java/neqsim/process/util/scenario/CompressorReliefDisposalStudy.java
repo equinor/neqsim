@@ -107,7 +107,7 @@ public final class CompressorReliefDisposalStudy {
     }
     DynamicBlowdownFlareStudyDataSource dynamic = dynamicBuilder.build();
     CoupledReliefBlowdownFlareInput.Builder inputBuilder = CoupledReliefBlowdownFlareInput.builder(design.studyId)
-        .addReliefStudy(reliefStudy, design.concurrencyGroup).dynamicStudy(dynamic)
+        .addReliefStudy(reliefStudy, design.concurrencyGroup, reliefFluid).dynamicStudy(dynamic)
         .scenarioSelectionReviewed(design.scenarioSelectionReviewed);
     for (String reference : design.evidenceReferences) {
       inputBuilder.addEvidenceReference(reference);

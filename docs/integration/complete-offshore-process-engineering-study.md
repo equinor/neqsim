@@ -188,7 +188,9 @@ technical pass means the modeled case met its configured criteria; it does not a
 continued degraded operation or facility design. The method benchmark is intentionally a `REGRESSION_BASELINE`, so the
 standard production-readiness result is false even though the numerical checks pass.
 
-The coupled blowdown/flare demonstration deliberately uses a documented 90/10 methane/ethane SRK screening fluid.
+The coupled blowdown/flare demonstration passes the same 90/10 methane/ethane SRK screening fluid to the
+blocked-outlet PSV study and the blowdown source. The PSV composition supplies the combustion basis for the
+flare heat-duty check. The PSV event and standalone blowdown are evaluated separately.
 The full offshore wellstream contains TBP pseudo-components whose elemental and flare-property characterization is not
 qualified for this transient handoff. Project adaptation must replace the screening fluid with a controlled,
 method-compatible depressuring composition and reconcile its inventory and thermodynamics with the full process case.

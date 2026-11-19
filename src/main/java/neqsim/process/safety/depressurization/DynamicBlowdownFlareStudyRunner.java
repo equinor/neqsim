@@ -337,6 +337,7 @@ public final class DynamicBlowdownFlareStudyRunner implements Serializable {
    */
   private Map<String, Object> sourceResultMap(DepressurizationResult result) {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
+    map.put("vapourWithdrawalUsed", result.vapourWithdrawalUsed);
     map.put("initialPressureBara", Double.valueOf(result.initialPressureBara));
     map.put("timeToHalfPressureS", finiteOrNull(result.timeToHalfPressure));
     map.put("timeTo7BargS", finiteOrNull(result.timeTo7BargS));
