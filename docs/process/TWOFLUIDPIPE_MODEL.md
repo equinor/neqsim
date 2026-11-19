@@ -2682,10 +2682,12 @@ spatial/temporal accuracy checks remain required.
 ```
 
 The preparation methods remain non-mutating. A separately selected experimental `runTransient`
-route now publishes complete intervals within the restricted contract below. The established
-WS1 five-second matrix and 180/600 s public Tengesdal gates still block multiphase production
-qualification. Concrete finite-volume active-set/transition physics, energy, changing component
-composition and phase change remain outside the initial isothermal route.
+route now publishes complete intervals within the restricted contract below. Its historical-grid
+five-second matrix and supporting 180/600 s atomic-publication gates pass under the bounded
+isothermal contract described below. These are numerical continuation and conservation gates,
+not the separate experimental Tengesdal amplitude/period/cycle qualification. Concrete
+finite-volume active-set/transition physics, energy, changing component composition and phase
+change remain outside the initial isothermal route.
 
 #### Complete transient transactions and experimental unsplit execution
 
@@ -2745,21 +2747,48 @@ evaluation; use the accepted state and mass report for this bounded route.
 The anchored SRK/PR density model and original phase-composition reference conditions persist
 across accepted calls and solver selection changes. `run()` reinitialization resets them.
 Reflashing at each new outer time would silently change component inventories under phase slip,
-so outlet publication instead uses the original frozen phase mass fractions. Each phase must
-have the same named-component mass fractions throughout the initial cells and prescribed inlet
-within `1e-10`. `TwoFluidUnsplitPublication` verifies this compatibility and builds the outlet
-from accepted phase transfers. Its TP flash preserves component totals and may change the
-downstream equilibrium phase split. Nonuniform or changed phase composition and negative
-phase outlet transfers reject without publication. Preparation-only signed-flow diagnostics
-retain their broader scope. General component advection and composition-dependent EOS updates
-are still required for evolving multicomponent multiphase transport.
+so every cell uses the initialized reference phase mass fractions while retaining its own
+accepted density anchor, pressure and temperature. Each present phase must match the prescribed
+inlet within `1e-10`. `TwoFluidUnsplitPublication` verifies this compatibility and builds the
+downstream stream from positive accepted phase transfers. A negative outlet phase transfer
+requires `setOutletBoundaryFluid(...)`; it remains signed in the conservation ledger and uses
+that external phase as donor, while the downstream stream never cancels the inflow against
+another phase's positive export. Its TP flash preserves exported component totals and may change
+the downstream equilibrium phase split. General component advection and composition-dependent
+EOS updates are still required for evolving multicomponent multiphase transport.
 
 Tests exercise repeat execution, defensive/serialized selection, a closed uniform three-phase
 fixed point, inlet-composition rejection, complete failure rollback, outlet-setter failure and
 connected storage/thermal identity. Local nonlinear defects accumulate over a long outer
-interval; satisfying each local solve does not guarantee the unchanged `1e-8` cumulative
-conservation gate. Select and record solver accuracy and outer-step partitioning, and retain
-failed full-interval checks rather than publishing a converged prefix.
+interval; satisfying each local solve does not by itself guarantee the unchanged `1e-8`
+cumulative conservation gate. The interval controller therefore assigns 25% of that global
+residual budget across attempted steps in proportion to their duration, including retries, and
+uses the stricter of this local budget and the caller's configured solver tolerance. The solver
+configuration is not mutated. Long signed face, source, cell and momentum ledgers use compensated
+summation; failed full-interval checks still reject the complete candidate instead of publishing
+a converged prefix.
+
+The public nitrogen/Crystex historical-grid execution now publishes the complete
+backward-Euler/pressure-interpolated interval with signed donor transport enabled:
+
+| Gate | Cells | Maximum nominal step (s) | Accepted nominal steps | Result |
+| --- | ---: | ---: | ---: | --- |
+| Five-second refinement matrix | 16 / 16 / 24 | 0.1 / 0.05 / 0.05 | 50 / 100 / 100 | Pass |
+| Supporting duration | 16 | 0.1 | 1,800 | Pass |
+| Sustained duration | 16 | 0.1 | 6,000 | Pass |
+
+All runs retain the `1e-9` configured nonlinear tolerance and `1e-8` complete-interval
+conservation gate; the controller may solve individual steps more tightly to honor the latter.
+They verify atomic clocks/identifier, nonnegative phase inventories, finite pressure and holdup,
+the accepted phase ledger and a forward outlet stream. They do not meet or replace the separate
+public-experiment pressure-amplitude, production-period and settled-cycle gates, and they do not
+qualify energy, phase change, restart or pigging.
+
+```bash
+./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.publication-qualification=true test
+./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#supportingPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.long-publication-qualification=true test
+./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#sustainedPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.sustained-publication-qualification=true test
+```
 
 The gas execution fixture uses methane/ethane `0.8/0.2` mole fractions, SRK/classic mixing,
 300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Four cells with

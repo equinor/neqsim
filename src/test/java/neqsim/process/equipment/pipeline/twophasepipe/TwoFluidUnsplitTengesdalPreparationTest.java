@@ -4,12 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
+import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator.PreparedInterval;
@@ -57,6 +62,28 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void fiveSecondPressureInterpolatedRiserQualificationMustCompleteTheWholeInterval(int cells, double maximumStep) {
     verifyPreparation(cells, maximumStep, 5.0, UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER, true);
+  }
+
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.publication-qualification", matches = "true")
+  @ParameterizedTest
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
+  void fiveSecondPressureInterpolatedRiserQualificationMustPublishAtomically(int cells, double maximumStep) {
+    verifyPublication(cells, maximumStep, 5.0);
+  }
+
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.long-publication-qualification", matches = "true")
+  @Test
+  void supportingPressureInterpolatedRiserQualificationMustPublishAtomically() {
+    verifyPublication(16, 0.1, 180.0);
+  }
+
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.sustained-publication-qualification", matches = "true")
+  @Test
+  void sustainedPressureInterpolatedRiserQualificationMustPublishAtomically() {
+    verifyPublication(16, 0.1, 600.0);
   }
 
   private static void verifyPreparation(int count, double maximumStep, double duration) {
@@ -124,6 +151,43 @@ class TwoFluidUnsplitTengesdalPreparationTest {
         maximumPressureDeparture, interval.getMaximumScaledResidual());
   }
 
+  private static void verifyPublication(int count, double maximumStep, double duration) {
+    TwoFluidPipe pipe = createPipe(count);
+    pipe.setUnsplitPressureInterpolationEnabled(true);
+    pipe.setBlendInclinedAnnularSlugTransitions(true);
+    pipe.setSignedDonorTransportEnabled(true);
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setRelativeTolerance(1.0e-9);
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    pipe.setUnsplitTransientSolver(solver, maximumStep);
+    UUID id = UUID.nameUUIDFromBytes(
+        ("published-tengesdal:" + count + ":" + maximumStep + ":" + duration).getBytes(StandardCharsets.UTF_8));
+
+    pipe.runTransient(duration, id);
+
+    assertEquals(duration, pipe.getSimulationTime(), 0.0);
+    assertEquals(duration, pipe.getTime(), 0.0);
+    assertEquals(id, pipe.getCalculationIdentifier());
+    TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+    assertEquals(duration, report.getElapsedTimeSeconds(), 0.0);
+    assertTrue(report.getAcceptedSubsteps() >= Math.ceil(duration / maximumStep));
+    for (Phase phase : Phase.values()) {
+      assertTrue(Double.isFinite(report.getFinalMassKg(phase)));
+      assertTrue(report.getFinalMassKg(phase) >= 0.0);
+      assertEquals(0.0, report.getResidualKg(phase) / Math.max(1.0, report.getInitialMassKg(phase)), 1.0e-8);
+    }
+    assertTrue(pipe.getOutletStream().getFlowRate("kg/sec") > 0.0);
+    for (TwoFluidSection section : pipe.getSectionSnapshots()) {
+      assertTrue(Double.isFinite(section.getPressure()) && section.getPressure() > 0.0);
+      assertEquals(1.0, section.getGasHoldup() + section.getOilHoldup() + section.getWaterHoldup(), 1.0e-8);
+    }
+    logger.info(
+        "Published unsplit Tengesdal interval: cells={}, maximumStep={}, duration={}, substeps={}, gasClosure={}, oilClosure={}, waterClosure={}, outletFlow={}",
+        count, maximumStep, duration, report.getAcceptedSubsteps(), report.getRelativeResidual(Phase.GAS),
+        report.getRelativeResidual(Phase.OIL), report.getRelativeResidual(Phase.WATER),
+        pipe.getOutletStream().getFlowRate("kg/sec"));
+  }
+
   static TwoFluidPipe createPipe(int count) {
     double diameter = 0.0762;
     double area = Math.PI * diameter * diameter / 4.0;
@@ -159,6 +223,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     pipe.setEnableInterfacialPressure(true);
     pipe.setImplicitInterfacialPressureCoupling(true);
     pipe.setEnableCoupledPressureMomentum(true);
+    pipe.setOutletBoundaryFluid(inlet.getFluid());
     pipe.setAllowOutletPhaseBackflow(true);
     pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
     pipe.run();

@@ -25,8 +25,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * Downstream fluid publication is deliberately narrower than hydrodynamic preparation. Without component advection,
  * each gas/oil/water composition must be uniform across the initial cells and prescribed inlet. The comparison uses an
- * absolute component mass-fraction tolerance of 1e-10; this is a compatibility check, not a physical mixing model. An
- * outlet with a negative phase transfer cannot be represented by one forward process stream and is rejected.
+ * absolute component mass-fraction tolerance of 1e-10; this is a compatibility check, not a physical mixing model. A
+ * negative phase transfer belongs to an explicitly configured pressure-boundary donor and stays signed in the
+ * conservation ledger. The downstream process stream contains only positive phase exports; it never hides boundary
+ * inflow by cancelling it against another phase's outflow.
  * </p>
  */
 public final class TwoFluidUnsplitPublication implements Serializable {
@@ -56,14 +58,25 @@ public final class TwoFluidUnsplitPublication implements Serializable {
     acceptedSubsteps = steps.size();
     double[][] faces = interval.getPhaseMassFaceTransferKg();
     double[][] sources = interval.getPhaseMassSourceTransferKg();
+    double[][] cellTransfers = interval.getPhaseMassCellTransferKg();
     requireMatrix(faces, initialSections.length + 1, PHASE_COUNT, "face transfers");
     requireMatrix(sources, initialSections.length, PHASE_COUNT, "source transfers");
+    requireMatrix(cellTransfers, initialSections.length, PHASE_COUNT, "cell transfers");
     initialMassKg = new double[PHASE_COUNT];
     finalMassKg = new double[PHASE_COUNT];
     inletMassKg = faces[0].clone();
     outletMassKg = faces[faces.length - 1].clone();
     sourceMassKg = new double[PHASE_COUNT];
-    double[][] momentumChange = new double[initialSections.length][PHASE_COUNT];
+    CompensatedSum[][] momentumChange = new CompensatedSum[initialSections.length][PHASE_COUNT];
+    CompensatedSum[] domainTransfer = new CompensatedSum[PHASE_COUNT];
+    for (int cell = 0; cell < initialSections.length; cell++) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        momentumChange[cell][phase] = new CompensatedSum();
+      }
+    }
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      domainTransfer[phase] = new CompensatedSum();
+    }
     double time = startTime;
     for (PreparedStep step : steps) {
       double dt = step.getTimeStepSeconds();
@@ -75,7 +88,7 @@ public final class TwoFluidUnsplitPublication implements Serializable {
       requireMatrix(rates, initialSections.length, 7, "conservative rates");
       for (int cell = 0; cell < initialSections.length; cell++) {
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
-          momentumChange[cell][phase] += dt * rates[cell][phase + PHASE_COUNT];
+          momentumChange[cell][phase].add(dt * rates[cell][phase + PHASE_COUNT]);
         }
       }
     }
@@ -98,13 +111,15 @@ public final class TwoFluidUnsplitPublication implements Serializable {
         throw new IllegalStateException("An isothermal interval cannot change the retained energy variable");
       }
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        double massChange = (faces[cell][phase] - faces[cell + 1][phase] + sources[cell][phase]) / before.getLength();
+        double massChange = cellTransfers[cell][phase] / before.getLength();
         requireResidual(endpoint[phase] - previous[phase] - massChange, previous[phase], tolerance, "cell phase mass");
-        requireResidual(endpoint[phase + PHASE_COUNT] - previous[phase + PHASE_COUNT] - momentumChange[cell][phase],
+        requireResidual(
+            endpoint[phase + PHASE_COUNT] - previous[phase + PHASE_COUNT] - momentumChange[cell][phase].value(),
             previous[phase + PHASE_COUNT], tolerance, "cell phase momentum");
         initialMassKg[phase] += previous[phase] * before.getLength();
         finalMassKg[phase] += endpoint[phase] * after.getLength();
         sourceMassKg[phase] += sources[cell][phase];
+        domainTransfer[phase].add(cellTransfers[cell][phase]);
       }
     }
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
@@ -112,9 +127,8 @@ public final class TwoFluidUnsplitPublication implements Serializable {
           || !Double.isFinite(sourceMassKg[phase])) {
         throw new IllegalStateException("Published phase inventories and transfers must be finite");
       }
-      requireResidual(
-          finalMassKg[phase] - initialMassKg[phase] - inletMassKg[phase] + outletMassKg[phase] - sourceMassKg[phase],
-          initialMassKg[phase], tolerance, "domain phase mass");
+      requireResidual(finalMassKg[phase] - initialMassKg[phase] - domainTransfer[phase].value(), initialMassKg[phase],
+          tolerance, "domain phase mass");
       if (!Double.isFinite(outletMassKg[phase] / getElapsedTimeSeconds())) {
         throw new IllegalStateException("Published interval-average phase flow must be finite");
       }
@@ -208,9 +222,9 @@ public final class TwoFluidUnsplitPublication implements Serializable {
    * Prepare a downstream fluid using the exact accepted phase transfers and uniform frozen phase compositions.
    *
    * <p>
-   * Reference clones are TP-flashed at every initial cell's pressure and temperature, matching construction of the
-   * pipe's anchored density model. Every present phase must have the same named-component mass fractions across these
-   * cells and the prescribed inlet. A TP flash of the weighted outlet preserves component totals but may change the
+   * The initialized reference supplies one frozen named-component composition for each conserved phase, matching
+   * construction of the pipe's anchored density model. Every present cell phase and the prescribed inlet must be
+   * compatible with those compositions. A TP flash of the weighted outlet preserves component totals but may change the
    * equilibrium phase split. Zero outlet transfer produces a zero-flow fluid with reference composition as its carrier.
    * All supplied fluids, sections and ledgers remain unchanged on success or failure.
    * </p>
@@ -232,9 +246,9 @@ public final class TwoFluidUnsplitPublication implements Serializable {
    * Prepare the outlet using persistent composition reference conditions across consecutive accepted intervals.
    *
    * <p>
-   * The same reference sections must be retained while the frozen density model remains active. Their pressure fixes
-   * the original phase compositions; changing current pressure must not trigger an unaccounted redistribution of
-   * component inventory. Reference cell geometry and temperature must match the current isothermal interval.
+   * The same reference sections must be retained while the frozen density model remains active. Their geometry and
+   * temperature identify the frozen isothermal mesh; changing current pressure must not trigger an unaccounted
+   * redistribution of component inventory.
    * </p>
    *
    * @param referenceFluid persistent thermodynamic reference used for the anchored density model
@@ -248,6 +262,32 @@ public final class TwoFluidUnsplitPublication implements Serializable {
    */
   public SystemInterface createOutletFluid(SystemInterface referenceFluid, SystemInterface prescribedInletFluid,
       TwoFluidSection[] frozenCompositionSections, double pressurePa, double temperatureK) {
+    return createOutletFluid(referenceFluid, prescribedInletFluid, null, frozenCompositionSections, pressurePa,
+        temperatureK);
+  }
+
+  /**
+   * Prepare the forward outlet stream while assigning reversed phase transfer to an external boundary donor.
+   *
+   * <p>
+   * The signed phase transfers remain unchanged in {@link #getOutletMassKg()}. Positive phase transfers are combined in
+   * the returned downstream stream. A negative phase transfer requires the corresponding phase in
+   * {@code outletBoundaryFluid}; its composition must match the frozen phase composition because this route does not
+   * yet transport named components inside the pipe. This preserves the frozen-composition contract instead of silently
+   * clipping mass or manufacturing a mixed net stream.
+   * </p>
+   *
+   * @param referenceFluid persistent thermodynamic reference used for the anchored density model
+   * @param prescribedInletFluid existing inlet phase composition, or null for a closed inlet
+   * @param outletBoundaryFluid external donor for reversed outlet phases, or null when every phase flows out
+   * @param frozenCompositionSections original cell pressure/temperature conditions used to freeze phase compositions
+   * @param pressurePa outlet absolute pressure in Pa
+   * @param temperatureK outlet temperature in K
+   * @return independent interval-average forward outlet fluid
+   */
+  public SystemInterface createOutletFluid(SystemInterface referenceFluid, SystemInterface prescribedInletFluid,
+      SystemInterface outletBoundaryFluid, TwoFluidSection[] frozenCompositionSections, double pressurePa,
+      double temperatureK) {
     if (referenceFluid == null || !(pressurePa > 0.0) || !Double.isFinite(pressurePa) || !(temperatureK > 0.0)
         || !Double.isFinite(temperatureK) || referenceFluid.getNumberOfComponents() == 0
         || frozenCompositionSections == null || frozenCompositionSections.length != initialSections.length) {
@@ -256,11 +296,9 @@ public final class TwoFluidUnsplitPublication implements Serializable {
     }
     double totalMass = 0.0;
     for (double mass : outletMassKg) {
-      if (mass < 0.0) {
-        throw new IllegalStateException(
-            "A forward outlet stream cannot publish negative phase transfer; use preparation-only diagnostics");
+      if (mass > 0.0) {
+        totalMass += mass;
       }
-      totalMass += mass;
     }
     if (!Double.isFinite(totalMass) || !Double.isFinite(totalMass / getElapsedTimeSeconds())) {
       throw new IllegalStateException("Frozen-phase outlet mass flow must be finite");
@@ -276,7 +314,9 @@ public final class TwoFluidUnsplitPublication implements Serializable {
         throw new IllegalArgumentException("Component molar masses must be positive and finite");
       }
     }
-    double[][] uniformFractions = new double[PHASE_COUNT][];
+    double[][] uniformFractions = phaseMassFractions(
+        flashReference(referenceFluid, referenceFluid.getPressure("Pa"), referenceFluid.getTemperature("K")), names,
+        molarMasses);
     for (int cell = 0; cell < initialSections.length; cell++) {
       TwoFluidSection frozen = frozenCompositionSections[cell];
       TwoFluidSection initial = initialSections[cell];
@@ -287,18 +327,26 @@ public final class TwoFluidUnsplitPublication implements Serializable {
         throw new IllegalArgumentException(
             "Frozen composition references must retain the accepted mesh and temperature");
       }
-      SystemInterface local = flashReference(referenceFluid, frozen.getPressure(), frozen.getTemperature());
-      double[][] fractions = phaseMassFractions(local, names, molarMasses);
       double[] state = initial.getStateVector();
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        if (state[phase] > 0.0 && fractions[phase] == null) {
+        if (state[phase] > 0.0 && uniformFractions[phase] == null) {
           throw new IllegalStateException("Positive phase inventory requires a frozen composition in cell " + cell);
         }
       }
-      mergeUniformFractions(uniformFractions, fractions);
     }
     if (prescribedInletFluid != null) {
       mergeUniformFractions(uniformFractions, phaseMassFractions(prescribedInletFluid, names, molarMasses));
+    }
+    double[][] outletDonorFractions = outletBoundaryFluid == null ? new double[PHASE_COUNT][]
+        : phaseMassFractions(outletBoundaryFluid, names, molarMasses);
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      if (outletMassKg[phase] < 0.0) {
+        if (outletDonorFractions[phase] == null) {
+          throw new IllegalStateException("Reversed outlet phase " + phase
+              + " requires setOutletBoundaryFluid(...) with a matching thermodynamic donor");
+        }
+        mergeUniformFraction(uniformFractions, outletDonorFractions[phase], phase);
+      }
     }
     double[] componentMoles = new double[count];
     double totalMoles = 0.0;
@@ -308,7 +356,7 @@ public final class TwoFluidUnsplitPublication implements Serializable {
       }
       if (uniformFractions[phase] != null) {
         for (int component = 0; component < count; component++) {
-          componentMoles[component] += outletMassKg[phase] * uniformFractions[phase][component]
+          componentMoles[component] += Math.max(0.0, outletMassKg[phase]) * uniformFractions[phase][component]
               / molarMasses[component];
         }
       }
@@ -348,7 +396,7 @@ public final class TwoFluidUnsplitPublication implements Serializable {
       fluid.init(3);
       return fluid;
     } catch (RuntimeException failure) {
-      throw new IllegalStateException("Cannot prepare frozen cell phase composition", failure);
+      throw new IllegalStateException("Cannot prepare the frozen reference phase compositions", failure);
     }
   }
 
@@ -412,15 +460,19 @@ public final class TwoFluidUnsplitPublication implements Serializable {
       if (candidate[phase] == null) {
         continue;
       }
-      if (uniform[phase] == null) {
-        uniform[phase] = candidate[phase].clone();
-      } else {
-        for (int component = 0; component < uniform[phase].length; component++) {
-          if (Math.abs(uniform[phase][component] - candidate[phase][component]) > COMPOSITION_TOLERANCE) {
-            throw new IllegalStateException(
-                "Nonuniform frozen phase composition requires component advection; use preparation-only diagnostics");
-          }
-        }
+      mergeUniformFraction(uniform, candidate[phase], phase);
+    }
+  }
+
+  private static void mergeUniformFraction(double[][] uniform, double[] candidate, int phase) {
+    if (uniform[phase] == null) {
+      uniform[phase] = candidate.clone();
+      return;
+    }
+    for (int component = 0; component < uniform[phase].length; component++) {
+      if (Math.abs(uniform[phase][component] - candidate[component]) > COMPOSITION_TOLERANCE) {
+        throw new IllegalStateException(
+            "Nonuniform frozen phase composition requires component advection; use preparation-only diagnostics");
       }
     }
   }

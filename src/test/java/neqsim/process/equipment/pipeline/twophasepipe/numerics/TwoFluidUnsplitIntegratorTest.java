@@ -25,6 +25,16 @@ import org.junit.jupiter.api.Test;
 class TwoFluidUnsplitIntegratorTest {
 
   @Test
+  void signedLedgerAccumulationRetainsLowOrderTransport() {
+    CompensatedSum sum = new CompensatedSum();
+    sum.add(1.0e16);
+    sum.add(1.0);
+    sum.add(-1.0e16);
+    assertEquals(1.0, sum.value(), 0.0);
+    assertThrows(IllegalArgumentException.class, () -> sum.add(Double.NaN));
+  }
+
+  @Test
   void nominalStepBoundCoversTheCompleteIntervalWithoutChangingTheFixedPoint() {
     TwoFluidSection[] accepted = nonuniformSections();
     for (TwoFluidSection cell : accepted) {

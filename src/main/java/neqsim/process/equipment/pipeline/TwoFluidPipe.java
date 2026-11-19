@@ -5517,12 +5517,13 @@ public class TwoFluidPipe extends Pipeline {
    * Snapshot an anchored, frozen-composition SRK/PR density closure for isothermal unsplit qualification.
    *
    * <p>
-   * A separate deep reference-fluid copy is flashed once at each accepted cell's pressure and temperature to obtain its
-   * phase compositions. Subsequent density probes retain those compositions and temperatures. A constant specific-
-   * volume offset anchors the EOS response to the accepted phase density, avoiding a density jump at handoff. This does
-   * not transport components, perform transient phase equilibrium, or qualify a production transient route. An absent
-   * inventory whose legacy density is zero receives an explicit constant 1 kg/m3 algebraic extension on the copied
-   * state only. That extension cannot support accepted phase appearance or inflow.
+   * One deep copy of the initialized inlet reference supplies a uniform composition for each conserved phase. Every
+   * cell receives an independent copy of those phase templates, evaluated at its own accepted temperature and pressure
+   * by the anchored density model. A constant specific-volume offset anchors the EOS response to the accepted cell
+   * density, avoiding a density jump at handoff. Uniform frozen phase composition is required because this route does
+   * not transport named components or perform transient phase equilibrium. An absent inventory whose legacy density is
+   * zero receives an explicit constant 1 kg/m3 algebraic extension on the copied state only. That extension cannot
+   * support accepted phase appearance or inflow.
    * </p>
    *
    * @return independent pressure-dependent phase-density closure
@@ -5537,6 +5538,7 @@ public class TwoFluidPipe extends Pipeline {
     }
     SystemInterface[] fluids = new SystemInterface[snapshot.length];
     boolean[][] residualDensityExtension = new boolean[snapshot.length][3];
+    SystemInterface frozenReference = SerializationUtils.clone(referenceFluid);
     for (int cell = 0; cell < snapshot.length; cell++) {
       double[] state = snapshot[cell].getStateVector();
       if (state[0] == 0.0 && snapshot[cell].getGasDensity() == 0.0) {
@@ -5551,15 +5553,7 @@ public class TwoFluidPipe extends Pipeline {
         snapshot[cell].setWaterDensity(1.0);
         residualDensityExtension[cell][2] = true;
       }
-      fluids[cell] = SerializationUtils.clone(referenceFluid);
-      fluids[cell].setPressure(snapshot[cell].getPressure(), "Pa");
-      fluids[cell].setTemperature(snapshot[cell].getTemperature(), "K");
-      try {
-        new ThermodynamicOperations(fluids[cell]).TPflash();
-        fluids[cell].init(3);
-      } catch (RuntimeException failure) {
-        throw new IllegalStateException("Cannot prepare frozen phase compositions for cell " + cell, failure);
-      }
+      fluids[cell] = SerializationUtils.clone(frozenReference);
     }
     AnchoredIsothermalDensityModel model = new AnchoredIsothermalDensityModel(snapshot, fluids);
     for (int cell = 0; cell < snapshot.length; cell++) {
@@ -6095,8 +6089,9 @@ public class TwoFluidPipe extends Pipeline {
    * phase compositions are frozen on the first accepted call and retained across later calls until {@link #run(UUID)}
    * reinitializes the pipe. Each phase's composition must be spatially uniform and match the prescribed inlet within
    * 1e-10 in component mass fraction. Changing composition, energy/phase transfer, slug tracking, upstream storage and
-   * negative phase outlet transfers remain unsupported and reject without publication. Preparation-only diagnostics
-   * retain their broader signed-flow scope. Selection does not establish experimental flow qualification.
+   * Signed phase outlet transfers require {@link #setOutletBoundaryFluid(SystemInterface)}. Boundary inflow keeps its
+   * sign in the phase ledger and uses that donor, while the downstream stream publishes only positive phase exports.
+   * Selection does not establish experimental flow qualification.
    * </p>
    *
    * @param solver nonlinear solver with tolerance no greater than 1e-8, or null to restore the legacy route
@@ -6769,8 +6764,8 @@ public class TwoFluidPipe extends Pipeline {
     TwoFluidSection outlet = endpoint[endpoint.length - 1];
     double pressure = outletBCType == BoundaryCondition.CONSTANT_PRESSURE ? outletPressure : outlet.getPressure();
     SystemInterface outletFluid = publication.createOutletFluid(referenceFluid,
-        inletBCType == BoundaryCondition.CLOSED ? null : getInletStream().getFluid(), unsplitReferenceSections,
-        pressure, outlet.getTemperature());
+        inletBCType == BoundaryCondition.CLOSED ? null : getInletStream().getFluid(), outletBoundaryFluid,
+        unsplitReferenceSections, pressure, outlet.getTemperature());
     double elapsed = publication.getElapsedTimeSeconds();
     double integratorEnd = timeIntegrator.getCurrentTime() + elapsed;
     if (!Double.isFinite(time + elapsed) || !(time + elapsed > time) || !Double.isFinite(integratorEnd)

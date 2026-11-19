@@ -831,6 +831,17 @@ operator on its existing friction owner: combining the two currently regresses t
 trace-phase/donor event. This is numerical source qualification, not severe-slugging, restart or
 pigging evidence.
 
+For the frozen-phase execution route, a negative outlet phase transfer must own
+an explicit `setOutletBoundaryFluid(...)` donor. Conservation retains its sign;
+the forward downstream stream contains only positive phase exports. With
+backward Euler, pressure interpolation, transition blending and signed donor
+transport, the historical-grid 16/24-cell five-second matrix and the 16-cell
+180/600 s atomic-publication gates pass. Long intervals allocate a
+duration-weighted share of the unchanged `1e-8` cumulative residual budget to
+each nonlinear step without changing the configured solver tolerance. This is
+numerical duration and transaction evidence, not the separate experimental
+Tengesdal amplitude/period/cycle acceptance or restart/pigging qualification.
+
 Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
 completed intervals needs `N + 1` events, so the settled window must span at least `N` times the
 largest admissible cycle period, plus phase and boundary margin. Keep shorter runs as numerical
