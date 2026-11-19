@@ -50,6 +50,14 @@ supported. For missing dry, operating, or hydrotest weights, retain the hold and
 identify the required vendor or design input. Confirm package boundaries before
 rolling dry weights into project totals.
 
+When asked for a mechanical datasheet, use `generateMechanicalDatasheet` or
+`generateAllMechanicalDatasheets` from the same generator. Review the native
+geometry and design case status, code and materials, weights and test basis,
+loads/supports, inspection and documentation. For vessels, verify the pressure
+boundary, levels, nozzle schedule and internals. Record approved input and
+vendor values against the reported requirement keys with source and revision.
+A screening nozzle bore does not specify a flange or a fabrication dimension.
+
 ## Architecture Pattern
 Every piece of process equipment has a `MechanicalDesign` object:
 

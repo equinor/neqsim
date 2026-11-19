@@ -37,6 +37,7 @@ class EquipmentDatasheetGeneratorTest {
     feed.setFlowRate(62000, "kg/hr");
     ThreePhaseSeparator separator = new ThreePhaseSeparator("V-101", feed);
     separator.setOrientation("horizontal");
+    separator.getDesignConditions().setMaxDesignTemperature(110.0, "C");
     ThrottlingValve valve = new ThrottlingValve("PCV-101", separator.getGasOutStream());
     valve.setOutletPressure(22.0);
     ProcessSystem process = new ProcessSystem();
@@ -79,6 +80,28 @@ class EquipmentDatasheetGeneratorTest {
     assertEquals(expected, operatingSummary.get("knownSubtotal_kg").getAsDouble(), 1e-8);
     assertEquals(1, operatingSummary.get("missingCount").getAsInt());
     assertTrue(operatingSummary.get("total_kg").isJsonNull());
+
+    MechanicalDatasheet mechanical = new EquipmentDatasheetGenerator(process).generateMechanicalDatasheet(separator, 1);
+    JsonObject document = mechanical.toJsonObject();
+    assertEquals(4, document.getAsJsonArray("separatorNozzles").size());
+    JsonObject water = document.getAsJsonArray("separatorNozzles").get(3).getAsJsonObject();
+    assertEquals("water", water.get("role").getAsString());
+    assertEquals(50.0, water.get("screeningBore_mm").getAsDouble(), 1e-8);
+    assertEquals(separator.getWaterOutStream().getName(), water.get("streamTag").getAsString());
+    assertTrue(sheet.getAsJsonObject("designConditions").get("designTemperature_C").isJsonNull());
+    assertTrue(mechanical.toMarkdown().contains("383.15"));
+    assertTrue(mechanical.toMarkdown().contains("Equipment DesignConditions"));
+    assertTrue(mechanical.toMarkdown().contains("Separator nozzle schedule"));
+    assertTrue(mechanical.toMarkdown().contains("HOLD"));
+    mechanical.setRequirement("drawing", "P&ID-101", "Test project drawing register");
+    mechanical.setHydrotestWeightBasis(10000, 20, 998, "Synthetic test assembly basis");
+    assertTrue(mechanical.toMarkdown().contains("29960.0"));
+    assertEquals(2, new EquipmentDatasheetGenerator(process).generateAllMechanicalDatasheets().size());
+
+    design.setWaterOutletNozzleID(0.1);
+    assertEquals(0.1, design.calcWaterOutletNozzleID(), 1e-10);
+    design.setWaterOutletNozzleID(0);
+    assertEquals(0.05, design.calcWaterOutletNozzleID(), 1e-10);
   }
 
   /**

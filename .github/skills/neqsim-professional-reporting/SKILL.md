@@ -701,6 +701,12 @@ design-basis package), these rules apply on top of the principles above. Each wa
 
 ## Equipment datasheet packages
 
+For mechanical sheets, render `MechanicalDatasheet` sections, sources and
+statuses. Present a basis and revision, process and mechanical design
+conditions, dimensions, materials, loads, weights, inspection and test basis,
+and a tag-linked connection schedule where the model exposes it. Keep
+equipment-specific holds visible where they affect the interpretation.
+
 When rendering equipment sheets, use the structured `EquipmentDatasheetGenerator`
 package as the data source. Show tag, document number and revision on each page
 and reconcile the complete set against the P&ID register. Keep every stream

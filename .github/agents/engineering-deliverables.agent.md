@@ -41,6 +41,11 @@ Render each sheet with project and case identification, a port table, process
 performance, mechanical configuration, weights and outstanding inputs. Keep
 known weight subtotals visibly distinct from complete project totals.
 
+For mechanical-only packages, use `MechanicalDatasheet` JSON or Markdown.
+Render from the structured statuses, show governing case and drawing references,
+and reconcile process nozzle roles against the P&ID. Pass the pressure boundary,
+test, materials, loads, inspections and vendor holds forward as separate fields.
+
 ### Professional P&ID and executable simulation handoff
 
 For requests to prepare a professional P&ID from a NeqSim model, read

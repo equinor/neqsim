@@ -72,3 +72,44 @@ All generated sheets carry the `PRELIMINARY` issue status.
 
 - [Mechanical Design](mechanical_design.md)
 - [Cost Estimation Framework](COST_ESTIMATION_FRAMEWORK.md)
+
+## Mechanical datasheets
+
+Use `generateMechanicalDatasheet(equipment, sequenceNumber)` for one equipment item
+or `generateAllMechanicalDatasheets()` for the process register. Each
+`MechanicalDatasheet` can export versioned JSON with `toJsonObject()` or `toJson()`
+and a readable Markdown sheet with `toMarkdown()`. It reuses the equipment ports,
+mechanical response, normalized geometry and design basis. Design and sizing
+calculations run on the original configured equipment before the export.
+
+The generic sheet covers the reference drawing, governing design cases and code
+edition, design and operating conditions, geometry, materials, equipment weights,
+site loads and supports, inspection, tests, and vendor documentation. Families with
+typed models add construction and review fields for rotating equipment, heat
+exchangers, valves, columns, pipelines, and separators. A separator adds shell
+and head fields, the model liquid and interface levels, the internals and
+auxiliary connections, and a process nozzle schedule. The calculated bore is a
+process screening dimension. It is independent of the nominal flange size,
+connection rating, material, orientation, local load checks and reinforcement.
+
+Fields show a value, unit, status and source. **MODEL** and **ESTIMATE** are
+preliminary. **CONFIGURED OR DEFAULT** requires confirmation against the
+project design cases. **HOLD** identifies missing information. **SUPPLIED**
+means the caller entered a controlled requirement. Enter controlled values
+using `setRequirement(key, value, source)` with the key from the JSON field.
+For a hydrotest weight estimate, supply an explicit test assembly dry mass,
+filled volume and test-fluid density through `setHydrotestWeightBasis`. The
+result is dry test assembly mass plus filled-volume mass. Confirm the separate
+test pressure, test temperature, scope and acceptance basis before use.
+
+Begin with the approved project inputs and current vendor or design
+information. For vessels, enter the selected plate and head geometry, the
+pressure boundary calculations, external pressure and minimum design metal
+temperature, nozzle details and load checks. Use the project's governing
+standard and edition. ASME BPVC Section VIII Division 1 describes pressure
+vessel construction requirements. IOGP S-619 documents the role of a
+procurement data sheet alongside the supplementary, information and quality
+requirements. The NeqSim outputs carry the preliminary issue status.
+
+- [ASME Boiler and Pressure Vessel Code](https://www.asme.org/codes-standards/bpvc-standards)
+- [IOGP S-619 pressure vessel specification and document structure](https://www.iogp-jip33.org/wp-content/uploads/2021/09/Specification-for-Unfired-Fusion-Welded-Pressure-Vessels-S-619v2021-09.pdf)

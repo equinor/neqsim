@@ -186,6 +186,31 @@ public class EquipmentDatasheetGenerator implements Serializable {
   }
 
   /**
+   * Builds a controlled mechanical sheet from the same equipment and case snapshot as the process datasheet.
+   *
+   * @param equipment process equipment
+   * @param sequenceNumber sheet number in the document register
+   * @return preliminary mechanical datasheet
+   */
+  public MechanicalDatasheet generateMechanicalDatasheet(ProcessEquipmentInterface equipment, int sequenceNumber) {
+    return new MechanicalDatasheet(generateDatasheet(equipment, sequenceNumber));
+  }
+
+  /**
+   * Builds mechanical datasheets for each physical equipment entry in the process register.
+   *
+   * @return sheets in process register order
+   */
+  public List<MechanicalDatasheet> generateAllMechanicalDatasheets() {
+    JsonArray sheets = JsonParser.parseString(generateAllDatasheets()).getAsJsonObject().getAsJsonArray("datasheets");
+    List<MechanicalDatasheet> result = new java.util.ArrayList<MechanicalDatasheet>();
+    for (com.google.gson.JsonElement sheet : sheets) {
+      result.add(new MechanicalDatasheet(sheet.getAsJsonObject()));
+    }
+    return result;
+  }
+
+  /**
    * Checks for a completed, converged run before reporting operating values.
    *
    * @return true when the process has a run identity and is solved
@@ -231,8 +256,8 @@ public class EquipmentDatasheetGenerator implements Serializable {
       MechanicalDesign mechDesign = equipment.getMechanicalDesign();
       if (mechDesign != null) {
         design.addProperty("designPressure_barg", roundTo(mechDesign.getMaxDesignPressure("barg"), 1));
-        design.addProperty("designTemperature_C", roundTo(mechDesign.getDesignMaxTemperatureLimit(), 0));
-        design.addProperty("minDesignTemperature_C", roundTo(mechDesign.getDesignMinTemperatureLimit(), 0));
+        design.addProperty("designTemperature_C", roundTo(mechDesign.getDesignMaxTemperatureLimit("C"), 1));
+        design.addProperty("minDesignTemperature_C", roundTo(mechDesign.getDesignMinTemperatureLimit("C"), 1));
         design.addProperty("corrosionAllowance_mm", roundTo(mechDesign.getCorrosionAllowance(), 1));
         MechanicalDesignResponse response = mechDesign.getResponse();
         if (response.getDesignStandard() != null) {

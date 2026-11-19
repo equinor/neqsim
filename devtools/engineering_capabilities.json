@@ -460,6 +460,7 @@
       "tool": "inspectApi",
       "apis": [
         "neqsim.process.mechanicaldesign.EquipmentDatasheetGenerator",
+        "neqsim.process.mechanicaldesign.MechanicalDatasheet",
         "neqsim.process.mechanicaldesign.MechanicalDesignReport"
       ],
       "skills": [
@@ -473,7 +474,7 @@
       "testSources": [
         "src/test/java/neqsim/process/mechanicaldesign/EquipmentDatasheetGeneratorTest.java"
       ],
-      "limitations": "Preliminary JSON sheets for physical equipment and a weight coverage register. Mechanical calculations must be prepared before export. Equipment-specific weight and design coverage varies; unavailable values remain holds."
+      "limitations": "Preliminary equipment and mechanical datasheets in JSON, mechanical Markdown and a weight coverage register. Mechanical calculations must be prepared before export. Equipment-specific weight and design coverage varies; unavailable values remain holds."
     },
     {
       "id": "equipment-sizing",

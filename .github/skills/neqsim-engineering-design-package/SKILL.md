@@ -37,6 +37,16 @@ the number of missing items. Carry vendor data and engineer-reviewed equipment
 weights with their source and revision. See
 `docs/process/equipment_datasheets.md` for the API and output contract.
 
+For a dedicated mechanical equipment sheet, use
+`EquipmentDatasheetGenerator.generateMechanicalDatasheet` or
+`generateAllMechanicalDatasheets`. Consume the native normalized mechanical
+response and process port table. Record customer/vendor values with
+`setRequirement` and a controlled source. Use a separate documented test
+assembly, liquid volume and test-fluid density for `setHydrotestWeightBasis`.
+Render `MechanicalDatasheet.toMarkdown()` or lay out the same JSON data in a
+controlled document. For separators distinguish calculated nozzle bores,
+nominal connections, and local/nozzle mechanical checks. Surface every hold.
+
 ## Class map
 
 | Class or family | Package | What it does | Key methods verified |
