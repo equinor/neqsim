@@ -39,6 +39,10 @@
   missing input, runtime mismatch or new findings are not a pass. Keep `pom.xml` and
   `pomJava8.xml` coordinated and test dependency changes on actual Java 8. Never refresh the
   baseline merely to make a PR green. Record commands and exact-head results.
+- **Devtools release versioning:** when a PR explicitly prepares a devtools package release, choose
+  the version bump using the policy in `devtools/README.md` (“Versioning and releases”), then update
+  `devtools/pyproject.toml` and regenerate/check `devtools/uv.lock` with uv. Do not bump the package
+  version for routine PRs that are not preparing a release.
 - **Quiet by default (agents, skills, plugin):** no pop-up windows, no run-time installs, no surprise
   sign-ins. Child processes use `creationflags=CREATE_NO_WINDOW` (toolkit entry points call
   `quiet_subprocess.install()`); dependencies are declared in the skill `pyproject.toml` and installed

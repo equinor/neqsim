@@ -17,7 +17,7 @@ description: From git clone to first contribution in 30 minutes - environment se
 
 **Recommended:**
 - VS Code with [Java Extension Pack](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack)
-- Python 3.11+ (for repository tooling, reports, and Jupyter notebook development)
+- Python 3.10+ (for repository tooling, reports, and Jupyter notebook development; Python 3.11+ is recommended for the Pillow security fix)
 
 NeqSim source remains Java 8 compatible, and a separate Java 8 artifact is published for
 compatibility. The standard artifact, normal development build, and supported Python gateway use
