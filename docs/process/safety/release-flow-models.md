@@ -560,7 +560,7 @@ For upstream pressure at or below back pressure, the result is valid zero forwar
 | Transient decompression waves, line packing, multiphase slip, delayed flashing or heat transfer | Outside the delivered models. |
 | Failed flash, unclosed inventory/entropy/fugacity or invalid density | `INVALID`, without a numeric release payload. |
 
-Version `1.2.3` assesses the upstream, accepted throat and ambient-expanded states on defensive
+Version `1.2.4` assesses the upstream, accepted throat and ambient-expanded states on defensive
 fluid copies. Components present above `1e-12` mole fraction are checked when the station is at
 or below their database triple-point temperature. The selected-component solid flash uses the
 same EOS and mixture; a stable solid mass fraction above `1e-12` returns `SOLID_RISK`. A
@@ -580,7 +580,7 @@ it into qualification. Table 1 of Witlox et al., *Journal of Hazardous Materials
 10.75 bar and 302.95 K through a 5 mm opening to 0.91 atm with a mass flow of 0.2 kg/s. The source
 table does not report measurement uncertainty. At those pressure and temperature inputs, the
 current SRK equilibrium request resolves a gas-only upstream state. Its raw 0.05969 kg/s result is
-therefore not a rate-validation point for the published liquid withdrawal. Version `1.2.3` retains a
+therefore not a rate-validation point for the published liquid withdrawal. Version `1.2.4` retains a
 fail-closed phase-applicability assessment; the generated receipt leaves relative error empty and
 records `NOT_COMPARABLE_UPSTREAM_PHASE`, `NOT_REPORTED` uncertainty and `UNQUALIFIED`. The model
 manifest retains `EXPERIMENTAL_INPUT_PHASE_MISMATCH` and
@@ -588,18 +588,25 @@ manifest retains `EXPERIMENTAL_INPUT_PHASE_MISMATCH` and
 experimental liquid inventory is required before computing a rate error.
 
 Hammer et al., *International Journal of Multiphase Flow* 152 (2022) 104201, DOI
-`10.1016/j.ijmultiphaseflow.2022.104201`, report six dense-liquid CO2 restriction tests with
+`10.1016/j.ijmultiphaseflow.2022.104201`, report six dense single-fluid CO2 restriction tests with
 explicit mass-flow uncertainty. The retained cases cover 11.4--12.77 MPa, 295.15--298.35 K,
 4.5--12.7 mm restrictions and both orifice and nozzle geometries. At the reported ambient receiver
 pressure, the equilibrium expansion detects an ambient dry-ice phase and returns `UNSUPPORTED`
 with `SOLID_RISK`; it exposes no station or numeric rate. `ReleaseBenchmarkApplicability` records
-`RESULT_UNUSABLE` and the diagnostic code without recovering a failed value. The deterministic
-receipt therefore preserves the measured rates, uncertainties and the paper's HEM references but
-leaves NeqSim rate and error fields empty. A 600 kPa receiver-pressure control remains numerically
-usable, demonstrating that the dense inlet alone is not rejected, but its resolved gas-only phase
-still does not match the declared liquid withdrawal and is not used as rate-validation evidence.
-Solid-capable physics and accountable domain review are required before these experiments can
-qualify a calculated release rate.
+`RESULT_UNUSABLE` and the diagnostic code without recovering a failed value.
+
+The benchmark gate separately accepts `SINGLE_MATERIAL_PHASE` when exactly one supported material
+phase occupies the upstream state, independent of whether an EOS labels that sole compressed phase
+as gas or liquid. This does not accept gas/liquid coexistence, aqueous coexistence, solids or an
+unsupported native phase. Because all six restrictions remain choked with invariant calculated
+rates across a 600--800 kPa non-solid receiver-pressure band, version `1.2.4` also retains a
+restriction-plane sensitivity comparison without using it as an ambient source payload. Across the
+six cases the mean absolute relative error is 19.39%, the
+signed bias is +9.86%, the relative RMSE is 21.19%, and the maximum absolute error is 34.26%. Only
+one of six predictions is inside the reported experimental uncertainty; the largest deviation is
+10.27 reported uncertainty intervals. These results are independent accuracy evidence and a clear
+model limitation, not calibration or qualification. The live ambient path remains fail-closed and
+solid-capable physics plus accountable domain review are still required.
 
 The frame's `model.evidence` object retains the exact manifest ID,
 applicability codes, limitation codes and evidence references used by the selected model; it does
@@ -629,7 +636,7 @@ an unresolved entropy, inventory or equilibrium residual still returns `INVALID`
 `INCIPIENT_PHASE_CONTINUATION` records resolved entropy roots, accepted/rejected candidate
 counts and the last rejection reason. This diagnostic is distinct from acoustic warnings.
 The original pressure-search bounds and closure tolerances are unchanged. The source-frame
-schema remains v1, while model provenance identifies numerical version `1.2.3`.
+schema remains v1, while model provenance identifies numerical version `1.2.4`.
 
 The former failing regression (80 mol% propane, 20 mol% n-butane, SRK/classic, 300 K,
 20 bara to 3 bara, 10 mm opening and discharge coefficient 0.62) now gives approximately
