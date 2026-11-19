@@ -80,6 +80,11 @@ class HomogeneousEquilibriumExternalBenchmarkTest extends neqsim.NeqSimTest {
     assertTrue(gasAssessment.isComparable());
     assertEquals(ReleaseBenchmarkApplicability.Status.COMPARABLE, gasAssessment.getStatus());
 
+    ReleaseBenchmarkApplicability singleMaterialAssessment = ReleaseBenchmarkApplicability.assess(gasResult,
+        ReleaseBenchmarkApplicability.ExpectedPhase.SINGLE_MATERIAL_PHASE);
+    assertTrue(singleMaterialAssessment.isComparable());
+    assertEquals(ReleaseBenchmarkApplicability.Status.COMPARABLE, singleMaterialAssessment.getStatus());
+
     ReleaseBenchmarkApplicability liquidAssessment = ReleaseBenchmarkApplicability.assess(gasResult,
         ReleaseBenchmarkApplicability.ExpectedPhase.MATERIAL_LIQUID);
     assertTrue(!liquidAssessment.isComparable());
