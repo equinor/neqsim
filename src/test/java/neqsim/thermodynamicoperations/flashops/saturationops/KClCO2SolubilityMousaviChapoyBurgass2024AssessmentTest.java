@@ -219,10 +219,25 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   static Result calculateWithFurstCo2IonScale(Reference reference, double co2FeedMoles, double furstCo2IonScale) {
+    return calculateWithFurstCo2IonScale(reference, co2FeedMoles, false, furstCo2IonScale);
+  }
+
+  /**
+   * Calculates one source state after scaling the complete Furst CO2-ion interaction block under the requested
+   * numerical solver.
+   *
+   * @param reference source state
+   * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
+   * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
+   * @param furstCo2IonScale dimensionless scale in the closed interval [0, 1]
+   * @return calculated diagnostics
+   */
+  static Result calculateWithFurstCo2IonScale(Reference reference, double co2FeedMoles,
+      boolean constrainedPhaseSolver, double furstCo2IonScale) {
     if (!Double.isFinite(furstCo2IonScale) || furstCo2IonScale < 0.0 || furstCo2IonScale > 1.0) {
       throw new IllegalArgumentException("Furst CO2-ion scale must be finite and in [0, 1]");
     }
-    return calculate(reference, co2FeedMoles, false, furstCo2IonScale);
+    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, furstCo2IonScale);
   }
 
   /**
