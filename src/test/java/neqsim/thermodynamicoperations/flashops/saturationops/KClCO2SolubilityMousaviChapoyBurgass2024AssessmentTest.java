@@ -232,8 +232,8 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param furstCo2IonScale dimensionless scale in the closed interval [0, 1]
    * @return calculated diagnostics
    */
-  static Result calculateWithFurstCo2IonScale(Reference reference, double co2FeedMoles,
-      boolean constrainedPhaseSolver, double furstCo2IonScale) {
+  static Result calculateWithFurstCo2IonScale(Reference reference, double co2FeedMoles, boolean constrainedPhaseSolver,
+      double furstCo2IonScale) {
     if (!Double.isFinite(furstCo2IonScale) || furstCo2IonScale < 0.0 || furstCo2IonScale > 1.0) {
       throw new IllegalArgumentException("Furst CO2-ion scale must be finite and in [0, 1]");
     }
@@ -968,3 +968,4 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     }
   }
 }
+
