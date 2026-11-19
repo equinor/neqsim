@@ -39,6 +39,8 @@ ASSESSMENTS = (
     ("KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest",
      "co2-kcl-solubility-mousavi-chapoy-burgass2024-assessment.csv", 26,
      "co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"),
+    ("CO2ElectrolyteFurstScaleIdentifiabilityAssessmentTest",
+     "co2-electrolyte-furst-scale-identifiability-assessment.csv", 78, None),
     ("MixedBrineCO2SolubilityMousaviChapoyBurgass2024AssessmentTest",
      "co2-mixed-brine-solubility-mousavi-chapoy-burgass2024-table-a24-assessment.csv", 18,
      "co2_mixed_brine_solubility_mousavi_chapoy_burgass2024_table_a24.csv"),
