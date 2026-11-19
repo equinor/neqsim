@@ -58,3 +58,29 @@ An optional native compressor map now solves for the speed needed to deliver 100
 SRK and PR use the same synthetic composition. They are sensitivity cases. Laboratory qualification requires measured observations for the feed and separate validation of the relevant phase behavior and transport properties. The produced-water preflight returned six missing Ba/SO4 and mixed-ion entries. The resulting evidence supports requesting parameters and measurements before predicting precipitated mass.
 
 [Integration acceptance and remaining work](https://github.com/equinor/neqsim/issues/5114)
+
+### First outlet reversal on the conservative-energy route
+
+On master `0eacf4bac9646a0c2839aa95392e38d67ddb51b2`, the installed SRK fixed-opening case
+with 60 cells, a 0.25 s outer step and conservative energy recovery rejected the interval
+(3.50, 3.75] s. Read-only diagnostic instrumentation at the first transition in
+`calcOutletFlux` and the substep acceptance point identified the only Euler stage in the
+accepted substep starting at 3.688795864 s (length 0.015725680 s). The terminal face
+pressure was 56.406713 bara and the water velocity was −0.000823 m/s. The gas and oil
+velocities were +7.51484 and +0.58670 m/s. The water area fraction of 0.058949 and
+density of 993.55 kg/m³ give a signed water flux of −0.001562 kg/s before the one-way
+rule and a pressure traction of 10.783 kN. The net water transfer reported by the pipe
+over the full outer interval was +0.003087 kg. The separator did not advance across
+this rejected handoff.
+
+| Outlet pressure used in the pre-event diagnostic | First rejected outer interval (s) |
+| --- | --- |
+| Live separator plus lagged choke loss | (3.50, 3.75] |
+| Held initial separator and initial loss | (3.75, 4.00] |
+| Live separator plus held initial loss | (2.75, 3.00] |
+| Held initial separator plus lagged choke loss | Reached 4.00 without rejection |
+
+Only the pressure imposed on the pipe was changed in the three diagnostic replays.
+All stopped by the first well event at 4 s. Holding the outlet face delays reversal
+for this case. Its persistence with a fixed face warrants examining the internal
+handoff and terminal pressure/momentum balance before changing the donor model.

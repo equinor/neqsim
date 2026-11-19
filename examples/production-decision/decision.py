@@ -70,6 +70,20 @@ def run_result(run):
     return quantities(run)
 
 
+def constraint_breaches(fluid, grid, values, power_limit):
+    """Return observed constraint breaches for a completed trajectory at one grid."""
+    mesh, dt = grid
+    breaches = []
+    for name, (direction, limit) in LIMITS.items():
+        if name == "power_kW":
+            limit = power_limit
+        value = values[name]
+        if (direction == "max" and value > limit) or (direction == "min" and value < limit):
+            breaches.append({"fluid": fluid, "mesh_cells": 60 * mesh, "dt_s": dt, "quantity": name,
+                             "value": value, "direction": direction, "limit": limit})
+    return breaches
+
+
 def assess(runs):
     """Compare identical scenarios and retain provenance for each decision quantity."""
     groups = {}
@@ -92,18 +106,25 @@ def assess(runs):
         for policy in ("fixed", "ramp"):
             runs_by_grid = policies.get(policy, {})
             result.setdefault(fluid, {})
-            if set(runs_by_grid) != set(GRIDS):
-                result[fluid][policy] = {"status": "missing_refinement", "available": len(runs_by_grid)}
-                continue
-            primary, fine_mesh, fine_step = [runs_by_grid[key][0] for key in GRIDS]
             rejections = []
-            for (mesh, dt), (case, _) in runs_by_grid.items():
+            breaches = []
+            for grid in GRIDS:
+                if grid not in runs_by_grid:
+                    continue
+                case, _ = runs_by_grid[grid]
                 if "rejection" in case:
+                    mesh, dt = grid
                     details = {key: value for key, value in case.items() if key != "rejection"}
                     rejections.append({"mesh_cells": 60 * mesh, "dt_s": dt, "reason": case["rejection"], **details})
-            if rejections:
-                result[fluid][policy] = {"status": "rejected_trajectory", "rejections": rejections}
+                else:
+                    breaches.extend(constraint_breaches(fluid, grid, case, LIMITS["power_kW"][1]))
+            if len(runs_by_grid) != len(GRIDS) or rejections:
+                status = "missing_refinement" if len(runs_by_grid) != len(GRIDS) else "rejected_trajectory"
+                result[fluid][policy] = {"status": status, "available": len(runs_by_grid), "rejections": rejections,
+                                         "violations": sorted({b["quantity"] for b in breaches}),
+                                         "violation_evidence": breaches}
                 continue
+            primary, fine_mesh, fine_step = [runs_by_grid[key][0] for key in GRIDS]
             quantities_result, violations = {}, []
             for key, tolerance in TOLERANCES.items():
                 values = [primary[key], fine_mesh[key], fine_step[key]]
@@ -204,13 +225,8 @@ def challenge(runs, limit_kw, reveal=False, surge_map_available=True):
         held = [(fluid, grid, row) for (fluid, name), records in cases.items() if name == policy
                 for grid, row in records.items() if grid != GRIDS[0] and "rejection" not in row]
         breaches = []
-        for fluid, (mesh, dt), row in held:
-            for name, (direction, limit) in LIMITS.items():
-                if name == "power_kW":
-                    limit = limit_kw
-                if (direction == "max" and row[name] > limit) or (direction == "min" and row[name] < limit):
-                    breaches.append({"fluid": fluid, "mesh_cells": 60 * mesh, "dt_s": dt, "quantity": name,
-                                     "value": row[name], "direction": direction, "limit": limit})
+        for fluid, grid, row in held:
+            breaches.extend(constraint_breaches(fluid, grid, row, limit_kw))
         result = {"violations": sorted({b["quantity"] for b in breaches}), "violation_evidence": breaches}
         outcome[policy] = result
         rejected = [(grid, row["rejection"]) for (_, name), records in cases.items() if name == policy

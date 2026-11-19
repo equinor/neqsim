@@ -145,16 +145,24 @@ HANDOFF_TOLERANCE = 1.e-10
 class OutletBackflowError(ValueError):
     """Carry the rejected interval separately from the final cell and transferred mass."""
 
-    def __init__(self, pipe, phases, start, dt, separator, opening, pressure, initialization):
+    def __init__(self, pipe, phases, start, dt, vessel, opening, pressure, initialization):
         cell = pipe.getSectionSnapshots()[-1]
         balance = pipe.getLastMassBalanceReport()
+        inventory = vessel.getThermoSystem()
+        phase_order = (phases.GAS, phases.OIL, phases.WATER)
         self.diagnostic = {
             "condition": "forward_only_outlet_clamped", "start_s": start, "end_s": start + dt,
-            "separator_bara": separator, "choke_pct": opening, "imposed_outlet_bara": pressure,
+            "separator_bara": vessel.getPressure("bara"), "choke_pct": opening, "imposed_outlet_bara": pressure,
+            "accepted_pipe_substeps": balance.getAcceptedSubsteps(),
+            "pipe_interval_s": balance.getElapsedTimeSeconds(),
+            "pipe_initial_phase_inventory_kg": {p.name().lower(): balance.getInitialMassKg(p) for p in phase_order},
+            "pipe_final_phase_inventory_kg": {p.name().lower(): balance.getFinalMassKg(p) for p in phase_order},
+            "separator_mass_before_handoff_kg": inventory.getMass("kg"),
+            "separator_advanced_for_interval": False,
             "terminal_cell_velocity_m_s": dict(zip(("gas", "oil", "water"),
                 (cell.getGasVelocity(), cell.getOilVelocity(), cell.getWaterVelocity()))),
             "interval_outlet_mass_kg": {phase.name().lower(): balance.getOutletMassKg(phase)
-                                       for phase in (phases.GAS, phases.OIL, phases.WATER)},
+                                       for phase in phase_order},
             "steady_handoff": initialization}
         super().__init__(f"Outlet backflow clamped in ({start}, {start + dt}] s at {pressure:.6f} bara")
 
@@ -290,7 +298,7 @@ def run(n, opt, chart_info=None):
         pipe.setOutletPressure(sep_p + drop, "bara")
         pipe.runTransient(opt.dt, run_id)
         if pipe.isTransientOutletBackflowClamped():
-            raise OutletBackflowError(pipe, phases, t, opt.dt, sep_p, opening, sep_p + drop, initialization)
+            raise OutletBackflowError(pipe, phases, t, opt.dt, vessel, opening, sep_p + drop, initialization)
         fluid = outlet.getFluid()
         n.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash()
         fluid.initProperties()

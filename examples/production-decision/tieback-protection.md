@@ -39,6 +39,16 @@ To replay all ten scenarios, the time and grid refinements, and the fully rated 
 python examples/production-decision/verify_tieback_protection.py --run tieback-cases > qualification.json
 ```
 
-The coupled well rate is initialized independently on each mesh with the same installed resistance. Both meshes run without a normal-operation trip and both detect an LC1 exceedance with isolation unavailable. The verifier reports separate functional and numerical verdicts. A **numerical HOLD** means the 0.5 bar zone-peak or 0.5 s timing tolerance is exceeded. The LC2 peak remains sensitive to the outer time step. Selecting a reinforced length or final setpoints requires a time/space-converged, independently benchmarked pressure envelope. The 90 s results cover only the simulated interval.
+The coupled well rate is initialized independently on each mesh with the same installed resistance. Both meshes run without a normal-operation trip and both detect an LC1 exceedance with isolation unavailable. The verifier reports separate functional and numerical verdicts. The normal case must remain online at all three mesh/timestep combinations. The numerical screen compares the pressure histories at both physical route endpoints on common timestamps, the peak in each zone across all native samples, and the HIPPS trip and both seat-feedback times. A **numerical HOLD** records any difference above the fixture tolerances of 0.5 bar or 0.5 s. Existing receipt directories need the additional normal case at 60 cells and 0.125 s, named `normal-.125-1.json`. The LC2 peak remains sensitive to the outer time step. Selecting a reinforced length or final setpoints requires a time/space-converged, independently benchmarked pressure envelope. The 90 s results cover only the simulated interval.
 
 The DEXPI 2.0.1 physical design projects the well as an inlet boundary, the tree and active manifold branch as individual valves, the hydraulic route as the named FL-201 line, and each PSV as a side branch. The output contains a tag register, cause/effect connections, XML and read-back evidence. The P&ID sheets trace the series valves and each relief takeoff through numbered continuations. Instrument detail sheets identify the measured valve ports and the declared shutdown functions. Each of the 15 functional links has a signal identifier and reciprocal sheet references. The receipt reports material drawing coverage separately and lists any unresolved attachments or incomplete signals. The separate PFD overview still has layout and coverage findings. Alternative rate/phase models, measured response curves, verified hydraulic boundaries and the project SRS are required for asset use.
+
+### Matched-time pressure comparison
+
+At master `0eacf4ba`, halving the outer step from 0.25 to 0.125 s on 60 cells moved
+the LC2 peak by 5.856 bar. At the common timestamps the largest riser-end difference
+was 0.841 bar at 5.25 s. The HIPPS demand time was unchanged and the second valve
+seat time differed by 0.25 s. Doubling the mesh at 0.25 s moved the LC2 peak by
+1.391 bar. The maximum subsea-end difference was 1.061 bar at 41.5 s. Both
+refinements exceed the 0.5 bar screening criterion. These are comparisons between
+numerical solutions of the synthetic blocked-outlet case with primary PSD unavailable.
