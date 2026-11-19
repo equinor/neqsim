@@ -91,6 +91,10 @@ def main():
     maxima = {"mass_kg": 0.0, "phase_mass_kg": 0.0, "volume_relative": 0.0,
               "component_relative": 0.0,
               "energy_relative": 0.0, "eos_energy_relative": 0.0}
+    tracked_phases = (phase.GAS, phase.OIL, phase.WATER)
+    cumulative_outlet = {str(p): 0.0 for p in tracked_phases}
+    previous_sample_mass = cumulative_outlet.copy()
+    previous_sample_time = pipe.getSimulationTime()
     count = 0
     while pipe.getSimulationTime() < args.duration - 1.0e-9:
         start = pipe.getSimulationTime()
@@ -125,15 +129,26 @@ def main():
             raise RuntimeError(f"Invalid liquid holdup at {pipe.getSimulationTime()} s: {holdup}")
         if not all(math.isfinite(x) and x > 0 for x in pressure + temperature):
             raise RuntimeError("Invalid absolute pressure or temperature")
+        for p in tracked_phases:
+            cumulative_outlet[str(p)] += mass.getOutletMassKg(p)
         count += 1
         if count % args.sample_every == 0 or pipe.getSimulationTime() >= args.duration - 1e-9:
-            emit({"type": "sample", "time_s": pipe.getSimulationTime(),
+            end = pipe.getSimulationTime()
+            window = end - previous_sample_time
+            mean_outlet = {key: 3600.0 * (value - previous_sample_mass[key]) / window
+                           for key, value in cumulative_outlet.items()}
+            emit({"type": "sample", "time_s": end,
+                  "sample_window_start_s": previous_sample_time,
+                  "sample_mean_phase_outlet_kg_h": mean_outlet,
+                  "cumulative_phase_outlet_kg": cumulative_outlet,
                   "inlet_kg_h": feed.getFlowRate("kg/hr"),
                   "outlet_kg_h": pipe.getOutletStream().getFlowRate("kg/hr"),
                   "phase_outlet_kg_h": {str(p): 3600 * mass.getOutletMassKg(p) / interval
                                         for p in (phase.GAS, phase.OIL, phase.WATER)},
                   "liquid_holdup": holdup, "pressure_Pa": pressure,
                   "temperature_K": temperature, "residuals": residuals})
+            previous_sample_mass = cumulative_outlet.copy()
+            previous_sample_time = end
     emit({"type": "summary", "completed_time_s": pipe.getSimulationTime(),
           "maximum_residuals": maxima,
           "qualification": "Numerical replay; not experimental holdup validation"})

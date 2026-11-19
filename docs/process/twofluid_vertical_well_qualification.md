@@ -51,6 +51,14 @@ The revision argument is caller-supplied provenance; the script does not infer a
 revision from a jar filename. Record any uncommitted changes or combined PR overlays too.
 
 Repeat the held case with 40 cells and with `--dt 0.25`. Preserve the full JSON Lines output.
+Use the same physical reporting window across refinements. For example, a 1 s window
+requires `--sample-every 2` at 0.5 s and `--sample-every 4` at 0.25 s. Each sample
+reports its window start, signed phase masses discharged since time zero (kg) and the
+mean phase rates over that window (kg/h). These use the accepted boundary flux in every
+step, including a shortened step at a rate change. The existing phase rates describe
+only the last integration interval. Compare common start and end times when an event
+splits an interval or the last window is shorter.
+
 The driver records the requested settings before the steady solve. Its
 `steady_initialization` record reports convergence, the solver termination reason and
 the number of refinement iterations. The default steady wall-clock budget is 20 s.
@@ -142,3 +150,19 @@ Observed maxima across the matrix were 0.665% rate drift, 35.67 Pa pressure
 drift and 0.000117 holdup drift. These checks freeze property refresh and exclude
 phase transfer and thermal effects to isolate mechanical transport. They do not
 qualify a flashing riser, moving outlet pressure or an arbitrary operating range.
+
+### Common-window rate-step replay
+
+On `0eacf4ba`, the 20,000 to 15,000 kg/h inlet step at 1 s gave the following
+total outlet rates integrated over equal physical windows. Each value is the sum
+of the three signed phase transfers divided by the duration of the window.
+
+| Cells | Outer step (s) | Mean in (0, 1] s (kg/h) | Mean in (1, 2] s (kg/h) |
+| ---: | ---: | ---: | ---: |
+| 20 | 0.50 | 18,068.79 | 13,096.40 |
+| 20 | 0.25 | 18,062.50 | 13,050.81 |
+| 40 | 0.50 | 18,234.44 | 12,028.48 |
+
+The step-refined 20-cell result changes by 0.35% in the second window. The 40-cell
+result changes by 8.15% at the common outer step. The integration window removes one
+source of sampling disagreement while preserving the spatial sensitivity.
