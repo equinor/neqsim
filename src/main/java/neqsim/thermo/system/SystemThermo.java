@@ -2699,6 +2699,10 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getEnthalpy() {
+    if (getTotalNumberOfMoles() == 0.0) {
+      // An empty phase template can retain EOS derivatives from its last flowing state.
+      return 0.0;
+    }
     if (useIdealGasEnthalpyOfFormation) {
       applyFormationEnthalpyReference();
     }
@@ -2845,6 +2849,10 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropy() {
+    if (getTotalNumberOfMoles() == 0.0) {
+      // An empty phase template can retain EOS derivatives from its last flowing state.
+      return 0.0;
+    }
     double entropy = 0;
     for (int i = 0; i < numberOfPhases; i++) {
       entropy += getPhase(i).getEntropy();

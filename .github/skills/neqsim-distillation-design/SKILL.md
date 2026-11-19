@@ -1,7 +1,7 @@
 ---
 name: neqsim-distillation-design
 description: "Distillation column design rules for NeqSim. USE WHEN: setting up distillation columns, troubleshooting convergence, selecting internals (trays/packing), sizing columns, or analyzing column performance. Covers DistillationColumn setup, solver selection, feed tray optimization, reflux ratio, and internals selection per industry standards."
-last_verified: "2026-11-17"
+last_verified: "2026-11-18"
 ---
 
 # Distillation Design Rules
@@ -252,6 +252,10 @@ column.setReboilerBoilupRatio(2.0);
 ```
 
 ## Reading Column Results
+
+For a terminal energy balance, sum the published streams' extensive enthalpy rates.
+A closed total-condenser reflux outlet carries zero enthalpy and entropy rates. Read
+molar or mass-specific properties only on flowing products.
 
 ```java
 column.run();

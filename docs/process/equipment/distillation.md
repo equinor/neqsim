@@ -256,6 +256,8 @@ bottoms and any separate liquid product or side draw. Duties are in W, positive 
 to the fluid and negative for heat removed. Flowing products receive caloric initialization
 before the balance is evaluated; zero-flow phase templates contribute zero energy. This avoids
 using stale residual enthalpy from the internal mixed fluid when a ratio reaches zero.
+At zero reflux, the total condenser sends the entire condensed flow to distillate. The reflux
+outlet retains a reference composition and carries exactly zero flow, enthalpy rate and entropy rate.
 
 Naphtali-Sandholm solves each tray's implicit vapor-composition K-value equation for up to
 30 forced-root fugacity sweeps, retaining the maximum log-K residual tolerance of $10^{-8}$.

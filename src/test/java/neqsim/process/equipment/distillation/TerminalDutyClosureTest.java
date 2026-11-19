@@ -2,11 +2,15 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -46,6 +50,43 @@ class TerminalDutyClosureTest {
       condenser.setRefluxRatio(0.0);
       condenser.run();
       assertClosure(feed, condenser.getDuty(), condenser.getGasOutStream(), condenser.getLiquidOutStream());
+    }
+  }
+
+  /** Checks the original 20 bara PR case without masking closed outlets in the energy balance. */
+  @Test
+  void closedTotalCondenserRefluxCarriesNoMaterialOrEnergy() {
+    SystemInterface fluid = new SystemPrEos(300.0, 20.0);
+    fluid.addComponent("methane", 0.1);
+    fluid.addComponent("ethane", 0.3);
+    fluid.addComponent("propane", 0.4);
+    fluid.addComponent("n-butane", 0.2);
+    fluid.setMixingRule(2);
+    Stream feed = new Stream("feed", fluid);
+    feed.run();
+    Condenser condenser = new Condenser("condenser");
+    condenser.addStream(feed);
+    condenser.setTotalCondenser(true);
+
+    for (double ratio : new double[] {0.0, 1.5, 0.0}) {
+      condenser.setRefluxRatio(ratio);
+      condenser.run();
+      SystemInterface reflux = condenser.getLiquidOutStream().getFluid();
+      SystemInterface distillate = condenser.getGasOutStream().getFluid();
+      assertEquals(ratio / (1.0 + ratio), reflux.getTotalNumberOfMoles(), 1.0e-12);
+      if (ratio == 0.0) {
+        assertEquals(0.0, reflux.getTotalNumberOfMoles(), 0.0);
+        assertEquals(0.0, reflux.getEnthalpy(), 0.0);
+        assertEquals(0.0, reflux.getEntropy(), 0.0);
+        assertThrows(ArithmeticException.class, () -> reflux.getEnthalpy("J/mol"));
+        assertThrows(ArithmeticException.class, () -> reflux.getEntropy("J/molK"));
+        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+          assertEquals(0.0, reflux.getComponent(i).getNumberOfmoles(), 0.0);
+          assertEquals(fluid.getComponent(i).getz(), reflux.getComponent(i).getz(), 1.0e-12);
+        }
+      }
+      assertEquals(condenser.getDuty(), distillate.getEnthalpy() + reflux.getEnthalpy() - feed.getFluid().getEnthalpy(),
+          1.0e-6);
     }
   }
 
