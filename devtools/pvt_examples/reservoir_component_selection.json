@@ -1,0 +1,31 @@
+{
+  "reference": "Original synthetic explicit scenario; no fitted history or EOS",
+  "source_sha256": "a371989720c1e39ba8053a6186f3ac42116ff7dc279af9a0c6ab5b82ba3c2cab",
+  "component_order": [
+    "methane",
+    "ethane",
+    "water"
+  ],
+  "windows": [
+    {
+      "end_row": "match",
+      "pressure_bara": "199",
+      "sigma_bara": "0.2",
+      "streams": {
+        "well-A gas": {
+          "total_moles": "10",
+          "mole_fractions": {
+            "methane": "0.85",
+            "ethane": "0.15"
+          }
+        },
+        "well-B water": {
+          "total_moles": "2",
+          "mole_fractions": {
+            "water": "1"
+          }
+        }
+      }
+    }
+  ]
+}
