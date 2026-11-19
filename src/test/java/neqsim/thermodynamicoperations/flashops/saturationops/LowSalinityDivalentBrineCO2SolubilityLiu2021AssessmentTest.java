@@ -213,6 +213,10 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         assertTrue(Math.abs(halfScaleDecompositionResidual) < 1.0e-12,
             reference.pointId + " half-scale decomposition identity");
         assertEquals(result.phaseTypes, halfScalePhaseTypes, reference.pointId + " half-scale phase set");
+        assertTrue(Double.compare(halfScaleModel, model) != 0,
+            reference.pointId + " half-scale dissolved CO2 must differ from baseline");
+        assertTrue(Double.compare(halfScaleModel, ablationModel) != 0,
+            reference.pointId + " half-scale dissolved CO2 must differ from ablation");
         halfScaleCount++;
       }
 
