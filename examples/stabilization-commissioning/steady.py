@@ -22,7 +22,8 @@ Z = {"nitrogen": .4, "CO2": 1.2, "methane": 32, "ethane": 5, "propane": 4,
      "n-heptane": 2.5, "n-octane": 3, "n-decane": 4, "nC14": 6, "nC20": 8,
      "water": 25.3}
 
-def build(rate=100_000, heater_c=78., gas_splits=(0.,0.,0.), surge_targets=None):
+def build(rate=100_000, heater_c=78., gas_splits=(0.,0.,0.), surge_targets=None,
+          integrated_sas=False):
     process = P.processmodel.ProcessSystem()
     units, streams, sinks, work = {}, {}, {}, {}
     def add(unit):
@@ -52,6 +53,18 @@ def build(rate=100_000, heater_c=78., gas_splits=(0.,0.,0.), surge_targets=None)
     feed.setFlowRate(rate, "kg/hr")
     add(feed)
     current = track("feed", feed)
+    if integrated_sas:
+        for tag, stroke in (("20-XV-101A", 2.0), ("20-XV-101B", 3.0)):
+            isolation = E.valve.HIPPSValve(tag, current)
+            isolation.setOutletPressure(55.0, "bara")
+            isolation.setClosureTime(stroke)
+            isolation.setPhysicalStepIdempotencyEnabled(True)
+            current = add(isolation).getOutletStream()
+        inlet_esd = E.valve.ESDValve("10-ESDV-100", current)
+        inlet_esd.setOutletPressure(55.0, "bara")
+        inlet_esd.setStrokeTime(4.0)
+        inlet_esd.setPhysicalStepIdempotencyEnabled(True)
+        current = add(inlet_esd).getOutletStream()
     overhead = []
     return_paths = []
     for i, pressure in enumerate([26., 8., 1.6]):
@@ -64,6 +77,12 @@ def build(rate=100_000, heater_c=78., gas_splits=(0.,0.,0.), surge_targets=None)
         add(mixing)
         sep = add(E.separator.ThreePhaseSeparator("V-"+str(n), mixing.getOutletStream()))
         overhead.append(track("gas"+str(n), sep.getGasOutStream()))
+        if integrated_sas and n == 101:
+            for suffix in "ABC":
+                transmitter = P.measurementdevice.PressureTransmitter(
+                    "20-PT-001" + suffix, sep.getGasOutStream())
+                transmitter.setUnit("bara")
+                process.add(transmitter)
         sinks["water"+str(n)] = track("water"+str(n), sep.getWaterOutStream())
         current = track("oil"+str(n), sep.getOilOutStream())
     # Stabilized crude to export via flooding suction and product cooler.

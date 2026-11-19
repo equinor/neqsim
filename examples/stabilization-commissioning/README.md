@@ -23,6 +23,7 @@ python examples/stabilization-commissioning/flare.py
 python examples/stabilization-commissioning/procedures.py
 python examples/stabilization-commissioning/sas.py
 python examples/stabilization-commissioning/drawings.py
+python examples/stabilization-commissioning/traceability.py
 python examples/stabilization-commissioning/verify.py
 ```
 
@@ -54,6 +55,7 @@ reconciliation with executable logic before they can be credited.
 | Flare handoff | Use the first sample with latched trip and inlet, transfer and export valve positions all zero. Initialize two native gas-cap depressurizations using the reduced train's HP/MP pressures and gas volumes at isolation. Preserve steady gas compositions and temperatures. Open both restrictions together; sum the time-dependent discharges into a fixed 1.5 bara header. |
 | Operating procedures | Execute turndown, controlled shutdown and operator-authorized restart against the closed native flowsheet. `CHV-100` uses a four-second rate-limited actuator and measured stem feedback. Stuck-shutdown and inhibited-restart cases must time out without falsely completing. A repeated shutdown uses the same deterministic physical-step identities. |
 | SAS and virtual FAT | Feed one revisioned I/O map and identical conditioned scan frames to native HIPPS/ESD logic and an independent offline emulator. Compare vote/latch order, degraded policy, demanded and actual final positions, F&G demand, reset permissives, separate restart, partial-stroke interruption and failed final elements. |
+| Revisioned traceability | Reconcile all ten SAS I/O points with exact canonical, DEXPI 2.0.1 and vector-sheet identities. Link each point to its logic endpoint, physical binding where applicable, executed scenario records and restart procedure. A controlled `20-XV-101A` stroke-time revision demonstrates dependency-scoped evidence invalidation. |
 
 At a 0.25 s step, the native V-101 trip occurred **22.25 s after blockage**,
 versus **21.00 s** with frozen phases. At 0.5 s the times were 22.50 and 21.00 s.
@@ -116,6 +118,28 @@ reduced hydraulic surrogate, and reset/restart restores the normal outlet
 boundary rather than modeling project depressurization. These results
 do not establish SIL, SRS, site FAT or operating approval. Coupled flare-header
 feedback, vendor logic, operator displays and cold-start inventory remain open.
+
+## Drawing, I/O and recorded-evidence traceability
+
+`drawings.py` exports the active turndown model with three physical redundant
+pressure transmitters, two finite-stroke HIPPS valves and the inlet ESD valve.
+The ten virtual-FAT I/O points are retained as exact canonical and DEXPI 2.0.1
+identities, including logical solenoid commands, position feedback and the F&G
+demand. The physical transmitters and valves are explicit simulation bindings;
+logical I/O points are deliberately not presented as separate process equipment.
+The current professional renderer places all ten new I/O identities on its
+vector HOLD-register sheets rather than on the V-101 process sheet. The index
+reports that placement explicitly; it does not claim that physical-layout
+coordination is complete.
+
+`traceability.py` reads the real package manifest, DEXPI projection, simulation
+bindings and vector sheets, then joins them to `sas.json` and the executed
+restart procedure. It writes `traceability.json` plus a selectable
+`traceability-index.html`. The retained revision test changes only the declared
+stroke time for `20-XV-101A`; scenarios depending on that valve are marked
+invalid while the independent F&G case remains current. This deterministic
+dependency calculation supports change review but is not engineering approval
+or multidisciplinary management of change.
 
 
 ## HIPPS pressure-protection replay

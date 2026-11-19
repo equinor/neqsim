@@ -94,9 +94,20 @@ assert sas["fg_demand"]["nativeTripSeconds"] is None
 assert sas["fg_demand"]["trace"][-1]["native_esd_pct"] == 0
 assert sas["tripTimeStepSensitivitySeconds"] <= 0.5
 assert sas["deterministicReplayMatches"]
+traceability = read("traceability")
+assert traceability["acceptance"]["ioPointCount"] == 10
+assert traceability["acceptance"]["completeCanonicalIdentityCount"] == 10
+assert traceability["acceptance"]["missingIdentityCount"] == 0
+assert traceability["acceptance"]["drawingTargetCount"] == 10
+assert traceability["acceptance"]["physicallyPlacedIoCount"] == 0
+assert traceability["acceptance"]["holdRegisterIoCount"] == 10
+assert traceability["singleValveRevisionTest"]["revisionChanged"]
+assert "failed_final" in traceability["singleValveRevisionTest"]["invalidatedScenarios"]
+assert "fg_demand" in traceability["singleValveRevisionTest"]["unaffectedScenarios"]
 assert read("drawing-intake")["schema_and_profile_conformant"]
 assert all(abs(x-y)<.2 for x,y in zip(summary["refinement"]["min_margin"],summary["turndown"]["min_margin"]))
 print(
     "PASS: steady and dynamic reference cases, physical procedures, deterministic replay, "
-    "actuator faults, native V-101 replay, SAS/emulator equivalence and timestep refinement."
+    "actuator faults, native V-101 replay, SAS/emulator equivalence, exact DEXPI/I/O traceability "
+    "and timestep refinement."
 )
