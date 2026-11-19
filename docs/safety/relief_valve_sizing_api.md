@@ -47,7 +47,10 @@ The public methods do not accept unit strings. Convert all inputs before calling
 
 ## Complete Java 8 example
 
-The following program exercises the gas, liquid, two-phase, and fire helpers with explicit SI conversions.
+The documentation regression suite compiles and executes the exact source of this program. It exercises
+the gas, liquid, two-phase, and fire helpers with explicit SI conversions.
+
+<!-- relief-sizing-example: complete -->
 
 ```java
 import java.util.Locale;
