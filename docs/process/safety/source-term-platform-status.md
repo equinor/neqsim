@@ -163,8 +163,9 @@ The current implementation includes:
 - The HEM manifest also retains six Hammer et al. (2022) dense single-fluid CO2 restriction cases
   with reported measurement uncertainty and published HEM references. Ambient expansion detects
   dry ice and fails closed as `UNSUPPORTED`/`SOLID_RISK`; no failed source payload or rate is
-  recovered. A separate choked restriction-plane sensitivity at a 600 kPa non-solid receiver uses
-  an explicit single-material-phase applicability rule and reports MAPE 19.39%, signed bias +9.86%,
+  recovered. A separate choked restriction-plane sensitivity is rate-invariant across a 600--800 kPa
+  non-solid receiver-pressure band, uses an explicit single-material-phase applicability rule and
+  reports MAPE 19.39%, signed bias +9.86%,
   relative RMSE 21.19%, maximum absolute error 34.26%, and only 1/6 cases inside reported
   uncertainty. The evidence remains `UNQUALIFIED` and cannot be used as an ambient source term.
 - The executed NeqSim-Colab safety source-term demonstration is merged through

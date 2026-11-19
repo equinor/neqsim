@@ -22,6 +22,8 @@ import neqsim.thermo.system.SystemInterface;
 /** Reproduces the dense-CO2 restriction cases reported by Hammer et al. (2022). */
 class HomogeneousEquilibriumDenseCo2BenchmarkTest extends neqsim.NeqSimTest {
   private static final double RESTRICTION_SENSITIVITY_BACK_PRESSURE_PA = 600000.0;
+  private static final double[] RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA = {600000.0, 700000.0, 800000.0};
+  private static final double RESTRICTION_RATE_RELATIVE_TOLERANCE = 2.0e-8;
 
   /**
    * Retains the six experimental cases and refuses rate errors for the unsupported solid-bearing expansion path.
@@ -34,13 +36,15 @@ class HomogeneousEquilibriumDenseCo2BenchmarkTest extends neqsim.NeqSimTest {
     assertEquals(6, benchmarks.size());
     StringBuilder receipt = new StringBuilder("caseId,geometry,modelVersion,withdrawalPhase,measuredMassFlow_kg_s,"
         + "absoluteUncertainty_kg_s,relativeUncertainty_percent,publishedHemMassFlux_kg_m2_s,"
-        + "publishedHemRelativeDeviation_percent,restrictionSensitivityBackPressure_Pa,actualMassFlow_kg_s,"
+        + "publishedHemRelativeDeviation_percent,restrictionSensitivityBackPressureMin_Pa,"
+        + "restrictionSensitivityBackPressureMax_Pa,maximumRateRelativeDifference,actualMassFlow_kg_s,"
         + "relativeError,flowComparisonStatus," + "resultStatus,resultDiagnosticCodes,evidenceLevel\n");
     double absoluteRelativeErrorSum = 0.0;
     double signedRelativeErrorSum = 0.0;
     double squaredRelativeErrorSum = 0.0;
     double maximumAbsoluteRelativeError = 0.0;
     double maximumUncertaintyMultiple = 0.0;
+    double maximumRateRelativeDifference = 0.0;
     int withinReportedUncertainty = 0;
     for (Benchmark benchmark : benchmarks) {
       SystemInterface fluid = benchmark.fluid();
@@ -65,14 +69,28 @@ class HomogeneousEquilibriumDenseCo2BenchmarkTest extends neqsim.NeqSimTest {
       assertTrue(result.getEvidence().hasIndependentEvidence());
       assertTrue(result.getEvidence().getLimitations().contains("DENSE_CO2_AMBIENT_SOLID_BEARING_PATH_UNSUPPORTED"));
 
-      ReleaseFlowResult restrictionResult = new HomogeneousEquilibriumReleaseModel()
-          .calculate(benchmark.request(benchmark.fluid(), RESTRICTION_SENSITIVITY_BACK_PRESSURE_PA));
-      assertTrue(restrictionResult.isUsable(), restrictionResult.getDiagnostics().get(0).getMessage());
-      assertTrue(restrictionResult.isChoked());
-      ReleaseBenchmarkApplicability restrictionApplicability = ReleaseBenchmarkApplicability.assess(restrictionResult,
-          benchmark.withdrawalPhase);
-      assertEquals(ReleaseBenchmarkApplicability.Status.COMPARABLE, restrictionApplicability.getStatus());
+      ReleaseFlowResult[] restrictionResults = new ReleaseFlowResult[RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA.length];
+      for (int index = 0; index < RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA.length; index++) {
+        restrictionResults[index] = new HomogeneousEquilibriumReleaseModel()
+            .calculate(benchmark.request(benchmark.fluid(), RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA[index]));
+        assertTrue(restrictionResults[index].isUsable(),
+            restrictionResults[index].getDiagnostics().get(0).getMessage());
+        assertTrue(restrictionResults[index].isChoked());
+        ReleaseBenchmarkApplicability restrictionApplicability = ReleaseBenchmarkApplicability
+            .assess(restrictionResults[index], benchmark.withdrawalPhase);
+        assertEquals(ReleaseBenchmarkApplicability.Status.COMPARABLE, restrictionApplicability.getStatus());
+      }
+      ReleaseFlowResult restrictionResult = restrictionResults[0];
       double actualMassFlowKgS = restrictionResult.getMassFlowRateKgS();
+      double caseMaximumRateRelativeDifference = 0.0;
+      for (int index = 1; index < restrictionResults.length; index++) {
+        double rateRelativeDifference = Math.abs(restrictionResults[index].getMassFlowRateKgS() - actualMassFlowKgS)
+            / actualMassFlowKgS;
+        caseMaximumRateRelativeDifference = Math.max(caseMaximumRateRelativeDifference, rateRelativeDifference);
+      }
+      assertTrue(caseMaximumRateRelativeDifference <= RESTRICTION_RATE_RELATIVE_TOLERANCE,
+          benchmark.caseId + " restriction-plane rate relative difference=" + caseMaximumRateRelativeDifference);
+      maximumRateRelativeDifference = Math.max(maximumRateRelativeDifference, caseMaximumRateRelativeDifference);
       double relativeError = (actualMassFlowKgS - benchmark.measuredMassFlowKgS) / benchmark.measuredMassFlowKgS;
       double absoluteRelativeError = Math.abs(relativeError);
       double uncertaintyMultiple = Math.abs(actualMassFlowKgS - benchmark.measuredMassFlowKgS)
@@ -103,7 +121,9 @@ class HomogeneousEquilibriumDenseCo2BenchmarkTest extends neqsim.NeqSimTest {
           .append(benchmark.measuredMassFlowKgS).append(',').append(benchmark.absoluteUncertaintyKgS).append(',')
           .append(benchmark.relativeUncertaintyPercent).append(',').append(benchmark.publishedHemMassFluxKgM2S)
           .append(',').append(benchmark.publishedHemRelativeDeviationPercent).append(',')
-          .append(RESTRICTION_SENSITIVITY_BACK_PRESSURE_PA).append(',').append(actualMassFlowKgS).append(',')
+          .append(RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA[0]).append(',')
+          .append(RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA[RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA.length - 1])
+          .append(',').append(caseMaximumRateRelativeDifference).append(',').append(actualMassFlowKgS).append(',')
           .append(relativeError).append(",COMPARABLE_RESTRICTION_PLANE_ONLY,").append(result.getStatus()).append(',')
           .append(applicability.getResultDiagnosticCodes()).append(",UNQUALIFIED\n");
     }
@@ -122,10 +142,11 @@ class HomogeneousEquilibriumDenseCo2BenchmarkTest extends neqsim.NeqSimTest {
     assertEquals(10.269665665474237, maximumUncertaintyMultiple, 1.0e-12);
     assertEquals(1, withinReportedUncertainty);
     String summary = "caseCount,meanAbsoluteRelativeError,meanSignedRelativeError,rootMeanSquaredRelativeError,"
-        + "maximumAbsoluteRelativeError,maximumUncertaintyMultiple,withinReportedUncertainty,evidenceLevel\n"
-        + benchmarks.size() + "," + meanAbsoluteRelativeError + "," + meanSignedRelativeError + ","
-        + rootMeanSquaredRelativeError + "," + maximumAbsoluteRelativeError + "," + maximumUncertaintyMultiple + ","
-        + withinReportedUncertainty + ",UNQUALIFIED\n";
+        + "maximumAbsoluteRelativeError,maximumUncertaintyMultiple,withinReportedUncertainty,"
+        + "maximumRateRelativeDifference,evidenceLevel\n" + benchmarks.size() + "," + meanAbsoluteRelativeError + ","
+        + meanSignedRelativeError + "," + rootMeanSquaredRelativeError + "," + maximumAbsoluteRelativeError + ","
+        + maximumUncertaintyMultiple + "," + withinReportedUncertainty + "," + maximumRateRelativeDifference
+        + ",UNQUALIFIED\n";
     Files.write(outputDirectory.resolve("hammer-dense-co2-2022-summary.csv"), summary.getBytes(StandardCharsets.UTF_8));
   }
 

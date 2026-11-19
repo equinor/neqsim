@@ -598,9 +598,10 @@ with `SOLID_RISK`; it exposes no station or numeric rate. `ReleaseBenchmarkAppli
 The benchmark gate separately accepts `SINGLE_MATERIAL_PHASE` when exactly one supported material
 phase occupies the upstream state, independent of whether an EOS labels that sole compressed phase
 as gas or liquid. This does not accept gas/liquid coexistence, aqueous coexistence, solids or an
-unsupported native phase. Because all six restrictions remain choked at a 600 kPa non-solid
-receiver, version `1.2.4` also retains a restriction-plane sensitivity comparison without using it
-as an ambient source payload. Across the six cases the mean absolute relative error is 19.39%, the
+unsupported native phase. Because all six restrictions remain choked with invariant calculated
+rates across a 600--800 kPa non-solid receiver-pressure band, version `1.2.4` also retains a
+restriction-plane sensitivity comparison without using it as an ambient source payload. Across the
+six cases the mean absolute relative error is 19.39%, the
 signed bias is +9.86%, the relative RMSE is 21.19%, and the maximum absolute error is 34.26%. Only
 one of six predictions is inside the reported experimental uncertainty; the largest deviation is
 10.27 reported uncertainty intervals. These results are independent accuracy evidence and a clear
