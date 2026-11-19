@@ -166,3 +166,40 @@ of the three signed phase transfers divided by the duration of the window.
 The step-refined 20-cell result changes by 0.35% in the second window. The 40-cell
 result changes by 8.15% at the common outer step. The integration window removes one
 source of sampling disagreement while preserving the spatial sensitivity.
+
+## Independent vertical air–water measurements
+
+The separate local-section screen uses near-atmospheric, upward air–water data from
+Skopich et al. (2015), reproduced in [BOEM M15PC00007, Appendix IV, Figure 66(b)](https://www.boem.gov/sites/default/files/documents/oil-gas-energy/resource-evaluation/BOEM-Report-M15PC00007.pdf).
+The nominal internal diameter is 50.8 mm and superficial water velocity is 0.05 m/s.
+The measured values below are approximate plot readings. Measurement uncertainty and
+the full facility boundary history were unavailable for this comparison.
+
+The example flashes 79/21 mol% nitrogen/oxygen and water with SRK-CPA and adjusts
+the feeds until both local superficial-volume targets at 1.01325 bara are matched to
+a relative tolerance of 1e-6. It assumes 293.15 K and 10 μm roughness. The 0.2 m and
+2 m vertical sections examine local developed gradients and sensitivity to gas expansion.
+Their lengths are modelling assumptions. Pressure gradients use the first and last cell
+centres. The code also reports the face-to-face gradient and the reconstructed range of
+local phase superficial velocities. Run with the compiled Java classpath used above:
+
+```sh
+python examples/pipeline/compare_vertical_air_water_holdup.py --revision "$(git rev-parse HEAD)"
+```
+
+| Gas superficial speed (m/s) | Measured liquid holdup, approx. | NeqSim holdup | Measured gradient, approx. (Pa/m) | NeqSim gradient (Pa/m) | Native regime |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 10 | 0.14 | 0.184 | 1480 | 1342 | Slug |
+| 20 | 0.065 | 0.115 | 800 | 7484 | Annular |
+| 25 | 0.055 | 0.064 | 820 | 6298 | Annular |
+
+These results use the 0.2 m, 20-cell case on Java revision
+`0eacf4bac9646a0c2839aa95392e38d67ddb51b2`. Doubling the mesh from 10 to 20 cells
+changed the three mean holdups by less than 0.000006. At 20 m/s in the 2 m section,
+the mean rose to 0.131 and the centre gradient was 7641 Pa/m. In the 0.2 m section
+at this speed, local gas superficial velocities were 19.71–19.99 m/s. The gravitational
+contribution reconstructed from the phase inventories was 1132 Pa/m at 20 m/s and
+640 Pa/m at 25 m/s. The large annular gradient overpredictions survive spatial
+refinement. The laboratory data provide independent evidence for air–water closure.
+Validation of the 2 km high-pressure hydrocarbon well still requires comparable
+phase-resolved measurements.
