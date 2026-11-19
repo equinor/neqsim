@@ -171,7 +171,7 @@ class DisposalVolume:
                 "mass_residual_kg": fluid.getMass("kg") - self.initial_mass - self.admitted + self.discharged + self.drained}
 
 
-def run(n, case, dt, duration, fixed_boundary):
+def run(n, case, dt, duration, fixed_boundary, vessel_energy_policy):
     """Advance the two native vessels and apply the previous drum pressure at both valve flanges."""
     study = n.process.safety.scenario.AdvancedV101PsvStudy
     settings = study.defaultSettings()
@@ -188,6 +188,11 @@ def run(n, case, dt, duration, fixed_boundary):
         feed.run()
         process.run()
     study.configureAfterSteady(process, settings)
+    for tag in ("10-V-100", "20-V-101"):
+        source = process.getUnit(tag)
+        source.setConservativeTransientEnergyIntegrationEnabled(vessel_energy_policy == "conservative")
+        if vessel_energy_policy == "conservative":
+            source.setConservativeTransientEnergyTolerance(settings.get("relativeEnergyLimit"))
     vessel = process.getUnit("20-V-101")
     pcv = process.getUnit("20-PCV-001")
     psv = process.getUnit("20-PSV-001")
@@ -265,6 +270,13 @@ def run(n, case, dt, duration, fixed_boundary):
     component_residuals = {name: actual[name] - expected for name, expected in header.expected_moles.items()}
     vessel_energy = {tag: process.getUnit(tag).getLastTransientEnergyBalanceReport()
                      for tag in ("10-V-100", "20-V-101")}
+    vessel_ledger = {tag: {"complete": bool(r.isComplete()), "initial_J": r.getInitialEnergyJ(),
+                           "net_boundary_energy_J": r.getNetIntegratedEnergyJ(),
+                           "expected_J": r.getExpectedEnergyJ(), "published_J": r.getPublishedEnergyJ(),
+                           "final_debt_J": r.getCumulativeDebtJ(), "max_abs_debt_J": r.getMaximumAbsoluteCumulativeDebtJ(),
+                           "signed_local_vu_defects_J": r.getCumulativeSignedLocalVuDefectJ(),
+                           "max_absolute_local_vu_defect_J": r.getMaximumAbsoluteLocalVuDefectJ()}
+                     for tag, r in vessel_energy.items()}
     criteria = {
         "source_vessel_energy": all(r.isComplete() and r.getMaximumRelativeCumulativeResidual()
                                     <= settings.get("relativeEnergyLimit") for r in vessel_energy.values()),
@@ -282,7 +294,8 @@ def run(n, case, dt, duration, fixed_boundary):
         criteria["wet_relief_and_drain"] = (max(r["relief_liquid_kg_s"] for r in rows) > 0.
                                             and peaks["condensate_kg"]["value"] > 0. and header.drained > 0.)
     return {"numerical_checks": criteria, "numerical_status": "PASS" if all(criteria.values()) else "HOLD",
-            "engineering_qualification": "HOLD", "header_component_residuals_mol": component_residuals,
+            "engineering_qualification": "HOLD", "vessel_energy_policy": vessel_energy_policy,
+            "vessel_energy_ledger": vessel_ledger, "header_component_residuals_mol": component_residuals,
             "peaks": peaks, "case": case, "dt_s": dt, "fixed_boundary": fixed_boundary,
             "header_volume_m3": VOLUME_M3, "tip_static_bara": STATIC_BARA,
             "tip_rated_kg_s": TIP_RATED_KG_S, "tip_rated_rise_bar": TIP_RATED_RISE_BAR,
@@ -299,6 +312,8 @@ if __name__ == "__main__":
     parser.add_argument("--dt", type=float, choices=[.0125, .025, .05, .1], default=.1)
     parser.add_argument("--duration", type=int, default=20)
     parser.add_argument("--fixed-boundary", action="store_true")
+    parser.add_argument("--vessel-energy", choices=["reference", "conservative"], default="conservative",
+                        help="Energy target for each source vessel. Reference reproduces the original benchmark.")
     parser.add_argument("--revision", required=True, help="Revision of the compiled NeqSim classpath")
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
@@ -306,7 +321,7 @@ if __name__ == "__main__":
         parser.error("Duration must include the initiating event and discharge interval")
     jpype.startJVM("-XX:-UsePerfData", "-Xmx600m", "-XX:ActiveProcessorCount=2", convertStrings=True,
                    classpath=os.environ["NEQSIM_CLASSPATH"].split(os.pathsep))
-    result = run(jpype.JPackage("neqsim"), args.case, args.dt, args.duration, args.fixed_boundary)
+    result = run(jpype.JPackage("neqsim"), args.case, args.dt, args.duration, args.fixed_boundary, args.vessel_energy)
     result["source_revision"] = args.revision
     with args.output.open("x", encoding="utf-8") as output:
         json.dump(result, output, allow_nan=False)

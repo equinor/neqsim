@@ -26,6 +26,9 @@ class SeparatorConservativeTransientEnergyIntegrationTest {
   void policySelectionIsExplicitAndRejectsUnsupportedAlgorithms() {
     Separator separator = new Separator("unwired");
     assertFalse(separator.isConservativeTransientEnergyIntegrationEnabled());
+    assertEquals(0.0, separator.getConservativeTransientEnergyTolerance());
+    assertThrows(IllegalArgumentException.class, () -> separator.setConservativeTransientEnergyTolerance(-1.0));
+    assertThrows(IllegalArgumentException.class, () -> separator.setConservativeTransientEnergyTolerance(Double.NaN));
     assertTrue(Double.isNaN(separator.getConservativeTransientEnergyTargetJ()));
     separator.setConservativeTransientEnergyIntegrationEnabled(true);
     assertTrue(separator.isConservativeTransientEnergyIntegrationEnabled());
@@ -67,11 +70,36 @@ class SeparatorConservativeTransientEnergyIntegrationTest {
     assertEquals(report.getPublishedEnergyJ() - expectedTarget, report.getCumulativeDebtJ(), 1.0e-8);
   }
 
+  /** An unattainable local specification rejects the interval and a feasible retry starts from the same inventory. */
+  @Test
+  void strictVuLimitRollsBackAndCanBeRetried() {
+    Fixture fixture = fixture();
+    closeAllBoundaries(fixture);
+    fixture.separator.setHeatInput(1234.56789);
+    fixture.separator.setConservativeTransientEnergyIntegrationEnabled(true);
+    fixture.separator.setTransientEnergyBalanceTrackingEnabled(true);
+    fixture.separator.setConservativeTransientEnergyTolerance(1.0e-30);
+    double initialTime = fixture.separator.getTime();
+    double initialEnergy = fixture.separator.getThermoSystem().getInternalEnergy();
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> fixture.separator.runTransient(0.1789, id(1)));
+    assertTrue(failure.getMessage().contains("conservative VU energy limit"));
+    assertEquals(initialTime, fixture.separator.getTime());
+    assertEquals(initialEnergy, fixture.separator.getThermoSystem().getInternalEnergy());
+    assertTrue(Double.isNaN(fixture.separator.getConservativeTransientEnergyTargetJ()));
+    fixture.separator.setConservativeTransientEnergyTolerance(1.0e-5);
+    fixture.separator.runTransient(0.1789, id(2));
+    assertEquals(1, fixture.separator.getLastTransientEnergyBalanceReport().getAcceptedStepCount());
+    assertEquals(0.1789, fixture.separator.getLastTransientEnergyBalanceReport().getElapsedTimeSeconds(), 1e-8);
+    assertEquals(initialEnergy + 1234.56789 * 0.1789, fixture.separator.getConservativeTransientEnergyTargetJ(), 1e-7);
+  }
+
   /** Snapshot replay and Java serialization retain the exact continuation target. */
   @Test
   void snapshotReplayAndSerializationRetainContinuationTarget() throws Exception {
     Fixture fixture = fixture();
     fixture.separator.setConservativeTransientEnergyIntegrationEnabled(true);
+    fixture.separator.setConservativeTransientEnergyTolerance(1.0e-5);
     fixture.separator.runTransient(0.1, id(1));
     Separator.TransientState checkpoint = fixture.separator.captureTransientState();
     Stream.TransientState feedCheckpoint = fixture.feed.captureTransientState();
@@ -81,13 +109,16 @@ class SeparatorConservativeTransientEnergyIntegrationTest {
     double expectedTarget = fixture.separator.getConservativeTransientEnergyTargetJ();
     double expectedEnergy = fixture.separator.getThermoSystem().getInternalEnergy();
     fixture.feed.restoreTransientState(feedCheckpoint);
+    fixture.separator.setConservativeTransientEnergyTolerance(0.0);
     fixture.separator.restoreTransientState(checkpoint);
+    assertEquals(1.0e-5, fixture.separator.getConservativeTransientEnergyTolerance());
     assertEquals(checkpointTarget, fixture.separator.getConservativeTransientEnergyTargetJ());
     fixture.separator.runTransient(0.1, id(2));
     assertEquals(expectedTarget, fixture.separator.getConservativeTransientEnergyTargetJ());
     assertEquals(expectedEnergy, fixture.separator.getThermoSystem().getInternalEnergy());
 
     Separator copy = (Separator) deserialize(serialize(fixture.separator));
+    assertEquals(1.0e-5, copy.getConservativeTransientEnergyTolerance());
     assertTrue(copy.isConservativeTransientEnergyIntegrationEnabled());
     assertEquals(expectedTarget, copy.getConservativeTransientEnergyTargetJ());
     assertEquals(expectedEnergy, copy.getThermoSystem().getInternalEnergy());

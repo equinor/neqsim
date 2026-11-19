@@ -16,10 +16,10 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def verify(path, case, dt, fixed, revision):
+def verify(path, case, dt, fixed, revision, energy_policy="conservative"):
     d = json.loads(path.read_text(encoding="utf-8"))
     require(d["case"] == case and d["dt_s"] == dt and d["fixed_boundary"] == fixed
-            and d["source_revision"] == revision, f"Wrong case or build in {path}")
+            and d["source_revision"] == revision and d["vessel_energy_policy"] == energy_policy, f"Wrong case or build in {path}")
     rows = d["rows"]
     require(len(rows) == round(20 / dt), f"Incomplete run in {path}")
     previous = d["tip_static_bara"]
@@ -54,10 +54,21 @@ def verify(path, case, dt, fixed, revision):
             and max(row["relative_energy_residual"] for row in rows) <= 1e-5, "Header inventory residual")
     require((d["numerical_status"] == "PASS") == all(d["numerical_checks"].values())
             and d["numerical_status"] in {"HOLD", "PASS"}, "Inconsistent numerical status")
+    for tag, ledger in d["vessel_energy_ledger"].items():
+        expected = ledger["initial_J"] + ledger["net_boundary_energy_J"]
+        require(math.isclose(ledger["expected_J"], expected, rel_tol=1e-12, abs_tol=1e-6)
+                and math.isclose(ledger["published_J"] - expected, ledger["final_debt_J"], abs_tol=1e-5)
+                and math.isclose(ledger["max_abs_debt_J"] / max(abs(ledger["initial_J"]), 1.),
+                                 d["vessel_relative_energy_residuals"][tag], rel_tol=1e-12),
+                f"Inconsistent source vessel energy ledger for {tag}")
     if max(d["vessel_relative_energy_residuals"].values()) > 1e-5:
         require(not d["numerical_checks"]["source_vessel_energy"], "Unreported vessel energy exceedance")
     require(all(d["numerical_checks"][k] for k in d["numerical_checks"] if k != "source_vessel_energy"),
             f"Disposal balance, physical flange, or discharge check failed in {path}")
+    if energy_policy == "conservative":
+        require(all(ledger["complete"] for ledger in d["vessel_energy_ledger"].values())
+                and max(d["vessel_relative_energy_residuals"].values()) <= 1e-5,
+                f"Conservative source-energy integration exceeded the reference limit in {path}")
     if case == "wet":
         require(max(r["relief_liquid_kg_s"] for r in rows) > 0 and d["drained_kg"] > 0,
                 "Missing wet release or physical drainage")
@@ -66,7 +77,8 @@ def verify(path, case, dt, fixed, revision):
 
 
 def assess(folder, revision):
-    control = verify(folder / "fixed-.1.json", "psv", .1, True, revision)
+    control = verify(folder / "fixed-.1.json", "psv", .1, True, revision, "reference")
+    verify(folder / "fixed-conservative-.1.json", "psv", .1, True, revision)
     for key, value, time in (("psv_kg_s", 5.495517794, 3.2), ("vessel_bara", 42.36368588, 2.4)):
         peak = control["peaks"][key]
         require(abs(peak["value"] - value) < 1e-5 and abs(peak["end_s"] - time) < 1e-8,
@@ -92,7 +104,8 @@ def simulate(folder, revision):
     folder.mkdir(parents=True, exist_ok=False)
     driver = str(Path(__file__).with_name("v101_disposal.py"))
     runs = [(case, suffix, case + "-" + suffix, []) for case in CASES for suffix in (".1", ".05")]
-    runs.append(("psv", ".1", "fixed-.1", ["--fixed-boundary"]))
+    runs.append(("psv", ".1", "fixed-.1", ["--fixed-boundary", "--vessel-energy", "reference"]))
+    runs.append(("psv", ".1", "fixed-conservative-.1", ["--fixed-boundary"]))
     for case, step, name, extra in runs:
         subprocess.run([sys.executable, driver, "--case", case, "--dt", step, "--revision", revision,
                         "--output", str(folder / (name + ".json")), *extra], check=True)

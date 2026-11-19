@@ -297,6 +297,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** Exact accumulated target energy for the enabled integration epoch, J. */
   private double conservativeTransientEnergyTargetJ = Double.NaN;
+  /** Optional VU defect limit relative to the initial energy of the conservative integration epoch. */
+  private volatile double conservativeTransientEnergyTolerance;
+  /** Initial energy normalization, in joules. Zero indicates an unbaselined or older serialized epoch. */
+  private volatile double conservativeTransientEnergyScaleJ;
 
   /**
    * Selects conservative accumulated-target energy integration for transient steps.
@@ -304,9 +308,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * <p>
    * When enabled, the first accepted equation is baselined from the current vessel internal energy. Each subsequent
    * target is the prior exact target plus the consumed boundary-energy rate multiplied by the physical timestep. The
-   * existing single VU flash is retained; its accepted local numerical defect is therefore corrected in the next target
-   * instead of being accumulated. No tolerance is hidden or changed. Disabling this policy preserves the legacy
-   * equation based directly on the published post-flash energy.
+   * accepted local numerical defect is therefore corrected in the next target instead of being accumulated. No
+   * tolerance is hidden or changed. Disabling this policy preserves the legacy equation based directly on the published
+   * post-flash energy.
    * </p>
    *
    * @param enabled true to enable; changing the selection begins a new unbaselined integration epoch
@@ -329,9 +333,29 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     return conservativeTransientEnergyIntegrationEnabled;
   }
 
+  /**
+   * Optionally limit the absolute VU defect to a fraction of max(abs(initial vessel energy), 1 J) in a conservative
+   * integration epoch. A locally accepted state outside this tighter limit is refined once at the same volume and
+   * energy. A persistent defect rejects the step through the existing snapshot rollback.
+   *
+   * @param relativeTolerance finite nonnegative fraction; zero retains the single-flash policy
+   */
+  public void setConservativeTransientEnergyTolerance(double relativeTolerance) {
+    if (!Double.isFinite(relativeTolerance) || relativeTolerance < 0.0) {
+      throw new IllegalArgumentException("Conservative transient energy tolerance must be finite and nonnegative");
+    }
+    conservativeTransientEnergyTolerance = relativeTolerance;
+  }
+
+  /** @return configured fraction of initial energy, or zero when additional refinement is disabled */
+  public double getConservativeTransientEnergyTolerance() {
+    return conservativeTransientEnergyTolerance;
+  }
+
   /** Starts a new unbaselined conservative integration epoch without changing the selected policy. */
   public void resetConservativeTransientEnergyIntegration() {
     conservativeTransientEnergyTargetJ = Double.NaN;
+    conservativeTransientEnergyScaleJ = 0.0;
   }
 
   /**
@@ -875,11 +899,40 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   protected final void runAcceptedTransientVUFlash(double specifiedVolumeM3, double specifiedEnergyJ,
       boolean warmStartInitialization) {
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    thermoOps.VUflash(specifiedVolumeM3, specifiedEnergyJ, "m3", "J", warmStartInitialization);
-    thermoSystem.init(2);
+    double relativeTolerance = conservativeTransientEnergyTolerance;
+    boolean refineEnergy = conservativeTransientEnergyIntegrationEnabled && relativeTolerance > 0.0;
+    double limitJ = relativeTolerance * conservativeTransientEnergyScaleJ;
+    for (int attempt = 0; attempt < 2; attempt++) {
+      thermoOps.VUflash(specifiedVolumeM3, specifiedEnergyJ, "m3", "J", warmStartInitialization || attempt == 1);
+      thermoSystem.init(2);
+      double actualVolumeM3 = thermoSystem.getVolume("m3");
+      double actualEnergyJ = thermoSystem.getInternalEnergy();
+      validateTransientVuState(thermoOps, specifiedVolumeM3, specifiedEnergyJ, actualVolumeM3, actualEnergyJ);
+      double defectJ = Math.abs(actualEnergyJ - specifiedEnergyJ);
+      if (!refineEnergy || defectJ <= limitJ) {
+        if (transientEnergyBalanceTracker != null) {
+          transientEnergyBalanceTracker.recordAcceptedVu(specifiedVolumeM3, actualEnergyJ, actualVolumeM3);
+        }
+        return;
+      }
+      if (attempt == 1) {
+        throw new IllegalStateException("Separator " + getName() + " exceeded its conservative VU energy limit: "
+            + defectJ + " J > " + limitJ + " J after refinement");
+      }
+    }
+  }
 
-    double actualVolumeM3 = thermoSystem.getVolume("m3");
-    double actualEnergyJ = thermoSystem.getInternalEnergy();
+  /**
+   * Checks the native convergence flag and the actual physical state before recording or refining a VU result.
+   *
+   * @param thermoOps evaluated flash operation
+   * @param specifiedVolumeM3 specified volume, m3
+   * @param specifiedEnergyJ specified internal energy, J
+   * @param actualVolumeM3 actual volume, m3
+   * @param actualEnergyJ actual internal energy, J
+   */
+  private void validateTransientVuState(ThermodynamicOperations thermoOps, double specifiedVolumeM3,
+      double specifiedEnergyJ, double actualVolumeM3, double actualEnergyJ) {
     double volumeResidual = relativeResidual(actualVolumeM3, specifiedVolumeM3);
     double energyResidual = relativeResidual(actualEnergyJ, specifiedEnergyJ);
     OperationInterface operation = thermoOps.getOperation();
@@ -905,9 +958,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                   + " Liquid overfill and carry-over into the gas outlet are not modelled. Check that the level"
                   + " control can make the liquid outflow exceed the inflow (setpoint below the maximum level,"
                   + " inlet valve minimum opening, liquid outlet capacity)."));
-    }
-    if (transientEnergyBalanceTracker != null) {
-      transientEnergyBalanceTracker.recordAcceptedVu(specifiedVolumeM3, actualEnergyJ, actualVolumeM3);
     }
   }
 
@@ -1008,6 +1058,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     transientEnergyBalanceTracker = snapshot.energyBalanceTracker == null ? null : snapshot.energyBalanceTracker.copy();
     conservativeTransientEnergyIntegrationEnabled = snapshot.conservativeEnergyIntegrationEnabled;
     conservativeTransientEnergyTargetJ = snapshot.conservativeEnergyTargetJ;
+    conservativeTransientEnergyScaleJ = snapshot.conservativeEnergyScaleJ;
+    conservativeTransientEnergyTolerance = snapshot.conservativeEnergyTolerance;
   }
 
   /**
@@ -1138,6 +1190,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     private final SeparatorTransientEnergyBalanceTracker energyBalanceTracker;
     private final boolean conservativeEnergyIntegrationEnabled;
     private final double conservativeEnergyTargetJ;
+    private final double conservativeEnergyScaleJ;
+    private final double conservativeEnergyTolerance;
 
     /**
      * Creates a checkpoint.
@@ -1175,6 +1229,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           : source.transientEnergyBalanceTracker.copy();
       conservativeEnergyIntegrationEnabled = source.conservativeTransientEnergyIntegrationEnabled;
       conservativeEnergyTargetJ = source.conservativeTransientEnergyTargetJ;
+      conservativeEnergyScaleJ = source.conservativeTransientEnergyScaleJ;
+      conservativeEnergyTolerance = source.conservativeTransientEnergyTolerance;
     }
   }
 
@@ -1510,6 +1566,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         if (conservativeTransientEnergyIntegrationEnabled) {
           if (!Double.isFinite(conservativeTransientEnergyTargetJ)) {
             conservativeTransientEnergyTargetJ = beforeEnergy;
+          }
+          if (conservativeTransientEnergyScaleJ == 0.0) {
+            conservativeTransientEnergyScaleJ = Math.max(1.0, Math.abs(beforeEnergy));
           }
           integrationBaseEnergy = conservativeTransientEnergyTargetJ;
         }
