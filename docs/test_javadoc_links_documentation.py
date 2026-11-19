@@ -122,12 +122,12 @@ class JavaDocLinksDocumentationTest(unittest.TestCase):
         release_notes = RELEASE_NOTES.read_text(encoding="utf-8")
 
         self.assertIn("Java 17+ (JDK, not just JRE)", guide)
-        self.assertIn("Python 3.10+ (for repository tooling", guide)
+        self.assertIn("Python 3.11+ (for repository tooling", guide)
         self.assertIn("NeqSim source remains Java 8 compatible", guide)
         self.assertNotIn("Python 3.8+", guide)
         self.assertNotIn("Java 8+ (JDK, not just JRE)", guide)
         self.assertNotIn("\n# Getting Started as a NeqSim Developer\n", guide)
-        self.assertIn('requires-python = ">=3.10"', pyproject)
+        self.assertIn('requires-python = ">=3.11"', pyproject)
         self.assertRegex(
             release_notes,
             r"standard core artifact\s+requires \*\*Java 17\+\*\*",

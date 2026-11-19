@@ -361,7 +361,7 @@ Targets: the bundled skills (editable, when this plugin ships a pyproject) and
 any pinned requirement specs such as the NeqSim task-solving toolkit (vendored
 under ${{PLUGIN_ROOT}}/toolkit, so no git clone is needed). Target interpreter, in
 order: NEQSIM_PYTHON, then the first of a pinned build-time interpreter (if any), the
-interpreter running this script, or a versioned python3.10-3.15 that is Python 3.10 or
+interpreter running this script, or a versioned python3.11-3.15 that is Python 3.11 or
 newer. Never selects or creates an environment.
 
 The install runs in a detached background process so the first chat prompt is
@@ -398,8 +398,8 @@ import sys
 import time
 from pathlib import Path
 
-MIN_PYTHON = (3, 10)
-PREFERRED_MINORS = (13, 12, 11, 10, 14, 15)
+MIN_PYTHON = (3, 11)
+PREFERRED_MINORS = (13, 12, 11, 14, 15)
 PINNED_PYTHON = {pinned!r}
 EDITABLE_SELF = {editable_self!r}
 REQUIREMENTS = {requirements!r}
@@ -1418,7 +1418,7 @@ _HOOK_WINDOWS_SCRIPT_TEMPLATE = (
     "-ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1; "
     "if ($f) {{ $p = @($f.FullName) }} }} }}; "
     "if ($p.Count -gt 0) {{ $x = $p[0]; $a = @($p | Select-Object -Skip 1) + @($s); & $x @a }} "
-    "else {{ Write-Output '{{\"systemMessage\":\"NeqSim plugin {name}: no Python 3.10+ found "
+    "else {{ Write-Output '{{\"systemMessage\":\"NeqSim plugin {name}: no Python 3.11+ found "
     "(checked NEQSIM_PYTHON, py, python on PATH and the usual install folders). Install Python "
     "from AccessIT or set NEQSIM_PYTHON to a python.exe, then start a new chat. Until then the "
     "neqsim_* MCP tools cannot be registered and the task toolkit is not installed.\"}}' }}")

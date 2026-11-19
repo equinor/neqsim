@@ -59,7 +59,7 @@ if defined PY goto :found
 
 echo.
 echo ERROR: No working Python interpreter was found.
-echo Install Python 3.10 or newer from https://www.python.org/downloads/
+echo Install Python 3.11 or newer from https://www.python.org/downloads/
 echo (check "Add python.exe to PATH"), then re-run install.cmd.
 exit /b 1
 

@@ -622,13 +622,13 @@ class HookPythonSelectionTest(unittest.TestCase):
         self.env.stop()
         self.tmp.cleanup()
 
-    def test_floor_is_python_310_with_no_upper_limit(self):
-        """MIN_PYTHON is 3.10 and newer interpreters are never rejected."""
-        self.assertEqual(self.ns["MIN_PYTHON"], (3, 10))
+    def test_floor_is_python_311_with_no_upper_limit(self):
+        """MIN_PYTHON is 3.11 and newer interpreters are never rejected."""
+        self.assertEqual(self.ns["MIN_PYTHON"], (3, 11))
         self.assertGreaterEqual(max(self.ns["PREFERRED_MINORS"]), 15)
 
     def test_current_interpreter_is_kept_when_new_enough(self):
-        """A 3.10+ default interpreter is returned without searching for alternatives."""
+        """A 3.11+ default interpreter is returned without searching for alternatives."""
         self.ns["MIN_PYTHON"] = tuple(sys.version_info[:2])
         self.ns["alternate_pythons"] = mock.Mock(side_effect=AssertionError("no search needed"))
         self.assertEqual(self.ns["pick_python"](), sys.executable)
