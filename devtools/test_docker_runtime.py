@@ -247,10 +247,7 @@ def test_cli_success_passes_options(monkeypatch, capsys):
 
 def test_unified_cli_dispatch_and_toolkit_packaging(monkeypatch):
     import neqsim_cli
-    try:
-        import tomllib
-    except ImportError:
-        import tomli as tomllib
+    import tomllib
 
     main = Mock(return_value=0)
     monkeypatch.setattr(dr, "main", main)

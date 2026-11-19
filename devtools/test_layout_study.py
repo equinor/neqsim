@@ -18,10 +18,7 @@ import subprocess
 import struct
 import sys
 import tempfile
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib
+import tomllib
 import unittest
 from unittest import mock
 
