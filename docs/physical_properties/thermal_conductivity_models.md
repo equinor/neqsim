@@ -306,28 +306,34 @@ to the underlying correlation.
 
 ### Basic Conductivity Calculation
 
+This complete Java 8 program is compiled and executed directly from this page by the
+documentation regression suite.
+
+<!-- thermal-conductivity-example: basic -->
+
 ```java
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create and flash fluid
-SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.setMixingRule("classic");
+public class ThermalConductivityQuickStart {
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
 
-// Initialize physical properties
-fluid.initPhysicalProperties();
-
-// Get thermal conductivity
-double gasConductivity = fluid.getPhase("gas").getThermalConductivity("W/mK");
-if (!(gasConductivity > 0.0)) {
-    throw new IllegalStateException("Expected positive gas thermal conductivity");
+    double gasConductivityWPerMeterK =
+        fluid.getPhase("gas").getThermalConductivity("W/mK");
+    if (!Double.isFinite(gasConductivityWPerMeterK)
+        || gasConductivityWPerMeterK <= 0.0) {
+      throw new IllegalStateException("Expected finite positive gas thermal conductivity");
+    }
+  }
 }
 ```
 
