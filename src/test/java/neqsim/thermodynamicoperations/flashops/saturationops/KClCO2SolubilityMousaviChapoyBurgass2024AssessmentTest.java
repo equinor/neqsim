@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -138,6 +139,44 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   }
 
   /**
+   * Verifies that the bounded scale retains the exact baseline and zero-block endpoint contracts.
+   */
+  @Tag("slow")
+  @Test
+  void furstCo2IonScaleRetainsEndpointContracts() {
+    Reference reference = new Reference("FURST-SCALE-CONTRACT", "Liu2021", 0.0, 0.0, 1.5, 298.0, 2.06703, 0.0,
+        0.0);
+    Result baseline = calculate(reference, CO2_FEED_MOLES);
+    Result scaledBaseline = calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, 1.0);
+    Result ablated = calculateWithoutFurstCo2IonInteractions(reference, CO2_FEED_MOLES);
+    Result scaledAblation = calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, 0.0);
+
+    assertEquals(baseline.molecularMolePercent, scaledBaseline.molecularMolePercent, 0.0);
+    assertEquals(baseline.co2FugacityBara, scaledBaseline.co2FugacityBara, 0.0);
+    assertEquals(baseline.waterActivity, scaledBaseline.waterActivity, 0.0);
+    assertEquals(baseline.phaseTypes, scaledBaseline.phaseTypes);
+    assertEquals(ablated.molecularMolePercent, scaledAblation.molecularMolePercent, 0.0);
+    assertEquals(ablated.co2FugacityBara, scaledAblation.co2FugacityBara, 0.0);
+    assertEquals(ablated.waterActivity, scaledAblation.waterActivity, 0.0);
+    assertEquals(ablated.phaseTypes, scaledAblation.phaseTypes);
+  }
+
+  /**
+   * Rejects nonfinite and out-of-range Furst block scales before executing a flash.
+   */
+  @Test
+  void furstCo2IonScaleRejectsInvalidBounds() {
+    Reference reference = new Reference("FURST-SCALE-BOUNDS", "Liu2021", 0.0, 0.0, 1.5, 298.0, 2.06703, 0.0,
+        0.0);
+    assertThrows(IllegalArgumentException.class,
+        () -> calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, Double.NaN));
+    assertThrows(IllegalArgumentException.class,
+        () -> calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, -1.0e-12));
+    assertThrows(IllegalArgumentException.class,
+        () -> calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, 1.0 + 1.0e-12));
+  }
+
+  /**
    * Calculates one source state at reported total pressure and one final aqueous kilogram of water.
    *
    * @param reference source state
@@ -145,7 +184,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   static Result calculate(Reference reference, double co2FeedMoles) {
-    return calculate(reference, co2FeedMoles, false, false);
+    return calculate(reference, co2FeedMoles, false, 1.0);
   }
 
   /**
@@ -160,7 +199,26 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   static Result calculateWithoutFurstCo2IonInteractions(Reference reference, double co2FeedMoles) {
-    return calculate(reference, co2FeedMoles, false, true);
+    return calculate(reference, co2FeedMoles, false, 0.0);
+  }
+
+  /**
+   * Calculates one source state after scaling the complete Furst CO2-ion interaction block.
+   *
+   * <p>
+   * The scale is applied to W0, W1 and W2 for every CO2-ion pair. Scaling the complete block preserves the declared
+   * single-ion gauge. This is a sensitivity diagnostic and does not update production parameters.
+   *
+   * @param reference source state
+   * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
+   * @param furstCo2IonScale dimensionless scale in the closed interval [0, 1]
+   * @return calculated diagnostics
+   */
+  static Result calculateWithFurstCo2IonScale(Reference reference, double co2FeedMoles, double furstCo2IonScale) {
+    if (!Double.isFinite(furstCo2IonScale) || furstCo2IonScale < 0.0 || furstCo2IonScale > 1.0) {
+      throw new IllegalArgumentException("Furst CO2-ion scale must be finite and in [0, 1]");
+    }
+    return calculate(reference, co2FeedMoles, false, furstCo2IonScale);
   }
 
   /**
@@ -172,7 +230,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   static Result calculate(Reference reference, double co2FeedMoles, boolean constrainedPhaseSolver) {
-    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, false);
+    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, 1.0);
   }
 
   /**
@@ -181,11 +239,11 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param reference source state
    * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
    * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
-   * @param ablateFurstCo2IonInteractions whether to zero only CO2-ion Furst W0/W1/W2 terms
+   * @param furstCo2IonScale dimensionless scale applied to CO2-ion Furst W0/W1/W2 terms
    * @return calculated diagnostics
    */
   private static Result calculate(Reference reference, double co2FeedMoles, boolean constrainedPhaseSolver,
-      boolean ablateFurstCo2IonInteractions) {
+      double furstCo2IonScale) {
     double saltFreeMassPercent = 100.0 - reference.totalSaltMassFractionPercent();
     double naclMoles = reference.naclMolalityMolPerKgWater;
     double kclMoles = reference.kclMolalityMolPerKgWater;
@@ -199,7 +257,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     }
     double totalPressureBara = 10.0 * reference.totalPressureMpa;
     Trial trial = flashWithAqueousWaterBasis(reference, totalPressureBara, co2FeedMoles, naclMoles, kclMoles,
-        cacl2Moles, mgcl2Moles, constrainedPhaseSolver, ablateFurstCo2IonInteractions);
+        cacl2Moles, mgcl2Moles, constrainedPhaseSolver, furstCo2IonScale);
     PhaseInterface aqueous = trial.aqueous;
 
     double waterMoles = aqueous.getComponent("water").getNumberOfMolesInPhase();
@@ -263,12 +321,12 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param cacl2Moles CaCl2 formula-unit inventory in mol
    * @param mgcl2Moles MgCl2 formula-unit inventory in mol
    * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
-   * @param ablateFurstCo2IonInteractions whether to zero only CO2-ion Furst W0/W1/W2 terms
+   * @param furstCo2IonScale dimensionless scale applied to CO2-ion Furst W0/W1/W2 terms
    * @return converged and validated state
    */
   private static Trial flashWithAqueousWaterBasis(Reference reference, double totalPressureBara, double co2FeedMoles,
       double naclMoles, double kclMoles, double cacl2Moles, double mgcl2Moles, boolean constrainedPhaseSolver,
-      boolean ablateFurstCo2IonInteractions) {
+      double furstCo2IonScale) {
     double waterFeedMoles = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL;
     double co2Feed = co2FeedMoles;
     for (int iteration = 0; iteration < 20; iteration++) {
@@ -278,7 +336,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       SystemInterface fluid = null;
       for (int attempt = 0; attempt <= MAX_RESERVOIR_RETRIES; attempt++) {
         fluid = flashSystem(reference.temperatureK, totalPressureBara, co2Feed, waterFeedMoles, naclMoles, kclMoles,
-            cacl2Moles, mgcl2Moles, constrainedPhaseSolver, ablateFurstCo2IonInteractions);
+            cacl2Moles, mgcl2Moles, constrainedPhaseSolver, furstCo2IonScale);
         if (fluid.getNumberOfPhases() >= 2) {
           break;
         }
@@ -344,12 +402,12 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param cacl2Moles CaCl2 formula-unit inventory in mol
    * @param mgcl2Moles MgCl2 formula-unit inventory in mol
    * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
-   * @param ablateFurstCo2IonInteractions whether to zero only CO2-ion Furst W0/W1/W2 terms
+   * @param furstCo2IonScale dimensionless scale applied to CO2-ion Furst W0/W1/W2 terms
    * @return flashed system
    */
   private static SystemInterface flashSystem(double temperatureK, double pressureBara, double co2Moles,
       double waterMoles, double naclMoles, double kclMoles, double cacl2Moles, double mgcl2Moles,
-      boolean constrainedPhaseSolver, boolean ablateFurstCo2IonInteractions) {
+      boolean constrainedPhaseSolver, double furstCo2IonScale) {
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
     fluid.addComponent("CO2", co2Moles);
     fluid.addComponent("water", waterMoles);
@@ -370,8 +428,8 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       fluid.addComponent("Cl-", chlorideMoles);
     }
     fluid.setMixingRule(10);
-    if (ablateFurstCo2IonInteractions) {
-      ablateFurstCo2IonInteractions(fluid);
+    if (furstCo2IonScale != 1.0) {
+      scaleFurstCo2IonInteractions(fluid, furstCo2IonScale);
     }
     fluid.setMultiPhaseCheck(true);
     if (constrainedPhaseSolver) {
@@ -384,15 +442,16 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   }
 
   /**
-   * Zeros only the Furst CO2-ion W0/W1/W2 interactions in every phase.
+   * Scales only the Furst CO2-ion W0/W1/W2 interactions in every phase.
    *
    * <p>
-   * Ion-specific attribution remains gauge-dependent; therefore this diagnostic removes the complete CO2-ion layer as a
+   * Ion-specific attribution remains gauge-dependent; therefore this diagnostic scales the complete CO2-ion layer as a
    * block and does not interpret individual cation or chloride terms.
    *
    * @param fluid initialized electrolyte system
+   * @param scale dimensionless interaction scale
    */
-  private static void ablateFurstCo2IonInteractions(SystemInterface fluid) {
+  private static void scaleFurstCo2IonInteractions(SystemInterface fluid, double scale) {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface phase = fluid.getPhase(phaseIndex);
       if (!(phase instanceof PhaseModifiedFurstElectrolyteEos)) {
@@ -403,9 +462,9 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       for (String ion : new String[] {"Na+", "K+", "Ca++", "Mg++", "Cl-"}) {
         if (phase.hasComponent(ion)) {
           int ionIndex = phase.getComponent(ion).getComponentNumber();
-          rule.setWijParameter(co2Index, ionIndex, 0.0);
-          rule.setWijT1Parameter(co2Index, ionIndex, 0.0);
-          rule.setWijT2Parameter(co2Index, ionIndex, 0.0);
+          rule.setWijParameter(co2Index, ionIndex, scale * rule.getWijParameter(co2Index, ionIndex));
+          rule.setWijT1Parameter(co2Index, ionIndex, scale * rule.gettWijT1Parameter(co2Index, ionIndex));
+          rule.setWijT2Parameter(co2Index, ionIndex, scale * rule.gettWijT2Parameter(co2Index, ionIndex));
         }
       }
     }
