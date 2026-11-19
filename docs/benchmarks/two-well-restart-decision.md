@@ -84,3 +84,13 @@ Only the pressure imposed on the pipe was changed in the three diagnostic replay
 All stopped by the first well event at 4 s. Holding the outlet face delays reversal
 for this case. Its persistence with a fixed face warrants examining the internal
 handoff and terminal pressure/momentum balance before changing the donor model.
+
+The installed receipt also carries an independent homogeneous-equilibrium short-orifice
+calculation. Both models use the same effective discharge area of 0.00241446 m² at 58%
+opening, derived once from the installed design rate, density and 2 bar loss. The orifice
+model instead computes the mass flux by isentropic EOS expansion. At the SRK steady
+handoff it predicts 19.1616 kg/s against 20.0000 kg/s. On the published outlet stream
+in the rejected interval it predicts 11.5202 kg/s against 10.8593 kg/s at 56.40671 and
+54.74331 bara. Both states remained subcritical. The second comparison uses the published
+interval stream and the pressures imposed for that interval. It cannot
+determine the individual phase donors. The comparison does not drive either device.

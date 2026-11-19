@@ -142,6 +142,23 @@ def chemistry(n):
 HANDOFF_TOLERANCE = 1.e-10
 
 
+def compare_choke(n, reported_stream, p_up, p_down, opening, rated_rate, rated_density):
+    """Compare the imposed restriction with an independent equilibrium short-opening calculation."""
+    effective_area = rated_rate * (opening / 58.) / math.sqrt(2. * rated_density * 2.e5)
+    fluid = reported_stream.getFluid().clone()
+    fluid.setPressure(p_up, "bara")
+    release = n.process.safety.release
+    model = release.HomogeneousEquilibriumReleaseModel()
+    request = release.ReleaseFlowRequest(fluid, math.sqrt(4. * effective_area / math.pi), 1., p_down * 1.e5)
+    result = model.calculate(request)
+    return {"model": str(result.getModelId()), "model_version": str(result.getModelVersion()),
+            "upstream_bara": p_up, "downstream_bara": p_down, "effective_cd_area_m2": effective_area,
+            "stream_kg_s": reported_stream.getFlowRate("kg/sec"), "status": str(result.getStatus()),
+            "hem_kg_s": result.getMassFlowRateKgS() if result.isUsable() else None,
+            "choked": bool(result.isChoked()) if result.isUsable() else None,
+            "diagnostics": [str(item.getCode()) for item in result.getDiagnostics()]}
+
+
 class OutletBackflowError(ValueError):
     """Carry the rejected interval separately from the final cell and transferred mass."""
 
@@ -228,6 +245,8 @@ def run(n, opt, chart_info=None):
                 raise ValueError("Steady pipe failed during well/choke initialization")
         else:
             raise ValueError("Coupled steady well rates and choke pressure failed to converge")
+    if initialization is not None:
+        initialization["choke_comparison"] = compare_choke(n, outlet, pipe.getOutletPressure("bara"), p0, 58., q0, rho0)
     if opt.energy_audit:
         pipe.prepareConservativeEnergyTransientFromSteadyState()
     valve = eq.valve.ThrottlingValve("Platform inlet choke", outlet)
@@ -298,7 +317,9 @@ def run(n, opt, chart_info=None):
         pipe.setOutletPressure(sep_p + drop, "bara")
         pipe.runTransient(opt.dt, run_id)
         if pipe.isTransientOutletBackflowClamped():
-            raise OutletBackflowError(pipe, phases, t, opt.dt, vessel, opening, sep_p + drop, initialization)
+            rejection = OutletBackflowError(pipe, phases, t, opt.dt, vessel, opening, sep_p + drop, initialization)
+            rejection.diagnostic["choke_comparison"] = compare_choke(n, outlet, sep_p + drop, sep_p, opening, q0, rho0)
+            raise rejection
         fluid = outlet.getFluid()
         n.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash()
         fluid.initProperties()

@@ -30,7 +30,6 @@ class TestInstalledHandoff(unittest.TestCase):
             self.assertEqual(0., next(r for r in rows if r["end_s"] == 4.25)["well_b_kg_s"])
             self.assertGreater(next(r for r in rows if r["end_s"] == 12.25)["well_b_kg_s"], 0.)
 
-
     def test_conservative_guard_keeps_pipe_and_vessel_inventories(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "srk.json"
@@ -45,6 +44,15 @@ class TestInstalledHandoff(unittest.TestCase):
                 return
             self.assertNotEqual(0, proc.returncode)
             evidence = result["outlet_diagnostic"]
+            rating = evidence["choke_comparison"]
+            initial = evidence["steady_handoff"]["choke_comparison"]
+            self.assertEqual("VALID", rating["status"])
+            self.assertFalse(rating["choked"])
+            self.assertEqual(evidence["imposed_outlet_bara"], rating["upstream_bara"])
+            self.assertEqual(evidence["separator_bara"], rating["downstream_bara"])
+            self.assertEqual(initial["effective_cd_area_m2"], rating["effective_cd_area_m2"])
+            self.assertGreater(rating["hem_kg_s"], 0.)
+            self.assertGreater(initial["hem_kg_s"], rating["hem_kg_s"])
             self.assertFalse(evidence["separator_advanced_for_interval"])
             self.assertGreater(evidence["separator_mass_before_handoff_kg"], 0.)
             self.assertGreater(evidence["accepted_pipe_substeps"], 0)
