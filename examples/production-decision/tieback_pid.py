@@ -124,7 +124,13 @@ def export(n, output, basis=ProtectionBasis()):
     if not check.isSchemaAndProfileConformant() or reread.hasImportLosses():
         raise ValueError("DEXPI package failed its round-trip check: " + str(reread.getDiagnostics()))
     readiness = json.loads((output / "professional-pid-readiness.json").read_text())
-    return {"drawing_coverage": "COMPLETE" if readiness["drawingHasNoErrors"] else "HOLD",
+    content = json.loads((output / "pid-drawing-content-report.json").read_text())
+    material_status = "COMPLETE" if readiness["drawingHasNoErrors"] else "HOLD"
+    unresolved = [h["subject"] for h in content["holds"] if h["code"] == "PID_ATTACHMENT_HOLD"]
+    incomplete_signals = [h["subject"] for h in content["holds"] if h["code"] == "SIGNAL_CONTINUATION_INCOMPLETE"]
+    return {"drawing_coverage": "HOLD" if unresolved or incomplete_signals else material_status,
+            "material_drawing_coverage": material_status, "unresolved_drawing_attachments": unresolved,
+            "incomplete_signal_continuations": incomplete_signals,
             "schema_and_profile": True, "fingerprint": str(reread.getSemanticFingerprint()),
             "functional_elements": model.getElements().size()}
 
