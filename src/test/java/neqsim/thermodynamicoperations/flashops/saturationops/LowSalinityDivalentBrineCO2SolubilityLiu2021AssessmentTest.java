@@ -207,8 +207,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         halfScaleComponentResidual = halfScale.componentBalanceResidualMol;
         halfScaleFugacityResidual = halfScale.molecularLogFugacityResidual;
         halfScalePhaseTypes = halfScale.phaseTypes;
-        assertTrue(halfScaleComponentResidual <= 1.0e-10,
-            reference.pointId + " half-scale component balance closure");
+        assertTrue(halfScaleComponentResidual <= 1.0e-10, reference.pointId + " half-scale component balance closure");
         assertTrue(Math.abs(halfScaleFugacityResidual) < 1.0e-8,
             reference.pointId + " half-scale molecular fugacity closure");
         assertTrue(Math.abs(halfScaleDecompositionResidual) < 1.0e-12,
@@ -235,10 +234,9 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
           constrainedResidual, ablationModel, ablationSaltEffect, ablationLogDissolvedRatio,
           ablationLogGuestFugacityRatio, ablationLogEffectiveFOverXRatio, ablationWaterActivity,
           ablationComponentResidual, ablationFugacityResidual, ablationPhaseTypes, ablationMinusBaselineModel,
-          halfScaleEvidenceLabel, halfScaleModel, halfScaleSaltEffect, halfScaleCurvature,
-          halfScaleLogDissolvedRatio, halfScaleLogGuestFugacityRatio, halfScaleLogEffectiveFOverXRatio,
-          halfScaleDecompositionResidual, halfScaleWaterActivity, halfScaleComponentResidual,
-          halfScaleFugacityResidual, halfScalePhaseTypes));
+          halfScaleEvidenceLabel, halfScaleModel, halfScaleSaltEffect, halfScaleCurvature, halfScaleLogDissolvedRatio,
+          halfScaleLogGuestFugacityRatio, halfScaleLogEffectiveFOverXRatio, halfScaleDecompositionResidual,
+          halfScaleWaterActivity, halfScaleComponentResidual, halfScaleFugacityResidual, halfScalePhaseTypes));
     }
 
     assertEquals(84, references.size());
