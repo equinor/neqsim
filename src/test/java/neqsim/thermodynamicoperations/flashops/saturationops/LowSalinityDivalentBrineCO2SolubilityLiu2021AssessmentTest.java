@@ -72,7 +72,14 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         + "ablation_log_dissolved_co2_molecular_ratio,ablation_log_guest_fugacity_ratio,"
         + "ablation_log_effective_f_over_x_ratio,ablation_water_activity,"
         + "ablation_component_balance_residual_mol,ablation_molecular_log_fugacity_residual,"
-        + "ablation_phase_types,ablation_minus_baseline_model_co2_mol_per_kg_solution");
+        + "ablation_phase_types,ablation_minus_baseline_model_co2_mol_per_kg_solution,"
+        + "half_scale_evidence_label,half_scale_model_co2_mol_per_kg_solution,"
+        + "half_scale_apparent_salt_effect_kg_water_per_mol_formula_unit,"
+        + "half_scale_curvature_kg_water_per_mol_formula_unit,"
+        + "half_scale_log_dissolved_co2_molecular_ratio,half_scale_log_guest_fugacity_ratio,"
+        + "half_scale_log_effective_f_over_x_ratio,half_scale_decomposition_identity_residual,"
+        + "half_scale_water_activity,half_scale_component_balance_residual_mol,"
+        + "half_scale_molecular_log_fugacity_residual,half_scale_phase_types");
 
     int pureCount = 0;
     int cacl2Count = 0;
@@ -80,6 +87,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
     int constrainedCount = 0;
     int sourceSaltingOutCount = 0;
     int ablationCount = 0;
+    int halfScaleCount = 0;
     for (SourceReference reference : references) {
       KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result result = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
           .calculate(reference.toModelReference(), CO2_FEED_MOLES);
@@ -153,6 +161,18 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
       double ablationFugacityResidual = Double.NaN;
       String ablationPhaseTypes = "";
       double ablationMinusBaselineModel = Double.NaN;
+      String halfScaleEvidenceLabel = "";
+      double halfScaleModel = Double.NaN;
+      double halfScaleSaltEffect = Double.NaN;
+      double halfScaleCurvature = Double.NaN;
+      double halfScaleLogDissolvedRatio = Double.NaN;
+      double halfScaleLogGuestFugacityRatio = Double.NaN;
+      double halfScaleLogEffectiveFOverXRatio = Double.NaN;
+      double halfScaleDecompositionResidual = Double.NaN;
+      double halfScaleWaterActivity = Double.NaN;
+      double halfScaleComponentResidual = Double.NaN;
+      double halfScaleFugacityResidual = Double.NaN;
+      String halfScalePhaseTypes = "";
       if (isAblationState(reference)) {
         KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result ablated = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
             .calculateWithoutFurstCo2IonInteractions(reference.toModelReference(), CO2_FEED_MOLES);
@@ -171,13 +191,37 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
         assertTrue(ablationFugacityResidual < 1.0e-8, reference.pointId + " ablation molecular fugacity closure");
         assertEquals(result.phaseTypes, ablationPhaseTypes, reference.pointId + " ablation phase set");
         ablationCount++;
+
+        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result halfScale = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+            .calculateWithFurstCo2IonScale(reference.toModelReference(), CO2_FEED_MOLES, 0.5);
+        halfScaleEvidenceLabel = midpointEvidenceLabel(reference);
+        halfScaleModel = modelMolPerKgSolution(halfScale);
+        halfScaleSaltEffect = Math.log(modelPure / halfScaleModel) / saltMoles;
+        halfScaleCurvature = halfScaleSaltEffect - 0.5 * (modelSaltEffect + ablationSaltEffect);
+        halfScaleLogDissolvedRatio = Math.log(halfScale.molecularMolePercent / pureWater.molecularMolePercent);
+        halfScaleLogGuestFugacityRatio = Math.log(halfScale.co2FugacityBara / pureWater.co2FugacityBara);
+        halfScaleLogEffectiveFOverXRatio = Math.log(halfScale.effectiveFOverXBara() / pureWaterEffectiveFOverXBara);
+        halfScaleDecompositionResidual = halfScaleLogDissolvedRatio - halfScaleLogGuestFugacityRatio
+            + halfScaleLogEffectiveFOverXRatio;
+        halfScaleWaterActivity = halfScale.waterActivity;
+        halfScaleComponentResidual = halfScale.componentBalanceResidualMol;
+        halfScaleFugacityResidual = halfScale.molecularLogFugacityResidual;
+        halfScalePhaseTypes = halfScale.phaseTypes;
+        assertTrue(halfScaleComponentResidual <= 1.0e-10, reference.pointId + " half-scale component balance closure");
+        assertTrue(Math.abs(halfScaleFugacityResidual) < 1.0e-8,
+            reference.pointId + " half-scale molecular fugacity closure");
+        assertTrue(Math.abs(halfScaleDecompositionResidual) < 1.0e-12,
+            reference.pointId + " half-scale decomposition identity");
+        assertEquals(result.phaseTypes, halfScalePhaseTypes, reference.pointId + " half-scale phase set");
+        halfScaleCount++;
       }
 
       report.add(String.format(Locale.ROOT,
           "%s,%s,%s,%d,%.8f,%.1f,%.1f,%.8f,%.12g,%.12g,%.12g,%.12g,%.12g,"
               + "%.12g,%.12g,%s,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,"
               + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g,%.12g,"
-              + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g",
+              + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s,%.12g,"
+              + "%s,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%s",
           reference.pointId, reference.saltType, reference.isPureWater() ? "REFERENCE" : "IDENTIFIABILITY_SCREEN",
           reference.salinityPpm, reference.saltMassFractionPercent, reference.temperatureK, reference.pressureAtm,
           reference.totalPressureMpa, reference.sourceCo2MolPerKgSolution, model,
@@ -189,7 +233,10 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
           result.componentBalanceResidualMol, result.molecularLogFugacityResidual, result.phaseTypes, constrainedModel,
           constrainedResidual, ablationModel, ablationSaltEffect, ablationLogDissolvedRatio,
           ablationLogGuestFugacityRatio, ablationLogEffectiveFOverXRatio, ablationWaterActivity,
-          ablationComponentResidual, ablationFugacityResidual, ablationPhaseTypes, ablationMinusBaselineModel));
+          ablationComponentResidual, ablationFugacityResidual, ablationPhaseTypes, ablationMinusBaselineModel,
+          halfScaleEvidenceLabel, halfScaleModel, halfScaleSaltEffect, halfScaleCurvature, halfScaleLogDissolvedRatio,
+          halfScaleLogGuestFugacityRatio, halfScaleLogEffectiveFOverXRatio, halfScaleDecompositionResidual,
+          halfScaleWaterActivity, halfScaleComponentResidual, halfScaleFugacityResidual, halfScalePhaseTypes));
     }
 
     assertEquals(84, references.size());
@@ -198,6 +245,7 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
     assertEquals(36, mgcl2Count);
     assertEquals(8, constrainedCount);
     assertEquals(16, ablationCount);
+    assertEquals(16, halfScaleCount);
     assertEquals(85, report.size());
     assertEquals(65, sourceSaltingOutCount,
         "retain the seven source rows that contradict the aggregate salting-out trend");
@@ -250,6 +298,24 @@ class LowSalinityDivalentBrineCO2SolubilityLiu2021AssessmentTest {
   private static boolean isAblationState(SourceReference reference) {
     return !reference.isPureWater() && reference.salinityPpm == 15000
         && (Math.abs(reference.pressureAtm - 20.4) < 1.0e-12 || Math.abs(reference.pressureAtm - 170.1) < 1.0e-12);
+  }
+
+  /**
+   * Labels the two retained midpoint states with source magnitudes already identified as anomalous.
+   *
+   * <p>
+   * The label is descriptive only. Every state remains in the generated evidence and no source value or tolerance is
+   * changed.
+   *
+   * @param reference source state
+   * @return evidence label for the midpoint diagnostic
+   */
+  private static String midpointEvidenceLabel(SourceReference reference) {
+    if (reference.salinityPpm == 15000 && Math.abs(reference.temperatureK - 353.0) < 1.0e-12
+        && Math.abs(reference.pressureAtm - 20.4) < 1.0e-12) {
+      return "RETAINED_SOURCE_MAGNITUDE_ANOMALY";
+    }
+    return "MIDPOINT_SENSITIVITY";
   }
 
   /**
