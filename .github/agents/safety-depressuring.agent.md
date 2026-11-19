@@ -60,8 +60,8 @@ ad hoc transient notebooks directly from extracted tags. Build `LineEquipmentLis
 `PidTopologyEvidence`, and `DynamicBlowdownFlareStudyDataSource` with one
 `BlowdownSource` per protected equipment item. Run `DynamicBlowdownFlareStudyRunner`
 to execute NeqSim `DepressurizationSimulator` cases, aggregate simultaneous loads
-with `MultiVesselBlowdownStudy`, size PSV orifices where set-pressure evidence is
-available, and generate `dynamic_blowdown_flare_load_handoff.v1` for flare-network,
+with `MultiVesselBlowdownStudy`, size vapour PSV orifices using valve settings and a referenced relief contingency
+at relieving conditions, and generate `dynamic_blowdown_flare_load_handoff.v2` for flare-network,
 consequence, and report consumers.
 
 ## Compressor protection handoff

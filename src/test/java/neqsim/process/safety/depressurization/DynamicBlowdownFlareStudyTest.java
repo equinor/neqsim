@@ -1,10 +1,17 @@
 package neqsim.process.safety.depressurization;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource.BlowdownSource;
+import neqsim.process.safety.overpressure.ReliefCause;
+import neqsim.process.safety.overpressure.ReliefPhase;
+import neqsim.process.safety.overpressure.ReliefScenario;
+import neqsim.process.util.fire.ReliefValveSizing;
 import neqsim.process.safety.rupture.PidTopologyEvidence;
 import neqsim.process.safety.rupture.SafetyEvidenceReference;
 import neqsim.thermo.system.SystemInterface;
@@ -46,7 +53,7 @@ class DynamicBlowdownFlareStudyTest {
     assertNotNull(handoff.getResult());
     assertNotNull(handoff.getFlareLoadHandoff());
     assertTrue(handoff.toJson().contains("dynamic_blowdown_flare_study_handoff.v1"));
-    assertTrue(handoff.toJson().contains("dynamic_blowdown_flare_load_handoff.v1"));
+    assertTrue(handoff.toJson().contains("dynamic_blowdown_flare_load_handoff.v2"));
     assertTrue(handoff.toJson().contains("recommendedOrifice"));
 
     Map<String, Object> result = handoff.getResult();
@@ -54,6 +61,94 @@ class DynamicBlowdownFlareStudyTest {
     assertTrue(((Double) combined.get("peakTotalMassFlowKgPerS")).doubleValue() > 0.0);
     Map<String, Object> flareLoad = mapValue(result.get("flareLoad"));
     assertTrue(((Double) flareLoad.get("peakHeatDutyMW")).doubleValue() > 0.0);
+  }
+
+  /** A larger BDV increases disposal load without changing the independent relief contingency. */
+  @Test
+  void reliefDemandIsIndependentOfBlowdownGeometry() {
+    ReliefScenario scenario = vapourScenario();
+    double firstPeak = 0.0;
+    double expected = ReliefValveSizing
+        .calculateRequiredArea(1.75, 75.0e5, 0.10, 2.5e5, 355.0, 0.028, 0.91, 1.22, true, true).getRequiredArea();
+    for (double diameter : new double[] {0.012, 0.024}) {
+      BlowdownSource source = sourceBuilder(diameter).psvContingency(scenario, 2.5, "case R-1").build();
+      Map<String, Object> result = runSource(source);
+      Map<String, Object> sizing = mapValue(mapValue(result.get("psvSizing")).get("V-1"));
+      assertEquals("sized", sizing.get("status"));
+      assertEquals("", sizing.get("validationMessage"));
+      assertEquals(expected, ((Number) sizing.get("requiredAreaM2")).doubleValue(), 1.0e-15);
+      assertEquals(1.75, sizing.get("basisMassFlowKgPerS"));
+      assertEquals("case R-1", mapValue(sizing.get("contingency")).get("reference"));
+      assertFalse(sizing.containsKey("bdvEquivalentAreaM2"));
+
+      Map<String, Object> bdv = mapValue(mapValue(result.get("bdvDischarge")).get("V-1"));
+      assertEquals(Math.PI * diameter * diameter / 4.0, ((Number) bdv.get("bdvEquivalentAreaM2")).doubleValue(),
+          1.0e-15);
+      double peak = ((Number) bdv.get("peakMassFlowKgPerS")).doubleValue();
+      assertTrue(peak > firstPeak);
+      firstPeak = peak;
+    }
+  }
+
+  /** Legacy settings still run blowdown and explicitly leave the PSV unsized. */
+  @Test
+  void legacySetPressureAloneDoesNotSizePsv() {
+    Map<String, Object> result = runSource(sourceBuilder(0.012).build());
+    Map<String, Object> sizing = mapValue(mapValue(result.get("psvSizing")).get("V-1"));
+    assertEquals("not_sized_missing_relief_demand", sizing.get("status"));
+    assertFalse(sizing.containsKey("requiredAreaM2"));
+    assertTrue(result.containsKey("combinedLoad"));
+  }
+
+  /** Unqualified contingencies cannot enter the gas sizing equation. */
+  @Test
+  void unusableScenariosAndMissingEvidenceStayUnsized() {
+    ReliefScenario liquid = new ReliefScenario.Builder("liquid", ReliefCause.BLOCKED_OUTLET).reliefRateKgPerS(1.0)
+        .phase(ReliefPhase.LIQUID).build();
+    assertEquals("not_sized_unsupported_relief_phase",
+        sourceBuilder(0.012).psvContingency(liquid, 1.5, "case").build().psvBasisStatus());
+    assertEquals("not_sized_noncredible_scenario", sourceBuilder(0.012)
+        .psvContingency(vapourScenario().withCredible(false), 1.5, "case").build().psvBasisStatus());
+    assertEquals("not_sized_invalid_relieving_state",
+        sourceBuilder(0.012)
+            .psvContingency(new ReliefScenario.Builder("gas", ReliefCause.BLOCKED_OUTLET).reliefRateKgPerS(1.0).build(),
+                1.5, "case")
+            .build().psvBasisStatus());
+    assertEquals("not_sized_invalid_pressure_basis",
+        sourceBuilder(0.012).psvContingency(vapourScenario(), 100.0, "case").build().psvBasisStatus());
+    assertThrows(IllegalArgumentException.class, () -> sourceBuilder(0.012).psvContingency(vapourScenario(), 1.5, ""));
+  }
+
+  /**
+   * Creates a synthetic single-phase vapour contingency independent of the initial blowdown fluid.
+   *
+   * @return explicit relief demand and relieving-state gas properties
+   */
+  private ReliefScenario vapourScenario() {
+    return new ReliefScenario.Builder("Blocked outlet", ReliefCause.BLOCKED_OUTLET).reliefRateKgPerS(1.75)
+        .reliefTemperatureK(355.0).molarMassKgPerMol(0.028).compressibility(0.91).specificHeatRatio(1.22).build();
+  }
+
+  /**
+   * Creates a source with PSV hardware and an independent BDV geometry.
+   *
+   * @param diameter BDV diameter in m
+   * @return configured source builder
+   */
+  private DynamicBlowdownFlareStudyDataSource.SourceBuilder sourceBuilder(double diameter) {
+    return BlowdownSource.builder("V-1", gasFluid()).vesselVolumeM3(2.0).orificeDiameterM(diameter)
+        .backPressureBara(1.5).psvBasis(75.0, 0.10, true, true);
+  }
+
+  /**
+   * Runs a short governed blowdown.
+   *
+   * @param source configured blowdown source
+   * @return dynamic study result
+   */
+  private Map<String, Object> runSource(BlowdownSource source) {
+    return DynamicBlowdownFlareStudyRunner.builder().timeStepSeconds(1.0).maxTimeSeconds(3.0).build()
+        .run(DynamicBlowdownFlareStudyDataSource.builder("test").addSource(source).build()).getResult();
   }
 
   /**
@@ -85,7 +180,8 @@ class DynamicBlowdownFlareStudyTest {
     BlowdownSource source = BlowdownSource.builder("V-100", gasFluid()).equipmentTag("V-100").vesselVolumeM3(2.0)
         .orificeDiameterM(0.012).dischargeCoefficient(0.72).backPressureBara(1.5).stopPressureBara(1.5)
         .api521FireCase(8.0, true, true).wallModel(300.0, 8.0, 470.0, 50.0).psvBasis(75.0, 0.21, false, false)
-        .evidenceReference(sourceDrawing).evidenceReference(pipingSpec).build();
+        .psvContingency(vapourScenario(), 2.5, "reviewed case R-1").evidenceReference(sourceDrawing)
+        .evidenceReference(pipingSpec).build();
 
     return DynamicBlowdownFlareStudyDataSource.builder("dyn-1").addSource(source)
         .pidTopologyEvidence(reviewedTopology()).lineEquipmentListEvidence(reviewedLineEquipmentEvidence())

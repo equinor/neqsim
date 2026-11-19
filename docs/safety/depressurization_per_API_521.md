@@ -49,6 +49,25 @@ double Tmin  = sim.minTemperatureC();     // for MDMT check
 double mdotMax = sim.peakMassFlow();      // for flare network sizing
 ```
 
+## Dynamic flare header and knockout loads
+
+`DynamicBlowdownFlareStudyRunner` records the component molar rates and enthalpy
+actually withdrawn from each vessel over each fixed interval. For a two-phase
+vessel under vapor withdrawal these are the discharged vapor properties. The
+runner adds the simultaneous rates by component name and performs an adiabatic
+pressure–enthalpy flash at the configured header pressure. The model assumes a
+common fluid-property basis and instantaneous phase separation at that pressure.
+Equilibrium gas feeds the tip and condensed material goes to knockout.
+
+In `flareLoad.profile`, `timeS` marks the **end** of each interval. The initial
+zero point has zero duration. `componentNames` indexes the header, vapor and
+knockout component-rate arrays in mol/s. The corresponding enthalpy rates are in
+W on the source EOS reference. Totals integrate the interval means over their
+actual duration. Mass, molar flow, heat release and CO₂ each have their own peak
+and timestamp. The tip heat uses the NeqSim flare's ISO 6976:1995 molar lower
+heating value at a combustion reference of 15.55 °C. Reported CO₂ includes
+incoming vapor CO₂ and assumes complete combustion of the other gas-phase carbon.
+
 ## API 521 acceptance criteria
 
 | Criterion | Limit | Source |
