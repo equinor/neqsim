@@ -161,15 +161,15 @@ class BuildPluginTest(unittest.TestCase):
         plugin = self.out / "demo"
         req_file = plugin / bap.LIVE_REQUIREMENTS_FILE
         self.assertTrue(req_file.exists())
-        lines = [l for l in req_file.read_text(encoding="utf-8").splitlines()
-                 if l and not l.startswith("#")]
+        lines = [line for line in req_file.read_text(encoding="utf-8").splitlines()
+                 if line and not line.startswith("#")]
         # dependencies + live + network, dev excluded, the direct URL moved to the internal file,
         # the sibling skill 'alpha' dropped (the editable root install provides it), bare
         # 'msal' superseded by its specified form
         self.assertEqual(lines, ["msal>=1.24", "pepr-client>=1.0.2", "requests>=2.28", "stidapi"])
         self.assertNotIn("pytest", req_file.read_text(encoding="utf-8"))
-        internal = [l for l in (plugin / bap.INTERNAL_REQUIREMENTS_FILE).read_text(
-            encoding="utf-8").splitlines() if l and not l.startswith("#")]
+        internal = [line for line in (plugin / bap.INTERNAL_REQUIREMENTS_FILE).read_text(
+            encoding="utf-8").splitlines() if line and not line.startswith("#")]
         self.assertEqual(internal, ["pypdm @ git+https://github.com/equinor/PyPDM.git"])
         self.assertEqual(result["live_requirements"], 4)
         hook_py = (plugin / "scripts" / "install_skill_packages.py").read_text(encoding="utf-8")
