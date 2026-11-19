@@ -86,7 +86,19 @@ $$D_i^{eff} = \frac{1 - x_i}{\sum_{j \neq i} \frac{x_j}{D_{ij}}}$$
 
 ### Maxwell-Stefan Diffusion Coefficients
 
-The fundamental diffusion coefficients describing molecular interactions, related to Fick diffusion through thermodynamic factors.
+The pair accessor `getDiffusionCoefficient(i, j)` returns the kinetic Maxwell–Stefan coefficient in m²/s.
+For a binary liquid using the shared liquid diffusivity model, `getFickDiffusionCoefficient(i, j)`
+multiplies that coefficient by the constant-temperature, constant-pressure thermodynamic factor
+$1+x_i n(\partial_{n_i}\ln\phi_i-\partial_{n_j}\ln\phi_i)$. Here $n$ is the total phase amount and
+$\phi_i$ is the fugacity coefficient. Initialize the system at level 3 and refresh phase physical
+properties after changing the state. In the ideal limit the binary coefficients coincide.
+
+For a mixture with more than two components, the liquid pair accessor describes a composition
+change exchanging $i$ with $j$ while all other mole fractions are fixed. Coupled multicomponent
+fluxes require the reduced Maxwell–Stefan resistance matrix and thermodynamic-factor matrix.
+Gas and common-phase pair correlations expose their uncorrected kinetic coefficient through the
+legacy Fick accessor. The [film model](../fluidmechanics/InterphaseHeatMassTransfer) uses the
+kinetic pair coefficients and applies the reduced thermodynamic-factor matrix once.
 
 ---
 

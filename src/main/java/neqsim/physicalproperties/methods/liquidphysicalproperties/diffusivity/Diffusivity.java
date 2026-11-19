@@ -141,14 +141,9 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
   /** {@inheritDoc} */
   @Override
   public double getFickBinaryDiffusionCoefficient(int i, int j) {
-    double temp = (i == j) ? 1.0 : 0.0;
-    double nonIdealCorrection = temp + liquidPhase.getPhase().getComponent(i).getx()
-        * liquidPhase.getPhase().getComponent(i).getdfugdn(j) * liquidPhase.getPhase().getNumberOfMolesInPhase();
-    if (Double.isNaN(nonIdealCorrection)) {
-      nonIdealCorrection = 1.0;
+    if (i == j) {
+      return binaryDiffusionCoefficients[i][i];
     }
-
-    // shuld be divided by non ideality factor
-    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection;
+    return binaryDiffusionCoefficients[i][j] * liquidPhase.getPhase().getReducedThermodynamicFactor(i, i, j);
   }
 }

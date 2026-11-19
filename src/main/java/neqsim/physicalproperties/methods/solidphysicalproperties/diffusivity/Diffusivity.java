@@ -74,9 +74,7 @@ public class Diffusivity extends SolidPhysicalPropertyMethod implements Diffusiv
   /** {@inheritDoc} */
   @Override
   public double getFickBinaryDiffusionCoefficient(int i, int j) {
-    double nonIdealCorrection = 1.0;
-    // shuld be divided by non ideality factor
-    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection;
+    return binaryDiffusionCoefficients[i][j];
   }
 
   /** {@inheritDoc} */
