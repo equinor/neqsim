@@ -5232,8 +5232,29 @@ public class TPflash extends Flash {
     return true;
   }
 
-  /** Rechecks wet oil and gas/oil endpoints after the other TP refinements have finished. */
+  /** Rechecks water-rich ionic and wet hydrocarbon endpoints for a missing material phase. */
   private void rescueWaterRichMissingAqueousPhase() {
+    if (system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1
+        && IonicAqueousPhaseEquilibrium.isApplicable(system)) {
+      double referenceGibbs = system.getGibbsEnergy();
+      double gibbsTolerance = Math.max(1.0e-7, Math.abs(referenceGibbs) * 1.0e-12);
+      // A phase with explicit ions but no aqueous phase is not a physically comparable Gibbs
+      // reference. The independent search still compares every accepted split with the conserved
+      // homogeneous aqueous feed before returning it.
+      boolean referenceComparable = system.hasPhaseType(PhaseType.AQUEOUS);
+      try {
+        SystemInterface candidate = system.clone();
+        new IonicAqueousPhaseEquilibrium(candidate).run();
+        candidate.init(1);
+        if (candidate.hasPhaseType(PhaseType.AQUEOUS) && Double.isFinite(candidate.getGibbsEnergy())
+            && (!referenceComparable || candidate.getGibbsEnergy() < referenceGibbs - gibbsTolerance)) {
+          copyFlashStateFrom(candidate);
+          return;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Ionic aqueous dual-root rescue failed: {}", ex.getMessage());
+      }
+    }
     if (system.doMultiPhaseCheck() && system.hasPhaseType(PhaseType.OIL)
         && (system.getNumberOfPhases() == 1 || (system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)))
         && system.hasComponent("water") && system.getComponent("water").getz() > 1.0e-6) {
