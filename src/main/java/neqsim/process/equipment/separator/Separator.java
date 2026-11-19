@@ -298,9 +298,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** Exact accumulated target energy for the enabled integration epoch, J. */
   private double conservativeTransientEnergyTargetJ = Double.NaN;
   /** Optional VU defect limit relative to the initial energy of the conservative integration epoch. */
-  private double conservativeTransientEnergyTolerance;
+  private volatile double conservativeTransientEnergyTolerance;
   /** Initial energy normalization, in joules. Zero indicates an unbaselined or older serialized epoch. */
-  private double conservativeTransientEnergyScaleJ;
+  private volatile double conservativeTransientEnergyScaleJ;
 
   /**
    * Selects conservative accumulated-target energy integration for transient steps.
@@ -899,8 +899,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   protected final void runAcceptedTransientVUFlash(double specifiedVolumeM3, double specifiedEnergyJ,
       boolean warmStartInitialization) {
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    boolean refineEnergy = conservativeTransientEnergyIntegrationEnabled && conservativeTransientEnergyTolerance > 0.0;
-    double limitJ = conservativeTransientEnergyTolerance * conservativeTransientEnergyScaleJ;
+    double relativeTolerance = conservativeTransientEnergyTolerance;
+    boolean refineEnergy = conservativeTransientEnergyIntegrationEnabled && relativeTolerance > 0.0;
+    double limitJ = relativeTolerance * conservativeTransientEnergyScaleJ;
     for (int attempt = 0; attempt < 2; attempt++) {
       thermoOps.VUflash(specifiedVolumeM3, specifiedEnergyJ, "m3", "J", warmStartInitialization || attempt == 1);
       thermoSystem.init(2);
