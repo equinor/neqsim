@@ -6,6 +6,7 @@ on:
     paths:
       - 'examples/relief/**'
       - 'src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudy.java'
+      - 'src/main/java/neqsim/process/equipment/separator/Separator.java'
       - 'src/main/java/neqsim/process/safety/depressurization/DepressurizationSimulator.java'
       - 'src/main/java/neqsim/process/safety/depressurization/SteadyFlareGasNetwork.java'
       - '.github/workflows/core-v101-disposal-benchmark.yml'

@@ -36,8 +36,15 @@ python examples/relief/verify_v101_disposal.py v101-results --revision "$rev" --
 python examples/relief/steady_disposal_limit.py
 ```
 
-The fixed boundary holds both the applied and actual PSV outlet at 1.2 bara while recording
-the disposal response separately. At 0.1 s it recovers the reference PSV peak of 5.495518 kg/s
+The matrix uses the native conservative energy integration policy on both vessels,
+with its relative VU energy tolerance set to the existing study limit of 1e-5. Each inlet
+and outlet enthalpy is integrated once. A locally acceptable VU state outside the
+epoch energy limit receives one warm refinement at the same volume and energy. A
+persistent defect rejects the native step with rollback. Standalone separators retain
+the previous single-flash behavior unless the user enables the additional tolerance.
+
+Two fixed-boundary controls hold the actual PSV outlet at 1.2 bara. The original control
+uses `--vessel-energy reference`. At 0.1 s it recovers the reference PSV peak of 5.495518 kg/s
 at 3.2 s and the V-101 peak of 42.363686 bara at 2.4 s. Each JSON row is an end-of-interval
 snapshot. The terminal rating and final EOS pressure are solved together. Vapor enthalpy and
 composition and the liquid drainage use opening-phase inventories. Rows include vessel temperatures and inventories, valve flows and lift,
@@ -45,8 +52,8 @@ flange/header pressures, drum level, drain and vapor flow, and header balance re
 
 ## Qualification evidence
 
-Reference Java revision `0eacf4bac9646a0c2839aa95392e38d67ddb51b2`. The table
-gives independent maxima over 20 s at a 0.1 s timestep. The two status columns apply
+Reference-policy Java revision `0eacf4bac9646a0c2839aa95392e38d67ddb51b2`. Run
+with `--vessel-energy reference` to reproduce the table below. It gives independent maxima over 20 s at a 0.1 s timestep. The two status columns apply
 the same numerical criteria at both resolutions.
 
 | Scenario | V-101 peak (bara) | PSV peak (kg/s) | BDV peak (kg/s) | Tip peak (kg/s) | Header peak (bara) | 0.1 s | 0.05 s |
@@ -70,6 +77,20 @@ Halving the step changed the peak tip flow from 5.416 to 5.449 kg/s and moved it
 from 14.90 to 7.95 s. The V-100 energy residual fell from 3.4274e-5 to 1.5821e-5.
 The BDV-only fine run reached 1.0351e-5. Peak-time sensitivity, source balances,
 thermal response and missing project equipment data keep the engineering qualification open.
+The receipt includes both upstream vessel energy ledgers in joules. It records the
+integrated boundary energy, expected and published internal energy, signed local VU
+defects, and maximum historical debt. The verifier recomputes each normalized maximum
+from the physical ledger and requires a complete passing epoch for both conservative vessels.
+
+With conservative integration and the same 1e-5 vessel policy, the fine BDV-only
+maximum fell from 1.0351e-5 to 4.6428e-7. In the wet case at 0.05 s, accumulating
+the exact source-energy target reduced the V-100 maximum from 1.5821e-5 to
+1.1931e-5. Its 218.125 J peak debt equalled the largest accepted VU flash defect.
+Refining only locally accepted states outside the epoch's 182.821 J budget reduced
+the maximum to 119.660 J (6.5452e-6). The fine wet tip peaked at 5.4493 kg/s at 7.95 s.
+At 0.025 and 0.0125 s the wet-case source maxima were 7.4565e-6 and 4.8489e-6.
+These are numerical energy checks on the synthetic vessels. The thermal comparison
+and project equipment limitations still apply.
 
 The BDV-only case also exposes the stiffness of the terminal rating near zero pressure
 rise. Evaluating the tip flow from the opening pressure produced peaks of 0.685 and
