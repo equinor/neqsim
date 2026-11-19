@@ -1,6 +1,6 @@
 ---
 name: engineering-deliverables
-description: "Generates engineering deliverables from NeqSim ProcessSystem or ProcessModel: professional P&ID drawing packages with DEXPI 2.0.1, instrumentation, safeguards, registers and simulation bindings for steady-state and dynamic tests. Also handles PFDs, study class A/B/C schedules, engineering design loops, completeness, CFIHOS handover, revision impact and package validation."
+description: "Generates engineering deliverables from NeqSim ProcessSystem or ProcessModel: professional P&ID drawing packages with DEXPI 2.0.1, instrumentation, safeguards, equipment datasheets, weight registers and simulation bindings for steady-state and dynamic tests. Also handles PFDs, study class A/B/C schedules, engineering design loops, completeness, CFIHOS handover, revision impact and package validation."
 required_skills:
 - neqsim-process-modeling
 - neqsim-api-patterns
@@ -30,6 +30,21 @@ vendor data, document control or accountable approval.
 ---
 
 ## Core Functionality
+
+### Equipment datasheets and weight register
+
+Use the `neqsim-engineering-design-package` datasheet workflow for one controlled
+equipment sheet per physical tag. Source the document numbers, revision,
+material connections, available process and mechanical data, and weight holds
+from `EquipmentDatasheetGenerator`. Reconcile sheet coverage against the P&ID.
+Render each sheet with project and case identification, a port table, process
+performance, mechanical configuration, weights and outstanding inputs. Keep
+known weight subtotals visibly distinct from complete project totals.
+
+For mechanical-only packages, use `MechanicalDatasheet` JSON or Markdown.
+Render from the structured statuses, show governing case and drawing references,
+and reconcile process nozzle roles against the P&ID. Pass the pressure boundary,
+test, materials, loads, inspections and vendor holds forward as separate fields.
 
 ### Professional P&ID and executable simulation handoff
 

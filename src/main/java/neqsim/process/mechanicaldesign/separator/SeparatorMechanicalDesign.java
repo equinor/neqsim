@@ -191,6 +191,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   private double oilOutletNozzleID = 0.0;
   /** Water outlet nozzle internal diameter [m]. */
   private double waterOutletNozzleID = 0.0;
+  /** Positive water outlet bore supplied by the design basis. */
+  private boolean waterOutletNozzleSpecified;
 
   // ============================================================================
   // Entrainment Performance Results (populated from
@@ -464,6 +466,17 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     setModuleLength(moduleLength);
 
+    if (inletNozzleID <= 0.0) {
+      calcInletNozzleID();
+    }
+    if (gasOutletNozzleID <= 0.0) {
+      calcGasOutletNozzleID();
+    }
+    if (oilOutletNozzleID <= 0.0) {
+      calcOilOutletNozzleID();
+    }
+    calcWaterOutletNozzleID();
+
     // Populate entrainment performance results if detailed calculation is enabled
     populateEntrainmentResults();
   }
@@ -576,6 +589,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     calcInletNozzleID();
     calcGasOutletNozzleID();
     calcOilOutletNozzleID();
+    calcWaterOutletNozzleID();
 
     // Set default liquid level fractions
     calculateDefaultLevelFractions();
@@ -993,6 +1007,27 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Screens the aqueous outlet bore of a three-phase separator for a 1.5 m/s liquid velocity. Positive specified
+   * diameters are retained. Calculated bores are rounded upward in 25 mm increments with a 50 mm minimum.
+   *
+   * @return screened internal bore in metres, or zero when aqueous flow is absent
+   */
+  public double calcWaterOutletNozzleID() {
+    if (waterOutletNozzleSpecified) {
+      return waterOutletNozzleID;
+    }
+    double flow = 0.0;
+    if (getProcessEquipment() instanceof ThreePhaseSeparator) {
+      Separator separator = (Separator) getProcessEquipment();
+      flow = getActualPhaseFlowRate(separator.getThermoSystem(), "aqueous");
+    }
+    waterOutletNozzleID = flow > 0.0
+        ? Math.max(0.05, Math.ceil(Math.sqrt(4.0 * flow / (Math.PI * 1.5)) / 0.025) * 0.025)
+        : 0.0;
+    return waterOutletNozzleID;
+  }
+
+  /**
    * Get actual volumetric flow for a named phase without evaluating density for an empty phase.
    *
    * @param fluid the separator fluid after the process calculation
@@ -1000,7 +1035,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @return actual volumetric flow in m3/s, or zero for an absent or empty phase
    */
   private double getActualPhaseFlowRate(SystemInterface fluid, String phaseType) {
-    if (!fluid.hasPhaseType(phaseType) || fluid.getPhase(phaseType).getNumberOfMolesInPhase() == 0.0) {
+    if (fluid == null || !fluid.hasPhaseType(phaseType) || fluid.getPhase(phaseType).getNumberOfMolesInPhase() == 0.0) {
       return 0.0;
     }
     return fluid.getPhase(phaseType).getFlowRate("m3/sec");
@@ -1250,6 +1285,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   public void setWaterOutletNozzleID(double id) {
     this.waterOutletNozzleID = id;
+    this.waterOutletNozzleSpecified = id > 0.0 && Double.isFinite(id);
   }
 
   // ==================== Getters for Fractions ====================
@@ -1466,7 +1502,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     this.inletNozzleID = inletNozzle;
     this.gasOutletNozzleID = gasNozzle;
     this.oilOutletNozzleID = oilNozzle;
-    this.waterOutletNozzleID = waterNozzle;
+    setWaterOutletNozzleID(waterNozzle);
   }
 
   /**

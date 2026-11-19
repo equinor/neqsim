@@ -1,6 +1,6 @@
 ---
 name: mechanical-design
-description: "Performs mechanical design and CAPEX for process equipment and systems - wall thickness, pipeline limit states, free span/VIV, pipe-soil, global buckling, corroded-pipe screening, materials, weight and AACE-class cost per ASME, API, DNV, ISO and NORSOK. Covers separators, pipelines, exchangers, compressors, valves, vessels, topsides, SURF, subsea and well rollups, with company TR requirements."
+description: "Performs mechanical design and CAPEX for process equipment and systems - wall thickness, pipeline limit states, free span/VIV, pipe-soil, global buckling, corroded-pipe screening, materials, weight, equipment datasheets and AACE-class cost per ASME, API, DNV, ISO and NORSOK. Covers separators, pipelines, exchangers, compressors, valves, vessels, topsides, SURF, subsea and well rollups, with company TR requirements."
 required_skills:
 - neqsim-api-patterns
 - neqsim-standards-lookup
@@ -38,6 +38,25 @@ mechanical-design efficiency and turndown APIs use percent; the simulator effici
 Pipeline project/company factors remain bounded by code/location ceilings during wall and MAOP
 calculations. Check `getDesignFactorSource()` and validate actual liquid inventory after separator
 sizing. See `docs/process/mechanical_design_database.md` for data layering and method limitations.
+
+## Equipment datasheet and weight basis
+
+For an entire flowsheet, run the configured design cases and generate
+`EquipmentDatasheetGenerator.generateAllDatasheets()`. Review the structured
+weight and hold fields before handing the package to `engineering-deliverables`.
+Check each modeled tag, its P&ID line connections, and the dry mass breakdown.
+Use the equipment's operating inventory for the operating weight where
+supported. For missing dry, operating, or hydrotest weights, retain the hold and
+identify the required vendor or design input. Confirm package boundaries before
+rolling dry weights into project totals.
+
+When asked for a mechanical datasheet, use `generateMechanicalDatasheet` or
+`generateAllMechanicalDatasheets` from the same generator. Review the native
+geometry and design case status, code and materials, weights and test basis,
+loads/supports, inspection and documentation. For vessels, verify the pressure
+boundary, levels, nozzle schedule and internals. Record approved input and
+vendor values against the reported requirement keys with source and revision.
+A screening nozzle bore does not specify a flange or a fabrication dimension.
 
 ## Architecture Pattern
 Every piece of process equipment has a `MechanicalDesign` object:
