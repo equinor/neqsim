@@ -697,3 +697,13 @@ design-basis package), these rules apply on top of the principles above. Each wa
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — risk-register schema
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — evidence matrix, rupture/PFP results, and source-term handoff reporting
 - [process-study-report](../process-study-report/SKILL.md) — complete process-study report package for a solved NeqSim model: engineering basis, all-stream tables per case, balances, BFD/PFD sheets, standards register and a fail-closed validation report (use it when the deliverable is a stream-table/PFD study rather than a narrative task report)
+
+
+## Equipment datasheet packages
+
+When rendering equipment sheets, use the structured `EquipmentDatasheetGenerator`
+package as the data source. Show tag, document number and revision on each page
+and reconcile the complete set against the P&ID register. Keep every stream
+value labelled with its unit and case. Show dry, operating and test weights in
+separate fields, include their scope and basis, and preserve explicit holds.
+Present known subtotals with coverage counts whenever a project total is unavailable.

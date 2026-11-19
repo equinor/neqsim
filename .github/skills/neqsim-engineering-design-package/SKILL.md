@@ -1,6 +1,6 @@
 ---
 name: neqsim-engineering-design-package
-description: "Guides agents through NeqSim EngineeringProject, EngineeringDesignLoop, PidDesignSynthesizer, DexpiEngineeringExporter, EngineeringDeliverableCompiler, and EngineeringApprovalLedger. USE WHEN: building a governed engineering design basis, iterating equipment design modules over cases, synthesizing and checking P&IDs, exporting DEXPI or CFIHOS handovers, validating package numerics, assessing change impact, or recording review decisions."
+description: "Guides agents through NeqSim EngineeringProject, EngineeringDesignLoop, PidDesignSynthesizer, DexpiEngineeringExporter, EngineeringDeliverableCompiler, and EngineeringApprovalLedger. USE WHEN: building a governed engineering design basis, producing equipment datasheets and weight registers, iterating equipment design modules over cases, synthesizing and checking P&IDs, exporting DEXPI or CFIHOS handovers, validating package numerics, assessing change impact, or recording review decisions."
 last_verified: "2026-10-03"
 ---
 
@@ -20,6 +20,22 @@ Run stages in this order:
 6. Diff the controlled revisions, propagate impact actions, then build the approval ledger with revision-aware invalidation.
 
 For process topology construction, operating actions, and DEXPI context, use `neqsim-pid-process-operations` and `neqsim-process-modeling`. This skill adds the typed design loop, package coordination, qualification, change, and approval APIs; it does not replace those workflows.
+
+## Equipment datasheets
+
+For a solved flowsheet, run the intended mechanical design calculations with
+explicit pressure, temperature and materials bases. Generate the structured
+package with `EquipmentDatasheetGenerator`. Reconcile one sheet per physical
+equipment tag against the P&ID and line register before rendering. Keep the
+simulation revision and case on the document header. Use separate sections for
+operating and design conditions, material stream connections, performance,
+mechanical dimensions, dry/operating/hydrotest weights, and inputs on hold.
+
+Use the model weight scope and the case inventory basis verbatim in the weight
+register. For quantities with missing coverage, keep the available subtotal and
+the number of missing items. Carry vendor data and engineer-reviewed equipment
+weights with their source and revision. See
+`docs/process/equipment_datasheets.md` for the API and output contract.
 
 ## Class map
 

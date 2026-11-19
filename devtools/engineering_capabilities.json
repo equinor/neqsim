@@ -454,6 +454,28 @@
       "limitations": "Public Java/JPype object workflow, discoverable through inspectApi; no new curated MCP execution schema or PLC application generator. Automatic cooling-loop helper requires an actual native utility valve directly feeding side 1 in process order, explicit thermal inputs and unique tags. Nine actual TT/PT/FT devices and one native TIC share canonical bindings with native four-port drawings and DEXPI 2.0.1. HeatExchanger with thermal dynamics enabled is a constant-pressure, fixed-composition, positive-throughflow single-phase model with two mixed fluid enthalpy inventories and a wall; nominal volumes initialize fixed masses, with no thermal expansion, hydraulic pressure/hammer, phase change or distributed counterflow. Classical EOS mixing and reference water/seawater are the supported property basis. Film coefficients and area govern thermal mode; configured steady NTU/UA is retained for the default steady mode. Native snapshot rollback and raw NeqSimXtream restart retain dynamic state; the convenience ProcessSystem loader reinitializes steady state. Candidate PID studies run isolated native copies, retain failures and traces, and accept only the declared final-window and thermal-residual criteria. Same-build full serialized runtime fingerprints normalize only selected PID gains/setpoint; changed properties, policy, history or source state invalidate evidence. Applying a recommendation requires a new revision and fresh canonical bindings. Executable policy stays in the native model/canonical sidecar, not XML-only PLC transfer. Routing, schema/profile conformance and test presence do not establish plant/vendor, receiving-tool, SRS/SIL/IPL, standards or construction qualification. Missing fail action, relief and line design remain HOLD."
     },
     {
+      "id": "equipment-datasheets-weight-register",
+      "title": "Process equipment datasheets and weight register",
+      "domain": "engineering-design",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.mechanicaldesign.EquipmentDatasheetGenerator",
+        "neqsim.process.mechanicaldesign.MechanicalDesignReport"
+      ],
+      "skills": [
+        "neqsim-engineering-design-package",
+        "neqsim-professional-reporting"
+      ],
+      "agents": [
+        "engineering-deliverables",
+        "mechanical-design"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/mechanicaldesign/EquipmentDatasheetGeneratorTest.java"
+      ],
+      "limitations": "Preliminary JSON sheets for physical equipment and a weight coverage register. Mechanical calculations must be prepared before export. Equipment-specific weight and design coverage varies; unavailable values remain holds."
+    },
+    {
       "id": "equipment-sizing",
       "title": "Separator and compressor sizing",
       "domain": "engineering-design",

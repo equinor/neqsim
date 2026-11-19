@@ -267,6 +267,14 @@ using its aggregates.
 
 ## JSON Export
 
+### Equipment datasheets and weights
+
+Use the [equipment datasheet generator](equipment_datasheets.md) after solving
+the process and running the mechanical design calculations for the intended
+case. Its weight register records the mechanical-design dry estimate separately
+from the operating estimate and identifies unavailable values. The equipment
+list in the mechanical design report leaves missing operating weights blank.
+
 ### Exporting Individual Equipment
 
 ```java

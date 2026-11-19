@@ -1,18 +1,28 @@
 package neqsim.process.mechanicaldesign;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Locale;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ModuleInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -96,19 +106,9 @@ public class EquipmentDatasheetGenerator implements Serializable {
    */
   public String generateAllDatasheets() {
     JsonArray datasheets = new JsonArray();
-    int seq = 1;
-
-    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
-      try {
-        JsonObject ds = generateDatasheet(unit, seq);
-        if (ds != null) {
-          datasheets.add(ds);
-          seq++;
-        }
-      } catch (Exception e) {
-        // Skip equipment that fails
-      }
-    }
+    JsonArray excluded = new JsonArray();
+    boolean solvedCase = hasSolvedCase();
+    collectDatasheets(processSystem, datasheets, excluded, solvedCase);
 
     JsonObject root = new JsonObject();
     root.addProperty("projectName", projectName);
@@ -116,9 +116,62 @@ public class EquipmentDatasheetGenerator implements Serializable {
     root.addProperty("generatedAt", java.time.Instant.now().toString());
     root.addProperty("equipmentCount", datasheets.size());
     root.add("datasheets", datasheets);
+    root.add("excludedSimulationObjects", excluded);
+    root.addProperty("operatingCaseStatus", solvedCase ? "solved" : "unsolved");
+    root.add("weightSummary", summarizeWeights(datasheets));
 
-    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeNulls().setPrettyPrinting().create();
     return gson.toJson(root);
+  }
+
+  /**
+   * Traverses process modules and reserves one numbered sheet for each physical item.
+   *
+   * @param process flowsheet to visit
+   * @param datasheets document register
+   * @param excluded streams and solver objects excluded from the equipment register
+   * @param solvedCase whether the simulation has a converged operating case
+   */
+  private void collectDatasheets(ProcessSystem process, JsonArray datasheets, JsonArray excluded, boolean solvedCase) {
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof ModuleInterface) {
+        collectDatasheets(((ModuleInterface) unit).getOperations(), datasheets, excluded, solvedCase);
+      } else if (unit instanceof StreamInterface || unit instanceof Recycle || unit instanceof Adjuster
+          || unit instanceof Calculator || unit instanceof SetPoint) {
+        excluded.add(unit.getName());
+      } else {
+        datasheets.add(generateDatasheet(unit, datasheets.size() + 1, solvedCase));
+      }
+    }
+  }
+
+  /**
+   * Reports known mass subtotals and reports full totals only when every item has a value.
+   *
+   * @param datasheets equipment document register
+   * @return weight coverage and totals by weight condition
+   */
+  private static JsonObject summarizeWeights(JsonArray datasheets) {
+    JsonObject summary = new JsonObject();
+    for (String condition : new String[] {"dry", "operating", "hydrotest"}) {
+      String key = condition + "Weight_kg";
+      double subtotal = 0.0;
+      int known = 0;
+      for (int index = 0; index < datasheets.size(); index++) {
+        JsonObject weight = datasheets.get(index).getAsJsonObject().getAsJsonObject("weights");
+        if (!weight.get(key).isJsonNull()) {
+          subtotal += weight.get(key).getAsDouble();
+          known++;
+        }
+      }
+      JsonObject total = new JsonObject();
+      total.addProperty("knownCount", known);
+      total.addProperty("missingCount", datasheets.size() - known);
+      total.addProperty("knownSubtotal_kg", known > 0 ? subtotal : null);
+      total.addProperty("total_kg", known > 0 && known == datasheets.size() ? subtotal : null);
+      summary.add(condition, total);
+    }
+    return summary;
   }
 
   /**
@@ -126,13 +179,34 @@ public class EquipmentDatasheetGenerator implements Serializable {
    *
    * @param equipment the process equipment
    * @param sequenceNumber sequence number for document numbering
-   * @return JSON object representing the datasheet, or null if not applicable
+   * @return JSON object representing the datasheet
    */
   public JsonObject generateDatasheet(ProcessEquipmentInterface equipment, int sequenceNumber) {
+    return generateDatasheet(equipment, sequenceNumber, hasSolvedCase());
+  }
+
+  /**
+   * Checks for a completed, converged run before reporting operating values.
+   *
+   * @return true when the process has a run identity and is solved
+   */
+  private boolean hasSolvedCase() {
+    return processSystem.getCalculationIdentifier() != null && processSystem.solved();
+  }
+
+  /**
+   * Creates a document using the supplied reporting basis for operating data.
+   *
+   * @param equipment process equipment
+   * @param sequenceNumber sheet sequence
+   * @param solvedCase whether the operating values are supported by a solved case
+   * @return equipment datasheet
+   */
+  private JsonObject generateDatasheet(ProcessEquipmentInterface equipment, int sequenceNumber, boolean solvedCase) {
     JsonObject ds = new JsonObject();
 
     // Header
-    String docNumber = String.format("%s-%04d", documentPrefix, sequenceNumber);
+    String docNumber = String.format(Locale.ROOT, "%s-%04d", documentPrefix, sequenceNumber);
     ds.addProperty("documentNumber", docNumber);
     ds.addProperty("projectName", projectName);
     ds.addProperty("revision", revision);
@@ -146,58 +220,115 @@ public class EquipmentDatasheetGenerator implements Serializable {
     general.addProperty("service", inferService(equipment));
     ds.add("generalInformation", general);
 
-    // Design Conditions from mechanical design
+    JsonArray holds = new JsonArray();
+    JsonObject weights = new JsonObject();
+    weights.add("dryWeight_kg", JsonNull.INSTANCE);
+    weights.add("operatingWeight_kg", JsonNull.INSTANCE);
+    weights.add("hydrotestWeight_kg", JsonNull.INSTANCE);
     JsonObject design = new JsonObject();
+    JsonArray standards = new JsonArray();
     try {
       MechanicalDesign mechDesign = equipment.getMechanicalDesign();
       if (mechDesign != null) {
-        design.addProperty("designPressure_barg", roundTo(mechDesign.getMaxDesignPressure() - 1.01325, 1));
+        design.addProperty("designPressure_barg", roundTo(mechDesign.getMaxDesignPressure("barg"), 1));
         design.addProperty("designTemperature_C", roundTo(mechDesign.getDesignMaxTemperatureLimit(), 0));
         design.addProperty("minDesignTemperature_C", roundTo(mechDesign.getDesignMinTemperatureLimit(), 0));
-        design.addProperty("corrosionAllowance_mm", roundTo(mechDesign.getCorrosionAllowance() * 1000.0, 1));
-
-        // Weight
-        double shellWeight = mechDesign.getWeigthVesselShell();
-        design.addProperty("dryWeight_kg", roundTo(shellWeight, 0));
-        design.addProperty("wallThickness_mm", roundTo(mechDesign.getWallThickness() * 1000.0, 1));
+        design.addProperty("corrosionAllowance_mm", roundTo(mechDesign.getCorrosionAllowance(), 1));
+        MechanicalDesignResponse response = mechDesign.getResponse();
+        if (response.getDesignStandard() != null) {
+          standards.add(response.getDesignStandard());
+        }
+        design.addProperty("dryWeight_kg", positiveOrNull(mechDesign.getWeightTotal()));
+        weights.addProperty("dryWeight_kg", positiveOrNull(mechDesign.getWeightTotal()));
+        weights.addProperty("vesselShellWeight_kg", positiveOrNull(mechDesign.getWeigthVesselShell()));
+        weights.addProperty("operatingWeight_kg", positiveOrNull(response.getOperatingWeight()));
+        weights.addProperty("basis", "NeqSim mechanical design estimate");
+        String wallUnit = MechanicalDesignData.wallThicknessUnit(mechDesign);
+        if (wallUnit != null) {
+          design.addProperty("wallThickness_mm",
+              roundTo(mechDesign.getWallThickness() * ("m".equals(wallUnit) ? 1000.0 : 1.0), 1));
+        }
+        ds.add("mechanicalDesign", JsonParser.parseString(response.toJson()));
       }
-    } catch (Exception e) {
-      // No mechanical design available
+    } catch (RuntimeException ex) {
+      holds.add("Mechanical design unavailable (" + ex.getClass().getSimpleName() + ")");
+    }
+    for (String condition : new String[] {"dry", "operating", "hydrotest"}) {
+      if (weights.get(condition + "Weight_kg").isJsonNull()) {
+        holds.add("Confirm " + condition + " weight");
+      }
     }
     ds.add("designConditions", design);
+    ds.add("applicableCodes", standards);
+    ds.add("weights", weights);
 
     // Operating Conditions from streams
-    JsonObject operating = buildOperatingConditions(equipment);
+    JsonObject operating = solvedCase ? buildOperatingConditions(equipment, holds) : new JsonObject();
     ds.add("operatingConditions", operating);
 
     // Equipment-specific performance data
-    JsonObject performance = buildPerformanceData(equipment);
+    JsonObject performance = solvedCase ? buildPerformanceData(equipment, holds) : new JsonObject();
     ds.add("performanceData", performance);
 
-    // Applicable standards
-    JsonArray standards = new JsonArray();
-    standards.add("ASME Section VIII Div. 1 (Pressure Vessels)");
-    standards.add("ASME B31.3 (Process Piping)");
-    if (equipment instanceof Separator) {
-      standards.add("NORSOK P-002 (Process System Design)");
-      standards.add("API 12J (Specification for Oil and Gas Separators)");
-    } else if (equipment instanceof Compressor) {
-      standards.add("API 617 (Axial and Centrifugal Compressors)");
-    } else if (equipment instanceof Pump) {
-      standards.add("API 610 (Centrifugal Pumps)");
+    ds.add("inletStreams", describePorts(equipment.getInletStreams(), holds, solvedCase));
+    ds.add("outletStreams", describePorts(equipment.getOutletStreams(), holds, solvedCase));
+    if (!solvedCase) {
+      holds.add("Solve the operating case before issuing process data");
     }
-    ds.add("applicableCodes", standards);
+    ds.add("holds", holds);
+    ds.addProperty("issueStatus", "PRELIMINARY");
 
     return ds;
+  }
+
+  /**
+   * Captures availability and operating properties for every exposed material connection.
+   *
+   * @param streams equipment port streams
+   * @param holds sheet-level missing data notes
+   * @param solvedCase whether the operating values are supported by a solved case
+   * @return connected streams in equipment port order
+   */
+  private JsonArray describePorts(List<StreamInterface> streams, JsonArray holds, boolean solvedCase) {
+    JsonArray ports = new JsonArray();
+    for (StreamInterface stream : streams) {
+      if (stream == null) {
+        continue;
+      }
+      JsonObject port = new JsonObject();
+      port.addProperty("streamTag", stream.getName());
+      if (solvedCase) {
+        try {
+          port.addProperty("pressure_bara", roundTo(stream.getPressure(), 4));
+          port.addProperty("temperature_C", roundTo(stream.getTemperature("C"), 3));
+          port.addProperty("massFlow_kgPerHr", roundTo(stream.getFlowRate("kg/hr"), 3));
+        } catch (RuntimeException ex) {
+          holds.add("Confirm operating data at stream " + stream.getName());
+        }
+      }
+      ports.add(port);
+    }
+    return ports;
+  }
+
+  /**
+   * Converts an unavailable or nonphysical equipment weight to a JSON null.
+   *
+   * @param weight weight in kg
+   * @return positive finite weight or null
+   */
+  private static Double positiveOrNull(double weight) {
+    return Double.isFinite(weight) && weight > 0.0 ? weight : null;
   }
 
   /**
    * Builds operating conditions section from equipment streams.
    *
    * @param equipment the equipment
+   * @param holds sheet-level missing data notes
    * @return JSON object with operating conditions
    */
-  private JsonObject buildOperatingConditions(ProcessEquipmentInterface equipment) {
+  private JsonObject buildOperatingConditions(ProcessEquipmentInterface equipment, JsonArray holds) {
     JsonObject ops = new JsonObject();
 
     try {
@@ -226,8 +357,8 @@ public class EquipmentDatasheetGenerator implements Serializable {
         ops.addProperty("inletPressure_bara", roundTo(valve.getInletStream().getPressure(), 1));
         ops.addProperty("outletPressure_bara", roundTo(valve.getOutletPressure(), 1));
       }
-    } catch (Exception e) {
-      // Cannot extract operating conditions
+    } catch (RuntimeException ex) {
+      holds.add("Confirm equipment operating conditions");
     }
 
     return ops;
@@ -237,9 +368,10 @@ public class EquipmentDatasheetGenerator implements Serializable {
    * Builds equipment-specific performance data.
    *
    * @param equipment the equipment
+   * @param holds sheet-level missing data notes
    * @return JSON object with performance data
    */
-  private JsonObject buildPerformanceData(ProcessEquipmentInterface equipment) {
+  private JsonObject buildPerformanceData(ProcessEquipmentInterface equipment, JsonArray holds) {
     JsonObject perf = new JsonObject();
 
     try {
@@ -266,8 +398,23 @@ public class EquipmentDatasheetGenerator implements Serializable {
         Cooler cooler = (Cooler) equipment;
         perf.addProperty("duty_kW", roundTo(Math.abs(cooler.getDuty()) / 1000.0, 1));
       }
-    } catch (Exception e) {
-      // Cannot extract performance data
+
+      if (equipment instanceof HeatExchanger) {
+        perf.addProperty("duty_kW", roundTo(((HeatExchanger) equipment).getDuty("kW"), 1));
+      }
+
+      if (equipment instanceof Pump) {
+        perf.addProperty("power_kW", roundTo(((Pump) equipment).getPower("kW"), 1));
+      }
+
+      if (equipment instanceof ThrottlingValve) {
+        ThrottlingValve valve = (ThrottlingValve) equipment;
+        perf.addProperty("pressureDrop_bar",
+            roundTo(valve.getInletStream().getPressure() - valve.getOutletStream().getPressure(), 3));
+        perf.addProperty("Cv_US", positiveOrNull(valve.getCv()));
+      }
+    } catch (RuntimeException ex) {
+      holds.add("Confirm equipment performance data");
     }
 
     return perf;
@@ -317,7 +464,7 @@ public class EquipmentDatasheetGenerator implements Serializable {
    * @return service description
    */
   private String inferService(ProcessEquipmentInterface equipment) {
-    String name = equipment.getName().toLowerCase();
+    String name = equipment.getName().toLowerCase(Locale.ROOT);
     if (name.contains("hp") || name.contains("high pressure")) {
       return "High Pressure Service";
     } else if (name.contains("mp") || name.contains("medium pressure")) {
@@ -342,9 +489,9 @@ public class EquipmentDatasheetGenerator implements Serializable {
    * @param decimals number of decimal places
    * @return rounded value
    */
-  private double roundTo(double value, int decimals) {
-    if (Double.isNaN(value) || Double.isInfinite(value)) {
-      return value;
+  private Double roundTo(double value, int decimals) {
+    if (!Double.isFinite(value)) {
+      return null;
     }
     double factor = Math.pow(10, decimals);
     return Math.round(value * factor) / factor;

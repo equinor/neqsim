@@ -173,7 +173,9 @@ Abstract base class for all equipment cost estimators.
 
 ### Separator Cost
 
-For vertical and horizontal separators, scrubbers, and slug catchers.
+For vertical and horizontal separators, scrubbers, and slug catchers. The
+separator estimate uses the volume of the sized cylindrical section and the
+vessel's orientation to select the Turton purchase-cost correlation.
 
 ```java
 Separator separator = new Separator("HP Separator", feed);
