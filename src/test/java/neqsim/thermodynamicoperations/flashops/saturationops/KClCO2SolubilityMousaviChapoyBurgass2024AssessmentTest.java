@@ -149,6 +149,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     Result scaledBaseline = calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, 1.0);
     Result ablated = calculateWithoutFurstCo2IonInteractions(reference, CO2_FEED_MOLES);
     Result scaledAblation = calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, 0.0);
+    Result midpoint = calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, 0.5);
 
     assertEquals(baseline.molecularMolePercent, scaledBaseline.molecularMolePercent, 0.0);
     assertEquals(baseline.co2FugacityBara, scaledBaseline.co2FugacityBara, 0.0);
@@ -158,6 +159,11 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     assertEquals(ablated.co2FugacityBara, scaledAblation.co2FugacityBara, 0.0);
     assertEquals(ablated.waterActivity, scaledAblation.waterActivity, 0.0);
     assertEquals(ablated.phaseTypes, scaledAblation.phaseTypes);
+    assertTrue(Double.compare(midpoint.molecularMolePercent, baseline.molecularMolePercent) != 0,
+        "midpoint dissolved CO2 must differ from the initialized full-block endpoint");
+    assertTrue(Double.compare(midpoint.molecularMolePercent, ablated.molecularMolePercent) != 0,
+        "midpoint dissolved CO2 must differ from the zero-block endpoint");
+    assertEquals(baseline.phaseTypes, midpoint.phaseTypes);
   }
 
   /**
@@ -427,6 +433,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     }
     fluid.setMixingRule(10);
     if (furstCo2IonScale != 1.0) {
+      fluid.init(0);
       scaleFurstCo2IonInteractions(fluid, furstCo2IonScale);
     }
     fluid.setMultiPhaseCheck(true);
@@ -457,14 +464,36 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       }
       ElectrolyteMixingRulesInterface rule = ((PhaseModifiedFurstElectrolyteEos) phase).getElectrolyteMixingRule();
       int co2Index = phase.getComponent("CO2").getComponentNumber();
+      boolean hasInitializedInteraction = false;
       for (String ion : new String[] {"Na+", "K+", "Ca++", "Mg++", "Cl-"}) {
         if (phase.hasComponent(ion)) {
           int ionIndex = phase.getComponent(ion).getComponentNumber();
-          rule.setWijParameter(co2Index, ionIndex, scale * rule.getWijParameter(co2Index, ionIndex));
-          rule.setWijT1Parameter(co2Index, ionIndex, scale * rule.gettWijT1Parameter(co2Index, ionIndex));
-          rule.setWijT2Parameter(co2Index, ionIndex, scale * rule.gettWijT2Parameter(co2Index, ionIndex));
+          double wij0 = rule.getWijParameter(co2Index, ionIndex);
+          double wij1 = rule.gettWijT1Parameter(co2Index, ionIndex);
+          double wij2 = rule.gettWijT2Parameter(co2Index, ionIndex);
+          double resolvedWij = rule.getWij(co2Index, ionIndex, phase.getTemperature());
+          hasInitializedInteraction |= wij0 != 0.0 || wij1 != 0.0 || wij2 != 0.0;
+          rule.setWijParameter(co2Index, ionIndex, scale * wij0);
+          rule.setWijT1Parameter(co2Index, ionIndex, scale * wij1);
+          rule.setWijT2Parameter(co2Index, ionIndex, scale * wij2);
+          assertEquals(scale * wij0, rule.getWijParameter(co2Index, ionIndex), 0.0,
+              ion + " scaled Furst W0 readback");
+          assertEquals(scale * wij1, rule.gettWijT1Parameter(co2Index, ionIndex), 0.0,
+              ion + " scaled Furst W1 readback");
+          assertEquals(scale * wij2, rule.gettWijT2Parameter(co2Index, ionIndex), 0.0,
+              ion + " scaled Furst W2 readback");
+          double expectedResolvedWij = scale * resolvedWij;
+          assertEquals(expectedResolvedWij, rule.getWij(co2Index, ionIndex, phase.getTemperature()),
+              8.0 * Math.ulp(expectedResolvedWij), ion + " temperature-resolved Furst Wij readback");
+          if (scale > 0.0 && scale < 1.0 && resolvedWij != 0.0) {
+            double scaledResolvedWij = rule.getWij(co2Index, ionIndex, phase.getTemperature());
+            assertTrue(scaledResolvedWij > Math.min(0.0, resolvedWij)
+                && scaledResolvedWij < Math.max(0.0, resolvedWij),
+                ion + " scaled Furst Wij must lie strictly between the endpoint values");
+          }
         }
       }
+      assertTrue(hasInitializedInteraction, "initialized phase must retain a nonzero CO2-ion Furst coefficient");
     }
   }
 
