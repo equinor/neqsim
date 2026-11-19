@@ -26,12 +26,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Verifies every Java API pattern in the thermal-conductivity documentation. */
 public class ThermalConductivityDocumentationTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "physical_properties", "thermal_conductivity_models.md");
+  private static final Path GUIDE = Paths.get("docs", "physical_properties", "thermal_conductivity_models.md");
   private static final String EXAMPLE_MARKER = "<!-- thermal-conductivity-example: basic -->";
   private static final String EXAMPLE_CLASS = "ThermalConductivityQuickStart";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -74,8 +72,7 @@ public class ThermalConductivityDocumentationTest {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
     int markerPosition = markdown.indexOf(EXAMPLE_MARKER);
     assertTrue(markerPosition >= 0, "Missing marker: " + EXAMPLE_MARKER);
-    assertTrue(markerPosition == markdown.lastIndexOf(EXAMPLE_MARKER),
-        "Marker must be unique: " + EXAMPLE_MARKER);
+    assertTrue(markerPosition == markdown.lastIndexOf(EXAMPLE_MARKER), "Marker must be unique: " + EXAMPLE_MARKER);
 
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
     assertTrue(fence.find(), "Missing Java fence after marker");
@@ -98,34 +95,16 @@ public class ThermalConductivityDocumentationTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
-    String classpath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-proc:none",
-                      "-classpath",
-                      classpath,
-                      "-d",
-                      classes.toString()),
-                  null,
-                  manager.getJavaFileObjects(javaFile.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
+          .call();
       assertTrue(successful, diagnostics.toString());
     }
-    return new URLClassLoader(
-        new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 
   /** Verifies the basic natural-gas example, including its formerly missing interface import. */
