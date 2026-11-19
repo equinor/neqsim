@@ -43,6 +43,29 @@ public final class CO2BrinePhaseEquilibrium {
   }
 
   /**
+   * Checks whether the shared dual-root search can qualify a general water-rich ionic feed.
+   *
+   * @param fluid system to inspect
+   * @return true for a non-reactive water-rich electrolyte-CPA feed with ions and a molecular solute
+   */
+  static boolean isIonicAqueousRootSearchApplicable(SystemInterface fluid) {
+    if (!(fluid instanceof SystemElectrolyteCPAstatoil) || fluid.isChemicalSystem() || !fluid.hasIons()
+        || fluid.isForcePhaseTypes() || fluid.doSolidPhaseCheck() || fluid.getHydrateCheck()
+        || fluid.isMultiphaseWaxCheck() || !fluid.getPhase(0).hasComponent("water")) {
+      return false;
+    }
+    double water = fluid.getPhase(0).getComponent("water").getNumberOfmoles();
+    double molecularSolute = 0.0;
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+      ComponentInterface species = fluid.getPhase(0).getComponent(component);
+      if (species.getNumberOfmoles() > 0.0 && !isIon(species) && !"water".equals(species.getComponentName())) {
+        molecularSolute += species.getNumberOfmoles();
+      }
+    }
+    return molecularSolute > 0.0 && water > molecularSolute;
+  }
+
+  /**
    * Checks the frozen-species scope shared with the reactive CO2/brine coupling.
    *
    * @param fluid system to inspect
@@ -87,9 +110,24 @@ public final class CO2BrinePhaseEquilibrium {
    * @throws IllegalStateException if a trial or the accepted equilibrium cannot be qualified numerically
    */
   public void run() {
+    run(false);
+  }
+
+  /** Executes the shared dual-root search for a general water-rich ionic feed. */
+  void runIonicAqueousRootSearch() {
+    run(true);
+  }
+
+  /**
+   * Executes the constrained fluid search under either the public CO2/brine scope or the generic ionic aqueous-root
+   * scope.
+   *
+   * @param generalIonicScope whether to use the general water-rich ionic applicability contract
+   */
+  private void run(boolean generalIonicScope) {
     minimumTrialDistance = Double.NaN;
     acceptedRoot = null;
-    if (!isApplicable(system)) {
+    if (generalIonicScope ? !isIonicAqueousRootSearchApplicable(system) : !isApplicable(system)) {
       throw new IllegalArgumentException("CO2/brine phase selection requires non-reactive electrolyte-CPA CO2/water");
     }
     if (!(system.getTemperature() > 0.0) || !Double.isFinite(system.getTemperature()) || !(system.getPressure() > 0.0)
@@ -113,31 +151,38 @@ public final class CO2BrinePhaseEquilibrium {
     boolean aqueousStable = true;
     minimumTrialDistance = Double.POSITIVE_INFINITY;
     for (PhaseType root : new PhaseType[] {PhaseType.GAS, PhaseType.OIL}) {
-      SystemInterface trial = initializedFeed();
-      trial.setPhaseType(0, root);
-      trial.setPhaseType(1, PhaseType.AQUEOUS);
-      trial.setBeta(0, 0.1);
-      trial.setBeta(1, 0.9);
-      for (int component = 0; component < trial.getNumberOfComponents(); component++) {
-        ComponentInterface species = trial.getPhase(0).getComponent(component);
-        species.setx("CO2".equals(species.getComponentName()) ? 0.9999
-            : "water".equals(species.getComponentName()) ? 0.0001 : FLOOR);
-      }
-      double distance = tangentPlaneTrial(trial, aqueous);
-      minimumTrialDistance = Math.min(minimumTrialDistance, distance);
-      if (distance < -TOLERANCE) {
-        aqueousStable = false;
-        SystemInterface split = solveSplit(trial);
-        if (split == null) {
-          throw new IllegalStateException("Unstable CO2/brine aqueous feed has no converged " + root + " split");
+      for (int seed = 0; seed < system.getNumberOfComponents(); seed++) {
+        ComponentInterface seedSpecies = system.getPhase(0).getComponent(seed);
+        if (isIon(seedSpecies) || "water".equals(seedSpecies.getComponentName())
+            || !(seedSpecies.getNumberOfmoles() > 0.0)
+            || (!generalIonicScope && !"CO2".equals(seedSpecies.getComponentName()))) {
+          continue;
         }
-        double gibbs = split.getGibbsEnergy();
-        if (!Double.isFinite(gibbs) || gibbs > aqueousGibbs + Math.max(1.0e-7, Math.abs(aqueousGibbs) * 1.0e-12)) {
-          throw new IllegalStateException("CO2/brine split failed the conserved-inventory Gibbs comparison");
+        SystemInterface trial = initializedFeed();
+        trial.setPhaseType(0, root);
+        trial.setPhaseType(1, PhaseType.AQUEOUS);
+        trial.setBeta(0, 0.1);
+        trial.setBeta(1, 0.9);
+        for (int component = 0; component < trial.getNumberOfComponents(); component++) {
+          ComponentInterface species = trial.getPhase(0).getComponent(component);
+          species.setx(component == seed ? 0.9999 : "water".equals(species.getComponentName()) ? 0.0001 : FLOOR);
         }
-        if (best == null || gibbs < best.getGibbsEnergy()) {
-          best = split;
-          bestRoot = root;
+        double distance = tangentPlaneTrial(trial, aqueous);
+        minimumTrialDistance = Math.min(minimumTrialDistance, distance);
+        if (distance < -TOLERANCE) {
+          aqueousStable = false;
+          SystemInterface split = solveSplit(trial);
+          if (split == null) {
+            throw new IllegalStateException("Unstable ionic aqueous feed has no converged " + root + " split");
+          }
+          double gibbs = split.getGibbsEnergy();
+          if (!Double.isFinite(gibbs) || gibbs > aqueousGibbs + Math.max(1.0e-7, Math.abs(aqueousGibbs) * 1.0e-12)) {
+            throw new IllegalStateException("Ionic aqueous split failed the conserved-inventory Gibbs comparison");
+          }
+          if (best == null || gibbs < best.getGibbsEnergy()) {
+            best = split;
+            bestRoot = root;
+          }
         }
       }
     }
@@ -149,6 +194,9 @@ public final class CO2BrinePhaseEquilibrium {
       throw new IllegalStateException("No qualified CO2/brine fluid phase state");
     }
     verify(best);
+    if (!generalIonicScope && best.getNumberOfPhases() == 2 && best.getPhase(0).getComponent("CO2").getx() <= 0.5) {
+      throw new IllegalStateException("CO2/brine split must contain a distinct CO2-rich phase");
+    }
     system.setNumberOfPhases(best.getNumberOfPhases());
     for (int phase = 0; phase < best.getNumberOfPhases(); phase++) {
       system.setPhaseIndex(phase, phase);
@@ -354,9 +402,19 @@ public final class CO2BrinePhaseEquilibrium {
     if (!candidate.hasPhaseType(PhaseType.AQUEOUS)) {
       throw new IllegalStateException("CO2/brine equilibrium lost its aqueous phase");
     }
-    if (candidate.getNumberOfPhases() == 2 && (candidate.getPhase(0).getComponent("CO2").getx() <= 0.5
+    if (candidate.getNumberOfPhases() == 2 && (candidate.getPhase(0).getType() == PhaseType.AQUEOUS
         || candidate.getPhase(1).getType() != PhaseType.AQUEOUS)) {
-      throw new IllegalStateException("CO2/brine split must contain distinct CO2-rich and aqueous phases");
+      throw new IllegalStateException("Ionic split must contain distinct molecular-rich and aqueous phases");
+    }
+    if (candidate.getNumberOfPhases() == 2) {
+      double compositionDifference = 0.0;
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        compositionDifference += Math.abs(candidate.getPhase(0).getComponent(component).getx()
+            - candidate.getPhase(1).getComponent(component).getx());
+      }
+      if (compositionDifference < 1.0e-8) {
+        throw new IllegalStateException("Ionic split contains indistinguishable phase compositions");
+      }
     }
     for (int phase = 0; phase < candidate.getNumberOfPhases(); phase++) {
       double beta = candidate.getBeta(phase);
