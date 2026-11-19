@@ -144,8 +144,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   @Tag("slow")
   @Test
   void furstCo2IonScaleRetainsEndpointContracts() {
-    Reference reference = new Reference("FURST-SCALE-CONTRACT", "Liu2021", 0.0, 0.0, 1.5, 298.0, 2.06703, 0.0,
-        0.0);
+    Reference reference = new Reference("FURST-SCALE-CONTRACT", "Liu2021", 0.0, 0.0, 1.5, 298.0, 2.06703, 0.0, 0.0);
     Result baseline = calculate(reference, CO2_FEED_MOLES);
     Result scaledBaseline = calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, 1.0);
     Result ablated = calculateWithoutFurstCo2IonInteractions(reference, CO2_FEED_MOLES);
@@ -166,8 +165,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    */
   @Test
   void furstCo2IonScaleRejectsInvalidBounds() {
-    Reference reference = new Reference("FURST-SCALE-BOUNDS", "Liu2021", 0.0, 0.0, 1.5, 298.0, 2.06703, 0.0,
-        0.0);
+    Reference reference = new Reference("FURST-SCALE-BOUNDS", "Liu2021", 0.0, 0.0, 1.5, 298.0, 2.06703, 0.0, 0.0);
     assertThrows(IllegalArgumentException.class,
         () -> calculateWithFurstCo2IonScale(reference, CO2_FEED_MOLES, Double.NaN));
     assertThrows(IllegalArgumentException.class,
