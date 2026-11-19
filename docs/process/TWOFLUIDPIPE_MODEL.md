@@ -2957,6 +2957,38 @@ zero to three of six five-second lanes, but it does not pass as a whole and does
 not authorize the 180/600 s sequence, physical restart, severe slugging or
 hydraulic pigging.
 
+#### Conservative signed-donor AUSM transport at flow reversal
+
+The remaining pressure-interpolated failure was reproduced on unmodified master
+at 1.4015625 s in the coarse lane. The limiting cell was downward-inclined and
+stratified: gas was countercurrent while the oil velocity approached zero, and
+Newton stopped in the oil-momentum equation as the face donor changed sign.
+
+The opt-in `setSignedDonorTransportEnabled(true)` path retains the two smooth
+AUSM Mach contributions as independent conservative streams:
+
+\[
+\dot m_f^+ = a_f M^+(M_L)\alpha_L\rho_L A_f,\qquad
+\dot m_f^- = -a_f M^-(M_R)\alpha_R\rho_R A_f,
+\]
+
+with signed transport `m+ - m-`. Advective momentum and enthalpy use the same
+left and right donors. Pressure traction remains separate, and the existing
+pressure-interpolation velocity is added as its own signed donor stream. This
+removes the discrete donor replacement without clipping mass, adding a phase
+floor, smearing a donor, changing a closure coefficient, or relaxing the
+`1e-9` nonlinear and `1e-8` independent conservation gates. Legacy AUSM
+transport remains the default.
+
+Analytical tests verify both donor contributions, mass/momentum/enthalpy
+identities, exact absent-phase zero transport, and continuity across zero net
+Mach. With the option enabled only in the backward-Euler/pressure-interpolated
+fixture, the unchanged three-lane 5 s matrix passes at 16 cells / 0.1 s,
+16 / 0.05 s and 24 / 0.05 s. The unchanged midpoint/no-interpolation matrix also
+passes. This closes the prerequisite five-second numerical gate; it is not
+180/600 s Tengesdal experimental qualification and does not establish physical
+restart, slug-load accuracy, or hydraulic pigging.
+
 ### Standing benchmark acceptance metrics
 
 Use `TwoFluidBenchmarkMetrics` to compare a rate sweep, a section profile, mesh realizations, and

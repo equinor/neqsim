@@ -11705,6 +11705,20 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Select conservative two-donor AUSM transport across internal-face flow reversal.
+   *
+   * @param enabled true to retain both split-Mach donor contributions
+   */
+  public void setSignedDonorTransportEnabled(boolean enabled) {
+    equations.setSignedDonorTransportEnabled(enabled);
+  }
+
+  /** @return whether both signed AUSM donor contributions are retained */
+  public boolean isSignedDonorTransportEnabled() {
+    return equations.isSignedDonorTransportEnabled();
+  }
+
+  /**
    * Enable or disable the holdup-gradient momentum term and its interfacial pressure correction.
    *
    * <p>

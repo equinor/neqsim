@@ -4647,6 +4647,16 @@ public class TwoFluidConservationEquations implements Serializable {
     return fluxCalculator;
   }
 
+  /** Select conservative two-donor AUSM transport across internal-face flow reversal. */
+  public void setSignedDonorTransportEnabled(boolean enabled) {
+    fluxCalculator.setSignedDonorTransportEnabled(enabled);
+  }
+
+  /** @return whether internal AUSM transport retains both signed donor contributions */
+  public boolean isSignedDonorTransportEnabled() {
+    return fluxCalculator.isSignedDonorTransportEnabled();
+  }
+
   /**
    * Select the optional two-sided Rusanov operator for internal phase faces.
    *

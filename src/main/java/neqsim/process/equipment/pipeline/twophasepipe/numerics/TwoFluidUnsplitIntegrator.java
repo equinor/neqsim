@@ -172,7 +172,7 @@ public final class TwoFluidUnsplitIntegrator {
       double dt = attempt.endTime - time;
       if (prepared.size() >= maximumSubsteps) {
         throw new IntervalPreparationException("Accepted substep limit reached", time, dt, prepared.size(), rejected,
-            null);
+            null, null, local);
       }
       double timeWeight = solver
           .getTimeIntegrationMethod() == UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER ? 1.0 : 0.5;
@@ -195,7 +195,7 @@ public final class TwoFluidUnsplitIntegrator {
         double middle = time + 0.5 * dt;
         if (attempt.depth >= maximumHalvings || !(middle > time) || !(middle < attempt.endTime)) {
           throw new IntervalPreparationException("Nonlinear subdivision limit or time resolution reached", time, dt,
-              prepared.size(), rejected, candidate.getTerminationReason());
+              prepared.size(), rejected, candidate.getTerminationReason(), candidate, local);
         }
         pending.push(new Attempt(attempt.endTime, attempt.depth + 1));
         pending.push(new Attempt(middle, attempt.depth + 1));
@@ -231,14 +231,49 @@ public final class TwoFluidUnsplitIntegrator {
     private final UnsplitTransientSolver.TerminationReason terminationReason;
 
     private IntervalPreparationException(String message, double failureTime, double attemptedTimeStep,
-        int preparedSubsteps, int rejectedAttempts, UnsplitTransientSolver.TerminationReason terminationReason) {
+        int preparedSubsteps, int rejectedAttempts, UnsplitTransientSolver.TerminationReason terminationReason,
+        UnsplitTransientSolver.Result candidate, TwoFluidSection[] acceptedSections) {
       super(message + ": time=" + failureTime + ", dt=" + attemptedTimeStep + ", preparedSubsteps=" + preparedSubsteps
-          + ", rejectedAttempts=" + rejectedAttempts + ", reason=" + terminationReason);
+          + ", rejectedAttempts=" + rejectedAttempts + ", reason=" + terminationReason
+          + (candidate == null ? ""
+              : ", iterations=" + candidate.getIterations() + ", evaluations=" + candidate.getModelEvaluations()
+                  + ", scaledResidual=" + candidate.getMaximumScaledResidual() + ", residualIndex="
+                  + candidate.getMaximumScaledResidualIndex() + ", minimumNewtonStep="
+                  + candidate.getMinimumAcceptedStepLength() + describeWorstCell(candidate, acceptedSections)));
       this.failureTime = failureTime;
       this.attemptedTimeStep = attemptedTimeStep;
       this.preparedSubsteps = preparedSubsteps;
       this.rejectedAttempts = rejectedAttempts;
       this.terminationReason = terminationReason;
+    }
+
+    /** Describe the conservative state around the largest residual without changing the failed candidate. */
+    private static String describeWorstCell(UnsplitTransientSolver.Result candidate,
+        TwoFluidSection[] acceptedSections) {
+      int index = candidate.getMaximumScaledResidualIndex();
+      double[][] state = candidate.getState();
+      if (index < 0 || state.length == 0 || index >= state.length * UnsplitTransientSolver.BLOCK_SIZE) {
+        return "";
+      }
+      int cell = index / UnsplitTransientSolver.BLOCK_SIZE;
+      int equation = index % UnsplitTransientSolver.BLOCK_SIZE;
+      double[] accepted = acceptedSections[cell].getStateVector();
+      double[] pressure = candidate.getPressure();
+      StringBuilder details = new StringBuilder(", worstCell=").append(cell).append(", equation=").append(equation)
+          .append(", inclinationRad=").append(acceptedSections[cell].getInclination()).append(", acceptedRegime=")
+          .append(acceptedSections[cell].getFlowRegime()).append(", acceptedOilWaterRegime=")
+          .append(acceptedSections[cell].getOilWaterFlowRegime());
+      String[] phaseNames = {"Gas", "Oil", "Water"};
+      for (int phase = 0; phase < 3; phase++) {
+        double acceptedVelocity = accepted[phase] > 0.0 ? accepted[phase + 3] / accepted[phase] : Double.NaN;
+        double candidateVelocity = state[cell][phase] > 0.0 ? state[cell][phase + 3] / state[cell][phase] : Double.NaN;
+        details.append(", accepted").append(phaseNames[phase]).append("MassPerLength=").append(accepted[phase])
+            .append(", candidate").append(phaseNames[phase]).append("MassPerLength=").append(state[cell][phase])
+            .append(", accepted").append(phaseNames[phase]).append("Velocity=").append(acceptedVelocity)
+            .append(", candidate").append(phaseNames[phase]).append("Velocity=").append(candidateVelocity);
+      }
+      return details.append(", acceptedPressure=").append(acceptedSections[cell].getPressure())
+          .append(", candidatePressure=").append(pressure[cell]).toString();
     }
 
     /** @return local time of the unsuccessful attempt in s; the caller's clock has not advanced */

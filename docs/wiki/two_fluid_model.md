@@ -1238,6 +1238,19 @@ complete gate remains failed. Pressure interpolation keeps its existing
 friction ownership because combining the operators regresses the unresolved
 trace-phase/donor event; no limiter, phase floor or relaxed tolerance replaces
 that missing formulation.
+The pressure-interpolated donor event is now resolved by the opt-in
+`setSignedDonorTransportEnabled(true)` AUSM path. Instead of selecting one
+finite-density donor from the sign of `M+(ML) + M-(MR)`, it retains the left
+`M+` and right `M-` mass, advective-momentum and enthalpy contributions as two
+conservative streams. Pressure traction is unchanged, and the collocated
+pressure correction remains its own signed donor. Analytical tests cover both
+donor identities, exact absence and continuity through zero net Mach. With this
+option in the backward-Euler/pressure-interpolated fixture, all three unchanged
+16/24-cell five-second lanes pass; the three unchanged midpoint lanes also
+pass. No physical closure, tolerance, inventory floor or accepted state is
+adjusted. Legacy transport remains the default. This closes the short numerical
+gate, not the separate 180/600 s experimental severe-slugging,
+physical-restart or coupled-pigging gates.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 
