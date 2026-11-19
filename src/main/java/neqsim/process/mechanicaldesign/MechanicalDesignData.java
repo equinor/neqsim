@@ -116,6 +116,15 @@ public final class MechanicalDesignData implements Serializable {
         "getDesignMaxTemperatureLimit(K)", true, "configured_or_default"));
     put(designBasis, "corrosionAllowance", design.getCorrosionAllowance() / 1000.0, "m", "getCorrosionAllowance (mm)",
         false);
+    DesignConditions specified = equipment == null ? null : equipment.getDesignConditions();
+    if (specified != null && !specified.isEmpty()) {
+      designBasis.put("specifiedDesignPressure",
+          new Quantity(specified.getDesignPressure("Pa"), "Pa", "Equipment DesignConditions", true, "equipment_input"));
+      designBasis.put("specifiedMaxDesignTemperature", new Quantity(specified.getMaxDesignTemperature("K"), "K",
+          "Equipment DesignConditions", true, "equipment_input"));
+      designBasis.put("specifiedMinDesignTemperature", new Quantity(specified.getMinDesignTemperature("K"), "K",
+          "Equipment DesignConditions", true, "equipment_input"));
+    }
 
     if (equipment instanceof HeatExchanger) {
       HeatExchanger exchanger = (HeatExchanger) equipment;
@@ -148,6 +157,8 @@ public final class MechanicalDesignData implements Serializable {
           true);
       put(geometry, "liquidOutletNozzleInnerDiameter", separatorDesign.getOilOutletNozzleID(), "m",
           "getOilOutletNozzleID", true);
+      put(geometry, "waterOutletNozzleInnerDiameter", separatorDesign.getWaterOutletNozzleID(), "m",
+          "getWaterOutletNozzleID", true);
       put(geometry, "normalLiquidLevel", separatorDesign.getNLL(), "m", "getNLL", false);
     } else if (design instanceof CompressorMechanicalDesign) {
       geometryKind = "compressor_envelope";

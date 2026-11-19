@@ -1,5 +1,6 @@
 package neqsim.process.safety.depressurization;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ public final class SteadyFlareGasNetwork {
   private final String headerTag;
   private final String tipTag;
   private final GasLine header;
+  private KnockoutLoss knockout;
   private final double staticBara;
   private final double ratedTipBara;
   private final double ratedFlow;
@@ -67,6 +69,24 @@ public final class SteadyFlareGasNetwork {
   }
 
   /**
+   * Install a knockout drum between the common pipe outlet and the tip. The supplied steady dry-gas curve includes the
+   * port-to-port loss at the modeled gas conditions. Interpolation is linear between adjacent rating points.
+   *
+   * @param drumTag unique knockout drum tag
+   * @param flowKgS increasing gas mass flow coordinates starting at zero, kg/s
+   * @param dropBar nondecreasing port-to-port pressure differences starting at zero, bar
+   * @return this network
+   */
+  public SteadyFlareGasNetwork setKnockoutPressureDrop(String drumTag, double[] flowKgS, double[] dropBar) {
+    String key = tag(drumTag);
+    if (branches.containsKey(key) || key.equals(headerTag) || key.equals(tipTag)) {
+      throw new IllegalArgumentException("Duplicate network tag: " + key);
+    }
+    knockout = new KnockoutLoss(key, flowKgS, dropBar);
+    return this;
+  }
+
+  /**
    * Connect a PSV at fixed lift or a fixed-opening BDV to the common header.
    *
    * @param deviceTag unique device tag identifying the branch
@@ -81,7 +101,8 @@ public final class SteadyFlareGasNetwork {
   public SteadyFlareGasNetwork addDevice(String deviceTag, double sourceBara, Pipe inlet, double areaM2, double cd,
       Pipe tailpipe, Double maxOutletBara) {
     String key = tag(deviceTag);
-    if (branches.containsKey(key) || key.equals(headerTag) || key.equals(tipTag)) {
+    if (branches.containsKey(key) || key.equals(headerTag) || key.equals(tipTag)
+        || knockout != null && key.equals(knockout.tag)) {
       throw new IllegalArgumentException("Duplicate network tag: " + key);
     }
     if (maxOutletBara != null) {
@@ -129,7 +150,7 @@ public final class SteadyFlareGasNetwork {
     double total = balancedFlow(null, toleranceKgS, iterations);
     double tip = tipPressure(total);
     double junction = junctionPressure(total);
-    double headerMach = header.checkedMach(total, tip);
+    double headerMach = header.checkedMach(total, headerOutletPressure(total));
     Map<String, DeviceRating> ratings = new LinkedHashMap<>();
     double sum = 0.0;
     for (Map.Entry<String, Branch> entry : branches.entrySet()) {
@@ -158,7 +179,7 @@ public final class SteadyFlareGasNetwork {
   private double preOpeningPressure(Branch closed, double tolerance, int iterations) {
     double total = balancedFlow(closed, tolerance, iterations);
     double junction = junctionPressure(total);
-    header.checkedMach(total, tipPressure(total));
+    header.checkedMach(total, headerOutletPressure(total));
     for (Branch other : branches.values()) {
       if (other != closed) {
         double flow = other.flow(junction, tolerance / (2.0 * branches.size()), iterations);
@@ -188,7 +209,8 @@ public final class SteadyFlareGasNetwork {
       }
       return total - sum;
     };
-    return root(balance, ratedFlow, tolerance, iterations, "tip rating or header balance");
+    double upper = knockout == null ? ratedFlow : Math.min(ratedFlow, knockout.maxFlow());
+    return root(balance, upper, tolerance, iterations, "disposal equipment rating or header balance");
   }
 
   /**
@@ -205,7 +227,15 @@ public final class SteadyFlareGasNetwork {
    * @param total trial gas flow, kg/s
    */
   private double junctionPressure(double total) {
-    return header.upstream(tipPressure(total), total);
+    return header.upstream(headerOutletPressure(total), total);
+  }
+
+  /**
+   * @param flow common gas flow, kg/s
+   * @return pressure at the downstream end of the common pipe, bara
+   */
+  private double headerOutletPressure(double flow) {
+    return tipPressure(flow) + (knockout == null ? 0.0 : knockout.loss(flow));
   }
 
   /**
@@ -293,6 +323,58 @@ public final class SteadyFlareGasNetwork {
       this.equivalentLengthM = equivalentLengthM;
       area = positive(Math.PI * boreM * boreM / 4.0, "pipe area");
       resistance = darcy * equivalentLengthM / boreM / (area * area);
+    }
+  }
+
+  /** Frozen dry-gas knockout drum rating at the common gas conditions. */
+  public static final class KnockoutLoss {
+    public final String tag;
+    private final double[] flowKgS;
+    private final double[] dropBar;
+
+    /**
+     * @param tag drum identifier
+     * @param flow gas mass flow coordinates, kg/s
+     * @param drop pressure difference across the drum at each coordinate, bar
+     */
+    private KnockoutLoss(String tag, double[] flow, double[] drop) {
+      if (flow == null || drop == null || flow.length < 2 || flow.length != drop.length) {
+        throw new IllegalArgumentException("Supply at least two paired knockout gas ratings");
+      }
+      this.tag = tag;
+      flowKgS = flow.clone();
+      dropBar = drop.clone();
+      if (flowKgS[0] != 0.0 || dropBar[0] != 0.0) {
+        throw new IllegalArgumentException("Knockout loss curve must start at zero flow and zero loss");
+      }
+      for (int i = 1; i < flowKgS.length; i++) {
+        if (!Double.isFinite(flowKgS[i]) || flowKgS[i] <= flowKgS[i - 1] || !Double.isFinite(dropBar[i])
+            || dropBar[i] < dropBar[i - 1]) {
+          throw new IllegalArgumentException("Require finite increasing flow and nondecreasing knockout loss");
+        }
+      }
+    }
+
+    /** @return greatest characterized gas flow, kg/s */
+    private double maxFlow() {
+      return flowKgS[flowKgS.length - 1];
+    }
+
+    /**
+     * @param flow mass rate within the frozen curve, kg/s
+     * @return interpolated knockout pressure drop, bar
+     */
+    private double loss(double flow) {
+      if (flow == 0.0) {
+        return 0.0;
+      }
+      int point = Arrays.binarySearch(flowKgS, flow);
+      if (point >= 0) {
+        return dropBar[point];
+      }
+      int upper = -point - 1;
+      double fraction = (flow - flowKgS[upper - 1]) / (flowKgS[upper] - flowKgS[upper - 1]);
+      return dropBar[upper - 1] + fraction * (dropBar[upper] - dropBar[upper - 1]);
     }
   }
 
@@ -444,6 +526,10 @@ public final class SteadyFlareGasNetwork {
     public final String headerTag;
     public final String tipTag;
     public final Pipe headerPipe;
+    /** Optional installed gas rating. The outlet connects directly to the tip at tipBara. */
+    public final KnockoutLoss knockoutDrum;
+    /** Common pipe outlet, also the drum inlet when a drum is installed, bara. */
+    public final double headerOutletBara;
     public final double ratedTipBara;
     public final double ratedFlowKgS;
     public final double temperatureK;
@@ -463,6 +549,8 @@ public final class SteadyFlareGasNetwork {
       headerTag = network.headerTag;
       tipTag = network.tipTag;
       headerPipe = network.header.pipe;
+      knockoutDrum = network.knockout;
+      headerOutletBara = network.headerOutletPressure(total);
       ratedTipBara = network.ratedTipBara;
       ratedFlowKgS = network.ratedFlow;
       temperatureK = network.temperatureK;

@@ -34,6 +34,10 @@ class AUSMImplicitPressureSplitTest {
     pipe.setTimeIntegrationMethod(method);
     pipe.setEnableCoupledPressureMomentum(true);
     pipe.run();
+    assertFalse(pipe.isSignedDonorTransportEnabled());
+    pipe.setSignedDonorTransportEnabled(true);
+    assertTrue(pipe.isSignedDonorTransportEnabled());
+    pipe.setSignedDonorTransportEnabled(false);
     pipe.runTransient(1.0e-4, UUID.randomUUID());
     assertTrue(pipe.isCoupledPressureMomentumConverged());
     assertEquals(1.0e-4, pipe.getLastMassBalanceReport().getElapsedTimeSeconds(), 1.0e-14);
@@ -131,9 +135,52 @@ class AUSMImplicitPressureSplitTest {
   }
 
   @Test
+  void signedDonorTransportRetainsBothAUSMContributionsConservatively() {
+    AUSMPlusFluxCalculator calculator = new AUSMPlusFluxCalculator();
+    PhaseState left = new PhaseState(8.0, 5.0, 2.0e5, 300.0, 1.2e5, 0.35);
+    PhaseState right = new PhaseState(20.0, -5.0, 2.0e5, 300.0, 1.0e5, 0.65);
+    double area = 0.2;
+    assertFalse(calculator.isSignedDonorTransportEnabled());
+
+    calculator.setSignedDonorTransportEnabled(true);
+    PhaseFlux flux = calculator.calcPhaseFlux(left, right, area);
+    double mach = left.velocity / 300.0;
+    double expectedForward = 300.0 * calculator.calcMachPlus(mach) * left.holdup * left.density * area;
+    double expectedReverse = -300.0 * calculator.calcMachMinus(-mach) * right.holdup * right.density * area;
+
+    assertTrue(flux.directionalAdvectionAvailable);
+    assertEquals(expectedForward, flux.forwardMassFlux, 1.0e-14);
+    assertEquals(expectedReverse, flux.reverseMassFlux, 1.0e-14);
+    assertEquals(expectedForward - expectedReverse, flux.massFlux, 1.0e-14);
+    assertEquals(expectedForward * left.velocity - expectedReverse * right.velocity
+        + flux.interfaceHoldup * flux.interfacePressure * area, flux.momentumFlux, 1.0e-10);
+    assertEquals(expectedForward * left.enthalpy - expectedReverse * right.enthalpy, flux.energyFlux, 1.0e-8);
+  }
+
+  @Test
+  void signedDonorTransportIsContinuousAcrossNetFlowReversal() {
+    AUSMPlusFluxCalculator calculator = new AUSMPlusFluxCalculator();
+    calculator.setSignedDonorTransportEnabled(true);
+    PhaseState left = new PhaseState(8.0, 5.0, 2.0e5, 300.0, 1.2e5, 0.35);
+    double epsilon = 1.0e-7;
+    PhaseState below = new PhaseState(20.0, -5.0 - epsilon, 2.0e5, 300.0, 1.0e5, 0.65);
+    PhaseState above = new PhaseState(20.0, -5.0 + epsilon, 2.0e5, 300.0, 1.0e5, 0.65);
+
+    PhaseFlux negativeSide = calculator.calcPhaseFlux(left, below, 0.2);
+    PhaseFlux positiveSide = calculator.calcPhaseFlux(left, above, 0.2);
+
+    assertTrue(negativeSide.forwardMassFlux > 0.0 && negativeSide.reverseMassFlux > 0.0);
+    assertTrue(positiveSide.forwardMassFlux > 0.0 && positiveSide.reverseMassFlux > 0.0);
+    assertTrue(Math.abs(positiveSide.massFlux - negativeSide.massFlux) < 1.0e-6,
+        "Crossing zero net Mach must not replace one finite-density donor with the other");
+    assertTrue(Math.abs(positiveSide.momentumFlux - negativeSide.momentumFlux) < 1.0e-4);
+  }
+
+  @Test
   void absentPhaseStillCarriesNoFluxWithCenteredPressure() {
     AUSMPlusFluxCalculator fluxCalculator = new AUSMPlusFluxCalculator();
     fluxCalculator.setCenteredPressureFluxEnabled(true);
+    fluxCalculator.setSignedDonorTransportEnabled(true);
     PhaseFlux flux = fluxCalculator.calcPhaseFlux(new PhaseState(10.0, 5.0, 2.0e6, 300.0, 1.0e5, 0.0),
         new PhaseState(20.0, -4.0, 1.8e6, 320.0, 1.2e5, 0.0), 0.2);
 

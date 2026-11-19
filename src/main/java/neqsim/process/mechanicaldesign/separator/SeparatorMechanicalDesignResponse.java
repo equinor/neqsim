@@ -1,6 +1,7 @@
 package neqsim.process.mechanicaldesign.separator;
 
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 
@@ -281,6 +282,48 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
   }
 
   /**
+   * Estimates normal operating package weight from the cylindrical shell inventory and the dry design weight.
+   *
+   * @param design sized mechanical design
+   * @param separator separator supplying the equilibrium fluid
+   * @return estimated mass in kg, or NaN when the horizontal gas/liquid basis is unavailable
+   */
+  private static double estimateHorizontalOperatingWeight(SeparatorMechanicalDesign design, Separator separator) {
+    double dryWeight = design.getWeightTotal();
+    double diameter = design.getInnerDiameter();
+    double length = design.getTantanLength();
+    SystemInterface fluid = separator.getThermoSystem();
+    if (!"horizontal".equalsIgnoreCase(separator.getOrientation()) || !(dryWeight > 0.0) || !(diameter > 0.0)
+        || !(length > 0.0) || fluid == null || !fluid.hasPhaseType("gas")) {
+      return Double.NaN;
+    }
+    boolean hasOil = fluid.hasPhaseType("oil");
+    boolean hasWater = fluid.hasPhaseType("aqueous");
+    double normalLevel = design.getNLL();
+    double interfaceLevel = design.getNIL();
+    if ((!hasOil && !hasWater) || !(normalLevel > 0.0 && normalLevel < diameter)
+        || (hasOil && hasWater && !(interfaceLevel >= 0.0 && interfaceLevel <= normalLevel))) {
+      return Double.NaN;
+    }
+    double vesselVolume = Math.PI * diameter * diameter / 4.0 * length;
+    double effectiveLength = design.getEffectiveLengthLiquid();
+    if (!(effectiveLength > 0.0)) {
+      return Double.NaN;
+    }
+    double lengthRatio = length / effectiveLength;
+    double liquidVolume = design.calcLiquidVolumeAtLevel(normalLevel) * lengthRatio;
+    double waterVolume = hasWater
+        ? (hasOil ? design.calcLiquidVolumeAtLevel(interfaceLevel) * lengthRatio : liquidVolume)
+        : 0.0;
+    double gasMass = (vesselVolume - liquidVolume) * fluid.getPhase("gas").getDensity("kg/m3");
+    double oilMass = hasOil ? (liquidVolume - waterVolume) * fluid.getPhase("oil").getDensity("kg/m3") : 0.0;
+    double waterMass = hasWater ? waterVolume * fluid.getPhase("aqueous").getDensity("kg/m3") : 0.0;
+    double contentsMass = gasMass + oilMass + waterMass;
+    double operatingWeight = dryWeight + contentsMass;
+    return contentsMass > 0.0 && Double.isFinite(operatingWeight) ? operatingWeight : Double.NaN;
+  }
+
+  /**
    * Populate separator-specific fields from SeparatorMechanicalDesign.
    *
    * @param mecDesign the separator mechanical design
@@ -294,6 +337,7 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
       Separator separator = (Separator) mecDesign.getProcessEquipment();
       this.orientation = separator.getOrientation();
       this.separatorType = separator instanceof ThreePhaseSeparator ? "three-phase" : "two-phase";
+      setOperatingWeight(estimateHorizontalOperatingWeight(mecDesign, separator));
     }
     this.shellThickness = mecDesign.getWallThickness() > 0.0 ? mecDesign.getWallThickness() * 1000.0 : Double.NaN;
     this.demisterType = mecDesign.getDemisterType();

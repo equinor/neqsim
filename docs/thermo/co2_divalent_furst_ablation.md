@@ -41,30 +41,51 @@ temperature range and its lowest/highest pressures while limiting the slow-test 
 Every state must retain the baseline phase set, component balance residual no larger
 than $10^{-10}$ mol, and molecular log-fugacity residual below $10^{-8}$.
 
-## Midpoint sensitivity
+## Midpoint sensitivity and initialization correction
 
-A follow-up diagnostic applies the fixed algebraic midpoint to the complete block in
-every phase:
+The intended follow-up diagnostic applies the fixed algebraic midpoint to the
+complete block in every phase:
 
-$
-W_{mathrm{CO_2},i}^{(alpha)}(T)=alpha W_{mathrm{CO_2},i}(T),
-qquad alpha=0.5.
-$
+$$
+W_{\mathrm{CO_2},i}^{(\alpha)}(T)=\alpha W_{\mathrm{CO_2},i}(T),
+\qquad \alpha=0.5.
+$$
 
-The midpoint was selected after the endpoint results were known, so it is a
-post-endpoint curvature diagnostic rather than a blind preregistered test. It is not a
-fit or a candidate production parameter. Scaling $W^{(0)}$, $W^{(1)}$, and $W^{(2)}$
-together preserves the declared gauge and leaves all other model terms unchanged.
+The first retained midpoint artifact from merged PR #5154 did not execute this
+physical state. The diagnostic read the coefficient arrays before electrolyte
+initialization, when the CO2-ion entries were still zero, and its setters then marked
+those zero entries as fitted. Consequently, the nominal $\alpha=0.5$ state collapsed
+exactly onto the $\alpha=0$ ablation. Its reported curvature is invalid and must not
+be used to select, fit, or reject a Furst scale.
 
-The same 16 states are retained, including the two 353 K and 20.4 atm source-magnitude
-anomalies. Those rows are labeled in the generated evidence and are not corrected or
-excluded. Curvature in the apparent salt effect is reported as
+The corrected diagnostic calls initialization level zero after the complete species
+set and mixing rule are configured, then reads and scales $W^{(0)}$, $W^{(1)}$, and
+$W^{(2)}$ together. Every phase must retain at least one nonzero initialized CO2-ion
+coefficient. Setter readback must equal the scaled coefficients, and the
+temperature-resolved value must satisfy
 
-$
-C=E(0.5)-rac{E(0)+E(1)}{2},
-$
+$$
+W_{\mathrm{CO_2},i}^{(\alpha)}(T)
+=\alpha W_{\mathrm{CO_2},i}^{(1)}(T).
+$$
 
-where $E(0)$ is the zero-block ablation and $E(1)$ is the current baseline. The
+For $0<\alpha<1$, each nonzero resolved interaction must lie strictly between the
+zero-block and full-block values. The flashed midpoint dissolved CO2 must also differ
+from both endpoints. These checks distinguish parameter-initialization failure from
+thermodynamic nonlinearity without changing production equations or coefficients.
+
+The midpoint was selected after the endpoint results were known, so it remains a
+post-endpoint curvature diagnostic rather than a blind preregistered test. It is not
+a fit or a candidate production parameter. The same 16 states are retained,
+including the two 353 K and 20.4 atm source-magnitude anomalies; those rows are
+labeled and are not corrected or excluded. Once a non-collapsed midpoint artifact is
+verified, curvature in the apparent salt effect is reported as
+
+$$
+C=E(0.5)-\frac{E(0)+E(1)}{2}.
+$$
+
+Here $E(0)$ is the zero-block ablation and $E(1)$ is the current baseline. The
 diagnostic can test endpoint nonlinearity and salt-family incompatibility at one
 concentration, four temperatures, and two pressures. It cannot identify an optimum
 scale or establish behavior across concentration.

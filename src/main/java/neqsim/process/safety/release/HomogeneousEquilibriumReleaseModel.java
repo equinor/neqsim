@@ -33,17 +33,17 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
   /** @return numerical model version, including guarded phase, solid-risk and external evidence records */
   @Override
   public String getModelVersion() {
-    return "1.2.3";
+    return "1.2.4";
   }
 
   /** {@inheritDoc} */
   @Override
   public ReleaseModelEvidence getEvidence() {
-    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.3",
+    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.4",
         Arrays.asList("SHORT_ORIFICE", "EQUILIBRIUM_PHASE_TRANSFER", "MULTICOMPONENT_EOS"),
         Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "EXPERIMENTAL_INPUT_PHASE_MISMATCH",
-            "MEASUREMENT_UNCERTAINTY_NOT_REPORTED", "DENSE_CO2_SOLID_BEARING_PATH_UNSUPPORTED",
-            "NO_ENGINEERING_QUALIFICATION"),
+            "MEASUREMENT_UNCERTAINTY_NOT_REPORTED", "DENSE_CO2_AMBIENT_SOLID_BEARING_PATH_UNSUPPORTED",
+            "DENSE_CO2_RESTRICTION_PLANE_SENSITIVITY_ONLY", "NO_ENGINEERING_QUALIFICATION"),
         Arrays.asList(
             new ReleaseModelEvidence.Record("hem-component-energy-closure", ReleaseModelEvidence.Type.CONSERVATION,
                 "src/test/java/neqsim/process/safety/release/ReleaseFlowModelTest.java",
@@ -62,9 +62,9 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
                 ReleaseModelEvidence.Type.EXPERIMENTAL,
                 "DOI 10.1016/j.ijmultiphaseflow.2022.104201; "
                     + "src/test/resources/neqsim/process/safety/release/hammer-dense-co2-2022.csv",
-                "Six published dense-liquid CO2 restriction cases with reported mass-flow uncertainty; executable "
-                    + "applicability evidence records the ambient-expanded solid-risk rejection and withholds rate "
-                    + "errors because solid-bearing flow is outside this model",
+                "Six published dense single-fluid CO2 restriction cases with reported mass-flow uncertainty; "
+                    + "executable evidence compares the choked restriction rate at a non-solid 0.6 MPa receiver, "
+                    + "while the actual ambient-expanded source path remains fail-closed on dry-ice risk",
                 true)));
   }
 

@@ -51,6 +51,9 @@ public class AUSMPlusFluxCalculator implements Serializable {
   /** Use centered pressure for a low-Mach predictor with an implicit pressure correction. */
   private boolean centeredPressureFluxEnabled = false;
 
+  /** Retain the two AUSM Mach contributions as independent conservative donor streams. */
+  private boolean signedDonorTransportEnabled;
+
   /**
    * State vector for one phase at a cell interface.
    */
@@ -253,6 +256,34 @@ public class AUSMPlusFluxCalculator implements Serializable {
         : calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
     double Phalf = alphaHalf * pHalf;
 
+    if (signedDonorTransportEnabled) {
+      double forwardMass = cHalf * Mplus * left.holdup * left.density * area;
+      double reverseMass = cHalf * Mminus * right.holdup * right.density * area;
+      flux.forwardMassFlux = forwardMass;
+      flux.reverseMassFlux = -reverseMass;
+      flux.forwardAdvectiveMomentumFlux = forwardMass * left.velocity;
+      flux.reverseAdvectiveMomentumFlux = reverseMass * right.velocity;
+      flux.forwardAdvectiveEnergyFlux = forwardMass * left.enthalpy;
+      flux.reverseAdvectiveEnergyFlux = reverseMass * right.enthalpy;
+      flux.massFlux = forwardMass + reverseMass;
+      flux.momentumFlux = flux.forwardAdvectiveMomentumFlux + flux.reverseAdvectiveMomentumFlux + Phalf * area;
+      flux.energyFlux = flux.forwardAdvectiveEnergyFlux + flux.reverseAdvectiveEnergyFlux;
+      flux.holdupFlux = cHalf * (Mplus * left.holdup + Mminus * right.holdup);
+      if (faceVelocityCorrection != 0.0) {
+        PhaseState correctionDonor = faceVelocityCorrection > 0.0 ? left : right;
+        double correctionMassFlow = faceVelocityCorrection * correctionDonor.holdup * correctionDonor.density * area;
+        flux.massFlux += correctionMassFlow;
+        flux.momentumFlux += correctionMassFlow * correctionDonor.velocity;
+        flux.energyFlux += correctionMassFlow * correctionDonor.enthalpy;
+        flux.holdupFlux += correctionDonor.holdup * faceVelocityCorrection;
+        addDirectionalAdvection(flux, correctionMassFlow, correctionDonor.velocity, correctionDonor.enthalpy);
+      }
+      flux.directionalAdvectionAvailable = true;
+      flux.interfaceHoldup = alphaHalf;
+      flux.interfacePressure = pHalf;
+      return flux;
+    }
+
     // A zero correction retains the historical arithmetic and bit pattern. A nonzero
     // correction is a second signed donor stream; it must not switch the physical AUSM donor.
     boolean donorLeft = Mhalf >= 0.0;
@@ -295,6 +326,20 @@ public class AUSMPlusFluxCalculator implements Serializable {
     flux.interfacePressure = pHalf;
 
     return flux;
+  }
+
+  /**
+   * Select conservative two-donor AUSM transport across flow reversal.
+   *
+   * @param enabled true to retain both split-Mach donor contributions instead of selecting by their net sign
+   */
+  public void setSignedDonorTransportEnabled(boolean enabled) {
+    signedDonorTransportEnabled = enabled;
+  }
+
+  /** @return whether both split-Mach donor contributions are retained */
+  public boolean isSignedDonorTransportEnabled() {
+    return signedDonorTransportEnabled;
   }
 
   /** Add one signed donor stream without cancelling an opposing stream at the same face. */

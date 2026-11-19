@@ -2771,7 +2771,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       initMechanicalDesign();
     }
 
-    // First read design specifications to get standard K-factors, Fg, etc.
+    // Match calcDesign's default standard when no explicit wall or standard has been set.
+    if (!separatorMechanicalDesign.isHasSetCompanySpecificDesignStandards()
+        && separatorMechanicalDesign.getWallThickness() <= 0.0) {
+      separatorMechanicalDesign.setCompanySpecificDesignStandards("default");
+    }
     separatorMechanicalDesign.readDesignSpecifications();
 
     // Then override with safety factor

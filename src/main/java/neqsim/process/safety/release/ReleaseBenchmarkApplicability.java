@@ -25,7 +25,16 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
     /** Gas or vapour withdrawal. */
     GAS,
     /** Hydrocarbon, generic or aqueous material-liquid withdrawal. */
-    MATERIAL_LIQUID
+    MATERIAL_LIQUID,
+    /**
+     * One supported material phase, without relying on an EOS gas-versus-liquid phase label.
+     *
+     * <p>
+     * This is intended for compressed or supercritical single-fluid benchmark states where the external experiment
+     * establishes a homogeneous feed but the EOS may label that sole dense phase as gas or liquid. It never accepts a
+     * gas/liquid split, aqueous coexistence, solids or an unsupported native phase.
+     */
+    SINGLE_MATERIAL_PHASE
   }
 
   /** Applicability of the model result to the benchmark withdrawal phase. */
@@ -89,10 +98,19 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
     double gasFraction = value(phases, "GAS");
     double liquidFraction = value(phases, "OIL") + value(phases, "LIQUID") + value(phases, "AQUEOUS");
     double supportedFraction = gasFraction + liquidFraction;
-    double expectedFraction = expectedPhase == ExpectedPhase.GAS ? gasFraction : liquidFraction;
+    double expectedFraction;
+    if (expectedPhase == ExpectedPhase.GAS) {
+      expectedFraction = gasFraction;
+    } else if (expectedPhase == ExpectedPhase.MATERIAL_LIQUID) {
+      expectedFraction = liquidFraction;
+    } else {
+      expectedFraction = supportedFraction;
+    }
     Status status;
     if (supportedFraction < 1.0 - PURE_PHASE_TOLERANCE) {
       status = Status.UNSUPPORTED_UPSTREAM_PHASE;
+    } else if (expectedPhase == ExpectedPhase.SINGLE_MATERIAL_PHASE && activeMaterialPhases(phases) != 1) {
+      status = Status.MIXED_UPSTREAM;
     } else if (expectedFraction <= PURE_PHASE_TOLERANCE) {
       status = Status.EXPECTED_PHASE_ABSENT;
     } else if (expectedFraction < 1.0 - PURE_PHASE_TOLERANCE) {
@@ -101,6 +119,17 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
       status = Status.COMPARABLE;
     }
     return new ReleaseBenchmarkApplicability(expectedPhase, status, expectedFraction, phases, diagnosticCodes);
+  }
+
+  private static int activeMaterialPhases(Map<String, Double> phases) {
+    int active = 0;
+    String[] materialPhases = {"GAS", "OIL", "LIQUID", "AQUEOUS"};
+    for (String phase : materialPhases) {
+      if (value(phases, phase) > PURE_PHASE_TOLERANCE) {
+        active++;
+      }
+    }
+    return active;
   }
 
   private static double value(Map<String, Double> values, String key) {
