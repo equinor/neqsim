@@ -75,3 +75,11 @@ for shared sources and do not infer OEM/dynamic qualification from synthetic tes
 - Emission accounting and carbon intensity: `@emissions-environmental`
 - Plant-data binding of network or energy models: `@plant-data`
 - Compressor and turbine machinery detail: `@rotating-equipment`
+
+When handing an energy or network result to `@emissions-environmental`, retain
+the reporting period and operating hours, facility boundary and scopes,
+production basis, and source-level energy or fuel flow with units and fuel
+composition. Preserve factor/GWP sources and distinguish fuel input from useful
+heat, generated power, and imported power so the emissions workflow can avoid
+double counting. Do not supply an unexplained gas-to-boe or energy-unit
+conversion; flag missing basis data for resolution.

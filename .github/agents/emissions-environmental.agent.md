@@ -24,12 +24,22 @@ ALWAYS read these skills before proceeding:
 0. **Resolve the jurisdiction first** (`neqsim-jurisdiction-regulatory-basis`): the CO2 tax or
    ETS, flaring consent, methane rules and permit authority belong to the asset country;
    never apply Norwegian or EU rules elsewhere, and list unverified items in `data_gaps`.
-1. **Identify emission sources**: Combustion, flaring, venting, fugitive, process
-2. **Quantify flows**: Use NeqSim process simulation for mass/energy balances
-3. **Apply emission factors**: CO2, CH4, N2O per source type
-4. **Calculate CO2 equivalents**: GWP-weighted total
-5. **Compare against benchmarks**: Industry averages, regulatory limits
-6. **Report per applicable standard**: EU ETS MRR, NORSOK, EPA, IMO
+1. **Freeze the reporting basis**: period and operating hours, facility boundary,
+   included scopes, production basis, species, and GWP assessment/version/time
+   horizon. Keep missing or unverified inputs in `data_gaps`; never silently treat
+   them as zero.
+2. **Identify emission sources**: Combustion, flaring, venting, fugitive, process
+3. **Quantify flows**: Use NeqSim process simulation for mass/energy balances and
+   retain stream composition, units, and source attribution.
+4. **Apply emission factors**: CO2, CH4, and N2O factors must match the source,
+   fuel, and declared basis. Do not mix measured emissions with a factor-based
+   estimate for the same source.
+5. **Calculate CO2 equivalents**: Apply one explicitly stated GWP basis
+   consistently; distinguish CO2e from the species-specific CO2 quantity used by
+   a tax or allowance rule.
+6. **Compare against benchmarks**: Label screening benchmarks as indicative, not
+   regulatory limits, and cite the source, year, and boundary before comparison.
+7. **Report per applicable standard**: EU ETS MRR, NORSOK, EPA, IMO
 
 ## Emission Source Categories
 
@@ -46,39 +56,13 @@ ALWAYS read these skills before proceeding:
 ### From NeqSim Process Simulation
 
 ```python
-from neqsim import jneqsim
-import json
-
-# After running process simulation, get fuel gas properties
+# After running the process simulation, get the fuel stream.
 fuel_stream = process.getUnit("Fuel Gas").getOutletStream()
 fuel_fluid = fuel_stream.getFluid()
-
-# Get fuel gas composition
-methane_frac = fuel_fluid.getComponent("methane").getx()
-ethane_frac = fuel_fluid.getComponent("ethane").getx()
-propane_frac = fuel_fluid.getComponent("propane").getx()
-
-# Mass flow of fuel
 fuel_mass_flow_kghr = fuel_stream.getFlowRate("kg/hr")
 
-# Calculate CO2 from stoichiometric combustion
-# CH4 + 2O2 -> CO2 + 2H2O  => 1 mol CH4 -> 1 mol CO2
-# C2H6 + 3.5O2 -> 2CO2 + 3H2O => 1 mol C2H6 -> 2 mol CO2
-# C3H8 + 5O2 -> 3CO2 + 4H2O => 1 mol C3H8 -> 3 mol CO2
-
-MW_CO2 = 44.01
-MW_CH4 = 16.04
-MW_C2H6 = 30.07
-MW_C3H8 = 44.10
-
-# CO2 emission factor (kg CO2 / kg fuel)
-avg_MW = fuel_fluid.getMolarMass("kg/mol") * 1000  # g/mol
-
-co2_per_mol_fuel = (methane_frac * 1 + ethane_frac * 2 + propane_frac * 3)
-co2_mass_ratio = co2_per_mol_fuel * MW_CO2 / avg_MW
-
-co2_emission_kghr = fuel_mass_flow_kghr * co2_mass_ratio
-co2_emission_tpa = co2_emission_kghr * 8760 / 1000  # tonnes/year
+# Use CombustionCalculator below for the full fuel composition and declared
+# operating hours. Do not infer total fuel carbon from only C1-C3 fractions.
 ```
 
 ### Full flue-gas composition + NOx / SO2 (use `CombustionCalculator`)
@@ -164,28 +148,19 @@ use `"NOx_as_NO2"`. Use `r.toJson()` for the full auditable result.
 
 ## Flare Emissions
 
-```python
-# Get flare gas from simulation
-flare_header = process.getUnit("Flare KO Drum").getGasOutStream()
-flare_fluid = flare_header.getFluid()
-
-flare_flow_kghr = flare_header.getFlowRate("kg/hr")
-
-# Flare combustion efficiency (98% typical, 95% conservative)
-combustion_efficiency = 0.98
-
-# CO2 from combustion
-co2_from_flare = flare_flow_kghr * co2_mass_ratio * combustion_efficiency
-
-# Unburned hydrocarbons (methane slip)
-ch4_slip = flare_flow_kghr * methane_frac * (1 - combustion_efficiency)
-
-# CO2 equivalent (CH4 GWP = 28 for 100-year, IPCC AR5)
-GWP_CH4 = 28
-co2e_from_flare = co2_from_flare + ch4_slip * GWP_CH4
-```
+For flare estimates, source the flare-gas composition and flow for the same
+period, and use an approved flare-emissions method or measured data for
+combustion efficiency and each unburned species. A generic combustion-efficiency
+percentage does not identify methane slip. Do not apply a fuel-gas mass ratio to
+flare gas, or multiply total gas mass flow by a mole fraction and label it mass
+flow. Calculate CO2e from the flare CO2 mass plus the GWP-weighted mass of each
+unburned species, on a consistent annual or reporting-period basis.
 
 ## Global Warming Potentials (GWP)
+
+The values below are illustrative AR5 values only. Use one stated assessment,
+time horizon, and methane basis consistently throughout an inventory; do not
+silently reuse these values when another basis is required.
 
 | Gas | GWP (100-yr, AR5) | GWP (20-yr, AR5) |
 |-----|-------------------|-------------------|
@@ -200,15 +175,19 @@ co2e_from_flare = co2_from_flare + ch4_slip * GWP_CH4
 # Carbon intensity = kg CO2e per unit of production
 total_co2e_tpa = combustion_co2e + flare_co2e + vent_co2e + fugitive_co2e
 
-# Per barrel of oil equivalent
-production_boe_per_year = oil_bbl_per_year + gas_Sm3_per_year / 1005.0
-carbon_intensity_kgCO2e_boe = total_co2e_tpa * 1000 / production_boe_per_year
+# Production must already be on a stated, consistent boe/year basis. If it is
+# derived from oil, gas, or other products, cite the conversion basis; do not
+# assume a universal Sm3-to-boe factor.
+production_boe_per_year = supplied_production_boe_per_year
+carbon_intensity_kgCO2e_boe = (
+    total_co2e_tpa * 1000 / production_boe_per_year
+    if production_boe_per_year > 0
+    else None  # undefined when production is zero or unavailable
+)
 
 # Industry benchmarks
-# Average offshore oil: 15-25 kg CO2e/boe
-# Best in class: < 10 kg CO2e/boe
-# High emitters: > 30 kg CO2e/boe
-# Norwegian NCS average: ~8 kg CO2e/boe (electrified platforms)
+# Compare only with a benchmark whose source, year, geography, and reporting
+# boundary are stated. A benchmark is context, not a compliance limit.
 ```
 
 ## Energy Efficiency
@@ -218,11 +197,19 @@ carbon_intensity_kgCO2e_boe = total_co2e_tpa * 1000 / production_boe_per_year
 total_power_MW = compressor_power + pump_power + utility_power
 total_heat_MW = heater_duty + reboiler_duty
 
-total_energy_GJ_per_year = (total_power_MW + total_heat_MW) * 3.6 * 8760 / 1000
+# MW * operating hours * 3.6 GJ/MWh = GJ. Do not divide by 1000 again.
+operating_hours_per_year = supplied_operating_hours_per_year
+total_energy_GJ_per_year = (total_power_MW + total_heat_MW) * operating_hours_per_year * 3.6
 
-energy_intensity_GJ_boe = total_energy_GJ_per_year / production_boe_per_year
+energy_intensity_GJ_boe = (
+    total_energy_GJ_per_year / production_boe_per_year
+    if production_boe_per_year > 0
+    else None  # undefined when production is zero or unavailable
+)
 
-# Benchmark: 0.5-2.0 GJ/boe typical for offshore production
+# State whether this is delivered energy, fuel input, or useful process duty.
+# Do not add fuel input and the heat/power it produced unless the boundary
+# intentionally counts both.
 ```
 
 ## Regulatory Frameworks
@@ -230,15 +217,20 @@ energy_intensity_GJ_boe = total_energy_GJ_per_year / production_boe_per_year
 ### Norwegian CO2 Tax and EU ETS
 
 ```python
-# Norwegian NCS: CO2 tax + EU ETS quota price
-co2_tax_nok_per_tonne = 952   # 2024 rate
-eu_ets_eur_per_tonne = 80
-eur_to_nok = 11.5
-
-total_carbon_cost_nok = total_co2e_tpa * (
-    co2_tax_nok_per_tonne + eu_ets_eur_per_tonne * eur_to_nok
-)
+# Obtain the rates, units, year, and eligibility rules for this asset/jurisdiction.
+# Keep the species-specific eligible quantity in the rate's native unit.
+co2_tax_cost_native = eligible_co2_tax_quantity * co2_tax_rate_per_native_unit
+ets_cost_native = eligible_ets_emissions_tonnes * ets_rate_per_tonne
+# Apply stated FX rates/dates; use 1.0 when already in the reporting currency.
+co2_tax_cost_reporting_currency = co2_tax_cost_native * co2_tax_fx_to_reporting_currency
+ets_cost_reporting_currency = ets_cost_native * ets_fx_to_reporting_currency
+total_carbon_cost = co2_tax_cost_reporting_currency + ets_cost_reporting_currency
 ```
+
+Never reuse a stale example rate as current policy. Confirm that each charge
+applies to the installation and emissions in scope, preserve each rate's native
+unit/currency/year, and do not add costs until currencies are aligned. Do not
+add an already-combined effective rate to its component rates.
 
 ### EU MRR (Monitoring and Reporting Regulation)
 
@@ -250,8 +242,29 @@ total_carbon_cost_nok = total_co2e_tpa * (
 ## Process Integration
 
 ```python
-# Full emissions inventory from NeqSim process
+# Illustrative hand-off shape. Populate values from the same declared period and
+# boundary; keep source-level energy and emissions so downstream totals can be checked.
 emissions_inventory = {
+    "basis": {
+        "period": supplied_reporting_period,
+        "operating_hours": supplied_operating_hours,
+        "boundary_and_scopes": supplied_boundary_and_scopes,
+        "gwp_basis": supplied_gwp_assessment_and_horizon,
+        "production_boe": supplied_production_boe,
+    },
+    "energy_by_source": {
+        "gas_turbines": {
+            "fuel_flow": supplied_fuel_flow,
+            "fuel_flow_unit": supplied_fuel_flow_unit,
+            "fuel_composition_basis": supplied_fuel_composition_basis,
+            "energy": supplied_energy,
+            "energy_unit": supplied_energy_unit,
+        },
+        "imported_power": {
+            "energy": supplied_imported_power,
+            "energy_unit": supplied_imported_power_unit,
+        },
+    },
     "combustion": {
         "gas_turbines": {"co2_tpa": gt_co2, "ch4_tpa": gt_ch4},
         "fired_heaters": {"co2_tpa": fh_co2, "ch4_tpa": fh_ch4},
@@ -262,7 +275,8 @@ emissions_inventory = {
     },
     "venting": {
         "cold_vent": {"ch4_tpa": cv_ch4},
-    }
+    },
+    "provenance": supplied_source_ids_and_factor_sources,
 }
 ```
 
@@ -277,13 +291,6 @@ emissions_inventory = {
 ## API Verification
 ALWAYS read the actual class source to verify method signatures before using them.
 Do NOT assume API patterns — check constructors, method names, and parameter types.
-        "tank_breathing": {"voc_tpa": tb_voc},
-    },
-    "total_co2e_tpa": total_co2e,
-    "carbon_intensity_kgCO2e_boe": ci,
-    "energy_intensity_GJ_boe": ei,
-}
-```
 
 ## Results JSON Schema
 
