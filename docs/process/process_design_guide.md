@@ -169,8 +169,11 @@ See [Mechanical Design Database](mechanical_design_database) for executable CSV 
 
 ## Complete Example
 
-The example logs summaries at INFO level; enable INFO output in your Log4j2 configuration to
-see them. Its result checks run regardless of the logging level.
+The documentation regression suite compiles and executes the exact source of this complete Java 8
+program. The example logs summaries at INFO level; enable INFO output in your Log4j2 configuration
+to see them. Its result checks run regardless of the logging level.
+
+<!-- process-design-example: complete -->
 
 ```java
 import org.apache.logging.log4j.LogManager;
