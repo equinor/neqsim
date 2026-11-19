@@ -114,7 +114,7 @@ public class MultiVesselBlowdownStudy implements Serializable {
    * @return this study for chaining
    */
   public MultiVesselBlowdownStudy setGridStep(double dt) {
-    if (dt <= 0.0) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
       throw new IllegalArgumentException("grid step must be positive");
     }
     this.gridStepS = dt;
@@ -143,12 +143,10 @@ public class MultiVesselBlowdownStudy implements Serializable {
     }
 
     List<Double> grid = new ArrayList<>();
-    for (double t = 0.0; t <= endTime + 1.0e-9; t += gridStepS) {
+    for (double t = 0.0; t < endTime; t += gridStepS) {
       grid.add(t);
     }
-    if (grid.isEmpty()) {
-      grid.add(0.0);
-    }
+    grid.add(endTime);
 
     List<Double> total = new ArrayList<>();
     Map<String, List<Double>> perSource = new LinkedHashMap<>();
@@ -231,14 +229,11 @@ public class MultiVesselBlowdownStudy implements Serializable {
   private double interpolateMassFlow(DepressurizationResult r, double t) {
     List<Double> times = r.time;
     List<Double> flows = r.massFlowKgPerS;
-    if (times.isEmpty()) {
+    if (times.isEmpty() || t < times.get(0) || t > times.get(times.size() - 1)) {
       return 0.0;
     }
-    if (t <= times.get(0)) {
+    if (t == times.get(0)) {
       return flows.get(0);
-    }
-    if (t >= times.get(times.size() - 1)) {
-      return 0.0;
     }
     for (int i = 1; i < times.size(); i++) {
       if (t <= times.get(i)) {
@@ -338,6 +333,18 @@ public class MultiVesselBlowdownStudy implements Serializable {
      */
     public Map<String, Double> getPeakContributionKgPerS() {
       return peakContributionKgPerS;
+    }
+
+    /**
+     * Compare the simultaneous source rates at the sampled mass peak with the installed dry-gas network capacity.
+     * Supply each device source pressure and opening at this timestamp. This post-processing does not rerun the
+     * vessels.
+     *
+     * @param network fixed-opening gas network whose device tags match the source names
+     * @return coupled steady gas capacity and local flange backpressures
+     */
+    public SteadyFlareGasNetwork.Result ratePeakGasCapacity(SteadyFlareGasNetwork network) {
+      return network.rate(getPeakContributionKgPerS());
     }
 
     /**

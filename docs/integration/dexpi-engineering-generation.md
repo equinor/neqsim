@@ -510,6 +510,22 @@ header Mach checks. The runner will return readiness blockers instead of calcula
 fire, header, flare or evidence inputs are absent. Use `setMaterialsReviewInput(...)` to overlay project material
 register, aqueous chemistry, inspection, coating and design-life data on the process-derived service conditions.
 
+### Dynamic PSV sizing and BDV discharge
+
+For a vapour PSV, retain the valve settings in `psvBasis(...)` and add
+`psvContingency(scenario, psvBackPressureBara, reference)`. Supply a named, credible
+`ReliefScenario` with the protected contingency's kg/s demand and vapour temperature (K),
+molar mass (kg/mol), compressibility and heat-capacity ratio at relieving conditions.
+The reference identifies the calculation or document supporting those inputs. The PSV
+backpressure is independent of the BDV outlet pressure. Liquid and flashing contingencies
+can be evaluated with the phase-specific methods in `OverpressureProtectionStudy`.
+
+Existing set-pressure-only inputs continue to run the blowdown. Their PSV result reports
+`not_sized_missing_relief_demand`. In the v2 result and compact load handoff, BDV area,
+diameter, discharge coefficient and peak mass flow are under `bdvDischarge[sourceId]`;
+PSV status, contingency and calculated area are under `psvSizing[sourceId]`. A PSV demand
+sizes the valve; it does not add a concurrent opening to the simulated BDV discharge.
+
 ## Controlled line list and piping design
 
 Hydraulic length, inner diameter, roughness and elevation remain properties of explicit `PipeLineInterface` equipment.

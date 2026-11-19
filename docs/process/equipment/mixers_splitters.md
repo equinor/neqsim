@@ -7,6 +7,10 @@ Mixers combine material streams. Splitters divide one stream by flow or by compo
 introducing a hydraulic pressure-drop model. The public classes are in
 `neqsim.process.equipment.mixer` and `neqsim.process.equipment.splitter`.
 
+A direct `Mixer.run()` initializes newly composed, positive-inventory inlet streams using
+their configured stream specifications before applying the minimum mass-flow threshold.
+An empty feed contributes neither mass nor an inlet pressure.
+
 ## Complete executable example
 
 This Java 8 example mixes two gas feeds, checks the inlet-pressure diagnostic, creates a 70/30
@@ -155,10 +159,11 @@ demands exceed the feed, NeqSim scales them to the available flow and gives rema
 flow.
 
 Positive-flow proportional branches preserve composition and, after property initialization,
-molar enthalpy and entropy. Their enthalpy and entropy rates sum to the feed rates. A zero-flow
-branch remains a valid topology connection, but its molar thermodynamic getters are not qualified
-for caloric balances; issue #4073 retains that residual-property and condenser/reboiler duty
-boundary.
+molar enthalpy and entropy. Their enthalpy and entropy rates sum to the feed rates.
+An exactly closed branch retains the inlet composition, pressure and temperature as a reference state. It carries zero moles and its system enthalpy and entropy rates are zero.
+Use the extensive getters for balances. Molar and mass-specific values require positive flow.
+The closed-outlet caloric balance and condenser duty regression are tracked in
+[issue #4073](https://github.com/equinor/neqsim/issues/4073).
 
 ## Component-selective splitting
 
@@ -183,7 +188,7 @@ empty branch a physical molar enthalpy or component inventory.
 - Inspect pressure-mismatch evidence instead of treating a mixer as a hydraulic model.
 - Confirm that splitter outlet rates sum to the feed rate.
 - Confirm every `ComponentSplitter` factor follows the feed component order.
-- Exclude zero-flow thermodynamic getters from caloric balances.
+- Sum extensive enthalpy and entropy rates across all proportional outlets, including closed outlets.
 - Add equipment to a `ProcessSystem` in upstream-to-downstream order.
 
 ## Related documentation

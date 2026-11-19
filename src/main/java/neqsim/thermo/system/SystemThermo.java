@@ -1335,7 +1335,8 @@ public abstract class SystemThermo implements SystemInterface {
       this.setMixingRule(4);
     } else if (modelName.equals("Kent Eisenberg-model")) {
       this.setMixingRule(4);
-    } else if (modelName.equals("UMR-PRU-EoS") || modelName.equals("UMR-PRU-MC-EoS") || modelName.equals("UMR-CPA")) {
+    } else if (modelName.equals("UMR-PRU-EoS") || modelName.equals("UMR-PRU-MC-EoS")
+        || modelName.equals(SystemUMRCPAEoS.MODEL_NAME)) {
       this.setMixingRule("HV", "UNIFAC_UMRPRU");
     } else if (modelName.equals("GERG-water-EOS")) {
       this.setMixingRule(8);
@@ -2698,6 +2699,10 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getEnthalpy() {
+    if (getTotalNumberOfMoles() == 0.0) {
+      // An empty phase template can retain EOS derivatives from its last flowing state.
+      return 0.0;
+    }
     if (useIdealGasEnthalpyOfFormation) {
       applyFormationEnthalpyReference();
     }
@@ -2844,6 +2849,10 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropy() {
+    if (getTotalNumberOfMoles() == 0.0) {
+      // An empty phase template can retain EOS derivatives from its last flowing state.
+      return 0.0;
+    }
     double entropy = 0;
     for (int i = 0; i < numberOfPhases; i++) {
       entropy += getPhase(i).getEntropy();
@@ -5494,6 +5503,8 @@ public abstract class SystemThermo implements SystemInterface {
         tempModel = new SystemSrkCPAstatoil(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("Electrolyte-CPA-EOS-statoil") || model.equals("Electrolyte-CPA-EOS")) {
         tempModel = new SystemElectrolyteCPAstatoil(getPhase(0).getTemperature(), getPhase(0).getPressure());
+      } else if (SystemUMRCPAEoS.MODEL_NAME.equalsIgnoreCase(model) || "UMR-CPA-EoS".equalsIgnoreCase(model)) {
+        tempModel = new SystemUMRCPAEoS(getTemperature(), getPressure());
       } else if (model.equals("UMR-PRU-EoS")) {
         tempModel = new SystemUMRPRUMCEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("PC-SAFT")) {
@@ -5519,7 +5530,10 @@ public abstract class SystemThermo implements SystemInterface {
             + getPhase(0).getComponent(i).getNumberOfmoles() + " isPlus "
             + getPhase(0).getComponent(i).isIsPlusFraction() + " isTBP "
             + getPhase(0).getComponent(i).isIsTBPfraction());
-        if (getPhase(0).getComponent(i).isIsTBPfraction()) {
+        ComponentInterface source = getPhase(0).getComponent(i);
+        if (tempModel instanceof SystemUMRCPAEoS && (source.isIsTBPfraction() || source.isIsPlusFraction())) {
+          ((SystemUMRCPAEoS) tempModel).addCharacterizedCut(source);
+        } else if (source.isIsTBPfraction()) {
           tempModel.addTBPfraction(getPhase(0).getComponent(i).getName(),
               getPhase(0).getComponent(i).getNumberOfmoles(), getPhase(0).getComponent(i).getMolarMass(),
               getPhase(0).getComponent(i).getNormalLiquidDensity());
@@ -5540,13 +5554,17 @@ public abstract class SystemThermo implements SystemInterface {
         tempModel.createDatabase(true);
       }
       logger.info("done ... set mixing rule ......");
+      if (tempModel instanceof SystemUMRCPAEoS) {
+        tempModel.setMultiPhaseCheck(doMultiPhaseCheck());
+        tempModel.setEnhancedMultiPhaseCheck(doEnhancedMultiPhaseCheck());
+      }
       tempModel.autoSelectMixingRule();
       if (model.equals("Electrolyte-ScRK-EOS")) { // ||
         // model.equals("Electrolyte-CPA-EOS-statoil"
         logger.info("chemical reaction init......");
         tempModel.setMultiPhaseCheck(false);
         tempModel.chemicalReactionInit();
-      } else {
+      } else if (!(tempModel instanceof SystemUMRCPAEoS)) {
         tempModel.setMultiPhaseCheck(true);
       }
     } catch (Exception ex) {

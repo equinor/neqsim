@@ -49,6 +49,25 @@ double Tmin  = sim.minTemperatureC();     // for MDMT check
 double mdotMax = sim.peakMassFlow();      // for flare network sizing
 ```
 
+## Dynamic flare header and knockout loads
+
+`DynamicBlowdownFlareStudyRunner` records the component molar rates and enthalpy
+actually withdrawn from each vessel over each fixed interval. For a two-phase
+vessel under vapor withdrawal these are the discharged vapor properties. The
+runner adds the simultaneous rates by component name and performs an adiabatic
+pressure–enthalpy flash at the configured header pressure. The model assumes a
+common fluid-property basis and instantaneous phase separation at that pressure.
+Equilibrium gas feeds the tip and condensed material goes to knockout.
+
+In `flareLoad.profile`, `timeS` marks the **end** of each interval. The initial
+zero point has zero duration. `componentNames` indexes the header, vapor and
+knockout component-rate arrays in mol/s. The corresponding enthalpy rates are in
+W on the source EOS reference. Totals integrate the interval means over their
+actual duration. Mass, molar flow, heat release and CO₂ each have their own peak
+and timestamp. The tip heat uses the NeqSim flare's ISO 6976:1995 molar lower
+heating value at a combustion reference of 15.55 °C. Reported CO₂ includes
+incoming vapor CO₂ and assumes complete combustion of the other gas-phase carbon.
+
 ## API 521 acceptance criteria
 
 | Criterion | Limit | Source |
@@ -56,6 +75,68 @@ double mdotMax = sim.peakMassFlow();      // for flare network sizing
 | Time to ≤ 50 % design pressure | ≤ 15 min | API 521 §5.20.2 |
 | Minimum metal temperature | ≥ MDMT (UCS-66) | API 521 §5.20.3 |
 | BDV downstream pressure | ≤ MAWP of flare header | API 521 §5.20.5 |
+
+## Steady dry-gas capacity at a coincident load
+
+Use `SteadyFlareGasNetwork` when several fixed-opening devices discharge a common dry gas into
+one header. Supply absolute pressures in bara, open nozzle areas in m², gas molar mass in kg/mol
+and simultaneous relief demands in kg/s. Represent each inlet and tailpipe by its inside diameter,
+equivalent length including fittings, and Darcy friction factor. Supply the static pressure and a
+rated flow/pressure point for a quadratic tip characteristic.
+
+```java
+import java.util.Collections;
+import neqsim.process.safety.depressurization.SteadyFlareGasNetwork;
+import neqsim.process.safety.depressurization.SteadyFlareGasNetwork.Pipe;
+
+// Illustrative geometry, nozzle and gas properties for a single operating point
+SteadyFlareGasNetwork network = new SteadyFlareGasNetwork("header",
+    new Pipe(0.14, 95.0, 0.02), "tip", 1.2, 1.2, 2.0, 300.0, 0.020, 1.0, 1.3);
+network.addDevice("PSV", 8.0, new Pipe(0.25, 0.0, 0.02), 0.0002, 0.95,
+    new Pipe(0.10, 120.0, 0.02), 1.6);
+SteadyFlareGasNetwork.Result rating = network.rate(Collections.singletonMap("PSV", 0.4));
+double availableKgS = rating.devices.get("PSV").availableKgS;
+double flangeBara = rating.devices.get("PSV").outletBara;
+```
+
+The solver balances each nozzle against its local inlet and discharge-flange pressures and balances
+the combined flow at the header. For each horizontal, isothermal pipe, the pressure-squared change
+in Pa² is `f (L/D) (mass flow / area)² ZRT/M`. A negative capacity margin gives the shortfall at
+the specified opening. A negative outlet-pressure margin gives the exceedance of the supplied
+device limit. Outlet rise is measured from the common zero-flow static pressure. The solver also reports a separate steady
+pre-opening pressure for each device by holding that device closed with the other openings fixed.
+Its incremental backpressure is the difference between the local outlet pressure and that baseline.
+For other event sequences, supply the corresponding openings in a separate case. Represent a closed device with zero open area. An omitted limit yields a null margin in the result and its JSON export.
+
+To rate a sampled blowdown peak, construct the network using source pressures and openings at
+that instant, match each device tag to its source, and call `history.ratePeakGasCapacity(network)`.
+The rate comparison uses the contributions at the common sampled peak. Other instants can govern
+individual branches. The method assumes constant gas properties, low-Mach pipe flow and one common
+junction. It rejects pipe outlet Mach above 0.3 and flows outside the rated tip range. Liquid
+carryover, KO drum losses, multiple headers, line packing and transient valve lift require a separate
+model and qualification.
+
+### V-101 PSV-only reference at negligible losses
+
+`AdvancedV101PsvStudyTest.reliefRefinesAndReplaysWithoutMutatingCanonicalSource` feeds the
+native `PSV_RELIEF` outlet rate and its timestamps into `ratePeakGasCapacity` at both native
+timesteps. The gas properties come from an SRK flash of the recorded vessel inventory at the
+instant of peak flow. All line lengths are zero. The imposed tip curve is flat at 1.2 bara.
+
+| Quantity | 0.10 s step | 0.05 s step |
+|---|---:|---:|
+| Native and transferred peak flow at 3.20 s, kg/s | 5.49552 | 5.49705 |
+| Maximum protected vessel pressure, bara | 42.36369 at 2.40 s | 42.38967 at 2.45 s |
+| Inlet flange pressure at peak flow, bara | 42.03573 | 42.04747 |
+| Outlet flange, header and tip pressure, bara | 1.20000 | 1.20000 |
+| Assumed water-equivalent nozzle capacity, kg/s | 11.71485 | 11.71866 |
+
+The synthetic native valve has a rated Cv of 80. Converting its effective Cv at peak to
+a water-equivalent CdA gives 1316.32 mm² in both runs. This assumed nozzle passes about 113%
+more gas than the observed valve. Independent nozzle area or certified capacity evidence
+would be needed to use this comparison for equipment sizing. The handoff recovers the
+fixed outlet boundary and retains the sampled flow demand. It does not advance header
+or knockout-drum inventory or return pressure to the native transient.
 
 ## See also
 

@@ -412,7 +412,9 @@ public class KrishnaStandartFilmModel extends
       this.calcBinaryMassTransferCoefficients(phaseNum);
       this.calcMassTransferCoefficients(phaseNum);
       this.initCorrections(phaseNum);
-      this.calcNonIdealCorrections(phaseNum);
+      if (useThermodynamicCorrections(phaseNum)) {
+        calcNonIdealCorrections(phaseNum);
+      }
       // this.calcFluxTypeCorrectionMatrix(phase,0);
       this.calcTotalMassTransferCoefficientArray(phaseNum);
     }

@@ -66,6 +66,20 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     return clonedPhase;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void removeComponent(String name, double moles, double molesInPhase) {
+    // Specialized phases (including electrolytes) can own additional species-indexed state and stale-state guards.
+    boolean standardCubic = getClass() == PhaseSrkEos.class || getClass() == PhasePrEos.class;
+    if (standardCubic && mixingRuleType == EosMixingRuleType.CLASSIC && mixSelect.intparam != null
+        && mixSelect.intparam.length == getNumberOfComponents()) {
+      int removed = getComponent(name).getComponentNumber();
+      mixSelect = mixSelect.withoutComponent(removed);
+      resetMixingRule(mixingRuleType);
+    }
+    super.removeComponent(name, moles, molesInPhase);
+  }
+
   /**
    * Constructor for PhaseEos.
    */

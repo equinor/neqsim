@@ -18,6 +18,7 @@ import neqsim.process.safety.overpressure.BlockedOutletRelief;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.overpressure.ProtectedItem;
 import neqsim.process.safety.overpressure.ReliefScenario;
+import neqsim.process.util.fire.ReliefValveSizing;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -63,8 +64,10 @@ public final class CompressorReliefDisposalStudy {
 
     ReliefScenario blockedOutlet = new BlockedOutletRelief().setName("Synthetic blocked compressor export")
         .setInflowRateKgPerS(train.getDesign().getFeedFlowKgPerSecond())
-        .setReliefPressureBara(design.reliefSetPressureBara).setReliefTemperatureC(initialTemperatureK - 273.15)
-        .setFluid(reliefFluid).calculate();
+        .setReliefPressureBara(
+            ReliefValveSizing.relievingPressurePa(design.reliefSetPressureBara * 1.0e5, design.psvOverpressureFraction)
+                / 1.0e5)
+        .setReliefTemperatureC(initialTemperatureK - 273.15).setFluid(reliefFluid).calculate();
     ProtectedItem item = new ProtectedItem(design.protectedEquipmentTag, design.maximumAllowablePressureBara)
         .setReliefSetPressureBara(design.reliefSetPressureBara).setBackPressureBara(design.backPressureBara)
         .setDesignTemperatureC(initialTemperatureK - 273.15);
@@ -78,7 +81,7 @@ public final class CompressorReliefDisposalStudy {
             design.wallHeatTransferCoefficientWPerM2K)
         .psvBasis(design.reliefSetPressureBara, design.psvOverpressureFraction, design.balancedBellowsPsv,
             design.ruptureDiskInstalled)
-        .build();
+        .psvContingency(blockedOutlet, design.backPressureBara, design.studyId + "/blocked-export").build();
     DynamicBlowdownFlareStudyDataSource.Builder dynamicBuilder = DynamicBlowdownFlareStudyDataSource
         .builder(design.studyId + "-dynamic").addSource(source)
         .flareHeader(design.headerDiameterM, design.headerPressureBara, design.headerTemperatureK,

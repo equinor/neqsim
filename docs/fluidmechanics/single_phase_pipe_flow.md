@@ -243,6 +243,13 @@ throws with its residual and iteration diagnostics before that state can initial
 the compatibility setting that permits a failed report to return applies only to legacy,
 non-conservative operation.
 
+The steady temperature initialization integrates heat exchange across each cell with frozen
+wall conductance and heat capacity. This keeps a long cell from overshooting ambient temperature
+when the thermal relaxation length is short. The regression for a 700 km horizontal gas line
+(1 m diameter, 1 MSm³/day, 200 bara) checks the conservative steady outlet mass rate and the
+temperature profile with the inlet and surroundings both at 293.15 K. The legacy staged
+pressure/energy iteration can still fail at this throughput.
+
 The low-flow repeatability regression allows eight floating-point units in the last place
 (ULPs) per inventory or mass-fraction value, covering the last-bit variation observed in Java 8 Linux CI.
 Its equation-residual, conservation and thermodynamic-consistency gates remain unchanged.

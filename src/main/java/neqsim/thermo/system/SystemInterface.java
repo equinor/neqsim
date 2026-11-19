@@ -17,6 +17,7 @@ import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.unit.TemperatureUnit;
 
 /**
  * SystemInterface interface.
@@ -363,6 +364,26 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   @Deprecated
   public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass, double boilingPoint);
+
+  /**
+   * Add a fraction from its molar mass and a normal boiling point supplied with an explicit temperature unit. The
+   * four-argument form takes the boiling point in kelvin.
+   *
+   * @param componentName name of the fraction
+   * @param numberOfMoles number of moles to add
+   * @param molarMass molar mass in kg/mol
+   * @param boilingPoint normal boiling point in the supplied unit
+   * @param unit absolute temperature unit K, C (or °C), F or R
+   * @throws IllegalArgumentException if the unit is unsupported or the absolute temperature is nonfinite or nonpositive
+   */
+  default void addTBPfraction2(String componentName, double numberOfMoles, double molarMass, double boilingPoint,
+      String unit) {
+    double kelvin = TemperatureUnit.convert(boilingPoint, "°C".equals(unit) ? "C" : unit, "K");
+    if (!Double.isFinite(kelvin) || kelvin <= 0.0) {
+      throw new IllegalArgumentException("Normal boiling point must be finite and above absolute zero");
+    }
+    addTBPfraction2(componentName, numberOfMoles, molarMass, kelvin);
+  }
 
   /**
    * Add a TBP fraction defined by molar mass and specific gravity.

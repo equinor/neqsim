@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -268,25 +269,20 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * calcNonIdealCorrections.
+   * Build the bulk-phase driving-force matrix with the last species as the dependent mole fraction.
    *
-   * @param phaseNum a int
+   * @param phaseNum bulk phase index
    */
   public void calcNonIdealCorrections(int phaseNum) {
-    nonIdealCorrections[phaseNum] = new double[bulkSystem.getPhase(phaseNum).getNumberOfComponents()
-        - 1][bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1];
-    double temp = 0;
-    for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
-      for (int j = 0; j < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; j++) {
-        temp = (i == j) ? 1.0 : 0.0;
-        nonIdealCorrections[phaseNum][i][j] = temp + bulkSystem.getPhase(phaseNum).getComponent(i).getx()
-            * bulkSystem.getPhase(phaseNum).getComponent(i).getdfugdn(j)
-            * bulkSystem.getPhase(phaseNum).getNumberOfMolesInPhase();
-        // her må det fylles inn
+    bulkSystem.init(3, phaseNum);
+    PhaseInterface phase = bulkSystem.getPhase(phaseNum);
+    int reference = phase.getNumberOfComponents() - 1;
+    nonIdealCorrections[phaseNum] = new double[reference][reference];
+    for (int i = 0; i < reference; i++) {
+      for (int j = 0; j < reference; j++) {
+        nonIdealCorrections[phaseNum][i][j] = phase.getReducedThermodynamicFactor(i, j, reference);
       }
     }
-    // System.out.println("non-id");
-    // nonIdealCorrections[phase].print(10,10);
   }
 
   /** {@inheritDoc} */

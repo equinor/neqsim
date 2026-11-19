@@ -83,7 +83,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Flange | ASME B16.5 | `asme_standards.csv` |
 | Process flow diagram, block flow diagram, graphical symbols (documentation) | ISO 10628-1:2014, ISO 10628-2:2012 (collective application of ISO 14617); NORSOK P-002:2023+AC:2024 sets no diagram requirement | Not in the CSV tables; texts are paywalled, so claim "conventions applied, conformance not claimed". Edition evidence and checks: `process-study-report` skill, `references/standards_verification.md` |
 | Orifice plate / differential-pressure metering | ISO 5167-1/-2, AGA 3 / API MPMS 14.3 | Use `Iso5167OrificeMeteringKernel` for strict ISO 5167-2:2022 screening; keep `Standard_AGA3` for an AGA/API basis and `Orifice` for process simulation |
-| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
+| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506Rev2` for the Rev. 2 unmitigated rate and `NorsokM506CorrosionDesignKernel` for legacy screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
 | Offshore steel fatigue | DNV-RP-C203 | Use `DnvRpC203FatigueDesignKernel` with a verified project-controlled S-N curve and stress spectrum; do not report legacy pipeline/riser shortcuts as exact-edition C203 evidence |
 | Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
 | Inspected pipeline metal loss | DNV-RP-F101 | Use `DnvRpF101CorrodedPipelineScreeningKernel` for the current isolated longitudinal defect/internal-pressure screen; measured geometry and caller-controlled factors are evidence, not values inferred from M-506, and ST-F101 design checks remain separate |
@@ -160,9 +160,9 @@ See `docs/process/dnv_st_f101_pipeline_screening.md` and the `neqsim-capability-
 
 ### NORSOK M-506 execution rule
 
-For an explicit NORSOK M-506 calculation, prefer
-`neqsim.process.engineering.calculation.NorsokM506CorrosionDesignKernel`. It implements only the
-unamended 2017 edition, checks `Pipeline` / `AdiabaticPipe` / `Pipe` applicability, retains raw
+For the Rev. 2 section 5.2 unmitigated rate, use `NorsokM506Rev2.rateMmPerYear` with in-situ
+pH, wall shear stress and CO2 fugacity. The legacy de Waard-Milliams screening adapter
+`NorsokM506CorrosionDesignKernel` accepts the unamended 2017 edition identifier, checks `Pipeline` / `AdiabaticPipe` / `Pipe` applicability, retains raw
 unit-explicit input values, and blocks unsupported or out-of-range cases before the mutable legacy
 calculator runs. Treat `NorsokM506CorrosionAssessment.getProjectedUniformWallLossMm()` as rate
 multiplied by exposure time, not as a specified corrosion allowance or acceptance decision.

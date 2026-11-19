@@ -139,3 +139,58 @@ Use feasible component amounts when constructing the existing
 `CompositionalReservoirHistory.Step` named production and injection ledgers.
 This audit returns bounds for that selection. It does not choose nominal
 amounts or create tank trials from independent marginal endpoints.
+
+## Select one conserved history scenario
+
+Use `select_component_history(study, scenario)` for an explicit candidate to
+the existing `CompositionalReservoirHistory.Step` boundary. The caller supplies
+every interval's stream total, complete mole fractions, average pressure and
+pressure sigma. Bind the scenario to the audit input SHA-256, give it a
+provenance reference, and declare the complete component order. The
+[synthetic selection](../../devtools/pvt_examples/reservoir_component_selection.json)
+is an executable input for the component fixture above.
+
+Selections must satisfy the original decimal bounds, including exact
+cumulative differences and mole fractions summing exactly to one. The validator
+also checks shared cumulative endpoints across all intervals. It retains the
+possible initial cumulative-counter interval after intersecting every selected
+increment with its original counter bounds. This prevents adjacent intervals
+from consuming inconsistent choices of the same uncertain boundary reading.
+Ineligible pressure kinds, missing sigma, missing streams and source-identity
+changes reject the whole scenario.
+
+For the example, selecting 10 mol production with fractions 0.85 methane
+and 0.15 ethane gives 8.5 and 1.5 mol. The independently named pure-water
+injection contributes 2 mol. Output contains the original source and selected
+scenario with their hashes, each stream's total and component amounts, and
+produced/injected arrays in the supplied order. Durations use the accepted
+calendar windows in seconds. End-pressure calibration/holdout roles follow
+the source. The initial reservoir fluid, pressure and laboratory model still
+come from the independently calibrated PVT handoff.
+
+```python
+import json
+from pathlib import Path
+
+from reservoir_history_intake import select_component_history
+
+folder = Path("devtools/pvt_examples")
+source = json.loads((folder / "reservoir_component_intake.json").read_text())
+scenario = json.loads((folder / "reservoir_component_selection.json").read_text())
+selected = select_component_history(source, scenario)
+print(selected["steps"][0]["produced_moles"])
+```
+
+Component amounts and selected pressures are serialized as exact decimal
+strings. Convert them to doubles at the Java interface and retain the
+original component order. The complete source component set must also match
+the accepted EOS component set required by the Java history. Reconcile lumped
+source species and missing constituents before this handoff. That interface conversion has floating-point
+roundoff. The selected produced composition remains a prescribed history
+input. Use the existing phase-withdrawal forward mode for predicted produced
+composition and GOR.
+
+This validator admits a caller-selected feasible scenario. A posterior grid
+still requires explicit joint prior weights and complete forward-model
+qualification. Feasible source accounting alone does not establish reservoir
+pressure accuracy, a PVT model fit or uncertainty coverage.

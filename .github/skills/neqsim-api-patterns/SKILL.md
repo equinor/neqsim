@@ -1,12 +1,14 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim Java/Python API patterns for fluids, flashes, process equipment and units. USE WHEN: selecting EOS/mixing-rule selection and property retrieval, including viscosity, thermal conductivity, binary/effective diffusion, gas-oil-water interfacial tension and black-oil PVT table conversion. Follow linked references for exact model selection, initialization and tested examples."
-last_verified: "2026-10-12"
+last_verified: "2026-11-18"
 ---
 
 # NeqSim API Patterns
 
 Copy-paste reference for common NeqSim operations. All Java code must be Java 8 compatible.
+
+For declarative flowsheets, `ProcessSystem.fromYamlFile(path)` and `fromYaml(text)` accept the same named equipment, inlets and units as `fromJson`. See the [canonical process schema](../../../docs/process/json_process_models_and_systems.md).
 
 Use progressive disclosure: search headings and read only the task-relevant section.
 For property-model selection, diffusion or gas-oil-water interfacial tension, read

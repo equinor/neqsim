@@ -635,7 +635,7 @@ alternatives take a boiling point instead of the missing property:
 
 ```java
 // molar mass known, specific gravity unknown
-oil.addTBPfraction2("C10", 0.02, 0.142, 447.3);   // name, moles, molarMass [kg/mol], Tb [K]
+oil.addTBPfraction2("C10", 0.02, 0.142, 174.0, "C");  // 0.142 kg/mol, 174 °C = 447.15 K
 
 // specific gravity known, molar mass unknown
 oil.addTBPfraction3("C10", 0.02, 0.734, 447.3);   // name, moles, specificGravity [-], Tb [K]
@@ -674,6 +674,10 @@ components this route reproduces the specific gravity to better than 1 %, where 
 // addPlusFraction(name, molarFlow, molarMass [kg/mol], specificGravity)
 oil.addPlusFraction("C20", 0.10, 0.350, 0.88);
 ```
+
+A zero-mole plus fraction stays in the fluid with its original name and properties when
+`characterisePlusFraction()` runs. After adding material to that fraction, call the same
+method again to split and lump it.
 
 ### 10.3 TBP Characterization Models
 

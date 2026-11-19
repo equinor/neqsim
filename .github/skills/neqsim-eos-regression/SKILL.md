@@ -1,7 +1,7 @@
 ---
 name: neqsim-eos-regression
 description: "EOS parameter regression workflow for fitting equation-of-state models to experimental data. USE WHEN: tuning binary interaction parameters (kij), matching saturation pressures, fitting PVT data (CME, CVD, DL), characterizing C7+ fractions, or validating EOS predictions against lab measurements. Covers SRK, PR, CPA parameter fitting strategies."
-last_verified: "2026-11-14"
+last_verified: "2026-11-18"
 ---
 
 # EOS Parameter Regression Workflow
@@ -205,6 +205,8 @@ fluid.getCharacterization().configureLumping().model("standard").totalPseudoComp
 fluid.getCharacterization().characterisePlusFraction();
 fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
 ```
+
+When an assay includes a plus fraction with zero moles, characterization preserves its name, inventory and properties. After adding material to that entry, characterize again before setting the mixing rule.
 
 **Ordering note (confirmed 2026-10-12 against a real NeqSim 3.24.0 build):**
 `characterisePlusFraction()` can SPLIT a plus/TBP fraction into several

@@ -7,9 +7,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.safety.overpressure.ReliefPhase;
+import neqsim.process.safety.overpressure.ReliefScenario;
 import neqsim.process.safety.rupture.PidTopologyEvidence;
 import neqsim.process.safety.rupture.SafetyEvidenceReference;
 import neqsim.process.safety.rupture.SafetyStudyReadiness;
+import neqsim.process.util.fire.ReliefValveSizing;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -518,6 +521,9 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
     private final double wallAreaM2;
     private final double wallSpecificHeatJPerKgK;
     private final double wallHeatTransferCoeffWPerM2K;
+    private final ReliefScenario psvScenario;
+    private final double psvBackPressureBara;
+    private final String psvScenarioReference;
     private final double psvSetPressureBara;
     private final double psvOverpressureFraction;
     private final boolean balancedBellowsPsv;
@@ -546,6 +552,9 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
       this.wallAreaM2 = builder.wallAreaM2;
       this.wallSpecificHeatJPerKgK = builder.wallSpecificHeatJPerKgK;
       this.wallHeatTransferCoeffWPerM2K = builder.wallHeatTransferCoeffWPerM2K;
+      this.psvScenario = builder.psvScenario;
+      this.psvBackPressureBara = builder.psvBackPressureBara;
+      this.psvScenarioReference = builder.psvScenarioReference;
       this.psvSetPressureBara = builder.psvSetPressureBara;
       this.psvOverpressureFraction = builder.psvOverpressureFraction;
       this.balancedBellowsPsv = builder.balancedBellowsPsv;
@@ -704,7 +713,95 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
      * @return true if PSV sizing can be calculated
      */
     public boolean hasPsvSizingBasis() {
-      return Double.isFinite(psvSetPressureBara) && psvSetPressureBara > 0.0;
+      return "ready".equals(psvBasisStatus());
+    }
+
+    /**
+     * Gets the named relief demand and relieving fluid properties supplied for this PSV.
+     *
+     * @return immutable contingency or null for a blowdown-only source
+     */
+    public ReliefScenario getPsvScenario() {
+      return psvScenario;
+    }
+
+    /**
+     * Gets the downstream absolute pressure declared for the PSV contingency.
+     *
+     * @return PSV backpressure in bara
+     */
+    public double getPsvBackPressureBara() {
+      return psvBackPressureBara;
+    }
+
+    /**
+     * Checks the supplied basis for single-phase vapour sizing independently of the BDV simulation.
+     *
+     * @return ready or an explicit reason for leaving the PSV unsized
+     */
+    String psvBasisStatus() {
+      if (!positive(psvSetPressureBara)) {
+        return "not_sized_missing_set_pressure";
+      }
+      if (psvScenario == null) {
+        return "not_sized_missing_relief_demand";
+      }
+      if (!psvScenario.isCredible()) {
+        return "not_sized_noncredible_scenario";
+      }
+      if (!positive(psvScenario.getReliefRateKgPerS())) {
+        return "not_sized_invalid_relief_demand";
+      }
+      if (psvScenario.getPhase() != ReliefPhase.VAPOUR) {
+        return "not_sized_unsupported_relief_phase";
+      }
+      if (!positive(psvScenario.getReliefTemperatureK()) || !positive(psvScenario.getMolarMassKgPerMol())
+          || !positive(psvScenario.getCompressibility()) || !Double.isFinite(psvScenario.getSpecificHeatRatio())
+          || psvScenario.getSpecificHeatRatio() <= 1.0) {
+        return "not_sized_invalid_relieving_state";
+      }
+      double inletPa = ReliefValveSizing.relievingPressurePa(psvSetPressureBara * 1.0e5, psvOverpressureFraction);
+      if (!Double.isFinite(psvOverpressureFraction) || psvOverpressureFraction < 0.0 || !positive(inletPa)
+          || !positive(psvBackPressureBara) || psvBackPressureBara * 1.0e5 >= inletPa) {
+        return "not_sized_invalid_pressure_basis";
+      }
+      return "ready";
+    }
+
+    /**
+     * Tests for a finite positive physical value.
+     *
+     * @param value quantity to check
+     * @return whether the value is positive and finite
+     */
+    private static boolean positive(double value) {
+      return Double.isFinite(value) && value > 0.0;
+    }
+
+    /**
+     * Describes the scenario and its gas properties, including any assumptions recorded by the originating calculation.
+     *
+     * @return a compact basis record or null if no contingency was supplied
+     */
+    Map<String, Object> psvContingencyMap() {
+      if (psvScenario == null) {
+        return null;
+      }
+      Map<String, Object> basis = new LinkedHashMap<String, Object>();
+      basis.put("reference", psvScenarioReference);
+      basis.put("scenario", psvScenario.getName());
+      basis.put("cause", psvScenario.getCause());
+      basis.put("reliefPhase", psvScenario.getPhase());
+      basis.put("credible", Boolean.valueOf(psvScenario.isCredible()));
+      basis.put("massFlowKgPerS", finiteOrNull(psvScenario.getReliefRateKgPerS()));
+      basis.put("temperatureK", finiteOrNull(psvScenario.getReliefTemperatureK()));
+      basis.put("molarMassKgPerMol", finiteOrNull(psvScenario.getMolarMassKgPerMol()));
+      basis.put("compressibility", finiteOrNull(psvScenario.getCompressibility()));
+      basis.put("specificHeatRatio", finiteOrNull(psvScenario.getSpecificHeatRatio()));
+      basis.put("backPressureBara", finiteOrNull(psvBackPressureBara));
+      basis.put("standardReference", psvScenario.getStandardReference());
+      basis.put("assumptions", psvScenario.getAssumptions());
+      return basis;
     }
 
     /**
@@ -780,8 +877,8 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
             "Provide flare header or disposal-system pressure basis.");
       }
       if (!hasPsvSizingBasis()) {
-        readiness.addWarning(category, "PSV set pressure is not configured; PSV orifice sizing will be skipped.",
-            "Provide PSV set pressure and correction basis to include API 520/521 PSV sizing.");
+        readiness.addWarning(category, "PSV sizing status: " + psvBasisStatus(),
+            "Supply the valve settings and a referenced credible vapour relief scenario at relieving conditions.");
       }
       if (!Double.isFinite(fireHeatInputW) && !(Double.isFinite(wettedAreaM2) && wettedAreaM2 > 0.0)) {
         readiness.addWarning(category, "Fire heat input is not configured; adiabatic blowdown will be used.",
@@ -818,6 +915,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
       map.put("wallAreaM2", finiteOrNull(wallAreaM2));
       map.put("wallSpecificHeatJPerKgK", finiteOrNull(wallSpecificHeatJPerKgK));
       map.put("wallHeatTransferCoeffWPerM2K", finiteOrNull(wallHeatTransferCoeffWPerM2K));
+      map.put("psvContingency", psvContingencyMap());
       map.put("psvSetPressureBara", finiteOrNull(psvSetPressureBara));
       map.put("psvOverpressureFraction", Double.valueOf(psvOverpressureFraction));
       map.put("balancedBellowsPsv", Boolean.valueOf(balancedBellowsPsv));
@@ -863,6 +961,9 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
     private double wallAreaM2 = Double.NaN;
     private double wallSpecificHeatJPerKgK = 470.0;
     private double wallHeatTransferCoeffWPerM2K = 50.0;
+    private ReliefScenario psvScenario;
+    private String psvScenarioReference;
+    private double psvBackPressureBara = Double.NaN;
     private double psvSetPressureBara = Double.NaN;
     private double psvOverpressureFraction = 0.21;
     private boolean balancedBellowsPsv;
@@ -991,7 +1092,7 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
     }
 
     /**
-     * Sets PSV sizing basis.
+     * Sets the PSV pressure and installation settings. Sizing also requires a linked relief contingency.
      *
      * @param setPressureBara PSV set pressure in bara
      * @param overpressureFraction overpressure fraction
@@ -1005,6 +1106,27 @@ public final class DynamicBlowdownFlareStudyDataSource implements Serializable {
       this.psvOverpressureFraction = overpressureFraction;
       this.balancedBellowsPsv = balancedBellows;
       this.ruptureDiskInstalled = ruptureDisk;
+      return this;
+    }
+
+    /**
+     * Supplies the PSV contingency separately from the blowdown inventory, backpressure and BDV demand. The scenario
+     * properties must describe the vapour at relieving pressure and temperature.
+     *
+     * @param scenario credible relief scenario with demand and relieving-state properties
+     * @param backPressureBara PSV downstream absolute pressure in bara for this contingency
+     * @param reference source calculation or evidence record identifying this demand and state
+     * @return this builder
+     * @throws IllegalArgumentException if the contingency has no identity or reference
+     */
+    public SourceBuilder psvContingency(ReliefScenario scenario, double backPressureBara, String reference) {
+      if (scenario == null || clean(scenario.getName()).isEmpty() || scenario.getCause() == null
+          || clean(reference).isEmpty()) {
+        throw new IllegalArgumentException("A named PSV contingency, cause and basis reference are required");
+      }
+      this.psvScenario = scenario;
+      this.psvBackPressureBara = backPressureBara;
+      this.psvScenarioReference = clean(reference);
       return this;
     }
 

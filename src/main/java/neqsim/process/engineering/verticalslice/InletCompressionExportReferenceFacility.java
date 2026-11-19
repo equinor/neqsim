@@ -306,15 +306,17 @@ public final class InletCompressionExportReferenceFacility {
   private static void addReliefAndFlare(EngineeringProject project, ProcessSystem process) {
     SystemInterface fluid = ((Separator) process.getUnit(SEPARATOR)).getGasOutStream().getFluid().clone();
     ReliefScenario blockedOutlet = new BlockedOutletRelief().setName("Blocked export outlet")
-        .setInflowRateKgPerHr(10000.0).setReliefPressureBara(90.0).setReliefTemperatureC(45.0).setFluid(fluid)
-        .calculate();
+        .setInflowRateKgPerHr(10000.0)
+        .setReliefPressureBara(ReliefValveSizing.relievingPressurePa(90.0e5, 0.10) / 1.0e5).setReliefTemperatureC(45.0)
+        .setFluid(fluid).calculate();
     OverpressureProtectionStudy reliefStudy = new OverpressureProtectionStudy(
         new ProtectedItem(COOLER, 90.0).setReliefSetPressureBara(90.0).setBackPressureBara(1.5))
         .addScenario(blockedOutlet);
     DynamicBlowdownFlareStudyDataSource.BlowdownSource source = DynamicBlowdownFlareStudyDataSource.BlowdownSource
         .builder(COOLER, fluid).equipmentTag(COOLER).vesselVolumeM3(5.0).orificeDiameterM(0.025)
         .dischargeCoefficient(0.72).backPressureBara(1.5).stopPressureBara(1.5).api521FireCase(20.0, true, true)
-        .psvBasis(90.0, 0.21, false, false).build();
+        .psvBasis(90.0, 0.10, false, false)
+        .psvContingency(blockedOutlet, 1.5, "Reference facility blocked export outlet").build();
     DynamicBlowdownFlareStudyDataSource dynamic = DynamicBlowdownFlareStudyDataSource.builder("reference-flare-study")
         .addSource(source).flareHeader(0.50, 1.5, 288.15, 0.020, 1.30).maxAllowableHeaderMach(0.50)
         .flareGeometry(0.60, 40.0, 0.20).flareDesignCapacity(1.0e9, 100.0, 50000.0).sourceDiagramsReviewed(true)

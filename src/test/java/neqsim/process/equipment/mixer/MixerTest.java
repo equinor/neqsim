@@ -13,6 +13,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos1978;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -433,6 +434,38 @@ class MixerTest {
     double[] molarComposition = testMixer.getThermoSystem().getMolarComposition();
     assertEquals(0.5, molarComposition[0], 1e-6);
     assertEquals(0.5, molarComposition[1], 1e-6);
+  }
+
+  /** Direct mixer runs must conserve disjoint uninitialized feeds and ignore a genuinely empty inlet. */
+  @Test
+  void directRunResolvesFreshPr78FeedsBeforeLowFlowSelection() {
+    SystemInterface nitrogen = new SystemPrEos1978(298.15, 10.0);
+    nitrogen.addComponent("nitrogen", 1.0);
+    SystemInterface methane = new SystemPrEos1978(320.15, 12.0);
+    methane.addComponent("methane", 1.0);
+    SystemInterface empty = new SystemPrEos1978(280.15, 1.0);
+    empty.addComponent("water", 0.0);
+
+    Stream first = new Stream("nitrogen", nitrogen);
+    Stream second = new Stream("methane", methane);
+    Mixer mixer = new Mixer("fresh feeds");
+    mixer.addStream(first);
+    mixer.addStream(second);
+    mixer.addStream(new Stream("zero water", empty));
+
+    for (int run = 0; run < 2; run++) {
+      mixer.run();
+      SystemInterface mixed = mixer.getThermoSystem();
+      assertTrue(mixer.isActive());
+      assertEquals(2, mixed.getNumberOfComponents());
+      assertEquals(1.0, mixed.getComponent("nitrogen").getNumberOfmoles(), 1e-12);
+      assertEquals(1.0, mixed.getComponent("methane").getNumberOfmoles(), 1e-12);
+      assertEquals(0.5, mixed.getComponent("methane").getz(), 1e-12);
+      assertEquals(10.0, mixed.getPressure(), 1e-10);
+      assertEquals(first.getFlowRate("kg/hr") + second.getFlowRate("kg/hr"), mixed.getFlowRate("kg/hr"), 1e-8);
+      assertEquals(first.getThermoSystem().getEnthalpy() + second.getThermoSystem().getEnthalpy(), mixed.getEnthalpy(),
+          1e-3);
+    }
   }
 
   @Test

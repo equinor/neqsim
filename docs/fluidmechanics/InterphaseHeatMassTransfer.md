@@ -109,7 +109,14 @@ $$B_{ij} = -x_i \left(\frac{1}{D_{ij}} - \frac{1}{D_{i,n}}\right), \quad i \neq 
 
 $$\Gamma_{ij} = \delta_{ij} + x_i \frac{\partial \ln \gamma_i}{\partial x_j}$$
 
-Where $\gamma_i$ is the activity coefficient and $\delta_{ij}$ is the Kronecker delta.
+Here $\delta_{ij}$ is the Kronecker delta. In the film model the last species $r$ is dependent.
+At fixed temperature, pressure and total phase moles $n$, increasing $x_j$ displaces $x_r$.
+For EOS fugacity coefficients $\phi_i$ this gives
+
+$$\Gamma_{ij}=\delta_{ij}+x_i n\left(\frac{\partial\ln\phi_i}{\partial n_j}-\frac{\partial\ln\phi_i}{\partial n_r}\right).$$
+
+The film refreshes the bulk-phase fugacity derivatives when the thermodynamic correction is enabled.
+Its pair transport inputs remain the kinetic Maxwell–Stefan diffusivities.
 
 ### 2.3 Film Theory
 
