@@ -382,3 +382,39 @@ def select_component_history(study, scenario):
             "raw_scenario": deepcopy(scenario), "component_order": list(order),
             "cumulative_origin_bounds": {name: [_exact_decimal(lo), _exact_decimal(hi)]
                                          for name, (lo, hi) in origins.items()}, "steps": steps}
+
+
+def build_component_history(study, scenario, model, temperature_k, pressure_bara,
+                            phase_volume_fractions, initial_reference, java):
+    """Construct the existing Java history from a revalidated conserved selection.
+
+    The caller supplies an accepted CalibratedPvtModel and an already initialized
+    namespace from neqsim_dev_setup. Initial gas/oil/aqueous fractions are
+    reservoir initialization inputs. Java validates the complete EOS component
+    set and initialization values; replay subsequently checks phase feasibility.
+    The returned history is reusable for replay and bounded volume matching.
+    Exact source selections accompany the conversion to Java double arrays.
+    """
+    if not isinstance(initial_reference, str) or not initial_reference.strip():
+        raise PVTStudyError("Reservoir initialization requires a provenance reference")
+    selected = select_component_history(study, scenario)
+    if not callable(getattr(java, "JClass", None)):
+        raise PVTStudyError("An initialized NeqSim Java namespace is required")
+    history_type = java.JClass("neqsim.pvtsimulation.util.CompositionalReservoirHistory")
+    step_type = java.JClass("neqsim.pvtsimulation.util.CompositionalReservoirHistory$Step")
+    steps = [
+        step_type(row["duration_seconds"], [float(value) for value in row["produced_moles"]],
+                  [float(value) for value in row["injected_moles"]], float(row["pressure_bara"]),
+                  float(row["sigma_bara"]), row["holdout"])
+        for row in selected["steps"]
+    ]
+    fractions = list(phase_volume_fractions)
+    reference = (scenario["reference"] + "; source_sha256=" + selected["source_sha256"]
+                 + "; scenario_sha256=" + selected["scenario_sha256"]
+                 + "; initialization=" + initial_reference)
+    history = history_type(model, reference, selected["component_order"], temperature_k,
+                           pressure_bara, fractions, steps)
+    return {"history": history, "selection": selected,
+            "calibration_provenance": str(model.getProvenance()),
+            "initialization": {"reference": initial_reference, "temperature_k": temperature_k,
+                               "pressure_bara": pressure_bara, "phase_volume_fractions": fractions}}

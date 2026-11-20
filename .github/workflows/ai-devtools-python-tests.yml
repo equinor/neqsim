@@ -7,6 +7,9 @@ on:
   pull_request:
     paths:
       - "devtools/**"
+      - "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java"
+      - "src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java"
+      - "src/test/resources/neqsim/pvtsimulation/gas-lab-tank/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
@@ -24,6 +27,9 @@ on:
     branches: [master]
     paths:
       - "devtools/**"
+      - "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java"
+      - "src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java"
+      - "src/test/resources/neqsim/pvtsimulation/gas-lab-tank/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
@@ -58,6 +64,19 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Compile workspace for reservoir source handoff
+        run: >-
+          ./mvnw -B -ntp -DskipTests compile
+          org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath
+          -Dmdep.outputFile=target/neqsim-dev-classpath.txt
+
+      - name: Qualify reservoir source handoff against workspace Java
+        env:
+          NEQSIM_TEST_RESERVOIR_JAVA: "1"
+        run: >-
+          uv run --project devtools --locked --group test python -m pytest -q -s
+          devtools/test_reservoir_history_java.py
+
       - name: Verify SRK local-flux receipts and rejection controls
         run: |
           uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy -p test_srk_receipts.py -v
@@ -88,6 +107,7 @@ jobs:
             devtools/test_reservoir_history_intake.py \
             devtools/test_reservoir_component_intake.py \
             devtools/test_reservoir_component_selection.py \
+            devtools/test_reservoir_history_bridge.py \
             devtools/test_pvt_study.py \
             devtools/test_pvt_report.py \
             devtools/test_pvt_proxy.py \

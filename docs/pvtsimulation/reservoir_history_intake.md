@@ -194,3 +194,78 @@ This validator admits a caller-selected feasible scenario. A posterior grid
 still requires explicit joint prior weights and complete forward-model
 qualification. Feasible source accounting alone does not establish reservoir
 pressure accuracy, a PVT model fit or uncertainty coverage.
+
+## Build and execute the existing Java reservoir history
+
+Use `build_component_history` with the original study and explicit scenario,
+an accepted `CalibratedPvtModel`, and the already initialized namespace returned
+by `neqsim_dev_setup.neqsim_init(project_root=...)`. The builder revalidates
+the source and scenario, constructs the existing measured-component `Step`
+objects, and returns a reusable `CompositionalReservoirHistory`. It also
+returns the exact source selection, the model's calibration provenance JSON
+and the separately declared reservoir initialization.
+
+Temperature is in K, initial pressure in bara, and initial gas/oil/aqueous
+fractions are fractions of pore volume. They are reservoir initialization
+inputs. Supply their own provenance and justify them independently of the
+laboratory sample's phase fractions. Construction checks the complete EOS
+component set and input values. Replay checks whether the requested initial
+phases are physically available.
+
+The following helper constructs the synthetic three-component source example.
+The caller supplies the accepted model with methane, ethane and water and an
+initialized Java namespace. This helper does not initialize a JVM or tune a
+fluid.
+
+```python
+import json
+from pathlib import Path
+
+from reservoir_history_intake import build_component_history
+
+
+def history_from_source(accepted_model, java):
+    folder = Path("devtools/pvt_examples")
+    source = json.loads((folder / "reservoir_component_intake.json").read_text())
+    scenario = json.loads((folder / "reservoir_component_selection.json").read_text())
+    return build_component_history(
+        source, scenario, accepted_model, 400.0, 200.0, [1.0, 0.0, 0.0],
+        "Synthetic gas-only reservoir initialization at 400 K and 200 bara", java,
+    )
+```
+
+The returned `history` supports the existing `replay(volume_m3)` and
+`fitVolume(minimum_m3, maximum_m3)` operations. Preserve its accompanying
+`selection` when reporting the Java double conversion. Its history reference
+contains the source/selection hashes and initialization reference. The
+`calibration_provenance` string describes the accepted model's metadata;
+it is not a content hash of every EOS parameter.
+
+The [compiled-Java bridge test](../../devtools/test_reservoir_history_java.py)
+reuses the [independent gas-only laboratory/tank reference](../../src/test/resources/neqsim/pvtsimulation/gas-lab-tank/reference.json).
+The numerical reference and its independent generator predate this handoff.
+Production and injection components enter as prescribed interval amounts.
+The test compares retained inventories and pressures, fits volume with the
+frozen laboratory model, perturbs a held-out pressure, retries after an
+infeasible trial, and checks that the serialized original/tuned bundle is
+unchanged. The selected-source reference uses explicit synthetic component
+meters and does not establish measured field accuracy or predicted
+produced-composition/GOR acceptance.
+
+The frozen bridge bounds are 0.001 m³ for recovered initial volume,
+1e-6 bar for replay pressures and 1e-4 mol for each retained component.
+The qualified independent case has an initial volume of 1017.3 m³ at
+400 K and 200 bara; the source deliberately reverses the Java component
+order to check named routing. No tolerance is fitted to these results.
+The laboratory reference's own calibration/holdout qualification remains
+separate from the reservoir pressure calibration and held-out pressure.
+
+Run that test with `NEQSIM_TEST_RESERVOIR_JAVA=1` after compiling the selected
+workspace and its Maven dependency classpath. It asserts that the loaded
+history class comes from that workspace's `target/classes`. The Python
+workflow compiles and executes this gate explicitly. Ordinary hermetic
+source-audit tests leave it disabled. Run the opt-in suite in its own Python
+process: its fixture owns the JVM and shuts it down before pytest restores
+native fault handlers. The retained CI output reports volume, pressure and
+component errors, separate calibration/holdout scores and measured bridge,
+replay and fitting runtimes.
