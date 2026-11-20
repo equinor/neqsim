@@ -22,6 +22,14 @@ class SourceCollectionTest(unittest.TestCase):
         path.write_text("Synthetic reference", encoding="utf-8")
         return path
 
+    def test_ots_and_alarm_event_folders_are_catalogued_sources(self):
+        self.add_file("ots/event_raw.csv")
+        self.add_file("alarm_events/events.json")
+        self.assertEqual(sources.main([str(self.task)]), 0)
+        record = json.loads((self.refs / "collection_manifest.json").read_text())
+        keys = sorted(s["source"] for s in record["sources"])
+        self.assertEqual(keys, ["alarm-events", "ots"])
+
     def test_equipment_portal_is_emitted_once_in_all_outputs(self):
         self.add_file("equipment-portal/reference_prices.pdf")
         for _ in range(2):

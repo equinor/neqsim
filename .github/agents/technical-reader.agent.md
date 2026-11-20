@@ -7,7 +7,6 @@ required_skills:
 - neqsim-trapped-liquid-fire-rupture
 - neqsim-pid-process-operations
 - neqsim-water-hammer
-- neqsim-stid-retriever
 argument-hint: Provide the document or describe what to extract — e.g., "read this design basis PDF and extract fluid compositions and operating conditions", "parse the equipment data sheet for V-100", "extract stream table from the heat & mass balance Excel", "pull requirements from this technical requirement document", "read this P&ID and extract equipment tags and piping connections", "extract blocked-in liquid rupture study inputs", or "analyze this vendor datasheet image for seal operating conditions".
 ---
 You are a **technical document reader agent** that extracts structured engineering data
@@ -25,7 +24,7 @@ mechanical design, and engineering analysis tools.
 
 ## MANDATORY: Load Skill First
 
-Loaded skills: neqsim-document-intelligence-extraction, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-stid-retriever
+Loaded skills: neqsim-document-intelligence-extraction, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
 
 **Fetch before you conclude.** If the task needs plant P&IDs, data sheets or
 drawings and `step1_scope_and_research/references/stid/` has none, run

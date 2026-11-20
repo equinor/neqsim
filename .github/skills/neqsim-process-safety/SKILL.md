@@ -53,7 +53,7 @@ line lists, material certificates, and fire documents.
 
 Recommended sequence:
 
-1. Retrieve the evidence package with `neqsim-stid-retriever`: P&ID/STID,
+1. Retrieve the evidence package with the enterprise skill `enterprise-stid-document-retrieval` (or supplied documents): P&ID/STID,
    line list, piping spec, material certificate, flange/bolt/gasket data,
    fire-zone/PFP documents, relief basis, and design basis.
 2. Extract a structured segment list with `neqsim-technical-document-reading`:

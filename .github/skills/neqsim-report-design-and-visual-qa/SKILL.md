@@ -25,6 +25,27 @@ experience. A well-formed DOCX is not proof of good pagination.
 - Never open, edit or copy the report generator. Put reusable finishing logic in
   `devtools/report_design.py`; authored narrative belongs in report inputs.
 
+## Figure design rules (illustrations)
+
+Learned from reviewing a 17-figure safety study; apply to every generated figure, not only flow diagrams.
+
+| Rule | Why / measured failure |
+|---|---|
+| Design figures at the report text width (about 7.2 in) with 7-9 pt text | 13-19 in wide figures printed at 3-4 pt and were unreadable |
+| One house style module per study: colours, fonts, markers, legend position, north arrow, margins | panels in different figures used different arrows, legends and extents |
+| Title = the finding (bold, at most two lines), grey sub-line = case and conditions | descriptive titles ("Plan footprints") made readers hunt for the message |
+| Reserve title and legend margins explicitly; never let a legend or sub-line overlap panel titles or axis labels | overlaps appeared in every multi-panel figure on first render |
+| Do not scale a multi-panel figure by adding panels: 2 x 2 at most per page-width figure | 8-panel figures turned narrow plumes into slivers |
+| Sensitivity axes start at zero and are shared between panels | auto-zoomed tornado axes made differences of 0.1 % look dominant |
+| Show the quantity the decision needs (peak on the flight path), not the model's near-source core value; cap extreme values as "> 100 %" | "peak 6210 % LFL" was meaningless |
+| State exaggerated scales (e.g. vertical x3) and show a scale bar on schematic overlays | readers misjudge geometry otherwise |
+| Never publish a picture that shows nothing (default view, ITEMS 0, empty panel); keep it as evidence, list the gap in a coverage table | six "not found" captures were embedded as figures |
+| A table is not repeated as a figure; no duplicate images (auto-collected wind rose next to the composite) | duplicates inflated the figure list |
+| Overlays on third-party screenshots (digital twin, drone, map) carry the disclaimer "schematic, not registered to the camera" and the source | no camera parameters means the position is not geo-referenced |
+| Give every figure a discussion entry (observation, mechanism, implication, recommendation) | the generator places figures with a discussion entry in the Discussion chapter and the rest in Results: mixing the two split related figures |
+| Numbers quoted in figure text come from the results file, computed not typed; re-check after every model change | a benchmark sentence claimed 0.1 % where the rerun gave 2.3 % |
+| Render the PDF and look at the figure pages at print size before sign-off | the contact sheet at print size exposed all of the above |
+
 ## Procedure
 
 1. Generate the normal report with `neqsim report TASK_DIR` when needed. For an

@@ -1125,12 +1125,12 @@ stidapi:
 
 ```bash
 # Download documents for specific equipment tags
-uv run --project devtools --locked devtools/stid_download.py \
+python -m enterprise_stid_document_retrieval.stid_download \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --tags 35-KA001A 35-KA001B
 
 # Download + convert to PNG for AI image analysis
-uv run --project devtools --locked devtools/stid_download.py \
+python -m enterprise_stid_document_retrieval.stid_download \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --tags 35-KA001A --convert-png
 ```
@@ -1138,7 +1138,7 @@ uv run --project devtools --locked devtools/stid_download.py \
 ### Download by Document Number
 
 ```bash
-uv run --project devtools --locked devtools/stid_download.py \
+python -m enterprise_stid_document_retrieval.stid_download \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --docs E001-AS-P-XB-00001-01
 ```
@@ -1146,7 +1146,7 @@ uv run --project devtools --locked devtools/stid_download.py \
 ### Programmatic Retrieval
 
 ```python
-from devtools.doc_retriever import retrieve_documents
+from enterprise_stid_document_retrieval.doc_retriever import retrieve_documents
 
 docs = retrieve_documents(
     tags=['35-KA001A'],
