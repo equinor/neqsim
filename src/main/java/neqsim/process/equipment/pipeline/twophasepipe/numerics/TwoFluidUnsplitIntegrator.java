@@ -29,6 +29,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitMo
  * </p>
  */
 public final class TwoFluidUnsplitIntegrator {
+  private static final double INTERVAL_RESIDUAL_BUDGET_FRACTION = 0.25;
   private final TwoFluidConservationEquations equations;
   private final PhaseDensityModel densityModel;
   private final UnsplitTransientSolver solver;
@@ -187,8 +188,10 @@ public final class TwoFluidUnsplitIntegrator {
         pressure[cell] = local[cell].getPressure();
         area[cell] = local[cell].getArea();
       }
-      UnsplitTransientSolver.Result candidate = solver.solve(state, pressure, area, dt, time, outletPressure,
-          outletPressureFixed, adapter);
+      double localTolerance = Math.min(solver.getRelativeTolerance(),
+          INTERVAL_RESIDUAL_BUDGET_FRACTION * relativeTolerance * dt / duration);
+      UnsplitTransientSolver.Result candidate = solver.solveWithTolerance(state, pressure, area, dt, time,
+          outletPressure, outletPressureFixed, adapter, localTolerance);
       evaluations += candidate.getModelEvaluations();
       if (!candidate.isConverged() || !candidate.isActiveSetStable()) {
         rejected++;
@@ -202,8 +205,7 @@ public final class TwoFluidUnsplitIntegrator {
         continue;
       }
       // Configuration, density and independent verification exceptions fail immediately; they are not retry signals.
-      PreparedStep step = adapter.prepareStep(candidate, dt, time, outletPressure, outletPressureFixed,
-          relativeTolerance);
+      PreparedStep step = adapter.prepareStep(candidate, dt, time, outletPressure, outletPressureFixed, localTolerance);
       prepared.add(step);
       local = step.getEndpointSections();
       time = attempt.endTime;
@@ -312,7 +314,9 @@ public final class TwoFluidUnsplitIntegrator {
     private final long modelEvaluations;
     private final double[][] phaseMassFaceTransferKg;
     private final double[][] phaseMassSourceTransferKg;
+    private final double[][] phaseMassCellTransferKg;
     private final double[][] conservativeFrictionImpulsePerLength;
+    private final double[] massResidualKg;
     private final double maximumScaledResidual;
 
     private PreparedInterval(List<PreparedStep> steps, TwoFluidSection[] initial, double startTime, double endTime,
@@ -325,8 +329,15 @@ public final class TwoFluidUnsplitIntegrator {
       TwoFluidSection[] endpoint = steps.get(steps.size() - 1).getEndpointSections();
       phaseMassFaceTransferKg = new double[endpoint.length + 1][3];
       phaseMassSourceTransferKg = new double[endpoint.length][3];
+      phaseMassCellTransferKg = new double[endpoint.length][3];
       conservativeFrictionImpulsePerLength = new double[endpoint.length][3];
       double[][] momentumChanges = new double[endpoint.length][3];
+      CompensatedSum[][] faceTransfers = sums(endpoint.length + 1, 3);
+      CompensatedSum[][] sourceTransfers = sums(endpoint.length, 3);
+      CompensatedSum[][] cellTransfers = sums(endpoint.length, 3);
+      CompensatedSum[][] momentumTransfer = sums(endpoint.length, 3);
+      CompensatedSum[][] frictionTransfer = sums(endpoint.length, 3);
+      CompensatedSum[] domainTransfers = sums(3);
       for (PreparedStep step : steps) {
         double dt = step.getTimeStepSeconds();
         double[][] faces = step.getEvaluation().getPhaseMassFaceFluxes();
@@ -335,39 +346,70 @@ public final class TwoFluidUnsplitIntegrator {
         double[][] frictionImpulse = step.getConservativeFrictionImpulsePerLength();
         for (int face = 0; face < faces.length; face++) {
           for (int phase = 0; phase < 3; phase++) {
-            phaseMassFaceTransferKg[face][phase] += dt * faces[face][phase];
+            faceTransfers[face][phase].add(dt * faces[face][phase]);
           }
         }
         for (int cell = 0; cell < endpoint.length; cell++) {
           for (int phase = 0; phase < 3; phase++) {
-            phaseMassSourceTransferKg[cell][phase] += dt * sources[cell][phase] * endpoint[cell].getLength();
-            momentumChanges[cell][phase] += dt * rates[cell][phase + 3];
-            conservativeFrictionImpulsePerLength[cell][phase] += frictionImpulse[cell][phase];
+            double source = dt * sources[cell][phase] * endpoint[cell].getLength();
+            sourceTransfers[cell][phase].add(source);
+            cellTransfers[cell][phase].add(dt * (faces[cell][phase] - faces[cell + 1][phase]) + source);
+            momentumTransfer[cell][phase].add(dt * rates[cell][phase + 3]);
+            frictionTransfer[cell][phase].add(frictionImpulse[cell][phase]);
           }
+        }
+        for (int phase = 0; phase < 3; phase++) {
+          double domainTransfer = dt * (faces[0][phase] - faces[faces.length - 1][phase]);
+          for (int cell = 0; cell < endpoint.length; cell++) {
+            domainTransfer += dt * sources[cell][phase] * endpoint[cell].getLength();
+          }
+          domainTransfers[phase].add(domainTransfer);
+        }
+      }
+      for (int face = 0; face < phaseMassFaceTransferKg.length; face++) {
+        for (int phase = 0; phase < 3; phase++) {
+          phaseMassFaceTransferKg[face][phase] = faceTransfers[face][phase].value();
+        }
+      }
+      for (int cell = 0; cell < endpoint.length; cell++) {
+        for (int phase = 0; phase < 3; phase++) {
+          phaseMassSourceTransferKg[cell][phase] = sourceTransfers[cell][phase].value();
+          phaseMassCellTransferKg[cell][phase] = cellTransfers[cell][phase].value();
+          momentumChanges[cell][phase] = momentumTransfer[cell][phase].value();
+          conservativeFrictionImpulsePerLength[cell][phase] = frictionTransfer[cell][phase].value();
         }
       }
       double maximumResidual = 0.0;
+      double maximumCellMassResidual = 0.0;
+      double maximumCellMomentumResidual = 0.0;
+      double maximumDomainMassResidual = 0.0;
       for (int cell = 0; cell < endpoint.length; cell++) {
         double[] before = initial[cell].getStateVector();
         double[] after = endpoint[cell].getStateVector();
         for (int phase = 0; phase < 3; phase++) {
-          double massChange = (phaseMassFaceTransferKg[cell][phase] - phaseMassFaceTransferKg[cell + 1][phase]
-              + phaseMassSourceTransferKg[cell][phase]) / endpoint[cell].getLength();
-          maximumResidual = Math.max(maximumResidual,
-              Math.abs(after[phase] - before[phase] - massChange) / Math.max(1.0, Math.abs(before[phase])));
-          maximumResidual = Math.max(maximumResidual,
-              Math.abs(after[phase + 3] - before[phase + 3] - momentumChanges[cell][phase])
-                  / Math.max(1.0, Math.abs(before[phase + 3])));
+          double massChange = phaseMassCellTransferKg[cell][phase] / endpoint[cell].getLength();
+          double cellMassResidual = Math.abs(after[phase] - before[phase] - massChange)
+              / Math.max(1.0, Math.abs(before[phase]));
+          double cellMomentumResidual = Math.abs(after[phase + 3] - before[phase + 3] - momentumChanges[cell][phase])
+              / Math.max(1.0, Math.abs(before[phase + 3]));
+          maximumCellMassResidual = Math.max(maximumCellMassResidual, cellMassResidual);
+          maximumCellMomentumResidual = Math.max(maximumCellMomentumResidual, cellMomentumResidual);
+          maximumResidual = Math.max(maximumResidual, Math.max(cellMassResidual, cellMomentumResidual));
         }
       }
-      double[] massResidual = getMassResidualKg();
       double[] initialMass = steps.get(0).getInitialMassKg();
+      double[] finalMass = steps.get(steps.size() - 1).getFinalMassKg();
+      massResidualKg = new double[3];
       for (int phase = 0; phase < 3; phase++) {
-        maximumResidual = Math.max(maximumResidual, Math.abs(massResidual[phase]) / Math.max(1.0, initialMass[phase]));
+        massResidualKg[phase] = finalMass[phase] - initialMass[phase] - domainTransfers[phase].value();
+        double domainMassResidual = Math.abs(massResidualKg[phase]) / Math.max(1.0, initialMass[phase]);
+        maximumDomainMassResidual = Math.max(maximumDomainMassResidual, domainMassResidual);
+        maximumResidual = Math.max(maximumResidual, domainMassResidual);
       }
       if (!Double.isFinite(maximumResidual) || maximumResidual > relativeTolerance) {
         throw new IllegalStateException("Complete interval conservation failed: scaled residual=" + maximumResidual
-            + ", tolerance=" + relativeTolerance);
+            + ", cell mass=" + maximumCellMassResidual + ", cell momentum=" + maximumCellMomentumResidual
+            + ", domain mass=" + maximumDomainMassResidual + ", tolerance=" + relativeTolerance);
       }
       maximumScaledResidual = maximumResidual;
     }
@@ -417,6 +459,11 @@ public final class TwoFluidUnsplitIntegrator {
       return copyMatrixArray(phaseMassSourceTransferKg);
     }
 
+    /** @return defensive net gas/oil/water transfer into each cell in kg */
+    public double[][] getPhaseMassCellTransferKg() {
+      return copyMatrixArray(phaseMassCellTransferKg);
+    }
+
     /**
      * Return the accepted passive-friction momentum impulse summed over all prepared substeps.
      *
@@ -429,17 +476,26 @@ public final class TwoFluidUnsplitIntegrator {
 
     /** @return gas/oil/water inventory residuals in kg against the exact accepted face and source transfers */
     public double[] getMassResidualKg() {
-      double[] initial = substeps.get(0).getInitialMassKg();
-      double[] residual = substeps.get(substeps.size() - 1).getFinalMassKg();
-      for (int phase = 0; phase < 3; phase++) {
-        residual[phase] -= initial[phase] + phaseMassFaceTransferKg[0][phase]
-            - phaseMassFaceTransferKg[phaseMassFaceTransferKg.length - 1][phase];
-        for (double[] source : phaseMassSourceTransferKg) {
-          residual[phase] -= source[phase];
-        }
-      }
-      return residual;
+      return massResidualKg.clone();
     }
+  }
+
+  private static CompensatedSum[][] sums(int rows, int columns) {
+    CompensatedSum[][] result = new CompensatedSum[rows][columns];
+    for (int row = 0; row < rows; row++) {
+      for (int column = 0; column < columns; column++) {
+        result[row][column] = new CompensatedSum();
+      }
+    }
+    return result;
+  }
+
+  private static CompensatedSum[] sums(int length) {
+    CompensatedSum[] result = new CompensatedSum[length];
+    for (int index = 0; index < length; index++) {
+      result[index] = new CompensatedSum();
+    }
+    return result;
   }
 
   private static TwoFluidSection[] cloneSections(TwoFluidSection[] sections) {

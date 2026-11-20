@@ -514,11 +514,21 @@ public final class UnsplitTransientSolver implements Serializable {
    */
   public Result solve(double[][] previousState, double[] previousPressure, double[] cellAreas, double timeStep,
       double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
+    return solveWithTolerance(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure,
+        outletPressureFixed, model, relativeTolerance);
+  }
+
+  /** Solve one step with a stricter caller-owned tolerance without mutating this solver's configuration. */
+  Result solveWithTolerance(double[][] previousState, double[] previousPressure, double[] cellAreas, double timeStep,
+      double startTime, double outletPressure, boolean outletPressureFixed, Model model, double solveTolerance) {
     validateInputs(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
         model);
+    if (!(solveTolerance > 0.0) || !Double.isFinite(solveTolerance) || solveTolerance > relativeTolerance) {
+      throw new IllegalArgumentException("Solve tolerance must be positive, finite and no looser than configured");
+    }
     if (isDirectionalComplementarityEnabled()) {
       return solveDirectional(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure,
-          outletPressureFixed, model);
+          outletPressureFixed, model, solveTolerance);
     }
     double timeWeight = getTimeIntegrationMethod().weight;
     double[][] state = copyMatrixArray(previousState);
@@ -537,7 +547,7 @@ public final class UnsplitTransientSolver implements Serializable {
     TerminationReason terminationReason = activeSetStable ? TerminationReason.MAXIMUM_ITERATIONS
         : TerminationReason.ACTIVE_SET_UPDATE_LIMIT;
 
-    while (activeSetStable && iterations < maximumIterations && residualNorm > relativeTolerance) {
+    while (activeSetStable && iterations < maximumIterations && residualNorm > solveTolerance) {
       iterations++;
       double[][] jacobian;
       try (Linearization ignored = new Linearization(countedModel, current)) {
@@ -577,7 +587,7 @@ public final class UnsplitTransientSolver implements Serializable {
         trial = evaluateResidual(previousState, previousPressure, trialState, trialPressure, cellAreas, timeStep,
             startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
         double trialNorm = maximumAbsolute(trial.residual);
-        if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < relativeTolerance) {
+        if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < solveTolerance) {
           accepted = true;
           break;
         }
@@ -602,7 +612,7 @@ public final class UnsplitTransientSolver implements Serializable {
       }
     }
 
-    boolean converged = terminationReason == TerminationReason.MAXIMUM_ITERATIONS && residualNorm <= relativeTolerance
+    boolean converged = terminationReason == TerminationReason.MAXIMUM_ITERATIONS && residualNorm <= solveTolerance
         && activeSetStable;
     if (converged) {
       terminationReason = TerminationReason.CONVERGED;
@@ -614,7 +624,8 @@ public final class UnsplitTransientSolver implements Serializable {
 
   /** Solve the opt-in augmented cell/face system with frozen one-sided donor-presence rows. */
   private Result solveDirectional(double[][] previousState, double[] previousPressure, double[] cellAreas,
-      double timeStep, double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
+      double timeStep, double startTime, double outletPressure, boolean outletPressureFixed, Model model,
+      double solveTolerance) {
     double timeWeight = getTimeIntegrationMethod().weight;
     double[][] state = copyMatrixArray(previousState);
     double[] pressure = previousPressure.clone();
@@ -638,7 +649,7 @@ public final class UnsplitTransientSolver implements Serializable {
     TerminationReason terminationReason = activeSetStable ? TerminationReason.MAXIMUM_ITERATIONS
         : TerminationReason.ACTIVE_SET_UPDATE_LIMIT;
 
-    while (activeSetStable && iterations < maximumIterations && residualNorm > relativeTolerance) {
+    while (activeSetStable && iterations < maximumIterations && residualNorm > solveTolerance) {
       iterations++;
       double[][] jacobian;
       try (Linearization ignored = new Linearization(countedModel, new ResidualEvaluation(current.residual,
@@ -694,7 +705,7 @@ public final class UnsplitTransientSolver implements Serializable {
               countedModel, timeWeight);
         }
         double trialNorm = maximumAbsolute(trial.residual);
-        if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < relativeTolerance) {
+        if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < solveTolerance) {
           accepted = true;
           break;
         }
@@ -721,7 +732,7 @@ public final class UnsplitTransientSolver implements Serializable {
         terminationReason = TerminationReason.ACTIVE_SET_UPDATE_LIMIT;
       }
     }
-    boolean converged = terminationReason == TerminationReason.MAXIMUM_ITERATIONS && residualNorm <= relativeTolerance
+    boolean converged = terminationReason == TerminationReason.MAXIMUM_ITERATIONS && residualNorm <= solveTolerance
         && activeSetStable;
     if (converged) {
       terminationReason = TerminationReason.CONVERGED;

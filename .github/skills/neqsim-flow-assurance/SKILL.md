@@ -1265,6 +1265,16 @@ commercial-simulator comparison.
   because the combined operator regresses the trace-phase/donor event. This is
   numerical source evidence only, not restart, severe-slugging or pigging
   qualification.
+- For the bounded frozen-phase `runTransient` route, configure
+  `setOutletBoundaryFluid(...)` whenever a constant-pressure outlet can donate a
+  reversed phase. The signed transfer stays in the phase ledger; only positive
+  exports enter the downstream stream. The historical-grid 16/24-cell,
+  0.1/0.05 s five-second matrix and the 16-cell 180/600 s duration gates pass
+  with backward Euler, pressure interpolation, transition blending and signed
+  donor transport. The interval controller tightens local solves against a
+  duration-weighted share of the unchanged cumulative conservation budget.
+  Treat this as atomic numerical continuation evidence, not experimental severe
+  slugging, physical restart, receiver surge or pigging qualification.
 - Do not over-constrain `setOutletPressure` with a measured pressure drop the
   modelled geometry cannot produce. Investigate valves, fittings, elevations, and
   boundary consistency separately.

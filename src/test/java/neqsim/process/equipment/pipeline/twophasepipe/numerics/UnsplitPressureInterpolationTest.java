@@ -267,8 +267,8 @@ class UnsplitPressureInterpolationTest {
         duration / 4.0);
     assertEquals(4, interval.getSubsteps().size());
     assertEquals(0, interval.getRejectedAttempts(), "The smooth small-amplitude fixture must not need subdivision");
-    double[][] integratedFaces = new double[accepted.length + 1][3];
-    double[][] integratedSources = new double[accepted.length][3];
+    CompensatedSum[][] integratedFaceSums = compensatedSums(accepted.length + 1, 3);
+    CompensatedSum[][] integratedSourceSums = compensatedSums(accepted.length, 3);
     TwoFluidSection[] previous = accepted;
     double time = start;
     double weight = method == TimeIntegrationMethod.BACKWARD_EULER ? 1.0 : 0.5;
@@ -287,12 +287,12 @@ class UnsplitPressureInterpolationTest {
       double[][] sources = step.getEvaluation().getPhaseMassSourcesPerLength();
       for (int face = 0; face < faces.length; face++) {
         for (int phase = 0; phase < 3; phase++) {
-          integratedFaces[face][phase] += dt * faces[face][phase];
+          integratedFaceSums[face][phase].add(dt * faces[face][phase]);
         }
       }
       for (int cell = 0; cell < accepted.length; cell++) {
         for (int phase = 0; phase < 3; phase++) {
-          integratedSources[cell][phase] += dt * sources[cell][phase] * accepted[cell].getLength();
+          integratedSourceSums[cell][phase].add(dt * sources[cell][phase] * accepted[cell].getLength());
         }
       }
       previous = step.getEndpointSections();
@@ -300,6 +300,8 @@ class UnsplitPressureInterpolationTest {
     }
     assertEquals(start + duration, time, 0.0);
     assertEquals(time, interval.getEndTimeSeconds(), 0.0);
+    double[][] integratedFaces = values(integratedFaceSums);
+    double[][] integratedSources = values(integratedSourceSums);
     assertMatrixEquals(integratedFaces, interval.getPhaseMassFaceTransferKg(), 0.0);
     assertMatrixEquals(integratedSources, interval.getPhaseMassSourceTransferKg(), 0.0);
     TwoFluidSection[] endpoint = interval.getEndpointSections();
@@ -531,6 +533,26 @@ class UnsplitPressureInterpolationTest {
       assertEquals(expected[cell].getOilHoldup(), actual[cell].getOilHoldup(), 0.0);
       assertEquals(expected[cell].getWaterHoldup(), actual[cell].getWaterHoldup(), 0.0);
     }
+  }
+
+  private static CompensatedSum[][] compensatedSums(int rows, int columns) {
+    CompensatedSum[][] sums = new CompensatedSum[rows][columns];
+    for (int row = 0; row < rows; row++) {
+      for (int column = 0; column < columns; column++) {
+        sums[row][column] = new CompensatedSum();
+      }
+    }
+    return sums;
+  }
+
+  private static double[][] values(CompensatedSum[][] sums) {
+    double[][] values = new double[sums.length][sums[0].length];
+    for (int row = 0; row < sums.length; row++) {
+      for (int column = 0; column < sums[row].length; column++) {
+        values[row][column] = sums[row][column].value();
+      }
+    }
+    return values;
   }
 
   private static void assertMatrixEquals(double[][] expected, double[][] actual, double tolerance) {

@@ -176,19 +176,10 @@ class TwoFluidUnsplitPublicationTest {
   }
 
   @Test
-  void nonuniformCellAndInletCompositionsFailBeforeAnyPublication() {
-    TwoFluidSection[] accepted = sections(false, 0.0);
-    accepted[1].setTemperature(305.0);
-    PreparedInterval interval = interval(accepted, 1.0 / 512.0, true);
-    TwoFluidUnsplitPublication publication = TwoFluidUnsplitPublication.prepare(interval, accepted, START, 1.0 / 512.0,
-        1.0e-8);
+  void incompatibleInletCompositionsFailBeforeAnyPublication() {
     SystemInterface template = fluid(false);
     double[] before = template.getMolarComposition().clone();
-    IllegalStateException failure = assertThrows(IllegalStateException.class,
-        () -> publication.createOutletFluid(template, null, 45.0e5, 295.0));
-    assertTrue(failure.getMessage().contains("Nonuniform frozen phase composition"));
-    assertArrayEquals(before, template.getMolarComposition(), 0.0);
-    accepted = sections(false, 0.0);
+    TwoFluidSection[] accepted = sections(false, 0.0);
     TwoFluidUnsplitPublication uniform = TwoFluidUnsplitPublication.prepare(interval(accepted, 0.1, true), accepted,
         START, 0.1, 1.0e-8);
     SystemInterface changedInlet = template.clone();
@@ -219,7 +210,7 @@ class TwoFluidUnsplitPublicationTest {
     TwoFluidUnsplitPublication publication = TwoFluidUnsplitPublication.prepare(interval(current, duration, false),
         current, START, duration, 1.0e-8);
     SystemInterface template = fluid(false);
-    assertThrows(IllegalStateException.class, () -> publication.createOutletFluid(template, template, 48.0e5, 295.0));
+    assertComponentFlows(template, publication, publication.createOutletFluid(template, template, 48.0e5, 295.0));
     SystemInterface outlet = publication.createOutletFluid(template, template, frozen, 48.0e5, 295.0);
     assertComponentFlows(template, publication, outlet);
     assertEquals(50.0e5, frozen[0].getPressure(), 0.0);
@@ -246,6 +237,26 @@ class TwoFluidUnsplitPublicationTest {
     assertTrue(signedTransfer[2] < 0.0);
     assertThrows(IllegalStateException.class, () -> publication.createOutletFluid(fluid(false), null, 45.0e5, 295.0));
     assertArrayEquals(signedTransfer, publication.getOutletMassKg(), 0.0);
+  }
+
+  @Test
+  void signedBackflowUsesBoundaryDonorAndPublishesOnlyForwardPhaseExport() {
+    TwoFluidSection[] accepted = sections(false, -1.0);
+    double duration = 1.0 / 4096.0;
+    TwoFluidUnsplitPublication publication = TwoFluidUnsplitPublication.prepare(interval(accepted, duration, false),
+        accepted, START, duration, 1.0e-8);
+    SystemInterface template = fluid(false);
+    SystemInterface donor = fluid(false);
+    double[] donorComposition = donor.getMolarComposition().clone();
+    double donorFlow = donor.getFlowRate("kg/sec");
+    SystemInterface forwardOutlet = publication.createOutletFluid(template, null, donor, accepted, 45.0e5, 295.0);
+
+    assertEquals(0.0, forwardOutlet.getFlowRate("kg/sec"), 0.0);
+    assertArrayEquals(donorComposition, donor.getMolarComposition(), 0.0);
+    assertEquals(donorFlow, donor.getFlowRate("kg/sec"), 0.0);
+    for (double signedTransfer : publication.getOutletMassKg()) {
+      assertTrue(signedTransfer < 0.0);
+    }
   }
 
   private static void assertComponentFlows(SystemInterface template, TwoFluidUnsplitPublication publication,

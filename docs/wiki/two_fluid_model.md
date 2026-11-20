@@ -1195,10 +1195,12 @@ owned submodels must be reacquired after acceptance. Supported serializable phas
 SRK, PR, SRK-CPA and SRK-CPAs; pipe subclasses require a separate commit contract.
 
 `setUnsplitTransientSolver(solver, maximumTimeStep)` separately selects an experimental,
-always-transactional `runTransient` route. It retains original SRK/PR density and phase-composition
-references across calls. Outlet composition derives from exact phase transfers only when each
-phase has uniform frozen component mass fractions across cells and inlet. Nonuniform/changing
-composition and negative phase outlet transfer reject without publication. General component
+always-transactional `runTransient` route. It retains original SRK/PR density anchors and one
+initialized frozen composition for each conserved phase across calls. Outlet composition derives
+from exact phase transfers only when present cells, inlet and any explicit outlet-boundary donor
+match those frozen component mass fractions. Negative outlet phase transfer requires
+`setOutletBoundaryFluid(...)`, remains signed in the phase ledger and is excluded from the
+forward downstream stream; it is never clamped or netted against another phase. General component
 transport, energy, phase change and tracked slugs remain unsupported in this route.
 Four-cell/0.1 s and eight-/sixteen-cell/0.05 s gas configurations now complete consecutive
 calls covering five seconds at the unchanged `1e-10` nonlinear and `1e-8` conservation gates.
@@ -1249,8 +1251,14 @@ option in the backward-Euler/pressure-interpolated fixture, all three unchanged
 16/24-cell five-second lanes pass; the three unchanged midpoint lanes also
 pass. No physical closure, tolerance, inventory floor or accepted state is
 adjusted. Legacy transport remains the default. This closes the short numerical
-gate, not the separate 180/600 s experimental severe-slugging,
-physical-restart or coupled-pigging gates.
+gate. The same atomic publication route now also passes the separate 16-cell,
+0.1 s **180 s** and **600 s** numerical duration gates. The interval controller
+distributes 25% of the unchanged `1e-8` cumulative residual budget across
+attempted steps and uses the stricter of that allocation and the configured
+`1e-9` nonlinear tolerance without mutating the solver. Compensated signed-ledger
+summation and independent endpoint checks remain active. These runs do not
+satisfy the distinct experimental pressure-amplitude, period and cycle gates and
+do not qualify physical restart or coupled pigging.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 
