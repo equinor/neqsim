@@ -1202,6 +1202,12 @@ match those frozen component mass fractions. Negative outlet phase transfer requ
 `setOutletBoundaryFluid(...)`, remains signed in the phase ledger and is excluded from the
 forward downstream stream; it is never clamped or netted against another phase. General component
 transport, energy, phase change and tracked slugs remain unsupported in this route.
+Each accepted unsplit call also records nonlinear diagnostics on its
+`TwoFluidMassBalanceReport`: `getRejectedAttempts()` and `getModelEvaluations()` are non-negative
+for this route and remain -1 when the selected transient algorithm does not publish them. The
+active 600 s Tengesdal slow gate uses these values together with unchanged amplitude, period,
+hold-up, inventory and conservation criteria; a zero-rejection numerical run is necessary but
+not sufficient experimental evidence.
 Four-cell/0.1 s and eight-/sixteen-cell/0.05 s gas configurations now complete consecutive
 calls covering five seconds at the unchanged `1e-10` nonlinear and `1e-8` conservation gates.
 The outlet now uses the independently recovered phase fractions consistently with internal
