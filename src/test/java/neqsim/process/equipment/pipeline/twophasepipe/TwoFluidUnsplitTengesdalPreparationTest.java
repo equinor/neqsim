@@ -93,6 +93,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyPublication(16, 0.1, 600.0);
   }
 
+  /** Qualify the published unsplit trajectory against the unchanged public experimental gates. */
   @Tag("slow")
   @Test
   void sustainedPublishedTrajectoryMatchesPublicLimitCycle() {
@@ -152,6 +153,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     double minimumLiquidRate = minimum(liquidRates);
     double maximumLiquidRate = maximum(liquidRates);
     double meanLiquidFeed = inletLiquidMass / duration;
+    final int totalRejectedAttempts = rejectedAttempts;
     logger.info(
         "Published unsplit Tengesdal experiment: amplitude={} Pa, pressurePeriod={} s, pressureCycles={}, "
             + "liquidPeriod={} s, liquidCycles={}, qMin={}, qMax={}, meanFeed={}, steadyHoldup={}, rejects={}, "
@@ -162,7 +164,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
         maximumClosure.get(Phase.OIL), maximumClosure.get(Phase.WATER));
     assertAll("600 s published unsplit Tengesdal qualification",
         () -> assertEquals(duration, pipe.getSimulationTime(), 0.0),
-        () -> assertEquals(0, rejectedAttempts, "rejected nonlinear attempts"),
+        () -> assertEquals(0, totalRejectedAttempts, "rejected nonlinear attempts"),
         () -> assertTrue(liquidCycle.completedCycleCount >= 2,
             "completed liquid-production cycles=" + liquidCycle.completedCycleCount),
         () -> SevereSluggingExperimentalBenchmarkTest.assertExperimentalAgreement(pressureAmplitude,
@@ -280,6 +282,12 @@ class TwoFluidUnsplitTengesdalPreparationTest {
         pipe.getOutletStream().getFlowRate("kg/sec"));
   }
 
+  /**
+   * Convert boxed samples to a primitive array.
+   *
+   * @param values finite samples
+   * @return primitive copy
+   */
   private static double[] toArray(List<Double> values) {
     double[] result = new double[values.size()];
     for (int index = 0; index < values.size(); index++) {
@@ -288,6 +296,12 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     return result;
   }
 
+  /**
+   * Return the minimum sample.
+   *
+   * @param values non-empty finite samples
+   * @return minimum value
+   */
   private static double minimum(List<Double> values) {
     double result = Double.POSITIVE_INFINITY;
     for (double value : values) {
@@ -296,6 +310,12 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     return result;
   }
 
+  /**
+   * Return the maximum sample.
+   *
+   * @param values non-empty finite samples
+   * @return maximum value
+   */
   private static double maximum(List<Double> values) {
     double result = Double.NEGATIVE_INFINITY;
     for (double value : values) {
