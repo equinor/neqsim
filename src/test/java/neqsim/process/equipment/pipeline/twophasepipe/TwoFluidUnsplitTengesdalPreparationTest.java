@@ -105,6 +105,10 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     final double holdupTarget = 0.342;
     final double holdupTolerance = 0.01 * holdupTarget;
     TwoFluidPipe pipe = createPipe(count);
+    // Start from the accepted steady state, but let the transient PDE own its native force imbalance.
+    // The steady-consistency correction intentionally pins an unchanged operating point and can suppress
+    // the instability this independent severe-slugging experiment is intended to detect.
+    pipe.setSteadyConsistentTransient(false);
     pipe.setUnsplitPressureInterpolationEnabled(true);
     pipe.setBlendInclinedAnnularSlugTransitions(true);
     pipe.setSignedDonorTransportEnabled(true);
