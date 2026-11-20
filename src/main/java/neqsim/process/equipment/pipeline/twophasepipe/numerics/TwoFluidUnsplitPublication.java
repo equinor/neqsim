@@ -41,7 +41,7 @@ public final class TwoFluidUnsplitPublication implements Serializable {
   private final double endTime;
   private final int acceptedSubsteps;
   private final int rejectedAttempts;
-  private final int modelEvaluations;
+  private final long modelEvaluations;
   private final double[] initialMassKg;
   private final double[] finalMassKg;
   private final double[] inletMassKg;
@@ -194,7 +194,7 @@ public final class TwoFluidUnsplitPublication implements Serializable {
   }
 
   /** @return nonlinear model evaluation count */
-  public int getModelEvaluations() {
+  public long getModelEvaluations() {
     return modelEvaluations;
   }
 
