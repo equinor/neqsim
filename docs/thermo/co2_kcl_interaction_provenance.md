@@ -846,3 +846,77 @@ holdouts. A production update requires a source-separated improvement on the
 calibration discriminator, both single-salt validation families and those
 holdouts, with parameter uncertainty, physical consistency, convergence,
 non-regression and timing checks.
+
+## KCl CPA-versus-Furst layer-isolation matrix
+
+`CO2KClInteractionLayerIsolationAssessmentTest` uses nine predeclared dense
+Mousavi-Chapoy-Burgass KCl states only as a no-fit layer discriminator. It
+evaluates the four endpoints formed by the complete CO2-ion Furst block and the
+complete K+/CO2 cubic CPA binary-interaction layer being independently enabled
+or ablated. No experimental value is added or changed; the source remains the
+CC BY 4.0 fixture described above.
+
+The Furst endpoint retains the existing complete-block gauge convention:
+
+$$
+W_{\mathrm{CO_2},i}^{(k)}(T;\lambda_F)
+=\lambda_F W_{\mathrm{CO_2},i}^{(k)}(T),\qquad
+\lambda_F\in\{0,1\},\quad k\in\{0,1,2\}.
+$$
+
+Rule 10 supports composition-dependent CPA mixing. Its K+/CO2 database row has
+a base term of 1, a zero temperature term, and both directional composition
+terms set to 1. Therefore the CPA endpoint removes the symmetric base,
+temperature, and both directional composition matrices together when
+$\lambda_C=0$ and leaves the initialized database layer untouched when
+$\lambda_C=1$. Removing only the symmetric base coefficient would not be a
+valid complete-row ablation.
+
+For the log dissolved-CO2 response
+$y_{FC}=\ln(x_{\mathrm{CO_2},FC}/x_{\mathrm{CO_2},\mathrm{water}})$,
+the retained non-additive layer coupling is
+
+$$
+\delta_y=y_{11}-y_{10}-y_{01}+y_{00}.
+$$
+
+The same factorial identity is reported for effective aqueous $f/x$. Each of
+the 36 endpoint rows also retains source residual, matched pure water, water
+activity, guest-side CO2 fugacity, component balance, molecular-fugacity
+closure, decomposition identity and phase topology. The cubic EOS, association,
+non-CO2 electrolyte terms, source values, solver tolerances and constrained
+GAS/OIL root comparison remain unchanged. No hydrate calculation enters this
+matrix.
+
+On the pinned nine-state grid, the legacy K+/CO2 CPA row is numerically
+inactive: the maximum absolute CPA endpoint effect on log dissolved CO2 is
+`3.95e-15`, and the maximum absolute Furst-by-CPA coupling is `4.00e-15`.
+This is explained by the current cubic model convention, not by fitting or a
+looser tolerance. Ionic components set the cubic attraction parameter to
+$a_{K^+}=10^{-35}$, while the cubic cross attraction is proportional to
+$\sqrt{a_{\mathrm{CO_2}}a_{K^+}}(1-k_{ij})$. Changing the initialized K+/CO2
+row therefore perturbs a deliberately negligible cubic cross term. The
+existing row cannot explain the KCl discrepancy and is not an identifiable
+parameter-update direction for these states.
+
+The complete Furst block is the active aqueous layer. With it enabled, the
+dense-KCl MARE is `8.861%` with `-7.979%` signed bias; disabling it raises both
+MARE and positive bias to `100.041%`. Its per-state effect on log dissolved CO2
+ranges from `-0.4362` to `-1.0887`. The corresponding guest-fugacity effect is
+only `1.57e-6` to `3.28e-4` in log space, while the effective aqueous `f/x`
+effect is `+0.4363` to `+1.0888`. The water-activity log effect is much smaller,
+`-0.00016` to `-0.00865`. Thus the layer response is overwhelmingly the
+aqueous CO2 activity/fugacity term rather than guest fugacity or water
+activity. No hydrate model is executed or changed in this matrix; the earlier
+independent hydrate comparisons remain frozen transfer holdouts.
+
+These endpoints are ablations, not candidate parameters. The current K+/CO2
+CPA values are legacy database values without independent parameter provenance,
+and one dense KCl family cannot qualify replacements. Liu low-salinity NaCl and
+dense NaCl remain the independent concentration-family constraints. Table A.24,
+all Dholabhai and Burgass hydrate families, CaCl2/MgCl2, Archer water activity,
+He-Morse, Yasunishi-Yoshida and Burgass-Tohidi evidence remain untouched
+holdouts or transfer controls. A production update still requires a declared
+gauge or salt-pair formulation, continuous bounded sensitivity or fitting,
+independent KCl evidence, uncertainty or covariance, holdout transfer,
+convergence, non-regression and timing evidence.
