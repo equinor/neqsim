@@ -122,7 +122,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
       maximumClosure.put(phase, 0.0);
     }
     int rejectedAttempts = 0;
-    int modelEvaluations = 0;
+    long modelEvaluations = 0L;
     double inletLiquidMass = 0.0;
     UUID id = UUID.nameUUIDFromBytes("published-tengesdal-experiment".getBytes(StandardCharsets.UTF_8));
     int steps = (int) Math.round(duration / outerStep);
