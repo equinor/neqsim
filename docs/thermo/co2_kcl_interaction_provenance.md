@@ -920,3 +920,73 @@ holdouts or transfer controls. A production update still requires a declared
 gauge or salt-pair formulation, continuous bounded sensitivity or fitting,
 independent KCl evidence, uncertainty or covariance, holdout transfer,
 convergence, non-regression and timing evidence.
+
+## Chloride salt-pair curvature and gauge diagnostic
+
+`CO2ChlorideSaltPairCurvatureAssessmentTest` follows the merged layer-isolation
+result with an equation-level, no-production-change diagnostic. The current
+electrolyte-CPA Furst term is pairwise and has no explicit
+neutral-cation-anion product. NeqSim's separate Pitzer implementation provides
+the physically established candidate topology. For a 1:1 chloride salt MCl,
+its neutral-CO2 contribution is
+
+$$
+\ln\gamma_{\mathrm{CO_2}}
+=2m\lambda_{\mathrm{CO_2},M^+}
+ +2m\lambda_{\mathrm{CO_2},\mathrm{Cl^-}}
+ +m^2\zeta_{\mathrm{CO_2},M^+,\mathrm{Cl^-}}.
+$$
+
+This equation is used only as an identifiability basis. It is not active in
+`SystemElectrolyteCPAstatoil`, and the diagnostic does not transplant a Pitzer
+coefficient into CPA. Such a change would require a consistent Helmholtz-energy
+term, every composition and state derivative, a standard-state mapping and a
+double-counting assessment against the existing Furst response.
+
+The He-Morse source-space discriminator fits its reported CO2 activity
+coefficients independently at each temperature to the zero-intercept bases
+$am$ and $am+bm^2$. The two-term basis reduces log-space RMSE at all five
+temperatures, and its quadratic coefficient is negative throughout:
+
+| Temperature / K | Linear RMSE | Linear-plus-quadratic RMSE | $b$ on molality basis |
+|---:|---:|---:|---:|
+| 273.15 | 0.042721 | 0.017427 | -0.026692 |
+| 298.15 | 0.045219 | 0.030092 | -0.015345 |
+| 323.15 | 0.020356 | 0.010882 | -0.005499 |
+| 348.15 | 0.022117 | 0.008150 | -0.006010 |
+| 363.15 | 0.006226 | 0.004053 | -0.001381 |
+
+The independent Yasunishi-Yoshida 298.15 K Ostwald series shows the same
+diminishing-salting-out curvature: the log-space RMSE falls from 0.018197 to
+0.002824 and the quadratic coefficient is -0.008224. Its concentration
+coordinate is mol/L of solution, however, whereas He-Morse uses mol/kg water.
+The values are therefore separate shape evidence, not transferable estimates
+of one production parameter. The unreviewed Yasunishi-Yoshida 308.15 K block
+remains excluded.
+
+The executable composition Jacobian combines only retained He-Morse KCl
+molalities and the independent Liu NaCl composition coordinates. Five
+individual-ion columns—Na, K and chloride lambda plus NaCl and KCl zeta—have
+rank four. The exact null direction is `[1, 1, -1, 0, 0]`: electroneutral
+single-salt data cannot choose an absolute allocation between cation and
+chloride lambda terms. Reparameterizing to NaCl and KCl salt-level linear and
+quadratic combinations gives full rank four. This proves structural
+identifiability of salt-pair curvature while preserving the single-ion gauge;
+it does not fit a response or select a gauge.
+
+He-Morse is used only as a source-shape discriminator, Yasunishi-Yoshida as an
+independent source-shape validation and Liu NaCl only for the composition-rank
+audit. Dense Mousavi-Chapoy-Burgass NaCl/KCl results remain adjacent model
+controls. Table A.24 mixed brine, all Dholabhai and Burgass hydrate data,
+CaCl2/MgCl2, Archer water activity and Burgass-Tohidi remain frozen transfer
+holdouts and are not inputs to this diagnostic.
+
+The result supports a salt-pair curvature direction but not a production
+change. Before a bounded fit, the primary He-Morse activity-coefficient
+standard state and covariance, defensible parameter bounds, the dense-source
+pure-water pressure mapping and the complete electrolyte-CPA free-energy
+formulation must be frozen. A candidate must then report calibration,
+independent source holdouts, parameter covariance/sensitivity, Table A.24 and
+hydrate transfer, convergence, non-regression and timing. No empirical
+temperature offset, fitted coefficient, relaxed tolerance or hydrate
+qualification is introduced here.
