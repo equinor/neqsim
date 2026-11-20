@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-15"
+last_verified: "2026-11-20"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -14,6 +14,12 @@ Use the `runPipeline` analysis `wellToTopsideSlugControl` for the published
 well-to-topside anti-slug replay. It reuses the canonical choke, two-fluid pipe,
 three-phase separator and controller APIs and returns both control modes with
 time series. Treat it as numerical reference evidence, not field validation.
+
+For the public Tengesdal severe-slugging gate on the unsplit route, inspect
+`TwoFluidMassBalanceReport.getRejectedAttempts()` and `getModelEvaluations()` after every accepted
+observation interval. Require zero rejected attempts together with the unchanged 600 s amplitude,
+period, hold-up, inventory and conservation gates; numerical completion is not experimental
+qualification.
 
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the
