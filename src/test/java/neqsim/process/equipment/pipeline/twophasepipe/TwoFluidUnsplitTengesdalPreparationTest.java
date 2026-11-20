@@ -147,8 +147,8 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     }
     LimitCycleMetrics pressureCycle = TwoFluidBenchmarkMetrics.analyzeLimitCycle(toArray(times), toArray(pressures),
         warmUp);
-    SevereSluggingExperimentalBenchmarkTest.LowProductionCycleMetrics liquidCycle =
-        SevereSluggingExperimentalBenchmarkTest.analyzeLowProductionCycles(times, liquidRates);
+    SevereSluggingExperimentalBenchmarkTest.LowProductionCycleMetrics liquidCycle = SevereSluggingExperimentalBenchmarkTest
+        .analyzeLowProductionCycles(times, liquidRates);
     double pressureAmplitude = maximum(pressures) - minimum(pressures);
     double minimumLiquidRate = minimum(liquidRates);
     double maximumLiquidRate = maximum(liquidRates);
@@ -169,8 +169,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
             "completed liquid-production cycles=" + liquidCycle.completedCycleCount),
         () -> SevereSluggingExperimentalBenchmarkTest.assertExperimentalAgreement(pressureAmplitude,
             liquidCycle.periodSeconds),
-        () -> assertEquals(holdupTarget, steadyFlowlineHoldup, holdupTolerance,
-            "steady flowline liquid hold-up"),
+        () -> assertEquals(holdupTarget, steadyFlowlineHoldup, holdupTolerance, "steady flowline liquid hold-up"),
         () -> assertTrue(maximumLiquidRate > 1.25 * meanLiquidFeed, "no liquid blowout above the mean feed"),
         () -> assertTrue(minimumLiquidRate < 0.75 * meanLiquidFeed, "no liquid fallback below the mean feed"));
     for (Phase phase : Phase.values()) {
