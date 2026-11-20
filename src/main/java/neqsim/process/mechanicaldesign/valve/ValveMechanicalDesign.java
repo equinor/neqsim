@@ -325,6 +325,37 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     }
   }
 
+  /**
+   * Sets the nominal choke from a data-sheet flow coefficient and a discharge coefficient.
+   *
+   * <p>
+   * Only applicable with a multiphase choke sizing method; the orifice diameter follows from the Cv and Cd so that the
+   * choke model has the capacity of the data-sheet Cv.
+   * </p>
+   *
+   * @param cv flow coefficient at full opening [US Cv], positive
+   * @param dischargeCoefficient discharge coefficient Cd [-], greater than zero and at most one
+   * @throws IllegalArgumentException if cv is not positive or Cd is outside (0, 1]
+   */
+  public void setChokeFlowCoefficient(double cv, double dischargeCoefficient) {
+    if (valveSizingMethod instanceof ControlValveSizing_MultiphaseChoke) {
+      ((ControlValveSizing_MultiphaseChoke) valveSizingMethod).setChokeFlowCoefficient(cv, dischargeCoefficient);
+    }
+  }
+
+  /**
+   * Gets the flow coefficient equivalent to the choke diameter and discharge coefficient at an opening.
+   *
+   * @param percentOpening valve opening [percent], 0 to 100
+   * @return equivalent Cv [US Cv], or 0 if a multiphase choke sizing method is not in use
+   */
+  public double getChokeEquivalentCv(double percentOpening) {
+    if (valveSizingMethod instanceof ControlValveSizing_MultiphaseChoke) {
+      return ((ControlValveSizing_MultiphaseChoke) valveSizingMethod).getEquivalentCv(percentOpening);
+    }
+    return 0.0;
+  }
+
   ControlValveSizingInterface valveSizingMethod = null;
 
   /**

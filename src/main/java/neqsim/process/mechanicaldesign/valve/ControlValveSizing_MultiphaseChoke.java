@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.valve.choke.ChokeFlowCoefficient;
 import neqsim.process.mechanicaldesign.valve.choke.GilbertChokeFlow;
 import neqsim.process.mechanicaldesign.valve.choke.MultiphaseChokeFlow;
 import neqsim.process.mechanicaldesign.valve.choke.SachdevaChokeFlow;
@@ -159,6 +160,37 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
    */
   public double getDischargeCoefficient() {
     return chokeModel.getDischargeCoefficient();
+  }
+
+  /**
+   * Sets the nominal (fully open) choke from a data-sheet flow coefficient and a discharge coefficient.
+   *
+   * <p>
+   * The orifice diameter is {@code D = sqrt(4 Cv A1 / (pi Cd))} (see {@link ChokeFlowCoefficient}), and the model uses
+   * the same Cd, so the capacity of the model equals the Cv. The Gilbert family has the discharge coefficient embedded
+   * in its correlation constant and ignores Cd; use Sachdeva when a Cd should take effect.
+   * </p>
+   *
+   * @param cv flow coefficient at full opening [US Cv], positive
+   * @param dischargeCoefficient discharge coefficient Cd [-], greater than zero and at most one
+   * @throws IllegalArgumentException if cv is not positive or Cd is outside (0, 1]
+   */
+  public void setChokeFlowCoefficient(double cv, double dischargeCoefficient) {
+    double diameter = ChokeFlowCoefficient.orificeDiameterFromCv(cv, dischargeCoefficient);
+    setChokeDiameter(diameter, "m");
+    setDischargeCoefficient(dischargeCoefficient);
+  }
+
+  /**
+   * Gets the flow coefficient equivalent to the nominal choke diameter and discharge coefficient.
+   *
+   * @param percentOpening valve opening [percent], 0 to 100
+   * @return equivalent Cv at the opening [US Cv], following the valve characteristic
+   */
+  public double getEquivalentCv(double percentOpening) {
+    double nominal = ChokeFlowCoefficient.cvFromOrificeDiameter(chokeDiameter,
+        Math.min(1.0, chokeModel.getDischargeCoefficient()));
+    return nominal * openingFraction(percentOpening);
   }
 
   /**

@@ -205,6 +205,7 @@ This documentation is organized into the following sections:
 | **Choke Collapse Analysis** | [choke-collapse.md](choke-collapse) | ChokeCollapseAnalyzer — critical pressure ratio, flashing, cavitation |
 | **Inadvertent Valve Operation** | [inadvertent-valve-operation.md](inadvertent-valve-operation) | InadvertentValveOperationAnalyzer — API 521 §4.4.13 / NORSOK P-002 IVO screening |
 | **Well Chokes** | [well_choke_implementation.md](well_choke_implementation) | Sachdeva, Gilbert choke models, ThrottlingValve integration |
+| **Choke Valve Practice** | [choke_valve_practice.md](choke_valve_practice) | Cv to orifice conversion, operating-range and clean-up screening, Cv condition monitoring |
 | Distillation | [distillation.md](equipment/distillation) | DistillationColumn, SimpleTray |
 | Absorbers | [absorbers.md](equipment/absorbers) | SimpleAbsorber, SimpleTEGAbsorber |
 | Ejectors | [ejectors.md](equipment/ejectors) | Ejector |
