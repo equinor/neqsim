@@ -1128,13 +1128,13 @@ public class TwoFluidPipe extends Pipeline {
   private double[] lastIntervalPeakPressureTimeS;
 
   /** Highest accepted inlet-face mechanical pressure in the latest transient interval (Pa). */
-  private double lastIntervalPeakInletFacePressurePa = Double.NaN;
+  private volatile double lastIntervalPeakInletFacePressurePa = Double.NaN;
 
   /** Simulation time of {@link #lastIntervalPeakInletFacePressurePa} (s). */
-  private double lastIntervalPeakInletFacePressureTimeS = Double.NaN;
+  private volatile double lastIntervalPeakInletFacePressureTimeS = Double.NaN;
 
   /** True when the latest interval envelope includes every accepted internal substep. */
-  private boolean lastIntervalPeakSubstepResolved;
+  private volatile boolean lastIntervalPeakSubstepResolved;
 
   /** Temperature profile (K). */
   private double[] temperatureProfile;
@@ -12034,12 +12034,12 @@ public class TwoFluidPipe extends Pipeline {
    * Get the highest cell-centre pressure reached in each cell during the latest transient call.
    *
    * <p>
-   * The envelope starts from the state at the beginning of the call and includes every accepted internal substep of
-   * the legacy and transactional routes; rejected attempts are excluded. A short local pressure excursion can occur
-   * and decay between two outer calls. Sampling {@link #getPressureProfile()} after each call then records or misses
-   * the excursion depending on the outer step, which makes a peak screening depend on the reporting interval rather
-   * than on the solution. Use this envelope for pressure-protection and rating checks. The experimental unsplit route
-   * reports only its start and end states; see {@link #isLastIntervalPressureEnvelopeSubstepResolved()}.
+   * The envelope starts from the state at the beginning of the call and includes every accepted internal substep of the
+   * legacy and transactional routes; rejected attempts are excluded. A short local pressure excursion can occur and
+   * decay between two outer calls. Sampling {@link #getPressureProfile()} after each call then records or misses the
+   * excursion depending on the outer step, which makes a peak screening depend on the reporting interval rather than on
+   * the solution. Use this envelope for pressure-protection and rating checks. The experimental unsplit route reports
+   * only its start and end states; see {@link #isLastIntervalPressureEnvelopeSubstepResolved()}.
    * </p>
    *
    * @param unit pressure unit, for example "bara" or "Pa"
