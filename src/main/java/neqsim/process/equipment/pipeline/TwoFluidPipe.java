@@ -6780,7 +6780,8 @@ public class TwoFluidPipe extends Pipeline {
     clearSevereSluggingSystemClassification();
     lastMassBalanceReport = new TwoFluidMassBalanceReport(elapsed, publication.getAcceptedSubsteps(),
         publication.getInitialMassKg(), publication.getFinalMassKg(), publication.getInletMassKg(),
-        publication.getOutletMassKg(), publication.getSourceMassKg());
+        publication.getOutletMassKg(), publication.getSourceMassKg(), publication.getRejectedAttempts(),
+        publication.getModelEvaluations());
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
     isTransientMode = true;
