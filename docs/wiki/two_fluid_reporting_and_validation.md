@@ -190,6 +190,66 @@ for (int step = 0; step < 3600; step++) {
 }
 ```
 
+### Peak pressure between reporting samples
+
+A local pressure excursion can rise and decay inside one `runTransient(dt, id)` call. In a
+shut-in riser, falling liquid can trap and compress a gas pocket at the riser base. One cell then
+rings by several bar for less than a second. `getPressureProfile()` returns only the end state
+of the call, so a peak taken from those samples records or misses the excursion depending on the
+reporting interval. For pressure-protection, rating and allowable checks, use the interval envelope.
+It holds the highest cell-centre pressure and inlet-face mechanical pressure over every
+accepted internal substep of the latest call, starting from the state at its beginning. Rejected
+trial substeps are excluded. A new steady `run()` clears the envelope.
+
+```java
+double[] rated = new double[pipe.getPressureProfile().length];
+java.util.Arrays.fill(rated, Double.NEGATIVE_INFINITY);
+for (int step = 0; step < 360; step++) {
+  pipe.runTransient(0.25, UUID.randomUUID());
+  if (!pipe.isLastIntervalPressureEnvelopeSubstepResolved()) {
+    throw new IllegalStateException("Envelope omits internal substeps");
+  }
+  double[] peak = pipe.getLastIntervalPeakPressureProfile("bara");
+  double[] when = pipe.getLastIntervalPeakPressureTimeProfile(); // simulation time, s
+  for (int i = 0; i < peak.length; i++) {
+    rated[i] = Math.max(rated[i], peak[i]);
+  }
+  double inletFace = pipe.getLastIntervalPeakInletFacePressure("bara");
+}
+```
+
+The legacy and transactional routes are substep-resolved. The experimental unsplit route
+exposes only its start and end states, and `isLastIntervalPressureEnvelopeSubstepResolved()`
+returns false. Regression: `TwoFluidPipeIntervalPressureEnvelopeTest`.
+
+The envelope removes the sampling dependence. It does not make an under-resolved excursion
+converged. On the synthetic 5.4 km tie-back of
+[the pressure-protection study](../../examples/production-decision/tieback-protection.md),
+measured 2026-11-20 on master `b7269252`, the riser-base envelope after a blocked outlet with
+HIPPS isolation varied as follows:
+
+| Internal CFL | Outer step and mesh | LC2/riser envelope peak |
+| --- | --- | --- |
+| 0.5 (default) | 0.25 s, 60 cells | 78.92 bara |
+| 0.5 (default) | 0.125 s, 60 cells | 72.91 bara |
+| 0.5 (default) | 0.5 s, 60 cells | 71.03 bara |
+| 0.5 (default) | 0.25 s, 120 cells | 78.89 bara |
+| 0.25 | 0.25 s, 60 cells | 80.03 bara |
+| 0.25 | 0.125 s, 60 cells | 80.04 bara |
+| 0.25 | 0.25 s, 120 cells | 80.39 bara |
+| 0.25 | 0.25 s, 240 cells | 80.99 bara |
+| 0.125 | 0.25 s, 60 cells | 80.36 bara |
+
+The outer step changes the internal substep because each call takes at least two substeps of
+equal length. At CFL 0.5 that perturbation moved the peak by up to 7.9 bar. At CFL 0.25 the
+outer-step and Courant-number refinements agreed within 0.33 bar. The 60/120-cell pair agreed
+within 0.36 bar. The 240-cell mesh added 0.60 bar. The excursion is local to the riser-base cell,
+and the increments grow with refinement, so the peak is time-converged but not mesh-converged.
+Upstream zones agreed within 0.06 bar at both Courant numbers on 60 and 120 cells. For
+riser-base or countercurrent liquid-fallback studies, set `setCflNumber(0.25)` and confirm the
+envelope with one Courant-number and two mesh refinements. Treat a growing mesh increment as an
+open qualification item, not a converged value. Do not rely on the default.
+
 Recommended transient CSV columns:
 
 ```text

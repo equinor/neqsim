@@ -1121,6 +1121,21 @@ public class TwoFluidPipe extends Pipeline {
   /** Pressure profile (Pa). */
   private double[] pressureProfile;
 
+  /** Highest accepted cell-centre pressure in the latest transient interval (Pa); null before a transient call. */
+  private double[] lastIntervalPeakPressurePa;
+
+  /** Simulation time of each entry in {@link #lastIntervalPeakPressurePa} (s). */
+  private double[] lastIntervalPeakPressureTimeS;
+
+  /** Highest accepted inlet-face mechanical pressure in the latest transient interval (Pa). */
+  private double lastIntervalPeakInletFacePressurePa = Double.NaN;
+
+  /** Simulation time of {@link #lastIntervalPeakInletFacePressurePa} (s). */
+  private double lastIntervalPeakInletFacePressureTimeS = Double.NaN;
+
+  /** True when the latest interval envelope includes every accepted internal substep. */
+  private boolean lastIntervalPeakSubstepResolved;
+
   /** Temperature profile (K). */
   private double[] temperatureProfile;
 
@@ -5429,6 +5444,7 @@ public class TwoFluidPipe extends Pipeline {
     minimumTransientPressureDamping = 1.0;
     transientCoupledPressureMomentumRejectedSubsteps = 0;
     transientCoupledPressureMomentumFailureDiagnostic = "";
+    clearIntervalPressureEnvelope();
     // A new steady state owns a new wall-temperature field, including every radial layer.
     wallTemperatureProfile = null;
     multilayerLayerTemperatureProfiles = null;
@@ -6776,6 +6792,7 @@ public class TwoFluidPipe extends Pipeline {
     for (TwoFluidSection section : endpoint) {
       flowRegimeDetector.classify(section);
     }
+    beginIntervalPressureEnvelope(false);
     sections = endpoint;
     clearSevereSluggingSystemClassification();
     lastMassBalanceReport = new TwoFluidMassBalanceReport(elapsed, publication.getAcceptedSubsteps(),
@@ -6789,6 +6806,7 @@ public class TwoFluidPipe extends Pipeline {
     simulationTime = publication.getEndTimeSeconds();
     time += elapsed;
     timeIntegrator.setCurrentTime(integratorEnd);
+    observeIntervalPressureEnvelope(simulationTime);
     outStream.setFluid(outletFluid);
     updateResultArrays();
     calcIdentifier = id;
@@ -6946,6 +6964,11 @@ public class TwoFluidPipe extends Pipeline {
     componentConservationReports = candidate.componentConservationReports;
     componentConservationTimes = candidate.componentConservationTimes;
     pressureProfile = candidate.pressureProfile;
+    lastIntervalPeakPressurePa = candidate.lastIntervalPeakPressurePa;
+    lastIntervalPeakPressureTimeS = candidate.lastIntervalPeakPressureTimeS;
+    lastIntervalPeakInletFacePressurePa = candidate.lastIntervalPeakInletFacePressurePa;
+    lastIntervalPeakInletFacePressureTimeS = candidate.lastIntervalPeakInletFacePressureTimeS;
+    lastIntervalPeakSubstepResolved = candidate.lastIntervalPeakSubstepResolved;
     temperatureProfile = candidate.temperatureProfile;
     liquidHoldupProfile = candidate.liquidHoldupProfile;
     gasVelocityProfile = candidate.gasVelocityProfile;
@@ -7047,6 +7070,7 @@ public class TwoFluidPipe extends Pipeline {
     // momenta only; it does not replace cell phase inventory.
     applyBoundaryConditions();
     validateSectionStates();
+    beginIntervalPressureEnvelope(true);
     equations.setConservativeSlugs(enableSlugTracking && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
         ? lagrangianSlugTracker.getSlugs()
         : null);
@@ -7654,6 +7678,7 @@ public class TwoFluidPipe extends Pipeline {
       increaseTime(dtActual);
       timeRemaining = dt - acceptedElapsedTime;
       timeIntegrator.advanceTime(dtActual);
+      observeIntervalPressureEnvelope(simulationTime);
     }
 
     lastMassBalanceReport = new TwoFluidMassBalanceReport(acceptedElapsedTime, acceptedSubsteps, initialMassKg,
@@ -11949,6 +11974,124 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isTransientCoupledPressureMomentumFailureDetected() {
     return transientCoupledPressureMomentumFailureDetected;
+  }
+
+  /** Forget the interval pressure envelope; a new steady state has no transient history. */
+  private void clearIntervalPressureEnvelope() {
+    lastIntervalPeakPressurePa = null;
+    lastIntervalPeakPressureTimeS = null;
+    lastIntervalPeakInletFacePressurePa = Double.NaN;
+    lastIntervalPeakInletFacePressureTimeS = Double.NaN;
+    lastIntervalPeakSubstepResolved = false;
+  }
+
+  /**
+   * Start the interval envelope from the state at the beginning of a transient call.
+   *
+   * @param substepResolved true when every accepted internal substep will be observed
+   */
+  private void beginIntervalPressureEnvelope(boolean substepResolved) {
+    clearIntervalPressureEnvelope();
+    if (sections == null || sections.length == 0) {
+      return;
+    }
+    lastIntervalPeakPressurePa = new double[sections.length];
+    lastIntervalPeakPressureTimeS = new double[sections.length];
+    for (int i = 0; i < sections.length; i++) {
+      lastIntervalPeakPressurePa[i] = sections[i].getPressure();
+      lastIntervalPeakPressureTimeS[i] = simulationTime;
+    }
+    lastIntervalPeakInletFacePressurePa = equations.getInletFacePressure(sections);
+    lastIntervalPeakInletFacePressureTimeS = simulationTime;
+    lastIntervalPeakSubstepResolved = substepResolved;
+  }
+
+  /**
+   * Include the current accepted state in the interval envelope.
+   *
+   * @param stateTime simulation time of the accepted state (s)
+   */
+  private void observeIntervalPressureEnvelope(double stateTime) {
+    if (lastIntervalPeakPressurePa == null || sections == null
+        || sections.length != lastIntervalPeakPressurePa.length) {
+      return;
+    }
+    for (int i = 0; i < sections.length; i++) {
+      double pressure = sections[i].getPressure();
+      if (pressure > lastIntervalPeakPressurePa[i]) {
+        lastIntervalPeakPressurePa[i] = pressure;
+        lastIntervalPeakPressureTimeS[i] = stateTime;
+      }
+    }
+    double face = equations.getInletFacePressure(sections);
+    if (face > lastIntervalPeakInletFacePressurePa) {
+      lastIntervalPeakInletFacePressurePa = face;
+      lastIntervalPeakInletFacePressureTimeS = stateTime;
+    }
+  }
+
+  /**
+   * Get the highest cell-centre pressure reached in each cell during the latest transient call.
+   *
+   * <p>
+   * The envelope starts from the state at the beginning of the call and includes every accepted internal substep of
+   * the legacy and transactional routes; rejected attempts are excluded. A short local pressure excursion can occur
+   * and decay between two outer calls. Sampling {@link #getPressureProfile()} after each call then records or misses
+   * the excursion depending on the outer step, which makes a peak screening depend on the reporting interval rather
+   * than on the solution. Use this envelope for pressure-protection and rating checks. The experimental unsplit route
+   * reports only its start and end states; see {@link #isLastIntervalPressureEnvelopeSubstepResolved()}.
+   * </p>
+   *
+   * @param unit pressure unit, for example "bara" or "Pa"
+   * @return one value per cell, or an empty array before the first transient call after initialization
+   */
+  public double[] getLastIntervalPeakPressureProfile(String unit) {
+    if (lastIntervalPeakPressurePa == null) {
+      return new double[0];
+    }
+    double[] result = new double[lastIntervalPeakPressurePa.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = new PressureUnit(lastIntervalPeakPressurePa[i], "Pa").getValue(unit);
+    }
+    return result;
+  }
+
+  /**
+   * Get the simulation time at which each entry of {@link #getLastIntervalPeakPressureProfile(String)} occurred.
+   *
+   * @return accepted-state times in seconds, or an empty array before the first transient call
+   */
+  public double[] getLastIntervalPeakPressureTimeProfile() {
+    return lastIntervalPeakPressureTimeS == null ? new double[0] : lastIntervalPeakPressureTimeS.clone();
+  }
+
+  /**
+   * Get the highest inlet-face mechanical pressure reached during the latest transient call.
+   *
+   * @param unit pressure unit
+   * @return pressure in the requested unit, or NaN before the first transient call
+   */
+  public double getLastIntervalPeakInletFacePressure(String unit) {
+    return Double.isNaN(lastIntervalPeakInletFacePressurePa) ? Double.NaN
+        : new PressureUnit(lastIntervalPeakInletFacePressurePa, "Pa").getValue(unit);
+  }
+
+  /**
+   * Get the simulation time of {@link #getLastIntervalPeakInletFacePressure(String)}.
+   *
+   * @return time in seconds, or NaN before the first transient call
+   */
+  public double getLastIntervalPeakInletFacePressureTime() {
+    return lastIntervalPeakInletFacePressureTimeS;
+  }
+
+  /**
+   * Check whether the latest interval envelope includes every accepted internal substep.
+   *
+   * @return false before a transient call and for the experimental unsplit route, which exposes endpoints only
+   */
+  public boolean isLastIntervalPressureEnvelopeSubstepResolved() {
+    return lastIntervalPeakSubstepResolved;
   }
 
   /** @return count of bounded Newton iterations, including rejected attempts, since the last run() */
