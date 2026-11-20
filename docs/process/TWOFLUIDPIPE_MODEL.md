@@ -2788,7 +2788,7 @@ qualify energy, phase change, restart or pigging.
 ./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.publication-qualification=true test
 ./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#supportingPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.long-publication-qualification=true test
 ./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#sustainedPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.sustained-publication-qualification=true test
-./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#sustainedPublishedTrajectoryMatchesPublicLimitCycle' -DexcludedTestGroups= test
+./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#sustainedPublishedTrajectoryMatchesPublicLimitCycle' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.experimental-qualification=true test
 ```
 
 The final slow test advances the published unsplit route in one-second observation intervals for
@@ -2801,6 +2801,26 @@ rejected nonlinear attempts. `TwoFluidMassBalanceReport.getRejectedAttempts()` a
 `getModelEvaluations()` publish those unsplit diagnostics; they return -1 for a transient route
 that does not expose them. Completing the numerical 600 s publication gate alone is not
 experimental qualification.
+
+On exact head `e62eb59ead12aaf3c807be79fd8934a9de7fc519`, the complete experimental gate
+ran to 600 s with zero rejected nonlinear attempts and conservative, non-negative phase inventories,
+but the published trajectory was a near-exact fixed point:
+
+| Qualification metric | Observed | Unchanged acceptance requirement |
+| --- | ---: | ---: |
+| Inlet-pressure amplitude | `1.945482e-4 Pa` | `68.6-127.4 kPa` |
+| Liquid-production period | Not resolved | `26.6-49.4 s` |
+| Completed liquid-production cycles | 0 | At least 2 |
+| Initial flowline liquid hold-up | `0.3285387` | `0.33858-0.34542` |
+| Blowout / fallback | Neither present | Both present around mean liquid feed |
+
+Disabling the legacy steady-consistency correction after initialization on head
+`a4fe09de6929a6acd78b0f654f212eb53fbf03f2` reproduced every value above exactly, so that
+correction is not the owner of the flat unsplit response. The unsplit adapter deliberately rejects
+tracked-slug geometry and conservative slug-force integration; adding and qualifying conservative
+moving slug/film coupling is the demonstrated next physical dependency. The executable gate remains
+opt-in while it is known to fail. No threshold, nonlinear tolerance, inventory floor or accepted
+transport is changed to hide this negative evidence.
 
 The gas execution fixture uses methane/ethane `0.8/0.2` mole fractions, SRK/classic mixing,
 300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Four cells with
