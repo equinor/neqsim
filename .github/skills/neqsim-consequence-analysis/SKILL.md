@@ -122,7 +122,9 @@ the analyzer picks Gaussian or dense gas from the density at **ambient** tempera
 so a cold (-107 C) dense flare gas is routed to Gaussian: set the model explicitly
 and set the endpoint explicitly (`sts0131IntegralEndpoint()` = 20 % LFL; the default is
 50 % LFL). For an unignited flare, cold vent or relief tail pipe near a helideck use
-the community skill `neqsim-flare-helideck-dispersion` and agent
+the community skill `neqsim-flare-helideck-dispersion` (any release source and any receptor
+- helideck, flight paths, air intakes, muster areas, escape routes - in one facility frame)
+and agent
 `flare-helideck-dispersion-agent` (neqsim-community-skills / neqsim-community-agents)
 and keep these measured lessons (offshore platform study, 2026-11-20, screening model
 checked against `GaussianPlume` within 2 %):

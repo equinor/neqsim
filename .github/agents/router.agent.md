@@ -55,7 +55,7 @@ midpoint lanes.
 | Looped gas/oil network, linepack, network nominations and quality limits, terminal tanks, cargo scheduling, integrated production model, gas-lift allocation, tie-in host capacity, electrification, power-from-shore, wind/solar/GT dispatch, energy bus | `@network-energy-systems` | `@field-development` for concept economics; `@optimize` for the search; `@utility-design` for utility sizing |
 | Compressor chart calibration or extrapolation, compressor train, turboexpander map, pump NPSH, API 610, casing / thrust / rotor screening | `@rotating-equipment` | `@control-system` for anti-surge control; `@root-cause` for trips; `@mechanical-design` for detailed design |
 | Release rate, leak or rupture source term, HEM flashing release, pipe decompression, time-resolved source term | `@safety-depressuring` | `@consequence-analysis` for fire / dispersion; loads `neqsim-release-source-terms` |
-| Unignited flare or vent gas near a helideck or helicopter flight path, flame-out dispersion, gas at helideck, wind-rose weighted LFL exposure | `@consequence-analysis` | `@safety-depressuring` for API 520 rates; `installation-weather-agent` for wind; `@standards-review` for criteria; community `flare-helideck-dispersion-agent` for the study; `@process-study-report` for the report |
+| Unignited flare or vent gas near a helideck, helicopter flight path or any other place on the facility (air intake, muster area, escape route, crane cab), flame-out dispersion, wind-rose weighted LFL exposure | `@consequence-analysis` | `@safety-depressuring` for API 520 rates; `installation-weather-agent` for wind; `@standards-review` for criteria; community `flare-helideck-dispersion-agent` for the study; `@process-study-report` for the report |
 | ESD test, dynamic safety scenario, operational or portfolio risk simulation, open drain review, process-safety-system review | `@safety-depressuring` | `@standards-review` for P-002 / STS0131 gates; loads `neqsim-operational-risk-and-safety-validation` |
 | Engineering design loop, P&ID synthesis, DEXPI export, CFIHOS handover, change impact, package validation | `@engineering-deliverables` | `@process-model` for the base model; `@standards-review` for rule compliance; loads `neqsim-engineering-design-package` |
 | Model predictive control, step-response model, virtual flow meter, soft sensor, data reconciliation, cascade or split-range structure | `@control-system` | `@plant-data` for historian data; loads `neqsim-advanced-control-mpc-and-virtual-sensing` |
@@ -174,8 +174,8 @@ Some requests need multiple agents in sequence. Detect these patterns:
 **Trigger:** "blowdown" or "depressurization" + equipment description
 **Pipeline:** `@process-model` (establish steady-state) then `@safety-depressuring` (run transient)
 
-### Pattern 3a: Flare / vent gas at helideck and flight path
-**Trigger:** "helideck", "flight path", "helicopter", "unignited flare", "flame-out", "cold vent" + gas dispersion
+### Pattern 3a: Flare / vent gas at helideck, flight path or any other receptor
+**Trigger:** "helideck", "flight path", "helicopter", "unignited flare", "flame-out", "cold vent" + gas dispersion; also "air intake", "muster area", "escape route", "crane cab", "accommodation" + gas from a flare or vent
 **Pipeline:** `@standards-review` (criteria) and `installation-weather-agent` (wind) in parallel, then `@safety-depressuring` (API 520 rates), then `@consequence-analysis` coordinating community `flare-helideck-dispersion-agent` (study and figures), an independent review pass, and `@process-study-report`; with the enterprise plugin add `enterprise-echo-3d-agent` for equipment pictures
 
 ### Pattern 3b: Process + Plant Data (Digital Twin)

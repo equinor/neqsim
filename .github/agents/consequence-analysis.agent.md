@@ -44,7 +44,7 @@ referenced output suitable for facility siting (API 752), HSE-case justification
 | Overpressure (VCE) at distance                        | `VCEModel.overpressurePa(d)`                                   |
 | BLEVE fireball / thermal dose                         | `BLEVECalculator`                                              |
 | Distance to LFL / IDLH / ERPG                         | `GaussianPlume.distanceToConcentration(thresh)`                |
-| Unignited flare / vent gas at a helideck or flight path | community `flare-helideck-dispersion-agent` (see below)      |
+| Unignited flare / vent gas at a helideck, flight path or any other receptor (air intake, muster area, escape route, crane cab) | community `flare-helideck-dispersion-agent` (see below) |
 | Heavy gas (CO₂, LPG) near-field                       | `HeavyGasDispersion`                                           |
 | Fatality probability from radiation / toxic / overP   | `ProbitModel.thermalFatality()` / `h2sFatality()` / etc.       |
 | QRA roll-up (frequency × ignition × fatality)         | `ConsequenceAnalysisEngine.individualFatalityRiskPerYear(d)`   |
@@ -81,18 +81,21 @@ referenced output suitable for facility siting (API 752), HSE-case justification
    observation / mechanism / implication / recommendation.
 8. **Source-term JSON** (`exportSourceTerm()`) for any external CFD handoff.
 
-## Unignited flare or vent gas at a helideck and flight path (coordination)
+## Unignited flare or vent gas at a helideck, flight path or any other receptor (coordination)
 
 Trigger: "gas dispersion near the helideck / flight path", "unignited flare", "cold vent",
-"flame-out", "helicopter approach". `consequence-analysis` coordinates; it does not hand-roll
+"flame-out", "helicopter approach", "gas at the air intake / muster area / escape route /
+crane cab / accommodation". `consequence-analysis` coordinates; it does not hand-roll
 the elevated-jet model (the NeqSim dispersion classes are ground-level, see skill Method 5b).
+The community agent handles any release source and any receptor shape (point, area, route,
+flight-path fan) in one facility frame, with the helideck as a preset.
 
 | Step | Who | Output |
 |---|---|---|
 | 1 Basis | this agent + `@standards-review` | geometry, flight-path assumption, acceptance criteria with source (20 % and 10 % LFL, S-001 / TR-type requirements), what is not in the library |
 | 2 Wind | `installation-weather-agent` (community) | joint direction x speed table, Pasquill rule, caveats |
 | 3 Release rates | `@safety-depressuring` | API 520/526 sizing, rated capacity per orifice, blowdown rates, tip conditions |
-| 4 Dispersion | community `flare-helideck-dispersion-agent` + skill `neqsim-flare-helideck-dispersion` | helideck / into-wind / any-path % LFL, conditional exceedance, tilt scan, Monte Carlo, figures |
+| 4 Dispersion | community `flare-helideck-dispersion-agent` + skill `neqsim-flare-helideck-dispersion` | per-receptor % LFL and ranking (helideck / into-wind / any-path, air intakes, muster, escape routes), conditional exceedance, tilt scan, Monte Carlo (helideck preset), figures |
 | 5 Independent review | this agent (fresh context) | check: wind-from vs travel convention, stable-air plume-rise limits, 5 deg path resolution, sigma0 over-dilution, tilt sensitivity, benchmark numbers computed not typed |
 | 6 Pictures | with the enterprise plugin: `enterprise-echo-3d-agent` for equipment context | informative views only, overlays labelled schematic |
 | 7 Report | `@process-study-report` or `@solve-task`; figure rules in `neqsim-report-design-and-visual-qa` | every figure has a discussion entry; headline numbers from results.json |
