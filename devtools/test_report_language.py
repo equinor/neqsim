@@ -186,6 +186,21 @@ def test_benchmark_points_list_is_rendered():
     assert "Notes" not in headers
 
 
+def test_benchmark_comparisons_list_is_rendered():
+    """benchmark_validation.comparisons (the schema of the task-workflow skill) must produce table rows."""
+    module = _load_generator()
+    results = {"benchmark_validation": {"benchmark_source": "NIST", "comparisons": [
+        {"parameter": "density_kg_m3", "benchmark": 820.5, "neqsim": 818.3, "deviation_pct": 0.27,
+         "condition": "25C, 60 bar"},
+        {"parameter": "viscosity_cP", "benchmark": 0.45, "neqsim": 0.43, "deviation_pct": 4.4,
+         "condition": "25C, 60 bar"},
+    ]}}
+    headers, rows, _status_idx = module._benchmark_table(results)
+    assert [row[0] for row in rows] == ["density_kg_m3", "viscosity_cP"]
+    assert headers[1:3] == ["Reference value", "NeqSim value"]
+    assert rows[0][1:3] == [module._fmt_cell(820.5), module._fmt_cell(818.3)]
+
+
 def test_norwegian_report_uses_decimal_comma(monkeypatch):
     """Tables in an nb report print 0,538 and 14,2; English keeps the point."""
     module = _load_generator()

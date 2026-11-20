@@ -80,6 +80,8 @@ class TwoFluidPipeUnsplitRunTest {
       TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
       assertEquals(2.5, report.getElapsedTimeSeconds(), 0.0);
       assertTrue(report.getAcceptedSubsteps() >= (int) Math.ceil(2.5 / maximumStep));
+      assertTrue(report.getRejectedAttempts() >= 0);
+      assertTrue(report.getModelEvaluations() >= report.getAcceptedSubsteps());
       for (Phase phase : Phase.values()) {
         assertEquals(0.0, report.getRelativeResidual(phase), 1.0e-8);
       }

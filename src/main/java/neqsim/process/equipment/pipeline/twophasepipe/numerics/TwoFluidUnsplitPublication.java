@@ -40,6 +40,8 @@ public final class TwoFluidUnsplitPublication implements Serializable {
   private final double startTime;
   private final double endTime;
   private final int acceptedSubsteps;
+  private final int rejectedAttempts;
+  private final long modelEvaluations;
   private final double[] initialMassKg;
   private final double[] finalMassKg;
   private final double[] inletMassKg;
@@ -56,6 +58,8 @@ public final class TwoFluidUnsplitPublication implements Serializable {
     endTime = interval.getEndTimeSeconds();
     List<PreparedStep> steps = interval.getSubsteps();
     acceptedSubsteps = steps.size();
+    rejectedAttempts = interval.getRejectedAttempts();
+    modelEvaluations = interval.getModelEvaluations();
     double[][] faces = interval.getPhaseMassFaceTransferKg();
     double[][] sources = interval.getPhaseMassSourceTransferKg();
     double[][] cellTransfers = interval.getPhaseMassCellTransferKg();
@@ -182,6 +186,16 @@ public final class TwoFluidUnsplitPublication implements Serializable {
   /** @return accepted internal step count */
   public int getAcceptedSubsteps() {
     return acceptedSubsteps;
+  }
+
+  /** @return rejected nonlinear attempt count */
+  public int getRejectedAttempts() {
+    return rejectedAttempts;
+  }
+
+  /** @return nonlinear model evaluation count */
+  public long getModelEvaluations() {
+    return modelEvaluations;
   }
 
   /** @return defensive initial gas/oil/water inventory in kg */

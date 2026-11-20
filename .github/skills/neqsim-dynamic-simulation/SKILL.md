@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-17"
+last_verified: "2026-11-20"
 ---
 
 # Dynamic Simulation Guidance
@@ -12,6 +12,15 @@ For the canonical synthetic wellhead-choke, two-fluid riser and three-phase
 inlet-separator control replay, call `runPipeline` with analysis
 `wellToTopsideSlugControl`. Preserve the exact fixed outlet-pressure boundary;
 live separator-pressure feedback is not yet qualified by the `#5036` evidence.
+
+For an explicitly selected unsplit `TwoFluidPipe` route, the accepted mass report exposes
+`getRejectedAttempts()` and `getModelEvaluations()`. A non-negative value is available for unsplit
+execution; -1 means the selected transient route does not publish that diagnostic. Do not infer
+nonlinear quality only from elapsed time or an enforced flux sign. The current sustained unsplit
+Tengesdal gate completes 600 s with zero rejects but remains a flat fixed point, with
+`1.945482e-4 Pa` pressure amplitude and no liquid-production cycle. Disabling steady consistency
+does not change it. Tracked-slug geometry and conservative slug-force integration are still rejected
+by this route; qualify that moving slug/film coupling before promoting the opt-in experimental gate.
 
 ## Extend the existing unit operation
 

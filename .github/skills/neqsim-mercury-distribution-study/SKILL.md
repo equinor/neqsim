@@ -1,7 +1,7 @@
 ---
 name: neqsim-mercury-distribution-study
 description: "Run a mercury distribution study on a NeqSim process: convert the E300 study fluid to UMR-PRU-MC with MercuryFluidConverter, rebuild the process, hold back free mercury in separators and report every stream with MercuryProcessAnalyzer. USE WHEN: asked where mercury ends up in gas, oil and water, the mercury content of products, or where free liquid or solid mercury forms in separation, recompression, chilling or dew point control."
-last_verified: "2026-11-19"
+last_verified: "2026-11-20"
 ---
 
 # Mercury distribution study on a process
@@ -36,6 +36,11 @@ ionic or organic mercury, which this model does not describe.
 
 Ask for the measurement basis when only a number is given. A content in gas from a
 separator is not the content of the well stream.
+
+No measurement yet (prospect, or a discovery that was not sampled for mercury): get the
+content and its range from `neqsim-reservoir-mercury-estimation`, which gives a best estimate
+with P10/P50/P90 and the mineral-equilibrium limits (`ReservoirMercuryEstimator`), and run the
+distribution for the low and the high end of the range.
 
 ## Steps
 
