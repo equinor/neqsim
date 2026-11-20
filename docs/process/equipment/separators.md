@@ -909,6 +909,25 @@ For detailed phase-to-phase entrainment specification, see the [Entrainment](#en
 
 ---
 
+## Free mercury accumulation
+
+A separator can hold back mercury that its gas, oil and aqueous phases cannot dissolve:
+
+```java
+separator.setFreeMercuryAccumulation(true);
+process.run();
+double gramPerDay = separator.getFreeMercuryAccumulationRate("g/day");
+String state = separator.getFreeMercuryState(); // "none", "liquid" or "solid"
+```
+
+The outlets then leave saturated with mercury, and the held back amount is included in
+`getMassBalance(unit)`. The option is off by default; a separator then does no mercury calculation and its
+results and speed are unchanged. It applies to steady-state calculations of `Separator`, `GasScrubber`,
+`TwoPhaseSeparator`, `ThreePhaseSeparator` and `ThreePhaseGasScrubber`. See
+[Mercury distribution studies](../mercury-distribution-study.md).
+
+---
+
 ## Example: HP/LP Separation Train
 
 ```java

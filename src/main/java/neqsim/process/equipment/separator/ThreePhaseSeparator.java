@@ -59,7 +59,7 @@ public class ThreePhaseSeparator extends Separator {
    * Run-skip cache. Transient so a deserialized or cloned separator always recalculates its outlets on the first run
    * instead of returning the stored (possibly modified) outlet states.
    */
-  private transient double lastEnthalpy;
+  private transient volatile double lastEnthalpy;
   private transient double lastFlowRate;
   private transient double lastPressure;
   private transient double lastPressureDrop;
@@ -519,6 +519,7 @@ public class ThreePhaseSeparator extends Separator {
     if (useTempMultiPhaseCheck) {
       thermoSystem2.setMultiPhaseCheck(false);
     }
+    separateFreeMercury();
 
     // If detailed entrainment model is enabled, compute from droplet physics
     if (isDetailedEntrainmentCalculation() && getPerformanceCalculator() != null
@@ -1238,7 +1239,14 @@ public class ThreePhaseSeparator extends Separator {
       }
     }
 
-    return waterFlow + oilFlow + gasFlow - inletFlow;
+    return waterFlow + oilFlow + gasFlow + getHeldBackMercuryFlow(unit) - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void invalidateRunCache() {
+    super.invalidateRunCache();
+    lastEnthalpy = Double.NaN;
   }
 
   /** {@inheritDoc} */

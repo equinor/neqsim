@@ -46,6 +46,7 @@ import neqsim.thermo.system.SystemPrLeeKeslerEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
+import neqsim.thermo.util.mercury.MercuryFluidConverter;
 import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 
 /**
@@ -831,6 +832,12 @@ public class JsonProcessBuilder {
   /**
    * Builds a fluid (SystemInterface) from a JSON definition.
    *
+   * <p>
+   * With {@code "e300FilePath"} and a {@code "model"} containing {@code UMR} the fluid of the file is converted to
+   * UMR-PRU-MC for mercury studies; an optional {@code "mercuryContent": [value, "unit"]} gives the mercury content of
+   * the whole fluid, see {@link MercuryFluidConverter}.
+   * </p>
+   *
    * @param fluidDef the JSON object defining the fluid
    * @return the created fluid, or null if creation failed
    */
@@ -847,6 +854,15 @@ public class JsonProcessBuilder {
         fluid = EclipseFluidReadWrite.read(e300FilePath);
         fluid.setTemperature(temperature, "K");
         fluid.setPressure(pressure, "bara");
+        if (fluidDef.has("model") && model.contains("UMR")) {
+          // Mercury study: the characterized E300 fluid is carried over to UMR-PRU-MC.
+          if (fluidDef.has("mercuryContent")) {
+            JsonArray content = fluidDef.getAsJsonArray("mercuryContent");
+            fluid = MercuryFluidConverter.toUmrPruMc(fluid, content.get(0).getAsDouble(), content.get(1).getAsString());
+          } else {
+            fluid = MercuryFluidConverter.toUmrPruMc(fluid);
+          }
+        }
       } else {
         fluid = createFluidByModel(model, temperature, pressure);
         if (fluid == null) {

@@ -102,6 +102,8 @@ import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemUMRPRUMCEos;
+import neqsim.thermo.util.mercury.MercuryPhaseEquilibrium;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -2401,6 +2403,100 @@ public class DocExamplesCompilationTest {
     assertTrue(calc.toJson().contains("KEARTON"));
     calc.setStandardConditions(0.0, "C", 1.01325, "bara");
     assertTrue(calc.getStandardVolumeFlowRate("Sm3/hr") < standardFlow);
+  }
+
+  /**
+   * Verifies the separate mercury phase example in docs/thermo/mercury_thermodynamics.md.
+   */
+  @Test
+  void testMercuryPhaseEquilibriumExample() {
+    SystemInterface fluid = new SystemUMRPRUMCEos(273.15 + 20.0, 21.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("n-heptane", 0.10);
+    fluid.addComponent("water", 0.19);
+    fluid.addComponent("mercury", 0.01);
+    fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+
+    MercuryPhaseEquilibrium mercury = new MercuryPhaseEquilibrium(fluid);
+    mercury.run();
+
+    String state = mercury.getFreeMercuryState(); // "none", "liquid" or "solid"
+    double freeFraction = mercury.getFreeMercuryFraction(); // mole fraction of the feed
+    SystemInterface phases = mercury.getFluid(); // gas, oil and aqueous phases with dissolved mercury
+    double fractionSum = freeFraction;
+    for (int i = 0; i < phases.getNumberOfPhases(); i++) {
+      double phaseFraction = mercury.getPhaseFraction(i);
+      double moleFraction = mercury.getMercuryMoleFraction(i);
+      double ugPerSm3 = mercury.getMercuryConcentration(i, "ug/Sm3");
+      double ugPerKg = mercury.getMercuryConcentration(i, "ug/kg");
+      fractionSum += phaseFraction;
+      assertTrue(moleFraction > 0.0 && moleFraction < 1.0e-4);
+      assertTrue(ugPerSm3 > 0.0 && ugPerKg > 0.0);
+    }
+
+    assertEquals("liquid", state);
+    assertEquals(3, phases.getNumberOfPhases());
+    assertTrue(freeFraction > 0.0099 && freeFraction < 0.01);
+    assertEquals(1.0, fractionSum, 1.0e-12);
+  }
+
+  /**
+   * Verifies the mercury distribution study example in docs/process/mercury-distribution-study.md.
+   */
+  @Test
+  void testMercuryDistributionStudyExample() {
+    SystemInterface e300Fluid = neqsim.thermo.util.readwrite.EclipseFluidReadWrite
+        .read("src/test/java/neqsim/thermo/util/readwrite/fluid1.e300");
+    SystemInterface fluid = neqsim.thermo.util.mercury.MercuryFluidConverter.toUmrPruMc(e300Fluid, 100.0, "ug/Sm3");
+
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(200000.0, "kg/hr");
+    feed.setTemperature(70.0, "C");
+    feed.setPressure(60.0, "bara");
+    process.add(feed);
+    Separator inletSeparator = new Separator("inlet separator", feed);
+    process.add(inletSeparator);
+    neqsim.process.equipment.heatexchanger.Cooler chiller = new neqsim.process.equipment.heatexchanger.Cooler("chiller",
+        inletSeparator.getGasOutStream());
+    chiller.setOutTemperature(273.15 - 40.0);
+    process.add(chiller);
+    Separator coldSeparator = new Separator("cold separator", chiller.getOutletStream());
+    process.add(coldSeparator);
+
+    neqsim.process.util.mercury.MercuryProcessAnalyzer.setFreeMercuryAccumulation(process, true);
+    process.run();
+
+    neqsim.process.util.mercury.MercuryProcessReport report = neqsim.process.util.mercury.MercuryProcessAnalyzer
+        .analyze(process);
+    int streamsWithFreeMercury = 0;
+    for (neqsim.process.util.mercury.MercuryStreamResult stream : report.getStreams()) {
+      String name = stream.getLabel();
+      double gramPerDay = stream.getMercuryFlowRate("g/day");
+      double saturation = stream.getSaturationRatio(); // above 1: the stream carries free mercury
+      String state = stream.getFreeMercuryState(); // "none", "liquid" or "solid"
+      double gasContent = stream.getMercuryConcentration("gas", "ug/Sm3"); // NaN without a gas phase
+      assertEquals(neqsim.process.util.mercury.MercuryStreamResult.STATUS_OK, stream.getStatus(), name);
+      assertTrue(gramPerDay > 0.0, name);
+      assertEquals(saturation > 1.001, !"none".equals(state), name);
+      assertTrue(Double.isNaN(gasContent) || gasContent > 0.0, name);
+      streamsWithFreeMercury += stream.hasFreeMercury() ? 1 : 0;
+    }
+    double heldBack = coldSeparator.getFreeMercuryAccumulationRate("g/day");
+    String heldBackState = coldSeparator.getFreeMercuryState();
+    double notAccountedFor = report.getMercuryBalanceError("g/day");
+    String json = report.toJson();
+
+    // Only the chilled gas carries free mercury, and the cold separator holds it back as solid.
+    assertEquals(1, streamsWithFreeMercury);
+    assertEquals("solid", report.getStream("chiller.outStream").getFreeMercuryState());
+    assertEquals("solid", heldBackState);
+    assertTrue(heldBack > 0.0);
+    assertEquals(report.getStream("chiller.outStream").getFreeMercuryFlowRate("g/day"), heldBack, 1.0e-4 * heldBack);
+    assertEquals(0.0, notAccountedFor, 1.0e-9);
+    assertEquals(report.getFeedMercuryFlowRate("g/day"), report.getProductMercuryFlowRate("g/day") + heldBack,
+        1.0e-5 * report.getFeedMercuryFlowRate("g/day"));
+    assertTrue(json.contains("\"freeMercuryState\": \"solid\""));
   }
 
 }

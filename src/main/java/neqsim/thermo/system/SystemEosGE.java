@@ -131,7 +131,8 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
     geLiquidPhaseSlot = 1;
     eosOilPhaseSlot = 2;
 
-    setMaxNumberOfPhases(solidPhaseCheck ? 4 : 3);
+    // The phase slots are filled below, so the limit is set without allocating phase templates.
+    setPhaseLimit(solidPhaseCheck ? 4 : 3);
     phaseArray[eosGasPhaseSlot] = eosGasPhase;
     initialisePhase(eosGasPhaseSlot, temperature, pressure, PhaseType.GAS);
     phaseArray[geLiquidPhaseSlot] = geAqueousPhase;

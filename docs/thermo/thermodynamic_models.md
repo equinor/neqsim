@@ -239,7 +239,7 @@ fluid at the specified temperature and pressure to obtain the UMR-CPA equilibriu
 in a single equation of state:
 
 1. A **Peng-Robinson physical term** with a **3-parameter Mathias-Copeman** alpha
-   function (attractive term 13, `_umrmc` group-interaction tables).
+   function (attractive term 13, `_umrcpa` group-interaction tables).
 2. The **Universal Mixing Rule (UMR)** of Voutsas/Magoulas/Tassios, driven by
    **UNIFAC group-contribution** activity coefficients (the same residual term as
    `UMR-PRU`). The co-volume combining rule `bmixType = 1`,
@@ -304,7 +304,9 @@ Non-associating gases (methane, ethane, propane, CO₂, N₂, …) use the paper
 **5-parameter** Mathias-Copeman alpha (attractive term 22,
 `AttractiveTermMatCop5PRUMR`). Pure-component CPA and Mathias-Copeman parameters
 are read from the component database (`COMP.csv`), and the group-interaction
-parameters from the `UNIFAC*_UMRMC` resource tables.
+parameters from the `UNIFAC*_UMRCPA` resource tables. These are separate from the
+`UNIFAC*_UMRMC` tables of UMR-PRU-MC, whose water and mercury group parameters are
+fitted without an association term.
 
 **Volume correction (liquid density)**
 
@@ -708,6 +710,10 @@ Where $\Lambda \approx 0.693$ for SRK.
 fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
 fluid.setMixingRule("HV", "NRTL");
 ```
+
+On a UMR-PRU fluid (`SystemUMRPRUEos`, `SystemUMRPRUMCEos`, `SystemUMRPRUMCEosNew`) `setMixingRule("HV")`
+selects `UNIFAC_UMRPRU` unless another GE model has been chosen. The JSON process builder and the MCP runners
+use this for the model name `UMRPRU`.
 
 ### 8.4 Wong-Sandler Mixing Rule
 

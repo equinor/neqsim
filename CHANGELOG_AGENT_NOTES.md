@@ -9,6 +9,47 @@
 
 ---
 
+## 2026-11-19 — UMR-PRU-MC mercury and water parameters, mercury in process simulation, UMR-CPA tables
+
+- **Results change for `SystemUMRPRUMCEos` and `SystemUMRPRUMCEosNew` with water or mercury.** The mercury and
+  water group-interaction parameters in the `UNIFACInterParam*_UMRMC` tables are now those of the mercury
+  calculator library libhg 2.0.3. Fluids with water now form an aqueous phase where the old parameters gave
+  none. Hydrocarbon, CO2 and N2 results are unchanged.
+- **UMR-CPA is unchanged.** `SystemUMRCPAEoS` and `SystemUMRCPAvolcor` read the new
+  `UNIFACInterParam*_UMRCPA` tables, which hold the previous `_UMRMC` values. Replace those tables, not the
+  `_UMRMC` ones, when tuning UMR-CPA.
+- New `neqsim.thermo.util.mercury.MercuryPhaseEquilibrium`: gas, oil and aqueous phases in equilibrium with a
+  separate pure liquid or solid mercury phase. Use it instead of `TPflash` when a fluid may be above mercury
+  saturation. It works on a copy; read results from its getters and `getFluid()`.
+- UMR-PRU-MC is not valid for mercury with MEG or TEG; see `docs/thermo/mercury_thermodynamics.md`.
+- `SystemThermo.setMaxNumberOfPhases(n)` now allocates a phase template for every missing phase below `n`.
+  Before, a value above the allocated phases (for example 4 without a solid phase) left an empty slot, and the
+  next clone or flash failed with a `NullPointerException`. The flash still reports at most three fluid phases.
+  `setMultiPhaseCheck`, the solid phase check and `setNumberOfPhases` set the limit without that allocation, as
+  before, so their cost is unchanged.
+- **Mercury in process simulation.** `MercuryProcessAnalyzer.analyze(process)`
+  (`neqsim.process.util.mercury`) reports the mercury flow, the content of each phase, the saturation ratio
+  and free liquid or solid mercury of every stream, and the mercury balance of every unit and of the process,
+  for a `ProcessSystem` or a `ProcessModel`. `Separator.setFreeMercuryAccumulation(true)` (also
+  `ThreePhaseSeparator` and `GasScrubber`) holds back mercury above its solubility in the vessel;
+  `getFreeMercuryAccumulationRate(unit)` and `getFreeMercuryState()` give the result. The option is off by
+  default and a separator then does no mercury calculation.
+- **E300 fluid to UMR-PRU-MC.** `MercuryFluidConverter.toUmrPruMc(fluid, content, unit)` builds a
+  UMR-PRU-MC fluid from any fluid, keeping the pseudo-component properties, with a mercury content in
+  `mole fraction`, `ppb`, `ug/Sm3`, `ug/Nm3` or `ug/kg` of the whole fluid. Rebuild the process with the
+  converted fluid; do not replace fluids in a built process.
+- **`UMRPRU` in JSON and MCP now is UMR-PRU.** `EosMixingRuleType.defaultForModel` returns `HV` for UMR
+  models, and `setMixingRule("HV")` on a UMR-PRU fluid selects the `UNIFAC_UMRPRU` model. Before, the JSON
+  process builder and the MCP runners gave `UMRPRU` the classic mixing rule, which ignores the group
+  parameters, so results with that model name change. An explicit `"mixingRule"` is still honoured. The JSON
+  fluid also takes `"e300FilePath"` with `"model": "UMRPRU"` and `"mercuryContent": [value, "unit"]`.
+- New agent `@mercury-distribution` and skill `neqsim-mercury-distribution-study` run the study from an E300
+  fluid and a process model. Guide: `docs/process/mercury-distribution-study.md`.
+- Guidance is in `docs/thermo/mercury_thermodynamics.md` and the `neqsim-api-patterns` and
+  `neqsim-capability-map` skills.
+
+---
+
 ## 2026-11-14 — Remove unused legacy CPA phase methods (breaking API change)
 
 - Removed `solveXOld()`, `solveX2Old(int)`, `initOld2(...)`, `initCPAMatrixOld(int)`,

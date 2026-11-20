@@ -215,6 +215,27 @@
       ]
     },
     {
+      "package": "neqsim.process.util.mercury",
+      "title": "Mercury distribution studies in process simulation",
+      "keywords": "mercury Hg distribution process study track mercury streams products free liquid solid mercury condensation dropout accumulation separator cold box dew point control recompression mercury balance ug/Sm3 saturation",
+      "agent": "mercury-distribution",
+      "skill": "neqsim-mercury-distribution-study",
+      "docs": [
+        "docs/process/mercury-distribution-study.md"
+      ]
+    },
+    {
+      "package": "neqsim.thermo.util.mercury",
+      "title": "Mercury phase equilibrium and UMR-PRU-MC fluid conversion",
+      "keywords": "mercury Hg UMR-PRU-MC E300 fluid conversion mercury content separate liquid solid mercury phase solubility saturation fugacity gas oil water partitioning",
+      "agent": "mercury-distribution",
+      "skill": "neqsim-mercury-distribution-study",
+      "docs": [
+        "docs/thermo/mercury_thermodynamics.md",
+        "docs/process/mercury-distribution-study.md"
+      ]
+    },
+    {
       "package": "neqsim.process.equipment.pipeline",
       "title": "Pipeline and well hydraulics",
       "keywords": "Beggs Brill two fluid slug transient pipeline riser flowline hydraulics restart pigging",

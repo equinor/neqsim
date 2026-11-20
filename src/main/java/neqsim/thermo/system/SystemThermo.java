@@ -932,7 +932,8 @@ public abstract class SystemThermo implements SystemInterface {
     ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
 
     if (getMaxNumberOfPhases() < 4) {
-      setMaxNumberOfPhases(4);
+      // The phase slots are managed here, so the limit is set without allocating phase templates.
+      setPhaseLimit(4);
     }
   }
 
@@ -5443,6 +5444,27 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setMaxNumberOfPhases(int maxNumberOfPhases) {
     this.maxNumberOfPhases = maxNumberOfPhases;
+    // Cloning, adding components and the flash loop over every phase below the maximum, so each must exist.
+    for (int i = 2; i < maxNumberOfPhases && i < phaseArray.length; i++) {
+      if (phaseArray[i] == null && phaseArray[1] != null) {
+        phaseArray[i] = phaseArray[1].clone();
+        phaseArray[i].resetMixingRule(phaseArray[0].getMixingRuleType());
+        phaseArray[i].resetPhysicalProperties();
+      }
+    }
+  }
+
+  /**
+   * Set the maximum number of phases without allocating phase templates.
+   *
+   * <p>
+   * For fluid classes that fill the phase slots themselves right after setting the limit.
+   * </p>
+   *
+   * @param maxNumberOfPhases maximum number of phases the flash may report
+   */
+  protected final void setPhaseLimit(int maxNumberOfPhases) {
+    this.maxNumberOfPhases = maxNumberOfPhases;
   }
 
   /** {@inheritDoc} */
@@ -5763,7 +5785,8 @@ public abstract class SystemThermo implements SystemInterface {
   public void setMultiPhaseCheck(boolean multiPhaseCheck) {
     if (getMaxNumberOfPhases() < 3) {
       if (multiPhaseCheck) {
-        setMaxNumberOfPhases(3);
+        // The third phase template is created below, so the limit is set without allocating it twice.
+        setPhaseLimit(3);
         if (phaseArray[1] != null) {
           phaseArray[2] = phaseArray[1].clone();
           phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleType());
@@ -5772,7 +5795,7 @@ public abstract class SystemThermo implements SystemInterface {
           // initialized lazily if the phase becomes active or a caller requests them.
         }
       } else {
-        setMaxNumberOfPhases(2);
+        setPhaseLimit(2);
       }
     }
     this.multiPhaseCheck = multiPhaseCheck;
@@ -5837,7 +5860,7 @@ public abstract class SystemThermo implements SystemInterface {
   public void setNumberOfPhases(int number) {
     this.numberOfPhases = number;
     if (numberOfPhases > getMaxNumberOfPhases()) {
-      setMaxNumberOfPhases(number);
+      setPhaseLimit(number);
     }
   }
 

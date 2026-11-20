@@ -14,6 +14,13 @@ package neqsim.thermo.system;
  * </p>
  *
  * <p>
+ * The mercury and water group parameters in the {@code _umrmc} tables are those of the Equinor mercury calculator
+ * library (libhg 2.0.3), fitted without an association term. UMR-CPA ({@link SystemUMRCPAEoS}) reads its own
+ * {@code _umrcpa} tables. A separate liquid or solid mercury phase is calculated with
+ * {@link neqsim.thermo.util.mercury.MercuryPhaseEquilibrium}.
+ * </p>
+ *
+ * <p>
  * See {@link SystemUMRPRUEos} for the universal mixing rule, the <i>A = -0.53</i> constant, the co-volume combining
  * rule, and the rationale for omitting the Flory-Huggins (r) combinatorial term.
  * </p>

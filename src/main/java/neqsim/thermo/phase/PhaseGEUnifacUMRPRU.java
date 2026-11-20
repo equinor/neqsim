@@ -28,6 +28,9 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   double VCommontemp = 0.0;
   double FCommontemp = 0.0;
 
+  /** True when the equation-of-state phase has a CPA association term, which uses its own interaction tables. */
+  private boolean cpaInteractionParameters = false;
+
   /**
    * Constructor for PhaseGEUnifacUMRPRU.
    */
@@ -47,6 +50,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   public PhaseGEUnifacUMRPRU(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
     super(phase, alpha, Dij, mixRule, intparam);
+    cpaInteractionParameters = phase instanceof PhaseUMRCPA;
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       ComponentInterface source = phase.getComponent(i);
@@ -212,7 +216,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    * variants. Both {@code SystemUMRPRUMCEos} (attractive term number 13, 3-parameter Mathias-Copeman alpha) and
    * {@code SystemUMRPRUMCEosNew} (attractive term number 19, 5-parameter Mathias-Copeman alpha) map to the
    * {@code _umrmc} tables here. Any future variant that should consume the {@code _umrmc} tables must be added to this
-   * single decision point.
+   * single decision point. UMR-CPA uses the same attractive terms but reads the {@code _umrcpa} tables, see
+   * {@link #getInteractionTableName(String)}.
    * </p>
    *
    * @return {@code true} when the {@code _umrmc} tables should be queried, {@code false} for the original {@code _umr}
@@ -221,6 +226,26 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
   protected boolean useMcInteractionParameters() {
     int term = getPhase().getComponent(0).getAttractiveTermNumber();
     return term == 13 || term == 19 || term == 22;
+  }
+
+  /**
+   * Select the group-interaction table of this phase.
+   *
+   * <p>
+   * UMR-CPA describes hydrogen bonding with an association term, so its water group parameters differ from those of
+   * UMR-PRU with a Mathias-Copeman alpha function, where the group model carries the whole water non-ideality. The two
+   * models therefore read separate tables: {@code _umrcpa} and {@code _umrmc}.
+   * </p>
+   *
+   * @param parameter interaction parameter, "a", "b" or "c"
+   * @return database table name
+   */
+  protected String getInteractionTableName(String parameter) {
+    String suffix = "_umr";
+    if (useMcInteractionParameters()) {
+      suffix = cpaInteractionParameters ? "_umrcpa" : "_umrmc";
+    }
+    return "unifacinterparam" + parameter + suffix;
   }
 
   /** {@inheritDoc} */
@@ -233,13 +258,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-        if (useMcInteractionParameters()) {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        } else {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umr WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        }
+        dataSet = database.getResultSet(("SELECT * FROM " + getInteractionTableName("a") + " WHERE MainGroup="
+            + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
         dataSet.next();
         // dataSet.getClob("MainGroup");
         for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
@@ -273,13 +293,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-        if (useMcInteractionParameters()) {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        } else {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umr WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        }
+        dataSet = database.getResultSet(("SELECT * FROM " + getInteractionTableName("b") + " WHERE MainGroup="
+            + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
         dataSet.next();
         // dataSet.getClob("MainGroup");
         for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
@@ -305,13 +320,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-        if (useMcInteractionParameters()) {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        } else {
-          dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umr WHERE MainGroup="
-              + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
-        }
+        dataSet = database.getResultSet(("SELECT * FROM " + getInteractionTableName("c") + " WHERE MainGroup="
+            + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
         dataSet.next();
         // dataSet.getClob("MainGroup");
         for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {

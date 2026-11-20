@@ -53,6 +53,7 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSoreideWhitson;
+import neqsim.thermo.util.mercury.MercuryPhaseEquilibrium;
 import neqsim.thermodynamicoperations.OperationInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermodynamicoperations.flashops.OptimizedVUflash;
@@ -276,10 +277,22 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Run-skip cache. Transient so a deserialized or cloned separator always recalculates its outlets on the first run
    * instead of returning the stored (possibly modified) outlet states.
    */
-  private transient double lastEnthalpy;
+  private transient volatile double lastEnthalpy;
   private transient double lastFlowRate;
   private transient double lastPressure;
   private transient double lastPressureDrop;
+
+  /** True when mercury above its solubility is separated and held back in the vessel. */
+  private volatile boolean freeMercuryAccumulation = false;
+
+  /** Free mercury held back in the vessel in the last steady-state calculation, in mole/sec. */
+  private volatile double freeMercuryAccumulationMoles = 0.0;
+
+  /** Molar mass of mercury in kg/mol, read from the fluid in the last steady-state calculation. */
+  private volatile double freeMercuryMolarMass = 0.20059;
+
+  /** State of the free mercury in the last steady-state calculation: none, liquid or solid. */
+  private volatile String freeMercuryState = "none";
 
   /** Stable identity for transient transaction diagnostics. */
   private String transientStateIdentity = UUID.randomUUID().toString();
@@ -1278,6 +1291,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       ops.TPflash();
       thermoSystem2.initProperties();
     }
+    separateFreeMercury();
 
     // If detailed entrainment model is enabled, compute entrainment from droplet
     // physics
@@ -3651,7 +3665,122 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
     }
 
-    return liquidFlow + gasFlow - flow;
+    return liquidFlow + gasFlow + getHeldBackMercuryFlow(unit) - flow;
+  }
+
+  /**
+   * Get the free mercury held back in the vessel for use in a mass balance.
+   *
+   * @param unit flow unit of the mass balance
+   * @return accumulation rate of free mercury in the unit, zero when no free mercury is held back or the unit is not
+   * supported by {@link #getFreeMercuryAccumulationRate(String)}
+   */
+  protected double getHeldBackMercuryFlow(String unit) {
+    if (freeMercuryAccumulationMoles <= 0.0) {
+      return 0.0;
+    }
+    try {
+      return getFreeMercuryAccumulationRate(unit);
+    } catch (IllegalArgumentException ex) {
+      logger.debug("free mercury not included in the mass balance in unit {}", unit);
+      return 0.0;
+    }
+  }
+
+  /**
+   * Choose whether mercury above its solubility in the fluid phases is separated and held back in the vessel.
+   *
+   * <p>
+   * When enabled, the steady-state calculation finds the mercury that the gas, oil and aqueous phases cannot dissolve
+   * with {@link MercuryPhaseEquilibrium}. That mercury, liquid above 234.321 K and solid below, stays in the vessel:
+   * the outlet streams leave saturated with mercury and the held back amount is given by
+   * {@link #getFreeMercuryAccumulationRate(String)}. Results are unchanged when the fluid has no mercury or dissolves
+   * all of it. The option is not used in transient calculations.
+   * </p>
+   *
+   * @param freeMercuryAccumulation true to hold back free mercury in the vessel
+   */
+  public void setFreeMercuryAccumulation(boolean freeMercuryAccumulation) {
+    this.freeMercuryAccumulation = freeMercuryAccumulation;
+    freeMercuryAccumulationMoles = 0.0;
+    freeMercuryState = "none";
+    invalidateRunCache();
+  }
+
+  /**
+   * Check whether free mercury is separated and held back in the vessel.
+   *
+   * @return true when the option is enabled
+   */
+  public boolean isFreeMercuryAccumulation() {
+    return freeMercuryAccumulation;
+  }
+
+  /**
+   * Get the state of the free mercury held back in the vessel in the last steady-state calculation.
+   *
+   * @return "none", "liquid" or "solid"
+   */
+  public String getFreeMercuryState() {
+    return freeMercuryState;
+  }
+
+  /**
+   * Get the rate at which free mercury is held back in the vessel in the last steady-state calculation.
+   *
+   * @param unit "mole/sec", "mole/hr", "kg/sec", "kg/min", "kg/hr", "kg/day", "kg/yr", "g/sec", "g/hr", "g/day" or
+   * "g/yr"
+   * @return accumulation rate of free mercury, zero when the option is disabled or no free mercury forms
+   * @throws IllegalArgumentException if the unit is not supported
+   */
+  public double getFreeMercuryAccumulationRate(String unit) {
+    return MercuryPhaseEquilibrium.convertMercuryFlow(freeMercuryAccumulationMoles, freeMercuryMolarMass, unit);
+  }
+
+  /**
+   * Make the next steady-state calculation recalculate the outlets even when the inlet is unchanged.
+   */
+  protected void invalidateRunCache() {
+    lastEnthalpy = Double.NaN;
+  }
+
+  /**
+   * Take the mercury that the fluid phases cannot dissolve out of the flashed separator fluid.
+   *
+   * <p>
+   * Does nothing unless {@link #setFreeMercuryAccumulation(boolean)} is enabled and the fluid holds mercury together
+   * with other components. The flashed fluid is replaced only when free mercury forms, so that the ordinary flash
+   * result is kept in all other cases.
+   * </p>
+   */
+  protected void separateFreeMercury() {
+    if (!freeMercuryAccumulation) {
+      // Ordinary calculation: no mercury work.
+      return;
+    }
+    freeMercuryAccumulationMoles = 0.0;
+    freeMercuryState = "none";
+    if (thermoSystem2 == null || !thermoSystem2.getPhase(0).hasComponent(MercuryPhaseEquilibrium.MERCURY)
+        || thermoSystem2.getPhase(0).getNumberOfComponents() < 2
+        || thermoSystem2.getPhase(0).getComponent(MercuryPhaseEquilibrium.MERCURY).getNumberOfmoles() <= 0.0) {
+      return;
+    }
+    try {
+      MercuryPhaseEquilibrium equilibrium = new MercuryPhaseEquilibrium(thermoSystem2);
+      equilibrium.run();
+      if (!equilibrium.hasFreeMercury()) {
+        return;
+      }
+      SystemInterface saturatedFluid = equilibrium.getFluid();
+      saturatedFluid.setMultiPhaseCheck(thermoSystem2.doMultiPhaseCheck());
+      saturatedFluid.initProperties();
+      freeMercuryMolarMass = saturatedFluid.getPhase(0).getComponent(MercuryPhaseEquilibrium.MERCURY).getMolarMass();
+      freeMercuryAccumulationMoles = equilibrium.getFreeMercuryMoles();
+      freeMercuryState = equilibrium.getFreeMercuryState();
+      thermoSystem2 = saturatedFluid;
+    } catch (RuntimeException ex) {
+      logger.warn("free mercury was not separated in {}: {}", getName(), ex.getMessage());
+    }
   }
 
   /** {@inheritDoc} */

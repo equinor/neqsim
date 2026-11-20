@@ -1,7 +1,7 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim Java/Python API patterns for fluids, flashes, process equipment and units. USE WHEN: selecting EOS/mixing-rule selection and property retrieval, including viscosity, thermal conductivity, binary/effective diffusion, gas-oil-water interfacial tension and black-oil PVT table conversion. Follow linked references for exact model selection, initialization and tested examples."
-last_verified: "2026-11-18"
+last_verified: "2026-11-19"
 ---
 
 # NeqSim API Patterns
@@ -113,6 +113,26 @@ requires `water` in the composition; an unavailable hydrate temperature is retur
 **UMR-PRU mixing rule:** the two-argument form is required. `setMixingRule(EosMixingRuleType.HV)` (or copying
 `otherFluid.getMixingRule()`) selects NRTL-modified Huron-Vidal, not the UMR-PRU UNIFAC model, and silently changes
 dew points (about 2 C in a lean-gas check).
+
+**Mercury and water with UMR-PRU:** `SystemUMRPRUMCEos` uses the mercury and water group parameters of the mercury
+calculator (libhg 2.0.3), so it forms an aqueous phase and distributes mercury between gas, oil and water like that
+calculator. Checked 2026-11-19 on 13 cases (-30 to 60 C, 21 to 70 bara): mercury mole fractions within 1 % for
+fluids up to nC20 and within 5 % with n-alkanes up to nC39. It is not valid for mercury with MEG or TEG (gas
+mercury 130 to 2400 times too low). UMR-CPA keeps its own water parameters in the `UNIFAC*_UMRCPA` tables. For a
+fluid that may hold more mercury than it dissolves, run `new MercuryPhaseEquilibrium(fluid).run()`
+(`neqsim.thermo.util.mercury`) and read `getFreeMercuryState()`, `getFreeMercuryFraction()` and
+`getMercuryConcentration(phase, "ug/Sm3")`; an ordinary `TPflash` instead forms a mercury-rich liquid. Details:
+[Mercury thermodynamics](../../../docs/thermo/mercury_thermodynamics.md).
+
+**Mercury through a process:** convert the study fluid with
+`MercuryFluidConverter.toUmrPruMc(fluid, content, unit)` (keeps E300 pseudo-components; content of the whole
+fluid in `ug/Sm3`, `ug/kg`, `ppb` or `mole fraction`), build the process with it, call
+`MercuryProcessAnalyzer.setFreeMercuryAccumulation(process, true)` so separators hold back free mercury, run, and
+read `MercuryProcessAnalyzer.analyze(process)` (`neqsim.process.util.mercury`): per stream
+`getMercuryFlowRate("g/day")`, `getSaturationRatio()`, `getFreeMercuryState()` and
+`getMercuryConcentration("gas", "ug/Sm3")`. With `setMixingRule("HV")` a UMR-PRU fluid uses `UNIFAC_UMRPRU`; never
+use the classic mixing rule with it. Workflow: `neqsim-mercury-distribution-study` skill and
+[Mercury distribution studies](../../../docs/process/mercury-distribution-study.md).
 
 **PR-LK vs PR78**: `SystemPrLeeKeslerEos` uses PR76 alpha for ALL ω:
 `m = 0.37464 + 1.54226ω − 0.26992ω²`. Standard `SystemPrEos1978` uses a modified

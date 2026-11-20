@@ -213,6 +213,7 @@ This documentation is organized into the following sections:
 | Electrolyzers | [electrolyzers.md](equipment/electrolyzers) | Electrolyzer, CO2Electrolyzer |
 | Filters | [filters.md](equipment/filters) | Particle, coalescing, strainer, and media filters with dynamic loading and mechanical design |
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
+| Mercury Distribution Studies | [mercury-distribution-study.md](mercury-distribution-study) | Mercury in every stream and product, free liquid or solid mercury, accumulation in separators, E300 fluid conversion to UMR-PRU-MC |
 | **Sulfur Recovery** | [sulfur_recovery.md](sulfur_recovery) | Integrated Claus furnace, WHB, converters, sulfur condensers, TGTU recycle, incineration, and KPIs |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
