@@ -20,3 +20,4 @@ neqsim-norwegian-continental-shelf-data equinor/neqsim-community-skills
 neqsim-sodir-open-data            equinor/neqsim-community-skills
 neqsim-subsea-slot-tee-reuse-inventory equinor/neqsim-community-skills
 neqsim-dynamic-model-identification equinor/neqsim-community-skills
+neqsim-flare-helideck-dispersion  equinor/neqsim-community-skills

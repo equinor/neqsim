@@ -2399,7 +2399,7 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     # Pull controlled documents automatically when a retrieval backend is
     # configured (same zero-argument path agents use in chat). Non-fatal.
     try:
-        import doc_retriever
+        from enterprise_stid_document_retrieval import doc_retriever
         retrieval = doc_retriever.retrieve_for_task(task_dir, quiet=True)
         if retrieval.get("status") == "ok":
             print("  Documents: {} retrieved into step1_scope_and_research/references/stid/".format(
@@ -2407,6 +2407,8 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         elif retrieval.get("status") not in ("no_backend", "disabled", "no_installation"):
             print("  Document retrieval {}: {}".format(retrieval.get("status"),
                                                       retrieval.get("message", "")))
+    except ImportError:
+        pass  # enterprise-stid-document-retrieval not installed: nothing to retrieve
     except Exception as error:  # noqa: BLE001
         print("  WARNING: automatic document retrieval skipped ({})".format(str(error)[:120]))
 

@@ -117,7 +117,7 @@ public class STS0131AcceptanceCriteria implements Serializable {
 ```
 
 **Data access integration:** The time-to-rupture calculation needs:
-- Material derating curves (can come from STID material certificates → `neqsim-stid-retriever`)
+- Material derating curves (can come from STID → `enterprise-stid-document-retrieval`)
 - Fire zone geometry (from PFP/fire documents → `neqsim-technical-document-reading`)
 - Personnel egress time (from escape analysis documents)
 

@@ -464,7 +464,6 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-production-optimization` | Production optimization, bottleneck analysis | Decline curves, gas lift, network optimization |
 | `neqsim-reaction-engineering` | Chemical reactor modeling | GibbsReactor, PFR, CSTR, kinetics, AnaerobicDigester |
 | `neqsim-standards-lookup` | Standards compliance or lookup | Equipment-to-standards mapping, CSV database queries |
-| `neqsim-stid-retriever` | Retrieving vendor/engineering documents | Local dirs, manual upload, retrieval backends, relevance filtering |
 | `neqsim-subsea-and-wells` | Subsea systems, well design, SURF cost | Casing design, tieback analysis, cost estimation |
 | `neqsim-unisim-reader` | UniSim/HYSYS conversion tasks | COM reader, component/EOS mapping, topology reconstruction |
 | `neqsim-controllability-operability` | Operability, turndown, control valve sizing | ISA-75 valve sizing, startup/shutdown, recycle stability |

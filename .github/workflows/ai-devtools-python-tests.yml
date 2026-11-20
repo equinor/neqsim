@@ -130,8 +130,7 @@ jobs:
             devtools/test_map_driver_lifecycle_link.py \
             devtools/test_neqsim_living_tasks.py \
             devtools/test_neqsim_doctor.py \
-            devtools/test_unisim_outputs.py \
-            devtools/test_stid_download.py
+            devtools/test_unisim_outputs.py
 
       - name: Verify pure-CO2 retained-data auditor guards
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v

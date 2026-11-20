@@ -7,7 +7,6 @@ required_skills:
 - neqsim-flow-accelerated-corrosion
 - neqsim-plant-data
 - neqsim-process-safety
-- neqsim-stid-retriever
 - neqsim-technical-document-reading
 - neqsim-pid-process-operations
 - neqsim-troubleshooting
@@ -16,13 +15,13 @@ argument-hint: "Describe the equipment issue — e.g., 'compressor C-100 trippin
 ---
 ## Skills to Load
 
-Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting, neqsim-rotating-equipment-design
+Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting, neqsim-rotating-equipment-design
 
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-root-cause-analysis/SKILL.md` — RCA framework, symptoms, hypotheses, evidence analysis
 - `.github/skills/neqsim-plant-data/SKILL.md` — Historian data via tagreader API
 - `.github/skills/neqsim-process-safety/SKILL.md` — Barrier management and risk context
-- `.github/skills/neqsim-stid-retriever/SKILL.md` — Retrieve design documents
+- `enterprise-stid-document-retrieval` (enterprise skill, when installed) — Retrieve design documents
 - `.github/skills/neqsim-technical-document-reading/SKILL.md` — Extract data from vendor docs
 - `.github/skills/neqsim-pid-process-operations/SKILL.md` — P&ID context for equipment
 - `.github/skills/neqsim-troubleshooting/SKILL.md` — Recovery strategies after diagnosis
@@ -102,7 +101,7 @@ Map the user's description to a `Symptom` enum value:
    - Key parameters: temperature, pressure, flow, vibration, power, efficiency
    - Export as CSV or pass directly as `Map<String, double[]>`
 
-2. **STID/design data**: Use `neqsim-stid-retriever` to get equipment datasheets
+2. **STID/design data**: Use `enterprise-stid-document-retrieval` (enterprise skill) to get equipment datasheets
    - Design conditions: temperature, pressure, flow
    - Performance curves (compressor maps, pump curves)
    - Material limits
@@ -194,7 +193,7 @@ Use these as templates when constructing RCA inputs for real equipment.
 ```
 Plant Historian (PI/IP.21)         STID / Vendor Docs
          │                                  │
-    tagreader API                 neqsim-stid-retriever
+    tagreader API                 enterprise STID retrieval
          │                                  │
     CSV / DataFrame              design limits, specs
          │                                  │

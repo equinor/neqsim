@@ -435,7 +435,7 @@ emitted in `RootCauseReport.toJson()` and MCP JSON.
 | `neqsim-plant-data` | Read historian data via tagreader API |
 | `neqsim-control-authority-screening` | Rule out a saturated control valve before accepting an external cause for "the controlled variable got worse" |
 | `neqsim-heat-exchanger-fouling-assessment` | Quantify exchanger degradation behind a cooling or duty shortfall hypothesis |
-| `neqsim-stid-retriever` | Retrieve STID design documents |
+| `enterprise-stid-document-retrieval` (enterprise) | Retrieve STID design documents |
 | `neqsim-technical-document-reading` | Extract design values from datasheets |
 | `neqsim-troubleshooting` | Recovery strategies after diagnosis |
 | `neqsim-process-safety` | Link RCA findings to barrier management |
@@ -595,7 +595,7 @@ historian_csv = df.to_csv(index=False)
 
 ### Step 2: Extract STID Design Data
 
-Use the `neqsim-stid-retriever` and `neqsim-technical-document-reading` skills
+Use the `enterprise-stid-document-retrieval` (enterprise) and `neqsim-technical-document-reading` skills
 to extract design limits and reference values from STID datasheets.
 
 ```python

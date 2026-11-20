@@ -25,7 +25,7 @@ PDF or image document
 | PDF page rasterization | [devtools/pdf_to_figures.py](../../devtools/pdf_to_figures.py) | Converts PDF pages to PNG images for visual analysis. |
 | Scanned PDF OCR | [devtools/pdf_ocr.py](../../devtools/pdf_ocr.py) | Extracts text from scanned PDFs and engineering drawings. |
 | P&ID tag OCR | [devtools/pdf_ocr.py --pid](../../devtools/pdf_ocr.py) | Uses high-DPI sparse OCR for equipment, instrument, and line tags. |
-| STID document download | [devtools/stid_download.py](../../devtools/stid_download.py) | Downloads STID documents into a task folder and can convert PDFs to PNG. |
+| STID document download | `enterprise_stid_document_retrieval.stid_download` (enterprise skill `enterprise-stid-document-retrieval`) | Downloads STID documents into a task folder and can convert PDFs to PNG. |
 | Document extraction | [`neqsim-technical-document-reading`](../../.github/skills/neqsim-technical-document-reading/SKILL.md) | Provides structured extraction patterns for technical documents and images. |
 | Report figure traceability | `results.json` figure sections | Links figures to captions, discussions, and key results. |
 
@@ -47,7 +47,7 @@ PDF or image document
 |-------|-----|
 | [`neqsim-technical-document-reading`](../../.github/skills/neqsim-technical-document-reading/SKILL.md) | Main skill for extracting structured data from documents and engineering images. |
 | [`neqsim-pdf-ocr`](../../.github/skills/neqsim-pdf-ocr/SKILL.md) | OCR for scanned PDFs, P&IDs, vendor datasheets, and engineering drawings. |
-| [`neqsim-stid-retriever`](../../.github/skills/neqsim-stid-retriever/SKILL.md) | Retrieval of STID, vendor, P&ID, and datasheet documents into task folders. |
+| `enterprise-stid-document-retrieval` (enterprise skill) | Retrieval of STID, vendor, P&ID, and datasheet documents into task folders. |
 | [`neqsim-process-extraction`](../../.github/skills/neqsim-process-extraction/SKILL.md) | Conversion of extracted process data into NeqSim JSON or route models. |
 | [`neqsim-professional-reporting`](../../.github/skills/neqsim-professional-reporting/SKILL.md) | Figure captions, figure discussions, linked results, and report traceability. |
 | [`neqsim-notebook-patterns`](../../.github/skills/neqsim-notebook-patterns/SKILL.md) | Figure generation, notebook execution, and `results.json` integration. |
@@ -103,7 +103,7 @@ Scanned PDF
 
 ```text
 STID/vendor source
--> stid_download.py into task references folder
+-> stid_download (enterprise-stid-document-retrieval) into task references folder
 -> optional PDF-to-PNG conversion
 -> technical.reader extraction
 -> process extraction or engineering analysis

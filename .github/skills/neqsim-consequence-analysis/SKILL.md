@@ -1,8 +1,8 @@
 ---
 name: neqsim-consequence-analysis
-version: "1.0.0"
-description: "Quantitative consequence analysis - jet/pool fire, VCE, BLEVE, Gaussian and heavy-gas dispersion, probit fatality, individual and societal risk. USE WHEN: a task requires fire-radiation contours, dispersion to LFL/IDLH/ERPG, BLEVE thermal/missile assessment, or QRA-style integration of release outcomes. Anchors on neqsim.process.safety.fire, .dispersion and .qra."
-last_verified: "2026-11-14"
+version: "1.1.0"
+description: "Quantitative consequence analysis - jet/pool fire, VCE, BLEVE, Gaussian and heavy-gas dispersion, probit fatality, individual and societal risk. USE WHEN: a task requires fire-radiation contours, dispersion to LFL/IDLH/ERPG, BLEVE thermal/missile assessment, QRA-style integration of release outcomes, or unignited flare/vent gas at a helideck and flight path. Anchors on neqsim.process.safety.fire, .dispersion and .qra."
+last_verified: "2026-11-20"
 requires:
   java_packages:
     - neqsim.process.safety.fire
@@ -112,6 +112,38 @@ double distLFL = plume.distanceToConcentration(0.044);    // m to methane LFL
 Stability classes: A (very unstable) … F (stable). RURAL vs URBAN selects Briggs σ
 coefficients per Pasquill-Gifford. Use `Stability.F` for worst-case dispersion
 analysis (calm night, low wind).
+
+### Method 5b — Elevated flare or vent gas at a helideck and flight path
+
+`GasDispersionAnalyzer` and `GaussianPlume` model a release at one height with passive
+spreading; they have no jet momentum rise, no stable-air plume-rise limit, no
+receptor geometry (helideck, flight path) and no wind-rose weighting. In `AUTO` mode
+the analyzer picks Gaussian or dense gas from the density at **ambient** temperature,
+so a cold (-107 C) dense flare gas is routed to Gaussian: set the model explicitly
+and set the endpoint explicitly (`sts0131IntegralEndpoint()` = 20 % LFL; the default is
+50 % LFL). For an unignited flare, cold vent or relief tail pipe near a helideck use
+the community skill `neqsim-flare-helideck-dispersion` and agent
+`flare-helideck-dispersion-agent` (neqsim-community-skills / neqsim-community-agents)
+and keep these measured lessons (offshore platform study, 2026-11-20, screening model
+checked against `GaussianPlume` within 2 %):
+
+- Report the exceedance of **both** 10 % and 20 % LFL on the helideck, on the into-wind
+  approach path and on any path of the obstacle-free sector, weighted by the joint
+  wind direction x speed table; the result is **conditional on a release**, not a
+  frequency.
+- Apply the Briggs **stable-air limits** to momentum rise and to the sinking of a dense
+  plume in classes E and F: neutral rise in stable air hid the exposure of the warm
+  blowdown completely (0 % of hours above 20 % LFL instead of 6.6 %) in an independent
+  review.
+- Resolve flight-path bearings at 5 deg or finer; 15 deg steps understated the
+  exceedance hours of narrow plumes (up to a factor of 2 in the review).
+- Scan the tip inclination (20-70 deg): for cold dense gas the helideck peak went from
+  0.2 % LFL at 40 deg to 19 % at 35 deg and above 100 % at 30 deg.
+- API 520 sizes the relief device and fixes the rated release rate; atmospheric
+  discharge and dispersion criteria are in API 521 section 5.8.
+- Platform wake, turbulence over the deck and hot exhaust are not in a screening
+  model; hand the low-wind cases to CFD (source term from
+  `ConsequenceAnalysisEngine.exportSourceTerm()`).
 
 ## Method 6 — Heavy-Gas Dispersion
 

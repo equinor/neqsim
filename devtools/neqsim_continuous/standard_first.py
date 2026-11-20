@@ -170,8 +170,11 @@ def _auto_retrieve_documents(task_dir):
     if DEVTOOLS not in sys.path:
         sys.path.insert(0, DEVTOOLS)
     try:
-        import doc_retriever
+        from enterprise_stid_document_retrieval import doc_retriever
         status = doc_retriever.retrieve_for_task(task_dir, quiet=True)
+    except ImportError:
+        status = {"status": "no_backend",
+                  "message": "enterprise-stid-document-retrieval is not installed"}
     except Exception as exc:  # noqa: BLE001
         status = {"status": "error", "message": str(exc)[:300]}
     action = {"kind": "document_retrieval", "status": status.get("status"),

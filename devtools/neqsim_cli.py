@@ -97,8 +97,8 @@ COMMANDS = {
         "desc": "Create a task-solving workspace",
     },
     "fetch-docs": {
-        "module": "doc_retriever",
-        "desc": "Auto-retrieve STID/backend documents into a task (infers installation)",
+        "module": "enterprise_stid_document_retrieval.doc_retriever",
+        "desc": "Auto-retrieve STID/backend documents into a task (enterprise skill; infers installation)",
     },
     "tasks": {
         "module": "task_corpus",
@@ -659,7 +659,12 @@ def main():
         sys.exit(_handle_documents(sys.argv[2:]))
 
     if cmd in ("fetch-docs", "fetch-documents"):
-        import doc_retriever
+        try:
+            from enterprise_stid_document_retrieval import doc_retriever
+        except ImportError:
+            print("neqsim fetch-docs needs the enterprise skill enterprise-stid-document-retrieval "
+                  "(neqsim-enterprise-skills); it is not installed.")
+            sys.exit(1)
         sys.exit(doc_retriever.main(sys.argv[2:]))
 
     if cmd == "report":

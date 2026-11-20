@@ -61,6 +61,8 @@ SOURCE_CATALOG = [
     ("maintenance", "SAP / Maintenance", "Work orders, failure reports, linked documents"),
     ("servicenow", "ServiceNow", "Referenced records (RITM / INC / CHG / SCTASK)"),
     ("tagreader", "Plant historian", "PI / IP.21 (tagreader) signal exports"),
+    ("ots", "OTS historian", "Omnia Timeseries (OTS) catalogue, raw and aggregated signal exports"),
+    ("alarm-events", "Alarm & Events", "Alarm and event log extracts (iiot-ae-api-v1)"),
     ("seeq", "Seeq", "Seeq signal and capsule exports"),
     ("pdm", "PDM", "Production Data Mart allocation and production-accounting evidence"),
     ("rigga", "Rigga (legacy)", "Legacy PDM Streamer production-volume exports"),
@@ -84,6 +86,7 @@ SOURCE_KEYS = [key for key, _name, _desc in SOURCE_CATALOG]
 SOURCE_FOLDER_ALIASES = {
     "fmu_share": "fmu", "ores": "osdu", "rddms": "osdu",
     "equipment_portal": "equipment-portal", "omnia_maps": "omnia-maps",
+    "alarm_events": "alarm-events", "alarms": "alarm-events", "timeseries": "ots",
     "earlier_tasks": "earlier-tasks", "previous_tasks": "earlier-tasks",
 }
 SOURCE_NAME = {key: name for key, name, _desc in SOURCE_CATALOG}

@@ -9,7 +9,7 @@ last_verified: "2026-07-13"
 Find, store, and summarize related papers and web information for a NeqSim task
 so the research is **auditable, reusable, and distributable** with the task
 folder. This skill defines the *workflow and storage convention*; it pairs with
-`neqsim-stid-retriever` (internal/vendor corpora), `neqsim-technical-document-reading`
+`enterprise-stid-document-retrieval` (enterprise skill; internal/vendor corpora), `neqsim-technical-document-reading`
 (fact extraction), `neqsim-pdf-ocr` (scanned PDFs), and `neqsim-standards-lookup`
 (which standards to pull). It is the open-literature/web counterpart to the
 internal-document retrieval flow, and shares the same `references/` collection
@@ -77,7 +77,7 @@ references/
    Save standard PDFs (when obtainable) to `literature/`.
 
 4. **Internal corpus (if configured).** If a retrieval backend is available,
-   pull internal/vendor docs via `neqsim-stid-retriever` into their own source
+   pull internal/vendor docs via the enterprise skill `enterprise-stid-document-retrieval` into their own source
    subfolders (`stid/`, `vendor/`, `manual/`).
 
 5. **Web search.** Use the `fetch_webpage` tool to retrieve and read candidate
@@ -177,7 +177,7 @@ Search date: YYYY-MM-DD
 
 ## Related Skills
 
-- `neqsim-stid-retriever` — internal/vendor document corpora (per-source folders).
+- `enterprise-stid-document-retrieval` (enterprise skill) — internal/vendor document corpora (per-source folders).
 - `neqsim-technical-document-reading` — extract structured facts from PDFs/images.
 - `neqsim-pdf-ocr` — OCR for scanned PDFs before extraction.
 - `neqsim-standards-lookup` — identify governing standards to retrieve.

@@ -3,7 +3,6 @@ name: literature-scout
 description: "Searches public literature and internal/private databases for material relevant to a NeqSim engineering task. Saves PDFs to step1_scope_and_research/references/, summarizes each source in notes.md, and produces a Literature & Reference Documents section with citations. Wraps @stid.retriever for private corpora and supports configurable external search backends."
 required_skills:
 - neqsim-literature-search
-- neqsim-stid-retriever
 - neqsim-technical-document-reading
 - neqsim-pdf-ocr
 - neqsim-standards-lookup
@@ -73,12 +72,12 @@ with summaries that the solver agent can use without re-reading the originals.
 
 ## Skills to Load
 
-Loaded skills: neqsim-literature-search, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pdf-ocr, neqsim-standards-lookup, neqsim-trapped-liquid-fire-rupture
+Loaded skills: neqsim-literature-search, neqsim-technical-document-reading, neqsim-pdf-ocr, neqsim-standards-lookup, neqsim-trapped-liquid-fire-rupture
 
 - `neqsim-literature-search` — the paper + web research workflow: research
   questions, web-page extracts saved to `references/web/`, papers to
   `references/literature/`, and a structured `literature_findings.md`.
-- `neqsim-stid-retriever` — for internal document corpora (vendor docs,
+- `enterprise-stid-document-retrieval` (enterprise skill, when installed) — for internal document corpora (vendor docs,
   STID drawings, mechanical arrangements).
 - `neqsim-technical-document-reading` — to extract structured data from
   retrieved PDFs and images.
