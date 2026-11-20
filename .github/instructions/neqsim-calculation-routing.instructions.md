@@ -91,6 +91,17 @@ remote-context failures and startup timeouts explicitly, with the remedy from
 the command. Preserve documented offline hand-offs when the runtime is blocked;
 never label an unexecuted engine calculation as successful.
 
+## Task folders always come from `new-task` (dated name)
+
+Create every task folder with `neqsim new-task "<title>" --type X --prompt "<request>"`
+(or `<python> -m neqsim_cli new-task ...` when `neqsim` is not on PATH). It names the folder
+`YYYY-MM-DD_<slug>` (date first) and scaffolds the template. Never create a task folder by hand
+with `New-Item`/`mkdir` or the file-create tool, and never invent a name without the date.
+If `new-task` fails, fix or report that blocker; do not fall back to a hand-made folder. If a
+folder must be created before the CLI is reachable, name it `YYYY-MM-DD_<slug>` and run
+`neqsim new-task "<title>" --slug <that folder name>` to scaffold it in place.
+PowerShell constrained-language hosts reject some inline scripts, so call the CLI directly
+instead of wrapping it in `$host.SetShouldExit(...)` style one-liners.
 ## Repo paths in agents and skills, when only the plugin is installed
 
 Agents and skills cite repository paths. Without a NeqSim checkout (agent plugin

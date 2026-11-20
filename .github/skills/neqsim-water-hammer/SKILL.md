@@ -149,7 +149,7 @@ classes. Escalate to detailed study if any of these apply:
 ## Related Skills
 
 - `neqsim-pid-process-operations` for valve actions and operational scenarios.
-- `neqsim-stid-retriever` and `neqsim-technical-document-reading` for route and
+- `enterprise-stid-document-retrieval` (enterprise) and `neqsim-technical-document-reading` for route and
   evidence extraction.
 - `neqsim-plant-data` for tagreader snapshots and event windows.
 - `neqsim-process-safety` for risk framing and escalation into safety studies.

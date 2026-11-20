@@ -213,7 +213,6 @@
  ],
  "literature search": [
   "neqsim-literature-search",
-  "neqsim-stid-retriever",
   "neqsim-standards-lookup"
  ],
  "find papers": [
@@ -408,9 +407,6 @@
  ],
  "a simulation fails to converge": [
   "neqsim-troubleshooting"
- ],
- "a task needs vendor performance data": [
-  "neqsim-stid-retriever"
  ],
  "a user has unisim/hysys simulation files": [
   "neqsim-unisim-reader"
@@ -613,9 +609,6 @@
  "matching saturation pressures": [
   "neqsim-eos-regression"
  ],
- "mechanical drawings": [
-  "neqsim-stid-retriever"
- ],
  "meg/deg injection": [
   "neqsim-electrolyte-systems"
  ],
@@ -731,9 +724,6 @@
  ],
  "neqsim-standards-lookup": [
   "neqsim-standards-lookup"
- ],
- "neqsim-stid-retriever": [
-  "neqsim-stid-retriever"
  ],
  "neqsim-subsea-and-wells": [
   "neqsim-subsea-and-wells"
@@ -924,9 +914,6 @@
  ],
  "or any system with ions": [
   "neqsim-electrolyte-systems"
- ],
- "or as-built documentation for process equipment": [
-  "neqsim-stid-retriever"
  ],
  "or building validation reports for calibrated simulations": [
   "neqsim-model-calibration-and-data-reconciliation"

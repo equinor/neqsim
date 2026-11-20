@@ -211,5 +211,5 @@ remediation message if they're missing — never silently produces empty results
 ## Related Skills
 
 - [`neqsim-technical-document-reading`](../neqsim-technical-document-reading/SKILL.md) — text-based PDFs, Word, Excel, image analysis with `view_image`
-- [`neqsim-stid-retriever`](../neqsim-stid-retriever/SKILL.md) — fetch the documents in the first place
+- `enterprise-stid-document-retrieval` (enterprise skill) — fetch the documents in the first place
 - [`neqsim-process-extraction`](../neqsim-process-extraction/SKILL.md) — convert extracted text into NeqSim JSON

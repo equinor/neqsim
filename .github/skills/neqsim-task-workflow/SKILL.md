@@ -191,7 +191,7 @@ checks before writing Step 1 content:
 
    | Data need | Retrieve with | Notes |
    |-----------|---------------|-------|
-   | Compressor/pump curves, vendor performance maps, datasheets, P&IDs, mechanical drawings, line lists, material certs | `@stid.reader` / `stid-reader-agent` + `neqsim-stid-retriever` (STID doc download → PDF/OCR → `neqsim-technical-document-reading`) | Vendor "map"/curve docs live in STID; download then extract the map digitally |
+   | Compressor/pump curves, vendor performance maps, datasheets, P&IDs, mechanical drawings, line lists, material certs | `@stid.reader` / `stid-reader-agent` + `enterprise-stid-document-retrieval` (STID doc download → PDF/OCR → `neqsim-technical-document-reading`) | Vendor "map"/curve docs live in STID; download then extract the map digitally |
    | Piping class, pipe internal diameter, wall thickness, valve (VDS/MDS) data, flange rating | `@tr2000` / `tr2000-agent` + `enterprise-tr2000-api` | Resolve line tag → PCS → internal Ø |
    | Live instrument data / operating point (P, T, flow, speed, valve %, current recycle) | `@plant-data` / `plant-data-agent` + `neqsim-plant-data` (tagreader PI/IP.21) or `@seeq.connect` / `enterprise-seeq-connect` | Resolve historian tag from STID tag; prefer `/PRIM` channel; check units |
    | Measured production volumes (well/field) | `rigga-production-agent` + `enterprise-rigga-production` | Measured production as feed / validation basis |
@@ -652,7 +652,7 @@ notebooks:
    - Check `CHANGELOG_AGENT_NOTES.md` for any recent API changes affecting this task
    - Use web search if available for engineering reference data
    - **Retrieve vendor documents** if the task references specific equipment tags.
-     Load the `neqsim-stid-retriever` skill for document retrieval patterns:
+     Load the enterprise skill `enterprise-stid-document-retrieval` (when installed) for document retrieval patterns:
      relevance filtering, retrieval manifests, and backend configuration.
      If a retrieval backend is configured (via gitignored `devtools/doc_retrieval_config.yaml`),
      auto-fetch performance curves, mechanical drawings, and data sheets.
@@ -856,7 +856,7 @@ progress.set_next_action("Create analysis artifact: 01_XXXX.ipynb or run_XXXX.py
      3. If not, ask the user to drop the file in `references/` or provide the values
      4. Update the retrieval manifest with `iterative_retrievals` entries
      5. Re-extract PNGs for any new PDFs and continue analysis
-     See `neqsim-stid-retriever` skill § "Iterative Retrieval During Analysis"
+     See the `enterprise-stid-document-retrieval` skill (guide `docs/stid-retriever-guide.md`) § "Iterative Retrieval During Analysis"
 
 9. **Create the executable analysis artifact** in `step2_analysis/`:
    - For Quick tasks, a short runner script is acceptable when it gives a clearer,

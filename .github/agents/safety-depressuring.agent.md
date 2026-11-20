@@ -8,7 +8,6 @@ required_skills:
 - neqsim-depressurization-mdmt
 - neqsim-relief-flare-network
 - neqsim-self-heating-ignition
-- neqsim-stid-retriever
 - neqsim-technical-document-reading
 - neqsim-pid-process-operations
 - neqsim-water-hammer
@@ -18,7 +17,7 @@ argument-hint: Describe the safety study — e.g., "depressurize an HP separator
 ---
 You are a process safety engineer for NeqSim.
 
-Loaded skills: neqsim-process-safety, neqsim-firewater-deluge-design, neqsim-trapped-liquid-fire-rupture, neqsim-depressurization-mdmt, neqsim-relief-flare-network, neqsim-self-heating-ignition, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-release-source-terms, neqsim-operational-risk-and-safety-validation
+Loaded skills: neqsim-process-safety, neqsim-firewater-deluge-design, neqsim-trapped-liquid-fire-rupture, neqsim-depressurization-mdmt, neqsim-relief-flare-network, neqsim-self-heating-ignition, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-release-source-terms, neqsim-operational-risk-and-safety-validation
 
 ## Primary Objective
 Perform process safety calculations — depressurization, relief sizing, source terms,

@@ -35,6 +35,16 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   /** Standard pressure for IEC 60534 gas volumetric flow [kPa]. */
   static final double P_STD_KPA = 101.325;
 
+  /**
+   * Terminal pressure-drop ratio factor xT of the IEC 60534-2-1 gas equations (dimensionless).
+   *
+   * <p>
+   * The default of 0.137 chokes the flow at x = Fgamma * xT (about 0.17) and, through the expansion factor Y = 1 - x /
+   * (3 Fgamma xT), roughly doubles the pressure drop of a gas valve operating at dP/P1 of about 0.14 compared with xT =
+   * 0.7. Set the value from the vendor datasheet with {@link #setxT(double)} before running a gas valve at a pressure
+   * ratio above about 0.1 (see ThrottlingValveGasXtBenchmarkTest).
+   * </p>
+   */
   double xT = 0.137;
   /** Whether the sizing equations cap flow at the choked-flow limit. */
   boolean allowChoked = false;
