@@ -1,10 +1,15 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import neqsim.process.equipment.pipeline.TwoFluidBenchmarkMetrics;
+import neqsim.process.equipment.pipeline.TwoFluidBenchmarkMetrics.LimitCycleMetrics;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
@@ -84,6 +91,91 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   @Test
   void sustainedPressureInterpolatedRiserQualificationMustPublishAtomically() {
     verifyPublication(16, 0.1, 600.0);
+  }
+
+  @Tag("slow")
+  @Test
+  void sustainedPublishedTrajectoryMatchesPublicLimitCycle() {
+    final int count = 16;
+    final double maximumStep = 0.1;
+    final double outerStep = 1.0;
+    final double duration = 600.0;
+    final double warmUp = 20.0;
+    final double holdupTarget = 0.342;
+    final double holdupTolerance = 0.01 * holdupTarget;
+    TwoFluidPipe pipe = createPipe(count);
+    pipe.setUnsplitPressureInterpolationEnabled(true);
+    pipe.setBlendInclinedAnnularSlugTransitions(true);
+    pipe.setSignedDonorTransportEnabled(true);
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setRelativeTolerance(1.0e-9);
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    pipe.setUnsplitTransientSolver(solver, maximumStep);
+    double steadyFlowlineHoldup = pipe.getLiquidHoldupProfile()[count / 4];
+    List<Double> times = new ArrayList<Double>();
+    List<Double> pressures = new ArrayList<Double>();
+    List<Double> liquidRates = new ArrayList<Double>();
+    Map<Phase, Double> maximumClosure = new EnumMap<Phase, Double>(Phase.class);
+    Map<Phase, Double> finalInventory = new EnumMap<Phase, Double>(Phase.class);
+    for (Phase phase : Phase.values()) {
+      maximumClosure.put(phase, 0.0);
+    }
+    int rejectedAttempts = 0;
+    int modelEvaluations = 0;
+    double inletLiquidMass = 0.0;
+    UUID id = UUID.nameUUIDFromBytes("published-tengesdal-experiment".getBytes(StandardCharsets.UTF_8));
+    int steps = (int) Math.round(duration / outerStep);
+    for (int step = 0; step < steps; step++) {
+      pipe.runTransient(outerStep, id);
+      TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+      assertEquals(outerStep, report.getElapsedTimeSeconds(), 0.0);
+      assertTrue(report.getRejectedAttempts() >= 0);
+      assertTrue(report.getModelEvaluations() >= report.getAcceptedSubsteps());
+      rejectedAttempts += report.getRejectedAttempts();
+      modelEvaluations += report.getModelEvaluations();
+      inletLiquidMass += report.getInletMassKg(Phase.LIQUID);
+      for (Phase phase : Phase.values()) {
+        maximumClosure.put(phase, Math.max(maximumClosure.get(phase), report.getRelativeResidual(phase)));
+        finalInventory.put(phase, report.getFinalMassKg(phase));
+      }
+      if (pipe.getSimulationTime() >= warmUp) {
+        times.add(pipe.getSimulationTime());
+        pressures.add(pipe.getPressureProfile()[0]);
+        liquidRates.add(report.getOutletMassKg(Phase.LIQUID) / report.getElapsedTimeSeconds());
+      }
+    }
+    LimitCycleMetrics pressureCycle = TwoFluidBenchmarkMetrics.analyzeLimitCycle(toArray(times), toArray(pressures),
+        warmUp);
+    SevereSluggingExperimentalBenchmarkTest.LowProductionCycleMetrics liquidCycle =
+        SevereSluggingExperimentalBenchmarkTest.analyzeLowProductionCycles(times, liquidRates);
+    double pressureAmplitude = maximum(pressures) - minimum(pressures);
+    double minimumLiquidRate = minimum(liquidRates);
+    double maximumLiquidRate = maximum(liquidRates);
+    double meanLiquidFeed = inletLiquidMass / duration;
+    logger.info(
+        "Published unsplit Tengesdal experiment: amplitude={} Pa, pressurePeriod={} s, pressureCycles={}, "
+            + "liquidPeriod={} s, liquidCycles={}, qMin={}, qMax={}, meanFeed={}, steadyHoldup={}, rejects={}, "
+            + "evaluations={}, gasClosure={}, oilClosure={}, waterClosure={}",
+        pressureAmplitude, pressureCycle.getPeriodSeconds(), pressureCycle.getCompletedCycleCount(),
+        liquidCycle.periodSeconds, liquidCycle.completedCycleCount, minimumLiquidRate, maximumLiquidRate,
+        meanLiquidFeed, steadyFlowlineHoldup, rejectedAttempts, modelEvaluations, maximumClosure.get(Phase.GAS),
+        maximumClosure.get(Phase.OIL), maximumClosure.get(Phase.WATER));
+    assertAll("600 s published unsplit Tengesdal qualification",
+        () -> assertEquals(duration, pipe.getSimulationTime(), 0.0),
+        () -> assertEquals(0, rejectedAttempts, "rejected nonlinear attempts"),
+        () -> assertTrue(liquidCycle.completedCycleCount >= 2,
+            "completed liquid-production cycles=" + liquidCycle.completedCycleCount),
+        () -> SevereSluggingExperimentalBenchmarkTest.assertExperimentalAgreement(pressureAmplitude,
+            liquidCycle.periodSeconds),
+        () -> assertEquals(holdupTarget, steadyFlowlineHoldup, holdupTolerance,
+            "steady flowline liquid hold-up"),
+        () -> assertTrue(maximumLiquidRate > 1.25 * meanLiquidFeed, "no liquid blowout above the mean feed"),
+        () -> assertTrue(minimumLiquidRate < 0.75 * meanLiquidFeed, "no liquid fallback below the mean feed"));
+    for (Phase phase : Phase.values()) {
+      assertTrue(maximumClosure.get(phase) < 1.0e-9, phase + " 600 s closure=" + maximumClosure.get(phase));
+      assertTrue(Double.isFinite(finalInventory.get(phase)));
+      assertTrue(finalInventory.get(phase) >= 0.0);
+    }
   }
 
   private static void verifyPreparation(int count, double maximumStep, double duration) {
@@ -186,6 +278,30 @@ class TwoFluidUnsplitTengesdalPreparationTest {
         count, maximumStep, duration, report.getAcceptedSubsteps(), report.getRelativeResidual(Phase.GAS),
         report.getRelativeResidual(Phase.OIL), report.getRelativeResidual(Phase.WATER),
         pipe.getOutletStream().getFlowRate("kg/sec"));
+  }
+
+  private static double[] toArray(List<Double> values) {
+    double[] result = new double[values.size()];
+    for (int index = 0; index < values.size(); index++) {
+      result[index] = values.get(index);
+    }
+    return result;
+  }
+
+  private static double minimum(List<Double> values) {
+    double result = Double.POSITIVE_INFINITY;
+    for (double value : values) {
+      result = Math.min(result, value);
+    }
+    return result;
+  }
+
+  private static double maximum(List<Double> values) {
+    double result = Double.NEGATIVE_INFINITY;
+    for (double value : values) {
+      result = Math.max(result, value);
+    }
+    return result;
   }
 
   static TwoFluidPipe createPipe(int count) {
