@@ -358,6 +358,59 @@ public final class StandardStateSpecies implements Serializable {
   }
 
   /**
+   * Elemental mercury as a monatomic ideal gas: dfH298 of 61.38 +/- 0.04 kJ/mol and S298 of 174.971 +/- 0.005 J/(mol K)
+   * from CODATA (Cox, Wagman and Medvedev, 1989); the heat capacity of a monatomic ideal gas is 5R/2 = 20.786 J/(mol
+   * K). Named "mercury" to match the NeqSim component.
+   *
+   * @return mercury ideal-gas species
+   */
+  public static StandardStateSpecies mercuryGas() {
+    return robieHemingway("mercury", Phase.IDEAL_GAS, formula("Hg", 1.0), 61.38e3, 174.971,
+        new double[] {20.786, 0.0, 0.0, 0.0, 0.0}, 298.15, 1000.0, PressureModel.IDEAL_GAS, 0.0, 40.0, 0.005,
+        "CODATA key values, Cox, Wagman and Medvedev (1989), monatomic ideal gas");
+  }
+
+  /**
+   * Liquid mercury, the reference state of the element: S298 of 75.90 +/- 0.12 J/(mol K) from CODATA (Cox, Wagman and
+   * Medvedev, 1989), heat capacity {@code Cp = 30.3841 - 0.0114665 T + 1.01527e-5 T^2} J/(mol K) from the NIST-JANAF
+   * liquid fit (Chase, 1998), 298-630 K, and molar volume 14.82 cm3/mol at 298 K. With {@link #mercuryGas()} this
+   * reproduces the vapour pressure correlation of Huber, Laesecke and Friend (2006) within 2 % from 0 to 250 °C.
+   *
+   * @return liquid mercury species
+   */
+  public static StandardStateSpecies liquidMercury() {
+    return robieHemingway("liquid mercury", Phase.LIQUID, formula("Hg", 1.0), 0.0, 75.90,
+        new double[] {30.3841, -0.0114665, 0.0, 0.0, 1.01527e-5}, 298.15, 630.0, PressureModel.CONSTANT_VOLUME,
+        14.82e-6, 0.0, 0.12, "CODATA (1989) entropy; NIST-JANAF, Chase (1998), liquid heat capacity");
+  }
+
+  /**
+   * Cinnabar, trigonal (red) HgS, the stable mercury sulfide below about 345 °C, from Robie and Hemingway (1995) USGS
+   * Bulletin 2131: dfH298 of -54.3 +/- 2.1 kJ/mol, S298 of 82.5 +/- 2.1 J/(mol K) and molar volume of 28.42 cm3/mol.
+   * Heat capacity {@code Cp = 43.76 + 0.01556 T} J/(mol K) (Mills, 1974), which gives 48.4 J/(mol K) at 298 K.
+   *
+   * @return cinnabar species
+   */
+  public static StandardStateSpecies cinnabar() {
+    return robieHemingway("cinnabar", Phase.SOLID, formula("Hg", 1.0, "S", 1.0), -54.3e3, 82.5,
+        new double[] {43.76, 0.01556, 0.0, 0.0, 0.0}, 298.15, 618.0, PressureModel.CONSTANT_VOLUME, 28.42e-6, 2.1e3,
+        2.1, "Robie and Hemingway (1995), USGS Bulletin 2131, cinnabar; Cp from Mills (1974)");
+  }
+
+  /**
+   * Metacinnabar, cubic (black) HgS, metastable below about 345 °C and the form that usually precipitates from fluids,
+   * from Robie and Hemingway (1995) USGS Bulletin 2131: dfH298 of -46.7 +/- 1.5 kJ/mol, S298 of 96.2 +/- 4.2 J/(mol K)
+   * and molar volume of 30.17 cm3/mol. The heat capacity is taken equal to that of cinnabar.
+   *
+   * @return metacinnabar species
+   */
+  public static StandardStateSpecies metacinnabar() {
+    return robieHemingway("metacinnabar", Phase.SOLID, formula("Hg", 1.0, "S", 1.0), -46.7e3, 96.2,
+        new double[] {43.76, 0.01556, 0.0, 0.0, 0.0}, 298.15, 618.0, PressureModel.CONSTANT_VOLUME, 30.17e-6, 1.5e3,
+        4.2, "Robie and Hemingway (1995), USGS Bulletin 2131, metacinnabar; Cp taken as cinnabar");
+  }
+
+  /**
    * Builds an element map from alternating symbol and count arguments.
    *
    * @param symbolsAndCounts alternating element symbol (String) and atom count (Double)

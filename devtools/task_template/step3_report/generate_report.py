@@ -3725,7 +3725,7 @@ def _benchmark_tests(results):
         benchmark = {"tests": benchmark}
     if not isinstance(benchmark, dict):
         return []
-    listed = next((benchmark[key] for key in ("tests", "points")
+    listed = next((benchmark[key] for key in ("tests", "points", "comparisons")
                    if isinstance(benchmark.get(key), list)), None)
     if listed is not None:
         entries = ((value.get("test") or value.get("name") or "Test {}".format(index)
@@ -6258,7 +6258,7 @@ def add_uncertainty_word_tables(doc, results):
 # (label, accepted keys): results.json files in use write either
 # reference_value/neqsim_value or the shorter numeric reference/neqsim.
 _BENCHMARK_VALUE_COLUMNS = (
-    ("Reference value", ("reference_value", "expected", "reference")),
+    ("Reference value", ("reference_value", "expected", "reference", "benchmark")),
     ("NeqSim value", ("neqsim_value", "neqsim", "calculated")),
     ("Unit", ("unit",)),
     ("Deviation [%]", ("deviation_pct", "deviation_percent")),

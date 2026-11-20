@@ -71,6 +71,11 @@ SOURCE_CATALOG = [
     ("lab", "Lab / PVT", "Lab, PVT and gas-sample reports"),
     ("osdu", "OSDU Data Platform", "OSDU Storage records and Reservoir DDMS (RESQML) exports"),
     ("fmu", "FMU project share", "Reservoir-model project files (Eclipse includes, ERT, RMS volumes)"),
+    ("geochemdb", "GeochemDB", "Geochemical analyses of fluid, gas and rock samples"),
+    ("welldb", "WellDB", "Well reports and page-referenced search hits from the well document share"),
+    ("powerbi", "Power BI", "Report tables and metadata read from Power BI"),
+    ("sodir", "Sodir", "Norwegian Offshore Directorate publications, maps and fact pages"),
+    ("earlier-tasks", "Earlier tasks", "Data and results reused from earlier task folders"),
     ("literature", "Literature", "Papers, standards, textbooks"),
     ("web", "Web", "Saved web pages, article extracts, online references"),
     ("manual", "Manual upload", "User-provided documents"),
@@ -82,6 +87,7 @@ SOURCE_FOLDER_ALIASES = {
     "fmu_share": "fmu", "ores": "osdu", "rddms": "osdu",
     "equipment_portal": "equipment-portal", "omnia_maps": "omnia-maps",
     "alarm_events": "alarm-events", "alarms": "alarm-events", "timeseries": "ots",
+    "earlier_tasks": "earlier-tasks", "previous_tasks": "earlier-tasks",
 }
 SOURCE_NAME = {key: name for key, name, _desc in SOURCE_CATALOG}
 SOURCE_DESC = {key: desc for key, _name, desc in SOURCE_CATALOG}

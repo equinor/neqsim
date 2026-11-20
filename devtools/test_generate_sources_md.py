@@ -90,6 +90,28 @@ class SourceCollectionTest(unittest.TestCase):
         self.assertEqual(moves["routes.json"], "omnia-maps")
         self.assertEqual(moves["SEMI_datasheet.pdf"], "vendor")
 
+    def test_database_pulls_and_reused_task_data_have_their_own_source(self):
+        cases = {
+            "geochemdb/raw/analyses.json": "geochemdb",
+            "welldb/share_hits.json": "welldb",
+            "powerbi/table_Data.json": "powerbi",
+            "sodir/atlas.pdf": "sodir",
+            "previous_tasks/samples.csv": "earlier-tasks",
+            "h2s_study/wells_final.csv": "earlier-tasks",
+        }
+        for name in cases:
+            self.add_file(name)
+        (self.refs / "manifest.json").write_text(json.dumps({"documents": [
+            {"file": "wells_final.csv", "source": "earlier_tasks"},
+        ]}), encoding="utf-8")
+        record = sources.scan_references(self.task, self.refs)
+        actual = {doc["file"]: src["source"]
+                  for src in record["sources"] for doc in src["documents"]}
+        self.assertEqual(actual, cases)
+        names = {src["source"]: src["system_name"] for src in record["sources"]}
+        self.assertEqual(names["geochemdb"], "GeochemDB")
+        self.assertEqual(names["earlier-tasks"], "Earlier tasks")
+
     def test_existing_sources_and_unrelated_names_keep_their_classification(self):
         for name, expected in {
             "TR2000_pipe_class.pdf": "tr2000",

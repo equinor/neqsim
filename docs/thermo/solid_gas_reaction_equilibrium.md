@@ -139,6 +139,9 @@ rises with depth. In an NCS study, uplifted Barents Sea wells gave only +6 °C, 
 for a buffer frozen at maximum burial, so the buffer re-equilibrates on cooling. The method
 returns `NaN` when the measured value lies outside the buffered range between the bounds.
 
+The same framework gives the upper limits of elemental mercury (cinnabar and liquid mercury) with the
+buffered H2S of this section: see [Mercury limits in reservoir fluids](reservoir_mercury_limits.md).
+
 ## Verification
 
 `SolidGasReactionEquilibriumTest` checks:
