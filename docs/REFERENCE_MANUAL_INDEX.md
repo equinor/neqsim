@@ -174,6 +174,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Pitzer Parameters         | [docs/thermo/pitzer_parameter_provenance.md](thermo/pitzer_parameter_provenance.md) | Pitzer dataset identity, provenance, mixed-ion coverage diagnostics, and adoption gates                              |
 | Pitzer Barite Qualification | [Barite mixing qualification](thermo/pitzer_barite_qualification.md) | Source gaps, frozen feeds and remaining independent precipitation evidence |
 | Solid-Gas Reaction Equilibrium | [docs/thermo/solid_gas_reaction_equilibrium.md](thermo/solid_gas_reaction_equilibrium.md) | Mineral-water-gas equilibrium constants with pressure corrections and EOS fugacities (FeS + H2O + CO2 = FeCO3 + H2S) |
+| Mercury Limits in Reservoir Fluids | [docs/thermo/reservoir_mercury_limits.md](thermo/reservoir_mercury_limits.md) | Upper limits of elemental mercury from equilibrium with cinnabar and liquid mercury, saturation index of a measured content |
 
 ### Chapter 7: Flash Calculations
 

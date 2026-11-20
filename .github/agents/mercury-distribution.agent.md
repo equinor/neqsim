@@ -23,6 +23,10 @@ Loaded skills: neqsim-mercury-distribution-study, neqsim-process-modeling, neqsi
    the process, the mercury content with its unit, and the stream and phase it was
    measured in. Ask for the measurement basis when it is missing. Record the water
    content of the feed.
+   When no mercury measurement exists, take the content and its range from the
+   [neqsim-reservoir-mercury-estimation](../skills/neqsim-reservoir-mercury-estimation/SKILL.md)
+   skill (best estimate, P10 to P90 and the `ReservoirMercuryEstimator` limits) and run
+   the low and the high end.
 3. Run the base case with the E300 fluid as the study has it. Keep the mass flows
    of the main streams.
 4. Convert the fluid with `MercuryFluidConverter.toUmrPruMc(fluid, content, unit)`
