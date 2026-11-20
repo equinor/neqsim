@@ -35,6 +35,8 @@ class TwoFluidUnsplitPublicationTest {
       assertEquals(START + duration, publication.getEndTimeSeconds(), 0.0);
       assertEquals(duration, publication.getElapsedTimeSeconds(), 0.0);
       assertEquals(2, publication.getAcceptedSubsteps());
+      assertEquals(interval.getRejectedAttempts(), publication.getRejectedAttempts());
+      assertEquals(interval.getModelEvaluations(), publication.getModelEvaluations());
       double[] inlet = new double[3];
       double[] outlet = new double[3];
       double[] source = new double[3];
@@ -77,6 +79,8 @@ class TwoFluidUnsplitPublicationTest {
       assertArrayEquals(inlet, restored.getInletMassKg(), 0.0);
       assertArrayEquals(source, restored.getSourceMassKg(), 0.0);
       assertEquals(publication.getElapsedTimeSeconds(), restored.getElapsedTimeSeconds(), 0.0);
+      assertEquals(publication.getRejectedAttempts(), restored.getRejectedAttempts());
+      assertEquals(publication.getModelEvaluations(), restored.getModelEvaluations());
       assertSectionsEqual(publication.getEndpointSections(), restored.getEndpointSections());
       assertSectionsEqual(original, accepted);
     }

@@ -47,8 +47,9 @@ Supported material identifiers are `carbon_steel`, `duplex_steel`, `22cr`, `supe
 
 ## Complete Java example
 
-The example uses Log4j2 rather than direct console output. Its API calls are exercised by the focused JUnit regression linked above.
+The example uses Log4j2 rather than direct console output. The documentation regression compiles and executes the exact marked source below with Java 8; the focused JUnit regression linked above remains the owner of numerical-result checks.
 
+<!-- erosion-prediction-example: complete-screen -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

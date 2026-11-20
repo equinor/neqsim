@@ -14,3 +14,4 @@ keywords: "thermodynamics, EOS, equation of state, SRK, Peng-Robinson, CPA, flas
 
 - [Pitzer barite mixing qualification](./pitzer_barite_qualification.md)
 - [Solid-gas reaction equilibrium (FeS to siderite and H2S)](./solid_gas_reaction_equilibrium.md)
+- [Mercury limits in reservoir fluids (cinnabar and liquid mercury)](./reservoir_mercury_limits.md)

@@ -3,7 +3,7 @@ name: neqsim-reservoir-h2s-mineral-buffer
 calculation_basis: "neqsim-java"
 version: "0.1.0"
 description: "Original (pre-souring) H2S in reservoir fluids from mineral buffering: pyrite + Fe-carbonate with the CH4/CO2 of the fluid fixes the H2S fugacity, which explains the exponential rise of H2S with reservoir temperature (Haaland 1999 correlation, about 54 kJ/mol). USE WHEN: a task asks what H2S to expect in a new reservoir or discovery, why H2S rises with temperature, whether a measured H2S is natural or souring, or which mineral reaction controls H2S."
-last_verified: "2026-11-12"
+last_verified: "2026-11-20"
 requires:
   python_packages: ["neqsim"]
   java_packages: ["neqsim.thermo.util.mineral (SolidGasReactionEquilibrium, MineralH2SBuffers, ReservoirH2SEstimator; equinor/neqsim#4945)"]
@@ -23,6 +23,8 @@ In clastic reservoirs with excess iron minerals, the H2S content of the reservoi
 - Testing a proposed mineral reaction (for example FeS + H2O + CO2 = FeCO3 + H2S) against the phase rule.
 
 Not for: production souring from seawater injection (use `neqsim-reservoir-souring-correlation`), separator-gas to wellstream conversion (use `neqsim-h2s-phase-partitioning`), or sour carbonate reservoirs with active thermochemical sulfate reduction (percent-level H2S, kinetically controlled).
+
+For a best estimate of a named prospect or discovery with P10/P50/P90, an uncertainty budget and a report, use `neqsim-reservoir-h2s-estimation`: it calibrates this buffer on measured wells and adds the uncertainty of the prospect inputs.
 
 ## Inputs
 
