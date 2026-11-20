@@ -8,10 +8,11 @@ import neqsim.thermo.phase.PhaseUMRCPA;
  *
  * <p>
  * This model combines the Peng-Robinson physical term with the Universal Mixing Rule (UMR) driven by UNIFAC
- * group-contribution activity coefficients, the 3-parameter Mathias-Copeman alpha function (attractive term 13,
- * {@code _umrmc} group-interaction tables), and a CPA association term for self- and cross-associating compounds
- * (water, glycols, alcohols). The association contribution is added to the Helmholtz energy in
- * {@link PhaseUMRCPA#getF()}.
+ * group-contribution activity coefficients, the 3-parameter Mathias-Copeman alpha function (attractive term 13), and a
+ * CPA association term for self- and cross-associating compounds (water, glycols, alcohols). The group-interaction
+ * parameters come from the {@code _umrcpa} tables, which are separate from the {@code _umrmc} tables of UMR-PRU because
+ * the association term carries the hydrogen bonding of water. The association contribution is added to the Helmholtz
+ * energy in {@link PhaseUMRCPA#getF()}.
  * </p>
  *
  * <p>
@@ -48,8 +49,8 @@ public class SystemUMRCPAEoS extends SystemPrEos {
     // Engage the co-volume combining rule used by the UMR-PRU family.
     setBmixType(1);
     modelName = MODEL_NAME;
-    // Attractive term 13 selects the 3-parameter Mathias-Copeman alpha and the _umrmc
-    // group-interaction tables, matching the UMR-PRU-MC physical term.
+    // Attractive term 13 selects the 3-parameter Mathias-Copeman alpha, matching the UMR-PRU-MC
+    // physical term. The UMR-CPA phase reads the _umrcpa group-interaction tables.
     attractiveTermNumber = 13;
 
     // Recreates phases created in super constructor SystemPrEos.

@@ -25,8 +25,8 @@ public final class FluidDefaults {
   /**
    * Returns the default mixing-rule name for a thermodynamic model name as used in MCP inputs.
    *
-   * @param model model name such as SRK, PR, CPA, CPA-SRK, ELECTROLYTE-CPA (case-insensitive, may be null)
-   * @return {@code CLASSIC_TX_CPA} for CPA-family models, otherwise {@code CLASSIC}
+   * @param model model name such as SRK, PR, CPA, CPA-SRK, ELECTROLYTE-CPA, UMRPRU (case-insensitive, may be null)
+   * @return {@code CLASSIC_TX_CPA} for CPA-family models, {@code HV} for UMR-PRU models, otherwise {@code CLASSIC}
    */
   public static String defaultMixingRule(String model) {
     return EosMixingRuleType.defaultForModel(model).name();

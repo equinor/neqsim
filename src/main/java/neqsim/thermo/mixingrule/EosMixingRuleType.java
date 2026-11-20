@@ -70,7 +70,9 @@ public enum EosMixingRuleType implements MixingRuleTypeInterface {
    * <p>
    * CPA-family models (name containing {@code CPA}, e.g. {@code CPA}, {@code CPA-SRK}, {@code ELECTROLYTE-CPA}) need
    * {@link #CLASSIC_TX_CPA}; with {@link #CLASSIC} they read the SRK binary-interaction database and give wrong
-   * aqueous-phase results (a wet-gas hydrate temperature near 0 C instead of about 16 C at 100 bara). All other cubic
+   * aqueous-phase results (a wet-gas hydrate temperature near 0 C instead of about 16 C at 100 bara). UMR-PRU models
+   * (name containing {@code UMR}, e.g. {@code UMRPRU}) need {@link #HV}, which the UMR-PRU fluid classes combine with
+   * their UNIFAC model; with {@link #CLASSIC} the group-interaction parameters are not used at all. All other cubic
    * models default to {@link #CLASSIC}.
    * </p>
    *
@@ -78,8 +80,12 @@ public enum EosMixingRuleType implements MixingRuleTypeInterface {
    * @return the default mixing rule for that model
    */
   public static EosMixingRuleType defaultForModel(String modelName) {
-    if (modelName != null && modelName.trim().toUpperCase().contains("CPA")) {
+    String name = modelName == null ? "" : modelName.trim().toUpperCase();
+    if (name.contains("CPA")) {
       return CLASSIC_TX_CPA;
+    }
+    if (name.contains("UMR")) {
+      return HV;
     }
     return CLASSIC;
   }

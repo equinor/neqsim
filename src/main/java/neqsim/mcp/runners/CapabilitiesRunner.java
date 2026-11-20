@@ -891,8 +891,10 @@ public class CapabilitiesRunner {
     JsonObject contract = new JsonObject();
     contract.add("rootFields", toJsonArray(Arrays.asList("name", "fluid", "fluids", "process", "connections", "areas",
         "interAreaLinks", "autoRun", "maxIterations", "flowTolerance", "temperatureTolerance", "pressureTolerance")));
-    contract.add("fluidFields", toJsonArray(Arrays.asList("model", "temperature", "pressure", "mixingRule",
-        "components", "characterizedComponents", "e300FilePath", "binaryInteractionParameters", "multiPhaseCheck")));
+    contract.add("fluidFields",
+        toJsonArray(
+            Arrays.asList("model", "temperature", "pressure", "mixingRule", "components", "characterizedComponents",
+                "e300FilePath", "mercuryContent", "binaryInteractionParameters", "multiPhaseCheck")));
     contract.add("unitFields", toJsonArray(Arrays.asList("type", "name", "inlet", "inlets", "fluidRef", "properties")));
     contract.add("connectionFields", toJsonArray(Arrays.asList("from", "sourcePort", "to", "targetPort", "type")));
     contract.add("supportedEquipmentTypes", toJsonArray(EquipmentFactory.getSupportedEquipmentTypes()));

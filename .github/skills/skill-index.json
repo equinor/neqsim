@@ -1897,6 +1897,22 @@
   "neqsim-emulsion-separation",
   "neqsim-production-chemistry"
  ],
+ "mercury distribution process study": [
+  "neqsim-mercury-distribution-study"
+ ],
+ "track mercury in process streams": [
+  "neqsim-mercury-distribution-study"
+ ],
+ "free liquid or solid mercury": [
+  "neqsim-mercury-distribution-study"
+ ],
+ "convert e300 fluid to umr-pru-mc": [
+  "neqsim-mercury-distribution-study"
+ ],
+ "mercury content of gas oil water": [
+  "neqsim-mercury-distribution-study",
+  "neqsim-api-patterns"
+ ],
  "production chemistry": [
   "neqsim-production-chemistry",
   "neqsim-flow-assurance",

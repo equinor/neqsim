@@ -52,9 +52,13 @@ package neqsim.thermo.system;
  * <td>{@link SystemUMRPRUMCEosNew}</td>
  * <td>19</td>
  * <td>5-parameter Mathias-Copeman</td>
- * <td>{@code _umr}</td>
+ * <td>{@code _umrmc}</td>
  * </tr>
  * </table>
+ *
+ * <p>
+ * UMR-CPA ({@link SystemUMRCPAEoS}) adds an association term and reads its own {@code _umrcpa} tables.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -62,6 +66,33 @@ package neqsim.thermo.system;
 public class SystemUMRPRUEos extends SystemPrEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** True when the excess Gibbs energy model of the mixing rule has been chosen by a call. */
+  private boolean excessGibbsModelSelected = false;
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The Huron-Vidal mixing rule ({@code "HV"}) is used with the UMR-PRU UNIFAC model unless another excess Gibbs energy
+   * model has been chosen with {@link #setMixingRuleGEmodel(String)} or {@link #setMixingRule(String, String)}.
+   * {@code setMixingRule("HV")} therefore gives the same model as {@code setMixingRule("HV", "UNIFAC_UMRPRU")}.
+   * </p>
+   */
+  @Override
+  public void setMixingRule(String typename) {
+    if (!excessGibbsModelSelected && "HV".equalsIgnoreCase(typename)) {
+      setMixingRuleGEmodel("UNIFAC_UMRPRU");
+    }
+    super.setMixingRule(typename);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRuleGEmodel(String name) {
+    excessGibbsModelSelected = true;
+    super.setMixingRuleGEmodel(name);
+  }
 
   /**
    * Constructor for SystemUMRPRUEos.

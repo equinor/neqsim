@@ -55,6 +55,25 @@ class SystemThermoMultiphaseInitializationTest {
     }
   }
 
+  /** Verify a maximum phase count above the allocated phases adds templates instead of leaving empty slots. */
+  @Test
+  void raisingMaximumPhaseCountAllocatesTemplatesAndKeepsFlashUsable() {
+    SystemInterface reference = createFluid();
+    reference.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(reference).TPflash();
+
+    SystemInterface fluid = createFluid();
+    fluid.setMultiPhaseCheck(true);
+    fluid.setMaxNumberOfPhases(4);
+    assertTrue(fluid.getPhases()[3] != null, "Every phase below the maximum must exist");
+    assertEquals(fluid.getNumberOfComponents(), fluid.getPhases()[3].getNumberOfComponents());
+    new ThermodynamicOperations(fluid).TPflash();
+    assertEquals(reference.getNumberOfPhases(), fluid.getNumberOfPhases());
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      assertEquals(reference.getBeta(phase), fluid.getBeta(phase), 1.0e-10);
+    }
+  }
+
   /**
    * Create a reproducible three-phase cubic-EOS feed.
    *

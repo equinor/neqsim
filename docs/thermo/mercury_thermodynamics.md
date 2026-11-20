@@ -1,6 +1,6 @@
 ---
 title: "Mercury Thermodynamics in NeqSim"
-description: "How to model elemental mercury (Hg0) in NeqSim using SRK-TwuCoon-Statoil-EOS, configure TPflash workflows, and use thesis-derived binary interaction parameters and correlations."
+description: "How to model elemental mercury (Hg0) in NeqSim using SRK-TwuCoon-Statoil-EOS or UMR-PRU-MC with the mercury calculator parameters, calculate a separate liquid or solid mercury phase, configure TPflash workflows, and use thesis-derived binary interaction parameters and correlations."
 ---
 
 This page describes practical workflows for modeling elemental mercury ($Hg^0$) in hydrocarbon systems with NeqSim.
@@ -17,6 +17,9 @@ For mercury-containing natural gas and light hydrocarbon systems, use:
 - `SystemSrkTwuCoonStatoilEos`
 
 This model is the NeqSim SRK-TwuCoon variant used for mercury-focused calculations.
+
+To reproduce the Equinor mercury calculator within a few percent, or to calculate a separate liquid or solid
+mercury phase, see [UMR-PRU-MC with the mercury calculator parameters](#umr-pru-mc-with-the-mercury-calculator-parameters).
 
 ## Minimal TPflash Example (Java)
 
@@ -73,6 +76,8 @@ ops.TPflash()
 In addition to SRK-TwuCoon, NeqSim also supports mercury calculations with UMR-PRU family models:
 
 - `SystemUMRPRUEos`
+- `SystemUMRPRUMCEos`, whose mercury and water parameters are those of the mercury calculator; see
+  [UMR-PRU-MC with the mercury calculator parameters](#umr-pru-mc-with-the-mercury-calculator-parameters)
 
 UMR-PRU is useful when you want a predictive UNIFAC-driven mixing-rule framework for non-ideal mixtures, while still using a cubic EOS backbone.
 
@@ -143,6 +148,120 @@ Track differences in:
 - Liquid/gas partitioning trend versus temperature
 
 This gives a practical uncertainty band for design and interpretation.
+
+## UMR-PRU-MC with the mercury calculator parameters
+
+`SystemUMRPRUMCEos` uses the mercury and water group-interaction parameters of the Equinor mercury
+calculator library (libhg 2.0.3). Use it, with `setMixingRule("HV", "UNIFAC_UMRPRU")`, when the mercury
+distribution between gas, oil and water should agree with that calculator.
+
+The parameters are in the `UNIFACInterParamA_UMRMC`, `B_UMRMC` and `C_UMRMC` tables: the mercury and the
+water group against CO2, N2, methane, ethane, the alkane, aromatic, alkyl-aromatic and cyclic groups, H2S,
+hydrogen and methanol. Most hydrocarbon, CO2 and N2 group parameters were already the same as in the
+calculator; the H2S, hydrogen and substituted cyclic carbon groups still differ. With the water parameters
+used before, UMR-PRU-MC formed no aqueous phase for a gas-condensate with 15 mol% water. UMR-CPA, which
+describes water with an association term, keeps those parameters in its own `UNIFAC*_UMRCPA` tables and is
+not changed.
+
+Three things are not taken from the calculator, so the agreement is close but not exact:
+
+- The critical properties and Mathias-Copeman coefficients of the components come from the NeqSim
+  component table. They differ for some components, mainly the n-alkanes from nC20.
+- A branched alkane has no separate group for its methyl branch.
+- **Glycols are not covered.** The calculator treats MEG and TEG as single groups with their own mercury
+  parameters. UMR-PRU-MC builds them from CH2, OH and ether groups, which have no mercury parameters. In the
+  two cases checked, the mercury content of the gas over aqueous MEG and TEG was 2400 and 130 times lower
+  than in the calculator. Do not use UMR-PRU-MC for mercury in a fluid with glycol.
+
+### Separate mercury phase
+
+`MercuryPhaseEquilibrium` calculates the gas, oil and aqueous phases together with a separate phase of pure
+mercury, liquid above 234.321 K and solid below. It works on a copy of the fluid taken when the object is
+created, so create a new `MercuryPhaseEquilibrium` after changing temperature, pressure or composition.
+`getFluid()` returns a new copy of the result on each call; keep it in a variable.
+
+```java
+SystemInterface fluid = new SystemUMRPRUMCEos(273.15 + 20.0, 21.0);
+fluid.addComponent("methane", 0.70);
+fluid.addComponent("n-heptane", 0.10);
+fluid.addComponent("water", 0.19);
+fluid.addComponent("mercury", 0.01);
+fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+
+MercuryPhaseEquilibrium mercury = new MercuryPhaseEquilibrium(fluid);
+mercury.run();
+
+String state = mercury.getFreeMercuryState(); // "none", "liquid" or "solid"
+double freeFraction = mercury.getFreeMercuryFraction(); // mole fraction of the feed
+SystemInterface phases = mercury.getFluid(); // gas, oil and aqueous phases with dissolved mercury
+for (int i = 0; i < phases.getNumberOfPhases(); i++) {
+  double phaseFraction = mercury.getPhaseFraction(i);
+  double moleFraction = mercury.getMercuryMoleFraction(i);
+  double ugPerSm3 = mercury.getMercuryConcentration(i, "ug/Sm3");
+  double ugPerKg = mercury.getMercuryConcentration(i, "ug/kg");
+}
+```
+
+```python
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemUMRPRUMCEos(273.15 + 20.0, 21.0)
+fluid.addComponent("methane", 0.70)
+fluid.addComponent("n-heptane", 0.10)
+fluid.addComponent("water", 0.19)
+fluid.addComponent("mercury", 0.01)
+fluid.setMixingRule("HV", "UNIFAC_UMRPRU")
+
+mercury = jneqsim.thermo.util.mercury.MercuryPhaseEquilibrium(fluid)
+mercury.run()
+print(mercury.getFreeMercuryState(), mercury.getFreeMercuryFraction())
+phases = mercury.getFluid()
+for i in range(phases.getNumberOfPhases()):
+    print(phases.getPhase(i).getType(), mercury.getMercuryConcentration(i, "ug/Sm3"))
+```
+
+Mercury is treated as a dilute solute: the other components are split by a flash at trace mercury content
+and the mercury content of each phase is then solved. The error is of the order of the dissolved mercury
+mole fraction. `MercuryPhaseEquilibrium` takes the pure mercury fugacity from the equation of state of the
+fluid, so it also runs with other models, such as `SystemSrkTwuCoonStatoilEos`.
+
+An ordinary `TPflash` on a fluid above mercury saturation does not give this result. The equation of state
+then forms a mercury-rich liquid, which held 5 to 13 mol% of other components in the cases checked, and it
+takes the place of one of the three fluid phases NeqSim reports.
+
+### Mercury through a process
+
+To track mercury through a process, convert the study fluid with `MercuryFluidConverter`, let the separators
+hold back free mercury and read the report of `MercuryProcessAnalyzer`. See
+[Mercury distribution studies in process simulation](../process/mercury-distribution-study.md).
+
+### Agreement with the mercury calculator
+
+Checked on 2026-11-19 against libhg 2.0.3, as the mercury mole fraction in each phase.
+
+| Fluids | Conditions | NeqSim relative to libhg |
+|--------|------------|--------------------------|
+| Gas and gas-condensate up to nC20, with and without water and H2S (3 cases) | -30 to 30 C, 21 to 70 bara, below saturation | -1.0 % to +0.2 % |
+| The same fluids with a liquid mercury phase (2 cases) | -20 and 20 C, 21 and 70 bara | -0.9 % to +0.9 % |
+| Gas-condensate with n-alkanes up to nC39, with and without water (8 cases) | -30 to 60 C, 21 and 70 bara | -3.7 % to +4.4 % |
+| Gas over aqueous MEG or TEG (2 cases) | 10 and 30 C, 60 and 80 bara | not comparable, see above |
+
+Phase fractions agree within 0.004. `MercuryPhaseEquilibriumTest` holds the cases of the first two rows.
+
+Apart from the parameters, the results differ from the calculator in four situations:
+
+- **Mercury phase not found by libhg.** libhg reports a mercury phase only when its stability analysis
+  finds one. In 3 of 10 checked cases above saturation, by a factor 2.9 to 350, it reported no mercury
+  phase and gave the supersaturated concentrations. `MercuryPhaseEquilibrium` compares the mercury fugacity
+  with that of pure mercury and reported the mercury phase in all ten.
+- **Solid mercury under pressure.** libhg divides the volume term of solid mercury by a gas constant that
+  is ten times too small for its units. At -50 C its mercury solubility is therefore 10 % higher at 30 bara
+  and 40 % higher at 100 bara than with consistent units, which NeqSim uses.
+- **Number of fluid phases.** The two programs use different stability analyses. In one case NeqSim found a
+  condensate phase that libhg did not report, and in one case at -50 C libhg found a second, aromatic-rich
+  liquid that NeqSim did not report. NeqSim reports at most three fluid phases.
+- **Concentration basis of a dense gas.** libhg labels a phase with compressibility below 0.307 as liquid
+  and reports it in ug/kg. Ask `getMercuryConcentration` for the unit you need.
 
 ## Thesis-Derived BIP Usage in NeqSim
 

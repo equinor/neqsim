@@ -577,14 +577,17 @@ public class NeqSimDataBase extends NeqSimDatabaseBase {
 
       updateTable("UNIFACInterParamA_UMR");
       updateTable("UNIFACInterParamA_UMRMC");
+      updateTable("UNIFACInterParamA_UMRCPA");
 
       updateTable("UNIFACInterParamB");
       updateTable("UNIFACInterParamB_UMR");
       updateTable("UNIFACInterParamB_UMRMC");
+      updateTable("UNIFACInterParamB_UMRCPA");
 
       updateTable("UNIFACInterParamC");
       updateTable("UNIFACInterParamC_UMR");
       updateTable("UNIFACInterParamC_UMRMC");
+      updateTable("UNIFACInterParamC_UMRCPA");
       updateTable("MBWR32param");
       updateTable("COMPSALT");
       updateTable("PitzerParameters");

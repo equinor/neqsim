@@ -57,6 +57,13 @@ with [neqsim-emulsion-separation](../skills/neqsim-emulsion-separation/SKILL.md)
 The diagnostic study copies state and is run explicitly; it does not change
 the normal process calculation or its outlet streams.
 
+For a mercury distribution study, or a question about free liquid or solid
+mercury in the process, hand the function that builds the process and the study
+fluid to [@mercury-distribution](mercury-distribution.agent.md) with
+[neqsim-mercury-distribution-study](../skills/neqsim-mercury-distribution-study/SKILL.md).
+The process is rebuilt with the fluid converted to UMR-PRU-MC; free mercury
+accumulation in separators is off unless that study switches it on.
+
 For NeqSim-to-P&ID or "complete DEXPI engineering model" requests, use the
 governed engineering path from `neqsim-pid-process-operations`:
 
