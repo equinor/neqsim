@@ -35,6 +35,8 @@ public final class TwoFluidMassBalanceReport implements Serializable {
 
   private final double elapsedTimeSeconds;
   private final int acceptedSubsteps;
+  private final int rejectedAttempts;
+  private final int modelEvaluations;
   private final double[] initialMassKg;
   private final double[] finalMassKg;
   private final double[] inletMassKg;
@@ -54,8 +56,33 @@ public final class TwoFluidMassBalanceReport implements Serializable {
    */
   TwoFluidMassBalanceReport(double elapsedTimeSeconds, int acceptedSubsteps, double[] initialMassKg,
       double[] finalMassKg, double[] inletMassKg, double[] outletMassKg, double[] sourceMassKg) {
+    this(elapsedTimeSeconds, acceptedSubsteps, initialMassKg, finalMassKg, inletMassKg, outletMassKg, sourceMassKg, -1,
+        -1);
+  }
+
+  /**
+   * Create a report with nonlinear-attempt diagnostics.
+   *
+   * @param elapsedTimeSeconds accepted elapsed time in seconds
+   * @param acceptedSubsteps number of accepted internal time steps
+   * @param initialMassKg initial gas, oil, and water inventory in kg
+   * @param finalMassKg final gas, oil, and water inventory in kg
+   * @param inletMassKg integrated gas, oil, and water inlet flux in kg
+   * @param outletMassKg integrated gas, oil, and water outlet flux in kg
+   * @param sourceMassKg integrated gas, oil, and water source terms in kg
+   * @param rejectedAttempts number of rejected nonlinear attempts, or -1 when unavailable
+   * @param modelEvaluations number of nonlinear model evaluations, or -1 when unavailable
+   */
+  TwoFluidMassBalanceReport(double elapsedTimeSeconds, int acceptedSubsteps, double[] initialMassKg,
+      double[] finalMassKg, double[] inletMassKg, double[] outletMassKg, double[] sourceMassKg, int rejectedAttempts,
+      int modelEvaluations) {
+    if (rejectedAttempts < -1 || modelEvaluations < -1) {
+      throw new IllegalArgumentException("Nonlinear diagnostics must be non-negative or -1 when unavailable");
+    }
     this.elapsedTimeSeconds = elapsedTimeSeconds;
     this.acceptedSubsteps = acceptedSubsteps;
+    this.rejectedAttempts = rejectedAttempts;
+    this.modelEvaluations = modelEvaluations;
     this.initialMassKg = requirePhaseValues(initialMassKg, "initialMassKg");
     this.finalMassKg = requirePhaseValues(finalMassKg, "finalMassKg");
     this.inletMassKg = requirePhaseValues(inletMassKg, "inletMassKg");
@@ -109,6 +136,24 @@ public final class TwoFluidMassBalanceReport implements Serializable {
    */
   public int getAcceptedSubsteps() {
     return acceptedSubsteps;
+  }
+
+  /**
+   * Get rejected nonlinear attempts for the accepted interval.
+   *
+   * @return rejected attempt count, or -1 when the selected transient route does not publish it
+   */
+  public int getRejectedAttempts() {
+    return rejectedAttempts;
+  }
+
+  /**
+   * Get nonlinear model evaluations for the accepted interval.
+   *
+   * @return model evaluation count, or -1 when the selected transient route does not publish it
+   */
+  public int getModelEvaluations() {
+    return modelEvaluations;
   }
 
   /**
