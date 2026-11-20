@@ -19,7 +19,11 @@ For the public Tengesdal severe-slugging gate on the unsplit route, inspect
 `TwoFluidMassBalanceReport.getRejectedAttempts()` and `getModelEvaluations()` after every accepted
 observation interval. Require zero rejected attempts together with the unchanged 600 s amplitude,
 period, hold-up, inventory and conservation gates; numerical completion is not experimental
-qualification.
+qualification. The current 16-cell/0.1 s gate completes with zero rejects but a flat
+`1.945482e-4 Pa` pressure amplitude, no liquid cycle or blowout/fallback and `0.3285387`
+steady flowline hold-up. The same values with steady-consistency disabled rule out that correction
+as the cause. Treat conservative moving slug/film coupling, which the unsplit route does not yet
+support, as the next physical dependency; keep this gate opt-in until it passes unchanged.
 
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the
