@@ -25,9 +25,9 @@ import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
  *
  * <p>
  * The candidate basis follows NeqSim's existing Pitzer neutral-solute semantics. For a 1:1 salt MCl,
- * {@code ln(gamma_CO2) = 2 m lambda(CO2,M) + 2 m lambda(CO2,Cl) + m^2 zeta(CO2,M,Cl)}. This test compares
- * linear and linear-plus-quadratic source-space shapes and audits the composition Jacobian. It does not select a
- * coefficient, choose a single-ion gauge, transfer Pitzer parameters into electrolyte CPA, or change production code.
+ * {@code ln(gamma_CO2) = 2 m lambda(CO2,M) + 2 m lambda(CO2,Cl) + m^2 zeta(CO2,M,Cl)}. This test compares linear and
+ * linear-plus-quadratic source-space shapes and audits the composition Jacobian. It does not select a coefficient,
+ * choose a single-ion gauge, transfer Pitzer parameters into electrolyte CPA, or change production code.
  * </p>
  *
  * @author OpenAI
@@ -35,12 +35,9 @@ import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
  */
 class CO2ChlorideSaltPairCurvatureAssessmentTest {
   private static final Logger logger = LogManager.getLogger(CO2ChlorideSaltPairCurvatureAssessmentTest.class);
-  private static final String HE_MORSE_RESOURCE =
-      "/data/chemistry_benchmarks/co2_kcl_solubility_he_morse1993.csv";
-  private static final String YASUNISHI_YOSHIDA_RESOURCE =
-      "/data/chemistry_benchmarks/co2_kcl_ostwald_yasunishi_yoshida1979.csv";
-  private static final String LIU_NACL_RESOURCE =
-      "/data/chemistry_benchmarks/co2_water_nacl_solubility_liu2021.csv";
+  private static final String HE_MORSE_RESOURCE = "/data/chemistry_benchmarks/co2_kcl_solubility_he_morse1993.csv";
+  private static final String YASUNISHI_YOSHIDA_RESOURCE = "/data/chemistry_benchmarks/co2_kcl_ostwald_yasunishi_yoshida1979.csv";
+  private static final String LIU_NACL_RESOURCE = "/data/chemistry_benchmarks/co2_water_nacl_solubility_liu2021.csv";
   private static final String OUTPUT = "target/co2-chloride-salt-pair-curvature-assessment.csv";
   private static final double NACL_MOLAR_MASS_KG_PER_MOL = 0.05844277;
 
@@ -72,8 +69,8 @@ class CO2ChlorideSaltPairCurvatureAssessmentTest {
       report.add(String.format(Locale.ROOT,
           "HE_MORSE_KCL,source_shape_discriminator_no_parameter_selection,%.2f,mol_per_kg_water,%d,"
               + "%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,quadratic_shape_supported_parameter_not_adopted",
-          temperature, block.size(), fit.linearCoefficient, fit.quadraticLinearCoefficient,
-          fit.quadraticCoefficient, fit.linearRmse, fit.quadraticRmse, 0.04));
+          temperature, block.size(), fit.linearCoefficient, fit.quadraticLinearCoefficient, fit.quadraticCoefficient,
+          fit.linearRmse, fit.quadraticRmse, 0.04));
     }
 
     FitResult yasunishiFit = fitYasunishiYoshida(yasunishi, algebra);
