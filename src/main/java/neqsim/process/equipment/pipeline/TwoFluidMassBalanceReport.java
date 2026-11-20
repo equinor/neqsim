@@ -36,7 +36,7 @@ public final class TwoFluidMassBalanceReport implements Serializable {
   private final double elapsedTimeSeconds;
   private final int acceptedSubsteps;
   private final int rejectedAttempts;
-  private final int modelEvaluations;
+  private final long modelEvaluations;
   private final double[] initialMassKg;
   private final double[] finalMassKg;
   private final double[] inletMassKg;
@@ -75,7 +75,7 @@ public final class TwoFluidMassBalanceReport implements Serializable {
    */
   TwoFluidMassBalanceReport(double elapsedTimeSeconds, int acceptedSubsteps, double[] initialMassKg,
       double[] finalMassKg, double[] inletMassKg, double[] outletMassKg, double[] sourceMassKg, int rejectedAttempts,
-      int modelEvaluations) {
+      long modelEvaluations) {
     if (rejectedAttempts < -1 || modelEvaluations < -1) {
       throw new IllegalArgumentException("Nonlinear diagnostics must be non-negative or -1 when unavailable");
     }
@@ -152,7 +152,7 @@ public final class TwoFluidMassBalanceReport implements Serializable {
    *
    * @return model evaluation count, or -1 when the selected transient route does not publish it
    */
-  public int getModelEvaluations() {
+  public long getModelEvaluations() {
     return modelEvaluations;
   }
 
