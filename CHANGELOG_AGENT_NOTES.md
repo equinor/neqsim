@@ -9,6 +9,26 @@
 
 ---
 
+## 2026-11-20 — Mercury limits of a reservoir fluid from mineral equilibrium
+
+- New `neqsim.thermo.util.mineral.ReservoirMercuryEstimator`: the mercury a reservoir fluid can hold in
+  equilibrium with mercury sulfide (cinnabar or metacinnabar) and with liquid mercury.
+  `estimate(fluid)` returns both limits (`getSulfideLimit("ug/Sm3")`, `getLiquidLimit("ug/Sm3")`), the
+  controlling phase, the buffered H2S, and the saturation index and apparent HgS activity of the mercury the
+  fluid already holds. `setMercurySulfideActivity(0.003)` gives the limit for mercury held as a trace in
+  sulfide. The fluid needs mercury parameters: build it with `MercuryFluidConverter.toUmrPruMc`.
+- The limits are upper bounds, not predictions: pure cinnabar overpredicts measured mercury by up to three
+  orders of magnitude (Bryndzia et al., 2022). See `docs/thermo/reservoir_mercury_limits.md`.
+- New `MineralMercuryBuffers` (reactions) and `StandardStateSpecies.mercuryGas()`, `liquidMercury()`,
+  `cinnabar()`, `metacinnabar()`. No existing result changes.
+- Do not use `SolidGasReactionEquilibrium.solveForGas` with mercury as the target gas: the iteration can
+  form a mercury-rich phase and fail. The estimator uses the dilute-solution formula instead.
+- Skill `neqsim-reservoir-mercury-estimation` (mirrored from the community repository) gives the estimate
+  and the report for a prospect; `neqsim-mercury-distribution-study` and the `mercury-distribution` agent
+  point to it when no mercury measurement exists.
+- Task tooling: the report generator renders `benchmark_validation.comparisons`; the sources index has the
+  sources `geochemdb`, `welldb`, `powerbi`, `sodir` and `earlier-tasks`.
+
 ## 2026-11-19 — UMR-PRU-MC mercury and water parameters, mercury in process simulation, UMR-CPA tables
 
 - **Results change for `SystemUMRPRUMCEos` and `SystemUMRPRUMCEosNew` with water or mercury.** The mercury and
