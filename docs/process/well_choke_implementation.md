@@ -482,6 +482,7 @@ mvn test -Dtest="SachdevaChokeFlowTest,GilbertChokeFlowTest,MultiphaseChokeFlowF
 
 ## Related Documentation
 
+- [Choke Valve Calculations and Operating Practice](choke_valve_practice.md) — Cv and discharge coefficient conversion, operating-range screening, clean-up and sand limits, Cv condition monitoring
 - [Multiphase Choke Flow Models](MultiphaseChokeFlow) — Detailed API reference for the choke calculation classes
 - [Well and Choke Simulation](../simulation/well_and_choke_simulation) — Network-level well and choke simulation
 - [Choke Collapse PSD Protection](../wiki/choke_collapse_psd_protection) — Safety scenario with PSD valve trip

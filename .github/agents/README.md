@@ -315,6 +315,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
+| **choke-valve** | `@choke-valve <description>` | Choke Cv and discharge coefficient to orifice, multiphase model choice, operating-range, clean-up, sand and collapse-capacity screening, bean-up, Cv-based erosion and plugging monitoring |
 | **control-system** | `@control-system <description>` | PID controller design and tuning, control loop architecture, measurement device selection, alarm/trip configuration, control narratives |
 
 **Examples:**
