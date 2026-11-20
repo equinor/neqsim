@@ -19,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.component.ComponentEosInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
@@ -188,7 +190,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   static Result calculate(Reference reference, double co2FeedMoles) {
-    return calculate(reference, co2FeedMoles, false, 1.0);
+    return calculate(reference, co2FeedMoles, false, 1.0, true);
   }
 
   /**
@@ -203,7 +205,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   static Result calculateWithoutFurstCo2IonInteractions(Reference reference, double co2FeedMoles) {
-    return calculate(reference, co2FeedMoles, false, 0.0);
+    return calculate(reference, co2FeedMoles, false, 0.0, true);
   }
 
   /**
@@ -237,7 +239,30 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     if (!Double.isFinite(furstCo2IonScale) || furstCo2IonScale < 0.0 || furstCo2IonScale > 1.0) {
       throw new IllegalArgumentException("Furst CO2-ion scale must be finite and in [0, 1]");
     }
-    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, furstCo2IonScale);
+    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, furstCo2IonScale, true);
+  }
+
+  /**
+   * Calculates one source state with independent endpoint controls for the complete Furst CO2-ion block and the
+   * complete K+/CO2 CPA binary-interaction layer.
+   *
+   * <p>
+   * Disabling the CPA layer removes the base, temperature and both directional composition terms together. The endpoint
+   * is a layer-isolation diagnostic, not a candidate parameterization.
+   *
+   * @param reference source state
+   * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
+   * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
+   * @param furstCo2IonScale dimensionless Furst block scale, restricted to 0 or 1
+   * @param cpaKCo2Enabled whether the complete K+/CO2 CPA layer remains enabled
+   * @return calculated diagnostics
+   */
+  static Result calculateWithInteractionLayerEndpoints(Reference reference, double co2FeedMoles,
+      boolean constrainedPhaseSolver, double furstCo2IonScale, boolean cpaKCo2Enabled) {
+    if (furstCo2IonScale != 0.0 && furstCo2IonScale != 1.0) {
+      throw new IllegalArgumentException("Furst layer endpoint must be 0 or 1");
+    }
+    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, furstCo2IonScale, cpaKCo2Enabled);
   }
 
   /**
@@ -249,7 +274,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   static Result calculate(Reference reference, double co2FeedMoles, boolean constrainedPhaseSolver) {
-    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, 1.0);
+    return calculate(reference, co2FeedMoles, constrainedPhaseSolver, 1.0, true);
   }
 
   /**
@@ -259,10 +284,11 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
    * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
    * @param furstCo2IonScale dimensionless scale applied to CO2-ion Furst W0/W1/W2 terms
+   * @param cpaKCo2Enabled whether the complete K+/CO2 CPA layer remains enabled
    * @return calculated diagnostics
    */
   private static Result calculate(Reference reference, double co2FeedMoles, boolean constrainedPhaseSolver,
-      double furstCo2IonScale) {
+      double furstCo2IonScale, boolean cpaKCo2Enabled) {
     double saltFreeMassPercent = 100.0 - reference.totalSaltMassFractionPercent();
     double naclMoles = reference.naclMolalityMolPerKgWater;
     double kclMoles = reference.kclMolalityMolPerKgWater;
@@ -276,7 +302,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     }
     double totalPressureBara = 10.0 * reference.totalPressureMpa;
     Trial trial = flashWithAqueousWaterBasis(reference, totalPressureBara, co2FeedMoles, naclMoles, kclMoles,
-        cacl2Moles, mgcl2Moles, constrainedPhaseSolver, furstCo2IonScale);
+        cacl2Moles, mgcl2Moles, constrainedPhaseSolver, furstCo2IonScale, cpaKCo2Enabled);
     PhaseInterface aqueous = trial.aqueous;
 
     double waterMoles = aqueous.getComponent("water").getNumberOfMolesInPhase();
@@ -341,11 +367,12 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param mgcl2Moles MgCl2 formula-unit inventory in mol
    * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
    * @param furstCo2IonScale dimensionless scale applied to CO2-ion Furst W0/W1/W2 terms
+   * @param cpaKCo2Enabled whether the complete K+/CO2 CPA layer remains enabled
    * @return converged and validated state
    */
   private static Trial flashWithAqueousWaterBasis(Reference reference, double totalPressureBara, double co2FeedMoles,
       double naclMoles, double kclMoles, double cacl2Moles, double mgcl2Moles, boolean constrainedPhaseSolver,
-      double furstCo2IonScale) {
+      double furstCo2IonScale, boolean cpaKCo2Enabled) {
     double waterFeedMoles = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL;
     double co2Feed = co2FeedMoles;
     for (int iteration = 0; iteration < 20; iteration++) {
@@ -355,7 +382,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       SystemInterface fluid = null;
       for (int attempt = 0; attempt <= MAX_RESERVOIR_RETRIES; attempt++) {
         fluid = flashSystem(reference.temperatureK, totalPressureBara, co2Feed, waterFeedMoles, naclMoles, kclMoles,
-            cacl2Moles, mgcl2Moles, constrainedPhaseSolver, furstCo2IonScale);
+            cacl2Moles, mgcl2Moles, constrainedPhaseSolver, furstCo2IonScale, cpaKCo2Enabled);
         if (fluid.getNumberOfPhases() >= 2) {
           break;
         }
@@ -422,11 +449,12 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param mgcl2Moles MgCl2 formula-unit inventory in mol
    * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
    * @param furstCo2IonScale dimensionless scale applied to CO2-ion Furst W0/W1/W2 terms
+   * @param cpaKCo2Enabled whether the complete K+/CO2 CPA layer remains enabled
    * @return flashed system
    */
   private static SystemInterface flashSystem(double temperatureK, double pressureBara, double co2Moles,
       double waterMoles, double naclMoles, double kclMoles, double cacl2Moles, double mgcl2Moles,
-      boolean constrainedPhaseSolver, double furstCo2IonScale) {
+      boolean constrainedPhaseSolver, double furstCo2IonScale, boolean cpaKCo2Enabled) {
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
     fluid.addComponent("CO2", co2Moles);
     fluid.addComponent("water", waterMoles);
@@ -447,9 +475,14 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       fluid.addComponent("Cl-", chlorideMoles);
     }
     fluid.setMixingRule(10);
-    if (furstCo2IonScale != 1.0) {
+    if (furstCo2IonScale != 1.0 || !cpaKCo2Enabled) {
       fluid.init(0);
-      scaleFurstCo2IonInteractions(fluid, furstCo2IonScale);
+      if (furstCo2IonScale != 1.0) {
+        scaleFurstCo2IonInteractions(fluid, furstCo2IonScale);
+      }
+      if (!cpaKCo2Enabled) {
+        removeCpaKCo2InteractionLayer(fluid);
+      }
     }
     fluid.setMultiPhaseCheck(true);
     if (constrainedPhaseSolver) {
@@ -508,6 +541,45 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       }
       assertTrue(hasInitializedInteraction, "initialized phase must retain a nonzero CO2-ion Furst coefficient");
     }
+  }
+
+  /**
+   * Removes the complete initialized K+/CO2 cubic CPA binary-interaction layer from every phase.
+   *
+   * <p>
+   * Mixing rule 10 supports base, temperature and directional composition terms. Removing only the symmetric base term
+   * would not isolate the complete initialized CPA row.
+   *
+   * @param fluid initialized electrolyte system containing K+ and CO2
+   */
+  private static void removeCpaKCo2InteractionLayer(SystemInterface fluid) {
+    boolean foundInitializedLayer = false;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = fluid.getPhase(phaseIndex);
+      if (!phase.hasComponent("K+") || !phase.hasComponent("CO2")
+          || !(phase.getMixingRule() instanceof EosMixingRulesInterface)) {
+        continue;
+      }
+      EosMixingRulesInterface rule = (EosMixingRulesInterface) phase.getMixingRule();
+      int potassiumIndex = phase.getComponent("K+").getComponentNumber();
+      int co2Index = phase.getComponent("CO2").getComponentNumber();
+      assertTrue(phase.getComponent("K+") instanceof ComponentEosInterface,
+          "K+ must expose the cubic EOS parameters used by the CPA mixing rule");
+      assertEquals(1.0e-35, ((ComponentEosInterface) phase.getComponent("K+")).geta(), 0.0,
+          "K+ cubic attraction parameter explains the inactive CPA cross term");
+      double base = rule.getBinaryInteractionParameter(potassiumIndex, co2Index);
+      double temperature = rule.getBinaryInteractionParameterT1(potassiumIndex, co2Index);
+      foundInitializedLayer |= base != 0.0 || temperature != 0.0;
+      rule.setBinaryInteractionParameter(potassiumIndex, co2Index, 0.0);
+      rule.setBinaryInteractionParameterT1(potassiumIndex, co2Index, 0.0);
+      rule.setBinaryInteractionParameterij(potassiumIndex, co2Index, 0.0);
+      rule.setBinaryInteractionParameterji(potassiumIndex, co2Index, 0.0);
+      assertEquals(0.0, rule.getBinaryInteractionParameter(potassiumIndex, co2Index), 0.0,
+          "K+/CO2 CPA base term ablation readback");
+      assertEquals(0.0, rule.getBinaryInteractionParameterT1(potassiumIndex, co2Index), 0.0,
+          "K+/CO2 CPA temperature term ablation readback");
+    }
+    assertTrue(foundInitializedLayer, "initialized K+/CO2 CPA layer must be present before ablation");
   }
 
   /**
@@ -632,7 +704,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return source states
    * @throws Exception if the fixture cannot be read or parsed
    */
-  private static List<Reference> loadReferences() throws Exception {
+  static List<Reference> loadReferences() throws Exception {
     InputStream stream = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.class.getResourceAsStream(RESOURCE);
     assertNotNull(stream, RESOURCE);
     List<Reference> references = new ArrayList<Reference>();
