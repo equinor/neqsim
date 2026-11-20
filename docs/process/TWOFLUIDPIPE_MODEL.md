@@ -2788,7 +2788,19 @@ qualify energy, phase change, restart or pigging.
 ./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.publication-qualification=true test
 ./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#supportingPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.long-publication-qualification=true test
 ./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#sustainedPressureInterpolatedRiserQualificationMustPublishAtomically' -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.sustained-publication-qualification=true test
+./mvnw -q '-Dtest=TwoFluidUnsplitTengesdalPreparationTest#sustainedPublishedTrajectoryMatchesPublicLimitCycle' -DexcludedTestGroups= test
 ```
+
+The final slow test advances the published unsplit route in one-second observation intervals for
+600 s while retaining a 0.1 s maximum internal step. It samples inlet pressure, signed liquid
+outlet transfer and flowline liquid hold-up after 20 s. The unchanged #3298 gates require a
+98 kPa pressure swing and 38 s liquid-production period within 30%, steady flowline hold-up
+0.342 within 1%, at least two recovered liquid cycles, blowout/fallback around the accepted mean
+liquid feed, non-negative phase inventories, relative phase/total closure below `1e-9`, and zero
+rejected nonlinear attempts. `TwoFluidMassBalanceReport.getRejectedAttempts()` and
+`getModelEvaluations()` publish those unsplit diagnostics; they return -1 for a transient route
+that does not expose them. Completing the numerical 600 s publication gate alone is not
+experimental qualification.
 
 The gas execution fixture uses methane/ethane `0.8/0.2` mole fractions, SRK/classic mixing,
 300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Four cells with
