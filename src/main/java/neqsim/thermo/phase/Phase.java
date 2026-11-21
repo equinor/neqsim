@@ -89,7 +89,12 @@ public abstract class Phase implements PhaseInterface {
   private transient boolean caloricInitInProgress = false;
 
   /** Temperature, pressure, moles and composition checksums at the last init(2) or init(3) call. */
-  private transient double[] caloricStamp = null;
+  private transient boolean caloricStamped = false;
+  private transient double stampT;
+  private transient double stampP;
+  private transient double stampN;
+  private transient double stampSx;
+  private transient double stampSxx;
 
   protected MixingRuleTypeInterface mixingRuleType;
 
@@ -2918,7 +2923,10 @@ public abstract class Phase implements PhaseInterface {
   protected void ensureCaloricDerivatives() {
     boolean hasMaterial = numberOfMolesInPhase > 0.0 && beta > 0.0;
     boolean finiteState = Double.isFinite(beta) && Double.isFinite(numberOfMolesInPhase);
-    if (initType != 1 || caloricInitInProgress || !hasMaterial || !finiteState || caloricStateMatchesStamp()) {
+    if (initType != 1 || caloricInitInProgress || !hasMaterial || !finiteState) {
+      return;
+    }
+    if (caloricStateMatchesStamp()) {
       return;
     }
     caloricInitInProgress = true;
@@ -2931,12 +2939,8 @@ public abstract class Phase implements PhaseInterface {
     }
   }
 
-  /**
-   * Computes the temperature, pressure, moles and composition checksums that identify the current state of the phase.
-   *
-   * @return array with temperature, pressure, moles in phase and two composition checksums
-   */
-  private double[] currentCaloricState() {
+  /** Records the state at which the temperature and pressure derivatives are calculated. */
+  private void stampCaloricState() {
     double sx = 0.0;
     double sxx = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
@@ -2944,12 +2948,12 @@ public abstract class Phase implements PhaseInterface {
       sx += x * (i + 1);
       sxx += x * x * (i + 7);
     }
-    return new double[] {temperature, pressure, numberOfMolesInPhase, sx, sxx};
-  }
-
-  /** Records the state at which the temperature and pressure derivatives are calculated. */
-  private void stampCaloricState() {
-    caloricStamp = currentCaloricState();
+    stampT = temperature;
+    stampP = pressure;
+    stampN = numberOfMolesInPhase;
+    stampSx = sx;
+    stampSxx = sxx;
+    caloricStamped = true;
   }
 
   /**
@@ -2958,7 +2962,17 @@ public abstract class Phase implements PhaseInterface {
    * @return true if the stored derivatives belong to the current state of the phase
    */
   private boolean caloricStateMatchesStamp() {
-    return caloricStamp != null && java.util.Arrays.equals(caloricStamp, currentCaloricState());
+    if (!caloricStamped || stampT != temperature || stampP != pressure || stampN != numberOfMolesInPhase) {
+      return false;
+    }
+    double sx = 0.0;
+    double sxx = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double x = componentArray[i].getx();
+      sx += x * (i + 1);
+      sxx += x * x * (i + 7);
+    }
+    return stampSx == sx && stampSxx == sxx;
   }
 
   /** {@inheritDoc} */
