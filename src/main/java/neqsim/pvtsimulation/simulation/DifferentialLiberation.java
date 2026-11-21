@@ -19,7 +19,11 @@ public class DifferentialLiberation extends BasePVTsimulation {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DifferentialLiberation.class);
 
+  /** Standard temperature for gas and stock-tank oil volumes [K]. */
+  private static final double STANDARD_TEMPERATURE = 288.15;
+
   private boolean recordDepletionSnapshots;
+  private boolean useIdealGasStandardVolume = true;
   private DepletionSnapshot[] depletionSnapshots = new DepletionSnapshot[0];
 
   double VoilStd = 0.0;
@@ -213,14 +217,14 @@ public class DifferentialLiberation extends BasePVTsimulation {
             throw new IllegalStateException("DLE post-saturation flash failed at " + pressures[i] + " bara", ex);
           }
         }
-        gasStandardVolume[i] = getThermoSystem().getPhase(PhaseType.GAS).getMass()
-            / getThermoSystem().getPhase(PhaseType.GAS).getPhysicalProperties().getDensity()
-            * getThermoSystem().getPhase(0).getPressure() / ThermodynamicConstantsInterface.referencePressure
-            / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
+        // Physical properties (Peneloux-corrected densities) must describe the stage state, not
+        // the single-phase saturation state evaluated in calcSaturationConditions().
+        getThermoSystem().initPhysicalProperties();
+        gasStandardVolume[i] = standardGasVolume(getThermoSystem().getPhase(PhaseType.GAS));
         totalGasStandardVolume += getGasStandardVolume()[i];
-        // if (totalVolume[i] > saturationVolume) {
-        Zgas[i] = getThermoSystem().getPhase(0).getZ();
-        relGasGravity[i] = getThermoSystem().getPhase(0).getMolarMass() / 0.028;
+        Zgas[i] = getThermoSystem().getPhase(PhaseType.GAS).getZvolcorr();
+        relGasGravity[i] = getThermoSystem().getPhase(PhaseType.GAS).getMolarMass() * 1000.0
+            / ThermodynamicConstantsInterface.molarMassAir;
         if (getThermoSystem().hasPhaseType(PhaseType.GAS) && getThermoSystem().hasPhaseType(PhaseType.OIL)) {
           oilDensity[i] = getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
           liquidVolume[i] = getThermoSystem().getPhase(1).getMass() / oilDensity[i];
@@ -263,7 +267,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
     VoilStd = getThermoSystem().getPhase(PhaseType.OIL).getMass()
         / getThermoSystem().getPhase(PhaseType.OIL).getPhysicalProperties().getDensity();
     if (getThermoSystem().hasPhaseType(PhaseType.GAS)) {
-      totalGasStandardVolume += getThermoSystem().getPhase(PhaseType.GAS).getCorrectedVolume();
+      totalGasStandardVolume += standardGasVolume(getThermoSystem().getPhase(PhaseType.GAS));
     }
 
     double total = 0;
@@ -281,6 +285,61 @@ public class DifferentialLiberation extends BasePVTsimulation {
        * " gasstdvol " + getGasStandardVolume()[i]);
        */
     }
+  }
+
+  /**
+   * Returns the volume a liberated gas phase occupies at standard conditions (288.15 K, 1.01325 bara).
+   *
+   * <p>
+   * With the default laboratory convention (Pedersen et al., 2015, Sec. 3.1, Eq. 3.7) the gas is taken as ideal at
+   * standard conditions, Z = 1, so V = n R T_std / P_std. Any liquid that would drop out of the gas at standard
+   * conditions is thereby counted as its equivalent gas volume. With {@link #setUseIdealGasStandardVolume(boolean)} set
+   * to false, the gas is instead evaluated as a single gas phase at standard conditions and its Peneloux-corrected
+   * (when enabled) real-gas Z is used.
+   * </p>
+   *
+   * @param gas the liberated gas phase
+   * @return standard volume in m3
+   */
+  private double standardGasVolume(neqsim.thermo.phase.PhaseInterface gas) {
+    double moles = gas.getNumberOfMolesInPhase();
+    double idealVolume = moles * ThermodynamicConstantsInterface.R * STANDARD_TEMPERATURE
+        / (ThermodynamicConstantsInterface.referencePressure * 1.0e5);
+    if (useIdealGasStandardVolume) {
+      return idealVolume;
+    }
+    SystemInterface gasAtStd = getThermoSystem().phaseToSystem(PhaseType.GAS.getDesc());
+    gasAtStd.setTemperature(STANDARD_TEMPERATURE);
+    gasAtStd.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    gasAtStd.init(1);
+    gasAtStd.getPhase(0).setType(PhaseType.GAS);
+    gasAtStd.initPhysicalProperties();
+    return idealVolume * gasAtStd.getPhase(0).getZvolcorr();
+  }
+
+  /**
+   * Selects the standard-condition convention for the liberated gas used in {@link #getRs()}, {@link #getBg()} and
+   * {@link #getGasStandardVolume()}.
+   *
+   * <p>
+   * The default (true) is the usual laboratory convention: Z = 1 at standard conditions and any liquid dropout
+   * converted to equivalent gas (Pedersen et al., 2015, Eq. 3.7). Set false to use the real-gas Z of each liberated gas
+   * evaluated as a single gas phase at standard conditions.
+   * </p>
+   *
+   * @param ideal true for Z = 1 at standard conditions (default), false for real-gas Z
+   */
+  public void setUseIdealGasStandardVolume(boolean ideal) {
+    this.useIdealGasStandardVolume = ideal;
+  }
+
+  /**
+   * Returns whether the liberated gas is taken as ideal (Z = 1) at standard conditions.
+   *
+   * @return true for the Z = 1 laboratory convention (default)
+   */
+  public boolean isUseIdealGasStandardVolume() {
+    return useIdealGasStandardVolume;
   }
 
   /**

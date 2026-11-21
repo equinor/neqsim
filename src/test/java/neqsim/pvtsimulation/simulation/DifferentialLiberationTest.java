@@ -64,11 +64,12 @@ public class DifferentialLiberationTest {
     differentialLiberation.runCalc();
 
     assertEquals(1.690017599362585, differentialLiberation.getBo()[0], 0.001);
-    assertEquals(212.6056363340536, differentialLiberation.getRs()[0], 0.001);
+    // Rs uses the Z = 1 standard-gas convention (Pedersen et al. 2015, Eq. 3.7), see #5195.
+    assertEquals(213.65948266944534, differentialLiberation.getRs()[0], 0.001);
     assertEquals(677.684004582184, differentialLiberation.getOilDensity()[0], 0.001);
     assertEquals(1.7613484588308035, differentialLiberation.getBo()[pressures.length - 9], 0.001);
     assertEquals(1.3109612423374373, differentialLiberation.getBo()[pressures.length - 2], 0.001);
-    assertEquals(55.070900101414495, differentialLiberation.getRs()[pressures.length - 2], 0.001);
+    assertEquals(55.08653610241253, differentialLiberation.getRs()[pressures.length - 2], 0.001);
     assertEquals(0.05559782268972172, differentialLiberation.getBg()[pressures.length - 2], 0.001);
     assertEquals(1.0525713881601992, differentialLiberation.getBo()[pressures.length - 1], 0.001);
     assertEquals(0.0, differentialLiberation.getRs()[pressures.length - 1], 0.001);

@@ -88,6 +88,8 @@ public final class PitzerParameterDatasets {
     phase.setReactiveCarbonateSourceZeroDefinitions(sourceZeros);
     phase.enablePhreeqcCommonIonTerms();
     phase.markManualParameterDatasetLoaded();
+    // MEG is not in the PHREEQC catalog; its rows come from the NeqSim MEG dataset.
+    PitzerMegParameters.apply(phase);
     phase.requireCompletePitzerParameterCoverage();
     phase.requireCompletePitzerReactionParameterCoverage();
     phase.requireCompleteNeutralPitzerParameterCoverage();
@@ -153,6 +155,8 @@ public final class PitzerParameterDatasets {
     applyExactSourceNeutralRows(phase, catalog, ions, neutrals, null);
     phase.enablePhreeqcCommonIonTerms();
     phase.markManualParameterDatasetLoaded();
+    // MEG is not in the PHREEQC catalog; its rows come from the NeqSim MEG dataset.
+    PitzerMegParameters.apply(phase);
     phase.requireCompletePitzerParameterCoverage();
     phase.requireCompletePitzerReactionParameterCoverage();
     phase.requireCompleteNeutralPitzerParameterCoverage();
@@ -557,6 +561,7 @@ public final class PitzerParameterDatasets {
       if (phase.getComponent(component).getNumberOfMolesInPhase() <= 1.0e-20
           || Math.abs(phase.getComponent(component).getIonicCharge()) >= 0.5
           || "water".equalsIgnoreCase(phase.getComponent(component).getComponentName())
+          || PitzerMegParameters.isMeg(phase.getComponent(component))
           || (excludeHydrocarbons && isHydrocarbonForAutomaticCatalog(phase.getComponent(component)))) {
         continue;
       }
@@ -604,6 +609,8 @@ public final class PitzerParameterDatasets {
     applyCatalogNeutralRows(phase, catalog, ions, neutrals);
     phase.enablePhreeqcCommonIonTerms();
     phase.markManualParameterDatasetLoaded();
+    // MEG is not in the PHREEQC catalog; its rows come from the NeqSim MEG dataset.
+    PitzerMegParameters.apply(phase);
     phase.requireCompletePitzerParameterCoverage();
     phase.requireCompleteNeutralPitzerParameterCoverage();
   }

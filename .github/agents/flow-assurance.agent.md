@@ -92,7 +92,13 @@ For Pitzer brines, use the `neqsim-electrolyte-systems` setup and
 dataset identity, explicit CO2-chloride zeta values, pressure grid and operating temperature
 from `thermo.fluid`. Carry forward the guest Henry-reference limits and unqualified parameter
 assumptions. The Pitzer operations calculate onset and throw on unavailable curve points;
-they do not calculate hydrate amounts or qualify all drilling-fluid additives.
+they do not calculate hydrate amounts or qualify all drilling-fluid additives. Pitzer supports
+MEG (+ NaCl) through `PitzerMegParameters`; with N2 present its search floor is 278.12 K, so use
+e-CPA for MEG cases below about 5 °C.
+
+Model choice (measured 21 Nov 2026): every SRK-CPA solver variant and every SRK electrolyte-CPA
+system now uses the same CPA hydrate model and gives the same hydrate temperature. Without ions use
+`SystemSrkCPAstatoil`; e-CPA gives the same result but is 5–10× slower per flash.
 
 ## Wax Analysis
 Use `WaxCharacterise` from `neqsim.thermo.characterization`:

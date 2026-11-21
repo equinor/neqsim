@@ -49,7 +49,7 @@ label such as `C20`, not `C20+`, before calling `characterisePlusFraction()`.
 | Constant mass expansion (CCE/CME) | `ConstantMassExpansion` | Relative volume, liquid volume as percent of saturation volume, gas Z-factor, Y-function |
 | Constant volume depletion (CVD) | `ConstantVolumeDepletion` | Saturation pressure, relative volume, liquid volume as percent of saturation volume, cumulative mole-percent depletion |
 | Differential liberation (DL) | `DifferentialLiberation` | Saturation pressure, Bo, Bg, Rs, oil density, gas Z-factor |
-| Legacy separator test | `SeparatorTest` | Per-stage GOR and oil formation-volume factor arrays |
+| Legacy separator test | `SeparatorTest` | Per-stage GOR, oil formation-volume factor and gas gravity; stock-tank oil density, API gravity and gas gravity |
 | Swelling test | `SwellingTest` | Pressure and relative-oil-volume arrays |
 | Pressure/temperature viscosity grid | `ViscositySim` | Gas, oil, and aqueous viscosity arrays in Pa·s |
 
@@ -201,17 +201,51 @@ isothermal: use `setTemperature` for its common temperature; the temperature arr
 is used by `runTuning`. Regression evidence:
 [`ConstantVolumeDepletionTest`](../../src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java).
 
+### Volume conventions (volume shift, gas gravity, standard volumes)
+
+When the fluid uses Peneloux volume correction (`useVolumeCorrection(true)`, the default for
+EoS phases), every volume reported by `ConstantMassExpansion` and `DifferentialLiberation` is
+the corrected volume, as in Pedersen et al. (2015), *Phase Behavior of Petroleum Reservoir
+Fluids*, Sec. 3.1:
+
+| Result | Definition |
+| --- | --- |
+| CCE `getRelativeVolume()`, `getLiquidRelativeVolume()`, `getYfactor()` | From `getCorrectedVolume()` of the cell and of the saturated fluid |
+| CCE and DL `getZgas()`, CCE `getZsaturation()` | `getZvolcorr()` = P M / (ρ R T) with the corrected density |
+| DL `getBg()` | Corrected reservoir gas volume divided by its standard volume |
+| DL `getRelGasGravity()`, `SeparatorTest.getGasGravity()` | M_gas / M_air with M_air = 28.96546 g/mol |
+| DL `getGasStandardVolume()`, `getRs()` | Liberated gas at 288.15 K and 1.01325 bara with Z = 1; liquid that would drop out at standard conditions is counted as equivalent gas (Pedersen Eq. 3.7) |
+
+The Z = 1 standard-gas convention is the laboratory default. Call
+`setUseIdealGasStandardVolume(false)` on `DifferentialLiberation` to evaluate each liberated
+gas as a single gas phase at standard conditions with its real (corrected) Z instead; this
+gives smaller standard volumes and Rs, typically by less than 1 %.
+
+In NeqSim 3.29.0 and earlier the gas gravity was divided by 28.0 g/mol (3.4 % high), DL Z and Bg and the
+CCE relative volume used the uncorrected EoS volume, and DL Rs mixed the two standard-gas
+conventions (equinor/neqsim#5195). Regression evidence:
+[`PvtVolumeConventionsTest`](../../src/test/java/neqsim/pvtsimulation/simulation/PvtVolumeConventionsTest.java).
+
+`RegressionParameter.VOLUME_SHIFT_C7PLUS` multiplies the effective Peneloux shift of every
+plus and TBP fraction, whether it comes from the default Rackett correlation, a dimensionless
+shift constant or an E300 `SSHIFT`. It changes liquid densities only when the fluid uses
+volume correction.
+
 ### Differential liberation
 
 Configure `DifferentialLiberation` with `setTemperature`, `setPressures`, and `runCalc`.
 Read `getSaturationPressure`, `getBo`, `getBg`, `getRs`, `getOilDensity`, `getZgas`, and
-`getRelGasGravity`. Result arrays align with the pressure schedule.
+`getRelGasGravity`. Result arrays align with the pressure schedule. Standard-volume and gas
+gravity conventions are listed above.
 
 ### Separator tests
 
 The legacy `SeparatorTest` accepts all stages in one call:
 `setSeparatorConditions(temperaturesK, pressuresBara)`. After `runCalc`, read the per-stage
-arrays from `getGOR` and `getBofactor`. For named stages, reservoir-condition handling,
+arrays from `getGOR`, `getBofactor` and `getGasGravity` (NaN for a stage without gas), and
+the stock-tank results from `getStockTankOilDensity()` (kg/m³, volume-corrected),
+`getStockTankOilAPIGravity()` and `getStockTankGasGravity()` (NaN when no gas is released at
+standard conditions). For named stages, reservoir-condition handling,
 stock-tank results, and cumulative GOR, prefer `MultiStageSeparatorTest`; see the
 [PVT simulation overview](README.md).
 

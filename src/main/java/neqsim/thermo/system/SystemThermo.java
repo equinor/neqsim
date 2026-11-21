@@ -628,7 +628,7 @@ public abstract class SystemThermo implements SystemInterface {
       ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
     }
 
-    phaseArray[4] = new PhaseHydrate(getModelName());
+    phaseArray[4] = new PhaseHydrate(this);
     phaseArray[4].setTemperature(phaseArray[0].getTemperature());
     phaseArray[4].setPressure(phaseArray[0].getPressure());
     phaseArray[4].setType(PhaseType.HYDRATE);

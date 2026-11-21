@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -72,6 +73,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       diagnostics = new HydrateEquilibriumDiagnostics(system, converged, lastResidual, Double.NaN);
       return;
     }
+    ensureHydratePhase(system);
     // Enable multi-phase check to properly handle systems with water+MEG+hydrocarbons+electrolytes
     // This ensures proper phase separation (gas, aqueous, hydrocarbon liquid)
     boolean originalMultiPhaseCheck = system.doMultiPhaseCheck();
@@ -92,6 +94,24 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       throw ex;
     } finally {
       system.setMultiPhaseCheck(originalMultiPhaseCheck);
+    }
+  }
+
+  /**
+   * Adds the incipient hydrate phase when the caller has not called {@code setHydrateCheck(true)}.
+   *
+   * <p>
+   * The hydrate operations read the hydrate phase in slot 4. Without it they failed with an unrelated "can not return
+   * phase number 4" error, whereas the Pitzer route already prepared the phase itself.
+   * </p>
+   *
+   * @param system fluid system to prepare
+   */
+  static void ensureHydratePhase(SystemInterface system) {
+    neqsim.thermo.phase.PhaseInterface[] phases = system.getPhases();
+    boolean hasHydratePhase = phases != null && phases.length >= 5 && phases[4] instanceof PhaseHydrate;
+    if (!system.getHydrateCheck() || !hasHydratePhase) {
+      system.setHydrateCheck(true);
     }
   }
 

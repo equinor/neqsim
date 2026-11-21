@@ -108,9 +108,9 @@ class PvtLabTestsDocumentationTest extends NeqSimTest {
     assertEquals(pressuresBara.length, liquidRelativeVolume.length);
     assertEquals(pressuresBara.length, gasZ.length);
     assertEquals(pressuresBara.length, yFunction.length);
-    assertEquals(0.95756922523, relativeVolume[0], 0.001);
-    assertEquals(1.35726592522, relativeVolume[12], 0.001);
-    assertEquals(2.19059327098, yFunction[12], 0.001);
+    assertEquals(0.9551658657673409, relativeVolume[0], 0.001);
+    assertEquals(1.3787841166851758, relativeVolume[12], 0.001);
+    assertEquals(2.071653694591627, yFunction[12], 0.001);
     assertTrue(Double.isFinite(liquidRelativeVolume[12]));
     assertTrue(liquidRelativeVolume[12] >= 0.0);
     assertTrue(liquidRelativeVolume[12] <= 100.0);

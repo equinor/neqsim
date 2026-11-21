@@ -49,9 +49,10 @@ public class ConstantMassExpansionTest {
     CMEsim.runCalc();
 
     assertEquals(2.1873758493453708E-4, CMEsim.getIsoThermalCompressibility()[0], 0.00001);
-    assertEquals(0.95756922523, CMEsim.getRelativeVolume()[0], 0.001);
+    // Relative volumes use Peneloux-corrected (physical-property) volumes, see #5195.
+    assertEquals(0.9551658657673409, CMEsim.getRelativeVolume()[0], 0.001);
     assertEquals(0.99569265437, CMEsim.getRelativeVolume()[6], 0.001);
-    assertEquals(1.3572659252241415, CMEsim.getRelativeVolume()[12], 0.001);
-    assertEquals(2.1905932709777476, CMEsim.getYfactor()[12], 0.001);
+    assertEquals(1.3787841166851758, CMEsim.getRelativeVolume()[12], 0.001);
+    assertEquals(2.071653694591627, CMEsim.getYfactor()[12], 0.001);
   }
 }

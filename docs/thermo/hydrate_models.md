@@ -127,6 +127,31 @@ where $w(r)$ is the spherically averaged Kihara cell potential.
 
 ## Available Hydrate Models
 
+### Which model a fluid system uses
+
+`setHydrateCheck(true)` creates the hydrate phase with `new PhaseHydrate(system)`, which selects the cavity model
+from the **class family** of the fluid system (`PhaseHydrate.hydrateModelFor`). `PhaseHydrate.getHydrateModel()`
+reports the choice.
+
+| Fluid system | Hydrate model | Component class |
+|---|---|---|
+| `SystemSrkCPA` and all subclasses: `SystemSrkCPAs`, `SystemSrkCPAstatoil`, `...FullyImplicit`, `...Reduced`, `...FullyImplicitReduced`, `...BroydenImplicit`, `...AndersonMixing`, `...AndersonReduced`, `SystemElectrolyteCPAMM` | CPA | `ComponentHydrateGF` |
+| `SystemElectrolyteCPAstatoil`, `SystemElectrolyteCPA`, `SystemElectrolyteCPAAdvanced` | CPA | `ComponentHydrateGF` |
+| `SystemPitzer` | Pitzer | `ComponentHydratePitzer` |
+| `SystemPrCPA`, `SystemUMRCPAEoS`, SRK, PR and all other systems | PVTsim | `ComponentHydratePVTsim` |
+
+The CPA cavity parameters were regressed with SRK-CPA, so PR-CPA and UMR-CPA keep the PVTsim parameters.
+
+Before November 2026 the choice used an exact model-name match, so the CPA solver variants and
+`SystemElectrolyteCPAAdvanced` fell back to the PVTsim parameters. Measured on 21 Nov 2026 at 100 bara: methane +
+water gave 12.76 °C with `SystemSrkCPAstatoil` but 12.99 °C with `SystemSrkCPAstatoilFullyImplicit`/`Reduced`;
+gas + oil + 5 wt% NaCl gave 17.12 °C (e-CPA) versus 17.56 °C (e-CPA-Advanced). All variants now give the
+`SystemSrkCPAstatoil` result, so changing the CPA association solver for speed no longer changes the hydrate
+temperature. `PhaseHydrateModelSelectionTest` guards this.
+
+The hydrate temperature and pressure operations add the hydrate phase themselves when `setHydrateCheck(true)` has
+not been called; calling it explicitly remains the documented pattern.
+
 ### CPA Hydrate Model (Statoil/Equinor)
 
 **Class:** `ComponentHydrateGF`, `ComponentHydrateStatoil`

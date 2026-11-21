@@ -13,9 +13,26 @@ import neqsim.thermo.phase.PhaseType;
  *
  * <p>
  * This class provides a wrapper around the EOS-CG (Equation of State for Combustion Gases) multi-fluid model. The
- * EOS-CG parameters are cached statically to avoid expensive re-initialization on every call, which significantly
+ * initialised EOS-CG kernels are cached to avoid expensive re-initialization on every call, which significantly
  * improves performance for applications that make repeated property calculations.
  * </p>
+ *
+ * <p>
+ * <b>Thread safety and model ownership.</b> An EOS-CG kernel keeps mutable coefficient caches and the last pressure
+ * slope. The cache therefore holds one initialised kernel per thread, and every calculation resolves the kernel on the
+ * thread that performs it. Wrappers owned by different threads can run at the same time, for example in
+ * {@code ProcessSystem.runParallel()}, and give the same results as serial runs. Each thread that uses EOS-CG holds its
+ * own kernel for as long as the thread lives, so long-lived pools keep their kernels.
+ * </p>
+ *
+ * <p>
+ * The wrapper itself, its phase and its fluid are not thread-safe: do not share one {@code NeqSimEOSCG} or one fluid
+ * between threads; {@code clone()} the fluid per worker instead. A kernel passed explicitly to the package-private
+ * constructor is owned by the caller and is not confined to a thread.
+ * </p>
+ *
+ * @author esol
+ * @version $Id: $Id
  */
 public class NeqSimEOSCG {
   /** Each thread owns the kernel's mutable coefficient caches and pressure slope. */
@@ -73,7 +90,14 @@ public class NeqSimEOSCG {
     return kernelOverride == null ? models.get() : kernelOverride;
   }
 
-  /** Clear cached EOS-CG kernels. */
+  /**
+   * Clear cached EOS-CG kernels.
+   *
+   * <p>
+   * Existing wrappers stay usable: the next calculation on each thread builds and initialises a fresh kernel. A kernel
+   * passed explicitly to a wrapper is not affected.
+   * </p>
+   */
   public static void clearCache() {
     models = ThreadLocal.withInitial(NeqSimEOSCG::createModel);
   }

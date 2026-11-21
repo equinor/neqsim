@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-modeling
 description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation - for example a multi-stage gas compression train with intercooling, an HP/LP separation train, or a gas treatment unit."
-last_verified: "2026-10-01"
+last_verified: "2026-11-21"
 ---
 
 # NeqSim Process Modeling Skill
@@ -182,6 +182,13 @@ feedStream.setPropertyInitLevel(Stream.PropertyInitLevel.FULL);      // one stre
 Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 `runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
 `runDataflow(UUID)` and `runTransient(double, UUID)`.
+
+> **Parallel runs with GERG-2008 / EOS-CG.** `runParallel` and other multi-threaded
+> drivers are safe with GERG-2008 (incl. H2/NH3 variants) and EOS-CG: the wrappers
+> hold one kernel per thread, and `ReferenceEosThreadConfinementTest` requires
+> concurrent results to match serial ones exactly. Each branch must still own its
+> fluid — `clone()` it; never share one fluid, phase or wrapper across threads.
+> Details: `docs/thermo/gerg2008_eoscg.md` ("Thread safety").
 
 ## Closing Feedback Loops Automatically (`makeRecycles`)
 

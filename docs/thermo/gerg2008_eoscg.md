@@ -71,6 +71,29 @@ reuses density results at identical states. The cache is isolated by model,
 thread and phase branch. Fugacity perturbations evaluate the residual Helmholtz
 energy directly at the trial composition, leaving the original phase intact.
 
+### Thread safety
+
+The GERG-2008, GERG-2008-H2, GERG-2008-NH3 and EOS-CG kernels keep mutable
+temperature, composition and work state. `NeqSimGERG2008` and `NeqSimEOSCG`
+therefore hold one initialised kernel per thread (and per GERG model type), and
+each calculation uses the kernel of the thread that runs it. Independently owned
+fluids can be evaluated in parallel, for example with
+`ProcessSystem.runParallel()`, and give the same results as a serial run. The
+regression test `ReferenceEosThreadConfinementTest` races two workers at
+different states and requires bit-identical residual Helmholtz energies; the
+cases come from a report by Kirill Shevtsov, where a shared kernel shifted the
+result by 84 % (GERG-2008) and 64 % (EOS-CG).
+
+What remains the caller's responsibility:
+
+- One fluid, phase or wrapper must not be used by several threads at once.
+  `clone()` the fluid for each worker.
+- Every thread that uses a model holds its own kernel for its lifetime, so
+  memory grows with the number of threads in long-lived pools.
+- `clearCache()` makes the next calculation on each thread build a fresh
+  kernel. Existing wrappers stay usable. An EOS-CG kernel passed explicitly to a
+  wrapper is owned by the caller and is not affected.
+
 ### Usage in NeqSim
 
 To use GERG-2008 in NeqSim, use the `SystemGERG2008Eos` class.

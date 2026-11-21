@@ -362,6 +362,33 @@ The model has been validated against Robinson & Stokes experimental data for mea
 - **Mean activity coefficient (γ±)**: 6.0% average error
 - **Osmotic coefficient (φ)**: 4.3% average error
 
+## Computational cost
+
+Measured 21 Nov 2026 (gas + C6–C10 oil + water + 30 wt% MEG, no ions, 100 bara, one TP flash):
+
+| Model | Before | After |
+|---|---|---|
+| `SystemSrkCPAstatoil` | 13–24 ms | unchanged |
+| `SystemElectrolyteCPAstatoil` | 430–530 ms | 87–172 ms |
+| e-CPA hydrate temperature, gas + oil + 30 wt% MEG | 9.1 s | 1.7 s |
+| e-CPA hydrate temperature, gas + oil + 30 wt% MEG + 5 wt% NaCl | 43.1 s | 2.6 s |
+| e-CPA hydrate temperature, methane + water | 0.81 s | 0.76 s |
+
+Two changes, with identical results on the hydrate benchmark set (all temperatures equal to 0.01 K):
+
+- `PhaseModifiedFurstElectrolyteEos.volInit()` evaluates the volume-independent terms — short-range `W`, `WT`,
+  `WTT`, solvent dielectric constant and derivatives, and the per-component packing-fraction numerators — once per
+  temperature and composition instead of in every volume iteration. The cache is cleared at every `init`. The
+  packing fractions keep the original summation order, so results are bit-identical. This matters: a
+  near-degenerate CO2/brine flash at 323 K and 399 bar changed phase split when only the rounding order changed.
+- `PhaseElectrolyteCPA.calcRootVolFinder(GAS)` returns 1.0 directly. Its 2000-point scan could never record a gas
+  root (`solvedBonVlow` starts at 1.0 and is only assigned while below 1e-3), so every GAS call scanned the whole
+  grid and returned 1.0. This fallback ran about 26 times per flash for gas-type trial phases with liquid-like
+  composition. The intended lowest-density-root search was never active and is not introduced here.
+
+The remaining gap to SRK-CPA is the association-site solver (`PhaseElectrolyteCPA.solveX`/`initCPAMatrix`).
+Use `SystemSrkCPAstatoil` when no ions are present.
+
 ## Dielectric Constant Mixing Rules
 
 The model supports three dielectric constant mixing rules:

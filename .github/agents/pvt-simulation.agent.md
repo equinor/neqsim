@@ -10,6 +10,7 @@ required_skills:
 - neqsim-professional-reporting
 - neqsim-pvt-fluid-study-report
 argument-hint: Describe the PVT experiment — e.g., "CME test at 100°C with pressures from 400 to 50 bara", "CVD for reservoir fluid with C7+ characterization", or "fit EOS to match experimental saturation pressure of 250 bara".
+last_verified: "2026-11-21"
 ---
 Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-eos-regression, neqsim-input-validation, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-pvt-fluid-study-report
 
@@ -80,7 +81,7 @@ All classes are in `neqsim.pvtsimulation.simulation`:
 | Constant Mass Expansion | `ConstantMassExpansion` | Relative volume, density, compressibility above/below bubble point |
 | Constant Volume Depletion | `ConstantVolumeDepletion` | Gas production from fixed-volume cell, liquid dropout |
 | Differential Liberation | `DifferentialLiberation` | Stepwise gas removal at reservoir temperature |
-| Separator Test | `SeparatorTest` or `MultiStageSeparatorTest` | Stage separation GOR, API gravity, FVF |
+| Separator Test | `SeparatorTest` or `MultiStageSeparatorTest` | Stage separation GOR, FVF, gas gravity; stock-tank oil density and API gravity |
 | Saturation Pressure | `SaturationPressure` | Bubble/dew point pressure calculation |
 | Saturation Temperature | `SaturationTemperature` | Bubble/dew point temperature |
 | GOR | `GOR` | Gas-oil ratio vs pressure |
@@ -137,6 +138,13 @@ Always characterize C7+ properly:
 - Use `addTBPfraction()` for each carbon number fraction
 - Use `addPlusFraction()` for the heavy end
 - Call `getCharacterization().characterisePlusFraction()` before running PVT. If the heavy end has zero moles, the entry remains available on the original slate. Repeat characterization after adding heavy-end inventory.
+
+## Volume and standard-condition conventions
+CCE relative volume, CCE/DL gas Z and DL Bg are Peneloux-corrected when the fluid uses volume
+correction. Gas gravity is M_gas / 28.96546 g/mol. DL Rs and gas standard volumes use Z = 1 at
+288.15 K and 1.01325 bara with liquid dropout counted as equivalent gas (Pedersen Eq. 3.7);
+call `DifferentialLiberation.setUseIdealGasStandardVolume(false)` only when the lab report uses
+real-gas Z. Results from NeqSim 3.29.0 and earlier differ (#5195). Details: `docs/pvtsimulation/pvt_lab_tests.md`.
 
 ## EOS Parameter Fitting for PVT Matching
 When PVT simulation results don't match experimental data, tune EOS parameters:

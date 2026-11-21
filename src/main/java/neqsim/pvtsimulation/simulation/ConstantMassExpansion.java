@@ -188,9 +188,12 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    saturationVolume = getThermoSystem().getVolume();
+    getThermoSystem().initPhysicalProperties();
+    // Volumes are Peneloux-corrected when the fluid uses volume correction; kept in the legacy
+    // getVolume() unit (m3 * 1e5) so that existing consumers of saturationVolume are unchanged.
+    saturationVolume = correctedVolume(getThermoSystem());
     saturationPressure = getThermoSystem().getPressure();
-    Zsaturation = getThermoSystem().getZ();
+    Zsaturation = getThermoSystem().getZvolcorr();
     saturationIsoThermalCompressibility = -1.0 / getThermoSystem().getPhase(0).getVolume()
         / getThermoSystem().getPhase(0).getdPdVTn();
 
@@ -210,7 +213,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         viscosityOil[i] = getThermoSystem().getPhase("oil").getViscosity();
       }
       // getThermoSystem().display();
-      totalVolume[i] = getThermoSystem().getVolume();
+      totalVolume[i] = correctedVolume(getThermoSystem());
       relativeVolume[i] = totalVolume[i] / saturationVolume;
       density[i] = getThermoSystem().getPhase(0).getDensity("kg/m3");
       gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
@@ -219,7 +222,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
           / ThermodynamicConstantsInterface.referencePressure / getThermoSystem().getPhase(0).getZ() * 288.15
           / getThermoSystem().getTemperature();
       Bg[i] = gasVolume[i] * 1e5 / gasStandardVolume[i];
-      Zgas[i] = getThermoSystem().getPhase(0).getZ();
+      Zgas[i] = getThermoSystem().getPhase(0).getZvolcorr();
       if (getThermoSystem().getNumberOfPhases() == 1) {
         viscosity[i] = getThermoSystem().getPhase(0).getViscosity();
         isoThermalCompressibility[i] = -1.0 / getThermoSystem().getPhase(0).getVolume()
@@ -228,7 +231,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         liquidRelativeVolume[i] = Double.NaN;
       }
       if (getThermoSystem().getNumberOfPhases() > 1) {
-        liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
+        liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getCorrectedVolume() * 1.0e5 / saturationVolume
+            * 100;
         Yfactor[i] = ((saturationPressure - pressures[i]) / pressures[i])
             / ((totalVolume[i] - saturationVolume) / saturationVolume);
         viscosity[i] = Double.NaN;
@@ -241,6 +245,21 @@ public class ConstantMassExpansion extends BasePVTsimulation {
 
     // System.out.println("test finished");
     // System.out.println("test finished");
+  }
+
+  /**
+   * Returns the total volume of the system from the physical-property (Peneloux-corrected when enabled) phase
+   * densities, in the legacy {@link SystemInterface#getVolume()} unit (m3 * 1e5).
+   *
+   * <p>
+   * Requires {@link SystemInterface#initPhysicalProperties()} to have been called for the current state.
+   * </p>
+   *
+   * @param system the equilibrated system
+   * @return corrected volume in m3 * 1e5
+   */
+  static double correctedVolume(SystemInterface system) {
+    return system.getCorrectedVolume() * 1.0e5;
   }
 
   /**
