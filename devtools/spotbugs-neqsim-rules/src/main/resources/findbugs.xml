@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindbugsPlugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="findbugsplugin.xsd"
+	pluginid="com.equinor.neqsim.spotbugs" defaultenabled="true" provider="NeqSim"
+	website="https://github.com/equinor/neqsim">
+	<Detector class="com.equinor.neqsim.spotbugs.CaloricPropertyWithoutInitDetector" speed="fast" reports="NEQSIM_CALORIC_WITHOUT_INIT,NEQSIM_PHYSICAL_WITHOUT_INIT,NEQSIM_REDUNDANT_INIT" />
+	<BugPattern type="NEQSIM_REDUNDANT_INIT" abbrev="NQ" category="PERFORMANCE" />
+	<BugPattern type="NEQSIM_CALORIC_WITHOUT_INIT" abbrev="NQ" category="CORRECTNESS" />
+	<BugPattern type="NEQSIM_PHYSICAL_WITHOUT_INIT" abbrev="NQ" category="CORRECTNESS" />
+	<Detector class="com.equinor.neqsim.spotbugs.StaleFluidStateDetector" speed="fast" reports="NEQSIM_STALE_PROPERTY_READ,NEQSIM_SHARED_FLUID_MUTATION,NEQSIM_MISSING_MIXING_RULE" />
+	<BugPattern type="NEQSIM_STALE_PROPERTY_READ" abbrev="NQ" category="CORRECTNESS" />
+	<BugPattern type="NEQSIM_SHARED_FLUID_MUTATION" abbrev="NQ" category="CORRECTNESS" />
+	<BugPattern type="NEQSIM_MISSING_MIXING_RULE" abbrev="NQ" category="CORRECTNESS" />
+</FindbugsPlugin>

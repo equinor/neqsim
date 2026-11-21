@@ -161,6 +161,14 @@
 							<nested>true</nested>
 							<!-- Native spotbugsXml.xml is always retained; omit the duplicate XDoc report. -->
 							<xmlOutput>false</xmlOutput>
+							<!-- NeqSim rules from devtools/spotbugs-neqsim-rules; install that project first. -->
+							<plugins>
+								<plugin>
+									<groupId>com.equinor.neqsim</groupId>
+									<artifactId>spotbugs-neqsim-rules</artifactId>
+									<version>1.0.0</version>
+								</plugin>
+							</plugins>
 						</configuration>
 					</plugin>
 				</plugins>

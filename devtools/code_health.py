@@ -20,6 +20,8 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = Path(".config/code-health-baseline.json")
+RULES_BASELINE = Path(".config/neqsim-rules-baseline.json")
+RULES_PLUGIN = "com.equinor.neqsim.spotbugs"
 TOOLS = {"source", "pmd", "spotbugs"}
 JAVA_NOISE = re.compile(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', re.S)
 IMPORT = re.compile(r"^\s*import\s+(?:static\s+)?([\w.*]+)\s*;", re.M)
@@ -157,6 +159,19 @@ def read_analyzer(path: Path, tool: str, root: Path) -> list:
     return findings
 
 
+def split_neqsim_rules(findings: list) -> tuple[list, list]:
+    """Separate NeqSim SpotBugs rules; their output does not depend on the analysis JDK."""
+    own = [f for f in findings if f["tool"] == "spotbugs" and f["rule"].startswith("NEQSIM_")]
+    return [f for f in findings if f not in own], own
+
+
+def require_rules_plugin(report: Path) -> None:
+    """Fail closed when the NeqSim detector plugin did not run, instead of passing silently."""
+    plugins = {n.get("id") for n in ET.parse(report).getroot().iter() if n.tag.rsplit("}", 1)[-1] == "Plugin"}
+    if RULES_PLUGIN not in plugins:
+        raise ValueError("NeqSim SpotBugs rules plugin was not loaded; install devtools/spotbugs-neqsim-rules first")
+
+
 def baseline_counts(data: dict, tools: set) -> Counter:
     """Validate a baseline instead of accepting malformed/unknown policy."""
     if data.get("schema_version") != 1 or not isinstance(data.get("findings"), list):
@@ -209,6 +224,8 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--baseline", type=Path, default=BASELINE)
+    parser.add_argument("--rules-baseline", type=Path, default=RULES_BASELINE,
+                        help="Reviewed baseline for NeqSim SpotBugs rules")
     parser.add_argument("--tools", default="source", help="source,pmd,spotbugs")
     parser.add_argument("--pmd", type=Path)
     parser.add_argument("--spotbugs", type=Path)
@@ -234,7 +251,10 @@ def main(argv=None) -> int:
         analyzers = {tool: ET.parse(getattr(args, tool)).getroot().get("version", "unspecified")
                      for tool in sorted(tools - {"source"})}
         analysis_runtime = None
+        rule_findings = []
         if "spotbugs" in tools:
+            require_rules_plugin(args.spotbugs)
+            findings, rule_findings = split_neqsim_rules(findings)
             summary = next(n for n in ET.parse(args.spotbugs).getroot()
                            if n.tag.rsplit("}", 1)[-1] == "FindBugsSummary")
             analysis_runtime = {key: summary.get(key) for key in ("java_version", "vm_version")}
@@ -264,6 +284,11 @@ def main(argv=None) -> int:
             if analysis_runtime:
                 data["analysis_runtime"] = analysis_runtime
             baseline.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            if "spotbugs" in tools:
+                rules = args.rules_baseline if args.rules_baseline.is_absolute() else args.root / args.rules_baseline
+                rules.parent.mkdir(parents=True, exist_ok=True)
+                rules.write_text(json.dumps(make_baseline(rule_findings, {"spotbugs"}, args.revision), indent=2)
+                                 + "\n", encoding="utf-8")
             report.update(status="baseline_written")
         else:
             data = json.loads(baseline.read_text(encoding="utf-8"))
@@ -281,6 +306,12 @@ def main(argv=None) -> int:
                                      + json.dumps(expected_runtime, sort_keys=True)
                                      + "; use the pinned CI JDK before comparing findings")
             introduced, resolved = check_baseline(findings, data, tools)
+            if "spotbugs" in tools:
+                rules = args.rules_baseline if args.rules_baseline.is_absolute() else args.root / args.rules_baseline
+                rules_data = json.loads(rules.read_text(encoding="utf-8"))
+                rule_new, rule_resolved = check_baseline(rule_findings, rules_data, {"spotbugs"})
+                introduced, resolved = introduced + rule_new, resolved + rule_resolved
+                report["neqsim_rules"] = dict(sorted(Counter(f["rule"] for f in rule_findings).items()))
             report.update(new_findings=introduced, resolved_findings=resolved,
                           status="passed" if not introduced else "failed")
     except (OSError, ValueError, KeyError, TypeError, ET.ParseError, SyntaxError) as error:

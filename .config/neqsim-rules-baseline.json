@@ -1,0 +1,2697 @@
+{
+  "schema_version": 1,
+  "source_revision": "4ee12dd60ce9731fccea1293f7815399dae3445a",
+  "tools": [
+    "spotbugs"
+  ],
+  "findings": [
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/FlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.FlowNode:::|Method:neqsim.fluidmechanics.flownode.FlowNode:calcTotalHeatTransferCoefficient:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/FlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.FlowNode:::|Method:neqsim.fluidmechanics.flownode.FlowNode:getPrandtlNumber:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/NonEquilibriumFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:calcHeatTransferCoefficients:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/NonEquilibriumFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:calcHeatTransferCorrection:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/ReactiveFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:calcHeatTransferCoefficients:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/ReactiveFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:calcHeatTransferCorrection:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphaseonephase/interphasepipeflow/InterphasePipeFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseDropletFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseSlugFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseSlugFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseStratifiedFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseStratifiedFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasereactorflow/InterphasePackedBed.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:getHeatCapacityMass:(Lneqsim/thermo/phase/PhaseInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/stirredcell/InterphaseStirredCellFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/stirredcell/InterphaseStirredCellFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/multiphasenode/MultiPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:update:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/TwoPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:update:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/onephaseflowsolver/onephasepipeflowsolver/OnePhaseFixedStaggeredGrid.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:::|Method:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:initFinalResults:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/onephaseflowsolver/onephasepipeflowsolver/OnePhaseFixedStaggeredGrid.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:::|Method:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:initMatrix:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/onephaseflowsolver/onephasepipeflowsolver/OnePhaseFixedStaggeredGrid.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:::|Method:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:initProfiles:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/onephaseflowsolver/onephasepipeflowsolver/OnePhaseFixedStaggeredGrid.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:::|Method:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:initTemperature:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/onephaseflowsolver/onephasepipeflowsolver/OnePhaseFixedStaggeredGrid.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:::|Method:neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid:setEnergyMatrixTDMA:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/stirredcellsolver/StirredCellSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:initFinalResults:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/stirredcellsolver/StirredCellSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:initMatrix:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/stirredcellsolver/StirredCellSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:initTemperature:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:initFinalResults:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:initMatrix:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:initTemperature:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:setEnergyMatrixTDMA:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:estimateInternalHeatTransferCoefficient:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getCondensationRateAtNode:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getCumulativeEnergyLossProfile:()[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getEnergyBalanceError:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getEnthalpyProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getGasHeatTransferCoefficientAtNode:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getHeatCapacityProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getLiquidHeatTransferCoefficientAtNode:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getPrandtlNumberProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getStantonNumberHeatProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getTotalEnthalpyProfile:()[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/integration/StreamValidator.java",
+      "evidence": "P2:Class:neqsim.integration.StreamValidator:::|Method:neqsim.integration.StreamValidator:validateStreamHasRun:(Lneqsim/process/equipment/stream/StreamInterface;)Lneqsim/integration/ValidationFramework$ValidationResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/integration/ThermoValidator.java",
+      "evidence": "P2:Class:neqsim.integration.ThermoValidator:::|Method:neqsim.integration.ThermoValidator:validateForEquilibrium:(Lneqsim/thermo/system/SystemInterface;)Lneqsim/integration/ValidationFramework$ValidationResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/mcp/runners/PropertyTableRunner.java",
+      "evidence": "P2:Class:neqsim.mcp.runners.PropertyTableRunner:::|Method:neqsim.mcp.runners.PropertyTableRunner:addProperty:(Lcom/google/gson/JsonObject;Lneqsim/thermo/system/SystemInterface;Ljava/lang/String;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/engineering/CompressorAutomationWorkflow.java",
+      "evidence": "P2:Class:neqsim.process.engineering.CompressorAutomationWorkflow:::|Method:neqsim.process.engineering.CompressorAutomationWorkflow:steadySnapshot:(Lneqsim/process/util/scenario/CompressorAutomationStudy$Train;)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/engineering/pid/PidSeparatorControlStudy.java",
+      "evidence": "P2:Class:neqsim.process.engineering.pid.PidSeparatorControlStudy:::|Method:neqsim.process.engineering.pid.PidSeparatorControlStudy:run:(Lneqsim/process/engineering/EngineeringProject;Lneqsim/process/engineering/pid/PidDesignModel;Lneqsim/process/engineering/pid/PidSimulationBindings;Lneqsim/process/engineering/pid/PidSeparatorControlStudy$Definition;Lneqsim/process/engineering/pid/PidSeparatorControlStudy$Limits;)Lneqsim/process/engineering/pid/PidSeparatorControlStudy$Result;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/absorber/SimpleTEGAbsorber.java",
+      "evidence": "P2:Class:neqsim.process.equipment.absorber.SimpleTEGAbsorber:::|Method:neqsim.process.equipment.absorber.SimpleTEGAbsorber:calcMixStreamEnthalpy:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/absorber/SimpleTEGAbsorber.java",
+      "evidence": "P2:Class:neqsim.process.equipment.absorber.SimpleTEGAbsorber:::|Method:neqsim.process.equipment.absorber.SimpleTEGAbsorber:displayResult:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/absorber/WaterStripperColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.absorber.WaterStripperColumn:::|Method:neqsim.process.equipment.absorber.WaterStripperColumn:displayResult:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/Compressor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.Compressor:::|Method:neqsim.process.equipment.compressor.Compressor:differentialPolytropicTemperatureRise:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/Compressor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.Compressor:::|Method:neqsim.process.equipment.compressor.Compressor:displayResult:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/Compressor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.Compressor:::|Method:neqsim.process.equipment.compressor.Compressor:findOutPressure:(DDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/Compressor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.Compressor:::|Method:neqsim.process.equipment.compressor.Compressor:getEntropyProduction:(Ljava/lang/String;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/Compressor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.Compressor:::|Method:neqsim.process.equipment.compressor.Compressor:getTotalWork:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/Compressor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.Compressor:::|Method:neqsim.process.equipment.compressor.Compressor:idealInletPolytropicHead:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/CompressorChartGenerator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.CompressorChartGenerator:::|Method:neqsim.process.equipment.compressor.CompressorChartGenerator:generateChartCore:(Ljava/lang/String;[DDDDD)Lneqsim/process/equipment/compressor/CompressorChartInterface;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/CompressorChartKhader2015.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.CompressorChartKhader2015:::|Method:neqsim.process.equipment.compressor.CompressorChartKhader2015:generateRealCurvesForFluid:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/CompressorChartKhader2015.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.CompressorChartKhader2015:::|Method:neqsim.process.equipment.compressor.CompressorChartKhader2015:getPolytropicEfficiency:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/CompressorChartKhader2015.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.CompressorChartKhader2015:::|Method:neqsim.process.equipment.compressor.CompressorChartKhader2015:getPolytropicHead:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/CompressorMapSimilarity.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.CompressorMapSimilarity:::|Method:neqsim.process.equipment.compressor.CompressorMapSimilarity:fromFluids:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/compressor/CompressorMapSimilarity;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/seal/NeumannLabyrinthSolver.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.seal.NeumannLabyrinthSolver:::|Method:neqsim.process.equipment.compressor.seal.NeumannLabyrinthSolver:defaultIsenthalpicFlash:(Lneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/compressor/seal/NeumannLabyrinthSolver$IsenthalpicFlash;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/seal/NeumannLabyrinthSolver.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.seal.NeumannLabyrinthSolver:::|Method:neqsim.process.equipment.compressor.seal.NeumannLabyrinthSolver:enthalpyReached:(Lneqsim/thermo/system/SystemInterface;D)Z:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator:::|Method:neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator:calculate:([D[D[DLjava/lang/String;[DLjava/util/List;[DZ)Lneqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator$FlowCalculationResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator:::|Method:neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator:calculateDpFromFlow:(DDDLjava/lang/String;[DLjava/util/List;[DZ)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/DistillationColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.DistillationColumn:::|Method:neqsim.process.equipment.distillation.DistillationColumn:energyBalanceCheck:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:calculateSegment:(ILneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/distillation/RateBasedPackedColumn$SegmentComputation;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:calculateSimultaneousResidualSegment:(ILneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;D)Lneqsim/process/equipment/distillation/RateBasedPackedColumn$SegmentComputation;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:estimateTemperatureForTargetEnthalpy:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:evaluateColumnResidual:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;Ljava/util/List;[DDI)Lneqsim/process/equipment/distillation/RateBasedPackedColumn$ColumnResidualEvaluation;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:evaluateSegmentResidual:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;Lneqsim/process/equipment/distillation/RateBasedPackedColumn$TransportSnapshot;Ljava/util/List;[DI)Lneqsim/process/equipment/distillation/RateBasedPackedColumn$SegmentResidualEvaluation;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:heatCapacityMass:(Lneqsim/thermo/phase/PhaseInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:phaseMolarEnthalpy:(Lneqsim/thermo/phase/PhaseInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/ShortcutDistillationColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.ShortcutDistillationColumn:::|Method:neqsim.process.equipment.distillation.ShortcutDistillationColumn:computeDuties:(Lneqsim/thermo/system/SystemInterface;D[D[DIII)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/ejector/Ejector.java",
+      "evidence": "P2:Class:neqsim.process.equipment.ejector.Ejector:::|Method:neqsim.process.equipment.ejector.Ejector:estimateSpeedOfSound:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/ejector/EjectorFixedGeometrySolver.java",
+      "evidence": "P2:Class:neqsim.process.equipment.ejector.EjectorFixedGeometrySolver:::|Method:neqsim.process.equipment.ejector.EjectorFixedGeometrySolver:enthalpy:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/ejector/EjectorFixedGeometrySolver.java",
+      "evidence": "P2:Class:neqsim.process.equipment.ejector.EjectorFixedGeometrySolver:::|Method:neqsim.process.equipment.ejector.EjectorFixedGeometrySolver:isentropicEnthalpy:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/expander/ExpanderChartKhader.java",
+      "evidence": "P2:Class:neqsim.process.equipment.expander.ExpanderChartKhader:::|Method:neqsim.process.equipment.expander.ExpanderChartKhader:getStageHeadDrop:(DDLneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/expander/ExpanderOld.java",
+      "evidence": "P2:Class:neqsim.process.equipment.expander.ExpanderOld:::|Method:neqsim.process.equipment.expander.ExpanderOld:displayResult:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/HeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.HeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.HeatExchanger:evaluate:([Lneqsim/thermo/system/SystemInterface;Lneqsim/process/equipment/heatexchanger/HeatExchanger$ThermalState;[DD)Lneqsim/process/equipment/heatexchanger/HeatExchanger$Evaluation;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/HeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.HeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.HeatExchanger:initialState:([Lneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/heatexchanger/HeatExchanger$ThermalState;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/HeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.HeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.HeatExchanger:requireSinglePhaseRatingState:(Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/MultiStreamHeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger:getDuty:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/NeqHeater.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.NeqHeater:::|Method:neqsim.process.equipment.heatexchanger.NeqHeater:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/PinchAnalysis.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:::|Method:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:addProcessStream:(Ljava/lang/String;Lneqsim/process/equipment/stream/StreamInterface;D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/PinchAnalysis.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:::|Method:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:addStreamsFromHeatExchanger:(Lneqsim/process/equipment/heatexchanger/HeatExchanger;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/PinchAnalysis.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:::|Method:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:addStreamsFromHeatExchanger:(Lneqsim/process/equipment/heatexchanger/MultiStreamHeatExchanger2;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/PinchAnalysis.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:::|Method:neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis:fromProcessSystem:(Lneqsim/process/processmodel/ProcessSystem;D)Lneqsim/process/equipment/heatexchanger/heatintegration/PinchAnalysis;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/lng/LNGTankLayeredModel.java",
+      "evidence": "P2:Class:neqsim.process.equipment.lng.LNGTankLayeredModel:::|Method:neqsim.process.equipment.lng.LNGTankLayeredModel:estimateCp:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/mixer/Mixer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.mixer.Mixer:::|Method:neqsim.process.equipment.mixer.Mixer:displayResult:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java",
+      "evidence": "P2:Class:neqsim.process.equipment.network.LoopedPipeNetwork:::|Method:neqsim.process.equipment.network.LoopedPipeNetwork:mixNodeFluids:(Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lneqsim/process/equipment/network/LoopedPipeNetwork$MixedNodeState;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java",
+      "evidence": "P2:Class:neqsim.process.equipment.network.LoopedPipeNetwork:::|Method:neqsim.process.equipment.network.LoopedPipeNetwork:updateGenericEdgeThermodynamicState:(Lneqsim/process/equipment/network/LoopedPipeNetwork$NetworkPipe;Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/network/TwoFluidPipeNetwork.java",
+      "evidence": "P2:Class:neqsim.process.equipment.network.TwoFluidPipeNetwork:::|Method:neqsim.process.equipment.network.TwoFluidPipeNetwork:algebraicDonorConverged:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;)Z:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/IdealGasPiggingModel.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.IdealGasPiggingModel:::|Method:neqsim.process.equipment.pipeline.IdealGasPiggingModel:<init>:(Lneqsim/process/equipment/pipeline/PigMotion;Lneqsim/thermo/system/SystemInterface;DDDDDDDDD)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:calcHeatBalance:(DLneqsim/thermo/system/SystemInterface;Lneqsim/thermodynamicoperations/ThermodynamicOperations;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:calcTemperatureDifference:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:estimateHeatTransferCoefficent:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/Pipeline.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.Pipeline:::|Method:neqsim.process.equipment.pipeline.Pipeline:getEntropyProduction:(Ljava/lang/String;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:calculateCooldownTimeFrom:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:calculateInnerHTC:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:calculateLiquidSpecificEnthalpy:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:createPrescribedInletFace:(Lneqsim/process/equipment/pipeline/twophasepipe/TwoFluidSection;DLneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/pipeline/twophasepipe/TwoFluidSection;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:initializeSections:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:transientHeatCapacity:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:updateNonEquilibriumPhaseProperties:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:updateTemperatureProfile:(DD)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:::|Method:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:calculateFallbackHeatFluxes:(Lneqsim/fluidmechanics/flownode/twophasenode/TwoPhaseFlowNode;[D)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:::|Method:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:estimateStep:(Lneqsim/thermo/system/SystemInterface;Lneqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy$LocalClosure;DD)Lneqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy$StepEstimate;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:::|Method:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:totalEnthalpy:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/ConservativeThermodynamicRecovery.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.ConservativeThermodynamicRecovery$Result:::|Method:neqsim.process.equipment.pipeline.twophasepipe.ConservativeThermodynamicRecovery$Result:install:(Lneqsim/process/equipment/pipeline/twophasepipe/TwoFluidSection;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/ThermodynamicCoupling.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling:::|Method:neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling:extractProperties:(Lneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/pipeline/twophasepipe/ThermodynamicCoupling$ThermoProperties;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TransientPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:::|Method:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:calculateFluxes:([Lneqsim/process/equipment/pipeline/twophasepipe/PipeSection;)[[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/powergeneration/HRSG.java",
+      "evidence": "P2:Class:neqsim.process.equipment.powergeneration.HRSG:::|Method:neqsim.process.equipment.powergeneration.HRSG:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/powergeneration/SteamTurbine.java",
+      "evidence": "P2:Class:neqsim.process.equipment.powergeneration.SteamTurbine:::|Method:neqsim.process.equipment.powergeneration.SteamTurbine:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pump/Pump.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pump.Pump:::|Method:neqsim.process.equipment.pump.Pump:displayResult:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pump/Pump.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pump.Pump:::|Method:neqsim.process.equipment.pump.Pump:getEntropyProduction:(Ljava/lang/String;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reactor/GibbsReactor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reactor.GibbsReactor:::|Method:neqsim.process.equipment.reactor.GibbsReactor:solveGibbsEquilibrium:(D)Z:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reactor/PlugFlowReactor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reactor.PlugFlowReactor:::|Method:neqsim.process.equipment.reactor.PlugFlowReactor:estimateTotalHeatCapacityFlow:(Lneqsim/thermo/system/SystemInterface;[DI)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reactor/sulfurrecovery/ClausCatalyticConverter.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reactor.sulfurrecovery.ClausCatalyticConverter:::|Method:neqsim.process.equipment.reactor.sulfurrecovery.ClausCatalyticConverter:estimateHeatCapacityFlow:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reactor/sulfurrecovery/ClausReactionFurnace.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reactor.sulfurrecovery.ClausReactionFurnace:::|Method:neqsim.process.equipment.reactor.sulfurrecovery.ClausReactionFurnace:estimateHeatCapacityFlow:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reactor/sulfurrecovery/ReactiveWasteHeatBoiler.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reactor.sulfurrecovery.ReactiveWasteHeatBoiler:::|Method:neqsim.process.equipment.reactor.sulfurrecovery.ReactiveWasteHeatBoiler:estimateHeatCapacityFlow:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reactor/sulfurrecovery/SulfurCondenser.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reactor.sulfurrecovery.SulfurCondenser:::|Method:neqsim.process.equipment.reactor.sulfurrecovery.SulfurCondenser:estimateHeatCapacityFlow:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reservoir/TubingPerformance.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reservoir.TubingPerformance:::|Method:neqsim.process.equipment.reservoir.TubingPerformance:calculateRameyTemperature:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/separator/Separator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.Separator:::|Method:neqsim.process.equipment.separator.Separator:publishAcceptedEnergyUpdate:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/separator/Separator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.Separator:::|Method:neqsim.process.equipment.separator.Separator:transientBoundaryEnthalpy:(Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:calculateGasHeatTransferCoeff:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:calculateInternalHeatTransferCoeff:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:calculateMassFlowRate:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:getEnthalpy:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:getEntropy:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:getFlareHeaderMach:(D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:getInternalEnergy:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:getLiquidPoolProperties:()[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:runTransient:(DLjava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/util/CalculatorLibrary.java",
+      "evidence": "P2:Class:neqsim.process.equipment.util.CalculatorLibrary:::|Method:neqsim.process.equipment.util.CalculatorLibrary:lambda$0:(Ljava/util/ArrayList;Lneqsim/process/equipment/ProcessEquipmentInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/valve/ChokeCollapseAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.valve.ChokeCollapseAnalyzer:::|Method:neqsim.process.equipment.valve.ChokeCollapseAnalyzer:analyseGas:(Lneqsim/thermo/system/SystemInterface;DDDLneqsim/process/equipment/valve/ChokeCollapseResult;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/valve/ChokeCollapseAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.valve.ChokeCollapseAnalyzer:::|Method:neqsim.process.equipment.valve.ChokeCollapseAnalyzer:findCollapsePressureRatio:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/integration/ml/FeatureExtractor.java",
+      "evidence": "P2:Class:neqsim.process.integration.ml.FeatureExtractor:::|Method:neqsim.process.integration.ml.FeatureExtractor:extractFeature:(Lneqsim/process/equipment/stream/StreamInterface;Ljava/lang/String;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/measurementdevice/DifferentialPressureFlowMeter.java",
+      "evidence": "P2:Class:neqsim.process.measurementdevice.DifferentialPressureFlowMeter:::|Method:neqsim.process.measurementdevice.DifferentialPressureFlowMeter:getIsentropicExponent:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/EngineeringDeliverablesPackage.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.EngineeringDeliverablesPackage:::|Method:neqsim.process.mechanicaldesign.EngineeringDeliverablesPackage:gasOrificeRelease:(Lneqsim/thermo/phase/PhaseInterface;DDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveGasSizing_IEC_60534_2_1.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveGasSizing_IEC_60534_2_1:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveGasSizing_IEC_60534_2_1:fromValve:(Lneqsim/process/equipment/valve/ThrottlingValve;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing:calcKv:(D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing:calcValveSize:(D)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing:calculateMolarFlow:(DLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing:calculateOutletPressure:(DLneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:calcValveSize:(D)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:calculateFlowRateFromKvAndValveOpeningGas:(DLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:calculateFlowRateFromValveOpeningGas:(DLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:calculateValveOpeningFromFlowRateGas:(DDDLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:findOutletPressureForFixedKvGas:(DLneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534_full.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534_full:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534_full:calculateFlowRateFromValveOpeningGas_full:(DLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_simple.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:calcKv:(D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_simple.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:calculateMolarFlow:(DLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_simple.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:calculateOutletPressure:(DLneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_simple.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_simple:calculateValveOpeningFromFlowRate:(DDDLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/SafetyValveMechanicalDesign.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign:::|Method:neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign:buildContext:(Lneqsim/process/equipment/valve/SafetyValve;Lneqsim/process/equipment/valve/SafetyValve$RelievingScenario;)Lneqsim/process/mechanicaldesign/valve/SafetyValveMechanicalDesign$SizingContext;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/choke/GilbertChokeFlow.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.choke.GilbertChokeFlow:::|Method:neqsim.process.mechanicaldesign.valve.choke.GilbertChokeFlow:calculateDownstreamPressure:(Lneqsim/thermo/system/SystemInterface;DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/choke/MultiphaseChokeFlow.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.choke.MultiphaseChokeFlow:::|Method:neqsim.process.mechanicaldesign.valve.choke.MultiphaseChokeFlow:calculateFluidCriticalPressureRatio:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/choke/SachdevaChokeFlow.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.choke.SachdevaChokeFlow:::|Method:neqsim.process.mechanicaldesign.valve.choke.SachdevaChokeFlow:expansion:(Lneqsim/thermo/system/SystemInterface;DD)Lneqsim/process/mechanicaldesign/valve/choke/SachdevaChokeFlow$Expansion;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/ml/EquipmentStateAdapter.java",
+      "evidence": "P2:Class:neqsim.process.ml.EquipmentStateAdapter:::|Method:neqsim.process.ml.EquipmentStateAdapter:extractBasicState:(Lneqsim/process/equipment/ProcessEquipmentInterface;)Lneqsim/process/ml/StateVector;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/processmodel/ProcessSystem.java",
+      "evidence": "P2:Class:neqsim.process.processmodel.ProcessSystem:::|Method:neqsim.process.processmodel.ProcessSystem:implicitRecycleStatesMatch:(Ljava/util/Map;Ljava/util/Map;)Z:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/processmodel/diagram/ProcessDiagramGraphAdapter.java",
+      "evidence": "P2:Class:neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter$Builder:::|Method:neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter$Builder:addStreamOperatingValues:(Lneqsim/process/processmodel/diagram/ProcessDiagramGraphAdapter$ElementReference;Lneqsim/process/equipment/stream/StreamInterface;Ljava/lang/String;Ljava/lang/String;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/depressurization/VesselFillingSimulator.java",
+      "evidence": "P2:Class:neqsim.process.safety.depressurization.VesselFillingSimulator:::|Method:neqsim.process.safety.depressurization.VesselFillingSimulator:currentInsideHtc:(DDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/pump/PumpDeadheadAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.safety.pump.PumpDeadheadAnalyzer:::|Method:neqsim.process.safety.pump.PumpDeadheadAnalyzer:resolveSpecificHeat:(Ljava/util/List;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/HomogeneousEquilibriumReleaseModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.HomogeneousEquilibriumReleaseModel:::|Method:neqsim.process.safety.release.HomogeneousEquilibriumReleaseModel:phaseBoundaryEntropy:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;DDDDLneqsim/process/safety/release/HomogeneousEquilibriumReleaseModel$SolverDiagnostics;)Lneqsim/thermo/system/SystemInterface;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/HomogeneousEquilibriumReleaseModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.HomogeneousEquilibriumReleaseModel:::|Method:neqsim.process.safety.release.HomogeneousEquilibriumReleaseModel:sample:(Lneqsim/thermo/system/SystemInterface;Lneqsim/process/safety/release/ReleaseState;DLneqsim/process/safety/release/HomogeneousEquilibriumReleaseModel$SolverDiagnostics;)Lneqsim/process/safety/release/HomogeneousEquilibriumReleaseModel$Sample;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/LeakModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.LeakModel:::|Method:neqsim.process.safety.release.LeakModel:advanceBlowdown:(Lneqsim/thermo/system/SystemInterface;D)Lneqsim/thermo/system/SystemInterface;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/LeakModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.LeakModel:::|Method:neqsim.process.safety.release.LeakModel:blowdownMassFlowRate:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/LeakModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.LeakModel:::|Method:neqsim.process.safety.release.LeakModel:requireBlowdownGas:(Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/LegacyScreeningReleaseModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.LegacyScreeningReleaseModel:::|Method:neqsim.process.safety.release.LegacyScreeningReleaseModel:isLegacyChoked:(Lneqsim/thermo/system/SystemInterface;DLjava/util/List;)Z:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/NonEquilibriumReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.NonEquilibriumReleaseInventory:::|Method:neqsim.process.safety.release.NonEquilibriumReleaseInventory:advance:([[DLneqsim/process/safety/release/NonEquilibriumReleaseInventory$State;DDD)Lneqsim/process/safety/release/NonEquilibriumReleaseInventory$Step;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/NonEquilibriumReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.NonEquilibriumReleaseInventory:::|Method:neqsim.process.safety.release.NonEquilibriumReleaseInventory:calculate:(Lneqsim/process/safety/release/NonEquilibriumReleaseInventory$State;)Lneqsim/process/safety/release/ReleaseFlowResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/NonEquilibriumReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.NonEquilibriumReleaseInventory:::|Method:neqsim.process.safety.release.NonEquilibriumReleaseInventory:evaluate:([[DDD)Lneqsim/process/safety/release/NonEquilibriumReleaseInventory$State;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/NonEquilibriumReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.NonEquilibriumReleaseInventory:::|Method:neqsim.process.safety.release.NonEquilibriumReleaseInventory:evaluateSeparate:([[DDDD)Lneqsim/process/safety/release/NonEquilibriumReleaseInventory$State;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/RealGasFannoPipeReleaseModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.RealGasFannoPipeReleaseModel:::|Method:neqsim.process.safety.release.RealGasFannoPipeReleaseModel:inletState:(Lneqsim/thermo/system/SystemInterface;DDD)Lneqsim/process/safety/release/RealGasFannoPipeReleaseModel$FlowState;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/RealGasFannoPipeReleaseModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.RealGasFannoPipeReleaseModel:::|Method:neqsim.process.safety.release.RealGasFannoPipeReleaseModel:isentropicExpansion:(Lneqsim/thermo/system/SystemInterface;DD)Lneqsim/thermo/system/SystemInterface;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/RealGasFannoPipeReleaseModel.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.RealGasFannoPipeReleaseModel:::|Method:neqsim.process.safety.release.RealGasFannoPipeReleaseModel:soundSpeed:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/RealGasPipeDecompression.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.RealGasPipeDecompression:::|Method:neqsim.process.safety.release.RealGasPipeDecompression:stableStep:([Lneqsim/process/safety/release/RealGasPipeDecompression$CellState;Lneqsim/process/safety/release/RealGasPipeDecompression$CellState;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/ReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.ReleaseInventory:::|Method:neqsim.process.safety.release.ReleaseInventory:advance:(Lneqsim/thermo/system/SystemInterface;DDDI)Lneqsim/process/safety/release/ReleaseInventory$InventoryStep;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/ReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.ReleaseInventory:::|Method:neqsim.process.safety.release.ReleaseInventory:calculate:(Lneqsim/thermo/system/SystemInterface;I)Lneqsim/process/safety/release/ReleaseFlowResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/ReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.ReleaseInventory:::|Method:neqsim.process.safety.release.ReleaseInventory:getBalance:()Lneqsim/process/safety/release/ReleaseInventory$Balance;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/ReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.ReleaseInventory:::|Method:neqsim.process.safety.release.ReleaseInventory:refineSinglePhaseVolumeEnergy:(Lneqsim/thermo/system/SystemInterface;DD)Z:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/ReleaseInventory.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.ReleaseInventory:::|Method:neqsim.process.safety.release.ReleaseInventory:runTransient:(DLjava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/ReleaseInventoryInterphaseTransfer.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.ReleaseInventoryInterphaseTransfer:::|Method:neqsim.process.safety.release.ReleaseInventoryInterphaseTransfer:calculate:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;Ljava/util/Map;Ljava/util/Map;DD)Lneqsim/process/safety/release/ReleaseInventoryInterphaseTransfer$Step;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/release/ReleaseState.java",
+      "evidence": "P2:Class:neqsim.process.safety.release.ReleaseState:::|Method:neqsim.process.safety.release.ReleaseState:<init>:(Lneqsim/thermo/system/SystemInterface;D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/util/monitor/FluidResponse.java",
+      "evidence": "P2:Class:neqsim.process.util.monitor.FluidResponse:::|Method:neqsim.process.util.monitor.FluidResponse:<init>:(Ljava/lang/String;Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/util/monitor/StreamResponse.java",
+      "evidence": "P2:Class:neqsim.process.util.monitor.StreamResponse:::|Method:neqsim.process.util.monitor.StreamResponse:<init>:(Lneqsim/process/equipment/stream/StreamInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/util/report/HeatMaterialBalance.java",
+      "evidence": "P2:Class:neqsim.process.util.report.HeatMaterialBalance:::|Method:neqsim.process.util.report.HeatMaterialBalance:getStreamData:(Lneqsim/process/equipment/stream/StreamInterface;)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/util/scenario/CompressorAutomationStudy.java",
+      "evidence": "P2:Class:neqsim.process.util.scenario.CompressorAutomationStudy:::|Method:neqsim.process.util.scenario.CompressorAutomationStudy:inventory:(Lneqsim/process/equipment/separator/Separator;)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/util/scenario/CompressorAutomationStudy.java",
+      "evidence": "P2:Class:neqsim.process.util.scenario.CompressorAutomationStudy:::|Method:neqsim.process.util.scenario.CompressorAutomationStudy:stream:(Lneqsim/process/equipment/stream/StreamInterface;)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "evidence": "P2:Class:neqsim.pvtsimulation.simulation.ConstantVolumeDepletion:::|Method:neqsim.pvtsimulation.simulation.ConstantVolumeDepletion:fixedCellFeasibleGibbsReference:(Lneqsim/thermo/system/SystemInterface;[D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "evidence": "P2:Class:neqsim.pvtsimulation.simulation.ConstantVolumeDepletion:::|Method:neqsim.pvtsimulation.simulation.ConstantVolumeDepletion:refineFixedCellEquilibrium:(Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/standards/gasquality/Draft_GERG2004.java",
+      "evidence": "P2:Class:neqsim.standards.gasquality.Draft_GERG2004:::|Method:neqsim.standards.gasquality.Draft_GERG2004:createTable:(Ljava/lang/String;)[[Ljava/lang/String;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/util/agentic/SimulationQualityGate.java",
+      "evidence": "P2:Class:neqsim.util.agentic.SimulationQualityGate:::|Method:neqsim.util.agentic.SimulationQualityGate:checkEnergyBalance:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/util/agentic/SimulationQualityGate.java",
+      "evidence": "P2:Class:neqsim.util.agentic.SimulationQualityGate:::|Method:neqsim.util.agentic.SimulationQualityGate:checkStreamConsistency:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_CALORIC_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/util/nucleation/AttainableMetastabilityVolumeBalance.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:::|Method:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:bubbleGrowthVolumeRate:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;Lneqsim/thermodynamicoperations/ThermodynamicOperations;DDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_MISSING_MIXING_RULE",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/onephasenode/onephasepipeflownode/onePhasePipeFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode:::|Method:neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode:main:([Ljava/lang/String;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/chemicalreactions/kinetics/Kinetics.java",
+      "evidence": "P2:Class:neqsim.chemicalreactions.kinetics.Kinetics:::|Method:neqsim.chemicalreactions.kinetics.Kinetics:calcReacMatrix:(Lneqsim/thermo/phase/PhaseInterface;Lneqsim/thermo/phase/PhaseInterface;I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/FlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.FlowNode:::|Method:neqsim.fluidmechanics.flownode.FlowNode:calcTotalHeatTransferCoefficient:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/FlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.FlowNode:::|Method:neqsim.fluidmechanics.flownode.FlowNode:getEffectiveSchmidtNumber:(II)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/FlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.FlowNode:::|Method:neqsim.fluidmechanics.flownode.FlowNode:getPrandtlNumber:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/FlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.FlowNode:::|Method:neqsim.fluidmechanics.flownode.FlowNode:getSchmidtNumber:(III)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/finitevolumeboundary/fluidboundarysolver/FluidBoundarySolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver:getMolarFlux:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/NonEquilibriumFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:calcHeatTransferCoefficients:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/NonEquilibriumFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:setJacMassTrans2:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/NonEquilibriumFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary:setfvecMassTrans2:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/KrishnaStandartFilmModel.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel:calcBinarySchmidtNumbers:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/ReactiveFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:calcHeatTransferCoefficients:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/ReactiveFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:setJacMassTrans2:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/ReactiveFluidBoundary.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:setfvecMassTrans2:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/enhancementfactor/EnhancementFactorAlg.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactorAlg:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactorAlg:calcEnhancementVec:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphaseonephase/interphasepipeflow/InterphasePipeFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphaseonephase/interphasepipeflow/InterphasePipeFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphaseonephase.interphasepipeflow.InterphasePipeFlow:calcWallMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseDropletFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseDropletFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:calcInterphaseMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseDropletFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseDropletFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow:calcWallMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseSlugFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseSlugFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:calcInterphaseMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseSlugFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseSlugFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseSlugFlow:calcWallMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseStratifiedFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseStratifiedFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:calcInterphaseMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseStratifiedFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasepipeflow/InterphaseStratifiedFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow:calcWallMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasereactorflow/InterphasePackedBed.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasereactorflow/InterphasePackedBed.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:calcInterphaseMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/interphasereactorflow/InterphasePackedBed.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasereactorflow.InterphasePackedBed:getEffectiveDiffusivity:(Lneqsim/thermo/phase/PhaseInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/stirredcell/InterphaseStirredCellFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:calcInterphaseHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/stirredcell/InterphaseStirredCellFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:calcInterphaseMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/stirredcell/InterphaseStirredCellFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:calcWallHeatTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/interphasetransportcoefficient/interphasetwophase/stirredcell/InterphaseStirredCellFlow.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.stirredcell.InterphaseStirredCellFlow:calcWallMassTransferCoefficient:(IDLneqsim/fluidmechanics/flownode/FlowNodeInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/multiphasenode/MultiPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:calcReynoldNumber:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/multiphasenode/MultiPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:init:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/multiphasenode/MultiPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:initFlowCalc:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/onephasenode/onePhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode:calcReynoldsNumber:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/onephasenode/onePhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode:init:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/onephasenode/onePhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.onephasenode.onePhaseFlowNode:initFlowCalc:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/onephasenode/onephasepipeflownode/onePhasePipeFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode:::|Method:neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode:calcReynoldsNumber:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/TwoPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:calcReynoldNumber:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/TwoPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:getNucleationDiameter:(Z)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/TwoPhaseFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode:init:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/twophasepipeflownode/BubbleFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode:calcEmpiricalInterfacialAreaPerVolume:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/twophasepipeflownode/DropletFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode:calcEmpiricalInterfacialAreaPerVolume:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/twophasereactorflownode/TwoPhasePackedBedFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode.TwoPhasePackedBedFlowNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.twophasereactorflownode.TwoPhasePackedBedFlowNode:calcReynoldNumber:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/twophasenode/twophasestirredcellnode/StirredCellNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode.StirredCellNode:::|Method:neqsim.fluidmechanics.flownode.twophasenode.twophasestirredcellnode.StirredCellNode:calcReynoldNumber:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/stirredcellsolver/StirredCellSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:initFinalResults:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/stirredcellsolver/StirredCellSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver.StirredCellSolver:initMatrix:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:initFinalResults:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:initMatrix:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:setComponentConservationMatrix2:(II)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:setEnergyMatrixTDMA:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:setImpulsMatrixTDMA:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:setMassConservationMatrix:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:setPhaseFractionMatrix:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:updatePressureFromMomentumBalance:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:::|Method:neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver:validateMassTransferAgainstLiterature:()Ljava/lang/String;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:detectFlowPatternAtNode:(I)Lneqsim/fluidmechanics/flownode/FlowPattern;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:estimateInternalHeatTransferCoefficient:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getAccelerationPressureDrop:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getDensityProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getFrictionalPressureDrop:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getGasHeatTransferCoefficientAtNode:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getGasMassTransferCoefficientAtNode:(ID)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getGravitationalPressureDrop:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getLiquidHeatTransferCoefficientAtNode:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getLiquidMassTransferCoefficientAtNode:(ID)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getLockhartMartinelliPressureGradient:(I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getMixtureDensityProfile:()[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getNusseltNumberProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getPrandtlNumberProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getSchmidtNumberProfile:(ID)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getStantonNumberHeatProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getSurfaceTensionProfile:()[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getThermalConductivityProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:::|Method:neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem:getViscosityProfile:(I)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/fluidmechanics/util/FlowRegimeDetector.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.util.FlowRegimeDetector:::|Method:neqsim.fluidmechanics.util.FlowRegimeDetector:detectFlowRegime:(Lneqsim/thermo/system/SystemInterface;DDDD)Lneqsim/fluidmechanics/util/FlowRegimeDetector$FlowRegime;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/mcp/runners/PropertyTableRunner.java",
+      "evidence": "P2:Class:neqsim.mcp.runners.PropertyTableRunner:::|Method:neqsim.mcp.runners.PropertyTableRunner:addProperty:(Lcom/google/gson/JsonObject;Lneqsim/thermo/system/SystemInterface;Ljava/lang/String;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/absorber/RateBasedAbsorber.java",
+      "evidence": "P2:Class:neqsim.process.equipment.absorber.RateBasedAbsorber:::|Method:neqsim.process.equipment.absorber.RateBasedAbsorber:calculateStage:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;DI)Lneqsim/process/equipment/absorber/RateBasedAbsorber$StageResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/absorber/SimpleTEGAbsorber.java",
+      "evidence": "P2:Class:neqsim.process.equipment.absorber.SimpleTEGAbsorber:::|Method:neqsim.process.equipment.absorber.SimpleTEGAbsorber:getFsFactor:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/absorber/SimpleTEGAbsorber.java",
+      "evidence": "P2:Class:neqsim.process.equipment.absorber.SimpleTEGAbsorber:::|Method:neqsim.process.equipment.absorber.SimpleTEGAbsorber:getGasLoadFactor:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/absorber/SimpleTEGAbsorber.java",
+      "evidence": "P2:Class:neqsim.process.equipment.absorber.SimpleTEGAbsorber:::|Method:neqsim.process.equipment.absorber.SimpleTEGAbsorber:getMinimumDiameterForFsLimit:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/adsorber/AdsorptionBed.java",
+      "evidence": "P2:Class:neqsim.process.equipment.adsorber.AdsorptionBed:::|Method:neqsim.process.equipment.adsorber.AdsorptionBed:calcErgunPressureDrop:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/adsorber/MercuryRemovalBed.java",
+      "evidence": "P2:Class:neqsim.process.equipment.adsorber.MercuryRemovalBed:::|Method:neqsim.process.equipment.adsorber.MercuryRemovalBed:calcErgunPressureDrop:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/compressor/CompressorChartGenerator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.CompressorChartGenerator:::|Method:neqsim.process.equipment.compressor.CompressorChartGenerator:generateChartCore:(Ljava/lang/String;[DDDDD)Lneqsim/process/equipment/compressor/CompressorChartInterface;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator:::|Method:neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator:calculate:([D[D[DLjava/lang/String;[DLjava/util/List;[DZ)Lneqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator$FlowCalculationResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:averageDiffusivity:(Lneqsim/thermo/phase/PhaseInterface;Z)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:binaryDiffusivity:(Lneqsim/thermo/phase/PhaseInterface;IIDZ)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:calculateTransportSnapshot:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;D)Lneqsim/process/equipment/distillation/RateBasedPackedColumn$TransportSnapshot;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:estimateSurfaceTension:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/distillation/RateBasedPackedColumn.java",
+      "evidence": "P2:Class:neqsim.process.equipment.distillation.RateBasedPackedColumn:::|Method:neqsim.process.equipment.distillation.RateBasedPackedColumn:thermalConductivity:(Lneqsim/thermo/phase/PhaseInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/filter/Filter.java",
+      "evidence": "P2:Class:neqsim.process.equipment.filter.Filter:::|Method:neqsim.process.equipment.filter.Filter:calculateErgunPressureDrop:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/filter/SulfurFilter.java",
+      "evidence": "P2:Class:neqsim.process.equipment.filter.SulfurFilter:::|Method:neqsim.process.equipment.filter.SulfurFilter:runParticleSizePrediction:(Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/HeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.HeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.HeatExchanger:requireSinglePhaseRatingState:(Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/LNGHeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.LNGHeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.LNGHeatExchanger:computeRigorousZoneData:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/manifold/Manifold.java",
+      "evidence": "P2:Class:neqsim.process.equipment.manifold.Manifold:::|Method:neqsim.process.equipment.manifold.Manifold:calculateBranchLOF:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/manifold/Manifold.java",
+      "evidence": "P2:Class:neqsim.process.equipment.manifold.Manifold:::|Method:neqsim.process.equipment.manifold.Manifold:calculateHeaderLOF:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java",
+      "evidence": "P2:Class:neqsim.process.equipment.network.LoopedPipeNetwork:::|Method:neqsim.process.equipment.network.LoopedPipeNetwork:calculateHeadLossDarcyWeisbach:(Lneqsim/process/equipment/network/LoopedPipeNetwork$NetworkPipe;Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java",
+      "evidence": "P2:Class:neqsim.process.equipment.network.LoopedPipeNetwork:::|Method:neqsim.process.equipment.network.LoopedPipeNetwork:calculateHeadLossTubing:(Lneqsim/process/equipment/network/LoopedPipeNetwork$NetworkPipe;Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/AdiabaticPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.AdiabaticPipe:::|Method:neqsim.process.equipment.pipeline.AdiabaticPipe:calcPressureOut:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/AdiabaticPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.AdiabaticPipe:::|Method:neqsim.process.equipment.pipeline.AdiabaticPipe:calculateLOF:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/AdiabaticTwoPhasePipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe:::|Method:neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe:calcPressureOut:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/IncompressiblePipeFlow.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.IncompressiblePipeFlow:::|Method:neqsim.process.equipment.pipeline.IncompressiblePipeFlow:calcPressureOut:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:calcFrictionPressureLoss:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:calcHydrostaticPressureDifference:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:calcTwoPhaseHeatTransferCoefficient:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:calculateLOF:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:estimateHeatTransferCoefficent:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:homogeneousViscosity:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeGray.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeGray:::|Method:neqsim.process.equipment.pipeline.PipeGray:calcSegmentPressureDrop:(Lneqsim/thermo/system/SystemInterface;DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeHagedornBrown.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeHagedornBrown:::|Method:neqsim.process.equipment.pipeline.PipeHagedornBrown:calcSegmentPressureDrop:(Lneqsim/thermo/system/SystemInterface;DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeMukherjeeAndBrill.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeMukherjeeAndBrill:::|Method:neqsim.process.equipment.pipeline.PipeMukherjeeAndBrill:calcSegmentPressureDrop:(Lneqsim/thermo/system/SystemInterface;DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/Pipeline.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.Pipeline:::|Method:neqsim.process.equipment.pipeline.Pipeline:getSuperficialVelocity:(II)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TubingPerformance.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TubingPerformance:::|Method:neqsim.process.equipment.pipeline.TubingPerformance:readPhaseState:(Lneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/pipeline/TubingPerformance$PhaseState;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:calculateInnerHTC:(DD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:initializeSections:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.TwoFluidPipe:::|Method:neqsim.process.equipment.pipeline.TwoFluidPipe:updateNonEquilibriumPhaseProperties:(I)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:::|Method:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:calculateFallbackHeatFluxes:(Lneqsim/fluidmechanics/flownode/twophasenode/TwoPhaseFlowNode;[D)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:::|Method:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:calculateLocalHydrodynamics:(Lneqsim/thermo/system/SystemInterface;D)Lneqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy$LocalHydrodynamics;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/evaporation/PipelineEvaporationStudy.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:::|Method:neqsim.process.equipment.pipeline.evaporation.PipelineEvaporationStudy:phaseVolumeFlow:(Lneqsim/thermo/system/SystemInterface;I)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/ConservativeThermodynamicRecovery.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.ConservativeThermodynamicRecovery$Result:::|Method:neqsim.process.equipment.pipeline.twophasepipe.ConservativeThermodynamicRecovery$Result:install:(Lneqsim/process/equipment/pipeline/twophasepipe/TwoFluidSection;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/ThermodynamicCoupling.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling:::|Method:neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling:extractProperties:(Lneqsim/thermo/system/SystemInterface;)Lneqsim/process/equipment/pipeline/twophasepipe/ThermodynamicCoupling$ThermoProperties;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TransientPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:::|Method:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:initializeFromStream:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TransientPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:::|Method:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:updateInletFromStream:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reactor/PlugFlowReactor.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reactor.PlugFlowReactor:::|Method:neqsim.process.equipment.reactor.PlugFlowReactor:getGasViscosity:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reservoir/TubingPerformance.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reservoir.TubingPerformance:::|Method:neqsim.process.equipment.reservoir.TubingPerformance:calculateBeggsBrillPressureDrop:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reservoir/TubingPerformance.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reservoir.TubingPerformance:::|Method:neqsim.process.equipment.reservoir.TubingPerformance:calculateGrayPressureDrop:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reservoir/TubingPerformance.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reservoir.TubingPerformance:::|Method:neqsim.process.equipment.reservoir.TubingPerformance:calculateHagedornBrownPressureDrop:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/reservoir/TubingPerformance.java",
+      "evidence": "P2:Class:neqsim.process.equipment.reservoir.TubingPerformance:::|Method:neqsim.process.equipment.reservoir.TubingPerformance:calculateHasanKabirPressureDrop:(Lneqsim/thermo/system/SystemInterface;D)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/separator/ThreePhaseSeparator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.ThreePhaseSeparator:::|Method:neqsim.process.equipment.separator.ThreePhaseSeparator:calcInterfaceSettlingTime:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/separator/sectiontype/SeparatorSection.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.sectiontype.SeparatorSection:::|Method:neqsim.process.equipment.separator.sectiontype.SeparatorSection:getMinimumLiquidSealHeight:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/subsea/FlexiblePipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.FlexiblePipe:::|Method:neqsim.process.equipment.subsea.FlexiblePipe:calculatePressureDrop:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/subsea/SubseaJumper.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.SubseaJumper:::|Method:neqsim.process.equipment.subsea.SubseaJumper:calculatePressureDrop:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:calculateGasHeatTransferCoeff:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:calculateInternalHeatTransferCoeff:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java",
+      "evidence": "P2:Class:neqsim.process.equipment.tank.VesselDepressurization:::|Method:neqsim.process.equipment.tank.VesselDepressurization:getLiquidPoolProperties:()[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/equipment/watertreatment/Hydrocyclone.java",
+      "evidence": "P2:Class:neqsim.process.equipment.watertreatment.Hydrocyclone:::|Method:neqsim.process.equipment.watertreatment.Hydrocyclone:extractFluidProperties:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/fielddevelopment/evaluation/SeparatorSizingCalculator.java",
+      "evidence": "P2:Class:neqsim.process.fielddevelopment.evaluation.SeparatorSizingCalculator:::|Method:neqsim.process.fielddevelopment.evaluation.SeparatorSizingCalculator:sizeSeparator:(Lneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/fielddevelopment/evaluation/SeparatorSizingCalculator$SeparatorType;Lneqsim/process/fielddevelopment/evaluation/SeparatorSizingCalculator$DesignStandard;)Lneqsim/process/fielddevelopment/evaluation/SeparatorSizingCalculator$SeparatorSizingResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/integration/ml/FeatureExtractor.java",
+      "evidence": "P2:Class:neqsim.process.integration.ml.FeatureExtractor:::|Method:neqsim.process.integration.ml.FeatureExtractor:extractFeature:(Lneqsim/process/equipment/stream/StreamInterface;Ljava/lang/String;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/measurementdevice/DifferentialPressureFlowMeter.java",
+      "evidence": "P2:Class:neqsim.process.measurementdevice.DifferentialPressureFlowMeter:::|Method:neqsim.process.measurementdevice.DifferentialPressureFlowMeter:getDynamicViscosity:()D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/measurementdevice/VolumeFlowTransmitter.java",
+      "evidence": "P2:Class:neqsim.process.measurementdevice.VolumeFlowTransmitter:::|Method:neqsim.process.measurementdevice.VolumeFlowTransmitter:getRawMeasuredValue:(Ljava/lang/String;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/measurementdevice/vfm/SoftSensor.java",
+      "evidence": "P2:Class:neqsim.process.measurementdevice.vfm.SoftSensor:::|Method:neqsim.process.measurementdevice.vfm.SoftSensor:calculateProperty:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/absorber/AbsorberMechanicalDesign.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.absorber.AbsorberMechanicalDesign:::|Method:neqsim.process.mechanicaldesign.absorber.AbsorberMechanicalDesign:calcDesign:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/designstandards/SeparatorDesignStandard.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard:::|Method:neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard:getLiquidRetentionTime:(Ljava/lang/String;Lneqsim/process/mechanicaldesign/MechanicalDesign;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/pump/PumpMechanicalDesignResponse.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.pump.PumpMechanicalDesignResponse:::|Method:neqsim.process.mechanicaldesign.pump.PumpMechanicalDesignResponse:populateFromPumpDesign:(Lneqsim/process/mechanicaldesign/pump/PumpMechanicalDesign;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/separator/GasScrubberMechanicalDesign.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign:::|Method:neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign:calcDesign:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/separator/conformity/ConformityRuleSet.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet$TR1965RuleSet:::|Method:neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet$TR1965RuleSet:getGasDensity:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/separator/conformity/ConformityRuleSet.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet$TR1965RuleSet:::|Method:neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet$TR1965RuleSet:getLiquidDensity:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/separator/conformity/ConformityRuleSet.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet$TR1965RuleSet:::|Method:neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet$TR1965RuleSet:getSurfaceTensionMNPerM:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:calculateFlowRateFromKvAndValveOpeningGas:(DLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:calculateFlowRateFromValveOpeningGas:(DLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:calculateValveOpeningFromFlowRateGas:(DDDLneqsim/process/equipment/stream/StreamInterface;Lneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534:findOutletPressureForFixedKvLiquid:(DLneqsim/process/equipment/stream/StreamInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534_full.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534_full:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534_full:sizeControlValveGas:(DDDDDDDD)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534_full.java",
+      "evidence": "P2:Class:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534_full:::|Method:neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534_full:sizeControlValveLiquid:(DDDDDDD)Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/ml/EquipmentStateAdapter.java",
+      "evidence": "P2:Class:neqsim.process.ml.EquipmentStateAdapter:::|Method:neqsim.process.ml.EquipmentStateAdapter:extractSeparatorState:(Lneqsim/process/equipment/separator/SeparatorInterface;)Lneqsim/process/ml/StateVector;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/depressurization/VesselFillingSimulator.java",
+      "evidence": "P2:Class:neqsim.process.safety.depressurization.VesselFillingSimulator:::|Method:neqsim.process.safety.depressurization.VesselFillingSimulator:currentInsideHtc:(DDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/safety/opendrain/OpenDrainProcessEvidenceCalculator.java",
+      "evidence": "P2:Class:neqsim.process.safety.opendrain.OpenDrainProcessEvidenceCalculator:::|Method:neqsim.process.safety.opendrain.OpenDrainProcessEvidenceCalculator:getLiquidDensityKgPerM3:(Lneqsim/thermo/system/SystemInterface;)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/process/util/monitor/FluidResponse.java",
+      "evidence": "P2:Class:neqsim.process.util.monitor.FluidResponse:::|Method:neqsim.process.util.monitor.FluidResponse:<init>:(Ljava/lang/String;Lneqsim/thermo/system/SystemInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/standards/gasquality/Draft_GERG2004.java",
+      "evidence": "P2:Class:neqsim.standards.gasquality.Draft_GERG2004:::|Method:neqsim.standards.gasquality.Draft_GERG2004:createTable:(Ljava/lang/String;)[[Ljava/lang/String;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/util/nucleation/AttainableMetastabilityVolumeBalance.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:::|Method:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:bubbleGrowthVolumeRate:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermo/system/SystemInterface;Lneqsim/thermodynamicoperations/ThermodynamicOperations;DDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/util/nucleation/ClassicalNucleationTheory.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.ClassicalNucleationTheory:::|Method:neqsim.util.nucleation.ClassicalNucleationTheory:fromThermoSystem:(Lneqsim/thermo/system/SystemInterface;Ljava/lang/String;)Lneqsim/util/nucleation/ClassicalNucleationTheory;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/util/nucleation/MulticomponentNucleation.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.MulticomponentNucleation:::|Method:neqsim.util.nucleation.MulticomponentNucleation:calculatePseudocomponent:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
+      "path": "src/main/java/neqsim/util/nucleation/SpinodalDecompositionDetector.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.SpinodalDecompositionDetector:::|Method:neqsim.util.nucleation.SpinodalDecompositionDetector:estimateDominantWavelength:(Lneqsim/thermo/phase/PhaseInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/equipment/separator/Separator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.Separator:::|Method:neqsim.process.equipment.separator.Separator:setTransientOutletComposition:(Lneqsim/process/equipment/stream/StreamInterface;[D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/equipment/subsea/SubseaManifold.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.SubseaManifold:::|Method:neqsim.process.equipment.subsea.SubseaManifold:applyPressureDrop:(Lneqsim/process/equipment/stream/StreamInterface;D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/fielddevelopment/tieback/capacity/TieInCapacityPlanner.java",
+      "evidence": "P2:Class:neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner:::|Method:neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner:restoreProcessStream:(Lneqsim/process/processmodel/ProcessModel;Lneqsim/process/processmodel/ProcessSystem;Lneqsim/process/equipment/stream/StreamInterface;D[D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/util/optimizer/ProcessOptimizationEngine.java",
+      "evidence": "P2:Class:neqsim.process.util.optimizer.ProcessOptimizationEngine:::|Method:neqsim.process.util.optimizer.ProcessOptimizationEngine:evaluateCapacityPoint:(DDDDD)Lneqsim/process/util/optimizer/ProcessOptimizationEngine$LiftCurvePoint;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/DryGasSealAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.DryGasSealAnalyzer:::|Method:neqsim.process.equipment.compressor.DryGasSealAnalyzer:runCondensateAccumulation:()Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/DryGasSealAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.DryGasSealAnalyzer:::|Method:neqsim.process.equipment.compressor.DryGasSealAnalyzer:runFlashVaporisationImpact:()Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/DryGasSealAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.DryGasSealAnalyzer:::|Method:neqsim.process.equipment.compressor.DryGasSealAnalyzer:runIsenthalpicExpansionAnalysis:()Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/SealGasSupplyConditioning.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.SealGasSupplyConditioning:::|Method:neqsim.process.equipment.compressor.SealGasSupplyConditioning:expand:(D)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/expander/ExpanderOld.java",
+      "evidence": "P2:Class:neqsim.process.equipment.expander.ExpanderOld:::|Method:neqsim.process.equipment.expander.ExpanderOld:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/HeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.HeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.HeatExchanger:foulingScreening:(D[DLjava/lang/String;)Lneqsim/process/equipment/heatexchanger/HeatExchanger$FoulingScreeningResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/ReBoiler.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.ReBoiler:::|Method:neqsim.process.equipment.heatexchanger.ReBoiler:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:runWithSpecifiedFlowRate:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TransientPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:::|Method:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:initializeFromStream:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TransientPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:::|Method:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:updateInletFromStream:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/powergeneration/HRSG.java",
+      "evidence": "P2:Class:neqsim.process.equipment.powergeneration.HRSG:::|Method:neqsim.process.equipment.powergeneration.HRSG:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/separator/Separator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.Separator:::|Method:neqsim.process.equipment.separator.Separator:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/safety/envelope/SafetyEnvelopeCalculator.java",
+      "evidence": "P2:Class:neqsim.process.safety.envelope.SafetyEnvelopeCalculator:::|Method:neqsim.process.safety.envelope.SafetyEnvelopeCalculator:calculateMDMTEnvelope:(DDDI)Lneqsim/process/safety/envelope/SafetyEnvelope;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/util/combustion/CombustionCalculator.java",
+      "evidence": "P2:Class:neqsim.process.util.combustion.CombustionCalculator:::|Method:neqsim.process.util.combustion.CombustionCalculator:adiabaticFlameTemperature:(DDDDDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/standards/gasquality/Standard_AGA3.java",
+      "evidence": "P2:Class:neqsim.standards.gasquality.Standard_AGA3:::|Method:neqsim.standards.gasquality.Standard_AGA3:calculate:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/standards/gasquality/Standard_AGA7.java",
+      "evidence": "P2:Class:neqsim.standards.gasquality.Standard_AGA7:::|Method:neqsim.standards.gasquality.Standard_AGA7:calculate:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/util/nucleation/AttainableMetastabilityVolumeBalance.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:::|Method:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:calculateLimit:(DD)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/util/nucleation/AttainableMetastabilityVolumeBalance.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:::|Method:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:solveIsentropicLiquidTemperature:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermodynamicoperations/ThermodynamicOperations;DDD)D:",
+      "count": 1
+    }
+  ]
+}
