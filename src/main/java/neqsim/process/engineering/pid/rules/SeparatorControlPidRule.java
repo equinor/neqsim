@@ -67,12 +67,12 @@ public final class SeparatorControlPidRule implements PidDesignRule {
     PidElement lcv = (existing == null
         ? PidRuleSupport.element(context, equipment, "LCV", "LEVEL-CONTROL-VALVE", PidElementType.CONTROL_VALVE,
             RULE_ID, "Separator liquid level control valve", "Modulate liquid outlet flow to control level")
-        : PidRuleSupport.existingFinalElement(context, equipment, existing.getName(), "LEVEL-CONTROL-VALVE",
-            RULE_ID, "Separator liquid level control valve (existing modelled letdown valve)",
+        : PidRuleSupport.existingFinalElement(context, equipment, existing.getName(), "LEVEL-CONTROL-VALVE", RULE_ID,
+            "Separator liquid level control valve (existing modelled letdown valve)",
             "Use the modelled liquid letdown valve as the level-control final element instead of adding a second "
                 + "valve in series"))
-        .line(liquid.getName())
-        .attribute("failurePosition", "HAZOP_INPUT_REQUIRED").attribute("sizingStatus", "CALCULATION_REQUIRED");
+        .line(liquid.getName()).attribute("failurePosition", "HAZOP_INPUT_REQUIRED")
+        .attribute("sizingStatus", "CALCULATION_REQUIRED");
     connect(lt, lic, lcv);
     PidRuleSupport.trace(lt, context, equipment, "LEVEL");
     PidRuleSupport.trace(lic, context, equipment, "LEVEL-CONTROL");

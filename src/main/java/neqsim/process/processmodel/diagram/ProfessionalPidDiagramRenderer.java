@@ -133,8 +133,7 @@ public final class ProfessionalPidDiagramRenderer {
   /** Heaters and coolers drawn as bands on shared heat-exchanger sheets. */
   private final List<ProcessEquipmentInterface> compactExchangers = new ArrayList<ProcessEquipmentInterface>();
   /** Heat-exchanger sheets in drawing order, each with its exchangers top to bottom. */
-  private final List<List<ProcessEquipmentInterface>> exchangerSheets =
-      new ArrayList<List<ProcessEquipmentInterface>>();
+  private final List<List<ProcessEquipmentInterface>> exchangerSheets = new ArrayList<List<ProcessEquipmentInterface>>();
   private static final double EXCHANGER_SHEET_TOP = 88.0;
   /** ISO 5457 A1 frame: 20 mm filing margin on the left, 10 mm elsewhere. */
   private static final double FRAME_LEFT = 20.0;
@@ -454,7 +453,7 @@ public final class ProfessionalPidDiagramRenderer {
       }
       verifySourceCoverage();
       fillSheetTotals();
-    return nativeRenderer.renderScenes(pages, diagnostics, Arrays.asList("DRAWING_SHEET_BOUNDS", "MATERIAL_ENDPOINTS",
+      return nativeRenderer.renderScenes(pages, diagnostics, Arrays.asList("DRAWING_SHEET_BOUNDS", "MATERIAL_ENDPOINTS",
           "TEXT_TEXT_AND_TEXT_ROUTE_INTERSECTIONS", "ORTHOGONAL_ROUTE_INTERSECTIONS"));
     }
     Scene scene = new Scene(project.getProjectId() + "-PFD-001", "Process flow diagram", "001", "pfd");
@@ -732,7 +731,8 @@ public final class ProfessionalPidDiagramRenderer {
         "On/off shutdown or blowdown valve: ball closure element with ISA-5.1 generic actuator");
     conventions.put("ISOLATION_VALVE", "Manual isolation valve body without actuator");
     conventions.put("ACTUATOR_TYPE", "Generic actuator shown until the project selects the actuator type (HOLD)");
-    conventions.put("SIGNAL_LINE", "Dashed 0.25 mm; drawn directly on the sheet, continuation flags only across sheets");
+    conventions.put("SIGNAL_LINE",
+        "Dashed 0.25 mm; drawn directly on the sheet, continuation flags only across sheets");
     conventions.put("PROCESS_LINE", "Solid 0.5 mm with <area>-<fluid code>-<sequence> / DN / class designation");
     report.put("symbolConventions", conventions);
     report.put("holds", holds);
@@ -1159,10 +1159,11 @@ public final class ProfessionalPidDiagramRenderer {
           continue;
         }
         List<Point> route = target.family == Family.CONTROL_VALVE || target.family == Family.PNEUMATIC_OPERATED_VALVE
-            || target.family == Family.SHUTDOWN_VALVE ? points(source.right(), new Point(815, source.y), new Point(815, 385), new Point(target.x, 385),
-                target.top())
-            : points(source.right(), new Point(source.right().x + 22, source.y),
-                new Point(source.right().x + 22, target.y), target.left());
+            || target.family == Family.SHUTDOWN_VALVE
+                ? points(source.right(), new Point(815, source.y), new Point(815, 385), new Point(target.x, 385),
+                    target.top())
+                : points(source.right(), new Point(source.right().x + 22, source.y),
+                    new Point(source.right().x + 22, target.y), target.left());
         String id = signalIds.get(signalKey(signal));
         scene.route(source, "r", target, target.family == Family.CONTROL_FUNCTION ? "l" : "t", id, true, route);
         signalSources.add(id);
@@ -1455,8 +1456,7 @@ public final class ProfessionalPidDiagramRenderer {
   private void renderPooledAuxiliary() {
     for (int offset = 0; offset < pooledAuxiliary.size(); offset += AUXILIARY_ROUTES_PER_SHEET) {
       Scene scene = scene(project.getProjectId(), "Relief, blowdown, vent, drain and utility connections");
-      for (int index = offset; index < Math.min(offset + AUXILIARY_ROUTES_PER_SHEET, pooledAuxiliary.size());
-          index++) {
+      for (int index = offset; index < Math.min(offset + AUXILIARY_ROUTES_PER_SHEET, pooledAuxiliary.size()); index++) {
         ProcessEquipmentInterface unit = (ProcessEquipmentInterface) pooledAuxiliary.get(index)[0];
         List<PidElement> group = (List<PidElement>) pooledAuxiliary.get(index)[1];
         PidElement element = group.get(0);
@@ -1767,8 +1767,9 @@ public final class ProfessionalPidDiagramRenderer {
    *
    * <p>
    * IEC 62424 and ISA-5.1 practice draws a signal line directly when both ends are on the same sheet; a named
-   * continuation is used only when the peer is on another sheet. Signals whose peer is drawn on this sheet are therefore
-   * routed directly as dashed signal lines, and every remaining end receives the reciprocal continuation reference.
+   * continuation is used only when the peer is on another sheet. Signals whose peer is drawn on this sheet are
+   * therefore routed directly as dashed signal lines, and every remaining end receives the reciprocal continuation
+   * reference.
    * </p>
    *
    * @param scene finished sheet
@@ -1814,9 +1815,8 @@ public final class ProfessionalPidDiagramRenderer {
       double continuationWidth = Math.min(115, Math.max(30, displayLength(label) * 1.6 + 10));
       double x = functionDetail ? 700
           : node.x + node.width / 2 + 12 + 3 * scene.directSignalLanes + continuationWidth / 2;
-      for (int shift = 0; shift < 20 && !functionDetail
-          && scene.routeInBox(new double[] {x - continuationWidth / 2 - 5, node.y - 8.5, continuationWidth + 6, 17});
-          shift++) {
+      for (int shift = 0; shift < 20 && !functionDetail && scene
+          .routeInBox(new double[] {x - continuationWidth / 2 - 5, node.y - 8.5, continuationWidth + 6, 17}); shift++) {
         x += 6;
       }
       Node terminal = scene.terminal("signal-from:" + tag, x, node.y, label, true);
@@ -1931,11 +1931,12 @@ public final class ProfessionalPidDiagramRenderer {
     scene.proposalNodes.put(element.getTag(), node);
     drawnSheets.putIfAbsent(element.getTag(), scene.number);
     // Fail action applies to actuated valves only; a manual valve carries its normal position (NO/NC).
-    String valveNote = family == Family.CHECK_VALVE ? "FLOW >" : family == Family.RELIEF_VALVE ? "SET:HOLD"
-        : family == Family.ISOLATION_VALVE
-            ? (element.getType() == PidElementType.DRAIN || element.getType() == PidElementType.VENT ? "NC"
-                : "NO/NC:HOLD")
-            : "FA:HOLD";
+    String valveNote = family == Family.CHECK_VALVE ? "FLOW >"
+        : family == Family.RELIEF_VALVE ? "SET:HOLD"
+            : family == Family.ISOLATION_VALVE
+                ? (element.getType() == PidElementType.DRAIN || element.getType() == PidElementType.VENT ? "NC"
+                    : "NO/NC:HOLD")
+                : "FA:HOLD";
     Attachment actualAttachment = projection.getAttachments().get(element.getTag());
     ProcessEquipmentInterface boundValve = actualAttachment == null ? null
         : equipment.get(actualAttachment.getBoundSimulationName());
@@ -2296,7 +2297,6 @@ public final class ProfessionalPidDiagramRenderer {
     return family != Family.UNMAPPED && family != Family.PIPE_TEE;
   }
 
-
   /**
    * Draws a header merge tee ahead of the receiving unit's inlet devices and returns the tee as the line source.
    *
@@ -2566,8 +2566,8 @@ public final class ProfessionalPidDiagramRenderer {
       if (unit != producers.get(stream) && unit.getInletStreams().contains(stream)) {
         if (numericalHelper(unit) && unit instanceof neqsim.process.equipment.util.Recycle
             && ((neqsim.process.equipment.util.Recycle) unit).getOutletStream() != null) {
-          ProcessEquipmentInterface physical = soleConsumer(((neqsim.process.equipment.util.Recycle) unit)
-              .getOutletStream());
+          ProcessEquipmentInterface physical = soleConsumer(
+              ((neqsim.process.equipment.util.Recycle) unit).getOutletStream());
           return physical == null ? "B/L " + lineNumber(stream) : sheetLabel(physical.getName());
         }
         if (unit instanceof ThrottlingValve && !materialPathTags.contains(unit.getName())) {
@@ -2964,7 +2964,6 @@ public final class ProfessionalPidDiagramRenderer {
     }
   }
 
-
   /**
    * Returns the drawing line number for a source stream name, resolved against the streams of its owner.
    *
@@ -2974,7 +2973,8 @@ public final class ProfessionalPidDiagramRenderer {
    * NORSOK-style number {@code <area>-<fluid code>-<sequence>}: the area is the numeric prefix of the producing (or
    * receiving) equipment tag, the fluid code is {@code PG} for vapour-dominated and {@code PL} for liquid-dominated
    * process lines, and the sequence is unique per area and fluid code. Every generated number is recorded in the
-   * drawing content report with its source stream and is review-required, so line-list ownership stays with the project.
+   * drawing content report with its source stream and is review-required, so line-list ownership stays with the
+   * project.
    * </p>
    *
    * @param streamName source stream name; names need not be unique in a process
@@ -3083,7 +3083,6 @@ public final class ProfessionalPidDiagramRenderer {
     return Collections.unmodifiableMap(lineNumbers);
   }
 
-
   /**
    * Adds the equipment data callout above the equipment, as is usual practice on process P&amp;IDs: tag, service,
    * operating conditions from the converged simulation, duty or power, and design conditions (HOLD until supplied).
@@ -3101,8 +3100,8 @@ public final class ProfessionalPidDiagramRenderer {
     try {
       if (!unit.getOutletStreams().isEmpty()) {
         StreamInterface outlet = unit.getOutletStreams().get(0);
-        operating.append(String.format(Locale.ROOT, " %.1f bara / %.1f C", outlet.getPressure("bara"),
-            outlet.getTemperature("C")));
+        operating.append(
+            String.format(Locale.ROOT, " %.1f bara / %.1f C", outlet.getPressure("bara"), outlet.getTemperature("C")));
       }
       if (unit instanceof neqsim.process.equipment.compressor.Compressor) {
         operating.append(String.format(Locale.ROOT, " / %.0f kW",
@@ -3130,8 +3129,6 @@ public final class ProfessionalPidDiagramRenderer {
     scene.calloutX = x;
   }
 
-
-
   /**
    * Replaces the sheet-total and peer-sheet placeholders in one text.
    *
@@ -3147,13 +3144,12 @@ public final class ProfessionalPidDiagramRenderer {
       String drawn = drawnSheets.get(matcher.group(1));
       String sheet = drawn != null ? drawn : matcher.group(2);
       // A peer that is not drawn on any sheet is listed in the HOLD register; never point to a guessed sheet.
-      matcher.appendReplacement(buffer, java.util.regex.Matcher.quoteReplacement(drawn != null ? "/PID-" + sheet
-          : "/HOLD"));
+      matcher.appendReplacement(buffer,
+          java.util.regex.Matcher.quoteReplacement(drawn != null ? "/PID-" + sheet : "/HOLD"));
     }
     matcher.appendTail(buffer);
     return buffer.toString();
   }
-
 
   /**
    * Returns the displayed length of a label after peer-sheet placeholders are resolved (estimated with the fallback).
@@ -3183,9 +3179,9 @@ public final class ProfessionalPidDiagramRenderer {
    *
    * <p>
    * Each violation is a drawing error, so a generated set cannot report a clean drawing while breaking them: ISO 7200
-   * identification fields and revision table; ISO 5457 frame furniture; resolved sheet references with no
-   * continuation pointing at its own sheet; line designations instead of internal simulation names; minimum text
-   * height of 2.5 mm; and valve symbols consistent with the ISA-5.1 function letters of their tags.
+   * identification fields and revision table; ISO 5457 frame furniture; resolved sheet references with no continuation
+   * pointing at its own sheet; line designations instead of internal simulation names; minimum text height of 2.5 mm;
+   * and valve symbols consistent with the ISA-5.1 function letters of their tags.
    * </p>
    *
    * @param layout rendered sheet layout specification
@@ -3232,9 +3228,9 @@ public final class ProfessionalPidDiagramRenderer {
       java.util.regex.Matcher self = SELF_REFERENCE.matcher(text);
       while (self.find()) {
         if (self.group(1).equals(number)) {
-          diagnostics.add(NativeEngineeringDiagramRenderer.sceneDiagnostic(Severity.WARNING,
-              "PID_STANDARD_SIGNAL_SELF_REFERENCE",
-              "Named same-sheet signal continuation used because no clear direct route exists: " + text, sheet));
+          diagnostics.add(
+              NativeEngineeringDiagramRenderer.sceneDiagnostic(Severity.WARNING, "PID_STANDARD_SIGNAL_SELF_REFERENCE",
+                  "Named same-sheet signal continuation used because no clear direct route exists: " + text, sheet));
         }
       }
       if (text.contains(" / DN") || text.startsWith("B/L ")) {
@@ -3253,8 +3249,7 @@ public final class ProfessionalPidDiagramRenderer {
     if ("pid".equals(layout.get("kind")) || "pfd".equals(layout.get("kind"))) {
       for (String field : TITLE_FIELDS) {
         if (!present.contains(field)) {
-          geometryError("PID_STANDARD_TITLE_BLOCK", "ISO 7200 title block or revision field missing: " + field,
-              sheet);
+          geometryError("PID_STANDARD_TITLE_BLOCK", "ISO 7200 title block or revision field missing: " + field, sheet);
         }
       }
     }
@@ -3323,7 +3318,6 @@ public final class ProfessionalPidDiagramRenderer {
     }
   }
 
-
   /**
    * Returns the short drawing label of a nozzle: N1, N2, ... numbered per equipment in drawing order, as on process
    * P&amp;IDs and equipment data sheets. The controlled nozzle identity is kept in the nozzle register of the content
@@ -3345,7 +3339,6 @@ public final class ProfessionalPidDiagramRenderer {
     labels.put(label, nozzleIdentity);
     return label;
   }
-
 
   /**
    * Returns the auxiliary route group keys of one unit, in model order.
@@ -3370,9 +3363,9 @@ public final class ProfessionalPidDiagramRenderer {
    * Returns true for a simple heater or cooler that is drawn as a band on a shared heat-exchanger sheet.
    *
    * <p>
-   * Eligible units have one inlet and one outlet, no instrument-detail sheets, no material-path role, and are fed either
-   * directly or through a two-inlet header tee. Two-circuit exchangers, fired heaters with more complex topology and
-   * units with too many instrument rows keep their own sheet.
+   * Eligible units have one inlet and one outlet, no instrument-detail sheets, no material-path role, and are fed
+   * either directly or through a two-inlet header tee. Two-circuit exchangers, fired heaters with more complex topology
+   * and units with too many instrument rows keep their own sheet.
    * </p>
    *
    * @param unit candidate unit
@@ -3392,8 +3385,7 @@ public final class ProfessionalPidDiagramRenderer {
       return false;
     }
     ProcessEquipmentInterface producer = producers.get(unit.getInletStreams().get(0));
-    if (supportedSuctionMixer(producer)
-        || supportedHeaderMixer(producer) && producer.getInletStreams().size() != 2) {
+    if (supportedSuctionMixer(producer) || supportedHeaderMixer(producer) && producer.getInletStreams().size() != 2) {
       return false;
     }
     return exchangerRows(unit) <= 5;
@@ -3513,7 +3505,8 @@ public final class ProfessionalPidDiagramRenderer {
         if (proposals.containsKey(valve.getName())) {
           node = proposalValve(scene, proposals.get(valve.getName()), vx, y);
         } else {
-          node = scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve), vx, y, 16, 10, valve.getName());
+          node = scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve), vx, y, 16, 10,
+              valve.getName());
         }
         valveNodes.put(valve.getName(), node);
         scene.route(last, "r", node, "l", physical, false, null);
@@ -3601,17 +3594,16 @@ public final class ProfessionalPidDiagramRenderer {
     String operating = "OPERATING: HOLD";
     try {
       StreamInterface outlet = unit.getOutletStreams().get(0);
-      operating = String.format(Locale.ROOT, "OPERATING: %.1f bara / %.1f C / DUTY %.0f kW",
-          outlet.getPressure("bara"), outlet.getTemperature("C"),
-          ((neqsim.process.equipment.heatexchanger.Heater) unit).getDuty() / 1000.0);
+      operating = String.format(Locale.ROOT, "OPERATING: %.1f bara / %.1f C / DUTY %.0f kW", outlet.getPressure("bara"),
+          outlet.getTemperature("C"), ((neqsim.process.equipment.heatexchanger.Heater) unit).getDuty() / 1000.0);
     } catch (RuntimeException e) {
       operating = "OPERATING: HOLD";
     }
     scene.centered(680, top + 1, unit.getName() + "  " + service, 3.5, null);
     scene.centered(680, top + 6, operating, 3, null);
     String size = sizing.equipmentLabel(unit.getName());
-    scene.centered(680, top + 11, "DESIGN: HOLD barg / HOLD C" + (size == null || size.trim().isEmpty() ? "" : " | " + size),
-        3, null);
+    scene.centered(680, top + 11,
+        "DESIGN: HOLD barg / HOLD C" + (size == null || size.trim().isEmpty() ? "" : " | " + size), 3, null);
   }
 
   /**
@@ -3761,9 +3753,8 @@ public final class ProfessionalPidDiagramRenderer {
         top = y - 19;
         boundHeight = 19 + height / 2;
       }
-      record.put("bbox",
-          boxedFunction(family) ? new double[] {x - width / 2 - 2, top - 2, width + 4, boundHeight + 4}
-              : new double[] {x - width / 2, top, width, boundHeight});
+      record.put("bbox", boxedFunction(family) ? new double[] {x - width / 2 - 2, top - 2, width + 4, boundHeight + 4}
+          : new double[] {x - width / 2, top, width, boundHeight});
       record.put("symbolFamily", family.name());
       record.put("standardReference",
           family == Family.FIELD_INSTRUMENT || family == Family.CONTROL_FUNCTION || family == Family.SAFETY_FUNCTION
@@ -4072,8 +4063,7 @@ public final class ProfessionalPidDiagramRenderer {
      * @param sensing true for sensing line
      * @param arrow true to draw the direction arrow at the end
      */
-    void stroke(List<Point> path, String from, String to, String id, boolean signal, boolean sensing,
-        boolean arrow) {
+    void stroke(List<Point> path, String from, String to, String id, boolean signal, boolean sensing, boolean arrow) {
       List<Point> distinct = new ArrayList<Point>();
       for (Point point : path) {
         if (distinct.isEmpty() || Math.abs(point.x - distinct.get(distinct.size() - 1).x)
@@ -4204,8 +4194,8 @@ public final class ProfessionalPidDiagramRenderer {
     }
 
     /**
-     * Draws the ISO 5457 sheet furniture: 0.7 mm centring marks and the grid reference system (16 numbered columns
-     * and 12 lettered rows, I and O omitted) in the border between the frame and the trimmed edge.
+     * Draws the ISO 5457 sheet furniture: 0.7 mm centring marks and the grid reference system (16 numbered columns and
+     * 12 lettered rows, I and O omitted) in the border between the frame and the trimmed edge.
      */
     private void isoFrame() {
       double left = 20.0;
@@ -4285,8 +4275,8 @@ public final class ProfessionalPidDiagramRenderer {
       page.commands.add(Command.line(20, headY - 9, 250, headY - 9, "#111111", .25, "title-block", ""));
       for (int index = 0; index < columns.length; index++) {
         if (index > 0 && index < columns.length - 1) {
-          page.commands.add(Command.line(columns[index], headY - 9, columns[index], bottom, "#111111", .25,
-              "title-block", ""));
+          page.commands
+              .add(Command.line(columns[index], headY - 9, columns[index], bottom, "#111111", .25, "title-block", ""));
         }
         if (index < heads.length) {
           text(columns[index] + 1.5, bottom - 2.8, heads[index], 2.5, null);
@@ -4311,8 +4301,8 @@ public final class ProfessionalPidDiagramRenderer {
       double x = block + 2.0;
       double row = 8.2;
       for (int line = 1; line < 6; line++) {
-        page.commands.add(
-            Command.line(block, top + row * line, right, top + row * line, "#111111", .25, "title-block", ""));
+        page.commands
+            .add(Command.line(block, top + row * line, right, top + row * line, "#111111", .25, "title-block", ""));
       }
       text(x, top + 5.5, "OWNER: HOLD", 2.5, null);
       text(x + 90, top + 5.5, "DOC. TYPE: " + ("pfd".equals(kind) ? "PFD" : "P&ID"), 2.5, null);
@@ -4464,8 +4454,7 @@ public final class ProfessionalPidDiagramRenderer {
      * @return true for a collinear overlap
      */
     private boolean collinearOverlap(double[] a, double[] b, double[] c, double[] d) {
-      boolean horizontal = Math.abs(a[1] - b[1]) < 1e-6 && Math.abs(c[1] - d[1]) < 1e-6
-          && Math.abs(a[1] - c[1]) < .8;
+      boolean horizontal = Math.abs(a[1] - b[1]) < 1e-6 && Math.abs(c[1] - d[1]) < 1e-6 && Math.abs(a[1] - c[1]) < .8;
       boolean vertical = Math.abs(a[0] - b[0]) < 1e-6 && Math.abs(c[0] - d[0]) < 1e-6 && Math.abs(a[0] - c[0]) < .8;
       if (horizontal) {
         return Math.min(Math.max(a[0], b[0]), Math.max(c[0], d[0]))
@@ -4511,8 +4500,7 @@ public final class ProfessionalPidDiagramRenderer {
         }
       }
       for (double[] box : boxes) {
-        if (maxX >= box[0] - 1 && minX <= box[0] + box[2] + 1 && maxY >= box[1] - 1
-            && minY <= box[1] + box[3] + 1) {
+        if (maxX >= box[0] - 1 && minX <= box[0] + box[2] + 1 && maxY >= box[1] - 1 && minY <= box[1] + box[3] + 1) {
           return box;
         }
       }
@@ -4540,8 +4528,8 @@ public final class ProfessionalPidDiagramRenderer {
             double width = callout.get(line)[0].length() * size * .52;
             double[] box = {x - width / 2 - 1, top + 5 * line - size * .6 - 1, width + 2, size * 1.2 + 2};
             free = firstHit(new Point(box[0], box[1]), new Point(box[0] + box[2], box[1]), "", "") == null
-                && firstHit(new Point(box[0], box[1] + box[3]), new Point(box[0] + box[2], box[1] + box[3]), "", "")
-                    == null
+                && firstHit(new Point(box[0], box[1] + box[3]), new Point(box[0] + box[2], box[1] + box[3]), "",
+                    "") == null
                 && firstHit(new Point(box[0], box[1]), new Point(box[0], box[1] + box[3]), "", "") == null
                 && !routeInBox(box) && !boxCoversNode(box);
           }

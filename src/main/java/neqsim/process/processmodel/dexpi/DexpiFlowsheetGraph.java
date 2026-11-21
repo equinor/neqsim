@@ -29,9 +29,9 @@ import neqsim.process.equipment.EquipmentEnum;
  *
  * <p>
  * Each edge keeps the source nozzle, which the builder uses to select the correct outlet of multi-outlet equipment
- * (separator gas versus liquid, splitter branch). The port is resolved from, in order: the {@code PortRole}
- * generic attribute written by {@link DexpiXmlWriter}; the type of the downstream unit (compressor implies gas, pump
- * implies liquid); the vertical nozzle position (highest outlet is gas); and finally document order.
+ * (separator gas versus liquid, splitter branch). The port is resolved from, in order: the {@code PortRole} generic
+ * attribute written by {@link DexpiXmlWriter}; the type of the downstream unit (compressor implies gas, pump implies
+ * liquid); the vertical nozzle position (highest outlet is gas); and finally document order.
  * </p>
  *
  * @author NeqSim
@@ -55,8 +55,7 @@ final class DexpiFlowsheetGraph {
 
   private static final Set<String> NO_FLOW_COMPONENTS = new HashSet<>(java.util.Arrays.asList("PressureSafetyValve",
       "PressureReliefValve", "SpringLoadedGlobeSafetyValve", "SpringLoadedAngleGlobeSafetyValve",
-      "PilotOperatedSafetyValve", "SafetyValveOrFitting", "RuptureDisk", "BlindFlange", "SpectacleBlind",
-      "LineBlind"));
+      "PilotOperatedSafetyValve", "SafetyValveOrFitting", "RuptureDisk", "BlindFlange", "SpectacleBlind", "LineBlind"));
 
   /** One directed material connection between two flowsheet nodes. */
   static final class Edge {
@@ -121,7 +120,8 @@ final class DexpiFlowsheetGraph {
   /** Human-readable notes on dropped or collapsed content, in the form CODE|elementId|message. */
   final List<String> notes = new ArrayList<>();
 
-  private DexpiFlowsheetGraph() {}
+  private DexpiFlowsheetGraph() {
+  }
 
   /**
    * Extracts the material-flow graph from a parsed Proteus-compatible document.
@@ -285,15 +285,15 @@ final class DexpiFlowsheetGraph {
     }
     if (nozzle != null && nozzle.role != null) {
       switch (nozzle.role) {
-        case ROLE_GAS:
-          return 0;
-        case ROLE_LIQUID:
-        case ROLE_OIL:
-          return Math.min(1, outletCount - 1);
-        case ROLE_WATER:
-          return Math.min(2, outletCount - 1);
-        default:
-          break;
+      case ROLE_GAS:
+        return 0;
+      case ROLE_LIQUID:
+      case ROLE_OIL:
+        return Math.min(1, outletCount - 1);
+      case ROLE_WATER:
+        return Math.min(2, outletCount - 1);
+      default:
+        break;
       }
     }
     EquipmentEnum targetType = nodeTypes.get(edge.target);
@@ -503,23 +503,23 @@ final class DexpiFlowsheetGraph {
     }
     String u = unit == null ? "bara" : unit.trim().toLowerCase(Locale.ROOT);
     switch (u) {
-      case "bara":
-      case "bar":
-        return value;
-      case "barg":
-        return value + 1.01325;
-      case "pa":
-        return value / 1.0e5;
-      case "kpa":
-        return value / 100.0;
-      case "mpa":
-        return value * 10.0;
-      case "psia":
-        return value * 0.0689475729;
-      case "psig":
-        return value * 0.0689475729 + 1.01325;
-      default:
-        return Double.NaN;
+    case "bara":
+    case "bar":
+      return value;
+    case "barg":
+      return value + 1.01325;
+    case "pa":
+      return value / 1.0e5;
+    case "kpa":
+      return value / 100.0;
+    case "mpa":
+      return value * 10.0;
+    case "psia":
+      return value * 0.0689475729;
+    case "psig":
+      return value * 0.0689475729 + 1.01325;
+    default:
+      return Double.NaN;
     }
   }
 
@@ -540,17 +540,17 @@ final class DexpiFlowsheetGraph {
     }
     String u = unit == null ? "c" : unit.trim().toLowerCase(Locale.ROOT);
     switch (u) {
-      case "c":
-      case "degc":
-      case "°c":
-        return value + 273.15;
-      case "k":
-        return value;
-      case "f":
-      case "degf":
-        return (value - 32.0) / 1.8 + 273.15;
-      default:
-        return Double.NaN;
+    case "c":
+    case "degc":
+    case "°c":
+      return value + 273.15;
+    case "k":
+      return value;
+    case "f":
+    case "degf":
+      return (value - 32.0) / 1.8 + 273.15;
+    default:
+      return Double.NaN;
     }
   }
 

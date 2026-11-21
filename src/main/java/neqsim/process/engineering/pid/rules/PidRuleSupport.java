@@ -24,8 +24,8 @@ final class PidRuleSupport {
   }
 
   /**
-   * Creates a proposal that represents an existing modelled device under its own tag, so the drawing and the
-   * exchange show one device instead of a new device in series with the modelled one.
+   * Creates a proposal that represents an existing modelled device under its own tag, so the drawing and the exchange
+   * show one device instead of a new device in series with the modelled one.
    *
    * @param context design context
    * @param equipment owning equipment

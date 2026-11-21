@@ -2,6 +2,7 @@ package neqsim.process.engineering.pid;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -38,8 +39,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <ul>
  * <li>pressure envelope: proposed design pressure and temperature of each protected unit from its operating point;</li>
  * <li>relief (API 520/521): blocked outlet, external fire (wetted area, adequate drainage) and gas blow-by through a
- * failed-open upstream liquid control valve (IEC 60534 choked gas flow); the governing case sets the relieving rate
- * and the API orifice;</li>
+ * failed-open upstream liquid control valve (IEC 60534 choked gas flow); the governing case sets the relieving rate and
+ * the API orifice;</li>
  * <li>blowdown (API 521): vapour-withdrawal depressurization of the vessel inventory, with the smallest orifice that
  * reaches the lower of 6.9 barg and half the design pressure within 15 minutes, the peak flare rate and the minimum
  * fluid temperature;</li>
@@ -53,8 +54,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * Results only replace placeholders (values containing {@code REQUIRED} or {@code HOLD}); project inputs are never
  * overwritten. Every touched element keeps {@code REVIEW_REQUIRED} status and gets a {@link #EVIDENCE_PREFIX}
- * reference. The default {@link Policy} values are documented screening assumptions, not certified reliability data
- * or approved design rules; supply project values through the policy. A HAZOP, LOPA and SRS remain required.
+ * reference. The default {@link Policy} values are documented screening assumptions, not certified reliability data or
+ * approved design rules; supply project values through the policy. A HAZOP, LOPA and SRS remain required.
  * </p>
  *
  * @author ESOL
@@ -194,22 +195,22 @@ public final class PidSafetyStudies {
     public Map<String, Object> toMap() {
       Map<String, Object> map = new LinkedHashMap<String, Object>();
       map.put("name", name);
-      map.put("designPressure", String.format(Locale.ROOT,
-          "max(operating x %.2f, operating + %.1f bar) gauge", 1.0 + designPressureFraction,
-          designPressureMinimumMarginBar));
+      map.put("designPressure", String.format(Locale.ROOT, "max(operating x %.2f, operating + %.1f bar) gauge",
+          1.0 + designPressureFraction, designPressureMinimumMarginBar));
       map.put("designTemperatureMarginC", Double.valueOf(designTemperatureMarginC));
       map.put("psvSetPressure", "equal to the proposed design pressure (single valve)");
       map.put("flareBackPressureBara", Double.valueOf(flareBackPressureBara));
-      map.put("fireCase", "API 521 Q = 43200 F A^0.82 W, F = " + fireEnvironmentFactor
-          + ", wetted area at normal liquid level");
+      map.put("fireCase",
+          "API 521 Q = 43200 F A^0.82 W, F = " + fireEnvironmentFactor + ", wetted area at normal liquid level");
       map.put("normalLiquidLevelFraction", Double.valueOf(normalLiquidLevelFraction));
       map.put("blowdownCriterion", "lower of 6.9 barg and 50 % of design pressure within 15 min (API 521)");
       map.put("blowdownDischargeCoefficient", Double.valueOf(blowdownDischargeCoefficient));
-      map.put("gasBlowbyValve", "IEC 60534 choked gas flow, xT = " + valvePressureRecoveryFactorXt
-          + ", rated Cv from the model valve");
-      map.put("tripSetPoints", "midway between the operating value and the design or relief limit; level HH "
-          + levelHighHighPercent + " %, LL " + levelLowLowPercent + " % of range; low flow " + lowFlowFraction
-          + " x normal; low pressure " + lowPressureFraction + " x operating gauge");
+      map.put("gasBlowbyValve",
+          "IEC 60534 choked gas flow, xT = " + valvePressureRecoveryFactorXt + ", rated Cv from the model valve");
+      map.put("tripSetPoints",
+          "midway between the operating value and the design or relief limit; level HH " + levelHighHighPercent
+              + " %, LL " + levelLowLowPercent + " % of range; low flow " + lowFlowFraction + " x normal; low pressure "
+              + lowPressureFraction + " x operating gauge");
       map.put("silTarget", "NOG 070 minimum SIL for the function type");
       map.put("reliabilityData", String.format(Locale.ROOT,
           "SCREENING_NOT_CERTIFIED: sensor lambdaD %.1e/h DC %.0f %%, logic %.1e/h DC %.0f %%, final element %.1e/h,"
@@ -247,7 +248,7 @@ public final class PidSafetyStudies {
      * @return updated tags
      */
     public List<String> getUpdatedTags() {
-      return updatedTags;
+      return Collections.unmodifiableList(updatedTags);
     }
 
     /**
@@ -256,7 +257,7 @@ public final class PidSafetyStudies {
      * @return findings with code, subject and message
      */
     public List<Map<String, Object>> getFindings() {
-      return findings;
+      return Collections.unmodifiableList(findings);
     }
 
     /**
@@ -305,8 +306,7 @@ public final class PidSafetyStudies {
     }
     Result result = new Result(policy);
     Map<String, ProcessEquipmentInterface> units = new LinkedHashMap<String, ProcessEquipmentInterface>();
-    Map<StreamInterface, ProcessEquipmentInterface> producers =
-        new IdentityHashMap<StreamInterface, ProcessEquipmentInterface>();
+    Map<StreamInterface, ProcessEquipmentInterface> producers = new IdentityHashMap<StreamInterface, ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       units.put(unit.getName(), unit);
       for (StreamInterface outlet : unit.getOutletStreams()) {
@@ -352,8 +352,10 @@ public final class PidSafetyStudies {
         if (element.getTag().equals(finding.get("subject"))) {
           Object previous = element.getAttributes().get(FINDINGS);
           String code = String.valueOf(finding.get("code"));
-          element.attribute(FINDINGS, previous == null || String.valueOf(previous).contains(code)
-              ? (previous == null ? code : String.valueOf(previous)) : previous + "; " + code);
+          element.attribute(FINDINGS,
+              previous == null || String.valueOf(previous).contains(code)
+                  ? (previous == null ? code : String.valueOf(previous))
+                  : previous + "; " + code);
         }
       }
     }
@@ -384,9 +386,9 @@ public final class PidSafetyStudies {
       row.put("tag", element.getTag());
       row.put("equipmentTag", element.getEquipmentTag());
       for (Map.Entry<String, Object> entry : element.getAttributes().entrySet()) {
-        if (entry.getKey().startsWith("study") || entry.getKey().equals("setPoint") || entry.getKey().equals("silTarget")
-            || entry.getKey().equals("voting") || entry.getKey().equals("orificeSizing")
-            || entry.getKey().equals(FINDINGS)) {
+        if (entry.getKey().startsWith("study") || entry.getKey().equals("setPoint")
+            || entry.getKey().equals("silTarget") || entry.getKey().equals("voting")
+            || entry.getKey().equals("orificeSizing") || entry.getKey().equals(FINDINGS)) {
           row.put(entry.getKey(), entry.getValue());
         }
       }
@@ -407,8 +409,8 @@ public final class PidSafetyStudies {
     report.put("projectId", model.getProjectId());
     report.put("studyStatus", "SCREENING_REVIEW_REQUIRED");
     report.put("evidencePrefix", EVIDENCE_PREFIX);
-    report.put("standards", java.util.Arrays.asList("API 520 Part I", "API 521:2020", "IEC 60534-2-1",
-        "IEC 61511:2016", "NOG 070", "ISO 10418:2019"));
+    report.put("standards", java.util.Arrays.asList("API 520 Part I", "API 521:2020", "IEC 60534-2-1", "IEC 61511:2016",
+        "NOG 070", "ISO 10418:2019"));
     if (result != null) {
       report.put("policy", result.getPolicy().toMap());
     } else {
@@ -416,8 +418,10 @@ public final class PidSafetyStudies {
       for (PidElement element : model.getElements()) {
         reference = reference == null ? element.getAttributes().get(REFERENCE) : reference;
       }
-      report.put("policy", reference != null && String.valueOf(reference).contains("NEQSIM_SCREENING_DEFAULTS")
-          ? Policy.screening().toMap() : "PROJECT_POLICY: values recorded with the study run");
+      report.put("policy",
+          reference != null && String.valueOf(reference).contains("NEQSIM_SCREENING_DEFAULTS")
+              ? Policy.screening().toMap()
+              : "PROJECT_POLICY: values recorded with the study run");
     }
     report.put("reliefDevices", relief);
     report.put("blowdownValves", blowdown);
@@ -449,11 +453,12 @@ public final class PidSafetyStudies {
     }
     report.put("findings", findings);
     report.put("approvalStatus", "REVIEW_REQUIRED");
-    report.put("limitations", java.util.Arrays.asList(
-        "Screening values: confirm design pressure, relief scenarios and set points in the HAZOP and relief study",
-        "SIL targets are NOG 070 minimums; a LOPA may require more",
-        "Reliability data are screening values, not certified data",
-        "Two-phase relief, flare network back pressure and ESD valve closure times are not calculated"));
+    report.put("limitations",
+        java.util.Arrays.asList(
+            "Screening values: confirm design pressure, relief scenarios and set points in the HAZOP and relief study",
+            "SIL targets are NOG 070 minimums; a LOPA may require more",
+            "Reliability data are screening values, not certified data",
+            "Two-phase relief, flare network back pressure and ESD valve closure times are not calculated"));
     return report;
   }
 
@@ -466,8 +471,8 @@ public final class PidSafetyStudies {
    */
   public static String reportJson(PidDesignModel model, Result result) {
     Map<String, Object> report = report(model, result);
-    return report.isEmpty() ? "" : new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()
-        .create().toJson(report);
+    return report.isEmpty() ? ""
+        : new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
   }
 
   /**
@@ -494,7 +499,6 @@ public final class PidSafetyStudies {
     String governing = "";
     double governingRate = 0.0;
     double governingOverpressure = 0.10;
-    double governingTemperatureK = unit.getInletStreams().get(0).getTemperature();
     // Blocked outlet: all vapour entering at relieving conditions must be relieved.
     double relievingBara = setBara * 1.10;
     try {
@@ -524,17 +528,18 @@ public final class PidSafetyStudies {
               "vertical".equalsIgnoreCase(String.valueOf(separator.getOrientation())));
           double heatW = 43200.0 * policy.fireEnvironmentFactor * Math.pow(wetted, 0.82);
           double fireRate = heatW / Math.max(latent, 115000.0) * 3600.0;
-          appendCase(cases, String.format(Locale.ROOT, "FIRE %.0f kg/h (wetted %.1f m2, %.0f kW)", fireRate,
-              wetted, heatW / 1000.0));
+          appendCase(cases,
+              String.format(Locale.ROOT, "FIRE %.0f kg/h (wetted %.1f m2, %.0f kW)", fireRate, wetted, heatW / 1000.0));
           if (fireRate > governingRate) {
             governing = "FIRE";
             governingRate = fireRate;
             governingOverpressure = 0.21;
           }
         } else {
-          result.finding("FIRE_CASE_SUPERCRITICAL", psv.getTag(), String.format(Locale.ROOT,
-              "The liquid has no distinct latent heat at %.1f bara; use the API 521 supercritical fire method",
-              fireRelievingBara));
+          result.finding("FIRE_CASE_SUPERCRITICAL", psv.getTag(),
+              String.format(Locale.ROOT,
+                  "The liquid has no distinct latent heat at %.1f bara; use the API 521 supercritical fire method",
+                  fireRelievingBara));
         }
       } else {
         result.finding("FIRE_CASE_GEOMETRY_MISSING", psv.getTag(), "Vessel geometry is required for the fire case");
@@ -551,9 +556,10 @@ public final class PidSafetyStudies {
         ProcessEquipmentInterface source = producers.get(valve.getInletStreams().get(0));
         for (PidElement trip : model.getElementsForEquipment(source.getName())) {
           if (String.valueOf(trip.getAttributes().get("proposalPurpose")).contains("LEVEL-LL")) {
-            trip.attribute(HAZOP_EVIDENCE, String.format(Locale.ROOT,
-                "Loss of level in %s gives gas blow-by of %.0f kg/h through %s to %s, relieved by %s", source.getName(),
-                blowby, valve.getName(), unit.getName(), psv.getTag()));
+            trip.attribute(HAZOP_EVIDENCE,
+                String.format(Locale.ROOT,
+                    "Loss of level in %s gives gas blow-by of %.0f kg/h through %s to %s, relieved by %s",
+                    source.getName(), blowby, valve.getName(), unit.getName(), psv.getTag()));
           }
         }
         appendCase(cases, String.format(Locale.ROOT, "GAS_BLOWBY via %s %.0f kg/h", valve.getName(), blowby));
@@ -605,9 +611,10 @@ public final class PidSafetyStudies {
     psv.attribute("studyOrifice", orifice);
     psv.attribute("studyBackPressureBara", round1(backBara));
     psv.attribute(ANNOTATION, String.format(Locale.ROOT, "SET %.1f barg / %s", designBarg, orifice));
-    psv.attribute(HAZOP_EVIDENCE, String.format(Locale.ROOT,
-        "%s set %.1f barg (design pressure %.1f barg), governing case %s %.0f kg/h, orifice %s", psv.getTag(),
-        designBarg, designBarg, governing, governingRate, orifice));
+    psv.attribute(HAZOP_EVIDENCE,
+        String.format(Locale.ROOT,
+            "%s set %.1f barg (design pressure %.1f barg), governing case %s %.0f kg/h, orifice %s", psv.getTag(),
+            designBarg, designBarg, governing, governingRate, orifice));
     result.updatedTags.add(psv.getTag());
     return designBarg;
   }
@@ -690,8 +697,8 @@ public final class PidSafetyStudies {
     double seconds = timeToTarget(best, targetBara);
     bdv.attribute(REFERENCE,
         reference(policy, EVIDENCE_PREFIX + ": API 521 dynamic depressurization of the simulated inventory"));
-    bdv.attribute("orificeSizing", String.format(Locale.ROOT, "%.0f mm restriction orifice (API 521, %.1f barg in %.0f s)",
-        diameterMm, targetBara - ATM, seconds));
+    bdv.attribute("orificeSizing", String.format(Locale.ROOT,
+        "%.0f mm restriction orifice (API 521, %.1f barg in %.0f s)", diameterMm, targetBara - ATM, seconds));
     bdv.attribute("studyOrificeDiameterMm", Double.valueOf(diameterMm));
     bdv.attribute("studyInventoryBasis", volumeBasis);
     bdv.attribute("studyInitialPressureBarg", round1(inventory.getPressure() - ATM));
@@ -702,15 +709,17 @@ public final class PidSafetyStudies {
     String mdmt = minimumC < policy.carbonSteelMdmtC ? "BELOW_CARBON_STEEL_MDMT" : "ABOVE_CARBON_STEEL_MDMT";
     bdv.attribute("studyMinimumTemperatureCheck", mdmt);
     if (minimumC < policy.carbonSteelMdmtC) {
-      result.finding("BLOWDOWN_LOW_TEMPERATURE", bdv.getTag(), String.format(Locale.ROOT,
-          "Fluid reaches %.1f C during blowdown (wall heat capacity not modelled), below the %.0f C carbon steel"
-              + " limit; check wall and tail-pipe temperatures and review material selection",
-          minimumC, policy.carbonSteelMdmtC));
+      result.finding("BLOWDOWN_LOW_TEMPERATURE", bdv.getTag(),
+          String.format(Locale.ROOT,
+              "Fluid reaches %.1f C during blowdown (wall heat capacity not modelled), below the %.0f C carbon steel"
+                  + " limit; check wall and tail-pipe temperatures and review material selection",
+              minimumC, policy.carbonSteelMdmtC));
     }
     bdv.attribute(ANNOTATION, String.format(Locale.ROOT, "RO %.0f mm", diameterMm));
-    bdv.attribute(HAZOP_EVIDENCE, String.format(Locale.ROOT,
-        "%s with %.0f mm orifice depressurizes %s to %.1f barg in %.0f s, peak %.0f kg/h to flare, minimum %.1f C",
-        bdv.getTag(), diameterMm, unit.getName(), targetBara - ATM, seconds, peak * 3600.0, minimumC));
+    bdv.attribute(HAZOP_EVIDENCE,
+        String.format(Locale.ROOT,
+            "%s with %.0f mm orifice depressurizes %s to %.1f barg in %.0f s, peak %.0f kg/h to flare, minimum %.1f C",
+            bdv.getTag(), diameterMm, unit.getName(), targetBara - ATM, seconds, peak * 3600.0, minimumC));
     result.updatedTags.add(bdv.getTag());
   }
 
@@ -765,8 +774,7 @@ public final class PidSafetyStudies {
       double operating = inletPressureBara(unit) - ATM;
       double set = policy.lowPressureFraction * operating;
       setPoint = String.format(Locale.ROOT, "%.1f barg", set);
-      basis = String.format(Locale.ROOT, "%.0f %% of operating %.1f barg", policy.lowPressureFraction * 100,
-          operating);
+      basis = String.format(Locale.ROOT, "%.0f %% of operating %.1f barg", policy.lowPressureFraction * 100, operating);
       display = setPoint;
     } else if (purpose.contains("T-HH")) {
       double operating = unit.getOutletStreams().isEmpty() ? unit.getInletStreams().get(0).getTemperature("C")
@@ -796,7 +804,8 @@ public final class PidSafetyStudies {
     }
     trip.attribute("setPoint", setPoint);
     trip.attribute("studySetPointBasis", basis);
-    trip.attribute(REFERENCE, reference(policy, EVIDENCE_PREFIX + ": trip set point from the simulated operating point"));
+    trip.attribute(REFERENCE,
+        reference(policy, EVIDENCE_PREFIX + ": trip set point from the simulated operating point"));
     trip.attribute(ANNOTATION, display);
     Object earlier = trip.getAttributes().get(HAZOP_EVIDENCE);
     String sentence = trip.getTag() + " trips at " + setPoint + " (" + basis + ")";
@@ -823,7 +832,8 @@ public final class PidSafetyStudies {
         : purpose.contains("LEVEL-LL") ? Nog070SifType.PSD_LOW_LOW_LEVEL : Nog070SifType.PSD_PROCESS_SEGMENT;
     int target = Nog070SilCatalogue.getMinimumSil(type);
     trip.attribute("silTarget", "SIL " + target + " (NOG 070 minimum: " + type.name() + ")");
-    trip.attribute(REFERENCE, reference(policy, EVIDENCE_PREFIX + ": NOG 070 SIL target and IEC 61511 PFDavg screening"));
+    trip.attribute(REFERENCE,
+        reference(policy, EVIDENCE_PREFIX + ": NOG 070 SIL target and IEC 61511 PFDavg screening"));
     if (!result.updatedTags.contains(trip.getTag())) {
       result.updatedTags.add(trip.getTag());
     }
@@ -836,8 +846,9 @@ public final class PidSafetyStudies {
           "No final element is assigned, so SIL " + target + " cannot be verified");
       return;
     }
-    String[] steps = {"1oo1 sensor, 1oo1 logic, 1oo1 final element", "1oo1 sensor, 1oo1 logic, 1oo1 final element"
-        + " with partial-stroke testing", "1oo2 sensors, 1oo1 logic, 1oo1 final element with partial-stroke testing",
+    String[] steps = {"1oo1 sensor, 1oo1 logic, 1oo1 final element",
+        "1oo1 sensor, 1oo1 logic, 1oo1 final element" + " with partial-stroke testing",
+        "1oo2 sensors, 1oo1 logic, 1oo1 final element with partial-stroke testing",
         "1oo2 sensors, 1oo1 logic, 1oo2 final elements (second valve in series) with partial-stroke testing"};
     double pfd = Double.NaN;
     int achieved = 0;
@@ -882,9 +893,10 @@ public final class PidSafetyStudies {
     Object previous = trip.getAttributes().get(HAZOP_EVIDENCE);
     trip.attribute(HAZOP_EVIDENCE, previous == null ? trip.getTag() + " " + evidence : previous + "; " + evidence);
     if (!met) {
-      result.finding("SIF_TARGET_NOT_MET", trip.getTag(), String.format(Locale.ROOT,
-          "SIL %d not reached (PFDavg %.1e) even with redundant sensors and final elements; review the function",
-          target, pfd));
+      result.finding("SIF_TARGET_NOT_MET", trip.getTag(),
+          String.format(Locale.ROOT,
+              "SIL %d not reached (PFDavg %.1e) even with redundant sensors and final elements; review the function",
+              target, pfd));
     } else if (used == 3) {
       result.finding("SIF_REDUNDANT_FINAL_ELEMENT", trip.getTag(),
           "SIL " + target + " needs a second final element in series; it is not drawn yet");
@@ -1145,8 +1157,8 @@ public final class PidSafetyStudies {
    * @param policy screening assumptions
    * @return gas blow-by in kg/h, or 0 when it cannot be calculated
    */
-  private static double gasBlowbyKgPerH(ThrottlingValve valve, Map<StreamInterface, ProcessEquipmentInterface> producers,
-      double downstreamBara, Policy policy) {
+  private static double gasBlowbyKgPerH(ThrottlingValve valve,
+      Map<StreamInterface, ProcessEquipmentInterface> producers, double downstreamBara, Policy policy) {
     try {
       Separator source = (Separator) producers.get(valve.getInletStreams().get(0));
       double opening = Math.max(1.0, valve.getPercentValveOpening()) / 100.0;

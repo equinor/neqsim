@@ -1579,8 +1579,8 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Returns the number of outlet nozzles to create for a unit: one per splitter branch, two for a separator, three
-   * for a three-phase separator and one otherwise.
+   * Returns the number of outlet nozzles to create for a unit: one per splitter branch, two for a separator, three for
+   * a three-phase separator and one otherwise.
    *
    * @param unit the equipment unit
    * @return outlet nozzle count, at least one

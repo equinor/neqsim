@@ -104,9 +104,9 @@ public class DexpiSimulationRoundTripTest {
 
     ProcessSystem process = new ProcessSystem();
     process.setName("HP/LP separation with recompression");
-    for (ProcessEquipmentInterface unit : new ProcessEquipmentInterface[] {feed, heater, hp, recycled, gasMixer,
-        cooler, scrubber, compressor, hpLiquidValve, scrubberValve, liquidMixer, lp, pump, recompressor,
-        recycleCooler, recycle}) {
+    for (ProcessEquipmentInterface unit : new ProcessEquipmentInterface[] {feed, heater, hp, recycled, gasMixer, cooler,
+        scrubber, compressor, hpLiquidValve, scrubberValve, liquidMixer, lp, pump, recompressor, recycleCooler,
+        recycle}) {
       process.add(unit);
     }
     return process;
@@ -120,8 +120,8 @@ public class DexpiSimulationRoundTripTest {
    * @throws Exception on failure
    */
   private static ProcessSystem rebuild(File file) throws Exception {
-    ProcessSystem rebuilt = new DexpiSimulationBuilder(file).setFluidTemplate(wellFluid())
-        .setFeedPressure(60.0, "bara").setFeedTemperature(70.0, "C").setFeedFlowRate(50000.0, "kg/hr").build();
+    ProcessSystem rebuilt = new DexpiSimulationBuilder(file).setFluidTemplate(wellFluid()).setFeedPressure(60.0, "bara")
+        .setFeedTemperature(70.0, "C").setFeedFlowRate(50000.0, "kg/hr").build();
     rebuilt.run();
     return rebuilt;
   }
@@ -137,10 +137,10 @@ public class DexpiSimulationRoundTripTest {
       Separator expected = (Separator) source.getUnit(name);
       Separator actual = (Separator) rebuilt.getUnit(name);
       assertNotNull(actual, name);
-      assertEquals(expected.getGasOutStream().getFlowRate("kg/hr"), actual.getGasOutStream().getFlowRate("kg/hr"),
-          5.0, name + " gas");
-      assertEquals(expected.getLiquidOutStream().getFlowRate("kg/hr"),
-          actual.getLiquidOutStream().getFlowRate("kg/hr"), 5.0, name + " liquid");
+      assertEquals(expected.getGasOutStream().getFlowRate("kg/hr"), actual.getGasOutStream().getFlowRate("kg/hr"), 5.0,
+          name + " gas");
+      assertEquals(expected.getLiquidOutStream().getFlowRate("kg/hr"), actual.getLiquidOutStream().getFlowRate("kg/hr"),
+          5.0, name + " liquid");
       assertEquals(expected.getGasOutStream().getPressure("bara"), actual.getGasOutStream().getPressure("bara"), 1e-6,
           name + " pressure");
     }
@@ -265,8 +265,8 @@ public class DexpiSimulationRoundTripTest {
   }
 
   /**
-   * A third-party P&amp;ID without operating data is connected into a flowsheet, and each specification a user must
-   * add before running is reported.
+   * A third-party P&amp;ID without operating data is connected into a flowsheet, and each specification a user must add
+   * before running is reported.
    *
    * @throws Exception on failure
    */

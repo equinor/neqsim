@@ -33,9 +33,9 @@ import neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Pins the drawing conventions of the professional P&amp;ID: ISO 5457 frame and ISO 7200 title block, ISA-5.1 valve
- * and function symbols, direct same-sheet signals, line numbers instead of simulation names, header merges drawn as
- * tees, hidden solver helpers, and standard relief/blowdown connections drawn instead of held.
+ * Pins the drawing conventions of the professional P&amp;ID: ISO 5457 frame and ISO 7200 title block, ISA-5.1 valve and
+ * function symbols, direct same-sheet signals, line numbers instead of simulation names, header merges drawn as tees,
+ * hidden solver helpers, and standard relief/blowdown connections drawn instead of held.
  */
 public class ProfessionalPidDrawingStandardsTest {
   @TempDir

@@ -187,17 +187,17 @@ public class DexpiSimulationBuilder {
    *
    * <p>
    * The flowsheet is reconstructed from the material connections in the P&amp;ID. In-line throttling valves that carry
-   * an operating outlet pressure become {@code ThrottlingValve} units; other piping items are collapsed. Each connection
-   * leaves the correct outlet of multi-outlet equipment (separator gas, liquid or water; splitter branch). Units with
-   * several inlets are fed through a mixer, and connections that close a loop are torn and closed with a
+   * an operating outlet pressure become {@code ThrottlingValve} units; other piping items are collapsed. Each
+   * connection leaves the correct outlet of multi-outlet equipment (separator gas, liquid or water; splitter branch).
+   * Units with several inlets are fed through a mixer, and connections that close a loop are torn and closed with a
    * {@code Recycle}. Operating outlet pressures and temperatures carried in the file are applied as unit
    * specifications. Every judgement the builder makes is recorded in {@link #getDiagnostics()}.
    * </p>
    *
    * <p>
-   * The DEXPI file does not carry fluid composition. The fluid template and the feed state set on this builder are
-   * used for every boundary feed. Native DEXPI 2.x files (root element {@code Model}) are rejected with an explicit
-   * error because they cannot yet be built into a runnable simulation.
+   * The DEXPI file does not carry fluid composition. The fluid template and the feed state set on this builder are used
+   * for every boundary feed. Native DEXPI 2.x files (root element {@code Model}) are rejected with an explicit error
+   * because they cannot yet be built into a runnable simulation.
    * </p>
    *
    * @return a fully wired ProcessSystem ready for {@code process.run()}
@@ -278,8 +278,9 @@ public class DexpiSimulationBuilder {
         if (source != null) {
           inlets.add(outletFor(source, edge, graph));
         } else {
-          Stream tear = new Stream(uniqueName(unitMap.get(edge.source).getName() + "-to-" + unit.getName() + "-tear",
-              usedNames), fluid.clone());
+          Stream tear = new Stream(
+              uniqueName(unitMap.get(edge.source).getName() + "-to-" + unit.getName() + "-tear", usedNames),
+              fluid.clone());
           tear.setFlowRate(Math.max(1.0e-6, 0.01 * feedFlowRate), feedFlowRateUnit);
           double p = DexpiFlowsheetGraph.operatingPressureBara(graph.nodes.get(edge.source));
           double t = DexpiFlowsheetGraph.operatingTemperatureK(graph.nodes.get(edge.source));
@@ -288,9 +289,8 @@ public class DexpiSimulationBuilder {
           processSystem.add(tear);
           tears.put(edge, tear);
           inlets.add(tear);
-          addDiagnostic(BuildDiagnostic.Severity.INFO, "DEXPI_BUILD_RECYCLE_TEAR", id,
-              "loop torn at the connection " + unitMap.get(edge.source).getName() + " -> " + unit.getName()
-                  + "; closed with a Recycle");
+          addDiagnostic(BuildDiagnostic.Severity.INFO, "DEXPI_BUILD_RECYCLE_TEAR", id, "loop torn at the connection "
+              + unitMap.get(edge.source).getName() + " -> " + unit.getName() + "; closed with a Recycle");
         }
       }
       if (inlets.isEmpty()) {
@@ -348,8 +348,8 @@ public class DexpiSimulationBuilder {
       applyAutoInstrumentation(processSystem, dexpiInstruments);
     }
 
-    logger.info("Built ProcessSystem with {} units from DEXPI ({} diagnostics)", processSystem.getUnitOperations().size(),
-        diagnostics.size());
+    logger.info("Built ProcessSystem with {} units from DEXPI ({} diagnostics)",
+        processSystem.getUnitOperations().size(), diagnostics.size());
     return processSystem;
   }
 
@@ -600,6 +600,7 @@ public class DexpiSimulationBuilder {
     used.add(name);
     return name;
   }
+
   /**
    * Builds a map of equipment ID to DexpiProcessUnit with sizing attributes populated.
    *
@@ -648,7 +649,6 @@ public class DexpiSimulationBuilder {
     logger.debug("Built {} DexpiProcessUnit entries", unitMap.size());
     return unitMap;
   }
-
 
   /**
    * Applies auto-instrumentation using the DynamicProcessHelper, then logs associations between DEXPI instrument tags

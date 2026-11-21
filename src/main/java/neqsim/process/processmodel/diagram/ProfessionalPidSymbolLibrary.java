@@ -98,7 +98,6 @@ public final class ProfessionalPidSymbolLibrary {
     return Family.UNMAPPED;
   }
 
-
   /**
    * Returns true when the ISA-5.1 function letters of a tag declare a modulating control valve.
    *
@@ -311,10 +310,10 @@ public final class ProfessionalPidSymbolLibrary {
    */
   private static void valve(Page page, Family family, double x, double y, double width, double height, String tag) {
     if (family == Family.RELIEF_VALVE) {
-      poly(page, tag, new double[][] {{x, y}, {x - height / 2, y + height / 2}, {x + height / 2, y + height / 2},
-          {x, y}});
-      poly(page, tag, new double[][] {{x, y}, {x + width / 2, y - height / 2}, {x + width / 2, y + height / 2},
-          {x, y}});
+      poly(page, tag,
+          new double[][] {{x, y}, {x - height / 2, y + height / 2}, {x + height / 2, y + height / 2}, {x, y}});
+      poly(page, tag,
+          new double[][] {{x, y}, {x + width / 2, y - height / 2}, {x + width / 2, y + height / 2}, {x, y}});
       page.commands.add(Command.line(x, y, x, y - 8, "#111111", .3, tag, ""));
       poly(page, tag, new double[][] {{x - 4, y - 8}, {x + 4, y - 10}, {x - 4, y - 12}, {x + 4, y - 14},
           {x - 4, y - 16}, {x + 4, y - 18}});

@@ -20,8 +20,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * class supplies those inputs explicitly, using the arrangement normally shown on process P&amp;IDs:
  * </p>
  * <ul>
- * <li>pressure-safety valves, rupture disks and blowdown valves on a dedicated process nozzle of the protected equipment,
- * discharging to the flare header;</li>
+ * <li>pressure-safety valves, rupture disks and blowdown valves on a dedicated process nozzle of the protected
+ * equipment, discharging to the flare header;</li>
  * <li>vents on a dedicated process nozzle, routed to the flare header;</li>
  * <li>drains on a dedicated process nozzle, routed to the closed drain header.</li>
  * </ul>
@@ -44,7 +44,8 @@ public final class PidStandardConnectionProposals {
   /** Destination used for drain connections. */
   public static final String CLOSED_DRAIN_HEADER = "CLOSED-DRAIN-HEADER";
 
-  private PidStandardConnectionProposals() {}
+  private PidStandardConnectionProposals() {
+  }
 
   /**
    * Completes the standard auxiliary connections of a P&amp;ID proposal model in place.
@@ -86,8 +87,7 @@ public final class PidStandardConnectionProposals {
           : flareConnectors.containsKey(element.getEquipmentTag()) ? flareConnectors.get(element.getEquipmentTag())
               : FLARE_HEADER;
       element.attribute("physicalSourceEquipmentTag", owner.getName())
-          .attribute("physicalSourceNozzleTag", "N-" + element.getTag())
-          .attribute("physicalSourcePortRole", "PROCESS")
+          .attribute("physicalSourceNozzleTag", "N-" + element.getTag()).attribute("physicalSourcePortRole", "PROCESS")
           .attribute("designEvidenceReference", EVIDENCE_PREFIX + ": " + basis)
           .attribute("destinationTag", destination);
       completed.add(element.getTag());
@@ -103,17 +103,17 @@ public final class PidStandardConnectionProposals {
    */
   private static String basis(PidElementType type) {
     switch (type) {
-      case SAFETY_RELIEF_VALVE:
-      case RUPTURE_DISK:
-        return "relief device on a dedicated equipment nozzle discharging to the flare header (API 521 / ISO 23251)";
-      case BLOWDOWN_VALVE:
-        return "blowdown valve on a dedicated equipment nozzle routed to the flare header (API 521 / ISO 23251)";
-      case VENT:
-        return "hydrocarbon vent on a dedicated equipment nozzle routed to the flare header";
-      case DRAIN:
-        return "drain on a dedicated equipment nozzle routed to the closed drain header";
-      default:
-        return null;
+    case SAFETY_RELIEF_VALVE:
+    case RUPTURE_DISK:
+      return "relief device on a dedicated equipment nozzle discharging to the flare header (API 521 / ISO 23251)";
+    case BLOWDOWN_VALVE:
+      return "blowdown valve on a dedicated equipment nozzle routed to the flare header (API 521 / ISO 23251)";
+    case VENT:
+      return "hydrocarbon vent on a dedicated equipment nozzle routed to the flare header";
+    case DRAIN:
+      return "drain on a dedicated equipment nozzle routed to the closed drain header";
+    default:
+      return null;
     }
   }
 

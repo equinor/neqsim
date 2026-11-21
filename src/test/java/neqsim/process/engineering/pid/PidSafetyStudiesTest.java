@@ -41,8 +41,8 @@ public class PidSafetyStudiesTest {
    */
   private static PidElement find(PidDesignModel model, String equipment, PidElementType type, String purpose) {
     for (PidElement element : model.getElementsForEquipment(equipment)) {
-      if (element.getType() == type && (purpose == null
-          || String.valueOf(element.getAttributes().get("proposalPurpose")).contains(purpose))) {
+      if (element.getType() == type
+          && (purpose == null || String.valueOf(element.getAttributes().get("proposalPurpose")).contains(purpose))) {
         return element;
       }
     }
