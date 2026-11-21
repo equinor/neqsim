@@ -42,7 +42,9 @@ public final class ProcessTopologyPidRule implements PidDesignRule {
   public boolean supports(ProcessEquipmentInterface equipment) {
     return equipment != null && !(equipment instanceof StreamInterface) && !(equipment instanceof ThrottlingValve)
         && !(equipment instanceof Splitter) && !(equipment instanceof Recycle) && !(equipment instanceof Calculator)
-        && !(equipment instanceof Adjuster);
+        && !(equipment instanceof Adjuster)
+        // A plain mixer is a piping junction (tee), like a splitter: it has no equipment nozzles.
+        && equipment.getClass() != neqsim.process.equipment.mixer.Mixer.class;
   }
 
   @Override

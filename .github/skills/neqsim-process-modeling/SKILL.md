@@ -266,6 +266,9 @@ plant.setAutoRecycles(True)             # or let run()/runUntilConverged() do it
 - Use `Dexpi20XmlWriter` for native Plant/P&ID exchange and `Dexpi20ProcessModelWriter` for native Process/PFD/BFD
   exchange. A Proteus document with a changed header is not native DEXPI 2.0. Preserve the conformance report and still
   require a named-CAE round-trip before project qualification.
+- To rebuild a runnable model from a Proteus P&ID (including NeqSim's own `DexpiXmlWriter` output), use
+  `DexpiSimulationBuilder` with an explicit fluid template and feed, then check `getDiagnostics()` for missing outlet
+  specifications before `run()`. Native DEXPI 2.x files are rejected; DEXPI does not carry composition.
 - Keep an explicitly registered terminal product as `new Stream(productName, upstreamOutlet)` when the product must
   remain a named topology node. NeqSim reports the wrapped outlet as that stream's inlet and the DEXPI Process exporter
   maps the node to a sink. Zero-flow and isolated empty streams must not be deleted merely to avoid invalid empty port

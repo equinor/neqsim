@@ -169,6 +169,20 @@ Three heuristics that repeatedly decide the outcome:
 Carryover margin scales as `1/(1-level)`, so report the utilisation as a level
 sensitivity — it converts "verify the HH trip" into a numeric trip setpoint.
 
+### Method 1c — Run the studies on every safeguard of a generated P&ID
+
+When a P&ID was synthesized from the process (`PidDesignSynthesizer`), run
+`PidSafetyStudies.run(pid, process, PidSafetyStudies.Policy.screening())` after
+`PidStandardConnectionProposals.complete(...)`. It applies the Method 1b calculations to
+every proposed PSV (blocked outlet, fire, gas blow-by through upstream liquid valves),
+sizes each BDV by dynamic blowdown to the API 521 target, sums the flare load, places
+trip set points between operating and relief limits, sets NOG 070 SIL targets and screens
+PFDavg. Results land on the P&ID elements, the drawings, DEXPI and the HAZOP preparation
+(`quantifiedSafeguardEvidence`). The blowdown minimum temperature is the fluid
+temperature without wall heat capacity: treat `BLOWDOWN_LOW_TEMPERATURE` as a prompt
+for the wall/tail-pipe check above. Report every finding; reliability data are screening
+values (`docs/process/safety/pid-safety-studies.md`).
+
 ## Method 2 — LOPA Worksheet
 
 Use [`LOPAResult`](../../../src/main/java/neqsim/process/safety/risk/sis/LOPAResult.java) to compute residual frequency:

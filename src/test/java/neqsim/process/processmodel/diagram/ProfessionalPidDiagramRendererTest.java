@@ -68,8 +68,11 @@ public class ProfessionalPidDiagramRendererTest extends NeqSimTest {
         ProfessionalPidSymbolLibrary.family(new neqsim.process.equipment.valve.CheckValve("NRV")));
     assertEquals(ProfessionalPidSymbolLibrary.Family.RELIEF_VALVE,
         ProfessionalPidSymbolLibrary.family(new neqsim.process.equipment.valve.SafetyReliefValve("PSV")));
-    assertEquals(ProfessionalPidSymbolLibrary.Family.ISOLATION_VALVE,
+    // An actuated shutdown valve is drawn with its ISA-5.1 actuator; a control-tagged valve keeps its control symbol.
+    assertEquals(ProfessionalPidSymbolLibrary.Family.SHUTDOWN_VALVE,
         ProfessionalPidSymbolLibrary.family(new neqsim.process.equipment.valve.ESDValve("SDV")));
+    assertEquals(ProfessionalPidSymbolLibrary.Family.CONTROL_VALVE,
+        ProfessionalPidSymbolLibrary.family(new neqsim.process.equipment.valve.ESDValve("30-PCV-101")));
     assertEquals(ProfessionalPidSymbolLibrary.Family.UNMAPPED,
         ProfessionalPidSymbolLibrary.family(new neqsim.process.equipment.expander.Expander("EXP")));
   }

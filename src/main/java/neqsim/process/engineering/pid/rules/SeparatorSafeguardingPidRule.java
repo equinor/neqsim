@@ -75,7 +75,7 @@ public final class SeparatorSafeguardingPidRule implements PidDesignRule {
     PidElement bdv = PidRuleSupport
         .element(context, equipment, "BDV", "DEPRESSURISATION", PidElementType.BLOWDOWN_VALVE, RULE_ID,
             "Separator blowdown valve", "Depressurise isolated inventory to the flare system when required")
-        .attribute("failurePosition", "FAIL_CLOSED_PROPOSAL")
+        .attribute("failurePosition", "FAIL_OPEN_PROPOSAL")
         .attribute("orificeSizing", "DYNAMIC_BLOWDOWN_STUDY_REQUIRED")
         .attribute("flareTieIn", "PROJECT_INPUT_REQUIRED");
     pressureTrip.connect(inletEsdv.getId()).connect(gasEsdv.getId()).connect(bdv.getId());

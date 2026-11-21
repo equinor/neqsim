@@ -179,6 +179,10 @@ public final class ProfessionalPidPackageExporter {
       writeJson(staging.resolve("pid-engineering-registers.json"), registers.toJson());
       writeJson(staging.resolve("pid-simulation-bindings.json"), bindings.toJson());
       writeJson(staging.resolve("dynamic-capability-report.json"), DynamicCapabilityReport.from(process).toJson());
+      String safetyStudies = PidSafetyStudies.reportJson(model, null);
+      if (!safetyStudies.isEmpty()) {
+        writeJson(staging.resolve("pid-safety-studies.json"), safetyStudies);
+      }
       if (!process.copy().saveToNeqsim(staging.resolve("simulation-model.neqsim").toString())) {
         throw new IOException("Could not persist the executable process model");
       }
@@ -192,6 +196,7 @@ public final class ProfessionalPidPackageExporter {
       readiness.put("sheetFiles", sheetFiles);
       readiness.put("drawingProfile",
           professional == null ? "CONTROLLED_LEGACY_LAYOUT_REVIEW" : "ISO_10628_BASIS_NATIVE");
+      readiness.put("safetyStudies", safetyStudies.isEmpty() ? "NOT_RUN" : "pid-safety-studies.json");
       readiness.put("drawingContentReport", professional == null ? "NOT_ASSESSED" : "pid-drawing-content-report.json");
       readiness.put("isoConformanceStatus", "CONTROLLED_STANDARD_AND_DISCIPLINE_REVIEW_REQUIRED");
       readiness.put("nativePidProjection", projected.toMap());

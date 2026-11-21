@@ -9,6 +9,8 @@ description: safety documentation for NeqSim
 
 - [Closed-loop SIF verification](closed-loop-sif-verification.md): execute detection,
   voting, logic delay, and final-element response in an isolated transient.
+- [Safety studies on a generated P&ID](pid-safety-studies.md): size relief and blowdown
+  valves, set trip points, screen SIL and quantify HAZOP safeguards from the simulation.
 - [HAZOP and LOPA to draft SRS handoff](hazop-lopa-srs-handoff.md): trace supplied
   hazard and risk inputs through IPL eligibility, LOPA arithmetic, and an unapproved SRS draft.
 - [Integrated facility safety response](integrated-facility-safety-response.md): join

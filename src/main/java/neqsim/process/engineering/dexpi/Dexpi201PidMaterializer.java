@@ -418,7 +418,8 @@ public final class Dexpi201PidMaterializer {
       setData(function, "DeviceInformation",
           "NeqSim design proposal; " + element.getType().name() + "; " + element.getStatus().name() + "; source rule "
               + element.getRuleId()
-              + (manual ? "; actual local discrete manual push button; no process sensing location" : ""));
+              + (manual ? "; actual local discrete manual push button; no process sensing location" : "")
+              + studySummary(element));
       Element locationData = data(function, "Location");
       Element locationValue = document.createElement("DataReference");
       locationValue.setAttribute("data",
@@ -490,6 +491,10 @@ public final class Dexpi201PidMaterializer {
       nodes.appendChild(object(valve.getAttribute("id") + "Inlet", "Plant/Piping.PipingNode"));
       nodes.appendChild(object(valve.getAttribute("id") + "Outlet", "Plant/Piping.PipingNode"));
       components(segment, "Items").appendChild(valve);
+      Object studySet = element.getAttributes().get("studySetPressureBarg");
+      if ("SafetyValveOrFitting".equals(family) && studySet instanceof Number) {
+        gaugePressure(valve, "SetPressureHigh", ((Number) studySet).doubleValue());
+      }
       byTag.put(element.getTag(), valve);
       nativeIds.put(element.getTag(), valve.getAttribute("id"));
       return valve;
@@ -1046,6 +1051,56 @@ public final class Dexpi201PidMaterializer {
       mapping.put("setPressureGaugeBar", Double.valueOf(gauge));
       mapping.put("basis", "CALLER_DECLARED_REFERENCE_NOT_MEASURED_ATMOSPHERE");
       pressureReliefMappings.add(mapping);
+    }
+
+    /**
+     * Writes a gauge pressure as a native DEXPI physical quantity in bar.
+     *
+     * @param owner native object
+     * @param property official pressure property
+     * @param gaugeBar gauge pressure in bar
+     */
+    private void gaugePressure(Element owner, String property, double gaugeBar) {
+      Element old = direct(owner, "Data", property);
+      if (old != null) {
+        owner.removeChild(old);
+      }
+      Element quantity = document.createElement("AggregatedDataValue");
+      quantity.setAttribute("type", "Core/PhysicalQuantities.PhysicalQuantity");
+      Element unit = document.createElement("Data");
+      unit.setAttribute("property", "Unit");
+      Element reference = document.createElement("DataReference");
+      reference.setAttribute("data", "Core/PhysicalQuantities.PressureGaugeUnit.Bar");
+      unit.appendChild(reference);
+      quantity.appendChild(unit);
+      Element value = document.createElement("Data");
+      value.setAttribute("property", "Value");
+      Element number = document.createElement("Double");
+      number.setTextContent(Double.toString(gaugeBar));
+      value.appendChild(number);
+      quantity.appendChild(value);
+      data(owner, property).appendChild(quantity);
+    }
+
+    /**
+     * Returns the screening safety-study results of a function as device-information text.
+     *
+     * @param element source proposal
+     * @return text starting with a separator, or empty when no study result is present
+     */
+    private String studySummary(PidElement element) {
+      if (!element.getAttributes().containsKey(neqsim.process.engineering.pid.PidSafetyStudies.REFERENCE)) {
+        return "";
+      }
+      StringBuilder text = new StringBuilder();
+      for (String name : new String[] {"setPoint", "silTarget", "voting", "studyPfdAvg", "studySilVerification"}) {
+        Object value = element.getAttributes().get(name);
+        if (value != null) {
+          text.append("; ").append(name).append(' ').append(value);
+        }
+      }
+      text.append("; ").append(element.getAttributes().get(neqsim.process.engineering.pid.PidSafetyStudies.REFERENCE));
+      return text.toString();
     }
 
     /**

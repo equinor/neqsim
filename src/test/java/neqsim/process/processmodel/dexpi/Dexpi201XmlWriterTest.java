@@ -138,6 +138,18 @@ public class Dexpi201XmlWriterTest extends NeqSimTest {
     }
     assertEquals(1, inbound);
     assertEquals(1, outbound);
+    Element segment = (Element) valve.getParentNode().getParentNode();
+    java.util.Map<String, String> ends = new java.util.LinkedHashMap<String, String>();
+    NodeList segmentRefs = segment.getElementsByTagName("References");
+    for (int refIndex = 0; refIndex < segmentRefs.getLength(); refIndex++) {
+      Element reference = (Element) segmentRefs.item(refIndex);
+      ends.put(reference.getAttribute("property"), reference.getAttribute("objects").substring(1));
+    }
+    assertEquals(valve.getAttribute("id"), ends.get("SourceItem"));
+    assertEquals(valve.getAttribute("id"), ends.get("TargetItem"));
+    NodeList valveNodes = valve.getElementsByTagName("Object");
+    assertEquals(((Element) valveNodes.item(0)).getAttribute("id"), ends.get("SourceNode"));
+    assertEquals(((Element) valveNodes.item(1)).getAttribute("id"), ends.get("TargetNode"));
   }
 
   /**
@@ -395,8 +407,26 @@ public class Dexpi201XmlWriterTest extends NeqSimTest {
     Path repeated = temporaryDirectory.resolve("recycle-repeated.xml");
     Dexpi201XmlWriter.writeAndAssess(process, repeated.toFile(), metadata());
     assertArrayEquals(Files.readAllBytes(file), Files.readAllBytes(repeated));
-    IllegalArgumentException processGap = assertThrows(IllegalArgumentException.class, () -> Dexpi201ProcessModelWriter
-        .writeAndAssess(process, temporaryDirectory.resolve("unsupported-recycle-process.xml").toFile(), metadata()));
+    Path processFile = temporaryDirectory.resolve("recycle-process.xml");
+    Dexpi20ConformanceAssessment.Report processReport = Dexpi201ProcessModelWriter.writeAndAssess(process,
+        processFile.toFile(), metadata());
+    assertTrue(processReport.isSchemaAndProfileConformant(), processReport.getErrors().toString());
+    String processXml = new String(Files.readAllBytes(processFile), StandardCharsets.UTF_8);
+    assertFalse(processXml.contains("RECYCLE-SOLVER"));
+    assertFalse(processXml.contains("RETURN-TEAR"));
+    int materialStreams = 0;
+    NodeList processObjects = parse(processFile).getElementsByTagName("Object");
+    for (int index = 0; index < processObjects.getLength(); index++) {
+      if ("Process/Process.Stream".equals(((Element) processObjects.item(index)).getAttribute("type"))) {
+        materialStreams++;
+      }
+    }
+    // Fresh feed, mixer outlet, recycle branch closed onto the mixer, and the product branch.
+    assertEquals(4, materialStreams);
+    process.add(new neqsim.process.equipment.util.Calculator("CALC-101"));
+    IllegalArgumentException processGap = assertThrows(IllegalArgumentException.class,
+        () -> Dexpi201ProcessModelWriter.writeAndAssess(process,
+            temporaryDirectory.resolve("unsupported-calculator-process.xml").toFile(), metadata()));
     assertTrue(processGap.getMessage().contains("no reviewed physical alias projection"));
   }
 
