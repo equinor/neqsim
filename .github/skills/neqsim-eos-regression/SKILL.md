@@ -1,7 +1,7 @@
 ---
 name: neqsim-eos-regression
 description: "EOS parameter regression workflow for fitting equation-of-state models to experimental data. USE WHEN: tuning binary interaction parameters (kij), matching saturation pressures, fitting PVT data (CME, CVD, DL), characterizing C7+ fractions, or validating EOS predictions against lab measurements. Covers SRK, PR, CPA parameter fitting strategies."
-last_verified: "2026-11-18"
+last_verified: "2026-11-21"
 ---
 
 # EOS Parameter Regression Workflow
@@ -304,6 +304,17 @@ changing the objective — and that arbitrary value then dominates the *condensa
 liquid* density in the reservoir model. Check the objective across the bound
 range before including a parameter; if it is monotonic to the bound, drop it and
 keep the correlation value.
+
+### `VOLUME_SHIFT_C7PLUS` scales the effective shift
+
+`RegressionParameter.VOLUME_SHIFT_C7PLUS` multiplies the effective Peneloux shift of each
+plus/TBP fraction (Rackett correlation, dimensionless constant or E300 `SSHIFT`). Before the
+#5195 fix it scaled only the dimensionless constant, which is zero for characterised fractions,
+so the parameter had no effect. It changes liquid density only with `useVolumeCorrection(true)`.
+Compare simulated DL/CCE volumes with lab data on the same basis: NeqSim now reports
+Peneloux-corrected relative volume, Z and Bg, gas gravity relative to air at 28.96546 g/mol and
+DL Rs with Z = 1 standard gas (`setUseIdealGasStandardVolume(false)` for real-gas Z). See
+`docs/pvtsimulation/pvt_lab_tests.md` and `PvtVolumeConventionsTest`.
 
 ### Plus-fraction back-out fails on lean gas
 

@@ -46,7 +46,8 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     /*
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
      */
-    saturationVolume = system.getVolume();
+    system.initPhysicalProperties();
+    saturationVolume = system.getCorrectedVolume();
     saturationPressure = system.getPressure();
     Zsaturation = system.getZ();
   }
@@ -80,7 +81,8 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     // thermoOps.setSystem(tempSystem);
     thermoOps.TPflash();
 
-    double totalVolume = tempSystem.getVolume();
+    tempSystem.initPhysicalProperties();
+    double totalVolume = tempSystem.getCorrectedVolume();
     // system.display();
     return totalVolume / saturationVolume; // %wax
   }

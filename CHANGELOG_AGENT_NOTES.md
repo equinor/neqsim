@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-11-21 — PVT volume conventions in DL, CCE, separator test and `VOLUME_SHIFT_C7PLUS` (#5195)
+
+- Changed results: `DifferentialLiberation.getRelGasGravity()` is now relative to air (28.96546 g/mol, was 28.0);
+  `getZgas()`/`getBg()` and `ConstantMassExpansion.getRelativeVolume()`/`getLiquidRelativeVolume()`/`getYfactor()`/
+  `getZgas()`/`getZsaturation()` use Peneloux-corrected volumes; DL `getRs()`/`getGasStandardVolume()` use Z = 1 standard gas
+  (Pedersen Eq. 3.7). Migration: lab-matching code needs no change; hard-coded reference values shift (DL Rs about +0.5 %,
+  CCE relative volume below Psat by up to about 4 %).
+- New: `DifferentialLiberation.setUseIdealGasStandardVolume(false)` for real-gas Z at standard conditions.
+- New: `SeparatorTest.getGasGravity()`, `getStockTankOilDensity()`, `getStockTankOilAPIGravity()`, `getStockTankGasGravity()`.
+- Fixed: `RegressionParameter.VOLUME_SHIFT_C7PLUS` now scales the effective shift (previously no effect).
+- Updated: `docs/pvtsimulation/pvt_lab_tests.md`, `neqsim-eos-regression` skill, `pvt-simulation` agent.
+
+---
+
 ## 2026-11-21 — DEXPI conformance validation (`neqsim dexpi-check`, `@dexpi-validation`)
 
 - New `devtools/dexpi_conformance_check.py` (`neqsim dexpi-check FILE --expect-version 2.0.1`): identifies version/profile
