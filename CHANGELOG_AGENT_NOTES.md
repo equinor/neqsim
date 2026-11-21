@@ -18,6 +18,10 @@
   reports as `CONFORMANT`.
 - Fixed: `Dexpi20XmlWriter` (2.0.1 only) now gives in-line valve segments `SourceItem`/`SourceNode`/`TargetItem`/`TargetNode`;
   the 17-unit train export now has zero pyDEXPI issues. `Dexpi201XmlWriterTest.insertsControlValveOnPhysicalPipingPath` pins it.
+- Fixed: `Dexpi20ProcessModelWriter` now writes the mandatory `Method` (compression, heat exchange) and quantity `DisplayText`
+  in the 2.0.0 path too (pyDEXPI could not instantiate those steps), and `Dexpi201ProcessModelWriter` closes a single-stream
+  `Recycle` by stream identity instead of rejecting it (`Calculator`/`Adjuster` still rejected). Both Process exports of the
+  17-unit recycle train now have zero pyDEXPI issues; `Dexpi201XmlWriterTest.projectsBranchedRecycleWithDistinctOwnedPorts` pins it.
 - New skill `neqsim-dexpi-conformance-validation` and agent `dexpi-validation`; router row added.
 
 ---

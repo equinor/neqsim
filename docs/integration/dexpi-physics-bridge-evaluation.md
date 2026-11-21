@@ -30,8 +30,8 @@ official DEXPI example `C01V04-VER.EX01.xml` from a third-party tool, were used 
 | --- | --- | --- |
 | Simulation to Proteus P&ID XML | Good | 17 units, 16 lines, operating P/T/flow on 31 items, design data, recycle closure kept; 0.2–0.4 s |
 | Simulation to native DEXPI 2.0.1 Plant | Good | Schema/profile conformant; pyDEXPI strict load with 0 errors |
-| Simulation to native DEXPI 2.0.1 Process | Blocked for recycle models | Conformant and pyDEXPI-clean without the recycle; rejects any `Recycle` unit |
-| Simulation to native DEXPI 2.0.0 Process | Defect | Reported CONFORMANT, but omits the mandatory `Method` on `Compressing` and `Cooling`; pyDEXPI cannot instantiate 5 of 13 process steps |
+| Simulation to native DEXPI 2.0.1 Process | Good | Conformant and pyDEXPI-clean, including models with a single-stream `Recycle` (closed by stream identity) |
+| Simulation to native DEXPI 2.0.0 Process | Good | Mandatory `Method` and `DisplayText` now written; pyDEXPI loads all steps with 0 issues; still no `EngineeringModel` provenance (no metadata in this API) |
 | Simulation to native DEXPI 2.0.0 Plant | Partial | Heater exported as `FiredHeater`, which pyDEXPI rejects; `GlobeValve` attributes not in the model |
 | Stream state in Process exchange | Partial | 19 streams with P, T and mass flow; no composition, so the file alone cannot be re-simulated |
 | Quick Proteus drawing (`DexpiXmlSvgRenderer`) | Not professional | One 1.8 m-wide row; lines cross equipment; `Recycle` solver helper drawn as equipment |
@@ -149,8 +149,8 @@ Ordered by how much each item blocks the goal.
 
 | Priority | Item | Why it matters |
 | --- | --- | --- |
-| P1 | Project `Recycle` as a physical stream connection in the 2.0.1 Process writer, as the 2.0.1 Plant writer already does | Nearly every real plant has a recycle; today it blocks the standards-current Process exchange |
-| P1 | Emit the mandatory `Method` in the 2.0.0 Process path, or bundle the 2.0.0 model files and run the model-level multiplicity validator; steer users to 2.0.1 | The current 2.0.0 Process export is reported CONFORMANT but fails in pyDEXPI |
+| Done | Recycle projection in the 2.0.1 Process writer; mandatory `Method` and `DisplayText` in the 2.0.0 Process path | Verified with `neqsim dexpi-check`: NeqSim CONFORMANT and pyDEXPI 0 issues on the 17-unit recycle train |
+| P2 | Bundle the 2.0.0 model files and run the model-level multiplicity validator on the 2.0.0 path | The NeqSim assessment still cannot see 2.0.0 multiplicity defects; pyDEXPI (`neqsim dexpi-check`) is the independent guard |
 | P1 | Native DEXPI 2.0.1 Plant and Process import into `ProcessSystem`, reusing the flowsheet graph and diagnostics | Modern CAE tools exchange 2.0.1; pyDEXPI already reads NeqSim's 2.0.1 output, but NeqSim does not |
 | P1 | Export the fluid definition (composition, EoS reference) with Process streams | Lets a DEXPI file alone carry enough to re-run the physics |
 | P3 | Professional P&ID: utility-system input for cooler control valves | ISO frame, title block, ISA symbols, direct signals, line numbers, relief connections, nozzle labels, pooled auxiliary sheets and shared heat-exchanger sheets are done |

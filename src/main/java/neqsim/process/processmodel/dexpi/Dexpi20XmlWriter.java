@@ -595,7 +595,7 @@ public final class Dexpi20XmlWriter {
    * @return physical stream identity
    * @throws IOException when alias chains form a cycle
    */
-  private static StreamInterface resolveAlias(StreamInterface stream, Map<StreamInterface, StreamInterface> aliases)
+  static StreamInterface resolveAlias(StreamInterface stream, Map<StreamInterface, StreamInterface> aliases)
       throws IOException {
     Set<StreamInterface> visited = Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
     StreamInterface current = stream;

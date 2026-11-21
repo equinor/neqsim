@@ -52,10 +52,12 @@ SVG/PDF drawing set and native graphical projection must be separately checked
 for object coverage and project conventions. No drawing qualification is inferred.
 
 `Dexpi201ProcessModelWriter.writeAndAssess(process, file, metadata)` provides the
-optional 2.0.1 Process/PFD/BFD exchange for models without numerical helpers.
-It rejects `Recycle`, `Calculator` and `Adjuster` explicitly because their physical
-alias projection has not yet been implemented for the Process profile. It never
-labels a recycle solver as a physical transporting step. The supported Plant/P&ID
+optional 2.0.1 Process/PFD/BFD exchange. A single-stream `Recycle` is closed by stream
+identity, as in the Plant profile: the recycled feed is not written as a separate source and the
+return connection goes to the actual consumer, so a recycle solver is never exported as a
+physical step. `Calculator` and `Adjuster` are rejected explicitly because their projection has
+not been reviewed for the Process profile; a recycle with several inlets or outlets is also
+rejected. The supported Plant/P&ID
 projection described below is separate. The existing multi-area package APIs keep
 their declared 2.0.0 manifest contract; they must not be relabelled as 2.0.1 packages.
 
@@ -418,13 +420,16 @@ paths are not modified. `completeSupportedProjection` is separate from named-too
 qualification, full semantic equivalence, engineering approval and fitness for
 construction.
 
-The explicit 2.0.1 Process writer also supplies the mandatory compression and heat
-exchange method literals. Generic `Compressor` source equipment uses the official
+The Process writers supply the mandatory compression and heat
+exchange method literals, in the compatibility 2.0.0 path as well as the 2.0.1 path
+(without them pyDEXPI cannot instantiate those steps and drops their ports). Generic `Compressor` source equipment uses the official
 `CompressionMethod.Unspecified` value: the isentropic calculation method does not
 establish a physical centrifugal or reciprocating machine type. Cooler and heat
 exchanger steps use `HeatExchangeMethod.Generic` unless a future reviewed subtype
-mapping supplies stronger source evidence. The compatibility Process writer
-retains its existing output.
+mapping supplies stronger source evidence. Quantity values also carry the mandatory
+`DisplayText` in both versions. The 2.0.0 path still writes no `EngineeringModel`
+provenance because its API takes no metadata; use the 2.0.1 writer when a file must
+be fully conformant.
 
 Regression evidence is in `PidPhysicalProjectionTest` and
 `Dexpi201PidMaterializerTest`; the tests independently inspect sensing locations,

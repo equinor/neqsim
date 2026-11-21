@@ -44,10 +44,13 @@ If it is missing the layer reports `NOT_RUN` with this command. Java is located 
   `pydexpi_segment_connectivity` violations (in-line valve segments declared no source/target item). Fixed in
   `Dexpi20XmlWriter` (valve segments now name their item and its inlet/outlet nodes); the same file is now `PASS`
   with 0 pyDEXPI issues. The NeqSim semantic profile did not flag the defect: always run pyDEXPI too.
-- Process 2.0.0 (`Dexpi20ProcessModelWriter.write`): NeqSim `CONFORMANT`; pyDEXPI reports 8
-  `model_references_in_composition_tree` issues and 4 loader errors; this path is 2.0.0 and lacks
-  the mandatory `Method`.
-- Process 2.0.1 rejects models with `Recycle`/`Calculator`/`Adjuster` by design.
+- Process 2.0.0 (`Dexpi20ProcessModelWriter.write`): before the fix, NeqSim reported `CONFORMANT` while pyDEXPI
+  reported 8 composition-tree issues and 4 loader errors, because compression/cooling steps lacked the mandatory
+  `Method` (5 of 13 steps could not be instantiated). Fixed: `Method` and `DisplayText` are now written; 0 issues.
+  This path still carries no `EngineeringModel` provenance (no metadata argument).
+- Process 2.0.1 (`Dexpi201ProcessModelWriter`): single-stream `Recycle` is now closed by stream identity (verified on the
+  17-unit recycle train: NeqSim `CONFORMANT`, pyDEXPI 0 issues); `Calculator`/`Adjuster` are still rejected.
+- pyDEXPI loader warnings about cyclic port references are expected on Process files and are not failures.
 
 ## Producing a file that can pass
 
