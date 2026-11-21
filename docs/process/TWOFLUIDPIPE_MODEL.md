@@ -1751,13 +1751,17 @@ studies.
 `setThermodynamicUpdateInterval(...)` steps the transient flashes the feed at each cell's pressure and
 temperature and resets the cell's phase densities. The gas and oil mass of a cell are advanced separately, so a
 flash that returns one merged hydrocarbon phase fits neither phase of the cell. That happens above the saturation
-pressure of the feed, and at rare isolated conditions inside the two-phase region where the flash misses the split:
-1 of 20,000 random conditions between 140 and 240 bara and 330 and 353 K for a methane/ethane/n-heptane/n-decane/water
-feed, for example 172.13 bara and 339.28 K. The reset used to leave the cell less than half full, and its pressure
+pressure of the feed. Until 2026-11-21 it also happened at rare isolated conditions inside the two-phase region,
+where an oversized Newton step made the flash miss the split (issue 5199, fixed in
+`SysNewtonRhapsonTPflash`): 172.13 bara and 339.28 K for a methane/ethane/n-heptane/n-decane/water feed. The reset
+used to leave the cell less than half full, and its pressure
 collapsed within a few steps. A 15.6 km, 12-inch line packed at 300 t/h against a closed outlet (80 cells) stopped
 converging at 1,540 s and 175 bar with one cell at 7 bar. A cell in which gas and oil each fill more than 1 % now
 keeps its previous phase properties for that update, and the same case runs to 2,400 s and 255 bar with no rejected
 substep (`TwoFluidPipeLinePackingTest`, measured 2026-11-21). Runs with component transport are unchanged.
+With the flash corrected, the cell guard did not act below the saturation pressure in that 80-cell case started
+from 100 bara (0 activations in 1,725 s, same pressures with and without it). It is still needed above it: without
+it the 10-cell test case stops converging 125 s after the outlet closes.
 
 Two limits remain for closed-end pack-up with the coupled option (same case, measured 2026-11-21):
 
