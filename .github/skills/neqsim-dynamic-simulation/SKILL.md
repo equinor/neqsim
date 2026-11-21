@@ -684,6 +684,16 @@ For a declared restart-opening window, use `TwoFluidPipeReport.analyzePressureTr
 unfiltered extrema, peak-to-peak pressure, maximum sample rate, total/excess variation and reversal
 count with an explicit Pa gate. Preserve the sample interval and do not promote this diagnostic to a
 surge qualification without mesh/time and independent evidence.
+For pressure-protection, rating or allowable checks on a `TwoFluidPipe`, take zone peaks from
+`getLastIntervalPeakPressureProfile("bara")` (and `getLastIntervalPeakInletFacePressure`) after each
+`runTransient` call, not from `getPressureProfile()` samples. Require
+`isLastIntervalPressureEnvelopeSubstepResolved()`. Riser-base gas-pocket collapse after shut-in can
+rise and decay inside one outer step. Measured 2026-11-20 on the synthetic tie-back
+(`examples/production-decision/tieback-protection.md`): at the default CFL 0.5 the substep envelope
+moved by up to 7.9 bar with the outer step. At `setCflNumber(0.25)`, outer-step, CFL and mesh
+refinements agreed within 0.36 bar on 60/120 cells. A 240-cell mesh added 0.60 bar, so the local
+riser-base peak is time-converged but not mesh-converged. Use CFL 0.25 for riser-base/countercurrent
+fallback studies, show one CFL and two mesh refinements, and report a growing mesh increment as open. See `docs/wiki/two_fluid_reporting_and_validation.md`.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each

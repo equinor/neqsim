@@ -25,6 +25,21 @@ class TestProtectionRefinement(unittest.TestCase):
         self.assertEqual([0.], result["route_peak_differences_bar"])
         self.assertEqual({"max_abs_bar": 1., "at_s": .25}, result["endpoint_history_differences"]["riser_bara"])
 
+    def test_shifted_front_is_judged_by_timing_window(self):
+        # The refined riser front arrives one scan later: same-time error 2 bar, no amplitude error.
+        rows = [(0., 56.), (.25, 58.), (.5, 58.)]
+        self.base["trace"] = [{"s": t, "subsea_bara": 70., "riser_bara": p} for t, p in rows]
+        self.fine["trace"] = [{"s": t, "subsea_bara": 70., "riser_bara": p}
+                              for t, p in ((0., 56.), (.125, 56.), (.25, 56.), (.375, 57.), (.5, 58.))]
+        result = compare_protection(self.base, self.fine)
+        self.assertEqual(2., result["endpoint_history_differences"]["riser_bara"]["max_abs_bar"])
+        self.assertEqual(0., result["endpoint_tube_differences"]["riser_bara"]["max_abs_bar"])
+        self.assertTrue(result["within_tolerances"])
+        # An amplitude error is not hidden by the window.
+        for row in self.fine["trace"][1:]:
+            row["riser_bara"] -= .75
+        self.assertFalse(compare_protection(self.base, self.fine)["within_tolerances"])
+
     def test_independent_seat_feedback(self):
         self.fine["events"]["hipv_b_seated_s"] += .75
         self.assertFalse(compare_protection(self.base, self.fine)["within_tolerances"])

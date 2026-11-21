@@ -133,6 +133,11 @@ response schema. Gate the result on convergence, pressure-floor, and wall-clock
 findings, then apply the steady/transient limitations in the loaded
 `neqsim-flow-assurance` skill.
 
+For transient pressure peaks against line ratings (shut-in, HIPPS, blocked outlet),
+report the substep envelope from `TwoFluidPipe.getLastIntervalPeakPressureProfile`
+with the pipe CFL at 0.25, and include one CFL and two mesh refinements. End-of-step
+profile samples can miss riser-base excursions (see `neqsim-dynamic-simulation`).
+
 Before routing a mechanistic steady or transient study, read
 `docs/process/twofluidpipe-evidence-matrix.md`. Distinguish implemented,
 numerically verified, experimentally qualified, failed, and unsupported rows.

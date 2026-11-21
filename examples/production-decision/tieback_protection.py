@@ -35,6 +35,11 @@ HIPPS_BARA = 70.6
 HOST_BARA = 58.5
 DESIGN_RATE = 20.
 SERIES_RESISTANCE = (80. - 69.55044648172829) / DESIGN_RATE**2
+# Internal Courant number of the pipe solver. With the library default of 0.5, intermittent
+# gas-pocket collapses at the riser base produced substep peaks that changed by up to 6 bar
+# with the outer step. At 0.25 the substep envelope agrees within 0.4 bar across outer step,
+# Courant number and mesh refinement. See tieback-protection.md.
+PROTECTION_CFL = .25
 
 
 @dataclass(frozen=True)
@@ -187,15 +192,17 @@ def supply_rate(line_p, q0, resistance, dhsv_open, hipv_open, tree_closed, choke
     return (low + high) / 2.
 
 
-def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis()):
-    if case not in CASES or mesh not in (1, 2) or dt not in (.125, .25, .5):
-        raise ValueError("Unsupported scenario, time step or mesh")
+def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis(), cfl=PROTECTION_CFL):
+    if (case not in CASES or mesh not in (1, 2, 4) or dt not in (.125, .25, .5)
+            or cfl not in (.125, .25, .5)):
+        raise ValueError("Unsupported scenario, time step, mesh or Courant number")
     steps = round(duration / dt)
     if duration <= 2. or not math.isclose(steps * dt, duration, abs_tol=1e-9):
         raise ValueError("Duration must include the event and end on a scan")
     host_case = case in ("host_gas_blocked", "host_psv_only")
     plant, well, dhsv, tree, manifold, valves, pipe, sep = make_plant(
         n, mesh, separator_bara=48. if host_case else 54.4)
+    pipe.setCflNumber(cfl)
     zones = basis.zones
     groups = zone_indices(zones, pipe)
     dhsv.setStrokeTime(basis.dhsv_stroke_s)
@@ -229,6 +236,8 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis()):
     # Freeze the quadratic choke/header resistance at the initial operating point.
     resistance = SERIES_RESISTANCE
     peaks = [{"peak_bara": -math.inf} for zone in zones]
+    scan_peaks = [-math.inf for zone in zones]
+    interval_envelope = None
     events, trace = {}, []
     max_mass_error = max_component_error = admitted = discharged = 0.
     seated_tree = False
@@ -244,7 +253,7 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis()):
         pressures = [v / 1e5 for v in pipe.getPressureProfile()]
         if not all(math.isfinite(v) and v > 0 for v in [line_p, riser_p, *pressures]):
             raise ValueError(f"Invalid pressure at {t} s")
-        zone_max = []
+        zone_max, zone_envelope = [], []
         for j, cells in enumerate(groups):
             points = [(pressures[k], locations[k]) for k in cells]
             if j == 0:
@@ -253,8 +262,14 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis()):
                 points.append((riser_p, pipe.getLength()))
             peak, where = max(points)
             zone_max.append(peak)
+            scan_peaks[j] = max(scan_peaks[j], peak)
+            when = t
+            if interval_envelope is not None and interval_envelope[j][0] > peak:
+                # A local excursion can rise and decay between two scans.
+                peak, where, when = interval_envelope[j]
+            zone_envelope.append(peak)
             if peak > peaks[j]["peak_bara"]:
-                peaks[j] = {"peak_bara": peak, "at_m": where, "at_s": t}
+                peaks[j] = {"peak_bara": peak, "at_m": where, "at_s": when}
 
         readings = [line_p] * 3
         if case == "false_high" and t >= 2.:
@@ -310,7 +325,8 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis()):
         rate = supply_rate(line_p, DESIGN_RATE, resistance, dhsv_open, openings, seated_tree,
                            case == "choke_failed_open" and t >= 2.)
         trace.append({"s": t, "subsea_bara": line_p, "riser_bara": riser_p,
-                      "zone_peaks_bara": zone_max, "hipps_readings_bara": readings,
+                      "zone_peaks_bara": zone_max, "zone_envelope_bara": zone_envelope,
+                      "hipps_readings_bara": readings,
                       "hipv_open_fraction": openings, "dhsv_open_fraction": dhsv_open,
                       "tree_open": not seated_tree, "requested_inlet_kg_s": rate})
         if host is not None:
@@ -326,6 +342,17 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis()):
             pipe.setInletMassFlow(rate)
             pipe.setInletBoundaryCondition(pipe.BoundaryCondition.CONSTANT_FLOW)
         pipe.runTransient(dt, step)
+        if not pipe.isLastIntervalPressureEnvelopeSubstepResolved():
+            raise ValueError(f"Pressure envelope omits internal substeps at {t} s")
+        cell_peaks = list(pipe.getLastIntervalPeakPressureProfile("bara"))
+        cell_times = list(pipe.getLastIntervalPeakPressureTimeProfile())
+        interval_envelope = []
+        for j, cells in enumerate(groups):
+            points = [(cell_peaks[k], locations[k], cell_times[k]) for k in cells]
+            if j == 0:
+                points.append((pipe.getLastIntervalPeakInletFacePressure("bara"), 0.,
+                               pipe.getLastIntervalPeakInletFacePressureTime()))
+            interval_envelope.append(max(points))
         balance = pipe.getLastMassBalanceReport()
         mass_in = sum(balance.getInletMassKg(phase) for phase in phases)
         mass_out = sum(balance.getOutletMassKg(phase) for phase in phases)
@@ -352,12 +379,15 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis()):
             valve.runController(dt, step)
         hipps.execute(dt)
 
-    for zone, peak in zip(zones, peaks):
+    for zone, peak, scan in zip(zones, peaks, scan_peaks):
+        peak["scan_peak_bara"] = scan
         peak.update(asdict(zone))
         peak["margin_bar"] = zone.allowable_bara - peak["peak_bara"]
         peak["rated_for_source_at_common_datum"] = zone.design_bara >= 120.
-    return {"case": case, "dt_s": dt, "mesh_cells": len(locations), "duration_s": duration,
+    return {"case": case, "dt_s": dt, "mesh_cells": len(locations), "pipe_cfl": cfl,
+            "duration_s": duration,
             "basis": asdict(basis), "qualification": "TRANSIENT_SCREENING",
+            "peak_basis": "accepted internal substeps and scan samples",
             "transient_pressure_limiter_count": int(pipe.getTransientPressureLimitCount()),
             "steady": steady, "dynamic_host": host.result() if host else None, "zones": peaks, "events": events, "admitted_kg": admitted,
             "host_transfer_kg": discharged, "phase_residual_kg": max_mass_error,
@@ -369,7 +399,9 @@ def main():
     parser.add_argument("--case", choices=CASES, required=True)
     parser.add_argument("--dt", type=float, default=.25)
     parser.add_argument("--duration", type=float, default=90.)
-    parser.add_argument("--mesh", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--mesh", type=int, choices=(1, 2, 4), default=1)
+    parser.add_argument("--cfl", type=float, choices=(.125, .25, .5), default=PROTECTION_CFL,
+                        help="Internal pipe Courant number (default %(default)s)")
     parser.add_argument("--basis", type=Path, help="JSON override of ProtectionBasis fields")
     parser.add_argument("--fully-rated", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
@@ -379,7 +411,8 @@ def main():
     basis = ProtectionBasis.read(args.basis)
     if args.fully_rated:
         basis = replace(basis, zones=tuple(Zone(z.name, z.end_m, 130., 130.) for z in basis.zones))
-    result = run(jpype.JPackage("neqsim"), args.case, args.dt, args.duration, args.mesh, basis)
+    result = run(jpype.JPackage("neqsim"), args.case, args.dt, args.duration, args.mesh, basis,
+                 args.cfl)
     payload = json.dumps(result, indent=2, allow_nan=False)
     with args.output.open("x", encoding="utf-8") as output:
         output.write(payload + "\n")

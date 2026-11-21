@@ -2,7 +2,7 @@
 name: neqsim-process-safety
 version: "1.5.0"
 description: "Process safety methodology - barriers, PSFs/SCEs, HAZOP, LOPA, SIL per IEC 61511, integrated safety response, change revalidation, bow-tie, risk matrix, TR3001 overpressure studies, trapped-liquid rupture. USE WHEN: a task needs barrier registers, hazard identification, LOPA, SIF SIL assignment, ESD/blowdown/relief/flare evidence, safety revalidation, overpressure governing cases, PFP demand or risk evaluation. Anchors on neqsim.process.safety.barrier, .risk, .overpressure, .rupture."
-last_verified: "2026-07-18"
+last_verified: "2026-11-20"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
@@ -337,6 +337,11 @@ PSV/concurrency results, transient blowdown/flare results, and controlled proces
 or hydrate margin. Supply the actual `DynamicSafetyScenarioResult` and
 `CoupledReliefBlowdownFlareResult`; the facility study embeds their maps and must not duplicate their
 physics.
+For HIPPS or PSD response on a `TwoFluidPipe` tie-back, compare zone allowables against the
+substep pressure envelope (`TwoFluidPipe.getLastIntervalPeakPressureProfile`), not end-of-step
+samples, and set the pipe CFL to 0.25 for riser-base fallback. The measurement and refinement
+recipe are in the `neqsim-dynamic-simulation` skill and
+`examples/production-decision/tieback-protection.md`.
 
 Capture compressor response with `CompressorTripResponse.capture(...)`. `AntiSurge.shouldTrip()` is
 the demand signal; separately record whether the trip was observed, its response time, allowable

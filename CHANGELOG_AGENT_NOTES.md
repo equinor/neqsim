@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-11-20 — TwoFluidPipe substep pressure envelope for protection checks
+
+- New on `TwoFluidPipe`: `getLastIntervalPeakPressureProfile(unit)`, `getLastIntervalPeakPressureTimeProfile()`,
+  `getLastIntervalPeakInletFacePressure(unit)`, `getLastIntervalPeakInletFacePressureTime()` and
+  `isLastIntervalPressureEnvelopeSubstepResolved()`. They give the highest pressure over every accepted
+  internal substep of the latest `runTransient` call. A new steady `run()` clears them.
+- Migration: take rating and allowable peaks from the envelope, not from `getPressureProfile()` samples.
+  For riser-base liquid fallback, use `setCflNumber(0.25)`. The measurement is in
+  `docs/wiki/two_fluid_reporting_and_validation.md`.
+- Tie-back protection receipts now require `pipe_cfl` and `zone_envelope_bara`; regenerate old receipts.
+- Updated: `neqsim-dynamic-simulation`, `neqsim-process-safety`, `flow-assurance.agent.md`.
+
+---
+
 ## 2026-11-20 — Mercury limits of a reservoir fluid from mineral equilibrium
 
 - New `neqsim.thermo.util.mineral.ReservoirMercuryEstimator`: the mercury a reservoir fluid can hold in
