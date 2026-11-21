@@ -342,6 +342,22 @@ replace import/export/reimport testing in the exact CAE product and version used
 Record that separate evidence through `DexpiToolQualificationRunner` and
 `DexpiToolQualificationEvidence`.
 
+### Independent check with pyDEXPI
+
+The assessment above is NeqSim checking its own pinned declarations. Always add an independent
+load and rule check with [pyDEXPI](https://github.com/process-intelligence-research/pyDEXPI), the
+community reference implementation of DEXPI 2.0.1 (Python 3.12+, `uv tool install "pydexpi>=2.1"`):
+
+```
+neqsim dexpi-check plant.dexpi.xml --expect-version 2.0.1 --output dexpi-check.json
+```
+
+The command reports the detected version and profile, the NeqSim assessment and the pyDEXPI findings
+(rule id, object id, XML line) as separate layers with a conservative verdict (`PASS`, `PASS_NEQSIM_ONLY`,
+`UNVERIFIED`, `FAIL`). On the 17-unit HP/LP train, the 2.0.1 Plant export is `CONFORMANT` in NeqSim while pyDEXPI
+reports four mandatory `segment_connectivity` violations on the two in-line valve segments. Agent: `@dexpi-validation`;
+skill: `neqsim-dexpi-conformance-validation`.
+
 ## Release and review controls
 
 - Pin exchange evidence to DEXPI 2.0.0 model URIs and the file digest; never silently reinterpret a

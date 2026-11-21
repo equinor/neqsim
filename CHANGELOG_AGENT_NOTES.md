@@ -9,6 +9,17 @@
 
 ---
 
+## 2026-11-21 — DEXPI conformance validation (`neqsim dexpi-check`, `@dexpi-validation`)
+
+- New `devtools/dexpi_conformance_check.py` (`neqsim dexpi-check FILE --expect-version 2.0.1`): identifies version/profile
+  from the Core import, runs `Dexpi20ConformanceAssessment` through the JVM and an independent pyDEXPI 2.1 load plus rule
+  check (`pydexpi` located on PATH/`PYDEXPI`, never installed at run time). Verdicts `PASS`, `PASS_NEQSIM_ONLY`,
+  `UNVERIFIED`, `FAIL`; pyDEXPI found 4 `segment_connectivity` violations in a NeqSim 2.0.1 Plant export that the NeqSim layer
+  reports as `CONFORMANT`.
+- New skill `neqsim-dexpi-conformance-validation` and agent `dexpi-validation`; router row added.
+
+---
+
 ## 2026-11-21 — Safety studies on generated P&IDs (`PidSafetyStudies`)
 
 - New `neqsim.process.engineering.pid.PidSafetyStudies.run(pid, process, Policy)`: sizes every proposed PSV

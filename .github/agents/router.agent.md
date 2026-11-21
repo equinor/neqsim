@@ -94,6 +94,7 @@ midpoint lanes.
 | Complex multi-discipline task needing pre-assessment | `@capability-scout` | then specialist agents |
 | Engineering deliverables, PFD, alarm schedule, spare parts, thermal utilities, noise assessment, study class A/B deliverables | `@engineering-deliverables` | `@process-model` for process system, `@field-development` for full study |
 | Independently quality-control a generated P&ID against its source, drawings and controlled ISO/IEC/ISA standards; `neqsim pid-review` | `@pid-quality-review` | Integrates `@pfd-layout-review` and `@standards-review`; unresolved design data or controlled references remain HOLD |
+| Validate a DEXPI XML file: is it 2.0.1 / 2.0.0, Plant or Process, does it load and pass independent rules; `neqsim dexpi-check` | `@dexpi-validation` | NeqSim schema/profile check plus pyDEXPI; `PASS_NEQSIM_ONLY` when pyDEXPI is missing; hands exporter defects to `@engineering-deliverables` |
 | Reactor, reaction, equilibrium, kinetic, CSTR, PFR, catalyst | `@reaction-engineering` | `@thermo-fluid` for reaction chemistry |
 | UniSim, HYSYS, .usc file, convert simulation | `@unisim-reader` | `@process-model` for NeqSim model build |
 | Control system, PID, controller tuning, dynamic, transient | `@control-system` | `@process-model` for base simulation |
