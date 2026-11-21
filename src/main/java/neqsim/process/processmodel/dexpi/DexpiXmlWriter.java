@@ -587,6 +587,8 @@ public final class DexpiXmlWriter {
     Map<String, double[]> nozzlePositions = new HashMap<>();
     // Equipment owner for every process nozzle, used to resolve source-backed line properties.
     Map<String, ProcessEquipmentInterface> nozzleOwners = new HashMap<>();
+    // Process role of each nozzle (inlet, gas/liquid/water outlet, split branch) for simulation round trips.
+    Map<String, String[]> portRoles = new HashMap<>();
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof DexpiStream) {
@@ -602,13 +604,10 @@ public final class DexpiXmlWriter {
       } else if (unit instanceof DexpiProcessUnit) {
         String inNozzle = "Nozzle-" + nozzleCounter++;
         List<String> outNozzles = new ArrayList<>();
-        outNozzles.add("Nozzle-" + nozzleCounter++);
-        if (DexpiStreamUtils.isMultiOutlet(unit)) {
+        for (int outlet = 0; outlet < outletNozzleCount(unit); outlet++) {
           outNozzles.add("Nozzle-" + nozzleCounter++);
-          if (unit instanceof ThreePhaseSeparator) {
-            outNozzles.add("Nozzle-" + nozzleCounter++);
-          }
         }
+        registerPortRoles(unit, inNozzle, outNozzles, portRoles);
         registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
         registerNozzleOwners(unit, inNozzle, outNozzles, nozzleOwners);
         appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzles,
@@ -619,13 +618,10 @@ public final class DexpiXmlWriter {
         // Native NeqSim equipment — use reverse mapping
         String inNozzle = "Nozzle-" + nozzleCounter++;
         List<String> outNozzles = new ArrayList<>();
-        outNozzles.add("Nozzle-" + nozzleCounter++);
-        if (DexpiStreamUtils.isMultiOutlet(unit)) {
+        for (int outlet = 0; outlet < outletNozzleCount(unit); outlet++) {
           outNozzles.add("Nozzle-" + nozzleCounter++);
-          if (unit instanceof ThreePhaseSeparator) {
-            outNozzles.add("Nozzle-" + nozzleCounter++);
-          }
         }
+        registerPortRoles(unit, inNozzle, outNozzles, portRoles);
         registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
         registerNozzleOwners(unit, inNozzle, outNozzles, nozzleOwners);
         if (isValveType(unit)) {
@@ -642,6 +638,8 @@ public final class DexpiXmlWriter {
         registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
       }
     }
+
+    annotatePortRoles(document, portRoles);
 
     // Register pass-through streams (e.g., Stream wrapping a separator outlet)
     registerPassThroughStreams(processSystem, outletStreamToNozzle);
@@ -1501,6 +1499,16 @@ public final class DexpiXmlWriter {
    */
   private static void registerOutletNozzles(ProcessEquipmentInterface unit, List<String> outNozzles,
       Map<Integer, String> outletStreamToNozzle) {
+    if (unit instanceof Splitter) {
+      Splitter splitter = (Splitter) unit;
+      for (int i = 0; i < outNozzles.size(); i++) {
+        StreamInterface branch = splitter.getSplitStream(i);
+        if (branch != null) {
+          outletStreamToNozzle.put(System.identityHashCode(branch), outNozzles.get(i));
+        }
+      }
+      return;
+    }
     StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
     if (gasOut != null && !outNozzles.isEmpty()) {
       outletStreamToNozzle.put(System.identityHashCode(gasOut), outNozzles.get(0));
@@ -1553,7 +1561,13 @@ public final class DexpiXmlWriter {
       // (top)
       nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 8.0}); // liquid
       // (bottom)
-    } else if (outNozzles.size() >= 3) {
+    } else if (outNozzles.size() > 3) {
+      // Multi-branch splitter: evenly spaced outlets from top to bottom
+      for (int i = 0; i < outNozzles.size(); i++) {
+        nozzlePositions.put(outNozzles.get(i),
+            new double[] {position.x + 18.0, position.y + 8.0 - 16.0 * i / (outNozzles.size() - 1)});
+      }
+    } else if (outNozzles.size() == 3) {
       // 3-phase separator: gas top, oil middle, water bottom
       nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
       // (top)
@@ -1561,6 +1575,82 @@ public final class DexpiXmlWriter {
       // (middle-low)
       nozzlePositions.put(outNozzles.get(2), new double[] {position.x + 18.0, position.y - 12.0}); // water
       // (bottom)
+    }
+  }
+
+  /**
+   * Returns the number of outlet nozzles to create for a unit: one per splitter branch, two for a separator, three
+   * for a three-phase separator and one otherwise.
+   *
+   * @param unit the equipment unit
+   * @return outlet nozzle count, at least one
+   */
+  private static int outletNozzleCount(ProcessEquipmentInterface unit) {
+    if (unit instanceof Splitter) {
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      return Math.max(1, outlets == null ? 1 : outlets.size());
+    }
+    if (!DexpiStreamUtils.isMultiOutlet(unit)) {
+      return 1;
+    }
+    return unit instanceof ThreePhaseSeparator ? 3 : 2;
+  }
+
+  /**
+   * Records the process role and outlet index of the nozzles of one unit.
+   *
+   * <p>
+   * The roles are written as the {@code NeqSimPortAttributes} generic-attribute set on each nozzle so that
+   * {@link DexpiSimulationBuilder} can rebuild a faithful simulation: which separator outlet carries gas, liquid or
+   * water and which splitter branch a line leaves from. Receiving tools that do not know the set can ignore it.
+   * </p>
+   *
+   * @param unit the equipment unit
+   * @param inNozzle the inlet nozzle id
+   * @param outNozzles the outlet nozzle ids in outlet order
+   * @param portRoles map to populate with nozzle id to {role, index}
+   */
+  private static void registerPortRoles(ProcessEquipmentInterface unit, String inNozzle, List<String> outNozzles,
+      Map<String, String[]> portRoles) {
+    portRoles.put(inNozzle, new String[] {DexpiFlowsheetGraph.ROLE_INLET, null});
+    boolean threePhase = unit instanceof ThreePhaseSeparator;
+    boolean separator = threePhase || unit instanceof Separator;
+    for (int i = 0; i < outNozzles.size(); i++) {
+      String role = DexpiFlowsheetGraph.ROLE_OUTLET;
+      if (separator) {
+        if (i == 0) {
+          role = DexpiFlowsheetGraph.ROLE_GAS;
+        } else if (i == 1) {
+          role = threePhase ? DexpiFlowsheetGraph.ROLE_OIL : DexpiFlowsheetGraph.ROLE_LIQUID;
+        } else {
+          role = DexpiFlowsheetGraph.ROLE_WATER;
+        }
+      }
+      portRoles.put(outNozzles.get(i), new String[] {role, Integer.toString(i)});
+    }
+  }
+
+  /**
+   * Writes the recorded port roles as a {@code NeqSimPortAttributes} generic-attribute set on each nozzle.
+   *
+   * @param document the XML document
+   * @param portRoles nozzle id to {role, index}
+   */
+  private static void annotatePortRoles(Document document, Map<String, String[]> portRoles) {
+    NodeList nozzles = document.getElementsByTagName("Nozzle");
+    for (int i = 0; i < nozzles.getLength(); i++) {
+      Element nozzle = (Element) nozzles.item(i);
+      String[] role = portRoles.get(nozzle.getAttribute("ID"));
+      if (role == null) {
+        continue;
+      }
+      Element set = document.createElement("GenericAttributes");
+      set.setAttribute("Set", DexpiFlowsheetGraph.PORT_ATTRIBUTE_SET);
+      appendGenericAttribute(document, set, DexpiFlowsheetGraph.PORT_ROLE, role[0]);
+      if (role[1] != null) {
+        appendGenericAttribute(document, set, DexpiFlowsheetGraph.PORT_INDEX, role[1]);
+      }
+      nozzle.appendChild(set);
     }
   }
 

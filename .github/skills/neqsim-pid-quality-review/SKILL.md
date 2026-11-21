@@ -146,6 +146,11 @@ passing receipt onto regenerated content.
    signal styles, off-page references, labels, title/revision/status and legend.
    A low-resolution preview cannot establish print legibility. Record what was
    viewed and bind the visual review to those exact files.
+   The renderer already fails a sheet on the automated `PID_STANDARD_*`
+   checks (ISO 5457 frame, ISO 7200 title block and `SHEET n OF N`, valve symbol
+   versus ISA tag function, unresolved or own-sheet signal references, internal
+   stream names as line labels, text under 2.5 mm). Treat a clean automated
+   result as a prerequisite, not as the visual review.
 7. **Review the standards basis.** Use the referenced checklist to map applicable
    requirements to controlled evidence and observed artifacts. Read the actual
    applicable requirement rather than inferring it from an ISO/IEC/ISA name.

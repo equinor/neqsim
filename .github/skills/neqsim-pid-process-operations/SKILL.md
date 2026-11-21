@@ -222,6 +222,42 @@ only for a supported lossless subset, and compare a regenerated package with
 `ProfessionalPidPackageReader.compare(...)`. Unsupported or incomplete source
 semantics must remain explicit non-equivalence diagnostics.
 
+For a professional P&ID that must show relief, blowdown, vent and drain
+devices on the drawings instead of in the HOLD register, call
+`PidStandardConnectionProposals.complete(pid, project.getEngineeringProcessSystem())`
+after synthesis and before `PidSimulationBindings.from(...)`. It supplies dedicated
+equipment nozzles and flare/closed-drain destinations with a traceable
+`NEQSIM-STANDARD-CONNECTION-PROPOSAL` evidence reference, keeps them
+review-required, and never overwrites project inputs. Then require
+`drawingHasNoErrors=true` in `professional-pid-readiness.json`: it includes the
+automated `PID_STANDARD_*` drawing checks (ISO 5457 frame, ISO 7200 title block,
+ISA-5.1 valve/function symbols, direct same-sheet signals, line numbers, text
+height). Report `PID_STANDARD_SIGNAL_SELF_REFERENCE` warnings and the
+`lineNumberRegister` (generated line numbers need line-list confirmation). The
+conventions table is in `docs/pid-design-synthesis.md#drawing-conventions-applied-to-every-sheet`.
+Model the real liquid letdown valve after each separator: the level loop then
+uses it as the final element instead of adding a second LCV. Read nozzle
+identities from `nozzleRegister` (drawings show N1, N2, ...), and expect relief,
+blowdown, vent and drain routes on the pooled auxiliary sheets.
+
+For P&ID-to-simulation requests ("build/run a model from this P&ID", "round-trip
+the DEXPI file"), use `DexpiSimulationBuilder` on a Proteus-profile file, then
+read `getDiagnostics()` before `run()`. Resolve every
+`DEXPI_BUILD_SPECIFICATION_MISSING` (set outlet pressure or temperature on the
+named unit) and review `DEXPI_BUILD_ADDITIONAL_FEED` and
+`DEXPI_BUILD_SPLIT_FACTORS_ASSUMED`; never hide them. The builder keeps in-line
+control valves, resolves separator gas/liquid/water outlets from the
+`NeqSimPortAttributes` nozzle roles (with fallbacks), wires all mixer inlets,
+closes loops with `Recycle`, and applies exported outlet specifications. A
+NeqSim export rebuilt with the same fluid template reproduces the source results
+(`DexpiSimulationRoundTripTest`). DEXPI carries no composition, so always supply
+the fluid template. Native DEXPI 2.x files are rejected explicitly; export
+Proteus for simulation round trips. For native Process exchange prefer
+`Dexpi201ProcessModelWriter` (the 2.0.0 path omits the mandatory `Method` on
+compression and cooling steps), and note it currently rejects models that
+contain a `Recycle`. Known gaps and priorities are in
+`docs/integration/dexpi-physics-bridge-evaluation.md`.
+
 Do not call the Proteus graphical file DEXPI 2.0. Antisurge recycle topology is
 connected discharge-to-suction; PSV/BDV proposals use dedicated equipment
 nozzles and a separate relief/blowdown network. Treat every

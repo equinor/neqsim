@@ -20,6 +20,8 @@ simulation, an approved P&ID, or a construction release.
 | Prepare a professional P&ID review package and executable tag handoff | `ProfessionalPidPackageExporter`, `PidSimulationBindings`, `PidSimulationSession` | [Governed P&ID design synthesis](../pid-design-synthesis.md#professional-pid-and-simulation-handoff) |
 | Export a native DEXPI 2.0 P&ID Plant model | `Dexpi20XmlWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md) |
 | Export a native DEXPI 2.0 PFD/BFD Process model | `Dexpi20ProcessModelWriter.writeAndAssess(...)` or opt-in `writeAndAssessTopology(..., operatingCaseId)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md#process-model-export) |
+| Export a native DEXPI 2.0.1 Process model | `Dexpi201ProcessModelWriter.writeAndAssess(...)`; prefer it over 2.0.0, which omits the mandatory `Method` on compression and cooling steps; models with a `Recycle` are currently rejected | [Physics-bridge evaluation](../integration/dexpi-physics-bridge-evaluation.md) |
+| Rebuild a runnable simulation from a Proteus P&ID, including recycles | `DexpiSimulationBuilder.build()` and `getDiagnostics()` | [Build diagnostics and round-trip fidelity](../integration/dexpi-reader.md#build-diagnostics-and-round-trip-fidelity) |
 | Generate a governed engineering package with DEXPI, registers, cases, and evidence | `EngineeringDeliverableCompiler` | [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md) |
 | Generate a review-required P&ID proposal | `PidDesignSynthesizer`, `PidEngineeringPackageExporter` | [Governed P&ID design synthesis](../pid-design-synthesis.md) |
 
@@ -248,6 +250,14 @@ nozzles, tags, and topology, but the resulting scaffold still needs:
 - controller tuning, actuator dynamics, and initial conditions; and
 - evidence for operating, design, and accidental cases.
 
+A Proteus file written by `DexpiXmlWriter` carries operating outlet conditions and nozzle port roles, so
+`DexpiSimulationBuilder` rebuilds the same flowsheet (separator outlets, in-line valves, mixer inlets, splitter
+branches, outlet specifications, and recycle loops). With the same fluid template and feed, it reproduces the source
+results. For third-party P&IDs, the builder still connects the flowsheet and lists each missing specification in
+`getDiagnostics()`. Native DEXPI 2.x files are rejected with an explicit error; they cannot yet be built into a
+simulation. See [DEXPI physics-bridge evaluation](../integration/dexpi-physics-bridge-evaluation.md) for measured
+fidelity and the roadmap.
+
 Treat OCR, PDF extraction, STID metadata, and manually normalized drawing content as evidence sources. Do not silently
 promote unreviewed drawing interpretation into approved line routing, interlocks, setpoints, or safeguard credit.
 
@@ -291,6 +301,7 @@ classification, target-system loading, or final information acceptance.
 
 - [DEXPI import, export, and visualization](../integration/dexpi-reader.md)
 - [DEXPI and P&ID current-master audit](../integration/dexpi-pid-current-master-audit.md)
+- [DEXPI physics-bridge evaluation](../integration/dexpi-physics-bridge-evaluation.md)
 - [DEXPI engineering-diagram reference cases](../integration/dexpi-reference-cases.md)
 - [Engineering diagram document and sheet model](../integration/engineering-diagram-document-model.md)
 - [DEXPI 2.0 native exchange and conformance](../integration/dexpi-20-conformance.md)

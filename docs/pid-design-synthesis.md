@@ -308,6 +308,56 @@ new authored vector catalogue is **not an independently qualified ISO symbol
 catalogue**. The exporter records standards review, design-input and discipline
 HOLDs instead of claiming certification or assigning an approver.
 
+### Drawing conventions applied to every sheet
+
+The professional renderer applies the following conventions and checks them on
+every generated sheet. A violation is a drawing error in
+`professional-pid-readiness.json` (`drawingHasNoErrors=false`), so a package
+cannot report a clean drawing while breaking them.
+
+| Area | Convention | Check code |
+| --- | --- | --- |
+| Sheet frame (ISO 5457) | A1 with 20 mm filing margin and 10 mm border, 16 numbered columns and 12 lettered rows (I and O omitted), 0.7 mm centring marks | `PID_STANDARD_SHEET_FRAME` |
+| Title block (ISO 7200) | 180 mm identification block: owner, document type, title, document number, project, revision, `SHEET n OF N`, language, issue date, status, creator, approver; revision table (REV, DATE, DESCRIPTION, PREP, CHK, APPR) and drawing notes | `PID_STANDARD_TITLE_BLOCK`, `PID_STANDARD_SHEET_NUMBERING` |
+| Valves (ISO 10628-2, ISA-5.1) | Control valves and automated on/off valves always show the ISA-5.1 generic actuator; shutdown and blowdown valves add a ball closure element; manual isolation valves have no actuator. The ISA function letters of the tag govern the symbol, so a `PCV` or `ASV` modelled with shutdown-valve dynamics is still drawn as a control valve, and an `XV`/`SDV`/`ESDV` is always actuated | `PID_STANDARD_VALVE_SYMBOL` |
+| Instrument functions (ISA-5.1) | Field instrument: circle. Shared display/control (PCS/DCS): circle in square with line. SIS/ESD/PSD logic: diamond in square with line | `symbolConventions` in the content report |
+| Signals (IEC 62424, ISA-5.1) | A signal whose two ends are on the same sheet is drawn directly as a dashed line, routed clear of symbols and text and interrupted where it crosses another line. Several signals to one final element join at a junction dot. A named continuation is used only across sheets, or when no clear route exists (warning) | `PID_STANDARD_SIGNAL_SELF_REFERENCE` (warning) |
+| Sheet references | Continuation flags give the sheet where the peer is actually drawn; a peer that is not drawn on any sheet reads `/HOLD` | `PID_STANDARD_UNRESOLVED_REFERENCE` |
+| Line designations | Streams with internal simulation names get NORSOK-style numbers `<area>-<fluid code>-<sequence>` (`PG` vapour, `PL` liquid). Names that are already line tags are kept. `lineNumberRegister` in the content report maps every number to its source stream; generated numbers are `LINE_NUMBER_GENERATED` holds for line-list confirmation | `PID_STANDARD_LINE_DESIGNATION` |
+| Text | Minimum height 2.5 mm | `PID_STANDARD_TEXT_HEIGHT` |
+| Equipment data | A callout above each primary unit gives tag, service, operating pressure, temperature and duty or power from the converged model, and design conditions (HOLD until supplied) | — |
+| Flowsheet fidelity | Two- or three-inlet header mixers are drawn as tees on the receiving unit's sheet and get no equipment nozzles. Solver utilities (`Recycle`, `Calculator`, `Adjuster`) are not drawn; recycle lines connect their real physical ends | `DRAWING_SOURCE_EQUIPMENT_UNREPRESENTED` |
+| Nozzles | Labelled N1, N2, ... per equipment, continuing onto the auxiliary sheets; `nozzleRegister` in the content report maps each label to its controlled nozzle identity | — |
+| Relief valves (ISO 10628-2) | Spring-loaded angle-pattern body: inlet from below, outlet to the side, tag beside the valve | — |
+| Manual valves | Show their normal position (`NC` for drains and vents, otherwise `NO/NC:HOLD`); fail action (`FA`) applies to actuated valves only | — |
+| Sheet grouping | One sheet per primary unit; relief, blowdown, vent, drain and utility connections of all units share pooled auxiliary sheets, four routes per sheet | — |
+| Existing devices | When a separator liquid outlet already feeds a modelled throttling valve, the level loop uses that valve (its own tag) as the final element instead of proposing a second valve in series | — |
+
+Relief valves, blowdown valves, vents and drains need explicit auxiliary routes,
+and stay in the HOLD register until they have them. For a review drawing that
+shows them in the usual arrangement, call
+`PidStandardConnectionProposals.complete(model, project.getEngineeringProcessSystem())`
+before creating the bindings. It gives each one a dedicated equipment nozzle
+and routes it to `FLARE-HEADER` (or the model's flare off-page connector) or to
+`CLOSED-DRAIN-HEADER`. Each completed element records a `designEvidenceReference`
+starting with `NEQSIM-STANDARD-CONNECTION-PROPOSAL` and stays review-required.
+Explicit project inputs are never overwritten, and utility-side proposals are
+left for project data.
+
+```java
+PidDesignModel pid = PidDesignSynthesizer.synthesize(project,
+    new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "20"),
+    NorsokPidRuleCatalog.completeProposals());
+PidStandardConnectionProposals.complete(pid, project.getEngineeringProcessSystem());
+PidSimulationBindings bindings = PidSimulationBindings.from(project, pid);
+Path exported = ProfessionalPidPackageExporter.export(project, pid, bindings, metadata, outputDirectory);
+```
+
+These conventions are implemented and checked automatically. They do not
+replace the controlled standards review: the symbol catalogue is still authored
+by NeqSim, not an independently qualified ISO library.
+`ProfessionalPidDrawingStandardsTest` pins the conventions.
+
 Inspect these additional artifacts:
 
 | Artifact | What it proves |

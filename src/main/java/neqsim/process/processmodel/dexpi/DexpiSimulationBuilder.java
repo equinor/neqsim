@@ -5,9 +5,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -25,12 +29,20 @@ import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.DexpiTopologyResolver.ResolvedTopology;
-import neqsim.process.processmodel.dexpi.DexpiTopologyResolver.TopologyEdge;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -83,6 +95,7 @@ public class DexpiSimulationBuilder {
   private String feedFlowRateUnit = "MSm3/day";
   private boolean autoInstrument = false;
   private boolean namespaceAware = false;
+  private final List<BuildDiagnostic> diagnostics = new ArrayList<>();
 
   /**
    * Creates a new simulation builder for the given DEXPI XML file.
@@ -170,14 +183,30 @@ public class DexpiSimulationBuilder {
   }
 
   /**
-   * Builds the NeqSim {@link ProcessSystem} from the DEXPI XML file.
+   * Builds a runnable {@link ProcessSystem} from the DEXPI file.
+   *
+   * <p>
+   * The flowsheet is reconstructed from the material connections in the P&amp;ID. In-line throttling valves that carry
+   * an operating outlet pressure become {@code ThrottlingValve} units; other piping items are collapsed. Each connection
+   * leaves the correct outlet of multi-outlet equipment (separator gas, liquid or water; splitter branch). Units with
+   * several inlets are fed through a mixer, and connections that close a loop are torn and closed with a
+   * {@code Recycle}. Operating outlet pressures and temperatures carried in the file are applied as unit
+   * specifications. Every judgement the builder makes is recorded in {@link #getDiagnostics()}.
+   * </p>
+   *
+   * <p>
+   * The DEXPI file does not carry fluid composition. The fluid template and the feed state set on this builder are
+   * used for every boundary feed. Native DEXPI 2.x files (root element {@code Model}) are rejected with an explicit
+   * error because they cannot yet be built into a runnable simulation.
+   * </p>
    *
    * @return a fully wired ProcessSystem ready for {@code process.run()}
    * @throws IOException if the file cannot be read
-   * @throws DexpiXmlReaderException if the XML cannot be parsed
+   * @throws DexpiXmlReaderException if the XML cannot be parsed or uses an unsupported DEXPI profile
    */
   public ProcessSystem build() throws IOException, DexpiXmlReaderException {
     logger.info("Building ProcessSystem from DEXPI file: {}", dexpiFile.getAbsolutePath());
+    diagnostics.clear();
 
     Document document;
     try (InputStream is = new FileInputStream(dexpiFile)) {
@@ -186,88 +215,391 @@ public class DexpiSimulationBuilder {
     if (document == null) {
       throw new DexpiXmlReaderException("Failed to parse DEXPI XML document");
     }
+    Element root = document.getDocumentElement();
+    String rootName = root.getLocalName() != null ? root.getLocalName() : root.getTagName();
+    if ("Model".equals(rootName)) {
+      throw new DexpiXmlReaderException("Native DEXPI 2.x Model files cannot yet be built into a simulation: "
+          + dexpiFile.getName() + ". Export the Proteus-compatible profile with DexpiXmlWriter.write(...) for "
+          + "simulation round trips, or read instruments with DexpiXmlReader.readInstruments(...).");
+    }
 
-    // Step 1: Resolve topology
     ResolvedTopology topology = DexpiTopologyResolver.resolve(document);
-    logger.info("Topology: {} equipment, {} edges", topology.getOrderedEquipmentIds().size(),
-        topology.getEdges().size());
-
-    // Step 2: Build DexpiProcessUnit map with sizing attributes
     Map<String, DexpiProcessUnit> unitMap = buildUnitMap(document, topology);
+    Map<String, EquipmentEnum> equipmentTypes = new HashMap<>();
+    for (Map.Entry<String, DexpiProcessUnit> entry : unitMap.entrySet()) {
+      equipmentTypes.put(entry.getKey(), entry.getValue().getMappedEquipment());
+    }
+    DexpiFlowsheetGraph graph = DexpiFlowsheetGraph.extract(document, topology, equipmentTypes,
+        DexpiMappingLoader.loadPipingComponentMapping());
+    for (String note : graph.getNotes()) {
+      String[] parts = note.split("\\|", 3);
+      addDiagnostic(BuildDiagnostic.Severity.INFO, parts[0], parts[1], parts[2]);
+    }
+    for (Map.Entry<String, Element> node : graph.nodes.entrySet()) {
+      if (!unitMap.containsKey(node.getKey())) {
+        Element element = node.getValue();
+        String tag = getGenericAttribute(element, DexpiMetadata.TAG_NAME);
+        String name = tag != null ? tag : node.getKey();
+        DexpiProcessUnit valve = new DexpiProcessUnit(name, element.getAttribute("ComponentClass"),
+            EquipmentEnum.ThrottlingValve, null, null);
+        valve.setDexpiId(node.getKey());
+        unitMap.put(node.getKey(), valve);
+      }
+    }
+    logger.info("Flowsheet graph: {} units, {} material connections", graph.nodes.size(), graph.edges.size());
 
-    // Step 3: Create process system and feed stream
     ProcessSystem processSystem = new ProcessSystem("DEXPI process");
     SystemInterface fluid = getOrCreateFluidTemplate();
-    Stream feedStream = new Stream("DEXPI-Feed", fluid.clone());
-    feedStream.setPressure(feedPressure, feedPressureUnit);
-    feedStream.setTemperature(feedTemperature, feedTemperatureUnit);
-    feedStream.setFlowRate(feedFlowRate, feedFlowRateUnit);
-    processSystem.add(feedStream);
-
-    // Step 4: Walk topology and instantiate equipment
-    Map<String, ProcessEquipmentInterface> createdEquipment = new HashMap<>();
-    Map<String, StreamInterface> outletStreams = new HashMap<>();
-
-    // The feed stream is available for the first equipment
-    List<String> orderedIds = topology.getOrderedEquipmentIds();
+    Map<String, ProcessEquipmentInterface> created = new LinkedHashMap<>();
+    Map<DexpiFlowsheetGraph.Edge, Stream> tears = new LinkedHashMap<>();
+    Set<String> usedNames = new HashSet<>();
     boolean feedAssigned = false;
 
-    for (String equipId : orderedIds) {
-      DexpiProcessUnit unit = unitMap.get(equipId);
-      if (unit == null) {
-        logger.debug("Skipping equipment '{}' (no unit mapping)", equipId);
-        continue;
+    List<String> remaining = new ArrayList<>();
+    for (String id : topology.getOrderedEquipmentIds()) {
+      if (graph.nodes.containsKey(id)) {
+        remaining.add(id);
       }
-
-      // Find inlet stream for this equipment
-      StreamInterface inletStream = null;
-      List<TopologyEdge> incoming = topology.getIncomingEdges(equipId);
-      for (TopologyEdge edge : incoming) {
-        StreamInterface upstreamOutlet = outletStreams.get(edge.getSourceEquipmentId());
-        if (upstreamOutlet != null) {
-          inletStream = upstreamOutlet;
-          break;
-        }
-      }
-
-      // If no upstream connection found, use the feed stream
-      if (inletStream == null && !feedAssigned) {
-        inletStream = feedStream;
-        feedAssigned = true;
-      }
-
-      // If still no inlet, create a clone of the feed
-      if (inletStream == null) {
-        Stream clonedFeed = new Stream(equipId + "-feed", fluid.clone());
-        clonedFeed.setPressure(feedPressure, feedPressureUnit);
-        clonedFeed.setTemperature(feedTemperature, feedTemperatureUnit);
-        clonedFeed.setFlowRate(feedFlowRate, feedFlowRateUnit);
-        processSystem.add(clonedFeed);
-        inletStream = clonedFeed;
-      }
-
-      // Create the equipment
-      ProcessEquipmentInterface equipment = DexpiEquipmentFactory.create(unit, inletStream);
-      processSystem.add(equipment);
-      createdEquipment.put(equipId, equipment);
-
-      // Capture outlet stream for downstream wiring
-      StreamInterface outletStream = getOutletStream(equipment);
-      if (outletStream != null) {
-        outletStreams.put(equipId, outletStream);
+    }
+    for (String id : graph.nodes.keySet()) {
+      if (!remaining.contains(id)) {
+        remaining.add(id);
       }
     }
 
-    // Step 5: Optionally auto-instrument, using DEXPI tags if available
+    while (!remaining.isEmpty()) {
+      String id = pickNext(remaining, graph, created.keySet());
+      remaining.remove(id);
+      DexpiProcessUnit unit = unitMap.get(id);
+
+      List<StreamInterface> inlets = new ArrayList<>();
+      for (DexpiFlowsheetGraph.Edge edge : graph.incoming(id)) {
+        ProcessEquipmentInterface source = created.get(edge.source);
+        if (source != null) {
+          inlets.add(outletFor(source, edge, graph));
+        } else {
+          Stream tear = new Stream(uniqueName(unitMap.get(edge.source).getName() + "-to-" + unit.getName() + "-tear",
+              usedNames), fluid.clone());
+          tear.setFlowRate(Math.max(1.0e-6, 0.01 * feedFlowRate), feedFlowRateUnit);
+          double p = DexpiFlowsheetGraph.operatingPressureBara(graph.nodes.get(edge.source));
+          double t = DexpiFlowsheetGraph.operatingTemperatureK(graph.nodes.get(edge.source));
+          tear.setPressure(Double.isNaN(p) ? feedPressure : p, Double.isNaN(p) ? feedPressureUnit : "bara");
+          tear.setTemperature(Double.isNaN(t) ? feedTemperature : t, Double.isNaN(t) ? feedTemperatureUnit : "K");
+          processSystem.add(tear);
+          tears.put(edge, tear);
+          inlets.add(tear);
+          addDiagnostic(BuildDiagnostic.Severity.INFO, "DEXPI_BUILD_RECYCLE_TEAR", id,
+              "loop torn at the connection " + unitMap.get(edge.source).getName() + " -> " + unit.getName()
+                  + "; closed with a Recycle");
+        }
+      }
+      if (inlets.isEmpty()) {
+        Stream feed = new Stream(feedAssigned ? uniqueName(unit.getName() + "-feed", usedNames) : "DEXPI-Feed",
+            fluid.clone());
+        feed.setPressure(feedPressure, feedPressureUnit);
+        feed.setTemperature(feedTemperature, feedTemperatureUnit);
+        feed.setFlowRate(feedFlowRate, feedFlowRateUnit);
+        processSystem.add(feed);
+        inlets.add(feed);
+        if (feedAssigned) {
+          addDiagnostic(BuildDiagnostic.Severity.WARNING, "DEXPI_BUILD_ADDITIONAL_FEED", id,
+              "unit has no upstream connection; it received its own copy of the builder feed state and rate");
+        }
+        feedAssigned = true;
+      }
+
+      ProcessEquipmentInterface equipment;
+      if (unit.getMappedEquipment() == EquipmentEnum.Mixer) {
+        equipment = DexpiEquipmentFactory.create(unit, inlets.get(0));
+        for (int i = 1; i < inlets.size(); i++) {
+          ((Mixer) equipment).addStream(inlets.get(i));
+        }
+      } else {
+        StreamInterface inlet = inlets.get(0);
+        if (inlets.size() > 1) {
+          Mixer header = new Mixer(uniqueName(unit.getName() + "-inlet-mixer", usedNames));
+          for (StreamInterface stream : inlets) {
+            header.addStream(stream);
+          }
+          processSystem.add(header);
+          inlet = header.getOutletStream();
+          addDiagnostic(BuildDiagnostic.Severity.INFO, "DEXPI_BUILD_INLET_MIXER", id,
+              inlets.size() + " connections enter the unit; they were combined in an inlet mixer");
+        }
+        equipment = DexpiEquipmentFactory.create(unit, inlet);
+      }
+      usedNames.add(equipment.getName());
+      configureSplitter(equipment, id, graph);
+      applyOperatingSpecification(equipment, id, graph.nodes.get(id));
+      processSystem.add(equipment);
+      created.put(id, equipment);
+    }
+
+    for (Map.Entry<DexpiFlowsheetGraph.Edge, Stream> tear : tears.entrySet()) {
+      ProcessEquipmentInterface source = created.get(tear.getKey().source);
+      Recycle recycle = new Recycle(uniqueName(tear.getValue().getName().replace("-tear", "-recycle"), usedNames));
+      recycle.addStream(outletFor(source, tear.getKey(), graph));
+      recycle.setOutletStream(tear.getValue());
+      processSystem.add(recycle);
+    }
+
     if (autoInstrument) {
       List<DexpiInstrumentInfo> dexpiInstruments = parseDexpiInstruments(document);
       applyAutoInstrumentation(processSystem, dexpiInstruments);
     }
 
-    logger.info("Built ProcessSystem with {} units from DEXPI", processSystem.getUnitOperations().size());
+    logger.info("Built ProcessSystem with {} units from DEXPI ({} diagnostics)", processSystem.getUnitOperations().size(),
+        diagnostics.size());
     return processSystem;
   }
 
+  /**
+   * Returns the diagnostics recorded by the last {@link #build()} call.
+   *
+   * @return unmodifiable diagnostics in recording order
+   */
+  public List<BuildDiagnostic> getDiagnostics() {
+    return Collections.unmodifiableList(diagnostics);
+  }
+
+  /** A judgement or loss recorded while building a simulation from DEXPI. */
+  public static final class BuildDiagnostic implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Diagnostic severity. */
+    public enum Severity {
+      /** Informational note on a deliberate mapping. */
+      INFO,
+      /** Possible loss of fidelity that the user should review. */
+      WARNING
+    }
+
+    private final Severity severity;
+    private final String code;
+    private final String elementId;
+    private final String message;
+
+    /**
+     * Creates a diagnostic.
+     *
+     * @param severity severity
+     * @param code stable code
+     * @param elementId DEXPI element id, possibly null
+     * @param message human-readable message
+     */
+    BuildDiagnostic(Severity severity, String code, String elementId, String message) {
+      this.severity = severity;
+      this.code = code;
+      this.elementId = elementId;
+      this.message = message;
+    }
+
+    /**
+     * Returns the severity.
+     *
+     * @return severity
+     */
+    public Severity getSeverity() {
+      return severity;
+    }
+
+    /**
+     * Returns the stable diagnostic code.
+     *
+     * @return code
+     */
+    public String getCode() {
+      return code;
+    }
+
+    /**
+     * Returns the DEXPI element id the diagnostic refers to.
+     *
+     * @return element id, possibly null
+     */
+    public String getElementId() {
+      return elementId;
+    }
+
+    /**
+     * Returns the human-readable message.
+     *
+     * @return message
+     */
+    public String getMessage() {
+      return message;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+      return severity + " " + code + " [" + elementId + "] " + message;
+    }
+  }
+
+  /**
+   * Records a build diagnostic.
+   *
+   * @param severity severity
+   * @param code stable code
+   * @param elementId DEXPI element id
+   * @param message human-readable message
+   */
+  private void addDiagnostic(BuildDiagnostic.Severity severity, String code, String elementId, String message) {
+    diagnostics.add(new BuildDiagnostic(severity, code, elementId, message));
+  }
+
+  /**
+   * Picks the next unit whose upstream units exist; when only loops remain, the unit with most inputs ready.
+   *
+   * @param remaining units not yet built, in preferred order
+   * @param graph material-flow graph
+   * @param created ids of units already built
+   * @return the next unit id
+   */
+  private static String pickNext(List<String> remaining, DexpiFlowsheetGraph graph, Set<String> created) {
+    String best = null;
+    int bestReady = -1;
+    for (String id : remaining) {
+      int ready = 0;
+      int missing = 0;
+      for (DexpiFlowsheetGraph.Edge edge : graph.incoming(id)) {
+        if (created.contains(edge.source)) {
+          ready++;
+        } else {
+          missing++;
+        }
+      }
+      if (missing == 0) {
+        return id;
+      }
+      if (ready > bestReady) {
+        best = id;
+        bestReady = ready;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Returns the outlet stream an edge leaves from.
+   *
+   * @param source built source unit
+   * @param edge material edge
+   * @param graph material-flow graph
+   * @return the source outlet stream for the edge
+   */
+  private static StreamInterface outletFor(ProcessEquipmentInterface source, DexpiFlowsheetGraph.Edge edge,
+      DexpiFlowsheetGraph graph) {
+    List<StreamInterface> outlets = new ArrayList<>();
+    if (source instanceof ThreePhaseSeparator) {
+      ThreePhaseSeparator separator = (ThreePhaseSeparator) source;
+      outlets.add(separator.getGasOutStream());
+      outlets.add(separator.getOilOutStream());
+      outlets.add(separator.getWaterOutStream());
+    } else if (source instanceof Separator) {
+      outlets.add(((Separator) source).getGasOutStream());
+      outlets.add(((Separator) source).getLiquidOutStream());
+    } else if (source instanceof Splitter) {
+      Splitter splitter = (Splitter) source;
+      for (int i = 0; i < graph.outgoing(edge.source).size(); i++) {
+        outlets.add(splitter.getSplitStream(i));
+      }
+    }
+    if (outlets.isEmpty()) {
+      return DexpiStreamUtils.getGasOutletStream(source);
+    }
+    if (source instanceof Splitter) {
+      return outlets.get(Math.max(0, graph.outgoing(edge.source).indexOf(edge)));
+    }
+    return outlets.get(graph.resolveOutletIndex(edge, outlets.size()));
+  }
+
+  /**
+   * Gives a splitter one branch per outgoing connection, split by exported branch flows when available.
+   *
+   * @param equipment built unit; ignored unless it is a splitter
+   * @param id DEXPI id of the unit
+   * @param graph material-flow graph
+   */
+  private void configureSplitter(ProcessEquipmentInterface equipment, String id, DexpiFlowsheetGraph graph) {
+    if (!(equipment instanceof Splitter)) {
+      return;
+    }
+    List<DexpiFlowsheetGraph.Edge> outgoing = graph.outgoing(id);
+    int branches = Math.max(1, outgoing.size());
+    double[] factors = new double[branches];
+    boolean allFlows = outgoing.size() == branches;
+    for (int i = 0; i < outgoing.size(); i++) {
+      String value = getGenericAttribute(outgoing.get(i).segment, "OperatingFlowValue");
+      try {
+        factors[i] = value == null ? Double.NaN : Double.parseDouble(value);
+      } catch (NumberFormatException e) {
+        factors[i] = Double.NaN;
+      }
+      allFlows &= Double.isFinite(factors[i]) && factors[i] >= 0.0;
+    }
+    if (!allFlows) {
+      java.util.Arrays.fill(factors, 1.0);
+      addDiagnostic(BuildDiagnostic.Severity.WARNING, "DEXPI_BUILD_SPLIT_FACTORS_ASSUMED", id,
+          "branch flows not available; equal split assumed over " + branches + " branches");
+    }
+    ((Splitter) equipment).setSplitFactors(factors);
+  }
+
+  /**
+   * Applies exported operating outlet conditions as unit specifications.
+   *
+   * @param equipment built unit
+   * @param id DEXPI id of the unit
+   * @param element DEXPI element carrying the operating values
+   */
+  private void applyOperatingSpecification(ProcessEquipmentInterface equipment, String id, Element element) {
+    double pressure = DexpiFlowsheetGraph.operatingPressureBara(element);
+    double temperature = DexpiFlowsheetGraph.operatingTemperatureK(element);
+    boolean needsPressure = equipment instanceof Compressor || equipment instanceof Pump
+        || equipment instanceof ThrottlingValve;
+    if (needsPressure) {
+      if (Double.isNaN(pressure)) {
+        addDiagnostic(BuildDiagnostic.Severity.WARNING, "DEXPI_BUILD_SPECIFICATION_MISSING", id,
+            equipment.getName() + " has no operating outlet pressure in the file; set it before running");
+        return;
+      }
+      if (equipment instanceof Compressor) {
+        ((Compressor) equipment).setOutletPressure(pressure);
+      } else if (equipment instanceof Pump) {
+        ((Pump) equipment).setOutletPressure(pressure);
+      } else {
+        ((ThrottlingValve) equipment).setOutletPressure(pressure);
+      }
+    } else if (equipment instanceof Heater) {
+      if (Double.isNaN(temperature)) {
+        addDiagnostic(BuildDiagnostic.Severity.WARNING, "DEXPI_BUILD_SPECIFICATION_MISSING", id,
+            equipment.getName() + " has no operating outlet temperature in the file; set it before running");
+        return;
+      }
+      ((Heater) equipment).setOutTemperature(temperature);
+    }
+  }
+
+  /**
+   * Returns a unit name not yet used in the built process and reserves it.
+   *
+   * @param base preferred name
+   * @param used names already used, updated with the result
+   * @return unique name
+   */
+  private static String uniqueName(String base, Set<String> used) {
+    String name = base;
+    int index = 2;
+    while (used.contains(name)) {
+      name = base + "-" + index++;
+    }
+    used.add(name);
+    return name;
+  }
   /**
    * Builds a map of equipment ID to DexpiProcessUnit with sizing attributes populated.
    *
@@ -317,15 +649,6 @@ public class DexpiSimulationBuilder {
     return unitMap;
   }
 
-  /**
-   * Gets the outlet stream from a process equipment instance.
-   *
-   * @param equipment the equipment
-   * @return the outlet stream, or null if not available
-   */
-  private StreamInterface getOutletStream(ProcessEquipmentInterface equipment) {
-    return DexpiStreamUtils.getGasOutletStream(equipment);
-  }
 
   /**
    * Applies auto-instrumentation using the DynamicProcessHelper, then logs associations between DEXPI instrument tags

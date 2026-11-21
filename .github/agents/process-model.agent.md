@@ -64,6 +64,11 @@ fluid to [@mercury-distribution](mercury-distribution.agent.md) with
 The process is rebuilt with the fluid converted to UMR-PRU-MC; free mercury
 accumulation in separators is off unless that study switches it on.
 
+For P&ID-to-NeqSim requests, build with `DexpiSimulationBuilder` from a
+Proteus-profile file, supply the fluid template and feed explicitly, and resolve
+every `getDiagnostics()` warning (missing outlet specifications, extra feeds,
+assumed split factors) before running. Report the diagnostics with the results.
+
 For NeqSim-to-P&ID or "complete DEXPI engineering model" requests, use the
 governed engineering path from `neqsim-pid-process-operations`:
 

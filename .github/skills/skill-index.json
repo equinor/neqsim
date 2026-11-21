@@ -241,6 +241,29 @@
   "neqsim-literature-search",
   "neqsim-regression-baselines"
  ],
+ "p&id to simulation": [
+  "neqsim-pid-process-operations",
+  "neqsim-process-modeling"
+ ],
+ "dexpi import": [
+  "neqsim-pid-process-operations",
+  "neqsim-process-modeling"
+ ],
+ "dexpi round trip": [
+  "neqsim-pid-process-operations"
+ ],
+ "build simulation from p&id": [
+  "neqsim-pid-process-operations",
+  "neqsim-process-modeling"
+ ],
+ "iso p&id standard": [
+  "neqsim-pid-process-operations",
+  "neqsim-pid-quality-review"
+ ],
+ "professional p&id drawing": [
+  "neqsim-pid-process-operations",
+  "neqsim-pid-quality-review"
+ ],
  "pid symbols": [
   "neqsim-pid-process-operations",
   "neqsim-technical-document-reading"
