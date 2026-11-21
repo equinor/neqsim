@@ -138,6 +138,18 @@ public class Dexpi201XmlWriterTest extends NeqSimTest {
     }
     assertEquals(1, inbound);
     assertEquals(1, outbound);
+    Element segment = (Element) valve.getParentNode().getParentNode();
+    java.util.Map<String, String> ends = new java.util.LinkedHashMap<String, String>();
+    NodeList segmentRefs = segment.getElementsByTagName("References");
+    for (int refIndex = 0; refIndex < segmentRefs.getLength(); refIndex++) {
+      Element reference = (Element) segmentRefs.item(refIndex);
+      ends.put(reference.getAttribute("property"), reference.getAttribute("objects").substring(1));
+    }
+    assertEquals(valve.getAttribute("id"), ends.get("SourceItem"));
+    assertEquals(valve.getAttribute("id"), ends.get("TargetItem"));
+    NodeList valveNodes = valve.getElementsByTagName("Object");
+    assertEquals(((Element) valveNodes.item(0)).getAttribute("id"), ends.get("SourceNode"));
+    assertEquals(((Element) valveNodes.item(1)).getAttribute("id"), ends.get("TargetNode"));
   }
 
   /**

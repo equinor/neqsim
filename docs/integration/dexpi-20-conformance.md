@@ -354,9 +354,12 @@ neqsim dexpi-check plant.dexpi.xml --expect-version 2.0.1 --output dexpi-check.j
 
 The command reports the detected version and profile, the NeqSim assessment and the pyDEXPI findings
 (rule id, object id, XML line) as separate layers with a conservative verdict (`PASS`, `PASS_NEQSIM_ONLY`,
-`UNVERIFIED`, `FAIL`). On the 17-unit HP/LP train, the 2.0.1 Plant export is `CONFORMANT` in NeqSim while pyDEXPI
-reports four mandatory `segment_connectivity` violations on the two in-line valve segments. Agent: `@dexpi-validation`;
-skill: `neqsim-dexpi-conformance-validation`.
+`UNVERIFIED`, `FAIL`). Agent: `@dexpi-validation`; skill: `neqsim-dexpi-conformance-validation`.
+
+The first pyDEXPI run on the 17-unit HP/LP train found four mandatory `segment_connectivity` violations on the two
+in-line valve segments while the NeqSim assessment reported `CONFORMANT`. The 2.0.1 writer now declares
+`SourceItem`/`SourceNode`/`TargetItem`/`TargetNode` on valve segments (2.0.0 output is unchanged), and the same export
+passes with zero pyDEXPI issues.
 
 ## Release and review controls
 

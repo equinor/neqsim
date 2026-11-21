@@ -40,9 +40,10 @@ If it is missing the layer reports `NOT_RUN` with this command. Java is located 
 
 ## Measured behaviour (2026-11-21, 17-unit HP/LP train with recompression)
 
-- Plant 2.0.1 (`Dexpi201XmlWriter`): NeqSim `CONFORMANT`; pyDEXPI found 4 mandatory
-  `pydexpi_segment_connectivity` violations (`ValveSegment_Equipment7/8` have no source/target item).
-  The NeqSim semantic profile did not flag them: always run pyDEXPI too.
+- Plant 2.0.1 (`Dexpi201XmlWriter`): before the fix, NeqSim reported `CONFORMANT` while pyDEXPI found 4 mandatory
+  `pydexpi_segment_connectivity` violations (in-line valve segments declared no source/target item). Fixed in
+  `Dexpi20XmlWriter` (valve segments now name their item and its inlet/outlet nodes); the same file is now `PASS`
+  with 0 pyDEXPI issues. The NeqSim semantic profile did not flag the defect: always run pyDEXPI too.
 - Process 2.0.0 (`Dexpi20ProcessModelWriter.write`): NeqSim `CONFORMANT`; pyDEXPI reports 8
   `model_references_in_composition_tree` issues and 4 loader errors; this path is 2.0.0 and lacks
   the mandatory `Method`.

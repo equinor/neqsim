@@ -67,10 +67,12 @@ def run_neqsim_assessment(path: Path, identity: dict, project_root: Path | None)
     if identity["kind"] != "DEXPI_2X" or identity["specificationVersion"] not in ("2.0.0", "2.0.1"):
         return {"status": "NOT_APPLICABLE",
                 "reason": "NeqSim bundles only the 2.0.0 and 2.0.1 definitions"}
+    import contextlib
     import neqsim_dev_setup
 
-    ns = neqsim_dev_setup.neqsim_init(project_root=str(project_root) if project_root else None,
-                                      verbose=False)
+    with contextlib.redirect_stdout(sys.stderr):
+        ns = neqsim_dev_setup.neqsim_init(
+            project_root=str(project_root) if project_root else None, verbose=False)
     assessment = ns.JClass("neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment")
     profile_enum = ns.JClass("neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment$Profile")
     paths = ns.JClass("java.nio.file.Paths")

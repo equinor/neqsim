@@ -275,8 +275,10 @@ public final class Dexpi20XmlWriter {
         distinctInletNodes.put(unit.getName(), unitInletNodes);
 
         List<StreamInterface> outlets = unit.getOutletStreams();
+        String firstOutletNode = null;
         if (outlets == null || outlets.isEmpty()) {
           String outletNode = "PipingNode" + nodeNumber++;
+          firstOutletNode = outletNode;
           String outletNozzleId = pipingComponent ? equipmentId : equipmentId + "Outlet";
           appendNozzle(document, nozzles, outletNozzleId, outletNode, "OUTLET");
           nodeOwners.put(outletNode, outletNozzleId);
@@ -284,6 +286,9 @@ public final class Dexpi20XmlWriter {
         } else {
           for (int i = 0; i < outlets.size(); i++) {
             String outletNode = "PipingNode" + nodeNumber++;
+            if (i == 0) {
+              firstOutletNode = outletNode;
+            }
             String outletNozzleId = pipingComponent ? equipmentId : equipmentId + "Outlet" + (i + 1);
             appendNozzle(document, nozzles, outletNozzleId, outletNode, "OUTLET_" + (i + 1));
             nodeOwners.put(outletNode, outletNozzleId);
@@ -302,6 +307,13 @@ public final class Dexpi20XmlWriter {
         if (pipingComponent) {
           Element valveSegment = object(document, "ValveSegment_" + equipmentId, "Plant/Piping.PipingNetworkSegment");
           components(document, valveSegment, "Items").appendChild(equipment);
+          if (specification201) {
+            // A segment that starts and ends at its own item must name that item and its two nodes.
+            references(document, valveSegment, "SourceItem", equipmentId);
+            references(document, valveSegment, "SourceNode", unitInletNodes.get(0));
+            references(document, valveSegment, "TargetItem", equipmentId);
+            references(document, valveSegment, "TargetNode", firstOutletNode);
+          }
           segments.appendChild(valveSegment);
         } else {
           taggedItems.appendChild(equipment);

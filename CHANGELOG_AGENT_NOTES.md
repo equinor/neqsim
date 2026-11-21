@@ -16,6 +16,8 @@
   check (`pydexpi` located on PATH/`PYDEXPI`, never installed at run time). Verdicts `PASS`, `PASS_NEQSIM_ONLY`,
   `UNVERIFIED`, `FAIL`; pyDEXPI found 4 `segment_connectivity` violations in a NeqSim 2.0.1 Plant export that the NeqSim layer
   reports as `CONFORMANT`.
+- Fixed: `Dexpi20XmlWriter` (2.0.1 only) now gives in-line valve segments `SourceItem`/`SourceNode`/`TargetItem`/`TargetNode`;
+  the 17-unit train export now has zero pyDEXPI issues. `Dexpi201XmlWriterTest.insertsControlValveOnPhysicalPipingPath` pins it.
 - New skill `neqsim-dexpi-conformance-validation` and agent `dexpi-validation`; router row added.
 
 ---
