@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -108,8 +109,8 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    */
   static void ensureHydratePhase(SystemInterface system) {
     neqsim.thermo.phase.PhaseInterface[] phases = system.getPhases();
-    if (!system.getHydrateCheck() || phases == null || phases.length < 5
-        || !(phases[4] instanceof neqsim.thermo.phase.PhaseHydrate)) {
+    boolean hasHydratePhase = phases != null && phases.length >= 5 && phases[4] instanceof PhaseHydrate;
+    if (!system.getHydrateCheck() || !hasHydratePhase) {
       system.setHydrateCheck(true);
     }
   }

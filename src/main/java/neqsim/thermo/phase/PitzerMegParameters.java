@@ -8,15 +8,15 @@ import neqsim.thermo.component.ComponentInterface;
  * Neutral-solute Pitzer parameters for monoethylene glycol (MEG) in water and in aqueous NaCl.
  *
  * <p>
- * MEG is treated as a neutral solute on the molality scale. For MEG alone, the osmotic coefficient of water is
- * $\phi = 1 + \lambda m + 2\mu m^2$ and $\ln a_w = -M_w m \phi$, with $\lambda(T)$ and $\mu(T)$ in the PHREEQC
- * six-term form referenced to 298.15 K. The binary parameters were regressed by NeqSim to the freezing points (233-269
- * K) and the 298.15 K isopiestic water activities of aqueous ethylene glycol reported by Tsurko et al. (2026), J. Chem.
- * Eng. Data 71, 942-959 (Tables 2 and 44). The NaCl term was regressed to the ternary water/NaCl/ethylene-glycol
- * melting-point equation of Benson et al. (2010), Cryobiology 61, 352-356, for EG:NaCl mass ratios 5-45 and total
- * solute up to 30 wt% (rms 0.70 K in freezing temperature). Only the sum of the MEG-Na+ and MEG-Cl- lambda terms is
- * identifiable from water-activity data of a single salt; by convention the full value is assigned to MEG-Na+ and the
- * MEG-Cl- term is zero.
+ * MEG is treated as a neutral solute on the molality scale. For MEG alone, the osmotic coefficient of water is $\phi =
+ * 1 + \lambda m + 2\mu m^2$ and $\ln a_w = -M_w m \phi$, with $\lambda(T)$ and $\mu(T)$ in the PHREEQC six-term form
+ * referenced to 298.15 K. The binary parameters were regressed by NeqSim to the freezing points (233-269 K) and the
+ * 298.15 K isopiestic water activities of aqueous ethylene glycol reported by Tsurko et al. (2026), J. Chem. Eng. Data
+ * 71, 942-959 (Tables 2 and 44). The NaCl term was regressed to the ternary water/NaCl/ethylene-glycol melting-point
+ * equation of Benson et al. (2010), Cryobiology 61, 352-356, for EG:NaCl mass ratios 5-45 and total solute up to 30 wt%
+ * (rms 0.70 K in freezing temperature). Only the sum of the MEG-Na+ and MEG-Cl- lambda terms is identifiable from
+ * water-activity data of a single salt; by convention the full value is assigned to MEG-Na+ and the MEG-Cl- term is
+ * zero.
  * </p>
  *
  * <p>
@@ -24,8 +24,8 @@ import neqsim.thermo.component.ComponentInterface;
  * the binary and 248-273 K for the NaCl term (NaCl up to 1.22 mol/kg in the regression data), with Na+ and Cl- as the
  * only ions. Other cations (K+, Ca++, Mg++) have no MEG rows; the neutral coverage audit then fails with a diagnostic
  * rather than assuming zero. MEG together with methanol or another liquid co-solvent likewise fails closed. Dilute
- * molecular gases and hydrocarbons receive explicit zero rows with MEG, listed by
- * {@link PhasePitzer#getMegAssumedZeroRows()}, which reproduces their ideal-dilute treatment.
+ * molecular gases and hydrocarbons receive explicit zero rows with MEG, listed by {@link
+ * PhasePitzer#getMegAssumedZeroRows()}, which reproduces their ideal-dilute treatment.
  * </p>
  *
  * @author NeqSim
@@ -64,8 +64,10 @@ public final class PitzerMegParameters {
    */
   public static boolean isMeg(ComponentInterface component) {
     String name = component.getComponentName();
-    return "MEG".equalsIgnoreCase(name) || "ethylene glycol".equalsIgnoreCase(name)
-        || "ethyleneglycol".equalsIgnoreCase(name);
+    if ("MEG".equalsIgnoreCase(name) || "ethylene glycol".equalsIgnoreCase(name)) {
+      return true;
+    }
+    return "ethyleneglycol".equalsIgnoreCase(name);
   }
 
   /**
@@ -132,32 +134,31 @@ public final class PitzerMegParameters {
     for (int other : others) {
       ComponentInterface component = phase.getComponent(other);
       if (!isDiluteGasOrHydrocarbon(component)) {
-        throw new IllegalStateException("Pitzer MEG dataset " + DATASET_ID + " has no MEG interaction data for "
-            + component.getComponentName() + "; MEG can only be combined with dilute gases, hydrocarbons and NaCl");
+        String message = "Pitzer MEG dataset " + DATASET_ID + " has no MEG data for " + component.getComponentName();
+        throw new IllegalStateException(message + "; MEG combines only with dilute gases, hydrocarbons and NaCl");
       }
       String name = component.getComponentName();
       assumeZeroPair(phase, other, meg, "LAMBDA:[" + name + ",MEG]", assumed);
       assumeZeroPair(phase, other, other, "LAMBDA:[" + name + "," + name + "]", assumed);
-      for (int ion : cations) {
-        assumeZeroPair(phase, other, ion, "LAMBDA:[" + name + "," + phase.getComponent(ion).getComponentName() + "]",
-            assumed);
-      }
-      for (int ion : anions) {
-        assumeZeroPair(phase, other, ion, "LAMBDA:[" + name + "," + phase.getComponent(ion).getComponentName() + "]",
-            assumed);
+      List<Integer> ions = new ArrayList<Integer>(cations);
+      ions.addAll(anions);
+      for (int ion : ions) {
+        String label = "LAMBDA:[" + name + "," + phase.getComponent(ion).getComponentName() + "]";
+        assumeZeroPair(phase, other, ion, label, assumed);
       }
       for (int cation : cations) {
         for (int anion : anions) {
           if (!phase.hasNeutralInteraction(PhasePitzer.NEUTRAL_FAMILY_ZETA, other, cation, anion)) {
             phase.setZeta(other, cation, anion, 0.0);
-            assumed.add("ZETA:[" + name + "," + phase.getComponent(cation).getComponentName() + ","
-                + phase.getComponent(anion).getComponentName() + "]");
+            String cationName = phase.getComponent(cation).getComponentName();
+            String anionName = phase.getComponent(anion).getComponentName();
+            assumed.add("ZETA:[" + name + "," + cationName + "," + anionName + "]");
           }
         }
       }
       for (int second : others) {
-        assumeZeroPair(phase, other, second,
-            "LAMBDA:[" + name + "," + phase.getComponent(second).getComponentName() + "]", assumed);
+        String label = "LAMBDA:[" + name + "," + phase.getComponent(second).getComponentName() + "]";
+        assumeZeroPair(phase, other, second, label, assumed);
       }
     }
     // The mu family is now active, so every neutral triple is audited. Only MEG-MEG-MEG carries data.
@@ -171,8 +172,10 @@ public final class PitzerMegParameters {
           int k = neutrals.get(c);
           if (!phase.hasNeutralInteraction(PhasePitzer.NEUTRAL_FAMILY_MU, i, j, k)) {
             phase.setMu(i, j, k, 0.0);
-            assumed.add("MU:[" + phase.getComponent(i).getComponentName() + ","
-                + phase.getComponent(j).getComponentName() + "," + phase.getComponent(k).getComponentName() + "]");
+            String firstName = phase.getComponent(i).getComponentName();
+            String secondName = phase.getComponent(j).getComponentName();
+            String thirdName = phase.getComponent(k).getComponentName();
+            assumed.add("MU:[" + firstName + "," + secondName + "," + thirdName + "]");
           }
         }
       }

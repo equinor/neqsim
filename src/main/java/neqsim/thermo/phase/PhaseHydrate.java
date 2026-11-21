@@ -12,6 +12,12 @@ import neqsim.thermo.component.ComponentHydratePVTsim;
 import neqsim.thermo.component.ComponentHydratePitzer;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.mixingrule.MixingRulesInterface;
+import neqsim.thermo.system.SystemElectrolyteCPA;
+import neqsim.thermo.system.SystemElectrolyteCPAAdvanced;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermo.system.SystemSrkCPA;
 
 /**
  * PhaseHydrate class.
@@ -44,16 +50,16 @@ public class PhaseHydrate extends Phase {
    * Creates a hydrate phase whose cavity model matches the fluid model family of a system.
    *
    * <p>
-   * The family is decided from the system class, not from its model name, so every SRK-CPA solver variant
-   * ({@code SystemSrkCPA} and subclasses such as the FullyImplicit, Reduced, Broyden and Anderson implementations) and
-   * every SRK-based electrolyte CPA system use the CPA-fitted {@link ComponentHydrateGF} parameters. The choice of
-   * association solver therefore cannot change the hydrate equilibrium. PR-CPA and UMR-CPA keep the PVTsim parameters
-   * because the CPA hydrate parameters were regressed with SRK-CPA.
+   * The family is decided from the system class, not from its model name, so every SRK-CPA solver variant (SystemSrkCPA
+   * and subclasses such as the FullyImplicit, Reduced, Broyden and Anderson implementations) and every SRK-based
+   * electrolyte CPA system use the CPA-fitted {@link ComponentHydrateGF} parameters. The choice of association solver
+   * therefore cannot change the hydrate equilibrium. PR-CPA and UMR-CPA keep the PVTsim parameters because the CPA
+   * hydrate parameters were regressed with SRK-CPA.
    * </p>
    *
    * @param system fluid system that owns the hydrate phase
    */
-  public PhaseHydrate(neqsim.thermo.system.SystemInterface system) {
+  public PhaseHydrate(SystemInterface system) {
     hydrateModel = hydrateModelFor(system);
   }
 
@@ -63,14 +69,14 @@ public class PhaseHydrate extends Phase {
    * @param system fluid system
    * @return {@code "PitzerHydrateModel"}, {@code "CPAHydrateModel"} or {@code "PVTsimHydrateModel"}
    */
-  public static String hydrateModelFor(neqsim.thermo.system.SystemInterface system) {
-    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+  public static String hydrateModelFor(SystemInterface system) {
+    if (system instanceof SystemPitzer) {
       return "PitzerHydrateModel";
     }
-    if (system instanceof neqsim.thermo.system.SystemSrkCPA
-        || system instanceof neqsim.thermo.system.SystemElectrolyteCPAstatoil
-        || system instanceof neqsim.thermo.system.SystemElectrolyteCPA
-        || system instanceof neqsim.thermo.system.SystemElectrolyteCPAAdvanced) {
+    if (system instanceof SystemSrkCPA || system instanceof SystemElectrolyteCPAstatoil) {
+      return "CPAHydrateModel";
+    }
+    if (system instanceof SystemElectrolyteCPA || system instanceof SystemElectrolyteCPAAdvanced) {
       return "CPAHydrateModel";
     }
     return hydrateModelForFluidModelName(system == null ? "" : system.getModelName());
@@ -89,8 +95,10 @@ public class PhaseHydrate extends Phase {
     if ("Pitzer-GE-model".equals(fluidModel)) {
       return "PitzerHydrateModel";
     }
-    if (fluidModel.startsWith("CPAs-SRK-EOS") || fluidModel.equals("CPA-SRK-EOS")
-        || fluidModel.startsWith("Electrolyte-CPA")) {
+    if (fluidModel.startsWith("CPAs-SRK-EOS") || fluidModel.equals("CPA-SRK-EOS")) {
+      return "CPAHydrateModel";
+    }
+    if (fluidModel.startsWith("Electrolyte-CPA")) {
       return "CPAHydrateModel";
     }
     return "PVTsimHydrateModel";

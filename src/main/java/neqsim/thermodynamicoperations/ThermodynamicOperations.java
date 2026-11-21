@@ -1843,8 +1843,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     // guessing temperature
     // Mole numbers are defined before the first init; overall fractions z are not.
     double factor = 1.0;
-    double waterMoles = system.getPhase(0).hasComponent("water")
-        ? system.getPhase(0).getComponent("water").getNumberOfmoles() : 0.0;
+    double waterMoles = 0.0;
+    if (system.getPhase(0).hasComponent("water")) {
+      waterMoles = system.getPhase(0).getComponent("water").getNumberOfmoles();
+    }
     if (waterMoles > 0.0 && system.getPhase(0).hasComponent("methanol")) {
       factor -= 2 * system.getPhase(0).getComponent("methanol").getNumberOfmoles() / waterMoles;
     }

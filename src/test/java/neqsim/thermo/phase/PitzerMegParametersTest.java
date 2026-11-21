@@ -3,6 +3,8 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
@@ -62,16 +64,21 @@ class PitzerMegParametersTest {
    * @return water activity in equilibrium with ice
    */
   private static double iceWaterActivity(double temperature) {
-    return Math.exp((210368.0 + 131.438 * temperature - 3.32373e6 / temperature - 41729.1 * Math.log(temperature))
-        / (8.314462618 * temperature));
+    double numerator = 210368.0 + 131.438 * temperature - 3.32373e6 / temperature - 41729.1 * Math.log(temperature);
+    return Math.exp(numerator / (8.314462618 * temperature));
   }
 
   /** Checks the fit against the 298.15 K isopiestic water activities. */
   @Test
   void reproducesIsopiesticWaterActivityAt298K() {
     // Tsurko et al. (2026), J. Chem. Eng. Data 71, 942-959, Table 44; u(a_w) = 0.0004.
-    double[][] data = {{1.0766, 0.9816}, {3.8601, 0.9347}, {7.1174, 0.8843}, {11.3910, 0.8173}, {15.9500, 0.7728},
-        {20.0301, 0.7442}};
+    List<double[]> data = new ArrayList<double[]>();
+    data.add(new double[] {1.0766, 0.9816});
+    data.add(new double[] {3.8601, 0.9347});
+    data.add(new double[] {7.1174, 0.8843});
+    data.add(new double[] {11.3910, 0.8173});
+    data.add(new double[] {15.9500, 0.7728});
+    data.add(new double[] {20.0301, 0.7442});
     for (double[] point : data) {
       assertEquals(point[1], waterActivity(singleAqueous(298.15, point[0], 0.0)), 0.005, "m=" + point[0]);
     }
@@ -84,8 +91,8 @@ class PitzerMegParametersTest {
     double[][] data = {{1.9989, -4.03}, {5.9547, -12.79}, {9.9983, -22.30}, {15.9988, -36.48}};
     for (double[] point : data) {
       double temperature = 273.15 + point[1];
-      assertEquals(iceWaterActivity(temperature), waterActivity(singleAqueous(temperature, point[0], 0.0)), 0.006,
-          "m=" + point[0]);
+      double calculated = waterActivity(singleAqueous(temperature, point[0], 0.0));
+      assertEquals(iceWaterActivity(temperature), calculated, 0.006, "m=" + point[0]);
     }
   }
 
@@ -117,8 +124,8 @@ class PitzerMegParametersTest {
       }
     }
     assertTrue(aqueous != null);
-    double megInAqueous = aqueous.getComponent("MEG").getNumberOfMolesInPhase()
-        / system.getPhase(0).getComponent("MEG").getNumberOfmoles();
+    double megTotal = system.getPhase(0).getComponent("MEG").getNumberOfmoles();
+    double megInAqueous = aqueous.getComponent("MEG").getNumberOfMolesInPhase() / megTotal;
     assertTrue(megInAqueous > 0.999, "MEG fraction in aqueous phase " + megInAqueous);
     assertTrue(aqueous.getMegAssumedZeroRows().contains("LAMBDA:[nitrogen,MEG]"));
   }

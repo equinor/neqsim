@@ -242,14 +242,14 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    *
    * <p>
    * The short-range interaction sums W, WT and WTT, the solvent dielectric constant and its temperature derivatives,
-   * and the per-component packing-fraction numerators are evaluated once per temperature and composition instead of in every
-   * iteration of the volume solver. The cache is keyed on exact temperature, phase mole numbers and the mixing-rule
-   * instance, and is cleared at each {@code init}.
+   * and the per-component packing-fraction numerators are evaluated once per temperature and composition instead of in
+   * every iteration of the volume solver. The cache is keyed on exact temperature, phase mole numbers and the
+   * mixing-rule instance, and is cleared at each {@code init}.
    * </p>
    */
   private void updateVolumeIndependentTerms() {
-    if (cachedTermsTemperature == temperature && cachedTermsMixingRule == electrolyteMixingRule
-        && cachedTermsMoles != null && cachedTermsMoles.length == numberOfComponents) {
+    boolean sameState = cachedTermsTemperature == temperature && cachedTermsMixingRule == electrolyteMixingRule;
+    if (sameState && cachedTermsMoles != null && cachedTermsMoles.length == numberOfComponents) {
       boolean same = true;
       for (int i = 0; i < numberOfComponents; i++) {
         if (cachedTermsMoles[i] != componentArray[i].getNumberOfMolesInPhase()) {

@@ -2033,9 +2033,10 @@ public class PhasePitzer extends PhaseGE {
    */
   boolean hasNeutralInteraction(int family, int... indexes) {
     ensureNeutralInteractions();
-    long key = indexes.length == 2 ? pairTemperatureKey(family, indexes[0], indexes[1])
-        : tripleTemperatureKey(family, indexes[0], indexes[1], indexes[2]);
-    return neutralInteractions.containsKey(key);
+    if (indexes.length == 2) {
+      return neutralInteractions.containsKey(pairTemperatureKey(family, indexes[0], indexes[1]));
+    }
+    return neutralInteractions.containsKey(tripleTemperatureKey(family, indexes[0], indexes[1], indexes[2]));
   }
 
   /** Rows that the MEG dataset defined as explicit zeros for dilute gases and hydrocarbons. */
@@ -2062,8 +2063,10 @@ public class PhasePitzer extends PhaseGE {
    * @return immutable list of row descriptions, empty when no MEG dataset is active
    */
   public List<String> getMegAssumedZeroRows() {
-    return java.util.Collections.unmodifiableList(megAssumedZeroRows == null ? new ArrayList<String>()
-        : megAssumedZeroRows);
+    if (megAssumedZeroRows == null) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(megAssumedZeroRows);
   }
 
   /** Ensures sparse neutral-interaction state exists for older serialized objects. */

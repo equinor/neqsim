@@ -5,6 +5,7 @@ import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PitzerAttenuation;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PitzerElectrostaticMixing;
+import neqsim.thermo.phase.PitzerMegParameters;
 
 /**
  * Component class for the Pitzer model.
@@ -105,9 +106,8 @@ public class ComponentGePitzer extends ComponentGE {
    */
   @Override
   protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
-    if (neutralPitzerInteractionsActive && phase.hasComponent("water")
-        && neqsim.thermo.phase.PitzerMegParameters.isMeg(this)) {
-      return neqsim.thermo.phase.PitzerMegParameters.henryReference(this, phase.getTemperature());
+    if (isActiveMegSolute(phase)) {
+      return PitzerMegParameters.henryReference(this, phase.getTemperature());
     }
     if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
       return super.getEffectiveHenryCoefficient(phase);
@@ -126,12 +126,12 @@ public class ComponentGePitzer extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
-    if (neutralPitzerInteractionsActive && phase.hasComponent("water")
-        && neqsim.thermo.phase.PitzerMegParameters.isMeg(this)) {
+    if (isActiveMegSolute(phase)) {
       double t = phase.getTemperature();
       double dt = 1.0e-3 * t;
-      return (Math.log(neqsim.thermo.phase.PitzerMegParameters.henryReference(this, t + dt))
-          - Math.log(neqsim.thermo.phase.PitzerMegParameters.henryReference(this, t - dt))) / (2.0 * dt);
+      double upper = Math.log(PitzerMegParameters.henryReference(this, t + dt));
+      double lower = Math.log(PitzerMegParameters.henryReference(this, t - dt));
+      return (upper - lower) / (2.0 * dt);
     }
     if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
       return super.getLnHenryCoefficientTemperatureDerivative(phase);
@@ -143,6 +143,19 @@ public class ComponentGePitzer extends ComponentGE {
       return 0.0;
     }
     return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
+  }
+
+  /**
+   * Tests whether this component is MEG handled by the neutral Pitzer MEG dataset.
+   *
+   * @param phase aqueous phase
+   * @return {@code true} for MEG in a water-containing phase with active neutral interactions
+   */
+  private boolean isActiveMegSolute(PhaseInterface phase) {
+    if (!neutralPitzerInteractionsActive || !phase.hasComponent("water")) {
+      return false;
+    }
+    return PitzerMegParameters.isMeg(this);
   }
 
   /**

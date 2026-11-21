@@ -51,15 +51,17 @@ class ElectrolyteCPAVolumeSolverPerformanceTest {
       double cachedW = phase.W;
       double cachedEps = phase.eps;
       double cachedSolventDielectric = phase.getSolventDiElectricConstant();
-      assertEquals(phase.calcW(phase, phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents()),
-          cachedW, 1e-12 * Math.max(1.0, Math.abs(cachedW)));
+      int count = phase.getNumberOfComponents();
+      double directW = phase.calcW(phase, phase.getTemperature(), phase.getPressure(), count);
+      assertEquals(directW, cachedW, 1e-12 * Math.max(1.0, Math.abs(cachedW)));
       assertEquals(phase.calcEps(), cachedEps, 1e-14);
       assertEquals(phase.calcSolventDiElectricConstant(phase.getTemperature()), cachedSolventDielectric, 1e-12);
       // A composition change without init must refresh the cache.
-      phase.getComponent("water").setNumberOfMolesInPhase(phase.getComponent("water").getNumberOfMolesInPhase() * 1.1);
+      double waterMoles = phase.getComponent("water").getNumberOfMolesInPhase();
+      phase.getComponent("water").setNumberOfMolesInPhase(waterMoles * 1.1);
       phase.volInit();
-      assertEquals(phase.calcSolventDiElectricConstant(phase.getTemperature()), phase.getSolventDiElectricConstant(),
-          1e-12);
+      double direct = phase.calcSolventDiElectricConstant(phase.getTemperature());
+      assertEquals(direct, phase.getSolventDiElectricConstant(), 1e-12);
     }
   }
 

@@ -2,6 +2,8 @@ package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.component.ComponentHydrateGF;
 import neqsim.thermo.system.SystemElectrolyteCPA;
@@ -55,16 +57,21 @@ class PhaseHydrateModelSelectionTest {
   /** Checks that all SRK-CPA and electrolyte-CPA systems select the CPA hydrate model. */
   @Test
   void everySrkCpaVariantUsesTheCpaHydrateModel() {
-    SystemInterface[] variants = {new SystemSrkCPAs(280.0, 100.0), new SystemSrkCPAstatoil(280.0, 100.0),
-        new SystemSrkCPAstatoilFullyImplicit(280.0, 100.0), new SystemSrkCPAstatoilReduced(280.0, 100.0),
-        new SystemSrkCPAstatoilBroydenImplicit(280.0, 100.0), new SystemSrkCPAstatoilAndersonMixing(280.0, 100.0),
-        new SystemElectrolyteCPAstatoil(280.0, 100.0), new SystemElectrolyteCPA(280.0, 100.0),
-        new SystemElectrolyteCPAAdvanced(280.0, 100.0)};
+    List<SystemInterface> variants = new ArrayList<SystemInterface>();
+    variants.add(new SystemSrkCPAs(280.0, 100.0));
+    variants.add(new SystemSrkCPAstatoil(280.0, 100.0));
+    variants.add(new SystemSrkCPAstatoilFullyImplicit(280.0, 100.0));
+    variants.add(new SystemSrkCPAstatoilReduced(280.0, 100.0));
+    variants.add(new SystemSrkCPAstatoilBroydenImplicit(280.0, 100.0));
+    variants.add(new SystemSrkCPAstatoilAndersonMixing(280.0, 100.0));
+    variants.add(new SystemElectrolyteCPAstatoil(280.0, 100.0));
+    variants.add(new SystemElectrolyteCPA(280.0, 100.0));
+    variants.add(new SystemElectrolyteCPAAdvanced(280.0, 100.0));
     for (SystemInterface variant : variants) {
       SystemInterface fluid = methaneWater(variant);
-      assertEquals("CPAHydrateModel", model(fluid), variant.getClass().getSimpleName());
-      assertTrue(fluid.getPhases()[4].getComponent("water") instanceof ComponentHydrateGF,
-          variant.getClass().getSimpleName());
+      String name = variant.getClass().getSimpleName();
+      assertEquals("CPAHydrateModel", model(fluid), name);
+      assertTrue(fluid.getPhases()[4].getComponent("water") instanceof ComponentHydrateGF, name);
     }
   }
 
@@ -96,8 +103,8 @@ class PhaseHydrateModelSelectionTest {
   /** Checks the model-name fallback selection. */
   @Test
   void fluidModelNameSelectionMatchesSolverSuffixes() {
-    assertEquals("CPAHydrateModel",
-        PhaseHydrate.hydrateModelForFluidModelName("CPAs-SRK-EOS-statoil-FullyImplicit-Reduced"));
+    String fullyImplicitReduced = "CPAs-SRK-EOS-statoil-FullyImplicit-Reduced";
+    assertEquals("CPAHydrateModel", PhaseHydrate.hydrateModelForFluidModelName(fullyImplicitReduced));
     assertEquals("CPAHydrateModel", PhaseHydrate.hydrateModelForFluidModelName("Electrolyte-CPA-Advanced"));
     assertEquals("PVTsimHydrateModel", PhaseHydrate.hydrateModelForFluidModelName("CPA-PR-EOS"));
     assertEquals("PVTsimHydrateModel", PhaseHydrate.hydrateModelForFluidModelName(""));
