@@ -1997,6 +1997,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
             || !enthalpyClosed && (Tafter < bandLow || Tafter > bandHigh)) {
           system.setTemperature(Tanalytical);
           testOps.TPflash();
+          system.init(2);
           enthalpyInlet = system.getEnthalpy();
         }
         temperatureProfile.add(system.getTemperature());

@@ -161,6 +161,7 @@ public class SealGasSupplyConditioning {
     f.setMultiPhaseCheck(true);
     ThermodynamicOperations ops = new ThermodynamicOperations(f);
     ops.TPflash();
+    f.init(2);
     double enthalpy = f.getEnthalpy("J/mol");
     f.setPressure(supplyPressureBara);
     ops.PHflash(enthalpy, "J/mol");

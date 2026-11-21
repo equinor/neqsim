@@ -1375,6 +1375,7 @@ public class HeatExchanger extends Heater
     double hotProbeTemperature = capacityEvaluationTemperature(hotAtColdIn, tColdInK);
     hotAtColdIn.setTemperature(hotProbeTemperature);
     new ThermodynamicOperations(hotAtColdIn).TPflash();
+    hotAtColdIn.init(2);
     double dHhotFull = hotAtColdIn.getEnthalpy() - hHotIn;
 
     SystemInterface coldAtHotIn = coldSys.clone();

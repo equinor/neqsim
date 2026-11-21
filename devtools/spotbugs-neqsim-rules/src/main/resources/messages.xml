@@ -18,7 +18,7 @@
 		</Details>
 	</BugPattern>
 	<BugPattern type="NEQSIM_REDUNDANT_INIT">
-		<ShortDescription>Repeated init call on the same fluid with nothing changed in between</ShortDescription>
+		<ShortDescription>Repeated init or TPflash on the same fluid with nothing changed in between</ShortDescription>
 		<LongDescription>{1} calls {2} on a fluid that was already initialised by an identical call earlier in the method, with no call, store or branch in between that could have changed it</LongDescription>
 		<Details>
 			<![CDATA[

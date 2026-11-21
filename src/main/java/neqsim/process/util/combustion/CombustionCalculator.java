@@ -1118,6 +1118,7 @@ public class CombustionCalculator implements Serializable {
       ThermodynamicOperations ops = new ThermodynamicOperations(prod);
       prod.setTemperature(298.15);
       ops.TPflash();
+      prod.init(2);
       double h0 = prod.getEnthalpy(); // J for the per-mol-fuel product batch at 298.15 K
       double target = h0 + lhvPerMolFuel * 1000.0; // add the released heat (J per mol fuel)
       // bisection: enthalpy increases monotonically with temperature
@@ -1127,6 +1128,7 @@ public class CombustionCalculator implements Serializable {
         double mid = 0.5 * (lo + hi);
         prod.setTemperature(mid);
         ops.TPflash();
+        prod.init(2);
         if (prod.getEnthalpy() < target) {
           lo = mid;
         } else {

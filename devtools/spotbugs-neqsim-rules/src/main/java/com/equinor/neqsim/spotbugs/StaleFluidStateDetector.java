@@ -257,6 +257,9 @@ public class StaleFluidStateDetector extends OpcodeStackDetector {
   private void handleOperation(String name, OpcodeStack.Item receiver) {
     String fluid = receiver.getRegisterNumber() >= 0 ? opsToFluid.get(receiver.getRegisterNumber()) : null;
     if (fluid == null) {
+      // The operations object is not tied to a known fluid (for example a field), so any tracked
+      // fluid may have been flashed and re-initialised.
+      states.clear();
       return;
     }
     if (needsMixingRule.contains(registerOf(fluid)) && !mixingReported && !name.startsWith("calc")) {

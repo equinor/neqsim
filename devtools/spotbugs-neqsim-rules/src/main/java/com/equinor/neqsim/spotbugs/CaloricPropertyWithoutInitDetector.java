@@ -88,6 +88,8 @@ public class CaloricPropertyWithoutInitDetector extends OpcodeStackDetector {
   private boolean caloricReported;
   private boolean physicalReported;
   private boolean redundantReported;
+  /** True for client classes; the property implementations themselves are only checked for repeats. */
+  private boolean propertyChecks = true;
   /** Last init call per fluid: key is receiver, method name and signature, value the arguments. */
   private final Map<String, String> lastInit = new HashMap<>();
   private String lastStringConstant = "";
@@ -105,7 +107,8 @@ public class CaloricPropertyWithoutInitDetector extends OpcodeStackDetector {
   @Override
   public void visitClassContext(ClassContext classContext) {
     String name = classContext.getJavaClass().getClassName();
-    if (isChecked(name)) {
+    propertyChecks = isChecked(name);
+    if (name.startsWith("neqsim.")) {
       super.visitClassContext(classContext);
     }
   }
@@ -159,7 +162,10 @@ public class CaloricPropertyWithoutInitDetector extends OpcodeStackDetector {
     boolean thermo = owner.startsWith(PHASE_PACKAGE) || owner.startsWith(SYSTEM_PACKAGE);
     boolean physical = thermo || owner.startsWith(PHYSICAL_PACKAGE);
     boolean run = "run".equals(name) || "runTransient".equals(name);
-    trackInit(name, thermo, physical);
+    trackInit(owner, name, thermo, physical);
+    if (!propertyChecks) {
+      return;
+    }
     if (run || owner.startsWith(OPERATIONS_PACKAGE)
         || thermo && name.startsWith("init") && !name.startsWith("initPhysical")) {
       caloricInitialised = true;
@@ -225,12 +231,15 @@ public class CaloricPropertyWithoutInitDetector extends OpcodeStackDetector {
    * the tracked state, because the fluid may have changed.
    * </p>
    *
+   * @param owner class of the invoked method
    * @param name invoked method name
    * @param thermo true if the owner is a phase or system type
    * @param physical true if the owner is a phase, system or physical property type
    */
-  private void trackInit(String name, boolean thermo, boolean physical) {
-    if (!(thermo && name.startsWith("init"))) {
+  private void trackInit(String owner, String name, boolean thermo, boolean physical) {
+    boolean flash = (OPERATIONS_PACKAGE + "ThermodynamicOperations").equals(owner) && "TPflash".equals(name)
+        && getSigConstantOperand().startsWith("()");
+    if (!(thermo && name.startsWith("init")) && !flash) {
       boolean getter = physical && (name.startsWith("get") || name.startsWith("is"));
       if (!getter) {
         lastInit.clear();
@@ -273,6 +282,9 @@ public class CaloricPropertyWithoutInitDetector extends OpcodeStackDetector {
       String prefix = receiverKey + "|init|";
       lastInit.keySet().removeIf(k -> k.startsWith(prefix));
     }
+    // A flash and an init on the same fluid reset each other's "already done" state.
+    boolean thisIsFlash = flash;
+    lastInit.keySet().removeIf(k -> k.contains("|TPflash|") != thisIsFlash);
     lastInit.put(key, arguments.toString());
   }
 

@@ -154,6 +154,7 @@ public class Standard_AGA7 extends neqsim.standards.Standard {
       flowingSystem.init(1);
       ThermodynamicOperations ops = new ThermodynamicOperations(flowingSystem);
       ops.TPflash();
+      flowingSystem.init(2);
       flowingSystem.initPhysicalProperties();
 
       flowingDensity = flowingSystem.getPhase(0).getDensity("kg/m3");
