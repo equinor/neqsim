@@ -914,7 +914,7 @@ System.out.println(summary);
 | `BIP_C2C6_C7PLUS` | BIP between C2-C6 and C7+ fractions | [0.0, 0.05, 0.01] |
 | `BIP_CO2_HC` | BIP between CO₂ and hydrocarbons | [0.08, 0.18, 0.12] |
 | `BIP_N2_HC` | BIP between N₂ and hydrocarbons | [0.02, 0.12, 0.05] |
-| `VOLUME_SHIFT_C7PLUS` | Volume shift multiplier for C7+ | [0.8, 1.2, 1.0] |
+| `VOLUME_SHIFT_C7PLUS` | Multiplier on the effective Peneloux shift of C7+ fractions (Rackett, constant or E300 SSHIFT); needs `useVolumeCorrection(true)` | [0.8, 1.2, 1.0] |
 | `TC_MULTIPLIER_C7PLUS` | Critical temperature multiplier | [0.95, 1.05, 1.0] |
 | `PC_MULTIPLIER_C7PLUS` | Critical pressure multiplier | [0.95, 1.05, 1.0] |
 | `OMEGA_MULTIPLIER_C7PLUS` | Acentric factor multiplier | [0.90, 1.10, 1.0] |
