@@ -37,5 +37,36 @@
 			]]>
 		</Details>
 	</BugPattern>
+	<Detector class="com.equinor.neqsim.spotbugs.StaleFluidStateDetector">
+		<Details>Finds fluids that are modified or flashed and then read without re-initialisation, fluids of streams that are modified in place, and flashes before a mixing rule is set.</Details>
+	</Detector>
+	<BugPattern type="NEQSIM_STALE_PROPERTY_READ">
+		<ShortDescription>Property read after the fluid was modified or flashed without re-initialising it</ShortDescription>
+		<LongDescription>{1} reads a property from a fluid that was changed earlier in the method ({2}) without initialising it again</LongDescription>
+		<Details>
+			<![CDATA[
+<p>The method changes a fluid (<code>setTemperature</code>, <code>setPressure</code>, <code>setMolarComposition</code>, <code>addComponent</code>, <code>init(0|1)</code>) or runs a TP flash on it, and then reads enthalpy, entropy, Cp, Cv, viscosity, conductivity or similar without calling <code>init(2)</code> or higher, <code>initProperties()</code> or <code>initPhysicalProperties(...)</code> in between. The property then belongs to the previous state.</p>
+<p>Initialise the fluid after the change and before the read. Physical properties need their own initialisation and are never updated by a flash.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_SHARED_FLUID_MUTATION">
+		<ShortDescription>State of a stream's own fluid is changed in place</ShortDescription>
+		<LongDescription>{1} calls {2} directly on the fluid returned by getThermoSystem() or getFluid(), which changes the fluid of the stream or unit</LongDescription>
+		<Details>
+			<![CDATA[
+<p><code>getThermoSystem()</code> and <code>getFluid()</code> return the live fluid of a stream or unit, not a copy. Changing its temperature, pressure or composition changes the stream for every other user. Use <code>clone()</code> before branching, or change the fluid through the stream or unit API when changing the stream is the intent (for example the outlet stream of the unit being implemented).</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_MISSING_MIXING_RULE">
+		<ShortDescription>Fluid flashed or initialised before a mixing rule is set</ShortDescription>
+		<LongDescription>{1} calls {2} on a fluid created in the method before setMixingRule(...) has been called on it</LongDescription>
+		<Details>
+			<![CDATA[
+<p>A fluid created with <code>new SystemXxx(...)</code> needs <code>setMixingRule(...)</code> after the components are added and before it is initialised or flashed. Without it the equation of state has no mixing rule and the results are wrong or the calculation fails.</p>
+			]]>
+		</Details>
+	</BugPattern>
 	<BugCode abbrev="NQ">NeqSim thermodynamic state</BugCode>
 </MessageCollection>

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "936ac62842e4e4a1562646f969806a775157fdeb",
+  "source_revision": "4ee12dd60ce9731fccea1293f7815399dae3445a",
   "tools": [
     "spotbugs"
   ],
@@ -1365,6 +1365,13 @@
     },
     {
       "tool": "spotbugs",
+      "rule": "NEQSIM_MISSING_MIXING_RULE",
+      "path": "src/main/java/neqsim/fluidmechanics/flownode/onephasenode/onephasepipeflownode/onePhasePipeFlowNode.java",
+      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode:::|Method:neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode:main:([Ljava/lang/String;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
       "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
       "path": "src/main/java/neqsim/chemicalreactions/kinetics/Kinetics.java",
       "evidence": "P2:Class:neqsim.chemicalreactions.kinetics.Kinetics:::|Method:neqsim.chemicalreactions.kinetics.Kinetics:calcReacMatrix:(Lneqsim/thermo/phase/PhaseInterface;Lneqsim/thermo/phase/PhaseInterface;I)D:",
@@ -2530,6 +2537,160 @@
       "rule": "NEQSIM_PHYSICAL_WITHOUT_INIT",
       "path": "src/main/java/neqsim/util/nucleation/SpinodalDecompositionDetector.java",
       "evidence": "P2:Class:neqsim.util.nucleation.SpinodalDecompositionDetector:::|Method:neqsim.util.nucleation.SpinodalDecompositionDetector:estimateDominantWavelength:(Lneqsim/thermo/phase/PhaseInterface;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/equipment/separator/Separator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.Separator:::|Method:neqsim.process.equipment.separator.Separator:setTransientOutletComposition:(Lneqsim/process/equipment/stream/StreamInterface;[D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/equipment/subsea/SubseaManifold.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.SubseaManifold:::|Method:neqsim.process.equipment.subsea.SubseaManifold:applyPressureDrop:(Lneqsim/process/equipment/stream/StreamInterface;D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/fielddevelopment/tieback/capacity/TieInCapacityPlanner.java",
+      "evidence": "P2:Class:neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner:::|Method:neqsim.process.fielddevelopment.tieback.capacity.TieInCapacityPlanner:restoreProcessStream:(Lneqsim/process/processmodel/ProcessModel;Lneqsim/process/processmodel/ProcessSystem;Lneqsim/process/equipment/stream/StreamInterface;D[D)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_SHARED_FLUID_MUTATION",
+      "path": "src/main/java/neqsim/process/util/optimizer/ProcessOptimizationEngine.java",
+      "evidence": "P2:Class:neqsim.process.util.optimizer.ProcessOptimizationEngine:::|Method:neqsim.process.util.optimizer.ProcessOptimizationEngine:evaluateCapacityPoint:(DDDDD)Lneqsim/process/util/optimizer/ProcessOptimizationEngine$LiftCurvePoint;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/DryGasSealAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.DryGasSealAnalyzer:::|Method:neqsim.process.equipment.compressor.DryGasSealAnalyzer:runCondensateAccumulation:()Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/DryGasSealAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.DryGasSealAnalyzer:::|Method:neqsim.process.equipment.compressor.DryGasSealAnalyzer:runFlashVaporisationImpact:()Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/DryGasSealAnalyzer.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.DryGasSealAnalyzer:::|Method:neqsim.process.equipment.compressor.DryGasSealAnalyzer:runIsenthalpicExpansionAnalysis:()Ljava/util/Map;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/compressor/SealGasSupplyConditioning.java",
+      "evidence": "P2:Class:neqsim.process.equipment.compressor.SealGasSupplyConditioning:::|Method:neqsim.process.equipment.compressor.SealGasSupplyConditioning:expand:(D)[D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/expander/ExpanderOld.java",
+      "evidence": "P2:Class:neqsim.process.equipment.expander.ExpanderOld:::|Method:neqsim.process.equipment.expander.ExpanderOld:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/HeatExchanger.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.HeatExchanger:::|Method:neqsim.process.equipment.heatexchanger.HeatExchanger:foulingScreening:(D[DLjava/lang/String;)Lneqsim/process/equipment/heatexchanger/HeatExchanger$FoulingScreeningResult;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/heatexchanger/ReBoiler.java",
+      "evidence": "P2:Class:neqsim.process.equipment.heatexchanger.ReBoiler:::|Method:neqsim.process.equipment.heatexchanger.ReBoiler:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:::|Method:neqsim.process.equipment.pipeline.PipeBeggsAndBrills:runWithSpecifiedFlowRate:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TransientPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:::|Method:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:initializeFromStream:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TransientPipe.java",
+      "evidence": "P2:Class:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:::|Method:neqsim.process.equipment.pipeline.twophasepipe.TransientPipe:updateInletFromStream:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/powergeneration/HRSG.java",
+      "evidence": "P2:Class:neqsim.process.equipment.powergeneration.HRSG:::|Method:neqsim.process.equipment.powergeneration.HRSG:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/equipment/separator/Separator.java",
+      "evidence": "P2:Class:neqsim.process.equipment.separator.Separator:::|Method:neqsim.process.equipment.separator.Separator:run:(Ljava/util/UUID;)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/safety/envelope/SafetyEnvelopeCalculator.java",
+      "evidence": "P2:Class:neqsim.process.safety.envelope.SafetyEnvelopeCalculator:::|Method:neqsim.process.safety.envelope.SafetyEnvelopeCalculator:calculateMDMTEnvelope:(DDDI)Lneqsim/process/safety/envelope/SafetyEnvelope;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/process/util/combustion/CombustionCalculator.java",
+      "evidence": "P2:Class:neqsim.process.util.combustion.CombustionCalculator:::|Method:neqsim.process.util.combustion.CombustionCalculator:adiabaticFlameTemperature:(DDDDDD)D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/standards/gasquality/Standard_AGA3.java",
+      "evidence": "P2:Class:neqsim.standards.gasquality.Standard_AGA3:::|Method:neqsim.standards.gasquality.Standard_AGA3:calculate:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/standards/gasquality/Standard_AGA7.java",
+      "evidence": "P2:Class:neqsim.standards.gasquality.Standard_AGA7:::|Method:neqsim.standards.gasquality.Standard_AGA7:calculate:()V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/util/nucleation/AttainableMetastabilityVolumeBalance.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:::|Method:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:calculateLimit:(DD)V:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NEQSIM_STALE_PROPERTY_READ",
+      "path": "src/main/java/neqsim/util/nucleation/AttainableMetastabilityVolumeBalance.java",
+      "evidence": "P2:Class:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:::|Method:neqsim.util.nucleation.AttainableMetastabilityVolumeBalance:solveIsentropicLiquidTemperature:(Lneqsim/thermo/system/SystemInterface;Lneqsim/thermodynamicoperations/ThermodynamicOperations;DDD)D:",
       "count": 1
     }
   ]

@@ -46,6 +46,15 @@ linearly and skip the classes that implement the properties
 | `NEQSIM_CALORIC_WITHOUT_INIT` | Enthalpy, entropy, Cp, Cv, Gibbs energy, internal energy, gamma, kappa, Joule-Thomson or speed of sound read with no `init(...)`, `initProperties()`, flash or `run()` earlier in the method. A TP flash leaves phases at init level 1, where these are stale. | `init(2)` or higher, `initProperties()` or `initThermoProperties()` first. |
 | `NEQSIM_PHYSICAL_WITHOUT_INIT` | Density (physical property model), viscosity, thermal conductivity, diffusion coefficient or interfacial tension read without initialising that property. | Initialise only what is needed (fastest): `initPhysicalProperties("density")`, `"viscosity"` or `"conductivity"`, or the `PhysicalPropertyType` overload. A targeted call counts only for its own property. Diffusion and interfacial tension need `initPhysicalProperties()`, `initProperties()` or `calcInterfaceProperties()`. |
 | `NEQSIM_REDUNDANT_INIT` | An identical `init(n)`, `initProperties()` or `initPhysicalProperties(...)` call repeated on the same fluid with no call, store or branch in between. | Remove the repeat; it only costs computation time. |
+| `NEQSIM_STALE_PROPERTY_READ` | A fluid changed (`setTemperature`, `setPressure`, `setMolarComposition`, `addComponent`, `init(0\|1)`) or TP-flashed (linked through `new ThermodynamicOperations(fluid)`) in the method, then a caloric or physical property read with no re-init. `initPhysicalProperties()` does not refresh caloric derivatives and a flash never refreshes physical properties. | Initialise after the change and before the read. |
+| `NEQSIM_SHARED_FLUID_MUTATION` | A state-changing call directly on `getThermoSystem()`/`getFluid()` of an input stream (a method parameter or an inlet getter), which changes the caller's stream. Own outlet streams and clones are not flagged. | `clone()` first, or change the stream through its API when that is the intent. |
+| `NEQSIM_MISSING_MIXING_RULE` | A fluid created with `new SystemXxx(...)` in the method is initialised or flashed before `setMixingRule(...)`. | Call `setMixingRule(...)` after adding components. |
+
+The stale-read, shared-mutation and mixing-rule rules need local evidence in one method
+and forget state at jump targets, at overwritten variables and when the fluid is passed
+to another method or the class calls its own helper, so they report only certain cases.
+The first three rules also fire on accessors and helpers that take an initialised fluid
+from the caller; those are baselined and are not a sign of a defect by themselves.
 
 Existing findings are recorded in `.config/neqsim-rules-baseline.json`, which
 unlike the SpotBugs baseline does not depend on the analysis JDK. CI compares

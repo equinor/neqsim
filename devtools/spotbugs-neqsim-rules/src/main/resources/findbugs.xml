@@ -6,4 +6,8 @@
 	<BugPattern type="NEQSIM_REDUNDANT_INIT" abbrev="NQ" category="PERFORMANCE" />
 	<BugPattern type="NEQSIM_CALORIC_WITHOUT_INIT" abbrev="NQ" category="CORRECTNESS" />
 	<BugPattern type="NEQSIM_PHYSICAL_WITHOUT_INIT" abbrev="NQ" category="CORRECTNESS" />
+	<Detector class="com.equinor.neqsim.spotbugs.StaleFluidStateDetector" speed="fast" reports="NEQSIM_STALE_PROPERTY_READ,NEQSIM_SHARED_FLUID_MUTATION,NEQSIM_MISSING_MIXING_RULE" />
+	<BugPattern type="NEQSIM_STALE_PROPERTY_READ" abbrev="NQ" category="CORRECTNESS" />
+	<BugPattern type="NEQSIM_SHARED_FLUID_MUTATION" abbrev="NQ" category="CORRECTNESS" />
+	<BugPattern type="NEQSIM_MISSING_MIXING_RULE" abbrev="NQ" category="CORRECTNESS" />
 </FindbugsPlugin>

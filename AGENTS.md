@@ -125,7 +125,8 @@ and `@code-review` for independent code review. Commands and baseline policy liv
   `init(3)` alone leaves transport properties at zero. Choosing `init(...)` levels in Java:
   `neqsim-thermodynamic-initialization` skill.
 - **Initialise before reading, once, and only what is needed** (enforced by SpotBugs rules
-  `NEQSIM_CALORIC_WITHOUT_INIT`, `NEQSIM_PHYSICAL_WITHOUT_INIT`, `NEQSIM_REDUNDANT_INIT`, baseline
+  `NEQSIM_CALORIC_WITHOUT_INIT`, `NEQSIM_PHYSICAL_WITHOUT_INIT`, `NEQSIM_REDUNDANT_INIT`,
+  `NEQSIM_STALE_PROPERTY_READ`, `NEQSIM_SHARED_FLUID_MUTATION`, `NEQSIM_MISSING_MIXING_RULE`, baseline
   `.config/neqsim-rules-baseline.json`; see `docs/development/CODE_HEALTH.md`): call `init(2)` or
   higher (or `initProperties()`/`initThermoProperties()`) before enthalpy/entropy/Cp/Cv; for a single
   physical property use `initPhysicalProperties("density"|"viscosity"|"conductivity")`, the fastest
