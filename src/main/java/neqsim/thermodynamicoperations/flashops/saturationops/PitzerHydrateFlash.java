@@ -17,8 +17,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * fugacities, including when the CO2-rich phase is liquid or has disappeared. Ions never occupy hydrate cages. The
  * default search envelope is 273.15-323.15 K and 1-1000 bara. These are numerical bounds, not a qualification of the
  * parameter database over that envelope. The lower temperature is further restricted to the fitted Henry-reference
- * range of each present guest (274.19 K for CO2, 275.46 K for methane). MEG uses the fitted {@link
- * neqsim.thermo.phase.PitzerMegParameters} dataset up to its molality limit. Ice, salt precipitation and other
+ * range of each present guest (274.19 K for CO2, 275.46 K for methane). MEG uses the fitted
+ * {@link neqsim.thermo.phase.PitzerMegParameters} dataset up to its molality limit. Ice, salt precipitation and other
  * drilling-fluid additives require separate models and validation. On failure the input temperature, pressure and
  * multiphase setting are restored, but phase properties must be reflashed before use. Use a clone to preserve an
  * operating state.

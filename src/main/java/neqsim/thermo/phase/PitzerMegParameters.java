@@ -24,8 +24,8 @@ import neqsim.thermo.component.ComponentInterface;
  * the binary and 248-273 K for the NaCl term (NaCl up to 1.22 mol/kg in the regression data), with Na+ and Cl- as the
  * only ions. Other cations (K+, Ca++, Mg++) have no MEG rows; the neutral coverage audit then fails with a diagnostic
  * rather than assuming zero. MEG together with methanol or another liquid co-solvent likewise fails closed. Dilute
- * molecular gases and hydrocarbons receive explicit zero rows with MEG, listed by {@link
- * PhasePitzer#getMegAssumedZeroRows()}, which reproduces their ideal-dilute treatment.
+ * molecular gases and hydrocarbons receive explicit zero rows with MEG, listed by
+ * {@link PhasePitzer#getMegAssumedZeroRows()}, which reproduces their ideal-dilute treatment.
  * </p>
  *
  * @author NeqSim
@@ -54,7 +54,8 @@ public final class PitzerMegParameters {
   private static final double DILUTE_GAS_BOILING_POINT_K = 273.15;
 
   /** Utility class; not instantiated. */
-  private PitzerMegParameters() {}
+  private PitzerMegParameters() {
+  }
 
   /**
    * Tests whether a component is MEG.
