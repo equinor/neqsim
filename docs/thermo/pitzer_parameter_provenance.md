@@ -873,6 +873,17 @@ H2S, and CH4 are now structurally representable, but no thesis value is copied o
 lineage, reuse rights, range, uncertainty, complete companion interactions, and held-out validation
 remain mandatory before a versioned parameter dataset can use them.
 
+### NeqSim MEG neutral dataset
+
+`PitzerMegParameters` (`neqsim-pitzer-meg-nacl-v1`) is a NeqSim regression, not a PHREEQC row. It defines
+`lambda(MEG,MEG)` and `mu(MEG,MEG,MEG)` fitted to Tsurko et al. (2026) freezing points and 298.15 K isopiestic
+water activities, and `lambda(MEG,Na+)` fitted to the Benson et al. (2010) water/NaCl/ethylene-glycol melting-point
+equation, with `lambda(MEG,Cl-)` = 0 and `zeta(MEG,Na+,Cl-)` = 0 as explicit conventions. It is applied after the
+PHREEQC catalog subset (MEG is excluded from the catalog topology) or after the legacy table. Because it activates
+the mu family, it also defines explicit zero rows for dilute gases and hydrocarbons, reported by
+`PhasePitzer.getMegAssumedZeroRows()`. Coefficients, data ranges and fit statistics are in
+[Pitzer hydrate equilibrium](pitzer_hydrate_equilibrium.md#meg-monoethylene-glycol).
+
 ## PHREEQC `C0` and NeqSim `Cphi` convention
 
 PHREEQC parses the database option `-C0` as `TYPE_C0`. In both its complete and optimized

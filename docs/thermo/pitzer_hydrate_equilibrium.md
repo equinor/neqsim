@@ -150,6 +150,66 @@ is reused at a different state. Pressure searches preserve the first crossing
 found by scanning upward from the lower pressure bound. The residual tolerance,
 search bounds, structure selection and parameter coverage are unchanged.
 
+## MEG (monoethylene glycol)
+
+Add `"MEG"` as a component. `PitzerMegParameters` (dataset `neqsim-pitzer-meg-nacl-v1`) loads automatically
+with either the PHREEQC catalog or the legacy parameter table. MEG is a neutral solute on the molality scale:
+
+$$\phi = 1 + \lambda_{MM}(T)\,m + 2\mu_{MMM}(T)\,m^2,\qquad \ln a_w = -M_w m \phi,$$
+
+with $\lambda$ and $\mu$ in the PHREEQC six-term form (terms 0 and 1 used, $T_r$ = 298.15 K). MEG's molality
+Henry reference is $M_w\,p^{sat}_{MEG}(T)$, which keeps it in the aqueous phase; it sets only the small MEG
+volatility, not the water activity. Before this dataset existed, MEG had no Henry reference. It went to the SRK gas
+phase (6.5 mol% at 10 °C and 100 bara) and the water activity stayed at 1, so the hydrate temperature was not
+suppressed at all.
+
+```java
+SystemPitzer fluid = new SystemPitzer(285.0, 100.0);
+fluid.addComponent("methane", 86.0);
+fluid.addComponent("ethane", 7.0);
+fluid.addComponent("propane", 3.0);
+fluid.addComponent("water", 1.0 / 0.01801528);        // 1 kg water
+fluid.addComponent("MEG", 0.3 / 0.7 / 0.06207);       // 30 wt% MEG, salt-free basis
+fluid.addComponent("Na+", 0.05 / 0.95 / 0.05844);     // optional NaCl
+fluid.addComponent("Cl-", 0.05 / 0.95 / 0.05844);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+new ThermodynamicOperations(fluid).hydrateFormationTemperature();
+```
+
+**Regression data and fit (NeqSim, 21 Nov 2026).**
+
+| Term | Data | Fit quality |
+|---|---|---|
+| $\lambda_{MM}$ = 3.0491e-3 + 71.86(1/T − 1/T_r); $\mu_{MMM}$ = −2.9662e-4 − 1.5291(1/T − 1/T_r) | Tsurko et al. (2026), *J. Chem. Eng. Data* 71, 942–959: freezing points (Table 2, 2–17.6 mol/kg, 233–269 K; $a_w$ from ice equilibrium, Koop et al. 2000) and isopiestic $a_w$ at 298.15 K (Table 44, 1.1–20.7 mol/kg) | 298 K: abs($\Delta a_w$) ≤ 0.0043. Freezing: abs($\Delta T_f$) ≤ 0.45 K up to 10 mol/kg, ≤ 1.7 K at 12–17.6 mol/kg |
+| $\lambda_{M,Na^+}$ = 0.14781 (constant), $\lambda_{M,Cl^-}$ = 0, $\zeta_{M,Na,Cl}$ = 0 | Ternary melting-point equation of Benson et al. (2010), *Cryobiology* 61, 352–356, EG:NaCl mass ratio 5–45, total solute 5–30 wt% (NaCl ≤ 1.22 mol/kg), evaluated with NeqSim's NaCl parameters | rms 0.70 K, max 1.80 K in freezing temperature |
+
+Only the sum $\lambda_{M,Na}+\lambda_{M,Cl}$ is identifiable from single-salt water activities; by convention all of it
+is assigned to Na+. A fitted $\zeta$ lowered the rms to 0.48 K but drifted 1.5 K from e-CPA at 10 wt% NaCl
+(outside the data), so it was not adopted.
+
+**Hydrate cross-check against `SystemElectrolyteCPAstatoil`** (gas C1–C4 + CO2, no N2, 1 kg water basis,
+21 Nov 2026):
+
+| P (bara) | MEG wt% | NaCl wt% | e-CPA (°C) | Pitzer (°C) |
+|---|---|---|---|---|
+| 100 | 20 | 0 | 15.15 | 15.38 |
+| 100 | 20 | 5 | 12.14 | 11.82 |
+| 100 | 30 | 3 | 9.18 | 8.75 |
+| 200 | 10 | 10 | 15.32 | 15.23 |
+
+With gas + oil + 30 wt% MEG, Pitzer's MEG suppression agrees with CPA within 0.3 K at 50–250 bara. These are
+model-to-model comparisons, not validation against hydrate measurements.
+
+**Scope.** MEG molality up to `PitzerMegParameters.MAX_MEG_MOLALITY` = 17.6 mol/kg (about 52 wt%); the hydrate
+flash throws above it (the fitted polynomial is not monotonic beyond the data). Na+ and Cl- are the only ions with
+MEG rows; K+, Ca++ or Mg++ with MEG fail the neutral coverage audit with a diagnostic. MEG with methanol or another
+liquid co-solvent fails closed. Dissolved gases and hydrocarbons get explicit zero rows with MEG (and zero self, ion
+and mu rows where no other dataset defines them); `PhasePitzer.getMegAssumedZeroRows()` lists them. Activating the
+neutral MEG rows also switches the dissolved-gas Henry reference to IAPWS G7-04 for supported gases, so methane
+solubility in the brine becomes non-zero. The Henry-range lower limit below still applies, so with nitrogen present
+the hydrate search cannot go below 278.12 K: many MEG cases then need e-CPA.
+
 ## Scope and qualification
 
 - Numerical bounds are at most 323.15 K and 1000 bara. The actual lower temperature is the largest
@@ -164,8 +224,9 @@ search bounds, structure selection and parameter coverage are unchanged.
 - The example contains no carbonate speciation or alkalinity. For pH or reactive electrolyte work,
   use the existing `SystemPitzer.chemicalReactionInit()` workflow with a reaction-compatible complete
   parameter dataset; the narrow chloride helper rejects additional species.
-- Oil-based mud, polymers, glycols, surfactants, barite and other drilling-fluid additives are not
-  characterized by the salt-only example. Organic-inhibitor activities require their own parameters.
+- Oil-based mud, polymers, glycols other than MEG, surfactants, barite and other drilling-fluid additives are not
+  characterized. MEG has its own dataset (see above); methanol currently enters the brine with an ideal
+  activity coefficient and no Pitzer parameters, so treat Pitzer methanol results as screening only.
 - Ice and salt precipitation, including salt hydrates in concentrated cold brines, are not solved
   simultaneously. Hydrate phase amounts require a separate coupled solid-equilibrium implementation.
 

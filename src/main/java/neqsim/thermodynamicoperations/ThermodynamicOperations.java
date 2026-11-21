@@ -1824,9 +1824,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
     system.setTemperature(initialTemperatureGuess);
     operation = new HydrateFormationTemperatureFlash(system);
-    for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
-      ((ComponentHydrate) system.getPhase(4).getComponent(i)).getHydrateStructure();
-    }
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
@@ -1844,13 +1841,20 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       return;
     }
     // guessing temperature
+    // Mole numbers are defined before the first init; overall fractions z are not.
     double factor = 1.0;
-    if (system.getPhase(0).hasComponent("methanol")) {
-      factor -= 2 * system.getPhase(0).getComponent("methanol").getz()
-          / system.getPhase(0).getComponent("water").getz();
+    double waterMoles = 0.0;
+    if (system.getPhase(0).hasComponent("water")) {
+      waterMoles = system.getPhase(0).getComponent("water").getNumberOfmoles();
     }
-    if (system.getPhase(0).hasComponent("MEG")) {
-      factor -= 2 * system.getPhase(0).getComponent("MEG").getz() / system.getPhase(0).getComponent("water").getz();
+    if (waterMoles > 0.0 && system.getPhase(0).hasComponent("methanol")) {
+      factor -= 2 * system.getPhase(0).getComponent("methanol").getNumberOfmoles() / waterMoles;
+    }
+    if (waterMoles > 0.0 && system.getPhase(0).hasComponent("MEG")) {
+      factor -= 2 * system.getPhase(0).getComponent("MEG").getNumberOfmoles() / waterMoles;
+    }
+    if (!Double.isFinite(factor)) {
+      factor = 1.0;
     }
     // Ensure factor is positive but allow inhibitor effects
     if (factor < 0.1) {
@@ -1892,9 +1896,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   private void runHydrateFormationTemperatureFlash() {
     operation = new HydrateFormationTemperatureFlash(system);
-    for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
-      ((ComponentHydrate) system.getPhase(4).getComponent(i)).getHydrateStructure();
-    }
     try {
       if (!isRunAsThread()) {
         getOperation().run();

@@ -707,6 +707,7 @@ public class PhasePitzer extends PhaseGE {
       parametersLoaded = true; // prevent infinite retries
       logger.error("Failed to load Pitzer parameters from database", ex);
     }
+    PitzerMegParameters.apply(this);
   }
 
   /**
@@ -2011,6 +2012,61 @@ public class PhasePitzer extends PhaseGE {
       requireCompleteNeutralPitzerParameterCoverage();
       neutralParameterCoverageValidated = true;
     }
+  }
+
+  /**
+   * Tests whether a component takes part in the neutral-solute Pitzer topology of this phase.
+   *
+   * @param index component index
+   * @return {@code true} for a non-water molecular solute included in the neutral topology
+   */
+  boolean isNeutralSoluteInTopology(int index) {
+    return isNeutralSolute(index);
+  }
+
+  /**
+   * Tests whether a neutral interaction row has been defined, including an explicit zero.
+   *
+   * @param family neutral family constant
+   * @param indexes two or three component indexes
+   * @return {@code true} when the row is defined
+   */
+  boolean hasNeutralInteraction(int family, int... indexes) {
+    ensureNeutralInteractions();
+    if (indexes.length == 2) {
+      return neutralInteractions.containsKey(pairTemperatureKey(family, indexes[0], indexes[1]));
+    }
+    return neutralInteractions.containsKey(tripleTemperatureKey(family, indexes[0], indexes[1], indexes[2]));
+  }
+
+  /** Rows that the MEG dataset defined as explicit zeros for dilute gases and hydrocarbons. */
+  private List<String> megAssumedZeroRows = new ArrayList<String>();
+
+  /**
+   * Records the zero rows added by {@link PitzerMegParameters} for dilute gases and hydrocarbons.
+   *
+   * @param rows row descriptions
+   */
+  void setMegAssumedZeroRows(List<String> rows) {
+    megAssumedZeroRows = new ArrayList<String>(rows);
+  }
+
+  /**
+   * Lists the neutral rows that the MEG dataset set to zero by assumption rather than from data.
+   *
+   * <p>
+   * These are interactions between MEG and dilute molecular gases or hydrocarbons (and their self and ion rows when no
+   * other dataset defines them). A zero row reproduces the ideal-dilute behaviour used for these species before the MEG
+   * dataset activated the neutral coverage audit.
+   * </p>
+   *
+   * @return immutable list of row descriptions, empty when no MEG dataset is active
+   */
+  public List<String> getMegAssumedZeroRows() {
+    if (megAssumedZeroRows == null) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(megAssumedZeroRows);
   }
 
   /** Ensures sparse neutral-interaction state exists for older serialized objects. */
