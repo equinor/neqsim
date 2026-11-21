@@ -79,7 +79,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private static final double LIQUID_HTC_FALLBACK = 100.0;
 
   /** Vent the gas phase only when gas and liquid are both present (blowdown valve on top of the vessel). */
-  private boolean vapourOnlyDischarge = true;
+  private volatile boolean vapourOnlyDischarge = true;
 
   /** True once {@link #run(UUID)} has scaled the inventory to the vessel volume. */
   private volatile boolean inventoryInitialized = false;
@@ -2704,6 +2704,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private void updateOutletStream() {
     // The vented fluid is the gas phase for a vapour-only discharge, otherwise the bulk inventory. Its total
     // enthalpy is kept through the orifice (isenthalpic expansion to the back pressure).
+    thermoSystem.init(2);
     int ventPhase = ventedGasPhaseIndex();
     SystemInterface outSystem = ventPhase >= 0 ? thermoSystem.phaseToSystem(ventPhase) : thermoSystem.clone();
     double ventEnthalpy = ventPhase >= 0 ? thermoSystem.getPhase(ventPhase).getEnthalpy() : thermoSystem.getEnthalpy();
