@@ -147,7 +147,7 @@ passing receipt onto regenerated content.
    A low-resolution preview cannot establish print legibility. Record what was
    viewed and bind the visual review to those exact files.
    The renderer already fails a sheet on the automated `PID_STANDARD_*`
-   checks (ISO 5457 frame, ISO 7200 title block and `SHEET n OF N`, valve symbol
+   checks (ISO 5457 frame and symbols inside the drawing area, ISO 7200 title block and `SHEET n OF N`, valve symbol
    versus ISA tag function, unresolved or own-sheet signal references, internal
    stream names as line labels, text under 2.5 mm). Treat a clean automated
    result as a prerequisite, not as the visual review.

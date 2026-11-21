@@ -330,7 +330,8 @@ cannot report a clean drawing while breaking them.
 | Nozzles | Labelled N1, N2, ... per equipment, continuing onto the auxiliary sheets; `nozzleRegister` in the content report maps each label to its controlled nozzle identity | — |
 | Relief valves (ISO 10628-2) | Spring-loaded angle-pattern body: inlet from below, outlet to the side, tag beside the valve | — |
 | Manual valves | Show their normal position (`NC` for drains and vents, otherwise `NO/NC:HOLD`); fail action (`FA`) applies to actuated valves only | — |
-| Sheet grouping | One sheet per primary unit; relief, blowdown, vent, drain and utility connections of all units share pooled auxiliary sheets, four routes per sheet | — |
+| Sheet grouping | Separators, compressors, pumps, columns and other major units get one sheet each. Simple heaters and coolers (one inlet, one outlet, at most five instrument rows, no instrument-detail sheet, fed directly or through a two-inlet header) are drawn as horizontal bands on shared "Heat exchangers" sheets, up to three per A1 sheet in flowsheet order. Relief, blowdown, vent, drain and utility connections of all units share pooled auxiliary sheets, four routes per sheet | — |
+| Drawing area (ISO 5457) | Every symbol, including continuation flags, lies inside the drawing frame | `PID_STANDARD_DRAWING_AREA` |
 | Existing devices | When a separator liquid outlet already feeds a modelled throttling valve, the level loop uses that valve (its own tag) as the final element instead of proposing a second valve in series | — |
 
 Relief valves, blowdown valves, vents and drains need explicit auxiliary routes,

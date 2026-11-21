@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-11-21 — Professional P&ID: shared heat-exchanger sheets
+
+- Simple `Heater`/`Cooler` units (exact class, one inlet and one outlet, no instrument-detail sheet, not on a material
+  path, fed directly or through a two-inlet header mixer, at most five instrument rows) are drawn as horizontal bands on
+  shared "Heat exchangers" sheets, up to three per A1 sheet. Separators, compressors and other major units keep their
+  own sheet. The 17-unit evaluation train drops from 17 to 15 sheets.
+- `drawingIndex[].subjectTag` of a shared sheet is a comma-separated list of the exchanger tags.
+- New drawing check `PID_STANDARD_DRAWING_AREA`: every symbol must lie inside the ISO 5457 frame. Header-tee
+  continuation flags moved from x=50 to x=60 mm (and the tee to x=115 mm) to satisfy it.
+- Migration: code that looked up a heater or cooler sheet by an exact `subjectTag` match must use a contains check.
+  Sheet numbers after the exchanger sheets shift.
+
+---
+
 ## 2026-11-21 — Professional P&ID follow-up: existing valves, nozzles, angle PSVs, pooled sheets
 
 - `SeparatorControlPidRule`: when the liquid outlet feeds a modelled `ThrottlingValve`, the level loop uses that valve

@@ -130,6 +130,19 @@ public final class ProfessionalPidDiagramRenderer {
   /** Auxiliary route groups awaiting the pooled sheets: {owning unit, ordered group members}. */
   private final List<Object[]> pooledAuxiliary = new ArrayList<Object[]>();
   private static final int AUXILIARY_ROUTES_PER_SHEET = 4;
+  /** Heaters and coolers drawn as bands on shared heat-exchanger sheets. */
+  private final List<ProcessEquipmentInterface> compactExchangers = new ArrayList<ProcessEquipmentInterface>();
+  /** Heat-exchanger sheets in drawing order, each with its exchangers top to bottom. */
+  private final List<List<ProcessEquipmentInterface>> exchangerSheets =
+      new ArrayList<List<ProcessEquipmentInterface>>();
+  private static final double EXCHANGER_SHEET_TOP = 88.0;
+  /** ISO 5457 A1 frame: 20 mm filing margin on the left, 10 mm elsewhere. */
+  private static final double FRAME_LEFT = 20.0;
+  private static final double FRAME_TOP = 10.0;
+  private static final double FRAME_RIGHT = 831.0;
+  private static final double FRAME_BOTTOM = 584.0;
+  private static final double EXCHANGER_SHEET_BOTTOM = 478.0;
+  private static final double EXCHANGER_ROW = 25.0;
   /** Actual valve-port instrument details assigned to their existing primary sheet. */
   private final Map<String, List<PidElement>> instrumentDetails = new LinkedHashMap<String, List<PidElement>>();
   /** Planned reciprocal detail sheet for each actual instrument. */
@@ -253,10 +266,21 @@ public final class ProfessionalPidDiagramRenderer {
       }
     }
     planInstrumentDetails(primary);
+    for (ProcessEquipmentInterface unit : primary) {
+      if (compactExchanger(unit)) {
+        compactExchangers.add(unit);
+      }
+    }
     int nextSheet = 1;
     for (ProcessEquipmentInterface unit : primary) {
       Family family = ProfessionalPidSymbolLibrary.family(unit);
       if (family == Family.UNMAPPED || family == Family.PIPE_TEE) {
+        continue;
+      }
+      if (compactExchangers.contains(unit)) {
+        for (String group : auxiliaryGroupKeys(unit)) {
+          pooledAuxiliaryKeys.add(unit.getName() + ":" + group);
+        }
         continue;
       }
       mainSheetNumbers.put(unit.getName(), String.format(Locale.ROOT, "%03d", Integer.valueOf(nextSheet++)));
@@ -273,6 +297,19 @@ public final class ProfessionalPidDiagramRenderer {
         pooledAuxiliaryKeys.add(unit.getName() + ":" + group);
       }
       nextSheet = numberDetails(unit, nextSheet);
+    }
+    // Small heaters and coolers share compact "Heat exchangers" sheets, several bands per A1 sheet.
+    double used = Double.MAX_VALUE;
+    for (ProcessEquipmentInterface exchanger : compactExchangers) {
+      double band = exchangerBandHeight(exchanger);
+      if (used + band > EXCHANGER_SHEET_BOTTOM - EXCHANGER_SHEET_TOP) {
+        exchangerSheets.add(new ArrayList<ProcessEquipmentInterface>());
+        used = 0.0;
+        nextSheet++;
+      }
+      exchangerSheets.get(exchangerSheets.size() - 1).add(exchanger);
+      mainSheetNumbers.put(exchanger.getName(), String.format(Locale.ROOT, "%03d", Integer.valueOf(nextSheet - 1)));
+      used += band;
     }
     for (List<ProcessEquipmentInterface> path : materialPages) {
       String number = String.format(Locale.ROOT, "%03d", Integer.valueOf(nextSheet++));
@@ -311,9 +348,16 @@ public final class ProfessionalPidDiagramRenderer {
             "No supported equipment family", unit.getName()));
         continue;
       }
+      if (compactExchangers.contains(unit)) {
+        collectAuxiliary(unit);
+        continue;
+      }
       renderUnit(unit);
       collectAuxiliary(unit);
       renderInstrumentDetails(unit);
+    }
+    for (List<ProcessEquipmentInterface> sheet : exchangerSheets) {
+      renderExchangerSheet(sheet);
     }
     for (List<ProcessEquipmentInterface> path : materialPages) {
       renderReliefPath(path);
@@ -2255,13 +2299,13 @@ public final class ProfessionalPidDiagramRenderer {
    * @return tee node from which the inlet line continues
    */
   private Node headerTee(Scene scene, ProcessEquipmentInterface mixer, double y) {
-    Node junction = scene.node(mixer.getName(), Family.PIPE_TEE, 103, y, 6, 6, "");
-    scene.centered(103, y - 8, mixer.getName(), 3, null);
+    Node junction = scene.node(mixer.getName(), Family.PIPE_TEE, 115, y, 6, 6, "");
+    scene.centered(115, y - 8, mixer.getName(), 3, null);
     List<StreamInterface> inlets = mixer.getInletStreams();
     for (int index = 0; index < inlets.size(); index++) {
       StreamInterface inlet = inlets.get(index);
       double ty = index == 0 ? y : index == 1 ? y + 45 : y - 45;
-      Node continuation = scene.terminal("in:" + inlet.getName(), 50, ty, upstreamLabel(inlet), false);
+      Node continuation = scene.terminal("in:" + inlet.getName(), 60, ty, upstreamLabel(inlet), false);
       if (index == 0) {
         scene.route(continuation, "r", junction, "l", inlet.getName(), false, null);
       } else {
@@ -3139,6 +3183,23 @@ public final class ProfessionalPidDiagramRenderer {
     if (!(layout.get("sheet_furniture") instanceof Map)) {
       geometryError("PID_STANDARD_SHEET_FRAME", "ISO 5457 frame, grid and centring marks are missing", sheet);
     }
+    List<Map<String, Object>> nodes = (List<Map<String, Object>>) layout.get("nodes");
+    if (nodes != null) {
+      for (Map<String, Object> node : nodes) {
+        if (node.get("bbox") instanceof List) {
+          List<?> box = (List<?>) node.get("bbox");
+          double x = ((Number) box.get(0)).doubleValue();
+          double y = ((Number) box.get(1)).doubleValue();
+          double w = ((Number) box.get(2)).doubleValue();
+          double h = ((Number) box.get(3)).doubleValue();
+          if (x < FRAME_LEFT - 0.01 || y < FRAME_TOP - 0.01 || x + w > FRAME_RIGHT + 0.01
+              || y + h > FRAME_BOTTOM + 0.01) {
+            geometryError("PID_STANDARD_DRAWING_AREA",
+                "Symbol " + node.get("id") + " extends outside the ISO 5457 drawing frame", sheet);
+          }
+        }
+      }
+    }
     List<Map<String, Object>> labels = (List<Map<String, Object>>) layout.get("labels");
     java.util.Set<String> present = new java.util.HashSet<String>();
     for (Map<String, Object> label : labels) {
@@ -3269,6 +3330,273 @@ public final class ProfessionalPidDiagramRenderer {
     String label = "N" + (labels.size() + 1);
     labels.put(label, nozzleIdentity);
     return label;
+  }
+
+
+  /**
+   * Returns the auxiliary route group keys of one unit, in model order.
+   *
+   * @param unit source unit
+   * @return route group keys
+   */
+  private Set<String> auxiliaryGroupKeys(ProcessEquipmentInterface unit) {
+    Set<String> groups = new LinkedHashSet<String>();
+    for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+      Attachment a = projection.getAttachments().get(element.getTag());
+      if (a.getKind() == PidPhysicalProjection.Kind.AUXILIARY_ROUTE
+          || a.getKind() == PidPhysicalProjection.Kind.SENSING && "DESIGNED_NOZZLE".equals(a.getDirection())) {
+        String route = textValue(a.toMap().get("physicalRouteId"));
+        groups.add(route.isEmpty() ? element.getTag() : route);
+      }
+    }
+    return groups;
+  }
+
+  /**
+   * Returns true for a simple heater or cooler that is drawn as a band on a shared heat-exchanger sheet.
+   *
+   * <p>
+   * Eligible units have one inlet and one outlet, no instrument-detail sheets, no material-path role, and are fed either
+   * directly or through a two-inlet header tee. Two-circuit exchangers, fired heaters with more complex topology and
+   * units with too many instrument rows keep their own sheet.
+   * </p>
+   *
+   * @param unit candidate unit
+   * @return true when the unit is drawn on a shared heat-exchanger sheet
+   */
+  private boolean compactExchanger(ProcessEquipmentInterface unit) {
+    if (unit.getClass() != neqsim.process.equipment.heatexchanger.Heater.class
+        && unit.getClass() != neqsim.process.equipment.heatexchanger.Cooler.class) {
+      return false;
+    }
+    if (unit.getInletStreams().size() != 1 || unit.getOutletStreams().size() != 1
+        || materialPathTags.contains(unit.getName())) {
+      return false;
+    }
+    List<PidElement> details = instrumentDetails.get(unit.getName());
+    if (details != null && !details.isEmpty()) {
+      return false;
+    }
+    ProcessEquipmentInterface producer = producers.get(unit.getInletStreams().get(0));
+    if (supportedSuctionMixer(producer)
+        || supportedHeaderMixer(producer) && producer.getInletStreams().size() != 2) {
+      return false;
+    }
+    return exchangerRows(unit) <= 5;
+  }
+
+  /**
+   * Counts the instrument rows of an exchanger band: one per line sensor and per stand-alone function.
+   *
+   * @param unit exchanger
+   * @return instrument rows
+   */
+  private int exchangerRows(ProcessEquipmentInterface unit) {
+    int rows = 0;
+    for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+      Attachment a = projection.getAttachments().get(element.getTag());
+      if (a.getKind() == PidPhysicalProjection.Kind.SENSING && !"DESIGNED_NOZZLE".equals(a.getDirection())
+          || a.getKind() == PidPhysicalProjection.Kind.MANUAL_INPUT
+          || a.getKind() == PidPhysicalProjection.Kind.FUNCTION && incomingInstruments(element).isEmpty()
+              && !localCommandOutput(element)) {
+        rows++;
+      }
+    }
+    return rows;
+  }
+
+  /**
+   * Returns the height of an exchanger band on a shared sheet.
+   *
+   * @param unit exchanger
+   * @return band height in millimetres
+   */
+  private double exchangerBandHeight(ProcessEquipmentInterface unit) {
+    return 50.0 + Math.max(1, exchangerRows(unit)) * EXCHANGER_ROW + 12.0;
+  }
+
+  /**
+   * Draws one shared heat-exchanger sheet: each heater or cooler as a band with its process line, inline devices,
+   * nozzles, instruments, functions, signals and data callout.
+   *
+   * @param exchangers exchangers on this sheet, top to bottom
+   */
+  private void renderExchangerSheet(List<ProcessEquipmentInterface> exchangers) {
+    List<String> tags = new ArrayList<String>();
+    for (ProcessEquipmentInterface exchanger : exchangers) {
+      tags.add(exchanger.getName());
+    }
+    Scene scene = scene(join(tags), "Heat exchangers");
+    double top = EXCHANGER_SHEET_TOP;
+    for (ProcessEquipmentInterface exchanger : exchangers) {
+      renderExchangerBand(scene, exchanger, top);
+      top += exchangerBandHeight(exchanger);
+    }
+    scene.spec.put("subjectTag", join(tags));
+    scene.text(25, 490,
+        "P&ID design status: proposed devices remain REVIEW REQUIRED; FA:HOLD means failure action is not assigned.", 3,
+        null);
+    scene.text(25, 499,
+        "Heaters and coolers are grouped on this sheet; their relief, vent and drain connections are on the pooled auxiliary sheets.",
+        3, null);
+    scene.finish();
+  }
+
+  /**
+   * Draws one heater or cooler band.
+   *
+   * @param scene shared sheet
+   * @param unit heater or cooler
+   * @param top band top in millimetres
+   */
+  private void renderExchangerBand(Scene scene, ProcessEquipmentInterface unit, double top) {
+    scene.spec.put("subjectTag", unit.getName());
+    Set<String> before = new LinkedHashSet<String>(scene.proposalNodes.keySet());
+    double y = top + 22.0;
+    Node body = scene.node(unit.getName(), Family.HEAT_EXCHANGER, 300, y, 30, 30, unit.getName());
+    exchangerCallout(scene, unit, top);
+    Map<String, Node> valveNodes = new LinkedHashMap<String, Node>();
+    // Inlet: header tee or upstream continuation, then inline devices.
+    StreamInterface inletStream = unit.getInletStreams().get(0);
+    ProcessEquipmentInterface producer = producers.get(inletStream);
+    List<PidElement> inletInline = inline(unit.getName(), inletStream.getName(), "INLET");
+    StreamInterface sourceStream = inletStream;
+    if (!inletInline.isEmpty()) {
+      Attachment first = projection.getAttachments().get(inletInline.get(0).getTag());
+      ProcessEquipmentInterface actual = equipment.get(first.getEquipmentTag());
+      if (first.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT && actual != null
+          && !actual.getInletStreams().isEmpty()) {
+        sourceStream = actual.getInletStreams().get(0);
+      }
+    }
+    Node last = supportedHeaderMixer(producer) ? headerTee(scene, producer, y)
+        : scene.terminal("in:" + inletStream.getName(), 60, y, upstreamLabel(sourceStream), false);
+    int index = 0;
+    for (PidElement proposal : inletInline) {
+      Node node = proposalValve(scene, proposal, 140 + index++ * 50, y);
+      valveNodes.put(proposal.getTag(), node);
+      scene.route(last, "r", node, "l", sourceStream.getName(), false, null);
+      last = node;
+    }
+    scene.route(last, "r", body, "l", inletStream.getName(), false, null);
+    scene.lineLabel(inletStream.getName(), 160, y - 6, unit.getName());
+    // Outlet: inline devices, then downstream continuation.
+    StreamInterface outletStream = unit.getOutletStreams().get(0);
+    last = body;
+    index = 0;
+    String physical = outletStream.getName();
+    for (PidElement proposal : inline(unit.getName(), outletStream.getName(), "OUTLET")) {
+      Node node = proposalValve(scene, proposal, 470 + index++ * 70, y);
+      valveNodes.put(proposal.getTag(), node);
+      scene.route(last, "r", node, "l", physical, false, null);
+      last = node;
+    }
+    for (ProcessEquipmentInterface valve : downstreamValves(unit)) {
+      if (valve.getInletStreams().contains(outletStream) && !valveNodes.containsKey(valve.getName())) {
+        double vx = 470 + index++ * 70;
+        Node node;
+        if (proposals.containsKey(valve.getName())) {
+          node = proposalValve(scene, proposals.get(valve.getName()), vx, y);
+        } else {
+          node = scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve), vx, y, 16, 10, valve.getName());
+        }
+        valveNodes.put(valve.getName(), node);
+        scene.route(last, "r", node, "l", physical, false, null);
+        last = node;
+        if (!valve.getOutletStreams().isEmpty()) {
+          physical = valve.getOutletStreams().get(0).getName();
+        }
+      }
+    }
+    Node target = scene.terminal("out:" + outletStream.getName(), 790, y, downstreamLabel(outletStream), false);
+    scene.route(last, "r", target, "l", physical, false, null);
+    scene.lineLabel(physical, 650, y + 12, unit.getName());
+    // Instruments: outlet sensors first (taps right of the exchanger), then inlet sensors and stand-alone functions.
+    List<PidElement> outletSensors = new ArrayList<PidElement>();
+    List<PidElement> inletSensors = new ArrayList<PidElement>();
+    for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+      Attachment a = projection.getAttachments().get(element.getTag());
+      if (a.getKind() == PidPhysicalProjection.Kind.SENSING && !"DESIGNED_NOZZLE".equals(a.getDirection())) {
+        if ("INLET".equals(a.getDirection())) {
+          inletSensors.add(element);
+        } else {
+          outletSensors.add(element);
+        }
+      }
+    }
+    Set<String> placed = new LinkedHashSet<String>();
+    int row = 0;
+    for (int i = 0; i < outletSensors.size(); i++) {
+      PidElement sensor = outletSensors.get(i);
+      double ry = top + 50 + row++ * EXCHANGER_ROW;
+      Node measurement = scene.instrument(sensor, 430, ry);
+      Point tap = new Point(366 - i * 8, y);
+      scene.sensing(null, tap, measurement, "l", points(tap, new Point(tap.x, ry), measurement.left()),
+          sensor.getTag());
+      placed.add(sensor.getTag());
+      placeChildFunction(scene, sensor, measurement, 550, ry, placed);
+    }
+    for (int i = 0; i < inletSensors.size(); i++) {
+      PidElement sensor = inletSensors.get(i);
+      double ry = top + 50 + row++ * EXCHANGER_ROW;
+      Node measurement = scene.instrument(sensor, 430, ry);
+      Point tap = new Point(262 - i * 8, y);
+      scene.sensing(null, tap, measurement, "l", points(tap, new Point(tap.x, ry), measurement.left()),
+          sensor.getTag());
+      placed.add(sensor.getTag());
+      placeChildFunction(scene, sensor, measurement, 550, ry, placed);
+    }
+    for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+      Attachment a = projection.getAttachments().get(element.getTag());
+      if (a.getKind() == PidPhysicalProjection.Kind.MANUAL_INPUT && !placed.contains(element.getTag())) {
+        double ry = top + 50 + row++ * EXCHANGER_ROW;
+        Node input = scene.instrument(element, 430, ry);
+        placed.add(element.getTag());
+        placeChildFunction(scene, element, input, 550, ry, placed);
+      }
+    }
+    for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+      Attachment a = projection.getAttachments().get(element.getTag());
+      if (a.getKind() == PidPhysicalProjection.Kind.FUNCTION && !placed.contains(element.getTag())
+          && !localCommandOutput(element)) {
+        double ry = top + 50 + row++ * EXCHANGER_ROW;
+        Node function = scene.instrument(element, 550, ry);
+        placed.add(element.getTag());
+        placeLocalCommand(scene, element, function, placed);
+      }
+    }
+    for (Map.Entry<String, Node> entry : new LinkedHashMap<String, Node>(scene.proposalNodes).entrySet()) {
+      if (!before.contains(entry.getKey())) {
+        signalEnds(scene, entry.getKey(), entry.getValue());
+      }
+    }
+    drawNozzles(scene, unit, body, valveNodes);
+    representedEquipment.add(unit.getName());
+  }
+
+  /**
+   * Adds the equipment data callout of an exchanger band above its process line.
+   *
+   * @param scene shared sheet
+   * @param unit heater or cooler
+   * @param top band top in millimetres
+   */
+  private void exchangerCallout(Scene scene, ProcessEquipmentInterface unit, double top) {
+    String service = unit.getClass().getSimpleName().toUpperCase(Locale.ROOT);
+    String operating = "OPERATING: HOLD";
+    try {
+      StreamInterface outlet = unit.getOutletStreams().get(0);
+      operating = String.format(Locale.ROOT, "OPERATING: %.1f bara / %.1f C / DUTY %.0f kW",
+          outlet.getPressure("bara"), outlet.getTemperature("C"),
+          ((neqsim.process.equipment.heatexchanger.Heater) unit).getDuty() / 1000.0);
+    } catch (RuntimeException e) {
+      operating = "OPERATING: HOLD";
+    }
+    scene.centered(680, top + 1, unit.getName() + "  " + service, 3.5, null);
+    scene.centered(680, top + 6, operating, 3, null);
+    String size = sizing.equipmentLabel(unit.getName());
+    scene.centered(680, top + 11, "DESIGN: HOLD barg / HOLD C" + (size == null || size.trim().isEmpty() ? "" : " | " + size),
+        3, null);
   }
 
   /**

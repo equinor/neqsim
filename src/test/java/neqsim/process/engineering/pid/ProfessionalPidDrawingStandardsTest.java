@@ -224,6 +224,15 @@ public class ProfessionalPidDrawingStandardsTest {
       pooled += "STD-PID".equals(entry.getAsJsonObject().get("subjectTag").getAsString()) ? 1 : 0;
     }
     assertTrue(pooled >= 1, "relief, blowdown, vent and drain routes share pooled auxiliary sheets");
+    String exchangerSheet = null;
+    for (JsonElement entry : content.getAsJsonArray("drawingIndex")) {
+      String subject = entry.getAsJsonObject().get("subjectTag").getAsString();
+      if (subject.contains("20-HA-001")) {
+        exchangerSheet = subject;
+      }
+    }
+    assertTrue(exchangerSheet != null && exchangerSheet.contains("23-HA-001"),
+        "simple heaters and coolers share a heat-exchanger sheet: " + exchangerSheet);
     for (String lineNumber : content.getAsJsonObject("lineNumberRegister").keySet()) {
       assertTrue(lineNumber.matches("^[0-9A-Z]{1,4}-[A-Z]{1,5}-[0-9A-Z]{2,}.*$"), lineNumber);
     }

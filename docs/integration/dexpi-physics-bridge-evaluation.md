@@ -101,12 +101,18 @@ output before and after the change:
 | Drawing coverage errors (mixers and the `Recycle` helper) | 6 | 0 |
 | PSVs, BDVs, vents and drains drawn (with opt-in standard connections) | 0 (HOLD register) | drawn on pooled auxiliary sheets |
 | Level control valve in series with the modelled letdown valve | 1 per separator | 0 (modelled valve is the final element) |
-| Sheets for the 17-unit train | 14 (relief devices not drawn) | 17 (relief devices drawn; auxiliary sheets pooled) |
+| Sheets for the 17-unit train | 14 (relief devices not drawn) | 15 (relief devices drawn; auxiliary sheets pooled; heaters and coolers share a sheet) |
 
 The full convention table and the check codes are in
 [Drawing conventions applied to every sheet](../pid-design-synthesis.md#drawing-conventions-applied-to-every-sheet).
 These are automated checks of implemented conventions, not an ISO certification: the symbol
 catalogue is NeqSim-authored, and controlled standards and discipline review remain required.
+
+Simple heaters and coolers now share "Heat exchangers" sheets (up to three bands per A1
+sheet), while separators and compressors keep their own sheet. On the 17-unit train this cuts the
+set from 17 to 15 sheets. A new `PID_STANDARD_DRAWING_AREA` check keeps every symbol inside the
+ISO 5457 frame; it caught header-tee continuation flags that started in the filing margin, which
+are now moved inside.
 
 Also resolved: PSVs use the ISO 10628-2 angle-pattern body, nozzles are labelled N1, N2 with a
 nozzle register, manual valves show their normal position instead of a fail action, and plain
@@ -114,8 +120,6 @@ mixers no longer receive nozzle proposals.
 
 Remaining drawing gaps:
 
-- One primary unit per A1 sheet. This matches common practice for major equipment, but small
-  heaters and coolers could share a sheet with their neighbours.
 - Utility-side control valves and meters (cooler TCVs) stay HOLD until the utility system is supplied.
 
 ## Roadmap to the goal
@@ -128,7 +132,7 @@ Ordered by how much each item blocks the goal.
 | P1 | Emit the mandatory `Method` in the 2.0.0 Process path, or bundle the 2.0.0 model files and run the model-level multiplicity validator; steer users to 2.0.1 | The current 2.0.0 Process export is reported CONFORMANT but fails in pyDEXPI |
 | P1 | Native DEXPI 2.0.1 Plant and Process import into `ProcessSystem`, reusing the flowsheet graph and diagnostics | Modern CAE tools exchange 2.0.1; pyDEXPI already reads NeqSim's 2.0.1 output, but NeqSim does not |
 | P1 | Export the fluid definition (composition, EoS reference) with Process streams | Lets a DEXPI file alone carry enough to re-run the physics |
-| P3 | Professional P&ID: combine small heat exchangers with neighbouring units on one sheet; utility-system input for cooler control valves | ISO frame, title block, ISA symbols, direct signals, line numbers, relief connections, nozzle labels and pooled auxiliary sheets are done |
+| P3 | Professional P&ID: utility-system input for cooler control valves | ISO frame, title block, ISA symbols, direct signals, line numbers, relief connections, nozzle labels, pooled auxiliary sheets and shared heat-exchanger sheets are done |
 | P2 | Make delivery manifests fail-closed on visual quality: no `completeWithinDeclaredScope: true` for an unrouted box diagram | Prevents overstated claims in engineering packages |
 | P2 | Bind DEXPI control loops to NeqSim controllers on the named final element (for example `PICSA 4712.02` to `PV4712.02`) | Turns the P&ID into a dynamic model rather than category-renamed auto-instrumentation |
 | P2 | Consistent heater mapping across profiles (heat exchanger unless fired) | `FiredHeater` and `HeatingInFurnace` misdescribe topsides heaters |
