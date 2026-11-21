@@ -32,7 +32,8 @@ public final class Dexpi201ProcessModelWriter {
       throw new IllegalArgumentException("process, file and metadata must not be null");
     }
     for (neqsim.process.equipment.ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      if (unit != null && Dexpi20XmlWriter.isNumericalHelper(unit)) {
+      if (unit instanceof neqsim.process.equipment.util.Calculator
+          || unit instanceof neqsim.process.equipment.util.Adjuster) {
         throw new IllegalArgumentException(
             "DEXPI 2.0.1 Process profile has no reviewed physical alias projection for numerical helper "
                 + unit.getClass().getName() + " (" + unit.getName() + ")");

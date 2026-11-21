@@ -9,6 +9,122 @@
 
 ---
 
+## 2026-11-21 — DEXPI conformance validation (`neqsim dexpi-check`, `@dexpi-validation`)
+
+- New `devtools/dexpi_conformance_check.py` (`neqsim dexpi-check FILE --expect-version 2.0.1`): identifies version/profile
+  from the Core import, runs `Dexpi20ConformanceAssessment` through the JVM and an independent pyDEXPI 2.1 load plus rule
+  check (`pydexpi` located on PATH/`PYDEXPI`, never installed at run time). Verdicts `PASS`, `PASS_NEQSIM_ONLY`,
+  `UNVERIFIED`, `FAIL`; pyDEXPI found 4 `segment_connectivity` violations in a NeqSim 2.0.1 Plant export that the NeqSim layer
+  reports as `CONFORMANT`.
+- Fixed: `Dexpi20XmlWriter` (2.0.1 only) now gives in-line valve segments `SourceItem`/`SourceNode`/`TargetItem`/`TargetNode`;
+  the 17-unit train export now has zero pyDEXPI issues. `Dexpi201XmlWriterTest.insertsControlValveOnPhysicalPipingPath` pins it.
+- Fixed: `Dexpi20ProcessModelWriter` now writes the mandatory `Method` (compression, heat exchange) and quantity `DisplayText`
+  in the 2.0.0 path too (pyDEXPI could not instantiate those steps), and `Dexpi201ProcessModelWriter` closes a single-stream
+  `Recycle` by stream identity instead of rejecting it (`Calculator`/`Adjuster` still rejected). Both Process exports of the
+  17-unit recycle train now have zero pyDEXPI issues; `Dexpi201XmlWriterTest.projectsBranchedRecycleWithDistinctOwnedPorts` pins it.
+- New skill `neqsim-dexpi-conformance-validation` and agent `dexpi-validation`; router row added.
+
+---
+
+## 2026-11-21 — Safety studies on generated P&IDs (`PidSafetyStudies`)
+
+- New `neqsim.process.engineering.pid.PidSafetyStudies.run(pid, process, Policy)`: sizes every proposed PSV
+  (blocked outlet, API 521 fire, gas blow-by through upstream liquid valves; API 520 orifice), sizes BDV orifices by
+  dynamic depressurization to the API 521 target, sums the flare load, proposes trip set points, sets NOG 070 SIL
+  targets and screens PFDavg (IEC 61511). Results replace placeholders only, keep `REVIEW_REQUIRED`, and carry
+  `safetyStudyReference` = `NEQSIM-SAFETY-SCREENING-STUDY...`.
+- Call after `PidStandardConnectionProposals.complete(...)` and before `PidSimulationBindings.from(...)`.
+- `ProfessionalPidPackageExporter` writes `pid-safety-studies.json` and readiness `safetyStudies` when results exist.
+- Drawings show PSV `SET x barg / orifice`, BDV `RO n mm`, trip set point and SIL target, and the proposed design
+  pressure in separator callouts. DEXPI 2.0.1 carries `SetPressureHigh` on proposed PSVs and the study text in
+  safety-function `DeviceInformation`.
+- `PidHazopStudyRunner`: deviations list `quantifiedSafeguardEvidence`; relief and blowdown valves are credited for
+  PRESSURE, `-T-`/`-P-` trip purposes match TEMPERATURE/PRESSURE; plain `Mixer` junctions are passive nodes (no
+  `HAZOP-PID-NODE-INCOMPLETE` error).
+- `SeparatorSafeguardingPidRule`: blowdown valves are now `FAIL_OPEN_PROPOSAL` (was `FAIL_CLOSED_PROPOSAL`).
+- Docs: `docs/process/safety/pid-safety-studies.md`. Skills: `neqsim-pid-process-operations`, `neqsim-process-safety`
+  (Method 1c). Agent: `engineering-deliverables`.
+
+---
+
+## 2026-11-21 — Professional P&ID: shared heat-exchanger sheets
+
+- Simple `Heater`/`Cooler` units (exact class, one inlet and one outlet, no instrument-detail sheet, not on a material
+  path, fed directly or through a two-inlet header mixer, at most five instrument rows) are drawn as horizontal bands on
+  shared "Heat exchangers" sheets, up to three per A1 sheet. Separators, compressors and other major units keep their
+  own sheet. The 17-unit evaluation train drops from 17 to 15 sheets.
+- `drawingIndex[].subjectTag` of a shared sheet is a comma-separated list of the exchanger tags.
+- New drawing check `PID_STANDARD_DRAWING_AREA`: every symbol must lie inside the ISO 5457 frame. Header-tee
+  continuation flags moved from x=50 to x=60 mm (and the tee to x=115 mm) to satisfy it.
+- Migration: code that looked up a heater or cooler sheet by an exact `subjectTag` match must use a contains check.
+  Sheet numbers after the exchanger sheets shift.
+
+---
+
+## 2026-11-21 — Professional P&ID follow-up: existing valves, nozzles, angle PSVs, pooled sheets
+
+- `SeparatorControlPidRule`: when the liquid outlet feeds a modelled `ThrottlingValve`, the level loop uses that valve
+  (its own tag, attribute `existingModelledDevice`) instead of proposing a new LCV in series.
+- `ProcessTopologyPidRule` no longer proposes nozzles for plain `Mixer` junctions.
+- Drawings: nozzles are labelled N1, N2, ... per equipment (`nozzleRegister` in the content report); PSVs use the
+  angle-pattern relief body; manual valves show NC / NO/NC:HOLD instead of FA:HOLD.
+- Auxiliary connections of all units share pooled sheets ("Relief, blowdown, vent, drain and utility connections"),
+  numbered after the unit and detail sheets. Sheet numbers of auxiliary content therefore change.
+- Migration: code expecting a proposed `xx-LCV-nnn` on a separator whose liquid outlet already has a modelled valve
+  must use the existing valve tag.
+
+---
+
+## 2026-11-21 — Professional P&ID drawing standards (ISO 5457 / ISO 7200 / ISA-5.1)
+
+- `ProfessionalPidDiagramRenderer` now draws an ISO 5457 frame, with a zone grid and centring marks,
+  and an ISO 7200 title block: owner, document type, document number, revision, `SHEET n OF N`,
+  language, status, creator and approver. It also draws a revision table and drawing notes.
+- Symbols (`ProfessionalPidSymbolLibrary`):
+  - Control valves and automated on/off valves always show the ISA-5.1 generic actuator.
+  - New family `SHUTDOWN_VALVE` (ESDV/SDV/XV/BDV) adds a ball element. Actual `ESDValve`/`PSDValve`/`HIPPSValve`/
+    `BlowdownValve` units map to it instead of `ISOLATION_VALVE`.
+  - The tag's ISA letters govern the symbol: a `PCV` modelled as `ESDValve` is drawn as a control valve.
+  - `CONTROL_FUNCTION` is now the DCS symbol (circle in square with line). `SAFETY_FUNCTION` is the
+    programmable-logic symbol (diamond in square with line).
+- Signals:
+  - Same-sheet signals are drawn directly, clear of symbols and text, with a gap at each line crossing.
+  - Signals to one final element join at a junction dot.
+  - Continuation flags give the sheet where the peer is actually drawn, or `/HOLD`.
+- Line labels use `<area>-<fluid>-<seq>` line numbers for internally named streams. The content
+  report adds `lineNumberRegister` and `symbolConventions`.
+- Equipment data callouts are drawn above each primary unit.
+- Header mixers are drawn as tees. `Recycle`, `Calculator` and `Adjuster` are no longer drawn or
+  counted as unrepresented.
+- New automated checks `PID_STANDARD_*` feed `drawingHasNoErrors`.
+- New opt-in `PidStandardConnectionProposals.complete(model, process)`: draws PSV, BDV, vent and drain
+  proposals on auxiliary sheets with flare or closed-drain destinations, all review-required.
+- Migration: tests asserting `ISOLATION_VALVE` for actual ESD-type valves must expect `SHUTDOWN_VALVE`.
+  Readers of drawing text should use the line-number register rather than raw stream names.
+- Updated: `neqsim-pid-process-operations`, `neqsim-pid-quality-review`, `engineering-deliverables.agent.md`,
+  skill index, `docs/pid-design-synthesis.md`, `docs/integration/dexpi-physics-bridge-evaluation.md`.
+
+---
+
+## 2026-11-21 — DEXPI P&ID to runnable simulation round trip
+
+- `DexpiSimulationBuilder.build()` now rebuilds the material flowsheet from the P&ID. In-line throttling valves
+  with an operating outlet pressure become `ThrottlingValve` units. Separator gas, liquid and water outlets are
+  wired separately, all mixer inlets are connected, splitter branches are created, loops are closed with
+  `Recycle`, and exported outlet pressures and temperatures are applied as specifications.
+- New `DexpiSimulationBuilder.getDiagnostics()` returns `BuildDiagnostic` entries (severity, code, element id,
+  message). Check `DEXPI_BUILD_SPECIFICATION_MISSING` before `run()`.
+- `DexpiXmlWriter` writes a `NeqSimPortAttributes` set (`PortRole`, `PortIndex`) on every nozzle, and one outlet
+  nozzle per splitter branch; previously only the first branch was exported.
+- Behaviour change: native DEXPI 2.x files passed to `DexpiSimulationBuilder` now raise `DexpiXmlReaderException`
+  instead of silently returning a feed-only process.
+- Migration: none for valid Proteus files; models that relied on the old single-feed wiring now get the real
+  topology. Supply the fluid template explicitly, because DEXPI has no composition.
+- Evaluation and roadmap: `docs/integration/dexpi-physics-bridge-evaluation.md`.
+- Updated: `neqsim-pid-process-operations`, `neqsim-process-modeling`, `process-model.agent.md`, skill index.
+
+---
+
 ## 2026-11-20 — TwoFluidPipe substep pressure envelope for protection checks
 
 - New on `TwoFluidPipe`: `getLastIntervalPeakPressureProfile(unit)`, `getLastIntervalPeakPressureTimeProfile()`,

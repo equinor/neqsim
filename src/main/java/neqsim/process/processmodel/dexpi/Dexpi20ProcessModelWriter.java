@@ -154,7 +154,8 @@ public final class Dexpi20ProcessModelWriter {
     if (processSystem == null || outputStream == null || metadata == null) {
       throw new IllegalArgumentException("processSystem, outputStream and metadata must not be null");
     }
-    write(processSystem, outputStream, topology(processSystem), new DirectOperatingValues(), metadata);
+    write(processSystem, outputStream, topology(processSystem, Dexpi20XmlWriter.numericalAliases(processSystem)),
+        new DirectOperatingValues(), metadata);
   }
 
   /**
@@ -194,9 +195,7 @@ public final class Dexpi20ProcessModelWriter {
       int stepNumber = 1;
       for (ProcessEquipmentInterface unit : topology.units) {
         Step step = appendStep(document, processSteps, "ProcessStep" + stepNumber++, unit.getName(), type(unit));
-        if (metadata != null) {
-          appendRequired201Method(document, step, unit);
-        }
+        appendRequiredMethod(document, step, unit);
         steps.put(unit, step);
       }
       for (Link link : topology.links) {
@@ -237,13 +236,13 @@ public final class Dexpi20ProcessModelWriter {
   }
 
   /**
-   * Supplies mandatory 2.0.1 method values without inventing a physical machine or exchanger subtype.
+   * Supplies the mandatory method value without inventing a physical machine or exchanger subtype.
    *
    * @param document native instance document
    * @param step exported process step
    * @param unit actual source equipment
    */
-  private static void appendRequired201Method(Document document, Step step, ProcessEquipmentInterface unit) {
+  private static void appendRequiredMethod(Document document, Step step, ProcessEquipmentInterface unit) {
     if (unit instanceof Compressor && !(unit instanceof Expander)) {
       dataReference(document, step.processStep, "Method", "Process/Enumerations.CompressionMethod.Unspecified");
     } else if (unit instanceof Cooler || unit instanceof HeatExchanger) {
@@ -276,10 +275,31 @@ public final class Dexpi20ProcessModelWriter {
   }
 
   private static ModelTopology topology(ProcessSystem processSystem) {
+    try {
+      return topology(processSystem, (Map<StreamInterface, StreamInterface>) null);
+    } catch (IOException ex) {
+      throw new IllegalStateException(ex);
+    }
+  }
+
+  /**
+   * Builds the material topology, optionally closing recycles by stream identity instead of equipment.
+   *
+   * @param processSystem source process
+   * @param aliases directed stream aliases, or null to keep the legacy one-step-per-unit topology
+   * @return steps and material connections
+   * @throws IOException when an alias chain is ambiguous or cyclic
+   */
+  private static ModelTopology topology(ProcessSystem processSystem, Map<StreamInterface, StreamInterface> aliases)
+      throws IOException {
     List<ProcessEquipmentInterface> units = new ArrayList<ProcessEquipmentInterface>();
     Map<StreamInterface, ProcessEquipmentInterface> sourceByStream = new IdentityHashMap<StreamInterface, ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit == null) {
+        continue;
+      }
+      if (aliases != null
+          && (unit instanceof Recycle || unit instanceof StreamInterface && aliases.containsKey(unit))) {
         continue;
       }
       type(unit);
@@ -299,10 +319,11 @@ public final class Dexpi20ProcessModelWriter {
     int number = 1;
     for (ProcessEquipmentInterface target : units) {
       for (StreamInterface inlet : target.getInletStreams()) {
-        ProcessEquipmentInterface source = sourceByStream.get(inlet);
+        StreamInterface physical = aliases == null ? inlet : Dexpi20XmlWriter.resolveAlias(inlet, aliases);
+        ProcessEquipmentInterface source = sourceByStream.get(physical);
         if (source != null) {
-          links.add(new Link(number++, source, target, inlet));
-          consumed.put(inlet, Boolean.TRUE);
+          links.add(new Link(number++, source, target, physical));
+          consumed.put(physical, Boolean.TRUE);
         }
       }
     }
@@ -525,10 +546,8 @@ public final class Dexpi20ProcessModelWriter {
     }
     Element values = components(document, stream, property);
     Element qualified = object(document, null, "Core/QualifiedValue");
-    if (Dexpi201XmlWriter.isSpecification201(document)) {
-      data(document, qualified, "DisplayText",
-          Double.toString(value.doubleValue()) + " " + unitReference.substring(unitReference.lastIndexOf('.') + 1));
-    }
+    data(document, qualified, "DisplayText",
+        Double.toString(value.doubleValue()) + " " + unitReference.substring(unitReference.lastIndexOf('.') + 1));
     Element data = document.createElement("Data");
     data.setAttribute("property", "Value");
     Element quantity = document.createElement("AggregatedDataValue");

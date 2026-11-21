@@ -191,6 +191,7 @@ basis and trace each acceptance criterion to the applicable controlled source.
 - [Closed-loop SIF verification](closed-loop-sif-verification)
 - [SIF reliability and degraded modes](sif-reliability-and-degraded-modes)
 - [HAZOP/LOPA to draft SRS handoff](hazop-lopa-srs-handoff)
+- [Safety studies on a generated P&ID](pid-safety-studies)
 - [Integrated facility safety response](integrated-facility-safety-response)
 - [Safety change revalidation and benchmarks](safety-change-revalidation-and-benchmarks)
 - [Release and dispersion scenarios](release-dispersion-scenarios)
