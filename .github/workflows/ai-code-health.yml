@@ -70,7 +70,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
         run: |
-          if [ "$EVENT_NAME" = pull_request ] && git diff --quiet "$BASE_SHA" HEAD -- src/main/java pom.xml devtools/code_health.py devtools/prepare_code_health_input.py .config/code-health-baseline.json .github/workflows/ai-code-health.yml; then
+          if [ "$EVENT_NAME" = pull_request ] && git diff --quiet "$BASE_SHA" HEAD -- src/main/java pom.xml devtools/code_health.py devtools/prepare_code_health_input.py devtools/spotbugs-neqsim-rules .config/code-health-baseline.json .config/neqsim-rules-baseline.json .github/workflows/ai-code-health.yml; then
             echo "run=false" >> "$GITHUB_OUTPUT"
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
@@ -99,12 +99,21 @@ jobs:
             echo "::notice::Initial baseline bootstrap; review its findings before merge."
             cp .config/code-health-baseline.json "$RUNNER_TEMP/code-health-baseline.json"
           fi
+          if git cat-file -e "$BASE_SHA:.config/neqsim-rules-baseline.json" 2>/dev/null; then
+            git show "$BASE_SHA:.config/neqsim-rules-baseline.json" > "$RUNNER_TEMP/neqsim-rules-baseline.json"
+          else
+            echo "::notice::Initial NeqSim rules baseline bootstrap; review its findings before merge."
+            cp .config/neqsim-rules-baseline.json "$RUNNER_TEMP/neqsim-rules-baseline.json"
+          fi
       - name: Compile clean classes and generate PMD report
         if: steps.impact.outputs.run == 'true'
         run: ./mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd
       - name: Prepare canonical static-analysis input
         if: steps.impact.outputs.run == 'true'
         run: uv run --project devtools --locked devtools/prepare_code_health_input.py
+      - name: Install NeqSim SpotBugs rules
+        if: steps.impact.outputs.run == 'true'
+        run: ./mvnw -B -ntp -f devtools/spotbugs-neqsim-rules/pom.xml install
       - name: Generate complete SpotBugs report
         if: steps.impact.outputs.run == 'true'
         run: ./mvnw -B -ntp -Pcode-health spotbugs:spotbugs
@@ -114,6 +123,7 @@ jobs:
           uv run --project devtools --locked devtools/code_health.py
           --tools pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml
           --baseline "$RUNNER_TEMP/code-health-baseline.json"
+          --rules-baseline "$RUNNER_TEMP/neqsim-rules-baseline.json"
           --output target/code-health-static.json
       - name: Retain analyzer and health evidence
         if: always() && steps.impact.outputs.run == 'true'

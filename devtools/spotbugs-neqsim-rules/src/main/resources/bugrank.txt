@@ -1,0 +1,4 @@
+# Scariest rank for NeqSim rules so that SpotBugs' default rank threshold reports them.
+-5 BugPattern NEQSIM_CALORIC_WITHOUT_INIT
+-5 BugPattern NEQSIM_PHYSICAL_WITHOUT_INIT
+-5 BugPattern NEQSIM_REDUNDANT_INIT

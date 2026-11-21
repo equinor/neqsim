@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="messagecollection.xsd">
+	<Plugin>
+		<ShortDescription>NeqSim rules</ShortDescription>
+		<Details>Detectors for NeqSim thermodynamic-state rules.</Details>
+	</Plugin>
+	<Detector class="com.equinor.neqsim.spotbugs.CaloricPropertyWithoutInitDetector">
+		<Details>Finds methods that read caloric properties of a phase or fluid without first initialising it.</Details>
+	</Detector>
+	<BugPattern type="NEQSIM_CALORIC_WITHOUT_INIT">
+		<ShortDescription>Caloric property read without init(2) or higher in the same method</ShortDescription>
+		<LongDescription>{1} reads a caloric property ({2}) of a phase or fluid without first calling init(2) or higher, initProperties(), initThermoProperties(), initPhysicalProperties(), a ThermodynamicOperations flash or run() earlier in the method</LongDescription>
+		<Details>
+			<![CDATA[
+<p>A TP flash leaves the phases at init level 1, where only fugacities are valid. Enthalpy, entropy, Cp, Cv and the other caloric properties are built from temperature and pressure derivatives that belong to the last init(2) or init(3) call, so reading them after a TP flash can silently return values for an older state.</p>
+<p>Call <code>init(2)</code> (or higher), <code>initProperties()</code>, <code>initThermoProperties()</code> or <code>initPhysicalProperties()</code> on the fluid before reading the property, or run the owning unit first. If the fluid is guaranteed to be initialised by the caller, record the finding in the reviewed rules baseline instead of suppressing it.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_REDUNDANT_INIT">
+		<ShortDescription>Repeated init call on the same fluid with nothing changed in between</ShortDescription>
+		<LongDescription>{1} calls {2} on a fluid that was already initialised by an identical call earlier in the method, with no call, store or branch in between that could have changed it</LongDescription>
+		<Details>
+			<![CDATA[
+<p>Initialisation calls such as <code>init(3)</code>, <code>initProperties()</code> and <code>initPhysicalProperties()</code> recalculate all phases and are among the most expensive calls in a process model. Repeating an identical call on the same fluid, with no change to temperature, pressure, composition or a flash in between, only costs computation time.</p>
+<p>Remove the second call. If only one property is needed, initialise just that property, for example <code>initPhysicalProperties("density")</code>, which is faster than a full initialisation.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_PHYSICAL_WITHOUT_INIT">
+		<ShortDescription>Physical property read without initialising it in the same method</ShortDescription>
+		<LongDescription>{1} reads a physical property ({2}) of a phase or fluid without first initialising it with initPhysicalProperties(), a targeted initPhysicalProperties(name), initProperties() or run() earlier in the method</LongDescription>
+		<Details>
+			<![CDATA[
+<p>Density, viscosity, thermal conductivity, diffusion coefficients and interfacial tension are calculated by the physical property models, not by the equation of state. They are only valid after the physical properties have been initialised for the current temperature, pressure and composition, and an earlier flash does not update them.</p>
+<p>When only one of density, viscosity or thermal conductivity is needed, initialise just that property, which is the fastest option: <code>initPhysicalProperties("viscosity")</code> or the <code>PhysicalPropertyType</code> overload. The check accepts a targeted call only for the property it names. Diffusion coefficients and interfacial tension have no targeted initialisation and need <code>initPhysicalProperties()</code>, <code>initProperties()</code> or <code>calcInterfaceProperties()</code>. Running the owning unit first also initialises them. If the fluid is guaranteed to be initialised by the caller, record the finding in the reviewed rules baseline instead of suppressing it.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugCode abbrev="NQ">NeqSim thermodynamic state</BugCode>
+</MessageCollection>

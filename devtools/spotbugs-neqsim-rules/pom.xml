@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.equinor.neqsim</groupId>
+	<artifactId>spotbugs-neqsim-rules</artifactId>
+	<version>1.0.0</version>
+	<packaging>jar</packaging>
+	<name>NeqSim SpotBugs rules</name>
+	<description>Build-time SpotBugs detectors for NeqSim thermodynamic-state rules. Not shipped with NeqSim.</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- Build tooling only (SpotBugs 4.10 needs Java 11+); the NeqSim library itself stays Java 8. -->
+		<maven.compiler.release>11</maven.compiler.release>
+		<spotbugs.version>4.10.5</spotbugs.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.spotbugs</groupId>
+			<artifactId>spotbugs</artifactId>
+			<version>${spotbugs.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>
