@@ -88,6 +88,9 @@ public abstract class Phase implements PhaseInterface {
   /** Guards against recursive lazy re-initialisation from the caloric property getters. */
   private transient boolean caloricInitInProgress = false;
 
+  /** Temperature, pressure, moles and composition checksums at the last init(2) or init(3) call. */
+  private transient double[] caloricStamp = null;
+
   protected MixingRuleTypeInterface mixingRuleType;
 
   /** Temperature of phase. */
@@ -536,6 +539,9 @@ public abstract class Phase implements PhaseInterface {
     }
     this.setInitType(initType);
     this.numberOfComponents = numberOfComponents;
+    if (initType >= 2) {
+      stampCaloricState();
+    }
     for (int i = 0; i < numberOfComponents; i++) {
       // Keep the per-component derivative arrays at the size of this phase so clones stay small.
       componentArray[i].fitCompositionDerivativeArrays(numberOfComponents);
@@ -1968,7 +1974,15 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getGibbsEnergy() {
-    return getEnthalpy() - temperature * getEntropy();
+    // Flash and phase-identification code compares Gibbs energies at init level 1; it must not
+    // re-initialise the phase through the caloric getters.
+    boolean previous = caloricInitInProgress;
+    caloricInitInProgress = true;
+    try {
+      return getEnthalpy() - temperature * getEntropy();
+    } finally {
+      caloricInitInProgress = previous;
+    }
   }
 
   /** {@inheritDoc} */
@@ -2904,7 +2918,7 @@ public abstract class Phase implements PhaseInterface {
   protected void ensureCaloricDerivatives() {
     boolean hasMaterial = numberOfMolesInPhase > 0.0 && beta > 0.0;
     boolean finiteState = Double.isFinite(beta) && Double.isFinite(numberOfMolesInPhase);
-    if (initType != 1 || caloricInitInProgress || !hasMaterial || !finiteState) {
+    if (initType != 1 || caloricInitInProgress || !hasMaterial || !finiteState || caloricStateMatchesStamp()) {
       return;
     }
     caloricInitInProgress = true;
@@ -2915,6 +2929,36 @@ public abstract class Phase implements PhaseInterface {
     } finally {
       caloricInitInProgress = false;
     }
+  }
+
+  /**
+   * Computes the temperature, pressure, moles and composition checksums that identify the current state of the phase.
+   *
+   * @return array with temperature, pressure, moles in phase and two composition checksums
+   */
+  private double[] currentCaloricState() {
+    double sx = 0.0;
+    double sxx = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double x = componentArray[i].getx();
+      sx += x * (i + 1);
+      sxx += x * x * (i + 7);
+    }
+    return new double[] {temperature, pressure, numberOfMolesInPhase, sx, sxx};
+  }
+
+  /** Records the state at which the temperature and pressure derivatives are calculated. */
+  private void stampCaloricState() {
+    caloricStamp = currentCaloricState();
+  }
+
+  /**
+   * Checks whether the phase is still at the state of the last init(2) or init(3) call.
+   *
+   * @return true if the stored derivatives belong to the current state of the phase
+   */
+  private boolean caloricStateMatchesStamp() {
+    return caloricStamp != null && java.util.Arrays.equals(caloricStamp, currentCaloricState());
   }
 
   /** {@inheritDoc} */

@@ -79,7 +79,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private static final double LIQUID_HTC_FALLBACK = 100.0;
 
   /** True once {@link #run(UUID)} has scaled the inventory to the vessel volume. */
-  private boolean inventoryInitialized = false;
+  private volatile boolean inventoryInitialized = false;
 
   /**
    * Calculation type for vessel thermodynamics.
