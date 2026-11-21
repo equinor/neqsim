@@ -172,10 +172,10 @@ public class SeparatorTest extends BasePVTsimulation {
   /**
    * Returns the gas specific gravity (air = 1) of the gas separated at each stage.
    *
-   * @return gas gravity per stage; NaN for a stage where no gas phase is separated
+   * @return copy of the per-stage gas gravity, NaN where no gas is separated, null before runCalc()
    */
   public double[] getGasGravity() {
-    return gasGravity;
+    return gasGravity == null ? null : gasGravity.clone();
   }
 
   /**
