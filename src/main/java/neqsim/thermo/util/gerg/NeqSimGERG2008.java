@@ -16,9 +16,23 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <p>
  * This class provides a wrapper around the GERG-2008 equation of state for calculating thermodynamic properties of
- * natural gas mixtures. The GERG-2008 parameters are cached statically to avoid expensive re-initialization on every
- * call, which significantly improves performance for applications that make repeated property calculations (such as
+ * natural gas mixtures. Initialised GERG-2008 kernels are cached to avoid expensive re-initialization on every call,
+ * which significantly improves performance for applications that make repeated property calculations (such as
  * compressor performance estimation).
+ * </p>
+ *
+ * <p>
+ * <b>Thread safety and model ownership.</b> A GERG-2008 kernel keeps mutable temperature and composition caches and
+ * numerical work arrays. The cache therefore holds one initialised kernel per thread and per {@link GERG2008Type}, and
+ * every calculation resolves the kernel on the thread that performs it. Wrappers owned by different threads can run
+ * at the same time, for example in {@code ProcessSystem.runParallel()}, and give the same results as serial runs. Each
+ * thread that uses a model type holds its own kernel and coefficient tables for as long as
+ * the thread lives, so long-lived pools keep their kernels.
+ * </p>
+ *
+ * <p>
+ * The wrapper itself, its phase and its fluid are not thread-safe: do not share one {@code NeqSimGERG2008} or one
+ * fluid between threads; {@code clone()} the fluid per worker instead.
  * </p>
  *
  * @author esol
@@ -95,6 +109,11 @@ public class NeqSimGERG2008 {
   /**
    * Clears the cached GERG-2008 model instances. This is primarily useful for testing or when parameters need to be
    * reloaded.
+   *
+   * <p>
+   * Existing wrappers stay usable: the next calculation on each thread builds and initialises a fresh kernel. Kernels
+   * already held by running calculations finish on the old instance and are then released.
+   * </p>
    */
   public static void clearCache() {
     MODEL_CACHE.clear();
