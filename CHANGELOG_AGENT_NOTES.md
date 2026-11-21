@@ -9,6 +9,27 @@
 
 ---
 
+## 2026-11-21 — Safety studies on generated P&IDs (`PidSafetyStudies`)
+
+- New `neqsim.process.engineering.pid.PidSafetyStudies.run(pid, process, Policy)`: sizes every proposed PSV
+  (blocked outlet, API 521 fire, gas blow-by through upstream liquid valves; API 520 orifice), sizes BDV orifices by
+  dynamic depressurization to the API 521 target, sums the flare load, proposes trip set points, sets NOG 070 SIL
+  targets and screens PFDavg (IEC 61511). Results replace placeholders only, keep `REVIEW_REQUIRED`, and carry
+  `safetyStudyReference` = `NEQSIM-SAFETY-SCREENING-STUDY...`.
+- Call after `PidStandardConnectionProposals.complete(...)` and before `PidSimulationBindings.from(...)`.
+- `ProfessionalPidPackageExporter` writes `pid-safety-studies.json` and readiness `safetyStudies` when results exist.
+- Drawings show PSV `SET x barg / orifice`, BDV `RO n mm`, trip set point and SIL target, and the proposed design
+  pressure in separator callouts. DEXPI 2.0.1 carries `SetPressureHigh` on proposed PSVs and the study text in
+  safety-function `DeviceInformation`.
+- `PidHazopStudyRunner`: deviations list `quantifiedSafeguardEvidence`; relief and blowdown valves are credited for
+  PRESSURE, `-T-`/`-P-` trip purposes match TEMPERATURE/PRESSURE; plain `Mixer` junctions are passive nodes (no
+  `HAZOP-PID-NODE-INCOMPLETE` error).
+- `SeparatorSafeguardingPidRule`: blowdown valves are now `FAIL_OPEN_PROPOSAL` (was `FAIL_CLOSED_PROPOSAL`).
+- Docs: `docs/process/safety/pid-safety-studies.md`. Skills: `neqsim-pid-process-operations`, `neqsim-process-safety`
+  (Method 1c). Agent: `engineering-deliverables`.
+
+---
+
 ## 2026-11-21 — Professional P&ID: shared heat-exchanger sheets
 
 - Simple `Heater`/`Cooler` units (exact class, one inlet and one outlet, no instrument-detail sheet, not on a material

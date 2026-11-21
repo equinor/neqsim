@@ -1963,8 +1963,15 @@ public final class ProfessionalPidDiagramRenderer {
             ((Number) settings.get("setPressureBar")).doubleValue());
       }
     }
+    Object study = element.getAttributes().get(neqsim.process.engineering.pid.PidSafetyStudies.ANNOTATION);
+    if (family == Family.RELIEF_VALVE && study != null) {
+      valveNote = String.valueOf(study);
+    }
     scene.text(family == Family.RELIEF_VALVE ? x + 4 : x, family == Family.RELIEF_VALVE ? y + 16 : y + 21, valveNote,
         2.5, null);
+    if (family != Family.RELIEF_VALVE && study != null) {
+      scene.text(x, y + 25, String.valueOf(study), 2.5, null);
+    }
     if (family != Family.CHECK_VALVE && family != Family.RELIEF_VALVE) {
       hold("VALVE_FAILURE_ACTION", element.getTag(), "ISO 10628-1:2014 / IEC 62424:2016",
           "Fail action and actuator detail require controlled project evidence");
@@ -3111,7 +3118,14 @@ public final class ProfessionalPidDiagramRenderer {
       operating.append(" HOLD");
     }
     lines.add(new String[] {operating.toString(), "3"});
-    lines.add(new String[] {"DESIGN: HOLD barg / HOLD C   |   SIZE: see data sheet", "3"});
+    String designPressure = "HOLD barg";
+    for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+      Object proposed = element.getAttributes().get("studyProtectedDesignPressureBarg");
+      if (proposed instanceof Number) {
+        designPressure = String.format(Locale.ROOT, "%.1f barg (PROP.)", ((Number) proposed).doubleValue());
+      }
+    }
+    lines.add(new String[] {"DESIGN: " + designPressure + " / HOLD C   |   SIZE: see data sheet", "3"});
     scene.callout = lines;
     scene.calloutX = x;
   }
@@ -3427,6 +3441,7 @@ public final class ProfessionalPidDiagramRenderer {
       tags.add(exchanger.getName());
     }
     Scene scene = scene(join(tags), "Heat exchangers");
+    scene.compactAnnotations = true;
     double top = EXCHANGER_SHEET_TOP;
     for (ProcessEquipmentInterface exchanger : exchangers) {
       renderExchangerBand(scene, exchanger, top);
@@ -3807,6 +3822,9 @@ public final class ProfessionalPidDiagramRenderer {
       return instrument(element, x, y, 18);
     }
 
+    /** True on compact band sheets: study annotations go above the incoming signal instead of below the symbol. */
+    boolean compactAnnotations;
+
     /**
      * Adds a function using the required source-backed input-port envelope size.
      *
@@ -3827,6 +3845,14 @@ public final class ProfessionalPidDiagramRenderer {
       Node node = node(element.getTag(), family, x, y, diameter, diameter, element.getTag());
       proposalNodes.put(element.getTag(), node);
       drawnSheets.putIfAbsent(element.getTag(), number);
+      Object study = element.getAttributes().get(neqsim.process.engineering.pid.PidSafetyStudies.ANNOTATION);
+      if (study != null) {
+        if (compactAnnotations) {
+          centered(x - 26.0, y - 2.5, String.valueOf(study), 2.5, null);
+        } else {
+          centered(x, y + diameter / 2.0 + 5.0, String.valueOf(study), 2.5, null);
+        }
+      }
       return node;
     }
 

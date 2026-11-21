@@ -1,4 +1,6 @@
 {
+ "p&id safety studies": ["neqsim-pid-process-operations", "neqsim-process-safety"],
+ "safeguard sizing from simulation": ["neqsim-pid-process-operations", "neqsim-process-safety"],
  "choke valve": ["neqsim-choke-valve-practice", "neqsim-subsea-and-wells"],
  "choke cv": ["neqsim-choke-valve-practice"],
  "choke sizing": ["neqsim-choke-valve-practice", "neqsim-subsea-and-wells"],

@@ -525,6 +525,11 @@ Streams provide node boundaries. Numerical `Recycle`, `Calculator`, and `Adjuste
 physical HAZOP nodes and do not require safeguard proposals. Real equipment still requires P&ID coverage;
 a model containing only numerical helpers is not ready for a HAZOP workshop.
 
+When `PidSafetyStudies.run(...)` has been applied, each deviation also lists
+`quantifiedSafeguardEvidence`: the calculated relief case and orifice, blowdown time and flare rate, trip set
+point and SIL screening of the safeguards credited for it. See
+[Safety studies on a generated P&ID](process/safety/pid-safety-studies.md).
+
 This is preparation for an IEC 61882 multidisciplinary workshop. It does not establish credible causes, consequences,
 IPL independence, residual risk, action closure, or approval. Reviewed outcomes can continue through the
 [HAZOP and LOPA to Draft SRS Handoff](process/safety/hazop-lopa-srs-handoff).

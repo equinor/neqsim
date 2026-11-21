@@ -242,6 +242,14 @@ blowdown, vent and drain routes on the pooled auxiliary sheets. Simple `Heater` 
 `Cooler` units (one inlet, one outlet, no instrument-detail sheet) are drawn as
 bands on shared "Heat exchangers" sheets, up to three per sheet; find a unit's
 sheet from `drawingIndex[].subjectTag`, which lists every tag on a shared sheet.
+To size the safeguards from the simulation, call
+`PidSafetyStudies.run(pid, process, PidSafetyStudies.Policy.screening())` after the
+standard connections and before binding. It sets PSV set pressure and orifice
+(blocked outlet, fire, gas blow-by), BDV orifice by dynamic blowdown, flare load,
+trip set points, NOG 070 SIL targets with PFDavg screening, and quotes them in the
+HAZOP preparation; the package then contains `pid-safety-studies.json`. Declare
+compressor segment volumes with `Policy.segmentVolume(tag, m3)` and report every
+finding (`docs/process/safety/pid-safety-studies.md`).
 
 For P&ID-to-simulation requests ("build/run a model from this P&ID", "round-trip
 the DEXPI file"), use `DexpiSimulationBuilder` on a Proteus-profile file, then

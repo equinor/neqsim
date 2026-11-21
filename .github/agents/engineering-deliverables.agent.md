@@ -26,6 +26,10 @@ For professional P&amp;ID drawings, complete standard relief/blowdown/vent/drain
 connections with `PidStandardConnectionProposals.complete(...)` before binding,
 and do not report a drawing as ready unless `drawingHasNoErrors=true`, which
 includes the automated ISO 5457 / ISO 7200 / ISA-5.1 `PID_STANDARD_*` checks.
+To fill relief set pressures and orifices, blowdown orifices, trip set points and
+SIL targets from the simulation, run `PidSafetyStudies.run(...)` after completing
+the connections and before binding; report its findings and keep every value
+review-required (`docs/process/safety/pid-safety-studies.md`).
 State that conformance still needs the controlled standards and discipline review.
 
 For P&amp;ID/DEXPI requests, also load `neqsim-pid-process-operations` and use the

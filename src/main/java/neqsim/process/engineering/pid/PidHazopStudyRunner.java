@@ -45,7 +45,8 @@ public final class PidHazopStudyRunner {
       }
       List<PidElement> safeguards = model.getElementsForEquipment(equipment.getName());
       // Passive piping nodes remain real HAZOP boundaries without fabricated vessel nozzles.
-      boolean passivePiping = equipment instanceof ThrottlingValve || equipment instanceof Splitter;
+      boolean passivePiping = equipment instanceof ThrottlingValve || equipment instanceof Splitter
+          || equipment.getClass() == neqsim.process.equipment.mixer.Mixer.class;
       if (safeguards.isEmpty() && !passivePiping) {
         findings.add(error(equipment.getName(), "No P&ID elements protect or control this HAZOP node."));
         continue;
@@ -82,7 +83,12 @@ public final class PidHazopStudyRunner {
       row.put("consequence", deviation.consequence);
       row.put("catalogueSafeguard", deviation.safeguard);
       row.put("recommendation", deviation.recommendation);
-      row.put("creditedSafeguardTags", matchingSafeguards(safeguards, deviation.parameter));
+      List<String> credited = matchingSafeguards(safeguards, deviation.parameter);
+      row.put("creditedSafeguardTags", credited);
+      List<String> evidence = studyEvidence(safeguards, credited, deviation.guideWord.name());
+      if (!evidence.isEmpty()) {
+        row.put("quantifiedSafeguardEvidence", evidence);
+      }
       row.put("workshopDecision", "OPEN");
       deviations.add(row);
     }
@@ -106,14 +112,50 @@ public final class PidHazopStudyRunner {
     return node;
   }
 
+  /**
+   * Returns the safety-study sentences of the credited safeguards that act in the direction of the guide word.
+   *
+   * @param elements safeguards of the node
+   * @param credited tags credited for the parameter
+   * @param guideWord HAZOP guide word
+   * @return evidence sentences from {@link PidSafetyStudies}
+   */
+  private static List<String> studyEvidence(List<PidElement> elements, List<String> credited, String guideWord) {
+    List<String> evidence = new ArrayList<String>();
+    boolean high = "MORE".equals(guideWord) || "HIGH".equals(guideWord);
+    boolean low = "LESS".equals(guideWord) || "NO".equals(guideWord) || "LOW".equals(guideWord);
+    for (PidElement element : elements) {
+      Object sentence = element.getAttributes().get(PidSafetyStudies.HAZOP_EVIDENCE);
+      if (sentence == null || !credited.contains(element.getTag())) {
+        continue;
+      }
+      String tag = element.getTag();
+      boolean highDevice = tag.contains("HH") || element.getType() == PidElementType.SAFETY_RELIEF_VALVE
+          || element.getType() == PidElementType.BLOWDOWN_VALVE;
+      boolean lowDevice = tag.contains("LL");
+      if (high && highDevice || low && lowDevice) {
+        evidence.add(String.valueOf(sentence));
+      }
+    }
+    return evidence;
+  }
+
   private static List<String> matchingSafeguards(List<PidElement> elements, HAZOPTemplate.Parameter parameter) {
     List<String> tags = new ArrayList<String>();
     String variable = parameter.name();
     for (PidElement element : elements) {
+      if (parameter == HAZOPTemplate.Parameter.PRESSURE && (element.getType() == PidElementType.SAFETY_RELIEF_VALVE
+          || element.getType() == PidElementType.BLOWDOWN_VALVE)) {
+        tags.add(element.getTag());
+        continue;
+      }
       Object measured = element.getAttributes().get("measuredVariable");
       Object purpose = element.getAttributes().get("proposalPurpose");
+      String shortForm = parameter == HAZOPTemplate.Parameter.TEMPERATURE ? "-T-"
+          : parameter == HAZOPTemplate.Parameter.PRESSURE ? "-P-" : null;
       if ((measured != null && variable.equals(String.valueOf(measured)))
-          || (purpose != null && String.valueOf(purpose).contains(variable))) {
+          || (purpose != null && String.valueOf(purpose).contains(variable))
+          || (purpose != null && shortForm != null && String.valueOf(purpose).contains(shortForm))) {
         tags.add(element.getTag());
       }
     }

@@ -62,7 +62,7 @@ public class ProfessionalPidDrawingStandardsTest {
    *
    * @return converged process
    */
-  private static ProcessSystem process() {
+  static ProcessSystem process() {
     Stream feed = new Stream("20-FEED-001", fluid());
     feed.setFlowRate(30000.0, "kg/hr");
     Heater heater = new Heater("20-HA-001", feed);

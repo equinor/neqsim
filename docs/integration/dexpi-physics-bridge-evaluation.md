@@ -118,6 +118,27 @@ Also resolved: PSVs use the ISO 10628-2 angle-pattern body, nozzles are labelled
 nozzle register, manual valves show their normal position instead of a fail action, and plain
 mixers no longer receive nozzle proposals.
 
+### Physics studies on the generated P&ID
+
+`PidSafetyStudies` now runs relief, blowdown, flare-load, trip set point and SIL screening studies
+on the proposed safeguards and writes the results back to the P&ID, the drawings, DEXPI 2.0.1 and
+the HAZOP preparation ([details](../process/safety/pid-safety-studies.md)). On the 17-unit train it
+takes about 10 s and updates 29 elements:
+
+| Result | Value |
+| --- | --- |
+| HP separator PSV | set 64.9 barg, blocked outlet governs (27 400 kg/h), orifice J |
+| LP separator PSV | set 12.5 barg, gas blow-by through 20-LV-001 governs (4 170 kg/h, versus 2 090 kg/h blocked outlet and 3 110 kg/h fire), orifice H |
+| Separator blowdown | 8, 9 and 4 mm orifices reach the API 521 target in 805 to 890 s |
+| Compressor blowdown (2 m3 declared) | 7 mm; fluid falls to -58 C, flagged for the material check |
+| Flare load | 28 000 kg/h, set by the largest single relief case, not by simultaneous blowdown (4 300 kg/h) |
+| Pressure and level trips | SIL 2 (NOG 070) met at PFDavg 7.9e-3 with partial-stroke testing on the inlet ESD valve |
+| HAZOP | 32 deviations quote calculated safeguard evidence; the two mixer-node errors are gone |
+
+Open items are reported as findings, for example the HP liquid being supercritical at fire
+relieving pressure, compressor segment volumes, low-low level trips with no final element, and the
+letdown valve Cv taken from the model.
+
 Remaining drawing gaps:
 
 - Utility-side control valves and meters (cooler TCVs) stay HOLD until the utility system is supplied.
@@ -136,7 +157,7 @@ Ordered by how much each item blocks the goal.
 | P2 | Make delivery manifests fail-closed on visual quality: no `completeWithinDeclaredScope: true` for an unrouted box diagram | Prevents overstated claims in engineering packages |
 | P2 | Bind DEXPI control loops to NeqSim controllers on the named final element (for example `PICSA 4712.02` to `PV4712.02`) | Turns the P&ID into a dynamic model rather than category-renamed auto-instrumentation |
 | P2 | Consistent heater mapping across profiles (heat exchanger unless fired) | `FiredHeater` and `HeatingInFurnace` misdescribe topsides heaters |
-| P2 | Use excluded relief branches as relief-study inputs (PSV sizing, flare load, blowdown) | Moves from P&ID to physics studies, not just steady-state balance |
+| P2 | Flare network hydraulics and radiation from the study loads; two-phase relief; ESD valve closure-time verification | `PidSafetyStudies` delivers loads, orifices and set points; the disposal system itself is not yet calculated |
 | P3 | Named-tool round-trip qualification (for example AVEVA, Hexagon, COMOS) with recorded evidence | Required before any interoperability claim |
 
 ## Reproduce
