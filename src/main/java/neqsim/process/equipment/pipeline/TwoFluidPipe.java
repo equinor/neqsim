@@ -202,6 +202,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Numerical epsilon used only inside closure denominators; it is never a phase-state floor. */
   private static final double CLOSURE_DENOMINATOR_EPSILON = 1.0e-14;
 
+  /** Volume fraction of a cell above which a phase counts as held by the cell when a flash is checked against it. */
+  private static final double OCCUPIED_PHASE_VOLUME_FRACTION = 0.01;
+
   /** Smallest positive holdup used while solving a singular two-phase closure. */
   private static final double CLOSURE_SOLVER_HOLDUP_EPSILON = 1.0e-15;
 
@@ -8220,6 +8223,15 @@ public class TwoFluidPipe extends Pipeline {
           continue;
         }
 
+        // A flash without a gas-oil split has one merged hydrocarbon phase. Its properties belong to
+        // neither phase of a cell that holds both, and the liquid branches below would then zero the
+        // oil or water holdup. Keep the last consistent phase properties of the cell instead.
+        if (!componentTransportEnabled && lacksOccupiedHydrocarbonPhase(sec, flash)) {
+          logger.debug("{}: flash at {} m has no gas-oil split for a cell holding both; phase properties kept",
+              getName(), sec.getPosition());
+          continue;
+        }
+
         // Update phase properties
         if (flash.hasPhaseType("gas")) {
           sec.setGasDensity(flash.getPhase("gas").getDensity("kg/m3"));
@@ -8298,6 +8310,38 @@ public class TwoFluidPipe extends Pipeline {
         logger.warn("Flash calculation failed for section at position {}", sec.getPosition());
       }
     }
+  }
+
+  /**
+   * Tells whether a cell holds both gas and oil while the flash has only one hydrocarbon phase.
+   *
+   * <p>
+   * The transient advances the gas and oil mass of a cell separately. An equilibrium flash of the feed at the cell
+   * pressure and temperature can still return a single hydrocarbon phase: above the saturation pressure of the feed,
+   * and occasionally at isolated conditions inside the two-phase region where the phase split is missed (for example
+   * 172.13 bara and 339.28 K for a methane/ethane/n-heptane/n-decane/water feed). Using that merged phase to reset the
+   * gas or oil density of the cell leaves the cell volume far from closed, and its pressure collapses within a few
+   * steps. A phase counts as held by the cell when it fills more than {@link #OCCUPIED_PHASE_VOLUME_FRACTION} of the
+   * cell.
+   * </p>
+   *
+   * @param sec cell to check
+   * @param flash equilibrium flash at the cell pressure and temperature
+   * @return true if the cell holds both gas and oil and the flash lacks the gas or the oil phase
+   */
+  private static boolean lacksOccupiedHydrocarbonPhase(TwoFluidSection sec, SystemInterface flash) {
+    if (flash.hasPhaseType("gas") && flash.hasPhaseType("oil")) {
+      return false;
+    }
+    double area = sec.getArea();
+    double gasDensity = sec.getGasDensity();
+    double oilDensity = sec.getOilDensity();
+    if (!(area > 0.0) || !(gasDensity > 0.0) || !(oilDensity > 0.0)) {
+      return false;
+    }
+    double gasFraction = sec.getGasMassPerLength() / (gasDensity * area);
+    double oilFraction = sec.getOilMassPerLength() / (oilDensity * area);
+    return gasFraction > OCCUPIED_PHASE_VOLUME_FRACTION && oilFraction > OCCUPIED_PHASE_VOLUME_FRACTION;
   }
 
   /**

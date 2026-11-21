@@ -1747,6 +1747,28 @@ wet gas/oil/water, the inventory grew 8 % in 10 s with no pressure rise; with
 boundary is `CLOSED` and the coupled option is off. Use the coupled option for HIPPS, ESD and blocked-outlet
 studies.
 
+**A flash without a gas-oil split does not reset the phase properties of a cell.** Every
+`setThermodynamicUpdateInterval(...)` steps the transient flashes the feed at each cell's pressure and
+temperature and resets the cell's phase densities. The gas and oil mass of a cell are advanced separately, so a
+flash that returns one merged hydrocarbon phase fits neither phase of the cell. That happens above the saturation
+pressure of the feed, and at rare isolated conditions inside the two-phase region where the flash misses the split:
+1 of 20,000 random conditions between 140 and 240 bara and 330 and 353 K for a methane/ethane/n-heptane/n-decane/water
+feed, for example 172.13 bara and 339.28 K. The reset used to leave the cell less than half full, and its pressure
+collapsed within a few steps. A 15.6 km, 12-inch line packed at 300 t/h against a closed outlet (80 cells) stopped
+converging at 1,540 s and 175 bar with one cell at 7 bar. A cell in which gas and oil each fill more than 1 % now
+keeps its previous phase properties for that update, and the same case runs to 2,400 s and 255 bar with no rejected
+substep (`TwoFluidPipeLinePackingTest`, measured 2026-11-21). Runs with component transport are unchanged.
+
+Two limits remain for closed-end pack-up with the coupled option (same case, measured 2026-11-21):
+
+- **Above the saturation pressure of the feed** (about 265 bara here) the phase masses stay frozen while
+  equilibrium says the gas dissolves. The 80-cell case shows cell-to-cell pressure differences of tens of bar again
+  above that pressure. Use component transport with mass transfer for that range.
+- **A steep riser with a closed top.** With the last two cells rising 350 m, neighbouring cells differ by about
+  10 m/s in phase velocity within 5 s of closing the outlet, and after about 30 min the top cells show pressures
+  far from the rest of the line (77 bar at the top against 211 bar at the inlet in one sample). Do not report
+  closed-riser-top pressures from this model.
+
 Use `setInletBoundaryCondition(...)` and `setOutletBoundaryCondition(...)` for explicit boundary
 types. Convenience methods such as `closeOutlet()` and `openOutlet(...)` update the type and value
 together.

@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -69,6 +70,62 @@ public class TwoFluidPipeLinePackingTest {
     double m1 = pipe.getTotalMassInventory();
     assertTrue(m1 > m0 * 1.03, "mass must accumulate: " + m0 + " -> " + m1);
     assertTrue(p1 > p0 + 10.0, "pressure must rise with accumulated mass: " + p0 + " -> " + p1);
+  }
+
+  /**
+   * Packing a line through the saturation pressure of the feed keeps the pressure profile intact.
+   *
+   * <p>
+   * Above the saturation pressure the equilibrium flash of the feed has a single hydrocarbon phase while every cell
+   * still holds gas and oil. Resetting the cell phase densities from that merged phase used to leave the cell volume
+   * far from closed: the coupled pressure correction stopped converging at about 120 s in this case. The same happens
+   * at rare isolated conditions inside the two-phase region where the flash misses the gas-oil split.
+   * </p>
+   */
+  @Test
+  void packingThroughSaturationPressureKeepsCellPressures() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 80.0, 240.0);
+    fluid.addComponent("methane", 70.0);
+    fluid.addComponent("ethane", 7.0);
+    fluid.addComponent("n-heptane", 10.0);
+    fluid.addComponent("n-decane", 6.0);
+    fluid.addComponent("water", 20.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    Stream stream = new Stream("well", fluid);
+    stream.setFlowRate(37500.0, "kg/hr");
+    stream.run();
+
+    TwoFluidPipe pipe = new TwoFluidPipe("flowline", stream);
+    pipe.setLength(1950.0);
+    pipe.setDiameter(0.3048);
+    pipe.setNumberOfSections(10);
+    pipe.setSurfaceTemperature(4.0, "C");
+    pipe.setHeatTransferCoefficient(4.0);
+    pipe.setOutletPressure(220.0, "bara");
+    pipe.setEnableCoupledPressureMomentum(true);
+    pipe.setEnableInterfacialPressure(true);
+    pipe.run();
+    pipe.closeOutlet();
+
+    UUID id = UUID.randomUUID();
+    double lowestCellPressure = Double.POSITIVE_INFINITY;
+    double largestRiseAlongFlow = 0.0;
+    for (int step = 0; step < 60; step++) {
+      pipe.runTransient(5.0, id);
+      double[] pressure = pipe.getPressureProfile();
+      for (int cell = 0; cell < pressure.length; cell++) {
+        lowestCellPressure = Math.min(lowestCellPressure, pressure[cell] / 1e5);
+        if (cell > 0) {
+          largestRiseAlongFlow = Math.max(largestRiseAlongFlow, (pressure[cell] - pressure[cell - 1]) / 1e5);
+        }
+      }
+    }
+    double inletPressure = pipe.getPressureProfile()[0] / 1e5;
+    assertEquals(0, pipe.getTransientCoupledPressureMomentumRejectedSubsteps(), "no rejected coupled substeps");
+    assertTrue(inletPressure > 280.0, "line must pack past the saturation pressure: " + inletPressure);
+    assertTrue(lowestCellPressure > 200.0, "no cell pressure may collapse: " + lowestCellPressure);
+    assertTrue(largestRiseAlongFlow < 30.0, "no pressure spike between neighbour cells: " + largestRiseAlongFlow);
   }
 
   /** The coldest-section cooldown time is no longer than the inlet-based cooldown time. */
