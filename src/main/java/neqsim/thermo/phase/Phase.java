@@ -84,6 +84,10 @@ public abstract class Phase implements PhaseInterface {
   public double numberOfMolesInPhase = 0;
 
   private int initType = 0;
+
+  /** Guards against recursive lazy re-initialisation from the caloric property getters. */
+  private transient boolean caloricInitInProgress = false;
+
   protected MixingRuleTypeInterface mixingRuleType;
 
   /** Temperature of phase. */
@@ -1062,7 +1066,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getCp() {
-    // System.out.println("Cp res:" + this.getCpres() + " Cp0: " + getCp0());
+    ensureCaloricDerivatives();
     return getCp0() * numberOfMolesInPhase + this.getCpres();
   }
 
@@ -1133,6 +1137,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getCv() {
+    ensureCaloricDerivatives();
     return getCp0() * numberOfMolesInPhase - R * numberOfMolesInPhase + getCvres();
   }
 
@@ -1215,6 +1220,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getEnthalpy() {
+    ensureCaloricDerivatives();
     return getHID() * numberOfMolesInPhase + this.getHresTP();
   }
 
@@ -1388,6 +1394,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropy() {
+    ensureCaloricDerivatives();
     double tempVar = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       tempVar += componentArray[i].getx() * componentArray[i].getIdEntropy(temperature);
@@ -2879,6 +2886,35 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public void setInitType(int initType) {
     this.initType = initType;
+  }
+
+  /**
+   * Makes sure the temperature and pressure derivatives behind the caloric properties belong to the current state.
+   *
+   * <p>
+   * A TP flash leaves the phases at init level 1 (fugacities only). The derivatives that enthalpy, entropy, Cp and Cv
+   * are built from are then still those of the last init(2) or init(3) call, which may have been made at another
+   * temperature, pressure or composition. Reading a caloric property at that point silently returned a value for the
+   * old state (for example an aqueous CPA Cp of 9.1 kJ/kgK instead of 3.9 kJ/kgK). When this phase is at init level 1
+   * and holds material, it is re-initialised here at level 2 for its current temperature, pressure, composition and
+   * phase fraction, which is what {@code system.init(2)} does for each phase. Init levels 0, 2 and 3 are left as they
+   * are.
+   * </p>
+   */
+  protected void ensureCaloricDerivatives() {
+    boolean hasMaterial = numberOfMolesInPhase > 0.0 && beta > 0.0;
+    boolean finiteState = Double.isFinite(beta) && Double.isFinite(numberOfMolesInPhase);
+    if (initType != 1 || caloricInitInProgress || !hasMaterial || !finiteState) {
+      return;
+    }
+    caloricInitInProgress = true;
+    try {
+      init(numberOfMolesInPhase / beta, numberOfComponents, 2, getType(), beta);
+    } catch (RuntimeException ex) {
+      logger.debug("Lazy init(2) for a caloric property failed, keeping current derivatives: {}", ex.getMessage());
+    } finally {
+      caloricInitInProgress = false;
+    }
   }
 
   /** {@inheritDoc} */

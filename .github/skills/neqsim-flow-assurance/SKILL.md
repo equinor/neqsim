@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-20"
+last_verified: "2026-11-21"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -44,6 +44,8 @@ support, as the next physical dependency; keep this gate opt-in until it passes 
 - Multiphase flow pattern prediction (slug, annular, stratified)
 - Thermal insulation sizing for subsea pipelines
 - Arrival temperature and cooldown calculations
+  (for `TwoFluidPipe` no-touch times use `calculateColdestSectionHydrateCooldownTime()` after `run()`;
+  `calculateHydrateCooldownTime()` starts from the inlet temperature and overstates the time for the riser base)
 
 ## Applicable Standards
 

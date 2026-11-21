@@ -251,6 +251,9 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean coupledPressureMomentumEnabled = false;
 
+  /** True once the closed-boundary pressure warning has been logged for this pipe. */
+  private transient boolean closedBoundaryPressureWarningLogged = false;
+
   /** True once the user has chosen the coupled pressure-momentum option explicitly. */
   private boolean coupledPressureMomentumExplicit = false;
 
@@ -5782,6 +5785,7 @@ public class TwoFluidPipe extends Pipeline {
   @Override
   public synchronized void runTransient(double dt, UUID id) {
     validateOutletTakeoffCompatibility();
+    warnIfClosedBoundaryWithoutCompressiblePressure();
     if (useConservativeEnergyRecovery) {
       validateConservativeEnergyConfiguration();
     }
@@ -5789,6 +5793,28 @@ public class TwoFluidPipe extends Pipeline {
       runTransactionalTransient(dt, id);
     } else {
       runTransientCandidate(dt, id);
+    }
+  }
+
+  /**
+   * Log a warning (once per pipe) when a boundary is closed but pressure is still rebuilt from the steady
+   * friction/gravity profile.
+   *
+   * <p>
+   * With the default pressure split, the transient step reconstructs the pressure profile from steady friction and
+   * gravity anchored at the open or stream-connected boundary. Mass then accumulates behind a closed outlet while the
+   * pressure stays flat (a 400 m, 12 inch line receiving 300 t/h gained 8 % mass in 10 s with no pressure rise).
+   * Shut-in, line-packing and HIPPS studies need the compressible pressure response of
+   * {@link #setEnableCoupledPressureMomentum(boolean)}; with it the same case rises by about 20 bar.
+   * </p>
+   */
+  private void warnIfClosedBoundaryWithoutCompressiblePressure() {
+    if (closedBoundaryPressureWarningLogged || coupledPressureMomentumEnabled) {
+      return;
+    }
+    if (inletBCType == BoundaryCondition.CLOSED || outletBCType == BoundaryCondition.CLOSED) {
+      closedBoundaryPressureWarningLogged = true;
+      logger.warn("{}: CLOSED boundary needs setEnableCoupledPressureMomentum(true) for line packing", getName());
     }
   }
 
@@ -11086,14 +11112,19 @@ public class TwoFluidPipe extends Pipeline {
    * Close the pipe outlet (blocked/shut-in condition).
    *
    * <p>
-   * Sets outlet boundary condition to CLOSED, meaning zero flow velocity at outlet. Pressure will build up during
-   * transient simulation as mass accumulates in the pipe. Useful for:
+   * Sets outlet boundary condition to CLOSED, meaning zero flow velocity at outlet. Useful for:
    * <ul>
    * <li>Shut-in scenario analysis</li>
    * <li>Pressure surge/water hammer studies</li>
    * <li>Line packing simulations</li>
    * <li>Emergency shutdown modeling</li>
    * </ul>
+   *
+   * <p>
+   * Pressure builds up as mass accumulates only with {@link #setEnableCoupledPressureMomentum(boolean)} enabled. With
+   * the default pressure split the profile is rebuilt from steady friction and gravity, so it stays flat while the
+   * inventory grows; {@code runTransient} logs a warning in that case.
+   * </p>
    */
   public void closeOutlet() {
     this.outletBCType = BoundaryCondition.CLOSED;
@@ -13494,10 +13525,63 @@ public class TwoFluidPipe extends Pipeline {
    */
   public double calculateCooldownTime(double targetTemperature, String unit) {
     double targetK = "C".equals(unit) ? targetTemperature + 273.15 : targetTemperature;
+    return calculateCooldownTimeFrom(getInletStream().getTemperature("K"), targetK);
+  }
 
+  /**
+   * Calculate the cooldown time of the coldest section of the current temperature profile.
+   *
+   * <p>
+   * {@link #calculateCooldownTime(double, String)} starts from the inlet stream temperature. After a run, the far end
+   * of a long insulated line (typically the riser base) is much colder than the inlet and reaches the target first, so
+   * the inlet-based value overstates the no-touch time. This method starts the same cooldown calculation from the
+   * lowest temperature in {@link #getTemperatureProfile()}. Before the pipe has been run it falls back to the inlet
+   * temperature.
+   * </p>
+   *
+   * @param targetTemperature Target temperature
+   * @param unit Temperature unit ("K" or "C")
+   * @return Cooldown time of the coldest section in hours
+   */
+  public double calculateColdestSectionCooldownTime(double targetTemperature, String unit) {
+    double targetK = "C".equals(unit) ? targetTemperature + 273.15 : targetTemperature;
+    double startK = getInletStream().getTemperature("K");
+    if (temperatureProfile != null && temperatureProfile.length > 0) {
+      double coldest = Double.POSITIVE_INFINITY;
+      for (double temperature : temperatureProfile) {
+        if (temperature > 0.0 && Double.isFinite(temperature)) {
+          coldest = Math.min(coldest, temperature);
+        }
+      }
+      if (Double.isFinite(coldest)) {
+        startK = coldest;
+      }
+    }
+    return calculateCooldownTimeFrom(startK, targetK);
+  }
+
+  /**
+   * Calculate the cooldown time of the coldest section to the hydrate formation temperature.
+   *
+   * @return Cooldown time in hours, or infinity if the hydrate temperature is not set
+   * @see #calculateColdestSectionCooldownTime(double, String)
+   */
+  public double calculateColdestSectionHydrateCooldownTime() {
+    if (hydrateFormationTemperature <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return calculateColdestSectionCooldownTime(hydrateFormationTemperature, "K");
+  }
+
+  /**
+   * Cooldown time from a given start temperature to a target temperature.
+   *
+   * @param initialTemp start fluid temperature [K]
+   * @param targetK target temperature [K]
+   * @return Cooldown time in hours
+   */
+  private double calculateCooldownTimeFrom(double initialTemp, double targetK) {
     if (useMultilayerThermalModel && thermalCalculator != null) {
-      // Use initial fluid temperature
-      double initialTemp = getInletStream().getTemperature("K");
       double configuredInnerHtc = thermalCalculator.getInnerHTC();
       thermalCalculator.setFluidTemperature(initialTemp);
       thermalCalculator.setInnerHTC(stagnantInnerHeatTransferCoefficient);
@@ -13514,7 +13598,7 @@ public class TwoFluidPipe extends Pipeline {
       return Double.POSITIVE_INFINITY;
     }
 
-    double fluidTemp = getInletStream().getTemperature("K");
+    double fluidTemp = initialTemp;
     double ambientTemp = surfaceTemperature;
 
     // Thermal mass per unit length (fluid + wall)

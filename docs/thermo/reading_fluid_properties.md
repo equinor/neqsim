@@ -201,6 +201,22 @@ double entropy = fluid.getEntropy("J/molK");
 double Cp = fluid.getCp("kJ/kgK");
 ```
 
+#### Caloric getters after a flash at init level 1
+
+A TP flash leaves every phase at init level 1. The temperature derivatives behind enthalpy, entropy, Cp and Cv
+are then those of the last `init(2)`/`init(3)` call, which may belong to another temperature, pressure or
+composition. Until this was fixed, reading a caloric property at that point silently returned a value for the old
+state. For an SRK-CPA gas/oil/water fluid flashed at 65 °C and 100 bara, the aqueous Cp came out as 9.1 kJ/(kg·K)
+instead of 3.9 kJ/(kg·K) when only `initPhysicalProperties()` was called after `TPflash()`. SRK, PR and UMR fluids
+gave errors of up to 25 % in oil Cp and about 1.3 kJ/mol in mixture enthalpy (`CaloricPropertiesAfterTPflashTest`,
+measured 2026-11-21).
+
+`Phase.getCp()`, `getCv()`, `getEnthalpy()` and `getEntropy()` (and everything built on them, such as the
+Joule-Thomson coefficient, speed of sound, Cp/Cv, Gibbs and internal energy, and the `SystemInterface` totals) now
+re-initialise a phase that is at init level 1 to level 2 for its current state before returning the value. The
+result is the same as calling `fluid.init(2)` first. Calling `initProperties()` after a flash is still the
+recommended pattern: it also fills the transport properties and does the level-2 work once for all phases.
+
 ### init(3) - Composition Derivatives
 
 Calculates derivatives of fugacity coefficients with respect to composition. Required for advanced calculations like stability analysis. This is the most computationally expensive level and is **rarely performed during standard flash calculations** - call it explicitly when needed.

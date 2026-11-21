@@ -1469,7 +1469,11 @@ System.out.println(pipe.getThermalSummary());
   transient link; this does not change the legacy steady zero-coefficient API conventions.
 - **Elevation work**: The simple and multi-layer routes include the same gravitational potential-energy source.
   Choosing a radial wall model must not remove uphill cooling or downhill heating from transported mass.
-- **Cooldown time**: Lumped capacitance approximation for shutdown scenarios
+- **Cooldown time**: Lumped capacitance approximation for shutdown scenarios. `calculateCooldownTime(...)` and
+  `calculateHydrateCooldownTime()` start from the inlet stream temperature. After a run, use
+  `calculateColdestSectionCooldownTime(...)` and `calculateColdestSectionHydrateCooldownTime()`, which start from the
+  coldest temperature in the current profile (typically the riser base of an insulated tie-back). In a 15 km tie-back
+  case the inlet-based value overstated the no-touch time because the inlet was about 20 °C warmer than the riser base.
 - **Transient advection**: Uses the gas, oil, and water mass flow retained from each conservative AUSM+ integration
   stage, combined with the time integrator's own stage weights. Temperature transport therefore uses the same face
   fluxes that advanced the accepted hydrodynamic state without a second flux sweep. A CLOSED inlet or outlet has
@@ -1733,6 +1737,15 @@ face. The adjacent physical cell retains its momentum and responds to the finite
 friction impulses; applying the boundary must not repeatedly reset that cell's velocity to zero.
 `TwoFluidClosedBoundaryMomentumTest` checks this short-time limit with Euler and RK4 while both
 integrated boundary mass fluxes remain zero. Legacy uncoupled boundary handling is unchanged.
+
+**Line packing and shut-in pressure need the coupled option.** With the default (uncoupled) pressure split, each
+transient step rebuilds the pressure profile from steady friction and gravity anchored at the open boundary. Mass
+then accumulates behind a closed outlet while the pressure stays flat. In a 400 m, 12-inch line fed 300 t/h of
+wet gas/oil/water, the inventory grew 8 % in 10 s with no pressure rise; with
+`setEnableCoupledPressureMomentum(true)` and `setEnableInterfacialPressure(true)` the same case rose by about
+20 bar (`TwoFluidPipeLinePackingTest`, measured 2026-11-21). `runTransient` logs a one-time warning when a
+boundary is `CLOSED` and the coupled option is off. Use the coupled option for HIPPS, ESD and blocked-outlet
+studies.
 
 Use `setInletBoundaryCondition(...)` and `setOutletBoundaryCondition(...)` for explicit boundary
 types. Convenience methods such as `closeOutlet()` and `openOutlet(...)` update the type and value

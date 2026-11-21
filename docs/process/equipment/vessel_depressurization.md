@@ -234,6 +234,12 @@ The initial fluid-system pressure returned by `SystemInterface.getPressure()` is
 vessel.setInitialLiquidLevel(0.5);  // 50% liquid by height
 ```
 
+The level fixes the total liquid volume. When the feed has more than one liquid phase (for example oil and
+water), that volume is shared between the liquid phases in proportion to their volumes at the feed state. Earlier
+versions scaled each liquid phase to the full liquid volume, so a gas/oil/water feed started with twice the liquid
+and a first-step pressure jump (40 to 87 bara in a 3.2 m x 12 m separator case);
+`VesselDepressurizationMultiLiquidTest` covers the fix.
+
 ---
 
 ## Heat Transfer Models
@@ -290,6 +296,13 @@ When liquid is present, separate wall zones track gas-wetted and liquid-wetted a
 vessel.setTwoPhaseHeatTransfer(true);
 vessel.setInitialLiquidLevel(0.5);
 ```
+
+The liquid-side film coefficient uses mass-weighted properties of all liquid phases (oil and water together).
+Each `CALCULATED`/`TRANSIENT_WALL` step refreshes the transport properties (viscosity, thermal conductivity) of the
+current state before the correlations are evaluated, and any missing or non-positive property falls back to a
+typical liquid value. Previously the transient step never refreshed transport properties, so a liquid phase could
+reach the correlation with zero viscosity and the run failed with "Heat capacity, viscosity, and thermal
+conductivity must be positive".
 
 ### Internal HTC Correlations
 
@@ -564,6 +577,10 @@ while (!vessel.isTargetPressureReached()) {
 SimulationResult result = vessel.runSimulation(3600.0, 1.0);  // endTime=3600s, dt=1s
 SimulationResult result = vessel.runSimulation(3600.0, 1.0, 10);  // record every 10 steps
 ```
+
+If `run()` has not been called, `runSimulation` calls it first so that the feed inventory is scaled to the vessel
+volume and liquid level. Without that step the inventory was the feed stream's flow-rate moles and the pressure
+collapsed to almost zero in the first time step.
 
 ### Time Step Selection
 

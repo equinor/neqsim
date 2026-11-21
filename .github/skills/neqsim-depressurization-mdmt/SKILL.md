@@ -2,7 +2,7 @@
 name: neqsim-depressurization-mdmt
 version: "1.0.0"
 description: "Emergency depressurization (blowdown) per API 521 and MDMT assessment per ASME UCS-66 / API 579 / EN 13445 with a VU-flash transient model. USE WHEN: sizing a blowdown valve, producing a P-vs-time curve under fire or depressurization, checking MDMT against blowdown end-temperature, supplying relief/flare source terms, or separating blowdown from trapped-liquid rupture. Anchors on DepressurizationSimulator and MDMTCalculator."
-last_verified: "2026-11-18"
+last_verified: "2026-11-21"
 requires:
   java_packages:
     - neqsim.process.safety.depressurization
@@ -446,6 +446,25 @@ charging overpressure with relief-demand flag).
 - **Stress ratio = 1** — using 1.0 for stress ratio gives the most conservative
   MDMT. Operating-pressure stress ratio (0.30–0.40) usually relaxes MDMT by
   10–30 °C.
+- **`VesselDepressurization` with gas/oil/water** (fixed 2026-11-21, `VesselDepressurizationMultiLiquidTest`):
+  `runSimulation` now calls `run()` itself when it has not been called (before, the inventory was the
+  feed's flow-rate moles and the pressure collapsed to about 0 bara in step 1). An initial liquid level
+  is now shared between oil and water instead of filled once per liquid phase (before, 40 bara jumped
+  to 87 bara in step 1). `CALCULATED`/`TRANSIENT_WALL` steps refresh transport properties, so the
+  liquid film coefficient no longer throws "Heat capacity, viscosity, and thermal conductivity must be
+  positive". With SRK-CPA and three phases each VU step is still slow (about 10 s per step on a
+  2-core runner, measured 2026-11-21); use SRK for screening sweeps or `NonEquilibriumBlowdownModel`
+  for the gas/liquid temperature split.
+- **Equilibrium blowdown with liquid present under-predicts gas cooling** — a single-temperature VU
+  model pins the gas to the liquid temperature. For MDMT also run a dry-vessel (gas-only) case from
+  the PSV set pressure or use `NonEquilibriumBlowdownModel`; in a 105 m³ separator study the
+  equilibrium wet case bottomed at +50 °C while the dry case reached −41 °C.
+- **`NonEquilibriumBlowdownModel` applies a fire by default.** For a cold (MDMT) blowdown call
+  `setFireEnabled(false)`. Since 2026-11-21 the vapour balance includes flow-work cooling; before that a
+  no-fire run kept the gas at its initial temperature, so older NEM MDMT results are not conservative.
+  The liquid zone now also flashes isenthalpically at each new pressure (`setFlashBoilOffEnabled`). For a
+  105 m³ separator (40 bara, 40 mm RO, no fire) NEM gave 3.2 barg after 15 min (equilibrium VU model 3.4 barg)
+  and a minimum gas temperature of 21 °C, between the equilibrium wet (+50 °C) and dry (−41 °C) cases.
 
 ## Time-resolved flare loads
 

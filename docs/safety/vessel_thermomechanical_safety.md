@@ -99,6 +99,16 @@ The `NemResult` exposes time-series lists (`timeS`, `pressureBara`,
 `finalGasTemperatureK`, `finalLiquidTemperatureK`,
 `maxTemperatureBifurcationK`, `flashFallbackCount`).
 
+**Cold blowdown and expansion cooling.** The vapour energy balance includes the flow work of the discharged gas,
+$m c_v \, dT = Q - (h - u)\, dm_{out}$ with $h - u = Z R T / M$, so the vapour now cools on depressurization
+(isentropic in the adiabatic limit). Before this term was added the vapour temperature changed only by heat
+exchange, so a no-fire blowdown kept the gas at its initial temperature. In a fire case the vapour first dips below
+the liquid and is then superheated by the wall. The fire is applied by default (also when `setFireExposure` is not
+called). For an MDMT check without fire, call `model.setFireEnabled(false)`: the wall then exchanges heat only with
+the contents and the outside is adiabatic. Each step also flashes the liquid zone isenthalpically at the new pressure and moves the vapour it forms to the vapour zone (`setFlashBoilOffEnabled(false)` restores the earlier wall-heat-only boil-off); without it a cold blowdown emptied the vapour zone and stopped early. Only the first liquid phase (oil, else aqueous) forms the liquid zone, so
+an oil/water inventory should be lumped into one liquid phase before use. `NonEquilibriumBlowdownModelTest` covers
+both cases (measured 2026-11-21).
+
 ---
 
 ## Dynamic PSV Sizing (Fire Case)
