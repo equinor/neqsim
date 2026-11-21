@@ -19,12 +19,12 @@ import neqsim.thermo.system.SystemSrkEos;
  * Regression tests for concurrent use of the GERG-2008 and EOS-CG wrappers.
  *
  * <p>
- * Both reference equations of state keep mutable temperature, composition and work state inside the kernel. Before
- * the kernels were confined to one thread, two independently owned wrappers evaluated on different threads could
- * overwrite each other's caches between the cache update and the Helmholtz-energy evaluation. The cases below are the
- * ones reported by Kirill Shevtsov: 280 K and 5 mol/L for a 90/5/5 mixture, raced against a second worker at a
- * different state and composition. With a shared kernel the residual Helmholtz energy of worker A was off by 84 %
- * (GERG-2008) and 64 % (EOS-CG). Every concurrent result must equal its serial reference bit for bit.
+ * Both reference equations of state keep mutable temperature, composition and work state inside the kernel. Before the
+ * kernels were confined to one thread, two independently owned wrappers evaluated on different threads could overwrite
+ * each other's caches between the cache update and the Helmholtz-energy evaluation. The cases below are the ones
+ * reported by Kirill Shevtsov: 280 K and 5 mol/L for a 90/5/5 mixture, raced against a second worker at a different
+ * state and composition. With a shared kernel the residual Helmholtz energy of worker A was off by 84 % (GERG-2008) and
+ * 64 % (EOS-CG). Every concurrent result must equal its serial reference bit for bit.
  * </p>
  *
  * @author esol
@@ -63,10 +63,10 @@ public class ReferenceEosThreadConfinementTest {
    */
   @Test
   void gergWorkersDoNotShareKernelState() throws Exception {
-    final NeqSimGERG2008 workerA = new NeqSimGERG2008(phase(new String[] {"methane", "nitrogen", "CO2"},
-        new double[] {0.90, 0.05, 0.05}));
-    final NeqSimGERG2008 workerB = new NeqSimGERG2008(phase(new String[] {"ethane", "propane", "n-butane"},
-        new double[] {0.50, 0.30, 0.20}));
+    final NeqSimGERG2008 workerA = new NeqSimGERG2008(
+        phase(new String[] {"methane", "nitrogen", "CO2"}, new double[] {0.90, 0.05, 0.05}));
+    final NeqSimGERG2008 workerB = new NeqSimGERG2008(
+        phase(new String[] {"ethane", "propane", "n-butane"}, new double[] {0.50, 0.30, 0.20}));
     double referenceA = workerA.getResidualHelmholtzEnergy(TEMPERATURE_A, DENSITY_A);
     double referenceB = workerB.getResidualHelmholtzEnergy(TEMPERATURE_B, DENSITY_B);
     assertEquals(-0.21828987902261812, referenceA, 1e-12, "isolated GERG-2008 reference from the bug report");
@@ -93,10 +93,10 @@ public class ReferenceEosThreadConfinementTest {
    */
   @Test
   void eoscgWorkersDoNotShareKernelState() throws Exception {
-    final NeqSimEOSCG workerA = new NeqSimEOSCG(phase(new String[] {"CO2", "nitrogen", "methane"},
-        new double[] {0.90, 0.05, 0.05}));
-    final NeqSimEOSCG workerB = new NeqSimEOSCG(phase(new String[] {"methane", "ethane", "propane"},
-        new double[] {0.70, 0.20, 0.10}));
+    final NeqSimEOSCG workerA = new NeqSimEOSCG(
+        phase(new String[] {"CO2", "nitrogen", "methane"}, new double[] {0.90, 0.05, 0.05}));
+    final NeqSimEOSCG workerB = new NeqSimEOSCG(
+        phase(new String[] {"methane", "ethane", "propane"}, new double[] {0.70, 0.20, 0.10}));
     double referenceA = workerA.getResidualHelmholtzEnergy(TEMPERATURE_A, DENSITY_A);
     double referenceB = workerB.getResidualHelmholtzEnergy(TEMPERATURE_B, DENSITY_B);
     assertEquals(-0.57502685346774800, referenceA, 1e-12, "isolated EOS-CG reference from the bug report");
@@ -122,10 +122,10 @@ public class ReferenceEosThreadConfinementTest {
    */
   @Test
   void clearCacheKeepsExistingWrappersUsable() {
-    NeqSimGERG2008 gerg = new NeqSimGERG2008(phase(new String[] {"methane", "nitrogen", "CO2"},
-        new double[] {0.90, 0.05, 0.05}));
-    NeqSimEOSCG eoscg = new NeqSimEOSCG(phase(new String[] {"CO2", "nitrogen", "methane"},
-        new double[] {0.90, 0.05, 0.05}));
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(
+        phase(new String[] {"methane", "nitrogen", "CO2"}, new double[] {0.90, 0.05, 0.05}));
+    NeqSimEOSCG eoscg = new NeqSimEOSCG(
+        phase(new String[] {"CO2", "nitrogen", "methane"}, new double[] {0.90, 0.05, 0.05}));
     double gergBefore = gerg.getResidualHelmholtzEnergy(TEMPERATURE_A, DENSITY_A);
     double eoscgBefore = eoscg.getResidualHelmholtzEnergy(TEMPERATURE_A, DENSITY_A);
     NeqSimGERG2008.clearCache();

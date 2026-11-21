@@ -24,15 +24,15 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * <b>Thread safety and model ownership.</b> A GERG-2008 kernel keeps mutable temperature and composition caches and
  * numerical work arrays. The cache therefore holds one initialised kernel per thread and per {@link GERG2008Type}, and
- * every calculation resolves the kernel on the thread that performs it. Wrappers owned by different threads can run
- * at the same time, for example in {@code ProcessSystem.runParallel()}, and give the same results as serial runs. Each
- * thread that uses a model type holds its own kernel and coefficient tables for as long as
- * the thread lives, so long-lived pools keep their kernels.
+ * every calculation resolves the kernel on the thread that performs it. Wrappers owned by different threads can run at
+ * the same time, for example in {@code ProcessSystem.runParallel()}, and give the same results as serial runs. Each
+ * thread that uses a model type holds its own kernel and coefficient tables for as long as the thread lives, so
+ * long-lived pools keep their kernels.
  * </p>
  *
  * <p>
- * The wrapper itself, its phase and its fluid are not thread-safe: do not share one {@code NeqSimGERG2008} or one
- * fluid between threads; {@code clone()} the fluid per worker instead.
+ * The wrapper itself, its phase and its fluid are not thread-safe: do not share one {@code NeqSimGERG2008} or one fluid
+ * between threads; {@code clone()} the fluid per worker instead.
  * </p>
  *
  * @author esol
