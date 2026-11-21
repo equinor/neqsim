@@ -943,6 +943,12 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
    * @return a double
    */
   public double calcRootVolFinder(PhaseType pt) {
+    if (pt == PhaseType.GAS) {
+      // The scan below never records a gas root: solvedBonVlow starts at 1.0 and is only assigned while it is below
+      // 1e-3, so a GAS request always returned 1.0 after evaluating all 2000 grid points. Return that value directly;
+      // molarVolumeChangePhase then solves from the dense end exactly as before.
+      return 1.0;
+    }
     double solvedBonVHigh = 0.0;
     double solvedBonVlow = 1.0;
     double oldh = 1;

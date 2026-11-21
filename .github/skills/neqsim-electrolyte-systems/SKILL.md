@@ -1,7 +1,7 @@
 ---
 name: neqsim-electrolyte-systems
 description: "Electrolyte and brine chemistry guidance for NeqSim. USE WHEN: modeling produced water, scale prediction, CO2/H2S in aqueous systems, MEG/DEG injection, hydrate inhibitor dosing, or any system with ions, salts, or electrolytes. Covers SystemElectrolyteCPAstatoil setup, ion components, scale risk assessment, and brine handling patterns."
-last_verified: "2026-09-01"
+last_verified: "2026-11-21"
 ---
 
 # Electrolyte Systems Guide
@@ -24,6 +24,7 @@ Guide for modeling electrolyte/brine systems in NeqSim.
 |--------|-------------|-------------|
 | Water + salt + HC gas | `SystemElectrolyteCPAstatoil` | `10` |
 | MEG/DEG + water + gas | `SystemSrkCPAstatoil` | `10` |
+| MEG + NaCl brine + gas (activity model) | `SystemPitzer` | `"classic"` |
 | Pure water + gas | `SystemSrkCPAstatoil` | `10` |
 | Brine + multiple salts | `SystemElectrolyteCPAstatoil` | `10` |
 
@@ -44,6 +45,16 @@ the one-argument overload rejects that topology. For concentration sweeps retain
 parameter dataset at zero salt. See the guide's 57-point reference assessment: numerical convergence and a
 passing regression suite do not mean every experimental comparison passed the 1 K accuracy criterion.
 Do not silently fill missing tuples or equate parameter coverage with scientific validation.
+
+MEG in `SystemPitzer`: the `PitzerMegParameters` dataset (`neqsim-pitzer-meg-nacl-v1`) loads automatically.
+It is fitted to MEG–water freezing points and 298 K water activities (Tsurko et al. 2026) and to a
+water/NaCl/MEG melting-point equation (Benson et al. 2010). Valid to 17.6 mol/kg MEG, with Na+/Cl- as the only
+ions. K+/Ca++/Mg++ with MEG, or MEG with methanol, fail closed. Zero rows assumed for dissolved gases are listed by
+`PhasePitzer.getMegAssumedZeroRows()`. Before this dataset existed, Pitzer put MEG in the gas phase and ignored it
+in the water activity. Methanol still enters the Pitzer brine ideally (no parameters): screening only.
+
+e-CPA speed (measured 21 Nov 2026): one flash takes 87–172 ms, against 430–530 ms before the volume-solver fixes and
+13–24 ms for SRK-CPA. With no ions, use `SystemSrkCPAstatoil`.
 
 Hand off to `neqsim-flow-assurance` / `flow.assurance` with the configured fluid, salt mole basis,
 dataset identity, supplied zeta/theta values, pressure grid and operating temperature. Carry forward

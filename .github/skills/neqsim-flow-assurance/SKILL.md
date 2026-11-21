@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-20"
+last_verified: "2026-11-21"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -96,6 +96,18 @@ fallback as stationary-pool evaporation. Keep #4674 physical boundary/full-cycle
 | **Salt brine / formation water (NaCl, CaCl2, ...)** | `SystemElectrolyteCPAstatoil` | `10` |
 | Pitzer salt-brine water activity | `SystemPitzer` | `"classic"` |
 
+All SRK-CPA solver variants (`SystemSrkCPAstatoil`, `...FullyImplicit`, `...Reduced`, `...Broyden...`,
+`...Anderson...`) and all SRK electrolyte-CPA systems use the same CPA hydrate cavity model
+(`ComponentHydrateGF`), so they give the same hydrate temperature; pick the solver for speed. Before
+21 Nov 2026 the variants silently used the PVTsim parameters (up to 0.44 K different). PR-CPA and UMR-CPA still
+use PVTsim parameters. Check with `((PhaseHydrate) fluid.getPhases()[4]).getHydrateModel()`.
+
+When no ions are present, prefer `SystemSrkCPAstatoil` over `SystemElectrolyteCPAstatoil`: same hydrate
+temperature, 5–10× faster flash (e-CPA hydrate point 1–3 s, measured 21 Nov 2026).
+
+`SystemPitzer` handles MEG (+ NaCl) through a fitted dataset (MEG ≤ 17.6 mol/kg). With N2 present the Pitzer
+hydrate search cannot go below 278.12 K, so for MEG-inhibited low-temperature cases use e-CPA.
+
 CPA or a consistent activity-based aqueous model is needed for water–hydrocarbon hydrate modeling.
 **When dissolved salts / electrolytes are present, use `SystemElectrolyteCPAstatoil` or a
 parameterized `SystemPitzer`** so the salt
@@ -130,7 +142,8 @@ ops.hydrateFormationTemperature();
 double hydrateT_C = fluid.getTemperature() - 273.15;
 ```
 
-`setHydrateCheck(true)` is mandatory: without it `hydrateFormationTemperature()` fails
+Call `setHydrateCheck(true)`. Since 21 Nov 2026 `hydrateFormationTemperature()` and
+`hydrateFormationPressure()` add the hydrate phase themselves if it is missing, but older releases fail
 (no hydrate phase) and any wrapper that swallows the exception reports NaN. The fluid must
 contain `water`. `HydrateRiskMapper` (and MCP `runFlowAssurance` `hydrateRiskMap`) now sets the
 flag itself and returns `RiskLevel.UNKNOWN` / `RESULT_NOT_AVAILABLE` with `failureReasons` when

@@ -16,9 +16,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * fugacities, including when the CO2-rich phase is liquid or has disappeared. Ions never occupy hydrate cages. The
  * default search envelope is 273.15-323.15 K and 1-1000 bara. These are numerical bounds, not a qualification of the
  * parameter database over that envelope. The lower temperature is further restricted to the fitted Henry-reference
- * range of each present guest (274.19 K for CO2, 275.46 K for methane). Ice, salt precipitation and drilling-fluid
- * additives require separate models and validation. On failure the input temperature, pressure and multiphase setting
- * are restored, but phase properties must be reflashed before use. Use a clone to preserve an operating state.
+ * range of each present guest (274.19 K for CO2, 275.46 K for methane). MEG uses the fitted
+ * {@link neqsim.thermo.phase.PitzerMegParameters} dataset up to its molality limit. Ice, salt precipitation and other
+ * drilling-fluid additives require separate models and validation. On failure the input temperature, pressure and
+ * multiphase setting are restored, but phase properties must be reflashed before use. Use a clone to preserve an
+ * operating state.
  * </p>
  *
  * @author NeqSim
@@ -277,6 +279,13 @@ public class PitzerHydrateFlash extends ConstantDutyTemperatureFlash {
     }
     if (aqueous == null || aqueous.getComponent("water").getNumberOfMolesInPhase() <= 0.0) {
       throw new IllegalStateException("Pitzer hydrate equilibrium requires an active aqueous phase");
+    }
+    int meg = neqsim.thermo.phase.PitzerMegParameters.megIndex(aqueous);
+    if (meg >= 0 && aqueous.getComponent(meg).getMolality(aqueous)
+        > neqsim.thermo.phase.PitzerMegParameters.MAX_MEG_MOLALITY) {
+      throw new IllegalStateException("Aqueous MEG molality " + aqueous.getComponent(meg).getMolality(aqueous)
+          + " mol/kg is above the fitted Pitzer MEG range of "
+          + neqsim.thermo.phase.PitzerMegParameters.MAX_MEG_MOLALITY + " mol/kg");
     }
     PhaseInterface hydrate = system.getPhases()[4];
     // The hybrid TP flash remaps active phases. Always address the hydrate by its creation-order slot.

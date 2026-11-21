@@ -117,6 +117,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
+    invalidateVolumeIndependentTerms();
     // Electrolyte interactions require the complete configured species set, including at init(0).
     if (isMixingRuleDefined()) {
       mixSelect.requireCurrentComponentCount(this);
@@ -152,18 +153,24 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * volInit.
    */
   public void volInit() {
-    W = electrolyteMixingRule.calcW(this, temperature, pressure, numberOfComponents);
-    WT = electrolyteMixingRule.calcWT(this, temperature, pressure, numberOfComponents);
-    WTT = electrolyteMixingRule.calcWTT(this, temperature, pressure, numberOfComponents);
-    eps = calcEps();
+    updateVolumeIndependentTerms();
+    // Same operation order as calcEps()/calcEpsIonic() so results are bit-identical to the uncached evaluation.
+    double packingDenominator = numberOfMolesInPhase * getMolarVolume() * 1e-5;
+    double packing = 0.0;
+    double ionicPacking = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double term = packingTerms[i] / packingDenominator;
+      packing += term;
+      if (componentArray[i].getIonicCharge() != 0) {
+        ionicPacking += term;
+      }
+    }
+    eps = packing;
     epsdV = calcEpsV();
     epsdVdV = calcEpsVV();
-    epsIonic = calcEpsIonic();
+    epsIonic = ionicPacking;
     epsIonicdV = calcEpsIonicdV();
     epsIonicdVdV = calcEpsIonicdVdV();
-    solventDiElectricConstant = calcSolventDiElectricConstant(temperature);
-    solventDiElectricConstantdT = calcSolventDiElectricConstantdT(temperature);
-    solventDiElectricConstantdTdT = calcSolventDiElectricConstantdTdT(temperature);
 
     diElectricConstant = calcDiElectricConstant(temperature);
     diElectricConstantdT = calcDiElectricConstantdT(temperature);
@@ -211,6 +218,66 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     XLR = calcXLR();
     XLRdT = calcXLRdT();
     bornX = calcBornX();
+  }
+
+  /** Temperature of the cached volume-independent electrolyte terms, K; NaN when invalid. */
+  private transient double cachedTermsTemperature = Double.NaN;
+  /** Phase mole numbers of the cached volume-independent electrolyte terms. */
+  private transient double[] cachedTermsMoles;
+  /** Mixing rule of the cached volume-independent electrolyte terms. */
+  private transient Object cachedTermsMixingRule;
+  /** Per-component packing-fraction numerators N_A pi/6 n_i sigma_i^3; eps = sum(term_i / (n V)). */
+  private transient double[] packingTerms;
+
+  /**
+   * Marks the cached volume-independent electrolyte terms stale. Called at every phase initialisation so that parameter
+   * changes between initialisations are always picked up.
+   */
+  protected void invalidateVolumeIndependentTerms() {
+    cachedTermsTemperature = Double.NaN;
+  }
+
+  /**
+   * Updates the electrolyte terms that depend on temperature and composition but not on volume.
+   *
+   * <p>
+   * The short-range interaction sums W, WT and WTT, the solvent dielectric constant and its temperature derivatives,
+   * and the per-component packing-fraction numerators are evaluated once per temperature and composition instead of in every
+   * iteration of the volume solver. The cache is keyed on exact temperature, phase mole numbers and the mixing-rule
+   * instance, and is cleared at each {@code init}.
+   * </p>
+   */
+  private void updateVolumeIndependentTerms() {
+    if (cachedTermsTemperature == temperature && cachedTermsMixingRule == electrolyteMixingRule
+        && cachedTermsMoles != null && cachedTermsMoles.length == numberOfComponents) {
+      boolean same = true;
+      for (int i = 0; i < numberOfComponents; i++) {
+        if (cachedTermsMoles[i] != componentArray[i].getNumberOfMolesInPhase()) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        return;
+      }
+    }
+    W = electrolyteMixingRule.calcW(this, temperature, pressure, numberOfComponents);
+    WT = electrolyteMixingRule.calcWT(this, temperature, pressure, numberOfComponents);
+    WTT = electrolyteMixingRule.calcWTT(this, temperature, pressure, numberOfComponents);
+    solventDiElectricConstant = calcSolventDiElectricConstant(temperature);
+    solventDiElectricConstantdT = calcSolventDiElectricConstantdT(temperature);
+    solventDiElectricConstantdTdT = calcSolventDiElectricConstantdTdT(temperature);
+    double[] moles = new double[numberOfComponents];
+    double[] terms = new double[numberOfComponents];
+    for (int i = 0; i < numberOfComponents; i++) {
+      moles[i] = componentArray[i].getNumberOfMolesInPhase();
+      terms[i] = avagadroNumber * pi / 6.0 * componentArray[i].getNumberOfMolesInPhase()
+          * Math.pow(componentArray[i].getLennardJonesMolecularDiameter() * 1e-10, 3.0) * 1.0;
+    }
+    packingTerms = terms;
+    cachedTermsMoles = moles;
+    cachedTermsMixingRule = electrolyteMixingRule;
+    cachedTermsTemperature = temperature;
   }
 
   /** {@inheritDoc} */

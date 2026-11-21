@@ -37,16 +37,72 @@ public class PhaseHydrate extends Phase {
    * @param fluidModel a {@link java.lang.String} object
    */
   public PhaseHydrate(String fluidModel) {
-    if ("Pitzer-GE-model".equals(fluidModel)) {
-      hydrateModel = "PitzerHydrateModel";
-    } else if (fluidModel.isEmpty()) {
-      hydrateModel = "PVTsimHydrateModel";
-    } else if (fluidModel.equals("CPAs-SRK-EOS-statoil") || fluidModel.equals("CPAs-SRK-EOS")
-        || fluidModel.equals("CPA-SRK-EOS") || fluidModel.equals("Electrolyte-CPA-EOS-statoil")) {
-      hydrateModel = "CPAHydrateModel";
-    } else {
-      hydrateModel = "PVTsimHydrateModel";
+    hydrateModel = hydrateModelForFluidModelName(fluidModel);
+  }
+
+  /**
+   * Creates a hydrate phase whose cavity model matches the fluid model family of a system.
+   *
+   * <p>
+   * The family is decided from the system class, not from its model name, so every SRK-CPA solver variant
+   * ({@code SystemSrkCPA} and subclasses such as the FullyImplicit, Reduced, Broyden and Anderson implementations) and
+   * every SRK-based electrolyte CPA system use the CPA-fitted {@link ComponentHydrateGF} parameters. The choice of
+   * association solver therefore cannot change the hydrate equilibrium. PR-CPA and UMR-CPA keep the PVTsim parameters
+   * because the CPA hydrate parameters were regressed with SRK-CPA.
+   * </p>
+   *
+   * @param system fluid system that owns the hydrate phase
+   */
+  public PhaseHydrate(neqsim.thermo.system.SystemInterface system) {
+    hydrateModel = hydrateModelFor(system);
+  }
+
+  /**
+   * Selects the hydrate cavity model for a fluid system.
+   *
+   * @param system fluid system
+   * @return {@code "PitzerHydrateModel"}, {@code "CPAHydrateModel"} or {@code "PVTsimHydrateModel"}
+   */
+  public static String hydrateModelFor(neqsim.thermo.system.SystemInterface system) {
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      return "PitzerHydrateModel";
     }
+    if (system instanceof neqsim.thermo.system.SystemSrkCPA
+        || system instanceof neqsim.thermo.system.SystemElectrolyteCPAstatoil
+        || system instanceof neqsim.thermo.system.SystemElectrolyteCPA
+        || system instanceof neqsim.thermo.system.SystemElectrolyteCPAAdvanced) {
+      return "CPAHydrateModel";
+    }
+    return hydrateModelForFluidModelName(system == null ? "" : system.getModelName());
+  }
+
+  /**
+   * Selects the hydrate cavity model from a fluid model name. Prefer {@link #hydrateModelFor} when a system exists.
+   *
+   * @param fluidModel fluid model name, for example {@code "CPAs-SRK-EOS-statoil-FullyImplicit"}
+   * @return {@code "PitzerHydrateModel"}, {@code "CPAHydrateModel"} or {@code "PVTsimHydrateModel"}
+   */
+  public static String hydrateModelForFluidModelName(String fluidModel) {
+    if (fluidModel == null || fluidModel.isEmpty()) {
+      return "PVTsimHydrateModel";
+    }
+    if ("Pitzer-GE-model".equals(fluidModel)) {
+      return "PitzerHydrateModel";
+    }
+    if (fluidModel.startsWith("CPAs-SRK-EOS") || fluidModel.equals("CPA-SRK-EOS")
+        || fluidModel.startsWith("Electrolyte-CPA")) {
+      return "CPAHydrateModel";
+    }
+    return "PVTsimHydrateModel";
+  }
+
+  /**
+   * Returns the selected hydrate cavity model.
+   *
+   * @return {@code "PitzerHydrateModel"}, {@code "CPAHydrateModel"} or {@code "PVTsimHydrateModel"}
+   */
+  public String getHydrateModel() {
+    return hydrateModel;
   }
 
   /**

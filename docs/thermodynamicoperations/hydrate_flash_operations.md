@@ -5,6 +5,12 @@ description: "This document provides comprehensive documentation for hydrate pha
 
 This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim.
 
+`hydrateFormationTemperature()` and `hydrateFormationPressure()` add the hydrate phase when
+`setHydrateCheck(true)` has not been called (previously CPA and e-CPA failed with "can not return phase number 4").
+The cavity model follows the fluid family; see [hydrate models](../thermo/hydrate_models.md#which-model-a-fluid-system-uses).
+`SystemPitzer` supports MEG through a fitted neutral dataset; see
+[Pitzer hydrate equilibrium](../thermo/pitzer_hydrate_equilibrium.md#meg-monoethylene-glycol).
+
 For `SystemPitzer`, temperature, pressure and equilibrium-line calls dispatch to `PitzerHydrateFlash`.
 See [Pitzer hydrate equilibrium](../thermo/pitzer_hydrate_equilibrium.md) for CO2/brine setup,
 parameter requirements and temperature limits. Hydrate amount operations (`hydrateTPflash` and

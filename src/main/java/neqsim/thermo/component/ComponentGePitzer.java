@@ -105,6 +105,10 @@ public class ComponentGePitzer extends ComponentGE {
    */
   @Override
   protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
+    if (neutralPitzerInteractionsActive && phase.hasComponent("water")
+        && neqsim.thermo.phase.PitzerMegParameters.isMeg(this)) {
+      return neqsim.thermo.phase.PitzerMegParameters.henryReference(this, phase.getTemperature());
+    }
     if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
       return super.getEffectiveHenryCoefficient(phase);
     }
@@ -122,6 +126,13 @@ public class ComponentGePitzer extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
+    if (neutralPitzerInteractionsActive && phase.hasComponent("water")
+        && neqsim.thermo.phase.PitzerMegParameters.isMeg(this)) {
+      double t = phase.getTemperature();
+      double dt = 1.0e-3 * t;
+      return (Math.log(neqsim.thermo.phase.PitzerMegParameters.henryReference(this, t + dt))
+          - Math.log(neqsim.thermo.phase.PitzerMegParameters.henryReference(this, t - dt))) / (2.0 * dt);
+    }
     if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
       return super.getLnHenryCoefficientTemperatureDerivative(phase);
     }
