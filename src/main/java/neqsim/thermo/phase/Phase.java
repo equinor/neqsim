@@ -2962,7 +2962,8 @@ public abstract class Phase implements PhaseInterface {
    * @return true if the stored derivatives belong to the current state of the phase
    */
   private boolean caloricStateMatchesStamp() {
-    if (!caloricStamped || stampT != temperature || stampP != pressure || stampN != numberOfMolesInPhase) {
+    if (!caloricStamped || Double.compare(stampT, temperature) != 0 || Double.compare(stampP, pressure) != 0
+        || Double.compare(stampN, numberOfMolesInPhase) != 0) {
       return false;
     }
     double sx = 0.0;
@@ -2972,7 +2973,7 @@ public abstract class Phase implements PhaseInterface {
       sx += x * (i + 1);
       sxx += x * x * (i + 7);
     }
-    return stampSx == sx && stampSxx == sxx;
+    return Double.compare(stampSx, sx) == 0 && Double.compare(stampSxx, sxx) == 0;
   }
 
   /** {@inheritDoc} */
