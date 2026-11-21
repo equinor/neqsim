@@ -36,7 +36,7 @@ public final class ProfessionalPidSymbolLibrary {
   public enum Family {
     VERTICAL_VESSEL, HORIZONTAL_VESSEL, COMPRESSOR, PUMP, HEAT_EXCHANGER, CONTROL_VALVE, ISOLATION_VALVE, CHECK_VALVE,
     RELIEF_VALVE, FIELD_INSTRUMENT, CONTROL_FUNCTION, SAFETY_FUNCTION, NOZZLE, TERMINAL, TERMINAL_NORTH, TERMINAL_WEST,
-    PNEUMATIC_OPERATED_VALVE, PIPE_TEE, UNMAPPED
+    PNEUMATIC_OPERATED_VALVE, PIPE_TEE, SHUTDOWN_VALVE, UNMAPPED
   }
 
   /** Prevents utility construction. */
@@ -85,7 +85,9 @@ public final class ProfessionalPidSymbolLibrary {
         || equipment instanceof neqsim.process.equipment.valve.PSDValve
         || equipment instanceof neqsim.process.equipment.valve.HIPPSValve
         || equipment instanceof neqsim.process.equipment.valve.BlowdownValve) {
-      return Family.ISOLATION_VALVE;
+      // The P&ID shows the declared function: a valve tagged as a control valve (PCV, LCV, ASV, ...) is drawn as a
+      // control valve even when its simulation model uses shutdown-valve stroke dynamics.
+      return controlFunctionTag(equipment.getName()) ? Family.CONTROL_VALVE : Family.SHUTDOWN_VALVE;
     }
     if (equipment instanceof neqsim.process.equipment.valve.RuptureDisk) {
       return Family.UNMAPPED;
@@ -94,6 +96,23 @@ public final class ProfessionalPidSymbolLibrary {
       return Family.CONTROL_VALVE;
     }
     return Family.UNMAPPED;
+  }
+
+  /**
+   * Returns true when the ISA-5.1 function letters of a tag declare a modulating control valve.
+   *
+   * @param tag equipment tag such as {@code 30-PCV-101} or {@code 30-ASV-100}
+   * @return true for control-valve letter groups (ending in CV, or ASV / FV / PV / LV / TV / HCV)
+   */
+  static boolean controlFunctionTag(String tag) {
+    java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^[0-9A-Z]{1,4}-([A-Z]{2,5})-[0-9]{2,}$")
+        .matcher(tag == null ? "" : tag);
+    if (!matcher.matches()) {
+      return false;
+    }
+    String letters = matcher.group(1);
+    return letters.endsWith("CV") || letters.equals("ASV") || letters.equals("FV") || letters.equals("PV")
+        || letters.equals("LV") || letters.equals("TV");
   }
 
   /**
@@ -133,22 +152,37 @@ public final class ProfessionalPidSymbolLibrary {
       break;
     case CONTROL_VALVE:
     case PNEUMATIC_OPERATED_VALVE:
+    case SHUTDOWN_VALVE:
     case ISOLATION_VALVE:
     case CHECK_VALVE:
     case RELIEF_VALVE:
       valve(page, family, x, y, width, height, tag);
       break;
     case FIELD_INSTRUMENT:
-    case CONTROL_FUNCTION:
-    case SAFETY_FUNCTION:
+      // ISA-5.1: discrete instrument, field mounted - circle without a location line.
       circle(page, x, y, width / 2.0, tag);
-      if (family != Family.FIELD_INSTRUMENT) {
-        page.commands.add(Command.line(x - width / 2.0, y, x + width / 2.0, y, "#111111", .25, tag, ""));
-      }
-      if (family == Family.SAFETY_FUNCTION) {
-        page.commands.add(Command.rect(x - width / 2.0 - 2.0, y - height / 2.0 - 2.0, width + 4.0, height + 4.0,
-            "#111111", "none", .25, tag, ""));
-      }
+      break;
+    case CONTROL_FUNCTION:
+      // ISA-5.1: shared display / shared control (DCS / PCS), primary location normally accessible to the operator -
+      // circle inscribed in a square with a solid horizontal line.
+      page.commands.add(Command.rect(x - width / 2.0 - 2.0, y - height / 2.0 - 2.0, width + 4.0, height + 4.0,
+          "#111111", "#ffffff", .25, tag, ""));
+      circle(page, x, y, width / 2.0, tag);
+      page.commands.add(Command.line(x - width / 2.0, y, x + width / 2.0, y, "#111111", .25, tag, ""));
+      break;
+    case SAFETY_FUNCTION:
+      // ISA-5.1: programmable logic function (used for SIS / ESD / PSD logic) - diamond inscribed in a square with a
+      // solid horizontal line. Distinct from the PCS symbol so control and safety functions cannot be confused.
+      page.commands.add(Command.rect(x - width / 2.0 - 2.0, y - height / 2.0 - 2.0, width + 4.0, height + 4.0,
+          "#111111", "#ffffff", .25, tag, ""));
+      List<Point> diamond = new ArrayList<Point>();
+      diamond.add(new Point(x, y - height / 2.0 - 2.0));
+      diamond.add(new Point(x + width / 2.0 + 2.0, y));
+      diamond.add(new Point(x, y + height / 2.0 + 2.0));
+      diamond.add(new Point(x - width / 2.0 - 2.0, y));
+      diamond.add(new Point(x, y - height / 2.0 - 2.0));
+      page.commands.add(Command.polyline(diamond, "#111111", .25, "", tag, false));
+      page.commands.add(Command.line(x - width / 2.0 - 2.0, y, x + width / 2.0 + 2.0, y, "#111111", .25, tag, ""));
       break;
     case PIPE_TEE:
       page.commands.add(Command.line(x - width / 2, y, x + width / 2, y, "#111111", .5, tag, ""));
@@ -275,6 +309,17 @@ public final class ProfessionalPidSymbolLibrary {
    * @param tag controlled tag
    */
   private static void valve(Page page, Family family, double x, double y, double width, double height, String tag) {
+    if (family == Family.RELIEF_VALVE) {
+      poly(page, tag,
+          new double[][] {{x, y}, {x - height / 2, y + height / 2}, {x + height / 2, y + height / 2}, {x, y}});
+      poly(page, tag,
+          new double[][] {{x, y}, {x + width / 2, y - height / 2}, {x + width / 2, y + height / 2}, {x, y}});
+      page.commands.add(Command.line(x, y, x, y - 8, "#111111", .3, tag, ""));
+      poly(page, tag, new double[][] {{x - 4, y - 8}, {x + 4, y - 10}, {x - 4, y - 12}, {x + 4, y - 14},
+          {x - 4, y - 16}, {x + 4, y - 18}});
+      page.commands.add(Command.line(x - 5, y - 18, x + 5, y - 18, "#111111", .3, tag, ""));
+      return;
+    }
     if (family == Family.CHECK_VALVE) {
       poly(page, tag, new double[][] {{x - width / 2, y - height / 2}, {x + width / 2, y},
           {x - width / 2, y + height / 2}, {x - width / 2, y - height / 2}});
@@ -284,11 +329,11 @@ public final class ProfessionalPidSymbolLibrary {
     }
     poly(page, tag, new double[][] {{x - width / 2, y - height / 2}, {x + width / 2, y + height / 2},
         {x + width / 2, y - height / 2}, {x - width / 2, y + height / 2}, {x - width / 2, y - height / 2}});
-    if (family == Family.CONTROL_VALVE || family == Family.PNEUMATIC_OPERATED_VALVE) {
+    if (family == Family.CONTROL_VALVE || family == Family.PNEUMATIC_OPERATED_VALVE
+        || family == Family.SHUTDOWN_VALVE) {
+      // ISA-5.1 / ISO 10628-2: an automatically operated valve always shows its actuator. The dome is the ISA-5.1
+      // generic actuator (also spring-diaphragm); the specific actuator type stays a data item (HOLD) until selected.
       page.commands.add(Command.line(x, y, x, y - 13, "#111111", .3, tag, ""));
-      if (family != Family.PNEUMATIC_OPERATED_VALVE) {
-        return; // Actuator power/type remains HOLD; do not silently select a diaphragm.
-      }
       List<Point> diaphragm = new ArrayList<Point>();
       for (int index = 0; index <= 16; index++) {
         double angle = Math.PI + index * Math.PI / 16.0;
@@ -296,8 +341,18 @@ public final class ProfessionalPidSymbolLibrary {
       }
       diaphragm.add(new Point(x - 5, y - 13));
       page.commands.add(Command.polygon(diaphragm, "#111111", "#ffffff", .3, tag));
+      if (family == Family.SHUTDOWN_VALVE) {
+        // On/off shutdown valve: a filled ball marks the quarter-turn closure element distinct from a throttling body.
+        List<Point> ball = new ArrayList<Point>();
+        for (int index = 0; index <= 16; index++) {
+          double angle = index * Math.PI / 8.0;
+          ball.add(new Point(x + 1.6 * Math.cos(angle), y + 1.6 * Math.sin(angle)));
+        }
+        page.commands.add(Command.polygon(ball, "#111111", "#111111", .25, tag));
+      }
     }
     if (family == Family.RELIEF_VALVE) {
+      // ISO 10628-2 spring-loaded safety valve, angle pattern: inlet from below, outlet to the side, spring on top.
       page.commands.add(Command.line(x, y, x, y - 8, "#111111", .3, tag, ""));
       poly(page, tag, new double[][] {{x - 4, y - 8}, {x + 4, y - 10}, {x - 4, y - 12}, {x + 4, y - 14},
           {x - 4, y - 16}, {x + 4, y - 18}});

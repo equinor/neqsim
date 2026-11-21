@@ -940,30 +940,84 @@ process.run();
 
 The builder performs these steps internally:
 
-1. **Topology resolution** — `DexpiTopologyResolver` parses `<Equipment>`, `<Nozzle>` and
-   `<Connection>` elements into a directed graph, collapses inline piping components (valves,
-   reducers) into equipment-level edges, and produces a topological ordering via Kahn's algorithm.
-   The resolver also detects cycles and logs warnings when cyclic dependencies are found;
-   `ResolvedTopology.hasCycle()` can be queried programmatically.
-2. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
+1. **Profile check** — Native DEXPI 2.x files (root element `Model`) are rejected with a
+   `DexpiXmlReaderException` that names the supported route. They are never silently turned into a
+   feed-only process.
+2. **Topology resolution** — `DexpiTopologyResolver` parses `<Equipment>`, `<Nozzle>` and
+   `<Connection>` elements and produces an upstream-to-downstream ordering via Kahn's algorithm.
+3. **Flowsheet graph** — `DexpiFlowsheetGraph` builds the material-flow graph used for simulation.
+   In-line throttling valves that carry an `OperatingPressureValue` become `ThrottlingValve` units,
+   including valves that sit inside a `PipingNetworkSegment` and are connected through their own
+   nozzles. Tees, reducers, strainers and isolation valves without an operating pressure are
+   collapsed as pass-through items. Branches through pressure-safety devices, rupture disks and
+   blinds are excluded, because they carry no flow at normal operation.
+4. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
    `dexpi_piping_component_mapping.properties` from the classpath to translate DEXPI ComponentClass
    strings (e.g. `CentrifugalCompressor`) into `EquipmentEnum` values.
-3. **Equipment instantiation** — `DexpiEquipmentFactory` creates real NeqSim equipment from the
+5. **Equipment instantiation** — `DexpiEquipmentFactory` creates real NeqSim equipment from the
    mapped enum, applying sizing attributes such as `InsideDiameter`, `TangentToTangentLength`,
    `DesignPressure`, `ValveCv` and `Orientation`. Distillation columns are instantiated with
    `NumberOfTrays` and `FeedTray` attributes when present. Column subtypes are detected from the
    DEXPI class name: absorbers (class containing "absorb") are created without condenser or
    reboiler, and strippers (class containing "strip") without a condenser.
-4. **Stream wiring** — The builder walks the topology in upstream-to-downstream order, connecting
-   outlet streams of upstream equipment to inlets of downstream equipment.
-5. **Auto-instrumentation** — When enabled, `DynamicProcessHelper.instrumentAndControl()` adds
+6. **Port-aware stream wiring** — Each connection leaves the correct outlet of its source unit.
+   For separators the outlet is resolved from, in order: the `PortRole` attribute that
+   `DexpiXmlWriter` writes on every nozzle (`GasOutlet`, `LiquidOutlet`, `OilOutlet`,
+   `WaterOutlet`), the downstream unit type (compressor or expander implies gas, pump implies
+   liquid), the vertical nozzle position (Proteus is Y-up, so the highest outlet is gas), and
+   document order. Splitters get one branch per outgoing connection, with split factors taken from
+   the exported branch `OperatingFlowValue` when all are present. Mixers receive every incoming
+   connection; other units with several inlets are fed through an inlet mixer.
+7. **Recycle closure** — When only loops remain, the builder tears the connection into the unit
+   with the most upstream units already built, inserts a tear stream at the source operating state,
+   and closes the loop with a `Recycle`.
+8. **Operating specifications** — `OperatingPressureValue` on compressors, pumps and throttling
+   valves becomes the outlet pressure, and `OperatingTemperatureValue` on heaters and coolers
+   becomes the outlet temperature. Units such as `bara`, `barg`, `kPa`, `MPa`, `psia`, `C`, `K`
+   and `F` are converted. Operating values take precedence over design values.
+9. **Auto-instrumentation** — When enabled, `DynamicProcessHelper.instrumentAndControl()` adds
    transmitters and PID controllers to separators, compressors and heat exchangers. DEXPI
    instrument tags are matched to auto-generated transmitters by category prefix (e.g. `PT-` for
    pressure transmitters) and the auto-generated names are **renamed** to the actual DEXPI tag
    names. Controller tags are derived by replacing the function letter (e.g. `PT-100` to `PC-100`).
-6. **Namespace-aware parsing** — The builder supports an optional `setNamespaceAware(true)` flag
+10. **Namespace-aware parsing** — The builder supports an optional `setNamespaceAware(true)` flag
    for DEXPI documents that use XML namespaces. When enabled, the underlying DOM parser and
    equipment factory use namespace-aware element resolution.
+
+### Build diagnostics and round-trip fidelity
+
+`DexpiSimulationBuilder.getDiagnostics()` returns every judgement the last `build()` made, each with
+a severity, a stable code, the DEXPI element id, and a message:
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `DEXPI_BUILD_SPECIFICATION_MISSING` | WARNING | A compressor, pump, valve, heater or cooler has no operating outlet value; set it before `run()` |
+| `DEXPI_BUILD_ADDITIONAL_FEED` | WARNING | A unit without an upstream connection received its own copy of the builder feed |
+| `DEXPI_BUILD_SPLIT_FACTORS_ASSUMED` | WARNING | Branch flows were not available, so an equal split was assumed |
+| `DEXPI_BUILD_RECYCLE_TEAR` | INFO | A loop was torn at the named connection and closed with a `Recycle` |
+| `DEXPI_BUILD_INLET_MIXER` | INFO | Several connections enter a non-mixer unit and were combined |
+| `DEXPI_BUILD_PASS_THROUGH` | INFO | A piping item or unsupported unit was collapsed |
+| `DEXPI_BUILD_NO_FLOW_BRANCH_EXCLUDED` | INFO | A safety-device or blind branch was excluded from the steady-state flowsheet |
+| `DEXPI_BUILD_CONNECTION_UNRESOLVED` | INFO | A connection ends off-page or at an unknown item |
+
+A model exported with `DexpiXmlWriter.write(...)` and rebuilt with the same fluid template and
+feed reproduces the source flowsheet: separator outlets, in-line valves, all mixer inlets,
+splitter branches and factors, outlet specifications, and recycle loops.
+`DexpiSimulationRoundTripTest` pins this for a recycle train, a three-phase separator with a
+three-way splitter, and a legacy file without port roles. DEXPI carries no fluid composition, so
+the fluid template is always a separate input. A third-party P&ID normally lacks operating data;
+the builder still connects the flowsheet and reports each specification you must add.
+
+```java
+DexpiSimulationBuilder builder = new DexpiSimulationBuilder(new File("plant.xml"))
+    .setFluidTemplate(fluid).setFeedPressure(60.0, "bara")
+    .setFeedTemperature(70.0, "C").setFeedFlowRate(50000.0, "kg/hr");
+ProcessSystem process = builder.build();
+for (DexpiSimulationBuilder.BuildDiagnostic diagnostic : builder.getDiagnostics()) {
+  System.out.println(diagnostic);
+}
+process.run();
+```
 
 ### Sizing attributes
 

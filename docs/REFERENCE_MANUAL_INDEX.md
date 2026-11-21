@@ -740,6 +740,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | Layered Architecture | [docs/safety/layered_safety_architecture.md](safety/layered_safety_architecture.md) | Layered safety architecture |
 | Process Safety       | [docs/process/safety/README.md](process/safety/README.md)                                 | Process safety module       |
 | Closed-loop SIF verification | [docs/process/safety/closed-loop-sif-verification.md](process/safety/closed-loop-sif-verification.md) | Executed detection, voting, logic delay, and final-element response |
+| P&ID safety studies | [docs/process/safety/pid-safety-studies.md](process/safety/pid-safety-studies.md) | Relief, blowdown, flare load, trip set points, SIL screening and HAZOP evidence from the simulation |
 | HAZOP/LOPA to SRS handoff | [docs/process/safety/hazop-lopa-srs-handoff.md](process/safety/hazop-lopa-srs-handoff.md) | IPL eligibility, LOPA arithmetic, and unapproved draft SRS traceability |
 | Integrated facility response | [docs/process/safety/integrated-facility-safety-response.md](process/safety/integrated-facility-safety-response.md) | Joined ESD, trip, relief, blowdown, flare, and process-limit evidence |
 | Live source-term sessions | [docs/process/safety/live-source-term-sessions.md](process/safety/live-source-term-sessions.md) | Versioned source frames from steady and transient process models |

@@ -9,6 +9,9 @@ import neqsim.process.engineering.pid.PidElementType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
 
 /** Proposes pressure, level and temperature instrumentation for separators and scrubbers. */
 public final class SeparatorControlPidRule implements PidDesignRule {
@@ -59,11 +62,17 @@ public final class SeparatorControlPidRule implements PidDesignRule {
     PidElement lic = PidRuleSupport.element(context, equipment, "LIC", "LEVEL-CONTROLLER", PidElementType.CONTROLLER,
         RULE_ID, "Separator level indicating controller",
         "Maintain liquid level within the approved operating envelope");
-    PidElement lcv = PidRuleSupport
-        .element(context, equipment, "LCV", "LEVEL-CONTROL-VALVE", PidElementType.CONTROL_VALVE, RULE_ID,
-            "Separator liquid level control valve", "Modulate liquid outlet flow to control level")
-        .line(((Separator) equipment).getLiquidOutStream().getName())
-        .attribute("failurePosition", "HAZOP_INPUT_REQUIRED").attribute("sizingStatus", "CALCULATION_REQUIRED");
+    StreamInterface liquid = ((Separator) equipment).getLiquidOutStream();
+    ThrottlingValve existing = existingFinalElement(context, liquid);
+    PidElement lcv = (existing == null
+        ? PidRuleSupport.element(context, equipment, "LCV", "LEVEL-CONTROL-VALVE", PidElementType.CONTROL_VALVE,
+            RULE_ID, "Separator liquid level control valve", "Modulate liquid outlet flow to control level")
+        : PidRuleSupport.existingFinalElement(context, equipment, existing.getName(), "LEVEL-CONTROL-VALVE", RULE_ID,
+            "Separator liquid level control valve (existing modelled letdown valve)",
+            "Use the modelled liquid letdown valve as the level-control final element instead of adding a second "
+                + "valve in series"))
+        .line(liquid.getName()).attribute("failurePosition", "HAZOP_INPUT_REQUIRED")
+        .attribute("sizingStatus", "CALCULATION_REQUIRED");
     connect(lt, lic, lcv);
     PidRuleSupport.trace(lt, context, equipment, "LEVEL");
     PidRuleSupport.trace(lic, context, equipment, "LEVEL-CONTROL");
@@ -118,6 +127,39 @@ public final class SeparatorControlPidRule implements PidDesignRule {
     result.add(sensor);
     result.add(controller);
     result.add(valve);
+  }
+
+  /**
+   * Returns the modelled throttling valve that receives a separator outlet, when it is the outlet's only consumer.
+   *
+   * <p>
+   * A separator's liquid letdown valve is the natural level-control final element. Proposing a new control valve in
+   * series with it would show two valves where the plant has one. Check, safety, relief and shutdown valve models are
+   * not throttling final elements and are ignored.
+   * </p>
+   *
+   * @param context design context giving access to the engineering process
+   * @param outlet separator outlet stream
+   * @return the existing throttling valve, or null
+   */
+  static ThrottlingValve existingFinalElement(PidDesignContext context, StreamInterface outlet) {
+    if (outlet == null || context.getProject() == null) {
+      return null;
+    }
+    ProcessSystem process = context.getProject().getEngineeringProcessSystem();
+    if (process == null) {
+      return null;
+    }
+    ProcessEquipmentInterface consumer = null;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!(unit instanceof StreamInterface) && unit.getInletStreams().contains(outlet)) {
+        if (consumer != null) {
+          return null;
+        }
+        consumer = unit;
+      }
+    }
+    return consumer != null && consumer.getClass() == ThrottlingValve.class ? (ThrottlingValve) consumer : null;
   }
 
   private static void connect(PidElement sensor, PidElement controller, PidElement valve) {

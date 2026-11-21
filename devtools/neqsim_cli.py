@@ -23,6 +23,7 @@ Usage:
     neqsim layout-study SPEC Physical plant layout: checked alternatives, CAD and study report
     neqsim pfd-check FILES   Deterministic layout check of PFD/BFD/flow diagrams (SVG, JSON spec, PNG); mandatory before use
     neqsim pid-review DIR    Review P&ID package integrity, drawings and standards evidence
+    neqsim dexpi-check FILE  DEXPI 2.0.x version/profile identity, NeqSim schema check and pyDEXPI rules
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)
     neqsim --set-task-root P Set the folder new tasks are created in (created if
@@ -162,6 +163,8 @@ def _print_usage():
                                 "Layout check of flow diagrams (overlaps, label/line collisions, crossings, arrows, tags); PASS/WARN/FAIL"))
     print("  {:<18s} {}".format("pid-review DIR",
                                 "P&ID package quality gate with hash-bound visual/standards evidence; PASS/HOLD/FAIL"))
+    print("  {:<18s} {}".format("dexpi-check FILE",
+                                "DEXPI 2.0.x conformance: version/profile, NeqSim schema check, pyDEXPI rules; PASS/FAIL"))
     print("  {:<18s} {}".format("report-manifest DIR",
                                 "Hand a solved task to project-development gates (discipline_report.v1 folder)"))
     print("  {:<18s} {}".format("work-record [DIR]",
@@ -692,6 +695,9 @@ def main():
     if cmd in ("pid-review", "pid_review"):
         import pid_quality_review
         sys.exit(pid_quality_review.main(sys.argv[2:]))
+    if cmd in ("dexpi-check", "dexpi_check"):
+        import dexpi_conformance_check
+        sys.exit(dexpi_conformance_check.main(sys.argv[2:]))
     if cmd in ("process-report", "process_report"):
         import process_report
         sys.exit(process_report.main(sys.argv[2:]))

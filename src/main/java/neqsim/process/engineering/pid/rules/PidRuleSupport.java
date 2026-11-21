@@ -23,6 +23,32 @@ final class PidRuleSupport {
         .attribute("approvalStatus", "REVIEW_REQUIRED");
   }
 
+  /**
+   * Creates a proposal that represents an existing modelled device under its own tag, so the drawing and the exchange
+   * show one device instead of a new device in series with the modelled one.
+   *
+   * @param context design context
+   * @param equipment owning equipment
+   * @param existingTag tag of the modelled device
+   * @param purpose proposal purpose
+   * @param ruleId rule identity
+   * @param description description
+   * @param rationale engineering rationale
+   * @return proposal element carrying the existing tag
+   */
+  static PidElement existingFinalElement(PidDesignContext context, ProcessEquipmentInterface equipment,
+      String existingTag, String purpose, String ruleId, String description, String rationale) {
+    try {
+      context.getTagAllocator().reserve(existingTag);
+    } catch (IllegalArgumentException alreadyReserved) {
+      // Another rule already refers to the same modelled device; the tag stays unique in the model.
+    }
+    return new PidElement("pid:" + normalize(existingTag), existingTag, PidElementType.CONTROL_VALVE)
+        .equipment(equipment.getName()).description(description).provenance(ruleId, rationale)
+        .standard("ANSI/ISA-5.1:2024").attribute("proposalPurpose", purpose)
+        .attribute("approvalStatus", "REVIEW_REQUIRED").attribute("existingModelledDevice", existingTag);
+  }
+
   static void trace(PidElement element, PidDesignContext context, ProcessEquipmentInterface equipment,
       String... tokens) {
     List<EngineeringRequirement> requirements = context.requirements(equipment.getName(), null);
