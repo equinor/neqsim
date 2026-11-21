@@ -226,6 +226,8 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue((toolkit / "unisim_reader.py").exists())
         rule = self.out / "core" / "com.github.copilot" / "rules" / "neqsim-calculation-routing.instructions.md"
         self.assertIn("neqsim docker ensure --linux", rule.read_text(encoding="utf-8"))
+        task_rule = self.out / "core" / "com.github.copilot" / "rules" / "neqsim-task-solving.instructions.md"
+        self.assertIn("neqsim new-task", task_rule.read_text(encoding="utf-8"))
         hook_py = (self.out / "core" / "scripts" / "install_skill_packages.py").read_text(
             encoding="utf-8")
         self.assertIn("'${PLUGIN_ROOT}/toolkit'", hook_py)
@@ -262,6 +264,15 @@ class BuildPluginTest(unittest.TestCase):
         self.assertIn("neqsim", core.pip_targets)
         self.assertEqual(core.verify_imports, ["neqsim", "neqsim_cli", "neqsim_runner"])
 
+    def test_default_specs_enterprise_plugin_ships_access_rule(self):
+        enterprise = next(s for s in bap.default_specs() if s.name == "neqsim-enterprise")
+        self.assertEqual([r.name for r in enterprise.rules_roots], ["plugin-rules"])
+        rule = enterprise.rules_roots[0] / "enterprise-access.instructions.md"
+        if not rule.is_file():
+            self.skipTest("neqsim-enterprise-skills checkout not available")
+        text = rule.read_text(encoding="utf-8")
+        self.assertIn("enterprise_sso_auth login", text)
+        self.assertIn("external system browser", text)
     def test_unresolved_required_skill_is_a_warning(self):
         result = self._build()
         self.assertTrue(any("neqsim-missing" in w for w in result["warnings"]))

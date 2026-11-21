@@ -169,7 +169,8 @@ def default_specs() -> List[PluginSpec]:
             "neqsim-enterprise",
             "Enterprise-only NeqSim skills and agents (governed data sources and "
             "company policies). Internal use only.",
-            [enterprise_skills], [enterprise_agents], [], False,
+            [enterprise_skills], [enterprise_agents],
+            [enterprise_skills.parent / "plugin-rules"], False,
             [enterprise_skills.parent],
         ),
         PluginSpec(
@@ -412,6 +413,12 @@ LOCK_MAX_AGE_S = 45 * 60
 MCP_REFRESH_S = 24 * 3600
 MCP_MIN_JAVA = 21
 JAVA_EXE = "java.exe" if os.name == "nt" else "java"
+
+# Slow proxies and flaky corporate networks time out the default 15 s pip read; a failed first
+# install otherwise costs the user a whole session. Explicit user settings still win.
+os.environ.setdefault("PIP_DEFAULT_TIMEOUT", "90")
+os.environ.setdefault("PIP_RETRIES", "8")
+os.environ.setdefault("PIP_DISABLE_PIP_VERSION_CHECK", "1")
 
 root = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 plugin_name = json.loads((root / "plugin.json").read_text(encoding="utf-8")).get("name", root.name)
