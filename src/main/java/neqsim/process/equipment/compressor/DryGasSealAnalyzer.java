@@ -545,6 +545,7 @@ public class DryGasSealAnalyzer {
 
         ThermodynamicOperations ops = new ThermodynamicOperations(expandedFluid);
         ops.TPflash();
+        expandedFluid.init(2);
         double enthalpy = expandedFluid.getEnthalpy("J/mol");
 
         // Now do PH flash at the lower outlet pressure
@@ -1038,6 +1039,7 @@ public class DryGasSealAnalyzer {
 
       ThermodynamicOperations ops = new ThermodynamicOperations(inletFluid);
       ops.TPflash();
+      inletFluid.init(2);
       double enthalpy = inletFluid.getEnthalpy("J/mol");
 
       // Expand to vent pressure
@@ -1139,6 +1141,7 @@ public class DryGasSealAnalyzer {
 
       ThermodynamicOperations ops = new ThermodynamicOperations(inletFluid);
       ops.TPflash();
+      inletFluid.init(2);
       double enthalpy = inletFluid.getEnthalpy("J/mol");
 
       SystemInterface ventFluid = sealGas.clone();

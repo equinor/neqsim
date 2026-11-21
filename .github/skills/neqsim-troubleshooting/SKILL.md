@@ -1,7 +1,7 @@
 ---
 name: neqsim-troubleshooting
 description: "Troubleshoot oil and gas process operating problems and NeqSim simulation failures. Route measured plant disturbances to the root-cause agent. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
-last_verified: "2026-11-18"
+last_verified: "2026-11-21"
 ---
 
 # NeqSim Troubleshooting Playbook
@@ -54,6 +54,20 @@ reapplied the previous flash's split. An outer flash that needs history-independ
 `Flash.discardSecondOrderSolver()` before each inner run, as `OptimizedVUflash` does. Do not discard it inside
 `TPflash.run()` itself: `TVFlashTest.testTVflash` (UMR-PRU) only reaches its lower-Gibbs split through the carried
 state, because a fresh TP flash misses that split.
+
+### A flash merges gas and oil at one isolated condition
+
+**Symptom:** a gas/oil/water flash returns one hydrocarbon phase with a density between gas and oil (327 kg/m3 where
+gas is 134 and oil 536), while the same fluid 1e-6 bar or 0.01 K away gives three phases.
+
+**Check:** the 2026-11-21 case (issue 5199) was an unaccepted Newton step in `SysNewtonRhapsonTPflash` that moved the
+phase fraction from 0.80 to -0.55. The next call read it as a converged collapsed phase. A step longer than the
+feasible interval (a component moved by more than its feed amount, or the phase fraction by more than one) is now
+discarded and `TPflash` takes a successive substitution step instead (`wasLastStepDiscarded()`). Shorter unaccepted
+steps that cross the phase-fraction limit are still taken, because the endpoint recoveries rely on that collapse.
+For a new case, log the phase fraction, the phase types and the deviation per iteration of the two-phase loop in
+`TPflash.run()` and look for a deviation that jumps to about 1 and then to below 1e-10 with the phase fraction at
+its limit.
 
 ## NaN / Zero Enthalpy After Clone + Re-Flash
 

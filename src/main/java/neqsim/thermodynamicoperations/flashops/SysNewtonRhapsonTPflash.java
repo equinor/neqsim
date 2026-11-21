@@ -67,6 +67,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** Pre-allocated EJML LU solver. */
   private transient LinearSolverDense<DMatrixRMaj> linearSolver;
 
+  /** True when the last Newton step was discarded because it was longer than the feasible composition interval. */
+  private boolean lastStepDiscarded = false;
+
   /**
    * Constructor for sysNewtonRhapsonTPflash.
    *
@@ -235,6 +238,38 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
+   * Check whether the current Newton direction, scaled by the step length, is longer than the feasible interval. Each
+   * component amount in the first phase lies between zero and its feed amount, and the phase fraction between zero and
+   * one, so a longer step leaves the physical domain from any starting point.
+   *
+   * @param alpha step length applied to the Newton direction
+   * @return true if the step moves a component by more than its feed amount or the phase fraction by more than one
+   */
+  private boolean exceedsFeasibleInterval(double alpha) {
+    double betaStep = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double step = alpha * dxVector.get(i, 0);
+      if (z[i] > 0.0 && Math.abs(step) > z[i]) {
+        return true;
+      }
+      betaStep += step;
+    }
+    return Math.abs(betaStep) > 1.0;
+  }
+
+  /**
+   * Tells whether the last call to {@link #solve()} discarded its Newton step. A step is discarded when no trial point
+   * passed the line search and the shortest step is still longer than the feasible composition interval. The system is
+   * then restored to the iterate from before the step, and the caller should take a successive substitution step
+   * instead.
+   *
+   * @return true if the last Newton step was discarded
+   */
+  public boolean wasLastStepDiscarded() {
+    return lastStepDiscarded;
+  }
+
+  /**
    * Set compositions from trial u vector and compute fugacities only (init level 1). Used for line search Q evaluation
    * at trial points.
    *
@@ -294,6 +329,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   private double solve(boolean useResidualFallback) {
     ensureSolverInitialized();
     iter++;
+    if (lastStepDiscarded) {
+      // The caller replaced the discarded step with its own update, so restart from the system state.
+      setu();
+      lastStepDiscarded = false;
+    }
     init();
 
     double qCurrent = computeQ();
@@ -358,6 +398,13 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     if (useResidualFallback && !accepted) {
       init();
       return 0.0;
+    }
+    if (!accepted && exceedsFeasibleInterval(alpha)) {
+      // An indefinite Hessian can give a direction that no backtracking shortens enough. Taking it would
+      // leave a negative phase fraction that the next iteration reads as a converged single phase.
+      lastStepDiscarded = true;
+      initWithLevel(1);
+      return 1.0;
     }
 
     // Update u with accepted step

@@ -1,7 +1,7 @@
 ---
 name: neqsim-thermodynamic-initialization
 description: "Select and audit NeqSim thermodynamic initialization levels for correctness and performance. USE WHEN: implementing or reviewing flashes, phase stability, EOS root selection, process-equipment thermodynamics, property access, or performance changes involving init(...) or initProperties()."
-last_verified: "2026-10-26"
+last_verified: "2026-11-21"
 ---
 
 # NeqSim thermodynamic initialization
@@ -49,6 +49,17 @@ change; the old incomplete association state is not migrated implicitly.
 When a caller consumes temperature derivatives after `TPflash`, initialize them on
 the resulting phase state with `init(2)`. Initializing before the flash is insufficient
 when it replaces phases; the legacy cricondenbar iteration is a regression example.
+
+`Phase.getCp()`, `getCv()`, `getEnthalpy()` and `getEntropy()` call
+`ensureCaloricDerivatives()`: a phase still at init level 1 (the state a TP flash leaves) is
+re-initialised to level 2 for its current T, P, composition and beta before the value is
+returned. Before this guard, a flash followed by `initPhysicalProperties()` (no `init(2)`)
+returned caloric values from the previous level-2 state: aqueous SRK-CPA Cp 9.1 instead of
+3.9 kJ/(kg·K), oil Cp up to 25 % off for SRK/PR/UMR (`CaloricPropertiesAfterTPflashTest`,
+measured 2026-11-21). Code that needs caloric values for many phases should still call
+`init(2)`/`initProperties()` once; the guard is a safety net, not a substitute, and it does not
+touch init levels 0, 2 or 3 or subclasses that override these getters (GERG, Span-Wagner,
+Leachman, Vega, IAPWS, GE, Pitzer, solid phases).
 
 An empty stream has no caloric temperature constraint: PH with zero total enthalpy
 must retain its temperature template, while nonzero extensive enthalpy is invalid.
@@ -125,6 +136,9 @@ For pure phases backed by independent fundamental EOS models, compare molar chem
 4. For a proposed reduction, add focused tests proving unchanged requested quantities and convergence.
 5. For hot paths, report iterations, flash calls, allocations, or benchmark results; avoid flaky wall-clock CI assertions.
 6. Keep `initProperties()` separate from thermodynamic derivative levels.
+7. Run the NeqSim SpotBugs rules (`devtools/spotbugs-neqsim-rules`, see `docs/development/CODE_HEALTH.md`): `NEQSIM_CALORIC_WITHOUT_INIT` (read H/S/Cp/Cv without `init(2)`+ in the same method), `NEQSIM_PHYSICAL_WITHOUT_INIT` (read density/viscosity/conductivity/diffusion/interfacial tension without initialising it) and `NEQSIM_REDUNDANT_INIT` (identical init repeated on an unchanged fluid). Existing hits are baselined in `.config/neqsim-rules-baseline.json`; new ones fail CI.
+8. For one physical property use the targeted call `initPhysicalProperties("density"|"viscosity"|"conductivity")`; it is faster than `initProperties()`. Diffusion coefficients and interfacial tension need the full `initPhysicalProperties()`, `initProperties()` or `calcInterfaceProperties()`.
+9. A phase left at init level 1 by a TP flash has its caloric derivatives refreshed lazily by `Phase.getEnthalpy/getEntropy/getCp/getCv`, but only as a safety net: call the proper init explicitly, which is cheaper and what the rule checks.
 
 ## Audit guidance
 

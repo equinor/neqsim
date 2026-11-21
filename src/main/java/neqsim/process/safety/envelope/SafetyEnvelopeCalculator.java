@@ -277,6 +277,7 @@ public class SafetyEnvelopeCalculator {
 
         ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
         ops.TPflash();
+        tempFluid.init(2);
 
         // Calculate minimum temperature during isentropic expansion to atmospheric
         double gamma = tempFluid.getGamma();

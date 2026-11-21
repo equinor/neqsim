@@ -529,6 +529,29 @@ history-independent. An outer flash that needs each inner result to be
 independent calls `Flash.discardSecondOrderSolver()` before the run, as
 `OptimizedVUflash` does for every trial state.
 
+**A step longer than the feasible interval is discarded (2026-11-21).** The
+line search tries eight step lengths and accepts the first that lowers
+Michelsen's $Q$. If none is accepted, the shortest step (1/256) is still taken.
+With an indefinite Hessian that step can be far outside the domain: for a
+methane/ethane/n-heptane/n-decane/water feed at 172.13 bara and 339.28 K it gave
+a phase fraction of -0.55. The next call wrote that onto the system, the
+iteration reported convergence on a collapsed phase, and the flash returned one
+hydrocarbon phase of 327 kg/m3 instead of gas and oil (issue 5199). `solve()`
+now discards an unaccepted step that moves a component by more than its feed
+amount $z_i$ or the phase fraction by more than one. It restores the iterate
+from before the step and reports the discard through `wasLastStepDiscarded()`.
+`TPflash` then takes a successive substitution step, and the next Newton call
+starts from the system state. Accepted steps and shorter unaccepted steps are
+unchanged. That includes unaccepted steps that cross the phase-fraction limit by
+a small amount: the endpoint recoveries rely on that collapse
+(`TPflashSourGasConsistencyTest`, `TPflashCondensateEndpointConservationTest`),
+and discarding every step that left the domain failed both. Of
+40,000 random flashes of that feed between 140 and 240 bara and 330 and 353 K,
+five changed: one that had lost the oil phase and four that had returned the oil
+phase after the aqueous phase. The other 39,995 give the same phase fractions to
+six decimals, and run time did not change
+(`TPflashIssue5199NewtonStepDomainTest`).
+
 **Fresh-state stability recovery (2026-11-16).** Discarding the solver in every
 `TPflash.run()` remains intentionally rejected because it changes legitimate
 within-run Newton continuation. The previously documented UMR-PRU

@@ -148,8 +148,10 @@ class CodeHealthTests(unittest.TestCase):
         prepare_index = next(i for i, command in enumerate(commands)
                              if command.startswith("uv run ") and "prepare_code_health_input.py" in command)
         analyze_index = next(i for i, command in enumerate(commands) if "spotbugs:spotbugs" in command)
-        self.assertLess(compile_index, prepare_index)
+        rules_index = next(i for i, command in enumerate(commands) if "spotbugs-neqsim-rules/pom.xml install" in command)
         self.assertLess(prepare_index, analyze_index)
+        self.assertLess(rules_index, analyze_index)
+        self.assertLess(compile_index, prepare_index)
         java = next(step for step in steps if step.get("uses", "").startswith("actions/setup-java@"))
         self.assertEqual("17.0.21+9", java["with"]["java-version"])
         artifact = next(step for step in steps if step.get("uses", "").startswith("actions/upload-artifact@"))
@@ -157,20 +159,56 @@ class CodeHealthTests(unittest.TestCase):
         impact = next(step for step in steps if step.get("id") == "impact")
         self.assertIn("devtools/prepare_code_health_input.py", impact["run"])
 
-    def spotbugs_runtime_fixture(self, java_version="17.0.21", vm_version="17.0.21+9"):
+    def spotbugs_runtime_fixture(self, java_version="17.0.21", vm_version="17.0.21+9", bugs="", plugin=True):
         path = self.root / "runtime.xml"
-        path.write_text('<BugCollection version="4.10.5"><FindBugsSummary total_classes="1" total_bugs="0" '
+        count = bugs.count("<BugInstance")
+        marker = f'<Project><Plugin id="{health.RULES_PLUGIN}" enabled="true"/></Project>' if plugin else ""
+        path.write_text('<BugCollection version="4.10.5">' + marker
+                        + f'<FindBugsSummary total_classes="1" total_bugs="{count}" '
                         f'java_version="{java_version}" vm_version="{vm_version}"/>'
-                        '<Errors errors="0" missingClasses="0"/></BugCollection>')
+                        '<Errors errors="0" missingClasses="0"/>' + bugs + '</BugCollection>')
         return path
 
-    def runtime_baseline(self):
+    def rules_bug(self, method="run"):
+        return ('<BugInstance type="NEQSIM_CALORIC_WITHOUT_INIT" priority="2">'
+                '<Class classname="neqsim.process.Example"/>'
+                f'<Method classname="neqsim.process.Example" name="{method}" signature="()V"/>'
+                '<SourceLine sourcepath="neqsim/process/Example.java" start="3" primary="true"/></BugInstance>')
+
+    def runtime_baseline(self, rules=()):
         data = health.make_baseline([], {"spotbugs"}, "base")
         data["analyzers"] = {"spotbugs": "4.10.5"}
         data["analysis_runtime"] = {"java_version": "17.0.21", "vm_version": "17.0.21+9"}
         path = self.root / "baseline.json"
         path.write_text(json.dumps(data))
+        rules_path = self.root / health.RULES_BASELINE
+        rules_path.parent.mkdir(parents=True, exist_ok=True)
+        rules_path.write_text(json.dumps(health.make_baseline(list(rules), {"spotbugs"}, "base")))
         return path
+
+    def run_spotbugs_gate(self, report, baseline):
+        return health.main(["--root", str(self.root), "--tools", "spotbugs", "--spotbugs", str(report),
+                            "--baseline", str(baseline), "--output", str(self.root / "result.json")])
+
+    def test_new_neqsim_rule_finding_fails_without_touching_pinned_baseline(self):
+        report = self.spotbugs_runtime_fixture(bugs=self.rules_bug())
+        baseline = self.runtime_baseline()
+        self.assertEqual(1, self.run_spotbugs_gate(report, baseline))
+        result = json.loads((self.root / "result.json").read_text())
+        self.assertEqual("NEQSIM_CALORIC_WITHOUT_INIT", result["new_findings"][0]["rule"])
+
+    def test_baselined_neqsim_rule_finding_passes_and_new_method_fails(self):
+        report = self.spotbugs_runtime_fixture(bugs=self.rules_bug())
+        known = health.read_analyzer(report, "spotbugs", self.root)
+        baseline = self.runtime_baseline(rules=known)
+        self.assertEqual(0, self.run_spotbugs_gate(report, baseline))
+        report = self.spotbugs_runtime_fixture(bugs=self.rules_bug() + self.rules_bug("other"))
+        self.assertEqual(1, self.run_spotbugs_gate(report, baseline))
+
+    def test_missing_rules_plugin_fails_closed(self):
+        report = self.spotbugs_runtime_fixture(plugin=False)
+        self.assertEqual(1, self.run_spotbugs_gate(report, self.runtime_baseline()))
+        self.assertIn("plugin was not loaded", json.loads((self.root / "result.json").read_text())["errors"][0])
 
     def test_runtime_drift_is_a_precondition_error_not_a_new_bug(self):
         report = self.spotbugs_runtime_fixture("17.0.20", "17.0.20+8")

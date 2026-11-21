@@ -23,6 +23,7 @@ report, runtime mismatch or new selected finding leaves the gate unresolved.
 uv run --project devtools --locked devtools/code_health.py --output target/code-health-source.json
 ./mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd
 uv run --project devtools --locked devtools/prepare_code_health_input.py
+./mvnw -B -ntp -f devtools/spotbugs-neqsim-rules/pom.xml install
 ./mvnw -B -ntp -Pcode-health spotbugs:spotbugs
 uv run --project devtools --locked devtools/code_health.py --tools source,pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml --output target/code-health.json
 ```
@@ -30,6 +31,41 @@ uv run --project devtools --locked devtools/code_health.py --tools source,pmd,sp
 The opt-in `code-health` Maven profile gives SpotBugs a 2 GiB heap, bounds its
 JVM processor count to two, and makes
 analyzer execution errors fail Maven; ordinary build defaults are retained.
+
+## NeqSim thermodynamic-state rules
+
+The `devtools/spotbugs-neqsim-rules` plugin adds SpotBugs rules for NeqSim's
+initialisation contract. It is build tooling only and is not shipped with NeqSim.
+Install it before running SpotBugs (see the commands above); the gate fails
+closed if the plugin did not load. The rules scan the bytecode of each method
+linearly and skip the classes that implement the properties
+(`neqsim.thermo`, `neqsim.thermodynamicoperations`, `neqsim.physicalproperties`).
+
+| Rule | Reports | Fix |
+|------|---------|-----|
+| `NEQSIM_CALORIC_WITHOUT_INIT` | Enthalpy, entropy, Cp, Cv, Gibbs energy, internal energy, gamma, kappa, Joule-Thomson or speed of sound read with no `init(...)`, `initProperties()`, flash or `run()` earlier in the method. A TP flash leaves phases at init level 1, where these are stale. | `init(2)` or higher, `initProperties()` or `initThermoProperties()` first. |
+| `NEQSIM_PHYSICAL_WITHOUT_INIT` | Density (physical property model), viscosity, thermal conductivity, diffusion coefficient or interfacial tension read without initialising that property. | Initialise only what is needed (fastest): `initPhysicalProperties("density")`, `"viscosity"` or `"conductivity"`, or the `PhysicalPropertyType` overload. A targeted call counts only for its own property. Diffusion and interfacial tension need `initPhysicalProperties()`, `initProperties()` or `calcInterfaceProperties()`. |
+| `NEQSIM_REDUNDANT_INIT` | An identical `init(n)`, `initProperties()` or `initPhysicalProperties(...)` call repeated on the same fluid with no call, store or branch in between. | Remove the repeat; it only costs computation time. |
+| `NEQSIM_STALE_PROPERTY_READ` | A fluid changed (`setTemperature`, `setPressure`, `setMolarComposition`, `addComponent`, `init(0\|1)`) or TP-flashed (linked through `new ThermodynamicOperations(fluid)`) in the method, then a caloric or physical property read with no re-init. `initPhysicalProperties()` does not refresh caloric derivatives and a flash never refreshes physical properties. | Initialise after the change and before the read. |
+| `NEQSIM_SHARED_FLUID_MUTATION` | A state-changing call directly on `getThermoSystem()`/`getFluid()` of an input stream (a method parameter or an inlet getter), which changes the caller's stream. Own outlet streams and clones are not flagged. | `clone()` first, or change the stream through its API when that is the intent. |
+| `NEQSIM_MISSING_MIXING_RULE` | A fluid created with `new SystemXxx(...)` in the method is initialised or flashed before `setMixingRule(...)`. | Call `setMixingRule(...)` after adding components. |
+
+The stale-read, shared-mutation and mixing-rule rules need local evidence in one method
+and forget state at jump targets, at overwritten variables and when the fluid is passed
+to another method or the class calls its own helper, so they report only certain cases.
+The first three rules also fire on accessors and helpers that take an initialised fluid
+from the caller; those are baselined and are not a sign of a defect by themselves.
+
+Existing findings are recorded in `.config/neqsim-rules-baseline.json`, which
+unlike the SpotBugs baseline does not depend on the analysis JDK. CI compares
+against the base branch's copy, so a new violation fails the **Code health
+static analysis** check while existing ones are tracked as debt. Fix a finding
+by initialising the fluid in the method that reads it, or by recording a
+reviewed baseline exception when the caller guarantees an initialised fluid.
+Regenerate the file only for a deliberate, reviewed change, using the same
+`read_analyzer` and `make_baseline` functions as the main baseline, and remove
+entries whose diagnostics disappeared. Detector changes that find more
+violations need a reviewed baseline update in the same PR.
 CI separately caps Maven at 1 GiB so the parent and fork fit a normal hosted runner.
 The static job pins Temurin 17.0.21+9. Compile, prepare input, then analyze in that
 order. Preparation archives every compiled class in sorted entry order with fixed

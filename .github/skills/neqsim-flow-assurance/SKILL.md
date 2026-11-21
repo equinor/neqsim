@@ -44,6 +44,8 @@ support, as the next physical dependency; keep this gate opt-in until it passes 
 - Multiphase flow pattern prediction (slug, annular, stratified)
 - Thermal insulation sizing for subsea pipelines
 - Arrival temperature and cooldown calculations
+  (for `TwoFluidPipe` no-touch times use `calculateColdestSectionHydrateCooldownTime()` after `run()`;
+  `calculateHydrateCooldownTime()` starts from the inlet temperature and overstates the time for the riser base)
 
 ## Applicable Standards
 
@@ -929,6 +931,16 @@ for (double qgMSm3d : gasRates) {
 > delay in a flowsheet; use `TwoFluidPipe` for line pack, shut-in, ramps and
 > blowdown (0.00 bar drift on the same null test, mass balance closing to the
 > digit), and `WaterHammerPipe` for surge.
+>
+> **`TwoFluidPipe` closed-end pack-up limits (measured 2026-11-21, 15.6 km 12-inch
+> line, 300 t/h wet gas/oil/water, 80 cells, coupled pressure-momentum).** The
+> flat line packs with no rejected substep up to the saturation pressure of the
+> feed (255 bar at 2,400 s). Above that pressure cell pressures differ by tens of
+> bar again, because the gas should dissolve and the default route keeps the phase
+> masses frozen: use component transport with mass transfer there. With a steep
+> riser and a closed top the cells at the riser show velocity differences of about
+> 10 m/s within 5 s and pressure spikes after about 30 min: do not report
+> closed-riser-top pressures from the model.
 
 ### Gray (1974) Correlation — Gas / Gas-Condensate Vertical Wells
 

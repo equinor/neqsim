@@ -1469,7 +1469,11 @@ System.out.println(pipe.getThermalSummary());
   transient link; this does not change the legacy steady zero-coefficient API conventions.
 - **Elevation work**: The simple and multi-layer routes include the same gravitational potential-energy source.
   Choosing a radial wall model must not remove uphill cooling or downhill heating from transported mass.
-- **Cooldown time**: Lumped capacitance approximation for shutdown scenarios
+- **Cooldown time**: Lumped capacitance approximation for shutdown scenarios. `calculateCooldownTime(...)` and
+  `calculateHydrateCooldownTime()` start from the inlet stream temperature. After a run, use
+  `calculateColdestSectionCooldownTime(...)` and `calculateColdestSectionHydrateCooldownTime()`, which start from the
+  coldest temperature in the current profile (typically the riser base of an insulated tie-back). In a 15 km tie-back
+  case the inlet-based value overstated the no-touch time because the inlet was about 20 °C warmer than the riser base.
 - **Transient advection**: Uses the gas, oil, and water mass flow retained from each conservative AUSM+ integration
   stage, combined with the time integrator's own stage weights. Temperature transport therefore uses the same face
   fluxes that advanced the accepted hydrodynamic state without a second flux sweep. A CLOSED inlet or outlet has
@@ -1733,6 +1737,41 @@ face. The adjacent physical cell retains its momentum and responds to the finite
 friction impulses; applying the boundary must not repeatedly reset that cell's velocity to zero.
 `TwoFluidClosedBoundaryMomentumTest` checks this short-time limit with Euler and RK4 while both
 integrated boundary mass fluxes remain zero. Legacy uncoupled boundary handling is unchanged.
+
+**Line packing and shut-in pressure need the coupled option.** With the default (uncoupled) pressure split, each
+transient step rebuilds the pressure profile from steady friction and gravity anchored at the open boundary. Mass
+then accumulates behind a closed outlet while the pressure stays flat. In a 400 m, 12-inch line fed 300 t/h of
+wet gas/oil/water, the inventory grew 8 % in 10 s with no pressure rise; with
+`setEnableCoupledPressureMomentum(true)` and `setEnableInterfacialPressure(true)` the same case rose by about
+20 bar (`TwoFluidPipeLinePackingTest`, measured 2026-11-21). `runTransient` logs a one-time warning when a
+boundary is `CLOSED` and the coupled option is off. Use the coupled option for HIPPS, ESD and blocked-outlet
+studies.
+
+**A flash without a gas-oil split does not reset the phase properties of a cell.** Every
+`setThermodynamicUpdateInterval(...)` steps the transient flashes the feed at each cell's pressure and
+temperature and resets the cell's phase densities. The gas and oil mass of a cell are advanced separately, so a
+flash that returns one merged hydrocarbon phase fits neither phase of the cell. That happens above the saturation
+pressure of the feed. Until 2026-11-21 it also happened at rare isolated conditions inside the two-phase region,
+where an oversized Newton step made the flash miss the split (issue 5199, fixed in
+`SysNewtonRhapsonTPflash`): 172.13 bara and 339.28 K for a methane/ethane/n-heptane/n-decane/water feed. The reset
+used to leave the cell less than half full, and its pressure
+collapsed within a few steps. A 15.6 km, 12-inch line packed at 300 t/h against a closed outlet (80 cells) stopped
+converging at 1,540 s and 175 bar with one cell at 7 bar. A cell in which gas and oil each fill more than 1 % now
+keeps its previous phase properties for that update, and the same case runs to 2,400 s and 255 bar with no rejected
+substep (`TwoFluidPipeLinePackingTest`, measured 2026-11-21). Runs with component transport are unchanged.
+With the flash corrected, the cell guard did not act below the saturation pressure in that 80-cell case started
+from 100 bara (0 activations in 1,725 s, same pressures with and without it). It is still needed above it: without
+it the 10-cell test case stops converging 125 s after the outlet closes.
+
+Two limits remain for closed-end pack-up with the coupled option (same case, measured 2026-11-21):
+
+- **Above the saturation pressure of the feed** (about 265 bara here) the phase masses stay frozen while
+  equilibrium says the gas dissolves. The 80-cell case shows cell-to-cell pressure differences of tens of bar again
+  above that pressure. Use component transport with mass transfer for that range.
+- **A steep riser with a closed top.** With the last two cells rising 350 m, neighbouring cells differ by about
+  10 m/s in phase velocity within 5 s of closing the outlet, and after about 30 min the top cells show pressures
+  far from the rest of the line (77 bar at the top against 211 bar at the inlet in one sample). Do not report
+  closed-riser-top pressures from this model.
 
 Use `setInletBoundaryCondition(...)` and `setOutletBoundaryCondition(...)` for explicit boundary
 types. Convenience methods such as `closeOutlet()` and `openOutlet(...)` update the type and value

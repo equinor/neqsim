@@ -37,9 +37,8 @@ public class ReBoiler extends TwoPortEquipment {
     system = inStream.getThermoSystem().clone();
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
+    system.init(2);
     double oldH = system.getEnthalpy();
-    testOps = new ThermodynamicOperations(system);
-    testOps.TPflash();
     testOps.PHflash(oldH + reboilerDuty, 0);
     outStream.setThermoSystem(system);
     // if(setTemperature) system.setTemperature(temperatureOut);

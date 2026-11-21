@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="messagecollection.xsd">
+	<Plugin>
+		<ShortDescription>NeqSim rules</ShortDescription>
+		<Details>Detectors for NeqSim thermodynamic-state rules.</Details>
+	</Plugin>
+	<Detector class="com.equinor.neqsim.spotbugs.CaloricPropertyWithoutInitDetector">
+		<Details>Finds methods that read caloric properties of a phase or fluid without first initialising it.</Details>
+	</Detector>
+	<BugPattern type="NEQSIM_CALORIC_WITHOUT_INIT">
+		<ShortDescription>Caloric property read without init(2) or higher in the same method</ShortDescription>
+		<LongDescription>{1} reads a caloric property ({2}) of a phase or fluid without first calling init(2) or higher, initProperties(), initThermoProperties(), initPhysicalProperties(), a ThermodynamicOperations flash or run() earlier in the method</LongDescription>
+		<Details>
+			<![CDATA[
+<p>A TP flash leaves the phases at init level 1, where only fugacities are valid. Enthalpy, entropy, Cp, Cv and the other caloric properties are built from temperature and pressure derivatives that belong to the last init(2) or init(3) call, so reading them after a TP flash can silently return values for an older state.</p>
+<p>Call <code>init(2)</code> (or higher), <code>initProperties()</code>, <code>initThermoProperties()</code> or <code>initPhysicalProperties()</code> on the fluid before reading the property, or run the owning unit first. If the fluid is guaranteed to be initialised by the caller, record the finding in the reviewed rules baseline instead of suppressing it.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_REDUNDANT_INIT">
+		<ShortDescription>Repeated init or TPflash on the same fluid with nothing changed in between</ShortDescription>
+		<LongDescription>{1} calls {2} on a fluid that was already initialised by an identical call earlier in the method, with no call, store or branch in between that could have changed it</LongDescription>
+		<Details>
+			<![CDATA[
+<p>Initialisation calls such as <code>init(3)</code>, <code>initProperties()</code> and <code>initPhysicalProperties()</code> recalculate all phases and are among the most expensive calls in a process model. Repeating an identical call on the same fluid, with no change to temperature, pressure, composition or a flash in between, only costs computation time.</p>
+<p>Remove the second call. If only one property is needed, initialise just that property, for example <code>initPhysicalProperties("density")</code>, which is faster than a full initialisation.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_PHYSICAL_WITHOUT_INIT">
+		<ShortDescription>Physical property read without initialising it in the same method</ShortDescription>
+		<LongDescription>{1} reads a physical property ({2}) of a phase or fluid without first initialising it with initPhysicalProperties(), a targeted initPhysicalProperties(name), initProperties() or run() earlier in the method</LongDescription>
+		<Details>
+			<![CDATA[
+<p>Density, viscosity, thermal conductivity, diffusion coefficients and interfacial tension are calculated by the physical property models, not by the equation of state. They are only valid after the physical properties have been initialised for the current temperature, pressure and composition, and an earlier flash does not update them.</p>
+<p>When only one of density, viscosity or thermal conductivity is needed, initialise just that property, which is the fastest option: <code>initPhysicalProperties("viscosity")</code> or the <code>PhysicalPropertyType</code> overload. The check accepts a targeted call only for the property it names. Diffusion coefficients and interfacial tension have no targeted initialisation and need <code>initPhysicalProperties()</code>, <code>initProperties()</code> or <code>calcInterfaceProperties()</code>. Running the owning unit first also initialises them. If the fluid is guaranteed to be initialised by the caller, record the finding in the reviewed rules baseline instead of suppressing it.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<Detector class="com.equinor.neqsim.spotbugs.StaleFluidStateDetector">
+		<Details>Finds fluids that are modified or flashed and then read without re-initialisation, fluids of streams that are modified in place, and flashes before a mixing rule is set.</Details>
+	</Detector>
+	<BugPattern type="NEQSIM_STALE_PROPERTY_READ">
+		<ShortDescription>Property read after the fluid was modified or flashed without re-initialising it</ShortDescription>
+		<LongDescription>{1} reads a property from a fluid that was changed earlier in the method ({2}) without initialising it again</LongDescription>
+		<Details>
+			<![CDATA[
+<p>The method changes a fluid (<code>setTemperature</code>, <code>setPressure</code>, <code>setMolarComposition</code>, <code>addComponent</code>, <code>init(0|1)</code>) or runs a TP flash on it, and then reads enthalpy, entropy, Cp, Cv, viscosity, conductivity or similar without calling <code>init(2)</code> or higher, <code>initProperties()</code> or <code>initPhysicalProperties(...)</code> in between. The property then belongs to the previous state.</p>
+<p>Initialise the fluid after the change and before the read. Physical properties need their own initialisation and are never updated by a flash.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_SHARED_FLUID_MUTATION">
+		<ShortDescription>State of a stream's own fluid is changed in place</ShortDescription>
+		<LongDescription>{1} calls {2} directly on the fluid returned by getThermoSystem() or getFluid(), which changes the fluid of the stream or unit</LongDescription>
+		<Details>
+			<![CDATA[
+<p><code>getThermoSystem()</code> and <code>getFluid()</code> return the live fluid of a stream or unit, not a copy. Changing its temperature, pressure or composition changes the stream for every other user. Use <code>clone()</code> before branching, or change the fluid through the stream or unit API when changing the stream is the intent (for example the outlet stream of the unit being implemented).</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugPattern type="NEQSIM_MISSING_MIXING_RULE">
+		<ShortDescription>Fluid flashed or initialised before a mixing rule is set</ShortDescription>
+		<LongDescription>{1} calls {2} on a fluid created in the method before setMixingRule(...) has been called on it</LongDescription>
+		<Details>
+			<![CDATA[
+<p>A fluid created with <code>new SystemXxx(...)</code> needs <code>setMixingRule(...)</code> after the components are added and before it is initialised or flashed. Without it the equation of state has no mixing rule and the results are wrong or the calculation fails.</p>
+			]]>
+		</Details>
+	</BugPattern>
+	<BugCode abbrev="NQ">NeqSim thermodynamic state</BugCode>
+</MessageCollection>

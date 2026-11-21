@@ -925,6 +925,10 @@ pipe.setLength(10000)
 pipe.setDiameter(0.25)
 pipe.setNumberOfSections(100)
 pipe.setOutletPressure(30.0, "bara")
+# Compressible pressure response: without these two lines the pressure profile is rebuilt
+# from steady friction/gravity and does not rise as mass accumulates behind the closed outlet.
+pipe.setEnableCoupledPressureMomentum(True)
+pipe.setEnableInterfacialPressure(True)
 
 # Initialize with normal flow
 pipe.run()

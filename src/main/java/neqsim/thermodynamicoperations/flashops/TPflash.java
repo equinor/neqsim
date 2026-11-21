@@ -1405,6 +1405,9 @@ public class TPflash extends Flash {
           }
           try {
             deviation = secondOrderSolver.solve();
+            if (secondOrderSolver.wasLastStepDiscarded()) {
+              sucsSubs();
+            }
           } catch (Exception ex) {
             sucsSubs();
           }
