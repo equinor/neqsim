@@ -37,7 +37,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
   private static final int MAX_ITERATIONS = 100;
 
   /** Temperature tolerance for convergence (K). */
-  private double temperatureTolerance = 0.5;
+  private volatile double temperatureTolerance = 0.5;
 
   /** Initial temperature step for search (K). */
   private double temperatureStep = 10.0;

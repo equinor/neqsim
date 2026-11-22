@@ -19,7 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id: $Id
  */
-public class FluidSevereSlug {
+public final class FluidSevereSlug {
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(FluidSevereSlug.class);
 

@@ -69,10 +69,10 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   private double precipitatedFraction = 0.0;
 
   /** Lower onset pressure where the precipitate re-dissolves (bara), NaN if not found. */
-  private double lowerOnsetPressure = Double.NaN;
+  private volatile double lowerOnsetPressure = Double.NaN;
 
   /** Whether the search continues below the upper onset to locate the lower onset. */
-  private boolean searchLowerOnset = true;
+  private volatile boolean searchLowerOnset = true;
 
   /**
    * Constructor for AsphalteneOnsetPressureFlash.

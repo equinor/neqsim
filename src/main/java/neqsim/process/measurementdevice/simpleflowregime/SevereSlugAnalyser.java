@@ -28,7 +28,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author ESOL
  * @version $Id: $Id
  */
-public class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
+public final class SevereSlugAnalyser extends MeasurementDeviceBaseClass {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */

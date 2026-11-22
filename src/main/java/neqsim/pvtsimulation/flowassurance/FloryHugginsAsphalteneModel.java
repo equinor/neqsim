@@ -645,7 +645,7 @@ public class FloryHugginsAsphalteneModel {
         continue;
       }
       if (precip > ONSET_THRESHOLD) {
-        if (p == startP) {
+        if (p >= startP) {
           logger.info("FH: asphaltene already unstable at the start pressure {} bara", startP);
           return startP;
         }

@@ -6,7 +6,7 @@ package neqsim.process.measurementdevice.simpleflowregime;
  * @author ESOL
  * @version $Id: $Id
  */
-public class Pipe {
+public final class Pipe {
   private String name;
   private double internalDiameter = 0.05;
   private double leftLength = 167.0;
