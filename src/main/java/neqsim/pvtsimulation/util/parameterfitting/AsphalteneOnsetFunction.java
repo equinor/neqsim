@@ -1,6 +1,8 @@
 package neqsim.pvtsimulation.util.parameterfitting;
 
 import neqsim.pvtsimulation.flowassurance.AsphalteneSolidModel;
+import neqsim.thermo.characterization.AsphalteneComponents;
+import neqsim.thermo.characterization.PedersenAsphalteneCharacterization;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseCPAInterface;
@@ -73,6 +75,12 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
   /** Type of parameter being fitted. */
   private FittingParameterType parameterType = FittingParameterType.ASSOCIATION_PARAMETERS;
 
+  /** Asphaltene mass held constant during MOLAR_MASS fitting (kg), NaN until first used. */
+  private double referenceAsphalteneMass = Double.NaN;
+
+  /** Asphaltene density used to recharacterize during MOLAR_MASS fitting (g/cm3). */
+  private double referenceAsphalteneDensity = 1.1;
+
   /**
    * Enum for different fitting parameter types.
    */
@@ -105,6 +113,12 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
 
   /**
    * Calculates the asphaltene onset pressure at the specified temperature.
+   *
+   * <p>
+   * The result is always finite so that the Levenberg-Marquardt Jacobian stays defined: when no onset is found down to
+   * the minimum search pressure the minimum pressure is returned, and when asphaltene is already precipitated at the
+   * start pressure the start pressure is returned.
+   * </p>
    *
    * @param dependentValues array containing [temperature_K]
    * @return calculated onset pressure in bara
@@ -139,12 +153,12 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
     switch (parameterType) {
     case ASSOCIATION_PARAMETERS:
       requireCpa();
-      // params[0] = epsilon/R (association energy in K)
+      // params[0] = association energy (J/mol, NeqSim CPA unit)
       // params[1] = kappa (association volume, dimensionless)
       // Apply to all phases for consistency
-      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
-        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(params[1]);
+      for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+        phase.getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
+        phase.getComponent(asphalteneIndex).setAssociationVolume(params[1]);
       }
       break;
 
@@ -153,19 +167,17 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       break;
 
     case MOLAR_MASS:
-      // params[0] = molar mass of asphaltene (g/mol)
-      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-        system.getPhase(phaseNum).getComponent(asphalteneIndex).setMolarMass(params[0] / 1000.0);
-      }
+      // params[0] = molar mass of asphaltene (g/mol); see applyMolarMass
+      applyMolarMass(asphalteneIndex, params[0]);
       break;
 
     case COMBINED:
       requireCpa();
-      // params[0] = epsilon/R, params[1] = asphaltene-methane kij (size-scaled to the others)
+      // params[0] = association energy (J/mol), params[1] = asphaltene-methane kij (size-scaled to the others)
       applyScaledKij(asphalteneIndex, params[1]);
-      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
-        system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(0.005); // Fixed
+      for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+        phase.getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
+        phase.getComponent(asphalteneIndex).setAssociationVolume(0.005); // Fixed
         // kappa
       }
       break;
@@ -179,12 +191,59 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
    */
   private int findAsphalteneIndex() {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      String name = system.getPhase(0).getComponent(i).getComponentName();
-      if (name.equalsIgnoreCase(asphalteneComponentName) || name.toLowerCase().contains("asphaltene")) {
+      if (system.getPhase(0).getComponent(i).getComponentName().equalsIgnoreCase(asphalteneComponentName)) {
         return i;
       }
     }
-    return -1;
+    return AsphalteneComponents.firstIndex(system);
+  }
+
+  /**
+   * Applies a new asphaltene molar mass consistently.
+   *
+   * <p>
+   * The asphaltene mass is held at its value when fitting started, so the number of moles changes as 1/M. For a TBP
+   * pseudo-component (for example from {@link PedersenAsphalteneCharacterization}) the critical properties and acentric
+   * factor are also recalculated with the Pedersen asphaltene correlations at the component's density. A database
+   * asphaltene keeps its critical and solid properties, which its solid-phase reference is tied to. Changing only the
+   * molar mass (as earlier versions did) left a mole-based flash, and hence the onset, unchanged. CPA systems are not
+   * supported; their asphaltene takes a and b from the database.
+   * </p>
+   *
+   * @param asphalteneIndex component index
+   * @param molarMassGPerMol new molar mass (g/mol)
+   */
+  private void applyMolarMass(int asphalteneIndex, double molarMassGPerMol) {
+    if (system.getPhase(0) instanceof PhaseCPAInterface) {
+      throw new IllegalStateException("MOLAR_MASS fitting needs a cubic asphaltene pseudo-component; a CPA asphaltene "
+          + "takes a and b from the database, so its molar mass does not change the onset");
+    }
+    if (!(molarMassGPerMol > 0.0) || !Double.isFinite(molarMassGPerMol)) {
+      throw new IllegalArgumentException("Asphaltene molar mass must be positive");
+    }
+    double currentMoles = system.getPhase(0).getComponent(asphalteneIndex).getNumberOfmoles();
+    double currentMolarMass = system.getPhase(0).getComponent(asphalteneIndex).getMolarMass();
+    if (Double.isNaN(referenceAsphalteneMass)) {
+      referenceAsphalteneMass = currentMoles * currentMolarMass;
+      double density = system.getPhase(0).getComponent(asphalteneIndex).getNormalLiquidDensity();
+      referenceAsphalteneDensity = density >= 0.9 && density <= 1.4 ? density : 1.1;
+    }
+    PedersenAsphalteneCharacterization characterization =
+        new PedersenAsphalteneCharacterization(molarMassGPerMol, referenceAsphalteneDensity, 0.0);
+    characterization.characterize();
+    // The characterization clamps the molar mass to its valid range; use the clamped value throughout.
+    molarMassGPerMol = characterization.getAsphalteneMW();
+    double newMoles = referenceAsphalteneMass / (molarMassGPerMol / 1000.0);
+    boolean pseudoComponent = system.getPhase(0).getComponent(asphalteneIndex).isIsTBPfraction();
+    system.addComponent(asphalteneIndex, newMoles - currentMoles);
+    for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+      phase.getComponent(asphalteneIndex).setMolarMass(molarMassGPerMol / 1000.0);
+      if (pseudoComponent) {
+        phase.getComponent(asphalteneIndex).setTC(characterization.getCriticalTemperature());
+        phase.getComponent(asphalteneIndex).setPC(characterization.getCriticalPressure());
+        phase.getComponent(asphalteneIndex).setAcentricFactor(characterization.getAcentricFactor());
+      }
+    }
   }
 
   /**
@@ -240,8 +299,14 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
     AsphalteneOnsetPressureFlash flash = new AsphalteneOnsetPressureFlash(system, startPressure, minPressure);
     flash.setPressureStep(pressureStep);
     flash.setPressureTolerance(pressureTolerance);
-    flash.run();
-    return flash.isOnsetFound() ? flash.getOnsetPressure() : Double.NaN;
+    flash.setSearchLowerOnset(false);
+    try {
+      flash.run();
+    } catch (IllegalStateException alreadyPrecipitated) {
+      // Unstable at the start pressure: the onset is at or above it.
+      return startPressure;
+    }
+    return flash.isOnsetFound() ? flash.getOnsetPressure() : minPressure;
   }
 
   /** {@inheritDoc} */

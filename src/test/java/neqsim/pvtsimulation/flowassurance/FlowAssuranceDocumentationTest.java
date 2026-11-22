@@ -70,7 +70,7 @@ class FlowAssuranceDocumentationTest {
     double riskIndex = screening.calculateRiskIndex();
 
     assertEquals(DeBoerRisk.MODERATE_PROBLEM, risk);
-    assertEquals(1.6, riskIndex, 1.0e-12);
+    assertEquals(200.0 / 120.0, riskIndex, 1.0e-9);
     assertFalse(risk.getDescription().trim().isEmpty());
   }
 

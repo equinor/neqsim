@@ -98,6 +98,21 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
    */
   public CPAMixingRulesInterface getCpaMixingRule();
 
+  /**
+   * Sets explicit cross-association energy and volume between two associating components in this phase. Call after
+   * the mixing rule has been set; setting the mixing rule again resets the values to the combining rule.
+   *
+   * @param compnumb1 first component index
+   * @param compnumb2 second component index
+   * @param energy cross-association energy in J/mol
+   * @param volume cross-association volume, dimensionless
+   * @throws UnsupportedOperationException if the phase does not support explicit cross-association parameters
+   */
+  public default void setCrossAssociationParameters(int compnumb1, int compnumb2, double energy, double volume) {
+    throw new UnsupportedOperationException(
+        getClass().getSimpleName() + " does not support explicit cross-association parameters");
+  }
+
   // ==================== Default CPA Calculation Methods ====================
   // These radial distribution functions are the same for all cubic EOS (SRK, PR, UMR)
   // based on the simplified Carnahan-Starling hard-sphere model.

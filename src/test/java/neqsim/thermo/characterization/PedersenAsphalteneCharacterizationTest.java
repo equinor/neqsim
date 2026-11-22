@@ -196,14 +196,28 @@ public class PedersenAsphalteneCharacterizationTest {
     String comp4Name = system.getPhase(0).getComponent(3).getComponentName();
     String comp5Name = system.getPhase(0).getComponent(4).getComponentName();
 
-    assertTrue(comp3Name.startsWith("Asph_"), "Component 3 should be Asph_1, got: " + comp3Name);
-    assertTrue(comp4Name.startsWith("Asph_"), "Component 4 should be Asph_2, got: " + comp4Name);
-    assertTrue(comp5Name.startsWith("Asph_"), "Component 5 should be Asph_3, got: " + comp5Name);
+    assertTrue(comp3Name.startsWith("Asphaltene_1"), "Component 3 should be Asphaltene_1, got: " + comp3Name);
+    assertTrue(comp4Name.startsWith("Asphaltene_2"), "Component 4 should be Asphaltene_2, got: " + comp4Name);
+    assertTrue(comp5Name.startsWith("Asphaltene_3"), "Component 5 should be Asphaltene_3, got: " + comp5Name);
+    assertEquals(3, AsphalteneComponents.indices(system).size(), "All split components must be recognised");
 
-    // Fractions above 1120 g/mol use the asphaltene model's own characterized
-    // properties, without entering the unsupported automatic TBP heavy branch.
-    double[] expectedMolecularWeights = {750.0, 1250.0, 1750.0};
-    double[] expectedDensities = {1.1375, 1.1625, 1.1875};
+    // Gamma split (mean 1000, minimum 500, shape 2.5) in three equal-mole slices.
+    double[][] split = PedersenAsphalteneCharacterization.gammaSplit(1000.0, 500.0, 2.5, 3);
+    double[] expectedMolecularWeights = split[0];
+    double[] expectedDensities = new double[3];
+    double totalMass = 0.0;
+    double totalMoles = 0.0;
+    for (int fraction = 0; fraction < 3; fraction++) {
+      expectedDensities[fraction] = 1.15 + 0.05 * (expectedMolecularWeights[fraction] - 1000.0) / 1000.0;
+      double moles = system.getPhase(0).getComponent(fraction + 2).getNumberOfmoles();
+      assertEquals(0.05 / 3.0, moles, 2e-4, "Nearly equal-mole slices (grid-resolution cut points)");
+      totalMoles += moles;
+      totalMass += moles * system.getPhase(0).getComponent(fraction + 2).getMolarMass() * 1000.0;
+    }
+    assertTrue(expectedMolecularWeights[0] < expectedMolecularWeights[1]
+        && expectedMolecularWeights[1] < expectedMolecularWeights[2]);
+    assertEquals(0.05, totalMoles, 1e-12);
+    assertEquals(0.05 * 1000.0, totalMass, 1e-6, "The split must conserve the mean molecular weight");
     for (int fraction = 0; fraction < expectedMolecularWeights.length; fraction++) {
       PedersenAsphalteneCharacterization expected = new PedersenAsphalteneCharacterization();
       expected.setAsphalteneMW(expectedMolecularWeights[fraction]);
@@ -212,7 +226,7 @@ public class PedersenAsphalteneCharacterizationTest {
       int componentIndex = fraction + 2;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         assertEquals(expectedMolecularWeights[fraction] / 1000.0,
-            system.getPhase(phase).getComponent(componentIndex).getMolarMass(), 1e-12);
+            system.getPhase(phase).getComponent(componentIndex).getMolarMass(), 1e-9);
         assertEquals(expected.getCriticalTemperature(), system.getPhase(phase).getComponent(componentIndex).getTC(),
             1e-12);
         assertEquals(expected.getCriticalPressure(), system.getPhase(phase).getComponent(componentIndex).getPC(),
@@ -757,7 +771,8 @@ public class PedersenAsphalteneCharacterizationTest {
     oil.init(0);
     pedersen.applyAsphalteneKij(oil, 0.08);
     boolean multiPhase = oil.doMultiPhaseCheck();
-    assertThrows(IllegalStateException.class, () -> pedersen.calculateOnsetPressure(oil, 500.0, 20.0));
+    // With Tc = a0*rho + ... the fluid is single-phase at 500 bar and split at 300 bar.
+    assertThrows(IllegalStateException.class, () -> pedersen.calculateOnsetPressure(oil, 300.0, 20.0));
     assertEquals(multiPhase, oil.doMultiPhaseCheck());
   }
 
