@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.ExactArgumentMemo;
 
 /**
  * Mechanistic flow regime detector based on Taitel-Dukler and Barnea models.
@@ -228,6 +229,12 @@ public class FlowRegimeDetector implements Serializable {
 
   /** Drift flux model for slip calculations. */
   private transient DriftFluxModel driftFluxModel;
+
+  /**
+   * Last solved equilibrium stratified level. Classification and its transition weights ask for the same level, so the
+   * second request reuses the first solution when every argument is bitwise unchanged.
+   */
+  private transient ExactArgumentMemo<Double> stratifiedLevelMemo;
 
   /**
    * Get the current detection method.
@@ -900,6 +907,35 @@ public class FlowRegimeDetector implements Serializable {
    */
   private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G,
       double mu_L, double mu_G, double theta) {
+    ExactArgumentMemo<Double> memo = stratifiedLevelMemo;
+    if (memo != null && memo.matches(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta)) {
+      return memo.getValue().doubleValue();
+    }
+    double level = solveStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
+    stratifiedLevelMemo = new ExactArgumentMemo<Double>(Double.valueOf(level), U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G,
+        theta);
+    return level;
+  }
+
+  /**
+   * Solve the stratified momentum balance for the liquid level by bisection.
+   *
+   * <p>
+   * The result depends on the arguments alone, which is what allows {@link #estimateStratifiedLiquidLevel} to reuse it.
+   * </p>
+   *
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m3]
+   * @param rho_G gas density [kg/m3]
+   * @param mu_L liquid viscosity [Pa.s]
+   * @param mu_G gas viscosity [Pa.s]
+   * @param theta pipe inclination angle [rad]
+   * @return liquid level [m]
+   */
+  private double solveStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G, double mu_L,
+      double mu_G, double theta) {
     double low = 0.01 * D;
     double high = 0.99 * D;
 
