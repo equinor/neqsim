@@ -307,6 +307,23 @@ state that load-case completeness, clause-level local-buckling assessment, fatig
 installation analysis, fabrication acceptance, licensed-standard review, and approval remain
 external. See the `neqsim-standards-lookup` and `neqsim-capability-map` skills and
 `docs/process/dnv_st_f101_pipeline_screening.md`.
+
+## ASME B31.3 process pipe stress
+
+For a routed, sized process line use `neqsim.process.mechanicaldesign.piping.PipeStressModel`,
+not the single-formula helpers in `designstandards.PipingStressAnalysis`. Build nodes and
+elements nozzle to nozzle; anchor the equipment nozzles (`setAnchorStiffness` for nozzle
+flexibility, `setNozzleAllowables` with vendor or API 610/617/WRC 297 values); add REST, GUIDE
+and LINE_STOP supports with their friction coefficient; set the corrosion allowance, design
+pressure, installation and operating temperature, and seismic or wind loads. `run()` solves OPE
+(with support lift-off and friction), SUS, EXP and OCC. It returns B31.3 304.1.2, 319 and 320
+ratios, support states and nozzle loads, with `toJson()` for reports.
+
+Report `isConverged()`, every nozzle without allowables, and the limitations list (static and
+linear; no response spectrum; no fatigue spectrum beyond the range factor f). The community
+`neqsim-asset-scene` skill (`analyse_pipe_stress`) builds the model from 3D scene routes. See
+`docs/process/mechanical_design/pipe_stress_model.md`.
+
 ## Data Sources
 - Material properties: `designdata/MaterialPipeProperties.csv`, `MaterialPlateProperties.csv`
 - Technical requirements: `designdata/TechnicalRequirements_Process.csv`
