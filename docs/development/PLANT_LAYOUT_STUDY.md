@@ -25,7 +25,9 @@ maintenance envelopes require their own evidence. Missing dimensions cannot be r
 Use the installed `neqsim` command, or the selected interpreter with `-m neqsim_cli` and the source `devtools` path.
 `layout-study --init DIR` writes a task-local specification. `--demo onshore` and `--demo offshore` generate synthetic
 examples; always select an output directory outside the source repository. Run a source YAML/JSON specification with
-`--out DIR`. Command help lists supported stages, process-data import and strict validation.
+`--out DIR`. Command help lists supported stages, process-data import and strict validation. `--optimize` shortens the
+connections of each feasible candidate and `--route` adds pipe-route estimates; both are described below and are off
+unless requested.
 
 The synthetic studies deliberately lack project hazard/structural qualification. Their expected outcome is INCOMPLETE
 with passing modeled geometry where feasible and visible NOT_EVALUATED engineering checks. Strict validation must retain
@@ -86,6 +88,79 @@ or a supported method is absent, while NOT_APPLICABLE requires justified scope. 
 INFEASIBLE; missing required assessment makes it INCOMPLETE. FEASIBLE is limited to the supplied modeled criteria and
 does not confer approval. Bounded placement search does not prove global optimality or full-geometry infeasibility.
 
+## Connection shortening and route estimates
+
+The placement search returns the first arrangement that satisfies the hard constraints of a scan. Two optional extensions
+take that candidate further. Neither changes a study that does not ask for it: the options are absent from the normalized
+study and its fingerprint is unchanged.
+
+```json
+{
+  "options": {
+    "grid_m": 1,
+    "optimize": {"enabled": true, "max_passes": 20, "max_evaluations": 200000},
+    "routing": {"enabled": true, "clearance_m": 0.0, "bend_penalty_m": 1.0,
+                "deck_penetration_penalty_m": 5.0, "avoid_envelopes": true}
+  }
+}
+```
+
+### Connection shortening (`options.optimize`, `--optimize`)
+
+`layout_optimizer` minimizes the weighted centre-to-centre Manhattan distance of the process connections,
+$J=\sum_c w_c\,(|\Delta x_c|+|\Delta y_c|+|\Delta z_c|)$, where $w_c$ is the optional `weight` of a connection (default 1; use
+it for a large-bore, alloy or hot line that should be short). The objective is the same proxy the comparison table reports.
+It is not a routed length, a material take-off or a cost.
+
+The search is deterministic and uses no random numbers. It repeats three moves until none improves the objective:
+relocating one item to any grid position, deck and orientation it is allowed; exchanging the positions of two items;
+and shifting a block of connected free items together. Every move is accepted only if the moved items pass the same hard
+constraints as the placement search: deck boundary and height, obstacles, reserved corridors, physical and maintenance
+envelopes, verified separation rules and deck mass limits. A required constraint is never traded against length. Fixed
+equipment does not move.
+
+The result is recorded under `solver.optimization` of the alternative: objective before and after, moves accepted,
+candidates evaluated, why the search stopped (`LOCAL_OPTIMUM`, `SEARCH_LIMIT` or `PASS_LIMIT`) and a simple lower bound.
+A local optimum on the grid is not the global optimum, `optimality_proven` is always false, and the lower bound ignores
+all other equipment and rules, so the reported gap is an upper limit on what remains, not a target.
+
+Equipment is drawn together until a rule stops it. With no maintenance envelopes and no separation rules the packages end
+up touching, which is rarely a real layout: supply the envelopes and the source-qualified rules first.
+
+Measured on 22 November 2026 with the two synthetic demonstrations, 1 m grid, default settings, comparing the scan result
+with the shortened result of the same alternative:
+
+| Demonstration | Connection proxy before, m | After, m | Required checks changed |
+| --- | --- | --- | --- |
+| Onshore, 8 packages, 7 connections | 145 / 88 / 88 | 40 / 39 / 41 | none |
+| Offshore, 9 packages, 8 connections, 3 decks | 89 / 78 / 74 | 69 / 66 / 66 | none |
+
+Each demonstration ran in under two seconds including route estimates. These are synthetic cases; they show the method
+works, not what a project will gain.
+
+### Route estimates (`options.routing`, `--route`)
+
+`layout_routing` searches, for every connection, the shortest axis-parallel path from the source equipment box to the
+target box through free space, using A* on a grid of cell size `routing.grid_m` (default: the placement grid). Equipment,
+obstacles and reserved corridors are closed; maintenance envelopes are closed except those of the two connected items. The
+path cost is its length plus `bend_penalty_m` per change of direction and `deck_penetration_penalty_m` per deck crossed.
+A reserved corridor is closed over the whole clear height unless `corridor_overhead_clearance_m` states the height above
+which a line may cross it; no default is assumed. When the grid would exceed `max_cells` the cell size is doubled and the
+effective size is recorded.
+
+Each alternative receives `route_estimates` with one record per connection: corner points in plant metres, length, bends,
+deck penetrations and a status of `ROUTED`, `ROUTED_THROUGH_ENVELOPE` (no path clear of maintenance envelopes exists),
+`NO_ROUTE_FOUND` or `NOT_PLACED`. The total is reported as `routed_length_estimate_m` next to the unchanged proxy, the
+routes are written to `dataset/route_estimates.csv` and drawn as blue dashed lines on the plans.
+
+A route estimate is a software screening line and nothing more. It runs from face to face because the model holds no
+nozzle positions; it has no line size, slope, pipe rack, supports, flexibility or stress check; and two routes may occupy
+the same space. Its evidence class is `SCREENING_ESTIMATE`. It is never written to `physical_routes` and never counts as
+physical-inventory evidence, which still requires supplied centrelines from a controlled source.
+
+Connection shortening uses the proxy, not the routed estimate, as its objective. Shorten first, then read the route
+estimates of the result.
+
 ## Standards basis
 
 Record the legally/contractually adopted edition and amendments. Verify current publication metadata at study setup,
@@ -135,8 +210,9 @@ delivery status and nonzero strict exit, even when all supplied geometric criter
 as not requested. DOCX is an optional editable companion; its absence does not substitute for the required PDF/HTML pair.
 
 `devtools/test_layout_study.py` exercises geometric failures, source gating, schema/frame rules, deterministic alternatives,
-stage-cache behavior and end-to-end examples where available. Test results establish the executed software scope only.
+connection shortening, route estimates, stage-cache behavior and end-to-end examples where available. Test results establish the executed software scope only.
 
+On 22 November 2026 the suite ran 71 tests successfully with the connection-shortening and route-estimate cases added.
 The initial 25 October 2026 validation ran 46 tests successfully, including reopened STEP/DXF/GLB checks. A dependency-free
 run passed with one optional CAD test skipped. Tested adapters were CadQuery 2.7.0, ezdxf 1.4.4, ReportLab 4.4.9,
 python-docx 1.2.0 and PyMuPDF 1.26.6. The synthetic reference package contains three alternatives each for an eight-package
@@ -147,8 +223,10 @@ assessments.
 
 ## Deferred engineering interfaces
 
-The physical-inventory contract records supplied centreline geometry and volumes; it does not generate routes, size piping,
-calculate pressure drop or perform flexibility/stress analysis. Hydraulic feedback, irregular terrain/structures, CFD/QRA
+The physical-inventory contract records supplied centreline geometry and volumes; it does not size piping, calculate
+pressure drop or perform flexibility/stress analysis, and the optional route estimates are not physical routes. Global
+placement optimization (an exact or mixed-integer backend), rack allocation, route-to-route clash avoidance and placement
+driven by routed length or pressure drop are not implemented. Hydraulic feedback, irregular terrain/structures, CFD/QRA
 hazard contours, evacuation capacity/hazard independence, fire/blast loads, crane capacity/removal operations, full vendor
 packages and floating-facility structural/marine qualification require explicit specialist adapters and evidence. IFC
 federation and commercial CAD authoring profiles require separate exchange qualification. Track these gaps without

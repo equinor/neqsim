@@ -2,7 +2,7 @@
 name: neqsim-plant-layout-study
 version: "1.0.0"
 description: "Orchestrate onshore and offshore physical plant-layout screening from explicit equipment envelopes and NeqSim process data to checked alternatives, drawings, CAD and a report. USE WHEN: plot plans, topsides/deck arrangements, plant layouts or a layout study report are requested."
-last_verified: "2026-10-25"
+last_verified: "2026-11-22"
 ---
 
 # Plant layout study
@@ -31,8 +31,14 @@ Reuse `ProcessDiagramGraphAdapter` and `EngineeringGraph` for semantic identitie
 - Generate and inspect synthetic examples using `--demo onshore` or `--demo offshore`, with explicit `--out DIR`.
 - Run the specification with `neqsim layout-study study.yaml --out DIR`; use `--strict` when complete required evidence is
   an acceptance gate. Read command help for supported stages and process-data input.
+- For a new design, add `--optimize` to shorten the connections of each feasible candidate and `--route` for pipe-route
+  estimates (or set `options.optimize` / `options.routing`). Enter maintenance envelopes and source-qualified separation
+  rules first: shortening packs equipment as close as the supplied rules allow. Use the same switches on every later
+  stage of the same output directory.
 - Preserve dataset fingerprints and source snapshots. A stale stage cache must be regenerated before use.
-- Reconcile process tags, coordinates and connection metrics. A centre-to-centre length proxy is not installed piping MTO.
+- Reconcile process tags, coordinates and connection metrics. A centre-to-centre length proxy is not installed piping MTO,
+  and neither is a route estimate: it is a face-to-face screening line without nozzles, rack, line size or stress check.
+- Report shortening honestly: local optimum on the grid, never "optimal". Quote `solver.optimization` before and after.
 - Review checks, CAD adapter availability/losses, drawings and report before handoff to `@plant-layout-review`.
 
 ## Standards and maturity

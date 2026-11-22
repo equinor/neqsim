@@ -52,6 +52,32 @@ def _comparison(alternatives):
     return headers, rows
 
 
+def _search_extensions(alternatives):
+    """Tabulate connection shortening and route estimates when a study used them.
+
+    Returns ``(headers, rows, notes)`` or ``None`` when neither extension ran.
+    """
+    if not any(a.get("solver", {}).get("optimization") or a.get("route_estimates") for a in alternatives):
+        return None
+    headers = ["Alternative", "Proxy before m", "Proxy after m", "Reduction %", "Stopped by",
+               "Gap to bound %", "Route estimate m", "Routed", "Unrouted"]
+    rows = []
+    for a in alternatives:
+        optimization = a.get("solver", {}).get("optimization") or {}
+        estimate = a.get("route_estimates") or {}
+        rows.append([a["id"], _value(optimization.get("objective_initial_m")),
+                     _value(optimization.get("objective_final_m")), _value(optimization.get("reduction_percent")),
+                     _value(optimization.get("stopped_by")), _value(optimization.get("gap_to_lower_bound_percent")),
+                     _value(estimate.get("total_length_m")), _value(estimate.get("routed")),
+                     _value(len(estimate["unrouted"]) if estimate else None)])
+    notes = ["Connection shortening is a deterministic local search on the placement grid under the same hard "
+             "constraints as the placement search. It ends at a local optimum; global optimality is not established. "
+             "The gap is measured against a simple lower bound that ignores all other equipment and rules.",
+             "Route estimates are software screening lines between equipment faces. They carry no nozzle positions, "
+             "pipe rack, line sizes, supports or stress check, may share space, and are not physical-route evidence."]
+    return headers, rows, notes
+
+
 def _coordinates(study, alternatives):
     """Return the exact placement and physical envelope coordinate schedule."""
     equipment = {e["tag"]: e for e in study["equipment"]}
@@ -178,8 +204,13 @@ def _html_report(study, alternatives, drawings, cad, inventory=None):
            "<h2>Alternative comparison</h2>", _table_html(headers, rows),
            "<p>Pipe proxy is a centre-to-centre distance metric for arrangement comparison. "
            "It is not a routed piping quantity or a pressure-drop calculation. Feasibility is evaluated "
-           "against modelled constraints; open required evidence keeps an alternative incomplete.</p>",
-           "<h2>Design basis</h2>"]
+           "against modelled constraints; open required evidence keeps an alternative incomplete.</p>"]
+    extensions = _search_extensions(alternatives)
+    if extensions:
+        out.extend(["<h3>Connection shortening and route estimates</h3>",
+                    _table_html(extensions[0], extensions[1])]
+                   + ["<p>%s</p>" % esc(note) for note in extensions[2]])
+    out.extend(["<h2>Design basis</h2>"])
     out.append(_table_html(["Basis", "Value"], [["Facility", p.get("facility_type")],
                ["Jurisdiction", p.get("jurisdiction")], ["Coordinate system", study.get("coordinate_system")],
                ["Placement options", study.get("options")]]))
@@ -214,7 +245,10 @@ def _html_report(study, alternatives, drawings, cad, inventory=None):
     groups = _drawing_groups(drawings, alternatives)
     for a in alternatives:
         out.append("<h2>%s</h2><p>%s</p>" % (esc(a["id"]), esc(a.get("label", ""))))
-        out.append(_table_html(["Solver field", "Value"], [[k, v] for k, v in a.get("solver", {}).items()]))
+        out.append(_table_html(["Solver field", "Value"],
+                               [[k, v] for k, v in a.get("solver", {}).items() if k != "optimization"]
+                               + [["optimization." + k, v]
+                                  for k, v in (a.get("solver", {}).get("optimization") or {}).items()]))
         for sheet in groups[a["id"]]:
             path = Path(sheet["svg"])
             if path.is_file():
@@ -327,6 +361,14 @@ def _pdf_report(path, study, alternatives, drawings, cad=None, inventory=None):
                       [[r[i] for i in (0, 1, 2, 3, 6, 7)] for r in rows], [23, 33, 28, 25, 25, 30]))
     body.append(paragraph("Pipe proxy is a centre-to-centre arrangement metric, not detailed routing. "
                           "A low proxy does not compensate for failed or unevaluated requirements."))
+    extensions = _search_extensions(alternatives)
+    if extensions:
+        body.append(paragraph("Connection shortening and route estimates", "Heading2"))
+        body.append(table([extensions[0][i] for i in (0, 1, 2, 3, 5, 6, 8)],
+                          [[r[i] for i in (0, 1, 2, 3, 5, 6, 8)] for r in extensions[1]],
+                          [23, 24, 24, 22, 24, 27, 20]))
+        for note in extensions[2]:
+            body.append(paragraph(note))
     body.append(paragraph("Design basis", "Heading1"))
     basis_rows = [["Facility", p.get("facility_type")], ["Jurisdiction", p.get("jurisdiction")],
                   ["Length and mass units", "m and kg"],
@@ -484,6 +526,13 @@ def _docx_report(path, study, alternatives, drawings, cad=None, inventory=None):
     headers, rows = _comparison(alternatives)
     table([headers[i] for i in (0, 1, 2, 6, 7)], [[r[i] for i in (0, 1, 2, 6, 7)] for r in rows])
     doc.add_paragraph("Pipe proxy is a centre-to-centre arrangement metric and does not establish routed piping quantities.")
+    extensions = _search_extensions(alternatives)
+    if extensions:
+        doc.add_heading("Connection shortening and route estimates", 2)
+        table([extensions[0][i] for i in (0, 1, 2, 3, 6, 8)],
+              [[r[i] for i in (0, 1, 2, 3, 6, 8)] for r in extensions[1]])
+        for note in extensions[2]:
+            doc.add_paragraph(note)
     doc.add_heading("Design basis", 1)
     table(["Item", "Value"], [["Facility", p.get("facility_type")], ["Jurisdiction", p.get("jurisdiction")],
                                ["Coordinate units", "metres; +Z up"], ["Mass units", "kg"]])
