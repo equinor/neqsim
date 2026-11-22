@@ -1,7 +1,12 @@
 package neqsim.pvtsimulation.util.parameterfitting;
 
+import neqsim.pvtsimulation.flowassurance.AsphalteneSolidModel;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseCPAInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetPressureFlash;
 
 /**
  * Fitting function for asphaltene onset pressure/temperature.
@@ -15,9 +20,20 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * The fitting parameters are:
  * </p>
  * <ul>
- * <li>params[0]: Association energy epsilon/R (K) - typically 2500-4000 K for asphaltenes</li>
- * <li>params[1]: Association volume kappa (dimensionless) - typically 0.001-0.05</li>
+ * <li>ASSOCIATION_PARAMETERS (CPA systems only): params[0] association energy epsilon/R (K), typically 2500-4000 K;
+ * params[1] association volume kappa, typically 0.001-0.05</li>
+ * <li>BINARY_INTERACTION: params[0] the asphaltene-methane interaction parameter; every other component gets a value
+ * scaled by its size asymmetry with the asphaltene (see {@link AsphalteneSolidModel#sizeAsymmetryKij}), so light
+ * components get large and heavy fractions near-zero values</li>
+ * <li>MOLAR_MASS: params[0] asphaltene molar mass (g/mol)</li>
+ * <li>COMBINED (CPA systems only): params[0] epsilon/R (K), params[1] the asphaltene-methane interaction parameter as
+ * for BINARY_INTERACTION; kappa is fixed at 0.005</li>
  * </ul>
+ *
+ * <p>
+ * The onset is found with {@link AsphalteneOnsetPressureFlash}. Flash failures and a fluid that is already unstable at
+ * the start pressure raise exceptions instead of being reported as an onset.
+ * </p>
  *
  * <p>
  * The dependent values are:
@@ -122,6 +138,7 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
 
     switch (parameterType) {
     case ASSOCIATION_PARAMETERS:
+      requireCpa();
       // params[0] = epsilon/R (association energy in K)
       // params[1] = kappa (association volume, dimensionless)
       // Apply to all phases for consistency
@@ -132,8 +149,7 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       break;
 
     case BINARY_INTERACTION:
-      // params[0] = kij with n-heptane or specified component
-      // Binary interaction parameters would be set here
+      applyScaledKij(asphalteneIndex, params[0]);
       break;
 
     case MOLAR_MASS:
@@ -144,8 +160,9 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       break;
 
     case COMBINED:
-      // params[0] = epsilon/R
-      // params[1] = kij (not implemented yet - uses fixed kappa)
+      requireCpa();
+      // params[0] = epsilon/R, params[1] = asphaltene-methane kij (size-scaled to the others)
+      applyScaledKij(asphalteneIndex, params[1]);
       for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
         system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationEnergy(params[0]);
         system.getPhase(phaseNum).getComponent(asphalteneIndex).setAssociationVolume(0.005); // Fixed
@@ -171,87 +188,60 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
   }
 
   /**
-   * Calculates the asphaltene onset pressure using phase stability analysis.
+   * Throw if the system is not a CPA system (association parameters have no effect otherwise).
+   */
+  private void requireCpa() {
+    if (!(system.getPhase(0) instanceof PhaseCPAInterface)) {
+      throw new IllegalStateException(
+          "Association parameters need a CPA system; use BINARY_INTERACTION or MOLAR_MASS for cubic equations of state");
+    }
+  }
+
+  /**
+   * Set asphaltene interaction parameters: the given value for methane, scaled by size asymmetry for the others.
    *
-   * @return onset pressure in bara, or NaN if not found
+   * @param asphalteneIndex asphaltene component index
+   * @param methaneKij asphaltene-methane interaction parameter
+   */
+  private void applyScaledKij(int asphalteneIndex, double methaneKij) {
+    PhaseInterface phase0 = system.getPhase(0);
+    double asphSize = phase0.getComponent(asphalteneIndex).getTC() / phase0.getComponent(asphalteneIndex).getPC();
+    double methaneSize = phase0.hasComponent("methane")
+        ? phase0.getComponent("methane").getTC() / phase0.getComponent("methane").getPC()
+        : 190.564 / 45.99;
+    double methaneShape = AsphalteneSolidModel.sizeAsymmetryKij(asphSize, methaneSize, 1.0);
+    int nc = phase0.getNumberOfComponents();
+    for (int p = 0; p < system.getMaxNumberOfPhases(); p++) {
+      PhaseInterface phase = system.getPhase(p);
+      if (!(phase instanceof PhaseEosInterface) || ((PhaseEosInterface) phase).getEosMixingRule() == null) {
+        continue;
+      }
+      EosMixingRulesInterface rule = ((PhaseEosInterface) phase).getEosMixingRule();
+      for (int k = 0; k < nc; k++) {
+        if (k == asphalteneIndex || "water".equalsIgnoreCase(phase.getComponent(k).getComponentName())) {
+          continue;
+        }
+        double size = phase0.getComponent(k).getTC() / phase0.getComponent(k).getPC();
+        double kij = methaneShape > 0.0
+            ? methaneKij * AsphalteneSolidModel.sizeAsymmetryKij(asphSize, size, 1.0) / methaneShape
+            : methaneKij;
+        rule.setBinaryInteractionParameter(asphalteneIndex, k, kij);
+        rule.setBinaryInteractionParameter(k, asphalteneIndex, kij);
+      }
+    }
+  }
+
+  /**
+   * Calculates the asphaltene onset pressure with the shared onset flash.
+   *
+   * @return onset pressure in bara, or NaN if no onset is found in the range
    */
   private double calculateOnsetPressure() {
-    ThermodynamicOperations ops = new ThermodynamicOperations(system);
-
-    // Enable solid phase checking
-    system.setSolidPhaseCheck(asphalteneComponentName);
-
-    double currentPressure = startPressure;
-    double previousPressure = startPressure;
-    boolean wasStable = true;
-
-    // Coarse search
-    while (currentPressure > minPressure) {
-      system.setPressure(currentPressure);
-
-      try {
-        ops.TPflash();
-      } catch (Exception e) {
-        currentPressure -= pressureStep;
-        continue;
-      }
-
-      boolean hasAsphaltene = checkForAsphaltenePrecipitation();
-
-      if (hasAsphaltene && wasStable) {
-        // Found transition - refine with bisection
-        return refinePressure(previousPressure, currentPressure, ops);
-      }
-
-      wasStable = !hasAsphaltene;
-      previousPressure = currentPressure;
-      currentPressure -= pressureStep;
-    }
-
-    return Double.NaN;
-  }
-
-  /**
-   * Refines the onset pressure using bisection.
-   */
-  private double refinePressure(double high, double low, ThermodynamicOperations ops) {
-    double mid;
-
-    while ((high - low) > pressureTolerance) {
-      mid = (high + low) / 2.0;
-      system.setPressure(mid);
-
-      try {
-        ops.TPflash();
-      } catch (Exception e) {
-        high = mid;
-        continue;
-      }
-
-      if (checkForAsphaltenePrecipitation()) {
-        low = mid;
-      } else {
-        high = mid;
-      }
-    }
-
-    return (high + low) / 2.0;
-  }
-
-  /**
-   * Checks if asphaltene precipitation has occurred.
-   */
-  private boolean checkForAsphaltenePrecipitation() {
-    if (system.hasPhaseType("solid")) {
-      try {
-        if (system.getPhaseOfType("solid").getNumberOfMolesInPhase() > 1e-10) {
-          return true;
-        }
-      } catch (Exception e) {
-        // Phase check failed
-      }
-    }
-    return false;
+    AsphalteneOnsetPressureFlash flash = new AsphalteneOnsetPressureFlash(system, startPressure, minPressure);
+    flash.setPressureStep(pressureStep);
+    flash.setPressureTolerance(pressureTolerance);
+    flash.run();
+    return flash.isOnsetFound() ? flash.getOnsetPressure() : Double.NaN;
   }
 
   /** {@inheritDoc} */

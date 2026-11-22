@@ -106,26 +106,40 @@ Control which parameters are fitted:
 ```java
 import neqsim.pvtsimulation.util.parameterfitting.AsphalteneOnsetFunction.FittingParameterType;
 
-// Fit both association parameters (default)
+// Fit both association parameters (default; CPA systems only)
 fitter.setParameterType(FittingParameterType.ASSOCIATION_PARAMETERS);
 fitter.setInitialGuess(3500.0, 0.005);
 
-// Fit only association energy
-fitter.setParameterType(FittingParameterType.ASSOCIATION_ENERGY);
-fitter.setInitialGuess(3500.0);
-
-// Fit only association volume
-fitter.setParameterType(FittingParameterType.ASSOCIATION_VOLUME);
-fitter.setInitialGuess(0.005);
-
-// Fit binary interaction parameter
+// Fit the asphaltene-methane interaction parameter; the other components get
+// values scaled by their size asymmetry with the asphaltene
 fitter.setParameterType(FittingParameterType.BINARY_INTERACTION);
-fitter.setInitialGuess(0.0);
+fitter.setInitialGuess(-0.05);
 
-// Fit molar mass
+// Fit molar mass (g/mol)
 fitter.setParameterType(FittingParameterType.MOLAR_MASS);
 fitter.setInitialGuess(750.0);
+
+// Fit association energy and the asphaltene-methane interaction parameter
+// (CPA systems only; kappa fixed at 0.005)
+fitter.setParameterType(FittingParameterType.COMBINED);
+fitter.setInitialGuess(3500.0, 0.0);
 ```
+
+| Type | Parameters | Systems |
+|------|------------|---------|
+| `ASSOCIATION_PARAMETERS` | epsilon/R (K), kappa | CPA only; other systems raise `IllegalStateException` |
+| `BINARY_INTERACTION` | asphaltene-methane k_ij | Cubic or CPA |
+| `MOLAR_MASS` | asphaltene molar mass (g/mol) | Cubic or CPA |
+| `COMBINED` | epsilon/R (K), asphaltene-methane k_ij | CPA only |
+
+Before 2026-11-22, `BINARY_INTERACTION` had no effect (the fitted value was never applied) and `COMBINED`
+ignored its second parameter. Fits made with those types before that date did not change the model.
+
+**Interaction parameter fits and the database solid reference.** With the database `asphaltene` component
+and its built-in solid reference, a measured onset is usually matched only with a negative asphaltene-methane
+interaction parameter (about -0.05 to -0.08 for a 90 C live oil). That matches one onset but makes light
+components good asphaltene solvents. To predict blends, gas injection or the onset envelope, calibrate the
+solid reference itself with [`AsphalteneSolidModel`](asphaltene_modeling.md#9-calibrated-solid-model-asphaltenesolidmodel).
 
 ### Configuring Pressure Search
 
@@ -198,12 +212,14 @@ Where:
 
 ### Onset Pressure Calculation
 
-For each temperature, the onset pressure is found by:
+For each temperature, the onset pressure is found with `AsphalteneOnsetPressureFlash`:
 
-1. Starting at high pressure (single liquid phase)
-2. Decreasing pressure in steps
-3. Detecting when a second phase appears
-4. Bisecting to find exact onset point
+1. Starting at high pressure, where the fluid must be stable (otherwise `IllegalStateException`)
+2. Decreasing pressure in steps (`setPressureRange`)
+3. Detecting an asphaltene solid or asphaltene-rich phase
+4. Bisecting to the tolerance set with `fitter.getFunction().setPressureTolerance(...)` (default 0.5 bar)
+
+A flash failure raises an exception instead of being skipped. No onset in the range gives `NaN`.
 
 ## Best Practices
 

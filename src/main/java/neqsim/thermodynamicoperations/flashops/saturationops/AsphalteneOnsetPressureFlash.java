@@ -46,7 +46,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   private static final int MAX_ITERATIONS = 100;
 
   /** Pressure tolerance for convergence (bara). */
-  private static final double PRESSURE_TOLERANCE = 0.1;
+  private volatile double pressureTolerance = 0.1;
 
   /** Initial pressure step for search (bara). */
   private double pressureStep = 5.0;
@@ -154,7 +154,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
     double mid;
     int bisectIter = 0;
 
-    while ((high - low) > PRESSURE_TOLERANCE && bisectIter < 20) {
+    while ((high - low) > pressureTolerance && bisectIter < 60) {
       bisectIter++;
       mid = (high + low) / 2.0;
       system.setPressure(mid);
@@ -168,7 +168,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
       }
     }
 
-    if (high - low > PRESSURE_TOLERANCE) {
+    if (high - low > pressureTolerance) {
       throw new IllegalStateException("Asphaltene pressure bracket did not converge");
     }
     return (high + low) / 2.0;
@@ -298,6 +298,16 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   public void setPressureStep(double step) {
     AsphalteneOnsetFlashSupport.requirePositive(step, "Pressure step");
     this.pressureStep = step;
+  }
+
+  /**
+   * Sets the bisection tolerance of the onset pressure.
+   *
+   * @param tolerance tolerance in bar
+   */
+  public void setPressureTolerance(double tolerance) {
+    AsphalteneOnsetFlashSupport.requirePositive(tolerance, "Pressure tolerance");
+    this.pressureTolerance = tolerance;
   }
 
   /**

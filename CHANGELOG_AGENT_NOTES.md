@@ -20,6 +20,27 @@
 - Known issue: electrolyte CPA pH of CO2-saturated water is about 0.9 units high (non-conservative corrosion rates).
 - Updated: `docs/process/corrosion/chloride_scc_assessment.md`, `norsok_m506_corrosion_rate.md`,
   `neqsim-flow-assurance` skill, `flow-assurance` agent.
+## 2026-11-22 — Calibrated asphaltene solid model; onset-search fixes
+
+- New: `neqsim.pvtsimulation.flowassurance.AsphalteneSolidModel` (Nghiem and Coombe solid model on SRK/PR).
+  Anchors the solid asphaltene fugacity at a measured onset (`calibrate(T, P)`), optionally fits the solid volume
+  from a lower onset (`calibrateLowerOnset`), the temperature term from a second temperature (`calibrateTemperature`)
+  and the size-asymmetry k_ij exponent from a blend onset (`fitKijExponent`). Gives upper and lower onset
+  (`onsetPressures`), the precipitated fraction, and blend or gas-injection onsets from the host calibration.
+  In a 90 C synthetic oil calibrated at 250 bara, 10 and 30 mol % condensate raise the onset to 258 and 282 bara.
+- Fixed: `AsphalteneOnsetFunction` `BINARY_INTERACTION` had no effect and `COMBINED` ignored its second parameter;
+  both now set the asphaltene-methane k_ij with size-scaled values for the other components. Association
+  types need CPA (`IllegalStateException` otherwise). The search now uses `AsphalteneOnsetPressureFlash`, so a fluid
+  unstable at the start or a failed flash raises instead of returning the start pressure or a silent NaN.
+- Fixed: `PedersenAsphalteneCharacterization.calculateOnsetPressure` counted any second liquid (water included)
+  as an onset and returned the start pressure for an already-split fluid. It now requires an asphaltene-rich
+  liquid, enables the multiphase check during the search, and raises on an unstable start or failed flash.
+- New: `AsphalteneOnsetPressureFlash.setPressureTolerance(double)`.
+- Migration: code that relied on the start pressure being returned as "onset" now gets `IllegalStateException`;
+  choose a higher start pressure or treat it as unstable. Fits made with `BINARY_INTERACTION` before this date
+  did not change the model.
+- Updated: `docs/pvtsimulation/flowassurance/asphaltene_modeling.md` (section 9), `asphaltene_parameter_fitting.md`,
+  flow-assurance README, `neqsim-flow-assurance` skill, `flow-assurance` agent.
 
 ---
 

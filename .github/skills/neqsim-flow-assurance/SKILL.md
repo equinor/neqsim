@@ -358,6 +358,33 @@ aspFluid.initProperties();
 // Compare upper/lower asphaltene onset pressures vs operating P
 ```
 
+### Calibrated onset envelope, blends and gas injection (`AsphalteneSolidModel`)
+
+With a measured onset, use the calibrated solid model (Nghiem and Coombe). It anchors the solid
+asphaltene fugacity at the measured onset and uses size-asymmetry k_ij (large for C1/N2/CO2, about 0 for
+heavy fractions), so one host calibration predicts blends and gas injection:
+
+```java
+AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil); // one component named *asphalten*, SRK/PR, classic
+model.calibrate(363.15, 250.0);        // measured upper onset (K, bara)
+model.calibrateLowerOnset(80.0);       // optional: lower onset below the bubble point
+AsphalteneSolidModel.OnsetResult env = model.onsetPressures(363.15, 500.0, 20.0, 5.0);
+double blendOnset = model.onsetPressures(blendFluid, 363.15, 600.0, 20.0, 5.0).getUpperOnsetPressure();
+double fraction = model.precipitatedFraction(hostOil, 363.15, 200.0);
+```
+
+Gotchas:
+
+- Do not tune k_ij against the database solid reference to hit a measured onset: it needs negative
+  asphaltene-methane values and then predicts that condensate stabilises the oil (wrong sign). Calibrate
+  the solid reference instead (measured 2026-11-22, see `docs/pvtsimulation/flowassurance/asphaltene_modeling.md` section 9).
+- Pedersen correlations give omega = 2.5 at 1000 g/mol, which the EoS splits into its own liquid; check
+  `isAsphalteneLiquidSplitDetected()` and use omega 1.2-1.5 for the solid model.
+- `PedersenAsphalteneCharacterization.calculateOnsetPressure` and `AsphalteneOnsetFunction` now raise
+  `IllegalStateException` when the fluid is already unstable at the start pressure (they used to return the
+  start pressure or NaN). `BINARY_INTERACTION` fitting now applies the fitted value (before 2026-11-22 it
+  had no effect); `ASSOCIATION_PARAMETERS`/`COMBINED` need a CPA system.
+
 ## 4. Pipeline Hydraulics
 
 ### Simple Adiabatic Pipe
@@ -1692,7 +1719,7 @@ model is enough and is cheap enough for Monte Carlo.
 |--------|-----------|---------------|------------|
 | Hydrate | `hydrateFormationTemperature()` | CPA EOS + hydrate check | MEG, methanol, insulation, DEH |
 | Wax | `calcWAT()`, `WaxFractionSim` | Wax characterization | Pigging, inhibitor, insulation |
-| Asphaltene | de Boer screening | CPA flash at multiple P | Inhibitor, avoid P drop |
+| Asphaltene | de Boer screening | `AsphalteneSolidModel` calibrated to a measured onset; CPA flash at multiple P | Inhibitor, avoid P drop |
 | Corrosion (CO2) | CO2 partial pressure | Standard flash | CRA, inhibitor, pH stabilization |
 | Slugging | Beggs & Brill flow regime | `PipeBeggsAndBrills` | Slug catcher, topside choking |
 | Scale | Ion activity product | Electrolyte-CPA | Scale inhibitor, pH control |

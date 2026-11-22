@@ -61,6 +61,7 @@ larger workflow. The calculators do not add that governance automatically.
 | Regular-solution model | `FloryHugginsAsphalteneModel` | Configure and calibrate for the fluid being studied |
 | Refractive-index screen | `RefractiveIndexAsphalteneScreening` | Requires measured or estimated refractive-index inputs |
 | Cubic-EOS characterization | `PedersenAsphalteneCharacterization` | Adds characterized pseudo-components and supports binary-interaction tuning |
+| Calibrated onset envelope, blends, gas injection | `AsphalteneSolidModel` | Calibrate to a measured onset; see [solid model](asphaltene_modeling#9-calibrated-solid-model-asphaltenesolidmodel) |
 | CPA parameter fitting | `AsphalteneOnsetFitting` | See [parameter fitting](asphaltene_parameter_fitting) |
 | Pressure-onset flash | `neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetPressureFlash` | Run the flash object and read `getOnsetPressure()` |
 | Temperature-onset flash | `neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemperatureFlash` | Run the flash object and read its onset result |

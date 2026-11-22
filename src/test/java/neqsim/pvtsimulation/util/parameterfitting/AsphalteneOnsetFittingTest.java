@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.util.parameterfitting;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests for AsphalteneOnsetFitting class.
@@ -206,5 +208,57 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
 
     assertTrue(epsilonR_min < epsilonR_max);
     assertTrue(kappa_min < kappa_max);
+  }
+
+  private static SystemInterface cubicOil() {
+    SystemInterface s = new SystemSrkEos(363.15, 400.0);
+    s.addComponent("methane", 0.40);
+    s.addComponent("ethane", 0.06);
+    s.addComponent("propane", 0.04);
+    s.addComponent("n-heptane", 0.25);
+    s.addComponent("nC10", 0.2);
+    s.addComponent("asphaltene", 0.004);
+    s.setMixingRule("classic");
+    return s;
+  }
+
+  private static double onsetWithMethaneKij(SystemInterface fluid, double kij) {
+    AsphalteneOnsetFunction function = new AsphalteneOnsetFunction();
+    function.setThermodynamicSystem(fluid);
+    function.setParameterType(AsphalteneOnsetFunction.FittingParameterType.BINARY_INTERACTION);
+    function.setPressureRange(600.0, 10.0, 10.0);
+    function.setFittingParams(0, kij);
+    return function.calcValue(new double[] {363.15});
+  }
+
+  @Test
+  @DisplayName("BINARY_INTERACTION sets size-scaled kij and changes the onset")
+  void testBinaryInteractionIsApplied() {
+    SystemInterface fluid = cubicOil();
+    double onsetA = onsetWithMethaneKij(fluid, -0.05);
+    int a = fluid.getPhase(0).getComponent("asphaltene").getComponentNumber();
+    neqsim.thermo.mixingrule.EosMixingRulesInterface rule = ((neqsim.thermo.phase.PhaseEosInterface) fluid.getPhase(0))
+        .getEosMixingRule();
+    assertEquals(-0.05, rule.getBinaryInteractionParameter(a, 0), 1e-12);
+    double heptane = rule.getBinaryInteractionParameter(a, 3);
+    assertTrue(heptane < 0.0 && heptane > -0.05, "heptane kij " + heptane);
+    double onsetB = onsetWithMethaneKij(cubicOil(), -0.08);
+    assertTrue(onsetA > onsetB + 50.0, onsetA + " vs " + onsetB);
+  }
+
+  @Test
+  @DisplayName("Unstable start pressure is an error, not an onset")
+  void testUnstableStartThrows() {
+    assertThrows(IllegalStateException.class, () -> onsetWithMethaneKij(cubicOil(), 0.0));
+  }
+
+  @Test
+  @DisplayName("Association parameters need CPA")
+  void testAssociationParametersNeedCpa() {
+    AsphalteneOnsetFunction function = new AsphalteneOnsetFunction();
+    function.setThermodynamicSystem(cubicOil());
+    function.setFittingParams(0, 3000.0);
+    function.setFittingParams(1, 0.01);
+    assertThrows(IllegalStateException.class, () -> function.calcValue(new double[] {363.15}));
   }
 }
