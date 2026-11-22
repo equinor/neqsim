@@ -170,9 +170,9 @@
                 "enum": [
                   "synthetic_assumption",
                   "vendor",
-                "calculated",
-                "measured",
-                "project_assumption"
+                  "calculated",
+                  "measured",
+                  "project_assumption"
                 ]
               },
               "reference": {
@@ -230,6 +230,11 @@
           },
           "service": {
             "type": "string"
+          },
+          "weight": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Relative weight of the connection in the connection-shortening objective; default 1."
           }
         }
       }
@@ -603,6 +608,71 @@
             "auto",
             "ortools"
           ]
+        },
+        "optimize": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Shorten the connections of each feasible candidate by deterministic local search. Off unless supplied.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "max_passes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "max_evaluations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000000
+            }
+          }
+        },
+        "routing": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Add orthogonal pipe-route estimates. Screening estimates only; never physical-route evidence. Off unless supplied.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "grid_m": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "clearance_m": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bend_penalty_m": {
+              "type": "number",
+              "minimum": 0
+            },
+            "deck_penetration_penalty_m": {
+              "type": "number",
+              "minimum": 0
+            },
+            "avoid_envelopes": {
+              "type": "boolean"
+            },
+            "corridor_overhead_clearance_m": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "exclusiveMinimum": 0
+            },
+            "headroom_m": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max_cells": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 5000000
+            }
+          }
         }
       }
     }

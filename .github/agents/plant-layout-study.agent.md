@@ -26,6 +26,9 @@ Loaded skills: `neqsim-plant-layout-study`, `neqsim-plant-layout-geometry`, `neq
 4. Use the onshore or offshore profile in the geometry skill. Fixed offshore and floating production require different
    specialist interfaces. Preserve locked equipment and declared maintenance, lifting and escape reservations.
 5. Generate alternatives and read every required check. A lower piping-length proxy cannot override a failed constraint.
+   For a new design run with `--optimize --route` once envelopes and source-qualified rules are entered: shortening is a
+   local search that never relaxes a hard constraint, and the route lines are screening estimates, not piping. Report
+   `solver.optimization` before/after and say "local optimum", never "optimal".
    `INCOMPLETE` is an engineering outcome, not a passing design. Ask `@standards-review` and `@consequence-analysis` for
    applicable evidence; metadata-only standard access cannot supply numerical acceptance rules.
 6. Produce the plot/deck plans, coordinates, findings and report; inspect all delivered drawings and report pages.
@@ -34,7 +37,7 @@ Loaded skills: `neqsim-plant-layout-study`, `neqsim-plant-layout-geometry`, `neq
    unresolved evidence and the next specialist actions. The software never assigns design approval.
 
 Default scope is orthogonal equipment/envelope boxes on rectangular plots/decks. State unsupported curved geometry,
-detailed pipe routing/stress, fire/blast/dispersion, escape capacity/hazard independence, structural and marine assessments
+detailed pipe routing/stress beyond the screening route estimates, fire/blast/dispersion, escape capacity/hazard independence, structural and marine assessments
 as explicit handoffs. Use the existing community/enterprise catalogs when available; public examples must remain usable
 without them. Follow repository task-folder, interpreter, privacy, validation and publication rules.
 
