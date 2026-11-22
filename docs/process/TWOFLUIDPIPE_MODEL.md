@@ -3328,11 +3328,12 @@ the same balance twice from the same state:
   cell's gradient is evaluated once per march and held for its second use. The same holds for
   the steady pressure-momentum residual.
 - **Repeated closure requests.** Flow-regime classification and its transition weights need the
-  same equilibrium level; the holdup closure needs the same stratified and slug-unit solutions
-  for the slug, stratified and annular shares of a blended cell. `FlowRegimeDetector`,
-  `SlugUnitModel` and the stratified holdup root keep their last solution and return it when
-  every argument has the same bit pattern as before (`ExactArgumentMemo`). There is no
-  tolerance: a reused value is the value the solver would have returned.
+  same equilibrium level, and the holdup closure needs the same slug-unit solution for the slug
+  and annular shares of a blended cell. `FlowRegimeDetector` and `SlugUnitModel` keep their last
+  solution and return it when every argument has the same bit pattern as before
+  (`ExactArgumentMemo`). The stratified holdup, which the slug, stratified and annular shares
+  all need, is solved once per cell inside the holdup closure. There is no tolerance: a reused
+  value is the value the solver would have returned.
 - **Slug-film balance.** The Haaland roughness power, the inclination sine and the
   stratified-to-annular geometry weight are evaluated once per unit instead of once per trial
   film holdup.
@@ -3376,7 +3377,9 @@ the same position: 88% of a run on the three-phase feed is its one flash per inc
 When changing closure code, keep these properties: a pressure march may hold gradients only
 while nothing but pressures is written, and a remembered closure result must depend on its
 arguments alone (or carry every model switch it reads in its arguments, as `SlugUnitModel`
-does).
+does). `TwoFluidPipe` itself holds no reuse state in fields: the held gradients are local to one
+march and the stratified holdup is local to one cell, which keeps the pipe's synchronised
+transient path free of extra shared state.
 
 Two test-classpath entry points reproduce the measurements. Launch each in a separate JVM with
 its logger at INFO and check that the reported results do not move when only run time is being

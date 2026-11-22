@@ -84,7 +84,7 @@ class SlugUnitModelTest {
   @Test
   void repeatedSolveReturnsEqualIndependentResults() {
     SlugUnitModel model = new SlugUnitModel();
-    SlugUnitModel.Result first = model.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS, 0.0);
+    SlugUnitModel.Result first = solveReferenceUnit(model, 0.0);
     assertTrue(first.valid);
     double filmHoldup = first.filmHoldup;
     double frictionGradient = first.frictionGradient;
@@ -92,15 +92,12 @@ class SlugUnitModelTest {
     first.filmHoldup = -1.0;
     first.frictionGradient = Double.NaN;
 
-    SlugUnitModel.Result second = model.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS, 0.0);
+    SlugUnitModel.Result second = solveReferenceUnit(model, 0.0);
     assertNotSame(first, second);
     assertTrue(second.valid);
     assertEquals(filmHoldup, second.filmHoldup);
     assertEquals(frictionGradient, second.frictionGradient);
-
-    SlugUnitModel.Result fresh = new SlugUnitModel().solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25,
-        ROUGHNESS, 0.0);
-    assertUnitsEqual(fresh, second);
+    assertUnitsEqual(solveReferenceUnit(new SlugUnitModel(), 0.0), second);
   }
 
   /**
@@ -108,22 +105,30 @@ class SlugUnitModelTest {
    */
   @Test
   void changedArgumentOrSwitchIsSolvedAgain() {
+    double inclination = Math.toRadians(2.0);
     SlugUnitModel model = new SlugUnitModel();
-    model.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS, 0.0);
+    solveReferenceUnit(model, 0.0);
 
-    SlugUnitModel.Result inclined = model.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS,
-        Math.toRadians(2.0));
-    assertUnitsEqual(new SlugUnitModel().solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS,
-        Math.toRadians(2.0)), inclined);
+    SlugUnitModel.Result inclined = solveReferenceUnit(model, inclination);
+    assertUnitsEqual(solveReferenceUnit(new SlugUnitModel(), inclination), inclined);
 
     model.setHighFroudeSlipReductionEnabled(false);
-    SlugUnitModel.Result plainSlip = model.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS,
-        Math.toRadians(2.0));
+    SlugUnitModel.Result plainSlip = solveReferenceUnit(model, inclination);
     SlugUnitModel reference = new SlugUnitModel();
     reference.setHighFroudeSlipReductionEnabled(false);
-    assertUnitsEqual(reference.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS,
-        Math.toRadians(2.0)), plainSlip);
+    assertUnitsEqual(solveReferenceUnit(reference, inclination), plainSlip);
     assertNotEquals(inclined.translationalVelocity, plainSlip.translationalVelocity);
+  }
+
+  /**
+   * Solves one fixed gas-liquid slug unit at the given inclination.
+   *
+   * @param model slug-unit model to ask
+   * @param inclination pipe inclination, radians
+   * @return slug-unit state
+   */
+  private static SlugUnitModel.Result solveReferenceUnit(SlugUnitModel model, double inclination) {
+    return model.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS, inclination);
   }
 
   /**

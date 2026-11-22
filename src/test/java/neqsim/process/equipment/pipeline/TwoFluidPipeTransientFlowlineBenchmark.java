@@ -54,9 +54,11 @@ public final class TwoFluidPipeTransientFlowlineBenchmark {
       if (sample >= 0) {
         seconds[sample] = elapsed;
       }
+      double pressureSum = Arrays.stream(pipe.getPressureProfile()).sum();
+      double liquidHoldupSum = Arrays.stream(pipe.getLiquidHoldupProfile()).sum();
+      double gasVelocitySum = Arrays.stream(pipe.getGasVelocityProfile()).sum();
       logger.info("sample={} transientSeconds={} pressureSumPa={} liquidHoldupSum={} gasVelocitySum={}", sample,
-          elapsed, Arrays.stream(pipe.getPressureProfile()).sum(),
-          Arrays.stream(pipe.getLiquidHoldupProfile()).sum(), Arrays.stream(pipe.getGasVelocityProfile()).sum());
+          elapsed, pressureSum, liquidHoldupSum, gasVelocitySum);
     }
     Arrays.sort(seconds);
     logger.info("cells=60 simulatedSeconds={} medianTransientSeconds={}", INTERVALS, seconds[seconds.length / 2]);

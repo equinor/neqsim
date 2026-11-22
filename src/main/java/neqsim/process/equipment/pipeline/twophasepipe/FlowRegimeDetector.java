@@ -912,8 +912,8 @@ public class FlowRegimeDetector implements Serializable {
       return memo.getValue().doubleValue();
     }
     double level = solveStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G, theta);
-    stratifiedLevelMemo = new ExactArgumentMemo<Double>(Double.valueOf(level), U_SL, U_SG, D, rho_L, rho_G, mu_L,
-        mu_G, theta);
+    stratifiedLevelMemo = new ExactArgumentMemo<Double>(Double.valueOf(level), U_SL, U_SG, D, rho_L, rho_G, mu_L, mu_G,
+        theta);
     return level;
   }
 
@@ -921,8 +921,7 @@ public class FlowRegimeDetector implements Serializable {
    * Solve the stratified momentum balance for the liquid level by bisection.
    *
    * <p>
-   * The result depends on the arguments alone, which is what allows {@link #estimateStratifiedLiquidLevel} to reuse
-   * it.
+   * The result depends on the arguments alone, which is what allows {@link #estimateStratifiedLiquidLevel} to reuse it.
    * </p>
    *
    * @param U_SL superficial liquid velocity [m/s]
@@ -935,8 +934,8 @@ public class FlowRegimeDetector implements Serializable {
    * @param theta pipe inclination angle [rad]
    * @return liquid level [m]
    */
-  private double solveStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G,
-      double mu_L, double mu_G, double theta) {
+  private double solveStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G, double mu_L,
+      double mu_G, double theta) {
     double low = 0.01 * D;
     double high = 0.99 * D;
 

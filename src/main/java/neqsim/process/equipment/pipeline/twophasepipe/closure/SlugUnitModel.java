@@ -508,8 +508,8 @@ public final class SlugUnitModel implements Serializable {
    *
    * <p>
    * The film root search evaluates the balance some tens of times per unit. The Haaland roughness power, the
-   * inclination sine and the stratified-to-annular geometry weight depend on the pipe alone, so they are evaluated
-   * once here with the same expressions the balance used before.
+   * inclination sine and the stratified-to-annular geometry weight depend on the pipe alone, so they are evaluated once
+   * here with the same expressions the balance used before.
    * </p>
    */
   private static final class FilmInvariants {
@@ -576,12 +576,12 @@ public final class SlugUnitModel implements Serializable {
    * Central angle of a circular segment with the given area fraction.
    *
    * <p>
-   * Solves {@code angle - sin(angle) = 2 pi holdup} on the smaller segment, where the left side is convex. The start
-   * is the reverted power series of that equation in {@code cbrt(12 pi holdup)}, which is already within rounding of
-   * the root for a thin segment and within 0.6 per cent at a half-full bore. Halley steps then converge cubically; a
-   * step that leaves the bracket falls back to Newton and then to bisection. With the cancellation-free residual of
-   * {@link #segmentAreaNumerator(double)} the iteration reaches its stop in at most three evaluations and returns the
-   * root to within four units in the last place.
+   * Solves angle - sin(angle) = 2 pi holdup on the smaller segment, where the left side is convex. The start is the
+   * reverted power series of that equation in the cube root of 12 pi holdup, which is already within rounding of the
+   * root for a thin segment and within 0.6 per cent at a half-full bore. Halley steps then converge cubically; a step
+   * that leaves the bracket falls back to Newton and then to bisection. With the cancellation-free residual of {@code
+   * segmentAreaNumerator} the iteration reaches its stop in at most three evaluations and returns the root to within
+   * four units in the last place.
    * </p>
    *
    * @param holdup segment area divided by bore area
@@ -607,8 +607,10 @@ public final class SlugUnitModel implements Serializable {
     double low = Math.cbrt(6.0 * target);
     double high = Math.PI;
     double lowSquared = low * low;
-    double angle = Math.min(high, low * (1.0 + lowSquared * (1.0 / 60.0
-        + lowSquared * (1.0 / 1400.0 + lowSquared * (1.0 / 25200.0 + lowSquared * (43.0 / 17248000.0))))));
+    double correction = 1.0 / 25200.0 + lowSquared * (43.0 / 17248000.0);
+    correction = 1.0 / 1400.0 + lowSquared * correction;
+    correction = 1.0 / 60.0 + lowSquared * correction;
+    double angle = Math.min(high, low * (1.0 + lowSquared * correction));
     double previousStepSize = Double.POSITIVE_INFINITY;
     for (int iteration = 0; iteration < 60; iteration++) {
       double residual = segmentAreaNumerator(angle) - target;
@@ -645,8 +647,8 @@ public final class SlugUnitModel implements Serializable {
    * <p>
    * Below one radian the difference {@code angle - sin(angle)} loses up to two digits to cancellation, enough to keep
    * the root search of {@link #centralAngle(double)} from settling. The Taylor series is used there instead; its
-   * truncation error is below 1e-18 relative at one radian. Above one radian the direct difference is accurate to a
-   * few units in the last place.
+   * truncation error is below 1e-18 relative at one radian. Above one radian the direct difference is accurate to a few
+   * units in the last place.
    * </p>
    *
    * @param angle central angle of the smaller segment, radians
@@ -657,10 +659,16 @@ public final class SlugUnitModel implements Serializable {
       return angle - Math.sin(angle);
     }
     double angleSquared = angle * angle;
-    double series = 1.0 / 6.0 + angleSquared * (-1.0 / 120.0 + angleSquared * (1.0 / 5040.0 + angleSquared
-        * (-1.0 / 362880.0 + angleSquared * (1.0 / 39916800.0 + angleSquared * (-1.0 / 6227020800.0 + angleSquared
-            * (1.0 / 1307674368000.0 + angleSquared * (-1.0 / 355687428096000.0 + angleSquared
-                * (1.0 / 121645100408832000.0 - angleSquared / 51090942171709440000.0))))))));
+    // Horner evaluation of 1/3! - x^2/5! + x^4/7! - ... - x^18/21!, highest term first.
+    double series = 1.0 / 121645100408832000.0 - angleSquared / 51090942171709440000.0;
+    series = -1.0 / 355687428096000.0 + angleSquared * series;
+    series = 1.0 / 1307674368000.0 + angleSquared * series;
+    series = -1.0 / 6227020800.0 + angleSquared * series;
+    series = 1.0 / 39916800.0 + angleSquared * series;
+    series = -1.0 / 362880.0 + angleSquared * series;
+    series = 1.0 / 5040.0 + angleSquared * series;
+    series = -1.0 / 120.0 + angleSquared * series;
+    series = 1.0 / 6.0 + angleSquared * series;
     return angle * (angleSquared * series);
   }
 

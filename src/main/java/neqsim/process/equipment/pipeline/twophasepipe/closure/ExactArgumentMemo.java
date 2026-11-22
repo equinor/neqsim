@@ -5,11 +5,11 @@ package neqsim.process.equipment.pipeline.twophasepipe.closure;
  *
  * <p>
  * The multiphase pipe closures solve the same nonlinear balance more than once for one cell: the flow-regime
- * classification and its transition weights both need the equilibrium stratified level, and the holdup closure
- * needs the stratified and slug-unit solutions for several regime shares. Each of those solves iterates over a
- * transcendental residual, so repeating it is the dominant closure cost. This entry lets the caller reuse the
- * previous solution when, and only when, every argument has the same bit pattern as before. The reused value is
- * therefore the value the solver would have returned, bit for bit; no tolerance is involved.
+ * classification and its transition weights both need the equilibrium stratified level, and the holdup closure needs
+ * the stratified and slug-unit solutions for several regime shares. Each of those solves iterates over a transcendental
+ * residual, so repeating it is the dominant closure cost. This entry lets the caller reuse the previous solution when,
+ * and only when, every argument has the same bit pattern as before. The reused value is therefore the value the solver
+ * would have returned, bit for bit; no tolerance is involved.
  * </p>
  *
  * <p>
