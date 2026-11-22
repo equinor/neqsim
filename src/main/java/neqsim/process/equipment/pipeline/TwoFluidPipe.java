@@ -8321,12 +8321,12 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * The flash is made on the feed composition at the cell pressure and temperature. Its oil is the equilibrium oil at
-   * that pressure, which holds more dissolved gas as pressure rises, so the equilibrium oil density falls with
-   * pressure (about -0.55 kg/m3 per bar for a volatile oil between 150 and 250 bara). When the transient moves no mass
-   * between gas and oil, resetting the cell to that density swells the oil without adding the gas that would swell it,
-   * and a cell that is mostly liquid then expands as its pressure rises. See
-   * {@link #frozenCompositionDensity(neqsim.thermo.phase.PhaseInterface, double, double, double, double, double[])}
-   * for the update used instead.
+   * that pressure, which holds more dissolved gas as pressure rises, so the equilibrium oil density falls with pressure
+   * (about -0.55 kg/m3 per bar for a volatile oil between 150 and 250 bara). When the transient moves no mass between
+   * gas and oil, resetting the cell to that density swells the oil without adding the gas that would swell it, and a
+   * cell that is mostly liquid then expands as its pressure rises. See
+   * {@link #frozenCompositionDensity(neqsim.thermo.phase.PhaseInterface, double, double, double, double, double[])} for
+   * the update used instead.
    * </p>
    *
    * @param sec cell being updated; its oil density reference is refreshed
@@ -8350,8 +8350,8 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * The equilibrium gas of the feed takes up heavier components as pressure rises, so its density rises faster with
    * pressure than a gas of fixed composition does. See
-   * {@link #frozenCompositionDensity(neqsim.thermo.phase.PhaseInterface, double, double, double, double, double[])}
-   * for the update used instead.
+   * {@link #frozenCompositionDensity(neqsim.thermo.phase.PhaseInterface, double, double, double, double, double[])} for
+   * the update used instead.
    * </p>
    *
    * @param sec cell being updated; its gas density reference is refreshed
@@ -8430,8 +8430,8 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Tells whether property updates advance gas and oil density at frozen composition.
    *
-   * @return true when the option is selected, pressure comes from the coupled solve and no model moves mass between
-   * gas and oil
+   * @return true when the option is selected, pressure comes from the coupled solve and no model moves mass between gas
+   * and oil
    */
   private boolean isFrozenCompositionDensityActive() {
     return frozenCompositionDensityUpdate && coupledPressureMomentumEnabled && !includeMassTransfer
@@ -12556,8 +12556,8 @@ public class TwoFluidPipe extends Pipeline {
    * non-equilibrium film transfer; those routes keep the equilibrium densities.
    * </p>
    *
-   * @param enabled true to advance gas and oil density at frozen composition, false to reset them to the
-   * equilibrium values
+   * @param enabled true to advance gas and oil density at frozen composition, false to reset them to the equilibrium
+   * values
    */
   public void setFrozenCompositionDensityUpdate(boolean enabled) {
     this.frozenCompositionDensityUpdate = enabled;
