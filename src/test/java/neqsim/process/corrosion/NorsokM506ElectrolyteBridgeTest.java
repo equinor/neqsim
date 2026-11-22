@@ -53,6 +53,7 @@ public class NorsokM506ElectrolyteBridgeTest {
 
     assertTrue(bridge.isFreeWaterPresent(), "a free water phase should be present");
     assertTrue(bridge.isPHFromElectrolyteModel(), "the rigorous electrolyte pH should be used");
+    assertFalse(bridge.isElectrolytePhaseSuspect(), "a clean brine phase should pass the plausibility checks");
 
     double pH = bridge.getInSituPH();
     assertTrue(pH > 2.0 && pH < 7.0, "in-situ pH should be in a plausible CO2-brine band, was " + pH);
