@@ -28,6 +28,15 @@ import java.io.Serializable;
  * incipient displacement. It is a stability screen, not a dynamic slug-frequency or slug-size model.
  * </p>
  *
+ * <p>
+ * Gas-oil-water systems are rejected by default because the published comparison is for one liquid. The condition
+ * depends on the liquid only through the hydrostatic head of the riser column, {@code phi rho_L g}, so a caller can
+ * choose to treat oil and water as one liquid with their in-situ mixture density ({@link
+ * Input.Builder#treatLiquidsAsMixture(boolean)}). That result is flagged by {@link Result#isLiquidMixtureBasis()}: it
+ * has no three-phase validation, and it does not describe water that separates and collects at the riser base, where
+ * the column is heavier than the mixture.
+ * </p>
+ *
  * @see <a href="https://doi.org/10.1016/0301-9322(86)90026-1">Taitel (1986)</a>
  */
 public final class SevereSluggingSystemDiagnostic {
@@ -49,7 +58,7 @@ public final class SevereSluggingSystemDiagnostic {
     NOT_APPLICABLE_NON_STRATIFIED_FLOWLINE,
     /** Both gas and liquid inventories required by the derivation are not present. */
     NOT_APPLICABLE_SINGLE_PHASE,
-    /** Oil-water-gas application is intentionally rejected because it is not validated. */
+    /** Oil-water-gas application is rejected unless the caller selects the liquid-mixture basis. */
     NOT_VALIDATED_THREE_PHASE
   }
 
@@ -69,6 +78,7 @@ public final class SevereSluggingSystemDiagnostic {
     private final boolean flowlineStratified;
     private final boolean flowlineContainsGasAndLiquid;
     private final boolean threePhase;
+    private final boolean liquidMixtureBasis;
 
     private Input(Builder builder) {
       upstreamGasVolumeM3 = nonNegative(builder.upstreamGasVolumeM3, "upstreamGasVolumeM3");
@@ -83,6 +93,7 @@ public final class SevereSluggingSystemDiagnostic {
       flowlineStratified = builder.flowlineStratified;
       flowlineContainsGasAndLiquid = builder.flowlineContainsGasAndLiquid;
       threePhase = builder.threePhase;
+      liquidMixtureBasis = builder.liquidMixtureBasis;
     }
 
     /**
@@ -145,6 +156,11 @@ public final class SevereSluggingSystemDiagnostic {
       return threePhase;
     }
 
+    /** Returns whether oil and water are evaluated as one liquid with their mixture density. */
+    public boolean isLiquidMixtureBasis() {
+      return liquidMixtureBasis;
+    }
+
     /** Builder for {@link Input}. */
     public static final class Builder {
       private double upstreamGasVolumeM3 = Double.NaN;
@@ -159,6 +175,7 @@ public final class SevereSluggingSystemDiagnostic {
       private boolean flowlineStratified;
       private boolean flowlineContainsGasAndLiquid;
       private boolean threePhase;
+      private boolean liquidMixtureBasis;
 
       private Builder() {
       }
@@ -230,6 +247,22 @@ public final class SevereSluggingSystemDiagnostic {
         return this;
       }
 
+      /**
+       * Selects evaluation of a gas-oil-water system with oil and water as one liquid.
+       *
+       * <p>
+       * The supplied liquid density must then be the oil-water mixture density in the riser. The default is false,
+       * which returns {@link Status#NOT_VALIDATED_THREE_PHASE} for a three-phase system.
+       * </p>
+       *
+       * @param value true to evaluate a three-phase system on the liquid-mixture basis
+       * @return this builder
+       */
+      public Builder treatLiquidsAsMixture(boolean value) {
+        liquidMixtureBasis = value;
+        return this;
+      }
+
       public Input build() {
         return new Input(this);
       }
@@ -246,15 +279,17 @@ public final class SevereSluggingSystemDiagnostic {
     private final double pressureMarginPa;
     private final double stabilityRatio;
     private final double gasExpansionHeadM;
+    private final boolean liquidMixtureBasis;
 
     private Result(Status status, double criticalTopPressurePa, double effectiveTopPressurePa, double pressureMarginPa,
-        double stabilityRatio, double gasExpansionHeadM) {
+        double stabilityRatio, double gasExpansionHeadM, boolean liquidMixtureBasis) {
       this.status = status;
       this.criticalTopPressurePa = criticalTopPressurePa;
       this.effectiveTopPressurePa = effectiveTopPressurePa;
       this.pressureMarginPa = pressureMarginPa;
       this.stabilityRatio = stabilityRatio;
       this.gasExpansionHeadM = gasExpansionHeadM;
+      this.liquidMixtureBasis = liquidMixtureBasis;
     }
 
     public Status getStatus() {
@@ -292,6 +327,15 @@ public final class SevereSluggingSystemDiagnostic {
     public double getGasExpansionHeadM() {
       return gasExpansionHeadM;
     }
+
+    /**
+     * Returns whether the result is for a gas-oil-water system with oil and water taken as one liquid.
+     *
+     * @return true when the classification rests on the unvalidated liquid-mixture basis
+     */
+    public boolean isLiquidMixtureBasis() {
+      return liquidMixtureBasis;
+    }
   }
 
   /**
@@ -312,6 +356,27 @@ public final class SevereSluggingSystemDiagnostic {
    */
   public static Input fromSections(TwoFluidSection[] sections, int riserBaseSection, double gasCapVoidFraction,
       double staticChokePressureDropPa) {
+    return fromSections(sections, riserBaseSection, gasCapVoidFraction, staticChokePressureDropPa, false);
+  }
+
+  /**
+   * Build a system descriptor from solved pipe sections, optionally on the liquid-mixture basis.
+   *
+   * <p>
+   * The riser liquid density is the liquid mass in the riser divided by its liquid volume. Where a section holds both
+   * oil and water the mass is taken from the two holdups and densities, so the value is the in-situ mixture density of
+   * the column and not the density of the flowing stream.
+   * </p>
+   *
+   * @param sections solved sections in flow direction
+   * @param riserBaseSection index of the first continuously rising section
+   * @param gasCapVoidFraction void fraction alpha-prime in the penetrating gas cap
+   * @param staticChokePressureDropPa fixed pressure drop between the riser outlet and separator, in Pa
+   * @param treatLiquidsAsMixture true to evaluate a gas-oil-water system with oil and water as one liquid
+   * @return immutable system input with geometry, inventory, phase, and flow-regime evidence
+   */
+  public static Input fromSections(TwoFluidSection[] sections, int riserBaseSection, double gasCapVoidFraction,
+      double staticChokePressureDropPa, boolean treatLiquidsAsMixture) {
     if (sections == null || sections.length < 2) {
       throw new IllegalArgumentException("sections must contain a flowline and riser");
     }
@@ -356,7 +421,7 @@ public final class SevereSluggingSystemDiagnostic {
         riserVolume += cellVolume;
         double liquidVolume = section.getLiquidHoldup() * cellVolume;
         riserLiquidVolume += liquidVolume;
-        riserLiquidMass += liquidVolume * section.getLiquidDensity();
+        riserLiquidMass += liquidVolume * columnLiquidDensity(section);
       }
     }
 
@@ -370,7 +435,27 @@ public final class SevereSluggingSystemDiagnostic {
         .staticChokePressureDropPa(staticChokePressureDropPa).liquidDensityKgPerM3(liquidDensity)
         .riserLiquidHoldup(riserLiquidHoldup).gasCapVoidFraction(gasCapVoidFraction)
         .validFlowlineRiserTopology(topologyValid).flowlineStratified(flowlineStratified)
-        .flowlineContainsGasAndLiquid(flowlineContainsGasAndLiquid).threePhase(threePhase).build();
+        .flowlineContainsGasAndLiquid(flowlineContainsGasAndLiquid).threePhase(threePhase)
+        .treatLiquidsAsMixture(treatLiquidsAsMixture).build();
+  }
+
+  /**
+   * Returns the density of the liquid a section holds.
+   *
+   * @param section solved section
+   * @return holdup-weighted oil-water density in kg/m3 when both liquids are present with usable densities, otherwise
+   * the section liquid density
+   */
+  private static double columnLiquidDensity(TwoFluidSection section) {
+    double oilHoldup = section.getOilHoldup();
+    double waterHoldup = section.getWaterHoldup();
+    double oilDensity = section.getOilDensity();
+    double waterDensity = section.getWaterDensity();
+    if (oilHoldup > 1.0e-10 && waterHoldup > 1.0e-10 && oilDensity > 0.0 && waterDensity > 0.0
+        && Double.isFinite(oilDensity) && Double.isFinite(waterDensity)) {
+      return (oilHoldup * oilDensity + waterHoldup * waterDensity) / (oilHoldup + waterHoldup);
+    }
+    return section.getLiquidDensity();
   }
 
   /** Evaluates the input using the Taitel quasi-steady stability condition. */
@@ -381,7 +466,7 @@ public final class SevereSluggingSystemDiagnostic {
     if (!input.hasValidFlowlineRiserTopology()) {
       return notApplicable(Status.NOT_APPLICABLE_INVALID_TOPOLOGY);
     }
-    if (input.isThreePhase()) {
+    if (input.isThreePhase() && !input.isLiquidMixtureBasis()) {
       return notApplicable(Status.NOT_VALIDATED_THREE_PHASE);
     }
     if (input.getUpstreamGasVolumeM3() == 0.0 || input.getRiserLiquidHoldup() == 0.0
@@ -403,11 +488,11 @@ public final class SevereSluggingSystemDiagnostic {
         : effectiveTopPressurePa / criticalTopPressurePa;
     Status status = pressureMarginPa >= 0.0 ? Status.STABLE : Status.UNSTABLE;
     return new Result(status, criticalTopPressurePa, effectiveTopPressurePa, pressureMarginPa, stabilityRatio,
-        gasExpansionHeadM);
+        gasExpansionHeadM, input.isThreePhase());
   }
 
   private static Result notApplicable(Status status) {
-    return new Result(status, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+    return new Result(status, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, false);
   }
 
   private static double positive(double value, String name) {

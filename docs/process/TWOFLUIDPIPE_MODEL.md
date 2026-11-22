@@ -901,6 +901,23 @@ The gas-liquid flow regime detector uses Taitel-Dukler transitions:
 | CHURN | Transition between slug and annular | ✅ |
 | BUBBLE | High liquid fraction, low gas velocity | ✅ |
 
+In a rising section (inclination above 10°) bubble flow also needs a continuous liquid. The
+inferred void fraction $U_{SG}/(U_{SG}+U_{SL}+U_b)$ is below the 0.25 coalescence limit whenever
+the gas is nearly stagnant, whatever the cell holds, so the cell's own void fraction must also be
+below 0.52, the packing limit of Taitel et al. (1980). Before this, the top cells of a riser packing
+against a closed outlet (0.3 % liquid, gas velocity passing through zero) took the bubble closure
+and the film velocity jumped from -0.7 to +14 m/s (`FlowRegimeNearDryRiserTest`).
+
+Still open: a near-dry rising cell falls through to `SLUG` or, when gas and film both move down,
+to the downward stratified branch, and it changes branch each time its gas velocity changes sign.
+With the default AUSM+ flux the gas velocity of a closed riser top keeps an odd-even pattern that
+drives such changes. `setMaterialWaveRusanovEnabled(true)` removes the pattern on a 1.6 km
+flowline-riser for 720 s, but on the 15.6 km line it gave riser-top steps of up to 83 bar after
+2000 s, so the default flux is the better choice there. Classifying
+countercurrent liquid below the 0.24 bridging holdup as stratified was tried and rejected: the
+stratified closure let the film run to the velocity limit and failed
+`TwoFluidPipeShutInRobustnessTest`.
+
 ### Transient Regime-Transition Continuation
 
 During transient source evaluation, `FlowRegimeDetector.classify(...)` supplies the same
@@ -1180,6 +1197,26 @@ neglects wall and interfacial shear during incipient gas penetration. It deliber
 a not-applicable status for invalid topology, non-stratified feeders, single-phase states, and
 unvalidated oil–water–gas cases. It predicts a stability boundary, not slug frequency, slug
 length, or transient cycle amplitude.
+
+A gas–oil–water system returns `NOT_VALIDATED_THREE_PHASE` by default. The condition depends on
+the liquid only through the hydrostatic head of the riser column, $\phi\,\rho_L\,g$, so the
+caller can choose to evaluate it with oil and water as one liquid:
+
+```java
+SevereSluggingSystemDiagnostic.Result screen =
+    pipe.evaluateSevereSluggingSystem(riserBaseSection, 0.89, 0.0, true);
+
+if (screen.isApplicable() && screen.isLiquidMixtureBasis()) {
+  // Oil-water mixture basis: report it as a screen without three-phase validation.
+}
+```
+
+$\rho_L$ is then the holdup-weighted oil–water density of the liquid held in the riser sections,
+not the density of the flowing stream. `isLiquidMixtureBasis()` is true only for a three-phase
+system evaluated this way. The Taitel comparison is for one liquid, so this result has no
+three-phase validation, and it does not describe water that separates and collects at the riser
+base, where the column is heavier than the mixture. The other applicability checks (topology,
+stratified feeder, both phases present) still apply.
 
 The flowline and riser may have different diameters, and each flowline section contributes its
 own solved gas volume. Only the rising sections must have constant area. The public
@@ -2086,6 +2123,77 @@ liquid keeps its acoustic properties if the property flash would introduce a sec
 pressure correction still updates the transported liquid density with its acoustic compressibility.
 Equilibrium properties for a different phase composition would otherwise change the calculated cell
 volume at every refresh even though the transported phase inventory has no transfer source.
+
+#### Property updates at frozen composition
+
+The same applies to a cell that holds gas and oil. Every `thermodynamicUpdateInterval` substeps the
+transient flashes the feed at each cell's pressure and temperature. With no mass transfer, component
+transport or non-equilibrium film transfer, the gas and oil masses in the cell are fixed, but the
+flash returns the equilibrium phases of the feed at the new pressure. Their densities are not the
+densities of the fluid in the cell:
+
+- The equilibrium oil holds more dissolved gas at higher pressure and is lighter. Resetting the cell
+  to that density swells the oil without the gas that would swell it.
+- The equilibrium gas takes up heavier components at higher pressure, so its density rises faster
+  than that of a gas of fixed composition.
+
+The coupled pressure solve advances each phase density with its sound speed,
+$\Delta\rho = \Delta P / c^2$. A property update that then moves a density by $\Delta\rho$ moves the
+cell pressure by about $-c^2\Delta\rho$ in the next solve. Setting the density to a target
+$\rho_t(P)$ therefore multiplies a pressure offset from the consistent state by $1-r$, with
+$r = c^2\,\mathrm{d}\rho_t/\mathrm{d}P$. The update is stable for $0 < r < 2$. Values for a
+gas–volatile-oil–water feed at 80 °C (SRK):
+
+| Pressure (bara) | Gas, equilibrium flash | Gas, frozen composition | Oil, equilibrium flash | Oil, frozen composition |
+|---|---|---|---|---|
+| 100 | 1.52 | 1.51 | -4.47 | 1.24 |
+| 140 | 1.74 | 1.61 | -3.79 | 1.25 |
+| 180 | 2.00 | 1.67 | -3.41 | 1.27 |
+| 220 | 2.29 | 1.68 | -3.23 | 1.28 |
+| 260 | 2.62 | 1.66 | -3.24 | 1.29 |
+
+With equilibrium densities a liquid-rich cell diverges at any pressure, and above about 180 bara
+the pressure of a gas-bearing cell alternates between updates with growing amplitude. On a 15.6 km,
+12-inch tie-back packing against a closed riser top (80 cells, 300 t/h falling with back-pressure,
+3000 s), this and the riser-top regime switching described under Flow Regime Detection gave
+90–130 bar steps in riser-top pressure from about 1500 s and a reported maximum of 288 barg. With
+both changes the riser-top pressure still steps, 23 times by more than 1 bar after the first 300 s
+and by 13 bar at most, and the maximum is the inlet pressure, 232 barg at 3000 s.
+
+By default the update now advances gas and oil density at frozen composition from the state stored
+at the cell's previous update,
+
+$$
+\rho_t = \rho_{ref}\,\exp\left(\bar\kappa_T\,(P - P_{ref}) - \bar\beta\,(T - T_{ref})\right)
+$$
+
+where $\bar\kappa_T$ [1/Pa] and $\bar\beta$ [1/K] are the phase's isothermal compressibility and
+thermal expansivity averaged over the interval. The step applied to the cell is
+$(\rho_t - \rho)/r$ when $r = \rho c^2 \kappa_T$ exceeds one, which lands the next solve on the
+pressure that the frozen composition gives for the cell's mass and volume. A cell without a stored
+state, or one that held none of the phase, starts from the equilibrium density. Water density is
+unchanged: its equilibrium density is already that of the water in the cell.
+
+```java
+pipe.setFrozenCompositionDensityUpdate(true);  // default
+pipe.setFrozenCompositionDensityUpdate(false); // previous equilibrium reset
+```
+
+The option acts only with `setEnableCoupledPressureMomentum(true)` and when
+`setIncludeMassTransfer`, component transport and non-equilibrium film transfer are all off; those
+routes keep the equilibrium densities because they move the mass that goes with them.
+
+Check, measured 2026-11-22 (`TwoFluidPipeFrozenCompositionDensityTest`): a 400 m, 0.3 m line of gas
+and volatile oil at 170 bara and 80 °C, outlet closed, fed 50 kg/s for 20 s. The pressure at which
+the final gas and oil masses, each kept at its initial composition, fill the pipe volume is
+229.1 bara. The frozen-composition update ends at 233.6 bara; the equilibrium reset ends at
+334.0 bara, a pressure rise 2.8 times too large.
+
+Limits: the update describes phases that exchange no mass. Gas that dissolves into oil during a slow
+pack-up lowers the pressure rise further, and that needs `setIncludeMassTransfer(true)` or
+component transport. Between updates the pressure solve responds isentropically and the update
+returns the cell to the isothermal state, so a packing line shows a sawtooth of about 0.1 bar on a
+1.3 bar rise per update interval; it does not grow.
 
 After a transient window, also read the sticky diagnostics
 `isTransientCoupledPressureMomentumFailureDetected()`,

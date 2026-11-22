@@ -2,7 +2,7 @@
 name: neqsim-process-safety
 version: "1.5.0"
 description: "Process safety methodology - barriers, PSFs/SCEs, HAZOP, LOPA, SIL per IEC 61511, integrated safety response, change revalidation, bow-tie, risk matrix, TR3001 overpressure studies, trapped-liquid rupture. USE WHEN: a task needs barrier registers, hazard identification, LOPA, SIF SIL assignment, ESD/blowdown/relief/flare evidence, safety revalidation, overpressure governing cases, PFP demand or risk evaluation. Anchors on neqsim.process.safety.barrier, .risk, .overpressure, .rupture."
-last_verified: "2026-11-21"
+last_verified: "2026-11-22"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
@@ -49,7 +49,10 @@ A `TwoFluidPipe` blocked-outlet or HIPPS run must enable `setEnableCoupledPressu
 accumulates, and the study silently shows no overpressure (`TwoFluidPipeLinePackingTest`; `runTransient` now warns).
 Check the fortified-zone volume between the HIPPS and the first closable downstream valve: in a 12-inch, 300 t/h,
 SITHP 275 bara tie-back (measured 2026-11-21), a valve closing 40 m downstream drove the line to SITHP before 12 s
-HIPPS valves seated, while a full 15.6 km line took about 40 min to reach the 180 barg trip.
+HIPPS valves seated, while a full 15.6 km line took about 32 min to reach the 180 barg trip (remeasured 2026-11-22
+with the frozen-composition property update, which is the default; with `setFrozenCompositionDensityUpdate(false)` the
+same run shows 90-130 bar steps at the closed riser top that are not pressure peaks; with the default, steps of up to
+13 bar remain there, so take the trip time from the inlet pressure).
 
 ## Method 0b — Trapped-Liquid Fire Rupture Screening
 
