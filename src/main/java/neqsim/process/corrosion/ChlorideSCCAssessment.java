@@ -226,7 +226,8 @@ public class ChlorideSCCAssessment implements Serializable {
     return upperType.contains("CARBON") || upperType.equals("CS") || upperType.startsWith("CS ")
         || upperType.contains("LOW ALLOY") || upperType.contains("LOW-ALLOY") || upperType.contains("C-MN")
         || upperType.contains("CMN") || upperType.contains("A106") || upperType.contains("A333")
-        || upperType.contains("API 5L") || upperType.contains("API5L") || upperType.matches(".*\\bX(42|52|60|65|70|80)\\b.*");
+        || upperType.contains("API 5L") || upperType.contains("API5L")
+        || upperType.matches(".*\\bX(42|52|60|65|70|80)\\b.*");
   }
 
   /**

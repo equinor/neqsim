@@ -252,19 +252,17 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
       PhaseInterface aqueous = work.getPhase(PhaseType.AQUEOUS);
       double waterFraction = aqueous.hasComponent("water") ? aqueous.getComponent("water").getx() : 0.0;
       inSituPH = aqueous.getpH();
-      if (waterFraction < MIN_AQUEOUS_WATER_FRACTION || !(inSituPH >= MIN_PLAUSIBLE_PH && inSituPH <= MAX_PLAUSIBLE_PH)) {
+      if (waterFraction < MIN_AQUEOUS_WATER_FRACTION
+          || !(inSituPH >= MIN_PLAUSIBLE_PH && inSituPH <= MAX_PLAUSIBLE_PH)) {
         electrolytePhaseSuspect = true;
       }
     }
     if (freeWaterPresent && !electrolytePhaseSuspect) {
       bicarbonateMgL = extractBicarbonateMgL(work);
       feCO3SaturationRatio = computeFeCO3SaturationRatio(work);
-    } else if (freeWaterPresent) {
-      // Implausible aqueous phase: do not use its pH or speciation; the correlation pH is used below.
-      inSituPH = Double.NaN;
-      bicarbonateMgL = 0.0;
-      feCO3SaturationRatio = -1.0;
     } else {
+      // No free water, or an implausible aqueous phase: do not use its pH or speciation; the
+      // correlation pH is used below.
       inSituPH = Double.NaN;
       bicarbonateMgL = 0.0;
       feCO3SaturationRatio = -1.0;
