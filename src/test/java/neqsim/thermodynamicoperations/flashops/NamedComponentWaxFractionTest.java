@@ -90,7 +90,7 @@ class NamedComponentWaxFractionTest extends neqsim.NeqSimTest {
    * @param temperature wax-positive temperature in K
    */
   @ParameterizedTest
-  @CsvSource({"1,false,265", "5,false,265", "5,true,270"})
+  @CsvSource({"1,false,265", "5,false,265", "5,true,268"})
   void coldWaxMassFractionsConserveFeed(double pressure, boolean heavy, double temperature) {
     SystemInterface fluid = feed(pressure, heavy);
     fluid.setTemperature(temperature);

@@ -61,8 +61,9 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
 
     double result = saturationTemperature.calcSaturationTemperature();
 
-    // Re-based with the cyclic UNIFAC groups for c-C7 and c-C8; see the envelope test above.
-    assertEquals(29.430432891845726, result - 273.15, 0.001);
+    // Re-based with the cyclic UNIFAC groups for c-C7 and c-C8 and the Equinor UMR-PRU parameter set; see the
+    // envelope test above.
+    assertEquals(29.448066329956077, result - 273.15, 0.001);
     assertTrue(countingOperations.getFlashCount() < 115,
         "issue 3269 fluid should stop after bracketing the upper boundary");
     assertTrue(countingOperations.getMinimumTemperature() > 290.0,
@@ -112,16 +113,16 @@ class SaturationTemperatureTest extends neqsim.NeqSimTest {
       assertTrue(false);
       throw new Exception(ex);
     }
-    // Re-based when c-C7 and c-C8 moved from the aliphatic to the cyclic UNIFAC groups; the
-    // fluid previously described c-hexane as a ring and the other two naphthenes as chains.
-    assertEquals((testOps.get("cricondentherm")[0] - 273.15), 23.42135124839797, 0.02);
-    assertEquals(testOps.get("cricondentherm")[1], 47.400609467549636, 0.02);
+    // Re-based when c-C7 and c-C8 moved from the aliphatic to the cyclic UNIFAC groups, and again for the Equinor
+    // UMR-PRU parameter set (n-heptane Mathias-Copeman alpha, ring CH and C interactions).
+    assertEquals((testOps.get("cricondentherm")[0] - 273.15), 23.44449836709117, 0.02);
+    assertEquals(testOps.get("cricondentherm")[1], 47.40113769319353, 0.02);
 
     testSystem.setPressure(testOps.get("cricondentherm")[1], "bara");
     SaturationTemperature satTempSim = new SaturationTemperature(testSystem);
     satTempSim.run();
     // Closure: the saturation temperature at the cricondentherm pressure is the cricondentherm.
-    assertEquals(satTempSim.getThermoSystem().getTemperature() - 273.15, 23.421359634399437, 0.001);
+    assertEquals(satTempSim.getThermoSystem().getTemperature() - 273.15, 23.444505310058616, 0.001);
   }
 
   private static SystemInterface createIssue3269Fluid() {

@@ -281,7 +281,7 @@ class TPFlashTest {
     testSystem5.addComponent("nC16", 5.00888e-2);
     testSystem5.setMixingRule("classic");
     testSystem5.setMultiPhaseCheck(true);
-    testSystem5.setPressure(90.03461693, "bara");
+    testSystem5.setPressure(90.92861701, "bara");
     testSystem5.setTemperature(293.15, "K");
     testSystem5.setTotalFlowRate(4.925e-07, "kg/sec");
     testOps = new ThermodynamicOperations(testSystem5);

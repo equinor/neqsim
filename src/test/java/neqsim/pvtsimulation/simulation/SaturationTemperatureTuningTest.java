@@ -77,7 +77,7 @@ class SaturationTemperatureTuningTest extends neqsim.NeqSimTest {
     SaturationTemperature simulation = new SaturationTemperature(fluid);
     simulation.setTemperatureSearchBounds(260.0, 320.0);
     simulation.run();
-    assertEquals(290.88693618774414, simulation.getSaturationTemperature(), 1.0e-4);
+    assertEquals(290.8957004547119, simulation.getSaturationTemperature(), 1.0e-4);
 
     fluid.addComponent("nC10", 1.0e-5);
     fluid.setPressure(55.0);

@@ -1,5 +1,6 @@
 package neqsim.thermo.component;
 
+import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.atomelement.UNIFACgroup;
@@ -20,7 +21,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentGEUnifacUMRPRU.class);
 
-  int numberOfUnifacSubGroups = 139;
+  /** One more than the highest subgroup column (sub1..sub140) in the UMR-PRU group-assignment tables. */
+  int numberOfUnifacSubGroups = 141;
   double[][] aij = null;
   double[][] aijdT = null;
   double[][] aijdTdT = null;
@@ -99,6 +101,50 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
       getUnifacGroup(i).calcQComp(this);
     }
+  }
+
+  /**
+   * Replace the UNIFAC group assignment with the row for this component in an override table, when such a row exists.
+   *
+   * <p>
+   * The Mathias-Copeman UMR-PRU parameter set treats some molecules, for example MEG and TEG, as one molecular group,
+   * while UMR-CPA builds them from functional groups. Variant-specific assignments are kept in a separate table with
+   * the same columns as {@code UNIFACcompUMRPRU} so that the shared table is unchanged.
+   * </p>
+   *
+   * @param tableName database table with the columns Name and sub1..sub140
+   * @return true when a row was found and the groups were replaced, false otherwise
+   */
+  public boolean applyGroupAssignmentOverride(String tableName) {
+    ArrayList<UNIFACgroup> groups = new ArrayList<UNIFACgroup>();
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database
+            .getResultSet("SELECT * FROM " + tableName + " WHERE Name='" + getComponentName() + "'")) {
+      if (!dataSet.next()) {
+        return false;
+      }
+      for (int p = 1; p < numberOfUnifacSubGroups; p++) {
+        int count = Integer.parseInt(dataSet.getString("sub" + Integer.toString(p)).trim());
+        if (count > 0) {
+          groups.add(new UNIFACgroup(p, count));
+        }
+      }
+    } catch (Exception ex) {
+      logger.error("Could not read UNIFAC group override for {} from {}", getComponentName(), tableName, ex);
+      return false;
+    }
+    if (groups.isEmpty()) {
+      return false;
+    }
+    unifacGroups = groups;
+    setUnifacGroups(unifacGroups);
+    for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
+      getUnifacGroup(i).calcXComp(this);
+    }
+    for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
+      getUnifacGroup(i).calcQComp(this);
+    }
+    return true;
   }
 
   /**

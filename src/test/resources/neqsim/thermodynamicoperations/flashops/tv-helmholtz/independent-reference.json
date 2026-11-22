@@ -1,113 +1,113 @@
 {
   "T": 293.15,
-  "V_internal": 99800.00000002717,
+  "V_internal": 99799.99999997062,
   "n": [
-    702.5935344274613,
-    123.98709431063615,
-    10.27690550561485,
-    1.1418783893713018
+    702.5935344863223,
+    123.98709432111573,
+    10.27690550956323,
+    1.1418783899514702
   ],
   "phase_checks": [
     {
-      "independent_F_RT": -5280.508475968696,
-      "independent_Hres_J": -401867.91297669057,
-      "reported_Hres_J": -401867.91297669103,
-      "P_bar": 19.138156156431236,
-      "A": 18472525737.046425,
-      "reported_A": 18472525737.04642,
-      "AT": -33345581.1774574,
-      "reported_AT": -33345581.1774574,
-      "B": 2451.1592548425256,
-      "reported_B": 2451.159254842526
+      "independent_F_RT": -5280.219290635383,
+      "independent_Hres_J": -401840.452843548,
+      "reported_Hres_J": -401840.45284354733,
+      "P_bar": 19.137473174060446,
+      "A": 18469775745.411636,
+      "reported_A": 18469775745.411636,
+      "AT": -33350855.73310433,
+      "reported_AT": -33350855.73310433,
+      "B": 2450.9690818652043,
+      "reported_B": 2450.9690818652048
     },
     {
-      "independent_F_RT": -42.88045312254809,
-      "independent_Hres_J": -132501.1893235495,
-      "reported_Hres_J": -132501.18932354962,
-      "P_bar": 19.138156156434206,
-      "A": 6338996.83148437,
-      "reported_A": 6338996.83148437,
-      "AT": -12274.89057075576,
-      "reported_AT": -12274.89057075576,
-      "B": 44.343602682665086,
-      "reported_B": 44.343602682665086
+      "independent_F_RT": -44.199679593182985,
+      "independent_Hres_J": -141996.44516626306,
+      "reported_Hres_J": -141996.44516626297,
+      "P_bar": 19.137473174059778,
+      "A": 6685629.890931177,
+      "reported_A": 6685629.890931176,
+      "AT": -14200.294570394712,
+      "reported_AT": -14200.294570394712,
+      "B": 45.1597555284386,
+      "reported_B": 45.1597555284386
     }
   ],
-  "one_phase_F_RT": -5312.775721162784,
-  "candidate_F_RT": -5323.388929088415,
-  "candidate_minus_one_phase_A_J": -25868.46917898328,
-  "one_phase_Hres_J": -417416.39101149124,
-  "candidate_Hres_J": -534369.1023002401,
-  "candidate_total_H_J": 118357.65566585524,
+  "one_phase_F_RT": -5312.834926426312,
+  "candidate_F_RT": -5324.418970228571,
+  "candidate_minus_one_phase_A_J": -28234.769559449524,
+  "one_phase_Hres_J": -418019.8895590394,
+  "candidate_Hres_J": -543836.8980098111,
+  "candidate_total_H_J": 108851.76530284919,
   "trials": [
     {
       "success": true,
       "message": "Optimization terminated successfully",
-      "F_RT": -5323.388929088412,
+      "F_RT": -5324.418970228567,
       "q": [
-        0.0009821082243300656,
-        0.0006435110369816266,
-        0.0009999929221120752,
-        0.0013625776586555166,
-        0.0005093127155385998
+        0.0010035510369461429,
+        0.0006574657251499448,
+        0.001013801212861879,
+        0.0013626043985744923,
+        0.0005167717407782641
       ],
-      "nit": 24
+      "nit": 22
     },
     {
       "success": true,
       "message": "Optimization terminated successfully",
-      "F_RT": -5323.3889290884135,
+      "F_RT": -5324.418970228567,
       "q": [
-        0.0009821084996909056,
-        0.0006435100851886946,
-        0.0009999922279363548,
-        0.0013625776646475568,
-        0.0005093127195262145
+        0.0010035525242882027,
+        0.000657464008099427,
+        0.0010138009522357705,
+        0.0013626043998788031,
+        0.0005167716452082049
       ],
-      "nit": 21
+      "nit": 20
     },
     {
       "success": true,
       "message": "Optimization terminated successfully",
-      "F_RT": -5323.388929088414,
+      "F_RT": -5324.418970228551,
       "q": [
-        0.0009821088088623183,
-        0.0006435100760226251,
-        0.0009999932501143242,
-        0.0013625776615893382,
-        0.0005093128304272996
+        0.0010035525205278296,
+        0.0006574652266974942,
+        0.0010138025842798897,
+        0.0013626044228268032,
+        0.0005167718313945927
       ],
-      "nit": 18
+      "nit": 20
     },
     {
       "success": true,
       "message": "Optimization terminated successfully",
-      "F_RT": -5323.388929088413,
+      "F_RT": -5324.4189702285685,
       "q": [
-        0.0009821080474399157,
-        0.0006435104583236041,
-        0.000999994096572647,
-        0.0013625776482373638,
-        0.000509312884554024
+        0.0010035538680514074,
+        0.0006574645784153139,
+        0.001013804626591436,
+        0.001362604390546325,
+        0.0005167719897181457
       ],
-      "nit": 26
+      "nit": 28
     },
     {
       "success": true,
       "message": "Optimization terminated successfully",
-      "F_RT": -5323.3889290884135,
+      "F_RT": -5324.4189702285685,
       "q": [
-        0.000982108928952008,
-        0.0006435105793435003,
-        0.000999992622669166,
-        0.0013625776435845936,
-        0.0005093128127967132
+        0.0010035519252919703,
+        0.000657465933746661,
+        0.0010138026234694827,
+        0.001362604382421931,
+        0.000516771828870425
       ],
-      "nit": 27
+      "nit": 32
     }
   ],
   "provenance": {
-    "source_head": "f1f71e9b902e018153b64f98c4fba253cf44bd7b",
+    "source_head": "3b511e7513447254e7a4aa0570b23a319b740481",
     "model": "SystemUMRPRUMCEos; Mathias-Copeman alpha13; rule2; quadratic covolume type1",
     "units": "n mol; T K; P bara; H/A J; volume internal 1e5*m3",
     "protocol": "Existing TVFlashTest public fixture, 1kg/s liquid +50 additions of .3kg/s gas,293.15K,.998m3; no parameter fit",
@@ -124,6 +124,7 @@
       293.15,
       293.25
     ],
-    "amount_basis": "One-second-equivalent inlet charges reproduce the existing flow-configured addFluid TV fixture; scalar n values are treated as molar inventories for fixed-T,V,n minimization."
+    "amount_basis": "One-second-equivalent inlet charges reproduce the existing flow-configured addFluid TV fixture; scalar n values are treated as molar inventories for fixed-T,V,n minimization.",
+    "parameter_basis": "Equinor UMR-PRU parameter set (COMP.csv MCPR and corrected nC16 Tc/Pc/omega), regenerated 2026-11-22"
   }
 }

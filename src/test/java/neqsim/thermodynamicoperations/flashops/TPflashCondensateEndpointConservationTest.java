@@ -180,7 +180,8 @@ class TPflashCondensateEndpointConservationTest extends neqsim.NeqSimTest {
   /** Checks that reusing the operation clears phase-removal history when the fluid becomes stable hot gas. */
   @Test
   void reusedOperationClearsPhaseRemovalHistory() {
-    SystemInterface fluid = createFluid(353.15, 350.0, false);
+    // 370.0 K and 330 bara still trigger the endpoint recovery with the corrected nC16 critical properties.
+    SystemInterface fluid = createFluid(370.0, 330.0, false);
     TPflash flash = new TPflash(fluid);
     flash.run();
     assertEquals(2, fluid.getNumberOfPhases());
@@ -194,8 +195,8 @@ class TPflashCondensateEndpointConservationTest extends neqsim.NeqSimTest {
     assertQualified(fluid);
     assertFalse(flash.getLastStabilityOutcome().startsWith("recovered nonconservative hydrocarbon endpoint"));
 
-    fluid.setTemperature(353.15);
-    fluid.setPressure(350.0);
+    fluid.setTemperature(370.0);
+    fluid.setPressure(330.0);
     flash.run();
     assertEquals(2, fluid.getNumberOfPhases());
     assertQualified(fluid);

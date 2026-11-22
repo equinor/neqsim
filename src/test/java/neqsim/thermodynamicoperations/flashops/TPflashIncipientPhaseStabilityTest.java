@@ -30,7 +30,9 @@ class TPflashIncipientPhaseStabilityTest {
   private static final String[] UMR_PRU_COMPONENTS = {"methane", "ethane", "n-pentane", "nC16"};
   private static final double[] UMR_PRU_FEED = {0.416683, 0.17522, 0.358009, 0.0500888};
   private static final double UMR_PRU_REFERENCE_TEMPERATURE_K = 293.15;
-  private static final double UMR_PRU_REFERENCE_PRESSURE_BARA = 90.03461693;
+  // 0.093 mbar below the UMR-PRU-MC bubble pressure of this feed (90.92870995 bara with the Equinor parameter set).
+  private static final double UMR_PRU_REFERENCE_PRESSURE_BARA = 90.92861701;
+  private static final double UMR_PRU_NEARBY_PRESSURE_BARA = 91.394;
 
   private static final double NORMALIZATION_TOLERANCE = 3.0e-12;
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
@@ -69,7 +71,7 @@ class TPflashIncipientPhaseStabilityTest {
    */
   @Test
   void subResidualTpdDoesNotOverrideExistingUmrPruSolution() {
-    for (double pressureBara : new double[] {UMR_PRU_REFERENCE_PRESSURE_BARA, 90.5}) {
+    for (double pressureBara : new double[] {UMR_PRU_REFERENCE_PRESSURE_BARA, UMR_PRU_NEARBY_PRESSURE_BARA}) {
       SystemInterface ordinary = flash(createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, pressureBara, false));
       SystemInterface multiphase = flash(createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, pressureBara, true));
 
@@ -125,9 +127,10 @@ class TPflashIncipientPhaseStabilityTest {
         createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, UMR_PRU_REFERENCE_PRESSURE_BARA, true));
     SystemInterface reusedUmrPru = umrPruReference.clone();
 
-    reusedUmrPru.setPressure(90.5, "bara");
+    reusedUmrPru.setPressure(UMR_PRU_NEARBY_PRESSURE_BARA, "bara");
     flash(reusedUmrPru);
-    SystemInterface freshUmrPru = flash(createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, 90.5, true));
+    SystemInterface freshUmrPru = flash(
+        createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, UMR_PRU_NEARBY_PRESSURE_BARA, true));
     assertEquivalentState(freshUmrPru, reusedUmrPru, 1.0e-8, "changed UMR-PRU state");
 
     reusedUmrPru.setPressure(UMR_PRU_REFERENCE_PRESSURE_BARA, "bara");

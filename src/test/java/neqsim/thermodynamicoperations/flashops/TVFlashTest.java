@@ -73,8 +73,8 @@ class TVFlashTest {
           * testSystem.getComponent(component).getHID(testSystem.getTemperature());
     }
     // Independent quadratic-covolume PR Helmholtz reference, not a golden copied from the TV solver.
-    // See tv-helmholtz/reproduce.py and CubicTvHelmholtzQualificationTest: the split lowers A by 25.868 kJ.
-    assertEquals(-534369.1023002401, testSystem.getEnthalpy() - idealEnthalpy, 1.0);
+    // See tv-helmholtz/reproduce.py and CubicTvHelmholtzQualificationTest: the split lowers A by 28.235 kJ.
+    assertEquals(-543836.8980098111, testSystem.getEnthalpy() - idealEnthalpy, 1.0);
     for (int phase = 0; phase < testSystem.getNumberOfPhases(); phase++) {
       assertEquals(testSystem.getPressure(), ((PhaseEos) testSystem.getPhase(phase)).calcPressure(), 1.0e-8);
     }
