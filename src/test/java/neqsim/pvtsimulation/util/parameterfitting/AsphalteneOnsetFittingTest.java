@@ -237,8 +237,8 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     SystemInterface fluid = cubicOil();
     double onsetA = onsetWithMethaneKij(fluid, -0.05);
     int a = fluid.getPhase(0).getComponent("asphaltene").getComponentNumber();
-    neqsim.thermo.mixingrule.EosMixingRulesInterface rule =
-        ((neqsim.thermo.phase.PhaseEosInterface) fluid.getPhase(0)).getEosMixingRule();
+    neqsim.thermo.mixingrule.EosMixingRulesInterface rule = ((neqsim.thermo.phase.PhaseEosInterface) fluid.getPhase(0))
+        .getEosMixingRule();
     assertEquals(-0.05, rule.getBinaryInteractionParameter(a, 0), 1e-12);
     double heptane = rule.getBinaryInteractionParameter(a, 3);
     assertTrue(heptane < 0.0 && heptane > -0.05, "heptane kij " + heptane);

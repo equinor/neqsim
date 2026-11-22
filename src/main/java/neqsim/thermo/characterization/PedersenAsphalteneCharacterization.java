@@ -508,7 +508,7 @@ public class PedersenAsphalteneCharacterization {
    * @param endPressure ending pressure for search (bar)
    * @return onset pressure in bar, or NaN if not found
    * @throws IllegalStateException if the fluid already has an asphaltene-rich phase at the start pressure or a flash
-   *         fails
+   * fails
    */
   public double calculateOnsetPressure(SystemInterface system, double startPressure, double endPressure) {
     if (!(startPressure > endPressure) || !(endPressure > 0.0)) {

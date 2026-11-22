@@ -46,7 +46,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   private static final int MAX_ITERATIONS = 100;
 
   /** Pressure tolerance for convergence (bara). */
-  private double pressureTolerance = 0.1;
+  private volatile double pressureTolerance = 0.1;
 
   /** Initial pressure step for search (bara). */
   private double pressureStep = 5.0;

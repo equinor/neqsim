@@ -23,8 +23,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * where f_L is the asphaltene fugacity in the equilibrated fluid (gas and oil, no solid). Asphaltene precipitates when
- * f_L exceeds f_s. Because the solid reference is independent of the fluid, one calibration on the host oil predicts the
- * onset of the same oil at other pressures and of the same asphaltene in blends with other fluids (gas injection,
+ * f_L exceeds f_s. Because the solid reference is independent of the fluid, one calibration on the host oil predicts
+ * the onset of the same oil at other pressures and of the same asphaltene in blends with other fluids (gas injection,
  * condensate commingling).
  * </p>
  *
@@ -67,7 +67,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version 1.0
  */
-public class AsphalteneSolidModel implements java.io.Serializable {
+public final class AsphalteneSolidModel implements java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
 
@@ -178,7 +178,7 @@ public class AsphalteneSolidModel implements java.io.Serializable {
    *
    * @param fluid fluid with one asphaltene component and the classic mixing rule set; it is cloned
    * @throws IllegalArgumentException if the fluid has no or several asphaltene components, no positive asphaltene
-   *         inventory, or no cubic mixing rule
+   * inventory, or no cubic mixing rule
    */
   public AsphalteneSolidModel(SystemInterface fluid) {
     if (fluid == null) {
@@ -330,7 +330,8 @@ public class AsphalteneSolidModel implements java.io.Serializable {
       }
     }
     if (!Double.isFinite(lnF)) {
-      throw new IllegalStateException("No finite asphaltene fugacity at " + temperature + " K and " + pressure + " bara");
+      throw new IllegalStateException(
+          "No finite asphaltene fugacity at " + temperature + " K and " + pressure + " bara");
     }
     return lnF;
   }
@@ -509,8 +510,7 @@ public class AsphalteneSolidModel implements java.io.Serializable {
    * @param step scan step in bar
    * @return onset result
    */
-  public OnsetResult onsetPressures(double temperature, double maximumPressure, double minimumPressure,
-      double step) {
+  public OnsetResult onsetPressures(double temperature, double maximumPressure, double minimumPressure, double step) {
     return onsetPressures(referenceFluid, temperature, maximumPressure, minimumPressure, step);
   }
 
