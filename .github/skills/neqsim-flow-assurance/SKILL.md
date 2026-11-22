@@ -595,6 +595,24 @@ for (double qgMSm3d : gasRates) {
 > termination are non-converged. Repeat mesh sensitivity for the actual
 > geometry; no fixed cell length is universally qualified.
 
+> **`TwoFluidPipe` run time (measured 2026-11-22, revision a2399c6 before and after
+> the closure-reuse change; 5.4 km 8-inch three-phase flowline and riser at 60 and
+> 120 cells, 20 km 16-inch gas-condensate line at 100 cells; OpenJDK 21, one
+> thread).** Steady `run()` takes 1.23 s at 60 cells and 4.14 s at 120 cells
+> (was 1.60 and 5.60 s); 60 s of transient on the 60-cell line takes 13.6 s
+> (was 24.2 s), with identical profiles. Equilibrium flashes are now the largest
+> remaining cost (`TPflash` is 48% of that transient case and 69% of the gas-condensate
+> steady solve), so run time scales with cells x flash cadence x fluid complexity. Budget
+> studies on that basis: screen sensitivities with `PipeBeggsAndBrills`
+> (0.04 s per 100 increments on the same feed) and keep `TwoFluidPipe` for the
+> cases that need section-resolved holdup, inventory or transients. The cadence
+> setters are `setSteadyStateFlashInterval(int)` (default 3) and
+> `setThermodynamicUpdateInterval(int)` (default 10); on that transient an interval
+> of 20 saved 27% of the transient time and moved the inlet pressure by 0.14 bar
+> after 60 s, so a longer interval is a model change to check per case. Details and
+> the two benchmark entry points:
+> [TwoFluidPipe model, run time](../../../docs/process/TWOFLUIDPIPE_MODEL.md#run-time-and-where-it-goes).
+
 > **MCP `runPipeline` solver and response handoff.** Omit `solver` (or use
 > `beggsBrill`) for the established correlation path. Use `solver: "twoFluid"`
 > when the task needs finite-volume pressure, temperature, holdup, phase-velocity,
