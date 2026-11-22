@@ -347,6 +347,10 @@ System.out.println("Lock-in risk: " + lockInRisk);
 
 ## Stress Analysis
 
+The formulas below are single-point screening checks. For a full nozzle-to-nozzle analysis with
+bends, support lift-off, friction and nozzle loads, use
+[PipeStressModel](mechanical_design/pipe_stress_model.md).
+
 ### ASME B31.3 Stress Categories
 
 | Stress Category | Formula | Allowable |

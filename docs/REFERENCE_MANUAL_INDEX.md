@@ -657,6 +657,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | Process Design Guide | [docs/process/process_design_guide.md](process/process_design_guide.md) | Process design, mechanical design, validation, and reporting |
 | Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Equipment sizing, ratings, standards, and design reports |
 | Topside Piping Design | [docs/process/topside_piping_design.md](process/topside_piping_design.md) | Hydraulic, mechanical, vibration, and stress screening |
+| **Pipe Stress Analysis (B31.3)** | [docs/process/mechanical_design/pipe_stress_model.md](process/mechanical_design/pipe_stress_model.md) | **PipeStressModel 3D beam FE: sustained, expansion, occasional and pressure checks, support lift-off and friction, bend SIFs, nozzle loads** |
 | Instrument Design | [docs/process/instrument-design.md](process/instrument-design.md) | Instrument ranges, I/O, uncertainty, response, and SIS interfaces |
 | Electrical Design | [docs/process/electrical-design.md](process/electrical-design.md) | Motors, VFDs, cables, transformers, switchgear, and load lists |
 | DEXPI Engineering Generation | [docs/integration/dexpi-engineering-generation.md](integration/dexpi-engineering-generation.md) | Canonical graph, governed DEXPI, registers, datasheets, and calculation evidence |
