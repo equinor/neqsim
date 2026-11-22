@@ -490,6 +490,31 @@ a not-applicable status for invalid topology, non-stratified feeders, single-pha
 unvalidated oil–water–gas cases. It predicts a stability boundary, not slug frequency, slug
 length, or transient cycle amplitude.
 
+**Three-phase bounds.** An oil–water–gas system keeps the `NOT_VALIDATED_THREE_PHASE` status and
+`isApplicable()` stays false. When oil and water are both present in the riser, the result also
+carries a bracket of the two-phase criterion: the critical pressure for an all-oil and for an
+all-water riser liquid. The critical pressure is linear in liquid density, so any oil–water
+mixture lies between the two values.
+
+```java
+SevereSluggingSystemDiagnostic.Result r = pipe.evaluateSevereSluggingSystem(riserBaseSection);
+if (r.getStatus() == SevereSluggingSystemDiagnostic.Status.NOT_VALIDATED_THREE_PHASE) {
+  double lowerPa = r.getCriticalTopPressureLowerBoundPa(); // lighter liquid
+  double upperPa = r.getCriticalTopPressureUpperBoundPa(); // heavier liquid
+  SevereSluggingSystemDiagnostic.ThreePhaseBound bound = r.getThreePhaseBound();
+  // STABLE_FOR_BOTH_BOUNDS, UNSTABLE_FOR_BOTH_BOUNDS, INCONCLUSIVE or NOT_AVAILABLE
+}
+```
+
+The bounds are `NOT_AVAILABLE` (NaN pressures) when the densities are missing or another validity
+gate fails (gas and liquid present, stratified feeder). They assume the same holdup and gas volume
+for both liquids and do not model oil–water slip, emulsions or water accumulation at the riser
+base. For a manually built descriptor, supply `oilDensityKgPerM3(...)` and
+`waterDensityKgPerM3(...)` on the `Input` builder.
+
+For a fast lumped dynamic screen that also estimates the pressure swing, see the
+[severe-slug analyser](severe-slug-analyser).
+
 The flowline and riser may have different diameters, and each flowline section contributes its
 own solved gas volume. Only the rising sections must have constant area. The public
 `SevereSluggingSystemDiagnostic.fromSections(...)` factory exposes the extracted descriptor for

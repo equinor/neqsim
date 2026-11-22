@@ -104,6 +104,14 @@ response schema. Gate the result on convergence, pressure-floor, and wall-clock
 findings, then apply the steady/transient limitations in the loaded
 `neqsim-flow-assurance` skill.
 
+For riser-induced (severe) slugging questions use the two screens described in the
+`neqsim-flow-assurance` skill: `TwoFluidPipe.evaluateSevereSluggingSystem(riserBaseSection)`
+(Taitel stability margin on a solved profile) and `SevereSlugAnalyser` (lumped dynamic model
+that also gives the riser-base pressure swing). Report the status, the pressure margin or
+swing with units, and the applicability limits. For oil–water–gas systems report the
+all-oil/all-water bracket (`getThreePhaseBound()`) as a bracket, not as a validated
+three-phase prediction. Details: `docs/process/severe-slug-analyser.md`.
+
 When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
 basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless
 screen. Do not infer effective mass, axial force, hydrodynamic diameter, or trigger values silently
