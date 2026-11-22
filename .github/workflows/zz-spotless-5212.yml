@@ -1,0 +1,60 @@
+name: zz-spotless-5212
+on:
+  push:
+    branches: [tmp/spotless-5212]
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - run: mvn -B -ntp -DskipTests spotless:apply
+      - run: |
+          git config user.name "spotless-bot"
+          git config user.email "spotless-bot@users.noreply.github.com"
+          git checkout -b tmp/spotless-5212-out2
+          git rm -q --cached .github/workflows/zz-spotless-5212.yml
+          rm .github/workflows/zz-spotless-5212.yml
+          git add -A src
+          git commit -m "spotless:apply" || echo "nothing to format"
+          git push -f origin tmp/spotless-5212-out2
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MAVEN_OPTS: -Xmx1024m
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: ./mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd
+      - run: uv run --project devtools --locked devtools/prepare_code_health_input.py
+      - run: ./mvnw -B -ntp -f devtools/spotbugs-neqsim-rules/pom.xml install
+      - run: ./mvnw -B -ntp -Pcode-health spotbugs:spotbugs
+      - run: >-
+          uv run --project devtools --locked devtools/code_health.py
+          --tools pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml
+          --baseline .config/code-health-baseline.json
+          --rules-baseline .config/neqsim-rules-baseline.json
+          --output target/code-health-static.json > health.log 2>&1 || true
+      - run: |
+          git config user.name "health-bot"
+          git config user.email "health-bot@users.noreply.github.com"
+          git checkout --orphan tmp/health-5212-out2
+          git rm -rq --cached .
+          mkdir -p out && cp health.log target/code-health-static.json out/ || true
+          git add -f out
+          git commit -qm "code health report"
+          git push -f origin tmp/health-5212-out2
