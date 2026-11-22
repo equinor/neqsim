@@ -75,8 +75,8 @@ class AsphalteneScreeningAndSolubilityFixesTest {
   void analyzerDeBoerDelegatesToScreeningClass() {
     AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer();
     for (double dp : new double[] {20.0, 95.0, 150.0, 400.0}) {
-      DeBoerAsphalteneScreening.DeBoerRisk reference =
-          new DeBoerAsphalteneScreening(100.0 + dp, 100.0, 700.0).evaluateRisk();
+      DeBoerAsphalteneScreening.DeBoerRisk reference = new DeBoerAsphalteneScreening(100.0 + dp, 100.0, 700.0)
+          .evaluateRisk();
       AsphalteneStabilityAnalyzer.AsphalteneRisk mapped = analyzer.deBoerScreening(100.0 + dp, 100.0, 700.0);
       AsphalteneStabilityAnalyzer.AsphalteneRisk[] expected = {AsphalteneStabilityAnalyzer.AsphalteneRisk.STABLE,
           AsphalteneStabilityAnalyzer.AsphalteneRisk.LOW_RISK, AsphalteneStabilityAnalyzer.AsphalteneRisk.MODERATE_RISK,
@@ -87,8 +87,8 @@ class AsphalteneScreeningAndSolubilityFixesTest {
 
   @Test
   void riskCombinationTakesTheHigherLevel() {
-    assertEquals(AsphalteneStabilityAnalyzer.AsphalteneRisk.HIGH_RISK, AsphalteneStabilityAnalyzer
-        .combineRisks(AsphalteneStabilityAnalyzer.AsphalteneRisk.STABLE, AsphalteneStabilityAnalyzer.AsphalteneRisk.HIGH_RISK));
+    assertEquals(AsphalteneStabilityAnalyzer.AsphalteneRisk.HIGH_RISK, AsphalteneStabilityAnalyzer.combineRisks(
+        AsphalteneStabilityAnalyzer.AsphalteneRisk.STABLE, AsphalteneStabilityAnalyzer.AsphalteneRisk.HIGH_RISK));
     assertEquals(AsphalteneStabilityAnalyzer.AsphalteneRisk.MODERATE_RISK,
         AsphalteneStabilityAnalyzer.combineRisks(null, null));
     assertEquals(AsphalteneStabilityAnalyzer.AsphalteneRisk.HIGH_RISK,

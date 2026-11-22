@@ -197,20 +197,20 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
       throw new IllegalArgumentException("Temperature unit must not be null");
     }
     switch (unit.trim().toUpperCase(java.util.Locale.ROOT)) {
-      case "K":
-      case "KELVIN":
-        return onsetTemperature;
-      case "C":
-      case "CELSIUS":
-        return onsetTemperature - 273.15;
-      case "F":
-      case "FAHRENHEIT":
-        return (onsetTemperature - 273.15) * 9.0 / 5.0 + 32.0;
-      case "R":
-      case "RANKINE":
-        return onsetTemperature * 1.8;
-      default:
-        throw new IllegalArgumentException("Unsupported temperature unit '" + unit + "'; use K, C, F or R");
+    case "K":
+    case "KELVIN":
+      return onsetTemperature;
+    case "C":
+    case "CELSIUS":
+      return onsetTemperature - 273.15;
+    case "F":
+    case "FAHRENHEIT":
+      return (onsetTemperature - 273.15) * 9.0 / 5.0 + 32.0;
+    case "R":
+    case "RANKINE":
+      return onsetTemperature * 1.8;
+    default:
+      throw new IllegalArgumentException("Unsupported temperature unit '" + unit + "'; use K, C, F or R");
     }
   }
 

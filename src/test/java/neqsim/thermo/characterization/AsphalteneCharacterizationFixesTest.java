@@ -18,9 +18,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Regression tests for the asphaltene characterization fixes: shared component detection, mass-based
- * asphaltene-rich test, parameters applied to all phases, Pedersen correlations, smooth interaction parameters, the
- * gamma split and the SARA resin with asphaltene-resin cross-association.
+ * Regression tests for the asphaltene characterization fixes: shared component detection, mass-based asphaltene-rich
+ * test, parameters applied to all phases, Pedersen correlations, smooth interaction parameters, the gamma split and the
+ * SARA resin with asphaltene-resin cross-association.
  */
 class AsphalteneCharacterizationFixesTest {
 
@@ -61,7 +61,8 @@ class AsphalteneCharacterizationFixesTest {
     double m = 1000.0;
     PedersenAsphalteneCharacterization c = new PedersenAsphalteneCharacterization(m, rho, 0.05);
     c.characterize();
-    double expectedPc = 1.01325 * Math.exp(1.28155 + 1.26838 * Math.pow(rho, 0.25) + 1.67106e2 / m - 8.10164e3 / (m * m));
+    double expectedPc = 1.01325
+        * Math.exp(1.28155 + 1.26838 * Math.pow(rho, 0.25) + 1.67106e2 / m - 8.10164e3 / (m * m));
     assertEquals(Math.max(5.0, Math.min(50.0, expectedPc)), c.getCriticalPressure(), 1e-9);
   }
 

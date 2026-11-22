@@ -228,8 +228,8 @@ public class AsphalteneOnsetFunction extends LevenbergMarquardtFunction {
       double density = system.getPhase(0).getComponent(asphalteneIndex).getNormalLiquidDensity();
       referenceAsphalteneDensity = density >= 0.9 && density <= 1.4 ? density : 1.1;
     }
-    PedersenAsphalteneCharacterization characterization =
-        new PedersenAsphalteneCharacterization(molarMassGPerMol, referenceAsphalteneDensity, 0.0);
+    PedersenAsphalteneCharacterization characterization = new PedersenAsphalteneCharacterization(molarMassGPerMol,
+        referenceAsphalteneDensity, 0.0);
     characterization.characterize();
     // The characterization clamps the molar mass to its valid range; use the clamped value throughout.
     molarMassGPerMol = characterization.getAsphalteneMW();

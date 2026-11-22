@@ -185,9 +185,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * Makes the component associating (for CPA): sets the current and the original number of association sites and the
-   * association scheme. The original number is what CPA phases restore when they rebuild their association schemes,
-   * so this is the setter to use for pseudo-components that are not associating in the database (for example a resin
-   * added as a TBP fraction).
+   * association scheme. The original number is what CPA phases restore when they rebuild their association schemes, so
+   * this is the setter to use for pseudo-components that are not associating in the database (for example a resin added
+   * as a TBP fraction).
    *
    * @param numberOfSites number of association sites (0 makes the component non-associating)
    * @param scheme association scheme, for example "1A"
