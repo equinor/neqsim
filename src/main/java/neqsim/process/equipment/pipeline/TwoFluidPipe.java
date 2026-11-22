@@ -859,7 +859,7 @@ public class TwoFluidPipe extends Pipeline {
   private int thermodynamicUpdateInterval = 10;
 
   /** Advance gas and oil density at frozen composition between property updates when phases exchange no mass. */
-  private boolean frozenCompositionDensityUpdate = true;
+  private volatile boolean frozenCompositionDensityUpdate = true;
 
   // ============ Steady-State Solver Configuration ============
 
