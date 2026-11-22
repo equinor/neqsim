@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +31,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   private double[] viscosityOil = null;
   private double[] Zgas = null;
   private double[] density = null;
+  /** Oil-phase density at each pressure, in kg/m3; NaN when no oil phase exists. */
+  private double[] oilDensity = null;
   private double[] Yfactor = null;
   private double[] isoThermalCompressibility = null;
   private double[] gasExpensionFactor = null;
@@ -75,19 +78,15 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         maxPres = getThermoSystem().getPressure();
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
-    /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
-     */
-    saturationVolume = getThermoSystem().getVolume();
-    saturationPressure = getThermoSystem().getPressure();
-    Zsaturation = getThermoSystem().getZ();
-    saturationConditionFound = true;
-
+    // Finish on the single-phase side of the bracket: the last midpoint can lie just below the
+    // saturation pressure and hold a trace incipient phase as phase 0 (#5209).
+    getThermoSystem().setPressure(maxPres);
+    thermoOps.TPflash();
     getThermoSystem().initPhysicalProperties();
-    saturationVolume = getThermoSystem().getPhase(0).getMass()
-        / getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    // Whole-cell volume over every phase present, in the same unit runCalc() uses (m3 * 1e5).
+    saturationVolume = correctedVolume(getThermoSystem());
     saturationPressure = getThermoSystem().getPressure();
-    Zsaturation = getThermoSystem().getZ();
+    Zsaturation = getThermoSystem().getZvolcorr();
     saturationConditionFound = true;
   }
 
@@ -95,6 +94,57 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   @Override
   public double getSaturationPressure() {
     return saturationPressure;
+  }
+
+  /**
+   * Executes the closed-mass experiment and captures absolute native states without estimating saturation.
+   *
+   * <p>
+   * The complete cell remains at every supplied pressure. No phase is removed and no saturation-normalized property is
+   * inferred. This route does not change or populate the legacy relative-volume arrays.
+   * </p>
+   *
+   * @return independently owned immutable equilibrium/retained states, in the supplied pressure order
+   * @throws IllegalArgumentException if pressures or temperature are invalid
+   * @throws IllegalStateException if a pressure-step flash or closed-mass conservation check fails
+   */
+  public DepletionSnapshot[] runNativeExpansion() {
+    if (pressures == null || pressures.length == 0) {
+      throw new IllegalArgumentException("CCE requires at least one pressure point");
+    }
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
+    double[] initialInventory = DepletionSnapshot.inventory(getThermoSystem());
+    String[] names = getThermoSystem().getComponentNames();
+    if (!Double.isFinite(getThermoSystem().getTemperature()) || getThermoSystem().getTemperature() <= 0) {
+      throw new IllegalArgumentException("CCE requires a positive finite temperature");
+    }
+    DepletionSnapshot[] states = new DepletionSnapshot[pressures.length];
+    for (int row = 0; row < pressures.length; row++) {
+      if (!Double.isFinite(pressures[row]) || pressures[row] <= 0) {
+        throw new IllegalArgumentException("CCE pressures must be positive and finite");
+      }
+      getThermoSystem().setPressure(pressures[row]);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception failure) {
+        throw new IllegalStateException("CCE equilibrium flash failed at " + pressures[row] + " bara", failure);
+      }
+      getThermoSystem().initProperties();
+      double[] current = DepletionSnapshot.inventory(getThermoSystem());
+      if (!Arrays.equals(names, getThermoSystem().getComponentNames())) {
+        throw new IllegalStateException("CCE component identities changed at row " + row);
+      }
+      for (int component = 0; component < current.length; component++) {
+        if (Math.abs(current[component] - initialInventory[component]) > 1e-10
+            * Math.max(1, initialInventory[component])) {
+          throw new IllegalStateException("CCE closed-mass balance failed for " + names[component] + " at row " + row);
+        }
+      }
+      states[row] = new DepletionSnapshot(getThermoSystem(), getThermoSystem(), current);
+    }
+    return states;
   }
 
   /**
@@ -115,6 +165,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     gasFormationVolumeFactor = new double[pressures.length];
     viscosity = new double[pressures.length];
     viscosityOil = new double[pressures.length];
+    oilDensity = new double[pressures.length];
     gasExpensionFactor = new double[pressures.length];
     if (!Double.isNaN(temperature)) {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
@@ -133,9 +184,12 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    saturationVolume = getThermoSystem().getVolume();
+    getThermoSystem().initPhysicalProperties();
+    // Volumes are Peneloux-corrected when the fluid uses volume correction; kept in the legacy
+    // getVolume() unit (m3 * 1e5) so that existing consumers of saturationVolume are unchanged.
+    saturationVolume = correctedVolume(getThermoSystem());
     saturationPressure = getThermoSystem().getPressure();
-    Zsaturation = getThermoSystem().getZ();
+    Zsaturation = getThermoSystem().getZvolcorr();
     saturationIsoThermalCompressibility = -1.0 / getThermoSystem().getPhase(0).getVolume()
         / getThermoSystem().getPhase(0).getdPdVTn();
 
@@ -148,8 +202,14 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         logger.error(ex.getMessage(), ex);
       }
       getThermoSystem().initPhysicalProperties();
+      oilDensity[i] = Double.NaN;
+      viscosityOil[i] = Double.NaN;
+      if (getThermoSystem().hasPhaseType("oil")) {
+        oilDensity[i] = getThermoSystem().getPhase("oil").getDensity("kg/m3");
+        viscosityOil[i] = getThermoSystem().getPhase("oil").getViscosity();
+      }
       // getThermoSystem().display();
-      totalVolume[i] = getThermoSystem().getVolume();
+      totalVolume[i] = correctedVolume(getThermoSystem());
       relativeVolume[i] = totalVolume[i] / saturationVolume;
       density[i] = getThermoSystem().getPhase(0).getDensity("kg/m3");
       gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
@@ -158,7 +218,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
           / ThermodynamicConstantsInterface.referencePressure / getThermoSystem().getPhase(0).getZ() * 288.15
           / getThermoSystem().getTemperature();
       Bg[i] = gasVolume[i] * 1e5 / gasStandardVolume[i];
-      Zgas[i] = getThermoSystem().getPhase(0).getZ();
+      Zgas[i] = getThermoSystem().getPhase(0).getZvolcorr();
       if (getThermoSystem().getNumberOfPhases() == 1) {
         viscosity[i] = getThermoSystem().getPhase(0).getViscosity();
         isoThermalCompressibility[i] = -1.0 / getThermoSystem().getPhase(0).getVolume()
@@ -167,7 +227,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         liquidRelativeVolume[i] = Double.NaN;
       }
       if (getThermoSystem().getNumberOfPhases() > 1) {
-        liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
+        liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getCorrectedVolume() * 1.0e5 / saturationVolume
+            * 100;
         Yfactor[i] = ((saturationPressure - pressures[i]) / pressures[i])
             / ((totalVolume[i] - saturationVolume) / saturationVolume);
         viscosity[i] = Double.NaN;
@@ -183,6 +244,21 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
+   * Returns the total volume of the system from the physical-property (Peneloux-corrected when enabled) phase
+   * densities, in the legacy {@link SystemInterface#getVolume()} unit (m3 * 1e5).
+   *
+   * <p>
+   * Requires {@link SystemInterface#initPhysicalProperties()} to have been called for the current state.
+   * </p>
+   *
+   * @param system the equilibrated system
+   * @return corrected volume in m3 * 1e5
+   */
+  static double correctedVolume(SystemInterface system) {
+    return system.getCorrectedVolume() * 1.0e5;
+  }
+
+  /**
    * runTuning.
    */
   public void runTuning() {
@@ -194,7 +270,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       for (int i = 0; i < experimentalData[0].length; i++) {
         CMEFunction function = new CMEFunction();
         double[] guess = new double[] {
-            getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0 };
+            getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0};
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
@@ -203,9 +279,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = { temperature, pressures[i] };
+        double[] sample1 = {temperature, pressures[i]};
         double relativeVolume = experimentalData[0][i];
-        double[] standardDeviation1 = { 1.5 };
+        double[] standardDeviation1 = {1.5};
         SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
@@ -271,9 +347,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     // double a = CMEsim.getSaturationPressure();
 
     CMEsim.setTemperaturesAndPressures(
-        new double[] { 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9 },
-        new double[] { 400, 300.0, 250.0, 200.0, 100.0 });
-    double[][] expData = { { 0.95, 0.99, 1.12, 1.9 } };
+        new double[] {273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9},
+        new double[] {400, 300.0, 250.0, 200.0, 100.0});
+    double[][] expData = {{0.95, 0.99, 1.12, 1.9}};
     CMEsim.setExperimentalData(expData);
     // CMEsim.runTuning();
     CMEsim.runCalc();
@@ -316,21 +392,39 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * Getter for the field <code>density</code>.
+   * Returns the legacy phase-zero density. In a gas-oil state this is normally gas density.
    *
-   * @return the density
+   * @return phase-zero density in kg/m3
    */
   public double[] getDensity() {
     return density;
   }
 
   /**
-   * Getter for the field <code>viscosity</code>.
+   * Returns the legacy single-phase viscosity. Two-phase entries are NaN.
    *
-   * @return the gas viscosity
+   * @return single-phase viscosity in Pa s, or NaN for a multiphase state
    */
   public double[] getViscosity() {
     return viscosity;
+  }
+
+  /**
+   * Returns oil-phase density along the constant-composition pressure schedule.
+   *
+   * @return oil density in kg/m3, or NaN where no oil phase exists
+   */
+  public double[] getOilDensity() {
+    return oilDensity;
+  }
+
+  /**
+   * Returns oil-phase dynamic viscosity along the constant-composition pressure schedule.
+   *
+   * @return oil viscosity in Pa s, or NaN where no oil phase exists
+   */
+  public double[] getOilViscosity() {
+    return viscosityOil;
   }
 
   /**

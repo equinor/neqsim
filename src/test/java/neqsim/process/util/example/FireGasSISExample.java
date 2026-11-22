@@ -100,7 +100,7 @@ public class FireGasSISExample {
     Stream separatorGasOut = new Stream("Sep Gas Out", separator.getGasOutStream());
 
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -150,7 +150,7 @@ public class FireGasSISExample {
     ESDLogic esdLogic = new ESDLogic("ESD Level 1");
     esdLogic.addAction(new TripValveAction(esdInletValve), 0.0);
     esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5);
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 1.0 }), 0.0);
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 1.0}), 0.0);
 
     // Link SIFs to ESD logic
     fireSIF.linkToLogic(esdLogic);

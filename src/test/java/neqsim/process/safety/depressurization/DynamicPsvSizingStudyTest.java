@@ -3,6 +3,8 @@ package neqsim.process.safety.depressurization;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import neqsim.process.safety.depressurization.DynamicPsvSizingStudy.SizingComparison;
+import neqsim.process.safety.depressurization.DynamicPsvSizingStudy.SizingStatus;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -44,12 +46,71 @@ public class DynamicPsvSizingStudyTest {
     assertTrue(result.oversizingRatio > 1.0, "Steady sizing should be conservative");
   }
 
-  /** The allowable pressure must equal set pressure times (1 + overpressure). */
+  /** A very small discharge coefficient leaves the expanded upper bound above the pressure limit. */
+  @Test
+  void overpressureAtExpandedBoundHasNoRequiredArea() {
+    SizingComparison result = new DynamicPsvSizingStudy(gasFluid(), 5.0, 500000.0, 50e5, 0.21, 1e5)
+        .setDischargeCoefficient(1e-6).setMaxTime(120.0).run();
+    assertEquals(SizingStatus.NO_FEASIBLE_AREA_IN_SEARCH, result.status);
+    assertEquals(10.0 * result.steadyRequiredAreaM2, result.attemptedAreaM2);
+    assertTrue(result.peakDynamicPressurePa > result.allowablePressurePa);
+    assertEquals(120.0, result.elapsedSeconds);
+    assertTrue(Double.isNaN(result.dynamicRequiredAreaM2));
+    assertTrue(Double.isNaN(result.oversizingRatio));
+  }
+
+  /** An unresolved inventory never qualifies on its initial pressure. */
+  @Test
+  void numericalCutoffReturnsIncompleteTrialEvidence() {
+    SizingComparison result = new DynamicPsvSizingStudy(gasFluid(), 1e-12, 500000.0, 50e5, 0.21, 1e5).setMaxTime(120.0)
+        .run();
+    assertEquals(SizingStatus.INCOMPLETE, result.status);
+    assertEquals(0.0, result.elapsedSeconds);
+    assertTrue(result.terminationReason.contains("resolution"));
+    assertTrue(result.attemptedAreaM2 > 0.0);
+    assertTrue(Double.isNaN(result.dynamicRequiredAreaM2));
+  }
+
+  /** The last partial integration step can set the actual peak. */
+  @Test
+  void pressureAtFinalPartialStepCounts() {
+    SizingComparison result = new DynamicPsvSizingStudy(gasFluid(), 5.0, 500000.0, 50e5, 0.21, 1e5).setTimeStep(120.0)
+        .setMaxTime(80.0).run();
+    assertEquals(SizingStatus.NO_FEASIBLE_AREA_IN_SEARCH, result.status);
+    assertEquals(80.0, result.elapsedSeconds);
+    assertTrue(result.peakDynamicPressurePa > result.allowablePressurePa);
+  }
+
+  /** Both integration grids must produce a full, pressure-compliant candidate. */
+  @Test
+  void passingAreaIsStableOnTimeStepRefinement() {
+    DynamicPsvSizingStudy study = new DynamicPsvSizingStudy(gasFluid(), 5.0, 500000.0, 50e5, 0.21, 1e5)
+        .setMaxTime(120.0);
+    SizingComparison coarse = study.setTimeStep(0.5).run();
+    SizingComparison fine = study.setTimeStep(0.25).run();
+    for (SizingComparison result : new SizingComparison[] {coarse, fine}) {
+      assertEquals(SizingStatus.FEASIBLE, result.status);
+      assertEquals(120.0, result.elapsedSeconds);
+      assertEquals(result.attemptedAreaM2, result.dynamicRequiredAreaM2);
+      assertTrue(result.peakDynamicPressurePa <= result.allowablePressurePa);
+    }
+    assertEquals(0.25, fine.timeStepSeconds);
+    assertEquals(fine.dynamicRequiredAreaM2, coarse.dynamicRequiredAreaM2, 0.01 * fine.dynamicRequiredAreaM2);
+  }
+
+  /** The allowable absolute pressure adds a fraction of gauge set pressure. */
   @Test
   public void allowablePressureMatchesDefinition() {
     DynamicPsvSizingStudy study = new DynamicPsvSizingStudy(gasFluid(), 5.0, 500000.0, 50.0e5, 0.21, 1.0e5);
     DynamicPsvSizingStudy.SizingComparison result = study.run();
-    assertEquals(50.0e5 * 1.21, result.allowablePressurePa, 50.0e5 * 1.21 * 1.0e-9);
+    assertEquals(6028721.75, result.allowablePressurePa, 1e-6);
+  }
+
+  /** The dynamic valve model rejects outlet pressures above its set pressure at construction. */
+  @Test
+  void backpressureAboveSetPressureIsRejected() {
+    assertThrows(IllegalArgumentException.class,
+        () -> new DynamicPsvSizingStudy(gasFluid(), 5.0, 500000.0, 50e5, 0.21, 61e5));
   }
 
   /** A null fluid must be rejected at construction. */

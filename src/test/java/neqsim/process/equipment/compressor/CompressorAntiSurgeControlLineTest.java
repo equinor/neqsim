@@ -143,8 +143,8 @@ public class CompressorAntiSurgeControlLineTest {
     double headOp = compressor.getPolytropicFluidHead();
     double surgeFlowOp = compressor.getSurgeFlowRate();
     // Fit a surge curve slightly to the right of the current one (measured surge test points).
-    double[] flow = new double[] { surgeFlowOp * 0.9, surgeFlowOp * 1.05, surgeFlowOp * 1.2 };
-    double[] head = new double[] { headOp * 1.2, headOp, headOp * 0.8 };
+    double[] flow = new double[] {surgeFlowOp * 0.9, surgeFlowOp * 1.05, surgeFlowOp * 1.2};
+    double[] head = new double[] {headOp * 1.2, headOp, headOp * 0.8};
     cal.fitSurgeCurve(flow, head);
     compressor.run();
     assertNotNull(compressor.getCompressorChart().getSurgeCurve());
@@ -157,8 +157,8 @@ public class CompressorAntiSurgeControlLineTest {
         () -> CompressorChartCalibrator.molarMassHeadCorrectionFactor(20.0, 0.0));
 
     // Control-margin recommendation widens with scatter.
-    double tight = cal.recommendControlMargin(0.10, new double[] { 1000.0, 1000.0, 1000.0 });
-    double noisy = cal.recommendControlMargin(0.10, new double[] { 800.0, 1000.0, 1200.0 });
+    double tight = cal.recommendControlMargin(0.10, new double[] {1000.0, 1000.0, 1000.0});
+    double noisy = cal.recommendControlMargin(0.10, new double[] {800.0, 1000.0, 1200.0});
     assertEquals(0.10, tight, 1e-9, "no scatter -> base margin");
     assertTrue(noisy > tight, "scatter should widen the recommended margin");
   }
@@ -169,10 +169,9 @@ public class CompressorAntiSurgeControlLineTest {
   @Test
   public void testChartCalibratorInputValidation() {
     CompressorChartCalibrator cal = new CompressorChartCalibrator(compressor);
-    assertThrows(IllegalArgumentException.class,
-        () -> cal.fitSurgeCurve(new double[] { 1.0, 2.0 }, new double[] { 1.0 }));
+    assertThrows(IllegalArgumentException.class, () -> cal.fitSurgeCurve(new double[] {1.0, 2.0}, new double[] {1.0}));
     assertThrows(IllegalArgumentException.class, () -> cal.fitSurgeCurve(new double[] {}, new double[] {}));
     assertThrows(IllegalArgumentException.class, () -> new CompressorChartCalibrator(null));
-    assertFalse(Double.isNaN(cal.recommendControlMargin(0.1, new double[] { 1000.0 })));
+    assertFalse(Double.isNaN(cal.recommendControlMargin(0.1, new double[] {1000.0})));
   }
 }

@@ -160,7 +160,7 @@ class TwoFluidPipeGasDensityCouplingTest {
   void testMeshRefinementImprovesAgreement() {
     double reference = darcyReference(200);
     List<Double> errors = new ArrayList<Double>();
-    for (int sections : new int[] { 40, 80 }) {
+    for (int sections : new int[] {40, 80}) {
       TwoFluidPipe pipe = runPipe(sections);
       Assertions.assertTrue(pipe.isSteadyStateConverged(), "case with " + sections + " sections must converge");
       errors.add(Math.abs(pressureDrop(pipe) - reference));

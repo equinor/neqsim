@@ -244,7 +244,7 @@ class AbsorptionColumnTest extends NeqSimTest {
     absorber.setTopPressure(pressure);
     absorber.setBottomPressure(pressure);
     for (int trayNumber = 0; trayNumber < absorber.getNumberOfTrays(); trayNumber++) {
-      absorber.getTray(trayNumber).setOutTemperature(stageTemperature);
+      absorber.getTray(trayNumber).setOutletTemperature(stageTemperature);
     }
     absorber.setTemperatureTolerance(1.0e-2);
     absorber.setMassBalanceTolerance(5.0e-2);

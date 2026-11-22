@@ -46,8 +46,12 @@ def _get_store(db_path=None):
         return JobStore(db_path)
     if _DEFAULT_DB is None:
         from pathlib import Path
-        default_dir = Path(__file__).resolve().parent.parent.parent / "task_solve"
-        default_dir.mkdir(exist_ok=True)
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        if (repo_root / "pom.xml").is_file():
+            default_dir = repo_root / "task_solve"
+        else:
+            default_dir = Path.home() / "neqsim_tasks"
+        default_dir.mkdir(parents=True, exist_ok=True)
         _DEFAULT_DB = str(default_dir / "neqsim_runner.db")
     return JobStore(_DEFAULT_DB)
 

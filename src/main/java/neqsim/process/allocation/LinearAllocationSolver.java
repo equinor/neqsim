@@ -274,8 +274,8 @@ public class LinearAllocationSolver implements Serializable {
    * @return {@code true} if every entry is finite
    */
   private static boolean isFinite(SimpleMatrix m) {
-    for (int i = 0; i < m.numRows(); i++) {
-      for (int j = 0; j < m.numCols(); j++) {
+    for (int i = 0; i < m.getDDRM().getNumRows(); i++) {
+      for (int j = 0; j < m.getDDRM().getNumCols(); j++) {
         if (!Double.isFinite(m.get(i, j))) {
           return false;
         }

@@ -39,7 +39,7 @@ class TPflashRichGasBoundaryTest {
    * @param requireSrkTopology whether to enforce the established SRK topology anchors
    */
   private void qualifyBoundary(boolean pengRobinson, String modelLabel, boolean requireSrkTopology) {
-    double[] temperaturesC = { -8.0, 0.0, 10.0, 30.0 };
+    double[] temperaturesC = {-8.0, 0.0, 10.0, 30.0};
     for (double temperatureC : temperaturesC) {
       SystemInterface ordinary = flash(pengRobinson, temperatureC, REFERENCE_PRESSURE_BARA, false, false);
       SystemInterface multiphase = flash(pengRobinson, temperatureC, REFERENCE_PRESSURE_BARA, true, false);

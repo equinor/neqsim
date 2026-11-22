@@ -1,8 +1,10 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -15,17 +17,18 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression tests for gas-liquid phase appearance and disappearance in {@link TwoFluidPipe}. */
 class TwoFluidPipePhaseDegeneracyTest {
-  private static final double[] LIQUID_MASS_FLOW_SWEEP = { 0.0, 0.5e-10, 0.99e-10, 1.01e-10, 2.0e-10, 1.0e-9, 1.0e-8 };
+  private static final double[] LIQUID_MASS_FLOW_SWEEP = {0.0, 0.5e-10, 0.99e-10, 1.01e-10, 2.0e-10, 1.0e-9, 1.0e-8};
 
   @Test
   void testLocalClosureApproachesPureGasContinuously() throws Exception {
-    OLGAModelType[] modelTypes = { OLGAModelType.FULL, OLGAModelType.SIMPLIFIED, OLGAModelType.DRIFT_FLUX };
-    FlowRegime[] regimes = { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.ANNULAR, FlowRegime.SLUG,
-        FlowRegime.DISPERSED_BUBBLE };
-    double[] inclinations = { 0.0, Math.toRadians(2.0), Math.toRadians(-2.0) };
+    OLGAModelType[] modelTypes = {OLGAModelType.FULL, OLGAModelType.SIMPLIFIED, OLGAModelType.DRIFT_FLUX};
+    FlowRegime[] regimes = {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.ANNULAR, FlowRegime.SLUG,
+        FlowRegime.DISPERSED_BUBBLE};
+    double[] inclinations = {0.0, Math.toRadians(2.0), Math.toRadians(-2.0)};
 
     for (OLGAModelType modelType : modelTypes) {
       for (FlowRegime regime : regimes) {
@@ -40,7 +43,7 @@ class TwoFluidPipePhaseDegeneracyTest {
   }
 
   @Test
-  void testPublicApiMassFlowSweepApproachesPureGasContinuously() {
+  void testFrozenPropertySteadyMassFlowSweepApproachesPureGasContinuously() throws Exception {
     for (OLGAModelType modelType : OLGAModelType.values()) {
       double previousMaximumHoldup = -1.0;
       double pureGasPressureDrop = 0.0;
@@ -54,7 +57,7 @@ class TwoFluidPipePhaseDegeneracyTest {
         pipe.setEnableSlugTracking(false);
         pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
         pipe.setSteadyStateMaxWallClockTime(1.0);
-        pipe.run();
+        runFrozenPropertySteadyState(pipe);
 
         double maximumHoldup = maximum(pipe.getLiquidHoldupProfile());
         double[] pressure = pipe.getPressureProfile();
@@ -65,12 +68,13 @@ class TwoFluidPipePhaseDegeneracyTest {
           pureGasPressureDrop = pressureDrop;
         } else {
           assertTrue(maximumHoldup > 0.0);
-          assertTrue(maximumHoldup < 1.0e-4, modelType + " public run imposed a finite trace-liquid inventory");
+          assertTrue(maximumHoldup < 1.0e-4,
+              modelType + " frozen-property solve imposed a finite trace-liquid inventory");
           assertTrue(Math.abs(pressureDrop - pureGasPressureDrop) < 100.0,
               modelType + " pressure drop did not approach its pure-gas limit");
         }
         assertTrue(maximumHoldup + 1.0e-15 >= previousMaximumHoldup,
-            modelType + " public holdup was not monotonic across phase appearance");
+            modelType + " frozen-property holdup was not monotonic across phase appearance");
         previousMaximumHoldup = maximumHoldup;
       }
     }
@@ -151,7 +155,7 @@ class TwoFluidPipePhaseDegeneracyTest {
   }
 
   @Test
-  void testTraceLiquidSteadyToTransientHandoffRemainsFiniteAndConservative() {
+  void testFrozenPropertyTraceLiquidSteadyToTransientHandoffRemainsFiniteAndConservative() throws Exception {
     TwoFluidPipe pipe = createControlledTwoPhasePipe(1.0e-8);
     pipe.setLength(2.0);
     pipe.setNumberOfSections(2);
@@ -161,7 +165,7 @@ class TwoFluidPipePhaseDegeneracyTest {
     pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
     pipe.setSteadyStateMaxWallClockTime(1.0);
 
-    pipe.run();
+    runFrozenPropertySteadyState(pipe);
     assertTrue(maximum(pipe.getLiquidHoldupProfile()) < 1.0e-4);
     pipe.runTransient(1.0e-6, UUID.fromString("00000000-0000-0000-0000-000000012733"));
 
@@ -176,6 +180,39 @@ class TwoFluidPipePhaseDegeneracyTest {
   }
 
   @Test
+  void testPublicEquilibriumRunDissolvesMetastableTraceLiquidAtEverySection() throws Exception {
+    TwoFluidPipe pipe = createControlledTwoPhasePipe(1.0e-8);
+    pipe.setLength(2.0);
+    pipe.setNumberOfSections(2);
+    pipe.setEnableTerrainTracking(false);
+    pipe.setEnableSlugTracking(false);
+    pipe.setSteadyStateMaxWallClockTime(1.0);
+    assertTrue(pipe.getInletStream().getFluid().getPhase("oil").getFlowRate("kg/sec") > 0.0,
+        "The deliberately metastable feed must initially contain trace oil");
+
+    pipe.run();
+
+    assertTrue(pipe.isSteadyStateConverged());
+    Field sectionsField = TwoFluidPipe.class.getDeclaredField("sections");
+    sectionsField.setAccessible(true);
+    for (TwoFluidSection section : (TwoFluidSection[]) sectionsField.get(pipe)) {
+      SystemInterface equilibrium = pipe.getInletStream().getFluid().clone();
+      equilibrium.setPressure(section.getPressure(), "Pa");
+      equilibrium.setTemperature(section.getTemperature(), "K");
+      new ThermodynamicOperations(equilibrium).TPflash();
+      assertTrue(equilibrium.hasPhaseType("gas"));
+      assertFalse(equilibrium.hasPhaseType("oil"), "The local reference flash dissolves metastable trace oil");
+      assertFalse(equilibrium.hasPhaseType("aqueous"));
+      assertEquals(0.0, section.getLiquidHoldup(), 0.0,
+          "Every equilibrated section, including the inlet, must remove the stale metastable inventory");
+      assertEquals(0.0, section.getOilMassPerLength(), 0.0);
+      assertEquals(0.0, section.getWaterMassPerLength(), 0.0);
+    }
+    assertTrue(pipe.getInletStream().getFluid().getPhase("oil").getFlowRate("kg/sec") > 0.0,
+        "The pipe equilibrium calculation must not mutate the feed's controlled phase state");
+  }
+
+  @Test
   void testPrimitiveExtractionDoesNotSeedAbsentOilOrWater() {
     TwoFluidSection section = createSection(0.0, FlowRegime.STRATIFIED_SMOOTH);
     section.setOilDensity(700.0);
@@ -184,8 +221,8 @@ class TwoFluidPipePhaseDegeneracyTest {
 
     double gasMassPerLength = 0.8 * 40.0 * area;
     double waterMassPerLength = 0.2 * 1000.0 * area;
-    section.setStateVector(new double[] { gasMassPerLength, 0.0, waterMassPerLength, gasMassPerLength, 0.0,
-        waterMassPerLength * 0.1, 0.0 });
+    section.setStateVector(
+        new double[] {gasMassPerLength, 0.0, waterMassPerLength, gasMassPerLength, 0.0, waterMassPerLength * 0.1, 0.0});
     section.extractPrimitiveVariables();
     assertEquals(0.0, section.getOilMassPerLength(), 0.0);
     assertEquals(0.0, section.getOilHoldup(), 0.0);
@@ -193,7 +230,7 @@ class TwoFluidPipePhaseDegeneracyTest {
 
     double oilMassPerLength = 0.2 * 700.0 * area;
     section.setStateVector(
-        new double[] { gasMassPerLength, oilMassPerLength, 0.0, gasMassPerLength, oilMassPerLength * 0.1, 0.0, 0.0 });
+        new double[] {gasMassPerLength, oilMassPerLength, 0.0, gasMassPerLength, oilMassPerLength * 0.1, 0.0, 0.0});
     section.extractPrimitiveVariables();
     assertEquals(0.0, section.getWaterMassPerLength(), 0.0);
     assertEquals(0.0, section.getWaterHoldup(), 0.0);
@@ -213,7 +250,7 @@ class TwoFluidPipePhaseDegeneracyTest {
     assertEquals(0.0, section.calcOilWaterInterfacialShear(), 0.0);
 
     double previousShear = 0.0;
-    for (double waterHoldup : new double[] { 1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6 }) {
+    for (double waterHoldup : new double[] {1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6}) {
       section.setWaterHoldup(waterHoldup);
       double shear = section.calcOilWaterInterfacialShear();
       assertTrue(Double.isFinite(shear));
@@ -333,6 +370,34 @@ class TwoFluidPipePhaseDegeneracyTest {
     TwoFluidPipe pipe = new TwoFluidPipe("controlled-phase-degeneracy-pipe", inlet);
     pipe.setDiameter(0.2);
     return pipe;
+  }
+
+  /**
+   * Isolate hydrodynamic phase-degeneracy limits from equilibrium phase disappearance.
+   *
+   * <p>
+   * The controlled fixture contains metastable trace oil that a TP flash correctly dissolves. Its continuity and
+   * conservative transport assertions therefore require frozen phase properties. Previously these assertions passed
+   * through public run() only because the inlet escaped the final thermodynamic consistency sweep. Keep every trace and
+   * conservation tolerance unchanged, but initialize the hydrodynamic steady solver explicitly for this fixture. The
+   * separate public equilibrium test verifies that the inlet now agrees with the local reference flash.
+   * </p>
+   *
+   * @param pipe controlled phase fixture
+   * @throws Exception if reflective access to the internal hydrodynamic solver fails
+   */
+  private void runFrozenPropertySteadyState(TwoFluidPipe pipe) throws Exception {
+    pipe.setIncludeMassTransfer(false);
+    Method initialize = TwoFluidPipe.class.getDeclaredMethod("initializeSections");
+    initialize.setAccessible(true);
+    initialize.invoke(pipe);
+    Field referenceFluid = TwoFluidPipe.class.getDeclaredField("referenceFluid");
+    referenceFluid.setAccessible(true);
+    referenceFluid.set(pipe, null);
+    Method steady = TwoFluidPipe.class.getDeclaredMethod("runSteadyState");
+    steady.setAccessible(true);
+    steady.invoke(pipe);
+    assertTrue(pipe.isSteadyStateConverged(), "The frozen-property hydrodynamic fixture must converge");
   }
 
   private Method getLocalHoldupClosure() throws NoSuchMethodException {

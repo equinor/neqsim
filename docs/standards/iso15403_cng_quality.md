@@ -36,9 +36,10 @@ be interpreted as a hydrogen-fuel rating.
 
 ## Complete Java example
 
-This example keeps every case on the same one-mole composition basis. The
-sensitivity cases replace two mole percentage points of methane with either
-carbon dioxide or nitrogen instead of adding material to an existing system.
+This assertion-enabled Java 8 program uses the same one-mole composition basis
+for every case at 200 bara absolute. The sensitivity cases replace two mole
+percentage points of methane with either carbon dioxide or nitrogen instead of
+adding material to an existing system. Run it with assertions enabled (`java -ea`).
 
 ```java
 import org.apache.logging.log4j.LogManager;
@@ -49,11 +50,13 @@ import neqsim.thermo.system.SystemSrkEos;
 
 public final class Iso15403Example {
   private static final Logger logger = LogManager.getLogger(Iso15403Example.class);
+  private static final double PRESSURE_BARA_ABSOLUTE = 200.0;
 
   private Iso15403Example() {}
 
   public static void main(String[] args) {
-    Standard_ISO15403 base = new Standard_ISO15403(createCng(0.92, 0.01, 0.01));
+    Standard_ISO15403 base =
+        new Standard_ISO15403(createCng(0.92, 0.01, 0.01));
     base.calculate();
     double baseMon = base.getValue("MON");
     double baseNm = base.getValue("NM");
@@ -68,21 +71,30 @@ public final class Iso15403Example {
     nitrogenCase.calculate();
     double nitrogenNm = nitrogenCase.getValue("NM");
 
-    if (!Double.isFinite(baseMon) || !Double.isFinite(baseNm)) {
-      throw new IllegalStateException("ISO 15403 correlation returned a non-finite result");
-    }
-    if (!(carbonDioxideNm > baseNm && nitrogenNm < baseNm)) {
-      throw new IllegalStateException("Unexpected composition-sensitivity result");
-    }
+    assert Double.isFinite(baseMon);
+    assert Double.isFinite(baseNm);
+    assert Math.abs(baseMon - 128.18474) < 1.0e-8;
+    assert Math.abs(baseNm - 81.8069493) < 1.0e-8;
+    assert Math.abs(carbonDioxideNm - 83.0627410) < 1.0e-8;
+    assert Math.abs(nitrogenNm - 78.6037889) < 1.0e-8;
+    assert carbonDioxideNm > baseNm;
+    assert nitrogenNm < baseNm;
+    assert "".equals(base.getUnit("MON"));
+    assert "".equals(base.getUnit("NM"));
+    assert base.isOnSpec();
 
-    logger.info("Base MON={}, base NM={}", baseMon, baseNm);
+    logger.info("Base MON={}, base NM={} (dimensionless)", baseMon, baseNm);
     logger.info("NM after replacing methane with CO2={}", carbonDioxideNm);
     logger.info("NM after replacing methane with N2={}", nitrogenNm);
   }
 
   private static SystemInterface createCng(
       double methane, double carbonDioxide, double nitrogen) {
-    SystemInterface gas = new SystemSrkEos(288.15, 200.0);
+    double totalMoles = methane + 0.04 + 0.01 + 0.005 + 0.005 + carbonDioxide + nitrogen;
+    assert Math.abs(totalMoles - 1.0) < 1.0e-12 : "Composition must total one mole";
+
+    SystemInterface gas = new SystemSrkEos(288.15, PRESSURE_BARA_ABSOLUTE);
+    assert Math.abs(gas.getPressure("bara") - PRESSURE_BARA_ABSOLUTE) < 1.0e-12;
     gas.addComponent("methane", methane);
     gas.addComponent("ethane", 0.04);
     gas.addComponent("propane", 0.01);
@@ -96,6 +108,9 @@ public final class Iso15403Example {
 }
 ```
 
+The assertions are executable documentation of the current implementation, not
+ISO acceptance limits. The repository regression compiles this exact fence for
+Java 8 and invokes it with assertions enabled.
 For these three normalized compositions, the current source correlation gives:
 
 | Case | MON | NM | Engineering interpretation |
@@ -127,7 +142,7 @@ required fuel properties.
 
 ## Related documentation
 
-- [Standards overview](README.md)
-- [ISO 6976 calorific values and Wobbe index](iso6976_calorific_values.md)
-- [Dew-point methods](dew_point_standards.md)
+- [Standards overview](README)
+- [ISO 6976 calorific values and Wobbe index](iso6976_calorific_values)
+- [Dew-point methods](dew_point_standards)
 

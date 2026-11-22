@@ -1,0 +1,135 @@
+---
+description: "Use when running NeqSim calculations or resolving plugin-only Python, Java and toolkit setup."
+applyTo: "**"
+---
+
+# Answering a NeqSim calculation request
+
+## Prefer the MCP tool for a one-off calculation
+
+A single property, flash, phase-envelope, sizing, PVT, or standards lookup is
+served by a curated `mcp_neqsim_*` tool when the NeqSim MCP server is available.
+Use it first: it needs no Python or terminal commands from the agent and returns
+a schema-checked result with provenance. The MCP server itself needs Java.
+Write Python or Java only when the task
+needs loops, plotting, a notebook, a report, or state inspected between steps.
+
+```text
+Calculate methane density at 20 C and 20 bara
+-> mcp_neqsim_runFlash {"components":"{\"methane\": 1.0}", "eos":"SRK",
+                        "flashType":"TP", "temperature":20, "temperatureUnit":"C",
+                        "pressure":20, "pressureUnit":"bara"}
+```
+
+## Java is often installed but hidden — find it, do not give up
+
+`JVMNotFoundException`, "No JVM shared library file (jvm.dll) found", or a JPype
+failure on `import neqsim` usually means the JVM is not *discoverable*, not that
+Java is missing. On managed corporate machines Java is regularly installed with
+no `java` on PATH and no `JAVA_HOME`.
+
+Do not hand-scan `C:\Program Files` and do not tell the user to install a JDK
+before checking. Run the locator, which searches vendor installs, the user
+profile, the Windows registry, and the JRE bundled with the VS Code Java
+extension:
+
+```powershell
+uv run --project devtools --locked devtools/java_locator.py        # source checkout: lists every usable Java
+neqsim doctor                          # pip install of the CLI: names the found Java
+```
+
+The core plugin installs the CLI and task toolkit on first session, without a
+checkout. Use the resolved Python interpreter and setup status supplied by the
+session hook. If `neqsim` is not on PATH, invoke `-m neqsim_cli doctor` with that
+interpreter (PowerShell requires `&` before a quoted executable path). Do not run
+the `uv` checkout command unless `devtools` actually exists. If package setup is
+pending or failed, inspect the reported install log and run `/neqsim-setup`
+instead of assuming the CLI is installed. The session hook separately resolves
+a JDK 21+ for the MCP server; prefer its available calculation tools.
+
+In Python, make a hidden JVM usable for the current process before touching
+JPype or NeqSim:
+
+```python
+import neqsim_dev_setup, sys, pathlib
+sys.path.insert(0, str(pathlib.Path(neqsim_dev_setup.__file__).parent))
+from java_locator import ensure_java_home
+ensure_java_home()          # sets JAVA_HOME + PATH for this process only
+import neqsim
+```
+
+The `sys.path` line matters: an editable devtools install resolves modules
+through a map frozen at install time, so a bare `import java_locator` can fail
+even though the file is present.
+
+`devtools/neqsim_dev_setup.py` already does all of this, so notebooks and runner
+jobs that use `neqsim_init(...)` need no extra step.
+
+Report "no Java installed" only after the locator finds nothing. The remedy
+then is a portable JDK unpacked into the user profile, which needs no admin
+rights — never a system-wide installer the user cannot run.
+
+## Start installed Docker automatically when a task needs it
+
+Before Docker-backed work (OpenFOAM, OPM Flow, FluidMagic or other containers),
+run `neqsim docker ensure --linux`. Do not require users to open Docker first.
+For Windows-container work omit `--linux`. Only do this when Docker is needed,
+not on every session. The command starts an installed local Docker Desktop or
+Linux Docker service and waits up to 120 seconds for `docker info` to succeed.
+Reuse an already healthy engine. Leave Docker running afterward.
+
+If the CLI is not on PATH, use the selected Python interpreter with
+`-m neqsim_cli docker ensure --linux`. In a source checkout use
+`uv run --project devtools --locked devtools/docker_runtime.py ensure --linux`.
+The command prints the resolved Docker executable path; use it for subsequent
+Docker commands if `docker` itself is not on PATH.
+
+Do not install Docker, elevate privileges, accept licence/first-run prompts,
+switch Docker contexts/container modes, restart/stop Docker, or alter WSL or
+host configuration automatically. Report missing installations, denied access,
+remote-context failures and startup timeouts explicitly, with the remedy from
+the command. Preserve documented offline hand-offs when the runtime is blocked;
+never label an unexecuted engine calculation as successful.
+
+## Task folders always come from `new-task` (dated name)
+
+Create every task folder with `neqsim new-task "<title>" --type X --prompt "<request>"`
+(or `<python> -m neqsim_cli new-task ...` when `neqsim` is not on PATH). It names the folder
+`YYYY-MM-DD_<slug>` (date first) and scaffolds the template. Never create a task folder by hand
+with `New-Item`/`mkdir` or the file-create tool, and never invent a name without the date.
+If `new-task` fails, fix or report that blocker; do not fall back to a hand-made folder. If a
+folder must be created before the CLI is reachable, name it `YYYY-MM-DD_<slug>` and run
+`neqsim new-task "<title>" --slug <that folder name>` to scaffold it in place.
+PowerShell constrained-language hosts reject some inline scripts, so call the CLI directly
+instead of wrapping it in `$host.SetShouldExit(...)` style one-liners.
+## Repo paths in agents and skills, when only the plugin is installed
+
+Agents and skills cite repository paths. Without a NeqSim checkout (agent plugin
+only) map them instead of failing on a missing file:
+
+- `devtools/NAME.py` is the installed toolkit module: run `<python> -m NAME`
+  (for example `-m skill_search`, `-m agent_search`, `-m new_task`,
+  `-m validate_task_results`) or the `neqsim` command. Modules outside the
+  toolkit (build and CI scripts) do not exist for plugin users; skip them.
+- `.github/skills/NAME/SKILL.md` is the skill `NAME`: load it by name from
+  the plugin, do not read that path.
+- A task folder is created with `neqsim new-task`; its templates are packaged,
+  so never copy from a `task_solve/` or `tasks/` path that is not there. Without a
+  checkout, tasks default to `~/neqsim_tasks`; `neqsim --show-task-root` prints the
+  folder in use.
+- In shipped skills and agents, commands written for a checkout were already turned into
+  `<python> -m NAME ...` where the toolkit has that module (use the session's Python
+  interpreter for `<python>`). A command that still says `uv run --project devtools`
+  or `devtools/NAME.py` is build or CI tooling: skip it.
+- `AGENTS.md`, `CONTEXT.md` and `docs/...` are not installed. Read them at
+  `https://github.com/equinor/neqsim/blob/master/<path>` only when the answer needs
+  them; the skill text normally carries what you need.
+- Discovery without a checkout: use the MCP tool `runCapability` (`search`, `inspectApi`,
+  `coverage`), `-m skill_search` and `-m agent_search`. `capability_search` needs the
+  source tree and is not installed.
+- Maven, Spotless, JUnit, Checkstyle and Java 8 source rules apply only when editing the
+  NeqSim Java source in a checkout (agents such as `neqsim-test`, `dynamic-equipment` and
+  `documentation`). Do not run `mvnw` or look for `pom.xml` without a checkout. If a
+  needed capability is missing, say so, give a Python or MCP workaround where one exists,
+  and offer `neqsim file-issue <task>` (or a pre-filled
+  `https://github.com/equinor/neqsim/issues/new` link) instead of editing Java.

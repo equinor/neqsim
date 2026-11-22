@@ -39,6 +39,12 @@ load `neqsim-dynamic-simulation` in addition.
 6. Run bounded optimization and re-simulate the full NeqSim process each iteration.
 7. Validate on holdout windows and publish fit diagnostics.
 
+For the replay and validation steps use `neqsim.process.operations.replay.ProcessReplay`:
+it runs a tag-bound time series through the calibrated model with a convergence gate,
+records failed rows without aborting, and gives per-window bias/RMS, baseline-standardised
+residuals and CUSUM change points (`ReplayResult.setBaselineWindow`, `detectChangePoints`),
+exportable as CSV/JSON. See `docs/process/process_replay.md`.
+
 ## Typical Tunable Parameters
 
 | Equipment | Parameters to Tune | Keep Fixed Unless Needed |
@@ -146,6 +152,9 @@ Recommended minimum metrics:
 | Optimization stalls | Flat objective or too many coupled variables | Reduce parameter count, stage the tuning in phases |
 | Noisy residuals | Sensor spikes and transient periods | Increase filtering and steady-state screening |
 | Unstable run during optimization | Recycle sensitivity | Start from converged base case and use troubleshooting recovery patterns |
+| Compressor discharge T low even at a plausible efficiency | Heavy model gas, anti-surge recycle, or a truly low effective efficiency | Diagnose in order, each with a measurement: (1) gas mole weight / composition, (2) anti-surge valve opening, (3) independent motor or shaft power. If 1 and 2 are clean, fit an *effective* efficiency to T (`compressor.setOutTemperature(T)` then `compressor.solveEfficiency(T)`, or the log-ratio update `eta*ln(T2m/T1)/ln(T2p/T1)` between runs) and check it against the power that was not fitted (Johan Sverdrup stage 3/4: 0.35-0.42 fitted, power within -13 to -27 %). Never widen the efficiency bound before 1-3 |
+| Separator gas flow meters disagree with the gas balance by a constant factor on every train | Meter basis (actual vs standard m3/h) or gas allocation | Treat as a data question; calibrate gas to the metered platform gas, do not tune GOR to the meter, and report the meter gap |
+| `Compressor.solveEfficiency(T)` returns an efficiency of 1.0 (or the lower limit) and the outlet is not at T | Older NeqSim builds: the unguarded secant step overshoots when the target needs an efficiency far from the start (e.g. wet gas at 134 C from 0.75 start, true value ~0.36). Fixed with a bracketed (safeguarded) secant in `Compressor.solveEfficiency`, test `CompressorSolveEfficiencyTest`. A phase-boundary jump can stall one initial guess about 0.1 K off the target; the solve then uses a local secant and interior restarts, still at the 0.01 K tolerance | Always read back `compressor.getOutletStream().getTemperature("C")` after the solve and compare with the target; on an older build bisect the efficiency between 0.3 and 0.95 yourself (outlet T usually falls as efficiency rises, but it can chatter across a phase boundary). Report the result as an *effective* efficiency (it lumps anti-surge recycle heating and composition error) and re-fit it after any change of gas composition or calibration factor |
 
 ## Reporting Pattern for results.json
 
@@ -210,6 +219,16 @@ Add a calibration block to the task `results.json`:
 - [ ] Fit metrics are reported for both train and validation sets.
 - [ ] Any excluded tags/windows have a documented reason.
 - [ ] Final recommendations include applicability range and limitations.
+
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+Calibration fits steady parameters; `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) supplies the dynamics and a cross-check:
+
+- identified gains compared with NeqSim `steady_gains` (`compare_gains`);
+- physics residuals after calibration to watch for drift;
+- chronological train and hold-out windows with `simulate_unit`.
+
+Keep the calibration window and the residual baseline window the same healthy period, and never shuffle time-series rows into training and test. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
 
 ## References
 

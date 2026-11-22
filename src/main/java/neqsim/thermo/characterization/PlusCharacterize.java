@@ -29,10 +29,10 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   int lastPlusFractionNumber = 80;
   int numberOfPseudocomponents = 5; // (lastPlusFractionNumber-firstPlusFractionNumber)*50;
   int length = 0;
-  double[] coefs = { 4.4660105006, -1.1266303727, 0.80, 0.0408709562 };
-  double[] SRKcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
-  double[] PRcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
-  double[] plusCoefs = { 0.0007774204804, -0.02390179 };
+  double[] coefs = {4.4660105006, -1.1266303727, 0.80, 0.0408709562};
+  double[] SRKcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
+  double[] PRcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
+  double[] plusCoefs = {0.0007774204804, -0.02390179};
   SystemInterface system = null;
 
   /**

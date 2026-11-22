@@ -1,8 +1,8 @@
 ---
 name: neqsim-consequence-analysis
-version: "1.0.0"
-description: "Quantitative consequence analysis for oil & gas hazards — jet fire, pool fire, vapour cloud explosion (VCE), BLEVE, Gaussian plume and heavy-gas dispersion, probit-based fatality probabilities, individual and societal risk roll-up. USE WHEN: a task requires fire-radiation contours, dispersion to LFL/IDLH/ERPG, BLEVE thermal/missile assessment, or QRA-style risk integration of multiple release outcomes. Anchors on neqsim.process.safety.fire, neqsim.process.safety.dispersion, neqsim.process.safety.qra."
-last_verified: "2026-04-26"
+version: "1.1.0"
+description: "Quantitative consequence analysis - jet/pool fire, VCE, BLEVE, Gaussian and heavy-gas dispersion, probit fatality, individual and societal risk. USE WHEN: a task requires fire-radiation contours, dispersion to LFL/IDLH/ERPG, BLEVE thermal/missile assessment, QRA-style integration of release outcomes, or unignited flare/vent gas at a helideck and flight path. Anchors on neqsim.process.safety.fire, .dispersion and .qra."
+last_verified: "2026-11-20"
 requires:
   java_packages:
     - neqsim.process.safety.fire
@@ -47,8 +47,8 @@ import neqsim.process.safety.dispersion.ProbitModel;
 
 // 30 kg/s gas leak, 50 MJ/kg HoC, 25 % radiative fraction
 JetFireModel jet = new JetFireModel(30.0, 50.0e6, 0.25);
-double flux50m = jet.radiationFluxAt(50.0);   // W/m²
-double dist125 = jet.distanceForFlux(12500.0); // m where flux = 12.5 kW/m²
+double flux50m = jet.incidentHeatFlux(50.0);   // W/m²
+double dist125 = jet.distanceToFlux(12500.0); // m where flux = 12.5 kW/m²
 ```
 
 Typical thermal radiation criteria (API 521 / NORSOK S-001):
@@ -65,9 +65,9 @@ Typical thermal radiation criteria (API 521 / NORSOK S-001):
 ```java
 import neqsim.process.safety.fire.PoolFireModel;
 
-// 500 kg liquid, burning rate 0.05 kg/m²·s, dike diameter 8 m, η = 0.30
-PoolFireModel pool = new PoolFireModel(0.05, 8.0, 50.0e6, 0.30);
-double flux = pool.radiationFluxAt(25.0); // W/m² at 25 m
+// Dike diameter 8 m, prescribed mass burning rate 0.05 kg/(m²·s)
+PoolFireModel pool = new PoolFireModel(8.0, 0.05);
+double flux = pool.incidentHeatFlux(25.0); // W/m² at 25 m
 ```
 
 ## Method 3 — Vapour Cloud Explosion (TNO Multi-Energy)
@@ -77,8 +77,8 @@ import neqsim.process.safety.fire.VCEModel;
 
 // 200 kg flammable in cloud, congestion class 7 (heavy)
 VCEModel vce = new VCEModel(200.0, 50.0e6, 7);
-double overpressure = vce.overpressureAt(60.0); // Pa at 60 m
-double safeDist = vce.distanceForOverpressure(20684.0); // m for 3 psi
+double overpressure = vce.overpressurePa(60.0); // Pa at 60 m
+double safeDist = vce.distanceToOverpressure(20684.0); // m for 3 psi
 ```
 
 ## Method 4 — BLEVE
@@ -88,10 +88,14 @@ import neqsim.process.safety.fire.BLEVECalculator;
 
 // 50 t propane vessel
 BLEVECalculator bleve = new BLEVECalculator(50000.0, 50.0e6, 0.40);
-double fireballDiameter = bleve.fireballDiameter();   // m
-double fireballDuration = bleve.fireballDuration();   // s
-double thermalDose = bleve.thermalDoseAt(150.0);      // (W/m²)^(4/3)·s
+double fireballDiameter = bleve.fireballDiameterM();   // m
+double fireballDuration = bleve.fireballDurationS();   // s
+double flux = bleve.incidentHeatFlux(150.0);          // W/m²
 ```
+
+For pool-fire, BLEVE and VCE contours, check for `Double.NaN` before using the
+returned distance. It means the target is unbracketed within the model's
+search range. See [Dispersion and Consequence Analysis](../../../docs/safety/dispersion_and_consequence.md).
 
 ## Method 5 — Gaussian Plume Dispersion (Briggs σ)
 
@@ -108,6 +112,40 @@ double distLFL = plume.distanceToConcentration(0.044);    // m to methane LFL
 Stability classes: A (very unstable) … F (stable). RURAL vs URBAN selects Briggs σ
 coefficients per Pasquill-Gifford. Use `Stability.F` for worst-case dispersion
 analysis (calm night, low wind).
+
+### Method 5b — Elevated flare or vent gas at a helideck and flight path
+
+`GasDispersionAnalyzer` and `GaussianPlume` model a release at one height with passive
+spreading; they have no jet momentum rise, no stable-air plume-rise limit, no
+receptor geometry (helideck, flight path) and no wind-rose weighting. In `AUTO` mode
+the analyzer picks Gaussian or dense gas from the density at **ambient** temperature,
+so a cold (-107 C) dense flare gas is routed to Gaussian: set the model explicitly
+and set the endpoint explicitly (`sts0131IntegralEndpoint()` = 20 % LFL; the default is
+50 % LFL). For an unignited flare, cold vent or relief tail pipe near a helideck use
+the community skill `neqsim-flare-helideck-dispersion` (any release source and any receptor
+- helideck, flight paths, air intakes, muster areas, escape routes - in one facility frame)
+and agent
+`flare-helideck-dispersion-agent` (neqsim-community-skills / neqsim-community-agents)
+and keep these measured lessons (offshore platform study, 2026-11-20, screening model
+checked against `GaussianPlume` within 2 %):
+
+- Report the exceedance of **both** 10 % and 20 % LFL on the helideck, on the into-wind
+  approach path and on any path of the obstacle-free sector, weighted by the joint
+  wind direction x speed table; the result is **conditional on a release**, not a
+  frequency.
+- Apply the Briggs **stable-air limits** to momentum rise and to the sinking of a dense
+  plume in classes E and F: neutral rise in stable air hid the exposure of the warm
+  blowdown completely (0 % of hours above 20 % LFL instead of 6.6 %) in an independent
+  review.
+- Resolve flight-path bearings at 5 deg or finer; 15 deg steps understated the
+  exceedance hours of narrow plumes (up to a factor of 2 in the review).
+- Scan the tip inclination (20-70 deg): for cold dense gas the helideck peak went from
+  0.2 % LFL at 40 deg to 19 % at 35 deg and above 100 % at 30 deg.
+- API 520 sizes the relief device and fixes the rated release rate; atmospheric
+  discharge and dispersion criteria are in API 521 section 5.8.
+- Platform wake, turbulence over the deck and hot exhaust are not in a screening
+  model; hand the low-wind cases to CFD (source term from
+  `ConsequenceAnalysisEngine.exportSourceTerm()`).
 
 ## Method 6 — Heavy-Gas Dispersion
 
@@ -191,6 +229,8 @@ double spl  = flame.soundPressureLevelDb(100.0);     // dB at 100 m
 
 Use this instead of the point-source jet-fire form when the source is an elevated
 flare tip (it accounts for stack height, wind tilt, and flame geometry).
+Height and wind speed must be finite and nonnegative. Transmissivity must be a
+finite fraction in [0, 1]. Invalid values throw `IllegalArgumentException`.
 
 ## Method 10 — Hazardous-Area Zone Classification (IEC 60079-10-1)
 
@@ -234,6 +274,10 @@ PfpDemandResult.PfpRating rating = pfp.getRating(); // NONE / H60 / J120 ...
 
 Determines whether unprotected steel reaches its critical temperature before the
 required survival time, and if so the intumescent thickness and H/J rating.
+For custom temperatures, supply finite values in kelvin. The critical steel
+temperature must exceed the positive initial steel temperature, and the
+effective fire temperature must exceed their arithmetic mean. See the
+[PFP demand guide](../../../docs/safety/flare_flame_hazardous_area_pfp.md).
 
 ## Source Term for External CFD
 
@@ -267,6 +311,7 @@ tests for every model. Run:
 ## See Also
 
 - `neqsim-process-safety` — frequency side (HAZOP / LOPA / SIL)
+- `neqsim-firewater-deluge-design` — the mitigation side: how much fire water the area needs, and whether water is the right barrier for the fire type you just characterised
 - `neqsim-relief-flare-network` — PSV sizing and flare radiation
 - `neqsim-depressurization-mdmt` — emergency depressurization source terms
 - `neqsim-agent-handoff` — source-term JSON schema

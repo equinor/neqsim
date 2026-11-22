@@ -73,7 +73,7 @@ public class JsonSerializationAuditTest {
     mixer.addStream(heater.getOutletStream());
 
     Splitter splitter = new Splitter("splitter", valve.getOutletStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
 
     Tank tank = new Tank("tank", splitter.getSplitStream(0));
 
@@ -174,7 +174,7 @@ public class JsonSerializationAuditTest {
         "VesselDepressurization",
         // Util
         "Adjuster", "Calculator", "FlowRateAdjuster", "FlowSetter", "GORfitter", "MoleFractionControllerUtil",
-        "MPFMfitter", "NeqSimUnit", "SetPoint", "Setter", "StreamSaturatorUtil", "StreamTransition" };
+        "MPFMfitter", "NeqSimUnit", "SetPoint", "Setter", "StreamSaturatorUtil", "StreamTransition"};
 
     for (String cls : missingClasses) {
       logger.info("  - " + cls);

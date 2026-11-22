@@ -101,7 +101,7 @@ public class TransientPipelineLiquidAccumulationExample {
     double outletPressure = 40.0; // bara (delivery pressure)
 
     // Flow rates to simulate (kg/s) - higher flow rates
-    double[] flowRates = { 50.0, 100.0, 150.0 };
+    double[] flowRates = {50.0, 100.0, 150.0};
 
     logger.info("Pipeline Configuration:");
     logger.info("  Length:           " + (pipeLength / 1000) + " km");

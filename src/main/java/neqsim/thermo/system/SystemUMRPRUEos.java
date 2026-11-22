@@ -52,9 +52,13 @@ package neqsim.thermo.system;
  * <td>{@link SystemUMRPRUMCEosNew}</td>
  * <td>19</td>
  * <td>5-parameter Mathias-Copeman</td>
- * <td>{@code _umr}</td>
+ * <td>{@code _umrmc}</td>
  * </tr>
  * </table>
+ *
+ * <p>
+ * UMR-CPA ({@link SystemUMRCPAEoS}) adds an association term and reads its own {@code _umrcpa} tables.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -62,6 +66,33 @@ package neqsim.thermo.system;
 public class SystemUMRPRUEos extends SystemPrEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** True when the excess Gibbs energy model of the mixing rule has been chosen by a call. */
+  private boolean excessGibbsModelSelected = false;
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The Huron-Vidal mixing rule ({@code "HV"}) is used with the UMR-PRU UNIFAC model unless another excess Gibbs energy
+   * model has been chosen with {@link #setMixingRuleGEmodel(String)} or {@link #setMixingRule(String, String)}.
+   * {@code setMixingRule("HV")} therefore gives the same model as {@code setMixingRule("HV", "UNIFAC_UMRPRU")}.
+   * </p>
+   */
+  @Override
+  public void setMixingRule(String typename) {
+    if (!excessGibbsModelSelected && "HV".equalsIgnoreCase(typename)) {
+      setMixingRuleGEmodel("UNIFAC_UMRPRU");
+    }
+    super.setMixingRule(typename);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMixingRuleGEmodel(String name) {
+    excessGibbsModelSelected = true;
+    super.setMixingRuleGEmodel(name);
+  }
 
   /**
    * Constructor for SystemUMRPRUEos.
@@ -93,14 +124,18 @@ public class SystemUMRPRUEos extends SystemPrEos {
     modelName = "UMR-PRU-EoS";
     attractiveTermNumber = 1;
 
-    CapeOpenProperties11 = new String[] { "speedOfSound", "jouleThomsonCoefficient", "internalEnergy",
+    CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient", "internalEnergy",
         "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
         "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
         "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy", "heatCapacityCp",
-        "heatCapacityCv", "density", "volume" };
+        "heatCapacityCv", "density", "volume"};
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemUMRPRUEos clone() {
     SystemUMRPRUEos clonedSystem = null;
@@ -108,6 +143,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
       clonedSystem = (SystemUMRPRUEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemUMRPRUEos", ex);
     }
 
     return clonedSystem;

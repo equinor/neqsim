@@ -133,7 +133,7 @@ public class WellToOilStabilizationExampleTest {
 
     // HP Separator
     Heater preHeater1 = new Heater("Pre-Heater HP", inletChoke.getOutletStream());
-    preHeater1.setOutTemperature(70.0, "C");
+    preHeater1.setOutletTemperature(70.0, "C");
 
     Separator hpSeparator = new Separator("HP Separator");
     hpSeparator.setInletStream(preHeater1.getOutletStream());
@@ -145,7 +145,7 @@ public class WellToOilStabilizationExampleTest {
     mpValve.setOutletPressure(10.0, "bara");
 
     Heater preHeater2 = new Heater("Pre-Heater MP", mpValve.getOutletStream());
-    preHeater2.setOutTemperature(65.0, "C");
+    preHeater2.setOutletTemperature(65.0, "C");
 
     Separator mpSeparator = new Separator("MP Separator");
     mpSeparator.setInletStream(preHeater2.getOutletStream());
@@ -157,7 +157,7 @@ public class WellToOilStabilizationExampleTest {
     lpValve.setOutletPressure(2.0, "bara");
 
     Heater stabilizer = new Heater("Stabilizer Heater", lpValve.getOutletStream());
-    stabilizer.setOutTemperature(80.0, "C");
+    stabilizer.setOutletTemperature(80.0, "C");
 
     Separator lpSeparator = new Separator("LP Separator (Stabilizer)");
     lpSeparator.setInletStream(stabilizer.getOutletStream());
@@ -174,7 +174,7 @@ public class WellToOilStabilizationExampleTest {
     lpCompressor.setPolytropicEfficiency(0.75);
 
     Cooler lpCooler = new Cooler("LP Compressor Aftercooler", lpCompressor.getOutletStream());
-    lpCooler.setOutTemperature(40.0, "C");
+    lpCooler.setOutletTemperature(40.0, "C");
 
     Mixer mpMixer = new Mixer("MP Gas Mixer");
     mpMixer.addStream(mpSeparator.getGasOutStream());
@@ -185,7 +185,7 @@ public class WellToOilStabilizationExampleTest {
     mpCompressor.setPolytropicEfficiency(0.75);
 
     Cooler mpCooler = new Cooler("MP Compressor Aftercooler", mpCompressor.getOutletStream());
-    mpCooler.setOutTemperature(40.0, "C");
+    mpCooler.setOutletTemperature(40.0, "C");
 
     Mixer hpMixer = new Mixer("HP Gas Mixer");
     hpMixer.addStream(hpSeparator.getGasOutStream());
@@ -196,7 +196,7 @@ public class WellToOilStabilizationExampleTest {
     exportCompressor.setPolytropicEfficiency(0.78);
 
     Cooler exportCooler = new Cooler("Export Cooler", exportCompressor.getOutletStream());
-    exportCooler.setOutTemperature(30.0, "C");
+    exportCooler.setOutletTemperature(30.0, "C");
 
     logger.info("   - 3-stage compression: LP→MP→HP→Export");
     logger.info("   - Export pressure: 120 bara");
@@ -250,7 +250,7 @@ public class WellToOilStabilizationExampleTest {
     logger.info(String.format("   Wellhead Temperature:  %.1f °C", well.getOutletStream().getTemperature("C")));
     logger.info(String.format("   Operating Flow Rate:   %.1f Sm³/day", well.getOperatingFlowRate("Sm3/day")));
     logger.info(String.format("   Bottom Hole Pressure:  %.1f bara", well.getBottomHolePressure("bara")));
-    System.out.println(String.format("   Drawdown:              %.1f bar", well.getDrawdown("bar")));
+    logger.info("{}", String.format("   Drawdown:              %.1f bar", well.getDrawdown("bar")));
 
     // Flowline
     logger.info("\n--- FLOWLINE ---");
@@ -287,8 +287,8 @@ public class WellToOilStabilizationExampleTest {
     // Compression power
     logger.info("\n--- COMPRESSION POWER ---");
     double totalPower = lpCompressor.getPower("kW") + mpCompressor.getPower("kW") + exportCompressor.getPower("kW");
-    System.out.println(String.format("   LP Compressor:         %.0f kW", lpCompressor.getPower("kW")));
-    System.out.println(String.format("   MP Compressor:         %.0f kW", mpCompressor.getPower("kW")));
+    logger.info("{}", String.format("   LP Compressor:         %.0f kW", lpCompressor.getPower("kW")));
+    logger.info("{}", String.format("   MP Compressor:         %.0f kW", mpCompressor.getPower("kW")));
     logger.info(String.format("   Export Compressor:     %.0f kW", exportCompressor.getPower("kW")));
     logger.info(String.format("   Total Power:           %.0f kW", totalPower));
 

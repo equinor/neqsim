@@ -38,10 +38,10 @@ final class PitzerNeutralInteraction implements Serializable {
     if (this.componentIndexes.length == 2) {
       if (this.componentIndexes[0] == this.componentIndexes[1]) {
         // PHREEQC differentiates both slots before accumulating them for the repeated species.
-        logGammaCoefficients = new double[] { 1.0, 1.0 };
+        logGammaCoefficients = new double[] {1.0, 1.0};
         osmoticCoefficient = 0.5;
       } else {
-        logGammaCoefficients = new double[] { 2.0, 2.0 };
+        logGammaCoefficients = new double[] {2.0, 2.0};
         osmoticCoefficient = 1.0;
       }
     } else if (family == PhasePitzer.NEUTRAL_FAMILY_MU) {
@@ -54,10 +54,10 @@ final class PitzerNeutralInteraction implements Serializable {
       } else {
         multiplicity = 6.0;
       }
-      logGammaCoefficients = new double[] { multiplicity, multiplicity, multiplicity };
+      logGammaCoefficients = new double[] {multiplicity, multiplicity, multiplicity};
       osmoticCoefficient = multiplicity;
     } else {
-      logGammaCoefficients = new double[] { 1.0, 1.0, 1.0 };
+      logGammaCoefficients = new double[] {1.0, 1.0, 1.0};
       osmoticCoefficient = 1.0;
     }
   }

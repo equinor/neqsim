@@ -25,7 +25,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
 
   @Test
   void testSetMolarComposition() {
-    sys.setMolarComposition(new double[] { 1, 1.5, 1.75 });
+    sys.setMolarComposition(new double[] {1, 1.5, 1.75});
     double[] molarComposition = sys.getMolarComposition();
     Assertions.assertEquals(0.23529411764705882, molarComposition[0], 0.0000001);
     Assertions.assertEquals(0.35294117647058826, molarComposition[1], 0.0000001);
@@ -34,21 +34,34 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     logger.info(sys);
   }
 
+  /** Verifies the normalized light fraction, heavy distribution and supplied heavy mean MW. */
   @Test
   void setMolarCompositionPlus() {
     sys.getCharacterization().characterisePlusFraction();
-    sys.setMolarCompositionPlus(new double[] { 1, 1.5, 1.75 });
+    sys.init(0);
+    double[] characterizedComposition = sys.getMolarComposition();
+    double heavyFraction = 1.0 - characterizedComposition[0];
+    sys.setMolarCompositionPlus(new double[] {1, 1.5, 1.75});
     double[] molarComposition = sys.getMolarComposition();
 
-    Assertions.assertEquals(0.3999998435802131, molarComposition[0], 0.0000001);
-    Assertions.assertEquals(0.17255098326920942, molarComposition[1], 0.0000001);
-    Assertions.assertEquals(0.1310217963111427, molarComposition[2], 0.0000001);
+    // Default lumping includes the TBP and plus fractions in one heavy distribution.
+    assertEquals(1.0 / (1.0 + 1.5), molarComposition[0], 1e-12);
+    double heavyMass = 0.0;
+    double heavyMoles = 0.0;
+    for (int component = 1; component < molarComposition.length; component++) {
+      assertEquals(0.6 * characterizedComposition[component] / heavyFraction, molarComposition[component], 1e-12);
+      heavyMoles += molarComposition[component];
+      heavyMass += molarComposition[component] * sys.getPhase(0).getComponent(component).getMolarMass();
+    }
+    assertEquals(0.6, heavyMoles, 1e-12);
+    assertEquals((1.06 * 0.0922 + 10.62 * 0.381) / (1.06 + 10.62), heavyMass / heavyMoles, 1e-11);
+    assertEquals(1.0, Arrays.stream(molarComposition).sum(), 1e-12);
     logger.info(sys);
   }
 
   @Test
   void testSetMolarCompositionOfPlusFluid() {
-    sys.setMolarCompositionOfPlusFluid(new double[] { 1, 1.5, 1.75 });
+    sys.setMolarCompositionOfPlusFluid(new double[] {1, 1.5, 1.75});
     double[] molarComposition = sys.getMolarComposition();
 
     Assertions.assertEquals(0.39999999999999997, molarComposition[0], 0.0000001);
@@ -61,7 +74,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   void testNoFlow() {
     sys.reset();
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      sys.setMolarComposition(new double[] { 1, 1.5, 1.75 });
+      sys.setMolarComposition(new double[] {1, 1.5, 1.75});
     });
     Assertions.assertEquals(
         "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
@@ -72,7 +85,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   void testNoFlowPlus() {
     sys.reset();
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      sys.setMolarCompositionPlus(new double[] { 1, 1.5, 1.75 });
+      sys.setMolarCompositionPlus(new double[] {1, 1.5, 1.75});
     });
     Assertions.assertEquals(
         "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
@@ -83,7 +96,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
   void testNoFlowPlusFluid() {
     sys.reset();
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      sys.setMolarCompositionOfPlusFluid(new double[] { 1, 1.5, 1.75 });
+      sys.setMolarCompositionOfPlusFluid(new double[] {1, 1.5, 1.75});
     });
     Assertions.assertEquals(
         "neqsim.util.exception.InvalidInputException: SystemSrkEos:setMolarComposition - Input totalFlow must be larger than 0 (1e-100) when setting molar composition",
@@ -209,12 +222,12 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     fluid.setMixingRule("classic");
 
     // Use "mole/hr" spelling (should work via case-insensitive match)
-    fluid.setComponentFlowRates(new double[] { 3600.0, 7200.0 }, "mole/hr");
+    fluid.setComponentFlowRates(new double[] {3600.0, 7200.0}, "mole/hr");
     assertEquals(1.0, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(), 1e-6);
     assertEquals(2.0, fluid.getPhase(0).getComponent("ethane").getNumberOfmoles(), 1e-6);
 
     // Use "kmole/hr" spelling
-    fluid.setComponentFlowRates(new double[] { 1.0, 2.0 }, "kmole/hr");
+    fluid.setComponentFlowRates(new double[] {1.0, 2.0}, "kmole/hr");
     assertEquals(1000.0 / 3600.0, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(), 1e-6);
     assertEquals(2000.0 / 3600.0, fluid.getPhase(0).getComponent("ethane").getNumberOfmoles(), 1e-6);
   }
@@ -224,7 +237,7 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     SystemInterface weightSystem = new SystemSrkEos(298.0, 50.0);
     weightSystem.addComponent("methane", 1.0);
     weightSystem.addComponent("ethane", 1.0);
-    weightSystem.setMolarComposition(new double[] { 0.25, 0.75 });
+    weightSystem.setMolarComposition(new double[] {0.25, 0.75});
 
     double[] weightComposition = weightSystem.getWeightBasedComposition();
 

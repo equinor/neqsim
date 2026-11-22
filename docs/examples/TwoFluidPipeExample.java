@@ -5,16 +5,18 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating the two-fluid transient multiphase pipe model.
- * 
+ *
  * <p>
  * This example simulates gas-condensate flow through a 10 km pipeline with
  * terrain undulations,
  * demonstrating liquid accumulation in low points.
  * </p>
- * 
+ *
  * <p>
  * The two-fluid model solves separate mass and momentum equations for each
  * phase, enabling accurate
@@ -26,28 +28,29 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Pressure drop with terrain effects</li>
  * <li>Transient ramp-up and turndown behavior</li>
  * </ul>
- * 
+ *
  * @author NeqSim Team
  * @version 1.0
  */
 public class TwoFluidPipeExample {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeExample.class);
 
   /**
    * Main entry point.
-   * 
+   *
    * @param args Command line arguments (not used)
    */
   public static void main(String[] args) {
     // Example 1: Simple steady-state simulation
-    System.out.println("=== Example 1: Steady-State Pipeline Simulation ===\n");
+    logger.info("=== Example 1: Steady-State Pipeline Simulation ===\n");
     runSteadyStateExample();
 
     // Example 2: Transient ramp-up simulation
-    System.out.println("\n=== Example 2: Transient Ramp-Up Simulation ===\n");
+    logger.info("\n=== Example 2: Transient Ramp-Up Simulation ===\n");
     runTransientExample();
 
     // Example 3: Terrain-induced liquid accumulation
-    System.out.println("\n=== Example 3: Terrain Effects on Liquid Holdup ===\n");
+    logger.info("\n=== Example 3: Terrain Effects on Liquid Holdup ===\n");
     runTerrainExample();
   }
 
@@ -92,16 +95,16 @@ public class TwoFluidPipeExample {
     double inletP = pressures[0];
     double outletP = pressures[pressures.length - 1];
 
-    System.out.println("Pipeline Configuration:");
-    System.out.printf("  Length: %.0f m%n", 10000.0);
-    System.out.printf("  Diameter: %.0f mm%n", 400.0);
-    System.out.printf("  Mass flow: %.1f kg/s%n", 50.0);
-    System.out.println();
-    System.out.println("Steady-State Results:");
-    System.out.printf("  Inlet pressure:  %.2f bara%n", inletP / 1e5);
-    System.out.printf("  Outlet pressure: %.2f bara%n", outletP / 1e5);
-    System.out.printf("  Pressure drop:   %.2f bar%n", (inletP - outletP) / 1e5);
-    System.out.printf("  Liquid inventory: %.2f m³%n", pipe.getLiquidInventory("m3"));
+    logger.info("Pipeline Configuration:");
+    logger.info("  Length: {} m", String.format("%.0f", 10000.0));
+    logger.info("  Diameter: {} mm", String.format("%.0f", 400.0));
+    logger.info("  Mass flow: {} kg/s", String.format("%.1f", 50.0));
+    logger.info("");
+    logger.info("Steady-State Results:");
+    logger.info("  Inlet pressure:  {} bara", String.format("%.2f", inletP / 1e5));
+    logger.info("  Outlet pressure: {} bara", String.format("%.2f", outletP / 1e5));
+    logger.info("  Pressure drop:   {} bar", String.format("%.2f", (inletP - outletP) / 1e5));
+    logger.info("  Liquid inventory: {} m³", String.format("%.2f", pipe.getLiquidInventory("m3")));
   }
 
   /**
@@ -128,7 +131,8 @@ public class TwoFluidPipeExample {
     pipe.run();
 
     double initialInventory = pipe.getLiquidInventory("m3");
-    System.out.printf("Initial liquid inventory (turndown): %.2f m³%n", initialInventory);
+    logger.info("Initial liquid inventory (turndown): {} m³",
+        String.format("%.2f", initialInventory));
 
     // Ramp up to normal rate over 10 minutes
     UUID runId = UUID.randomUUID();
@@ -146,14 +150,16 @@ public class TwoFluidPipeExample {
       // Report every minute
       if (Math.abs(t % 60.0) < dt / 2) {
         double inventory = pipe.getLiquidInventory("m3");
-        System.out.printf("  t=%.0f s: Flow=%.1f kg/s, Inventory=%.2f m³%n", t, flowRate,
-            inventory);
+        logger.info("  t={} s: Flow={} kg/s, Inventory={} m³", String.format("%.0f", t),
+            String.format("%.1f", flowRate), String.format("%.2f", inventory));
       }
     }
 
     double finalInventory = pipe.getLiquidInventory("m3");
-    System.out.printf("Final liquid inventory (normal rate): %.2f m³%n", finalInventory);
-    System.out.printf("Inventory change: %.2f m³%n", finalInventory - initialInventory);
+    logger.info("Final liquid inventory (normal rate): {} m³",
+        String.format("%.2f", finalInventory));
+    logger.info("Inventory change: {} m³",
+        String.format("%.2f", finalInventory - initialInventory));
   }
 
   /**
@@ -198,12 +204,13 @@ public class TwoFluidPipeExample {
 
     // Report holdup profile
     double[] holdups = pipe.getLiquidHoldupProfile();
-    System.out.println("Terrain Profile and Liquid Holdup:");
-    System.out.println("Position [m]  Elevation [m]  Holdup [-]");
+    logger.info("Terrain Profile and Liquid Holdup:");
+    logger.info("Position [m]  Elevation [m]  Holdup [-]");
 
     for (int i = 0; i < nSections; i += 10) {
       double position = i * 5000.0 / (nSections - 1);
-      System.out.printf("  %7.0f      %7.1f        %.4f%n", position, elevations[i], holdups[i]);
+      logger.info("  {}      {}        {}", String.format("%7.0f", position),
+          String.format("%7.1f", elevations[i]), String.format("%.4f", holdups[i]));
     }
 
     // Identify liquid accumulation zone
@@ -217,8 +224,9 @@ public class TwoFluidPipeExample {
     }
 
     double maxPosition = maxLocation * 5000.0 / (nSections - 1);
-    System.out.printf("%nMaximum holdup: %.4f at position %.0f m (valley bottom)%n", maxHoldup,
-        maxPosition);
-    System.out.printf("Total liquid inventory: %.2f m³%n", pipe.getLiquidInventory("m3"));
+    logger.info("\nMaximum holdup: {} at position {} m (valley bottom)",
+        String.format("%.4f", maxHoldup), String.format("%.0f", maxPosition));
+    logger.info("Total liquid inventory: {} m³",
+        String.format("%.2f", pipe.getLiquidInventory("m3")));
   }
 }

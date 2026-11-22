@@ -180,7 +180,7 @@ public class EquipmentValidator {
           double inTemp = inletStream.getFluid().getTemperature();
           if (outTemp > 0 && inTemp > 0 && outTemp <= inTemp) {
             builder.addWarning("heater", "Outlet temperature not higher than inlet",
-                "Heater should increase temperature. Set: heater.setOutTemperature(T > inlet)");
+                "Heater should increase temperature. Set: heater.setOutletTemperature(T > inlet)");
           }
         }
       }
@@ -219,7 +219,7 @@ public class EquipmentValidator {
           double inTemp = inletStream.getFluid().getTemperature();
           if (outTemp > 0 && inTemp > 0 && outTemp >= inTemp) {
             builder.addWarning("cooler", "Outlet temperature not lower than inlet",
-                "Cooler should decrease temperature. Set: cooler.setOutTemperature(T < inlet)");
+                "Cooler should decrease temperature. Set: cooler.setOutletTemperature(T < inlet)");
           }
         }
       }

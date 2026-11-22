@@ -75,7 +75,11 @@ public class SystemSrkCPA extends SystemSrkEos {
     super.addComponent(componentName, moles);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemSrkCPA clone() {
     SystemSrkCPA clonedSystem = null;
@@ -83,6 +87,7 @@ public class SystemSrkCPA extends SystemSrkEos {
       clonedSystem = (SystemSrkCPA) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemSrkCPA", ex);
     }
 
     return clonedSystem;

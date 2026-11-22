@@ -123,7 +123,7 @@ public final class Api521ReliefDesignKernel
   /** {@inheritDoc} */
   @Override
   public String getMethodVersion() {
-    return "1.0.0";
+    return "1.1.0";
   }
 
   /** {@inheritDoc} */
@@ -182,7 +182,7 @@ public final class Api521ReliefDesignKernel
           .input("multipleDevices", Boolean.valueOf(input.hasMultipleDevices()))
           .warning("API 521 screening does not certify scenario completeness, device selection, or installation");
       if (!assessment.isCapacityAdequate()) {
-        result.warning("The selected single standard orifice is not adequate for the governing scenario");
+        result.warning("A single standard orifice has not been shown adequate for all credible demands");
       }
       if (!assessment.isAccumulatedPressureAccepted()) {
         result.warning("The accumulated-pressure screening check is not accepted");
@@ -240,7 +240,10 @@ public final class Api521ReliefDesignKernel
       if (!Double.isFinite(rate) || rate < 0.0) {
         readiness.addBlocker("API521_SCENARIO_RATE_INVALID", prefix + " relief rate must be finite and non-negative",
             "Supply a traceable required relief rate in kg/s");
-      } else if (scenario.isCredible() && rate > 0.0) {
+      } else if (scenario.isCredible() && rate == 0.0) {
+        readiness.addBlocker("API521_CREDIBLE_RATE_MISSING", prefix + " has zero relief demand",
+            "Document the exclusion or provide a positive relief rate");
+      } else if (scenario.isCredible()) {
         crediblePositive++;
         assessPhaseInputs(prefix, scenario, readiness);
       }
@@ -261,10 +264,7 @@ public final class Api521ReliefDesignKernel
             prefix + " requires positive molar mass and compressibility and a heat-capacity ratio above one",
             "Supply verified relieving-fluid vapour properties");
       }
-      if (Double.isNaN(scenario.getReliefTemperatureK())) {
-        readiness.addWarning("API521_TEMPERATURE_DEFAULTED", prefix + " will use the legacy 288.15 K default",
-            "Supply a relieving temperature for project work");
-      } else if (!positive(scenario.getReliefTemperatureK())) {
+      if (!positive(scenario.getReliefTemperatureK())) {
         readiness.addBlocker("API521_TEMPERATURE_INVALID", prefix + " relieving temperature must be positive",
             "Supply the relieving temperature in kelvin");
       }
@@ -272,18 +272,18 @@ public final class Api521ReliefDesignKernel
       double density = positive(scenario.getDensityKgPerM3()) ? scenario.getDensityKgPerM3()
           : scenario.getLiquidDensityKgPerM3();
       if (!positive(density)) {
-        readiness.addWarning("API521_LIQUID_DENSITY_DEFAULTED", prefix + " will use the legacy 700 kg/m3 default",
+        readiness.addBlocker("API521_LIQUID_DENSITY_MISSING", prefix + " requires positive liquid density",
             "Supply relieving-liquid density for project work");
       }
       if (!positive(scenario.getViscosityPaS())) {
-        readiness.addWarning("API521_LIQUID_VISCOSITY_DEFAULTED", prefix + " will use the legacy 0.5 mPa s default",
+        readiness.addBlocker("API521_LIQUID_VISCOSITY_MISSING", prefix + " requires positive liquid viscosity",
             "Supply relieving-liquid viscosity for project work");
       }
-    } else if (!fraction(scenario.getGasMassFraction()) || !positive(scenario.getGasDensityKgPerM3())
-        || !positive(scenario.getLiquidDensityKgPerM3()) || !positive(scenario.getLatentHeatJPerKg())
-        || !positive(scenario.getLiquidHeatCapacityJPerKgK())) {
+    } else if (!positive(scenario.getReliefTemperatureK()) || !fraction(scenario.getGasMassFraction())
+        || !positive(scenario.getGasDensityKgPerM3()) || !positive(scenario.getLiquidDensityKgPerM3())
+        || !positive(scenario.getLatentHeatJPerKg()) || !positive(scenario.getLiquidHeatCapacityJPerKgK())) {
       readiness.addBlocker("API521_TWO_PHASE_PROPERTIES_INVALID",
-          prefix + " requires gas fraction, gas/liquid densities, latent heat, and liquid heat capacity",
+          prefix + " requires temperature, gas fraction, gas/liquid densities, latent heat, and liquid heat capacity",
           "Supply the complete two-phase omega-method input set");
     }
   }

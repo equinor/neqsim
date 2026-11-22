@@ -98,11 +98,11 @@ public class OffshoreProcess {
     pipe.setOutputFileName("c:/tempAsgard.nc");
     pipe.setInitialFlowPattern("annular");
     int numberOfLegs = 1, numberOfNodesInLeg = 120;
-    double[] legHeights = { 0, 0 };
-    double[] legPositions = { 0.0, 74.0 };
-    double[] pipeDiameters = { 1.02507588, 1.02507588 };
-    double[] outerTemperature = { 275.0, 275.0 };
-    double[] pipeWallRoughness = { 1e-5, 1e-5 };
+    double[] legHeights = {0, 0};
+    double[] legPositions = {0.0, 74.0};
+    double[] pipeDiameters = {1.02507588, 1.02507588};
+    double[] outerTemperature = {275.0, 275.0};
+    double[] pipeWallRoughness = {1e-5, 1e-5};
     pipe.setNumberOfLegs(numberOfLegs);
     pipe.setNumberOfNodesInLeg(numberOfNodesInLeg);
     pipe.setLegPositions(legPositions);

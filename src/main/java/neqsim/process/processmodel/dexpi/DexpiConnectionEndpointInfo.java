@@ -46,8 +46,14 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
 
   private final String endpointId;
   private final String elementName;
+  private final String componentClass;
+  private final String componentName;
+  private final String tagName;
   private final String ownerId;
   private final String ownerElementName;
+  private final String ownerComponentClass;
+  private final String ownerComponentName;
+  private final String ownerTagName;
   private final boolean resolved;
   private final List<String> incomingConnectionIds;
   private final List<String> outgoingConnectionIds;
@@ -65,10 +71,61 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
    */
   public DexpiConnectionEndpointInfo(String endpointId, String elementName, String ownerId, String ownerElementName,
       boolean resolved, List<String> incomingConnectionIds, List<String> outgoingConnectionIds) {
+    this(endpointId, elementName, ownerId, ownerElementName, "", "", "", resolved, incomingConnectionIds,
+        outgoingConnectionIds);
+  }
+
+  /**
+   * Creates immutable endpoint-incidence evidence with explicit owner provenance.
+   *
+   * @param endpointId explicit source endpoint identity
+   * @param elementName resolved endpoint XML element name, or empty when unresolved
+   * @param ownerId explicit endpoint owner identity, or empty when absent
+   * @param ownerElementName endpoint owner XML element name, or empty when absent
+   * @param ownerComponentClass explicit owner ComponentClass, or empty when absent
+   * @param ownerComponentName explicit owner ComponentName, or empty when absent
+   * @param ownerTagName explicit owner TagName, or empty when absent
+   * @param resolved whether the endpoint resolves in the source document
+   * @param incomingConnectionIds incoming connection-evidence IDs in source order
+   * @param outgoingConnectionIds outgoing connection-evidence IDs in source order
+   */
+  public DexpiConnectionEndpointInfo(String endpointId, String elementName, String ownerId, String ownerElementName,
+      String ownerComponentClass, String ownerComponentName, String ownerTagName, boolean resolved,
+      List<String> incomingConnectionIds, List<String> outgoingConnectionIds) {
+    this(endpointId, elementName, "", "", "", ownerId, ownerElementName, ownerComponentClass, ownerComponentName,
+        ownerTagName, resolved, incomingConnectionIds, outgoingConnectionIds);
+  }
+
+  /**
+   * Creates immutable endpoint-incidence evidence with explicit endpoint and owner provenance.
+   *
+   * @param endpointId explicit source endpoint identity
+   * @param elementName resolved endpoint XML element name, or empty when unresolved
+   * @param componentClass explicit endpoint ComponentClass, or empty when absent
+   * @param componentName explicit endpoint ComponentName, or empty when absent
+   * @param tagName explicit endpoint TagName, or empty when absent
+   * @param ownerId explicit endpoint owner identity, or empty when absent
+   * @param ownerElementName endpoint owner XML element name, or empty when absent
+   * @param ownerComponentClass explicit owner ComponentClass, or empty when absent
+   * @param ownerComponentName explicit owner ComponentName, or empty when absent
+   * @param ownerTagName explicit owner TagName, or empty when absent
+   * @param resolved whether the endpoint resolves in the source document
+   * @param incomingConnectionIds incoming connection-evidence IDs in source order
+   * @param outgoingConnectionIds outgoing connection-evidence IDs in source order
+   */
+  public DexpiConnectionEndpointInfo(String endpointId, String elementName, String componentClass, String componentName,
+      String tagName, String ownerId, String ownerElementName, String ownerComponentClass, String ownerComponentName,
+      String ownerTagName, boolean resolved, List<String> incomingConnectionIds, List<String> outgoingConnectionIds) {
     this.endpointId = normalize(endpointId);
     this.elementName = normalize(elementName);
+    this.componentClass = normalize(componentClass);
+    this.componentName = normalize(componentName);
+    this.tagName = normalize(tagName);
     this.ownerId = normalize(ownerId);
     this.ownerElementName = normalize(ownerElementName);
+    this.ownerComponentClass = normalize(ownerComponentClass);
+    this.ownerComponentName = normalize(ownerComponentName);
+    this.ownerTagName = normalize(ownerTagName);
     this.resolved = resolved;
     this.incomingConnectionIds = Collections.unmodifiableList(new ArrayList<String>(incomingConnectionIds));
     this.outgoingConnectionIds = Collections.unmodifiableList(new ArrayList<String>(outgoingConnectionIds));
@@ -84,6 +141,21 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
     return elementName;
   }
 
+  /** @return explicit endpoint ComponentClass, or empty when absent */
+  public String getComponentClass() {
+    return componentClass;
+  }
+
+  /** @return explicit endpoint ComponentName, or empty when absent */
+  public String getComponentName() {
+    return componentName;
+  }
+
+  /** @return explicit endpoint TagName, or empty when absent */
+  public String getTagName() {
+    return tagName;
+  }
+
   /** @return explicit endpoint owner identity, or empty when absent */
   public String getOwnerId() {
     return ownerId;
@@ -92,6 +164,21 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
   /** @return endpoint owner XML element name, or empty when absent */
   public String getOwnerElementName() {
     return ownerElementName;
+  }
+
+  /** @return explicit owner ComponentClass, or empty when absent */
+  public String getOwnerComponentClass() {
+    return ownerComponentClass;
+  }
+
+  /** @return explicit owner ComponentName, or empty when absent */
+  public String getOwnerComponentName() {
+    return ownerComponentName;
+  }
+
+  /** @return explicit owner TagName, or empty when absent */
+  public String getOwnerTagName() {
+    return ownerTagName;
   }
 
   /** @return whether the endpoint resolves in the source document */
@@ -172,8 +259,14 @@ public final class DexpiConnectionEndpointInfo implements Serializable {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("endpointId", endpointId);
     result.put("elementName", elementName);
+    result.put("componentClass", componentClass);
+    result.put("componentName", componentName);
+    result.put("tagName", tagName);
     result.put("ownerId", ownerId);
     result.put("ownerElementName", ownerElementName);
+    result.put("ownerComponentClass", ownerComponentClass);
+    result.put("ownerComponentName", ownerComponentName);
+    result.put("ownerTagName", ownerTagName);
     result.put("resolved", Boolean.valueOf(resolved));
     result.put("incomingConnectionCount", Integer.valueOf(getIncomingConnectionCount()));
     result.put("outgoingConnectionCount", Integer.valueOf(getOutgoingConnectionCount()));

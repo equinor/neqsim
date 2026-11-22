@@ -21,6 +21,7 @@ import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTen
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTensionSimple;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.LGTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.ParachorSurfaceTension;
+import neqsim.physicalproperties.interfaceproperties.surfacetension.SurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.SurfaceTensionInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -81,8 +82,24 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public void init(SystemInterface system) {
+    if (this.system != system) {
+      gasLiquidSurfaceTensionCalc = copyModel(gasLiquidSurfaceTensionCalc, system);
+      gasAqueousSurfaceTensionCalc = copyModel(gasAqueousSurfaceTensionCalc, system);
+      liquidLiquidSurfaceTensionCalc = copyModel(liquidLiquidSurfaceTensionCalc, system);
+    }
     this.system = system;
     init();
+  }
+
+  /**
+   * Preserves a selected model's parameters while binding an independent copy to the target fluid.
+   *
+   * @param model selected model, or null before model initialization
+   * @param target fluid whose bulk phases the copy will use
+   * @return copied model, or null for an uninitialized slot
+   */
+  private SurfaceTensionInterface copyModel(SurfaceTensionInterface model, SystemInterface target) {
+    return model == null ? null : ((SurfaceTension) model).copyForSystem(target);
   }
 
   /** {@inheritDoc} */
@@ -166,14 +183,26 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTension(int numb1, int numb2) {
+    if (system.getNumberOfPhases() < 2) {
+      return 0.0;
+    }
+    if (numb1 < 0 || numb2 < 0 || numb1 >= system.getNumberOfPhases() || numb2 >= system.getNumberOfPhases()
+        || numb1 == numb2) {
+      throw new IllegalArgumentException("Surface tension requires two distinct active phase indices");
+    }
+    double tension;
     if (system.getPhase(numb1).getType() == PhaseType.GAS && system.getPhase(numb2).getType() == PhaseType.OIL) {
-      return gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
+      tension = gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else if (system.getPhase(numb1).getType() == PhaseType.GAS
         && system.getPhase(numb2).getType() == PhaseType.AQUEOUS) {
-      return gasAqueousSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
+      tension = gasAqueousSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else {
-      return liquidLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
+      tension = liquidLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     }
+    if (!Double.isFinite(tension) || tension < 0.0) {
+      throw new IllegalStateException("Interfacial-tension model returned a non-finite or negative result");
+    }
+    return tension;
   }
 
   // TODO: add unit conversion implementation to interfacial tension
@@ -204,6 +233,10 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public void setInterfacialTensionModel(String phase1, String phase2, String model) {
+    if (gasLiquidSurfaceTensionCalc == null || gasAqueousSurfaceTensionCalc == null
+        || liquidLiquidSurfaceTensionCalc == null) {
+      setInterfacialTensionModel(interfacialTensionModel);
+    }
     SurfaceTensionInterface surfTensModel = null;
     if ("Linear Gradient Theory".equals(model)) {
       surfTensModel = new LGTSurfaceTension(system);

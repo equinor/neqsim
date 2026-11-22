@@ -69,7 +69,7 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
 
       for (int i = 0; i < experimentalData[0].length; i++) {
         ViscosityFunction function = new ViscosityFunction();
-        double[] guess = { 1.0 }; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
+        double[] guess = {1.0}; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem().clone();
@@ -78,9 +78,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
         tempSystem.setPressure(pressure[i]);
         thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = { shareRate[i] };
+        double[] sample1 = {shareRate[i]};
         double viscosity = experimentalData[0][i];
-        double[] standardDeviation1 = { 1.5 };
+        double[] standardDeviation1 = {1.5};
         SampleValue sample = new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
@@ -160,13 +160,13 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     tempSystem.init(1);
 
     ViscosityWaxOilSim sepSim = new ViscosityWaxOilSim(tempSystem);
-    double[] temps = { 300.15, 293.15, 283.15, 273.15, 264.15 };
-    double[] pres = { 5, 5, 5, 5.0, 5.0 };
+    double[] temps = {300.15, 293.15, 283.15, 273.15, 264.15};
+    double[] pres = {5, 5, 5, 5.0, 5.0};
     sepSim.setTemperaturesAndPressures(temps, pres);
-    sepSim.setShareRate(new double[] { 0, 0, 0, 100, 100 });
+    sepSim.setShareRate(new double[] {0, 0, 0, 100, 100});
     sepSim.runCalc();
 
-    double[][] expData = { { 2e-4, 3e-4, 4e-4, 5e-4, 6e-4 }, };
+    double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
     sepSim.setExperimentalData(expData);
     sepSim.runTuning();
     // sepSim.runCalc();

@@ -173,8 +173,31 @@ Where $\Delta^{A_i B_j}$ is the association strength between site A on molecule 
 | `SystemSrkCPAstatoil` | **Recommended** Equinor SRK-CPA implementation | 10 |
 | `SystemSrkCPA` | Standard SRK-CPA | 7 |
 | `SystemSrkCPAs` | Alternative SRK-CPA | 7 |
-| `SystemPrCPA` | Peng-Robinson with CPA | 7 |
+| `SystemPrCPA` | Peng-Robinson with generic PR-CPA parameters | 7, 9, 10 |
 | `SystemUMRCPAEoS` | UMR-CPA with UNIFAC | - |
+
+`SystemPrCPA` shares the PR-based CPA mass-action solver and analytic association
+derivatives with `SystemUMRCPAEoS`. Its components use the generic `aCPA_PR`,
+`bCPA_PR`, `mCPA_PR` and `associationboundingvolume_PR` database columns, the
+ordinary PR alpha with the fitted CPA coefficient when available, and
+`cpakij_PR` interactions. It does not use the dedicated UMR-CPA parameter or
+Mathias-Copeman families. Non-associating components without fitted CPA physical
+parameters retain their ordinary PR behavior. No new parameter regression is
+implied by the implementation repair.
+
+The repaired implementation replaces the legacy incomplete association path,
+which used SRK component objects inside a PR phase and could not initialize the
+water/TEG caloric reproducer. Its Java class names, constructors and PR phase
+inheritance are retained; `ComponentPrCPA` is now a concrete implementation.
+Old Java-serialized `PhasePrCPA` states are deliberately incompatible and must
+be recreated with `SystemPrCPA`; the phase serialization UID has changed.
+New-format serialization and cloned states are covered by regression tests.
+See [CPA caloric consistency](mixing_rules_guide.md#65-caloric-consistency) for
+the numerical checks and their limits.
+
+**Liquid-water heat capacity:** the default `SystemSrkCPAstatoil` can be 8–17% low
+at 5–60 °C. An opt-in, caloric-data-fitted water alpha is available through
+`setUseCaloricWaterAlpha(true)`; see the [calibration, benchmarks and limits](cpa_water_caloric.md).
 
 ### 4.3 Association Schemes
 
@@ -205,11 +228,18 @@ ops.TPflash();
 
 ### 4.5 UMR-CPA (`SystemUMRCPAEoS`)
 
+To switch an existing fluid, use the returned system from `fluid.setModel("UMR-CPA")`.
+The alias `UMR-CPA-EoS` also works, and both names are case-insensitive. The new system
+selects Huron–Vidal with `UNIFAC_UMRPRU` and retains the source multiphase and enhanced
+multiphase search settings. TBP and plus fractions keep their amounts, measured or fitted
+critical properties, normal boiling points, and fraction identities. Reflash the returned
+fluid at the specified temperature and pressure to obtain the UMR-CPA equilibrium.
+
 `SystemUMRCPAEoS` is a **fused UMR-CPA** model that combines three building blocks
 in a single equation of state:
 
 1. A **Peng-Robinson physical term** with a **3-parameter Mathias-Copeman** alpha
-   function (attractive term 13, `_umrmc` group-interaction tables).
+   function (attractive term 13, `_umrcpa` group-interaction tables).
 2. The **Universal Mixing Rule (UMR)** of Voutsas/Magoulas/Tassios, driven by
    **UNIFAC group-contribution** activity coefficients (the same residual term as
    `UMR-PRU`). The co-volume combining rule `bmixType = 1`,
@@ -219,6 +249,11 @@ in a single equation of state:
 3. The **CPA association term** for hydrogen-bonding compounds (water, glycols,
    alcohols, alkanolamines), added to the reduced Helmholtz energy in
    `PhaseUMRCPA.getF()`.
+
+CPA-fitted physical parameters are used only when both the energy parameter and
+co-volume are finite and positive. Components with association-site metadata but no
+fitted physical parameters, such as CO₂, retain their Peng–Robinson physical
+parameters and the selected Mathias–Copeman alpha instead of receiving zero values.
 
 The pressure is the sum of a physical and an association contribution:
 
@@ -269,7 +304,9 @@ Non-associating gases (methane, ethane, propane, CO₂, N₂, …) use the paper
 **5-parameter** Mathias-Copeman alpha (attractive term 22,
 `AttractiveTermMatCop5PRUMR`). Pure-component CPA and Mathias-Copeman parameters
 are read from the component database (`COMP.csv`), and the group-interaction
-parameters from the `UNIFAC*_UMRMC` resource tables.
+parameters from the `UNIFAC*_UMRCPA` resource tables. These are separate from the
+`UNIFAC*_UMRMC` tables of UMR-PRU-MC, whose water and mercury group parameters are
+fitted without an association term.
 
 **Volume correction (liquid density)**
 
@@ -287,6 +324,17 @@ to molecular type:
   specifically for the UMR-CPA parameter set (`UMRCPA_racketZ` / `UMRCPA_volcorr_T`
   columns in `COMP.csv`); those without a regressed value keep zero translation
   because their fitted CPA co-volume $b$ already reproduces the liquid density.
+
+`SystemUMRCPAvolcor` is the separate EOS-level translation variant. It includes
+the translation in the Helmholtz energy and fugacity derivatives, and disables
+the additional density-only correction. Its mixture translation and derivative
+caches must reflect the current component amounts before solving the volume or
+evaluating fugacity. Repeated initialization is not a substitute for that ordering.
+`PhaseUMRCPAvolcorStateLifecycleTest` checks first-initialization EOS pressure,
+partial molar volumes and fugacity derivatives after changes in phase amount and
+composition, plus conserved methane/water gas/aqueous equilibria on fresh,
+reused and cloned fluids over 280–320 K and 10–80 bara. These are numerical
+consistency regressions, not an experimental-accuracy qualification.
 
 **Typical applications**
 
@@ -394,7 +442,40 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 | `SystemArgonSolidHelmholtzEos` | Maltby-Hammer-Wilhelmsen solid Helmholtz EOS | Pure solid argon; experimental and opt-in |
 | `SystemSolidHelmholtzEos` | Extensible pure-solid Helmholtz system | Custom single-component solid equations |
 | `SystemVegaEos` | Vega equation | Specialized applications |
-| `SystemAmmoniaEos` | Ammonia-specific | Ammonia systems |
+| `SystemAmmoniaEos` | Gao 2020 Helmholtz reference equation | Pure ammonia |
+
+For subcritical liquid hydrogen with the Leachman EOS, NeqSim checks the
+dense-root interval above the isomer's critical density using Chebyshev
+refinement. The exact Leachman pressure and pressure slope qualify the root.
+A finer scan and bisection handle cases where the faster search cannot close
+the pressure equation.
+
+`PhaseSpanWagnerEos` caches its pure-CO2 reference-EOS state. Repeating initialization at
+unchanged temperature, pressure and effective phase selection republishes the same coherent
+density, molar volume, Z, fugacity, caloric state and pressure derivatives. Changing any of
+those state inputs recalculates the reference properties; callers do not need to invalidate
+the cache manually during ordinary system initialization.
+
+Below the critical temperature, the existing saturation-pressure rule selects the stable
+gas or liquid branch, regardless of the requested phase label. At and above the critical
+temperature, the requested phase type selects the density solver's initial guess and is
+part of the cache key. The published phase label follows the calculated density. The model
+supports pure CO2 only; changing its mole count scales extensive properties without a new
+density solve.
+
+Volume is synchronized on the first initialization and after every state change, not only
+after a repeated call. `getdPdTVn()` and `getdPdVTn()` use analytic Span-Wagner derivatives
+in bar/K and bar per internal volume unit (1e-5 m3), respectively. The inherited density
+derivatives `getdrhodP()` and `getdrhodT()` therefore return (kg/m3)/bar and (kg/m3)/K.
+The utility `NeqSimSpanWagner.getPressureDerivatives(T, rho)` accepts Kelvin and mol/m3
+and returns `[dP/dT, dP/drho]` in Pa/K and Pa/(mol/m3), without another density solve.
+
+For pure ammonia, `PhaseAmmoniaEos.getGibbsEnergy()` returns extensive Gibbs energy
+in J. Divide by the phase mole count for J/mol. With enthalpy in J/mol and entropy
+in J/(mol K), its Helmholtz relation is $g = h - Ts$ at the same temperature in K.
+Selected forced gas and liquid states from 280 to 400 K are checked against
+CoolProp 7.2.0's Gao ammonia implementation; this does not validate mixtures or every
+state of the equation.
 
 ---
 
@@ -422,7 +503,14 @@ import neqsim.thermo.system.SystemUNIFAC;
 SystemInterface fluid = new SystemUNIFAC(300.0, 1.0);
 fluid.addComponent("methanol", 0.3);
 fluid.addComponent("water", 0.7);
+fluid.setMixingRule("classic");
+fluid.init(0);
 ```
+
+UNIFAC group lists and indexed arrays are synchronized automatically during component
+construction and group alignment. Repeated initialization requires no manual group
+copying. `SystemUNIFACpsrk` uses the same group assignments with its temperature-dependent
+interaction parameters; UMR-PRU retains its separate group table.
 
 ### 6.3 NRTL (Non-Random Two-Liquid)
 
@@ -438,6 +526,20 @@ fluid.addComponent("ethanol", 0.4);
 fluid.addComponent("water", 0.6);
 ```
 
+After an NRTL activity-coefficient evaluation, `ComponentGEInterface.getGamma()` and
+`getLnGamma()` return the coefficient and its natural logarithm for the same evaluated state.
+Both values refresh on every evaluation, including after temperature, composition, or interaction
+parameter changes. The getters read stored results; changing an input requires reevaluation.
+This repairs stale logarithmic state without changing the NRTL equation, excess Gibbs energy,
+or fugacity calculation. Regression coverage uses prescribed binary parameters to check the
+analytical equation; it does not establish experimental accuracy for a fitted mixture.
+
+`getLnGammadt()` also publishes the analytical NRTL temperature derivative for
+that evaluated state. The aqueous Henry reference uses the same interaction
+parameters at infinite dilution and subtracts its temperature derivative when
+forming `d(ln(phi))/dT`. See [integrated EOS/GE reference conventions](henry_water_database.md#integrated-eos-gasoil-and-ge-liquid-references)
+for pure-fluid behavior and the distinct reactive-model conventions.
+
 ### 6.4 Other GE Models
 
 | Class | Description |
@@ -446,6 +548,20 @@ fluid.addComponent("water", 0.6);
 | `SystemUNIFACpsrk` | UNIFAC with PSRK parameters |
 | `SystemUMRPRUEos` | Peng-Robinson with UNIFAC mixing |
 | `SystemUMRPRUMCEos` | UMR-PRU with Mathias-Copeman |
+
+Wilson activity-coefficient evaluation stores both the coefficient and its logarithm on each
+component, including coefficients calculated for infinite-dilution reference states. These
+values supply the solvent vapor-pressure and solute Henry-law fugacity calculations. This
+repairs coefficient publication; it does not change or extend the Wilson interaction-energy
+correlation or qualify additional temperature/composition ranges.
+
+Standalone `PhaseGEUniquac`, `ComponentGEUniquac`, and `PhaseGEUniquacmodifiedHV` are
+**unsupported** and throw `UnsupportedOperationException` on direct construction. Their
+activity-coefficient implementation and parameter data are incomplete. Selecting `"UNIQUAC"`
+or the legacy spelling `"UNIQUAQ"` for a Huron–Vidal mixing rule also throws; it no longer
+silently substitutes NRTL. Select a supported model such as NRTL or a suitable UNIFAC variant
+explicitly. UNIFAC subclasses retain their own activity-coefficient implementations; this
+restriction does not apply to them or to the separate Coutinho UNIQUAC wax model.
 
 ---
 
@@ -538,7 +654,7 @@ ops.TPflash();
 | `SystemPitzer` | Pitzer aqueous GE + SRK gas/oil | Concentrated brines and reactive VLLE |
 | `SystemDesmukhMather` | Desmukh-Mather aqueous GE + SRK gas/oil | Reactive amine VLLE; parameter-limited scale screening |
 | `SystemKentEisenberg` | Kent-Eisenberg aqueous GE + SRK gas/oil | Reactive CO2/H2S amine VLLE screening |
-| `SystemDuanSun` | Duan-Sun, currently CO2-only | CO2 correlation; not hybrid gas-oil-aqueous |
+| `SystemDuanSun` | Historical CO2-only wrapper; conversion rejected | Not a usable gas-in-brine system. `setModel("Duan-Sun")` fails explicitly; direct `PhaseDuanSun` correlation evaluation remains available. |
 | `SystemFurstElectrolyteEos` | Fürst electrolyte EoS | General electrolytes |
 
 Mixed-ion `SystemPitzer` states fail before activity or osmotic-coefficient evaluation when a required binary,
@@ -594,6 +710,10 @@ Where $\Lambda \approx 0.693$ for SRK.
 fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
 fluid.setMixingRule("HV", "NRTL");
 ```
+
+On a UMR-PRU fluid (`SystemUMRPRUEos`, `SystemUMRPRUMCEos`, `SystemUMRPRUMCEosNew`) `setMixingRule("HV")`
+selects `UNIFAC_UMRPRU` unless another GE model has been chosen. The JSON process builder and the MCP runners
+use this for the model name `UMRPRU`.
 
 ### 8.4 Wong-Sandler Mixing Rule
 
@@ -833,7 +953,7 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 | `SystemSolidHelmholtzEos` | Solid reference | Extensible pure single-component solid Helmholtz system |
 | `SystemVegaEos` | Reference | Vega equation |
 | `SystemAmmoniaEos` | Reference | Ammonia-specific |
-| `SystemBnsEos` | Reference | BNS equation |
+| `SystemBnsEos` | Reference | Volume-corrected BNS gas properties with fitted LBC viscosity and optional helium. See [fluid creation](fluid_creation_guide.md#53-other-reference-equations). |
 | `SystemUNIFAC` | GE | UNIFAC |
 | `SystemUNIFACpsrk` | GE | UNIFAC-PSRK |
 | `SystemNRTL` | GE | NRTL |
@@ -877,6 +997,7 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 - [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
 - [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
 - [Experimental Solid Helmholtz Models](solid_helmholtz_models.md) - Pure solid-state and para-hydrogen freezing-point workflows
+- [Empirical Solid Fugacity References](empirical_solid_fugacity.md) - Liquid and opt-in sublimation references, density units, and solid-selection behavior
 - [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
 - [Søreide-Whitson Model](SoreideWhitsonModel.md) - Gas solubility in brine, produced water emissions
 - [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations
@@ -884,4 +1005,3 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 - [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING.md) - Emission calculations using Søreide-Whitson
 
 ---
-

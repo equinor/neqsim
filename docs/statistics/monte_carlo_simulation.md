@@ -80,30 +80,15 @@ Given experimental measurements $y_i \pm \sigma_i$, Monte Carlo simulation:
 
 ### MonteCarloSimulation Class
 
-```java
-import neqsim.statistics.montecarlosimulation.MonteCarloSimulation;
-import neqsim.statistics.parameterfitting.StatisticsInterface;
+`MonteCarloSimulation` calls `createNewRandomClass()` and `solve()` for each run,
+then collects the fitted parameters. `createReportMatrix()` returns `void`;
+`getReportMatrix()` returns a defensive copy of the collected report.
 
-public class MonteCarloSimulation {
-    private StatisticsInterface baseCase;
-    private int numberOfRuns = 50;
-    
-    // Creates randomized sample sets and re-fits
-    public void runSimulation() {
-        for (int i = 0; i < numberOfRuns; i++) {
-            StatisticsInterface runCase = baseCase.clone();
-            runCase.setSampleSet(
-                baseCase.getSampleSet().createNewNormalDistributedSet()
-            );
-            runCase.init();
-            runCase.solve();
-        }
-    }
-    
-    // Collects fitted parameters from all runs
-    public double[][] createReportMatrix() { ... }
-}
-```
+**Result access:** report creation no longer prints a JAMA matrix to standard output.
+Keep a `MonteCarloSimulation` instance and call `getReportMatrix()` after
+`runSimulation()` when you need to inspect, export or log the results. Calling the
+getter before a report exists throws `IllegalStateException`. Modifying the returned
+array or replacing its rows does not modify the simulation's stored results.
 
 ### Sample Randomization
 
@@ -139,7 +124,8 @@ Uses the **Colt library's** Normal distribution with Mersenne Twister RNG.
 
 ### Method 1: Via StatisticsBaseClass
 
-The simplest approach uses the built-in method:
+The built-in convenience method runs fits but does not return their report. Use
+Method 2 when you need parameter samples for analysis:
 
 ```java
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
@@ -172,8 +158,8 @@ mc.setNumberOfRuns(100);
 mc.runSimulation();
 
 // Get results matrix
-double[][] results = mc.createReportMatrix();
-// results[runIndex][parameterIndex]
+double[][] results = mc.getReportMatrix();
+// results[parameterIndex + 1][runIndex]; row 0 holds zero-based run indices
 ```
 
 ### Configuring Number of Runs
@@ -196,12 +182,17 @@ More runs provide:
 
 ### Report Matrix Structure
 
-```java
-double[][] results = mc.createReportMatrix();
+Columns represent runs. Row 0 contains run indices; rows 1 through the number of
+fitted parameters contain parameter samples. The existing ten-row layout is retained:
+unused rows are zero-filled and must not be interpreted as fitted parameters.
+This legacy collector supports at most nine fitting parameters.
 
-// results[i][j] = value of parameter j in run i
-int numRuns = results.length;
-int numParams = results[0].length;
+```java
+double[][] results = mc.getReportMatrix();
+
+// results[j + 1][i] = value of parameter j in run i
+int numRuns = results[0].length;
+int numParams = optimizer.getSampleSet().getSample(0).getFunction().getNumberOfFittingParams();
 ```
 
 ### Computing Statistics
@@ -214,8 +205,8 @@ double[] stds = new double[numParams];
 for (int j = 0; j < numParams; j++) {
     double sum = 0, sumSq = 0;
     for (int i = 0; i < numRuns; i++) {
-        sum += results[i][j];
-        sumSq += results[i][j] * results[i][j];
+        sum += results[j + 1][i];
+        sumSq += results[j + 1][i] * results[j + 1][i];
     }
     means[j] = sum / numRuns;
     stds[j] = Math.sqrt(sumSq/numRuns - means[j]*means[j]);
@@ -242,7 +233,7 @@ import java.util.Arrays;
 // Sort parameter values
 double[] paramJ = new double[numRuns];
 for (int i = 0; i < numRuns; i++) {
-    paramJ[i] = results[i][j];
+    paramJ[i] = results[j + 1][i];
 }
 Arrays.sort(paramJ);
 
@@ -257,11 +248,11 @@ double upper = paramJ[(int)(0.975 * numRuns)];
 // Calculate correlation between parameters i and j
 double sumXY = 0, sumX = 0, sumY = 0, sumX2 = 0, sumY2 = 0;
 for (int k = 0; k < numRuns; k++) {
-    sumX += results[k][i];
-    sumY += results[k][j];
-    sumXY += results[k][i] * results[k][j];
-    sumX2 += results[k][i] * results[k][i];
-    sumY2 += results[k][j] * results[k][j];
+    sumX += results[i + 1][k];
+    sumY += results[j + 1][k];
+    sumXY += results[i + 1][k] * results[j + 1][k];
+    sumX2 += results[i + 1][k] * results[i + 1][k];
+    sumY2 += results[j + 1][k] * results[j + 1][k];
 }
 
 double correlation = (numRuns*sumXY - sumX*sumY) /
@@ -277,6 +268,7 @@ double correlation = (numRuns*sumXY - sumX*sumY) /
 ```java
 import neqsim.statistics.parameterfitting.*;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.*;
+import neqsim.statistics.montecarlosimulation.MonteCarloSimulation;
 import java.util.ArrayList;
 
 // 1. Create objective function
@@ -312,11 +304,13 @@ double[] analyticStd = optimizer.parameterStandardDeviation;
 System.out.printf("Analytic σ: σa=%.4f, σb=%.4f%n", 
     analyticStd[0], analyticStd[1]);
 
-// 6. Run Monte Carlo simulation
-optimizer.runMonteCarloSimulation(500);
+// 6. Retain the simulation to access its report
+MonteCarloSimulation mc = new MonteCarloSimulation(optimizer);
+mc.setNumberOfRuns(500);
+mc.runSimulation();
 
-// 7. Get Monte Carlo statistics
-// (Access via the internal arrays populated by runMonteCarloSimulation)
+// 7. Read parameter samples (row j + 1, column run)
+double[][] results = mc.getReportMatrix();
 ```
 
 ### Comparing Analytical and Monte Carlo Uncertainties
@@ -475,21 +469,21 @@ MonteCarloSimulation mc = new MonteCarloSimulation(optimizer);
 mc.setNumberOfRuns(1000);
 mc.runSimulation();
 
-double[][] results = mc.createReportMatrix();
+double[][] results = mc.getReportMatrix();
 
 // Histogram analysis
 int numBins = 20;
-double minVal = Double.MAX_VALUE, maxVal = Double.MIN_VALUE;
-for (int i = 0; i < results.length; i++) {
-    minVal = Math.min(minVal, results[i][0]);
-    maxVal = Math.max(maxVal, results[i][0]);
+double minVal = Double.POSITIVE_INFINITY, maxVal = Double.NEGATIVE_INFINITY;
+for (int i = 0; i < results[0].length; i++) {
+    minVal = Math.min(minVal, results[1][i]);
+    maxVal = Math.max(maxVal, results[1][i]);
 }
 
 int[] histogram = new int[numBins];
 double binWidth = (maxVal - minVal) / numBins;
 
-for (int i = 0; i < results.length; i++) {
-    int bin = (int)((results[i][0] - minVal) / binWidth);
+for (int i = 0; i < results[0].length; i++) {
+    int bin = binWidth == 0.0 ? 0 : (int)((results[1][i] - minVal) / binWidth);
     if (bin == numBins) bin--;
     histogram[bin]++;
 }

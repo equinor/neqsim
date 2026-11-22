@@ -36,17 +36,46 @@ neqsim.process.safety.risk
 
 ## Quick Start
 
-```java
-import neqsim.process.safety.risk.dynamic.*;
-import neqsim.process.safety.risk.sis.*;
-import neqsim.process.safety.risk.realtime.*;
+The following example is complete Java source. It builds a one-stream process, configures a reproducible dynamic risk screen, executes a one-day Monte Carlo simulation, and verifies the returned availability contract without console output. `getMeanAvailability()` returns a percentage from 0 to 100.
 
-// Example: Dynamic simulation
-DynamicRiskSimulator sim = new DynamicRiskSimulator("Platform Risk");
-sim.setBaseProductionRate(100.0);
-sim.addEquipment("Compressor", 8760, 72, 1.0);
-DynamicRiskResult result = sim.runSimulation();
-System.out.println("Expected production: " + result.getExpectedProduction());
+<!-- risk-framework-quick-start: complete -->
+```java
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.risk.dynamic.DynamicRiskResult;
+import neqsim.process.safety.risk.dynamic.DynamicRiskSimulator;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+public final class RiskFrameworkReadmeExample {
+  private RiskFrameworkReadmeExample() {}
+
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+
+    DynamicRiskSimulator simulator = new DynamicRiskSimulator(process);
+    simulator.setFeedStreamName("Feed");
+    simulator.setProductStreamName("Feed");
+    simulator.setRandomSeed(2026L);
+    simulator.addEquipmentMtbf("Compressor", 8760.0, 72.0);
+    simulator.setTimestepHours(0.5);
+
+    DynamicRiskResult result = simulator.runDynamicSimulation(10, 1.0);
+    double meanAvailabilityPercent = result.getMeanAvailability();
+    if (!Double.isFinite(meanAvailabilityPercent)
+        || meanAvailabilityPercent < 0.0 || meanAvailabilityPercent > 100.0) {
+      throw new IllegalStateException("Availability must remain in [0, 100] percent");
+    }
+  }
+}
 ```
 
 For comprehensive examples, see:

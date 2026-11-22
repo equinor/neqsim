@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,11 +27,11 @@ public class TBPfractionModelTest {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
     thermoSystem.getCharacterization().setTBPModel("Twu");
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
-    assertEquals(536.173400, thermoSystem.getComponent(0).getTC(), 1e-3);
-    assertEquals(26.52357312690, thermoSystem.getComponent(0).getPC(), 1e-3);
-    assertEquals(0.56001213933, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
+    assertEquals(565.28034045792, thermoSystem.getComponent(0).getTC(), 1e-3);
+    assertEquals(27.96344322995, thermoSystem.getComponent(0).getPC(), 1e-3);
+    assertEquals(0.32808869220, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
     assertEquals(437.335493, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
-    assertEquals(0.24141893477, thermoSystem.getComponent(0).getRacketZ(), 1e-3);
+    assertEquals(0.26177021726, thermoSystem.getComponent(0).getRacketZ(), 1e-3);
   }
 
   @Test
@@ -172,13 +173,13 @@ public class TBPfractionModelTest {
   void testModelRecommendation() {
     TBPfractionModel model = new TBPfractionModel();
 
-    // Heavy oil should recommend heavy oil model
+    // Supported heavy fractions use the standard correlation rather than disabled heavy coefficients.
     String heavyRec = model.recommendTBPModel(0.600, 0.92, "SRK");
-    assertEquals("PedersenSRKHeavyOil", heavyRec);
+    assertEquals("PedersenSRK", heavyRec);
 
-    // Heavy oil with PR should recommend PR heavy oil model
+    // Match the standard correlation to PR when that equation of state is requested.
     String heavyPRRec = model.recommendTBPModel(0.600, 0.92, "PR");
-    assertEquals("PedersenPRHeavyOil", heavyPRRec);
+    assertEquals("PedersenPR", heavyPRRec);
 
     // Light paraffinic should recommend Twu
     String paraffinicRec = model.recommendTBPModel(0.100, 0.70, "SRK");
@@ -203,27 +204,23 @@ public class TBPfractionModelTest {
   }
 
   /**
-   * Test heavy oil models with high molecular weight fraction.
+   * Refuse explicitly selected heavy oil coefficient sets, including fractions below the automatic switch.
    */
   @Test
   void testHeavyOilModels() {
     // Test with heavy C30+ fraction (MW = 0.400 kg/mol, SG = 0.90)
     SystemInterface thermoSystemSRK = new SystemSrkEos(298.0, 10.0);
     thermoSystemSRK.getCharacterization().setTBPModel("PedersenSRKHeavyOil");
-    thermoSystemSRK.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90);
-
-    double TcSRK = thermoSystemSRK.getComponent(0).getTC();
-    double PcSRK = thermoSystemSRK.getComponent(0).getPC();
-    assertTrue(TcSRK > 700, "Heavy fraction Tc should be > 700 K, got: " + TcSRK);
-    assertTrue(PcSRK > 5 && PcSRK < 20, "Heavy fraction Pc should be 5-20 bar, got: " + PcSRK);
+    assertThrows(UnsupportedOperationException.class,
+        () -> thermoSystemSRK.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90));
+    assertEquals(0, thermoSystemSRK.getNumberOfComponents());
 
     // Test PR heavy oil model
     SystemInterface thermoSystemPR = new SystemPrEos(298.0, 10.0);
     thermoSystemPR.getCharacterization().setTBPModel("PedersenPRHeavyOil");
-    thermoSystemPR.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90);
-
-    double TcPR = thermoSystemPR.getComponent(0).getTC();
-    assertTrue(TcPR > 700, "Heavy fraction Tc (PR) should be > 700 K, got: " + TcPR);
+    assertThrows(UnsupportedOperationException.class,
+        () -> thermoSystemPR.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90));
+    assertEquals(0, thermoSystemPR.getNumberOfComponents());
   }
 
   /**
@@ -236,9 +233,9 @@ public class TBPfractionModelTest {
     double density = 0.78; // g/cm³
 
     // Core models with good accuracy
-    String[] coreModels = { "PedersenSRK", "Lee-Kesler", "Twu", "Standing" };
+    String[] coreModels = {"PedersenSRK", "Lee-Kesler", "Twu", "Standing"};
     // Models with known limitations
-    String[] allModels = { "PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing" };
+    String[] allModels = {"PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing"};
 
     logger.info("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
     logger.info(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));

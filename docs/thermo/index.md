@@ -1,7 +1,17 @@
 ---
 title: "Thermodynamic Documentation Set"
-description: "This folder collects topic-specific documentation for using NeqSim's thermodynamic, PVT, and physical property capabilities. Each page is intended to be self-contained while pointing to related guides..."
+description: "Navigation guide to NeqSim thermodynamic, PVT, phase-equilibrium, and physical-property documentation and related engineering workflows."
 keywords: "thermodynamics, EOS, equation of state, SRK, Peng-Robinson, CPA, flash calculation, TPflash, phase equilibrium, mixing rule, fluid properties, density, viscosity, enthalpy"
 ---
 
 {% include_relative README.md %}
+
+- [Component database and parameter provenance](./component_database_guide.md)
+- [Pure-water Henry database](./henry_water_database.md)
+- [CO2–KCl interaction provenance](./co2_kcl_interaction_provenance.md)
+- [Structure-H experimental data and parameter qualification](./structure_h_parameter_qualification.md)
+- [Petroleum and refinery characterization](./characterization/README.md)
+
+- [Pitzer barite mixing qualification](./pitzer_barite_qualification.md)
+- [Solid-gas reaction equilibrium (FeS to siderite and H2S)](./solid_gas_reaction_equilibrium.md)
+- [Mercury limits in reservoir fluids (cinnabar and liquid mercury)](./reservoir_mercury_limits.md)

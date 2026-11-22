@@ -105,7 +105,7 @@ public class LiftCurveTable implements Serializable {
   }
 
   /**
-   * Converts the table to Eclipse-compatible format.
+   * Formats a diagnostic pressure matrix; this is not a reservoir deck keyword.
    *
    * <p>
    * Format:
@@ -118,9 +118,20 @@ public class LiftCurveTable implements Serializable {
    * flow2 bhp21 bhp22 bhp23
    * </pre>
    *
-   * @return Eclipse format string
+   * @return diagnostic matrix string, with NaN retained for infeasible points
+   * @deprecated use {@link #toDiagnosticTable()}; use EclipseVFPExporter only with supplied well BHP
    */
+  @Deprecated
   public String toEclipseFormat() {
+    return toDiagnosticTable();
+  }
+
+  /**
+   * Formats the pressure matrix for inspection without claiming a qualified well model or deck.
+   *
+   * @return diagnostic matrix; pressure/rate units are available through this table's getters
+   */
+  public String toDiagnosticTable() {
     StringBuilder sb = new StringBuilder();
 
     // Header line

@@ -44,10 +44,14 @@ Before you start, make sure you have:
 
 | Requirement | Install Command | Purpose |
 |-------------|----------------|---------|
-| Python 3.8+ | [python.org](https://python.org) | Runs notebooks and reports |
-| Java JDK 8+ | [adoptium.net](https://adoptium.net) | NeqSim physics engine |
+| Python 3.11+ | [python.org](https://python.org) | Runs the task toolkit, notebooks, and reports |
+| Java JDK 17+ | [adoptium.net](https://adoptium.net) | Runs NeqSim and builds Java 8-compatible sources |
 | Git | [git-scm.com](https://git-scm.com) | Clone the repo |
 | VS Code + Copilot Chat | VS Code marketplace | AI assistance (optional) |
+
+The task-solving toolkit declares Python 3.11 or newer in `devtools/pyproject.toml`.
+NeqSim's Java sources remain Java 8 compatible, but the supported Python gateway requires a
+Java 17 or newer runtime. Source compatibility is not the same as the runtime prerequisite.
 
 **One-time setup:**
 
@@ -60,15 +64,21 @@ cd neqsim
 ./mvnw install          # Linux/Mac
 mvnw.cmd install        # Windows
 
-# Install Python helpers (finds Python + uses `python -m pip` for you)
+# Install the task-solving CLI and its report/notebook dependencies
 ./install.ps1                         # Windows (macOS/Linux: ./install.sh)
-python -m pip install python-docx matplotlib    # For reports and plots
+
+# Optional: put solved tasks outside the clone (default: <repo>/task_solve)
+neqsim --set-task-root "D:/Engineering Tasks"   # or: cwd, to follow the terminal folder
+neqsim --show-task-root
+
+# Optional: build every Word report from your organisation's template
+neqsim --set-report-template "C:/Users/you/Documents/company report template.docx"
+neqsim --show-report-template
 ```
 
-> **Important:** Installing `devtools/` (editable) ensures your notebooks
-> run against your local Java build, not the released package. When you add a
-> new method and rebuild, it's immediately available. Use `python -m pip`
-> (not bare `pip`) if you install manually.
+> **Important:** The installation scripts install the task toolkit and its report
+> dependencies. The toolkit then loads your local Java build, not a released JAR.
+> When you add a Java method and rebuild, notebooks can use it immediately.
 
 ---
 
@@ -77,10 +87,10 @@ python -m pip install python-docx matplotlib    # For reports and plots
 If you have VS Code with GitHub Copilot Chat, this is the fastest path:
 
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve-task hydrate formation temperature for wet gas at 100 bara
 ```
 
-The `@solve.task` agent handles the entire workflow:
+The `@solve-task` agent handles the entire workflow:
 1. Creates the task folder
 2. Fills in the task specification (standards, methods, acceptance criteria)
 3. Researches the topic
@@ -117,6 +127,13 @@ creation so you can add input files before notebooks are created:
 ```powershell
 neqsim new-task "compressor seal condensation study" --type G --scale comprehensive --intake-pause always
 ```
+
+The folder is created under the task root — the saved default from
+`neqsim --set-task-root`, or `<repo>/task_solve` if none is set. `neqsim --show-task-root`
+prints the folder in use, and `--task-root "PATH"` overrides it for a single task.
+The `@solve-task` agent resolves the same setting, so both paths land in one place.
+The Word report the task later generates follows `neqsim --set-report-template`
+the same way.
 
 This creates a folder like:
 
@@ -434,12 +451,13 @@ Run the report generator:
 
 ```powershell
 cd task_solve/2026-03-07_hydrate_formation_temperature_for_wet_gas
-python step3_report/generate_report.py
+neqsim report .
 ```
 
-This produces two files:
-- **Report.docx** — Word document for formal distribution
-- **Report.html** — Interactive HTML with navigation sidebar
+The CLI invokes the canonical generator from the current toolkit, so fixes reach existing task
+folders without copying or editing `generate_report.py`. It produces two files:
+- **`<Report title>.docx`** — Word document for formal distribution
+- **`<Report title>.html`** — Interactive HTML with navigation sidebar
 
 Both reports auto-populate from your data:
 
@@ -467,7 +485,8 @@ Every solved task can benefit the next person. Choose your level:
 
 ### Minimum: Log It
 
-Add an entry to `docs/development/TASK_LOG.md`:
+Add an entry to the local `docs/development/TASK_LOG.md` (create it if missing).
+This file is ignored by Git; do not commit it or include non-public task details in a PR:
 
 ```markdown
 ### 2026-03-07 — Hydrate formation temperature for wet gas
@@ -495,9 +514,11 @@ git checkout -b task/hydrate-formation
 # Copy reusable outputs to proper locations
 Copy-Item task_solve/.../HydrateTest.java src/test/java/neqsim/thermo/
 Copy-Item task_solve/.../notebook.ipynb examples/notebooks/
-git add src/test/ examples/notebooks/ docs/development/TASK_LOG.md
+git add src/test/ examples/notebooks/
 git commit -m "Add hydrate formation temperature analysis"
 git push -u origin task/hydrate-formation
+gh pr create --title "Add hydrate formation analysis" --body "From task-solving workflow"
+```
 
 ---
 
@@ -507,9 +528,7 @@ git push -u origin task/hydrate-formation
 - [Agents and Skills Reference](../integration/ai_agents_reference) — Complete catalog of all 16 agents and 14 skills
 - [Agentic Workflow Examples](../integration/ai_workflow_examples) — Step-by-step walkthroughs from simple to complex
 - [Code Patterns](../development/CODE_PATTERNS) — Copy-paste code starters for common tasks
-- [Task Log](../development/TASK_LOG) — Search past solved tasks before starting
-gh pr create --title "Add hydrate formation analysis" --body "From task-solving workflow"
-```
+- Local task log (`docs/development/TASK_LOG.md`; ignored by Git) — Search past solved tasks before starting
 
 > **Safety:** Never commit `task_solve/` contents directly — copy the
 > reusable files to their proper locations first.
@@ -646,8 +665,8 @@ heater.getDuty()                     # Watts
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| `ModuleNotFoundError: neqsim` | Not installed | Run `.\install.ps1` (or `python -m pip install -e devtools/`) |
-| JVM won't start | Java not found | Install JDK 8+ and set `JAVA_HOME` |
+| `ModuleNotFoundError: neqsim` | Not installed | Run `.\install.ps1` (or `uv sync --project devtools`) |
+| JVM won't start | Java not found | Install JDK 17+ and set `JAVA_HOME` |
 | Flash doesn't converge | Wrong EOS or bad composition | Check mole fractions sum to 1.0, try different EOS |
 | Report generator fails | Missing python-docx | Run `pip install python-docx matplotlib` |
 | Word file permission error | File open in Word | Close the .docx file and rerun |
@@ -663,7 +682,7 @@ heater.getDuty()                     # Watts
 | 60-second orientation | [CONTEXT.md](../../CONTEXT.md) | Repo map, build commands, constraints |
 | Full workflow reference | [TASK_SOLVING_GUIDE.md](../development/TASK_SOLVING_GUIDE) | Detailed workflow, AI agents, extending the API |
 | Code patterns | [CODE_PATTERNS.md](../development/CODE_PATTERNS) | Copy-paste starters for every task type |
-| Past solved tasks | [TASK_LOG.md](../development/TASK_LOG) | Search before starting — it may be solved already |
+| Past solved tasks | `TASK_LOG.md` (local only; ignored by Git) | Search before starting — it may be solved already |
 | Python quickstart | [Python Quickstart](../quickstart/python-quickstart) | Minimal Python setup |
 | TEG tutorial | [TEG Dehydration](teg_dehydration_tutorial) | Complete process simulation walkthrough |
 | GOSP tutorial | [Gas-Oil Separation Plant](gosp_tutorial) | Multi-stage separation example |

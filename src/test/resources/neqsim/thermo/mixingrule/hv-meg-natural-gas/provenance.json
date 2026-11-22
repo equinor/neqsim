@@ -1,0 +1,92 @@
+{
+  "doi": "10.1021/acs.jced.8b00495",
+  "status": "quarantined source data; no HV activation",
+  "source_model": "CPA; coefficients not transferred",
+  "parameter_activation": false,
+  "measured_overall_molar_feed": false,
+  "source_documents": {
+    "manuscript": {
+      "url": "https://backend.orbit.dtu.dk/ws/portalfiles/portal/152500814/MEG_H2O_NatGas_Data_Rev_5_Manuscript_all_changes_accepted.pdf",
+      "sha256": "06fb84d7b24cfc92ce79b2bf74b336c4f465c8932bcdf5370510bcf94f9eb0f6",
+      "bytes": 464068,
+      "pages": 46,
+      "version": "accepted author manuscript; generated institutional cover",
+      "visually_checked_pdf_pages_one_based": [
+        9,
+        10,
+        11,
+        12,
+        22,
+        23,
+        24
+      ]
+    },
+    "supplement": {
+      "url": "https://backend.orbit.dtu.dk/ws/portalfiles/portal/152500816/MEG_H2O_NatGas_Data_Rev_4_Supporting_Information.docx",
+      "sha256": "3aea40a41b06b5abaaa4e24840e9b784e185c2a46cce8ab0d3ce546bb5e75e3b",
+      "bytes": 39890,
+      "version": "institutional accepted-manuscript supplement DOCX",
+      "visual_renderer": "LibreOffice Writer PDF export; tables S1/S2 pages2/3"
+    }
+  },
+  "locators": {
+    "gas-feed.csv": "Table4 printed10/PDF11",
+    "states.csv": "Table5 printed11/PDF12; nominal states separately Tables9/10",
+    "observations.csv": "Tables9/10 printed21/22/PDF22/23; supplement TablesS1/S2"
+  },
+  "uncertainty": {
+    "composition": "author relative standard deviation percent; one sigma repeatability; not full combined uncertainty",
+    "temperature_standard_K": "0.05",
+    "pressure_standard_relative": "0.002",
+    "missing_vapor_MEG_experiments": [
+      6,
+      9
+    ],
+    "printed_zero_RSD": "rounded source values, not exact measurements or zero full uncertainty",
+    "footnote_b": "water experiments10/11 excluded only from author average error, not from retained observations"
+  },
+  "feed_limits": [
+    "Molar feed requires declared EOS compressibility and liquid density to convert loading volumes; not measured overall moles",
+    "MEG feed experiments10/11 is >0.998 mass fraction, not an equality or exact pure MEG",
+    "Table4 source subscript 22DMC4 duplicated for component15; CAS79-29-8 and name identify 2,3-dimethylbutane; no silent correction",
+    "Heptanes/octanes are source totals without CAS; no pure-component mapping or new heavy HV pairs",
+    "Rounded measured x and K values are not a normalized complete phase composition"
+  ],
+  "missing": [
+    "Final-publication versus accepted-manuscript reconciliation",
+    "Reconcile apparatus Table2 uncertainty with one-sigma TablesS1/S2 repeatability, full calibration covariance and inconsistent printed density unit",
+    "Complete source-compatible EOS-specific HV/pure inputs for selected light-gas/polar pairs",
+    "Reconcile Table3 purity/low water, Table5 mass-fraction inequality and printed23 H2O99.8mol% before explicit feed conversion and uncertainty propagation",
+    "Independent native thermodynamic, both-direction inhibitor partition and performance qualification before parameter activation"
+  ],
+  "retrieved_UTC": "2026-11-03",
+  "files": {
+    "gas-feed.csv": "e905800b6a972ca51546a82806d64d20beedc20fc56ba70d2e686de17948b1a8",
+    "states.csv": "6e081046a47846ed8dde34afa9f86019dd76e6b4cc56b9bede4e47cc6f80a906",
+    "observations.csv": "3ffe5ec33457434103fb36d30d8ca623e269ac5e7d884cdca3d49e1b2e772f2a"
+  },
+  "apparatus_table2": {
+    "location": "printed8/PDF9; coverage factors unspecified in table",
+    "relative_percent": {
+      "vapor_water": "3",
+      "vapor_MEG": "12",
+      "liquid_water": "2"
+    },
+    "flow_calibration_deviation_percent": "0.09",
+    "mass_uncertainty_g": "0.001",
+    "density_uncertainty_value_as_printed": "0.00007",
+    "density_uncertainty_unit_as_printed": "g mol^-1",
+    "density_unit_status": "Dimensionally inconsistent for density; not corrected or used in conversion"
+  },
+  "source_conflicts": {
+    "table3_MEG_purity_mole_percent": "99.8",
+    "table3_MEG_water_content_percent_upper_bound": "<0.003",
+    "table3_water_content_basis": "not stated",
+    "table5_MEG_feed_mass_fraction_experiments10_11": ">0.998",
+    "printed23_PDF24_model_assumption_species_as_printed": "H2O",
+    "printed23_PDF24_model_assumption_mole_percent": "99.8",
+    "resolution": "unresolved; do not substitute MEG for the printed H2O or infer exact residual water"
+  },
+  "source_averaging": "Each reported result is the mean of two experiments; individual replicates not supplied",
+  "correlation": "Concentrations and partition coefficients from the same experiments are not independent samples; covariance not supplied"
+}

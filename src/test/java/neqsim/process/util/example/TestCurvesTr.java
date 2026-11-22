@@ -134,7 +134,7 @@ public class TestCurvesTr {
     processSystem.add(saturatedStream);
 
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
+    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
     splitter.run();
     processSystem.add(splitter);
 
@@ -157,7 +157,7 @@ public class TestCurvesTr {
     processSystem.add(finalSeparator);
 
     Splitter splitter2 = new Splitter("Test Splitter2", finalSeparator.getGasOutStream());
-    splitter2.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    splitter2.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     splitter2.run();
     processSystem.add(splitter2);
 
@@ -550,7 +550,7 @@ public class TestCurvesTr {
     processSystem.add(saturatedStream);
 
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
+    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
     splitter.run();
     processSystem.add(splitter);
 
@@ -570,7 +570,7 @@ public class TestCurvesTr {
     processSystem.add(finalSeparator);
 
     Splitter splitter2 = new Splitter("Test Splitter2", finalSeparator.getGasOutStream());
-    splitter2.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    splitter2.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     splitter2.run();
     processSystem.add(splitter2);
 
@@ -595,8 +595,8 @@ public class TestCurvesTr {
     // Generate lift curve for different outlet pressures and flow rates
     // Note: Total inlet flow is ~2.1 million kg/hr, split to 1/3 going to compressor train
     // So compressor sees about 700,000 kg/hr at baseline
-    double[] outletPressures = { 90.0, 100.0, 110.0, 120.0, 130.0 };
-    double[] flowRates = { 1500000, 1800000, 2100000, 2400000, 2700000, 3000000 }; // Total inlet
+    double[] outletPressures = {90.0, 100.0, 110.0, 120.0, 130.0};
+    double[] flowRates = {1500000, 1800000, 2100000, 2400000, 2700000, 3000000}; // Total inlet
     // flows
 
     String vfpTable = generateEclipseLiftCurve(processSystem, "Inlet Stream", outletPressures, flowRates);

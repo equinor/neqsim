@@ -1,0 +1,319 @@
+{
+  "type": "object",
+  "properties": {
+    "formations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 _-]{0,31}$"
+          },
+          "ph": {
+            "type": "number",
+            "minimum": 3,
+            "maximum": 11,
+            "description": "Activity-based pH reported at the reference sampling conditions."
+          },
+          "reference_c": {
+            "type": "number",
+            "minimum": 20,
+            "maximum": 100
+          },
+          "alkalinity_mmol_kg_water": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "description": "Millimoles of equivalent charge per kg solvent water."
+          },
+          "silica_mg_sio2_kg_water": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000,
+            "description": "Dissolved silica as mg SiO2 per kg solvent water."
+          },
+          "ions_mol_kg_water": {
+            "type": "object",
+            "properties": {
+              "Na": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 4
+              },
+              "K": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.2
+              },
+              "Ca": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.3
+              },
+              "Mg": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.3
+              },
+              "Ba": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.01
+              },
+              "Sr": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.02
+              },
+              "S(6)": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.2
+              },
+              "Cl": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "Na",
+              "K",
+              "Ca",
+              "Mg",
+              "Ba",
+              "Sr",
+              "S(6)",
+              "Cl"
+            ],
+            "additionalProperties": false,
+            "description": "Analytical major-ion totals in mol/kg solvent water. S(6) is sulfate sulfur."
+          },
+          "gas_mol_per_kg_water": {
+            "type": "object",
+            "properties": {
+              "methane": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 500
+              },
+              "ethane": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 500
+              },
+              "propane": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 500
+              },
+              "CO2": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 500
+              }
+            },
+            "required": [
+              "methane",
+              "ethane",
+              "propane",
+              "CO2"
+            ],
+            "additionalProperties": false,
+            "description": "Gas component inventories in mol/kg inlet solvent water."
+          },
+          "oil_mol_per_kg_water": {
+            "type": "object",
+            "properties": {
+              "n-heptane": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 500
+              },
+              "n-decane": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 500
+              }
+            },
+            "required": [
+              "n-heptane",
+              "n-decane"
+            ],
+            "additionalProperties": false,
+            "description": "Oil surrogate inventories in mol/kg inlet solvent water."
+          },
+          "reference_pressure_bara": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Absolute pressure at the assay reference condition, in bar."
+          }
+        },
+        "required": [
+          "name",
+          "ph",
+          "reference_c",
+          "reference_pressure_bara",
+          "alkalinity_mmol_kg_water",
+          "silica_mg_sio2_kg_water",
+          "ions_mol_kg_water"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 2,
+      "maxItems": 3
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 _-]{0,31}$"
+          },
+          "temperature_c": {
+            "type": "number",
+            "minimum": 20,
+            "maximum": 100
+          },
+          "pressure_bara": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "co2_fugacity_bar": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "description": "Station-mode CO2 fugacity in bar. Omit for closed aqueous DIC only."
+          },
+          "aqueous_solvent_water_fraction": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "description": "Station-mode retained fraction of incoming solvent water. Defaults to 1."
+          }
+        },
+        "required": [
+          "name",
+          "temperature_c",
+          "pressure_bara"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 5
+    },
+    "blend_steps": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 20
+    },
+    "additional_blends": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "minItems": 2,
+        "maxItems": 3
+      },
+      "minItems": 0,
+      "maxItems": 10,
+      "description": "Each array gives solvent-water mass fractions in formation order. Fractions sum to one."
+    },
+    "water_kg_s": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 500,
+      "description": "Total incoming solvent-water mass rate in kg/s."
+    },
+    "mode": {
+      "enum": [
+        "process",
+        "station"
+      ],
+      "default": "process",
+      "description": "Process mode flashes gas/oil/water. Station mode uses water assays and specified conditions."
+    }
+  },
+  "required": [
+    "formations",
+    "nodes",
+    "blend_steps",
+    "additional_blends"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "if": {
+    "required": [
+      "mode"
+    ],
+    "properties": {
+      "mode": {
+        "const": "station"
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "formations": {
+        "items": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "gas_mol_per_kg_water"
+                ]
+              },
+              {
+                "required": [
+                  "oil_mol_per_kg_water"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "else": {
+    "required": [
+      "water_kg_s"
+    ],
+    "properties": {
+      "formations": {
+        "items": {
+          "required": [
+            "gas_mol_per_kg_water",
+            "oil_mol_per_kg_water"
+          ]
+        }
+      },
+      "nodes": {
+        "items": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "co2_fugacity_bar"
+                ]
+              },
+              {
+                "required": [
+                  "aqueous_solvent_water_fraction"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

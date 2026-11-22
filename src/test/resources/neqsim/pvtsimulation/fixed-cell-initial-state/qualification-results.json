@@ -1,0 +1,74 @@
+{
+  "baseRevision": "d6dd0cd190ac32f04a08627fafdeff7f745566e5",
+  "mergedPredecessor": {
+    "pr": 4866,
+    "head": "d75a0432555dd82255b8ac5e6535988444c4e3ab",
+    "merge": "9a928fd70d073859749917d37f53f9fe1d7f9cc8",
+    "workflowPasses": 9,
+    "java8TestsPerPlatform": 19788,
+    "java8Failures": 0,
+    "java8Errors": 0,
+    "java8Skipped": 209
+  },
+  "baselineNewTest": {
+    "exit": 1,
+    "tests": 1,
+    "errors": 1,
+    "message": "CVD gas removal overshot the saturation volume by1.000e-12relative"
+  },
+  "nearbyZeroPaths": 54,
+  "nearbyZeroEndpoints": 270,
+  "binaryControlPaths": 9,
+  "binaryControlEndpoints": 45,
+  "independentReferencePaths": 81,
+  "independentReferenceEndpoints": 729,
+  "zeroMolesAndWithdrawals": 0,
+  "volumeRelativeBound": 1e-12,
+  "independentAmountBoundMol": 1e-08,
+  "tests": {
+    "tests": 674,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "classes": 79
+  },
+  "coverage": {
+    "INSTRUCTION": {
+      "covered": 145,
+      "missed": 60
+    },
+    "BRANCH": {
+      "covered": 19,
+      "missed": 5
+    },
+    "LINE": {
+      "covered": 27,
+      "missed": 10
+    },
+    "COMPLEXITY": {
+      "covered": 8,
+      "missed": 5
+    },
+    "METHOD": {
+      "covered": 1,
+      "missed": 0
+    }
+  },
+  "toolingTests": 50,
+  "spotbugs": {
+    "baseFindings": 19,
+    "candidateFindings": 19,
+    "sameSignatures": true,
+    "new": []
+  },
+  "checkstyleWarnings": 6,
+  "javadocWarnings": 24,
+  "runtimeGeometricMedianRatio": 0.9528174536729767,
+  "runtimeRatioRange": [
+    0.6575032920334246,
+    1.1798595206473874
+  ],
+  "runtimeMaxRelativeChecksumChange": 0.0,
+  "runtimeInterpretation": "Shared-runner spread; no general speedup/no-regression claim",
+  "bytecodeMajor": 52
+}

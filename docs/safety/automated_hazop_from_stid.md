@@ -181,6 +181,6 @@ barrier register, LOPA/SIL/QRA, and human review are complete.
 - [Barrier Management and SCE Traceability](barrier_management.md)
 - [Scenario Generation](../process/safety/scenario-generation.md)
 - [Web API JSON Process Builder](../integration/web_api_json_process_builder.md)
-- [STID Retriever Skill](../../.github/skills/neqsim-stid-retriever/SKILL.md)
+- Enterprise skill `enterprise-stid-document-retrieval` (neqsim-enterprise-skills)
 - [Technical Document Reading Skill](../../.github/skills/neqsim-technical-document-reading/SKILL.md)
 - [Plant Data Skill](../../.github/skills/neqsim-plant-data/SKILL.md)

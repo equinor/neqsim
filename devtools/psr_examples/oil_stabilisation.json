@@ -1,0 +1,38 @@
+{
+  "fluid": {
+    "model": "SRK",
+    "temperature": 343.15,
+    "pressure": 70.0,
+    "mixingRule": "classic",
+    "multiPhaseCheck": true,
+    "components": {
+      "nitrogen": 0.004,
+      "CO2": 0.015,
+      "methane": 0.30,
+      "ethane": 0.06,
+      "propane": 0.05,
+      "i-butane": 0.01,
+      "n-butane": 0.03,
+      "i-pentane": 0.015,
+      "n-pentane": 0.02,
+      "n-hexane": 0.07,
+      "n-heptane": 0.09,
+      "n-octane": 0.08,
+      "n-nonane": 0.07,
+      "nC10": 0.056,
+      "water": 0.12
+    }
+  },
+  "process": [
+    {"type": "Stream", "name": "well fluid", "properties": {"flowRate": [90000.0, "kg/hr"]}},
+    {"type": "ThreePhaseSeparator", "name": "inlet separator", "inlet": "well fluid"},
+    {"type": "ThrottlingValve", "name": "oil valve 1", "inlet": "inlet separator.oilOut", "properties": {"outletPressure": 20.0}},
+    {"type": "Heater", "name": "oil heater", "inlet": "oil valve 1.outlet", "properties": {"outTemperature": 358.15}},
+    {"type": "ThreePhaseSeparator", "name": "second stage separator", "inlet": "oil heater.outlet"},
+    {"type": "ThrottlingValve", "name": "oil valve 2", "inlet": "second stage separator.oilOut", "properties": {"outletPressure": 2.0}},
+    {"type": "Separator", "name": "stabiliser flash drum", "inlet": "oil valve 2.outlet"},
+    {"type": "Pump", "name": "oil export pump", "inlet": "stabiliser flash drum.liquidOut", "properties": {"outletPressure": 30.0}},
+    {"type": "Pump", "name": "water pump", "inlet": "inlet separator.waterOut", "properties": {"outletPressure": 100.0}}
+  ],
+  "autoRun": true
+}

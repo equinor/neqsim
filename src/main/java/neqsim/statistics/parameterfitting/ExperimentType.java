@@ -1,14 +1,12 @@
 package neqsim.statistics.parameterfitting;
 
-import java.io.Serializable;
-
 /**
  * Experimental data category used by parameter fitting studies and reports.
  *
  * @author Even Solbraa
  * @version 1.0
  */
-public enum ExperimentType implements Serializable {
+public enum ExperimentType {
   /** Generic regression data. */
   GENERIC,
   /** Vapor-liquid equilibrium data. */

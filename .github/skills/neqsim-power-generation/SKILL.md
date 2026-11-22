@@ -6,6 +6,28 @@ last_verified: "2026-07-04"
 
 # Power Generation with NeqSim
 
+## Integrated compression supplies
+
+For a common compressor shaft, use `CompressorPowerTrain` with
+`directDrive(GasTurbineUnit)`, `electricDrive(ElectricMotor)` or
+`gasElectricDrive(GasTurbineUnit, Generator, ElectricMotor)` and attach it with
+`shaft.setPowerTrain(...)`. Read the
+[executable matching guide](../../../docs/process/equipment/integrated_compression_power.md).
+Use actual compressor duty, gearbox efficiency, motor/VFD and generator inverse
+maps, supply caps and auxiliaries. Keep turbine-generator rpm separate from motor
+rpm. Check the shaft report AND the supply result: `isPowerFeasible()` tests power;
+`isFeasible()` also rejects a below-minimum-load turbine. A shortfall never makes
+the compressor's requested discharge physically achievable.
+
+Use `GasTurbinePerformanceMap.setPartLoadHeatRateTable(loadFractions, factors)`
+for supplied part-load data; load is relative to site-available shaft power and
+the last point must be (1, 1). Keep ambient corrections separate and record
+data provenance. Catalogue/generic maps and passing synthetic balance tests do
+not qualify a turbine package. Follow issue #4909 for component maps, output-speed
+surfaces, dynamic controls and independent validation. For shared electricity
+use the existing energy-bus solver; this dedicated-train adapter does not dispatch
+motor/generator energy ports or create a material exhaust stream.
+
 Guide for modeling power generation equipment — gas turbines, steam turbines,
 heat recovery steam generators (HRSG), and combined cycle systems.
 
@@ -127,6 +149,41 @@ double reqW      = gt.getRequiredPower();         // required power in Watts
 > mode. Power-demand mode throws if `thermalEfficiency <= 0`. For vendor-accurate
 > fuel/CO₂ vs a load demand, prefer `GasTurbineVendorPerformance` (top of this
 > skill) or the catalog-driven `GasTurbineUnit` (section 7).
+
+### Reading CO₂ off a load-driven turbine — three traps
+
+`addDrivenLoad(compressor)` is the cleanest way to size fuel to a real duty: the
+turbine sums `Compressor.getPower()` over its loads each solve, so the fuel gas
+tracks the process. Getting an **emission** number out of it has three traps.
+
+```java
+GasTurbine gt = new GasTurbine("GT-driver");
+gt.setInletStream(fuelStream);
+gt.setThermalEfficiency(0.32);      // REQUIRED
+gt.addDrivenLoad(exportCompressor); // loads must be run before the turbine
+gt.run();
+double fuel_kghr = gt.getFuelFlowRate("kg/hr");
+```
+
+1. **Pseudo-components abort the combustion balance.** The stoichiometry asks the
+   element database for each hydrocarbon's C and H count, and a characterised
+   fluid's `C7P`/`C10A`… pseudo-components are not in it. Older builds threw
+   `Element:getNumberOfElements - Input C component not in element database`;
+   current builds estimate the atom counts from molar mass. Either way, prefer
+   building the **fuel** from real named components (`nitrogen, CO2, methane,
+   ethane, propane, i-butane, n-butane, i-pentane, n-pentane, n-hexane`) —
+   renormalising an export-gas composition onto that set typically captures
+   >99.8 mol% and matches what a plant actually burns.
+2. **The combustion air carries CO₂ of its own.** `Fluid.create("combustion air")`
+   is an *unnormalised* `N2 0.78084 / O2 0.20946 / CO2 0.033 / water 0.1`, i.e.
+   **2.9 mol% CO₂** against atmospheric 0.04 %. Subtract the air-borne CO₂
+   (`gt.airStream`) before quoting an exhaust CO₂, or the number is inflated
+   (75 % in one 1.7 MW case).
+3. **Cross-check against a carbon balance.** The defensible number is
+   `fuel_moles × (C atoms per mole fuel) × 44.01 g/mol`. Compare it with the
+   exhaust read; agreement to <1 % is the check that both the fuel sizing and the
+   exhaust composition are right. Do this before putting a CO₂ profile in a
+   report or a STEA export.
 
 ## 2. Steam Turbine
 
@@ -297,6 +354,27 @@ double avail_MW = gt.getAvailablePowerW() / 1.0e6;
 double load     = gt.getLoadFraction();
 double co2_tph  = gt.getCO2EmissionKgPerS() * 3.6;
 ```
+
+### Site rating, exhaust limit and waste heat (ambient-dependent driver)
+
+```java
+GasTurbinePerformanceMap map = GasTurbinePerformanceMap.fromSpec(spec);
+map.setSiteRatingFromPowerPoints(new double[] {5, 16}, new double[] {41.4e6, 39.3e6}, spec.getRatedPowerW()); // vendor points
+map.setExhaustTemperatureRisePerKelvin(0.5);        // or setSiteExhaustTemperatureTable(...)
+gt.setPerformanceMap(map);
+gt.setMaxExhaustTemperatureK(820.0);                  // power cut 1 %/K of full-load exhaust-T excess
+double pAt30C = gt.getAvailablePowerAtAmbientC(30.0); // no run needed; W
+double[] curve = gt.getSiteRatingCurveW(new double[] {-5, 5, 15, 25});
+gt.setAmbientTemperatureC(30.0); gt.setDemandedPower(15.0e6); gt.run();
+double fuelKgHr = gt.getFuelMassFlowKgPerHr();
+double whruW = gt.getWasteHeatRecoveryDutyW(150.0 + 273.15, 0.85);  // exhaust heat above stack
+```
+
+`PlatformPowerSystem` dispatches GT generators + power from shore (+ optional steam bottoming yield, e.g. 0.25
+MWe/MW) at an ambient temperature: `evaluate(T_K, electricDemandW, heatDemandW)` and `evaluateAcrossAmbient(...)`
+give capacity, deficit, N-1 margin, WHRU heat to the process, fuel and CO2 (`toJson()`). A mechanical-drive GT on a
+compressor shaft is modelled with `CompressorShaft.setGasTurbineUnitDriver` (see `neqsim-rotating-equipment-design`).
+The vendor table overrides the linear lapse; keep the catalog only for slopes when vendor data exist.
 
 ### Linking turbine shaft to compressor demand
 
@@ -524,6 +602,35 @@ HRSG + steam-turbine combined-cycle extension, and reservoir-driven demand.
 | ASME PTC 22 | Gas turbine power performance |
 | ASME PTC 6 | Steam turbine performance |
 
+## Capacity of a platform power system against ambient (field-study pattern)
+
+Use when the question is *"will power capacity bind?"* for a field profile (verified on a FPSO with a mechanical-drive injection turbine and two generator sets):
+
+1. Take the driver ratings from the debottlenecking or datasheet source as sustainable shaft power at a stated ambient (for example 41.4 MW at 5 C and 39.3 MW at 16 C) and fit a lapse per K above the reference. Cross-check the lapse with `GasTurbinePerformanceMap.fromSpec(GasTurbineCatalog.get("SGT_750"))`: the catalog gave 0.205 MW/K against 0.196 from the vendor numbers, and 0.65 %/K for LM2500PLUS_G4. The catalog level is generic (41 MW ISO), so keep the vendor level and use the catalog only for the slope.
+2. Rate against the measured hourly ambient distribution; report utilisation at the hot design day, the mean over the distribution and the gas rate at which the rating is reached at 5 C and at 16 C.
+3. Do not read the certified train power on a compressor datasheet as the limit; it is the duty at the guarantee point.
+4. Electrical load: calibrate to measured generator output and scale the drivers that change (water injection power with injection rate and pressure, recompressors from the model); keep the design offloading step as the peak and the measured p99 minus mean as the empirical peak. Report the N+1 margin as peak load over one generator at hot ambient, not as a production limit.
+5. Heat: demand from the model heaters plus the study utility loads, supply from the vendor WHRU duty against turbine load; check whether both generators must run for heat, which conflicts with a standby unit.
+6. Fuel gas follows the turbine load; the process model usually carries a constant fuel gas flow, so report the fuel change separately and compare with the forecast fuel.
+
+Note: jneqsim 3.5 has no `gasturbine` sub-package; run the catalog cross-check in an environment with a recent jar (3.18 in the shared venv), not in the model environment.
+
+## Added exhaust heat recovery for a heating-medium (HM) circuit (retrofit pattern)
+
+Use when the question is *"can we take more heat from a gas-turbine exhaust to cut electric-boiler or fired-heater duty?"* (verified on an NCS field centre with two LM2500+ class drivers, an OTSG feeding a steam turbine and an electrode boiler on a 136/152 C water HM loop).
+
+1. **Source term from the historian, not the catalog.** Fit exhaust mass flow and turbine exit temperature against load from GT-on hours (flow 77 kg/s and 505 C at 94 % load). `GasTurbineCatalog` LM2500PLUS_G4 gave -10 % flow / -2 % temperature versus the aged measured units; keep the measured fit and use the catalog only for the slope.
+2. **Heat above a minimum gas outlet temperature:** `Q = m * (h(T_exh) - h(T_out_min))` with T_out_min = HM return + 14 K pinch (about 150 C for a 136 C return). Use SRK or CoolProp on the combusted fuel gas; per turbine this is about 30 MW at 94 % load, five to seven times a typical 4-6 MW HM load.
+3. **Coil location sets the size.** A coil after an existing OTSG (stack end, gas about 173 C) has LMTD about 17 K and needs about 6x the area and 12x the weight of a hot-end coil upstream of the OTSG (LMTD about 325 K). Size with `A = Q / (U * LMTD)`, U about 28 W/m2K external area for a finned water coil, and compare both before costing.
+4. **Hot-end coil trades against steam power.** If an OTSG/steam turbine is in service, heat to the coil removes `yield` MWe per MW (measured 0.254 MWe/MW from ST output over heat to steam); with the OTSG out of service it costs nothing. Net electricity displaced = Q_HM / eta_EB - yield x Q_HM x (share of time OTSG in service). Check the OTSG state first - a long outage can be worth more than the project.
+5. **Validate the exhaust model on the steam side:** heat to steam (feedwater to steam enthalpy) divided by exhaust enthalpy drop to the OTSG outlet should close within 1-2 %; it did (0.996).
+6. **Back-pressure penalty:** about 0.2-0.6 % heat rate per 10 mbar added exhaust dp; extra fuel gas and CO2 are small (about 1.5 GWh/yr per 6.6 mbar) but need OEM acceptance. Add the dp only for the new coil, not the existing path.
+7. **Value depends on the share of the HM load that the electric boiler actually supplies:** the measured WHRU duty is not the EB duty. Get the EB electric power history before giving a final value; break-even was about 3.1 MW EB-served load post-tax.
+8. **CO2 depends on the grid factor:** on a Power-from-Shore platform the avoided CO2 is small at the Norwegian average factor (20-25 g/kWh, about 0.5 kt/yr for 30 GWh/yr) and large at a marginal factor (300 g/kWh, about 9 kt/yr); report both and the abatement cost on each basis.
+9. Tag naming pattern on the NCS field centre historian: `OSF-27-NRB -0831A` (GT load %), `OSF-27-NRA -0831A` (exhaust flow), `OSF-27-TI -275` (exhaust T), `OSF-55-FIC -0671` (OTSG feedwater), `OSF-55-TY -0685` (OTSG outlet T), `OSF-55-XI -0626` (steam turbine MW), `OSF-41-*` (HM system). Narrow prefix searches (`OSF-27-*`) work; broad `OSF-*` searches time out.
+
+Related: [`neqsim-heat-integration`](../neqsim-heat-integration/SKILL.md) for utility targeting and [`neqsim-energy-systems-and-electrification`](../neqsim-energy-systems-and-electrification/SKILL.md) for the electricity/CO2 side.
+
 ## Common Pitfalls
 
 | Pitfall | Solution |
@@ -532,3 +639,6 @@ HRSG + steam-turbine combined-cycle extension, and reservoir-driven demand.
 | Missing air stream for gas turbine | GT requires both fuel and combustion air |
 | Steam below saturation in turbine outlet | Check for wet steam — may need superheat or extraction |
 | Pinch analysis with wrong units | HeatStream uses °C for temperature, kW for duty |
+| Ambient derate "does nothing" for a capped turbine | `min(site rating, operating cap)`: a fixed cap (e.g. a 27.5 MW user/mechanical cap, an island-balance rating) hides the lapse until the site rating falls below it (Oseberg: never at 0-20 °C ambient). Ask whether the cap is an ISO rating (derate it with `site factor`) or a hard limit, and report both |
+| Efficiency "improves" on a hot day at fixed MW | The part-load polynomial uses load = P / *available* power; at the same MW a hot-day turbine is at higher load fraction, so its heat rate can drop. Compare at a fixed load fraction (`0.8 * getAvailablePowerAtAmbient(T)`) when judging ambient effects |
+| Exhaust/WHRU duty independent of load and ambient | WHRU = m·cp·(T_exh − T_stack)·eff with m ∝ (0.5 + 0.5 load) and T_exh = full-load(T) + part-load shape; a generator in hot standby at 30 % load gives a small fraction of the nameplate WHRU duty, so "kept as backup" HKs give no heat unless run (power-from-shore plants) |

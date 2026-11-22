@@ -37,7 +37,7 @@ public class TestParachorFit {
             .getResultSet("SELECT * FROM purecomponentsurfacetension WHERE ComponentName='MEG'")) {
       while (dataSet.next()) {
         ParachorFunction function = new ParachorFunction();
-        double guess[] = { 207.2 }; // methane
+        double guess[] = {207.2}; // methane
         function.setInitialGuess(guess);
 
         SystemInterface testSystem = new SystemSrkCPAstatoil(280, 0.001);
@@ -50,8 +50,8 @@ public class TestParachorFit {
         testSystem.init(0);
         testSystem.setNumberOfPhases(2);
         testSystem.init(3);
-        double sample1[] = { testSystem.getTemperature(), testSystem.getPressure() };
-        double standardDeviation1[] = { 0.1, 0.1 };
+        double sample1[] = {testSystem.getTemperature(), testSystem.getPressure()};
+        double standardDeviation1[] = {0.1, 0.1};
         SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("SurfaceTension")),
             Double.parseDouble(dataSet.getString("StandardDeviation")), sample1, standardDeviation1);
         sample.setFunction(function);

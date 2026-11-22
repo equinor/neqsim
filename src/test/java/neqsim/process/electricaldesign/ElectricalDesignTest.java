@@ -331,7 +331,7 @@ public class ElectricalDesignTest {
   @Test
   void testHeaterElectricalDesign() {
     Heater heater = new Heater("TestHeater", testStream);
-    heater.setOutTemperature(273.15 + 80.0);
+    heater.setOutletTemperature(273.15 + 80.0);
     heater.run();
 
     HeatExchangerElectricalDesign elecDesign = (HeatExchangerElectricalDesign) heater.getElectricalDesign();
@@ -348,7 +348,7 @@ public class ElectricalDesignTest {
   @Test
   void testCoolerElectricalDesign() {
     Cooler cooler = new Cooler("TestCooler", testStream);
-    cooler.setOutTemperature(273.15 + 10.0);
+    cooler.setOutletTemperature(273.15 + 10.0);
     cooler.run();
 
     HeatExchangerElectricalDesign elecDesign = (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
@@ -366,7 +366,7 @@ public class ElectricalDesignTest {
   @Test
   void testCoolerShellAndTubeType() {
     Cooler cooler = new Cooler("S&TCooler", testStream);
-    cooler.setOutTemperature(273.15 + 10.0);
+    cooler.setOutletTemperature(273.15 + 10.0);
     cooler.run();
 
     HeatExchangerElectricalDesign elecDesign = (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
@@ -460,7 +460,7 @@ public class ElectricalDesignTest {
     comp.setOutletPressure(50.0);
 
     Cooler cooler = new Cooler("aftercooler", comp.getOutletStream());
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

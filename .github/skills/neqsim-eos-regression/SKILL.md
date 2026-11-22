@@ -1,7 +1,7 @@
 ---
 name: neqsim-eos-regression
 description: "EOS parameter regression workflow for fitting equation-of-state models to experimental data. USE WHEN: tuning binary interaction parameters (kij), matching saturation pressures, fitting PVT data (CME, CVD, DL), characterizing C7+ fractions, or validating EOS predictions against lab measurements. Covers SRK, PR, CPA parameter fitting strategies."
-last_verified: "2026-07-04"
+last_verified: "2026-11-21"
 ---
 
 # EOS Parameter Regression Workflow
@@ -18,6 +18,28 @@ Guide for fitting equation-of-state parameters to experimental data using NeqSim
 
 ## Regression Strategy
 
+For reservoir material-balance handoff, use `CalibratedPvtModel` to freeze original
+and independently tuned fluids with sample/model/laboratory revision references.
+Compare complete held-out CCE/CVD/DLE and separator experiments before accepting
+the tuned model. Never split rows from one depletion experiment between tuning and
+validation. `MaterialBalancePvtHistory` requires an explicitly attributed depletion
+and separator path; constant-composition flash tables cannot be passed as CVD/DLE
+history. It checks alignment and provenance fields, not the external evidence's
+truth or experimental accuracy. See `docs/pvtsimulation/reservoir_material_balance.md`
+and hand off measured-history volume estimation to `@field-development`, keeping
+laboratory EOS calibration separate from reservoir/aquifer fitting.
+
+For explicit finite uncertainty scenarios, hand the frozen laboratory model to
+`ReservoirHistoryEnsemble` rather than fitting EOS parameters against field volume.
+Its posterior `parameterQuantiles(q)` reports marginal lower-tail in-place volume
+and support assumptions in `getParameterNames()` order; `pressureQuantiles(q)`
+reports model-pressure uncertainty. Zero/one select the positive-mass support
+endpoints, including a tiny positive tail or explicit infinite capacity. Marginal
+quantiles are not one joint scenario, continuous posterior coverage, petroleum
+exceedance P10 or recoverable reserves. Retain grid/prior/EOS/history sensitivity
+and the independent evidence boundary in
+`docs/pvtsimulation/reservoir_aquifer_uncertainty.md`.
+
 ### Step 1: Select Base EOS
 
 | Fluid System | Recommended EOS | Reason |
@@ -30,6 +52,30 @@ Guide for fitting equation-of-state parameters to experimental data using NeqSim
 | Electrolytes | Electrolyte-CPA | Ion interactions |
 
 ### Step 2: Gather Experimental Data
+
+For reported gas-phase p/T/Z/molar-mass/density tuples, apply the optional
+`PvtGasDensityConsistency` gate before regression. All quantities must describe
+the same phase/state and molar-volume basis; pressure is absolute Pa, temperature
+K, molar mass kg/mol, density kg/m3. Freeze justified absolute bounds first and
+retain failing rows and source/page/table/row identities. Do not treat printed
+precision as measurement sigma or widen bounds to manufacture agreement. Passing
+same-sample evidence can be frozen in `CalibratedPvtModel` via its overload.
+See `docs/pvtsimulation/laboratory_gas_density_consistency.md` and its executable
+regression; the check is arithmetic compatibility, not independent accuracy.
+
+For saturated-vapor-reference gas-condensate CVD, screen the complete observed
+experiment with `CvdMaterialBalance` before fitting. Use absolute Pa, constant K,
+liquid volume per initial saturated cell volume and cumulative moles per initial
+mole. Each withdrawal uses that endpoint vapor composition. Preserve source row
+IDs, smoothed/adjusted versus raw analyses, and separately attributed final liquid
+analysis bounds. Absent/unresolved/inconsistent liquid has no available composition;
+never normalize or clip failed inventories. Optional checkpoint attachment uses
+`CalibratedPvtModel(..., gasDensityEvidence, cvdEvidence)` and rejects a failed or
+wrong-sample report. Arithmetic consistency is not independent measured accuracy.
+See `docs/pvtsimulation/laboratory_cvd_material_balance.md`; the primary NS-1
+calculated liquid is a numerical reference, while experimental CH4/C7+ remain
+incompatible with printed-rounding-only bounds. Wet, critical and other reference
+protocols are outside this gate, not silently extrapolated.
 
 Required data types by priority:
 1. **Saturation pressure** (bubble/dew point) at reservoir temperature — most critical
@@ -153,12 +199,36 @@ fluid.addComponent("n-pentane", 0.02);
 fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);
 fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 fluid.addTBPfraction("C9", 0.03, 119.0 / 1000, 0.768);
-fluid.addPlusFraction("C10+", 0.10, 200.0 / 1000, 0.830);
+fluid.addPlusFraction("C10", 0.10, 200.0 / 1000, 0.830); // no "+" in the name -- breaks parsing
 
-fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
-fluid.setMixingRule("classic");
+fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
 fluid.getCharacterization().characterisePlusFraction();
+fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
 ```
+
+When an assay includes a plus fraction with zero moles, characterization preserves its name, inventory and properties. After adding material to that entry, characterize again before setting the mixing rule.
+
+**Ordering note (confirmed 2026-10-12 against a real NeqSim 3.24.0 build):**
+`characterisePlusFraction()` can SPLIT a plus/TBP fraction into several
+lumped pseudo-components, changing the total component count. Setting the
+mixing rule BEFORE that split leaves the EOS's kij matrix sized for the
+pre-split count; the first flash that actually needs the matrix then throws
+`ArrayIndexOutOfBoundsException: Index N out of bounds for length N` inside
+`EosMixingRuleHandler$ClassicSRK.getkij`. Always characterize first, then
+set the mixing rule.
+
+**Lumping count note (confirmed 2026-10-12, PR review on `#4303`, reproduced
+with a failing JUnit assertion):** do NOT call
+`fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(n)`
+directly on the default ("standard") lumping model to control the total
+pseudo-component count -- `StandardLumpingModel.generateLumpedComposition()`
+overwrites `numberOfLumpedComponents` with `numberOfPseudocomponents` (both
+default to 7) at generation time, so `setNumberOfLumpedComponents(6)` alone
+still produces 7 pseudo-components (12 total components here: 5 real + 4
+TBP/plus heavy fractions lumped into 7), not 6 (11 total). Use
+`configureLumping().model("standard").totalPseudoComponents(n).build()`,
+which sets `numberOfPseudocomponents` directly -- the field the generator
+actually reads.
 
 ### Tuning Parameters
 
@@ -177,6 +247,10 @@ fluid.getCharacterization().characterisePlusFraction();
 - [ ] Z-factor within ±2% of CVD data
 - [ ] Oil formation volume factor within ±3%
 - [ ] Viscosity within ±20% (transport properties have larger uncertainty)
+- [ ] Gas condensate: dew point within 10 % and C7+ density within 3 %; CME/CVD not degraded by the tuning
+- [ ] Report the result as a `pvt_tuning_quality` block (before = untuned template, after = tuned, parameters with
+      bounds and at-bound flags, excluded data with reasons): see `neqsim-professional-reporting` Principle 9a
+- [ ] Lab data checked for physical validity first: a gas "CME" that stays near 1.0 was run on separator liquid
 
 ## Common Pitfalls
 
@@ -186,6 +260,14 @@ fluid.getCharacterization().characterisePlusFraction();
 4. **Compositional shift**: Parameters fitted to one composition may fail for depleted fluids
 5. **Forgetting `setMixingRule`**: Must call before accessing kij parameters
 6. **Wrong units**: MW in kg/mol (not g/mol) for `addTBPfraction`
+7. **Changing a CPA component's `TC` silently changes its fitted `a(T)`**: CPA uses
+   `a(T) = a0 (1 + c1 (1 - sqrt(T/Tc)))^2`, so correcting `TC` in `COMP.csv` breaks the vapour-pressure fit.
+   Because `sqrt(a)` is linear in `sqrt(T)`, re-express exactly: keep `K = sqrt(a0)(1+c1)` and
+   `S = sqrt(a0) c1 / sqrt(Tc)`, then `sqrt(a0') = K - S sqrt(Tc')` and `c1' = S sqrt(Tc') / sqrt(a0')`.
+   The Peneloux shift (`racketZCPA`) also scales with `Tc/Pc`, so refit it to liquid density afterwards.
+   This was applied and measured for glycerol on 2026-11-14 (#4069): vapour pressure was identical before and after,
+   and density was within 0.05 % at 0–100 °C. See the
+   [component database guide](../../../docs/thermo/component_database_guide.md#glycerol-identity-and-data-reconstruction-4069).
 
 ## Mechanics of Applying Tuning (read before writing a regression loop)
 
@@ -223,6 +305,17 @@ liquid* density in the reservoir model. Check the objective across the bound
 range before including a parameter; if it is monotonic to the bound, drop it and
 keep the correlation value.
 
+### `VOLUME_SHIFT_C7PLUS` scales the effective shift
+
+`RegressionParameter.VOLUME_SHIFT_C7PLUS` multiplies the effective Peneloux shift of each
+plus/TBP fraction (Rackett correlation, dimensionless constant or E300 `SSHIFT`). Before the
+#5195 fix it scaled only the dimensionless constant, which is zero for characterised fractions,
+so the parameter had no effect. It changes liquid density only with `useVolumeCorrection(true)`.
+Compare simulated DL/CCE volumes with lab data on the same basis: NeqSim now reports
+Peneloux-corrected relative volume, Z and Bg, gas gravity relative to air at 28.96546 g/mol and
+DL Rs with Z = 1 standard gas (`setUseIdealGasStandardVolume(false)` for real-gas Z). See
+`docs/pvtsimulation/pvt_lab_tests.md` and `PvtVolumeConventionsTest`.
+
 ### Plus-fraction back-out fails on lean gas
 
 Backing MW(C36+) out of the C7+ mass balance works for a black oil but not when
@@ -249,3 +342,69 @@ report saturation pressures 24% apart, no EOS will fit both; tuning harder just
 fits noise. Report bias and scatter separately, and stop when the scatter matches
 the data's own inconsistency.
 
+
+
+### Explicit initial-volume depletion handoff
+
+`DepletionPvtHistoryGenerator.replayNativeFixedCell` preserves original/tuned
+checkpoints and fixed separator provenance for independently declared initial
+occupied-volume experiments. Its immutable reference is not a dew-point estimate
+or measured saturation normalization. The bounded gas-bearing phase family must
+remain unchanged; critical and other-phase states fail. Keep the ordinary
+`replayNative` laboratory protocol separate. See
+`docs/pvtsimulation/depletion_pvt_generation.md` and
+`FixedCellDepletionHandoffTest`; synthetic EOS consistency does not establish
+measured calibration, held-out experiment accuracy or recoverable reserves.
+
+
+Explicit-reference fixed-cell replay refines accepted endpoints through the existing
+multiphase beta solver to 1e-12 equilibrium and relative volume targets. Preserve all
+phase-family, Gibbs and component gates; failed refinement rejects the transaction.
+The Gibbs trial must use the same stored component inventory: the caller reconstructs
+a feasible homogeneous-phase allocation on copies before comparing energies. Keep
+`FixedCellFeasibleGibbsTest` alongside the independent fixed-cell references; this
+fix does not relax energy/fugacity/balance bounds or qualify global stability.
+Its108 SRK/PR/volume-correction controls check analytic extensivity and fresh
+homogeneous construction only; do not treat them as new depletion-path admission
+or independent EOS/measurement accuracy. Preserve the frozen EOS_CONTROL_SCOPE.md.
+Precise restoration reuses its caller-qualified endpoint before the first volume
+check and reflashes after withdrawal; preserve FixedCellInitialStateTest's named
+zero-inventory and independent binary controls. Do not widen volume tolerances
+to conceal a repeated-flash inventory perturbation. Legacy CVD keeps its sequence.
+Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
+The original 216-state and intermediate 480-state matrices use identical frozen bounds.
+
+
+For independently declared dry initial-volume experiments with oil appearance or
+loss, use `DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell`
+(core `ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion`). Preserve
+`FixedCellResult.allowsDryPhaseChanges()` with the immutable experiment reference.
+The existing fixed-cell method retains its unchanged-family contract. Gas must
+remain; water/aqueous/other phases, critical-degenerate splits and unclosed paths
+fail transactionally. Every local refinement retains its phase-family/Gibbs/
+component gates; between-endpoint dry oil appearance/disappearance is permitted.
+`DryFixedCellPhaseTransitionTest` and the fixed-cell-transitions reference qualify
+27dry binary SRK paths at three scales/both checkpoint selections, including the
+gas-only pressure-grid limit and every separator inventory. This is independent
+numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
+Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.
+
+### Explicit wet-gas/aqueous fixed-cell path
+
+Use `DepletionPvtHistoryGenerator.replayNativeWetGasFixedCell` (core
+`ConstantVolumeDepletion.runWetGasFixedCellDepletion`) only for a separately
+accepted initial-occupied-volume gas/aqueous experiment. Aqueous liquid may
+disappear; aqueous appearance/reappearance is rejected; gas must remain and
+oil/other phases fail transactionally.
+Water carried in produced gas is conserved through the unchanged separator.
+Preserve checkpoint selection, whole-experiment identity and actual final-product
+basis. `allowsWetGasPhaseChanges()` is distinct from the dry protocol flag.
+No wet-dew inference, saturation-normalized CVD, black-oil extrapolation,
+reservoir-volume fitting or measured-accuracy claim follows from this route.
+Read `WetGasFixedCellHandoffTest` and the frozen independent reference at
+`src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/`.
+Read `OFFGRID_SCOPE.md` and `OFFGRID_VALIDATION.md` in that reference folder for
+27 additional 20-pressure paths, unchanged bounds and separately labeled
+current-master compatibility. Numerical case counts are not independent
+experimental measurements or laboratory/reservoir holdout evidence.
+Guide: `docs/pvtsimulation/depletion_pvt_generation.md#wet-gas-fixed-cell-aqueous-transitions`.

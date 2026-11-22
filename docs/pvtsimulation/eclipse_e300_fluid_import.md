@@ -7,7 +7,7 @@ description: "Guide to Eclipse 300 compositional fluid file format (.e300), supp
 
 Eclipse 300 (E300) is the compositional reservoir simulator from SLB (formerly Schlumberger). It uses a text-based file format to define fluid compositions and equation-of-state (EOS) parameters for compositional reservoir simulation.
 
-NeqSim can **read** E300 fluid files to create thermodynamic `SystemInterface` fluids, and **write** NeqSim fluids back to E300 format. This enables seamless round-tripping between PVT tools (such as PVTsim, Multiflash, or WinProp), reservoir simulators, and NeqSim process/flow assurance calculations.
+NeqSim can **read** E300 fluid files to create thermodynamic `SystemInterface` fluids, and **write** NeqSim fluids back to E300 format. This enables exchange of the supported compositional fluid representation between reservoir simulators and NeqSim process/flow-assurance calculations. Active model parameters, reader modes and serialization precision must be checked before claiming fidelity.
 
 The Java class that handles E300 files is `neqsim.thermo.util.readwrite.EclipseFluidReadWrite`.
 
@@ -41,6 +41,7 @@ The table below lists all keywords supported by NeqSim's E300 reader:
 | `MW`       | Molecular weights                                                | g/mol         | Yes      |
 | `TBOIL`    | Normal boiling points                                            | K             | Yes      |
 | `VCRIT`    | Critical volumes                                                 | m³/kmol       | Yes      |
+| `VCRITVIS` | Effective critical volumes used only by LBC viscosity             | m³/kmol       | Optional |
 | `ZCRIT`    | Critical Z-factors                                               | —             | Optional |
 | `SSHIFT`   | Volume translation (shift) parameters                            | —             | Yes      |
 | `PARACHOR` | Parachor parameters for IFT calculation                          | dyn/cm        | Yes      |
@@ -52,6 +53,54 @@ The table below lists all keywords supported by NeqSim's E300 reader:
 | `PEDERSEN` | Flag to use Pedersen (PFCT) viscosity model                      | —             | Optional |
 | `OMEGAA`   | EOS OmegaA parameter                                             | —             | Optional |
 | `OMEGAB`   | EOS OmegaB parameter                                             | —             | Optional |
+
+### Persistent PR `OMEGAB` coefficients
+
+Use **`EclipseFluidReadWrite.readWithPrOmegaB(path)`** to opt into applying each
+positive, finite `OMEGAB` value to the corresponding PR component in every
+allocated phase. The overload with a `String[]` of fluid names applies the source
+block to every replicated named fluid. Provide exactly one coefficient per source
+component. A missing section leaves the model default active. The writer exports
+active PR coefficients with round-trip decimal precision whenever at least one
+component is explicitly tuned. This also preserves the exact defaults of the
+remaining components. They survive initialization and flashes when imported
+through this opt-in reader.
+
+Ordinary `read(...)` methods preserve their established behavior of parsing and
+ignoring `OMEGAB`, including forced-CPA imports. Untuned E300 output retains its
+historical five-decimal coefficients. In particular, the exported `0.07780`
+differs slightly from the internal untuned PR default **0.077803333**. Choosing
+the opt-in reader for an old file deliberately makes its explicit coefficients
+effective and can therefore change its numerical results. The two read modes
+use distinct cache entries. SRK and CPA do not support the PR override API; the
+opt-in reader must not be used as an association-parameter importer.
+
+The coefficient does not
+replace critical properties, binary interactions, volume shifts or viscosity
+tuning. See the [PR tuning contract](../thermo/characterization/README#persistent-pr-covolume-tuning).
+
+`PrOmegaBFluidRoundTripTest` covers custom/default coefficients, replicated
+fluids, invalid values, cache-mode separation, forced-CPA compatibility and
+post-import flashes.
+
+### Critical-Volume Units and Older NeqSim Files
+
+The writer exports `VCRIT` in m³/kmol and dimensionless `ZCRIT`. NeqSim stores
+critical volume internally in cm³/mol: 0.0986 m³/kmol in a metric E300 file
+therefore becomes 98.6 cm³/mol after import. Both the ordinary reader and the
+reader that replicates components with fluid-name suffixes perform this conversion.
+
+Older NeqSim writers exported cm³/mol values under the m³/kmol label and
+overstated `ZCRIT` by a factor of 1000. For compatibility, the reader treats the
+entire `VCRIT` block as legacy cm³/mol when its largest absolute value is at
+least 20; otherwise it converts from m³/kmol. This magnitude-based detection
+assumes ordinary fluid critical volumes and cannot distinguish a standard file
+containing unusually large values from a legacy file. Mixed units within one
+block are unsupported.
+
+Regenerate files written by older NeqSim versions with the corrected writer
+before importing them into PVTsim or Eclipse. Reading an old file in NeqSim
+does not repair the file on disk.
 
 ### Example E300 File
 
@@ -292,30 +341,23 @@ LBCCOEF
    0.1023000  0.0233640  0.0585330  -0.0407580  0.0093324 /
 ```
 
-### Component Name Mapping
+### Component Name Resolution
 
-NeqSim maps E300 shorthand component names to its internal database names:
+NeqSim resolves each `CNAMES` entry in this order:
 
-| E300 Name                              | NeqSim Name                                  |
-| -------------------------------------- | -------------------------------------------- |
-| `N2`                                   | nitrogen                                     |
-| `CO2`                                  | CO2                                          |
-| `C1`                                   | methane                                      |
-| `C2`                                   | ethane                                       |
-| `C3`                                   | propane                                      |
-| `iC4`                                  | i-butane                                     |
-| `C4`                                   | n-butane                                     |
-| `iC5`                                  | i-pentane                                    |
-| `C5`                                   | n-pentane                                    |
-| `C6`                                   | n-hexane                                     |
-| `H2O`                                  | water                                        |
-| Any other name (e.g., `C7`, `C10-C12`) | Treated as a pseudo-component (TBP fraction) |
+1. Standard E300 shorthands are mapped to their canonical database components. Examples include `N2` → `nitrogen`, `C1` → `methane`, `iC4` → `i-butane`, and `H2O` → `water`.
+2. Other known database spellings and aliases are resolved through `ComponentNameResolver`. Matching is tolerant of supported case, hyphen, and synonym variants; for example, `IC4`, `NC4`, `Nc5`, and `c1` resolve to the same database components as their standard E300 spellings.
+3. Bare carbon-number names such as `C7` and `C10`, grouped cuts such as `C10-C12`, and other unresolved names are treated as characterized TBP pseudo-fractions.
 
-Pseudo-components (C7+, grouped fractions like `C10-C12`, `C22-C28`, etc.) are added as TBP fractions using the critical properties, molecular weight, and an estimated density from the correlation:
+Recognized database components retain NeqSim's database properties, including ideal-gas heat-capacity coefficients. Binary interaction parameters are then applied through the selected mixing rule or imported `BIC` data. This avoids replacing a known component with a generic pseudo-fraction merely because the E300 file uses an alias.
 
-$$
+Pseudo-fractions are added with the E300 molecular weight converted from g/mol to kg/mol and a standard liquid density in kg/L (numerically equal to g/cm³) estimated from:
+
+$
 \rho_{std} = 0.5046 \times \frac{MW}{1000} + 0.668468
-$$
+$
+
+Here `MW` is the E300 value in g/mol; `MW / 1000` is the kg/mol value passed to the TBP-fraction API. Treat the density correlation as an initialization estimate and replace it with measured or characterized data when available.
 
 ### Binary Interaction Coefficients (BIC)
 
@@ -349,48 +391,104 @@ Two viscosity correlation options are supported:
 - **LBC** (Lorentz-Bray-Clark): Specified via the `LBCCOEF` keyword with 5 coefficients for the dense-fluid contribution
 - **Pedersen** (PFCT): Activated by the `PEDERSEN` keyword flag; uses the corresponding states principle
 
+### Viscosity-only critical volumes (`VCRITVIS`)
+
+The writer emits the **effective volume actually used by LBC** for each component
+as `VCRITVIS`, in component order. This is distinct from thermodynamic `VCRIT`:
+NeqSim's legacy TBP LBC route estimates a viscosity volume from molecular weight
+and normal liquid density, which can differ from the component's stored critical
+volume. Reconstructing the TBP density during import otherwise changes viscosity
+even when the EOS and phase split agree.
+
+The [ECLIPSE Reference Manual](https://www.ipt.ntnu.no/~kleppe/TPG4150/EclipseReferenceManual.pdf),
+printed page 2370, defines `VCRITVIS` as the per-component viscosity-only critical
+volume. Its METRIC unit is m³/kg-mole, equivalently m³/kmol. NeqSim converts these
+values to cm³/mol by multiplying by exactly **1000**; `VCRIT` remains unchanged.
+The current `VCRITVIS` import path requires `METRIC` units and rejects other
+declared systems. Arrays must contain one positive finite value per source
+component. The replicated-fluid reader repeats that ordered source array for
+all named fluid blocks and initializes every allocated phase.
+
+Files without `VCRITVIS` but with `LBCCOEF` use the file's `VCRIT` values as the
+LBC critical volumes, as Eclipse E300 does. This applies to `METRIC` files with
+one positive finite `VCRIT` per source component; other files without `VCRITVIS`
+retain the existing NeqSim LBC estimation behavior.
+Explicit viscosity volumes take precedence over that estimate without changing
+component EOS properties. For a qualified delivery, compare the effective array,
+LBC coefficients and actual gas/oil viscosity over the declared replay grid;
+file-read success alone does not establish prediction fidelity. Regression
+coverage is in [LbcFluidRoundTripTest](../../src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java).
+
 ## Reading E300 Files in NeqSim
 
 ### Java API
 
+The following quick start is a complete Java 8 program. Pass one E300 file path as
+its command-line argument. It reads the file, checks the automatic multiphase
+setting for water-containing slates, performs a TP flash at 100 bara and 90 °C,
+initializes physical properties, and fails if the first-phase density is not
+finite and positive.
+
+<!-- e300-import-example: java-quickstart -->
 ```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Basic read
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300");
+/** Executable Eclipse E300 import example. */
+public final class EclipseE300ImportQuickStart {
+  /** Utility class. */
+  private EclipseE300ImportQuickStart() {}
 
-// Read with water addition (kij = 0.5 for water vs all components)
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", true);
+  /**
+   * Imports and flashes one E300 fluid.
+   *
+   * @param args one input E300 file path
+   * @throws Exception if the input is invalid or the calculation fails
+   */
+  public static void main(String[] args) throws Exception {
+    if (args.length != 1) {
+      throw new IllegalArgumentException("Expected one E300 file path");
+    }
 
-// Read with water and custom kij
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", true, 0.45);
+    Path input = Paths.get(args[0]);
+    if (!Files.isRegularFile(input)) {
+      throw new IllegalArgumentException("E300 file does not exist: " + input);
+    }
 
-// Read with pseudo-name suffix (for multi-fluid models)
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", "_well1");
+    SystemInterface fluid = EclipseFluidReadWrite.read(input.toString(), "");
+    if (fluid.hasComponent("water") && !fluid.doMultiPhaseCheck()) {
+      throw new IllegalStateException("Water-containing imports must enable multiphase checking");
+    }
 
-// Read multiple fluids from same file (each component set gets a suffix)
-String[] fluidNames = {"well1", "well2"};
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", fluidNames);
+    fluid.setPressure(100.0, "bara");
+    fluid.setTemperature(90.0, "C");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+
+    if (fluid.getNumberOfPhases() < 1) {
+      throw new IllegalStateException("The TP flash returned no phases");
+    }
+    double density = fluid.getPhase(0).getDensity("kg/m3");
+    if (!Double.isFinite(density) || density <= 0.0) {
+      throw new IllegalStateException("First-phase density is not finite and positive");
+    }
+  }
+}
 ```
 
-After reading, the fluid is ready for thermodynamic calculations:
+The reader overloads select additional import behavior:
 
-```java
-// Set reservoir conditions
-fluid.setPressure(100.0, "bara");
-fluid.setTemperature(90.0, "C");
-
-// Run flash calculation
-neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-    new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initProperties();
-
-// Get results
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-System.out.println("Gas density: " + fluid.getPhase("gas").getDensity("kg/m3"));
-```
+| Purpose | Java call |
+| --- | --- |
+| Basic import | `EclipseFluidReadWrite.read(path)` |
+| Add water with default interactions | `EclipseFluidReadWrite.read(path, true)` |
+| Add water with a custom interaction value | `EclipseFluidReadWrite.read(path, true, 0.45)` |
+| Add a pseudo-component suffix | `EclipseFluidReadWrite.read(path, "_well1")` |
+| Replicate the slate for named fluids | `EclipseFluidReadWrite.read(path, fluidNames)` |
 
 ### Python API (neqsim-python)
 
@@ -460,19 +558,13 @@ NeqSim can export any fluid to E300 format, enabling workflows where you build a
 
 ### Java API
 
-```java
-import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+Use the writer overload that matches the required output:
 
-// Write to file
-EclipseFluidReadWrite.write(fluid, "output.e300");
-
-// Write with reservoir temperature
-EclipseFluidReadWrite.write(fluid, "output.e300", 120.0);  // 120 °C
-
-// Get E300 content as string (for logging or embedding)
-String e300Content = EclipseFluidReadWrite.toE300String(fluid);
-System.out.println(e300Content);
-```
+| Purpose | Java call |
+| --- | --- |
+| Write with the default reservoir temperature | `EclipseFluidReadWrite.write(fluid, "output.e300")` |
+| Write with a 120 °C reservoir temperature | `EclipseFluidReadWrite.write(fluid, "output.e300", 120.0)` |
+| Serialize without creating a file | `EclipseFluidReadWrite.toE300String(fluid)` |
 
 ### Python API
 
@@ -655,22 +747,24 @@ E300 fluid files from PVTsim may or may not include water. NeqSim provides the `
 - Parachor parameter of 10.0
 - Multi-phase check enabled for aqueous phase detection
 
-```java
-// Java
-SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true);
-// or with custom water kij
-SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true, 0.45);
-```
+Use `EclipseFluidReadWrite.read("fluid.e300", true)` for the default water interactions, or `EclipseFluidReadWrite.read("fluid.e300", true, 0.45)` to supply a custom water interaction value.
+
+When an imported E300 slate already contains `H2O` or `water`, both the ordinary
+and repeated named-fluid readers enable the multiphase check automatically. This
+allows subsequent TP flashes to search for a separate aqueous phase. Importing a
+dry slate does not add water or enable this option implicitly.
 
 ### Multi-Fluid Models
 
 When modeling multiple reservoir zones or wells with different compositions but the same EOS characterization, use the `fluidNames` array variant. Each component set gets a unique suffix so they can coexist in one `SystemInterface`:
 
-```java
-String[] zones = {"zone1", "zone2"};
-SystemInterface multiFluid = EclipseFluidReadWrite.read("fluid.e300", zones);
-// Components named: methane_zone1, methane_zone2, C7_zone1, C7_zone2, etc.
-```
+For example, pass `new String[] {"zone1", "zone2"}` to `EclipseFluidReadWrite.read("fluid.e300", zones)`. The resulting names include `methane_zone1`, `methane_zone2`, `C7_zone1`, and `C7_zone2`.
+
+Every labelled component block retains the original per-component EOS parameters,
+including distinct `OMEGAA` overrides and binary interaction coefficients. Origin
+labels do not represent different chemical species. The replicated import tests
+compare each override explicitly and compare phase splits and recycled product
+recoveries against the unlabelled fluid.
 
 ### Pseudo-Name Suffixes
 
@@ -684,26 +778,19 @@ fluid_b = readEclipseFluid('reservoir_B.e300', wellName='_B')
 
 ### Round-Trip Verification
 
-You can verify E300 read/write fidelity by round-tripping a fluid:
+A basic round trip is an initial software check, not proof that all active
+parameters or target-simulator interpretations are preserved. For sample-to-model
+documentation, full parameter capture and fresh-process replay, use the guarded
+[PVT fluid-study report workflow](pvt_fluid_study_report.md). PR OmegaB overrides
+need the preserving reader route; never reapply missing source parameters after
+reading and then claim export fidelity.
 
-```java
-// Read original
-SystemInterface original = EclipseFluidReadWrite.read("input.e300");
-
-// Write it out
-EclipseFluidReadWrite.write(original, "roundtrip.e300", 90.0);
-
-// Read back and compare
-SystemInterface roundtripped = EclipseFluidReadWrite.read("roundtrip.e300");
-
-// Compare properties
-for (int i = 0; i < original.getNumberOfComponents(); i++) {
-    System.out.printf("%-12s  Tc_orig=%.3f  Tc_rt=%.3f%n",
-        original.getComponent(i).getComponentName(),
-        original.getComponent(i).getTC(),
-        roundtripped.getComponent(i).getTC());
-}
-```
+A basic software check reads the source, writes a temporary E300 file, reads that
+file again, and compares the selected component properties that matter to the
+workflow. The executable import quick start above validates the read and flash
+path; use the dedicated round-trip tests linked in this guide for serializer
+coverage. Do not treat a matching component count or a successful file read as
+prediction-fidelity evidence.
 
 ## Troubleshooting
 
@@ -713,7 +800,7 @@ for (int i = 0; i < original.getNumberOfComponents(); i++) {
 | Wrong EOS used                                                | Missing `PRCORR` after `EOS PR` | Add `PRCORR` keyword on the line after `PR /`                |
 | Negative densities or unrealistic properties                  | Missing `SSHIFT` or `PARACHOR`  | Ensure the E300 file includes volume shift and parachor data |
 | Composition does not sum to 1.0                               | E300 file has unnormalized `ZI` | NeqSim normalizes internally, but check for typos            |
-| Water phase not appearing                                     | Water not added                 | Use `read(file, true)` or add water manually                 |
+| Water phase not appearing | Water is absent, or multiphase checking was disabled after import | Add water when required and retain the imported multiphase-check setting |
 | Name collision with multiple wells                            | Same pseudo-names               | Use `wellName` suffix or `fluidNames` array                  |
 | Viscosity not matching PVTsim                                 | Missing `LBCCOEF` or `PEDERSEN` | Ensure viscosity keywords are in the E300 file               |
 

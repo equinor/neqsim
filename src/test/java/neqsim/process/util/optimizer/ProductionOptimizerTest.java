@@ -13,6 +13,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
@@ -20,6 +22,7 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.util.optimizer.ProductionOptimizer.CapacityRange;
 import neqsim.process.util.optimizer.ProductionOptimizer.CapacityRule;
 import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintDirection;
@@ -675,10 +678,14 @@ public class ProductionOptimizerTest {
   /**
    * Test that optimizer correctly uses capacity constraints from auto-sized separator. This verifies that after
    * autoSize(), the separator's capacity constraints are properly used by the optimizer (via getMaxUtilization() from
-   * CapacityConstrainedEquipment).
+   * CapacityConstrainedEquipment). Both gas-controlled sizing and liquid-inventory-controlled sizing must expose
+   * capacities based on the final diameter.
+   *
+   * @param retentionTime required liquid retention time in seconds
    */
-  @Test
-  public void testSeparatorCapacityConstraintAfterAutoSize() {
+  @ParameterizedTest
+  @ValueSource(doubles = {1.0, 150.0})
+  public void testSeparatorCapacityConstraintAfterAutoSize(double retentionTime) {
     // Create a realistic multi-phase fluid
     SystemSrkEos system = new SystemSrkEos(300.0, 50.0);
     system.addComponent("methane", 80.0);
@@ -707,15 +714,38 @@ public class ProductionOptimizerTest {
     double initialUtil = separator.getMaxUtilization();
     logger.info("Initial utilization (before autoSize): " + (initialUtil * 100) + "%");
 
-    // Auto-size the separator to match current flow
+    // Exercise a gas-controlled case and a liquid-inventory-controlled case without changing flow.
+    SeparatorMechanicalDesign design = separator.getMechanicalDesign();
+    design.setRetentionTime(retentionTime);
     separator.autoSize(1.0); // No safety factor for this test
     process.run();
 
-    // After autoSize with safety factor 1.0, utilization should be close to 100%
+    double gasDensity = separator.getThermoSystem().getPhase("gas").getDensity("kg/m3");
+    double liquidDensity = separator.getThermoSystem().getPhase("oil").getDensity("kg/m3");
+    double allowableGasVelocity = Math.min(design.getMaxGasVelocityLimit(),
+        design.getGasLoadFactor() * Math.sqrt((liquidDensity - gasDensity) / gasDensity));
+    // Sizing retains its EOS-volume basis; operating utilization uses density-corrected flow.
+    double gasSizingFlow = separator.getThermoSystem().getPhase("gas").getVolume("m3");
+    double liquidSizingFlow = separator.getThermoSystem().getPhase("oil").getVolume("m3");
+    double gasDiameter = Math.sqrt(4.0 * gasSizingFlow / (Math.PI * allowableGasVelocity * design.getFg()));
+    double requiredLiquidVolume = liquidSizingFlow * retentionTime * design.getFoamAllowanceFactor()
+        * design.getVolumeSafetyFactor();
+    double liquidDiameter = Math.cbrt(4.0 * requiredLiquidVolume / (5.0 * Math.PI * (1.0 - design.getFg())));
+    Assertions.assertEquals(Math.max(gasDiameter, liquidDiameter), separator.getInternalDiameter(),
+        separator.getInternalDiameter() * 1.0e-8);
+    Assertions.assertEquals(retentionTime > 1.0, liquidDiameter > gasDiameter,
+        "The two cases must exercise distinct controlling sizing requirements");
+    double vesselArea = Math.PI * Math.pow(separator.getInternalDiameter(), 2.0) / 4.0;
+    double availableLiquidVolume = vesselArea * separator.getSeparatorLength() * (1.0 - design.getFg());
+    Assertions.assertTrue(availableLiquidVolume >= requiredLiquidVolume * (1.0 - 1.0e-10),
+        "The final vessel must retain the required liquid inventory");
+    double gasCapacity = allowableGasVelocity * vesselArea * design.getFg() * 3600.0;
+    Assertions.assertEquals(gasCapacity, design.getMaxDesignGassVolumeFlow(), gasCapacity * 1.0e-8);
+    Assertions.assertEquals(gasCapacity, design.getMaxDesignVolumeFlow(), gasCapacity * 1.0e-8);
     double utilAfterAutoSize = separator.getMaxUtilization();
-    logger.info("Utilization after autoSize(1.0): " + (utilAfterAutoSize * 100) + "%");
-    Assertions.assertTrue(utilAfterAutoSize > 0.5 && utilAfterAutoSize < 1.5,
-        "Utilization should be reasonable (50-150%) after autoSize(1.0), got: " + (utilAfterAutoSize * 100) + "%");
+    double operatingGasFlow = separator.getThermoSystem().getPhase("gas").getFlowRate("m3/hr");
+    Assertions.assertEquals(operatingGasFlow / gasCapacity, utilAfterAutoSize, 1.0e-8,
+        "Gas utilization must reflect the final vessel area, including liquid-driven oversizing");
 
     // Now test the optimizer
     ProductionOptimizer optimizer = new ProductionOptimizer();
@@ -733,9 +763,11 @@ public class ProductionOptimizerTest {
           rec.getBottleneckUtilization() * 100, rec.isFeasible());
     }
 
-    // The optimal rate should be close to the original rate (since separator was
-    // sized for it)
+    // Gas-controlled sizing binds at the sizing rate; liquid-controlled sizing leaves gas headroom.
     double optimalRate = result.getOptimalRate();
+    double expectedRate = Math.min(baseRate * config.getDefaultUtilizationLimit() / utilAfterAutoSize, baseRate * 1.5);
+    Assertions.assertEquals(expectedRate, optimalRate, baseRate * 0.02,
+        "The optimizer must respect the gas capacity or reach the configured search bound");
     logger.info("Optimal rate: " + optimalRate + " kg/hr");
     logger.info("Feasible: " + result.isFeasible());
 

@@ -1,12 +1,49 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-09-01"
+last_verified: "2026-11-22"
 ---
 
 # Dynamic Simulation Guidance
 
 Guide for transient/dynamic process simulation in NeqSim.
+
+For the canonical synthetic wellhead-choke, two-fluid riser and three-phase
+inlet-separator control replay, call `runPipeline` with analysis
+`wellToTopsideSlugControl`. Preserve the exact fixed outlet-pressure boundary;
+live separator-pressure feedback is not yet qualified by the `#5036` evidence.
+
+For an explicitly selected unsplit `TwoFluidPipe` route, the accepted mass report exposes
+`getRejectedAttempts()` and `getModelEvaluations()`. A non-negative value is available for unsplit
+execution; -1 means the selected transient route does not publish that diagnostic. Do not infer
+nonlinear quality only from elapsed time or an enforced flux sign. The current sustained unsplit
+Tengesdal gate completes 600 s with zero rejects but remains a flat fixed point, with
+`1.945482e-4 Pa` pressure amplitude and no liquid-production cycle. Disabling steady consistency
+does not change it. Tracked-slug geometry and conservative slug-force integration are still rejected
+by this route; qualify that moving slug/film coupling before promoting the opt-in experimental gate.
+
+## Extend the existing unit operation
+
+Add transient behavior to the existing equipment class through its mode/configuration APIs.
+Do not create a separate `DynamicHeatExchanger`, `DynamicCompressor` or other unit operation
+solely for a different execution mode. Internal solver/state helpers are appropriate; a distinct
+physical/model abstraction requires a written rationale. Keep the same streams, ports, tags,
+design data, controllers and DEXPI/P&ID bindings. Preserve default steady behavior and test
+initialization, both mode transitions, cache invalidation, conservation, repeated-step identity,
+rollback and serialized continuation. For the heat exchanger automation workflow, configure the
+existing `HeatExchanger` and call `setDynamicModelEnabled(true)` before its initial run. See
+[the coordinated workflow](../../../docs/process/equipment/heat_exchanger_automation.md).
+
+## Pipeline phase-contact pressure balance
+
+`TwoFluidPipe` now enables the consistent phase-pressure operator by default,
+independently of Bestion stabilization. A stationary gas/oil/water contact at
+uniform pressure must have zero momentum rate. The default-pipe regression checks
+this at 2 and 200 bar. This numerical consistency fix does not qualify sustained
+phase-transfer well dynamics: issue #5066 still records loss of throughflow and
+trace-phase velocity failures. Check both held boundaries and rate changes, mass
+balance, phase inventories and mesh/time refinement before interpreting holdup.
+See [the model guide](../../../docs/wiki/two_fluid_model.md#pressure-balance-at-phase-contacts).
 
 ## When to Use Dynamic Simulation
 
@@ -31,6 +68,19 @@ explicit timestep and calculation identifier).
 Pass a finite, positive timestep. Process and model entry points reject zero,
 negative, NaN, and infinite values before any area or equipment state changes.
 Adaptive stepping rejects invalid requests rather than clamping them.
+
+`TwoFluidPipe` well shut-in and restart: a closed choke may feed a zero-mole
+stream, which the inlet face accepts. With adaptive stepping and legacy primitive recovery, a substep that
+would clip gas at 100 m/s or oil/water at 50 m/s in a phase holding at least
+5 % of the cell mass is retried; if no step is stable the run throws
+`IllegalStateException` ("velocity limiter engaged ..."). Treat that as a
+numerical failure, not a result. Check `getTransientVelocityLimiterRejectionCount()`
+after a successful step. Conservative energy recovery uses the transported phase momentum
+and mass to recover endpoint velocities without those caps. For hydraulic shut-in/restart studies with reversing
+phase flows, configure coupled pressure-momentum, independent oil/water faces
+and `setMaterialWaveRusanovEnabled(true)`. Check per-phase mass balances and
+repeat on a finer mesh. See the “Coupled hydraulic transport for shut-in and
+restart” section in `docs/process/TWOFLUIDPIPE_MODEL.md`.
 
 Each timestep:
 1. Flowsheet-wide settings are applied. Each setter unit receives exactly one
@@ -62,13 +112,53 @@ UUID. For ordinary loops `runTransient()` is safe because it creates a fresh
 UUID each call. Deterministic safety/OTS workflows can use
 `TransientStepIdentifier.deterministicPhysicalStep(scope, stepIndex)`.
 
-`ProcessSystem.runTransientAdaptive(...)` is **not yet a transactional adaptive
-integrator**. The current implementation validates the request, advances trial
-state directly, estimates a temperature-change heuristic, and chooses a
-subsequent timestep. It does not yet provide rejected-step process/event/control
-rollback or a full-step versus two-half-step error estimate. Do not use it as
-evidence of qualified stiff/adaptive professional dynamics until the #2911
-transactional-step work is complete.
+The legacy two-argument `ProcessSystem.runTransientAdaptive(dt, id)` advances one
+full step and recommends a following timestep using a temperature-change heuristic.
+It does not reject/retry on a full-step versus two-half-step estimate. Its strict
+qualification blocker remains; do not infer a different contract from its name.
+
+For opt-in numerical acceptance, both `ProcessSystem` and `ProcessModel` provide
+`runTransientAdaptive(requestedDt, parentId, AdaptiveTransientOptions)`. This first
+profile requires concrete process/model owners, exactly aligned finite area clocks
+and no shared mutable participant across different areas. Use explicit
+minimum/maximum timestep, bounded attempts, integration order and a
+`TransientErrorStateBinding` for every unique rollback participant, including
+attached controllers. Each read-only serializable provider returns a nonempty
+vector with stable owner/variable IDs, explicit units, finite values, positive
+absolute tolerances and nonnegative relative tolerances. Numerical coverage must
+be complete and the schema/tolerances must remain fixed across all trial states.
+The caller remains responsible for auditing that the declared variables cover
+the relevant physical and control state.
+
+The overload compares one full step with two half steps using maximum normalized
+error, restores rejected trials in place, and commits the actual two-half-step
+state. Distinct deterministic physical child UUIDs prevent idempotent controllers
+from skipping the second half. Use a new parent UUID on the next call; preserve
+result `getAcceptedStepSeconds()` versus `getSuggestedNextStepSeconds()` semantics.
+Execution/provider/schema failures propagate after rollback; they are not accepted
+as numerical progress. Exhausted bounds/attempts leave the step uncommitted.
+Use `AdaptiveTransientException` reason (`MINIMUM_STEP`, `ATTEMPT_LIMIT`, or
+`UNREPRESENTABLE_INTERVAL`), attempted-trial count, attempted step, normalized error
+and limiting-variable evidence for numerical failure reports. A `NaN` error marks
+an unavailable comparison; infinity marks an unbounded/overflowing error.
+
+Only this new overload uses start-of-substep event timing and caps the interval at
+the earliest future event across all area schedulers. Shared due events execute
+before any area advances. Endpoint events remain pending until the following call,
+so they cannot alter the interval that precedes their trigger time. Event actions
+must have declared complete in-memory mutation scope; external effects are outside
+the rollback contract. Callbacks must terminate and avoid due-now cross-scheduler
+chains; the underlying scheduler has no callback budget. Newly inserted future
+events trigger bounded rollback/localization, while a leftover past event fails
+the interval. Keep exclusive ownership during adaptive execution.
+
+Expect three physical evaluations per complete attempt plus snapshot/comparison and
+rejected-trial cost. Default/legacy paths gain no adaptive work. The synthetic
+quantitative tests establish the numerical acceptance/replay contract, while real
+process-control and safety studies still need method/parameter qualification,
+conservation/refinement evidence and explicit limits. Read the
+[dynamic capability contract](../../../docs/process/dynamic-capability-contract.md#opt-in-numerical-adaptive-acceptance)
+for the norm, provider contract, provenance, event and qualification boundaries.
 
 ## Basic Dynamic Setup
 
@@ -112,6 +202,23 @@ process.add(liqValve);
 // Run steady state first
 process.run();
 ```
+
+## TwoFluidPipe conservative thermal recovery
+
+For blowdown or repressurization, the legacy post-step temperature update does not
+recover temperature from transported total energy. The experimental
+`setUseConservativeEnergyRecovery(true)` option must be selected before `run()`;
+it initializes named-component inventories automatically, including pure fluids.
+Select coupled pressure-momentum, Euler, energy enabled and slug tracking disabled.
+Read [the two-fluid model guide](../../../docs/process/TWOFLUIDPIPE_MODEL.md#opt-in-conservative-transient-thermodynamic-recovery)
+for unsupported combinations and qualification limits. Inspect
+`getLastConservativeEnergyReport()` together with mass and component reports;
+the legacy sensible thermal report is null in this mode. A successful interval
+recovers common P/T from occupied volume and internal energy at each transported
+phase composition. It does not qualify rich-fluid evaporation rates or asset
+blowdown times. Regressions: `TwoFluidPipeConservativeEnergyTest` and
+`ConservativeThermodynamicRecoveryTest`. Keep issue #4595 open until the complete
+rich-phase-transition and refinement acceptance is demonstrated.
 
 ## Adding Measurement Devices
 
@@ -258,6 +365,103 @@ for (long step = 0; step < 600; step++) {
 After the run, use `ControllerPerformanceMetrics.fromEventLog(LC100.getEventLog())`
 (or `LC100.getPerformanceMetrics()`) to score the tuning (IAE/ISE/ITAE, PV
 variability, valve travel and reversals, settling time) — see the KPI section below.
+
+### Dynamic pressure-inventory loop recipe
+
+A pressure loop needs a real compressible inventory. A valve between two imposed-pressure
+streams verifies action and hydraulics, but it cannot demonstrate pressure regulation. For the
+canonical separator chain:
+
+1. Configure separator diameter, length and starting level, then disable steady-state calculation.
+2. Put a gas pressure-control valve on the outlet with a lower declared downstream pressure,
+   actuator lag and physical-step idempotency enabled.
+3. Set the PCV embedded controller to manual when an external PID owns the command.
+4. Register a physical-step-sampled `PressureTransmitter` on the separator gas outlet and attach an
+   engineering-unit, direct-acting PID to the PCV.
+5. Check each component inventory, the fixed-volume/internal-energy flash residual, pressure and
+   temperature bounds, held scan order, valve travel and timestep sensitivity.
+
+`SeparatorPressureControlChainTest` is the public reference implementation. Its SRK/classic wet-gas
+case uses a 2.2 m by 7.0 m separator, 55 bara initial pressure, 45 bara downstream boundary,
+20 to 28 kg/s feed step, one-second scans, `Kp = 6.0`, `Ti = 30 s` and 4 s actuator lag. The
+70 s regression limits peak pressure to 56.68 bara, pressure IAE to 84.6 bar-s and PCV travel to
+21.38 percentage points; it also requires exact rollback/restart/repeatability and 1.0/0.5 s
+refinement. These values qualify only the synthetic numerical chain. Do not reuse the tuning or
+limits as a plant design basis.
+
+### Audit separator cumulative energy independently of response
+
+Enable `setTransientEnergyBalanceTrackingEnabled(true)` on an exact concrete
+`Separator` after steady/inventory initialization. Read availability and coverage
+with `getTransientEnergyBalanceTrackingStatus()` and
+`getTransientEnergyBalanceCoverageIssue()`; null last report means no measured
+accepted update, not zero energy error. Reject uninstrumented subclasses,
+including `ThreePhaseSeparator`, as unsupported.
+
+Read `getLastTransientEnergyBalanceReport()` for consumed ordered enthalpy/heat
+terms, accepted-dt elapsed time, epoch, local VU defect and final published
+inventory energy. Compare `getAcceptedVuEnergyJ()` with `getPublishedEnergyJ()`;
+do not confuse a locally accepted flash with complete-window energy closure.
+Apply an explicit frozen criterion through `assessTransientEnergyBalance(limit)`;
+it gates maximum absolute cumulative debt using the reported initial-U scale.
+Keep response PASS, energy FAIL/INCOMPLETE and qualification HOLD separate.
+Retain the original criterion during timestep refinement and report raw J
+residuals, scale, extrema and sums of absolute local VU defects.
+
+Require exact ordered external balance, on/off trajectory parity, reset/epoch,
+snapshot/restart and rejected-step evidence. Treat skipped steps, excluded
+nonzero liquid withdrawal and steady reevaluation as incomplete coverage.
+Never reconstruct consumed inlet enthalpy from post-step ports after the mixer
+has been refreshed. Read the [native diagnostic contract](../../../docs/process/dynamic-capability-contract.md#opt-in-separator-cumulative-energy-diagnostics)
+for the bounded default-off API, scale and unsupported-mode limits.
+
+### Advanced ESD, voting and manual trip with actual inputs
+
+Use registered native held instruments with enabled transient sampling and
+`SafetyFunctionChannel.highTripFromMeasurement(...)` or
+`lowTripFromMeasurement(...)`. Derive channels from the actual executing process
+copy; references captured from the source graph are rejected. For an unlinked
+native `PushButton`, use `manualTripFromPushButton(...)`. Legacy custom extractors
+have unverified input identity and are not a substitute for actual configured
+instrument readback. Duplicate channel objects and duplicate normalized channel
+tags are rejected. Distinct software tags do not establish hardware independence.
+
+Preserve native semantics explicitly: response delay is continuous-demand
+qualification on held samples; qualified channels latch until reset; bypass keeps
+fixed m-out-of-n voting. Test nonoverlapping qualified pulses, pre-vote pause with
+no actuation, post-actuation resume, failed-child preservation and reset/retrip.
+Reset clears bookkeeping and does not reopen equipment or authorize operation.
+Use current held conditions and a separate explicit operator reopening, retaining
+each native trace epoch before reset.
+
+For quantitative cases use event-exact timing and whole-window
+`DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS` for pressure envelopes
+and no-trip invariants. Set its positive deadline to the full intended event
+window and require start/end coverage. Default reach-by-deadline can pass an
+initial normal sample despite a later violation. Neither mode proves behavior
+between samples. Read actual accepted physical UUID and dt from
+`ProcessSystem.getCalculationIdentifier()` and `getTimeStep()`; rounding
+wall-time/nominal-dt fails on real short final alignment steps.
+
+Use actual finite-stroke `ESDValve`, native `ESDLogic`/`TripValveAction`, and
+`ParallelActionGroup` where simultaneous valve commands are required. Legacy
+HIPPS immediate commands or stored closure-time metadata do not prove physical
+travel. Retain exact native target identities and supported trip-action readback;
+an energizing/opening/opaque action with the same target is not equivalent trip
+configuration. Command issuance, each actual valve closure, pressure response and
+failed/slow/inhibited negative controls need separate assertions.
+
+After canonical PID inputs/action configuration, definition IDs and evidence
+references are frozen, use `EngineeringSimulationRunner.runStrict(project)` for
+direct typed project evidence. Do not attach unrelated same-name results. The
+public `AdvancedV101SafetyStudy` fixture uses actual V100/V101 inventories, three
+PI loops and 17 devices (16 held plus 1 discrete manual input); its 18 profiles plus
+five half-dt cases retain expected native FAIL results. Keep per-vessel energy
+coverage/debt and independent raw consumed-boundary audits separate from response.
+The frozen 1e-5 energy limit and qualification HOLD remain even if whole-slice
+residuals partly cancel. This is a proposed design study, not SIL, ISO/IEC or
+construction approval. See the [closed-loop verification contract](../../../docs/process/safety/closed-loop-sif-verification.md)
+and public study resource README for the tested model and commands.
 
 ### Loop-tuning KPIs (ControllerPerformanceMetrics)
 
@@ -423,8 +627,74 @@ requires the controlled context attribute `distributedTransientModel=approved`.
 
 ## TwoFluidPipe Phase Appearance and Disappearance
 
+Read the
+[TwoFluidPipe evidence matrix](../../../docs/process/twofluidpipe-evidence-matrix.md)
+before selecting a steady or transient configuration. It is the canonical
+distinction between implemented, numerically verified, experimentally qualified,
+failed, and unsupported behavior.
+
 When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase
-resolved. Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
+resolved. In conservative-energy Euler mode on a dry gas/oil grid, use conserved component
+inventory differences from the local flashed targets, rather than assigning all new oil its final
+equilibrium composition. Carry opposing species transfers with their actual donor momentum and
+keep one total-energy owner. This remains an approximate relaxation, not predictive evaporation.
+Positive aqueous inventory/equilibrium retains the preceding source contract below.
+For a dry hydrocarbon finite-rate sensitivity, use `HydrocarbonPoolTransfer` only with
+conservative-energy Euler. Supply component $k_i$ values (m/s), evaporation enthalpies (J/kg),
+interface-width fraction and available heat (W/m); never infer them from the relaxation time.
+The closure uses the same equilibrium component target, component inventory, donor momentum and
+total-energy owners. Require zero-drive/area, donor/heat-limit, unseeded appearance, refinement and
+ledger gates. Label results parameterized screening until coefficients pass independent public
+calibration and validation. Do not call this elapsed pool-depletion, physical restart or pigging
+qualification.
+The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh/time evidence only. It crosses the cubic
+EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested root while the
+positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
+composition or change the configured root to manufacture a restart result.
+For a conservative pressure-driven restart, select `CONSTANT_PRESSURE`, optionally set an explicit
+reservoir with `setInletBoundaryFluid(...)`, and ramp from `getInletFacePressure("Pa")`. The solver
+reflashes the reservoir at the prescribed pressure and resolves signed phase speed from acoustic
+impedance; it no longer treats pressure traction as zero-advection refill. The isolated-reservoir
+route reuses one flash across internal stages at the same pressure; verify the
+performance safeguard with `getPressureInletFlashCount()`. A live connected stream remains uncached.
+The complete declared cycle closes mass, named-component and energy ledgers on 12/24 cells and
+0.5/0.25 s intervals, but
+the time-refined trace retains one small unfiltered opening reversal. Treat this as numerical
+boundary/restart evidence, not independent surge, field, gelled-oil or repeated-cycle validation.
+Use `HydrocarbonPoolTransfer.forHydrostaticPool(...)` only for stationary or slowly draining
+stratified terrain pools. Use `forStratifiedFlow(...)` for a flowing circular-stratified interface:
+its local holdup chord preserves integrated area and component sources under subdivision of a
+uniform state, including nonuniform cells and finite heat limits. Independent per-cell horizontal
+puddles introduce cell-length dependence during a flowing restart. The two area assumptions are
+distinct models; retain the historical hydrostatic-cycle failure as evidence rather than claiming
+the flowing closure validates static-pool convergence. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
+diagnostics. Representable long-cell trace wedges retain their leading-edge depth without a liquid
+floor; any reported fallback remains a numerical-resolution warning. Configure deliberate wall
+inventory with `setInitialWallTemperatureProfile(...)`
+before `run()` and retain the wall profile through every event/replay. In multilayer mode, its one
+temperature per cell initializes every radial layer uniformly; the layers evolve independently and
+a new steady run clears the old radial inventory. Mesh refinement must preserve physical terrain
+breakpoints and outlet length; a "last three cells" level-outlet rule compares different pipes.
+The wall-coupled 12/24-cell cycle fixes the final 1250 m at -333.5 m on both meshes and retains
+the 10% peak/final inventory gates. Consult its hydrocarbon-pool-transfer receipt for the executed
+result. Maximum single-cell interface area is extensive and is not a convergence target.
+A moving pig still needs separate distributed moving-volume, face-flux and pressure-work
+conservation and qualified inlet states.
+For a declared restart-opening window, use `TwoFluidPipeReport.analyzePressureTrace(...)` to report
+unfiltered extrema, peak-to-peak pressure, maximum sample rate, total/excess variation and reversal
+count with an explicit Pa gate. Preserve the sample interval and do not promote this diagnostic to a
+surge qualification without mesh/time and independent evidence.
+For pressure-protection, rating or allowable checks on a `TwoFluidPipe`, take zone peaks from
+`getLastIntervalPeakPressureProfile("bara")` (and `getLastIntervalPeakInletFacePressure`) after each
+`runTransient` call, not from `getPressureProfile()` samples. Require
+`isLastIntervalPressureEnvelopeSubstepResolved()`. Riser-base gas-pocket collapse after shut-in can
+rise and decay inside one outer step. Measured 2026-11-20 on the synthetic tie-back
+(`examples/production-decision/tieback-protection.md`): at the default CFL 0.5 the substep envelope
+moved by up to 7.9 bar with the outer step. At `setCflNumber(0.25)`, outer-step, CFL and mesh
+refinements agreed within 0.36 bar on 60/120 cells. A 240-cell mesh added 0.60 bar, so the local
+riser-base peak is time-converged but not mesh-converged. Use CFL 0.25 for riser-base/countercurrent
+fallback studies, show one CFL and two mesh refinements, and report a growing mesh increment as open. See `docs/wiki/two_fluid_reporting_and_validation.md`.
+Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each
 withdrawal by `phase mass / relaxation time`. An absent phase must have exactly zero evaporation
@@ -444,11 +714,91 @@ oil or water seeding. Check gas, oil, water, liquid, and total closure with
 `TwoFluidMassBalanceReport`; sweep nearby temperatures, refine time step and mesh, repeat the run,
 and compare rigorous flash with `FlashTable`. The flash table must retain the oil/aqueous liquid mass
 split. Record EOS, mixing rule, composition, absolute pressure, temperature, mass-transfer
-relaxation time, and units. The current hydrodynamic state transports bulk phase inventories, not a
-full component-composition vector per cell, and does not establish equivalence with any commercial
-transient multiphase simulator.
+relaxation time, and units. With named-component transport, freeze component source compositions
+and their partial-enthalpy latent source from the same RHS-stage equilibrium state as the
+hydrodynamic phase source. A disappearing phase uses its conserved donor composition for the
+property state; a receiving phase still uses only the equilibrium flash composition. Require
+phase, total, named-component, interphase, bounded-fraction, and latent-inclusive energy closure.
+
+The conservative Lagrangian slug/film + named-component + phase-transfer + thermal combination is
+currently verified only with single-stage Euler. Reject a multi-stage selection before mutation
+until intermediate phase appearance owns stage-local component inventories. Signed outlet backflow
+with named-component transport requires `setOutletBoundaryFluid(externalFluid)` before
+`setAllowOutletPhaseBackflow(true)`; this explicitly owns reversed phase composition, density, and
+enthalpy. The last interior composition is not a valid inflow boundary. Treat the synthetic
+same-gas pressure-ramp regression as boundary-contract evidence only, not complete restart or
+evaporation-rate qualification. When the physical outlet is a gas takeoff above retained liquid,
+use `setGasOnlyOutletTakeoff(true)` with a constant-pressure outlet; do not zero liquid inventories
+or manufacture a separator mixture. The mode closes external oil/water mass, component and
+advected-energy flux while preserving their traction and internal drainage. None of these numerical contracts establishes equivalence with a
+commercial transient multiphase simulator.
+
+A negative prescribed inlet mass rate is pipe outflow: phase split, composition and enthalpy come
+from the first finite-volume cell, not the external feed. Audit countercurrent boundary cases with
+`getLastBoundaryPhaseMomentumFluxes()` and `getLastBoundaryPhasePressureForces()` so donor advection
+and interior pressure traction remain distinct. These are boundary diagnostics, not a whole-domain
+momentum-conservation claim or physical restart qualification.
+
+## TwoFluidPipe Regime-Transition Continuation
+
+Transient wall-friction, interfacial-friction, interfacial-area, and entrainment sources must
+consume the dimensionless normalized weights from `FlowRegimeDetector.classify(...)`. Do not
+reintroduce `detectFlowRegime(...)` as a hard source switch: the steady hold-up and transient
+momentum paths would then see different closures at the same state. Keep stratified geometry active
+whenever a stratified weight is non-zero. Pure-regime endpoints must reproduce the original closure
+exactly.
+
+Blend interfacial forces directly as the weighted sum of each regime's shear times area;
+separately averaging the two factors introduces spurious cross terms. Verify the actual
+momentum source and equal/opposite phase reactions in transition tests.
+
+This continuation does not authorize changes to regime criteria, transition-band widths, hold-up
+correlations, or regime-specific friction models. It remains experimental until the public
+Tengesdal envelope, the liquid-rich 1,800 s inventory criterion, conservation, nonlinear
+convergence, nearby operating points, refinement, and runtime gates all pass. Continue to reject a
+completed time loop whose sticky coupled-solver diagnostics fire.
 
 ## TwoFluidPipe Coupled Pressure-Momentum Gate
+
+For a source-free steady-to-transient handoff, first verify that
+`getGasMassFlowProfile()`, `getOilMassFlowProfile()` and `getWaterMassFlowProfile()` are each
+flat. Local steady flashes may refresh properties but must not repartition transported phase mass
+unless the transient phase-transfer sources are enabled. In dispersed oil-water flow, use the
+regime detector's Hinze droplet size through
+`calcOilWaterInterfacialAreaPerLength()`; a pipe-scale line interface under-resolves droplet drag.
+The 5.4 km synthetic riser fixture is numerically verified for 60 s on 60/120 cells and 0.25/0.125 s
+reporting steps with nonnegative accepted phase outlet transfer and less than 0.1% phase-inventory
+drift. This is a fixed-boundary initialization gate, not severe-slugging or experimental evidence.
+
+Before a choke move on a three-phase riser, check `getOilWaterFlowRegimeProfile()` against the
+gas-liquid regime. Annular, churn, bubbly and mist cells must report a dispersed oil-water state:
+gas shear sets the mixing scale (`TwoFluidSection.calcOilWaterMixingVelocity()`), and the steady
+slip split uses the same velocity. If a stepped run shows water falling against rising oil in the
+riser, check for an oil-water regime flip. The steady-consistency correction now drops its relative
+oil-water force on such a flip and keeps only the combined liquid force. Measured 2026-11-15 on the
+5.4 km fixture with a pressure-coupled choke stepped 65% to 58%: water outflow formerly stopped at
+13 s on 60 cells, 0.25 s steps (12.75 s at 0.125 s, 13.25 s on 120 cells). It now stays positive
+through 150 s (about 1.0 kg/s on 60 cells, 0.85 kg/s on 120) while the riser gains about 400-520 kg
+of liquid as gas slows. Regression: `TwoFluidPipeThreePhaseChokeStepTest`
+(equinor/neqsim#5046).
+
+On the coupled route without mass transfer, component transport or non-equilibrium film transfer,
+property updates advance gas and oil density at frozen composition
+(`setFrozenCompositionDensityUpdate`, default true). Do not switch it off for a pack-up, shut-in or
+HIPPS study: the equilibrium reset swells the oil at fixed mass and makes gas-bearing cells alternate
+above about 180 bara. Measured 2026-11-22 on a closed 400 m line fed 50 kg/s for 20 s from 170 bara:
+229 bara by frozen-composition compression of the pipe inventory, 234 bara with the default, 334 bara
+with the reset (`TwoFluidPipeFrozenCompositionDensityTest`). The default describes phases that
+exchange no mass; when gas dissolving into oil matters over the pack-up time, enable mass transfer
+or component transport and say which was used.
+
+In a rising cell the regime detector requires a void fraction below 0.52 for bubble flow
+(`FlowRegimeNearDryRiserTest`). A near-dry closed riser top can still change regime when its gas
+velocity changes sign. Measured 2026-11-22 on a 15.6 km tie-back packing to 232 barg with the default
+flux: 23 riser-top steps above 1 bar in 3000 s, 13 bar at most (131 bar before the frozen-composition
+update); `setMaterialWaveRusanovEnabled(true)` gave steps up to 83 bar there. Read the pack-up rate
+and inlet pressure from such a run, and do not read riser-top film velocities at the recovery limit,
+or the pressure steps with them, as a pressure peak.
 
 For a liquid-rich pressure outlet that physically permits phase fallback, the coupled path requires
 all four options. Keep the nonlinear controls explicit in reproducible studies:
@@ -491,6 +841,49 @@ therefore numerical-progress evidence only, not sustained-severe-slugging or com
 evidence. Never tune a public closure to the commercial trace; validate the next boundary-coupling
 increment against the public Tengesdal experiment, conservation, nearby points, and mesh/time-step
 refinement.
+
+The unsplit transactional callback exposes directional gas/oil/water face diagnostics: separate
+forward/reverse mass transport, donor advective momentum, pressure traction, physical cell lengths,
+and phase mass sources. The experimental directional-complementarity option augments the nonlinear
+vector with nonnegative mass magnitude, advective momentum and a donor multiplier per internal
+phase face and direction, conservatively replaces the free flux, and carries solved faces into prepared-step
+verification. Physical AUSM transport and pressure correction retain separate donors. Exactly absent donors use
+conflict-free exact donor-presence anchors, zero-flow rows and zero-momentum rows; do not add an
+inventory floor. This is not yet a qualified phase-transition path: the six unchanged 0.1 s lanes
+pass. The nonlinear path may now land exactly on a zero phase/face bound, project only outward
+search components at an already active exact bound, and release each donor row independently.
+Rejected line-search trials use independent active-set copies. These are conservative transition
+mechanics, not a tolerance, inventory clip, or fitted donor smear. Exact disappearance, simultaneous
+opposing streams and phase-free multi-cell cases pass. All no-pressure-interpolation five-second lanes
+complete; pressure-interpolated baseline and augmented lanes still stop at 1.075--1.8427734375 s, so
+the complete gate remains failed. Retain
+all five-second, 180 s and 600 s gates.
+
+For current unsplit preparation without transient pressure interpolation, passive wall and
+interphase friction is advanced once by the conservative frozen-resistance source after transport
+converges. Inspect `PreparedStep.getConservativeFrictionImpulsePerLength()` and the interval sum
+alongside phase-mass and residual ledgers. All three unchanged midpoint five-second Tengesdal lanes
+now complete, but the pressure-interpolated lanes still fail at 1.4000/1.8125/0.9750 s. Keep that
+operator on its existing friction owner: combining the two currently regresses the exact
+trace-phase/donor event. This is numerical source qualification, not severe-slugging, restart or
+pigging evidence.
+
+For the frozen-phase execution route, a negative outlet phase transfer must own
+an explicit `setOutletBoundaryFluid(...)` donor. Conservation retains its sign;
+the forward downstream stream contains only positive phase exports. With
+backward Euler, pressure interpolation, transition blending and signed donor
+transport, the historical-grid 16/24-cell five-second matrix and the 16-cell
+180/600 s atomic-publication gates pass. Long intervals allocate a
+duration-weighted share of the unchanged `1e-8` cumulative residual budget to
+each nonlinear step without changing the configured solver tolerance. This is
+numerical duration and transaction evidence, not the separate experimental
+Tengesdal amplitude/period/cycle acceptance or restart/pigging qualification.
+
+Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
+completed intervals needs `N + 1` events, so the settled window must span at least `N` times the
+largest admissible cycle period, plus phase and boundary margin. Keep shorter runs as numerical
+characterization when they cannot contain the qualification cycle count; enforce the complete
+cycle gate in the long-duration qualification run.
 
 ## Running Dynamic Simulation
 
@@ -637,17 +1030,70 @@ override unless it is classified or cites an explicit repository ADR. Custom/dow
 `UNCLASSIFIED_DYNAMIC` until reviewed. `isFullyAudited()` is an inventory signal only: it does not certify numerical
 stability, conservation, benchmark parity, controls performance, or safety suitability. In particular,
 `PipeBeggsAndBrills` has distributed profile state but no conservative line-pack/storage term; do not use its capability
-label to claim severe-slugging or liquid-rich transient validity. Route those studies to the qualified `TwoFluidPipe`
-path and apply the relevant numerical and public-benchmark gates.
+label to claim severe-slugging or liquid-rich transient validity. Use `TwoFluidPipe` only when the requested
+configuration fits a numerically verified or experimentally qualified evidence-matrix row. Route failed or unsupported
+severe-slugging, slug-statistics, and boundary-composition cases to a separately qualified model or controlled
+experimental study.
+
+For closed or near-static terrain initialization, the interior pressure operator is analytically well balanced for a
+common mixture pressure: 90 flat/affine/curved, constant/smooth/alternating-density, 12--192-cell pure-gas/oil cases
+and a separate 45-case pure-water extension remain below `1e-10 m/s2` with exactly zero local mass and energy rates.
+Its signed energy correction is `Q * deltaP`
+with the mass donor and its diagnostic is transaction-safe. This is numerical fixed-point evidence only. Do not use it
+to qualify a two-density stationary pool, a moving interface, shutdown/restart, severe slugging, or pigging; those still
+require their separate evidence-matrix gates.
+
+For a gas/one-liquid circular section, the default-off
+`setStratifiedHydrostaticPressureMomentsEnabled(true)` option adds the phase-density pressure moments to internal and
+external momentum traction and the matching `Q * F / A` total-energy work with the mass donor. Exact phase endpoints,
+closed-domain force telescoping, signed flow, rollback and default-off restoration are covered by
+`StratifiedPressureMomentCouplingTest`. Simultaneous positive oil and water and diameter steps reject explicitly. This
+completes an operator prerequisite only; do not route it as evidence of elapsed pool retention, shutdown/cooldown,
+restart, severe slugging, hydraulic pigging or predictive evaporation.
+
+For phase appearance, retain both face fractions in
+`GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter)`.
+The minority-area inversion uses relative accuracy and algebraic reflection; do not pass the legacy
+general holdup-to-depth approximation into pressure work, where its absolute area cutoff distorts traces.
+The enabled historical 12/24-cell ramp currently stops at 0.25 s on the unchanged face-volume
+closure guard. Keep the executable coupling rejection record attached; instantaneous operator
+identities do not qualify full elapsed transient operation.
+
+For an explicitly reduced-order dry-gas pig calculation, inspect
+`IdealGasPiggingModel`. It advances immutable conservative upstream/downstream
+gas inventories with `PigMotion`, moving-volume work and the existing
+`IdealGasReleaseModel` bypass. Preserve the user-declared maximum time,
+donor-mass fraction and pig-travel fraction controls, and inspect total mass,
+combined energy, contact impact and timestep-refinement evidence. This is two
+well-mixed calorically perfect gas chambers, not distributed pipe dynamics.
+Launcher/receiver contact uses `PigMotion.advanceToPosition`; that API finds the
+first crossing on either side of a stop/reversal and retains the analytical work
+ledger, but the caller still owns the physical response to other position events.
+The Hendrix 62 m/52 mm dimensions do not qualify synthetic pressures, friction
+or bypass parameters. Do not infer `TwoFluidPipe` moving boundaries, liquid
+sweeping, receiver surge capacity, physical restart, severe slugging, pig
+trains or experimental/field validation.
 
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
-2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
+2. **Timestep size**: `ProcessSystem.runTransient` sub-steps automatically below the smallest unit
+   `getMaxStableTransientTimeStep()` (dynamic separators: 0.1 x gas mass / max boundary mass flow), so a
+   long control-interval step such as 100 s is safe; the clock advances by the requested step and one
+   history row is kept per call. Check `getLastTransientSubstepCount()` for cost. Turning it off with
+   `setAutomaticTransientSubstepping(false)` restores one explicit step per call: then keep `dt` below the
+   separator's stable step yourself (measured on the discussion-1574 separator, 2026-11-14: 100 s steps
+   overshot to 25-28 bara from a 9 bara feed and failed; 10 s oscillated; sub-stepped 100 s matched a 1 s
+   reference within 0.01 bara after 2000 s at 2.7x its speed). A `rejected transient VU state` error means the step was too long, or, when it says the
+   vessel is liquid-full, that level control cannot make the liquid outflow exceed the inflow.
 3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.
 4. **Controller windup**: Large setpoint changes can cause integral windup
 5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range
 7. **Enable dynamic (inventory) mode for level loops**: after `process.run()` (steady), call `setCalculateSteadyState(false)` on the separator AND every valve, then `separator.setLiquidLevel(startFraction)`, before `runTransient`. If steady-state mode is left on, the separator liquid level stays pinned at its default (0.5) and the level controller never acts. The valve `Cv` is auto-derived from the steady solve. A **liquid-outlet** level valve is `setReverseActing(false)` (level up -> valve opens); put a pressure controller on the gas-outlet valve so the vessel pressure is held and the level loop is isolated.
 8. **Physical-step UUIDs**: never reuse one non-null UUID across multiple outer timesteps. Reuse is reserved for refinement/evaluation of one physical step.
+9. **Restarting episodes**: `process.storeInitialState()` after `run()`, then `process.reset()` per episode (RL /
+   Gymnasium loops). With complete transient checkpoint coverage (`isInPlaceResetAvailable()`), reset restores
+   into the existing objects, so held references to separators, valves and controllers stay valid; otherwise it
+   swaps in copies and they must be re-fetched with `getUnit(name)`. `setHistoryCapacity(n)` bounds the history.
 
 ## Pluggable Integrator Strategies
 
@@ -760,3 +1206,81 @@ CompositionAnalyzer ax = new CompositionAnalyzer("AX-1", sweetGas, "methane",
 FlowRatioMeter rxn = new FlowRatioMeter("FR-1", recycleStream, feedStream,
     FlowRatioMeter.FlowBasis.MASS);
 ```
+
+
+### Use one physical pressure-, temperature- or flow-transmitter sample per control scan
+
+For qualified controller or alarm studies, explicitly enable physical-step sampling on the concrete
+`PressureTransmitter`, `TemperatureTransmitter` or `VolumeFlowTransmitter` and register it in the `ProcessSystem`. The
+process samples once after events and field inputs and before equipment/controllers; controller, history and alarm
+consumers share that held value. For a flow loop, use for example `FT100.setUnit("kg/hr")` followed by
+`FT100.setTransientSamplingEnabled(true)`. Declare the physical scan interval, configured phase/unit, filter time
+constant, integer sample delay, noise basis and any sensor-fault rate. Flow conversions to `kg/hr`, `m^3/hr`,
+`Nm^3/day` and `Sm^3/day` are frozen at the sample instant. Direct pressure/temperature reads retain the legacy
+read-driven modifier path; direct flow reads remain raw. Treat a stuck or biased FT as a study failure mode, not an
+independent safeguard. Vendor dynamics, alarm/trip integrity, SIL, voting and independence remain external evidence.
+
+## Safety Shutdown forward acoustic pump boundary
+
+Use `AcousticPumpBoundary` with upstream `WaterHammerPipe.BoundaryType.PUMP`
+for a declared single-liquid forward curve and actual positive-speed table.
+Its constructor fits copied reference data through existing `PumpChart`, checks
+monotonicity/domain/units and preserves Java restart state. Configure before
+`run()`; changing the boundary requires explicit reinitialization. Actual-speed
+and valve-travel knots use the same pipe clock. Use an explicit empty
+`eventSchedule` for pump-only `WaterHammerStudy` JSON. Study output includes
+aligned speed/inlet-flow/inlet-pressure/hydraulic-work histories. Unsupported
+curve transitions return an error with last accepted state and internal outlet
+history, never a successful truncated trip.
+
+Follow the [physical inputs, equations, public example and limits](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+Do not extrapolate clamped curves, turn stopped pumps into closed valves or
+claim a prescribed-speed adapter supplies shaft inertia, four-quadrant operation,
+check-valve disc/contact slam, NPSH/cavity physics, global rollback or integrated
+Safety Shutdown qualification. Existing canonical coordinator and ESD APIs own
+those integrations; do not create another scheduler or pressure-flow architecture.
+
+## Safety Shutdown ideal acoustic lift/contact handoff
+
+The experimental `AcousticLiftCheckValve` couples declared translating mechanics
+and signed jet/swept flow inside existing WaterHammerPipe substeps. Numerical
+inelastic contact and local Java restart do not qualify continuous impact/grazing
+timing, a full pump trip or global coordinator rollback. Keep the existing
+physical-step/event identities and ESD chain; no parallel scheduler or solver.
+Read the [acoustic model, accepted histories and public evidence](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve)
+and hand specialist hydraulic cases to `neqsim-water-hammer`. Asset/vendor,
+phase-change, structural and integrated Safety Shutdown remain NOT_EVALUATED.
+
+
+### Cross-sectional gravitational energy budget
+
+Use the existing `GeometryCalculator.StratifiedPressureMoments` derived centre-referenced phase
+first moments [m3] and `getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)`
+[J/m] for an explicit static normal-gravity budget. No solver state or serialized field is added.
+See [the executed analytical/high-precision energy record](../../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+This does not resolve the documented dry/wet pressure impulse or qualify dynamic pools, inlet refill
+or hydrocarbon evaporation; those still require conservative phase-front transport/work and heat/mass transfer.
+
+
+### Optional Rusanov phase-flux contract
+
+The default remains AUSM+. `AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local query,
+and `TwoFluidPipe.setRusanovInternalFluxEnabled(true)` selects the qualified two-donor operator on
+independent gas/oil/water internal faces after `setEnableWaterOilSlip(true)`.
+Its dissipated energy is `alpha * (rho * H - p)` with total specific enthalpy;
+exact absence ignores unused properties and positive traces retain the same formula.
+SRK gas/oil controls distinguish EOS-volume internal energy from physical-density mechanical
+energy using explicit pressure-volume work; do not mix these API conventions in a reference.
+See the [executed conservative-flux evidence](../../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md).
+Forward and reverse donor streams remain separate through Runge-Kutta staging, pressure work and
+transactional component transport; their difference must reproduce the hydrodynamic net. The
+combined-liquid split, pressure interpolation, reconstructed slug faces and one-direction unsplit
+complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
+phase, total-energy and rollback reports.
+Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
+
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+Dynamic parameters should come from data where data exists. `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) identifies time constants, delays and PID tuning from historian windows. NeqSim `steady_gains` checks the identified gains, and `simulate_unit` replays the identified reduced model.
+
+Use reduced models for stable regimes with identifiable dominant dynamics. Use the native NeqSim dynamic equipment in this skill for inventory, phase redistribution, network hydraulics and slugging. Calling a steady process repeatedly does not make a transient model. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).

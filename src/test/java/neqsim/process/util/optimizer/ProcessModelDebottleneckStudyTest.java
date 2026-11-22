@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
@@ -31,6 +32,7 @@ import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.MetricKind;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.MetricSampler;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.StudyOutcome;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.StudyResult;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.OperatingActionCandidateListSearch;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -46,13 +48,15 @@ class ProcessModelDebottleneckStudyTest {
   private static final class Fixture {
     private final Stream feed;
     private final CapacityConstraint installedCapacity;
+    private final CapacityConstraint downstreamCapacity;
     private final ProcessModel model;
     private final ProcessModelSimulationEvaluator evaluator;
 
-    private Fixture(Stream feed, CapacityConstraint installedCapacity, ProcessModel model,
-        ProcessModelSimulationEvaluator evaluator) {
+    private Fixture(Stream feed, CapacityConstraint installedCapacity, CapacityConstraint downstreamCapacity,
+        ProcessModel model, ProcessModelSimulationEvaluator evaluator) {
       this.feed = feed;
       this.installedCapacity = installedCapacity;
+      this.downstreamCapacity = downstreamCapacity;
       this.model = model;
       this.evaluator = evaluator;
     }
@@ -68,7 +72,7 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void pairedCapacityAlternativeIsDeterministicSerializableAndReversible() throws Exception {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     int evaluationCountBeforeStudy = fixture.evaluator.getEvaluationCount();
 
     ProcessModelDebottleneckStudy study = createStudy(fixture, "kg/hr");
@@ -78,8 +82,8 @@ class ProcessModelDebottleneckStudyTest {
     assertTrue(first.isCapacityRestored());
     assertTrue(first.isProcessStateRestored());
     assertTrue(first.isRecoverySimulationConverged());
-    assertArrayEquals(new double[] { 999.0 }, first.getBaseline().getSelectedParameters(), 0.0);
-    assertArrayEquals(new double[] { 1199.0 }, first.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {999.0}, first.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {1199.0}, first.getAlternative().getSelectedParameters(), 0.0);
     assertEquals(200.0, first.getObjectiveDelta(), 1.0e-8);
     assertEquals(5, first.getBaseline().getEvaluationCount());
     assertEquals(5, first.getAlternative().getEvaluationCount());
@@ -97,16 +101,23 @@ class ProcessModelDebottleneckStudyTest {
 
     assertEquals(1000.0, first.getOriginalCapacityState().getApplicableLimit(), 0.0);
     assertEquals(1200.0, first.getAppliedCapacityState().getApplicableLimit(), 0.0);
+    assertEquals(1000.0, first.getAppliedCapacityState().getDesignValue(), 0.0);
+    assertTrue(first.getAppliedCapacityState().hasOperatingLimit());
+    assertEquals(1200.0, first.getAppliedCapacityState().getOperatingLimit(), 0.0);
     assertEquals(1000.0, first.getBaseline().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
     assertEquals(1200.0, first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
-    assertEquals("synthetic replacement equipment basis",
+    assertEquals("synthetic installed basis",
         first.getAlternative().getInstalledCapacityEvidence().get(0).getDataSource());
+    assertEquals(CapacityConstraint.ApplicableLimitRole.CONFIGURED_OPERATING,
+        first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimitRole());
+    assertEquals("synthetic replacement equipment basis",
+        first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimitSourceReference());
     assertEquals(0.90, first.getAlternative().getInstalledCapacityEvidence().get(0).getConfidence(), 0.0);
     assertOriginalStateRestored(fixture);
 
     double[] exposed = first.getAlternative().getSelectedParameters();
     exposed[0] = -1.0;
-    assertArrayEquals(new double[] { 1199.0 }, first.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {1199.0}, first.getAlternative().getSelectedParameters(), 0.0);
     assertThrows(UnsupportedOperationException.class, () -> first.getMetricComparisons().clear());
 
     StudyResult serialized = roundTrip(first);
@@ -131,7 +142,7 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void incompatibleCapacityAlternativeFailsClosedWithoutEvaluation() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     int evaluationCountBeforeStudy = fixture.evaluator.getEvaluationCount();
 
     StudyResult result = createStudy(fixture, "t/day").evaluate();
@@ -148,7 +159,7 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void unavailableRequiredMetricRetainsPhysicalEvidenceAndRestoresState() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     ProcessModelDebottleneckStudy study = createStudy(fixture, "kg/hr");
     study.addMetric(new MetricDefinition("required-quality", "Required quality", MetricKind.OTHER, "mol/mol",
         "dry product basis", "synthetic unavailable analyzer", "single steady state", 0.5, true, new MetricSampler() {
@@ -172,14 +183,115 @@ class ProcessModelDebottleneckStudyTest {
     assertOriginalStateRestored(fixture);
   }
 
+  /** Transactional operating actions must use the same paired search and restore every candidate exactly. */
+  @Test
+  void pairedOperatingActionAlternativeIsQualifiedAndReversible() {
+    Fixture fixture = createFixture();
+    ProcessModelSimulationEvaluator simulation = new ProcessModelSimulationEvaluator(fixture.model);
+    simulation.setIncludeStrategyCapacityConstraints(false);
+    simulation.addObjective("feed production", model -> model.getVariableValue("wells::feed.flowRate", "kg/hr"),
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    simulation.getObjectives().get(0).setUnit("kg/hr");
+    ProcessModelOperatingAction action = ProcessModelOperatingAction.continuous("feed-rate", "Feed rate",
+        "wells::feed.flowRate", 800.0, 1400.0, "kg/hr", "synthetic throughput action");
+    ProcessModelOperatingActionSetEvaluator actions = new ProcessModelOperatingActionSetEvaluator("paired-feed-actions",
+        "Paired feed actions", "synthetic transactional regression", simulation, Arrays.asList(action));
+    actions.requireHydraulicConstraint(ProcessModelOperatingActionEvaluator.HydraulicLimitRole.GATHERING_HYDRAULICS,
+        "separation", "separator", "installed gas rate", "synthetic installed capacity requirement");
+    ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult probe = actions.evaluate(new double[] {800.0});
+    assertTrue(probe.isFeasible(), probe.getOutcome() + ": " + probe.getDiagnostics());
+    List<double[]> candidates = new ArrayList<double[]>();
+    candidates.add(new double[] {800.0});
+    candidates.add(new double[] {999.0});
+    candidates.add(new double[] {1199.0});
+    candidates.add(new double[] {1400.0});
+    OperatingActionCandidateListSearch search = new OperatingActionCandidateListSearch("ordered-action-grid",
+        "Ordered action grid", "synthetic common paired candidates", candidates, 0, 0.0);
+    CapacityAlternative alternative = new CapacityAlternative("separator-gas-1200",
+        "Raise separator installed gas capacity", "synthetic brownfield screening case", "separation", "separator",
+        "installed gas rate", 1200.0, "kg/hr", LimitDirection.MAXIMUM, "synthetic replacement equipment basis", 0.90,
+        900.0, 1300.0);
+    ProcessModelDebottleneckStudy study = new ProcessModelDebottleneckStudy("paired-action-study",
+        "Paired action capacity study", "synthetic transactional paired regression", actions, alternative, search, 0);
+
+    StudyResult result = study.evaluate();
+
+    assertEquals(StudyOutcome.COMPLETED, result.getOutcome(), result.getDiagnostics().toString() + " baseline="
+        + (result.getBaseline() == null ? "null" : result.getBaseline().getDiagnostics().toString()));
+    assertArrayEquals(new double[] {999.0}, result.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {1199.0}, result.getAlternative().getSelectedParameters(), 0.0);
+    assertEquals(200.0, result.getObjectiveDelta(), 1.0e-8);
+    assertTrue(result.getBaseline().isProcessStateRestored());
+    assertTrue(result.getAlternative().isProcessStateRestored());
+    assertTrue(result.isCapacityRestored());
+    assertTrue(result.isProcessStateRestored());
+    assertTrue(result.isRecoverySimulationConverged());
+    assertThrows(IllegalStateException.class, () -> study.addMetric(new MetricDefinition("unsupported", "Unsupported",
+        MetricKind.OTHER, "-", "none", "none", "none", 1.0, false, model -> 0.0)));
+    assertOriginalStateRestored(fixture);
+  }
+
+  /**
+   * A two-constraint alternative must be evaluated as one simulator scenario, preserve the observed interaction, and
+   * restore both limits rather than adding the independent deltas.
+   */
+  @Test
+  void combinedCapacityAlternativeIsObservedAndFullyRestored() {
+    Fixture fixture = createFixture();
+    fixture.downstreamCapacity.setDesignValue(1100.0);
+    fixture.evaluator.evaluate(new double[] {800.0});
+    List<double[]> candidates = Arrays.asList(new double[] {800.0}, new double[] {999.0}, new double[] {1099.0},
+        new double[] {1199.0}, new double[] {1299.0}, new double[] {1400.0});
+    CandidateListSearch search = new CandidateListSearch("combined-throughput-grid", "Combined throughput grid",
+        "synthetic exact combination candidates", candidates, 0, 0.0);
+    CapacityAlternative separatorAlternative = new CapacityAlternative("separator-gas-1200",
+        "Raise separator gas capacity", "synthetic combination regression", "separation", "separator",
+        "installed gas rate", 1200.0, "kg/hr", LimitDirection.MAXIMUM, "synthetic separator replacement", 0.90, 900.0,
+        1300.0);
+    CapacityAlternative downstreamAlternative = new CapacityAlternative("downstream-gas-1300",
+        "Raise downstream gas capacity", "synthetic combination regression", "separation", "separator",
+        "downstream gas rate", 1300.0, "kg/hr", LimitDirection.MAXIMUM, "synthetic downstream replacement", 0.90,
+        1000.0, 1400.0);
+    ProcessModelDebottleneckStudy combined = new ProcessModelDebottleneckStudy("combined-capacity-study",
+        "Combined capacity study", "synthetic non-additive combination regression", fixture.evaluator,
+        Arrays.asList(separatorAlternative, downstreamAlternative), search, 0);
+
+    StudyResult result = combined.evaluate();
+
+    assertEquals(StudyOutcome.COMPLETED, result.getOutcome(), result.getDiagnostics().toString());
+    assertEquals(2, result.getAlternativeDefinitions().size());
+    assertEquals(2, result.getOriginalCapacityStates().size());
+    assertEquals(2, result.getAppliedCapacityStates().size());
+    assertArrayEquals(new double[] {999.0}, result.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {1199.0}, result.getAlternative().getSelectedParameters(), 0.0);
+    assertEquals(200.0, result.getObjectiveDelta(), 1.0e-8);
+    assertEquals(1000.0, result.getOriginalCapacityStates().get(0).getApplicableLimit(), 0.0);
+    assertEquals(1100.0, result.getOriginalCapacityStates().get(1).getApplicableLimit(), 0.0);
+    assertEquals(1200.0, result.getAppliedCapacityStates().get(0).getApplicableLimit(), 0.0);
+    assertEquals(1300.0, result.getAppliedCapacityStates().get(1).getApplicableLimit(), 0.0);
+    assertTrue(result.isCapacityRestored());
+    assertTrue(result.isProcessStateRestored());
+    assertTrue(result.isRecoverySimulationConverged());
+    assertEquals(1000.0, fixture.installedCapacity.getApplicableLimit(), 0.0);
+    assertEquals(1100.0, fixture.downstreamCapacity.getApplicableLimit(), 0.0);
+    assertFalse(fixture.installedCapacity.hasOperatingLimit());
+    assertFalse(fixture.downstreamCapacity.hasOperatingLimit());
+    assertEquals(800.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
+    assertThrows(UnsupportedOperationException.class, () -> result.getAlternativeDefinitions().clear());
+    assertThrows(IllegalArgumentException.class,
+        () -> new ProcessModelDebottleneckStudy("duplicate-combination", "Duplicate combination",
+            "synthetic duplicate regression", fixture.evaluator,
+            Arrays.asList(separatorAlternative, separatorAlternative), search, 0));
+  }
+
   /** Creates the deterministic paired study used by the focused tests. */
   private ProcessModelDebottleneckStudy createStudy(Fixture fixture, String alternativeUnit) {
     List<double[]> candidates = new ArrayList<double[]>();
-    candidates.add(new double[] { 800.0 });
+    candidates.add(new double[] {800.0});
     // Keep selected points 1 kg/hr inside each limit so unit-conversion roundoff cannot make equality infeasible.
-    candidates.add(new double[] { 999.0 });
-    candidates.add(new double[] { 1199.0 });
-    candidates.add(new double[] { 1400.0 });
+    candidates.add(new double[] {999.0});
+    candidates.add(new double[] {1199.0});
+    candidates.add(new double[] {1400.0});
     CandidateListSearch search = new CandidateListSearch("ordered-throughput-grid", "Ordered throughput grid",
         "synthetic acceptance candidate set", candidates, 0, 0.0);
     CapacityAlternative alternative = new CapacityAlternative("separator-gas-1200",
@@ -221,9 +333,19 @@ class ProcessModelDebottleneckStudyTest {
             return feed.getFlowRate("kg/hr");
           }
         });
+    final CapacityConstraint downstream = new CapacityConstraint("downstream gas rate", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(2000.0).setMaxValue(2200.0).setWarningThreshold(0.90).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("synthetic downstream basis").setConfidence(0.95).setValidityRange(500.0, 2300.0)
+        .setValueSupplier(new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return feed.getFlowRate("kg/hr");
+          }
+        });
     Separator separator = new Separator("separator", feed);
     separator.clearCapacityConstraints();
     separator.addCapacityConstraint(installed);
+    separator.addCapacityConstraint(downstream);
 
     ProcessSystem wells = new ProcessSystem("wells");
     wells.add(feed);
@@ -243,7 +365,7 @@ class ProcessModelDebottleneckStudyTest {
           }
         }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE).addEquipmentCapacityConstraints();
     evaluator.getObjectives().get(0).setUnit("kg/hr");
-    return new Fixture(feed, installed, model, evaluator);
+    return new Fixture(feed, installed, downstream, model, evaluator);
   }
 
   /** Confirms exact recovery of every mutable installed-capacity field and the process set point. */
@@ -262,6 +384,7 @@ class ProcessModelDebottleneckStudyTest {
     assertEquals(500.0, fixture.installedCapacity.getValidityMinimum(), 0.0);
     assertEquals(1400.0, fixture.installedCapacity.getValidityMaximum(), 0.0);
     assertEquals(12.3, fixture.installedCapacity.getShadowPrice(), 0.0);
+    assertFalse(fixture.installedCapacity.hasOperatingLimit());
     assertEquals(800.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
   }
 

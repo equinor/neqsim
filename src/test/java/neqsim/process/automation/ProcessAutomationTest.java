@@ -887,6 +887,7 @@ class ProcessAutomationTest {
 
   @Test
   void testCompressorIsentropicEfficiency() {
+    assertTrue(automation.isWritableAddress("Compressor.isentropicEfficiency"));
     automation.setVariableValue("Compressor.isentropicEfficiency", 0.85, null);
     double eff = automation.getVariableValue("Compressor.isentropicEfficiency", null);
     assertEquals(0.85, eff, 0.01);
@@ -1038,7 +1039,7 @@ class ProcessAutomationTest {
     s.setFlowRate(10000.0, "kg/hr");
 
     Splitter splitter = new Splitter("Splitter", s, 2);
-    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    splitter.setSplitFactors(new double[] {0.6, 0.4});
 
     ProcessSystem ps = new ProcessSystem();
     ps.add(s);
@@ -1353,15 +1354,8 @@ class ProcessAutomationTest {
     // READ_ONLY_VARIABLE diagnostic via the safe accessor.
     String json = automation.setVariableValueSafe("Cooler.outletStream.temperature", 50.0, "C");
     com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
-    String status = root.get("status").getAsString();
-    if ("error".equals(status)) {
-      String cat = root.get("category").getAsString();
-      // Either READ_ONLY_VARIABLE or PROPERTY_NOT_FOUND is acceptable depending on
-      // how the underlying setter rejects the attempt.
-      assertTrue(
-          "READ_ONLY_VARIABLE".equals(cat) || "PROPERTY_NOT_FOUND".equals(cat) || "INVALID_ADDRESS_FORMAT".equals(cat),
-          "Expected error category for read-only set, got " + cat);
-    }
+    assertEquals("READ_ONLY_VARIABLE", root.get("category").getAsString());
+    assertFalse(automation.isDirty(), "Rejected OUTPUT write must not dirty the process");
   }
 
   @Test
@@ -1657,7 +1651,7 @@ class ProcessAutomationTest {
     feed.setPressure(60.0, "bara");
 
     Splitter split = new Splitter("Router", feed);
-    split.setSplitFactors(new double[] { 0.5, 0.5 });
+    split.setSplitFactors(new double[] {0.5, 0.5});
 
     ProcessSystem p = new ProcessSystem();
     p.add(feed);
@@ -1683,13 +1677,16 @@ class ProcessAutomationTest {
     // Read the current routing fraction.
     assertEquals(0.5, auto.getVariableValue("Router.splitFactor_0", null), 1e-6);
 
-    // Write a new routing fraction; the splitter renormalises so the factors sum to 1.
+    // Write a new routing fraction exactly; the remaining outlets are rescaled.
     auto.setVariableValue("Router.splitFactor_0", 0.9, null);
     p.run();
     double f0 = auto.getVariableValue("Router.splitFactor_0", null);
     double f1 = auto.getVariableValue("Router.splitFactor_1", null);
+    assertEquals(0.9, f0, 1e-12, "requested routing action must survive splitter normalisation");
+    assertEquals(0.1, f1, 1e-12, "the complementary outlet must preserve total allocation");
     assertEquals(1.0, f0 + f1, 1e-6, "split factors must sum to 1");
-    assertTrue(f0 > 0.5, "branch 0 weight should have increased, got " + f0);
+    assertThrows(IllegalArgumentException.class, () -> auto.setVariableValue("Router.splitFactor_0", Double.NaN, null));
+    assertThrows(IllegalArgumentException.class, () -> auto.setVariableValue("Router.splitFactor_0", 1.01, null));
   }
 
   @Test
@@ -1750,7 +1747,7 @@ class ProcessAutomationTest {
 
     ProcessAutomation auto = new ProcessAutomation(p);
     java.util.List<java.util.Map<String, Double>> candidates = new java.util.ArrayList<java.util.Map<String, Double>>();
-    for (double r : new double[] { 8000.0, 12000.0, 16000.0 }) {
+    for (double r : new double[] {8000.0, 12000.0, 16000.0}) {
       java.util.Map<String, Double> c = new java.util.LinkedHashMap<String, Double>();
       c.put("bfeed.flowRate", r);
       candidates.add(c);
@@ -1778,7 +1775,7 @@ class ProcessAutomationTest {
     ProcessAutomation auto = new ProcessAutomation(model);
 
     java.util.List<java.util.Map<String, Double>> candidates = new java.util.ArrayList<java.util.Map<String, Double>>();
-    for (double pOut : new double[] { 110.0, 130.0 }) {
+    for (double pOut : new double[] {110.0, 130.0}) {
       java.util.Map<String, Double> c = new java.util.LinkedHashMap<String, Double>();
       c.put("Compression::Export Compressor.outletPressure", pOut);
       candidates.add(c);

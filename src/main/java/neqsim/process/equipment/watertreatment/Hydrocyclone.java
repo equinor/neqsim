@@ -140,7 +140,7 @@ public class Hydrocyclone extends Separator {
   // ---------------------------------------------------------------------------
 
   /** Standard liner cone diameters in mm. */
-  public static final double[] STANDARD_LINER_SIZES_MM = { 35.0, 45.0, 60.0 };
+  public static final double[] STANDARD_LINER_SIZES_MM = {35.0, 45.0, 60.0};
 
   /** Liner cone diameter (mm). Default 35 mm is most common for oil-water. */
   private double linerDiameterMm = 35.0;

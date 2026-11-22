@@ -1,0 +1,18 @@
+{
+  "classes": {
+    "neqsim/thermo/component/ComponentGENRTLmodifiedHV.class": "1fc662a7f1ad8e50e36fd4217df2f443956471096b08e59bfb6b96a9e94353e6",
+    "neqsim/thermo/component/attractiveeosterm/AttractiveTermBaseClass.class": "835a8edd21b31a1ad36ffe3939fda578f6b056c8dd5d6975a58d72ef0595d0ec",
+    "neqsim/thermo/mixingrule/EosMixingRuleHandler.class": "08573fdad69affb13159989163f2871e866d80ee234d824022065cf88f436900",
+    "neqsim/thermo/phase/PhaseEos.class": "9472cc64587e465ca0d02f66a24a0874ec9d674037a12383611ee49c30d5a581",
+    "neqsim/thermo/phase/PhaseGENRTLmodifiedHV.class": "53923734d30b87bdd1bb115b5338eb7e4d8288d9d18fac75ffe4d5e80acf8735",
+    "neqsim/thermodynamicoperations/ThermodynamicOperations.class": "2cf43c78c0237af3e933ddf4f988abfb36e37388864292de32c0e5ea65d0973e"
+  },
+  "hv-merged-baseline-classes": {
+    "neqsim/thermo/component/ComponentGENRTLmodifiedHV.class": "19831598202a9c83962969a03a0cd5e0470f10433abc8e02c7cf284606f74c08",
+    "neqsim/thermo/component/attractiveeosterm/AttractiveTermBaseClass.class": "835a8edd21b31a1ad36ffe3939fda578f6b056c8dd5d6975a58d72ef0595d0ec",
+    "neqsim/thermo/mixingrule/EosMixingRuleHandler.class": "08573fdad69affb13159989163f2871e866d80ee234d824022065cf88f436900",
+    "neqsim/thermo/phase/PhaseEos.class": "9472cc64587e465ca0d02f66a24a0874ec9d674037a12383611ee49c30d5a581",
+    "neqsim/thermo/phase/PhaseGENRTLmodifiedHV.class": "53923734d30b87bdd1bb115b5338eb7e4d8288d9d18fac75ffe4d5e80acf8735",
+    "neqsim/thermodynamicoperations/ThermodynamicOperations.class": "2cf43c78c0237af3e933ddf4f988abfb36e37388864292de32c0e5ea65d0973e"
+  }
+}

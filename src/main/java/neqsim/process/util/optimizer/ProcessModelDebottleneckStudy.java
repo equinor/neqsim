@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.automation.ProcessAutomation;
@@ -15,6 +16,9 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ConstraintD
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.EvaluationResult;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDefinition;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ParameterDefinition;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateObjectiveEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult;
 
 /**
  * Evaluates one installed-capacity alternative against a common deterministic production-search policy.
@@ -99,6 +103,26 @@ public final class ProcessModelDebottleneckStudy {
      * @return immutable search selection
      */
     SearchSelection search(ProcessModelSimulationEvaluator evaluator);
+  }
+
+  /** Serializable common search policy for transactional operating-action scenarios. */
+  public interface OperatingActionScenarioSearch extends Serializable {
+    /** @return stable search-policy identifier */
+    String getId();
+
+    /** @return human-readable search-policy name */
+    String getName();
+
+    /** @return source and assumptions for the search policy */
+    String getProvenance();
+
+    /**
+     * Selects one operating-action vector. The study independently verifies the selected vector.
+     *
+     * @param evaluator transactional operating-action evaluator
+     * @return immutable search selection
+     */
+    SearchSelection search(ProcessModelOperatingActionSetEvaluator evaluator);
   }
 
   /** Serializable metric callback sampled once at each verified scenario point. */
@@ -266,6 +290,15 @@ public final class ProcessModelDebottleneckStudy {
     private final double designValue;
     private final double maximumValue;
     private final double minimumValue;
+    private final boolean operatingLimitSet;
+    private final double operatingLimit;
+    private final CapacityConstraint.ConstraintSource operatingLimitSource;
+    private final String operatingLimitSourceReference;
+    private final boolean operatingLimitConfidenceSet;
+    private final double operatingLimitConfidence;
+    private final boolean operatingLimitValidityRangeSet;
+    private final double operatingLimitValidityMinimum;
+    private final double operatingLimitValidityMaximum;
     private final double warningThreshold;
     private final String unit;
     private final CapacityConstraint.ConstraintSeverity severity;
@@ -282,6 +315,17 @@ public final class ProcessModelDebottleneckStudy {
       designValue = constraint.getDesignValue();
       maximumValue = constraint.getMaxValue();
       minimumValue = constraint.getMinValue();
+      operatingLimitSet = constraint.hasOperatingLimit();
+      operatingLimit = operatingLimitSet ? constraint.getOperatingLimit() : Double.NaN;
+      operatingLimitSource = constraint.getOperatingLimitSource();
+      operatingLimitSourceReference = safeText(constraint.getOperatingLimitSourceReference());
+      operatingLimitConfidenceSet = constraint.hasOperatingLimitConfidence();
+      operatingLimitConfidence = operatingLimitConfidenceSet ? constraint.getOperatingLimitConfidence() : Double.NaN;
+      operatingLimitValidityRangeSet = constraint.hasOperatingLimitValidityRange();
+      operatingLimitValidityMinimum = operatingLimitValidityRangeSet ? constraint.getOperatingLimitValidityMinimum()
+          : Double.NaN;
+      operatingLimitValidityMaximum = operatingLimitValidityRangeSet ? constraint.getOperatingLimitValidityMaximum()
+          : Double.NaN;
       warningThreshold = constraint.getWarningThreshold();
       unit = safeText(constraint.getUnit());
       severity = constraint.getSeverity();
@@ -307,7 +351,55 @@ public final class ProcessModelDebottleneckStudy {
       return minimumValue;
     }
 
+    /** @return true when a separate operating limit is configured */
+    public boolean hasOperatingLimit() {
+      return operatingLimitSet;
+    }
+
+    /** @return configured operating limit, or NaN */
+    public double getOperatingLimit() {
+      return operatingLimitSet ? operatingLimit : Double.NaN;
+    }
+
+    /** @return authority backing the operating limit, or null */
+    public CapacityConstraint.ConstraintSource getOperatingLimitSource() {
+      return operatingLimitSet ? operatingLimitSource : null;
+    }
+
+    /** @return reference supporting the operating limit */
+    public String getOperatingLimitSourceReference() {
+      return operatingLimitSet ? operatingLimitSourceReference : "";
+    }
+
+    /** @return true when operating-limit confidence is set */
+    public boolean hasOperatingLimitConfidence() {
+      return operatingLimitSet && operatingLimitConfidenceSet;
+    }
+
+    /** @return operating-limit confidence, or NaN */
+    public double getOperatingLimitConfidence() {
+      return hasOperatingLimitConfidence() ? operatingLimitConfidence : Double.NaN;
+    }
+
+    /** @return true when operating-limit validity is set */
+    public boolean hasOperatingLimitValidityRange() {
+      return operatingLimitSet && operatingLimitValidityRangeSet;
+    }
+
+    /** @return lower operating-limit validity bound, or NaN */
+    public double getOperatingLimitValidityMinimum() {
+      return hasOperatingLimitValidityRange() ? operatingLimitValidityMinimum : Double.NaN;
+    }
+
+    /** @return upper operating-limit validity bound, or NaN */
+    public double getOperatingLimitValidityMaximum() {
+      return hasOperatingLimitValidityRange() ? operatingLimitValidityMaximum : Double.NaN;
+    }
+
     public double getApplicableLimit() {
+      if (operatingLimitSet) {
+        return operatingLimit;
+      }
       return minimumValue > 0.0 && designValue == Double.MAX_VALUE ? minimumValue : designValue;
     }
 
@@ -519,6 +611,153 @@ public final class ProcessModelDebottleneckStudy {
       return null;
     }
 
+    private boolean improves(double candidate, double incumbent, ObjectiveDefinition.Direction direction) {
+      if (direction == ObjectiveDefinition.Direction.MAXIMIZE) {
+        return candidate > incumbent + objectiveTolerance;
+      }
+      return candidate < incumbent - objectiveTolerance;
+    }
+  }
+
+  /** Deterministic common candidate-list search for transactional operating actions. */
+  public static final class OperatingActionCandidateListSearch implements OperatingActionScenarioSearch {
+    private static final long serialVersionUID = 1L;
+
+    private final String id;
+    private final String name;
+    private final String provenance;
+    private final List<double[]> candidates;
+    private final int objectiveIndex;
+    private final double objectiveTolerance;
+
+    /**
+     * Creates a direction-aware ordered search shared by the baseline and capacity alternative.
+     *
+     * @param id stable search identifier
+     * @param name human-readable search name
+     * @param provenance source and assumptions for the ordered candidates
+     * @param candidates operating-action vectors in action declaration order
+     * @param objectiveIndex registered objective used for selection
+     * @param objectiveTolerance absolute objective tolerance retaining the earlier candidate on ties
+     */
+    public OperatingActionCandidateListSearch(String id, String name, String provenance, List<double[]> candidates,
+        int objectiveIndex, double objectiveTolerance) {
+      this.id = requireText(id, "Search identifier");
+      this.name = requireText(name, "Search name");
+      this.provenance = requireText(provenance, "Search provenance");
+      if (candidates == null || candidates.isEmpty()) {
+        throw new IllegalArgumentException("Candidate-list search requires at least one candidate");
+      }
+      List<double[]> copied = new ArrayList<double[]>();
+      for (double[] candidate : candidates) {
+        if (candidate == null) {
+          throw new IllegalArgumentException("Search candidates must not be null");
+        }
+        copied.add(Arrays.copyOf(candidate, candidate.length));
+      }
+      this.candidates = Collections.unmodifiableList(copied);
+      if (objectiveIndex < 0) {
+        throw new IllegalArgumentException("Objective index must be non-negative");
+      }
+      this.objectiveIndex = objectiveIndex;
+      if (!isFinite(objectiveTolerance) || objectiveTolerance < 0.0) {
+        throw new IllegalArgumentException("Objective tolerance must be finite and non-negative");
+      }
+      this.objectiveTolerance = objectiveTolerance;
+    }
+
+    @Override
+    public String getId() {
+      return id;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public String getProvenance() {
+      return provenance;
+    }
+
+    /** @return defensive ordered candidate vectors */
+    public List<double[]> getCandidates() {
+      List<double[]> copy = new ArrayList<double[]>();
+      for (double[] candidate : candidates) {
+        copy.add(Arrays.copyOf(candidate, candidate.length));
+      }
+      return Collections.unmodifiableList(copy);
+    }
+
+    /** @return selected objective index */
+    public int getObjectiveIndex() {
+      return objectiveIndex;
+    }
+
+    /** @return absolute objective tie tolerance */
+    public double getObjectiveTolerance() {
+      return objectiveTolerance;
+    }
+
+    @Override
+    public SearchSelection search(ProcessModelOperatingActionSetEvaluator evaluator) {
+      if (evaluator == null) {
+        return SearchSelection.failed("Operating-action evaluator was null");
+      }
+      ProcessModelSimulationEvaluator simulation = evaluator.getSimulationEvaluator();
+      if (objectiveIndex >= simulation.getObjectiveCount()) {
+        return SearchSelection.failed("Search objective index is not registered");
+      }
+      ObjectiveDefinition objective = simulation.getObjectives().get(objectiveIndex);
+      double[] selected = null;
+      double selectedValue = Double.NaN;
+      int candidateIndex = 0;
+      for (double[] candidate : candidates) {
+        String invalid = validateCandidate(evaluator, candidate, candidateIndex);
+        if (invalid != null) {
+          return SearchSelection.failed(invalid);
+        }
+        CandidateSetEvaluationResult result = evaluator.evaluate(candidate);
+        double[] rawObjectives = result.getRawObjectives();
+        if (result.isCandidateSimulationConverged() && result.isFeasible() && result.isBaselineRestored()
+            && result.isBaselineSimulationConverged() && objectiveIndex < rawObjectives.length
+            && isFinite(rawObjectives[objectiveIndex])) {
+          double value = rawObjectives[objectiveIndex];
+          if (selected == null || improves(value, selectedValue, objective.getDirection())) {
+            selected = Arrays.copyOf(candidate, candidate.length);
+            selectedValue = value;
+          }
+        }
+        candidateIndex++;
+      }
+      if (selected == null) {
+        return SearchSelection
+            .failed("No converged feasible and completely restored operating-action candidate was found");
+      }
+      return SearchSelection.selected(selected,
+          "Selected the first direction-aware best feasible candidate from the ordered operating-action list");
+    }
+
+    /** Returns a fail-closed validation diagnostic, or null. */
+    private String validateCandidate(ProcessModelOperatingActionSetEvaluator evaluator, double[] candidate,
+        int candidateIndex) {
+      List<ProcessModelOperatingAction> actions = evaluator.getActions();
+      if (candidate.length != actions.size()) {
+        return "Candidate " + candidateIndex + " length does not match operating-action count";
+      }
+      for (int index = 0; index < candidate.length; index++) {
+        if (!isFinite(candidate[index])) {
+          return "Candidate " + candidateIndex + " contains a non-finite action value";
+        }
+        if (!actions.get(index).accepts(candidate[index])) {
+          return "Candidate " + candidateIndex + " lies outside a declared action domain";
+        }
+      }
+      return null;
+    }
+
+    /** Returns true only for an objective improvement beyond the declared tolerance. */
     private boolean improves(double candidate, double incumbent, ObjectiveDefinition.Direction direction) {
       if (direction == ObjectiveDefinition.Direction.MAXIMIZE) {
         return candidate > incumbent + objectiveTolerance;
@@ -758,6 +997,17 @@ public final class ProcessModelDebottleneckStudy {
       this.minimizerValue = minimizerValue;
     }
 
+    /** Creates evidence from one transactional operating-action candidate objective. */
+    private ObjectiveEvidence(CandidateObjectiveEvidence evidence) {
+      index = evidence.getIndex();
+      name = safeText(evidence.getName());
+      direction = evidence.getDirection();
+      unit = safeText(evidence.getUnit());
+      weight = evidence.getWeight();
+      rawValue = evidence.getRawValue();
+      minimizerValue = evidence.getMinimizerValue();
+    }
+
     public int getIndex() {
       return index;
     }
@@ -809,6 +1059,17 @@ public final class ProcessModelDebottleneckStudy {
       this.margin = margin;
     }
 
+    /** Creates evidence from one transactional operating-action candidate constraint. */
+    private ConstraintEvidence(CandidateConstraintEvidence evidence) {
+      index = evidence.getIndex();
+      name = safeText(evidence.getName());
+      type = evidence.getType();
+      unit = safeText(evidence.getUnit());
+      hard = evidence.isHard();
+      value = evidence.getValue();
+      margin = evidence.getMargin();
+    }
+
     public int getIndex() {
       return index;
     }
@@ -850,6 +1111,7 @@ public final class ProcessModelDebottleneckStudy {
     private final double[] selectedParameters;
     private final boolean simulationConverged;
     private final boolean feasible;
+    private final boolean processStateRestored;
     private final int evaluationCount;
     private final List<ObjectiveEvidence> objectives;
     private final List<ConstraintEvidence> constraints;
@@ -870,6 +1132,33 @@ public final class ProcessModelDebottleneckStudy {
           : Arrays.copyOf(selectedParameters, selectedParameters.length);
       simulationConverged = result != null && result.isSimulationConverged();
       feasible = result != null && result.isFeasible();
+      processStateRestored = true;
+      this.evaluationCount = evaluationCount;
+      this.objectives = immutableList(objectives);
+      this.constraints = immutableList(constraints);
+      installedCapacityEvidence = result == null ? Collections.<InstalledEquipmentCapacityEvidence>emptyList()
+          : immutableList(result.getInstalledEquipmentCapacityEvidence());
+      boundaryEvidence = result == null ? Collections.<ProcessBoundaryConstraintEvidence>emptyList()
+          : immutableList(result.getProcessBoundaryConstraintEvidence());
+      this.metrics = immutableList(metrics);
+      this.diagnostics = immutableStrings(diagnostics);
+    }
+
+    /** Creates scenario evidence from one independently verified transactional action candidate. */
+    private ScenarioEvidence(String label, OperatingActionScenarioSearch search, ScenarioStatus status,
+        double[] selectedParameters, CandidateSetEvaluationResult result, int evaluationCount,
+        List<ObjectiveEvidence> objectives, List<ConstraintEvidence> constraints, List<MetricEvidence> metrics,
+        List<String> diagnostics) {
+      this.label = label;
+      searchId = search.getId();
+      searchName = search.getName();
+      searchProvenance = search.getProvenance();
+      this.status = status;
+      this.selectedParameters = selectedParameters == null ? new double[0]
+          : Arrays.copyOf(selectedParameters, selectedParameters.length);
+      simulationConverged = result != null && result.isCandidateSimulationConverged();
+      feasible = result != null && result.isFeasible();
+      processStateRestored = result != null && result.isBaselineRestored() && result.isBaselineSimulationConverged();
       this.evaluationCount = evaluationCount;
       this.objectives = immutableList(objectives);
       this.constraints = immutableList(constraints);
@@ -913,8 +1202,13 @@ public final class ProcessModelDebottleneckStudy {
       return feasible;
     }
 
+    /** @return true when transactional action state was fully restored and reconverged */
+    public boolean isProcessStateRestored() {
+      return processStateRestored;
+    }
+
     public boolean isQualified() {
-      return status == ScenarioStatus.QUALIFIED && simulationConverged && feasible;
+      return status == ScenarioStatus.QUALIFIED && simulationConverged && feasible && processStateRestored;
     }
 
     public int getEvaluationCount() {
@@ -956,6 +1250,9 @@ public final class ProcessModelDebottleneckStudy {
     private final CapacityAlternative alternativeDefinition;
     private final CapacityState originalCapacityState;
     private final CapacityState appliedCapacityState;
+    private final List<CapacityAlternative> alternativeDefinitions;
+    private final List<CapacityState> originalCapacityStates;
+    private final List<CapacityState> appliedCapacityStates;
     private final StudyOutcome outcome;
     private final ScenarioEvidence baseline;
     private final ScenarioEvidence alternative;
@@ -967,17 +1264,20 @@ public final class ProcessModelDebottleneckStudy {
     private final double objectiveDelta;
     private final List<String> diagnostics;
 
-    private StudyResult(String id, String name, String provenance, CapacityAlternative alternativeDefinition,
-        CapacityState originalCapacityState, CapacityState appliedCapacityState, StudyOutcome outcome,
+    private StudyResult(String id, String name, String provenance, List<CapacityAlternative> alternativeDefinitions,
+        List<CapacityState> originalCapacityStates, List<CapacityState> appliedCapacityStates, StudyOutcome outcome,
         ScenarioEvidence baseline, ScenarioEvidence alternative, boolean capacityRestored, boolean processStateRestored,
         boolean recoverySimulationConverged, List<MetricComparison> metricComparisons, boolean objectiveDeltaCalculable,
         double objectiveDelta, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
-      this.alternativeDefinition = alternativeDefinition;
-      this.originalCapacityState = originalCapacityState;
-      this.appliedCapacityState = appliedCapacityState;
+      this.alternativeDefinitions = immutableList(alternativeDefinitions);
+      this.originalCapacityStates = immutableList(originalCapacityStates);
+      this.appliedCapacityStates = immutableList(appliedCapacityStates);
+      this.alternativeDefinition = this.alternativeDefinitions.isEmpty() ? null : this.alternativeDefinitions.get(0);
+      this.originalCapacityState = this.originalCapacityStates.isEmpty() ? null : this.originalCapacityStates.get(0);
+      this.appliedCapacityState = this.appliedCapacityStates.isEmpty() ? null : this.appliedCapacityStates.get(0);
       this.outcome = outcome;
       this.baseline = baseline;
       this.alternative = alternative;
@@ -1006,12 +1306,27 @@ public final class ProcessModelDebottleneckStudy {
       return alternativeDefinition;
     }
 
+    /** @return immutable ordered alternatives applied in the paired scenario */
+    public List<CapacityAlternative> getAlternativeDefinitions() {
+      return immutableList(alternativeDefinitions);
+    }
+
     public CapacityState getOriginalCapacityState() {
       return originalCapacityState;
     }
 
+    /** @return immutable original capacity states in alternative declaration order */
+    public List<CapacityState> getOriginalCapacityStates() {
+      return immutableList(originalCapacityStates);
+    }
+
     public CapacityState getAppliedCapacityState() {
       return appliedCapacityState;
+    }
+
+    /** @return immutable applied capacity states in alternative declaration order */
+    public List<CapacityState> getAppliedCapacityStates() {
+      return immutableList(appliedCapacityStates);
     }
 
     public StudyOutcome getOutcome() {
@@ -1055,11 +1370,147 @@ public final class ProcessModelDebottleneckStudy {
     }
   }
 
+  /** Outcome of one transactional combined-capacity operating-envelope evaluation. */
+  public enum CombinedEnvelopeOutcome {
+    /** Every requested slice completed and all mutable state was restored. */
+    COMPLETED,
+    /** A direct installed-capacity alternative could not be resolved or applied exactly. */
+    ALTERNATIVE_NOT_APPLICABLE,
+    /** At least one relieved slice did not complete with safe point-level recovery. */
+    SLICE_FAILED,
+    /** Installed-capacity or process-state recovery was incomplete. */
+    RESTORATION_FAILED
+  }
+
+  /**
+   * Immutable result of evaluating exact baseline slice definitions under one combined capacity configuration.
+   *
+   * <p>
+   * Baseline slices are retained as immutable templates and are never resampled. Relieved slices use the same exact
+   * study, axes, grids, and anchors while all declared capacity alternatives are active together. The result is
+   * qualified only after reverse-order capacity restoration and process reconvergence.
+   * </p>
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static final class CombinedEnvelopeResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final String studyId;
+    private final String envelopeStudyId;
+    private final CombinedEnvelopeOutcome outcome;
+    private final List<ProcessModelOperatingEnvelopeStudy.SliceResult> baselineSlices;
+    private final List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices;
+    private final List<CapacityState> originalCapacityStates;
+    private final List<CapacityState> appliedCapacityStates;
+    private final boolean capacityRestored;
+    private final boolean processStateRestored;
+    private final boolean recoverySimulationConverged;
+    private final List<String> diagnostics;
+    private final transient ProcessModelDebottleneckStudy sourceStudy;
+    private final transient ProcessModelOperatingEnvelopeStudy sourceEnvelopeStudy;
+
+    /** Creates one immutable combined-envelope result. */
+    private CombinedEnvelopeResult(String studyId, String envelopeStudyId, CombinedEnvelopeOutcome outcome,
+        List<ProcessModelOperatingEnvelopeStudy.SliceResult> baselineSlices,
+        List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices, List<CapacityState> originalCapacityStates,
+        List<CapacityState> appliedCapacityStates, boolean capacityRestored, boolean processStateRestored,
+        boolean recoverySimulationConverged, List<String> diagnostics, ProcessModelDebottleneckStudy sourceStudy,
+        ProcessModelOperatingEnvelopeStudy sourceEnvelopeStudy) {
+      this.studyId = studyId;
+      this.envelopeStudyId = envelopeStudyId;
+      this.outcome = outcome;
+      this.baselineSlices = immutableList(baselineSlices);
+      this.relievedSlices = immutableList(relievedSlices);
+      this.originalCapacityStates = immutableList(originalCapacityStates);
+      this.appliedCapacityStates = immutableList(appliedCapacityStates);
+      this.capacityRestored = capacityRestored;
+      this.processStateRestored = processStateRestored;
+      this.recoverySimulationConverged = recoverySimulationConverged;
+      this.diagnostics = immutableStrings(diagnostics);
+      this.sourceStudy = sourceStudy;
+      this.sourceEnvelopeStudy = sourceEnvelopeStudy;
+    }
+
+    /** @return combination-study identifier */
+    public String getStudyId() {
+      return studyId;
+    }
+
+    /** @return operating-envelope study identifier */
+    public String getEnvelopeStudyId() {
+      return envelopeStudyId;
+    }
+
+    /** @return terminal combined-envelope outcome */
+    public CombinedEnvelopeOutcome getOutcome() {
+      return outcome;
+    }
+
+    /** @return immutable exact baseline slice templates */
+    public List<ProcessModelOperatingEnvelopeStudy.SliceResult> getBaselineSlices() {
+      return immutableList(baselineSlices);
+    }
+
+    /** @return immutable jointly relieved slices */
+    public List<ProcessModelOperatingEnvelopeStudy.SliceResult> getRelievedSlices() {
+      return immutableList(relievedSlices);
+    }
+
+    /** @return immutable original installed-capacity states */
+    public List<CapacityState> getOriginalCapacityStates() {
+      return immutableList(originalCapacityStates);
+    }
+
+    /** @return immutable applied installed-capacity states */
+    public List<CapacityState> getAppliedCapacityStates() {
+      return immutableList(appliedCapacityStates);
+    }
+
+    /** @return true when every capacity state was restored exactly */
+    public boolean isCapacityRestored() {
+      return capacityRestored;
+    }
+
+    /** @return true when the pre-evaluation process state was restored */
+    public boolean isProcessStateRestored() {
+      return processStateRestored;
+    }
+
+    /** @return true when the final recovery simulation converged */
+    public boolean isRecoverySimulationConverged() {
+      return recoverySimulationConverged;
+    }
+
+    /** @return true only for a complete, exactly restored evaluation */
+    public boolean isQualified() {
+      return outcome == CombinedEnvelopeOutcome.COMPLETED && capacityRestored && processStateRestored
+          && recoverySimulationConverged && baselineSlices.size() == relievedSlices.size();
+    }
+
+    /** @return immutable diagnostics */
+    public List<String> getDiagnostics() {
+      return immutableStrings(diagnostics);
+    }
+
+    /** @return exact runtime combination study, or null after serialization */
+    ProcessModelDebottleneckStudy getSourceStudy() {
+      return sourceStudy;
+    }
+
+    /** @return exact runtime envelope study, or null after serialization */
+    ProcessModelOperatingEnvelopeStudy getSourceEnvelopeStudy() {
+      return sourceEnvelopeStudy;
+    }
+  }
+
   /** Internal resolved direct installed constraint. */
   private static final class CapacityTarget {
+    private final CapacityAlternative alternative;
     private final CapacityConstraint constraint;
 
-    private CapacityTarget(CapacityConstraint constraint) {
+    private CapacityTarget(CapacityAlternative alternative, CapacityConstraint constraint) {
+      this.alternative = alternative;
       this.constraint = constraint;
     }
   }
@@ -1068,8 +1519,11 @@ public final class ProcessModelDebottleneckStudy {
   private final String name;
   private final String provenance;
   private final ProcessModelSimulationEvaluator evaluator;
+  private final ProcessModelOperatingActionSetEvaluator operatingActionEvaluator;
   private final CapacityAlternative alternative;
+  private final List<CapacityAlternative> alternatives;
   private final ScenarioSearch search;
+  private final OperatingActionScenarioSearch operatingActionSearch;
   private final int objectiveIndex;
   private final List<MetricDefinition> metrics = new ArrayList<MetricDefinition>();
 
@@ -1087,20 +1541,108 @@ public final class ProcessModelDebottleneckStudy {
   public ProcessModelDebottleneckStudy(String id, String name, String provenance,
       ProcessModelSimulationEvaluator evaluator, CapacityAlternative alternative, ScenarioSearch search,
       int objectiveIndex) {
+    this(id, name, provenance, evaluator, Collections.singletonList(alternative), search, objectiveIndex);
+  }
+
+  /**
+   * Creates a paired study that applies a declared combination of direct installed-capacity alternatives atomically.
+   *
+   * <p>
+   * The baseline is evaluated once with the installed limits. Every alternative is then applied in declaration order,
+   * the common search is rerun once against the combined configuration, and all installed states are restored in
+   * reverse order. The observed combined objective delta is therefore simulator evidence and is never constructed by
+   * adding independent deltas.
+   * </p>
+   *
+   * @param id stable study identifier
+   * @param name human-readable study name
+   * @param provenance engineering provenance for the combination
+   * @param evaluator configured process-model evaluator
+   * @param alternatives two or more independent direct installed-capacity alternatives
+   * @param search common search policy used for baseline and combined alternative
+   * @param objectiveIndex objective used for the paired delta
+   */
+  public ProcessModelDebottleneckStudy(String id, String name, String provenance,
+      ProcessModelSimulationEvaluator evaluator, List<CapacityAlternative> alternatives, ScenarioSearch search,
+      int objectiveIndex) {
     this.id = requireText(id, "Study identifier");
     this.name = requireText(name, "Study name");
     this.provenance = requireText(provenance, "Study provenance");
-    if (evaluator == null || alternative == null || search == null) {
-      throw new IllegalArgumentException("Evaluator, capacity alternative, and search are required");
+    if (evaluator == null || search == null) {
+      throw new IllegalArgumentException("Evaluator, capacity alternatives, and search are required");
     }
     if (objectiveIndex < 0 || objectiveIndex >= evaluator.getObjectiveCount()) {
       throw new IllegalArgumentException("Study objective index is not registered");
     }
     this.evaluator = evaluator;
-    this.alternative = alternative;
+    this.operatingActionEvaluator = null;
+    this.alternatives = validateAlternatives(alternatives);
+    this.alternative = this.alternatives.get(0);
     this.search = search;
+    this.operatingActionSearch = null;
     this.objectiveIndex = objectiveIndex;
     if (search instanceof CandidateListSearch && ((CandidateListSearch) search).getObjectiveIndex() != objectiveIndex) {
+      throw new IllegalArgumentException("Candidate-list search and study must use the same objective index");
+    }
+  }
+
+  /**
+   * Creates a paired study around the existing transactional operating-action evaluator.
+   *
+   * <p>
+   * Every candidate is evaluated through the same action application, read-back, convergence, feasibility, and
+   * reverse-order restoration contract used by the operating-envelope workflow. The same search policy is rerun after
+   * the installed alternative is applied. Metric callbacks are intentionally unsupported in this mode because the
+   * transactional evaluator restores the model before returning; objective and constraint evidence remain frozen from
+   * the verified candidate simulation.
+   * </p>
+   *
+   * @param id stable study identifier
+   * @param name human-readable study name
+   * @param provenance engineering provenance for the study configuration
+   * @param evaluator configured transactional operating-action evaluator
+   * @param alternative installed-capacity alternative
+   * @param search common action search policy used for baseline and alternative
+   * @param objectiveIndex objective used for the paired delta
+   */
+  public ProcessModelDebottleneckStudy(String id, String name, String provenance,
+      ProcessModelOperatingActionSetEvaluator evaluator, CapacityAlternative alternative,
+      OperatingActionScenarioSearch search, int objectiveIndex) {
+    this(id, name, provenance, evaluator, Collections.singletonList(alternative), search, objectiveIndex);
+  }
+
+  /**
+   * Creates a transactional paired study for one declared combination of direct capacity alternatives.
+   *
+   * @param id stable study identifier
+   * @param name human-readable study name
+   * @param provenance engineering provenance for the combination
+   * @param evaluator configured transactional operating-action evaluator
+   * @param alternatives two or more direct installed-capacity alternatives
+   * @param search common action search policy used for baseline and combined alternative
+   * @param objectiveIndex objective used for the paired delta
+   */
+  public ProcessModelDebottleneckStudy(String id, String name, String provenance,
+      ProcessModelOperatingActionSetEvaluator evaluator, List<CapacityAlternative> alternatives,
+      OperatingActionScenarioSearch search, int objectiveIndex) {
+    this.id = requireText(id, "Study identifier");
+    this.name = requireText(name, "Study name");
+    this.provenance = requireText(provenance, "Study provenance");
+    if (evaluator == null || search == null) {
+      throw new IllegalArgumentException("Evaluator, capacity alternatives, and search are required");
+    }
+    if (objectiveIndex < 0 || objectiveIndex >= evaluator.getSimulationEvaluator().getObjectiveCount()) {
+      throw new IllegalArgumentException("Study objective index is not registered");
+    }
+    this.evaluator = null;
+    this.operatingActionEvaluator = evaluator;
+    this.alternatives = validateAlternatives(alternatives);
+    this.alternative = this.alternatives.get(0);
+    this.search = null;
+    this.operatingActionSearch = search;
+    this.objectiveIndex = objectiveIndex;
+    if (search instanceof OperatingActionCandidateListSearch
+        && ((OperatingActionCandidateListSearch) search).getObjectiveIndex() != objectiveIndex) {
       throw new IllegalArgumentException("Candidate-list search and study must use the same objective index");
     }
   }
@@ -1121,20 +1663,61 @@ public final class ProcessModelDebottleneckStudy {
     return evaluator;
   }
 
+  /** @return transactional operating-action evaluator, or null for legacy parameter studies */
+  public ProcessModelOperatingActionSetEvaluator getOperatingActionEvaluator() {
+    return operatingActionEvaluator;
+  }
+
   public CapacityAlternative getAlternative() {
     return alternative;
+  }
+
+  /** @return immutable alternatives applied together in declaration order */
+  public List<CapacityAlternative> getAlternatives() {
+    return immutableList(alternatives);
   }
 
   public ScenarioSearch getSearch() {
     return search;
   }
 
+  /** @return transactional operating-action search, or null for legacy parameter studies */
+  public OperatingActionScenarioSearch getOperatingActionSearch() {
+    return operatingActionSearch;
+  }
+
   public int getObjectiveIndex() {
     return objectiveIndex;
   }
 
+  /** Validates and freezes ordered alternatives before any live model state is inspected. */
+  private static List<CapacityAlternative> validateAlternatives(List<CapacityAlternative> alternatives) {
+    if (alternatives == null || alternatives.isEmpty()) {
+      throw new IllegalArgumentException("At least one capacity alternative is required");
+    }
+    Map<String, CapacityAlternative> byId = new LinkedHashMap<String, CapacityAlternative>();
+    Map<String, CapacityAlternative> byConstraint = new LinkedHashMap<String, CapacityAlternative>();
+    for (CapacityAlternative candidate : alternatives) {
+      if (candidate == null) {
+        throw new IllegalArgumentException("Capacity alternatives must not contain null entries");
+      }
+      if (byId.put(candidate.getId(), candidate) != null) {
+        throw new IllegalArgumentException("Duplicate capacity alternative identifier: " + candidate.getId());
+      }
+      String constraint = candidate.getQualifiedConstraintName();
+      if (byConstraint.put(constraint, candidate) != null) {
+        throw new IllegalArgumentException("A capacity combination cannot change one constraint twice: " + constraint);
+      }
+    }
+    return Collections.unmodifiableList(new ArrayList<CapacityAlternative>(alternatives));
+  }
+
   /** Adds one physical or screening metric sampled at both selected operating points. */
   public ProcessModelDebottleneckStudy addMetric(MetricDefinition metric) {
+    if (operatingActionEvaluator != null) {
+      throw new IllegalStateException(
+          "Transactional operating-action studies expose frozen objective and constraint evidence, not metric callbacks");
+    }
     if (metric == null) {
       throw new IllegalArgumentException("Metric definition must not be null");
     }
@@ -1152,33 +1735,166 @@ public final class ProcessModelDebottleneckStudy {
     return Collections.unmodifiableList(new ArrayList<MetricDefinition>(metrics));
   }
 
+  /**
+   * Evaluates exact completed baseline slice definitions while all declared capacity alternatives are active together.
+   *
+   * <p>
+   * This method is available only for the transactional operating-action mode and requires the exact envelope study
+   * backed by the same evaluator. Alternatives are applied in declaration order, each slice is re-evaluated with its
+   * original axes, grid and anchor, and installed states are restored and verified in reverse declaration order. A
+   * partial, unconverged, non-finite, foreign, deserialized, or stale baseline slice fails before mutation. A relieved
+   * slice that cannot restore its action baseline stops further sampling, after which capacity and process recovery are
+   * still attempted.
+   * </p>
+   *
+   * @param envelopeStudy exact runtime operating-envelope study
+   * @param baselineSlices one or more complete exact-runtime baseline slices
+   * @return immutable paired baseline/relieved slice result
+   */
+  public CombinedEnvelopeResult evaluateCombinedEnvelope(ProcessModelOperatingEnvelopeStudy envelopeStudy,
+      ProcessModelOperatingEnvelopeStudy.SliceResult... baselineSlices) {
+    if (operatingActionEvaluator == null) {
+      throw new IllegalStateException("Combined envelope evaluation requires the transactional action evaluator");
+    }
+    if (envelopeStudy == null || envelopeStudy.getCandidateEvaluator() != operatingActionEvaluator) {
+      throw new IllegalArgumentException("Envelope study must use the exact combination-study evaluator");
+    }
+    List<ProcessModelOperatingEnvelopeStudy.SliceResult> templates = envelopeStudy
+        .validateCombinedReliefTemplates(baselineSlices);
+    ProcessModel model = operatingActionEvaluator.getSimulationEvaluator().getProcessModel();
+    List<String> diagnostics = new ArrayList<String>();
+    diagnostics.add("Relieved slices reuse exact baseline axes, grids, anchors, evaluator and refinement policy");
+    diagnostics.add("Capacity alternatives are applied together; no independent relief delta is treated as additive");
+    List<CapacityTarget> targets = new ArrayList<CapacityTarget>();
+    try {
+      for (CapacityAlternative capacityAlternative : alternatives) {
+        targets.add(resolveTarget(model, capacityAlternative));
+      }
+    } catch (RuntimeException exception) {
+      diagnostics.add(safeText(exception.getMessage()));
+      return combinedEnvelopeResult(envelopeStudy, CombinedEnvelopeOutcome.ALTERNATIVE_NOT_APPLICABLE, templates,
+          Collections.<ProcessModelOperatingEnvelopeStudy.SliceResult>emptyList(),
+          Collections.<CapacityState>emptyList(), Collections.<CapacityState>emptyList(), false, false, false,
+          diagnostics);
+    }
+
+    List<CapacityState> originalStates = new ArrayList<CapacityState>();
+    for (CapacityTarget target : targets) {
+      originalStates.add(new CapacityState(target.constraint));
+    }
+    List<CapacityState> appliedStates = new ArrayList<CapacityState>();
+    List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices = new ArrayList<ProcessModelOperatingEnvelopeStudy.SliceResult>();
+    CombinedEnvelopeOutcome provisionalOutcome = CombinedEnvelopeOutcome.COMPLETED;
+    boolean capacityRestored = false;
+    boolean processStateRestored = false;
+    boolean recoveryConverged = false;
+    try {
+      for (CapacityTarget target : targets) {
+        applyAlternative(target.constraint, target.alternative);
+        appliedStates.add(new CapacityState(target.constraint));
+      }
+      for (ProcessModelOperatingEnvelopeStudy.SliceResult template : templates) {
+        ProcessModelOperatingEnvelopeStudy.SliceResult relieved = envelopeStudy.evaluateMatchingSlice(template);
+        relievedSlices.add(relieved);
+        if (!relieved.isComplete()) {
+          provisionalOutcome = CombinedEnvelopeOutcome.SLICE_FAILED;
+          diagnostics.add("Stopped after an incomplete relieved slice: " + template.getId());
+          break;
+        }
+      }
+    } catch (RuntimeException exception) {
+      provisionalOutcome = appliedStates.size() == alternatives.size() ? CombinedEnvelopeOutcome.SLICE_FAILED
+          : CombinedEnvelopeOutcome.ALTERNATIVE_NOT_APPLICABLE;
+      diagnostics.add("Combined envelope execution failed: " + safeText(exception.getMessage()));
+    } finally {
+      capacityRestored = true;
+      for (int index = targets.size() - 1; index >= 0; index--) {
+        try {
+          CapacityTarget target = targets.get(index);
+          CapacityState originalState = originalStates.get(index);
+          restoreConstraint(target.constraint, originalState);
+          if (!statesEqual(originalState, new CapacityState(target.constraint))) {
+            capacityRestored = false;
+            diagnostics.add("Installed-capacity restoration verification failed: "
+                + target.alternative.getQualifiedConstraintName());
+          }
+        } catch (RuntimeException exception) {
+          capacityRestored = false;
+          diagnostics.add("Installed-capacity restoration failed: " + safeText(exception.getMessage()));
+        }
+      }
+      try {
+        model.run();
+        recoveryConverged = model.isModelConverged();
+        processStateRestored = recoveryConverged && relievedSlices.size() == templates.size();
+        for (ProcessModelOperatingEnvelopeStudy.SliceResult relieved : relievedSlices) {
+          processStateRestored = processStateRestored && relieved.isComplete();
+        }
+      } catch (RuntimeException exception) {
+        diagnostics.add("Combined envelope process-state recovery failed: " + safeText(exception.getMessage()));
+      }
+    }
+    CombinedEnvelopeOutcome outcome = capacityRestored && processStateRestored && recoveryConverged ? provisionalOutcome
+        : CombinedEnvelopeOutcome.RESTORATION_FAILED;
+    if (capacityRestored) {
+      diagnostics.add("Every installed-capacity state was restored and verified in reverse declaration order");
+    }
+    if (processStateRestored && recoveryConverged) {
+      diagnostics.add("Every relieved slice and the final restored-capacity process model recovered safely");
+    }
+    return combinedEnvelopeResult(envelopeStudy, outcome, templates, relievedSlices, originalStates, appliedStates,
+        capacityRestored, processStateRestored, recoveryConverged, diagnostics);
+  }
+
+  /** Builds one immutable combined-envelope result. */
+  private CombinedEnvelopeResult combinedEnvelopeResult(ProcessModelOperatingEnvelopeStudy envelopeStudy,
+      CombinedEnvelopeOutcome outcome, List<ProcessModelOperatingEnvelopeStudy.SliceResult> baselineSlices,
+      List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices, List<CapacityState> originalStates,
+      List<CapacityState> appliedStates, boolean capacityRestored, boolean processStateRestored,
+      boolean recoveryConverged, List<String> diagnostics) {
+    return new CombinedEnvelopeResult(id, envelopeStudy.getId(), outcome, baselineSlices, relievedSlices,
+        originalStates, appliedStates, capacityRestored, processStateRestored, recoveryConverged, diagnostics, this,
+        envelopeStudy);
+  }
+
   /** Executes the paired study and always attempts exact installed/process-state recovery. */
   public StudyResult evaluate() {
-    ProcessModel model = evaluator.getProcessModel();
-    double[] recoveryParameters = evaluator.getLastParameters();
-    if (recoveryParameters == null) {
-      recoveryParameters = evaluator.getInitialValues();
+    ProcessModelSimulationEvaluator activeEvaluator = evaluator != null ? evaluator
+        : operatingActionEvaluator.getSimulationEvaluator();
+    ProcessModel model = activeEvaluator.getProcessModel();
+    double[] recoveryParameters = null;
+    if (evaluator != null) {
+      recoveryParameters = evaluator.getLastParameters();
+      if (recoveryParameters == null) {
+        recoveryParameters = evaluator.getInitialValues();
+      }
     }
     List<String> diagnostics = new ArrayList<String>();
     diagnostics.add("Results are paired sampled evidence, not causal production loss, global "
         + "optimality, a shadow price, certified emissions, design approval, or investment approval");
 
-    CapacityTarget target;
+    List<CapacityTarget> targets = new ArrayList<CapacityTarget>();
     try {
-      target = resolveTarget(model);
+      for (CapacityAlternative capacityAlternative : alternatives) {
+        targets.add(resolveTarget(model, capacityAlternative));
+      }
     } catch (RuntimeException exception) {
       diagnostics.add(exception.getMessage());
-      return result(StudyOutcome.ALTERNATIVE_NOT_APPLICABLE, null, null, null, null, false, false, false, diagnostics);
+      return result(StudyOutcome.ALTERNATIVE_NOT_APPLICABLE, Collections.<CapacityState>emptyList(),
+          Collections.<CapacityState>emptyList(), null, null, false, false, false, diagnostics);
     }
 
-    CapacityState originalState = new CapacityState(target.constraint);
-    CapacityState appliedState = null;
+    List<CapacityState> originalStates = new ArrayList<CapacityState>();
+    for (CapacityTarget target : targets) {
+      originalStates.add(new CapacityState(target.constraint));
+    }
+    List<CapacityState> appliedStates = new ArrayList<CapacityState>();
     ScenarioEvidence baseline = null;
     ScenarioEvidence alternativeScenario = null;
     boolean capacityRestored = false;
     boolean processStateRestored = false;
     boolean recoveryConverged = false;
-    boolean alternativeApplied = false;
+    int appliedAlternativeCount = 0;
     StudyOutcome provisionalOutcome = StudyOutcome.BASELINE_FAILED;
 
     try {
@@ -1187,9 +1903,11 @@ public final class ProcessModelDebottleneckStudy {
         diagnostics.add("Baseline search or verification did not produce a qualified point");
         provisionalOutcome = StudyOutcome.BASELINE_FAILED;
       } else {
-        applyAlternative(target.constraint);
-        alternativeApplied = true;
-        appliedState = new CapacityState(target.constraint);
+        for (CapacityTarget target : targets) {
+          applyAlternative(target.constraint, target.alternative);
+          appliedAlternativeCount++;
+          appliedStates.add(new CapacityState(target.constraint));
+        }
         alternativeScenario = runScenario("alternative");
         if (!alternativeScenario.isQualified()) {
           diagnostics.add("Alternative search or verification did not produce a qualified point");
@@ -1206,94 +1924,107 @@ public final class ProcessModelDebottleneckStudy {
       provisionalOutcome = baseline == null || !baseline.isQualified() ? StudyOutcome.BASELINE_FAILED
           : StudyOutcome.ALTERNATIVE_FAILED;
     } finally {
-      try {
-        restoreConstraint(target.constraint, originalState);
-        capacityRestored = statesEqual(originalState, new CapacityState(target.constraint));
-      } catch (RuntimeException exception) {
-        diagnostics.add("Installed-capacity restoration failed: " + safeText(exception.getMessage()));
-        capacityRestored = false;
+      capacityRestored = true;
+      for (int index = targets.size() - 1; index >= 0; index--) {
+        try {
+          CapacityTarget target = targets.get(index);
+          CapacityState originalState = originalStates.get(index);
+          restoreConstraint(target.constraint, originalState);
+          if (!statesEqual(originalState, new CapacityState(target.constraint))) {
+            capacityRestored = false;
+            diagnostics.add("Installed-capacity restoration verification failed: "
+                + target.alternative.getQualifiedConstraintName());
+          }
+        } catch (RuntimeException exception) {
+          diagnostics.add("Installed-capacity restoration failed: " + safeText(exception.getMessage()));
+          capacityRestored = false;
+        }
       }
       try {
-        EvaluationResult recovery = evaluator.evaluate(recoveryParameters);
-        recoveryConverged = recovery.isSimulationConverged();
-        processStateRestored = recoveryConverged && arraysEqual(recoveryParameters, recovery.getParameters(), 0.0);
+        if (evaluator != null) {
+          EvaluationResult recovery = evaluator.evaluate(recoveryParameters);
+          recoveryConverged = recovery.isSimulationConverged();
+          processStateRestored = recoveryConverged && arraysEqual(recoveryParameters, recovery.getParameters(), 0.0);
+        } else {
+          model.run();
+          recoveryConverged = model.isModelConverged();
+          processStateRestored = recoveryConverged && (baseline == null || baseline.isProcessStateRestored())
+              && (alternativeScenario == null || alternativeScenario.isProcessStateRestored());
+        }
       } catch (RuntimeException exception) {
         diagnostics.add("Pre-study process-state recovery failed: " + safeText(exception.getMessage()));
       }
     }
 
-    if (!alternativeApplied && appliedState != null) {
-      diagnostics.add("Internal diagnostic: applied capacity state was retained without an applied alternative");
+    if (appliedAlternativeCount != appliedStates.size()) {
+      diagnostics.add("Internal diagnostic: applied capacity evidence count did not match applied alternatives");
     }
     StudyOutcome outcome = capacityRestored && processStateRestored && recoveryConverged ? provisionalOutcome
         : StudyOutcome.RESTORATION_FAILED;
     if (capacityRestored) {
-      diagnostics.add("The complete installed-capacity state was restored and verified");
+      diagnostics.add("Every installed-capacity state was restored and verified in reverse declaration order");
     }
     if (processStateRestored && recoveryConverged) {
       diagnostics.add("The pre-study parameter vector was restored and the process model reconverged");
     }
-    return result(outcome, originalState, appliedState, baseline, alternativeScenario, capacityRestored,
+    return result(outcome, originalStates, appliedStates, baseline, alternativeScenario, capacityRestored,
         processStateRestored, recoveryConverged, diagnostics);
   }
 
-  private CapacityTarget resolveTarget(ProcessModel model) {
-    ProcessSystem area = model.get(alternative.getAreaName());
+  private CapacityTarget resolveTarget(ProcessModel model, CapacityAlternative capacityAlternative) {
+    ProcessSystem area = model.get(capacityAlternative.getAreaName());
     if (area == null) {
-      throw new IllegalArgumentException("Alternative process area was not found: " + alternative.getAreaName());
+      throw new IllegalArgumentException(
+          "Alternative process area was not found: " + capacityAlternative.getAreaName());
     }
-    ProcessEquipmentInterface equipment = area.getUnit(alternative.getEquipmentName());
+    ProcessEquipmentInterface equipment = area.getUnit(capacityAlternative.getEquipmentName());
     if (equipment == null) {
       throw new IllegalArgumentException(
-          "Alternative equipment was not found: " + alternative.getQualifiedConstraintName());
+          "Alternative equipment was not found: " + capacityAlternative.getQualifiedConstraintName());
     }
     Map<String, CapacityConstraint> direct = equipment.getCapacityConstraints();
-    CapacityConstraint constraint = direct == null ? null : direct.get(alternative.getConstraintName());
+    CapacityConstraint constraint = direct == null ? null : direct.get(capacityAlternative.getConstraintName());
     if (constraint == null) {
       throw new IllegalArgumentException(
-          "A direct installed capacity constraint was not found: " + alternative.getQualifiedConstraintName());
+          "A direct installed capacity constraint was not found: " + capacityAlternative.getQualifiedConstraintName());
     }
     if (!constraint.isEnabled()) {
       throw new IllegalArgumentException("The installed capacity constraint is disabled");
     }
-    if (!alternative.getUnit().equals(constraint.getUnit())) {
+    if (!capacityAlternative.getUnit().equals(constraint.getUnit())) {
       throw new IllegalArgumentException("Alternative unit does not match the installed constraint unit");
     }
     LimitDirection actual = constraint.isMinimumConstraint() ? LimitDirection.MINIMUM : LimitDirection.MAXIMUM;
-    if (actual != alternative.getLimitDirection()) {
+    if (actual != capacityAlternative.getLimitDirection()) {
       throw new IllegalArgumentException("Alternative direction does not match the installed constraint");
     }
-    if (!isFinite(constraint.getDisplayDesignValue()) || constraint.getDisplayDesignValue() == Double.MAX_VALUE
-        || constraint.getDisplayDesignValue() <= 0.0) {
+    if (!isFinite(constraint.getApplicableLimit()) || constraint.getApplicableLimit() == Double.MAX_VALUE
+        || constraint.getApplicableLimit() <= 0.0) {
       throw new IllegalArgumentException("Installed applicable limit must be finite and positive");
     }
-    return new CapacityTarget(constraint);
+    return new CapacityTarget(capacityAlternative, constraint);
   }
 
-  private void applyAlternative(CapacityConstraint constraint) {
-    if (alternative.getLimitDirection() == LimitDirection.MINIMUM) {
-      constraint.setMinValue(alternative.getProposedLimit());
-    } else {
-      constraint.setDesignValue(alternative.getProposedLimit());
+  private void applyAlternative(CapacityConstraint constraint, CapacityAlternative capacityAlternative) {
+    constraint.setOperatingLimit(capacityAlternative.getProposedLimit(), CapacityConstraint.ConstraintSource.USER_RULE,
+        capacityAlternative.getProposalSource());
+    if (capacityAlternative.hasConfidence()) {
+      constraint.setOperatingLimitConfidence(capacityAlternative.getConfidence());
     }
-    constraint.setDataSource(alternative.getProposalSource());
-    if (alternative.hasConfidence()) {
-      constraint.setConfidence(alternative.getConfidence());
-    } else {
-      constraint.clearConfidence();
+    if (capacityAlternative.hasValidityRange()) {
+      constraint.setOperatingLimitValidityRange(capacityAlternative.getValidityMinimum(),
+          capacityAlternative.getValidityMaximum());
     }
-    if (alternative.hasValidityRange()) {
-      constraint.setValidityRange(alternative.getValidityMinimum(), alternative.getValidityMaximum());
-    } else {
-      constraint.clearValidityRange();
-    }
-    if (Double.doubleToLongBits(constraint.getDisplayDesignValue()) != Double
-        .doubleToLongBits(alternative.getProposedLimit())) {
+    if (Double.doubleToLongBits(constraint.getApplicableLimit()) != Double
+        .doubleToLongBits(capacityAlternative.getProposedLimit())) {
       throw new IllegalStateException("Proposed installed limit failed exact read-back verification");
     }
   }
 
   private ScenarioEvidence runScenario(String label) {
+    if (operatingActionEvaluator != null) {
+      return runOperatingActionScenario(label);
+    }
     int before = evaluator.getEvaluationCount();
     List<String> diagnostics = new ArrayList<String>();
     SearchSelection selection;
@@ -1332,6 +2063,70 @@ public final class ProcessModelDebottleneckStudy {
         : notSampledMetrics();
     return new ScenarioEvidence(label, search, status, parameters, result, evaluator.getEvaluationCount() - before,
         objectives, constraints, metricEvidence, diagnostics);
+  }
+
+  /** Runs and independently verifies one transactional operating-action scenario. */
+  private ScenarioEvidence runOperatingActionScenario(String label) {
+    ProcessModelSimulationEvaluator simulation = operatingActionEvaluator.getSimulationEvaluator();
+    int before = simulation.getEvaluationCount();
+    List<String> diagnostics = new ArrayList<String>();
+    SearchSelection selection;
+    try {
+      selection = operatingActionSearch.search(operatingActionEvaluator);
+    } catch (RuntimeException exception) {
+      diagnostics.add("Search failed: " + safeText(exception.getMessage()));
+      return new ScenarioEvidence(label, operatingActionSearch, ScenarioStatus.SEARCH_FAILED, null, null,
+          simulation.getEvaluationCount() - before, Collections.<ObjectiveEvidence>emptyList(),
+          Collections.<ConstraintEvidence>emptyList(), Collections.<MetricEvidence>emptyList(), diagnostics);
+    }
+    diagnostics.addAll(selection.getDiagnostics());
+    if (!selection.isSelected()) {
+      return new ScenarioEvidence(label, operatingActionSearch, ScenarioStatus.SEARCH_FAILED, null, null,
+          simulation.getEvaluationCount() - before, Collections.<ObjectiveEvidence>emptyList(),
+          Collections.<ConstraintEvidence>emptyList(), Collections.<MetricEvidence>emptyList(), diagnostics);
+    }
+    double[] actions = selection.getParameters();
+    String invalid = validateSelectedActions(actions);
+    if (invalid != null) {
+      diagnostics.add(invalid);
+      return new ScenarioEvidence(label, operatingActionSearch, ScenarioStatus.VERIFICATION_FAILED, actions, null,
+          simulation.getEvaluationCount() - before, Collections.<ObjectiveEvidence>emptyList(),
+          Collections.<ConstraintEvidence>emptyList(), Collections.<MetricEvidence>emptyList(), diagnostics);
+    }
+    CandidateSetEvaluationResult result = operatingActionEvaluator.evaluate(actions);
+    diagnostics.addAll(result.getDiagnostics());
+    List<ObjectiveEvidence> objectives = new ArrayList<ObjectiveEvidence>();
+    for (CandidateObjectiveEvidence objective : result.getObjectiveEvidence()) {
+      objectives.add(new ObjectiveEvidence(objective));
+    }
+    List<ConstraintEvidence> constraints = new ArrayList<ConstraintEvidence>();
+    for (CandidateConstraintEvidence constraint : result.getConstraintEvidence()) {
+      constraints.add(new ConstraintEvidence(constraint));
+    }
+    ScenarioStatus status = result.isCandidateSimulationConverged() && result.isFeasible()
+        && result.isBaselineRestored() && result.isBaselineSimulationConverged() ? ScenarioStatus.QUALIFIED
+            : ScenarioStatus.VERIFICATION_FAILED;
+    if (status != ScenarioStatus.QUALIFIED) {
+      diagnostics.add(
+          "Selected operating-action point did not pass convergence, feasibility, and complete restoration verification");
+    }
+    return new ScenarioEvidence(label, operatingActionSearch, status, actions, result,
+        simulation.getEvaluationCount() - before, objectives, constraints, Collections.<MetricEvidence>emptyList(),
+        diagnostics);
+  }
+
+  /** Returns a fail-closed action-vector diagnostic, or null. */
+  private String validateSelectedActions(double[] values) {
+    List<ProcessModelOperatingAction> actions = operatingActionEvaluator.getActions();
+    if (values == null || values.length != actions.size()) {
+      return "Selected action vector does not match operating-action count";
+    }
+    for (int index = 0; index < values.length; index++) {
+      if (!actions.get(index).accepts(values[index])) {
+        return "Selected action vector contains a non-finite or out-of-domain value";
+      }
+    }
+    return null;
   }
 
   private String validateSelectedParameters(double[] parameters) {
@@ -1405,9 +2200,9 @@ public final class ProcessModelDebottleneckStudy {
     return false;
   }
 
-  private StudyResult result(StudyOutcome outcome, CapacityState originalState, CapacityState appliedState,
-      ScenarioEvidence baseline, ScenarioEvidence alternativeScenario, boolean capacityRestored,
-      boolean processStateRestored, boolean recoveryConverged, List<String> diagnostics) {
+  private StudyResult result(StudyOutcome outcome, List<CapacityState> originalStates,
+      List<CapacityState> appliedStates, ScenarioEvidence baseline, ScenarioEvidence alternativeScenario,
+      boolean capacityRestored, boolean processStateRestored, boolean recoveryConverged, List<String> diagnostics) {
     List<MetricComparison> comparisons = compareMetrics(baseline, alternativeScenario);
     boolean deltaCalculable = baseline != null && alternativeScenario != null
         && baseline.getObjectives().size() > objectiveIndex
@@ -1418,7 +2213,7 @@ public final class ProcessModelDebottleneckStudy {
         ? alternativeScenario.getObjectives().get(objectiveIndex).getRawValue()
             - baseline.getObjectives().get(objectiveIndex).getRawValue()
         : Double.NaN;
-    return new StudyResult(id, name, provenance, alternative, originalState, appliedState, outcome, baseline,
+    return new StudyResult(id, name, provenance, alternatives, originalStates, appliedStates, outcome, baseline,
         alternativeScenario, capacityRestored, processStateRestored, recoveryConverged, comparisons, deltaCalculable,
         delta, diagnostics);
   }
@@ -1441,6 +2236,19 @@ public final class ProcessModelDebottleneckStudy {
     constraint.setDesignValue(state.getDesignValue());
     constraint.setMaxValue(state.getMaximumValue());
     constraint.setMinValue(state.getMinimumValue());
+    if (state.hasOperatingLimit()) {
+      constraint.setOperatingLimit(state.getOperatingLimit(), state.getOperatingLimitSource(),
+          state.getOperatingLimitSourceReference());
+      if (state.hasOperatingLimitConfidence()) {
+        constraint.setOperatingLimitConfidence(state.getOperatingLimitConfidence());
+      }
+      if (state.hasOperatingLimitValidityRange()) {
+        constraint.setOperatingLimitValidityRange(state.getOperatingLimitValidityMinimum(),
+            state.getOperatingLimitValidityMaximum());
+      }
+    } else {
+      constraint.clearOperatingLimit();
+    }
     constraint.setWarningThreshold(state.getWarningThreshold());
     constraint.setSeverity(state.getSeverity());
     constraint.setEnabled(state.isEnabled());
@@ -1460,7 +2268,17 @@ public final class ProcessModelDebottleneckStudy {
 
   private static boolean statesEqual(CapacityState first, CapacityState second) {
     return bitsEqual(first.designValue, second.designValue) && bitsEqual(first.maximumValue, second.maximumValue)
-        && bitsEqual(first.minimumValue, second.minimumValue)
+        && bitsEqual(first.minimumValue, second.minimumValue) && first.operatingLimitSet == second.operatingLimitSet
+        && (!first.operatingLimitSet || bitsEqual(first.operatingLimit, second.operatingLimit)
+            && first.operatingLimitSource == second.operatingLimitSource
+            && first.operatingLimitSourceReference.equals(second.operatingLimitSourceReference)
+            && first.operatingLimitConfidenceSet == second.operatingLimitConfidenceSet
+            && (!first.operatingLimitConfidenceSet
+                || bitsEqual(first.operatingLimitConfidence, second.operatingLimitConfidence))
+            && first.operatingLimitValidityRangeSet == second.operatingLimitValidityRangeSet
+            && (!first.operatingLimitValidityRangeSet
+                || bitsEqual(first.operatingLimitValidityMinimum, second.operatingLimitValidityMinimum)
+                    && bitsEqual(first.operatingLimitValidityMaximum, second.operatingLimitValidityMaximum)))
         && bitsEqual(first.warningThreshold, second.warningThreshold) && first.unit.equals(second.unit)
         && first.severity == second.severity && first.enabled == second.enabled
         && first.dataSource.equals(second.dataSource) && first.confidenceSet == second.confidenceSet

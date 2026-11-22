@@ -1,0 +1,8 @@
+case_id,temperature_K,pressure_bara,water_kg,Na_mol_per_kg_water,Ba_mol_per_kg_water,Cl_mol_per_kg_water,SO4_mol_per_kg_water
+very_dilute,298.15,1.01325,1.0,0.001002,0.000001,0.001002,0.000001
+dilute,298.15,1.01325,1.0,0.102,0.001,0.102,0.001
+issue_molality_basis,298.15,1.01325,1.0,1.0,0.001,1.0,0.001
+brine_3m,298.15,1.01325,1.0,3.002,0.001,3.002,0.001
+brine_5m,298.15,1.01325,1.0,5.002,0.001,5.002,0.001
+barium_excess,298.15,1.01325,1.0,1.0004,0.002,1.004,0.0002
+sulfate_excess,298.15,1.01325,1.0,1.004,0.0002,1.0004,0.002

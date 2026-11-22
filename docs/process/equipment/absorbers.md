@@ -728,7 +728,11 @@ where $N_i$ is the segment molar transfer rate, $N_{i,MS}$ is the Maxwell-Stefan
 
 ### Column-Wide Equation-Oriented Solver
 
-The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. For research-grade absorber and stripper studies, `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
+The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
+The five-segment TEG dehydration regression requires more than 20 profile iterations to meet its unchanged 1e-9 mol/s tolerance; it verifies rejection at 20 and convergence with a budget of 40. Increase the iteration budget only while checking the residual; a larger budget does not guarantee convergence.
+
+The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. The experimental `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
 
 The equation-oriented residual vector includes:
 
@@ -751,7 +755,7 @@ double gasBalance = column.getLastGasComponentBalanceResidual();
 double liquidBalance = column.getLastLiquidComponentBalanceResidual();
 ```
 
-Keep the fixed-point solver for routine screening and production workflows. Use the equation-oriented solver when coupled heat and mass transfer, interface equilibrium, and whole-column balance residuals are part of the study acceptance criteria.
+Keep the fixed-point solver for routine screening. The equation-oriented solver throws `IllegalStateException` if its final full-transfer residual is non-finite or exceeds the configured tolerance. On failure, `solved()` is false and residual diagnostics remain available, but the outlets are not updated; previous outlets must not be treated as current results. The CO2/water and TEG benchmark cases are not yet numerically qualified for this experimental solver (issues #4093 and #4094). The simultaneous segment solver also has an unresolved enthalpy-conservation regression tracked in #4094.
 
 Use this model when these details matter:
 
@@ -853,7 +857,32 @@ Typical absorber practice is about 15-40 L TEG/kg H2O removed, as also noted in 
 
 ### Packing Data
 
-The packing library supports aliases such as `pall ring 50`, `Pall-Ring-50`, `Mellapak250Y`, and `IMTP 70`. It combines built-in data with the `designdata/Packing.csv` table.
+The packing library supports aliases such as `pall ring 50`, `Pall-Ring-50`, `Mellapak250Y`, and `IMTP 70`.
+Built-in engineering estimates are authoritative for these existing names; `designdata/Packing.csv`
+adds entries without replacing them. Material-qualified aliases keep geometries distinct:
+`Pall-Ring-50-metal` selects the same built-in metal estimate as `Pall-Ring-50` (area 120 m²/m³,
+void fraction 0.96, packing factor 66 m⁻¹), while `Pall-Ring-50-plastic` selects the CSV plastic
+row (111.1 m²/m³, 0.919, 180 m⁻¹). These are screening estimates; verify data against the selected
+vendor packing for detailed design.
+
+The four legacy CSV rows named `Mellapak250X`, `PallRingPacking`, `RachigRingPacking`, and
+`BerlSaddlePacking` are marked `placeholder` and excluded from selectable specifications. They
+are not qualified engineering data. Models that previously selected these registry names must
+choose a supported packing from `PackingSpecificationLibrary.getPackingNames()` or provide a
+validated `PackingSpecification`; no replacement for Mellapak250X is assumed.
+
+Explicit packing selection in `RateBasedPackedColumn` and `PackingHydraulicsCalculator` throws
+`IllegalArgumentException` for an unknown or placeholder name and retains the previous selection.
+The library's `getOrDefault` remains an explicit opt-in fallback for compatibility; the equipment
+setters do not use it for user requests.
+
+The legacy fluid-mechanics geometry classes retain their class-name aliases but read actual
+random-packing rows by family, material and nominal size. Their no-argument constructors now
+select metal 50 mm Pall rings and ceramic 25 mm Raschig rings/Berl saddles, replacing the old
+250 mm placeholder geometry. `PallRingPacking("metal", 50)` reads the CSV geometry (size 0.05 m,
+area 112.6 m²/m³, void fraction 0.951); this geometry table is separate from the hydraulic
+registry's built-in reference estimates. Unsupported combinations fail during construction,
+and packing size setters require a finite positive value in metres.
 
 | Random packing examples | Structured packing examples |
 |-------------------------|-----------------------------|

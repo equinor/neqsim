@@ -24,12 +24,26 @@ The parameter fitting package calibrates model parameters against experimental d
 
 ## Compatibility
 
-The stable Java package is `neqsim.statistics.parameterfitting` with the nested optimizer package `neqsim.statistics.parameterfitting.nonlinearparameterfitting`. Backward compatibility is maintained by keeping the existing class names, constructors, and fluent methods intact:
+The stable Java package is `neqsim.statistics.parameterfitting` with the nested optimizer package `neqsim.statistics.parameterfitting.nonlinearparameterfitting`. Existing fitting workflows keep working because the class names, constructors of the fitting classes, and fluent methods are unchanged:
 
 - `LevenbergMarquardt.solve()` still returns `void`.
 - `SampleValue`, `SampleSet`, `BaseFunction`, and `LevenbergMarquardtFunction` are still available in the same packages.
 - Existing code can still set initial guesses on the function, create samples manually, call `optimizer.setSampleSet(sampleSet)`, and call `optimizer.solve()`.
 - New diagnostics are additive through `optimizer.getResult()` and `ParameterFittingStudy.Result`.
+
+Code that subclasses `StatisticsBaseClass` must account for matrix APIs migrated to arrays and EJML:
+
+- Protected covariance and correlation fields use arrays. Rebuild subclasses that accessed former JAMA fields.
+- Deprecated matrix bounds and display overloads now accept EJML `SimpleMatrix`. Array calls preserve dispatch to
+  those EJML hooks; old JAMA hook descriptors are no longer supported.
+- `getCoVarianceMatrix()` and `getParameterCorrelationMatrix()` return independent `double[][]` copies.
+- `LevenbergMarquardtResult` keeps its array constructor and an EJML `SimpleMatrix` constructor. Prefer
+  `fromArrays(...)` to avoid ambiguity for untyped null arguments.
+- `getCovarianceMatrix()` and `getCorrelationMatrix()` return EJML `SimpleMatrix` copies;
+  `getCovarianceMatrixArray()` and `getCorrelationMatrixArray()` return arrays.
+
+JAMA is removed from the build. This changes source and binary contracts for former matrix callers.
+See the [JAMA to EJML migration guide](../development/jama-ejml-migration.md) for migration and release review.
 
 ## Weighted Least Squares
 
@@ -325,15 +339,112 @@ This keeps the fitting study generic while allowing model-specific parameter upd
 
 `LevenbergMarquardtResult` is available after `solve()`:
 
+Each `solve()` attempt clears the previous convergence result and covariance
+statistics before evaluating samples. Function-evaluation exceptions propagate
+to the caller; they are not replaced by a zero residual or a successful fit.
+If evaluation aborts before the optimizer completes, `isSolved()` is false and
+`getResult()` retains the initial nonconverged `NOT_RUN` state with NaN final
+chi-square. Preserve the exception as the rejection reason; `NOT_RUN` does not
+claim a successful optimization or a completed failure assessment.
+
+The program below fits a two-parameter line, checks the convergence diagnostics, and uses the
+array accessors added by the current matrix-migration API. The returned matrices are defensive
+copies: changing one returned array does not mutate the optimizer result.
+
 ```java
-LevenbergMarquardtResult result = optimizer.getResult();
-int iterations = result.getIterations();
-double chiSquare = result.getFinalChiSquare();
-double gradientNorm = result.getGradientNorm();
-double[][] covariance = result.getCovariance();
-double[][] correlation = result.getCorrelation();
-double[] standardErrors = result.getParameterStandardErrors();
+package examples;
+
+import java.util.ArrayList;
+import neqsim.statistics.parameterfitting.SampleSet;
+import neqsim.statistics.parameterfitting.SampleValue;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public final class ParameterFittingDiagnosticsExample {
+  private static final Logger logger =
+      LogManager.getLogger(ParameterFittingDiagnosticsExample.class);
+
+  private ParameterFittingDiagnosticsExample() {}
+
+  public static void main(String[] args) {
+    LinearFunction function = new LinearFunction();
+    function.setInitialGuess(new double[] {0.5, 0.0});
+
+    ArrayList<SampleValue> samples = new ArrayList<SampleValue>();
+    for (int i = -3; i <= 3; i++) {
+      addSample(samples, function, i, 2.5 * i - 1.2);
+    }
+
+    LevenbergMarquardt optimizer = new LevenbergMarquardt();
+    optimizer.setSampleSet(new SampleSet(samples));
+    optimizer.setMaxNumberOfIterations(30);
+    optimizer.solve();
+
+    LevenbergMarquardtResult result = optimizer.getResult();
+    double slope = function.getFittingParams(0);
+    double intercept = function.getFittingParams(1);
+    double[][] covariance = result.getCovarianceMatrixArray();
+    double[][] correlation = result.getCorrelationMatrixArray();
+
+    require(result.isConverged(), "Optimizer did not converge: " + result.getConvergenceReason());
+    require(Double.isFinite(slope) && Double.isFinite(intercept), "Fitted parameters are not finite");
+    require(result.getFinalChiSquare() < 1.0e-8, "Unexpected weighted chi-square");
+    require(Double.isFinite(result.getGradientNorm()), "Gradient norm is not finite");
+    require(covariance != null && covariance.length == 2 && covariance[0].length == 2,
+        "Covariance matrix dimensions are invalid");
+    require(correlation != null && correlation.length == 2 && correlation[0].length == 2,
+        "Correlation matrix dimensions are invalid");
+
+    covariance[0][0] = Double.NaN;
+    require(Double.isFinite(result.getCovarianceMatrixArray()[0][0]),
+        "Covariance accessor must return a defensive copy");
+
+    assert result.isConverged();
+    assert Math.abs(slope - 2.5) < 1.0e-6;
+    assert Math.abs(intercept + 1.2) < 1.0e-6;
+
+    logger.info(
+        "Fit diagnostics: slope={}, intercept={}, iterations={}, chiSquare={}, gradientNorm={}",
+        slope, intercept, result.getIterations(), result.getFinalChiSquare(),
+        result.getGradientNorm());
+  }
+
+  private static void addSample(
+      ArrayList<SampleValue> samples,
+      LinearFunction function,
+      double x,
+      double measuredValue) {
+    SampleValue sample = new SampleValue(measuredValue, 0.1, new double[] {x});
+    sample.setFunction(function);
+    samples.add(sample);
+  }
+
+  private static void require(boolean condition, String message) {
+    if (!condition) {
+      throw new IllegalStateException(message);
+    }
+  }
+
+  private static final class LinearFunction extends LevenbergMarquardtFunction {
+    @Override
+    public double calcValue(double[] dependentValues) {
+      return params[0] * dependentValues[0] + params[1];
+    }
+
+    @Override
+    public void setFittingParams(int index, double value) {
+      params[index] = value;
+    }
+  }
+}
 ```
+
+For array-oriented callers, prefer `getCovarianceMatrixArray()` and
+`getCorrelationMatrixArray()`. The legacy `getCovarianceMatrix()` and
+`getCorrelationMatrix()` methods return independent EJML `SimpleMatrix` values.
 
 Convergence reasons are:
 

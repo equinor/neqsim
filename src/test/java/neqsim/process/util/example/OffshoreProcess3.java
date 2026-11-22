@@ -143,7 +143,7 @@ public class OffshoreProcess3 {
     SetPoint compressorPresSet = new SetPoint("comp pres set", compressor2stage, "pressure", inletSeparator);
 
     Heater secondndstagecooler = new Heater("2nd stage cooler", compressor2stage.getOutletStream());
-    secondndstagecooler.setOutTemperature(290.0);
+    secondndstagecooler.setOutletTemperature(290.0);
 
     Separator scrubbberfrom2ndstage = new Separator("scrubber of mix gas HP", secondndstagecooler.getOutletStream());
 
@@ -152,7 +152,7 @@ public class OffshoreProcess3 {
     mixer.addStream(scrubbberfrom2ndstage.getGasOutStream());
 
     Heater dewPointScrubberCooler = new Heater("dew point scrubber cooler2", mixer.getOutletStream());
-    dewPointScrubberCooler.setOutTemperature(273.15 + 32.3);
+    dewPointScrubberCooler.setOutletTemperature(273.15 + 32.3);
 
     Separator mpscrubber = new Separator("dew point control scrubber", dewPointScrubberCooler.getOutletStream());
 
@@ -232,7 +232,7 @@ public class OffshoreProcess3 {
     operations.add(exportGas);
     // ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
     // ((Heater) operations2.getUnit("dew point scrubber
-    // cooler2")).setOutTemperature(298.15);
+    // cooler2")).setOutletTemperature(298.15);
     // operations2.run();
     // ((Stream) operations2.getUnit("rich gas")).phaseEnvelope();
 

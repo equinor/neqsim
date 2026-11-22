@@ -40,7 +40,11 @@ public class SystemPrEos1978 extends SystemPrEos {
     attractiveTermNumber = 6;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemPrEos1978 clone() {
     SystemPrEos1978 clonedSystem = null;
@@ -48,6 +52,7 @@ public class SystemPrEos1978 extends SystemPrEos {
       clonedSystem = (SystemPrEos1978) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemPrEos1978", ex);
     }
 
     return clonedSystem;

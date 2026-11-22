@@ -187,7 +187,7 @@ public class DynamicProcessHelperTest extends neqsim.NeqSimTest {
     comp.setOutletPressure(30.0);
 
     Cooler cooler = new Cooler("aftercooler", comp.getOutletStream());
-    cooler.setOutTemperature(273.15 + 35.0);
+    cooler.setOutletTemperature(273.15 + 35.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

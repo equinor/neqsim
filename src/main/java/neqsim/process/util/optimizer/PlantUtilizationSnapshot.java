@@ -16,10 +16,15 @@ import java.util.Map;
  * restrictions. Enabled missing or invalid evidence fails closed. The class neither evaluates a process nor retains
  * mutable process state, callbacks, suppliers, or external optimizer proposals.
  * </p>
+ * <p>
+ * Without an expected-coverage report, completeness is relative to registered definitions only. Bind an independently
+ * declared equipment/constraint scope with {@link Builder#expectedCoverage(UtilizationCoverageReport)} to detect
+ * omitted registrations. This qualified path also requires an explicit convergence declaration for the calculation.
+ * </p>
  */
 public final class PlantUtilizationSnapshot implements Serializable {
   private static final long serialVersionUID = 1L;
-  private static final String SCHEMA_VERSION = "1.0";
+  private static final String SCHEMA_VERSION = "1.1";
   private static final double DEFAULT_NEAR_LIMIT_THRESHOLD = 0.9;
 
   private final String calculationId;
@@ -33,12 +38,17 @@ public final class PlantUtilizationSnapshot implements Serializable {
   private final List<String> feasibilityDiagnostics;
   private final boolean complete;
   private final boolean feasible;
+  private final UtilizationCoverageReport expectedCoverage;
 
   private PlantUtilizationSnapshot(Builder builder) {
     calculationId = PlantConstraintScope.requireText(builder.calculationId, "Calculation id");
     registryIdentityDigest = builder.registry.getIdentityDigest();
     nearLimitThreshold = validateNearLimitThreshold(builder.nearLimitThreshold);
     convergenceComplete = builder.convergenceComplete;
+    expectedCoverage = builder.expectedCoverage;
+    if (expectedCoverage != null && !registryIdentityDigest.equals(expectedCoverage.getRegistryIdentityDigest())) {
+      throw new IllegalArgumentException("Expected coverage must be bound to the same plant constraint registry");
+    }
 
     List<PlantConstraintEvidence> rows = new ArrayList<PlantConstraintEvidence>();
     Map<String, PlantConstraintEvidence> indexed = new LinkedHashMap<String, PlantConstraintEvidence>();
@@ -51,7 +61,27 @@ public final class PlantUtilizationSnapshot implements Serializable {
     evidence = Collections.unmodifiableList(rows);
     evidenceById = Collections.unmodifiableMap(indexed);
     bottleneckLadder = Collections.unmodifiableList(buildBottleneckLadder(rows));
-    coverageDiagnostics = Collections.unmodifiableList(buildCoverageDiagnostics(rows));
+    List<String> coverage = buildCoverageDiagnostics(rows);
+    if (!convergenceComplete) {
+      coverage.add("INCOMPLETE_CONVERGENCE");
+    }
+    if (expectedCoverage != null) {
+      if (!builder.convergenceDeclared) {
+        coverage.add("CONVERGENCE_NOT_DECLARED");
+      }
+      if (!expectedCoverage.isComplete()) {
+        coverage.add("INCOMPLETE_EXPECTED_COVERAGE");
+        for (String diagnostic : expectedCoverage.getDiagnostics()) {
+          coverage.add("EXPECTED_COVERAGE:" + diagnostic);
+        }
+      }
+      for (String expectedId : expectedCoverage.getRequiredConstraintIds()) {
+        if (!indexed.containsKey(expectedId)) {
+          coverage.add("UNREGISTERED_EXPECTED_CONSTRAINT:" + expectedId);
+        }
+      }
+    }
+    coverageDiagnostics = Collections.unmodifiableList(coverage);
     feasibilityDiagnostics = Collections.unmodifiableList(buildFeasibilityDiagnostics(rows));
     complete = coverageDiagnostics.isEmpty();
     feasible = complete && feasibilityDiagnostics.isEmpty();
@@ -165,7 +195,10 @@ public final class PlantUtilizationSnapshot implements Serializable {
     return bottleneckLadder.isEmpty() ? null : bottleneckLadder.get(0);
   }
 
-  /** @return true when every enabled registration has valid exact-calculation evidence */
+  /**
+   * @return true when every enabled registration has valid exact-calculation evidence and any supplied expected scope
+   * is complete; without an expected scope this does not establish complete equipment coverage
+   */
   public boolean isComplete() {
     return complete;
   }
@@ -173,6 +206,11 @@ public final class PlantUtilizationSnapshot implements Serializable {
   /** @return true when coverage is complete and no hard or critical limit is violated */
   public boolean isFeasible() {
     return feasible;
+  }
+
+  /** @return immutable expected-coverage preflight, or null for the legacy registration-only path */
+  public UtilizationCoverageReport getExpectedCoverage() {
+    return expectedCoverage;
   }
 
   /** @return immutable deterministic list of incomplete-coverage diagnostics */
@@ -192,6 +230,8 @@ public final class PlantUtilizationSnapshot implements Serializable {
     private final Map<String, PlantConstraintSample> samples = new LinkedHashMap<String, PlantConstraintSample>();
     private double nearLimitThreshold = DEFAULT_NEAR_LIMIT_THRESHOLD;
     private boolean convergenceComplete = true;
+    private boolean convergenceDeclared;
+    private UtilizationCoverageReport expectedCoverage;
 
     private Builder(PlantConstraintRegistry registry, String calculationId) {
       if (registry == null) {
@@ -241,6 +281,28 @@ public final class PlantUtilizationSnapshot implements Serializable {
      */
     public Builder convergenceComplete(boolean value) {
       convergenceComplete = value;
+      convergenceDeclared = true;
+      return this;
+    }
+
+    /**
+     * Binds the independently declared equipment/constraint scope to this snapshot.
+     *
+     * <p>
+     * The report must reference the exact registry digest. Its values are preflight evidence; the supplied runtime
+     * samples still establish exact-calculation feasibility. Call {@link #convergenceComplete(boolean)} explicitly
+     * after the model solve. The report is immutable and no equipment supplier is called by this method or build.
+     * </p>
+     *
+     * @param report registry-bound expected-coverage report
+     * @return this builder
+     * @throws IllegalArgumentException if the report is null or was bound to a different registry
+     */
+    public Builder expectedCoverage(UtilizationCoverageReport report) {
+      if (report == null || !registry.getIdentityDigest().equals(report.getRegistryIdentityDigest())) {
+        throw new IllegalArgumentException("Expected coverage must be bound to the same plant constraint registry");
+      }
+      expectedCoverage = report;
       return this;
     }
 

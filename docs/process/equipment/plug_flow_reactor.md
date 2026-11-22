@@ -108,6 +108,44 @@ Where:
 
 **Isothermal mode:** $dT/dz = 0$ (temperature forced constant, heat duty calculated)
 
+The isothermal result returned by `getHeatDuty()` is the net reaction heat release,
+in W, using the historical sign convention:
+
+$$Q_{reported} = -\int_0^L A_c \sum_j r_j(z)\,\Delta H_{rxn,j}\,dz = -\sum_j \Delta H_{rxn,j}\,\dot\xi_j$$
+
+Here $\dot\xi_j$ is the integrated extent flow of reaction $j$ in mol/s, and
+$\Delta H_{rxn,j}$ is the configured enthalpy in J/mol of reaction as written.
+Positive values mean heat is released (exothermic); negative values mean heat is
+absorbed (endothermic). The compensating external heat input, positive into the
+reactor, is **the negative of this reported value** in this reaction-energy model.
+Earlier getter Javadocs incorrectly described positive values as heat added.
+This result uses the configured reaction enthalpies, not an inlet/outlet EOS
+enthalpy difference; it does not add separate mixing, phase-change, or sensible
+heat corrections.
+
+Reaction heat is integrated with the same Euler update or RK4 stages and weights
+as the species balances. It includes the same catalyst activity, effectiveness,
+rate-basis conversion, and total tube area. Individual reaction extents are never
+inferred from a shared reactant's total disappearance, which would double-count
+parallel channels and miscount serial intermediates. Both thermodynamic coupling
+modes use this ledger; frozen properties retain their existing approximation.
+Refine the axial grid to check composition and duty convergence. A coarse grid
+that activates species clipping cannot establish a closed species/energy balance.
+
+For the illustrative parallel formic-acid regression in issue
+[#3859](https://github.com/equinor/neqsim/issues/3859), the two outlet product
+extent flows are approximately 0.32274048 and 0.20291727 mol/s. With reaction
+enthalpies of 30000 and 45000 J/mol, the reported duty is **-18.81349 kW**;
+the previous shared-reactant estimate gave -39.42433 kW. These parameters validate
+bookkeeping and are not a validated formic-acid kinetic mechanism.
+
+`getHeatDuty("W")`, `getHeatDuty("kW")`, and `getHeatDuty("MW")` use the same sign.
+The value is reset on every run. It is zero for no-reaction and adiabatic runs;
+coolant-mode jacket duty is not currently accumulated by this getter.
+`PlugFlowReactorHeatDutyTest` checks the public reproducer, serial and overlapping
+networks, grid refinement, non-unit stoichiometry, signs, units, repeated runs,
+mode changes, and catalyst/multiple-tube scaling.
+
 ### Pressure Drop — Ergun Equation (Packed Bed)
 
 $$
@@ -396,7 +434,10 @@ String csv  = profile.toCSV();    // CSV for spreadsheet/plotting
 
 A simple homogeneous gas-phase decomposition A → B + C:
 
+<!-- pfr-worked-example-1:start -->
 ```java
+Logger logger = LogManager.getLogger("PfrIsothermalExample");
+
 // Feed: 90% methane (A) + 10% ethane (B) at 300°C, 20 bara
 SystemInterface gas = new SystemSrkEos(273.15 + 300.0, 20.0);
 gas.addComponent("methane", 0.90);
@@ -426,15 +467,22 @@ pfr.setNumberOfSteps(100);
 pfr.setKeyComponent("methane");
 pfr.run();
 
-System.out.println("Conversion: " + pfr.getConversion());
-System.out.println("Pressure drop: " + pfr.getPressureDrop() + " bar");
+double conversion = pfr.getConversion();
+double pressureDropBar = pfr.getPressureDrop();
+assert Double.isFinite(conversion) && conversion >= 0.0 && conversion <= 1.0;
+assert Double.isFinite(pressureDropBar) && pressureDropBar >= 0.0;
+logger.info("Conversion: {}; pressure drop: {} bar", conversion, pressureDropBar);
 ```
+<!-- pfr-worked-example-1:end -->
 
 ### Example 2: Adiabatic Catalytic Reactor with Packed Bed
 
 An exothermic catalytic reaction with Ergun pressure drop:
 
+<!-- pfr-worked-example-2:start -->
 ```java
+Logger logger = LogManager.getLogger("PfrPackedBedExample");
+
 // Feed gas
 SystemInterface gas = new SystemSrkEos(273.15 + 250.0, 30.0);
 gas.addComponent("methane", 0.70);
@@ -470,21 +518,34 @@ pfr.setEnergyMode(PlugFlowReactor.EnergyMode.ADIABATIC);
 pfr.setNumberOfSteps(100);
 pfr.run();
 
-System.out.println("Conversion: " + pfr.getConversion());
-System.out.println("Outlet T: " + (pfr.getOutletTemperature() - 273.15) + " °C");
-System.out.println("Pressure drop: " + pfr.getPressureDrop() + " bar");
+double conversion = pfr.getConversion();
+double outletTemperatureC = pfr.getOutletTemperature() - 273.15;
+double pressureDropBar = pfr.getPressureDrop();
+assert Double.isFinite(conversion) && conversion >= 0.0 && conversion <= 1.0;
+assert Double.isFinite(outletTemperatureC);
+assert Double.isFinite(pressureDropBar) && pressureDropBar >= 0.0;
+logger.info(
+    "Conversion: {}; outlet temperature: {} C; pressure drop: {} bar",
+    conversion,
+    outletTemperatureC,
+    pressureDropBar);
 
 // Access axial profiles
 ReactorAxialProfile profile = pfr.getAxialProfile();
 double[] temps = profile.getTemperatureProfile();
 double[] convs = profile.getConversionProfile();
+assert temps.length == convs.length && temps.length == pfr.getNumberOfSteps() + 1;
 ```
+<!-- pfr-worked-example-2:end -->
 
 ### Example 3: Cooled Multi-Tube Reactor
 
 A shell-and-tube reactor with external coolant:
 
+<!-- pfr-worked-example-3:start -->
 ```java
+Logger logger = LogManager.getLogger("PfrCooledMultiTubeExample");
+
 // High temperature feed
 SystemInterface gas = new SystemSrkEos(273.15 + 400.0, 20.0);
 gas.addComponent("methane", 0.90);
@@ -516,10 +577,19 @@ pfr.setOverallHeatTransferCoefficient(250.0);  // W/(m2*K)
 pfr.setNumberOfSteps(200);
 pfr.run();
 
-System.out.println("Conversion: " + pfr.getConversion());
-System.out.println("Outlet T: " + (pfr.getOutletTemperature() - 273.15) + " °C");
-System.out.println("Heat duty: " + pfr.getHeatDuty("kW") + " kW");
+double conversion = pfr.getConversion();
+double outletTemperatureC = pfr.getOutletTemperature() - 273.15;
+double heatDutyKw = pfr.getHeatDuty("kW");
+assert Double.isFinite(conversion) && conversion >= 0.0 && conversion <= 1.0;
+assert Double.isFinite(outletTemperatureC);
+assert Double.isFinite(heatDutyKw);
+logger.info(
+    "Conversion: {}; outlet temperature: {} C; heat duty: {} kW",
+    conversion,
+    outletTemperatureC,
+    heatDutyKw);
 ```
+<!-- pfr-worked-example-3:end -->
 
 ### Example 4: Reversible Reaction with Equilibrium Limitation
 

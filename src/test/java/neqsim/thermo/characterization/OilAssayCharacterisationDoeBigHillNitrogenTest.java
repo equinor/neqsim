@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Public DOE refinery-assay qualification of linear total-nitrogen bookkeeping. */
 public class OilAssayCharacterisationDoeBigHillNitrogenTest {
-  private static final double[] MASS_YIELD_PERCENT = { 1.70, 5.22, 8.32, 12.55, 16.19, 13.18, 18.44, 12.84, 11.56 };
-  private static final double[] NITROGEN_MASS_PERCENT = { 0.0, 0.0, 0.0, 0.0, 0.0018, 0.0186, 0.102, 0.234, 0.501 };
+  private static final double[] MASS_YIELD_PERCENT = {1.70, 5.22, 8.32, 12.55, 16.19, 13.18, 18.44, 12.84, 11.56};
+  private static final double[] NITROGEN_MASS_PERCENT = {0.0, 0.0, 0.0, 0.0, 0.0018, 0.0186, 0.102, 0.234, 0.501};
   private static final double DOE_WHOLE_CRUDE_NITROGEN_MASS_PERCENT = 0.11;
 
   @Test

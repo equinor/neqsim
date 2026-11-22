@@ -116,12 +116,7 @@ ProcessLinkedMPC mpc = new ProcessLinkedMPC("pressureController", process);
 mpc.addMV("inlet_valve", "opening", 0.0, 1.0);  // Valve opening 0-100%
 mpc.addCV("separator", "pressure", 30.0);        // Control to 30 bar
 
-// Configure controller
-mpc.setSampleTime(60.0);          // 60 second sample time
-mpc.setPredictionHorizon(20);     // 20 samples = 20 minutes
-mpc.setControlHorizon(5);         // 5 control moves
-
-// Identify model
+// Identify the local steady-gain model
 mpc.identifyModel(60.0);
 
 // Control loop
@@ -290,16 +285,9 @@ sys.OutputName = {'separator.pressure', 'separator.liquidLevel'};
 
 ## Nonlinear Prediction
 
-For highly nonlinear processes, use full NeqSim simulation for prediction:
-
-```java
-// Enable nonlinear prediction
-mpc.setUseNonlinearPrediction(true);
-mpc.identifyModel(60.0);
-
-// Now calculate() uses full simulation
-double[] moves = mpc.calculate();
-```
+Use `NonlinearPredictor` to evaluate a specified input trajectory with process simulation.
+`ProcessLinkedMPC.calculate()` uses the local gain model by default. Supplying sampled step responses
+selects its linear horizon optimizer, as shown in the export/injection example below.
 
 ### Direct Predictor Access
 
@@ -642,6 +630,38 @@ ProductionIndex=  8
 | FuncPrec | Function precision | 1e-08 |
 | FeTol | Constraint feasibility tolerance | 1e-03 |
 | OptimTol | Optimality tolerance | 1e-05 |
+
+## Export versus injection with a scheduled takeaway reduction
+
+The executable [export/injection example](../../src/test/java/neqsim/process/mpc/ExportInjectionMpcExampleTest.java)
+routes 100 kg/h of methane through a NeqSim splitter. A local response model represents the effect
+of third-stage suction pressure on the split. At 48 bara, injection takes 20 kg/h. Raising suction
+by 1 bar diverts another 2 kg/h from export to injection. The assumed export-header pressure rises
+by 0.5 bar for each kg/h by which export exceeds the takeaway nomination. These synthetic gains
+describe this example only. A compressor application needs identified responses, valve limits and
+anti-surge protection appropriate to the equipment.
+
+Every 15 s the controller predicts the next six minutes, optimizes four independent suction
+settings and holds the fourth setting for the rest of the horizon. It applies the first setting.
+Suction is limited to 48–54 bara and can move by 1 bar per scan. A preferred setting of 48 bara
+favours export. A soft upper limit of 100 bara on the header discourages routing more gas to export
+than the receiving system can take.
+
+At 60 s, takeaway drops from 80 to 74 kg/h. With advance notice, the controller diverts some gas
+to injection before the change. The test checks the cost in diverted gas and compares the
+integrated pressure exceedance with a pressure-feedback controller subject to the same actuator
+limits. At 135 s an unexpected drop to 64 kg/h puts the measured header pressure 5 bar above the
+one-step forecast. Even at the suction upper limit, export is at least 68 kg/h, so the next scan
+must report at least 2 bar of upper slack. The test checks the measured export-plus-injection
+balance and the applied first move on every scan.
+
+| Quantity in the synthetic replay | Preview MPC | Pressure feedback |
+| --- | ---: | ---: |
+| Additional gas injected before the planned reduction, relative to feedback | 0.0215 kg | 0 kg |
+| Integrated pressure above 100 bara during the five planned-reduction scans | 12.55 bar·s | 90.00 bar·s |
+
+The first scan after detecting the surprise reports 4.143 bar of upper slack. The 1 bar-per-scan
+slew limit prevents the controller from immediately reaching the maximum suction pressure.
 
 ## See Also
 

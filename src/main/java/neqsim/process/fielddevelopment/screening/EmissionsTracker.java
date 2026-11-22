@@ -39,7 +39,7 @@ public class EmissionsTracker {
   private static final double FLARE_EFFICIENCY = 0.98;
   private static final double FLARE_KG_CO2_PER_SM3 = 2.75; // CO2 from CH4 combustion
   private static final double FUGITIVE_PERCENT = 0.01; // 0.01% fugitive emissions (modern facility)
-  private static final double METHANE_GWP = 25.0; // 100-year GWP
+  private static final double METHANE_GWP = 28.0; // IPCC AR5 100-year GWP
 
   // Power estimates (MW)
   private static final double COMPRESSION_MW_PER_STAGE = 5.0;

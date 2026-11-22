@@ -1,0 +1,12 @@
+package neqsim.qualification;
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+public class RootWorkCounts {
+ public static final long[] counts=new long[9];
+ public static void hit(int i){counts[i]++;}
+ public static void main(String[] args) throws Exception {
+  neqsim.thermo.mixingrule.HuronVidalPerformanceBenchmark.main(new String[]{args[0],args[1],"PR","flash_init3","40","10","4"});
+  Files.write(Paths.get(args[2]),Arrays.toString(counts).getBytes(StandardCharsets.UTF_8));
+ }
+}

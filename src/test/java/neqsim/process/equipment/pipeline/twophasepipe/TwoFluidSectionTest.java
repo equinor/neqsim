@@ -98,6 +98,30 @@ public class TwoFluidSectionTest {
   }
 
   @Test
+  void testDispersedOilWaterAreaUsesDropletSurface() {
+    section.setOilDensity(720.0);
+    section.setWaterDensity(1000.0);
+    section.setOilViscosity(3.0e-3);
+    section.setWaterViscosity(1.0e-3);
+    section.setOilHoldup(0.24);
+    section.setWaterHoldup(0.06);
+    section.setLiquidHoldup(0.30);
+    section.setWaterCut(0.20);
+    section.setOilFractionInLiquid(0.80);
+    section.setLiquidVelocity(3.0);
+    section.updateThreePhaseProperties();
+
+    assertNotNull(section.getOilWaterResult());
+    assertTrue(section.getOilWaterResult().maxDropletDiameter > 0.0);
+    double dispersedHoldup = section.getOilWaterResult().oilContinuous ? section.getWaterHoldup()
+        : section.getOilHoldup();
+    double expectedArea = 6.0 * section.getArea() * dispersedHoldup
+        / Math.min(section.getOilWaterResult().maxDropletDiameter, section.getDiameter());
+    assertEquals(expectedArea, section.calcOilWaterInterfacialAreaPerLength(), 1.0e-12);
+    assertTrue(expectedArea > section.getDiameter() * 0.5 * section.getLiquidHoldup());
+  }
+
+  @Test
   void testAreaCalculation() {
     double expectedArea = Math.PI * 0.1 * 0.1 / 4.0;
     assertEquals(expectedArea, section.getArea(), TOLERANCE);
@@ -184,7 +208,7 @@ public class TwoFluidSectionTest {
     section.setWaterDensity(1000.0);
     section.setLiquidDensity(850.0);
     section.setWaterCut(0.25);
-    section.setStateVector(new double[] { 8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0 });
+    section.setStateVector(new double[] {8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0});
 
     section.extractPrimitiveVariables();
 
@@ -203,7 +227,7 @@ public class TwoFluidSectionTest {
     section.setWaterDensity(1000.0);
     section.setLiquidDensity(850.0);
     section.setWaterCut(0.4);
-    section.setStateVector(new double[] { 5.0, 4.0, 6.0, 25.0, 8.0, 18.0, 100.0 });
+    section.setStateVector(new double[] {5.0, 4.0, 6.0, 25.0, 8.0, 18.0, 100.0});
 
     section.extractPrimitiveVariables();
     section.updateWaterOilHoldups();
@@ -304,8 +328,11 @@ public class TwoFluidSectionTest {
     assertEquals(first.getWaterSourceKgPerMetreSecond(), second.getWaterSourceKgPerMetreSecond(), 0.0);
   }
 
+  /** Closure diagnostics use initialized positive absolute pressure in both horizontal and inclined cells. */
   @Test
   void testClosurePassUpdatesEntrainmentAndSevereSlugDiagnostics() {
+    section.setPressure(50.0e5);
+    section.setTemperature(300.0);
     section.setGasDensity(25.0);
     section.setLiquidDensity(750.0);
     section.setGasViscosity(1.2e-5);
@@ -317,15 +344,20 @@ public class TwoFluidSectionTest {
     section.setLiquidVelocity(0.5);
     section.updateDerivedQuantities();
 
+    // The conservative source operator partitions mixture forces using initialized phase inertia.
+    section.updateConservativeVariables();
+
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     TwoFluidSection section2 = section.clone();
     section2.setPosition(section.getLength());
-    equations.calcRHS(new TwoFluidSection[] { section, section2 }, section.getLength());
+    equations.calcRHS(new TwoFluidSection[] {section, section2}, section.getLength());
 
     assertTrue(section.getEntrainmentFraction() >= 0.0);
     assertTrue(section.getEntrainedDropletDiameter() >= 0.0);
 
     TwoFluidSection riserBase = new TwoFluidSection(0.0, 10.0, 0.1, Math.toRadians(30.0));
+    riserBase.setPressure(50.0e5);
+    riserBase.setTemperature(300.0);
     riserBase.setGasDensity(20.0);
     riserBase.setLiquidDensity(800.0);
     riserBase.setGasViscosity(1.0e-5);
@@ -336,10 +368,11 @@ public class TwoFluidSectionTest {
     riserBase.setGasVelocity(0.02);
     riserBase.setLiquidVelocity(0.1);
     riserBase.updateDerivedQuantities();
+    riserBase.updateConservativeVariables();
 
     TwoFluidSection riserBase2 = riserBase.clone();
     riserBase2.setPosition(riserBase.getLength());
-    equations.calcRHS(new TwoFluidSection[] { riserBase, riserBase2 }, riserBase.getLength());
+    equations.calcRHS(new TwoFluidSection[] {riserBase, riserBase2}, riserBase.getLength());
 
     assertTrue(riserBase.getInclinedSectionGasCarryoverNumber() < 1.0);
     assertTrue(riserBase.isInclinedSectionLiquidFallbackPotential());
@@ -353,7 +386,7 @@ public class TwoFluidSectionTest {
     TwoFluidSection downstream = createThreePhaseBalanceSection(20.0, 1.0, 0.1);
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
-    equations.calcRHS(new TwoFluidSection[] { upstream, valley, downstream }, 10.0);
+    equations.calcRHS(new TwoFluidSection[] {upstream, valley, downstream}, 10.0);
 
     double[] sourceRates = equations.getLastMassBalanceRate().getSourceMassFlowKgPerSecond();
     assertEquals(0.0, sourceRates[0] + sourceRates[1] + sourceRates[2], 1.0e-12,

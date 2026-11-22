@@ -144,7 +144,7 @@ public class InstrumentDesignTest {
   @Test
   void testHeaterInstrumentDesign() {
     Heater heater = new Heater("TestHeater", testStream);
-    heater.setOutTemperature(273.15 + 80.0);
+    heater.setOutletTemperature(273.15 + 80.0);
     heater.run();
 
     HeatExchangerInstrumentDesign instrDesign = (HeatExchangerInstrumentDesign) heater.getInstrumentDesign();
@@ -163,7 +163,7 @@ public class InstrumentDesignTest {
   @Test
   void testCoolerInstrumentDesign() {
     Cooler cooler = new Cooler("TestCooler", testStream);
-    cooler.setOutTemperature(273.15 + 10.0);
+    cooler.setOutletTemperature(273.15 + 10.0);
     cooler.run();
 
     HeatExchangerInstrumentDesign instrDesign = (HeatExchangerInstrumentDesign) cooler.getInstrumentDesign();
@@ -305,7 +305,7 @@ public class InstrumentDesignTest {
     comp.setOutletPressure(50.0);
 
     Cooler cooler = new Cooler("aftercooler", comp.getOutletStream());
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

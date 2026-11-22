@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "campaign": 3154,
+  "sourceBase": "71835e21ef7e9c7b5a0ba809126c17b99aa864d8",
+  "fixture": "compiled-process-model-evaluation-plan",
+  "fixtureProvenance": "#3154 maintained multi-area compiled-plan fixture",
+  "command": "./mvnw -B -ntp -DskipTests -Dexec.classpathScope=test -Dexec.mainClass=neqsim.process.util.optimizer.CompiledProcessModelEvaluationPlanBenchmark -Dexec.args='target/benchmarks/compiled-process-model-evaluation-plan.json 20 2' exec:java",
+  "environment": {
+    "javaVersion": "17.0.20",
+    "osName": "Linux",
+    "availableProcessors": 8,
+    "maxHeapBytes": 5368709120,
+    "mainThreadAllocationOnly": true
+  },
+  "model": {
+    "areas": 20,
+    "units": 162,
+    "eos": "SRK",
+    "mixingRule": 2,
+    "components": 12,
+    "feedMassFlowKgHr": 12000.0,
+    "candidateMassFlowKgHr": 12120.0,
+    "installedExportLimitKgHr": 14000.0,
+    "massClosureToleranceKgHr": 0.05
+  },
+  "result": {
+    "compileElapsedNs": 2689549205,
+    "compileMainThreadAllocatedBytes": 1154759416,
+    "evaluationElapsedNs": 1159243826,
+    "evaluationMainThreadAllocatedBytes": 694325784,
+    "resultJsonBytes": 79243,
+    "expectedInstalledCapacityRows": 41,
+    "expectedBoundaryRows": 1,
+    "candidateAccepted": true,
+    "candidateConverged": true,
+    "baselineRestored": true,
+    "baselineReconverged": true,
+    "restoredFeedKgHr": 11999.999999999996,
+    "restoredProductsKgHr": 11999.999999999996,
+    "restoredMassResidualKgHr": 0.0
+  },
+  "acceptance": {
+    "minimumAreas": 6,
+    "minimumUnits": 150,
+    "exactCoverageRequired": true,
+    "finiteEvidenceRequired": true,
+    "completeRestorationRequired": true,
+    "wallTimeAssertion": false,
+    "speedupClaim": false
+  },
+  "limitations": [
+    "Allocation covers the main thread only.",
+    "Maximum heap is a JVM bound, not measured peak resident memory.",
+    "The fixture advances compiled evaluator scale qualification but does not complete recycle, water-handling, shared-resource transition, or discrete-lineup acceptance."
+  ]
+}

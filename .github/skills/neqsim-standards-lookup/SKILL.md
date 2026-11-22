@@ -1,7 +1,7 @@
 ---
 name: neqsim-standards-lookup
-description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), risk assessment, or safety analysis. Provides equipment-to-standards mapping, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
-last_verified: "2026-08-02"
+description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), ISO 18453 / GERG-water water dew point, risk assessment, or safety analysis. Provides equipment-to-standards mapping, calculation setup rules, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
+last_verified: "2026-11-22"
 ---
 
 # NeqSim Standards Lookup
@@ -19,6 +19,49 @@ Before any simulation or analysis, identify applicable standards:
 | **Quick** | 1-line note: "Per \[STANDARD\]" or "N/A — property lookup" |
 | **Standard** | Table of applicable standards with scope and status |
 | **Comprehensive** | Full table with clause numbers, design values, and compliance evidence |
+
+## Jurisdiction and Standard Sizes (MANDATORY with the identification above)
+
+Standards are not law. Before listing standards, resolve the country of the evaluated asset
+with `neqsim-jurisdiction-regulatory-basis` (ask once, or record the assumption and a
+`data_gaps` entry) and label every requirement as regulation, recognised standard or
+company requirement; company requirements may be stricter than regulation, never weaker.
+Report equipment sizes as buildable standard sizes with a `size_basis`
+(`neqsim-standard-equipment-sizes`); company or project sizes come first (enterprise:
+`enterprise-jurisdiction-and-company-sizing`), then vendor, then public standard tables.
+
+## Search the Local Standards Library First (MANDATORY)
+
+Before paraphrasing a standard from memory, citing it second-hand, or declaring
+it unobtainable, search the user's configured document root. It holds full PDFs
+and is more authoritative than recall:
+
+```bash
+neqsim --show-document-root       # may be unset - then there is no library
+neqsim documents "API 521"        # recursive; every word must appear in the path
+```
+
+Words may be in any order and need not be adjacent (`"API 521"` finds
+`API STD 521 ...`), but a standard filed under another body's number (for
+example `DNV-ST-F101`) is only found by that exact designation. When several
+editions are present (for example two `TR3500` versions), cite the edition you
+actually read.
+
+Every task folder also carries the listing at
+`step1_scope_and_research/references/document_root_index.md` — read it, since a
+subagent may have no CLI access. Refresh it with `neqsim documents --index .`.
+
+- **Cite clause numbers from the PDF**, not from memory. A remembered limit that
+  turns out to be the previous edition is a silent compliance error.
+- **File names are indicative only.** A document can contain the standard you
+  need without naming it (company guidelines often embed API/NORSOK
+  requirements), so open likely candidates before concluding it is absent.
+- Copy the standards actually used into `references/literature/` (or `manual/`
+  for company documents) so the task folder stays self-contained, and cite the
+  document number in `standards_applied`.
+- Only after this search comes up empty may a standard be recorded as a
+  `data_gap`. When no document root is configured, say so explicitly in the gap
+  entry rather than implying the standard does not exist.
 
 ## Equipment → Standards Mapping
 
@@ -38,8 +81,9 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Subsea equipment | NORSOK U-001, DNV-ST-F101 | `norsok_standards.csv`, `subsea_standards.csv` |
 | Well casing/tubing | API 5CT, API TR 5C3, NORSOK D-010 | `api_standards.csv`, `norsok_standards.csv` |
 | Flange | ASME B16.5 | `asme_standards.csv` |
+| Process flow diagram, block flow diagram, graphical symbols (documentation) | ISO 10628-1:2014, ISO 10628-2:2012 (collective application of ISO 14617); NORSOK P-002:2023+AC:2024 sets no diagram requirement | Not in the CSV tables; texts are paywalled, so claim "conventions applied, conformance not claimed". Edition evidence and checks: `process-study-report` skill, `references/standards_verification.md` |
 | Orifice plate / differential-pressure metering | ISO 5167-1/-2, AGA 3 / API MPMS 14.3 | Use `Iso5167OrificeMeteringKernel` for strict ISO 5167-2:2022 screening; keep `Standard_AGA3` for an AGA/API basis and `Orifice` for process simulation |
-| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
+| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506Rev2` for the Rev. 2 unmitigated rate and `NorsokM506CorrosionDesignKernel` for legacy screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
 | Offshore steel fatigue | DNV-RP-C203 | Use `DnvRpC203FatigueDesignKernel` with a verified project-controlled S-N curve and stress spectrum; do not report legacy pipeline/riser shortcuts as exact-edition C203 evidence |
 | Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
 | Inspected pipeline metal loss | DNV-RP-F101 | Use `DnvRpF101CorrodedPipelineScreeningKernel` for the current isolated longitudinal defect/internal-pressure screen; measured geometry and caller-controlled factors are evidence, not values inferred from M-506, and ST-F101 design checks remain separate |
@@ -48,6 +92,42 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Submarine-pipeline pipe-soil interaction | DNV-RP-F114 | Use `DnvRpF114PipeSoilInteractionScreeningKernel` for the current caller-controlled vertical/axial/lateral demand-resistance envelope; keep geotechnical model derivation and F109/F110/F105/ST-F101 acceptance separate |
 | Fixed-roof tank venting | API 2000 | Use `Api2000TankVentingScreeningKernel` for the current 7th-edition caller-controlled demand/capacity screen; do not infer licensed demand factors or report it as device sizing/conformity |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
+
+### ISO 18453 / GERG-water execution rule
+
+For a natural-gas **water dew point** request with a named **ISO 18453:2004** or
+**GERG-water** basis, use this setup and retain its model basis:
+
+1. Prefer `neqsim.standards.gasquality.Standard_ISO18453` for a water dew point
+   at a specified pressure. Its constructor sets up `SystemGERGwaterEos` and
+   `setMixingRule(8)`; explicitly call `setPressure(pressureBara)` before
+   `calculate()`, then read `getValue("dewPointTemperature", "C")`. Do not assume
+   the feed pressure replaces the wrapper's reference pressure.
+2. For a direct calculation, construct `SystemGERGwaterEos(temperatureK,
+   pressureBara)`, add the composition, call `setMixingRule(8)`, initialize, then
+   create `ThermodynamicOperations` for that fluid and call
+   `waterDewPointTemperatureFlash()`. Use a clone when the original process
+   fluid must be preserved. Do not substitute
+   GERG-2008, ordinary PR with `"classic"`, or CPA for an ISO 18453 model basis.
+3. Require positive finite water mole fraction and positive finite absolute
+   pressure. State whether moisture is on a wet-gas or dry-gas basis. For wet-gas
+   ppmv, `y_water = ppmv * 1e-6`; scale dry-component fractions by `1 - y_water`
+   and verify the complete wet composition sums to one. Convert dry-basis
+   moisture before using it as a wet-gas mole fraction. For mass per volume,
+   retain the specified reference temperature, pressure, and dry/real-gas basis.
+4. Below **273.16 K**, ISO 18453 uses an **ice reference**, not supercooled
+   liquid water. CPA liquid-water and hydrate boundaries are different
+   calculations. Reject non-finite output and report convergence failures.
+5. Report pressure, water basis, composition, NeqSim version, model and mixing
+   rule. Check the standard's composition limits: the validated range is
+   **−15 to +5 °C and 5–100 bara**; the extended range is **−50 to +40 °C and
+   1–300 bara**, with unknown correlation uncertainty. A converged result or a
+   class name does not establish full ISO compliance.
+
+Use the [maintained executable example and validation boundaries](../../../docs/standards/dew_point_standards.md)
+and route the task to the [gas-quality agent](../../agents/gas-quality.agent.md).
+`Draft_ISO18453` remains the legacy contract path; new direct calculations use
+`Standard_ISO18453`. Keep hydrocarbon dew point and cricondentherm separate.
 
 ### DNV-RP-F109 implementation status
 
@@ -80,9 +160,9 @@ See `docs/process/dnv_st_f101_pipeline_screening.md` and the `neqsim-capability-
 
 ### NORSOK M-506 execution rule
 
-For an explicit NORSOK M-506 calculation, prefer
-`neqsim.process.engineering.calculation.NorsokM506CorrosionDesignKernel`. It implements only the
-unamended 2017 edition, checks `Pipeline` / `AdiabaticPipe` / `Pipe` applicability, retains raw
+For the Rev. 2 section 5.2 unmitigated rate, use `NorsokM506Rev2.rateMmPerYear` with in-situ
+pH, wall shear stress and CO2 fugacity. The legacy de Waard-Milliams screening adapter
+`NorsokM506CorrosionDesignKernel` accepts the unamended 2017 edition identifier, checks `Pipeline` / `AdiabaticPipe` / `Pipe` applicability, retains raw
 unit-explicit input values, and blocks unsupported or out-of-range cases before the mutable legacy
 calculator runs. Treat `NorsokM506CorrosionAssessment.getProjectedUniformWallLossMm()` as rate
 multiplied by exposure time, not as a specified corrosion allowance or acceptance decision.
@@ -231,6 +311,7 @@ STS0131, TR1965, TR2237, or NORSOK P-002:
 | Gas scrubber conformance | `neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet.create("TR1965")` | Checks TR1965 K-factor, gas/liquid margins, entrainment, and scrubber layout metadata configured on `GasScrubberMechanicalDesign`. |
 | Blowdown fire acceptance | `neqsim.process.safety.depressurization.STS0131AcceptanceCriteria` | Evaluates `DepressurizationResult` against time-to-escape/time-to-rupture pressure, inventory, and escalated fire-rate limits. |
 | Piping/line sizing | `neqsim.process.mechanicaldesign.pipeline.NorsokP002LineSizingValidator` | Screens `PipeLineInterface` velocity, pressure gradient, and erosional velocity using NORSOK P-002 style limits. |
+| Process pipe stress (ASME B31.3) | `neqsim.process.mechanicaldesign.piping.PipeStressModel` | 3D beam FE model nozzle to nozzle: B31.3 304.1.2 pressure design, 320 sustained, 319 expansion (liberal S_A) and occasional (1.33 S_h) checks, support lift-off and friction, bend/tee SIFs, nozzle loads against supplied allowables. See `docs/process/mechanical_design/pipe_stress_model.md`. |
 | Leak detection sensitivity | `neqsim.process.safety.leakdetection.MassBalanceLeakDetector` | Estimates minimum detectable leak rate from flow, pressure, temperature, and linepack uncertainty. |
 | Performance standards | `neqsim.process.safety.barrier.TR2237Templates` | Creates starter barrier registers with TR2237-style performance standards and NORSOK S-001 topic mappings. |
 | Standards review | `neqsim.process.safety.compliance.StandardsDesignReview` | Converts supported calculated checks from a `ProcessSystem` into `StandardsComplianceReport`. |

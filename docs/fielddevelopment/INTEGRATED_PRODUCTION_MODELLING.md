@@ -57,6 +57,11 @@ inside the Jacobian loop**, so the field-wide solve is fast and numerically robu
 |-------|-------|------|
 | `ReservoirDrive` (interface) | Reservoir | Maps cumulative production to average reservoir pressure |
 | `MaterialBalanceGasDrive` | Reservoir | Gas *p/z* material balance |
+| `RealGasMaterialBalanceDrive` / `GasZFactor` | Reservoir | Pressure-dependent Z with a constant fractional influx support |
+| `DranchukAbouKassemZ` | Reservoir | Lean-gas Z correlation from supplied pseudo-critical constants |
+| `MaterialBalanceHistoryMatch` | Calibration | Static gas-column correction and sigma-clipped p/z history fit |
+| `RawlinsSchellhardtFit` | Wells | Log-linear gas deliverability fit from pressure and rate observations |
+| `SupplyCapacityBalance` | Facilities | Balance decreasing well supply against increasing pressure-dependent capacity |
 | `AquiferDrive` | Reservoir | Gas drive with Fetkovich aquifer influx |
 | `OilTankDrive` | Reservoir | Undersaturated oil compressibility tank |
 | `WellDeliverabilityCurve` | Wells | Monotone IPR+VLP surrogate (back pressure vs. rate) |
@@ -99,6 +104,37 @@ gasRes.produce(1.0e9, 365.0);               // produce 1e9 Sm3 over a year
 double pAfter = gasRes.getReservoirPressure(); // depleted pressure
 ```
 
+### Real-gas history match and facility capacity
+
+`RealGasMaterialBalanceDrive` implements `ReservoirDrive` with a caller-supplied `GasZFactor`.
+Its inputs are initial p/z in bara, gas initially in place (GIIP) in Sm3, reservoir temperature
+in K and a constant support fraction between zero (depletion) and one (exclusive). Each
+`produce` call adds the supplied volume in Sm3; `dtDays` does not multiply that volume.
+The support fraction is a screening approximation rather than a dynamic aquifer model.
+
+`MaterialBalanceHistoryMatch.staticBottomholePressure` takes wellhead pressure in **barg**, gas
+molar mass in kg/mol, vertical depth in m and mean column temperature in K, and returns **bara**.
+Use stabilised shut-in readings. `fitPzLine` accepts cumulative production and p/z arrays;
+`PzFit.getGiip()` returns volume in the same units as the cumulative-production input. The fitted
+intercept is initial p/z, not initial pressure. Check the fit against independent pressure history.
+
+`RawlinsSchellhardtFit.fit` takes reservoir pressures in **bara**, flowing wellhead pressures in
+**barg** and consistent surface rates. Use wide-open-choke observations and check the exponent
+and a hold-out period. `rate` and `wellheadPressureFor` also use wellhead **barg**;
+`WellDeliverabilityCurve.fromRawlinsSchellhardt` instead tabulates wellhead pressure in **bara**.
+Supply rates in Sm3/day when constructing that curve.
+
+`SupplyCapacityBalance.maximiseRate` accepts supply and capacity functions in the same rate
+units over a facility-pressure window in **bara**. Supply must be non-increasing and capacity
+non-decreasing with pressure. `PressureCapacityCurve` interpolates a capacity sweep and
+extrapolates its end segments, so keep optimisation within the assessed pressure range.
+At an interior crossing the result labels the binding side `FACILITY` even though both curves
+meet. A surrogate result requires replay against the detailed process and its constraints.
+
+`GasValueChainSurrogatesTest` verifies synthetic history matching, pressure decline, pressure-unit
+conversion, deliverability and the supply/capacity crossing. These are regression fixtures,
+not field-data qualification.
+
 ### Aquifer drive
 
 `AquiferDrive` adds Fetkovich aquifer influx $W_e$ to the gas material balance, supporting reservoir
@@ -119,7 +155,8 @@ OilTankDrive oilRes = new OilTankDrive(220.0, 8.0e6, 120.0, 90.0);
 ## WellDeliverabilityCurve
 
 The deliverability curve stores surface rate as a strictly decreasing function of wellhead (or
-sandface) back pressure. Three factory methods are provided.
+sandface) back pressure. Four factory methods are provided, including
+`fromRawlinsSchellhardt` for a fitted gas-well law at the current reservoir pressure.
 
 ```java
 // 1. From measured/sampled (pressure, rate) points (ascending pressure, non-increasing rate)

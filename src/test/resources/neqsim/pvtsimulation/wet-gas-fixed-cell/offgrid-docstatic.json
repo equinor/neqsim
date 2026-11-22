@@ -1,0 +1,43 @@
+{
+  "javadocWarnings": 47,
+  "parentJavadocWarnings": 47,
+  "javadocSignaturesEqual": true,
+  "checkstyleMessages": [
+    {
+      "file": "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "severity": "warning",
+      "message": "Line is longer than 120 characters (found 131).",
+      "source": "com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck"
+    },
+    {
+      "file": "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "severity": "warning",
+      "message": "Line is longer than 120 characters (found 123).",
+      "source": "com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck"
+    },
+    {
+      "file": "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "severity": "warning",
+      "message": "Line is longer than 120 characters (found 141).",
+      "source": "com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck"
+    },
+    {
+      "file": "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "severity": "warning",
+      "message": "Distance between variable 'origPres' declaration and its first usage is 4, but allowed 3.  Consider making that variable final if you still need to store its value in advance (before method calls that might have side effects on the original value).",
+      "source": "com.puppycrawl.tools.checkstyle.checks.coding.VariableDeclarationUsageDistanceCheck"
+    },
+    {
+      "file": "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "severity": "warning",
+      "message": "Distance between variable 'origPres' declaration and its first usage is 4, but allowed 3.  Consider making that variable final if you still need to store its value in advance (before method calls that might have side effects on the original value).",
+      "source": "com.puppycrawl.tools.checkstyle.checks.coding.VariableDeclarationUsageDistanceCheck"
+    },
+    {
+      "file": "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+      "severity": "warning",
+      "message": "<p> tag should be placed immediately before the first word, with no space after.",
+      "source": "com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocParagraphCheck"
+    }
+  ]
+}

@@ -21,94 +21,122 @@
    * Adds click/touch support for dropdown buttons since :hover doesn't work on touch devices
    */
   function initMobileDropdowns() {
-    var dropdownBtns = document.querySelectorAll('.nav-dropdown-btn');
-    var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
-    dropdownBtns.forEach(function(btn) {
-      var dropdown = btn.closest('.nav-dropdown');
+    var dropdowns = Array.prototype.slice.call(
+      document.querySelectorAll('.nav-dropdown')
+    );
+    var finePointer = window.matchMedia(
+      '(hover: hover) and (pointer: fine)'
+    ).matches;
+
+    function buttonFor(dropdown) {
+      return dropdown.querySelector('.nav-dropdown-btn');
+    }
+
+    function setOpen(dropdown, isOpen) {
+      var btn = buttonFor(dropdown);
+      dropdown.classList.toggle('is-open', isOpen);
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function closeOthers(current) {
+      dropdowns.forEach(function(dropdown) {
+        if (dropdown !== current) {
+          setOpen(dropdown, false);
+        }
+      });
+    }
+
+    function closeAndFocus(dropdown) {
+      setOpen(dropdown, false);
+      buttonFor(dropdown).focus();
+    }
+
+    dropdowns.forEach(function(dropdown) {
+      var btn = buttonFor(dropdown);
       var content = dropdown.querySelector('.nav-dropdown-content');
-      
-      // Function to toggle dropdown
-      function toggleDropdown(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Close all other dropdowns first
-        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
-          if (d !== dropdown) {
-            d.classList.remove('is-open');
+      var links = Array.prototype.slice.call(content.querySelectorAll('a'));
+
+      setOpen(dropdown, false);
+
+      btn.addEventListener('click', function(event) {
+        event.preventDefault();
+        var shouldOpen = btn.getAttribute('aria-expanded') !== 'true';
+        closeOthers(dropdown);
+        setOpen(dropdown, shouldOpen);
+      });
+
+      btn.addEventListener('keydown', function(event) {
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+          return;
+        }
+        event.preventDefault();
+        closeOthers(dropdown);
+        setOpen(dropdown, true);
+        if (links.length) {
+          links[event.key === 'ArrowDown' ? 0 : links.length - 1].focus();
+        }
+      });
+
+      content.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          closeAndFocus(dropdown);
+          return;
+        }
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+          return;
+        }
+
+        var current = links.indexOf(document.activeElement);
+        if (current === -1) {
+          return;
+        }
+        event.preventDefault();
+        var direction = event.key === 'ArrowDown' ? 1 : -1;
+        var next = (current + direction + links.length) % links.length;
+        links[next].focus();
+      });
+
+      dropdown.addEventListener('focusout', function(event) {
+        if (!dropdown.contains(event.relatedTarget)) {
+          setOpen(dropdown, false);
+        }
+      });
+
+      if (finePointer) {
+        dropdown.addEventListener('mouseenter', function() {
+          closeOthers(dropdown);
+          setOpen(dropdown, true);
+        });
+        dropdown.addEventListener('mouseleave', function() {
+          if (!dropdown.contains(document.activeElement)) {
+            setOpen(dropdown, false);
           }
         });
-        
-        // Toggle this dropdown
-        dropdown.classList.toggle('is-open');
       }
-      
-      // Handle both click and touch events
-      btn.addEventListener('click', toggleDropdown);
-      
-      // For touch devices, also listen for touchend to ensure responsiveness
-      if (isTouchDevice) {
-        btn.addEventListener('touchend', function(e) {
-          // Prevent the click event from also firing
-          e.preventDefault();
-          toggleDropdown(e);
-        }, { passive: false });
+
+      links.forEach(function(link) {
+        link.addEventListener('click', function() {
+          setOpen(dropdown, false);
+        });
+      });
+    });
+
+    document.addEventListener('click', function(event) {
+      if (!event.target.closest('.nav-dropdown')) {
+        closeOthers(null);
       }
     });
-    
-    // Close dropdowns when clicking/touching outside
-    function closeAllDropdowns(e) {
-      if (!e.target.closest('.nav-dropdown')) {
-        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
-          d.classList.remove('is-open');
-        });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key !== 'Escape') {
+        return;
       }
-    }
-    
-    document.addEventListener('click', closeAllDropdowns);
-    if (isTouchDevice) {
-      document.addEventListener('touchend', closeAllDropdowns);
-    }
-    
-    // Close dropdowns when pressing Escape
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
-          d.classList.remove('is-open');
-        });
-      }
-    });
-    
-    // Close dropdown when a link inside is clicked/touched and navigate
-    document.querySelectorAll('.nav-dropdown-content a').forEach(function(link) {
-      // Handler that closes dropdown and allows navigation
-      function handleLinkClick(e) {
-        // Get the href before closing dropdown
-        var href = link.getAttribute('href');
-        
-        // Close all dropdowns
-        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
-          d.classList.remove('is-open');
-        });
-        
-        // For touchend, we need to manually navigate since some browsers
-        // don't reliably fire click events after touchend on dynamically shown elements
-        if (e.type === 'touchend' && href) {
-          e.preventDefault();
-          // Small delay to allow dropdown close animation
-          setTimeout(function() {
-            window.location.href = href;
-          }, 10);
-        }
-        // For click events, the default behavior will handle navigation
-      }
-      
-      link.addEventListener('click', handleLinkClick);
-      
-      // On touch devices, also handle touchend for reliable navigation
-      if (isTouchDevice) {
-        link.addEventListener('touchend', handleLinkClick, { passive: false });
+      var openDropdown = document.querySelector('.nav-dropdown.is-open');
+      if (openDropdown) {
+        event.preventDefault();
+        closeAndFocus(openDropdown);
       }
     });
   }

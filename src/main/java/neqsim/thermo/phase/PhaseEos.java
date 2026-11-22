@@ -42,7 +42,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   double wEOS = 0;
   // Class methods
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseEos clone() {
     PhaseEos clonedPhase = null;
@@ -50,20 +54,30 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       clonedPhase = (PhaseEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseEos", ex);
     }
 
-    // Thread-safety contract: mixSelect and mixRule are shared (shallow) with the
-    // parent. This is safe for concurrent flashing on parent and clone because the
-    // interaction-parameter matrices (intparam, intparamT, HVDij, NRTLDij,
-    // WSintparam,
-    // NRTLalpha, ...) are written exclusively by setMixingRule() during fluid setup
-    // and are treated as read-only during flash calculations. Callers MUST NOT
-    // invoke setMixingRule() on a fluid (or any of its clones) while another thread
-    // is performing a flash on a sibling clone. EosMixingRuleHandler.clone() is
-    // available for callers that need fully-independent matrix copies (e.g., when
-    // tuning kij in parallel); it is intentionally not invoked here to keep clone()
-    // cheap on the hot path.
+    // Detach standard HV parameters and retained calculation state together. Other
+    // rules retain their existing sharing contract; no general concurrency promise is made.
+    if (mixSelect.canCopyHuronVidalRule(mixRule)) {
+      clonedPhase.mixSelect = mixSelect.clone();
+      clonedPhase.mixRule = clonedPhase.mixSelect.copyHuronVidalRule(mixRule, clonedPhase);
+    }
     return clonedPhase;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void removeComponent(String name, double moles, double molesInPhase) {
+    // Specialized phases (including electrolytes) can own additional species-indexed state and stale-state guards.
+    boolean standardCubic = getClass() == PhaseSrkEos.class || getClass() == PhasePrEos.class;
+    if (standardCubic && mixingRuleType == EosMixingRuleType.CLASSIC && mixSelect.intparam != null
+        && mixSelect.intparam.length == getNumberOfComponents()) {
+      int removed = getComponent(name).getComponentNumber();
+      mixSelect = mixSelect.withoutComponent(removed);
+      resetMixingRule(mixingRuleType);
+    }
+    super.removeComponent(name, moles, molesInPhase);
   }
 
   /**
@@ -138,23 +152,20 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         loc_ATT = calcATT(this, temperature, pressure, numberOfComponents);
       }
 
-      double sumHydrocarbons = 0.0;
-      double sumAqueous = 0.0;
-      for (int i = 0; i < numberOfComponents; i++) {
-        if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert() || getComponent(i).isIsTBPfraction())
-            && !getComponent(i).getName().equals("water") && !getComponent(i).getName().equals("water_PC")) {
-          sumHydrocarbons += getComponent(i).getx();
-        } else {
-          sumAqueous += getComponent(i).getx();
-        }
-      }
-
       if (getVolume() / getB() > 1.75) {
         setType(PhaseType.GAS);
-      } else if (sumHydrocarbons > sumAqueous) {
-        setType(PhaseType.OIL);
       } else {
-        setType(PhaseType.AQUEOUS);
+        double sumHydrocarbons = 0.0;
+        double sumAqueous = 0.0;
+        for (int i = 0; i < numberOfComponents; i++) {
+          if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert() || getComponent(i).isIsTBPfraction())
+              && !getComponent(i).getName().equals("water") && !getComponent(i).getName().equals("water_PC")) {
+            sumHydrocarbons += getComponent(i).getx();
+          } else {
+            sumAqueous += getComponent(i).getx();
+          }
+        }
+        setType(sumHydrocarbons > sumAqueous ? PhaseType.OIL : PhaseType.AQUEOUS);
       }
 
       // if ((hasComponent("water") && getVolume() / getB() < 1.75 &&
@@ -320,7 +331,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * @return molar volume [m3/mol * 1e5]
    * @throws neqsim.util.exception.IsNaNException if no real roots are found
    */
-  private double molarVolumeAnalytical(double pressure, double temperature, PhaseType pt)
+  protected double molarVolumeAnalytical(double pressure, double temperature, PhaseType pt)
       throws neqsim.util.exception.IsNaNException {
     double a = geta();
     double b = getb();
@@ -337,7 +348,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     double[] roots = solveCubic(c2, c1, c0);
     double z = Double.NaN;
     for (double r : roots) {
-      if (!Double.isNaN(r) && r > 0) {
+      if (Double.isFinite(r) && r > Math.max(0.0, B)) {
         if (Double.isNaN(z)) {
           z = r;
         } else if (pt == PhaseType.GAS && r > z) {
@@ -358,7 +369,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * Solve cubic equation z^3 + c2*z^2 + c1*z + c0 = 0 using Cardano's method.
+   * Solve z^3 + c2*z^2 + c1*z + c0 = 0 using Cardano's largest root and stable quadratic deflation.
    *
    * @param c2 coefficient for z^2
    * @param c1 coefficient for z
@@ -392,10 +403,29 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       double phi = Math.acos(acosArg);
       double m = 2.0 * Math.cbrt(r);
       roots[0] = m * Math.cos(phi / 3.0) - b / (3.0 * a);
-      roots[1] = m * Math.cos((phi + 2.0 * Math.PI) / 3.0) - b / (3.0 * a);
-      roots[2] = m * Math.cos((phi + 4.0 * Math.PI) / 3.0) - b / (3.0 * a);
+      // For phi in [0, pi], cos(phi/3) gives the largest root; recover the other two by deflation below.
+      roots[1] = Double.NaN;
+      roots[2] = Double.NaN;
     }
 
+    // At low pressure, subtracting b/(3a) from the trigonometric roots loses the small liquid roots.
+    // Deflate by the well-scaled largest root, deriving the quadratic coefficient from c1 rather than c2+z.
+    double largest = roots[0];
+    if (Double.isFinite(largest) && largest != 0.0) {
+      double product = -c0 / largest;
+      double linear = (product - c1) / largest;
+      double quadraticDiscriminant = linear * linear - 4.0 * product;
+      roots[0] = largest;
+      roots[1] = Double.NaN;
+      roots[2] = Double.NaN;
+      if (quadraticDiscriminant >= 0.0) {
+        double quadraticRoot = -0.5 * (linear + Math.copySign(Math.sqrt(quadraticDiscriminant), linear));
+        if (quadraticRoot != 0.0) {
+          roots[1] = quadraticRoot;
+          roots[2] = product / quadraticRoot;
+        }
+      }
+    }
     return roots;
   }
 
@@ -403,8 +433,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
-    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
-        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    // Composition is fixed during this volume solve; calculate the liquid seed only when needed.
+    double liquidBonV = pt == PhaseType.GAS ? Double.NaN : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R) : liquidBonV;
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
 
     double BonVold = BonV;
@@ -446,8 +477,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          if (pt == PhaseType.GAS && Double.isNaN(liquidBonV)) {
+            liquidBonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          }
+          BonV = pt == PhaseType.GAS ? liquidBonV : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
         BonV += d1 * (0.1);
@@ -468,15 +501,21 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       if (iterations > 150 && error > errorOld && !changeFase) {
         changeFase = true;
         BonVold = 10.0;
-        BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+        if (pt == PhaseType.GAS && Double.isNaN(liquidBonV)) {
+          liquidBonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+        }
+        BonV = pt == PhaseType.GAS ? liquidBonV : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (error > 1.0e-10 && iterations < maxIterations);
-    if (iterations >= maxIterations) {
+    // A tiny update can also indicate a stalled spinodal iteration. Inspect the final pressure only when the
+    // previous residual is suspect, avoiding another evaluation on the ordinary converged path. A large previous
+    // residual alone is not a failure if the last update solved the equation.
+    if (iterations >= maxIterations || !Double.isFinite(h) || (Math.abs(h) > 1.0e-10
+        && Math.abs(calcPressure() - pressure) > 1.0e-8 * Math.max(1.0, Math.abs(pressure)))) {
       return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {

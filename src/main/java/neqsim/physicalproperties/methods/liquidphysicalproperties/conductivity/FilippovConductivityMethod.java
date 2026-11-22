@@ -14,7 +14,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
  * Liquid thermal conductivity using temperature-dependent pure component correlations with the Filippov (1955) mixing
- * rule and an optional Missenard (1965) pressure correction.
+ * rule and an optional Missenard-derived pressure correction documented by CHEMPAK (1998).
  *
  * <p>
  * The Filippov mixing rule accounts for non-linear mixing of liquid thermal conductivities:
@@ -25,11 +25,11 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </p>
  *
  * <p>
- * The Missenard pressure correction adjusts the low-pressure conductivity for compressed liquids:
+ * The pressure factor follows CHEMPAK section 8.6.5, attributed there to Danner and Daubert:
  * </p>
  *
  * <p>
- * lambda(T,P) = lambda(T,Psat) * (1 + Q * (P - Psat))
+ * lambda(T,P) / lambda(T,Psat) = 0.98 + 0.0079 Pr Tr^1.4 + 0.63 Tr^1.2 Pr/(30 + Pr)
  * </p>
  *
  * <p>
@@ -37,7 +37,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </p>
  * <ul>
  * <li>Filippov, L.P. (1955). Vest. Mosk. Univ. Ser. Fiz.-Mat. Est. Nauk, 8, 67-69.</li>
- * <li>Missenard, F.A. (1965). Comptes Rendus, 260, 5521.</li>
+ * <li>CHEMPAK Operating and Reference Manual, version 4 (January 1998), section 8.6.5, reproduced with permission in
+ * the AFT documentation.</li>
  * <li>Poling, B.E., Prausnitz, J.M., O'Connell, J.P. (2001). The Properties of Gases and Liquids, 5th edition, Chapter
  * 10.</li>
  * </ul>
@@ -79,6 +80,7 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod imp
 
     try {
       properties = (FilippovConductivityMethod) super.clone();
+      properties.pureComponentConductivity = pureComponentConductivity.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -129,7 +131,11 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod imp
    */
   public void calcPureComponentConductivity() {
     double temp = liquidPhase.getPhase().getTemperature();
-    for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
+    int ncomp = liquidPhase.getPhase().getNumberOfComponents();
+    if (pureComponentConductivity.length != ncomp) {
+      pureComponentConductivity = new double[ncomp];
+    }
+    for (int i = 0; i < ncomp; i++) {
       pureComponentConductivity[i] = liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(0)
           + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(1) * temp
           + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(2) * temp * temp;
@@ -140,19 +146,19 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod imp
   }
 
   /**
-   * Calculates the Missenard pressure correction factor for compressed liquids.
+   * Calculates the CHEMPAK Missenard-derived pressure factor for compressed liquids.
    *
    * <p>
-   * The correction is based on the reduced pressure and temperature of the mixture. At typical process conditions (P
-   * &lt; 50 bar), this is a small (1-3%) correction.
+   * Uses mole-weighted pseudo-critical properties for mixtures, an unqualified extension. The legacy unity floor and
+   * bypass at Tr &gt;= 0.95 or Pr &lt; 0.01 are retained; they do not define an experimental validity envelope. Missing
+   * critical data also bypasses the correction. Nonfinite critical data returns NaN. No saturation pressure is
+   * calculated or subtracted. This is the analytic derived expression, not the original tabulated-Q correlation or
+   * sixth-edition conformance.
    * </p>
    *
-   * @return pressure correction factor (dimensionless, &gt;= 1.0)
+   * @return dimensionless factor (&gt;= 1.0), or NaN for nonfinite critical data or evaluation
    */
   private double getMissenardPressureCorrection() {
-    double pressure = liquidPhase.getPhase().getPressure(); // bara
-    double temp = liquidPhase.getPhase().getTemperature();
-
     // Estimate mixture critical properties
     double tcMix = 0.0;
     double pcMix = 0.0;
@@ -162,20 +168,31 @@ public class FilippovConductivityMethod extends LiquidPhysicalPropertyMethod imp
       pcMix += xi * liquidPhase.getPhase().getComponent(i).getPC();
     }
 
+    if (!Double.isFinite(pcMix) || !Double.isFinite(tcMix)) {
+      return Double.NaN;
+    }
     if (pcMix < 1e-10 || tcMix < 1e-10) {
       return 1.0;
     }
 
-    double tr = temp / tcMix;
-    double pr = pressure / pcMix;
+    double tr = liquidPhase.getPhase().getTemperature() / tcMix;
+    double pr = liquidPhase.getPhase().getPressure() / pcMix; // both pressures in bara
 
-    // Missenard correlation: Q = 0.98 + 0.0079 * Pr * Tr^0.5
-    // Valid for Tr < 0.95
+    // Retained implementation cutoffs; not a physical accuracy guarantee.
     if (tr >= 0.95 || pr < 0.01) {
       return 1.0;
     }
 
-    double qFactor = 0.98 + 0.0079 * pr * Math.sqrt(tr);
+    // For 0 < Tr < 0.95 and Pr <= 0.5, the full expression is below 0.994.
+    // The retained unity floor therefore permits skipping the power call exactly.
+    if (tr > 0.0 && pr <= 0.5) {
+      return 1.0;
+    }
+
+    // One fifth root supplies both powers; no mutable temperature or composition cache.
+    double trFifth = Math.pow(tr, 0.2);
+    double trSixFifths = tr * trFifth;
+    double qFactor = 0.98 + 0.0079 * pr * trSixFifths * trFifth + 0.63 * trSixFifths * (pr / (30.0 + pr));
     if (qFactor < 1.0) {
       qFactor = 1.0;
     }

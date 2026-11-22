@@ -37,7 +37,7 @@ For local development with the NeqSim repository:
 
 ```bash
 # From the neqsim repo root
-python -m pip install -e devtools/
+uv sync --project devtools
 ```
 
 ---
@@ -328,28 +328,28 @@ with open("eot_demo.ipynb", "w") as f:
 
 ```bash
 # Print model summary
-python devtools/unisim_reader.py C:\Models\file.usc --summary
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --summary
 
 # Output NeqSim JSON
-python devtools/unisim_reader.py C:\Models\file.usc --json
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --json
 
 # Generate Python script
-python devtools/unisim_reader.py C:\Models\file.usc --python process.py
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --python process.py
 
 # Generate Jupyter notebook
-python devtools/unisim_reader.py C:\Models\file.usc --notebook process.ipynb
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --notebook process.ipynb
 
 # Generate EOT simulator + demo notebook
-python devtools/unisim_reader.py C:\Models\file.usc --eot sim.py --eot-notebook demo.ipynb
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --eot sim.py --eot-notebook demo.ipynb
 
 # Fast extraction (topology only, no stream properties)
-python devtools/unisim_reader.py C:\Models\file.usc --no-streams --summary
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --no-streams --summary
 
 # Show UniSim GUI during extraction (debugging)
-python devtools/unisim_reader.py C:\Models\file.usc --visible --summary
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --visible --summary
 
 # Combined: multiple outputs in one command
-python devtools/unisim_reader.py C:\Models\file.usc --python p.py --notebook n.ipynb --eot s.py
+uv run --project devtools --locked devtools/unisim_reader.py C:\Models\file.usc --python p.py --notebook n.ipynb --eot s.py
 ```
 
 ---
@@ -859,7 +859,7 @@ app.Quit()
 Use the diagnostic tool `devtools/explore_unisim_com.py` to dump the complete COM object model from any `.usc` file:
 
 ```bash
-python devtools/explore_unisim_com.py C:\Models\unknown_model.usc
+uv run --project devtools --locked devtools/explore_unisim_com.py C:\Models\unknown_model.usc
 ```
 
 This prints all fluid packages, components, streams, operations, and their properties — useful for understanding a new model before conversion.

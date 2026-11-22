@@ -244,7 +244,14 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
     // Load company-specific design parameters from database
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Initializes bottom-tray and fallback product fluid properties before reading sizing densities. The column must be
+   * solved beforehand; property initialization does not perform a column solve.
+   * </p>
+   */
   @Override
   public void calcDesign() {
     if (!(getProcessEquipment() instanceof DistillationColumn)) {
@@ -261,7 +268,7 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
     // Calculate actual trays from efficiency
     actualTrays = (int) Math.ceil(numberOfTrays / trayEfficiency);
 
-    // Get vapor and liquid flow rates from top tray
+    // Get vapor and liquid flow rates from the bottom tray
     double vaporMolarFlow = 0.0;
     double liquidMolarFlow = 0.0;
     double vaporDensity = 1.0;
@@ -270,10 +277,11 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
     double liquidMW = 100.0;
 
     try {
-      // Get top tray conditions for sizing
+      // Get bottom-tray conditions for sizing
       if (column.getTray(0) != null && column.getTray(0).getGasOutStream() != null) {
         vaporMolarFlow = column.getTray(0).getGasOutStream().getFlowRate("mol/hr");
         if (column.getTray(0).getGasOutStream().getFluid() != null) {
+          column.getTray(0).getGasOutStream().getFluid().initProperties();
           vaporDensity = column.getTray(0).getGasOutStream().getFluid().getDensity("kg/m3");
           vaporMW = column.getTray(0).getGasOutStream().getFluid().getMolarMass() * 1000;
         }
@@ -281,6 +289,7 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
       if (column.getTray(0) != null && column.getTray(0).getLiquidOutStream() != null) {
         liquidMolarFlow = column.getTray(0).getLiquidOutStream().getFlowRate("mol/hr");
         if (column.getTray(0).getLiquidOutStream().getFluid() != null) {
+          column.getTray(0).getLiquidOutStream().getFluid().initProperties();
           liquidDensity = column.getTray(0).getLiquidOutStream().getFluid().getDensity("kg/m3");
           liquidMW = column.getTray(0).getLiquidOutStream().getFluid().getMolarMass() * 1000;
         }
@@ -292,12 +301,14 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
     try {
       if (vaporMolarFlow <= 0.0 && column.getGasOutStream() != null && column.getGasOutStream().getFluid() != null) {
         vaporMolarFlow = column.getGasOutStream().getFlowRate("mol/hr");
+        column.getGasOutStream().getFluid().initProperties();
         vaporDensity = column.getGasOutStream().getFluid().getDensity("kg/m3");
         vaporMW = column.getGasOutStream().getFluid().getMolarMass() * 1000;
       }
       if (liquidMolarFlow <= 0.0 && column.getLiquidOutStream() != null
           && column.getLiquidOutStream().getFluid() != null) {
         liquidMolarFlow = column.getLiquidOutStream().getFlowRate("mol/hr");
+        column.getLiquidOutStream().getFluid().initProperties();
         liquidDensity = column.getLiquidOutStream().getFluid().getDensity("kg/m3");
         liquidMW = column.getLiquidOutStream().getFluid().getMolarMass() * 1000;
       }
@@ -662,8 +673,8 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
    */
   private double roundToStandardDiameter(double diameter) {
     // Standard vessel diameters in meters
-    double[] standardSizes = { 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0,
-        3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0 };
+    double[] standardSizes = {0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0,
+        3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0};
 
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {

@@ -100,18 +100,18 @@ public class GaussianPlume implements Serializable {
     boolean rural = terrain == Terrain.RURAL;
     switch (stability) {
     case A:
-      return rural ? new double[] { 0.22, 0.0001 } : new double[] { 0.32, 0.0004 };
+      return rural ? new double[] {0.22, 0.0001} : new double[] {0.32, 0.0004};
     case B:
-      return rural ? new double[] { 0.16, 0.0001 } : new double[] { 0.32, 0.0004 };
+      return rural ? new double[] {0.16, 0.0001} : new double[] {0.32, 0.0004};
     case C:
-      return rural ? new double[] { 0.11, 0.0001 } : new double[] { 0.22, 0.0004 };
+      return rural ? new double[] {0.11, 0.0001} : new double[] {0.22, 0.0004};
     case D:
-      return rural ? new double[] { 0.08, 0.0001 } : new double[] { 0.16, 0.0004 };
+      return rural ? new double[] {0.08, 0.0001} : new double[] {0.16, 0.0004};
     case E:
-      return rural ? new double[] { 0.06, 0.0001 } : new double[] { 0.11, 0.0004 };
+      return rural ? new double[] {0.06, 0.0001} : new double[] {0.11, 0.0004};
     case F:
     default:
-      return rural ? new double[] { 0.04, 0.0001 } : new double[] { 0.11, 0.0004 };
+      return rural ? new double[] {0.04, 0.0001} : new double[] {0.11, 0.0004};
     }
   }
 
@@ -120,18 +120,18 @@ public class GaussianPlume implements Serializable {
     // {a, b, exponent}
     switch (stability) {
     case A:
-      return rural ? new double[] { 0.20, 0.0, 1.0 } : new double[] { 0.24, 0.001, 0.5 };
+      return rural ? new double[] {0.20, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
     case B:
-      return rural ? new double[] { 0.12, 0.0, 1.0 } : new double[] { 0.24, 0.001, 0.5 };
+      return rural ? new double[] {0.12, 0.0, 1.0} : new double[] {0.24, 0.001, 0.5};
     case C:
-      return rural ? new double[] { 0.08, 0.0002, 0.5 } : new double[] { 0.20, 0.0, 1.0 };
+      return rural ? new double[] {0.08, 0.0002, 0.5} : new double[] {0.20, 0.0, 1.0};
     case D:
-      return rural ? new double[] { 0.06, 0.0015, 0.5 } : new double[] { 0.14, 0.0003, 0.5 };
+      return rural ? new double[] {0.06, 0.0015, 0.5} : new double[] {0.14, 0.0003, 0.5};
     case E:
-      return rural ? new double[] { 0.03, 0.0003, 1.0 } : new double[] { 0.08, 0.00015, 0.5 };
+      return rural ? new double[] {0.03, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
     case F:
     default:
-      return rural ? new double[] { 0.016, 0.0003, 1.0 } : new double[] { 0.08, 0.00015, 0.5 };
+      return rural ? new double[] {0.016, 0.0003, 1.0} : new double[] {0.08, 0.00015, 0.5};
     }
   }
 

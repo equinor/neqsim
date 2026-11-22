@@ -1,202 +1,79 @@
 package neqsim.thermo.component;
 
-import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * Abstract class ComponentPrCPA.
+ * PR-CPA component with the shared PR-based CPA association derivatives and generic PR-CPA parameters.
+ *
+ * <p>
+ * Reuses the association implementation of {@link ComponentUMRCPA} without selecting its dedicated UMR parameter or
+ * alpha-function families. Components with valid fitted PR-CPA energy and co-volume parameters use those parameters;
+ * other components retain their ordinary PR physical term.
+ * </p>
  *
  * @author Even Solbraa
+ * @version 2.0
  */
-public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {
+public class ComponentPrCPA extends ComponentUMRCPA {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  int cpaon = 1;
-  double[] xsite;
-
   /**
-   * Constructor for ComponentPrCPA.
+   * Creates a component using generic PR-CPA component-database parameters.
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
-   * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param name component name
+   * @param moles total component amount in mol
+   * @param molesInPhase component amount in this phase in mol
+   * @param compIndex component index
    */
   public ComponentPrCPA(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
-    xsite = new double[numberOfAssociationSites];
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-      // System.out.println("ass sites: " + numberOfAssociationSites);
-      // System.out.println("aSRK " + a + " aCPA " + aCPA);
-      // System.out.println("bSRK " + b + " bCPA " + bCPA);
-      for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-        setXsite(j, 0.0);
-      }
-      a = aCPA;
-      b = bCPA;
-      setAttractiveTerm(1);
-    }
+    setAttractiveTerm(1);
   }
 
   /**
-   * Constructor for ComponentPrCPA.
+   * Creates a component from critical properties using the ordinary PR physical term.
    *
-   * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param number unused legacy component number
+   * @param TC critical temperature in K
+   * @param PC critical pressure in bara
+   * @param M molar mass in kg/mol
+   * @param a acentric factor
+   * @param moles component amount in mol
    */
   public ComponentPrCPA(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
-    xsite = new double[numberOfAssociationSites];
-    for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-      setXsite(j, 1.0);
-    }
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-      a = aCPA;
-      b = bCPA;
-    }
     setAttractiveTerm(1);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getVolumeCorrection() {
-    if ((aCPA > 1.0e-10) && cpaon == 1) {
-      return 0.0;
-    } else {
-      return super.getVolumeCorrection();
-    }
+  protected boolean useUmrParameters() {
+    return false;
   }
 
   /** {@inheritDoc} */
   @Override
   public ComponentPrCPA clone() {
-    ComponentPrCPA clonedComponent = null;
-    try {
-      clonedComponent = (ComponentPrCPA) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
-    }
-
-    return clonedComponent;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calca() {
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-      return aCPA;
-    }
-    return a;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double calcb() {
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-      return bCPA;
-    }
-    return b;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setAttractiveTerm(int i) {
-    super.setAttractiveTerm(i);
-    if ((getNumberOfAssociationSites() > 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-      getAttractiveTerm().setm(mCPA);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
-    double Fcpa = 0.0;
-    // if(phase.getPhaseType()==1) cpaon=0;
-    Fcpa = dFCPAdN(phase, numberOfComponents, temperature, pressure);
-    // System.out.println("Fsup " + Fsup + " fcpa " + Fcpa);
-    return Fsup + cpaon * Fcpa;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
+    return (ComponentPrCPA) super.clone();
   }
 
   /**
-   * dFCPAdN.
+   * Retains the legacy whole-array site-fraction setter with owned storage.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @return a double
+   * @param fractions unbonded association-site fractions
    */
-  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    double xi = 0.0;
-    for (int i = 0; i < numberOfAssociationSites; i++) {
-      xi += Math.log(xsite[i]);
-    }
-    return (xi - ((PhaseCPAInterface) phase).getHcpatot() / 2.0 * calc_lngi(phase));
+  public void setXsite(double[] fractions) {
+    xsite = fractions.clone();
   }
 
   /**
-   * calc_lngi.
+   * Retains the legacy Carnahan-Starling composition-derivative alias.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
-   */
-  public double calc_lngi(PhaseInterface phase) {
-    return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
-  }
-
-  /**
-   * calc_lngi2.
-   *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @param phase phase providing volume and co-volume
+   * @return logarithmic radial-distribution composition derivative
    */
   public double calc_lngi2(PhaseInterface phase) {
-    return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double[] getXsite() {
-    return this.xsite;
-  }
-
-  /**
-   * Setter for property xsite.
-   *
-   * @param xsite New value of property xsite.
-   */
-  public void setXsite(double[] xsite) {
-    this.xsite = xsite;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setXsite(int i, double xsite) {
-    this.xsite[i] = xsite;
+    return calc_lngi(phase);
   }
 }

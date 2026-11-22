@@ -600,7 +600,11 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
         + FC() * getCTT() + 2 * FCD() * getCT() * getAT();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkEosvolcor clone() {
     PhaseSrkEosvolcor clonedPhase = null;
@@ -608,6 +612,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
       clonedPhase = (PhaseSrkEosvolcor) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkEosvolcor", ex);
     }
 
     return clonedPhase;

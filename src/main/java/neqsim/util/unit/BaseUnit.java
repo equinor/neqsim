@@ -10,43 +10,49 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  /** Process value in SI units */
+  /**
+   * Legacy SI storage for subclasses compiled against earlier releases.
+   *
+   * @deprecated New implementations should calculate SI values from their stored input.
+   */
+  @Deprecated
   protected double SIvalue = 0.0;
 
-  /** Process value in given unit */
-  protected double invalue = 0.0;
-  /** Unit of process value */
-  protected String inunit = null;
-
-  /** Conversion factor */
+  /**
+   * Legacy scale storage for subclasses compiled against earlier releases.
+   *
+   * @deprecated Use a local conversion factor to avoid mutable conversion state.
+   */
+  @Deprecated
   protected double factor = 1.0;
+
+  /** Process value in given unit */
+  protected double invalue;
+  /** Unit of process value */
+  protected String inunit;
 
   /**
    * Constructor for BaseUnit.
    *
    * @param value a double
-   * @param name a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
-  public BaseUnit(double value, String name) {
+  public BaseUnit(double value, String unit) {
+    Unit.validateUnitInput(unit, "unit");
+    validateAllowedUnit(unit);
     this.invalue = value;
-    this.inunit = name;
+    this.inunit = unit;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Return the SI storage used by legacy subclasses.
+   *
+   * @return stored SI value
+   * @deprecated New implementations should override this method with their conversion strategy.
+   */
+  @Deprecated
   @Override
   public double getSIvalue() {
     return SIvalue;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double val, String fromunit, String tounit) {
-    throw new UnsupportedOperationException("Unimplemented method 'getValue'");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String fromunit) {
-    throw new UnsupportedOperationException("Unimplemented method 'getValue'");
   }
 }

@@ -53,7 +53,7 @@ public class BangBangController implements Controller {
     }
     // Within deadband: maintain previous action
 
-    return new double[] { currentAction };
+    return new double[] {currentAction};
   }
 
   @Override

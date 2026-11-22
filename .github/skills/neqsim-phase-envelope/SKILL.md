@@ -1,6 +1,7 @@
 ---
 name: neqsim-phase-envelope
 description: "Generate, plot, interpret, validate, and troubleshoot NeqSim PT phase envelopes. USE WHEN: calculating phase envelopes, dew and bubble curves, cricondenbar, cricondentherm, critical points, retrograde regions, envelope segments, or fixing Michelsen continuation and singular-Jacobian failures caused by zero or trace components."
+last_verified: "2026-11-18"
 ---
 
 # NeqSim PT Phase Envelopes
@@ -13,8 +14,8 @@ identity from physics, and preserve the caller's thermodynamic system.
 
 ## Route the Task
 
-- Use `@thermo.fluid` for envelope generation, plotting, properties, and solver defects.
-- Chain to `neqsim-eos-regression` or `@pvt.simulation` when matching lab data or tuning EOS parameters.
+- Use `@thermo-fluid` for envelope generation, plotting, properties, and solver defects.
+- Chain to `neqsim-eos-regression` or `@pvt-simulation` when matching lab data or tuning EOS parameters.
 - Chain to `neqsim-flow-assurance` for operating-path, hydrate, wax, or pipeline assessments.
 - Chain to `neqsim-ccs-hydrogen` for CO2/H2 impurity envelopes.
 - Chain to `neqsim-troubleshooting` when continuation does not converge or output is incomplete.
@@ -33,7 +34,10 @@ Read these sources before generating or changing code:
 
 Validate that temperature is in K, pressure is in bara, component amounts are finite and
 non-negative, and the mixing rule is set. Choose the EOS from the fluid chemistry, not from
-the desired plot shape.
+the desired plot shape. For characterized feeds, record the unit of each normal boiling
+point. Pass Celsius as the fifth argument `"C"` to `addTBPfraction2`; the four-argument
+form expects kelvin. When converting to UMR-CPA, use the system returned by `setModel("UMR-CPA")`
+and flash it before reading its equilibrium phases.
 
 ### 2. Handle zero and trace components correctly
 
@@ -66,7 +70,10 @@ double[] cricondentherm = ops.get("cricondentherm");
 ```
 
 Use `calcPTphaseEnvelope(true, lowPressureBara)` when the start side and lower pressure
-matter. Use the no-argument overload for the standard calculation.
+matter. Use the no-argument overload for the standard calculation. When maintaining direct callers of the legacy
+`PTphaseEnvelope` class, check both extremum coordinates for finite values before
+interpreting them or reading their associated compositions. A trace with no valid
+point publishes `NaN` for its temperature and pressure.
 
 ### 4. Consume structured segments by default
 
@@ -113,6 +120,18 @@ cricondentherm point and critical-point continuity instead of relying only on ma
 temperature.
 
 ### 6. Validate the result
+
+Distinguish a bounded incomplete trace from a closed vapor-liquid loop. Highly
+asymmetric hydrocarbon boundaries may continue into liquid-liquid coexistence
+after a critical crossing; legacy dew/bubble labels alone do not identify that
+phase topology. A pressure- or point-limit exception retains converged diagnostic
+segments, makes `isEnvelopeClosed()` false and leaves overall extrema NaN. Do not
+silently publish retained maxima as cricondenbar/cricondentherm or remove a real
+liquid-liquid branch to obtain closure. The methane/n-hexane/nC10 SRK regression
+and its independent direct-equation onset reference are in
+`AsymmetricSrkLiquidLiquidEnvelopeTest` and
+`src/test/resources/neqsim/thermodynamicoperations/phaseenvelopeops/asymmetric-srk-liquid-liquid/`.
+
 
 Require all applicable checks:
 
@@ -201,6 +220,14 @@ def dew_point_temperature(fluid, pressure_bara, t_high=90.0, t_low=-60.0):
 If the scan and the envelope disagree by more than a few kelvin, trust the scan and
 report the envelope as unreliable for that fluid.
 
+### Dew Pressure of a Lean Gas Condensate: Do Not Trust dewPointPressureFlash Alone
+
+Observed (Sprø/Drø task, SRK, 86.3 % methane, 6.5 % ethane, 1.0 mol % C7+ TBP, GOR 13 700 Sm3/Sm3):
+`dewPointPressureFlash()` started at 200 bara returned **0.46 bara at 40 °C** and 225 / 215 bara at 60 / 90 °C,
+while a TP-flash phase-count scan from 600 bara down (bisection on the phase count) gave 210 / 200 / 164 bara and
+`RobustPhaseEnvelope` gave a cricondenbar of 211 bara. Use the scan (step down 10 bara until two phases appear,
+then bisect) and keep `RobustPhaseEnvelope` as the cricondenbar bound; require `p_dew(T) <= cricondenbar`.
+
 ### Point Dew-Point Flashes on Wet Gas
 
 `ThermodynamicOperations.dewPointTemperatureFlash()` seeds an aqueous incipient
@@ -234,6 +261,37 @@ Report:
 - operating points or paths overlaid on the envelope when relevant
 - convergence or filtering warnings
 - benchmark source and deviations for decision-critical work
+
+## Silent Truncation of the Cricondenbar (READ THIS)
+
+`calcPTphaseEnvelope` marches along the saturation curve and reports the highest pressure it
+visits. For mixtures carrying several trace heavy components the march can **terminate early**,
+and the endpoint of the partial trace is then reported as the cricondenbar — with no exception, no
+warning, and a plausible-looking number.
+
+Observed case: a rich natural gas whose true cricondenbar is 123.4 bara at −6 °C was reported at
+62.0 bara at −65.8 °C — **49.8 % low**. Used for a dense-phase pipeline design that would have set
+the minimum operating pressure at 77 bara instead of 138 bara, and the line would have run
+two-phase while believed single-phase.
+
+**Always cross-check any cricondenbar that feeds a design decision.** Use
+`neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.RobustPhaseEnvelope`,
+which finds the boundary by a flash grid plus bisection and is independent of continuation:
+
+```java
+RobustPhaseEnvelope env = new RobustPhaseEnvelope(fluid);
+env.setTemperatureRange(150.0, 350.0);
+env.setPressureRange(1.0, 300.0);
+env.calculate();
+double pcb = env.getCricondenbarPressure();
+boolean suspect = env.continuationLooksTruncated(continuationValue, 0.10);
+```
+
+Symptoms that a continuation result is truncated:
+- The cricondenbar temperature sits at an implausible extreme (well below −50 °C for a
+  hydrocarbon gas).
+- The cricondentherm is far colder than the heaviest component's boiling point suggests.
+- Adding or removing a trace component changes the cricondenbar by more than a few bar.
 
 ## Known Limitations
 

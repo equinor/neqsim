@@ -1,0 +1,412 @@
+# Synthetic public example: four production wells on two templates, two water-injection wells, a terrain-profiled flowline,
+# a riser and a host inlet constraint. Every value is SYNTHETIC (invented for this example); nothing here is field, vendor
+# or standard data. Units are in the key suffix; pressures are absolute (bara); z is elevation above mean sea level (m, up).
+schema: surf_study.v1
+
+document:
+  title: "Four-well subsea tie-back with water injection: SURF design study (synthetic example)"
+  subtitle: "Concept-stage screening package generated from one study specification"
+  document_number: SURF-SYN-001
+  revision: "01"
+  issue_status: "Issued for review (diagnostic, synthetic example)"
+  readiness: SCREENING
+  date: "2026-10-25"
+  company: "NeqSim open example"
+  project: "Synthetic SURF demonstration"
+  prepared_by: "surf-study toolkit"
+  checked_by: "not assigned"
+  approved_by: "not assigned"
+  revision_history:
+    - {rev: "01", date: "2026-10-25", description: "First generated issue from surf_study.v1", by: "surf-study toolkit"}
+
+study:
+  id: SURF-SYN
+  objective: "Select between a daisy-chained and a dual-direct gathering concept for two four-well templates, and show that the generated NeqSim model, drawings, datasheets, quantities and report agree."
+  maturity: concept
+  design_life_years: 25
+  region: "Synthetic offshore field, 350 to 415 m water depth"
+  water_depth_m: 400.0
+  synthetic: true
+  adopted_requirements: [ISO-13628-1, API-17A, DNV-ST-F101, DNV-ST-F201, DNV-RP-O101, ISO-10628-1, ISO-7200, ISO-5457, ISO-129-1]
+  decisions:
+    - "Which gathering concept (A daisy-chain or B dual direct flowlines) is feasible in every operating case, and what does the feasible one cost?"
+    - "Does the injection and chemical-distribution system deliver the required pressure to every consumer in every case?"
+    - "Which design checks are screened here and which are open specialist hand-offs?"
+
+conventions:
+  pressure: "absolute (bara)"
+  temperature: "degC"
+  elevation: "metres above mean sea level, positive up; seabed is negative"
+  length: "physical 3D route length in metres; installed length = route length x (1 + allowance)"
+  hydraulic_diameter: "inside diameter = OD - 2 x nominal wall (corrosion allowance reported separately)"
+  flow_sign: "edge rate is positive from the 'from' node to the 'to' node"
+
+sources:
+  - {id: SYN-1, title: "Synthetic example inputs invented for the surf-study demonstration", input_class: synthetic, status: "not a field or vendor source"}
+
+fluids:
+  prod_early:
+    role: production
+    eos: SRK
+    mixing_rule: classic
+    components: {methane: 0.74, ethane: 0.07, propane: 0.04, n-butane: 0.02, n-pentane: 0.01, n-heptane: 0.03, nC10: 0.04, water: 0.05}
+    input_class: synthetic
+    source: SYN-1
+  prod_late:
+    role: production
+    eos: SRK
+    mixing_rule: classic
+    components: {methane: 0.60, ethane: 0.06, propane: 0.03, n-butane: 0.02, n-pentane: 0.01, n-heptane: 0.04, nC10: 0.06, water: 0.18}
+    input_class: synthetic
+    source: SYN-1
+  injection_water:
+    role: injection
+    eos: SRK
+    mixing_rule: classic
+    components: {water: 1.0}
+    input_class: synthetic
+    source: SYN-1
+  methanol:
+    role: chemical
+    eos: SRK
+    mixing_rule: classic
+    components: {methanol: 1.0}
+    input_class: synthetic
+    source: SYN-1
+  meg:
+    role: chemical
+    eos: SRK
+    mixing_rule: classic
+    components: {MEG: 1.0}
+    input_class: synthetic
+    source: SYN-1
+
+host:
+  id: HOST-01
+  name: "Synthetic host platform"
+  inlet_elevation_m: 20.0
+  max_inlet_mass_rate_kg_s: 60.0
+  separator: {name: "Host inlet separator", note: "operating pressure follows the host inlet pressure of each case"}
+  injection_supply_temperature_c: 30.0
+
+structures:
+  - {id: T1, kind: template, name: "Template 1", x_m: 10450.0, y_m: 120.0, z_m: -395.0, length_m: 110.0, width_m: 70.0, height_m: 6.0, slots: 4, source: SYN-1}
+  - {id: T2, kind: template, name: "Template 2", x_m: 13450.0, y_m: 600.0, z_m: -415.0, length_m: 110.0, width_m: 70.0, height_m: 6.0, slots: 4, source: SYN-1}
+
+nodes:
+  - {id: HOST-IN, tag: "HOST-INLET", kind: host, service: production, x_m: 0.0, y_m: 0.0, z_m: 20.0, source: SYN-1, note: "battery limit 2: host inlet pressure specified"}
+  - {id: PLEM-1, tag: "PLEM-101", kind: plem, service: production, x_m: 450.0, y_m: 0.0, z_m: -352.0, source: SYN-1}
+  - {id: M1, tag: "MF-101", kind: manifold, service: production, structure: T1, x_m: 10450.0, y_m: 120.0, z_m: -395.0, source: SYN-1}
+  - {id: M2, tag: "MF-102", kind: manifold, service: production, structure: T2, x_m: 13450.0, y_m: 600.0, z_m: -415.0, source: SYN-1}
+  - id: P1
+    tag: "XT-101"
+    kind: production_well
+    service: production
+    structure: T1
+    x_m: 10495.0
+    y_m: 145.0
+    z_m: -395.0
+    source: SYN-1
+    well: {reservoir_pressure_bara: 300.0, reservoir_temperature_c: 100.0, wellhead_temperature_c: 80.0, productivity_index_msm3d_per_bar2: 1.2e-5}
+  - id: P2
+    tag: "XT-102"
+    kind: production_well
+    service: production
+    structure: T1
+    x_m: 10495.0
+    y_m: 95.0
+    z_m: -395.0
+    source: SYN-1
+    well: {reservoir_pressure_bara: 300.0, reservoir_temperature_c: 100.0, wellhead_temperature_c: 80.0, productivity_index_msm3d_per_bar2: 1.0e-5}
+  - id: P3
+    tag: "XT-103"
+    kind: production_well
+    service: production
+    structure: T2
+    x_m: 13495.0
+    y_m: 625.0
+    z_m: -415.0
+    source: SYN-1
+    well: {reservoir_pressure_bara: 300.0, reservoir_temperature_c: 100.0, wellhead_temperature_c: 80.0, productivity_index_msm3d_per_bar2: 1.1e-5}
+  - id: P4
+    tag: "XT-104"
+    kind: production_well
+    service: production
+    structure: T2
+    x_m: 13495.0
+    y_m: 575.0
+    z_m: -415.0
+    source: SYN-1
+    well: {reservoir_pressure_bara: 300.0, reservoir_temperature_c: 100.0, wellhead_temperature_c: 80.0, productivity_index_msm3d_per_bar2: 0.9e-5}
+  - {id: INJ-SRC, tag: "INJ-SUPPLY", kind: injection_source, service: injection, x_m: -30.0, y_m: 20.0, z_m: 20.0, source: SYN-1, supply_pressure_bara: 10.0, temperature_c: 30.0, note: "battery limit 1 (injection): host water supply pressure specified"}
+  - {id: INJ-HEAD, tag: "INJ-HEADER", kind: junction, service: injection, x_m: -30.0, y_m: 20.0, z_m: 20.0, source: SYN-1}
+  - {id: PLET-I, tag: "PLET-201", kind: plet, service: injection, x_m: 460.0, y_m: -80.0, z_m: -352.0, source: SYN-1}
+  - {id: IM-1, tag: "MF-201", kind: injection_manifold, service: injection, structure: T1, x_m: 10410.0, y_m: 120.0, z_m: -395.0, source: SYN-1}
+  - {id: IM-2, tag: "MF-202", kind: injection_manifold, service: injection, structure: T2, x_m: 13410.0, y_m: 600.0, z_m: -415.0, source: SYN-1}
+  - id: I1
+    tag: "XT-201"
+    kind: injection_well
+    service: injection
+    structure: T1
+    x_m: 10410.0
+    y_m: 150.0
+    z_m: -395.0
+    source: SYN-1
+    well: {reservoir_pressure_bara: 160.0, injectivity_kg_s_per_bar: 0.5, fracture_pressure_bara: 280.0}
+  - id: I2
+    tag: "XT-202"
+    kind: injection_well
+    service: injection
+    structure: T2
+    x_m: 13410.0
+    y_m: 630.0
+    z_m: -415.0
+    source: SYN-1
+    well: {reservoir_pressure_bara: 160.0, injectivity_kg_s_per_bar: 0.4, fracture_pressure_bara: 280.0}
+
+edges:
+  # --- production jumpers (rigid, short) ---
+  - {id: J-P1, tag: "JMP-101", kind: jumper, service: production, from: P1, from_port: out, to: M1, to_port: in-P1, construction: rigid, od_mm: 168.3, wall_mm: 14.3, corrosion_allowance_mm: 3.0, grade: X65, insulation: {material: PU_FOAM, thickness_mm: 25.0}, thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}, hydraulic: {model: beggs_brill, segments: 1}, design: {pressure_bara: 345.0, temperature_c: 120.0}, installation: {method: "ROV-installed rigid jumper"}, source: SYN-1}
+  - {id: J-P2, tag: "JMP-102", kind: jumper, service: production, from: P2, from_port: out, to: M1, to_port: in-P2, construction: rigid, od_mm: 168.3, wall_mm: 14.3, corrosion_allowance_mm: 3.0, grade: X65, insulation: {material: PU_FOAM, thickness_mm: 25.0}, thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}, hydraulic: {model: beggs_brill, segments: 1}, design: {pressure_bara: 345.0, temperature_c: 120.0}, installation: {method: "ROV-installed rigid jumper"}, source: SYN-1}
+  - {id: J-P3, tag: "JMP-103", kind: jumper, service: production, from: P3, from_port: out, to: M2, to_port: in-P3, construction: rigid, od_mm: 168.3, wall_mm: 14.3, corrosion_allowance_mm: 3.0, grade: X65, insulation: {material: PU_FOAM, thickness_mm: 25.0}, thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}, hydraulic: {model: beggs_brill, segments: 1}, design: {pressure_bara: 345.0, temperature_c: 120.0}, installation: {method: "ROV-installed rigid jumper"}, source: SYN-1}
+  - {id: J-P4, tag: "JMP-104", kind: jumper, service: production, from: P4, from_port: out, to: M2, to_port: in-P4, construction: rigid, od_mm: 168.3, wall_mm: 14.3, corrosion_allowance_mm: 3.0, grade: X65, insulation: {material: PU_FOAM, thickness_mm: 25.0}, thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}, hydraulic: {model: beggs_brill, segments: 1}, design: {pressure_bara: 345.0, temperature_c: 120.0}, installation: {method: "ROV-installed rigid jumper"}, source: SYN-1}
+  # --- production gathering ---
+  - id: FL-T2
+    tag: "FL-102"
+    kind: flowline
+    service: production
+    from: M2
+    from_port: out-daisy
+    to: M1
+    to_port: in-daisy
+    concepts: [A, C]
+    route_points: [[12000.0, 400.0, -405.0], [11000.0, 250.0, -398.0]]
+    construction: rigid
+    od_mm: 273.1
+    wall_mm: 14.3
+    corrosion_allowance_mm: 3.0
+    grade: X65
+    insulation: {material: PU_FOAM, thickness_mm: 40.0}
+    thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}
+    hydraulic: {model: beggs_brill, segments: 4}
+    design: {pressure_bara: 345.0, temperature_c: 120.0}
+    installation: {method: "S-lay", burial: "none (surface-laid)"}
+    source: SYN-1
+  - id: FL-T2D
+    tag: "FL-103"
+    kind: flowline
+    service: production
+    from: M2
+    from_port: out-direct
+    to: PLEM-1
+    to_port: in-direct
+    concepts: [B]
+    route_points: [[12000.0, 420.0, -410.0], [9000.0, 350.0, -405.0], [6000.0, 300.0, -410.0], [3000.0, 180.0, -375.0], [1200.0, 60.0, -358.0]]
+    construction: rigid
+    od_mm: 273.1
+    wall_mm: 14.3
+    corrosion_allowance_mm: 3.0
+    grade: X65
+    insulation: {material: PU_FOAM, thickness_mm: 40.0}
+    thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}
+    hydraulic: {model: beggs_brill, segments: 8}
+    design: {pressure_bara: 345.0, temperature_c: 120.0}
+    installation: {method: "S-lay", burial: "none (surface-laid)"}
+    source: SYN-1
+  - id: FL-TRUNK
+    tag: "FL-101"
+    kind: trunkline
+    service: production
+    from: M1
+    from_port: out-trunk
+    to: PLEM-1
+    to_port: in-trunk
+    route_points: [[8700.0, 120.0, -400.0], [6900.0, 110.0, -410.0], [5100.0, 80.0, -385.0], [3200.0, 40.0, -340.0], [1450.0, 10.0, -355.0]]
+    construction: rigid
+    od_mm: 323.9
+    wall_mm: 15.9
+    corrosion_allowance_mm: 3.0
+    grade: X65
+    insulation: {material: PU_FOAM, thickness_mm: 40.0}
+    thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}
+    hydraulic: {model: beggs_brill, segments: 8}
+    design: {pressure_bara: 345.0, temperature_c: 120.0}
+    installation: {method: "S-lay", burial: "trenched 1.0 m cover on the last 2 km"}
+    structural:
+      dnv_st_f101:
+        input_class: synthetic
+        note: "SYNTHETIC kernel-contract inputs; factors and loads are not taken from the standard text or a project"
+        safety_class: MEDIUM
+        fabrication_route: SEAMLESS
+        fabrication: {tolerance_fraction: 0.10, ovality_fraction: 0.005, max_ovality_fraction: 0.03, fabrication_factor: 1.0}
+        material: {smys_mpa: 448.0, smts_mpa: 531.0, youngs_modulus_mpa: 207000.0, poisson_ratio: 0.30}
+        resistance_factors: {strength_derating: 1.0, smys_strength_factor: 1.0, smts_strength_factor: 0.96, material_resistance_factor: 1.15}
+        pressures_mpa: {operating: 25.0, incidental: 28.0, external: 4.1, minimum_internal: 0.2, system_test: 29.0, test_external: 4.1}
+        design_loads: {axial_kn: 20.0, bending_knm: 1.0, torsion_knm: 0.0}
+        installation_strains: {axial: 0.0, bending: 0.001, accumulated_plastic: 0.0, allowable: 0.02}
+        fatigue: {sn_log_a: 12.0, sn_slope: 3.0, stress_concentration_factor: 1.0, design_fatigue_factor: 3.0, bins: [[20.0, 1000.0]]}
+    source: SYN-1
+  - id: RI-1
+    tag: "RI-101"
+    kind: riser
+    service: production
+    from: PLEM-1
+    from_port: out-riser
+    to: HOST-IN
+    to_port: in-riser
+    route_points: [[300.0, 0.0, -300.0], [150.0, 0.0, -150.0], [60.0, 0.0, -30.0]]
+    construction: flexible
+    id_mm: 304.8
+    od_mm: 450.0
+    thermal: {ambient_c: 6.0, u_value_w_m2k: 2.5, note: "supplier-style effective U-value on the bore area (synthetic)"}
+    hydraulic: {model: beggs_brill, segments: 4}
+    design: {pressure_bara: 345.0, temperature_c: 120.0}
+    installation: {method: "flexible riser, lazy-wave concept (geometry not analysed)"}
+    source: SYN-1
+  # --- injection ---
+  - {id: INJ-PUMP, tag: "PU-201", kind: pump, service: injection, from: INJ-SRC, from_port: out, to: INJ-HEAD, to_port: in, pump: {discharge_pressure_bara: 220.0, efficiency: 0.8}, hydraulic: {model: darcy_weisbach, segments: 1}, source: SYN-1}
+  - id: RI-INJ
+    tag: "RI-201"
+    kind: riser
+    service: injection
+    from: INJ-HEAD
+    from_port: out
+    to: PLET-I
+    to_port: in-riser
+    route_points: [[-10.0, 20.0, 0.0], [150.0, -10.0, -150.0], [300.0, -50.0, -300.0]]
+    construction: rigid
+    od_mm: 273.1
+    wall_mm: 14.3
+    corrosion_allowance_mm: 3.0
+    grade: X65
+    insulation: {material: PU_FOAM, thickness_mm: 20.0}
+    thermal: {ambient_c: 6.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}
+    hydraulic: {model: darcy_weisbach, segments: 1}
+    design: {pressure_bara: 345.0, temperature_c: 80.0}
+    installation: {method: "steel catenary riser concept (geometry not analysed)"}
+    source: SYN-1
+  - id: IFL-1
+    tag: "FL-201"
+    kind: flowline
+    service: injection
+    from: PLET-I
+    from_port: out
+    to: IM-1
+    to_port: in
+    route_points: [[2500.0, -70.0, -350.0], [5000.0, -65.0, -380.0], [7500.0, -60.0, -405.0], [9500.0, -60.0, -398.0]]
+    construction: rigid
+    od_mm: 273.1
+    wall_mm: 14.3
+    corrosion_allowance_mm: 3.0
+    grade: X65
+    insulation: {material: PU_FOAM, thickness_mm: 20.0}
+    thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}
+    hydraulic: {model: darcy_weisbach, segments: 1}
+    design: {pressure_bara: 345.0, temperature_c: 80.0}
+    installation: {method: "S-lay", burial: "none (surface-laid)"}
+    source: SYN-1
+  - id: IFL-T2
+    tag: "FL-202"
+    kind: flowline
+    service: injection
+    from: IM-1
+    from_port: out-T2
+    to: IM-2
+    to_port: in
+    route_points: [[11200.0, 200.0, -400.0], [12300.0, 420.0, -408.0]]
+    construction: rigid
+    od_mm: 219.1
+    wall_mm: 12.7
+    corrosion_allowance_mm: 3.0
+    grade: X65
+    insulation: {material: PU_FOAM, thickness_mm: 20.0}
+    thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}
+    hydraulic: {model: darcy_weisbach, segments: 1}
+    design: {pressure_bara: 345.0, temperature_c: 80.0}
+    installation: {method: "S-lay", burial: "none (surface-laid)"}
+    source: SYN-1
+  - {id: J-I1, tag: "JMP-201", kind: jumper, service: injection, from: IM-1, from_port: out-I1, to: I1, to_port: in, construction: rigid, od_mm: 168.3, wall_mm: 14.3, corrosion_allowance_mm: 3.0, grade: X65, insulation: {material: PU_FOAM, thickness_mm: 25.0}, thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}, hydraulic: {model: darcy_weisbach, segments: 1}, design: {pressure_bara: 345.0, temperature_c: 80.0}, installation: {method: "ROV-installed rigid jumper"}, source: SYN-1}
+  - {id: J-I2, tag: "JMP-202", kind: jumper, service: injection, from: IM-2, from_port: out-I2, to: I2, to_port: in, construction: rigid, od_mm: 168.3, wall_mm: 14.3, corrosion_allowance_mm: 3.0, grade: X65, insulation: {material: PU_FOAM, thickness_mm: 25.0}, thermal: {ambient_c: 4.0, inner_htc_w_m2k: 300.0, outer_htc_w_m2k: 100.0}, hydraulic: {model: darcy_weisbach, segments: 1}, design: {pressure_bara: 345.0, temperature_c: 80.0}, installation: {method: "ROV-installed rigid jumper"}, source: SYN-1}
+
+umbilical:
+  id: UMB-1
+  tag: "UM-101"
+  name: "Main umbilical, host to the two template umbilical termination assemblies (functional specification)"
+  length_m: 13900.0
+  construction: "dynamic section + static section; conceptual cross-section only, not manufacturer-qualified"
+  terminations:
+    - {id: UTA-T1, node: M1, route_length_m: 10800.0}
+    - {id: UTA-T2, node: M2, route_length_m: 13900.0}
+  chemical_supply_pressure_bara: 380.0
+  required_margin_bar: 20.0
+  services:
+    - {id: CI-MEOH-1, kind: chemical, fluid: methanol, consumer: M1, tube_id_mm: 19.05, rate_kg_s: 0.30, purpose: "hydrate inhibitor, template 1 manifold", source: SYN-1}
+    - {id: CI-MEG-2, kind: chemical, fluid: meg, consumer: M2, tube_id_mm: 19.05, rate_kg_s: 0.35, purpose: "hydrate inhibitor, template 2 manifold", source: SYN-1}
+    - {id: HYD-1, kind: hydraulic, fluid_note: "water-glycol control fluid", tube_id_mm: 9.5, purpose: "tree and manifold valve actuation (supply)", consumer: M1, source: SYN-1}
+    - {id: HYD-2, kind: hydraulic, fluid_note: "water-glycol control fluid", tube_id_mm: 9.5, purpose: "tree and manifold valve actuation (return)", consumer: M2, source: SYN-1}
+    - {id: PWR-1, kind: power, demand_kw: 120.0, voltage_note: "to be defined by the electrical specialist", purpose: "subsea control modules and sensors, both templates", source: SYN-1}
+    - {id: SIG-1, kind: signal, channels: 4, purpose: "communication, fibre/copper per supplier", source: SYN-1}
+  spare: "two spare chemical tubes and one spare signal pair reserved (conceptual)"
+
+concepts:
+  - id: A
+    label: "Concept A - daisy chain"
+    description: "Template 2 flows to template 1 through a short infield flowline; one shared trunk line carries all four wells to the host."
+    feasibility_note: "Shared trunk: one line to install and maintain, but the T2 wells commingle through T1."
+  - id: B
+    label: "Concept B - dual direct flowlines"
+    description: "Template 2 has its own direct flowline to the PLEM; template 1 uses the trunk. Two long lines share the riser base."
+    feasibility_note: "Independent paths for each template; about 13 km of additional flowline."
+  - id: C
+    label: "Concept C - daisy chain with an 8-inch trunk"
+    description: "As concept A but the trunk is 219.1 x 12.7 mm instead of 323.9 x 15.9 mm: a cheaper line that is checked for feasibility before it can be ranked."
+    feasibility_note: "Smaller trunk: higher mixture velocity at plateau."
+    edge_overrides:
+      FL-TRUNK: {od_mm: 219.1, wall_mm: 12.7}
+
+cases:
+  - {id: BASE, label: "Plateau, base case", role: design, stage: plateau, production_fluid: prod_early, host_pressure_bara: 40.0, production_reservoir_pressure_bara: 300.0, productivity_scale: 1.0, injection_pump_discharge_bara: 220.0, injection_reservoir_pressure_bara: 160.0}
+  - {id: TURNDOWN, label: "Turndown (back-pressured host, reduced productivity)", role: scenario, stage: turndown, production_fluid: prod_early, host_pressure_bara: 60.0, production_reservoir_pressure_bara: 300.0, productivity_scale: 0.5, injection_pump_discharge_bara: 200.0, injection_reservoir_pressure_bara: 160.0}
+  - {id: LATE, label: "Late life, high water cut", role: scenario, stage: late_life, production_fluid: prod_late, host_pressure_bara: 35.0, production_reservoir_pressure_bara: 190.0, productivity_scale: 0.8, injection_pump_discharge_bara: 230.0, injection_reservoir_pressure_bara: 190.0}
+
+acceptance_criteria:
+  - {id: CR-DP, description: "Maximum operating pressure on each line does not exceed its design pressure", quantity: pressure_to_design_ratio_max, operator: "<=", value: 1.0, unit: "-", source: SYN-1}
+  - {id: CR-HYD, description: "Minimum hydrate equilibrium margin (uninhibited) on the production system", quantity: hydrate_margin_min_k, operator: ">=", value: 3.0, unit: dK, source: SYN-1}
+  - {id: CR-EROS, description: "Erosional velocity ratio v_mix / v_erosional (C-factor from the basis)", quantity: erosional_ratio_max, operator: "<=", value: 1.0, unit: "-", source: SYN-1}
+  - {id: CR-ARRT, description: "Host arrival temperature", quantity: host_arrival_temperature_c, operator: ">=", value: 20.0, unit: C, source: SYN-1}
+  - {id: CR-HOST, description: "Host inlet mass rate does not exceed the host limit", quantity: host_inlet_rate_kg_s, operator: "<=", value: 60.0, unit: kg/s, source: SYN-1}
+  - {id: CR-FRAC, description: "Injection pressure margin below the fracture limit", quantity: injection_fracture_margin_bar, operator: ">=", value: 10.0, unit: bar, source: SYN-1}
+  - {id: CR-UMB, description: "Chemical delivery pressure margin above the production pressure at the injection point", quantity: umbilical_margin_bar, operator: ">=", value: 20.0, unit: bar, source: SYN-1}
+  - {id: CR-COOL, description: "Lumped cooldown time to the hydrate temperature on the trunk line", quantity: cooldown_time_h, operator: ">=", value: 8.0, unit: h, source: SYN-1}
+
+solver:
+  network_tolerance_pa: 100.0
+  max_iterations: 100
+  coupling_relaxation: 0.7
+  coupling_max_iterations: 60
+  coupling_rate_tolerance_kg_s: 0.001
+  coupling_pressure_tolerance_bar: 0.01
+  erosional_c_factor_si: 122.0
+  erosional_c_source: SYN-1
+  hydrate_grid_bara: [20.0, 40.0, 70.0, 110.0, 160.0, 220.0]
+  hydrate_water_mole_fraction: 0.05
+  mesh_sensitivity: {factor: 2, tolerances: {p_bar: 1.0, t_k: 3.0}}
+  cost: {region: NORWAY, price_year_note: "as stated by the SURFCostEstimator basis", contingency_note: "estimator-internal; no separate contingency added"}
+
+assumptions:
+  - "All inputs are synthetic and invented for demonstration; they are not field, vendor or standard data."
+  - "Producer boundaries are live NeqSim WellFlow productivity-index inflow at the tree; the tubing VLP is not modelled."
+  - "Injection wells use the explicit liquid mass-injectivity contract (kg/s per bar); water is pure SRK water."
+  - "Riser shapes are concept schematics; their equilibrium geometry and dynamics are not analysed."
+  - "Chemical tubes are single-phase Darcy-Weisbach lines; umbilical mechanical design and electrical analysis are not assessed."
+  - "Beggs and Brill temperature results change by about 2 K between 8 and 16 increments on the long trunk; the 3 K mesh tolerance is a synthetic project choice (the smallest temperature margin to a criterion is tens of kelvin)."
+data_gaps:
+  - "No surveyed bathymetry, geotechnical data or metocean data: the seabed is synthetic."
+  - "No PVT study, tubing performance, reservoir model or well test: fluids and wells are synthetic."
+  - "No supplier data for flexible risers, umbilicals, trees, manifolds or jumpers."
+  - "No installation vessel, lay-tension, lifting or marine-warranty analysis."
+  - "On-bottom stability, free span, global buckling and pipe-soil checks lack environmental and soil inputs."
+exclusions:
+  - "Host topside modifications beyond the inlet pressure and rate constraint."
+  - "Wells (drilling and completion), subsurface and reservoir development."
+  - "Detailed electrical, control-system and safety-instrumented design."

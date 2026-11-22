@@ -1,0 +1,548 @@
+{
+  "protocol": "Same-JVM isolated worlds; 100 warmups/model; 6 windows; 8 alternating samples/model/window; 50 trials/sample",
+  "jvmOptions": [
+    "-Xms128m",
+    "-Xmx1024m"
+  ],
+  "javaVersion": "17.0.20",
+  "windows": [
+    {
+      "baseline": [
+        {
+          "seconds": 1.736384187999647,
+          "mainThreadCpuSeconds": 1.577454829,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.2665866110000934,
+          "mainThreadCpuSeconds": 1.212676167,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.0450977580003382,
+          "mainThreadCpuSeconds": 1.015977645,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1035422679997282,
+          "mainThreadCpuSeconds": 1.083549071,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.012622537000425,
+          "mainThreadCpuSeconds": 0.981781571,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.148223695001434,
+          "mainThreadCpuSeconds": 1.109510891,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7777022020000004,
+          "mainThreadCpuSeconds": 0.754552903,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.2950222839990602,
+          "mainThreadCpuSeconds": 1.263350893,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "candidate": [
+        {
+          "seconds": 1.4995521379987622,
+          "mainThreadCpuSeconds": 1.460861045,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1965481939987512,
+          "mainThreadCpuSeconds": 1.169146696,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7858759850005299,
+          "mainThreadCpuSeconds": 0.76862363,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.9557971690010163,
+          "mainThreadCpuSeconds": 0.946918724,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.9328107019991876,
+          "mainThreadCpuSeconds": 1.912582307,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.2970257710003352,
+          "mainThreadCpuSeconds": 1.269749343,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.9614630120013317,
+          "mainThreadCpuSeconds": 0.94434103,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8702760409996699,
+          "mainThreadCpuSeconds": 0.845991299,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "secondsRatio": 0.9583638981396971,
+      "mainThreadCpuSecondsRatio": 0.9648917296680828
+    },
+    {
+      "baseline": [
+        {
+          "seconds": 0.6008920139993279,
+          "mainThreadCpuSeconds": 0.589248405,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8820100499997352,
+          "mainThreadCpuSeconds": 0.847351029,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.639394417999938,
+          "mainThreadCpuSeconds": 0.627994626,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6852829519993975,
+          "mainThreadCpuSeconds": 0.665428697,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8095885250004358,
+          "mainThreadCpuSeconds": 0.786316626,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7477725710014056,
+          "mainThreadCpuSeconds": 0.732672395,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6565041260000726,
+          "mainThreadCpuSeconds": 0.639144703,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7566129589995398,
+          "mainThreadCpuSeconds": 0.725059016,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "candidate": [
+        {
+          "seconds": 0.6586249379997753,
+          "mainThreadCpuSeconds": 0.640103899,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7943348620010511,
+          "mainThreadCpuSeconds": 0.770939624,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7507671109997318,
+          "mainThreadCpuSeconds": 0.728926704,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6886829300001409,
+          "mainThreadCpuSeconds": 0.681442086,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8977502339985222,
+          "mainThreadCpuSeconds": 0.885509794,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7336645470004441,
+          "mainThreadCpuSeconds": 0.70954081,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6433076169996639,
+          "mainThreadCpuSeconds": 0.633642773,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.9845377349993214,
+          "mainThreadCpuSeconds": 0.937358076,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "secondsRatio": 1.035850763752539,
+      "mainThreadCpuSecondsRatio": 1.0345057353268392
+    },
+    {
+      "baseline": [
+        {
+          "seconds": 1.1173899389996222,
+          "mainThreadCpuSeconds": 0.786599612,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.2211255639995215,
+          "mainThreadCpuSeconds": 1.172807215,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7085210789991834,
+          "mainThreadCpuSeconds": 0.669416756,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8281192199992802,
+          "mainThreadCpuSeconds": 0.797660274,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1578622399993037,
+          "mainThreadCpuSeconds": 1.106009933,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1886993959997199,
+          "mainThreadCpuSeconds": 1.155371961,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1245427300000301,
+          "mainThreadCpuSeconds": 1.093518471,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.9048057740001241,
+          "mainThreadCpuSeconds": 0.876455836,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "candidate": [
+        {
+          "seconds": 0.5854475169999205,
+          "mainThreadCpuSeconds": 0.562958614,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1453362430002016,
+          "mainThreadCpuSeconds": 1.119827846,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 18.260098520999236,
+          "mainThreadCpuSeconds": 14.622570545,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.6677623289997427,
+          "mainThreadCpuSeconds": 1.55090872,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8094802539999364,
+          "mainThreadCpuSeconds": 0.748043263,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.3945552929999394,
+          "mainThreadCpuSeconds": 1.327857878,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1129159210013313,
+          "mainThreadCpuSeconds": 1.069868223,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.308713311000247,
+          "mainThreadCpuSeconds": 1.276523053,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "secondsRatio": 1.094613405627138,
+      "mainThreadCpuSecondsRatio": 1.2164376410823918
+    },
+    {
+      "baseline": [
+        {
+          "seconds": 1.1423423980013467,
+          "mainThreadCpuSeconds": 1.102327423,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.0241341470009502,
+          "mainThreadCpuSeconds": 1.006266509,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.0330219869993016,
+          "mainThreadCpuSeconds": 1.022993889,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1222597720006888,
+          "mainThreadCpuSeconds": 1.10429253,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.9453886539995437,
+          "mainThreadCpuSeconds": 0.931925607,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.029622002000906,
+          "mainThreadCpuSeconds": 1.010104228,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.0669961709991185,
+          "mainThreadCpuSeconds": 1.00569762,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8613294150000002,
+          "mainThreadCpuSeconds": 0.819860327,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "candidate": [
+        {
+          "seconds": 0.9576216519999434,
+          "mainThreadCpuSeconds": 0.910688489,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.055706626000756,
+          "mainThreadCpuSeconds": 1.025300246,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1883408689991484,
+          "mainThreadCpuSeconds": 1.165030234,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.299527217999639,
+          "mainThreadCpuSeconds": 1.255136041,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.9509137269997154,
+          "mainThreadCpuSeconds": 0.94264601,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.1084159709989763,
+          "mainThreadCpuSeconds": 1.083159497,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.2170194070004072,
+          "mainThreadCpuSeconds": 1.184905096,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.9041569159999199,
+          "mainThreadCpuSeconds": 0.864003556,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "secondsRatio": 1.049198314658611,
+      "mainThreadCpuSecondsRatio": 1.0456706717223105
+    },
+    {
+      "baseline": [
+        {
+          "seconds": 0.83129535199987,
+          "mainThreadCpuSeconds": 0.790946668,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7649826029992255,
+          "mainThreadCpuSeconds": 0.740313365,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7780393080010981,
+          "mainThreadCpuSeconds": 0.766342751,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7980368800017459,
+          "mainThreadCpuSeconds": 0.789006356,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8461380369990366,
+          "mainThreadCpuSeconds": 0.816908396,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.894148387000314,
+          "mainThreadCpuSeconds": 0.848940199,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7749087869997311,
+          "mainThreadCpuSeconds": 0.76444394,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7167705109986855,
+          "mainThreadCpuSeconds": 0.707664833,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "candidate": [
+        {
+          "seconds": 0.8193096159993729,
+          "mainThreadCpuSeconds": 0.78355557,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7460677760009276,
+          "mainThreadCpuSeconds": 0.717417916,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8546360450000066,
+          "mainThreadCpuSeconds": 0.814800077,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7563625180009694,
+          "mainThreadCpuSeconds": 0.741571382,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7013221800007159,
+          "mainThreadCpuSeconds": 0.689846967,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.8995032969996828,
+          "mainThreadCpuSeconds": 0.89043528,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.3004544359991996,
+          "mainThreadCpuSeconds": 1.232748487,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6011969329993008,
+          "mainThreadCpuSeconds": 0.582566491,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "secondsRatio": 0.9997436329502486,
+      "mainThreadCpuSecondsRatio": 0.9805688929488676
+    },
+    {
+      "baseline": [
+        {
+          "seconds": 0.6238109250007255,
+          "mainThreadCpuSeconds": 0.593967823,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.7332296089989541,
+          "mainThreadCpuSeconds": 0.695070958,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.609527218999574,
+          "mainThreadCpuSeconds": 0.596241367,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.860935786000482,
+          "mainThreadCpuSeconds": 0.793808777,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6470158579995768,
+          "mainThreadCpuSeconds": 0.633414318,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6090820009994786,
+          "mainThreadCpuSeconds": 0.582846457,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6574143249999906,
+          "mainThreadCpuSeconds": 0.626523567,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6350960700001451,
+          "mainThreadCpuSeconds": 0.615789686,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "candidate": [
+        {
+          "seconds": 0.6577819079993787,
+          "mainThreadCpuSeconds": 0.624715135,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 1.4454898449985194,
+          "mainThreadCpuSeconds": 1.42184165,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.791872046998833,
+          "mainThreadCpuSeconds": 0.768845718,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6842467480000778,
+          "mainThreadCpuSeconds": 0.64456882,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.745125461000498,
+          "mainThreadCpuSeconds": 0.632982543,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6481922080001823,
+          "mainThreadCpuSeconds": 0.639099336,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.6274416389987891,
+          "mainThreadCpuSeconds": 0.609548525,
+          "checksumVolumeM3": 0.021785970384931647
+        },
+        {
+          "seconds": 0.5615180309996504,
+          "mainThreadCpuSeconds": 0.538839143,
+          "checksumVolumeM3": 0.021785970384931647
+        }
+      ],
+      "secondsRatio": 1.0467328371971496,
+      "mainThreadCpuSecondsRatio": 1.0239622542286442
+    }
+  ],
+  "secondsRatioRange": [
+    0.9583638981396971,
+    1.094613405627138
+  ],
+  "secondsRatioGeometricMean": 1.0298605281069952,
+  "mainThreadCpuSecondsRatioRange": [
+    0.9648917296680828,
+    1.2164376410823918
+  ],
+  "mainThreadCpuSecondsRatioGeometricMean": 1.0413012442721745
+}

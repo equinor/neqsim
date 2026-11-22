@@ -10,10 +10,12 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.scenario.ProcessScenarioRunner;
 import neqsim.process.util.monitor.KPIDashboard;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example showing integration patterns for real-time digitalization systems.
- * 
+ *
  * Integration Points: - OPC UA/DA servers for real-time data exchange - PI/Seeq
  * historian
  * connections for time-series data - SCADA/DCS integration for control loops -
@@ -21,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * cloud/IoT platforms - MQTT for industrial IoT messaging
  */
 public class RealTimeIntegrationExample {
+  private static final Logger logger = LogManager.getLogger(RealTimeIntegrationExample.class);
 
   /**
    * Digital Twin Pattern: Live data feedback integration
@@ -154,8 +157,8 @@ public class RealTimeIntegrationExample {
      * Model reconciliation when plant data deviates from simulation
      */
     private void reconcileModel(String parameter, double actualValue, double simulatedValue) {
-      System.out.println("Model reconciliation triggered for " + parameter);
-      System.out.println("Actual: " + actualValue + ", Simulated: " + simulatedValue);
+      logger.info("Model reconciliation triggered for {}", parameter);
+      logger.info("Actual: {}, Simulated: {}", actualValue, simulatedValue);
 
       // Adjust model parameters based on plant data
       // This could involve:
@@ -171,7 +174,7 @@ public class RealTimeIntegrationExample {
         double adjustmentFactor = actualValue / simulatedValue;
         valve.setCv(currentCv * adjustmentFactor);
 
-        System.out.println("Adjusted valve Cv from " + currentCv + " to " + valve.getCv());
+        logger.info("Adjusted valve Cv from {} to {}", currentCv, valve.getCv());
       }
 
       // Re-run simulation with adjusted parameters
@@ -183,7 +186,7 @@ public class RealTimeIntegrationExample {
     }
 
     private void triggerHighPressureAlarm(double value) {
-      System.out.println("HIGH PRESSURE ALARM: " + value + " bara");
+      logger.warn("HIGH PRESSURE ALARM: {} bara", value);
       // Could trigger safety logic in ProcessScenarioRunner
       // runner.activateLogic("ESD Level 1");
     }
@@ -209,7 +212,7 @@ public class RealTimeIntegrationExample {
           Thread.sleep(5000); // 5-second cycle
 
         } catch (Exception e) {
-          System.err.println("Error in continuous simulation: " + e.getMessage());
+          logger.error("Error in continuous simulation", e);
           piHistorian.writeEvent("NEQSIM.Error", e.getMessage());
         }
       }
@@ -278,16 +281,16 @@ public class RealTimeIntegrationExample {
 
     public MockOPCClient(String endpoint) {
       this.endpoint = endpoint;
-      System.out.println("Connected to OPC server: " + endpoint);
+      logger.info("Connected to OPC server: {}", endpoint);
     }
 
     public void subscribe(String nodeId, java.util.function.Consumer<Double> callback) {
-      System.out.println("Subscribed to OPC node: " + nodeId);
+      logger.info("Subscribed to OPC node: {}", nodeId);
       // In real implementation, this would use Eclipse Milo or similar OPC client
     }
 
     public void writeValue(String nodeId, double value) {
-      System.out.println("Writing to OPC node " + nodeId + ": " + value);
+      logger.info("Writing to OPC node {}: {}", nodeId, value);
     }
   }
 
@@ -296,31 +299,31 @@ public class RealTimeIntegrationExample {
 
     public MockPIHistorian(String server) {
       this.server = server;
-      System.out.println("Connected to PI server: " + server);
+      logger.info("Connected to PI server: {}", server);
     }
 
     public void configureTag(String piTag, String deviceName) {
-      System.out.println("Configured PI tag " + piTag + " for device " + deviceName);
+      logger.info("Configured PI tag {} for device {}", piTag, deviceName);
     }
 
     public void writeValue(String piTag, double value) {
-      System.out.println("Writing to PI tag " + piTag + ": " + value);
+      logger.info("Writing to PI tag {}: {}", piTag, value);
       // In real implementation, this would use PI SDK or PI Web API
     }
 
     public void writeEvent(String piTag, String message) {
-      System.out.println("Writing PI event to " + piTag + ": " + message);
+      logger.info("Writing PI event to {}: {}", piTag, message);
     }
   }
 
   static class MockSCADAInterface implements SCADAInterface {
     public void registerAlarm(String alarmName, double threshold,
         java.util.function.Consumer<Double> handler) {
-      System.out.println("Registered alarm: " + alarmName + " (threshold: " + threshold + ")");
+      logger.info("Registered alarm: {} (threshold: {})", alarmName, threshold);
     }
 
     public void registerTrend(String trendName, KPIDashboard dashboard) {
-      System.out.println("Registered trend: " + trendName);
+      logger.info("Registered trend: {}", trendName);
     }
 
     public void updateTrends(ProcessSystem system) {
@@ -328,7 +331,7 @@ public class RealTimeIntegrationExample {
     }
 
     public void raiseAlarm(String alarmName, double value) {
-      System.out.println("SCADA ALARM: " + alarmName + " = " + value);
+      logger.warn("SCADA ALARM: {} = {}", alarmName, value);
     }
   }
 
@@ -336,7 +339,7 @@ public class RealTimeIntegrationExample {
    * Main method demonstrating real-time integration
    */
   public static void main(String[] args) {
-    System.out.println("=== NeqSim Real-Time Integration Example ===");
+    logger.info("=== NeqSim Real-Time Integration Example ===");
 
     DigitalTwinIntegration digitalTwin = new DigitalTwinIntegration();
 

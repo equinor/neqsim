@@ -122,7 +122,7 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
     requiredMotorPower *= margin;
 
     // Round up to next standard size
-    double[] standardSizes = { 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 15.0 };
+    double[] standardSizes = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 15.0};
     for (double size : standardSizes) {
       if (size >= requiredMotorPower) {
         requiredMotorPower = size;

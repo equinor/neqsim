@@ -120,7 +120,11 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
   public PhaseSrkCPAreduced() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkCPAreduced clone() {
     PhaseSrkCPAreduced clonedPhase = null;
@@ -141,6 +145,7 @@ public class PhaseSrkCPAreduced extends PhaseSrkCPAs {
       clonedPhase.workP = 0;
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkCPAreduced", ex);
     }
     return clonedPhase;
   }

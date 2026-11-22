@@ -130,7 +130,7 @@ public class DualEosComparison implements Serializable {
    * @param pressureBara pressure in bara
    */
   public void addCondition(double temperatureKelvin, double pressureBara) {
-    conditions.add(new double[] { temperatureKelvin, pressureBara });
+    conditions.add(new double[] {temperatureKelvin, pressureBara});
   }
 
   /**
@@ -140,7 +140,7 @@ public class DualEosComparison implements Serializable {
    * @param pressureBara pressure in bara
    */
   public void addConditionCelsius(double temperatureCelsius, double pressureBara) {
-    conditions.add(new double[] { temperatureCelsius + 273.15, pressureBara });
+    conditions.add(new double[] {temperatureCelsius + 273.15, pressureBara});
   }
 
   /**

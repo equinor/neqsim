@@ -9,8 +9,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousResidualRefinementTest {
-  private static final String[] COMPONENTS = { "nitrogen", "methane", "ethane", "propane", "nC10", "water" };
-  private static final double[] FEED = { 0.01, 0.75, 0.08, 0.04, 0.02, 0.10 };
+  private static final String[] COMPONENTS = {"nitrogen", "methane", "ethane", "propane", "nC10", "water"};
+  private static final double[] FEED = {0.01, 0.75, 0.08, 0.04, 0.02, 0.10};
 
   @Test
   void ordinaryFlashRefinesNonequilibriumAqueousEndpoint() {

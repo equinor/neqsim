@@ -1,9 +1,14 @@
 package neqsim.process.controllerdevice;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.measurementdevice.TransientMeasurementDevice;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
@@ -22,9 +27,10 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * </p>
  *
  * <p>
- * Output is the recycle valve opening in percent (0..100). The controller applies the opening directly to the recycle
- * valve each transient step, so attaching it through {@code valve.addController("anti-surge", controller)} or
- * {@code compressor.addController("anti-surge", controller)} is sufficient.
+ * Output is the recycle valve command in percent (0..100). The controller supplies a target to the recycle valve each
+ * transient step; actual position advances only during the valve physical step. Attaching it through
+ * {@code valve.addController("anti-surge", controller)} or {@code compressor.addController("anti-surge", controller)}
+ * is sufficient.
  * </p>
  *
  * @author NeqSim
@@ -39,6 +45,9 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
 
   /** The compressor whose surge margin is being protected. */
   private Compressor compressor = null;
+
+  /** Optional actual held calculated-margin input; null retains the legacy direct-map input. */
+  private MeasurementDeviceInterface surgeMarginMeasurement;
 
   /** The recycle valve used as the anti-surge actuator. */
   private ThrottlingValve recycleValve = null;
@@ -150,7 +159,7 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
       return;
     }
     double previousMargin = lastMargin;
-    double margin = compressor.getDistanceToSurge();
+    double margin = readMargin(id);
     if (!Double.isFinite(margin)) {
       // No surge data: hold the valve closed
       valveOpening = clamp(minOpening);
@@ -249,8 +258,166 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
    */
   private void applyToValve() {
     if (recycleValve != null) {
-      recycleValve.setPercentValveOpening(valveOpening);
+      recycleValve.setTargetPercentValveOpening(valveOpening);
     }
+  }
+
+  /**
+   * Binds an explicitly sampled calculated margin input without changing the legacy default. The supplied device
+   * remains the live physical-step source; copying it would detach its held samples and faults.
+   *
+   * @param measurement actual sample-and-hold device, or null to use the compressor map directly
+   * @throws IllegalArgumentException if the supplied device cannot provide held physical-step samples
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The controller must consume held samples and faults from the connected native measurement")
+  public void setSurgeMarginMeasurement(MeasurementDeviceInterface measurement) {
+    if (measurement != null && !(measurement instanceof TransientMeasurementDevice)) {
+      throw new IllegalArgumentException("Anti-surge margin input requires physical-step sample-and-hold");
+    }
+    surgeMarginMeasurement = measurement;
+  }
+
+  /** @return live held calculated-margin input, or null for the direct compressor-map policy */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The native measurement identity is required for causal binding and physical-step sample validation")
+  public MeasurementDeviceInterface getSurgeMarginMeasurement() {
+    return surgeMarginMeasurement;
+  }
+
+  /**
+   * Reads the configured margin once without advancing an instrument signal chain.
+   *
+   * @param id current physical-step identifier
+   * @return held dimensionless margin or the legacy direct-map value
+   * @throws IllegalStateException if an explicitly configured held input is missing its current sample
+   */
+  private double readMargin(UUID id) {
+    if (surgeMarginMeasurement == null) {
+      return compressor.getDistanceToSurge();
+    }
+    TransientMeasurementDevice sampled = (TransientMeasurementDevice) surgeMarginMeasurement;
+    if (!sampled.isTransientSamplingEnabled() || !sampled.hasTransientSample(id)) {
+      throw new IllegalStateException("Configured anti-surge input has no sample for the physical step");
+    }
+    return sampled.getTransientSample();
+  }
+
+  /**
+   * Returns detached static control policy and actual input/target identities, never integrator state.
+   *
+   * @return complete supported anti-surge configuration; the UNBOUNDED rate policy denotes an unlimited output rate
+   */
+  public Map<String, Object> getControlConfiguration() {
+    Map<String, Object> map = new LinkedHashMap<String, Object>();
+    map.put("schemaVersion", "neqsim.anti_surge_control_configuration.v1");
+    map.put("nativeClass", getClass().getName());
+    map.put("compressorTag", compressor == null ? "" : compressor.getName());
+    map.put("recycleValveTag", recycleValve == null ? "" : recycleValve.getName());
+    map.put("nativeMapReference", nativeMapReference());
+    map.put("inputMode", surgeMarginMeasurement == null ? "DIRECT_COMPRESSOR_MAP" : "HELD_CALCULATED_MARGIN");
+    map.put("inputTag", surgeMarginMeasurement == null ? "" : surgeMarginMeasurement.getName());
+    map.put("inputClass", surgeMarginMeasurement == null ? "" : surgeMarginMeasurement.getClass().getName());
+    map.put("active", Boolean.valueOf(isActive()));
+    map.put("surgeMarginSetPoint", Double.valueOf(surgeMarginSetPoint));
+    map.put("proportionalGain", Double.valueOf(proportionalGain));
+    map.put("integralTimeSeconds", Double.valueOf(integralTime));
+    map.put("minimumOpeningPercent", Double.valueOf(minOpening));
+    map.put("maximumOpeningPercent", Double.valueOf(maxOpening));
+    map.put("predictiveActionEnabled", Boolean.valueOf(predictiveActionEnabled));
+    map.put("predictionHorizonSeconds", Double.valueOf(predictionHorizon));
+    map.put("marginRateFilterSeconds", Double.valueOf(marginRateFilterTime));
+    map.put("valveRateLimitPercentPerSecond",
+        Double.isInfinite(valveRateLimit) ? "UNBOUNDED" : Double.valueOf(valveRateLimit));
+    map.put("outputLagSeconds", Double.valueOf(actuatorTimeConstant));
+    map.put("emergencyMargin", Double.valueOf(emergencyMargin));
+    map.put("emergencyOpeningPercent", Double.valueOf(emergencyOpening));
+    return map;
+  }
+
+  /**
+   * Captures full-precision native map data rather than the rounded human-readable chart export.
+   *
+   * @return detached-compatible map arrays and source types
+   */
+  private Map<String, Object> nativeMapReference() {
+    Map<String, Object> values = new LinkedHashMap<String, Object>();
+    if (compressor == null || compressor.getCompressorChart() == null) {
+      return new com.google.gson.Gson().fromJson(new com.google.gson.Gson().toJson(values), Map.class);
+    }
+    neqsim.process.equipment.compressor.CompressorChartInterface chart = compressor.getCompressorChart();
+    values.put("chartClass", chart.getClass().getName());
+    values.put("headUnit", chart.getHeadUnit());
+    values.put("active", Boolean.valueOf(chart.isUseCompressorChart()));
+    values.put("referenceConditions", chart.getChartConditions());
+    values.put("speedRpm", chart.getSpeeds());
+    values.put("actualFlowM3PerHour", chart.getFlows());
+    values.put("head", chart.getHeads());
+    values.put("efficiency", chart.getPolytropicEfficiencies());
+    values.put("surgeCurveHead", chart.getSurgeCurve().getSortedHead());
+    values.put("surgeCurveFlow", chart.getSurgeCurve().getSortedFlow());
+    return new com.google.gson.Gson().fromJson(new com.google.gson.Gson().toJson(values), Map.class);
+  }
+
+  /**
+   * Applies a complete declared static policy while retaining actual input and actuator references.
+   *
+   * @param values supported configuration produced by getControlConfiguration or its governed revision
+   * @throws IllegalArgumentException if keys, identities or bounded numerical settings are invalid
+   */
+  public void applyControlConfiguration(Map<String, Object> values) {
+    Map<String, Object> current = getControlConfiguration();
+    if (values == null || !values.keySet().equals(current.keySet())) {
+      throw new IllegalArgumentException("A complete supported anti-surge configuration is required");
+    }
+    for (String key : new String[] {"schemaVersion", "nativeClass", "compressorTag", "recycleValveTag", "inputMode",
+        "inputTag", "inputClass", "nativeMapReference"}) {
+      if (!new com.google.gson.Gson().toJsonTree(current.get(key))
+          .equals(new com.google.gson.Gson().toJsonTree(values.get(key)))) {
+        throw new IllegalArgumentException("Anti-surge actual identity differs: " + key);
+      }
+    }
+    double margin = number(values, "surgeMarginSetPoint");
+    double gain = number(values, "proportionalGain");
+    double integral = number(values, "integralTimeSeconds");
+    double minimum = number(values, "minimumOpeningPercent");
+    double maximum = number(values, "maximumOpeningPercent");
+    double horizon = number(values, "predictionHorizonSeconds");
+    double filter = number(values, "marginRateFilterSeconds");
+    double rate = "UNBOUNDED".equals(values.get("valveRateLimitPercentPerSecond")) ? Double.POSITIVE_INFINITY
+        : number(values, "valveRateLimitPercentPerSecond");
+    double lag = number(values, "outputLagSeconds");
+    double emergency = number(values, "emergencyMargin");
+    double emergencyOutput = number(values, "emergencyOpeningPercent");
+    if (margin < 0 || gain < 0 || integral < 0 || minimum < 0 || maximum > 100 || minimum > maximum || horizon < 0
+        || filter < 0 || rate <= 0 || lag < 0 || emergencyOutput < 0 || emergencyOutput > 100
+        || !(values.get("active") instanceof Boolean) || !(values.get("predictiveActionEnabled") instanceof Boolean)) {
+      throw new IllegalArgumentException("Invalid bounded anti-surge control policy");
+    }
+    setSurgeMarginSetPoint(margin);
+    setProportionalGain(gain);
+    setIntegralTime(integral);
+    setOpeningRange(minimum, maximum);
+    setPredictiveActionEnabled(((Boolean) values.get("predictiveActionEnabled")).booleanValue());
+    setPredictionHorizon(horizon);
+    setMarginRateFilterTime(filter);
+    setActuatorDynamics(rate, lag);
+    setEmergencyAction(emergency, emergencyOutput);
+    setActive(((Boolean) values.get("active")).booleanValue());
+  }
+
+  /**
+   * Reads one finite scalar without silently replacing an absent or non-numeric setting.
+   *
+   * @param values complete static policy
+   * @param key required scalar name
+   * @return finite numerical value
+   * @throws IllegalArgumentException if the value is missing or non-finite
+   */
+  private static double number(Map<String, Object> values, String key) {
+    Object value = values.get(key);
+    if (!(value instanceof Number) || !Double.isFinite(((Number) value).doubleValue())) {
+      throw new IllegalArgumentException("Finite anti-surge setting required: " + key);
+    }
+    return ((Number) value).doubleValue();
   }
 
   /**
@@ -497,10 +664,11 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   protected Serializable captureControllerSubclassTransientState() {
     double recycleValveOpening = recycleValve == null ? Double.NaN : recycleValve.getPercentValveOpening();
     double recycleValveTarget = recycleValve == null ? Double.NaN : recycleValve.getTargetPercentValveOpening();
-    return new AntiSurgeTransientState(compressor, recycleValve, surgeMarginSetPoint, proportionalGain, integralTime,
-        minOpening, maxOpening, valveOpening, integralState, lastMargin, predictiveActionEnabled, predictionHorizon,
-        marginRateFilterTime, filteredMarginRate, predictedMargin, targetValveOpening, valveRateLimit,
-        actuatorTimeConstant, emergencyMargin, emergencyOpening, recycleValveOpening, recycleValveTarget);
+    return new AntiSurgeTransientState(compressor, recycleValve, surgeMarginMeasurement, surgeMarginSetPoint,
+        proportionalGain, integralTime, minOpening, maxOpening, valveOpening, integralState, lastMargin,
+        predictiveActionEnabled, predictionHorizon, marginRateFilterTime, filteredMarginRate, predictedMargin,
+        targetValveOpening, valveRateLimit, actuatorTimeConstant, emergencyMargin, emergencyOpening,
+        recycleValveOpening, recycleValveTarget);
   }
 
   /** {@inheritDoc} */
@@ -511,6 +679,7 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     }
     AntiSurgeTransientState snapshot = (AntiSurgeTransientState) state;
     compressor = snapshot.compressor;
+    surgeMarginMeasurement = snapshot.surgeMarginMeasurement;
     recycleValve = snapshot.recycleValve;
     surgeMarginSetPoint = snapshot.surgeMarginSetPoint;
     proportionalGain = snapshot.proportionalGain;
@@ -554,6 +723,7 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
 
     private final Compressor compressor;
     private final ThrottlingValve recycleValve;
+    private final MeasurementDeviceInterface surgeMarginMeasurement;
     private final double surgeMarginSetPoint;
     private final double proportionalGain;
     private final double integralTime;
@@ -575,14 +745,16 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     private final double recycleValveOpening;
     private final double recycleValveTarget;
 
-    private AntiSurgeTransientState(Compressor compressor, ThrottlingValve recycleValve, double surgeMarginSetPoint,
-        double proportionalGain, double integralTime, double minOpening, double maxOpening, double valveOpening,
-        double integralState, double lastMargin, boolean predictiveActionEnabled, double predictionHorizon,
-        double marginRateFilterTime, double filteredMarginRate, double predictedMargin, double targetValveOpening,
-        double valveRateLimit, double actuatorTimeConstant, double emergencyMargin, double emergencyOpening,
-        double recycleValveOpening, double recycleValveTarget) {
+    private AntiSurgeTransientState(Compressor compressor, ThrottlingValve recycleValve,
+        MeasurementDeviceInterface surgeMarginMeasurement, double surgeMarginSetPoint, double proportionalGain,
+        double integralTime, double minOpening, double maxOpening, double valveOpening, double integralState,
+        double lastMargin, boolean predictiveActionEnabled, double predictionHorizon, double marginRateFilterTime,
+        double filteredMarginRate, double predictedMargin, double targetValveOpening, double valveRateLimit,
+        double actuatorTimeConstant, double emergencyMargin, double emergencyOpening, double recycleValveOpening,
+        double recycleValveTarget) {
       this.compressor = compressor;
       this.recycleValve = recycleValve;
+      this.surgeMarginMeasurement = surgeMarginMeasurement;
       this.surgeMarginSetPoint = surgeMarginSetPoint;
       this.proportionalGain = proportionalGain;
       this.integralTime = integralTime;

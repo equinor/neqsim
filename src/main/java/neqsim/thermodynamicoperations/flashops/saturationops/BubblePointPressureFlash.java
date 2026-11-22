@@ -29,6 +29,16 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    run(true);
+  }
+
+  /**
+   * Solve with one bounded restart after a trivial mixture root.
+   *
+   * @param allowRestart whether to retry from a sub-bubble Wilson estimate
+   */
+  private void run(boolean allowRestart) {
+    setSuperCritical(false);
     if (system.getPhase(0).getNumberOfComponents() == 1) {
       ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (system.getTemperature() >= comp.getTC()) {
@@ -47,6 +57,12 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         double pCrit = comp.getPC();
         double frac = (system.getTemperature() - tTrip) / (tCrit - tTrip);
         pGuess = pTrip + frac * (pCrit - pTrip);
+      }
+      if (system.getPhase(0).getClass() == neqsim.thermo.phase.PhaseSrkEos.class
+          || system.getPhase(0).getClass() == neqsim.thermo.phase.PhasePrEos.class) {
+        system.init(0);
+        system.init(1);
+        pGuess = neqsim.thermo.phase.CubicPureSaturation.pressure((neqsim.thermo.phase.PhaseEos) system.getPhase(0));
       }
       system.setPressure(pGuess);
     }
@@ -186,8 +202,14 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
       logger.info("ytot " + Math.abs(ytotal - 1.0));
       setSuperCritical(true);
     }
-    if (isSuperCritical()) {
-      // throw new IllegalStateException("System is supercritical");
+    if (isSuperCritical() && allowRestart && ktot < 1e-3 && system.getNumberOfComponents() > 1
+        && !system.isChemicalSystem()) {
+      // Start below the estimated bubble pressure to retain distinct vapor and liquid roots.
+      double guess = 0.5 * WilsonSaturationEstimate.bubblePressure(system);
+      if (Double.isFinite(guess) && guess > 0.0) {
+        system.setPressure(guess);
+        run(false);
+      }
     }
   }
 

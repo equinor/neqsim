@@ -1,0 +1,19 @@
+package neqsim.thermo.phase;
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import neqsim.thermo.system.*;
+public class RootFallbackTiming {
+ private static volatile double sink;
+ public static void main(String[] args) throws Exception {
+  boolean pr=args[0].equals("PR");SystemInterface fluid=pr?new SystemPrEos(150.0,10.0):new SystemSrkEos(150.0,10.0);fluid.addComponent("methane",1);fluid.setMixingRule(2);fluid.init(3);PhaseEos phase=(PhaseEos)fluid.getPhase(0);
+  for(PhaseType type:new PhaseType[]{PhaseType.GAS,PhaseType.LIQUID}) {phase.molarVolumeAnalytical(10,150,type);if(Math.abs(phase.calcPressure()-10)>1e-8)throw new IllegalStateException("Invalid timing root");}
+  StringBuilder data=new StringBuilder("sample,eos,elapsed_ns,checksum\n");
+  for(int round=0;round<32;round++) {
+   long begin=System.nanoTime();double sum=0;
+   for(int i=0;i<100000;i++)sum+=phase.molarVolumeAnalytical(10,150,i%2==0?PhaseType.GAS:PhaseType.LIQUID);
+   long time=System.nanoTime()-begin;sink=sum;
+   if(round>=20)data.append(round-20).append(',').append(args[0]).append(',').append(time).append(',').append(sum).append('\n');
+  }
+  Files.write(Paths.get(args[1]),data.toString().getBytes(StandardCharsets.UTF_8));
+ }
+}

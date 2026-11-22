@@ -76,6 +76,10 @@ public final class StandardCatalog {
         StandardType.API_520_PART_1, StandardType.API_520_PART_2, StandardType.API_527, StandardType.API_614,
         StandardType.API_618, StandardType.API_625, StandardType.API_676, StandardType.API_685, StandardType.API_5L,
         StandardType.API_12J);
+    entries.put(StandardType.API_RP_14C,
+        new StandardCatalogEntry(StandardType.API_RP_14C, StandardLifecycleStatus.CURRENT, null,
+            "https://www.api.org/-/media/files/publications/2024-catalog/2024-exploration-and-production.pdf",
+            "2026-11-18"));
     current(entries, API_REFINING_2025, StandardType.API_526);
     entries.put(StandardType.API_2000, new StandardCatalogEntry(StandardType.API_2000, StandardLifecycleStatus.CURRENT,
         null, API_REFINING_2025, API_2000_VERIFIED_ON));

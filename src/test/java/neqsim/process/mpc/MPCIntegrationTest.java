@@ -108,14 +108,14 @@ public class MPCIntegrationTest {
 
   @Test
   public void testLinearizationResultCreation() {
-    double[][] gains = { { 1.0, 2.0 }, { 3.0, 4.0 } };
-    double[][] distGains = { { 0.1 }, { 0.2 } };
-    double[] mvOp = { 0.5, 0.6 };
-    double[] cvOp = { 30.0, 25.0 };
-    double[] dvOp = { 100.0 };
-    String[] mvNames = { "MV1", "MV2" };
-    String[] cvNames = { "CV1", "CV2" };
-    String[] dvNames = { "DV1" };
+    double[][] gains = {{1.0, 2.0}, {3.0, 4.0}};
+    double[][] distGains = {{0.1}, {0.2}};
+    double[] mvOp = {0.5, 0.6};
+    double[] cvOp = {30.0, 25.0};
+    double[] dvOp = {100.0};
+    String[] mvNames = {"MV1", "MV2"};
+    String[] cvNames = {"CV1", "CV2"};
+    String[] dvNames = {"DV1"};
 
     LinearizationResult result = new LinearizationResult(gains, distGains, mvOp, cvOp, dvOp, mvNames, cvNames, dvNames,
         1e-3, 2);
@@ -177,7 +177,7 @@ public class MPCIntegrationTest {
   @Test
   public void testStepResponseCreation() {
     double sampleTime = 1.0;
-    double[] times = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    double[] times = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     double[] values = new double[times.length];
     double gain = 2.0;
     double tau = 3.0;
@@ -233,12 +233,12 @@ public class MPCIntegrationTest {
 
   @Test
   public void testStateSpaceExporterCreation() {
-    double[][] gains = { { 2.0 } };
-    String[] mvNames = { "valve" };
-    String[] cvNames = { "pressure" };
+    double[][] gains = {{2.0}};
+    String[] mvNames = {"valve"};
+    String[] cvNames = {"pressure"};
 
-    LinearizationResult result = new LinearizationResult(gains, new double[1][0], new double[] { 0.5 },
-        new double[] { 30.0 }, new double[0], mvNames, cvNames, new String[0], 1e-3, 1);
+    LinearizationResult result = new LinearizationResult(gains, new double[1][0], new double[] {0.5},
+        new double[] {30.0}, new double[0], mvNames, cvNames, new String[0], 1e-3, 1);
 
     StateSpaceExporter exporter = new StateSpaceExporter(result);
     StateSpaceExporter.StateSpaceModel model = exporter.toDiscreteStateSpace(60.0);
@@ -270,17 +270,17 @@ public class MPCIntegrationTest {
 
   @Test
   public void testStateSpaceModelSimulation() {
-    double[][] gains = { { 1.0 } };
-    LinearizationResult result = new LinearizationResult(gains, new double[1][0], new double[] { 0.5 },
-        new double[] { 0.0 }, new double[0], new String[] { "u" }, new String[] { "y" }, new String[0], 1e-3, 1);
+    double[][] gains = {{1.0}};
+    LinearizationResult result = new LinearizationResult(gains, new double[1][0], new double[] {0.5},
+        new double[] {0.0}, new double[0], new String[] {"u"}, new String[] {"y"}, new String[0], 1e-3, 1);
 
     StateSpaceExporter exporter = new StateSpaceExporter(result);
     // Use sample time matching default time constant for faster convergence in test
     StateSpaceExporter.StateSpaceModel model = exporter.toDiscreteStateSpace(10.0);
 
     // Simulate step response
-    double[] x = { 0.0 };
-    double[] u = { 1.0 };
+    double[] x = {0.0};
+    double[] u = {1.0};
     double[] trajectory = new double[20];
 
     for (int k = 0; k < 20; k++) {
@@ -404,6 +404,31 @@ public class MPCIntegrationTest {
     assertEquals(1, moves.length);
     // Move should be within bounds
     assertTrue(moves[0] >= 0.0 && moves[0] <= 1.0);
+  }
+
+  /**
+   * Verify zero error inside a pressure zone and correction toward the nearest boundary outside it.
+   */
+  @Test
+  public void testProcessLinkedMPCUsesNearestZoneBoundary() {
+    ProcessLinkedMPC mpc = new ProcessLinkedMPC("zoneController", process);
+    mpc.addMV("feed", "pressure", 30.0, 70.0).setMoveWeight(0.1);
+    ControlledVariable pressure = mpc.addCVZone("feed", "pressure", 45.0, 55.0);
+    pressure.setUnit("bara");
+    mpc.identifyModel(15.0);
+
+    feed.setPressure(47.0, "bara");
+    assertEquals(47.0, mpc.calculate()[0], 1e-9);
+    feed.setPressure(53.0, "bara");
+    assertEquals(53.0, mpc.calculate()[0], 1e-9);
+
+    feed.setPressure(58.0, "bara");
+    assertEquals(58.0 - 0.3 * 3.0 / 1.1, mpc.calculate()[0], 1e-9);
+    feed.setPressure(42.0, "bara");
+    assertEquals(42.0 + 0.3 * 3.0 / 1.1, mpc.calculate()[0], 1e-9);
+
+    pressure.setSetpoint(50.0);
+    assertEquals(42.0 + 0.3 * 8.0 / 1.1, mpc.calculate()[0], 1e-9);
   }
 
   @Test

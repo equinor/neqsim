@@ -99,6 +99,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
         gasCooled);
     ops.TPflash();
+    gasCooled.init(2);
     double gasEnthalypCooled = gasCooled.getEnthalpy();
 
     double maxHeatAvailable = gasInletEnthalpy - gasEnthalypCooled;

@@ -108,9 +108,11 @@ findings, `UNCLASSIFIED_DYNAMIC` review items, and known process-level execution
 not yet safe for strict professional qualification. `getExecutionIssues()` exposes those process-level findings
 separately so they are not confused with equipment state ownership or activation.
 
-Adaptive transient execution remains explicitly blocked by the current Phase-0 contract:
-`runTransientAdaptive(...)` mutates one full timestep and derives a following timestep recommendation without a
-full-step/two-half-step error estimate, rejected-step restore, retry, and one accepted-step commit boundary.
+The legacy two-argument `ProcessSystem.runTransientAdaptive(dt, id)` remains explicitly blocked by the
+Phase-0 strict execution contract: it mutates one full timestep and derives a following timestep recommendation without
+full-step/two-half-step error estimation, rejected-step restore or retry. The separate three-argument overload described
+below supplies an opt-in numerical acceptance path. Its presence does not change the legacy method or automatically
+qualify a process model.
 
 ## Identity-preserving transient step transactions
 
@@ -148,11 +150,19 @@ membership. Both blocks reject duplicate advancement for the same non-null physi
 continuation after rollback or Java serialization. Subclasses fail closed until they extend the snapshot for any
 additional mutable state.
 
-This is an additive compatibility boundary. Legacy `runTransient(...)`, `reset()`, and
-`runTransientAdaptive(...)` retain their current behavior. Built-in equipment must adopt the participant contract
+This is an additive compatibility boundary. Legacy `runTransient(...)`, `reset()`, and the two-argument
+`runTransientAdaptive(dt, id)` retain their current behavior. Built-in equipment must adopt the participant contract
 family by family with inventory, controller, conservation, timestep, and replay evidence before transactional execution
 becomes available for those flowsheets. An open transaction is an in-memory trial and is deliberately not serialized as
 a restart checkpoint.
+
+Concrete `Separator` and `ThreePhaseSeparator` instances are covered participants. Before a dynamic inventory update,
+they checkpoint the vessel inventory, phase and level state, outlet streams, and their owned inlet mixer without
+replacing any process-graph object. A returned VU state is accepted only when pressure, temperature, volume, and energy
+are finite, both relative volume and internal-energy residuals are at most $10^{-3}$, and the multicomponent optimized
+VU operation reports convergence. Rejection restores separator-owned state before propagating a deterministic failure;
+the enclosing process or model transaction then restores the clock and other participants. Separator subclasses remain
+blocked until they extend the snapshot for every subclass-owned mutable field.
 
 Scheduler rollback restores pending/fired membership, not arbitrary external side effects from event or alarm callbacks.
 Actions used inside a rejectable trial must mutate covered participants or defer external effects until commit. Passing
@@ -182,6 +192,89 @@ Passing strict preflight only means that the capability audit found no currently
 configuration, unqualified process execution mode, or unaudited custom transient method. It does not establish
 conservation accuracy, timestep independence, pressure-flow correctness, control/safety fidelity, OTS real-time
 performance, or engineering approval.
+
+## Opt-in numerical adaptive acceptance
+
+Both `ProcessSystem` and `ProcessModel` provide the overload
+`runTransientAdaptive(double requestedDt, UUID parentId, AdaptiveTransientOptions options)`. It returns an
+`AdaptiveTransientResult` after accepting one bounded interval, which may be shorter than `requestedDt`. This first
+profile accepts concrete `ProcessSystem` and `ProcessModel` instances only: a subclass may override transient
+execution with state or effects outside the audited trial path. Model areas must have exactly aligned finite clocks,
+and a mutable participant shared by different areas is rejected rather than advanced twice. The caller
+must use `getAcceptedStepSeconds()` when advancing its own scenario bookkeeping and must supply a new parent ID for
+the next accepted interval. `getSuggestedNextStepSeconds()` is a recommendation for a subsequent call, not additional
+elapsed time.
+
+`AdaptiveTransientOptions` explicitly declares minimum/maximum timesteps in seconds, a maximum attempt count, the
+underlying integration order and a list of `TransientErrorStateBinding` objects. Each binding associates the actual
+`TransientStateParticipant` instance with a serializable, read-only `TransientErrorStateProvider`. Every unique
+participant, including equipment-attached controllers, requires a binding. Complete rollback coverage and complete
+numerical provider coverage are separate requirements. A provider must report every numerical state relevant to its
+participant's error assessment; binding an object does not audit the physical completeness of that declaration.
+
+Each provider returns a nonempty list of immutable `TransientErrorStateVariable` values. Every variable declares a
+stable owner identity, stable variable identity, explicit unit, finite value, strictly positive absolute tolerance and
+nonnegative relative tolerance. The local owner identity must match its bound participant's state identity. The engine
+qualifies identities by process area. It rejects missing/duplicate participant bindings, duplicate scalar identities,
+empty vectors and changes in identity, unit or tolerance policy between the initial, full-step and half-step states.
+Units are compared as labels; the integrator performs no implicit unit conversion. Providers must not mutate the model
+or produce external effects.
+
+For a full-step state $x_f$ and the state $x_h$ after two half steps, acceptance uses the deterministic maximum
+normalized difference
+
+$$e=\max_i\frac{|x_{h,i}-x_{f,i}|}{a_i+r_i\max(|x_{h,i}|,|x_{f,i}|)}$$
+
+where $a_i$ has the declared state unit and $r_i$ is dimensionless. The interval is acceptable when $e\leq 1$.
+The engine accepts the actual two-half-step state; it does not reconstruct opaque snapshots or apply Richardson
+extrapolation. The full-step trial is rolled back before the half-step trial. Excess error causes complete rollback
+and a smaller retry within the configured bounds. Nonfinite state, changed coverage/schema, event failure and other
+execution failures restore the original model and propagate an error rather than being reported as accepted progress.
+Minimum-step or attempt exhaustion also leaves the requested step uncommitted.
+
+`AdaptiveTransientException` distinguishes `MINIMUM_STEP`, `ATTEMPT_LIMIT` and `UNREPRESENTABLE_INTERVAL` termination.
+Its getters expose the reason, number of attempted trials, attempted interval in seconds, last normalized error and
+limiting-variable evidence when available. A `NaN` error means that no valid comparison was available; positive
+infinity records an overflowing or unbounded normalized difference. These are failure diagnostics, never accepted
+numerical results. Invalid configuration or schema and ordinary equipment/event failures retain their own exception
+contracts after rollback.
+
+Full, first-half and second-half evaluations use distinct deterministic **physical child identifiers**. These are
+separate from `deterministicEvaluation(...)` diagnostic IDs. The second half uses the remaining representable duration
+to the full-step endpoint, keeping the accepted area clocks at the same endpoint as the full trial. Accepted
+participants retain their actual child-step provenance; the result retains the caller's parent ID and the two accepted half-step IDs. The result also records
+accepted and suggested timesteps, normalized error, limiting variable, attempt count and rejected-attempt count.
+
+### Events, replay and cost
+
+The new overload uses start-of-substep event semantics. Due scoped events execute before the interval is integrated;
+the interval is shortened to the earliest future event across all process-area schedulers. A shared scheduler is
+handled once before areas advance. An event at an accepted endpoint remains pending and takes effect at the start of
+the following call. This prevents a shutdown or setpoint change at the endpoint from changing the preceding physical
+interval. A newly inserted future event inside a proposed interval causes rollback and a bounded localization retry.
+Legacy transient entry points retain their existing event timing.
+
+Callbacks must terminate and must avoid chains that insert new due-now events into a scheduler that has already been
+processed in the current substep. A leftover event before the trial endpoint fails the interval. The existing
+`EventScheduler` has no callback-execution budget, so unbounded self-scheduling callbacks are outside this contract;
+the adaptive attempt limit cannot interrupt a callback that never returns.
+
+Rejected full/half trials restore participant state, clocks, controller state, histories and scheduler bookkeeping
+through the existing transaction boundary. Use exclusive ownership of the process and its areas during adaptive
+execution. Transaction-scoped callbacks must mutate only their declared, covered in-memory participants; the engine
+cannot compensate for external I/O or undeclared changes. Serialize only committed models. Providers/configuration
+must be preserved or explicitly rebuilt against the restored participant instances when continuing a checkpoint.
+
+A completed numerical attempt normally requires three physical evaluations: one full step and two half steps, plus
+state capture/comparison and any rejected attempts. No speedup is implied. No numerical-provider evaluation or
+adaptive trial is added to the default steady-state or legacy transient paths.
+
+`AdaptiveTransientStepTest` provides quantitative synthetic inventory-transfer/decay, refinement, conservation,
+rejection/rollback, event-boundary, multi-area and restart/replay evidence. These checks qualify the stated integration
+contract for those fixtures. Real separator, compressor, instrument, valve, control and safeguarding studies still
+require audited provider coverage, physical conservation/refinement benchmarks, valid vendor/site parameters and
+explicit operating/design limits. This API alone does not qualify stiff integration, whole-plant pressure-flow
+coupling, P&ID design, SIL, or safety-study approval.
 
 ## Physical-step versus refinement identity
 
@@ -216,6 +309,44 @@ contract: refinements share A for state idempotency while their diagnostic evalu
 
 `DynamicSafetyScenarioRunner` uses deterministic physical-step identifiers derived from scenario ID and step index so a
 replayed scenario is reproducible without freezing controllers after its first timestep.
+
+### Multi-area safety-scenario execution
+
+`DynamicSafetyScenario` definitions are bound explicitly to either one `ProcessSystem` or one multi-area
+`ProcessModel`. Model-scoped definitions use `modelInitiatingEvent(...)`, `addModelLogic(...)`, optional
+`configureModelCase(...)`, and criteria created with `DynamicScenarioCriterion.processModelBuilder(...)`. The builder
+rejects mixed system/model actions or observations, and the runner overload rejects a scenario bound to the other
+container type. This prevents an area-local observation from being applied silently as plant-wide evidence.
+
+```java
+DynamicSafetyScenario scenario = DynamicSafetyScenario
+    .builder("PLANT-HP-001", "Cross-area high-pressure isolation")
+    .durationSeconds(30.0)
+    .timeStepSeconds(1.0)
+    .triggerTimeSeconds(0.4)
+    .eventExactTiming(true)
+    .modelInitiatingEvent("HP-EVENT-v1", model -> applyHighPressure(model))
+    .addModelLogic("ESD-LOGIC-v1", model -> buildPlantEsdLogic(model))
+    .addCriterion(DynamicScenarioCriterion
+        .processModelBuilder("export-pressure", "Export pressure", "bara", "PT-301-v1",
+            model -> readExportPressure(model))
+        .acceptanceRange(null, 80.0)
+        .deadlineSeconds(5.0)
+        .build())
+    .build();
+
+DynamicSafetyScenarioResult result = DynamicSafetyScenarioRunner.runStrict(processModel, scenario);
+```
+
+The runner serializes an isolated `ProcessModel` copy, applies configuration only to that copy, initializes steady
+state, binds cross-area protection logic, and optionally performs strict dynamic-capability preflight. Every model
+physical step uses `ProcessModel.runTransientTransactional(...)`; failure in a later area therefore restores earlier
+areas before final logic evidence is collected. Event-exact execution splits at the trigger and final-duration
+boundaries and reports every accepted physical-step duration. Repeated runs with the same scenario ID and inputs use the
+same deterministic physical-step identities and must produce identical structured evidence.
+
+This execution contract establishes isolation, timing, rollback, and replay mechanics. It does not establish hazard
+completeness, independence, SIL, detector coverage, equipment physics validity, or engineering approval.
 
 ## Inspect a ProcessModel
 
@@ -266,9 +397,9 @@ boundary has an audited state-ownership category:
 - algebraic: standard `Stream` execution, composite module containers, `EnergyNetworkSolver`, ISO-5167 `Orifice`,
   `WellFlow` IPR pressure-flow relations, `Heater`, `Mixer`, `Splitter`, `MembraneSeparator`, and the quasi-steady
   `AdiabaticPipe`;
-- lumped: separators, tanks and `VesselDepressurization`, two-stream heat exchangers, compressors/expanders, pumps,
+- lumped: separators, `Tank`, `MountainCavern` and `VesselDepressurization`, two-stream heat exchangers, compressors/expanders, pumps,
   throttling/control/safety valves, `EnergyConverter` families, `BatteryStorage`, `Filter`,
-  `CommittedEnergyGenerator`, and `Electrolyzer`;
+  `CommittedEnergyGenerator`, `Electrolyzer`, `ReleaseInventory`, and `NonEquilibriumReleaseInventory`;
 - distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, `WaterHammerPipe`, the generic
   `Pipeline` family (including `MultiphasePipe` and `PipeBeggsAndBrills`), `DistillationColumn`, `AdsorptionBed`,
   `MercuryRemovalBed`, `PipeFlowNetwork`, and `WellFlowlineNetwork`;
@@ -291,6 +422,13 @@ audited category.
 
 An audit category states what kind of state the implementation owns. It does **not** establish conservation,
 timestep/mesh independence, transient stability, benchmark parity, restart, rollback, controls, or safety maturity.
+`MountainCavern` owns a persistent component inventory and a scalar pressure-relaxation state, so its category is
+`DYNAMIC_LUMPED`. Runtime activation remains `UNVERIFIED`. This is an isothermal screening model: the drop line is
+represented by an empirical relaxation time rather than coupled hydraulic and mass-transfer equations. Its current
+transient step uses hours, and the vent modifies an equilibrium-target clone rather than removing gas from the
+persistent inventory. The classification does not qualify seconds-based `ProcessSystem` integration, conservative
+vent discharge, outlet-flow accounting, or relief sizing; those require separate implementation and validation.
+
 In particular, `PipeBeggsAndBrills` owns spatially distributed transient profile state but has no conservative
 mass-storage/line-pack term. Its distributed category must not be used as evidence for severe slugging, liquid-rich
 transients, line pack, or another storage-driven claim; route those studies to the separately qualified `TwoFluidPipe`
@@ -302,6 +440,23 @@ component inventories and accepted-step diagnostics, and its ProcessSystem snaps
 boundedness, synchronized thermodynamic composition, clocks and calculation identifiers. The classification describes
 **distributed state ownership**, not blanket validity of every pipeline mode. Legacy staged compositional transport,
 zero/reversed flow, phase appearance and multiphase operation remain outside that evidence until separately qualified.
+
+`ReleaseInventory` owns well-mixed gas component masses and internal energy, so its capability is
+`DYNAMIC_LUMPED`. Closing the release opening retains that stored state and does not change the capability category.
+The classification applies to both process containers and does not elevate runtime activation or qualification:
+activation remains `UNVERIFIED`, and source-frame evidence remains `UNQUALIFIED`. See the
+[coupled gas inventory guide](safety/coupled-release-inventory) for the rigid, adiabatic, single-gas-phase boundary.
+
+`NonEquilibriumReleaseInventory` also has capability `DYNAMIC_LUMPED`: it retains separate gas/liquid component masses
+and total internal energy between accepted substeps at a common pressure and temperature. Closing its release opening
+preserves that state and category. Runtime activation remains `UNVERIFIED` and source-frame evidence remains
+`UNQUALIFIED`. This mapping does not qualify the prescribed interphase-transfer coefficients or imply whole-process
+transaction participation. See the [retained-phase inventory contract](safety/coupled-release-inventory#retained-phase-finite-rate-inventory).
+
+`IdealGasPipeDecompression` and `RealGasPipeDecompression` own cell-resolved conservative mass, momentum and
+total-energy state, so their capability is `DYNAMIC_DISTRIBUTED`. The category describes spatial state ownership only:
+the models remain limited to their documented one-sided single-gas boundaries, and their source-frame evidence remains
+`UNQUALIFIED`.
 
 `EnergyConverter` owns the previous useful-output state when a finite ramp rate is configured. Its transient ramp is
 therefore classified as `DYNAMIC_LUMPED`. Repeated nonlinear/refinement evaluations with the same non-null physical-step
@@ -435,9 +590,10 @@ one process system and coordinated multi-area process models, and restart eviden
 its closed snapshot. Concrete descendants and online-signal operation remain fail-closed.
 
 This tranche is limited to local instruments whose production measured-value path actually calls
-`applySignalModifiers(...)`. `VolumeFlowTransmitter` and the total/oil/water level-transmitter families still return
-raw values without advancing that inherited signal state, so they are intentionally not presented as transaction
-participants. Other state-owning analysers remain unaudited until all device-specific iteration, cache,
+`applySignalModifiers(...)`. `VolumeFlowTransmitter` is covered separately by the opt-in physical-scan contract below;
+its legacy direct-read path intentionally remains raw for compatibility. The total/oil/water level-transmitter families
+still return raw values without advancing inherited signal state, so they are intentionally not presented as
+transaction participants. Other state-owning analysers remain unaudited until all device-specific iteration, cache,
 configuration and binding state is covered.
 
 Passing this rollback gate does not qualify laboratory or online analyser accuracy, phase-sampling fidelity, wet-gas or
@@ -657,3 +813,142 @@ publish externally visible events or schedule an unscoped callback. Such effects
 list, while the callback itself must still implement `Serializable` for checkpoint/restart. This gate establishes
 fail-closed in-memory orchestration and deterministic replay only; it does not qualify event localization, external
 side-effect compensation, safety action, virtual commissioning, OTS behavior or adaptive timestep rejection.
+
+
+## Opt-in physical pressure-, temperature- and flow-transmitter scans
+
+A registered concrete `PressureTransmitter`, `TemperatureTransmitter` or `VolumeFlowTransmitter` can opt into one
+sample-and-hold update per physical transient step. The devices are disabled by default for compatibility. When enabled,
+`ProcessSystem` samples them after due events and INPUT field values have been applied and before equipment and controller
+execution. An equipment-owned or standalone controller, the measurement-history row and alarm evaluation then consume
+the same held value for that physical-step UUID.
+
+The signal order is fault transformation, Gaussian noise, exact first-order filter and discrete sample delay. The
+first-order coefficient is `1 - exp(-dt/tau)` using the actual finite positive physical timestep. On this opt-in path a
+`LINEAR_DRIFT` parameter is an engineering-unit rate per second, so its increment is rate times accepted seconds.
+Repeated sampling with the same physical-step UUID is idempotent. Rejected transactional/adaptive trials restore the
+held value, engineering unit, UUID, delay/filter/fault state and random-generator continuation before replay.
+
+For flow sampling, the configured unit is held together with frozen sample-instant equivalents in `kg/hr`, `m^3/hr`,
+`Nm^3/day` and `Sm^3/day`; actual- and standard-volume readings retain the configured phase number. A modified nonzero
+signal cannot be converted from a zero raw-flow basis and therefore fails explicitly. The public synthetic inlet chain
+uses a 90/10 methane/ethane feed, a 20-to-24 bara upstream disturbance, 10 bara downstream pressure, a 4 s valve-actuator
+lag and a 1 s scan. Across 150 s the sampled FT/PID/valve chain reaches 1120.365 kg/hr from a 1106.734 kg/hr setpoint,
+with 1440.835 kg/hr peak, 123 s settling, 10836.375 kg/hr-s IAE and 22.298 percentage-point actuator travel. Maximum
+mass, component and relative enthalpy-rate residuals are respectively 2.274e-13 kg/hr, 3.553e-15 mol/s and 1.054e-14.
+Changing the scan from 1.0 s to 0.5 s changes the 60 s flow by 0.653 kg/hr and opening by 0.023 percentage points.
+
+Legacy direct `getMeasuredValue(...)` calls retain their prior behavior: pressure and temperature use the historical
+one-second-per-read modifier path, while flow remains an unmodified raw reading. Other instrument families remain on
+their existing paths until separately audited. The device must be registered in the process measurement list to
+participate in the shared scan. Sample delay is a discrete scan delay, not a continuous transport delay. The synthetic
+stuck-FT case demonstrates that a frozen sensor can hide more than 300 kg/hr of actual error; it is a failed-control
+limitation, not safeguarding credit. Noise, fault, process and tuning parameters remain study inputs. This contract does
+not validate vendor sensor/valve data, alarm or trip settings, detector coverage, SIL, voting, independence or safety
+approval.
+
+### Optional forward acoustic pump inlet
+
+`WaterHammerPipe` can use `AcousticPumpBoundary` with upstream `PUMP` for a
+single-liquid, positive-speed, forward-curve calculation. It reuses the existing
+pipe clock and conservative cells; it adds no scheduler, topology, pump driver
+or process coordinator. Actual-speed knots and physical valve knots localize
+that same step. The immutable optional boundary and hydraulic-work ledger
+survive Java restart. Replacing the boundary requires explicit reinitialization.
+
+See the [physical/numerical contract and public evidence](../wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+This additive capability does not change the equipment's dynamic classification,
+qualify complete pump trips/slam or satisfy exact-once coordinator identities.
+Rejected internal intervals preserve accepted pipe state; a full request is not
+an atomic global transaction. Full EOS/shaft energy, stopped/reverse operation,
+cavity formation and integrated Safety Shutdown remain `NOT_EVALUATED`.
+
+
+
+## Opt-in separator cumulative-energy diagnostics
+
+The exact concrete `Separator` provides observational, constant-storage energy
+accounting. Enable it with `setTransientEnergyBalanceTrackingEnabled(true)`
+after steady initialization and explicit inventory configuration. It defaults
+to off; the disabled hot path allocates no diagnostic tracker/report and makes
+no diagnostic thermodynamic-property calls. Other runtime subclasses, including
+`ThreePhaseSeparator`, report `UNSUPPORTED` and reject enabling: their separate
+integration algorithms have not been instrumented by this contract.
+This diagnostic does not change dynamic capability classification, complete
+transaction coverage, or any strict preflight/qualification requirement.
+
+Read `getTransientEnergyBalanceTrackingStatus()` and
+`getTransientEnergyBalanceCoverageIssue()` even before a report exists.
+`getLastTransientEnergyBalanceReport()` returns null while disabled or before
+the first measured accepted update. The immutable report retains only bounded
+scalar sums/extrema and the latest accepted numerical values. A later skipped
+attempt refreshes its current coverage to `INCOMPLETE`; a previously returned
+report remains immutable. No unbounded history is stored.
+
+The report captures the actual ordered inlet, gas-outlet and phase-conditional
+liquid-outlet enthalpies consumed before outlet updates, plus applied external
+heat in W. It integrates their already-grouped native net rate once with dt.
+Exactly zero molar flux contributes exactly zero extensive enthalpy. Supplied
+nonzero liquid flow excluded by the native phase condition, component-removal
+limiting, empty/depleted inventory, caught initialization failure and unavailable
+observations make coverage incomplete. This energy diagnostic does not replace
+independent external mass/component and valve-port consistency checks.
+
+`getAcceptedVuEnergyJ()` and `getLocalVuDefectJ()` describe the returned VU state
+and its signed difference from the target. `getPublishedEnergyJ()` describes
+the actual final inventory after all successful physical postprocessing.
+`getCumulativeDebtJ()` compares that published inventory with initial U plus
+the integrated consumed boundary/heat energy. Read its maximum absolute value,
+the sum of absolute local defects and `getNonVuEnergyDifferenceJ()` to detect
+drift, cancellation and changes outside the local VU solve. Volume residuals
+are separate. The diagnostic does not change the solver or its tolerances.
+
+Call `assessTransientEnergyBalance(relativeLimit)` with an explicit finite,
+nonnegative numerical policy. It gates the maximum absolute cumulative debt,
+not merely the final value, against `max(abs(initial U), 1 J)`. The report also
+exposes raw absolute initial U and the normalization scale; this EOS-reference
+scale is not universally meaningful near zero U. `DISABLED`, `NOT_STARTED`,
+`INCOMPLETE` and `UNSUPPORTED` are distinct from measured `PASS`/`FAIL`.
+Keep process-response verdict, numerical-energy verdict and engineering/safety
+qualification separate. A study's frozen limit, such as `1e-5`, must not be relaxed
+to match the solver's per-step tolerance or make a response pass.
+
+Accepted elapsed time is the sum of accepted dt, independent of the legacy
+equipment clock. `resetTransientEnergyBalanceTracking()` and explicit inventory
+initialization begin a new visible epoch with a lazy initialized-U baseline.
+Disabling discards the ledger; reenabling starts a new epoch. A steady-state
+reevaluation retains prior accepted numerical evidence but marks the current
+window incomplete until explicit reset/reinitialization. Rejected VU solves
+and later physical exceptions restore the whole ledger, last report and epoch
+with the native separator checkpoint. Serialization and copies retain independent
+continuation state. Tracking-enabled calls reject invalid dt before mutation.
+
+`SeparatorTransientEnergyBalanceTest` covers analytic zero/heat/outflow balance,
+on/off trajectory equality, horizon cancellation, published-versus-VU energy,
+snapshot/restart, skips, reinitialization and rollback. Require an independent
+ordered-boundary audit and timestep refinement for each actual study. Post-step
+inlet enthalpy is not a valid substitute for consumed inlet enthalpy when
+`setTempPres` has rerun the mixer after the integration.
+
+## Exact closed-valve boundaries
+
+For native flow-driven `ThrottlingValve` transient operation, a closed or
+non-driving valve publishes exactly zero flow at both its inlet and outlet.
+This matters when the inlet is the same stream that a dynamic `Separator`
+uses as its withdrawal boundary: zeroing only the downstream stream would
+leave a fictitious vessel withdrawal. Positive-flow recovery preserves the
+valve-owned intensive composition without adding an epsilon leak. An initially
+dry source remains dry; arbitrary phase disappearance and a later external
+dry-source change require separate qualification. Steady-state flow-given and
+fixed-pressure behavior retain their existing contract.
+
+A separator excludes exactly zero inlet and outlet fluxes from extensive
+enthalpy transport. Intensive property calculations on zero-mole streams are
+not an energy source. Check external mass, component and energy balances,
+timestep refinement and reopen behavior in addition to strict activation.
+Passing the capability audit alone does not establish these numerical checks.
+
+Engineering dynamic-scenario tags admit actual registered or
+equipment-attached controllers and their exposed input transmitters, matching
+the executable P&ID binding namespace. Unknown controller-like tags remain
+validation errors.

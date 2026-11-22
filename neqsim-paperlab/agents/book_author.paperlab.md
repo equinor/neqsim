@@ -27,7 +27,7 @@ LaTeX equations, and publication-quality rendering.
 
 Before ANY book-related work, load and read the book creation skill:
 ```
-neqsim-paperlab/skills/book_creation/SKILL.md
+neqsim-paperlab/skills/book-creation/SKILL.md
 ```
 
 This contains the complete reference for book.yaml structure, equation handling,
@@ -37,7 +37,7 @@ When the book contains any quantitative claim derived from a NeqSim
 simulation (i.e., almost always for NeqSim-related books), ALSO load:
 
 ```
-neqsim-paperlab/skills/neqsim_in_writing/SKILL.md
+neqsim-paperlab/skills/neqsim-in-writing/SKILL.md
 ```
 
 It defines the dual-boot setup cell, claim-to-test linkage, equation-to-Java
@@ -47,10 +47,10 @@ results-table injection.
 For student-facing textbook release work, load these skills as needed:
 
 ```
-neqsim-paperlab/skills/paperlab_student_readability/SKILL.md
-neqsim-paperlab/skills/paperlab_chapter_flow_editor/SKILL.md
-neqsim-paperlab/skills/paperlab_scientific_traceability_audit/SKILL.md
-neqsim-paperlab/skills/paperlab_book_typesetting_release/SKILL.md
+neqsim-paperlab/skills/paperlab-student-readability/SKILL.md
+neqsim-paperlab/skills/paperlab-chapter-flow-editor/SKILL.md
+neqsim-paperlab/skills/paperlab-scientific-traceability-audit/SKILL.md
+neqsim-paperlab/skills/paperlab-book-typesetting-release/SKILL.md
 ```
 
 Use them for, respectively, learning quality, chapter arc and case-thread flow,
@@ -105,7 +105,7 @@ for the complete workflow.
 When asked to create a new book:
 
 1. Run the scaffold command (add `--type simple|technical|textbook` to set the
-   content level — defaults to `textbook`; see `book_creation` SKILL §1.1):
+   content level — defaults to `textbook`; see `book-creation` SKILL §1.1):
    ```bash
    cd neqsim-paperlab
    python paperflow.py book-new "<title>" --publisher <pub> --chapters <N> --type <type>
@@ -197,9 +197,9 @@ After every build:
 PaperLab's PDF renderer (`tools/book_render_pdf.py`) emits a Typst preamble
 that produces a publisher-quality book. You are responsible for verifying the
 final PDF meets professional typesetting standards. Load
-`skills/paperlab_book_typesetting_release/SKILL.md` for the final release
+`skills/paperlab-book-typesetting-release/SKILL.md` for the final release
 checklist and see section "7a. Professional Typesetting" of
-`skills/book_creation/SKILL.md` for the renderer details.
+`skills/book-creation/SKILL.md` for the renderer details.
 
 After running `book-render --format pdf`, open `submission/book.pdf` and
 verify ALL of the following:
@@ -231,8 +231,8 @@ by hand.
 
 Every numeric value, equation prediction, or qualitative behavioral claim that
 depends on NeqSim must trace to a runnable artifact. See
-`skills/neqsim_in_writing/SKILL.md` and
-`skills/paperlab_scientific_traceability_audit/SKILL.md` for the full pattern.
+`skills/neqsim-in-writing/SKILL.md` and
+`skills/paperlab-scientific-traceability-audit/SKILL.md` for the full pattern.
 Minimum acceptance criteria for every chapter:
 
 - [ ] Notebook starts with the dual-boot setup cell.

@@ -21,7 +21,7 @@ class NetworkPlanningHorizonTest {
     NetworkPlanningHorizon horizon = new NetworkPlanningHorizon(network);
     horizon.addHourlyPeriods("2026-01-01T00:00:00Z", 2);
     horizon.setInitialLinepack("pipeline", initial);
-    horizon.addPipeFlowSchedule("pipeline", new double[] { 10.0, 12.0 }, new double[] { 12.0, 10.0 }, "kg/s");
+    horizon.addPipeFlowSchedule("pipeline", new double[] {10.0, 12.0}, new double[] {12.0, 10.0}, "kg/s");
     horizon.setTerminalLinepackTarget("pipeline", initial.getMassKg());
 
     NetworkScheduleResult result = horizon.optimize();

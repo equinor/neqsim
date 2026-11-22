@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F104 CO2-envelope screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-08-27"
+description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
+last_verified: "2026-11-22"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -10,6 +10,26 @@ Consolidated guide for all flow assurance threats — hydrate, wax, asphaltene, 
 hydraulics, water/liquid hammer screening, slugging, and thermal management — with
 NeqSim code patterns.
 
+Use the `runPipeline` analysis `wellToTopsideSlugControl` for the published
+well-to-topside anti-slug replay. It reuses the canonical choke, two-fluid pipe,
+three-phase separator and controller APIs and returns both control modes with
+time series. Treat it as numerical reference evidence, not field validation.
+
+For the public Tengesdal severe-slugging gate on the unsplit route, inspect
+`TwoFluidMassBalanceReport.getRejectedAttempts()` and `getModelEvaluations()` after every accepted
+observation interval. Require zero rejected attempts together with the unchanged 600 s amplitude,
+period, hold-up, inventory and conservation gates; numerical completion is not experimental
+qualification. The current 16-cell/0.1 s gate completes with zero rejects but a flat
+`1.945482e-4 Pa` pressure amplitude, no liquid cycle or blowout/fallback and `0.3285387`
+steady flowline hold-up. The same values with steady-consistency disabled rule out that correction
+as the cause. Treat conservative moving slug/film coupling, which the unsplit route does not yet
+support, as the next physical dependency; keep this gate opt-in until it passes unchanged.
+
+> A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
+> validation) is produced by `neqsim flow-assurance-report` — see the
+> `neqsim-flow-assurance-study-report` skill. This skill stays the calculation reference.
+> A whole subsea SURF network (templates, injection, risers, umbilical, concept comparison) is
+> generated, solved and documented by `neqsim surf-study` — see the `neqsim-surf-design-study` skill.
 ## When to Use This Skill
 
 - Hydrate formation temperature/pressure prediction
@@ -24,6 +44,8 @@ NeqSim code patterns.
 - Multiphase flow pattern prediction (slug, annular, stratified)
 - Thermal insulation sizing for subsea pipelines
 - Arrival temperature and cooldown calculations
+  (for `TwoFluidPipe` no-touch times use `calculateColdestSectionHydrateCooldownTime()` after `run()`;
+  `calculateHydrateCooldownTime()` starts from the inlet temperature and overstates the time for the riser base)
 
 ## Applicable Standards
 
@@ -50,6 +72,21 @@ screen and checks externally calculated response displacements. It does not
 contain generalized design tables, produce dynamic response, qualify environmental
 or soil models, or claim DNV conformity. A pass still requires independent review.
 
+This skill quantifies the **threat** (hydrate curve, WAT, SI, corrosion rate). For the
+**chemical** answer — which product, minimum effective dose, cocktail compatibility, H2S/O2
+scavenger sizing, demulsifier vs oil-in-water spec, and chemical root-cause of a deposit —
+load `neqsim-production-chemistry` (`neqsim.process.chemistry`) and feed it the numbers
+computed here.
+
+For local dry hydrocarbon gas/oil interface investigations, the existing film boundary
+has a default-off `setCoupledMassHeatTransferEnabled(true)` numerical option. Read
+`docs/fluidmechanics/InterphaseHeatMassTransfer.md` for its residual gates and limited
+positive-composition/finite-transport range. It is not connected to the transient
+`TwoFluidPipe` source. Zero liquid Reynolds number currently gives an unsupported
+stratified transfer coefficient and rejects; never interpret the old unit-matrix
+fallback as stationary-pool evaporation. Keep #4674 physical boundary/full-cycle and
+#4675 heat/area/diffusion qualification separate from numerical convergence.
+
 ## 1. Hydrate Analysis
 
 ### EOS Selection for Hydrate Calculations
@@ -59,11 +96,34 @@ or soil models, or claim DNV conformity. A pass still requires independent revie
 | Pure water / fresh water | `SystemSrkCPAstatoil` | `10` |
 | Water + MEG / methanol / ethanol | `SystemSrkCPAstatoil` | `10` |
 | **Salt brine / formation water (NaCl, CaCl2, ...)** | `SystemElectrolyteCPAstatoil` | `10` |
+| Pitzer salt-brine water activity | `SystemPitzer` | `"classic"` |
 
-CPA is required for water–hydrocarbon hydrate modeling. **When dissolved salts /
-electrolytes are present, use `SystemElectrolyteCPAstatoil`** so the salt
+All SRK-CPA solver variants (`SystemSrkCPAstatoil`, `...FullyImplicit`, `...Reduced`, `...Broyden...`,
+`...Anderson...`) and all SRK electrolyte-CPA systems use the same CPA hydrate cavity model
+(`ComponentHydrateGF`), so they give the same hydrate temperature; pick the solver for speed. Before
+21 Nov 2026 the variants silently used the PVTsim parameters (up to 0.44 K different). PR-CPA and UMR-CPA still
+use PVTsim parameters. Check with `((PhaseHydrate) fluid.getPhases()[4]).getHydrateModel()`.
+
+When no ions are present, prefer `SystemSrkCPAstatoil` over `SystemElectrolyteCPAstatoil`: same hydrate
+temperature, 5–10× faster flash (e-CPA hydrate point 1–3 s, measured 21 Nov 2026).
+
+`SystemPitzer` handles MEG (+ NaCl) through a fitted dataset (MEG ≤ 17.6 mol/kg). With N2 present the Pitzer
+hydrate search cannot go below 278.12 K, so for MEG-inhibited low-temperature cases use e-CPA.
+
+CPA or a consistent activity-based aqueous model is needed for water–hydrocarbon hydrate modeling.
+**When dissolved salts / electrolytes are present, use `SystemElectrolyteCPAstatoil` or a
+parameterized `SystemPitzer`** so the salt
 thermodynamic (hydrate-suppression) effect is captured — plain
 `SystemSrkCPAstatoil` ignores ion activity and underestimates subcooling margin.
+
+For Pitzer hydrate onset, load `neqsim-electrolyte-systems` and read
+`docs/thermo/pitzer_hydrate_equilibrium.md`. Accept its hand-off of salt mole basis, dataset,
+explicit CO2-chloride zeta values (and K-Mg theta when both ions are present), pressure grid and operating temperature. Use the standard
+temperature/pressure/curve operations; the Pitzer route checks the fugacity residual and throws
+on failed points. Preserve the aqueous reference-state convention and guest Henry limits.
+Do not label onset calculations as hydrate amounts, kinetics or validated complete drilling-mud predictions.
+Carry forward the experimental assessment separately from convergence: the mixed-chloride high-pressure cases
+include errors exceeding 1 K. Do not generalize the NaCl benchmark to all salts, concentrations or pressures.
 
 ### Hydrate Formation Temperature
 
@@ -83,6 +143,13 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateFormationTemperature();
 double hydrateT_C = fluid.getTemperature() - 273.15;
 ```
+
+Call `setHydrateCheck(true)`. Since 21 Nov 2026 `hydrateFormationTemperature()` and
+`hydrateFormationPressure()` add the hydrate phase themselves if it is missing, but older releases fail
+(no hydrate phase) and any wrapper that swallows the exception reports NaN. The fluid must
+contain `water`. `HydrateRiskMapper` (and MCP `runFlowAssurance` `hydrateRiskMap`) now sets the
+flag itself and returns `RiskLevel.UNKNOWN` / `RESULT_NOT_AVAILABLE` with `failureReasons` when
+no equilibrium temperature exists — never treat an unavailable hydrate temperature as safe.
 
 ### Hydrate Equilibrium Curve (Multiple Pressures)
 
@@ -107,7 +174,9 @@ for (int i = 0; i < pressures.length; i++) {
 SystemInterface inhibitedFluid = new SystemSrkCPAstatoil(273.15 + 4, 100.0);
 inhibitedFluid.addComponent("methane", 0.80);
 inhibitedFluid.addComponent("water", 0.15);
-inhibitedFluid.addComponent("MEG", 0.05);  // 25 wt% MEG in water phase
+// 25 wt% MEG in the water + MEG phase: n_MEG = n_water * 18.015 * 0.25 / 0.75 / 62.07 = 0.0145 mol
+// (0.05 mol MEG per 0.15 mol water would be 53 wt%: amounts are MOLES, never weight percentages)
+inhibitedFluid.addComponent("MEG", 0.0145);
 inhibitedFluid.setMixingRule(10);
 inhibitedFluid.setMultiPhaseCheck(true);
 inhibitedFluid.setHydrateCheck(true);
@@ -117,6 +186,12 @@ ops.hydrateFormationTemperature();
 double inhibitedHydrateT = inhibitedFluid.getTemperature() - 273.15;
 // Compare with uninhibited to get subcooling margin
 ```
+
+For the **injection rate** that delivers a required wt% in the water phase (including purity
+and lean/rich MEG bookkeeping), use
+`neqsim.process.chemistry.hydrate.ThermodynamicHydrateInhibitorPerformance` — see
+`neqsim-production-chemistry`. Use the CPA curve above for the design concentration and the
+chemistry model for the rate.
 
 ### Salt-Inhibited Hydrate (Formation Water / Brine)
 
@@ -143,9 +218,11 @@ double brineHydrateT = brineGas.getTemperature() - 273.15;
 // Find required MEG concentration for target subcooling
 double[] megWtPct = {0, 10, 20, 30, 40, 50};
 for (double wt : megWtPct) {
-    // Create fluid with appropriate MEG/water ratio
-    double waterFrac = 0.20 * (1.0 - wt / 100.0);
-    double megFrac = 0.20 * (wt / 100.0);
+    // wt % MEG is a MASS fraction of the water + MEG mixture: convert to moles (M_water 18.015, M_MEG 62.07 g/mol)
+    double waterMol = 0.20 * (1.0 - wt / 100.0) / 18.015;
+    double megMol = 0.20 * (wt / 100.0) / 62.07;
+    double waterFrac = waterMol / (waterMol + megMol) * 0.20;
+    double megFrac = megMol / (waterMol + megMol) * 0.20;
     SystemInterface testFluid = new SystemSrkCPAstatoil(273.15, 100.0);
     testFluid.addComponent("methane", 0.80);
     testFluid.addComponent("water", waterFrac);
@@ -157,6 +234,73 @@ for (double wt : megWtPct) {
     // Record hydrate T vs MEG concentration
 }
 ```
+
+**Sweep gotchas (found building an HPHT tie-back, Fogelberg VPbo task):** `hydrateFormationTemperature()`
+with a rich gas condensate (C7+ pseudo-components) plus water and MEG at 40 wt % MEG did not return
+(CPA hydrate solver loop, no exception, no timeout). Run every MEG/pressure point of a sweep in a
+watchdog thread or subprocess with a hard time limit and keep the sweep to at most 30 wt % MEG. If a
+40-50 wt % row is still needed, a linear extrapolation (about -4.5 K per 10 wt % at 30-400 bara) is an
+UNVALIDATED screening number: label it as extrapolated, never use it for a pass/fail margin, and do not
+let the whole script hang for it. Write the intermediate JSON before the hydrate loop so a kill does not lose the
+fluid and CVD results.
+For flowline hydraulics with `PipeBeggsAndBrills` a trial inlet pressure that is too low throws
+`HydraulicDomainException: Non-positive pipeline pressure` instead of returning a low outlet pressure:
+catch it inside the chain function and return outlet 0 (infeasible). Letting it propagate out of a
+bisection silently turns a whole row of the inlet-pressure table into NaN.
+`ThermodynamicOperations.hydrateFormationTemperature()` is `void`: the answer is left in the fluid
+temperature, so read `fluid.getTemperature() - 273.15` after the call (`float(ops.hydrateFormationTemperature())`
+fails with `NoneType`; found in the Mistral Nord VPbo task). A wellstream built with `SystemSrkEos` plus
+`setHydrateCheck(true)` also under-predicts the hydrate temperature (methane benchmark about -8 K): rebuild
+the composition in `SystemSrkCPAstatoil` (mixing rule 10) and benchmark methane at 43/76/140 bara against
+5/10/15 C before using the numbers (CPA gives -0.03/+0.33/+0.58 K).
+To benchmark `PipeBeggsAndBrills` against Darcy-Weisbach use a dry single-phase gas (pure methane, 60 C,
+`setHeatTransferCoefficient` large): the deviation is then 0.2-0.4 %. A lean-gas condensate line cooled
+to seabed temperature differs by 25-50 % because the liquid holdup is real, so that difference is not a defect.
+Gas-condensate saturation pressure (Tyrihans cellar task): a bubble-point search on a lean gas-condensate fluid returns
+a wrong value because the fluid has a dew point; take the saturation pressure of GOR above about 1500 Sm3/Sm3 fluids
+from the CVD first step (dew point) and record it as a limitation. `hydrateFormationTemperature()` on a GOR 250 oil fluid
+with 3 mol % water at 200 bara did not converge and left the temperature unchanged: check that the returned temperature
+differs from the start temperature before reporting it and report `None` as a gap, not as a hydrate-free result.
+HPHT wellstream hydrates (Erlend / Kristin study): the CPA hydrate solver also stalls (no exception) with the
+C7+ TBP/plus pseudo-components at 50 bara and 1 mol % water, even without MEG. Rebuild the CPA mixture from the
+light components only (C1-C6, N2, CO2, water, renormalised), as C7+ barely moves the hydrate temperature; a
+Kristin-type gas (CGR 300 Sm3/MSm3) with 1 mol % water gave 17.2 / 21.2 / 26.6 / 31.9 C at 50 / 100 / 300 / 600 bara.
+Do not iterate `PipeBeggsAndBrills` inlet pressure by a fixed point `p_in += p_out_target - p_out`: it stalls at high
+pressure drop (unconverged tables looked like data). Use a secant solve, treat a `HydraulicDomainException` as outlet
+pressure 0, store an `ok` flag and exclude `ok == False` rows when interpolating; beyond the last converged rate
+extend the table with dp proportional to q^2 instead of the last slope.
+
+### MEG/Water Film Conditioned by Dry Gas (pipeline drying after glycol swabbing)
+
+Question pattern: "what MEG:H2O ratio does a residual film reach under dry export gas, and why is
+the gas above the dew-point spec?" Worked task: `2026-09-29_steady_state_megh2o_ratio_during_dry_gas_drying_of_a_meg`.
+
+- **Direction:** a 99 wt% MEG film is *drier* than the plateau (about 90 wt% at 6 C, 140 bara), so the
+  gas is the wetter side and the film **absorbs** water. It "dries" only if it starts wetter than the plateau.
+- **Equilibrium curve:** two-phase `SystemSrkCPAstatoil` TPflashes over an MEG sweep give gas water *and MEG*
+  content versus film composition (gas composition depends on the liquid composition, T and P only).
+  Report film composition on a **gas-free** basis, MEG/(MEG+water); dissolved CO2/CH4 is ~0.8 wt%.
+  MEG is not strictly non-volatile: about 5 ppm wt in the gas at 140 bara.
+- **Dew-point spec fixes only the water mole fraction** y_in, not the pipe condition. Hand chain: water
+  fugacity continuity, `a_w = y_in * phiV_w(T,P) * P / f0_w(T,P)`, with `f0_w` = IAPWS vapour pressure x
+  Poynting; `a_w` from the CPA liquid fugacity coefficient divided by the pure-water coefficient. Use binary
+  (gas-free) mole fractions when fitting `ln gamma_w` or the fit mis-predicts at high MEG.
+- **Plateau offset by mass balance:** with a stationary film the gas leaves carrying water and MEG in the
+  film's own ratio, so `(y_out - y_in)/y_in = r * y_MEG / y_in` (about 1.7 %), independent of `K_G` at large NTU.
+  The film inlet zone is stripped of MEG first (a film-free zone grows at ~200 m/day in a 0.4 m, 60 kg/s example).
+- **Flash per time step is backward Euler:** unconditionally stable, plateau independent of step size; an
+  explicit coding is stable only below `2 / (d y*_H2O / d r)` kg gas per kg film MEG per step.
+- **Dew point is logarithmic** (~6 % in water content per K at these conditions) and, for CPA, nearly
+  pressure independent at 70-140 bara: reading the same gas as a dew point at pipe pressure adds ~0.9 K.
+- **Basis traps:** CPA liquid-water dew point is a supercooled-liquid reference below freezing;
+  ISO 18453 / GERG-water uses an ice reference below 273.16 K. These are different phase boundaries.
+  For GERG-water, use `SystemGERGwaterEos`, `setMixingRule(8)`, and a
+  `ThermodynamicOperations` instance's `waterDewPointTemperatureFlash()`; follow the ISO 18453 execution rule
+  in `neqsim-standards-lookup` and the [dew-point guide](../../../docs/standards/dew_point_standards.md).
+  Recalculate outputs from the former non-convergent solver before comparing models. Neither an
+  ideal-gas estimate nor a CPA/GERG difference alone identifies an ISO implementation error.
+- **Numerics:** for N >= 100 film cells use `solve_ivp(method="BDF")`; LSODA stalls on the film-exhaustion
+  switch. Regularise `r = W/(M + delta)` so a film-free cell cannot return a spurious composition.
 
 ## 2. Wax Analysis
 
@@ -186,10 +330,15 @@ double wat_C = oil.getTemperature() - 273.15;
 import neqsim.pvtsimulation.simulation.WaxFractionSim;
 
 WaxFractionSim waxSim = new WaxFractionSim(oil);
-waxSim.setTemperatures(new double[]{333.15, 313.15, 293.15, 273.15});
-waxSim.run();
-double[] waxFractions = waxSim.getWaxFraction();
+waxSim.setTemperaturesAndPressures(new double[] {333.15, 313.15, 293.15, 273.15},
+    new double[] {5.0, 5.0, 5.0, 5.0}); // K, bara
+waxSim.runCalc(); // run() only prepares the operations object
+double[] waxFractions = waxSim.getWaxFraction(); // wax mass / feed mass
 ```
+
+The fluid needs `addSolidComplexPhase("wax")`, `setMultiphaseWaxCheck(true)` and
+`getWaxModel().addTBPWax()`; for named n-paraffin feeds see the `neqsim-wax-calculations` skill
+("Named n-paraffin feeds").
 
 ## 3. Asphaltene Stability
 
@@ -213,6 +362,71 @@ aspFluid.initProperties();
 // Check if asphaltene phase is stable
 // Compare upper/lower asphaltene onset pressures vs operating P
 ```
+
+### Calibrated onset envelope, blends and gas injection (`AsphalteneSolidModel`)
+
+With a measured onset, use the calibrated solid model (Nghiem and Coombe). It anchors the solid
+asphaltene fugacity at the measured onset and uses size-asymmetry k_ij (large for C1/N2/CO2, about 0 for
+heavy fractions), so one host calibration predicts blends and gas injection:
+
+```java
+AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil); // one component named *asphalten*, SRK/PR, classic
+model.calibrate(363.15, 250.0);        // measured upper onset (K, bara)
+model.calibrateLowerOnset(80.0);       // optional: lower onset below the bubble point
+AsphalteneSolidModel.OnsetResult env = model.onsetPressures(363.15, 500.0, 20.0, 5.0);
+double blendOnset = model.onsetPressures(blendFluid, 363.15, 600.0, 20.0, 5.0).getUpperOnsetPressure();
+double fraction = model.precipitatedFraction(hostOil, 363.15, 200.0);
+```
+
+Gotchas:
+
+- Do not tune k_ij against the database solid reference to hit a measured onset: it needs negative
+  asphaltene-methane values and then predicts that condensate stabilises the oil (wrong sign). Calibrate
+  the solid reference instead (measured 2026-11-22, see `docs/pvtsimulation/flowassurance/asphaltene_modeling.md` section 9).
+- Always check `isAsphalteneLiquidSplitDetected()`; if the EoS splits the asphaltene into its own liquid use
+  omega 1.2-1.5 for the solid model. (Before 2026-11-22 the Pedersen correlation gave omega = 2.5 at
+  1000 g/mol through a natural-log error; it now gives 1.18 at 1.10 g/cm3. Tc also gained its missing
+  density term and Pc its atm-to-bar conversion, so Pedersen onsets from before that date differ.)
+- `PedersenAsphalteneCharacterization.calculateOnsetPressure` raises `IllegalStateException` when the fluid
+  is already split at the start pressure. `AsphalteneOnsetFunction` (fitting) instead returns finite
+  penalties: the start pressure if already unstable, the minimum pressure if no onset is found.
+  `BINARY_INTERACTION` and `MOLAR_MASS` fits now act (both had no effect before 2026-11-22); `MOLAR_MASS`
+  holds the asphaltene mass and is cubic-only; `ASSOCIATION_PARAMETERS`/`COMBINED` need CPA, energies in J/mol.
+- `fitKijExponent` needs a blend/gas-injected fluid or another temperature; for the calibration fluid at
+  the calibration temperature it throws (the objective is flat there).
+
+### Detection, onset flashes and screening (changed 2026-11-22)
+
+- Asphaltene components: `AsphalteneComponents.isAsphaltene(name)` (contains "asphalten" or starts with
+  "asph_"); `addDistributedAsphaltene` now names slices `Asphaltene_1_PC`... from a mass-conserving gamma
+  split. Asphaltene-rich phase = more than 50 wt % asphaltene (was mol %).
+- `AsphalteneOnsetPressureFlash` also finds the lower onset (`getLowerOnsetPressure()`); unknown units
+  (including bare "psi") throw. `AsphalteneStabilityAnalyzer.calculateOnsetPressure(T, startP)` starts at
+  the given pressure; the envelope has 4 rows (T, upper, lower, bubble point at T); the assessment combines
+  SARA and thermodynamic risk.
+- De Boer boundaries are ordered (no-problem <= slight <= severe); `AsphalteneStabilityAnalyzer.deBoerScreening`
+  delegates to `DeBoerAsphalteneScreening`. Risk index for 350/150 bara at 750 kg/m3 is 200/120 = 1.667.
+
+### Flory-Huggins (`FloryHugginsAsphalteneModel`)
+
+```java
+FloryHugginsAsphalteneModel fh = new FloryHugginsAsphalteneModel(liveOil, 373.15);
+fh.setAsphalteneWeightFraction(0.03);
+fh.calibrateToOnsetPressure(373.15, 250.0); // with a measured onset; otherwise calibrateCorrelation(T) (heuristic prior)
+fh.setSolubilityParameterMethod(FloryHugginsAsphalteneModel.SolubilityParameterMethod.EOS); // optional
+double onset = fh.calculateOnsetPressure(373.15);
+```
+
+Onsets computed before 2026-11-22 are unreliable: the Newton solver for the solubility limit did not
+converge (phi of about 1e-19, residual about -45). The heuristic prior gives 12.4 % AARD, all
+under-predicted, on the 7 benchmark cases (2026-11-22); its fixed 0.35 MPa^0.5 margin sets the result.
+
+### SARA characterization with CPA resin
+
+`AsphalteneCharacterization.addAsphalteneComponents(fluid, nC7plus)` needs `setC7plusProperties` first,
+adds `asphaltene` and a `Resin_PC` pseudo-component (2B sites in SRK-CPA), and after
+`fluid.setMixingRule(10)` call `applyCrossAssociation(fluid)` to set the asphaltene-resin bond. Default
+asphaltene association volume is 0.005 (database value).
 
 ## 4. Pipeline Hydraulics
 
@@ -370,6 +584,16 @@ for (double qgMSm3d : gasRates) {
 > instead, raise the inlet pressure until the delivered rate matches, or iterate
 > inlet P per rate.
 
+> **PATTERN — tubing outflow (VLP) and gas-lift need on a heavy-oil tie-back.** Put the **bottom-hole**
+> pressure on the inlet stream (`P_bh = P_res - q_liq / PI`), set `setLength(MD)`, `setElevation(+TVD)`,
+> `setAdiabatic(true)` and read the outlet pressure as the wellhead pressure; add lift gas as extra gas in the
+> stream composition (bottom injection slightly over-states the lift). A 24 API oil (10 cP at 85 C) with 2000 m TVD
+> has a hydrostatic head of about 170 bar, so a 205 bar reservoir cannot reach a 40 bar arrival without lift: sweep
+> water cut x rate x lift GLR once, tabulate the WHP margin against `arrival + line dP + choke`, and read the
+> deliverable rate per well and the GLR needed from the table (it falls from about 2.5 kSm3/d per well at 5 % water cut
+> to zero near 85 %). Every `None`/exception in the table is the deliverability limit above, not a failure.
+> `getMixtureViscosityProfile()` / `getSegmentMixtureViscosity()` return **cP**, not Pa.s (do not multiply by 1000).
+
 > **GOTCHA — `getFlowRegime()` naming.** Beggs & Brill regimes are returned as
 > `SEGREGATED` (stratified/annular — gravity-dominated), `TRANSITION`,
 > `INTERMITTENT` (plug/slug), `DISTRIBUTED` (bubble/mist). "Gravity-dominated /
@@ -432,17 +656,32 @@ for (double qgMSm3d : gasRates) {
 > deviation against one is recorded here. Validate against experimental,
 > laboratory or field data, or against an analytic/first-principles check.
 
-> **`TwoFluidPipe` steady-state usage.** The refinement loop needs a few hundred
-> sweeps to settle the pressure profile against the updated section densities
-> (74 km at 160 sections ≈ 25 s, at 320 sections ≈ 60 s). Always
-> `assert pipe.isSteadyStateConverged()` **and** check
-> `pipe.getSteadyStateIterationsUsed() > 1` — a result reported after one sweep
-> still carries the densities the sections were initialised with and understates
-> the pressure drop of a gas line by roughly ten per cent. Around 160 sections
-> (≈450 m) is the sweet spot on a long transmission line: it converges reliably
-> and is grid-converged to 0.4% against 320 sections. Raise
-> `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
-> if `isSteadyStateWallClockLimited()` is true.
+> **`TwoFluidPipe` steady-state usage.** Gate every result on the complete
+> immutable `SteadyStateConvergenceReport`, not a stationary pressure trace or
+> iteration count. Require `isConverged()`, inspect the explicit termination
+> reason, and retain pressure-momentum, pressure-update, total-liquid-holdup,
+> water/oil-split, thermodynamic-property, and total-pressure-drop residuals
+> against the report's unchanged tolerance. Pressure-floor and wall-clock
+> termination are non-converged. Repeat mesh sensitivity for the actual
+> geometry; no fixed cell length is universally qualified.
+
+> **`TwoFluidPipe` run time (measured 2026-11-22, revision a2399c6 before and after
+> the closure-reuse change; 5.4 km 8-inch three-phase flowline and riser at 60 and
+> 120 cells, 20 km 16-inch gas-condensate line at 100 cells; OpenJDK 21, one
+> thread).** Steady `run()` takes 1.23 s at 60 cells and 4.14 s at 120 cells
+> (was 1.60 and 5.60 s); 60 s of transient on the 60-cell line takes 13.6 s
+> (was 24.2 s), with identical profiles. Equilibrium flashes are now the largest
+> remaining cost (`TPflash` is 48% of that transient case and 69% of the gas-condensate
+> steady solve), so run time scales with cells x flash cadence x fluid complexity. Budget
+> studies on that basis: screen sensitivities with `PipeBeggsAndBrills`
+> (0.04 s per 100 increments on the same feed) and keep `TwoFluidPipe` for the
+> cases that need section-resolved holdup, inventory or transients. The cadence
+> setters are `setSteadyStateFlashInterval(int)` (default 3) and
+> `setThermodynamicUpdateInterval(int)` (default 10); on that transient an interval
+> of 20 saved 27% of the transient time and moved the inlet pressure by 0.14 bar
+> after 60 s, so a longer interval is a model change to check per case. Details and
+> the two benchmark entry points:
+> [TwoFluidPipe model, run time](../../../docs/process/TWOFLUIDPIPE_MODEL.md#run-time-and-where-it-goes).
 
 > **MCP `runPipeline` solver and response handoff.** Omit `solver` (or use
 > `beggsBrill`) for the established correlation path. Use `solver: "twoFluid"`
@@ -488,13 +727,15 @@ for (double qgMSm3d : gasRates) {
 > energy equation feeds the momentum balance. Grid-converged (160 vs 320 sections
 > within 0.4%). Terrain response is solved, not tuned: the annular film balance
 > carries `tau_i = tau_wL + rhoL*g*sin(theta)*delta`, so holdup responds to
-> inclination and scales with `sin(theta)`. Still open: **the three-phase
-> free-water case does not converge** — 15 m3/hr of free water on the same line is
-> wall-clock limited after 4078 iterations at a 1200 s budget. ΔP is identical
-> between a 300 s and a 1200 s budget, so the profile is stationary and the
-> criterion is stalling on the three-phase liquid split — but
-> `isSteadyStateConverged()` is false, so the number must not be quoted. ALWAYS
-> check it on a water-bearing line.
+> inclination and scales with `sin(theta)`. The compact public 3 km,
+> 10-degree uphill gas/oil/water fixture is annular with dispersed oil and water
+> and converges on 30 and 60 cells without oil-water slip, with 0.922%
+> arrival-pressure and 0.138% mean-liquid-holdup sensitivity (rerun 2026-11-15)
+> and every final report residual below `1e-4`. This is numerical verification, not
+> experimental qualification. The historical 73.8 km / 15 m3/hr free-water
+> input is unavailable, so the earlier 4,078-iteration / 1,200 s report cannot
+> be reproduced or claimed fixed. Never generalize the compact result to that
+> unavailable case.
 
 > **`TwoFluidPipe` also fails silently when a line has no deliverability.** The
 > marching solver clamps section pressure at a 1 bara floor; that clamp is a
@@ -528,6 +769,15 @@ for (double qgMSm3d : gasRates) {
 > export line — and differ at 4 MSm3/d, where the equilibrium branch reclassifies 272 of 320
 > sections as stratified-wavy.
 
+> **Transient closure sources follow continuous regime weights.** During dynamic
+> evaluation, the existing dimensionless normalized weights from
+> `FlowRegimeDetector.classify(...)` blend wall friction, interfacial friction and area,
+> and entrainment. A non-zero stratified weight keeps the matching segment geometry active.
+> The flow map, transition bands, hold-up closure, and regime-specific formulas are unchanged,
+> and pure-regime endpoints recover their original closures. This is experimental numerical
+> continuation, not severe-slugging or liquid-rich qualification; require the public Tengesdal,
+> 1,800 s inventory, conservation, nearby-point, refinement, and solver-diagnostic gates.
+>
 > **Friction is per-phase wall shear in stratified flow.**
 > `setSeparatedFrictionModel(false)` restores the mixture correlation, which charges the whole
 > perimeter with a holdup-weighted density; on a stratified line at 41% holdup that
@@ -536,10 +786,12 @@ for (double qgMSm3d : gasRates) {
 > stratified flow because its perimeters come from a circular-segment layer; annular flow,
 > whose film wets the whole perimeter, is not that geometry.
 
-> **Measured accuracy on the 73.8 km reference line**, across a threefold rate range:
-> ΔP +1.4 / +1.6 / +0.1 / −2.7 % and maximum holdup −2.4 / −7.1 / −6.6 / +3.5 % at
-> 4 / 7 / 10 / 12 MSm3/d, all converged and grid-converged. The earlier defaults gave
-> ΔP +5.7 / +5.6 / +1.4 / −0.0 % and holdup −25.5 / −18.6 / −6.2 / +3.3 %.
+> **The historical 73.8 km comparison is not a public qualification basis.**
+> Its complete input and measurement package is unavailable in the repository,
+> so earlier reported pressure-drop and holdup deviations are retained only as
+> repair history. Do not route or certify a study from those values. Use the
+> reproducible public evidence and explicit failed/unsupported rows in the
+> TwoFluidPipe evidence matrix.
 
 > **Direct electrical heating (DEH)** is available on both models with the same
 > convention — the power set is what reaches the fluid, so cable and coating
@@ -561,6 +813,107 @@ for (double qgMSm3d : gasRates) {
 > analytical `SevereSluggingBenchmarkHarnessTest` screen and the public Tengesdal
 > evidence until the dynamic qualification gates below pass.
 >
+> **Screening a gas-oil-water riser.** `evaluateSevereSluggingSystem(riserBase)` returns
+> `NOT_VALIDATED_THREE_PHASE` when a section holds both oil and water. Call
+> `evaluateSevereSluggingSystem(riserBase, 0.89, 0.0, true)` to evaluate the Taitel condition with the
+> in-situ oil-water mixture density of the riser column, and report `isLiquidMixtureBasis()` with the
+> result: it has no three-phase validation and does not cover water collecting at the riser base. The
+> stratified-feeder check still applies, so run it at the turndown rates. Measured 2026-11-22 on a
+> 15 km, 12-inch flowline with a 430 m riser at 73 bara: slug-flow feeder at 300 and 150 t/h (not
+> applicable); stratified feeder and unstable at 75 and 30 t/h (critical top pressure 494 and
+> 800 bara).
+>
+> **The synthetic three-phase riser handoff is a narrower qualified lane.** With phase transfer
+> disabled, its steady gas/oil/water mass-flow profiles are flat, dispersed oil-water drag uses
+> Hinze droplet area, and the unchanged-boundary 60 s replay keeps accepted phase outlet transfer
+> nonnegative on 60/120 cells and 0.25/0.125 s reporting steps. Check the phase profiles and
+> inventory ledger before applying a choke move. A pressure-coupled 65% to 58% choke step now keeps
+> riser water outflow positive for 150 s; the earlier zero-water intervals came from an oil-water
+> regime flip, not from physical redistribution (`neqsim-dynamic-simulation`, equinor/neqsim#5046). Do not generalize this numerical initialization
+> result to slug statistics, separator control or field validation.
+>
+> **Finite-rate hydrocarbon pool transfer is parameterized screening.** On the
+> conservative-energy Euler route, `HydrocarbonPoolTransfer` accepts explicit
+> component transfer coefficients, evaporation enthalpies, interface width and
+> available W/m. It preserves component/momentum/energy ownership and exposes
+> donor/heat-limit diagnostics. Do not use an arbitrary relaxation time as a
+> fitted evaporation rate, and do not promote analytical conservation tests to
+> shutdown/restart, swept-slug, receiver-capacity or hydraulic-pigging evidence.
+> Calibration and validation need separate independent public multicomponent
+> rate data plus mesh/time and complete-cycle evidence.
+> The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh/time evidence. It
+> retains the requested dense EOS root across the cubic model's diagnostic
+> $V/B=1.75$ label transition while positive-compressibility, Jacobian and
+> energy-admissibility guards remain active. Do not clip composition or change
+> the configured root to manufacture a restart result.
+> The opt-in hydrostatic-pool mode uses volume-preserving inclined-cell area,
+> retains representable trace-wedge leading depth without a liquid floor, reports equilibrium
+> appearance and any still-sub-resolution stratified trace fallback,
+> and can retain an explicitly initialized wall profile across event intervals.
+> Use `HydrocarbonPoolTransfer.forStratifiedFlow(...)` for moving circular-stratified states.
+> Its local holdup chord preserves total area and component sources under subdivision of a
+> uniform physical state. Independent stationary puddles in every numerical cell are a
+> different area model and introduce a cell-length kinetic dependence during flow. Preserve
+> the historical hydrostatic-cycle failure; the flowing alternative does not validate it.
+> Mesh refinement must retain physical terrain and outlet breakpoints. The wall-coupled
+> 12/24-cell cycle fixes its final 1250 m at -333.5 m on both meshes; the earlier
+> "last three cells" rule compared different pipes. Retain the 10% peak/final inventory
+> gates and inspect the executed hydrocarbon-pool-transfer receipt. Maximum single-cell
+> interface area is extensive, not a convergence target. Independent mesh/time, rate/thermal
+> and moving-boundary conservation evidence is still required for coupled pigging.
+> A conservative `CONSTANT_PRESSURE` inlet now reflashes its explicit or connected external
+> reservoir and resolves signed phase flow with acoustic impedance, carrying the same donor through
+> mass, named-component and enthalpy ledgers. Start a restart ramp from
+> `getInletFacePressure("Pa")`, not the first cell-centre pressure.
+> An explicitly isolated reservoir reuses one flash across internal stages at each pressure;
+> `getPressureInletFlashCount()` verifies that safeguard. A live connected stream remains uncached.
+> The declared full cycle closes on 12/24 cells and 0.5/0.25 s intervals, but one small unfiltered
+> opening reversal and the absence
+> of independent public surge data keep physical restart and distributed hydraulic pigging open.
+> Record refill/valve-opening pressure windows with
+> `TwoFluidPipeReport.analyzePressureTrace(...)`; its unfiltered ringing metrics are numerical
+> diagnostics, not an independently validated surge limit.
+>
+> **Ideal-gas pig hydraulics is a separate reduced-order route.**
+> `IdealGasPiggingModel` couples `PigMotion` to conservative upstream/downstream
+> calorically perfect gas inventories and reuses `IdealGasReleaseModel` for
+> bidirectional choked/subcritical bypass. Use it only when two well-mixed gas
+> control volumes are an explicit approximation. Inspect total-mass and
+> combined-energy residuals, timestep refinement, numerical safeguards and the
+> launcher/receiver ledger. The public 62 m/52 mm Hendrix geometry is
+> provenance, not experimental trajectory validation; other example inputs are
+> synthetic. `PigMotion.advanceToPosition` supplies reversal-safe first-crossing
+> timing for known launcher, receiver, sensor or geometry coordinates; it does not
+> define contact or geometry physics. Do not route it as distributed `TwoFluidPipe` coupling,
+> pressure-wave, swept-liquid, receiver-capacity, residual-film,
+> physical-restart, severe-slugging, pig-train or field/commercial evidence.
+>
+> **Coupled component/phase/thermal slug transport has a narrower envelope.**
+> For the conservative Lagrangian slug/film path, named-component phase sources
+> and their partial-enthalpy latent source must be frozen from the same
+> hydrodynamic RHS-stage equilibrium state. The Stage 4 closed wet-gas regression
+> verifies phase, total, component, interphase, and thermal ledgers around a
+> seeded in-domain marker. It is single-stage Euler evidence only. Multi-stage
+> phase appearance needs stage-local component inventories and fails before
+> mutation. Named-component transport with signed outlet backflow requires
+> `setOutletBoundaryFluid(externalFluid)` before
+> `setAllowOutletPhaseBackflow(true)` so reversed phase composition, density,
+> and enthalpy have an explicit physical owner. Never infer that state from the
+> last interior cell. The current rich-gas pressure-ramp check is conservative
+> boundary evidence, not complete blowdown, pooling, restart, or evaporation-rate
+> qualification. For a gas takeoff above retained liquid, use
+> `setGasOnlyOutletTakeoff(true)` only with a constant-pressure outlet. Oil and
+> water remain externally closed while retaining traction and internal drainage;
+> do not replace this contract with inventory clipping or a manufactured boundary
+> mixture.
+>
+> A negative prescribed inlet rate uses the first pipe cell as the outflow donor;
+> it must not inherit the external feed phase split. Review total phase momentum
+> and pressure traction separately through
+> `getLastBoundaryPhaseMomentumFluxes()` and
+> `getLastBoundaryPhasePressureForces()`. Those arrays qualify the external
+> boundary contract only, not a complete momentum residual or physical restart.
+>
 > **Two severe-slugging screens exist; pick by question.**
 > `pipe.evaluateSevereSluggingSystem(riserBaseSection)` is the quasi-steady Taitel
 > criterion on a solved `TwoFluidPipe` profile (stable/unstable, pressure margin in
@@ -573,8 +926,8 @@ for (double qgMSm3d : gasRates) {
 > statistics use the second half of `simulationTime`, which must cover at least one
 > cycle (order `(H + alpha*L)/usl`). The slug value is normalised by absolute
 > pressure, so at high pressure judge severity from the amplitude against the riser
-> head `rho_L*g*H`. Both tools lump or reject oil–water: the Taitel diagnostic keeps
-> `NOT_VALIDATED_THREE_PHASE` and only adds an all-oil/all-water bracket
+> head `rho_L*g*H`. Both tools lump or reject oil–water: the default Taitel call keeps
+> `NOT_VALIDATED_THREE_PHASE` and adds an all-oil/all-water bracket
 > (`getThreePhaseBound()`, `getCriticalTopPressureLowerBoundPa()` /
 > `...UpperBoundPa()`); report an `INCONCLUSIVE` bracket as inconclusive, never as
 > stable. See `docs/process/severe-slug-analyser.md`.
@@ -622,8 +975,14 @@ for (double qgMSm3d : gasRates) {
 >
 > **Three-phase (gas/oil/water) steady state is fixed.** The oil/water slip
 > ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls
-> off to no slip once the liquid disperses above a liquid Froude number of about
+> off to no slip once the liquid disperses above a mixing Froude number of about
 > 3; the previous form cut off at Fr = 2 and under-predicted water holdup badly.
+> The Froude velocity is the bulk liquid velocity in stratified and slug flow
+> and the total volumetric flux in annular, churn, bubbly and mist flow, the
+> same mixing velocity the oil-water regime detector uses. Gas-sheared liquids
+> therefore carry no stratified slip into a transient that treats them as
+> dispersed (equinor/neqsim#5046, 2026-11-15; the horizontal in-situ water
+> benchmark, 0.1337, still passes).
 > One gap remains open: the pressure drop is over-predicted in this liquid-rich
 > regime, far more than on a gas-dominated line.
 >
@@ -643,6 +1002,26 @@ for (double qgMSm3d : gasRates) {
 > hydrate region**, negative is the safe margin, which is the opposite of the
 > intuitive reading. Full OLGA-side workflow in the community
 > `neqsim-olga-multiphase-simulator` skill.
+>
+> **Check three-phase PVT keyword semantics.** Use `RS = gas mass/(gas + oil
+> mass)`, excluding the separate aqueous phase. At standard conditions, use
+> `GLR = gas volume/(oil + water volume)` and `WC = water volume/(oil + water
+> volume)`; never copy GOR into GLR for a wet fluid. Omit optional multicomponent
+> bubble headers rather than exporting failed or inappropriate wet-fluid roots.
+> Regenerate older tables after the issue #4478 corrections; see
+> `docs/integration/olga_pvt_table_generation.md` for the no-liquid conventions
+> and required pure-component saturation validation.
+>
+> **Configure the table for the study, then hand over the report.** For a
+> wellstream table set produced water on a water-free feed
+> (`setProducedWater(30.0, "watercut")`), salinity (`setWaterSalinity(35000.0,
+> "mg/l")`), IAPWS aqueous properties (`setUseReferenceWaterProperties(true)`,
+> applied only where the aqueous phase is >= 95 wt% water, so MEG-rich water stays
+> on the EOS), `setEnvelopeRefinement(true, 5.0)` with >= 50 points per axis and
+> `setInsertStandardConditions(true)`. After `run()`, require
+> `getQualityReport().isLoadable()` and attach `writeTableReport("x_report.md")`
+> and the `.tab` to the study. Retrograde liquid density falling with pressure at
+> existing nodes is physical and is reported, not an error.
 >
 > **Never build a volumetric phase fraction from `phase.getVolume()`.** With a
 > Peneloux volume shift active it disagrees with `getDensity()` by the shift —
@@ -668,6 +1047,16 @@ for (double qgMSm3d : gasRates) {
 > delay in a flowsheet; use `TwoFluidPipe` for line pack, shut-in, ramps and
 > blowdown (0.00 bar drift on the same null test, mass balance closing to the
 > digit), and `WaterHammerPipe` for surge.
+>
+> **`TwoFluidPipe` closed-end pack-up limits (measured 2026-11-21, 15.6 km 12-inch
+> line, 300 t/h wet gas/oil/water, 80 cells, coupled pressure-momentum).** The
+> flat line packs with no rejected substep up to the saturation pressure of the
+> feed (255 bar at 2,400 s). Above that pressure cell pressures differ by tens of
+> bar again, because the gas should dissolve and the default route keeps the phase
+> masses frozen: use component transport with mass transfer there. With a steep
+> riser and a closed top the cells at the riser show velocity differences of about
+> 10 m/s within 5 s and pressure spikes after about 30 min: do not report
+> closed-riser-top pressures from the model.
 
 ### Gray (1974) Correlation — Gas / Gas-Condensate Vertical Wells
 
@@ -762,6 +1151,21 @@ double pCO2 = fluid.getPhase("gas").getComponent("CO2").getx()
 // Water cut affects wetting: >30% water cut → higher risk
 ```
 
+### Sour service (H2S cracking) screening for compressors and vessels
+
+H2S cracking (SSC) is a materials question, not a corrosion rate: ISO 15156-2 (NORSOK M-001 cl. 6.1.3) calls the service sour when the wet gas has
+pH2S >= 0.3 kPa at total pressure >= 0.4 MPa, and dehydration or chemical treatment give no relief. Screen it as follows (task 2026-10-21 Vigdis/Snorre compressors):
+
+1. Express the limit as H2S in the gas for each machine pressure: `y_limit = 0.3 kPa / P` (24 ppm at 125 bara, 10 ppm at 300 bara, 100 ppm at 30 bara). Check
+   both suction and discharge; the high-pressure machines go sour first because the ppm is constant while P rises.
+2. Get y_H2S per machine from a process model with H2S as a trace component (the system is linear: run once and scale), or from the stream composition; use
+   `y x P` (Dalton) for classification and the fugacity coefficient (`getFugacityCoefficient()`, 0.2-0.4 in dense injection gas) as sensitivity only.
+3. When the H2S source is not in the model (e.g. degassing-tank gas recovered from a flare), carry it with a dilution share f (`y_mix = f x y_source`) and report the
+   break-even f = `0.3 kPa / (y_source x P)` plus a Monte Carlo, instead of a single number.
+4. Report in-situ pH of the condensed water (CO2 and H2S, salt-free) and the water dew point at the discharge; ISO 15156-2 Figure 1 region and the material check are for the materials group.
+5. Adding a trace component to a model fluid: check the unit operations that rebuild streams by component index (a `ComponentSplitter` with split factors `[1]*(n-1)+[0]`
+   removes the LAST component); insert the tracer before the last component and verify the downstream ppm is not zero.
+
 ### Network-Level Corrosion (LoopedPipeNetwork)
 
 For production gathering networks, `LoopedPipeNetwork` has inline corrosion
@@ -782,10 +1186,9 @@ List<String> violations = net.getCorrosionViolations();
 Models: de Waard-Milliams (log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2))
 and NORSOK M-506 (Vcorr = Kt * fCO2^0.62 * (S/19)^0.146).
 
-### Rigorous NORSOK M-506 from a brine (electrolyte pH + FeCO3 film)
+### Legacy CO2 corrosion screening from a brine (electrolyte pH + FeCO3 film)
 
-`NorsokM506CorrosionRate` (`neqsim.process.corrosion`) is the standalone NORSOK
-M-506 model (fugacity, in-situ pH, FeCO3 scaling temperature, wall shear, glycol,
+`NorsokM506CorrosionRate` (`neqsim.process.corrosion`) uses de Waard-Milliams screening equations (fugacity, in-situ pH, FeCO3 scaling temperature, wall shear, glycol,
 inhibitor). By default it estimates pH from a CO2-water correlation. To drive it
 from **rigorous electrolyte thermodynamics** instead, use `NorsokM506ElectrolyteBridge`
 — the M-506 analogue of `CO2CorrosionAnalyzer`:
@@ -799,7 +1202,14 @@ bridge.run();                       // clones + flashes; does not mutate `fluid`
 double rate = bridge.getModel().getCorrectedCorrosionRate();  // mm/yr
 double pH   = bridge.getInSituPH();          // rigorous aqueous pH (getpH())
 double sr   = bridge.getFeCO3SaturationRatio();  // IAP/Ksp, or -1 if no Fe++/CO3--
+boolean suspect = bridge.isElectrolytePhaseSuspect(); // true -> correlation pH was used
 ```
+
+Gotcha (2026-11-22): the electrolyte CPA pH of CO2-saturated water is about 0.9 units high
+(4.84 vs about 3.9 at 25 C, 1 bar CO2), which gives non-conservative rates. The bridge falls back to
+the correlation pH when the aqueous phase is suspect (water < 0.7 mol frac) or pH is outside 2.5-10;
+check `isElectrolytePhaseSuspect()` and compare with the correlation pH. `ChlorideSCCAssessment`
+reports carbon and low-alloy steels as "Not susceptible" (they used to fall through to 316L).
 
 **FeCO3 film feedback (closes the corrosion↔scaling loop):** when the aqueous phase
 is supersaturated in siderite (SR>1), a protective film suppresses corrosion even
@@ -811,9 +1221,9 @@ model.setFeCO3SaturationRatio(sr);   // >1 = protective; -1 = disabled (default)
 double film = model.calculateFeCO3FilmFactor();  // 1.0 = no credit, <1 = protective
 ```
 
-For an auditable standards calculation, pass the resulting in-situ pH and optional saturation ratio
-to `NorsokM506CorrosionDesignKernel.Input`. The kernel is the preferred public path when the task
-names NORSOK M-506: it enforces the unamended 2017 edition and model envelope, preserves raw inputs
+For an auditable legacy screening calculation, pass the resulting in-situ pH and optional saturation ratio
+to `NorsokM506CorrosionDesignKernel.Input`. For the M-506 Rev. 2 unmitigated rate, use `NorsokM506Rev2.rateMmPerYear` with
+local shear and in-situ pH. The legacy kernel checks its registered 2017 edition identifier and model envelope, preserves raw inputs
 without setter clamping, and returns `CALCULATED_REVIEW_REQUIRED`. Continue to use the bridge to
 derive chemistry and the legacy model for sweeps, but do not present either route as a conformity
 assessment. The optional saturation-ratio film factor and projected wall loss are NeqSim screening
@@ -851,7 +1261,7 @@ Regression test for the fallback: `neqsim.chemicalreactions.AcidGasPHTest`
 ### Per-segment corrosion + scale along a line (PipeSegmentIntegrity)
 
 `PipeSegmentIntegrity` (`neqsim.process.corrosion`) walks a temperature/pressure/
-velocity profile and reports, per segment, the NORSOK M-506 corrosion rate AND the
+velocity profile and reports, per segment, the legacy screening corrosion rate AND the
 CaCO3 scale saturation, then ranks the worst corrosion and worst scale segments —
 so mitigation can be located along the line. Feed it a run `PipeBeggsAndBrills`:
 
@@ -882,9 +1292,159 @@ List<String> violations = net.getSandViolations();
 Erosion per DNV RP O501: E = K * Csand * v^2.6 * dp^0.2.
 Deposition flagged when v < 1 m/s.
 
+### Sand TRANSPORT is a different question from sand EROSION
+
+Erosion asks "is the fluid too fast?"; transport asks "is the fluid fast enough
+to keep the sand moving?". They pull in **opposite directions**, so a line can
+be comfortably inside its erosional limit and still be laying down a sand bed.
+NeqSim currently models erosion only (`ErosionPredictionCalculator`,
+`LoopedPipeNetwork.calculateSandTransport()`), and the network deposition rule
+above is a hard-coded `v < 1 m/s`, not a transport criterion. Compute the
+transport check explicitly.
+
+**Evaluate transport on the in-situ LIQUID velocity, never on the mixture
+velocity.** Sand is carried by the liquid, and because of slip
+
+```
+u_L = v_sl / H_L          (in-situ liquid velocity)
+u_G = v_sg / (1 - H_L)    (in-situ gas velocity)
+```
+
+`H_L > lambda_L` whenever there is slip, so `u_L < v_m`. On a measured mature-well
+case (6" line, 52% water cut, ~45 bara) `v_m` was 0.888 m/s but `u_L` only
+0.691 m/s — using `v_m` would have overstated the transport margin by 1.29x.
+
+Two criteria, both public and cheap:
+
+- **Oroskar & Turian (1980)** critical (deposition) velocity —
+  `v_c = 1.85 C^0.1536 (1-C)^0.3564 (D/d_p)^0.378 Re_p^0.09 x^0.30 sqrt(g d_p (s-1))`
+  with `Re_p = D sqrt(g d_p (s-1)) rho_L / mu_L` and `x ~ 0.95`. Report `u_L / v_c`.
+- **Shields (1936)** incipient motion of a settled bed — compare the liquid wall
+  shear `tau_w = (f/8) rho_L u_L^2` to `tau_c = theta_c (rho_s - rho_L) g d_p`
+  with `theta_c ~ 0.045`.
+
+**Sand deposition is a TURNDOWN failure mode.** As rate falls, hold-up *rises* and
+the slip ratio grows, so `u_L` collapses faster than `v_m`. Always run a rate
+sweep and report the rate at which `u_L` crosses `v_c` — that threshold, not the
+present-day margin, is the number operations needs. Do not use erosion headroom
+as a reason to choke a well back without checking it.
+
+### Minimum flow of a tie-back line, on the real route
+
+A line is not "flat plus a riser" once it is longer than about 2 km, and one rate is not a design.
+
+1. **Use the real profile.** Take depths along the route (survey, EMODnet `depth_sample`, or the
+   KP route of an existing line) and build
+   `RouteProfile.fromDepths(kp, depth).withRiser(depthAtHost, airGap).resample(60)`, then
+   `route.applyTo(twoFluidPipe)`; `route.getLowPointKp()` lists the liquid traps.
+   `route.applyTo(PipeBeggsAndBrills)` collapses the route to one averaged leg and logs a warning above
+   5 degrees; it keeps the net rise and loses the undulation. Compare the real profile with a flat
+   bed of the same length and riser on the SAME model before saying the seabed does not matter.
+2. **Fix the outlet, solve the inlet.** `TwoFluidPipe.setOutletPressure(p, "bara")` gives the inlet
+   pressure the line needs, which is the number a VFP or nodal curve wants. Fixing the inlet and
+   reading the outlet hides how fast the line pressure runs away at low rate.
+3. **Sweep the rate downwards** (about 10 to 200 % of plateau, with and without lift gas, at the lowest and
+   highest water cut) and report each limit by name; the minimum flow is the largest of them:
+   - hydraulic: the rate where the required inlet pressure stops falling (U-shape: friction falls,
+     hold-up and hydrostatic head rise);
+   - hold-up and liquid inventory (`getLiquidInventory("m3")`, `getLiquidHoldupProfile()`) and the
+     time to sweep it after a restart;
+   - thermal: arrival temperature minus the hydrate or wax temperature at the line pressure;
+   - sand or solids: `u_L / v_c` (section above);
+   - riser or terrain slugging and the pig rate, which the steady-state model does not give.
+4. **Always check `isSteadyStateConverged()`** and the iteration count; a case that exits after one
+   sweep is not a solution.
+5. State what was not run: severe-slugging limit cycles need a transient run and are not qualified in
+   `TwoFluidPipe` (see the evidence matrix); a steady-state hold-up profile is not a slug size.
+
+### Get the operating basis right before computing any velocity
+
+A wrong pressure invalidates every velocity, hold-up and transport number
+downstream of it, and no amount of model sophistication recovers it.
+
+**A well flowline runs DOWNSTREAM of the choke.** Its pressure is the receiving
+manifold/separator pressure, *not* the wellhead pressure that PDM and the
+historian report as "wellhead pressure" / "brønnhodetrykk". On a real case the
+wellhead read 45.5 bara while the line ran at 17.0 bara: gas density 63% lower,
+mixture velocity 2.1x higher, no-slip hold-up 59% lower, and the sand-transport
+margin moved from 1.38 to 1.8-2.3. Take the flowline condition from the
+**after-choke transmitter** (Norwegian tag descriptions: "Etter Strupeventil").
+
+**Confirm which route is actually in use, not just which routes exist.** Match
+the measured after-choke pressure against the separator pressures; the receiving
+vessel is the one a small dP away, and the others are typically tens of bar off.
+Check the trend as well as the snapshot — a well swaps onto the test separator
+during a well test, which is usually a *higher* pressure and therefore the
+**binding case for sand deposition**, while normal production is comfortable.
+
+**Derive the line temperature by an isenthalpic flash across the choke** when
+there is no after-choke temperature transmitter (`ops.PHflash(h_wellhead)`). With
+a high water cut the JT cooling is small (~1 K at 83 mol% water) because water
+dominates the heat capacity — do not assume a large drop.
+
+### Choosing the multiphase model for a transport check
+
+Start with the
+[TwoFluidPipe evidence matrix](../../../docs/process/twofluidpipe-evidence-matrix.md).
+It separates implemented, numerically verified, experimentally qualified, failed,
+and unsupported configurations. Do not route from a finite profile or a private
+commercial-simulator comparison.
+
+- Use `PipeBeggsAndBrills` for a correlation-based steady or quasi-steady
+  pressure-drop screen. It has no conservative distributed line-pack inventory,
+  so it is not evidence for transient liquid accumulation or severe slugging.
+- Use `TwoFluidPipe` when section-resolved phase momentum, holdup, inventory,
+  thermal, or transient diagnostics are required **and** the requested
+  configuration fits a verified matrix row.
+- The public Mohmmed air/water slug comparison currently fails qualification:
+  the baseline passes 3/9 fixed gates with MARE 1.0402, and the 40/80-cell plus
+  0.05/0.025 s sweep is non-monotone. Do not replace that evidence with a looser
+  physical bound or a proprietary trace.
+- Gate every steady result on the complete convergence report and every transient
+  on requested elapsed time, conservation, positivity, refinement, and all
+  applicable sticky solver/boundary diagnostics. Exclude a failed or unsupported
+  row instead of quoting it.
+- The experimental unsplit directional-complementarity path now solves nonnegative
+  mass magnitude, advective momentum and donor multipliers for both one-sided donor streams
+  and verifies its solved ledger independently. Physical AUSM transport and pressure
+  correction retain separate donors. Conflict-free exact-presence anchors and exact
+  zero-flow rows permit phase-free multi-cell regions without a mass clip or inventory
+  tolerance. Treat disappearance, simultaneous opposing streams and short-step
+  conservation tests as numerical evidence only: all no-pressure-interpolation
+  five-second lanes complete, but pressure-interpolated baseline and augmented lanes
+  still stop at 1.075--1.8427734375 s, so the complete riser matrix remains failed.
+  Require that entire matrix before progressing to 180/600 s,
+  physical restart, swept-liquid, receiver-surge or hydraulic-pigging claims.
+- The current no-pressure-interpolation unsplit preparer advances passive wall
+  and interphase friction once with the conservative frozen-resistance source.
+  Audit the accepted per-cell phase impulse from `PreparedStep`/`PreparedInterval`.
+  The three midpoint five-second lanes now pass; the pressure-interpolated lanes
+  still stop at 1.4000/1.8125/0.9750 s and retain their prior friction owner
+  because the combined operator regresses the trace-phase/donor event. This is
+  numerical source evidence only, not restart, severe-slugging or pigging
+  qualification.
+- For the bounded frozen-phase `runTransient` route, configure
+  `setOutletBoundaryFluid(...)` whenever a constant-pressure outlet can donate a
+  reversed phase. The signed transfer stays in the phase ledger; only positive
+  exports enter the downstream stream. The historical-grid 16/24-cell,
+  0.1/0.05 s five-second matrix and the 16-cell 180/600 s duration gates pass
+  with backward Euler, pressure interpolation, transition blending and signed
+  donor transport. The interval controller tightens local solves against a
+  duration-weighted share of the unchanged cumulative conservation budget.
+  Treat this as atomic numerical continuation evidence, not experimental severe
+  slugging, physical restart, receiver surge or pigging qualification.
+- Do not over-constrain `setOutletPressure` with a measured pressure drop the
+  modelled geometry cannot produce. Investigate valves, fittings, elevations, and
+  boundary consistency separately.
+
 ### Mineral Scale (thermodynamics + kinetics + brine mixing)
 
-NeqSim offers **two routes** to mineral scale. Pick by how much you know about
+For commingled formation waters with dissolved silica, follow the
+[produced-water route](../neqsim-produced-water-compatibility/SKILL.md)
+with the NeqSim and PHREEQC Pitzer example. Compare the CO₂ boundary conditions
+and amorphous silica, crystalline silica and metal silicate results at each station.
+
+For common carbonate and sulfate minerals, pick by how much you know about
 the brine and whether you need a rigorous precipitated amount.
 
 **(A) Screening SI from an ion analysis (fast, no flash).** Activity-corrected
@@ -1132,6 +1692,19 @@ compressors and to recommend a wash fluid.
 // Cp = fluid heat capacity (J/kgK)
 ```
 
+### Burial, trenching and rock dump change the thermal basis
+
+A buried or rock-covered flowline cools down much more slowly than an exposed one, so one burial depth
+for the whole line is wrong wherever the route changes between trenched, rock-covered and exposed
+stretches. Scope the protection first with the `neqsim-seabed-protection-screening` skill (map layers,
+trenchability, rock volume and tonnes; community `seabed-protection-agent`), then use its
+`to_neqsim_burial_segments` hand-off: one pipe section per burial state with `setBuried`,
+`setBurialDepth` (depth to the pipe centre) and `setSoilConductivity`, exposed sections on the
+seawater film coefficient. Report cooldown and hydrate margin for the protected and the unprotected
+state so the margin that burial buys is explicit. Burial depth and soil conductivity are thermal
+inputs only - never derive pipe-soil resistance or upheaval-buckling cover from them (see the DNV-RP-F114
+and F110 routing above).
+
 ### Arrival Temperature Check
 
 ```java
@@ -1142,13 +1715,72 @@ compressors and to recommend a wash fluid.
 // If not met: increase insulation, add DEH, reduce flow, or inject inhibitor
 ```
 
+### Low-rate satellite tie-back: heat loss, not friction, sets the design
+
+A short tie-back at 0.5-2 kSm3/d liquid (typical of a small cold, shallow oil such as the Barents
+satellites) has a pressure drop of 1-2 bar in 6-8 in, but a residence time of about a day, so the
+arrival temperature falls towards the seabed. Rank the options on arrival temperature and cost, not
+on hydraulics:
+
+- Run `PipeBeggsAndBrills` with `setUseOverallHeatTransferCoefficient(true)` and U = 12 (bare),
+  4 (wet insulation), 2.5 (thick wet), 1.2 W/m2K (pipe-in-pipe) at 500-4000 Sm3/d, at the real
+  wellhead temperature (area BHT trend gives the reservoir temperature when no BHT is reported).
+- No-touch time must include the steel (and half the insulation) heat capacity per metre; the fluid
+  alone overstates the cooling rate by about 50 %.
+- The WAT is usually the unknown: sweep it (for example 18 / 26 / 34 C) instead of picking one; a
+  passive 12 h no-touch time to a 26 C WAT from 35 C is not reachable even with pipe-in-pipe, so
+  adopt displacement/flush and chemicals for restart, keep DEH as the hedge for a high WAT, and say
+  that WAT, pour point and viscosity are the first data need.
+- Rank options by 15-year life-cycle cost (capex premium + chemical opex) and list the measured-WAT
+  decision rule (low WAT: wet insulation; mid: wet insulation plus displacement; high: DEH or PiP or
+  avoid a new line, for example by extended-reach wells from an existing template).
+```
+
+### DEH operations: how much power, how much temperature, how much energy
+
+Use this when a task asks what a direct-electrical-heating (DEH) system or an inlet heater is worth,
+how much electricity it burns or how its on/off operation relates to arrival temperature. The
+detailed pipe model is `setDirectElectricalHeatingPower` (above); for yearly screening a lumped
+model is enough and is cheap enough for Monte Carlo.
+
+- **Lumped arrival temperature** with distributed DEH power $P$: balance temperature
+  $T_{bal}=T_{sea}+P/UA$, arrival $T=T_{bal}+(T_{in}-T_{bal})e^{-UA/\dot m c_p}$. Fraction of DEH heat
+  that reaches the arrival (heat-exchanger effectiveness) is $\eta=(1-e^{-NTU})/NTU$ with
+  $NTU=UA/\dot m c_p$, so it falls from about 0.55 at 9 MSm3/d to about 0.2 at 2.5 MSm3/d in a
+  30 km line: electric DEH loses most of its heat to the sea at low rate, a heater at the receiving
+  end does not. Take $\dot m c_p$ from NeqSim (recombined wellstream, TP flash, per MSm3/d), not
+  from gas alone: liquids and water add 5-15 %.
+- **Calibrate on two independent anchors** (flow-assurance rate-vs-arrival-temperature curve and a
+  measured DEH step test), fit $(T_{in},UA)$ on one and predict the other; cap $T_{in}$ at a
+  physical wellhead temperature or the pair is degenerate (T_in runs to the optimiser bound).
+- **Never read DEH power from the transformer tap tag.** The tap/step tag is a setting that stays
+  at its last value (for example 12.6 of 13) with the breaker open. Power is breaker state times
+  primary current: $P\approx P_{max}\,I/I_{max}$ (check median current when on against the rated
+  power to find $I_{ref}$). One field showed the breaker closed 25 % of hours at about 7.7 MW,
+  so the time-average power was 2.0 MW (17 GWh/y), not the 7.7 MW the tap tag suggests, and a
+  quoted "halve the DEH, save 20 kt CO2" only applies once DEH runs continuously.
+- **Bang-bang DEH** (fixed power steps, on/off) holds the mean temperature but not the minimum.
+  Report on-fraction per month and the temperature percentiles, not only the mean; a regulated
+  heater saves little energy at equal mean but narrows the band, so value it through the
+  threshold-driven consequence (for example oil-in-water exceedance probability vs temperature
+  bin), not through kWh.
+- **Cross-check hydrate margin in the heated line**, not only at the receiving separator: the
+  arrival temperature without DEH crosses (hydrate formation temperature + margin) years before the
+  separator temperature does. In Python, `hydrateFormationTemperature()` on a CPA fluid with a long
+  component list threw `getPhase ... Can not return` here; `runFlowAssurance` `hydrateRiskMap` (MCP)
+  returned the CPA temperature directly and is the quick route.
+- Calibrate unknown mixing inputs (temperature of the other streams, DEH delivery scale) by
+  approximate Bayesian rejection against the measured energy rather than fixing them: draw from
+  wide priors, keep draws that reproduce the measured average DEH energy, and carry the survivors
+  through the economics.
+
 ## 7. Flow Assurance Decision Matrix
 
 | Threat | Detection | NeqSim Method | Mitigation |
 |--------|-----------|---------------|------------|
 | Hydrate | `hydrateFormationTemperature()` | CPA EOS + hydrate check | MEG, methanol, insulation, DEH |
 | Wax | `calcWAT()`, `WaxFractionSim` | Wax characterization | Pigging, inhibitor, insulation |
-| Asphaltene | de Boer screening | CPA flash at multiple P | Inhibitor, avoid P drop |
+| Asphaltene | de Boer screening | `AsphalteneSolidModel` calibrated to a measured onset; CPA flash at multiple P | Inhibitor, avoid P drop |
 | Corrosion (CO2) | CO2 partial pressure | Standard flash | CRA, inhibitor, pH stabilization |
 | Slugging | Beggs & Brill flow regime | `PipeBeggsAndBrills` | Slug catcher, topside choking |
 | Scale | Ion activity product | Electrolyte-CPA | Scale inhibitor, pH control |
@@ -1270,3 +1902,84 @@ impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet su
 | MEG not reducing hydrate T | Check MEG is partitioning to aqueous phase |
 | No solid S8 phase forms | Use `TPSolidflash()` (not `TPflash()`) and call `setSolidPhaseCheck("S8")` first |
 | S8 deposition risk missed | Saturate the gas at a realistic baseline (scrubber/separator P,T) before checking the letdown point |
+| Tie-back deliverability collapses (recovery 7-13 %) when a NeqSim tubing/flowline table is used as the outflow curve | `PipeBeggsAndBrills` tubing outflow is non-monotonic at low rate (liquid-loading minimum): intersect the inflow with the stable right-hand branch only (rate above the pressure minimum), never the whole table |
+| `PipeBeggsAndBrills` throws a negative-pressure exception while building a Pin(Q, P_arrival) table | Solve the required inlet pressure by bisection inside `try/except`, treat a failure as infeasible (NaN), and replace NaN by a large pressure before interpolating |
+| Hydrate temperature is NaN or MEG suppression is zero | `fluid.setHydrateCheck(True)` before the flash, and a water component present; in a TBP-characterised fluid the pseudo-components are named `<name>_PC` |
+| Arrival temperature equals the inlet in a Beggs-and-Brill cooling study | Call `setConstantSurfaceTemperature(...)` before `setHeatTransferCoefficient(...)`; screening U is about 20 W/m2K for a bare line and 4 for an insulated one. The U-value is referenced to the INNER area (pi x ID x L): convert a layered build-up with `U_inner = 1/(2 pi r_i R_total)`; an outer-area U overstates the heat loss |
+| 5.5-inch tubing shows no feasible rate for a 1-3 MSm3/d gas-condensate well | Use 7-inch (ID 0.159 m) as the screening tubing and check the liquid-loading minimum before blaming the flowline |
+| A new tie-back looks feasible on its own line but is routed through a shared trunk | Compute the back-pressure the added rate puts on the trunk inlet and compare it with the choke dP of the existing wells (Trestakk: +23/+51/+93 bar for +1.5/+3/+5 kSm3/d on a 12-in trunk against 14-95 bar of headroom); beyond the headroom the existing wells are throttled out or a dedicated line is needed |
+| Trunk ID and host arrival pressure are unknown | Calibrate the arrival pressure to measured wellhead/choke data for each plausible ID (10 and 12 in), show both, and bracket the arrival pressure with the host PSD window instead of reporting one number |
+
+### TwoFluidPipe static terrain initialization
+
+The conservative interior operator reconstructs a common face pressure from adjacent mixture inertia and signed
+half-cell heads. The public 90-case analytical matrix covers flat, affine and curved terrain, three density patterns,
+12--192 cells and pure gas/oil below `1e-10 m/s2`, with zero local mass and energy rates; a separate 45-case
+pure-water extension passes the same gates. Signed face work uses
+`Q * deltaP` with the mass donor, horizontal pressure flux is unchanged and rollback restores the accepted diagnostic.
+Use this as numerical hydrostatic-initialization evidence only. A stationary gas/liquid pool with different phase
+densities, moving terrain drainage, restart, slugging and pigging remain unsupported until their own conservation,
+refinement and public experimental gates pass.
+
+For an explicit static phase-traction diagnostic, use
+`GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`: signed liquid/gas moments
+about the interface in m3 and their area derivatives in m2. Multiply each moment by its phase density,
+gravity and cosine of inclination for the hydrostatic traction contribution; interface pressure times
+phase area is separate. To use the same geometry in the transient operator, explicitly call
+`setStratifiedHydrostaticPressureMomentsEnabled(true)`. It adds phase traction at every face and
+matching `Q * F / A` work with the signed mass donor; inspect
+`getLastStratifiedHydrostaticPressureForces()` in N. The supported face contains gas and at most one
+liquid in a constant-diameter circular pipe; oil+water and diameter steps reject. Its independent
+integral, signed-work, conservation and rollback tests do not establish elapsed dynamic pool
+retention, terrain drainage, shutdown/cooldown, restart, slugging, pigging or hydrocarbon evaporation.
+
+Preserve both face fractions when adapting holdup to pressure moments: use
+`calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter)`. Its relative minority-area
+inversion and algebraic reflection retain positive traces; the legacy general holdup-to-depth
+approximation has an absolute area tolerance and must not supply this pressure-work geometry.
+See `StratifiedPressureMomentsTest`, `StratifiedPressureMomentCouplingTest` and the public numerical record.
+The enabled historical 12/24-cell ramp currently stops at 0.25 s on the unchanged face-volume
+closure guard. Keep the executable coupling rejection record attached; instantaneous operator
+identities do not qualify full elapsed transient operation.
+
+## Residual MEG/water liquid after pigging
+
+For the bounded experimental Java/Python route, use `TwoFluidPipe` with
+`NonEquilibriumFilmTransfer`, `setInitialAqueousFilm`, and named-component transport.
+Inspect `docs/process/TwoFluidPipeFilmDrying.md` and `TwoFluidPipeFilmDryingTest` before setup.
+The inlet gas and initial liquid compositions are independent; water can absorb while MEG
+evaporates. Select isothermal Euler, CFL <= 0.5, and disable tracked slugs/heating. Coefficients
+are user inputs, not calibrated defaults. This is a gas/aqueous two-fluid route; the axial
+`PipelineEvaporationStudy` wall-film option does not calculate elapsed post-pigging drying time.
+Use `getFilmDryingStatus` with a positive residual threshold and horizon, preserve boundary
+and component ledgers, and distinguish seeded pool motion from validated terrain trapping.
+Short-time conservation, refinement and CPA equilibrium tests do not qualify 10 km drying duration.
+
+
+### Cross-sectional gravitational energy budget
+
+Use the existing `GeometryCalculator.StratifiedPressureMoments` derived centre-referenced phase
+first moments [m3] and `getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)`
+[J/m] for an explicit static normal-gravity budget. No solver state or serialized field is added.
+See [the executed analytical/high-precision energy record](../../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+This does not resolve the documented dry/wet pressure impulse or qualify dynamic pools, inlet refill
+or hydrocarbon evaporation; those still require conservative phase-front transport/work and heat/mass transfer.
+
+
+### Optional Rusanov phase-flux contract
+
+The default remains AUSM+. `AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local query,
+and `TwoFluidPipe.setRusanovInternalFluxEnabled(true)` selects the qualified two-donor operator on
+independent gas/oil/water internal faces after `setEnableWaterOilSlip(true)`.
+Its dissipated energy is `alpha * (rho * H - p)` with total specific enthalpy;
+exact absence ignores unused properties and positive traces retain the same formula.
+SRK gas/oil controls distinguish EOS-volume internal energy from physical-density mechanical
+energy using explicit pressure-volume work; do not mix these API conventions in a reference.
+See the [executed conservative-flux evidence](../../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md).
+Forward and reverse donor streams remain separate through Runge-Kutta staging, pressure work and
+transactional component transport; their difference must reproduce the hydrodynamic net. The
+combined-liquid split, pressure interpolation, reconstructed slug faces and one-direction unsplit
+complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
+phase, total-energy and rollback reports.
+Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
+

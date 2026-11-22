@@ -49,7 +49,7 @@ public class simpleTopSideProcess {
     LPcompressor.setOutletPressure(50.0);
 
     Heater heaterLP = new Heater("heaterLP", LPcompressor.getOutletStream());
-    heaterLP.setOutTemperature(270.25);
+    heaterLP.setOutletTemperature(270.25);
 
     Stream stream_2 = new Stream("cooled gas", heaterLP.getOutletStream());
 

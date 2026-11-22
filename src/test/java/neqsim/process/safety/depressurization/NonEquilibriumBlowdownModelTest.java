@@ -29,12 +29,19 @@ public class NonEquilibriumBlowdownModelTest {
     return fluid;
   }
 
-  /** A fire-heated two-phase blowdown must bifurcate the zone temperatures and depressurize. */
+  /**
+   * A fire-heated two-phase blowdown must bifurcate the zone temperatures and depressurize.
+   *
+   * <p>
+   * The vapour first cools by expansion (below the liquid) and is then superheated by the fire-heated wall; 300 s
+   * covers both stages for this vessel.
+   * </p>
+   */
   @Test
   public void developsBifurcationAndDepressurizes() {
     NonEquilibriumBlowdownModel model = new NonEquilibriumBlowdownModel(twoPhaseFluid(), 10.0, 0.012, 0.85, 1.0e5);
     model.setFireExposure(0.9, 1200.0, 30.0, 20.0).setWall(4000.0, 470.0).setInsideGasCoefficient(50.0)
-        .setInterfacial(80.0, 4.0).setLatentHeat(350000.0).setTimeStep(1.0).setMaxTime(150.0).setStopPressure(3.0e5);
+        .setInterfacial(80.0, 4.0).setLatentHeat(350000.0).setTimeStep(1.0).setMaxTime(300.0).setStopPressure(3.0e5);
 
     NonEquilibriumBlowdownModel.NemResult result = model.run();
 
@@ -42,6 +49,30 @@ public class NonEquilibriumBlowdownModelTest {
     assertTrue(result.maxTemperatureBifurcationK > 0.0, "Vapour and liquid zones should diverge in temperature");
     double lastPressure = result.pressureBara.get(result.pressureBara.size() - 1);
     assertTrue(lastPressure < result.initialPressureBara, "Vessel should depressurize");
+  }
+
+  /** Without fire the vapour cools by expansion, the liquid flashes and the wall receives no external heat. */
+  @Test
+  public void coldBlowdownCoolsVapourWithoutFire() {
+    SystemInterface fluid = twoPhaseFluid();
+    NonEquilibriumBlowdownModel model = new NonEquilibriumBlowdownModel(fluid, 10.0, 0.025, 0.85, 1.0e5);
+    model.setFireEnabled(false).setWall(4000.0, 470.0).setInsideGasCoefficient(10.0).setInterfacial(80.0, 4.0)
+        .setTimeStep(1.0).setMaxTime(300.0).setStopPressure(3.0e5);
+
+    NonEquilibriumBlowdownModel.NemResult result = model.run();
+
+    double t0 = result.gasTemperatureK.get(0);
+    double tGasMin = Double.POSITIVE_INFINITY;
+    double tWallMax = Double.NEGATIVE_INFINITY;
+    for (int i = 0; i < result.timeS.size(); i++) {
+      tGasMin = Math.min(tGasMin, result.gasTemperatureK.get(i));
+      tWallMax = Math.max(tWallMax, result.wallTemperatureK.get(i));
+    }
+    assertTrue(tGasMin < t0 - 5.0, "vapour must cool on depressurization: " + t0 + " -> " + tGasMin);
+    assertTrue(tWallMax <= t0 + 1.0e-6, "wall must not heat up without fire: " + tWallMax);
+    double liquidStart = result.liquidMassKg.get(0);
+    double liquidEnd = result.liquidMassKg.get(result.liquidMassKg.size() - 1);
+    assertTrue(liquidEnd < 0.99 * liquidStart, "liquid must flash: " + liquidStart + " -> " + liquidEnd);
   }
 
   /** A single-phase gas feed must be rejected because it cannot form two zones. */

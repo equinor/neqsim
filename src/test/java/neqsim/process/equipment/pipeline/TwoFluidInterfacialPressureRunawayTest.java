@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -94,6 +95,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * are updated in sequence rather than solved together.
  * </p>
  */
+@Tag("slow")
 public class TwoFluidInterfacialPressureRunawayTest {
 
   private static TwoFluidPipe build(boolean implicitCoupling, double cfl) {

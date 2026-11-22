@@ -70,7 +70,11 @@ public class SampleValue implements Cloneable {
     this.standardDeviations = standardDeviations;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SampleValue clone() {
     SampleValue clonedValue = null;
@@ -78,6 +82,7 @@ public class SampleValue implements Cloneable {
       clonedValue = (SampleValue) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of SampleValue", ex);
     }
     // this was modified 20.05.2002
     // clonedValue.system = system.clone();

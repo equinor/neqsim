@@ -56,7 +56,9 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
    *
    * <p>
    * Calculates the polytropic head for a given flow and speed by interpolating or extrapolating between reference
-   * compressor curves.
+   * compressor curves. Between two reference speeds, head is linearly interpolated at the requested flow without an
+   * additional speed scaling, so the result is continuous at each reference curve. When only one reference curve is
+   * selected (including outside the speed range), the existing linear speed scaling is retained.
    * </p>
    */
   @Override
@@ -91,13 +93,9 @@ public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorCh
     double head1 = interpolatedHeads.get(0);
     double head2 = interpolatedHeads.get(1);
 
-    // Interpolate or extrapolate the head based on speed
-    double interpolatedHead = extrapolateOrInterpolateSpeed(speed, speed1, speed2, head1, head2);
-
-    // Scale the interpolated head proportionally to speed
-    interpolatedHead *= (speed / Math.max(speed1, speed2));
-
-    return interpolatedHead;
+    // The reference heads already include the effect of speed. Scaling again introduces a downward jump just above
+    // each reference speed, making speed solves and their capacity evidence depend on the initial guess.
+    return extrapolateOrInterpolateSpeed(speed, speed1, speed2, head1, head2);
   }
 
   /**

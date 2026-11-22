@@ -71,8 +71,8 @@ public class NumericalDispersionAnalysisTest {
     logger.info("  σ = sqrt(2 × D_num × L / v) = sqrt(Δx × L × (1 - CFL))");
 
     // Example calculation
-    double[] gridSizes = { 50.0, 100.0, 200.0, 500.0 }; // m
-    double[] pipeLengths = { 10000.0, 50000.0, 100000.0 }; // m
+    double[] gridSizes = {50.0, 100.0, 200.0, 500.0}; // m
+    double[] pipeLengths = {10000.0, 50000.0, 100000.0}; // m
     double cfl = 0.8;
 
     logger.info(String.format("%-8s %-10s %-12s %-15s %-15s", "Δx (m)", "L (km)", "D_num (m²/s)", "σ (m)", "σ/Δx"));
@@ -127,7 +127,7 @@ public class NumericalDispersionAnalysisTest {
     double cfl = 0.8;
 
     // Grid sizes from coarse to fine
-    double[] gridSizes = { 1000.0, 500.0, 250.0, 125.0, 62.5 };
+    double[] gridSizes = {1000.0, 500.0, 250.0, 125.0, 62.5};
     double[] frontWidths = new double[gridSizes.length];
 
     logger.info("Grid refinement study (50 km pipe, v=10 m/s, CFL=0.8):");
@@ -175,7 +175,7 @@ public class NumericalDispersionAnalysisTest {
     double pipeLength = 50000.0; // 50 km
 
     // Different CFL numbers
-    double[] cflNumbers = { 0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99 };
+    double[] cflNumbers = {0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99};
 
     logger.info(String.format("Grid: Δx = %.0f m, Pipe: %.0f km", dx, pipeLength / 1000));
     logger.info(StringUtils.repeat("-", 60));
@@ -220,10 +220,10 @@ public class NumericalDispersionAnalysisTest {
     // Common pipeline scenarios
     double[][] scenarios = {
         // {pipeLength_km, velocity_mps, acceptableFrontWidth_m}
-        { 10.0, 10.0, 50.0 }, // Short gas pipeline
-        { 50.0, 10.0, 100.0 }, // Medium gas pipeline
-        { 100.0, 15.0, 200.0 }, // Long gas pipeline
-        { 200.0, 12.0, 300.0 }, // Very long pipeline
+        {10.0, 10.0, 50.0}, // Short gas pipeline
+        {50.0, 10.0, 100.0}, // Medium gas pipeline
+        {100.0, 15.0, 200.0}, // Long gas pipeline
+        {200.0, 12.0, 300.0}, // Very long pipeline
     };
 
     double cfl = 0.8;

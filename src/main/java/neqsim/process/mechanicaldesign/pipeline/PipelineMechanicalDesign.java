@@ -83,6 +83,8 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
 
   /** Location class per ASME B31.8. */
   private int locationClass = 1;
+  /** Whether location class was explicitly selected before the calculator was created. */
+  private boolean locationClassExplicitlySet;
 
   /** Data source for loading from database. */
   private transient PipelineMechanicalDesignDataSource dataSource;
@@ -146,15 +148,28 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    */
   public PipeMechanicalDesignCalculator getCalculator() {
     if (calculator == null) {
-      calculator = new PipeMechanicalDesignCalculator();
+      calculator = createCalculator();
       // Initialize from current settings
       calculator.setOuterDiameter(outerDiameter > 0 ? outerDiameter : innerDiameter + 0.02);
       calculator.setDesignPressure(getMaxOperationPressure() * 0.1); // bar to MPa
       calculator.setDesignTemperature(getMaxOperationTemperature() - 273.15); // K to C
       calculator.setMaterialGrade(materialGrade);
-      calculator.setLocationClass(locationClass);
+      if (locationClassExplicitlySet) {
+        calculator.setLocationClass(locationClass);
+      } else {
+        calculator.setCompanyLocationClass(locationClass);
+      }
     }
     return calculator;
+  }
+
+  /**
+   * Create the calculator used by the inherited pipeline design workflow.
+   *
+   * @return calculator supporting this equipment's material identities
+   */
+  protected PipeMechanicalDesignCalculator createCalculator() {
+    return new PipeMechanicalDesignCalculator();
   }
 
   /**
@@ -166,7 +181,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    * </p>
    */
   public void loadFromDatabase() {
-    String company = getCompanySpecificDesignStandards();
+    String company = getProcessDesignCompanyIdentifier();
     if (company == null || company.isEmpty()) {
       company = "default";
     }
@@ -202,7 +217,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    * Load design factors from database for the current company.
    */
   public void loadDesignFactorsFromDatabase() {
-    String company = getCompanySpecificDesignStandards();
+    String company = getProcessDesignCompanyIdentifier();
     if (company == null || company.isEmpty()) {
       return;
     }
@@ -210,12 +225,12 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     PipelineMechanicalDesignDataSource.PipeDesignFactors factors = getDataSource().loadDesignFactors(company);
 
     // Apply to calculator
-    getCalculator().setDesignFactor(factors.designFactor);
+    getCalculator().setCompanyDesignFactor(factors.designFactor, factors.getSources().get("designfactor"));
     getCalculator().setJointFactor(factors.jointFactor);
     getCalculator().setCorrosionAllowance(factors.corrosionAllowance / 1000.0); // mm to m
     getCalculator().setFabricationTolerance(factors.fabricationTolerance);
-    this.locationClass = factors.locationClass;
-    getCalculator().setLocationClass(factors.locationClass);
+    getCalculator().setCompanyLocationClass(factors.locationClass);
+    this.locationClass = getCalculator().getLocationClass();
   }
 
   /** {@inheritDoc} */
@@ -224,17 +239,19 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     requireTypedDnvStF101Path();
     super.readDesignSpecifications();
 
-    // Load from database based on company standards
+    MaterialPipeDesignStandard matStd = (MaterialPipeDesignStandard) getDesignStandard()
+        .get("material pipe design codes");
+    if (matStd != null) {
+      getCalculator().setCompanyDesignFactor(matStd.getDesignFactor(), "MATERIAL_STANDARD");
+      getCalculator().setJointFactor(matStd.getEfactor());
+    }
     if (getCompanySpecificDesignStandards() != null && !getCompanySpecificDesignStandards().isEmpty()) {
       loadFromDatabase();
     }
-
-    if (getDesignStandard().containsKey("material pipe design codes")) {
-      MaterialPipeDesignStandard matStd = (MaterialPipeDesignStandard) getDesignStandard()
-          .get("material pipe design codes");
-      matStd.getDesignFactor();
-      // Sync with calculator
+    if (matStd != null && matStd.isDesignFactorExplicitlySet()) {
       getCalculator().setDesignFactor(matStd.getDesignFactor());
+    }
+    if (matStd != null && matStd.isEfactorExplicitlySet()) {
       getCalculator().setJointFactor(matStd.getEfactor());
     }
 
@@ -366,6 +383,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    * @param locationClass location class 1-4
    */
   public void setLocationClass(int locationClass) {
+    locationClassExplicitlySet = true;
     this.locationClass = Math.max(1, Math.min(4, locationClass));
     if (calculator != null) {
       calculator.setLocationClass(this.locationClass);

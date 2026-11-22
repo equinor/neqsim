@@ -2,20 +2,34 @@ package neqsim.thermo.system;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentBNS;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.phase.PhaseBNS;
 
 /**
  * Thermodynamic system implementing the Burgoyne–Nielsen–Stanko PR correlation.
  *
  * @author esol
+ * @version 1.0
  */
 public class SystemBnsEos extends SystemEos {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * Converts a temperature from degrees Rankine to Kelvin.
+   *
+   * @param degR temperature in degrees Rankine
+   * @return temperature in Kelvin
+   */
   private static double degRToK(double degR) {
     return degR * 5.0 / 9.0;
   }
 
+  /**
+   * Converts an absolute pressure from psi to bar.
+   *
+   * @param psia absolute pressure in psi
+   * @return absolute pressure in bar
+   */
   private static double psiaToBar(double psia) {
     return psia * 0.06894757293168;
   }
@@ -27,54 +41,65 @@ public class SystemBnsEos extends SystemEos {
   private static final double PcCH4 = psiaToBar(667.029); // Critical pressure of methane [bar]
   private static final double VcZcCH4 = ThermodynamicConstantsInterface.R * TcCH4 / (PcCH4 * 1.0e5);
 
-  // Component count for BNS system (CO2, H2S, N2, H2, HC)
-  private static final int NUM_BNS_COMPONENTS = 5;
+  // Helium is appended to preserve the original five component indices.
+  private static final int HYDROCARBON_INDEX = 4;
+  private static final int HELIUM_INDEX = 5;
+  private static final double HELIUM_MOLAR_MASS = 4.003; // g/mol
 
-  private final double[] tcs;
-  private final double[] pcs;
-  private final double[] mws;
+  private double[] tcs;
+  private double[] pcs;
+  private double[] mws;
   private final double[] acfs;
   private final double[] omegaA;
   private final double[] omegaB;
   private final double[] vshift;
-  private final double[] vshiftField;
-  private double[][] cpCoeffs;
 
-  private final double[] zfractions = new double[NUM_BNS_COMPONENTS];
+  private double[] zfractions = new double[HELIUM_INDEX];
+  private double heliumMoleFraction;
   private double relativeDensity = 0.65;
   private boolean associatedGas = false;
-  private boolean mixingRuleDefined = false;
   private boolean componentsInitialized = false;
 
+  /**
+   * Returns the hydrocarbon pseudo-critical temperature for associated gas.
+   *
+   * @param x hydrocarbon molar mass above that of methane in g/mol
+   * @return pseudo-critical temperature in Kelvin
+   */
   private static double tcAg(double x) {
     return degRToK(2695.14765 * x / (274.341701 + x) + 343.008);
   }
 
+  /**
+   * Returns the hydrocarbon pseudo-critical temperature for gas condensate.
+   *
+   * @param x hydrocarbon molar mass above that of methane in g/mol
+   * @return pseudo-critical temperature in Kelvin
+   */
   private static double tcGc(double x) {
     return degRToK(1098.10948 * x / (101.529237 + x) + 343.008);
   }
 
+  /**
+   * Returns the hydrocarbon pseudo-critical pressure.
+   *
+   * @param x hydrocarbon molar mass above that of methane in g/mol
+   * @param vcSlope slope of the critical volume divided by critical compressibility with respect to molar mass
+   * @param tc pseudo-critical temperature in Kelvin
+   * @return pseudo-critical pressure in bar
+   */
   private static double pcFn(double x, double vcSlope, double tc) {
     double vcOnZc = vcSlope * x + VcZcCH4;
     return ThermodynamicConstantsInterface.R * tc / vcOnZc / 1.0e5;
   }
 
   /**
-   * Calculates the volume shift parameter.
+   * Returns the pseudo-critical temperature and pressure of the hydrocarbon fraction.
    *
-   * @param ciField volume shift field coefficient
-   * @param omegaB PR equation omega B parameter
-   * @param tc critical temperature [K]
-   * @param pc critical pressure [bar]
-   * @return volume shift parameter
+   * @param sgHc hydrocarbon specific gravity relative to air
+   * @param ag whether the hydrocarbon is characterized as associated gas
+   * @return temperature in Kelvin and pressure in bar
    */
-  private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
-    // Return the dimensionless volume shift coefficient.
-    // ComponentPR.getVolumeCorrection() multiplies by b internally,
-    // so we must NOT pre-multiply here to avoid double-b correction.
-    return ciField;
-  }
-
   private static double[] pseudoCritical(double sgHc, boolean ag) {
     double x = Math.max(0.0, MW_AIR * sgHc - MW_CH4);
     double tpc;
@@ -87,22 +112,33 @@ public class SystemBnsEos extends SystemEos {
       slope = 0.170931432 * 0.0283168466 / 453.59237;
     }
     double ppc = pcFn(x, slope, tpc);
-    return new double[] { tpc, ppc };
+    return new double[] {tpc, ppc};
   }
 
-  private static double hydrocarbonSg(double sg, double[] zf, double[] mws) {
-    double fracHc = zf[4];
-    double sumNon = 0.0;
-    for (int i = 0; i < 4; i++) {
-      sumNon += zf[i] * mws[i];
+  /**
+   * Calculates the hydrocarbon specific gravity by removing the known non-hydrocarbon contributions.
+   *
+   * @return hydrocarbon specific gravity, floored at methane
+   */
+  private double hydrocarbonSg() {
+    double fracHc = zfractions[HYDROCARBON_INDEX];
+    if (fracHc <= 0.0) {
+      return 0.75; // The unused hydrocarbon pseudo-component still needs valid parameters.
     }
-    if (fracHc > 0) {
-      return (sg - sumNon / MW_AIR) / fracHc;
-    } else {
-      return 0.75;
+
+    double nonHydrocarbonMass = heliumMoleFraction * HELIUM_MOLAR_MASS;
+    for (int i = 0; i < HYDROCARBON_INDEX; i++) {
+      nonHydrocarbonMass += zfractions[i] * mws[i] * 1000.0;
     }
+    return Math.max(MW_CH4 / MW_AIR, (relativeDensity - nonHydrocarbonMass / MW_AIR) / fracHc);
   }
 
+  /**
+   * Returns the NeqSim name for a BNS component slot.
+   *
+   * @param i component index
+   * @return component name
+   */
   private static String compName(int i) {
     switch (i) {
     case 0:
@@ -113,16 +149,10 @@ public class SystemBnsEos extends SystemEos {
       return "N2";
     case 3:
       return "H2";
-    default:
+    case HYDROCARBON_INDEX:
       return "HC";
-    }
-  }
-
-  private void applyBnsBips() {
-    for (int p = 0; p < getMaxNumberOfPhases(); p++) {
-      if (phaseArray[p] instanceof PhaseBNS) {
-        ((PhaseBNS) phaseArray[p]).setBnsBips(getTemperature());
-      }
+    default:
+      return "helium";
     }
   }
 
@@ -144,17 +174,13 @@ public class SystemBnsEos extends SystemEos {
     modelName = "BNS-PR";
     attractiveTermNumber = 1;
 
-    tcs = new double[] { degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430), 1.0 };
-    pcs = new double[] { psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84), psiaToBar(187.53), 1.0 };
-    mws = new double[] { 44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0 };
-    acfs = new double[] { 0.12253, 0.04909, 0.037, -0.217, -0.03899 };
-    omegaA = new double[] { 0.427671, 0.436725, 0.457236, 0.457236, 0.457236 };
-    omegaB = new double[] { 0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961 };
-    vshiftField = new double[] { -0.27607, -0.22901, -0.21066, -0.36270, -0.19076 };
-    vshift = new double[NUM_BNS_COMPONENTS];
-    for (int i = 0; i < vshift.length; i++) {
-      vshift[i] = calcVshift(vshiftField[i], omegaB[i], tcs[i], pcs[i]);
-    }
+    tcs = new double[] {degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430), 1.0};
+    pcs = new double[] {psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84), psiaToBar(187.53), 1.0};
+    mws = new double[] {44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0};
+    acfs = new double[] {0.12253, 0.04909, 0.037, -0.217, -0.03899};
+    omegaA = new double[] {0.427671, 0.436725, 0.457236, 0.457236, 0.457236};
+    omegaB = new double[] {0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961};
+    vshift = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
 
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseBNS(tcs, pcs, mws, acfs, omegaA, omegaB, vshift);
@@ -180,9 +206,7 @@ public class SystemBnsEos extends SystemEos {
   public SystemBnsEos(double T, double P, double sg, double yCO2, double yH2S, double yN2, double yH2,
       boolean associatedGas) {
     this(T, P);
-    this.associatedGas = associatedGas;
-    this.relativeDensity = sg;
-    setComposition(yCO2, yH2S, yN2, yH2);
+    setComposition(sg, yCO2, yH2S, yN2, yH2, associatedGas);
   }
 
   /**
@@ -198,9 +222,40 @@ public class SystemBnsEos extends SystemEos {
    * @throws java.lang.IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double sg, double yCO2, double yH2S, double yN2, double yH2, boolean associatedGas) {
+    setComposition(sg, yCO2, yH2S, yN2, yH2, 0.0, associatedGas);
+  }
+
+  /**
+   * Sets the BNS composition, including helium. Hydrocarbon is the balance of the supplied mole fractions.
+   *
+   * @param sg relative density (specific gravity)
+   * @param yCO2 mole fraction of CO2
+   * @param yH2S mole fraction of H2S
+   * @param yN2 mole fraction of N2
+   * @param yH2 mole fraction of H2
+   * @param yHe mole fraction of helium
+   * @param associatedGas true for associated gas, false for gas condensate
+   * @throws IllegalArgumentException if a fraction is non-finite or negative, or their sum exceeds 1
+   */
+  public void setComposition(double sg, double yCO2, double yH2S, double yN2, double yH2, double yHe,
+      boolean associatedGas) {
+    if (!(yCO2 >= 0.0 && yH2S >= 0.0 && yN2 >= 0.0 && yH2 >= 0.0 && yHe >= 0.0)) {
+      throw new IllegalArgumentException("Mole fractions must be non-negative");
+    }
+    double sum = yCO2 + yH2S + yN2 + yH2 + yHe;
+    if (sum > 1.0) {
+      throw new IllegalArgumentException(String.format("Sum of mole fractions (%.4f) exceeds 1.0", sum));
+    }
     this.relativeDensity = sg;
     this.associatedGas = associatedGas;
-    setComposition(yCO2, yH2S, yN2, yH2);
+    zfractions[0] = yCO2;
+    zfractions[1] = yH2S;
+    zfractions[2] = yN2;
+    zfractions[3] = yH2;
+    zfractions[HYDROCARBON_INDEX] = 1.0 - sum;
+    heliumMoleFraction = yHe;
+    componentsInitialized = true;
+    updateComposition();
   }
 
   /**
@@ -213,22 +268,7 @@ public class SystemBnsEos extends SystemEos {
    * @throws java.lang.IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
   public void setComposition(double yCO2, double yH2S, double yN2, double yH2) {
-    // Validate input parameters
-    if (yCO2 < 0 || yH2S < 0 || yN2 < 0 || yH2 < 0) {
-      throw new IllegalArgumentException("Mole fractions must be non-negative");
-    }
-
-    double sum = yCO2 + yH2S + yN2 + yH2;
-    if (sum > 1.0) {
-      throw new IllegalArgumentException(String.format("Sum of mole fractions (%.4f) exceeds 1.0", sum));
-    }
-
-    zfractions[0] = yCO2;
-    zfractions[1] = yH2S;
-    zfractions[2] = yN2;
-    zfractions[3] = yH2;
-    componentsInitialized = true;
-    updateComposition();
+    setComposition(relativeDensity, yCO2, yH2S, yN2, yH2, 0.0, associatedGas);
   }
 
   /**
@@ -263,34 +303,34 @@ public class SystemBnsEos extends SystemEos {
    * Updates the hydrocarbon pseudo-component properties based on composition and relative density.
    */
   private void updateHydrocarbonProperties() {
-    double[] zf = zfractions;
-    double sgHc = hydrocarbonSg(relativeDensity, zf, new double[] { 44.01, 34.082, 28.014, 2.016, 0.0 });
+    double sgHc = hydrocarbonSg();
     double[] tcpc = pseudoCritical(sgHc, associatedGas);
-    tcs[4] = tcpc[0];
-    pcs[4] = tcpc[1];
-    mws[4] = sgHc * MW_AIR / 1000.0;
-    vshift[4] = calcVshift(vshiftField[4], omegaB[4], tcs[4], pcs[4]);
+    tcs[HYDROCARBON_INDEX] = tcpc[0];
+    pcs[HYDROCARBON_INDEX] = tcpc[1];
+    mws[HYDROCARBON_INDEX] = sgHc * MW_AIR / 1000.0;
   }
 
   /**
-   * Updates heat capacity coefficients for all components.
+   * Calculates ideal-gas heat-capacity coefficients from the current hydrocarbon molar mass.
+   *
+   * @return SI heat-capacity polynomial coefficients in component order
    */
-  private void updateHeatCapacityCoefficients() {
-    // Base heat capacity coefficients for CO2, H2S, N2, H2, HC
-    double[][] cp = { { 2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11 },
-        { 4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11 },
-        { 3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12 },
-        { 1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11 },
-        { 5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12 } };
+  private double[][] calculateHeatCapacityCoefficients() {
+    // Base heat capacity coefficients for CO2, H2S, N2, H2, HC and helium
+    double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
+        {4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11},
+        {3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12},
+        {1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11},
+        {5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12}, {2.5, 0, 0, 0, 0}};
 
     // Apply scaling for hydrocarbon component based on molecular weight
-    double hcMw = mws[4] * 1000.0;
+    double hcMw = mws[HYDROCARBON_INDEX] * 1000.0;
     double x = hcMw - MW_CH4;
-    double[] a0 = { 7.8570e-4, 1.3123e-3, 9.8133e-4, 1.6463e-3, 1.7306e-2 };
-    double[] a1 = { -8.1649e-3, 5.5485e-3, 8.3258e-2, 2.0635e-1, 2.5551 };
-    for (int k = 0; k < NUM_BNS_COMPONENTS; k++) {
+    double[] a0 = {7.8570e-4, 1.3123e-3, 9.8133e-4, 1.6463e-3, 1.7306e-2};
+    double[] a1 = {-8.1649e-3, 5.5485e-3, 8.3258e-2, 2.0635e-1, 2.5551};
+    for (int k = 0; k < a0.length; k++) {
       double scale = a0[k] * x * x + a1[k] * x + 1.0;
-      cp[4][k] *= scale;
+      cp[HYDROCARBON_INDEX][k] *= scale;
     }
 
     // Convert to SI units (multiply by R)
@@ -300,83 +340,75 @@ public class SystemBnsEos extends SystemEos {
         cp[i][j] *= factor;
       }
     }
-    cpCoeffs = cp;
+    return cp;
   }
 
+  /**
+   * Updates the phase components and refreshes BNS interactions after a composition change.
+   */
   private void updateComposition() {
-    double sum = zfractions[0] + zfractions[1] + zfractions[2] + zfractions[3];
-    zfractions[4] = 1.0 - sum;
-
-    // Update hydrocarbon properties and heat capacity coefficients
     updateHydrocarbonProperties();
-    updateHeatCapacityCoefficients();
+    double[][] cpCoeffs = calculateHeatCapacityCoefficients();
 
-    double[] zf = zfractions;
-    for (int j = 0; j < zf.length; j++) {
-      String name = compName(j);
-      if (((PhaseBNS) phaseArray[0]).componentArray[j] != null) {
-        getComponent(name).setNumberOfmoles(zf[j]);
-        for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-          if (phaseArray[i] instanceof PhaseBNS) {
-            ComponentBNS comp = (ComponentBNS) ((PhaseBNS) phaseArray[i]).componentArray[j];
-            if (comp != null) {
-              comp.setNumberOfMolesInPhase(zf[j]);
-              comp.setCpA(cpCoeffs[j][0]);
-              comp.setCpB(cpCoeffs[j][1]);
-              comp.setCpC(cpCoeffs[j][2]);
-              comp.setCpD(cpCoeffs[j][3]);
-              comp.setCpE(cpCoeffs[j][4]);
-              comp.setTC(tcs[j]);
-              comp.setPC(pcs[j]);
-              comp.setMolarMass(mws[j]);
-              comp.setVolumeCorrectionConst(vshift[j]);
-              comp.calca();
-              comp.calcb();
-            }
+    int previousCount = getNumberOfComponents();
+    int componentCount = heliumMoleFraction > 0.0 || previousCount > HELIUM_INDEX ? HELIUM_INDEX + 1 : HELIUM_INDEX;
+    for (int j = 0; j < componentCount; j++) {
+      double moles = j == HELIUM_INDEX ? heliumMoleFraction : zfractions[j];
+      if (j >= previousCount) {
+        String name = compName(j);
+        if (j == HYDROCARBON_INDEX) {
+          super.addComponent("methane", moles);
+          renameComponent("methane", name);
+        } else {
+          super.addComponent(name, moles);
+        }
+      }
+      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+        if (phaseArray[i] instanceof PhaseBNS) {
+          ComponentBNS comp = (ComponentBNS) phaseArray[i].getComponent(j);
+          comp.setNumberOfmoles(moles);
+          comp.setNumberOfMolesInPhase(moles);
+          comp.setCpA(cpCoeffs[j][0]);
+          comp.setCpB(cpCoeffs[j][1]);
+          comp.setCpC(cpCoeffs[j][2]);
+          comp.setCpD(cpCoeffs[j][3]);
+          comp.setCpE(cpCoeffs[j][4]);
+          if (j == HYDROCARBON_INDEX) {
+            comp.setTC(tcs[j]);
+            comp.setPC(pcs[j]);
+            comp.setMolarMass(mws[j]);
+            comp.calca();
+            comp.calcb();
           }
         }
-      } else {
-        addBnsComponent(name, zf[j], j);
       }
     }
-    setTotalNumberOfMoles(1.0);
-
-    if (mixingRuleDefined) {
-      applyBnsBips();
-    }
-  }
-
-  private void addBnsComponent(String name, double moles, int compIndex) {
-    String addName = name.equals("HC") ? "methane" : name;
-    super.addComponent(addName, moles);
-    if (!addName.equals(name)) {
-      renameComponent(addName, name);
+    setTotalNumberOfMolesRaw(1.0);
+    if (getMixingRule() == null) {
+      setMixingRule(EosMixingRuleType.CLASSIC_T2);
+      return;
     }
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      if (phaseArray[i] != null) {
-        ComponentBNS comp = new ComponentBNS(name, moles, moles, compIndex, tcs[compIndex], pcs[compIndex],
-            mws[compIndex], acfs[compIndex], omegaA[compIndex], omegaB[compIndex], vshift[compIndex]);
-        comp.setCpA(cpCoeffs[compIndex][0]);
-        comp.setCpB(cpCoeffs[compIndex][1]);
-        comp.setCpC(cpCoeffs[compIndex][2]);
-        comp.setCpD(cpCoeffs[compIndex][3]);
-        comp.setCpE(cpCoeffs[compIndex][4]);
-        ((PhaseBNS) phaseArray[i]).componentArray[compIndex] = comp;
+      if (phaseArray[i] instanceof PhaseBNS && phaseArray[i].getMixingRuleType() != null) {
+        PhaseBNS phase = (PhaseBNS) phaseArray[i];
+        if (componentCount != previousCount) {
+          phase.setMixingRule(phase.getMixingRuleType());
+          phase.resetPhysicalProperties();
+        } else {
+          phase.setBnsBips(getTemperature());
+        }
       }
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setMixingRule(int type) {
-    super.setMixingRule(type);
-    mixingRuleDefined = true;
-    applyBnsBips();
   }
 
   /** {@inheritDoc} */
   @Override
   public SystemBnsEos clone() {
-    return (SystemBnsEos) super.clone();
+    SystemBnsEos copy = (SystemBnsEos) super.clone();
+    copy.zfractions = zfractions.clone();
+    copy.tcs = tcs.clone();
+    copy.pcs = pcs.clone();
+    copy.mws = mws.clone();
+    return copy;
   }
 }

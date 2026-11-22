@@ -26,8 +26,8 @@ The reconciliation is intentionally conservative:
 Every published tool has an explicit coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`.
 
 - 20 tools have tool-specific `BenchmarkTrust` pages and remain `EXPLICIT_TRUST`.
-- Twenty-one bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageState`, `getAdjustableParameters`, `validateInput`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `diagnoseAutomation`, and `getAutomationLearningReport`.
-- 30 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
+- Fifty bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageSecurity`, `manageState`, `getAdjustableParameters`, `validateInput`, `validateResults`, `generateReport`, `bridgeTaskWorkflow`, `generateVisualization`, `runPlugin`, `runCapability`, `composeWorkflow`, `solveTask`, `streamSimulation`, `composeMultiServerWorkflow`, `runRiskMatrix`, `runLOPA`, `runSIL`, `runBarrierRegister`, `runRelief`, `runOperationalStudy`, `compareProcesses`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`, `saveSimulationState`, `compareSimulationStates`, `runProcessLoop`, `designUtilities`, `runChemistry`, `runFlareNetwork`, `runHazopScenario`, `runSafetySystemPerformance`, `runOpenDrainReview`, `runNorsokS001Clause10Review`, `diagnoseAutomation`, and `getAutomationLearningReport`.
+- 1 tool remains `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
 
 The underlying `BenchmarkTrust` registry itself is intentionally unchanged at 20 explicit pages and 51 generic fallbacks. Contract-tested software-contract evidence is a separate Phase 0 classification and does not certify any thermodynamic, process, pipeline, dynamic, safety, or optimization calculation advertised by those surfaces. For `getSimulationVariable`, the qualified boundary is addressed read routing, requested-unit handling, standard envelope/provenance/validation/quality-gate preservation, fail-closed inputs, and packaged transport; the numerical value, model fidelity, convergence adequacy, and engineering applicability are not benchmark-validated by that classification. For `manageModel`, the qualified boundary is the reusable registry lifecycle, canonical routing, revision/delete invalidation, fail-closed inputs, and packaged transport; restart persistence, distributed coherence, numerical fidelity, convergence, mass/energy closure, facility fidelity, and plant authority remain outside that classification. For `manageSession`, the qualified boundary is canonical-process lifecycle, owner isolation, close/invalidation, fail-closed behavior and packaged transport; restart durability, distributed coherence, numerical fidelity, convergence, conservation, facility fidelity and plant authority remain outside that classification.
 
@@ -35,26 +35,263 @@ The discovery/catalog classification is backed by current source plus the packag
 
 Inventory version `1.12` promoted `getProgress` using the bounded `ProgressTracker` implementation, the focused lifecycle regression in `McpEvidenceInventoryFoundationTests`, the existing real-MCP `getProgress(action=listActive)` call, and `docs/evidence/PROGRESS_RETRIEVAL_CONTRACT.md`. Its machine-readable coverage record and packaged protocol expectation moved together on the same exact head, changing the Phase 0 coverage accounting from 20/8/43 to 20/9/42. The evidence is deliberately limited to active-operation discovery, point retrieval, milestone visibility, completion state, missing-operation errors, and real-protocol list retrieval; it does not validate the underlying calculation, convergence, cancellation, durability, deployment isolation, authorization, or plant authority.
 
-Inventory version `1.15` promoted `inspectApi` from the transport-qualified candidate recorded in 1.14 to `CONTRACT_TESTED`. `ApiKnowledgeRunner` restricts reflection to `neqsim.*` classes, explicit common NeqSim classes, and canonical `EquipmentFactory` aliases; `ApiKnowledgeRunnerTest` verifies representative alias/class resolution, member filtering/source pointers, and fail-closed rejection of `java.lang.Runtime`; and the existing `NeqSimTools` facade preserves normal access enforcement and response standardization. The focused `test_inspect_api_protocol.py` executes both the successful `ProcessModel` inspection and the fail-closed non-NeqSim case against the packaged STDIO server. Current inventory `1.23` continues to freeze `inspectApi=CONTRACT_TESTED` under the 20/21/30 accounting, and the primary `test_mcp_server.py` independently includes it in the same twenty-one-tool set. `docs/evidence/API_INSPECTION_CONTRACT.md` records the detailed boundary. This promotion validates discovery behavior only; it does not execute the inspected method or add a scientific trust claim.
+Inventory version `1.15` promoted `inspectApi` from the transport-qualified candidate recorded in 1.14 to `CONTRACT_TESTED`. `ApiKnowledgeRunner` restricts reflection to `neqsim.*` classes, explicit common NeqSim classes, and canonical `EquipmentFactory` aliases; `ApiKnowledgeRunnerTest` verifies representative alias/class resolution, member filtering/source pointers, and fail-closed rejection of `java.lang.Runtime`; and the existing `NeqSimTools` facade preserves normal access enforcement and response standardization. The focused `tests/protocol/test_inspect_api_protocol.py` executes both the successful `ProcessModel` inspection and the fail-closed non-NeqSim case against the packaged STDIO server. Current inventory `1.42` continues to freeze `inspectApi=CONTRACT_TESTED` under the 20/42/9 accounting, and the primary `tests/protocol/test_mcp_server.py` independently includes it in the same forty-two-tool set. `docs/evidence/API_INSPECTION_CONTRACT.md` records the detailed boundary. This promotion validates discovery behavior only; it does not execute the inspected method or add a scientific trust claim.
 
-Inventory version `1.17` promoted `manageValidationProfile` to `CONTRACT_TESTED` after the bounded candidate recorded in 1.16 completed its atomic classification gate. Merged PR #3266 established the source, Java regression, and packaged-MCP evidence: built-in profile discovery, structural preservation of validator/profile/standards/design-factor metadata, isolated custom-profile create/activate/read/delete lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation errors. Its historical promotion changed 20/10/41 to 20/11/40. Current inventory `1.23` retains that classification as part of the twenty-one-tool contract set. Its `benchmarkApplicability=NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE` boundary does not establish standards currency, completeness, legal applicability or licensing, validation science, persistence, multi-tenant isolation, external authorization, or plant authority.
+Inventory version `1.17` promoted `manageValidationProfile` to `CONTRACT_TESTED` after the bounded candidate recorded in 1.16 completed its atomic classification gate. Merged PR #3266 established the source, Java regression, and packaged-MCP evidence: built-in profile discovery, structural preservation of validator/profile/standards/design-factor metadata, isolated custom-profile create/activate/read/delete lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation errors. Its historical promotion changed 20/10/41 to 20/11/40. Current inventory `1.42` retains that classification as part of the forty-two-tool contract set. Its `benchmarkApplicability=NOT_APPLICABLE_NON_NUMERICAL_VALIDATION_PROFILE_GOVERNANCE` boundary does not establish standards currency, completeness, legal applicability or licensing, validation science, persistence, multi-tenant isolation, external authorization, or plant authority.
 
-Inventory version `1.18` atomically promoted the five evidence-qualified automation advisory tools after merged #3302 and #3309 established direct Java and packaged-MCP behavior evidence. `AutomationRunner` continues to resolve the supplied definition or handle to the canonical solved `ProcessSystem`; discovery, reads, diagnostics, and the process-local learning report remain delegated to `ProcessAutomation` and `AutomationDiagnostics`. Machine-readable coverage, `test_automation_read_protocol.py`, and the authoritative primary `test_mcp_server.py` accounting moved together from 20/11/40 to 20/16/35. Diagnostics remain advisory, do not establish causality, and do not issue plant or control commands; learning persistence and quality remain outside the evidence boundary. `docs/evidence/AUTOMATION_READ_CONTRACT.md` records the detailed contract and limitations.
+Inventory version `1.18` atomically promoted the five evidence-qualified automation advisory tools after merged #3302 and #3309 established direct Java and packaged-MCP behavior evidence. `AutomationRunner` continues to resolve the supplied definition or handle to the canonical solved `ProcessSystem`; discovery, reads, diagnostics, and the process-local learning report remain delegated to `ProcessAutomation` and `AutomationDiagnostics`. Machine-readable coverage, `tests/protocol/test_automation_read_protocol.py`, and the authoritative primary `tests/protocol/test_mcp_server.py` accounting moved together from 20/11/40 to 20/16/35. Diagnostics remain advisory, do not establish causality, and do not issue plant or control commands; learning persistence and quality remain outside the evidence boundary. `docs/evidence/AUTOMATION_READ_CONTRACT.md` records the detailed contract and limitations.
 
-Inventory version `1.19` atomically promotes `manageModel` after merged #3325 established direct Java and packaged-MCP evidence for the reusable model-registry lifecycle. The contract remains the core `ModelRegistry` foundation from #2875 and routes handles back into canonical NeqSim `ProcessSystem`/`ProcessModel` execution; no MCP-only simulator or second process representation is introduced. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `test_model_registry_protocol.py`, the synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/16/35 to 20/17/34. This classification covers registration, idempotency, get/list/inspect, canonical process/automation routing, revisioning, fail-closed invalid/unknown requests, deletion/invalidation, source-level principal/tenant isolation, and packaged transport. It does not establish restart persistence, distributed coherence, numerical accuracy, convergence, component or energy closure, facility fidelity, plant authority, control-system permission, design certification, or accountable engineering approval. `docs/evidence/MODEL_REGISTRY_CONTRACT.md` records the detailed boundary.
+Inventory version `1.19` atomically promotes `manageModel` after merged #3325 established direct Java and packaged-MCP evidence for the reusable model-registry lifecycle. The contract remains the core `ModelRegistry` foundation from #2875 and routes handles back into canonical NeqSim `ProcessSystem`/`ProcessModel` execution; no MCP-only simulator or second process representation is introduced. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `tests/protocol/test_model_registry_protocol.py`, the synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/16/35 to 20/17/34. This classification covers registration, idempotency, get/list/inspect, canonical process/automation routing, revisioning, fail-closed invalid/unknown requests, deletion/invalidation, source-level principal/tenant isolation, and packaged transport. It does not establish restart persistence, distributed coherence, numerical accuracy, convergence, component or energy closure, facility fidelity, plant authority, control-system permission, design certification, or accountable engineering approval. `docs/evidence/MODEL_REGISTRY_CONTRACT.md` records the detailed boundary.
 
-Inventory version `1.20` atomically promotes `manageSession` after merged #3335 established direct Java and packaged-MCP evidence for the existing canonical-process lifecycle. `SessionRunner` retains normal NeqSim `ProcessSystem` state; no MCP-only simulator or second process representation is introduced. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `test_session_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/17/34 to 20/18/33. This classification covers canonical process-backed creation, caller-visible list/state identity, authenticated owner isolation, fail-closed unknown actions, close/invalidation, existing evaluate/read/write routes, bounded process-local storage, and packaged transport. It does not establish restart durability, distributed coherence, numerical accuracy, convergence, component or energy closure, facility fidelity, causal troubleshooting, plant authority, control-system permission, design certification, or accountable engineering approval. `docs/evidence/SESSION_LIFECYCLE_CONTRACT.md` records the detailed boundary.
+Inventory version `1.20` atomically promotes `manageSession` after merged #3335 established direct Java and packaged-MCP evidence for the existing canonical-process lifecycle. `SessionRunner` retains normal NeqSim `ProcessSystem` state; no MCP-only simulator or second process representation is introduced. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `tests/protocol/test_session_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/17/34 to 20/18/33. This classification covers canonical process-backed creation, caller-visible list/state identity, authenticated owner isolation, fail-closed unknown actions, close/invalidation, existing evaluate/read/write routes, bounded process-local storage, and packaged transport. It does not establish restart durability, distributed coherence, numerical accuracy, convergence, component or energy closure, facility fidelity, causal troubleshooting, plant authority, control-system permission, design certification, or accountable engineering approval. `docs/evidence/SESSION_LIFECYCLE_CONTRACT.md` records the detailed boundary.
 
-Inventory version `1.21` atomically promotes `manageState` after merged #3348 established direct Java and packaged-MCP evidence for the existing persisted-state lifecycle. `StatePersistenceRunner` saves the canonical process definition owned by `SessionRunner`; load reconstructs a normal NeqSim session and does not add an MCP-only simulator. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `StatePersistenceRunnerTest`, `test_state_persistence_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/18/33 to 20/19/32. This classification covers save without silent overwrite, list/info, definition comparison, load, export, delete, caller-scoped isolated storage, sandbox/path rejection, and packaged transport. It does not establish numerical replay equality, accuracy, convergence, component or energy closure, distributed durability or coherence, transactions, encryption, signing, facility fidelity, causal troubleshooting, plant authority, control permission, design certification, or accountable engineering approval. `docs/evidence/STATE_PERSISTENCE_CONTRACT.md` records the detailed boundary.
+Inventory version `1.21` atomically promotes `manageState` after merged #3348 established direct Java and packaged-MCP evidence for the existing persisted-state lifecycle. `StatePersistenceRunner` saves the canonical process definition owned by `SessionRunner`; load reconstructs a normal NeqSim session and does not add an MCP-only simulator. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `StatePersistenceRunnerTest`, `tests/protocol/test_state_persistence_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/18/33 to 20/19/32. This classification covers save without silent overwrite, list/info, definition comparison, load, export, delete, caller-scoped isolated storage, sandbox/path rejection, and packaged transport. It does not establish numerical replay equality, accuracy, convergence, component or energy closure, distributed durability or coherence, transactions, encryption, signing, facility fidelity, causal troubleshooting, plant authority, control permission, design certification, or accountable engineering approval. `docs/evidence/STATE_PERSISTENCE_CONTRACT.md` records the detailed boundary.
 
-Inventory version `1.22` atomically promotes `getAdjustableParameters` after merged #3365 established direct Java and packaged-MCP evidence for canonical adjustable-parameter metadata discovery. `AutomationRunner` resolves an explicit process definition or reusable model handle to the same solved `ProcessSystem` and delegates discovery to `ProcessAutomation`; no MCP-only model or parameter registry is introduced. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `AutomationLoopRunnerTest`, `test_adjustable_parameters_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/19/32 to 20/20/31. This classification covers deterministic names, addresses, engineering units, optional bounds, target metadata, direct-definition/model-handle equivalence, fail-closed inputs, and packaged transport. It does not establish bound feasibility, numerical fidelity, convergence, mass or energy conservation, optimisation quality, facility fidelity, plant authority, control permission, design certification, or accountable engineering approval. `docs/evidence/ADJUSTABLE_PARAMETERS_CONTRACT.md` records the detailed boundary.
+Inventory version `1.22` atomically promotes `getAdjustableParameters` after merged #3365 established direct Java and packaged-MCP evidence for canonical adjustable-parameter metadata discovery. `AutomationRunner` resolves an explicit process definition or reusable model handle to the same solved `ProcessSystem` and delegates discovery to `ProcessAutomation`; no MCP-only model or parameter registry is introduced. Machine-readable coverage, `McpEvidenceInventoryFoundationTests`, `AutomationLoopRunnerTest`, `tests/protocol/test_adjustable_parameters_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/19/32 to 20/20/31. This classification covers deterministic names, addresses, engineering units, optional bounds, target metadata, direct-definition/model-handle equivalence, fail-closed inputs, and packaged transport. It does not establish bound feasibility, numerical fidelity, convergence, mass or energy conservation, optimisation quality, facility fidelity, plant authority, control permission, design certification, or accountable engineering approval. `docs/evidence/ADJUSTABLE_PARAMETERS_CONTRACT.md` records the detailed boundary.
 
-Inventory version `1.23` atomically promotes `validateInput` after merged #3391 established direct Java and packaged-MCP evidence for the existing pre-flight validator. `NeqSimTools` resolves reusable handles through `ModelRegistry` and delegates to the canonical `Validator`; it does not execute or duplicate a simulator. Machine-readable coverage, Java assertions, `test_validate_input_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/20/31 to 20/21/30. This classification covers deterministic syntax, structure, unit/range/component/equipment checks, model-handle equivalence, issue severity/remediation, fail-closed inputs, and packaged transport. It does not establish model completeness, physical fidelity, convergence, conservation, performance, facility suitability, plant authority, certification, or engineering approval. `docs/evidence/VALIDATE_INPUT_CONTRACT.md` records the detailed boundary.
+Inventory version `1.23` atomically promotes `validateInput` after merged #3391 established direct Java and packaged-MCP evidence for the existing pre-flight validator. `NeqSimTools` resolves reusable handles through `ModelRegistry` and delegates to the canonical `Validator`; it does not execute or duplicate a simulator. Machine-readable coverage, Java assertions, `tests/protocol/test_validate_input_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/20/31 to 20/21/30. This classification covers deterministic syntax, structure, unit/range/component/equipment checks, model-handle equivalence, issue severity/remediation, fail-closed inputs, and packaged transport. It does not establish model completeness, physical fidelity, convergence, conservation, performance, facility suitability, plant authority, certification, or engineering approval. `docs/evidence/VALIDATE_INPUT_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.24` atomically promotes `validateResults` after merged #3406 established direct Java and packaged-MCP evidence for the existing advisory `EngineeringValidator`, with merged #3416/#3421 preserving complete inventory transport under the response-size guard. Machine-readable coverage, Java assertions, `tests/protocol/test_validate_results_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/21/30 to 20/22/29. This classification covers deterministic rule findings, stable severity/remediation, fail-closed malformed inputs, and packaged transport. It does not execute or independently verify a model, recompute component, energy, or facility-wide conservation, establish numerical fidelity or convergence, grant plant authority, or replace accountable engineering approval. `docs/evidence/VALIDATE_RESULTS_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.25` atomically promotes `generateReport` and `bridgeTaskWorkflow` after merged #3440 established direct Java and packaged-MCP evidence for the paired transient reporting and task-workflow handoff surfaces. Machine-readable coverage, Java assertions, `tests/protocol/test_reporting_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/22/29 to 20/24/27. This classification covers requested report metadata, transient Markdown/tables/chart inputs, optional embedded advisory validation, bounded summaries, results-schema and supported-runner handoff mapping, provenance/placeholders, fail-closed invalid input, standard response guarding, and packaged transport. It does not execute or recompute a simulation, independently validate units, numerical results, convergence or conservation, prove report or workflow completeness, create or approve a persisted artifact, grant plant authority, or replace accountable engineering approval. `docs/evidence/REPORTING_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.26` atomically promotes `manageSecurity` after merged #3470 established direct Java and packaged-MCP evidence for its bounded application-security contract. Machine-readable coverage, Java assertions, `tests/protocol/test_security_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/24/27 to 20/25/26. This classification covers default-disabled compatibility, bootstrap reachability, transport-bound principal enforcement, administrator gating, process-local audit/rate-limit/status views, structured fail-closed errors, and packaged transport. It does not establish TLS, OIDC/OAuth, external IAM, vault-backed secrets, durable or distributed security, penetration resistance, certification, production hardening, plant authority, or accountable engineering approval. `docs/evidence/SECURITY_MANAGEMENT_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.27` atomically promotes `setSimulationVariable` after merged #3478 established direct Java and packaged-MCP evidence for the canonical mutation/rerun contract. Machine-readable coverage, Java assertions, `tests/protocol/test_simulation_variable_write_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/25/26 to 20/26/25. This classification covers typed INPUT-address mutation, requested-unit handling, rerun/report sequencing, inline/model-handle equivalence, exact OUTPUT-only and physical-bound rejection, fail-closed missing inputs, fuzzy recovery, and packaged transport. It does not establish numerical accuracy, convergence, conservation, persistence, optimization quality, plant or control authority, certification, or accountable engineering approval. `docs/evidence/SIMULATION_VARIABLE_WRITE_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.28` atomically promotes `saveSimulationState` and `compareSimulationStates` after merged #3500 established direct Java and packaged-MCP evidence for the paired canonical snapshot contract. Machine-readable coverage, Java assertions, `tests/protocol/test_simulation_state_snapshot_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/26/25 to 20/28/23. This classification covers bounded snapshot serialization, requested name/version, equipment/stream structural presence, inline/model-handle equivalence, identical and metadata-version comparison, fail-closed inputs, standard envelope evidence, and packaged transport. It does not establish complete process-state capture or diff semantics, replay/restoration, persistence, numerical accuracy, convergence, conservation, isolation/security, causal diagnosis, plant/control authority, certification, or accountable engineering approval. `docs/evidence/SIMULATION_STATE_SNAPSHOT_CONTRACT.md` records the detailed boundary.
+
+
+Inventory version `1.29` atomically promotes `generateVisualization` after merged #3510 established direct Java and packaged-MCP evidence for its bounded rendering-transport contract. Machine-readable coverage, Java assertions, `tests/protocol/test_visualization_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/28/23 to 20/29/22. This classification covers documented aliases, canonical response types, stable SVG/Mermaid/HTML media fields, XML/HTML escaping, fail-closed malformed and structurally invalid inputs, standard envelope evidence, and packaged transport. It does not establish browser fidelity, markup sandbox security, accessibility, complete topology, numerical or thermodynamic accuracy, convergence, conservation, plant/control authority, certification, or accountable engineering approval. `docs/evidence/VISUALIZATION_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.30` atomically promotes `runPlugin` after merged #3534 established direct Java and packaged-MCP evidence for its bounded process-local execution contract. Machine-readable coverage, Java assertions, `tests/protocol/test_plugin_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/29/22 to 20/30/21. This classification covers process-local registration/listing/metadata, exact invocation input/output, same-name replacement, cleanup, structured absent/empty/unknown-action/malformed-input failures, exception normalization, normal MCP access enforcement, standard response evidence, and packaged transport. It does not establish plugin provenance, installation, signing, isolation, sandboxing, resource or tenant controls, persistence, external IAM, transport security, schema enforcement, scientific validity, plant/control authority, certification, or accountable engineering approval. `docs/evidence/PLUGIN_EXECUTION_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.31` atomically promotes `runCapability` after merged #3554 established direct Java and packaged-MCP evidence for bounded runtime discovery and invocation. Machine-readable coverage, Java assertions, `tests/protocol/test_capability_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/30/21 to 20/31/20. This classification covers runtime-classpath discovery, deterministic/clamped search, explicit source and execution-route metadata, exact bounded public-static invocation, conversion and result/time limits, normal access enforcement, standard response evidence, packaged transport, and fail-closed unsafe requests. It does not establish arbitrary-classloader completeness, semantic search completeness, scientific validity, uncertainty, units or operating ranges, purity, thread safety, cooperative interruption, OS/process sandboxing, resource quotas, tenant isolation, external IAM/transport security, arbitrary stateful execution, plant/control authority, certification, or accountable engineering approval. `docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.32` atomically promotes `composeWorkflow` after merged #3566 established direct Java and packaged-MCP evidence for bounded caller-authored orchestration. Machine-readable coverage, Java assertions, `tests/protocol/test_compose_workflow_protocol.py`, synchronized focused protocol expectations, authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move together from 20/31/20 to 20/32/19. This classification covers ordered curated-runner dispatch, additive shared-fluid normalization, explicit step-input precedence, per-step accounting, stop-on-first-failure behavior, structured invalid-request errors, normal access enforcement, standard response evidence, and packaged transport. It does not establish natural-language planning, arbitrary execution, semantic compatibility or unit conversion between steps, transactionality, rollback, persistence, distributed execution, numerical fidelity, convergence, conservation, uncertainty, optimization quality, facility completeness, external IAM or transport security, tenant isolation, plant or control authority, certification, or accountable engineering approval. `docs/evidence/COMPOSE_WORKFLOW_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.33` atomically promotes `solveTask` after merged #3575 established direct Java and packaged-MCP evidence for bounded task orchestration. Machine-readable coverage, Java assertions, `tests/protocol/test_solve_task_protocol.py`, synchronized focused protocol expectations, authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move together from 20/32/19 to 20/33/18. This classification covers non-blank task enforcement, nine deterministic keyword-routed fixed plans, fail-closed unsupported descriptions, canonical shared-fluid preservation and native-runner input projection, explicit plan/completion accounting, required-step stop behavior, underlying diagnostic preservation, normal access enforcement, standard response evidence, and packaged transport. It does not establish general natural-language understanding, open-ended planning, arbitrary execution, semantic result chaining, numerical fidelity, convergence, conservation, uncertainty, optimization quality, facility completeness, persistence, distributed execution, external IAM or transport security, tenant isolation, plant or control authority, certification, or accountable engineering approval. `docs/evidence/TASK_SOLVER_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.34` atomically promotes `streamSimulation` after merged #3589 established direct Java and packaged-MCP evidence for bounded streaming lifecycle behavior. Machine-readable coverage, Java assertions, `tests/protocol/test_streaming_protocol.py`, synchronized focused protocol expectations, authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move together from 20/33/18 to 20/34/17. This classification covers bounded sweep, dynamic, and Monte Carlo admission, fail-closed request validation, paginated polling, principal-scoped opaque identifiers, terminal-state and active-slot handling, canonical runner delegation, standard response evidence, and packaged transport. It does not establish numerical accuracy, convergence for arbitrary inputs, statistical or uncertainty validity, distribution completeness, real-time deadlines, durability, restart recovery, distributed execution, external queues, hard process isolation, universal numerical-kernel interruption, external IAM or transport security, plant/control authority, certification, or accountable engineering approval. `docs/evidence/STREAMING_SIMULATION_CONTRACT.md` records the detailed boundary.
+
+Inventory version `1.35` atomically promotes `composeMultiServerWorkflow`
+after merged #3614 established direct Java and packaged-MCP evidence for
+bounded process-local composition metadata and planning. Machine-readable
+coverage, Java assertions, `tests/protocol/test_composition_protocol.py`, synchronized
+focused protocol expectations, authoritative `tests/protocol/test_mcp_server.py` accounting,
+and documentation move together from 20/34/17 to 20/35/16. This classification
+covers bounded metadata-only admission, deterministic built-in/custom
+discovery, fixed workflows, sequential task plans, protected built-ins,
+bounded custom metadata, fail-closed invalid/connection/credential input,
+normal access enforcement, standard response evidence, and packaged transport.
+It does not establish external-server connection, discovery, reachability,
+tool invocation, workflow execution, result chaining, credential access,
+transport/IAM/authentication, persistence/durability, distributed
+transactions/rollback, semantic/unit compatibility, scientific or numerical
+validity, convergence, conservation, plant/control authority, certification,
+or accountable engineering approval.
+`docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md` records the detailed
+boundary.
+
+Inventory version `1.36` atomically promoted `runRiskMatrix` after merged #3645
+established direct Java and packaged-MCP evidence for bounded generic 5×5
+screening. Machine-readable coverage, Java assertions,
+`tests/protocol/test_risk_matrix_protocol.py`, synchronized focused protocol expectations,
+authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move together
+from 20/35/16 to 20/36/15. This classification covers bounded request, event,
+and text admission; exactly one caller-supplied input basis; canonical NeqSim
+category and score mapping; deterministic defaults and ordering; stable
+fail-closed errors; explicit screening and input-basis metadata; normal access
+enforcement; standard response evidence; and packaged transport. It does not
+identify hazards, infer frequency or consequence, validate scenarios,
+safeguards or risk acceptance, establish ISO 31000, NORSOK Z-013 or other
+standards conformance, authorize plant action, certify design, or replace
+project-specific criteria and accountable qualified safety-engineering review.
+`docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md` records the detailed
+boundary.
+
+Inventory version `1.37` atomically promotes `runLOPA` after merged #3655
+established direct Java and packaged-MCP evidence for bounded layer-of-protection
+screening. Machine-readable coverage, Java assertions,
+`tests/protocol/test_lopa_protocol.py`, synchronized focused protocol expectations,
+authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move together
+from 20/36/15 to 20/37/14. This classification covers bounded request,
+scenario, layer, and text admission; caller-supplied initiating-event and
+independent-protection-layer inputs; canonical NeqSim PFD multiplication and
+target comparison; deterministic defaults and ordering; stable fail-closed
+errors; explicit screening and advisory metadata; normal access enforcement;
+the standard response envelope; and packaged transport. It does not identify
+hazards, establish scenario completeness, verify IPL independence or
+effectiveness, select or verify SIL, decide tolerability or risk acceptance,
+establish standards compliance, authorize plant action, certify design, or
+replace qualified process-safety review and accountable approval.
+
+Inventory version `1.38` atomically promotes `runSIL` after merged #3664
+established direct Java and packaged-MCP evidence for bounded SIF PFD screening.
+Machine-readable coverage, Java assertions, `tests/protocol/test_sil_protocol.py`, synchronized
+focused protocol expectations, authoritative `tests/protocol/test_mcp_server.py` accounting,
+acceptance baselines, and documentation move together from 20/37/14 to
+20/38/13. The canonical `SafetyInstrumentedFunction` and
+`SILVerificationResult` remain authoritative. This classification covers
+bounded admission, deterministic presentation, stable fail-closed errors, and
+explicit caller-input, screening, and independent-assessment metadata. It does
+not establish SRS completeness, validate reliability inputs or lifecycle
+assumptions, select or approve SIL, demonstrate IEC 61508/61511 conformance,
+certify design, authorize plant action, or replace independent functional-safety
+assessment and accountable approval.
+`docs/evidence/SIL_SCREENING_CONTRACT.md` records the detailed boundary.
 
 ## Remaining Phase 0 work
 
-The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 30 published tools still lack a defensible tool-specific or bounded software-contract trust classification.
+The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 12 published tools still lack a defensible tool-specific or bounded software-contract trust classification.
 
 The next dependency is to continue auditing the remaining trust gaps against current source, starting only where concrete tests, public benchmark evidence, authoritative data, or a clearly bounded software contract supports a precise classification. Do not manufacture accuracy bounds for discovery/catalog/governance tools and do not reconstruct a second MCP-side conservation model when canonical NeqSim does not expose independent evidence.
 
 This document and the `mergedFoundations` object therefore must not be interpreted as campaign completion, plant authority, design certification, or accountable engineering approval.
+
+
+Inventory version `1.39` atomically promotes `compareProcesses` after direct
+Java and packaged-MCP evidence established bounded admission, deterministic
+request order, canonical `ProcessRunner` delegation, explicit completion and
+per-case success/failure accounting, and partial-result visibility. Synchronized
+schema/example discovery, the comprehensive protocol, and the focused
+`tests/protocol/test_process_comparison_protocol.py` move with the machine-readable record
+from 20/38/13 to 20/39/12. The detailed boundary is recorded in
+`docs/evidence/PROCESS_COMPARISON_CONTRACT.md`. This classification does not
+establish case comparability, numerical accuracy, convergence, conservation,
+optimization quality, facility fidelity, plant authority, certification, or
+accountable engineering approval.
+
+
+Inventory version `1.40` atomically promotes `runBarrierRegister` after merged
+PR #3711 established the bounded canonical-model, Java, packaged-STDIO, access,
+response-evidence, and advisory-boundary qualification. Machine-readable
+coverage, Java assertions, focused and comprehensive protocol accounting, and
+current-state documentation move together from 20/39/12 to 20/40/11.
+The promotion records software-contract evidence only: hazard identification,
+document validity, scenario completeness, barrier independence or effectiveness,
+PFD validity, SIL verification, risk acceptance, standards compliance, plant
+authority, certification, and accountable process-safety approval remain outside
+the evidence boundary. No promotion candidate remains queued and
+`scientificValidationComplete=false`.
+
+Inventory version `1.41` atomically promotes `runOperationalStudy` after
+merged PR #3747 established bounded request admission, fail-closed errors,
+eight-action discovery, deterministic controller screening, canonical local
+`JsonProcessBuilder` and `ProcessSystem` execution, invariant screening-only
+and no-plant-write metadata, normal MCP access enforcement, standard response
+evidence, focused Java qualification, and packaged-STDIO qualification.
+Machine-readable coverage, Java assertions, focused and comprehensive protocol
+accounting, and current-state documentation move together from 20/40/11 to
+20/41/10. The promotion records software-contract evidence only: causality,
+document and tag validity, P&ID completeness, instrumentation accuracy,
+controller tuning or stability, model fidelity, numerical accuracy, convergence,
+conservation, equipment condition, operating limits, trip or mitigation
+effectiveness, standards conformance, plant authority, certification, and
+accountable engineering approval remain outside the evidence boundary. No
+promotion candidate remains queued and `scientificValidationComplete=false`.
+
+Inventory version `1.42` atomically promotes `runRelief` after merged
+PR #3787 established bounded request admission, fail-closed malformed and
+non-physical inputs, gas, liquid, two-phase, and fire-heat-input routing through
+canonical NeqSim `ReliefValveSizing` calculations, backpressure validation,
+finite positive and conservative area evidence, explicit screening-only and
+standards-conformance metadata, normal MCP access enforcement, standard
+response evidence, focused Java qualification, and packaged-STDIO
+qualification. Machine-readable coverage, Java assertions, comprehensive
+protocol accounting, and current-state documentation move together from
+20/41/10 to 20/42/9. This is software-contract evidence only: relief-scenario
+completeness, standards applicability, relieving-rate and property validity,
+allowable accumulation, coefficient applicability, relief-system hydraulics
+and disposal capacity, reaction loads, installation suitability, certification,
+plant authorization, qualified pressure-relief/process-safety review, and
+accountable approval remain outside the evidence boundary. No promotion
+candidate remains queued and `scientificValidationComplete=false`.
+
+
+
+Inventory version `1.43` atomically promotes `runProcessLoop` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+20/42/9 to 20/43/8. Existing direct Java qualification and the focused packaged
+STDIO protocol establish deterministic ordered trial accounting, canonical
+`ProcessSystem` construction, sequential `ProcessAutomation.evaluate`
+delegation, readback routing, isolated rejected-setpoint evidence, fail-closed
+blank and malformed inputs, normal access enforcement, and standard response
+evidence. No process, thermodynamic, optimization, or control algorithm is
+reimplemented.
+
+This bounded software contract does not establish global or local optimization,
+feasible-space completeness, numerical or thermodynamic accuracy, convergence
+for arbitrary inputs, conservation, uncertainty, controller stability,
+equipment or facility fidelity, safe operating limits, persistence, parallel
+execution, plant or control authority, certification, or accountable
+engineering approval. No promotion candidate remains queued and
+`scientificValidationComplete=false`.
+
+
+Inventory version `1.44` atomically promotes `designUtilities` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+20/43/8 to 20/44/7. The existing MCP runner deterministically delegates the
+five supported utility types to native NeqSim utility-design components.
+Direct component tests, focused packaged STDIO qualification, comprehensive
+protocol coverage, access enforcement, and standard response evidence move
+with the machine-readable classification on the same exact head. No utility,
+process, cost, emissions, or equipment model is reimplemented.
+
+This bounded screening contract does not establish design-basis completeness,
+property or correlation accuracy, equipment sizing adequacy, utility
+availability or reliability, network optimization, emissions or cost forecast
+accuracy, mechanical design, safe operating limits, standards or regulatory
+compliance, plant or control authority, certification, or accountable
+engineering approval. No promotion candidate remains queued and
+`scientificValidationComplete=false`.
+
+
+Inventory version `1.45` atomically promotes `runChemistry` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving current Phase 0 accounting
+from 20/44/7 to 20/45/6. The existing MCP facade delegates to the canonical
+`ChemistryRunner`; it does not introduce a second chemistry, electrolyte,
+scale, corrosion, adsorption, reaction, or transport model. Direct runner
+tests, focused packaged STDIO qualification across all eight analyses,
+comprehensive protocol coverage, access enforcement, structured failure
+evidence, and standard response evidence move with the machine-readable
+classification on the same exact head.
+
+This bounded dispatch and transport contract does not establish composition or
+design-basis suitability, thermodynamic or kinetic accuracy, parameter or
+dataset applicability, convergence for arbitrary inputs, uncertainty, chemical
+dose, safe operating limits, standards or regulatory compliance, plant or
+control authority, certification, or accountable engineering approval. No
+promotion candidate remains queued and
+`scientificValidationComplete=false`.
+
+
+### Open-drain review contract boundary
+
+Inventory 1.49 promotes `runOpenDrainReview` to `CONTRACT_TESTED` using the existing canonical
+`OpenDrainReviewRunner` and `OpenDrainReviewEngine`, the `open-drain-review/norsok-s001-stid`
+catalog example, direct Java tests, comprehensive and focused packaged-MCP qualification, and
+the standard server access/envelope path. The deterministic example returns two reviewed items,
+a `PASS_WITH_WARNINGS` verdict (zero failures and one missing-standards warning), NORSOK S-001
+Clause 9 attribution, and provenance; empty input fails closed.
+
+This evidence qualifies bounded software behavior only. It does not establish direct STID or
+tagreader connectivity, source/tag fidelity, complete drain-area coverage, hydraulic or CFD
+performance, drainage/fire-water/leak-rate design bases, segregation/backflow/seal/vent/utility
+adequacy, standards applicability or conformance, safe operating limits, plant authority,
+certification, or accountable process-safety approval.
+
+
+Inventory version `1.50` atomically promotes `runNorsokS001Clause10Review`
+from `CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+20/49/2 to 20/50/1. The existing MCP facade delegates to
+`NorsokS001Clause10ReviewRunner` and the canonical
+`ProcessSafetySystemReviewEngine`. Direct runner and engine tests, focused and
+comprehensive packaged-STDIO qualification, catalog execution, access
+enforcement, response evidence, and current-state documentation move with the
+machine-readable record on the same exact head. The evidence qualifies bounded
+software behavior only: evidence connectivity and fidelity, hazard/scenario
+completeness, SIL/PFD/SIF and lifecycle validity, PSV adequacy, controller or
+dynamic validity, independence/common cause, standards conformance, safe
+operating limits, plant authority, certification, and accountable engineering
+or process-safety approval remain outside the classification.

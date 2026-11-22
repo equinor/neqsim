@@ -167,6 +167,8 @@ fig.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 9](figures/FieldDevelopmentWorkflow_cell_9_output_1.png)
+
 ## 4. Inspect the after-tax screening economics
 
 The first figure shows the imposed plateau followed by exponential decline. It verifies the intended rate/volume conversion but does not establish reservoir deliverability.
@@ -257,6 +259,8 @@ plt.show()
 
 </details>
 
+![Result figure from cell 13](figures/FieldDevelopmentWorkflow_cell_13_output_2.png)
+
 ## 6. Interpretation and next fidelity step
 
 The second figure confirms the expected directional response: lower gas rate and higher CAPEX both reduce NPV. These bounded cases are engineering checks, not probabilistic percentiles.
@@ -273,4 +277,3 @@ Before concept selection:
 6. Obtain discipline review of the technical, fiscal, cost, schedule, and safety basis.
 
 For the physically coupled main-branch workflow, see [Integrated Field Lifecycle Simulation](../fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md). That API may be newer than the latest public Python package, so use a repository build when reproducing main-branch examples.
-

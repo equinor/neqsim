@@ -81,6 +81,15 @@ public class ElectricMotorDriver extends DriverCurveBase {
   private double efficiency25 = 0.85;
 
   /**
+   * Total number of series-connected power cells per phase in a multi-cell (cascaded H-bridge) medium-voltage VFD, e.g.
+   * a Siemens SINAMICS GH150 / Perfect Harmony drive. Zero means cell-bypass derating is not configured.
+   */
+  private int totalCellsPerPhase = 0;
+
+  /** Number of power cells per phase currently bypassed (removed from service after an internal fault). */
+  private int bypassedCellsPerPhase = 0;
+
+  /**
    * Default constructor.
    */
   public ElectricMotorDriver() {
@@ -313,7 +322,7 @@ public class ElectricMotorDriver extends DriverCurveBase {
     this.hasVFD = hasVFD;
     if (hasVFD) {
       this.minSpeed = ratedSpeed * minSpeedRatio;
-      this.maxSpeed = ratedSpeed * maxSpeedRatio;
+      this.maxSpeed = ratedSpeed * maxSpeedRatio * getVoltageDerateFraction();
     } else {
       this.minSpeed = ratedSpeed * 0.98;
       this.maxSpeed = ratedSpeed;
@@ -376,8 +385,79 @@ public class ElectricMotorDriver extends DriverCurveBase {
   public void setMaxSpeedRatio(double ratio) {
     this.maxSpeedRatio = ratio;
     if (hasVFD) {
-      this.maxSpeed = ratedSpeed * ratio;
+      this.maxSpeed = ratedSpeed * ratio * getVoltageDerateFraction();
     }
+  }
+
+  /**
+   * Configures cell-bypass derating for a cascaded multi-cell (cascaded H-bridge) medium-voltage VFD such as a Siemens
+   * SINAMICS GH150 / Perfect Harmony drive.
+   *
+   * <p>
+   * Each series-connected power cell contributes an equal share of the drive's maximum output phase voltage. When one
+   * or more cells are bypassed (removed from the circuit after an internal fault, with the remaining cells left in
+   * service so the drive keeps running), the maximum achievable output voltage is reduced in direct proportion to the
+   * fraction of cells still in service. For a drive controlled at constant volts-per-hertz, the maximum output
+   * frequency (and hence motor speed) is derated by that same fraction.
+   * </p>
+   *
+   * <p>
+   * <strong>Screening approximation:</strong> this assumes an equal per-cell voltage contribution and pure
+   * volts-per-hertz scaling. It does not model core saturation, per-cell current limits, or control-mode-specific
+   * behaviour, and does not replace the drive vendor's certified bypass-mode derating table.
+   * </p>
+   *
+   * @param totalCellsPerPhase total number of series power cells per phase when the drive is fully healthy; must be
+   * positive
+   * @param bypassedCellsPerPhase number of power cells per phase currently bypassed; must be between 0 and
+   * {@code totalCellsPerPhase - 1} (at least one cell must remain in service for the drive to run)
+   * @return this driver for chaining
+   * @throws IllegalArgumentException if the cell counts are inconsistent
+   */
+  public ElectricMotorDriver setCellBypassDerating(int totalCellsPerPhase, int bypassedCellsPerPhase) {
+    if (totalCellsPerPhase <= 0) {
+      throw new IllegalArgumentException("totalCellsPerPhase must be positive");
+    }
+    if (bypassedCellsPerPhase < 0 || bypassedCellsPerPhase >= totalCellsPerPhase) {
+      throw new IllegalArgumentException("bypassedCellsPerPhase must be between 0 and totalCellsPerPhase - 1");
+    }
+    this.totalCellsPerPhase = totalCellsPerPhase;
+    this.bypassedCellsPerPhase = bypassedCellsPerPhase;
+    if (hasVFD) {
+      this.maxSpeed = ratedSpeed * maxSpeedRatio * getVoltageDerateFraction();
+    }
+    return this;
+  }
+
+  /**
+   * Gets the total number of series power cells per phase configured via {@link #setCellBypassDerating}.
+   *
+   * @return total cells per phase, or 0 if cell-bypass derating has not been configured
+   */
+  public int getTotalCellsPerPhase() {
+    return totalCellsPerPhase;
+  }
+
+  /**
+   * Gets the number of power cells per phase currently bypassed.
+   *
+   * @return bypassed cells per phase, or 0 if cell-bypass derating has not been configured
+   */
+  public int getBypassedCellsPerPhase() {
+    return bypassedCellsPerPhase;
+  }
+
+  /**
+   * Gets the fraction of maximum output voltage still available after cell-bypass derating.
+   *
+   * @return the voltage derate fraction in the range (0,1]; 1.0 if {@link #setCellBypassDerating} has not been
+   * configured
+   */
+  public double getVoltageDerateFraction() {
+    if (totalCellsPerPhase <= 0) {
+      return 1.0;
+    }
+    return (double) (totalCellsPerPhase - bypassedCellsPerPhase) / totalCellsPerPhase;
   }
 
   /**

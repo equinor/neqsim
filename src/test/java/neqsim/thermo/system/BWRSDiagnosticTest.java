@@ -39,8 +39,8 @@ public class BWRSDiagnosticTest {
 
     System.out.println("=== JT Diagnostic: Methane at " + temperature + " K, " + pressure + " bar ===");
 
-    String[] names = { "BWRS", "GERG", "PR" };
-    SystemInterface[] systems = { bwrs, gerg, pr };
+    String[] names = {"BWRS", "GERG", "PR"};
+    SystemInterface[] systems = {bwrs, gerg, pr};
     double R = 8.3144621;
 
     for (int s = 0; s < 3; s++) {

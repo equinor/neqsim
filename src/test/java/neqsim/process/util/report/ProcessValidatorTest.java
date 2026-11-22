@@ -57,7 +57,7 @@ public class ProcessValidatorTest {
     Separator sep = new Separator("Test Sep", feed);
 
     Cooler cooler = new Cooler("After-cooler", sep.getGasOutStream());
-    cooler.setOutTemperature(273.15 + 25.0);
+    cooler.setOutletTemperature(273.15 + 25.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

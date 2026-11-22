@@ -1,0 +1,77 @@
+{
+  "headUnit": "kJ/kg",
+  "flowBasis": "actual_suction_m3_h",
+  "minimumFlowBasis": "surge",
+  "origin": "synthetic",
+  "source": "Constructed affinity-law speed lines for the two-well regression",
+  "suction_envelope": {
+    "pressure_bara": [
+      52,
+      57
+    ],
+    "temperature_K": [
+      295,
+      330
+    ],
+    "molar_mass_kg_mol": [
+      0.016,
+      0.04
+    ]
+  },
+  "speedCurves": [
+    {
+      "speed_rpm": 8000.0,
+      "flow_m3h": [
+        184.0,
+        320.0,
+        520.0
+      ],
+      "head_kJkg": [
+        59.52000000000001,
+        52.48000000000001,
+        40.32000000000001
+      ],
+      "polytropicEfficiency_pct": [
+        75,
+        80,
+        73
+      ]
+    },
+    {
+      "speed_rpm": 10000,
+      "flow_m3h": [
+        230,
+        400,
+        650
+      ],
+      "head_kJkg": [
+        93,
+        82,
+        63
+      ],
+      "polytropicEfficiency_pct": [
+        75,
+        80,
+        73
+      ]
+    },
+    {
+      "speed_rpm": 12000.0,
+      "flow_m3h": [
+        276.0,
+        480.0,
+        780.0
+      ],
+      "head_kJkg": [
+        133.92,
+        118.08,
+        90.72
+      ],
+      "polytropicEfficiency_pct": [
+        75,
+        80,
+        73
+      ]
+    }
+  ]
+}

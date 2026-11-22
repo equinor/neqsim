@@ -377,7 +377,7 @@ public class FieldLifecycleSimulator {
   private PotentialRates evaluateSatellitePotential(FieldLifecycleModel model, FieldLifecycleConfiguration config,
       double requestedOilRate, double requestedWaterRate) {
     setHostProductionRates(model, FacilityProductionRate.zero());
-    model.getGasAllocationSplitter().setSplitFactors(new double[] { 1.0, 0.0 });
+    model.getGasAllocationSplitter().setSplitFactors(new double[] {1.0, 0.0});
     double scale = 1.0;
     RuntimeException lastFailure = null;
     for (int attempt = 0; attempt < 7; attempt++) {
@@ -433,7 +433,7 @@ public class FieldLifecycleSimulator {
         double actualInjectionFraction = recoveredGasRate > 0.0 ? injectionRate / recoveredGasRate : 0.0;
         if (Math.abs(actualInjectionFraction - injectionFraction) > 1.0e-9) {
           model.getGasAllocationSplitter()
-              .setSplitFactors(new double[] { 1.0 - actualInjectionFraction, actualInjectionFraction });
+              .setSplitFactors(new double[] {1.0 - actualInjectionFraction, actualInjectionFraction});
           runProcess(model);
         }
 
@@ -501,14 +501,14 @@ public class FieldLifecycleSimulator {
   private FacilityProductionRate[] reduceForPolicy(CapacityAllocationPolicy policy, FacilityProductionRate satellite,
       FacilityProductionRate host, double factor) {
     if (policy == CapacityAllocationPolicy.PRO_RATA) {
-      return new FacilityProductionRate[] { satellite.scale(factor), host.scale(factor) };
+      return new FacilityProductionRate[] {satellite.scale(factor), host.scale(factor)};
     }
     if (policy == CapacityAllocationPolicy.SATELLITE_FIRST) {
-      return throughput(host) > 1.0e-9 ? new FacilityProductionRate[] { satellite, host.scale(factor) }
-          : new FacilityProductionRate[] { satellite.scale(factor), host };
+      return throughput(host) > 1.0e-9 ? new FacilityProductionRate[] {satellite, host.scale(factor)}
+          : new FacilityProductionRate[] {satellite.scale(factor), host};
     }
-    return throughput(satellite) > 1.0e-9 ? new FacilityProductionRate[] { satellite.scale(factor), host }
-        : new FacilityProductionRate[] { satellite, host.scale(factor) };
+    return throughput(satellite) > 1.0e-9 ? new FacilityProductionRate[] {satellite.scale(factor), host}
+        : new FacilityProductionRate[] {satellite, host.scale(factor)};
   }
 
   private double throughput(FacilityProductionRate rates) {
@@ -525,7 +525,7 @@ public class FieldLifecycleSimulator {
     double injectionFraction = fieldAgeYears >= config.getGasInjectionStartYear()
         ? config.getProducedGasRecycleFraction()
         : 0.0;
-    model.getGasAllocationSplitter().setSplitFactors(new double[] { 1.0 - injectionFraction, injectionFraction });
+    model.getGasAllocationSplitter().setSplitFactors(new double[] {1.0 - injectionFraction, injectionFraction});
   }
 
   private void setHostProductionRates(FieldLifecycleModel model, FacilityProductionRate rates) {
@@ -558,14 +558,14 @@ public class FieldLifecycleSimulator {
     double injectionFraction = fieldAgeYears >= config.getGasInjectionStartYear()
         ? config.getProducedGasRecycleFraction()
         : 0.0;
-    model.getGasAllocationSplitter().setSplitFactors(new double[] { 1.0 - injectionFraction, injectionFraction });
+    model.getGasAllocationSplitter().setSplitFactors(new double[] {1.0 - injectionFraction, injectionFraction});
     double rateScale = runProcessWithRateFallback(model, config, oilRateSm3PerDay, waterRateSm3PerDay);
 
     double recoveredGasRate = nonNegativeFlow(model.getRecoveredGas(), "Sm3/day");
     double injectionRate = Math.min(recoveredGasRate * injectionFraction, config.getMaximumGasInjectionRateSm3PerDay());
     double actualInjectionFraction = recoveredGasRate > 0.0 ? injectionRate / recoveredGasRate : 0.0;
     model.getGasAllocationSplitter()
-        .setSplitFactors(new double[] { 1.0 - actualInjectionFraction, actualInjectionFraction });
+        .setSplitFactors(new double[] {1.0 - actualInjectionFraction, actualInjectionFraction});
     runProcess(model);
 
     synchronizeInjectionStream(model, injectionRate);

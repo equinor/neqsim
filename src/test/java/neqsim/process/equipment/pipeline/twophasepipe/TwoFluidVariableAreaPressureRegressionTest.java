@@ -1,0 +1,100 @@
+package neqsim.process.equipment.pipeline.twophasepipe;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.Test;
+import java.lang.reflect.Field;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
+
+class TwoFluidVariableAreaPressureRegressionTest {
+  /**
+   * Default pipe equations must preserve a stationary phase contact without optional stabilization.
+   *
+   * @throws Exception if the pipe equation owner cannot be inspected
+   */
+  @Test
+  void defaultPipePreservesStationaryPhaseContacts() throws Exception {
+    TwoFluidPipe pipe = new TwoFluidPipe("stationary contact");
+    Field field = TwoFluidPipe.class.getDeclaredField("equations");
+    field.setAccessible(true);
+    TwoFluidConservationEquations equations = (TwoFluidConservationEquations) field.get(pipe);
+    assertFalse(equations.isEnableInterfacialPressure());
+    for (double pressure : new double[] {2.0e5, 2.0e7}) {
+      TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, 1.0), cell(1.5, 1.0, 0.1, 0.4), cell(2.5, 1.0, 0.1, 0.0)};
+      for (TwoFluidSection section : cells) {
+        section.setPressure(pressure);
+      }
+      double[][] rhs = equations.calcRHS(cells, 1.0);
+      for (int index = 0; index < cells.length; index++) {
+        for (int phase = 0; phase < 3; phase++) {
+          assertEquals(0.0, rhs[index][phase], 1.0e-12);
+          assertEquals(0.0, rhs[index][phase + 3], 1.0e-9,
+              "Constant pressure must not accelerate a stationary contact");
+        }
+      }
+    }
+  }
+
+  @Test
+  void stationaryPhaseContactsBalanceWithoutInterfacialStabilization() {
+    TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, 1.0), cell(2.0, 2.0, 0.2, 0.4), cell(4.5, 3.0, 0.15, 0.0)};
+    cells[1].setWaterCut(0.2);
+    cells[2].setWaterCut(1.0);
+    for (TwoFluidSection section : cells) {
+      section.updateConservativeVariables();
+    }
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setConsistentPhasePressureEnabled(true);
+    assertFalse(equations.isEnableInterfacialPressure());
+    double[][] rhs = equations.calcRHS(cells, 1.0);
+    for (int cell = 0; cell < cells.length; cell++) {
+      for (int phase = 0; phase < 3; phase++) {
+        assertEquals(0.0, rhs[cell][phase], 1.0e-12);
+        assertEquals(0.0, rhs[cell][phase + 3], 1.0e-9,
+            "Stationary phase contact must not accelerate cell " + cell + ", phase " + phase);
+      }
+    }
+  }
+
+  @Test
+  void constantPressureAtRestIsBalancedAcrossChangingAreaInEveryPhase() {
+    for (double gasHoldup : new double[] {1.0, 0.4, 0.0}) {
+      TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, gasHoldup), cell(2.0, 2.0, 0.2, gasHoldup),
+          cell(4.5, 3.0, 0.15, gasHoldup)};
+      TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+      equations.setEnableInterfacialPressure(true);
+
+      double[][] rhs = equations.calcRHS(cells, 1.0);
+
+      for (int index = 0; index < cells.length; index++) {
+        for (int phase = 0; phase < 3; phase++) {
+          assertEquals(0.0, rhs[index][phase], 1.0e-12);
+          assertEquals(0.0, rhs[index][phase + 3], 1.0e-9,
+              "Constant pressure cannot accelerate cell " + index + ", phase " + phase + ", alphaGas=" + gasHoldup);
+        }
+      }
+    }
+  }
+
+  private static TwoFluidSection cell(double position, double length, double diameter, double gasHoldup) {
+    TwoFluidSection cell = new TwoFluidSection(position, length, diameter, 0.0);
+    cell.setGasDensity(10.0);
+    cell.setOilDensity(800.0);
+    cell.setWaterDensity(1000.0);
+    cell.setLiquidDensity(900.0);
+    cell.setGasViscosity(1.0e-5);
+    cell.setOilViscosity(1.0e-3);
+    cell.setWaterViscosity(1.0e-3);
+    cell.setLiquidViscosity(1.0e-3);
+    cell.setGasHoldup(gasHoldup);
+    cell.setLiquidHoldup(1.0 - gasHoldup);
+    cell.setWaterCut(0.5);
+    cell.setGasVelocity(0.0);
+    cell.setLiquidVelocity(0.0);
+    cell.setGasSoundSpeed(300.0);
+    cell.setLiquidSoundSpeed(1200.0);
+    cell.setPressure(2.0e5);
+    cell.updateConservativeVariables();
+    return cell;
+  }
+}

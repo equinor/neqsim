@@ -74,7 +74,7 @@ public class PhaseEnvelopeRunner {
     }
 
     // --- Parse mixing rule ---
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
 
     try {
       // Create fluid at a reference condition
@@ -88,49 +88,17 @@ public class PhaseEnvelopeRunner {
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
       ops.calcPTphaseEnvelope();
 
-      // Extract envelope data
-      double[][] ptData = ops.getData();
-
-      // The phase envelope data structure:
-      // ptData[0] = pressures (bara), ptData[1] = temperatures (K)
-      // Additional columns may contain cricondenbar/cricondentherm markers
-
+      // getPoints(0) is {dewT, dewP, bubT, bubP}; use the named arrays so the
+      // columns cannot be mistaken for {P, T}. NaN entries are branch separators.
       JsonArray envelopePoints = new JsonArray();
-      if (ptData != null && ptData.length >= 2) {
-        for (int i = 0; i < ptData[0].length; i++) {
-          JsonObject point = new JsonObject();
-          point.addProperty("pressure_bara", ptData[0][i]);
-          point.addProperty("temperature_K", ptData[1][i]);
-          point.addProperty("temperature_C", ptData[1][i] - 273.15);
-          envelopePoints.add(point);
-        }
-      }
+      addBranch(envelopePoints, "dew", ops.get("dewT"), ops.get("dewP"));
+      addBranch(envelopePoints, "bubble", ops.get("bubT"), ops.get("bubP"));
 
-      // Try to extract cricondenbar and cricondentherm
+      // Extrema arrays are [T(K), P(bara)]
       JsonObject criticalPoints = new JsonObject();
-      try {
-        double cricondenbarP = ops.get("cricondenbar")[0];
-        double cricondenbarT = ops.get("cricondenbar")[1];
-        JsonObject cb = new JsonObject();
-        cb.addProperty("pressure_bara", cricondenbarP);
-        cb.addProperty("temperature_K", cricondenbarT);
-        cb.addProperty("temperature_C", cricondenbarT - 273.15);
-        criticalPoints.add("cricondenbar", cb);
-      } catch (Exception e) {
-        // cricondenbar data not available
-      }
-
-      try {
-        double cricondenthermT = ops.get("cricondentherm")[1];
-        double cricondenthermP = ops.get("cricondentherm")[0];
-        JsonObject ct = new JsonObject();
-        ct.addProperty("pressure_bara", cricondenthermP);
-        ct.addProperty("temperature_K", cricondenthermT);
-        ct.addProperty("temperature_C", cricondenthermT - 273.15);
-        criticalPoints.add("cricondentherm", ct);
-      } catch (Exception e) {
-        // cricondentherm data not available
-      }
+      addExtremum(criticalPoints, "cricondenbar", ops.get("cricondenbar"));
+      addExtremum(criticalPoints, "cricondentherm", ops.get("cricondentherm"));
+      addExtremum(criticalPoints, "criticalPoint", ops.get("criticalPoint1"));
 
       // Build provenance
       ResultProvenance provenance = ResultProvenance.forPhaseEnvelope(model);
@@ -173,6 +141,53 @@ public class PhaseEnvelopeRunner {
           "Check component names. Ensure the mixture has at least 2 components "
               + "or a single component with vapor-liquid equilibrium.");
     }
+  }
+
+  /**
+   * Appends the finite points of one envelope branch as {@code {branch, pressure_bara, temperature_K, temperature_C}}
+   * objects, skipping NaN separators and non-positive values.
+   *
+   * @param target array to append to
+   * @param branch branch label, {@code "dew"} or {@code "bubble"}
+   * @param temperaturesK branch temperatures in K (may be null)
+   * @param pressuresBara branch pressures in bara (may be null)
+   */
+  private static void addBranch(JsonArray target, String branch, double[] temperaturesK, double[] pressuresBara) {
+    if (temperaturesK == null || pressuresBara == null) {
+      return;
+    }
+    int n = Math.min(temperaturesK.length, pressuresBara.length);
+    for (int i = 0; i < n; i++) {
+      double t = temperaturesK[i];
+      double p = pressuresBara[i];
+      if (Double.isNaN(t) || Double.isNaN(p) || t <= 0.0 || p <= 0.0) {
+        continue;
+      }
+      JsonObject point = new JsonObject();
+      point.addProperty("branch", branch);
+      point.addProperty("pressure_bara", p);
+      point.addProperty("temperature_K", t);
+      point.addProperty("temperature_C", t - 273.15);
+      target.add(point);
+    }
+  }
+
+  /**
+   * Adds an envelope extremum ({@code [T(K), P(bara)]}) when it is finite and physical.
+   *
+   * @param target object to add the point to
+   * @param name key name, e.g. {@code cricondenbar}
+   * @param tp {@code [temperature K, pressure bara]} or null
+   */
+  private static void addExtremum(JsonObject target, String name, double[] tp) {
+    if (tp == null || tp.length < 2 || Double.isNaN(tp[0]) || Double.isNaN(tp[1]) || tp[0] <= 0.0 || tp[1] <= 0.0) {
+      return;
+    }
+    JsonObject point = new JsonObject();
+    point.addProperty("pressure_bara", tp[1]);
+    point.addProperty("temperature_K", tp[0]);
+    point.addProperty("temperature_C", tp[0] - 273.15);
+    target.add(name, point);
   }
 
   /**

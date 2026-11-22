@@ -1,0 +1,1303 @@
+{
+  "baseline": "3ec4b8cff4d5c2dc4875cb28229be88660c67504",
+  "java_options": [
+    "-Xms128m",
+    "-Xmx512m"
+  ],
+  "java_version": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "warmups": 16,
+  "rounds": 8,
+  "jvms_per_configuration": 4,
+  "benchmark_class_sha256": "b39e4701683c243db58f8fb500ead5b6becafbe4697adcef32b45dd6f13d14a2",
+  "candidate_sources_sha256": {
+    "src/main/java/neqsim/thermo/component/ComponentGENRTLmodifiedHV.java": "38a68b4217eec95dd4c1df15a195549491bb89a0cbcf0bbaf01c0a10e15b09e3",
+    "src/main/java/neqsim/thermo/component/attractiveeosterm/AttractiveTermBaseClass.java": "e0552804197d43b02389231b5888d55c1bc48eaa7bebfa02b5202d830b6dc485",
+    "src/main/java/neqsim/thermo/mixingrule/EosMixingRuleHandler.java": "fa3c19a81c5c041ac9f504291150be4521c97a2ce25eb13c7712573aad516b03",
+    "src/main/java/neqsim/thermo/phase/PhaseEos.java": "cc3a5cd91321301e972e4b16256c6311e48471d554aba692aab7869936e05878",
+    "src/main/java/neqsim/thermo/phase/PhaseGENRTLmodifiedHV.java": "4f99e049a6b7cbf2e17ec55d82502015e4579e522bb9c46c8e19977ce09aec0e",
+    "src/test/java/neqsim/thermo/mixingrule/HuronVidalClonePerformanceBenchmark.java": "6c4b147584bfab698634ee6c3ebe0125454c992e9e59095a77bad917756e16b5"
+  },
+  "results": [
+    {
+      "key": "SRK-4-clone-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-clone-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-phase-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-4-flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-4-clone_flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-clone-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-phase-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "SRK-20-flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "SRK-20-clone_flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-clone-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-phase-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-4-flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-4-clone_flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-clone-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-phase-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 200
+    },
+    {
+      "key": "PR-20-flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-1-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-2-0-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-2-1-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-2-2-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-2-3-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-4-0-candidate",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-4-1-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-4-2-baseline",
+      "exit": 0,
+      "iterations": 8
+    },
+    {
+      "key": "PR-20-clone_flash-3-4-3-candidate",
+      "exit": 0,
+      "iterations": 8
+    }
+  ]
+}

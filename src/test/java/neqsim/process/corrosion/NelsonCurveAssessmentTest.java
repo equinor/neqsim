@@ -251,7 +251,7 @@ public class NelsonCurveAssessmentTest {
   void testMaterialHierarchy() {
     // Verify that higher alloy materials have higher temperature limits
     double[] maxTemps = new double[6];
-    String[] materials = { "carbon_steel", "c_0_5mo", "1cr_0_5mo", "1_25cr_0_5mo", "2_25cr_1mo", "austenitic_ss" };
+    String[] materials = {"carbon_steel", "c_0_5mo", "1cr_0_5mo", "1_25cr_0_5mo", "2_25cr_1mo", "austenitic_ss"};
 
     for (int i = 0; i < materials.length; i++) {
       NelsonCurveAssessment nelson = new NelsonCurveAssessment();

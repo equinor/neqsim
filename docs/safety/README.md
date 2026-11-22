@@ -20,6 +20,7 @@ accountable review remain mandatory.
 | Choose equipment, logic, or scenario APIs | [Process-safety API overview](../process/safety/README) |
 | Size or screen relief devices | [Relief-Valve Sizing Screening](relief_valve_sizing_api) |
 | Test ESD logic dynamically | [ESD dynamic testing workflow](esd_testing_workflow) |
+| Study a subsea tie-back from tree to receiving separator | [Well-to-platform pressure protection](https://github.com/equinor/neqsim/blob/master/examples/production-decision/tieback-protection.md) |
 | Model HIPPS voting and action | [HIPPS implementation](hipps_implementation) |
 | Generate safety scenarios | [Safety scenario generation](../process/safety/scenario-generation) |
 | Review releases and consequence inputs | [Release and dispersion scenarios](../process/safety/release-dispersion-scenarios) |
@@ -91,6 +92,17 @@ accountable review remain mandatory.
 | [Release and dispersion scenarios](../process/safety/release-dispersion-scenarios) | Structured release scenarios with explicit inputs and limitations |
 | [Vessel thermomechanical safety](vessel_thermomechanical_safety) | Dynamic PSV screening and thermomechanical response |
 | [Trapped liquid fire rupture](trapped_liquid_fire_rupture) | Blocked-in liquid fire and rupture screening |
+
+### Firewater supply assessment
+
+`FireWaterCoverageAssessment` requires a finite spare supply flow in L/min and
+a finite worst-case pressure margin in bar before returning a hydraulic verdict.
+Supply both using `setSpareSupplyFlowLpm` and `setWorstCasePressureMarginBar`.
+If either value is unavailable, `verdict()` returns `SUPPLY_DATA_INCOMPLETE`.
+The corresponding feasibility check returns `false`, and `toJson()` writes
+`null` for the unavailable input. Finite negative margins remain valid inputs
+and indicate a shortfall. Full coverage is compliant only when the supplied flow
+and pressure also satisfy the assessment.
 
 ## Alarms and architecture
 

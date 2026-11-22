@@ -12,6 +12,8 @@ Requirements:
     pip install nbconvert nbformat
 """
 
+import base64
+import binascii
 import os
 import sys
 import json
@@ -128,9 +130,101 @@ def escape_liquid_tags(content):
     return content
 
 
+def markdown_heading_anchor(heading):
+    """Return the GitHub/Jekyll fragment generated for one Markdown heading."""
+
+    heading = re.sub(r"<[^>]+>", "", heading)
+    heading = re.sub(r"[\x60*_~]", "", heading)
+    heading = re.sub(r"[^\w\- ]", "", heading.lower())
+    return re.sub(r"\s+", "-", heading.strip())
+
+
+def anchor_comparison_key(anchor):
+    """Return punctuation-insensitive text for matching a legacy fragment."""
+
+    return "".join(
+        character for character in anchor.lower() if character.isalnum()
+    )
+
+
+def repair_local_heading_links(content):
+    """Repair unambiguous local heading links without touching code fences."""
+
+    lines = content.splitlines(keepends=True)
+    headings = []
+    occurrences = {}
+    fence_marker = None
+
+    for line in lines:
+        fence = re.match(r"^\s*(?P<fence>[\x60~]{3,})", line)
+        if fence:
+            marker = fence.group("fence")[0]
+            if fence_marker is None:
+                fence_marker = marker
+            elif marker == fence_marker:
+                fence_marker = None
+            continue
+        if fence_marker is not None:
+            continue
+
+        heading = re.match(r"^#{1,6}\s+(.+?)\s*$", line)
+        if not heading:
+            continue
+        anchor = markdown_heading_anchor(heading.group(1))
+        duplicate = occurrences.get(anchor, 0)
+        occurrences[anchor] = duplicate + 1
+        headings.append(anchor if duplicate == 0 else f"{anchor}-{duplicate}")
+
+    heading_set = set(headings)
+    local_link = re.compile(
+        r"(?P<prefix>\[[^\]\n]+\]\(#)(?P<target>[^)\s]+)(?P<suffix>\))"
+    )
+    repaired = []
+    fence_marker = None
+
+    def replace_link(match):
+        target = match.group("target")
+        if target.lower() in heading_set:
+            return match.group(0)
+
+        target_key = anchor_comparison_key(target)
+        candidates = [
+            heading
+            for heading in headings
+            if anchor_comparison_key(heading).startswith(target_key)
+        ]
+        if not target_key or len(candidates) != 1:
+            return match.group(0)
+        return (
+            match.group("prefix")
+            + candidates[0]
+            + match.group("suffix")
+        )
+
+    for line in lines:
+        fence = re.match(r"^\s*(?P<fence>[\x60~]{3,})", line)
+        if fence:
+            marker = fence.group("fence")[0]
+            if fence_marker is None:
+                fence_marker = marker
+            elif marker == fence_marker:
+                fence_marker = None
+            repaired.append(line)
+            continue
+        if fence_marker is not None:
+            repaired.append(line)
+        else:
+            repaired.append(local_link.sub(replace_link, line))
+
+    return "".join(repaired)
+
+
 def notebook_to_markdown(notebook_path):
     """
-    Convert a Jupyter notebook to Markdown format suitable for Jekyll.
+    Convert a notebook to Jekyll Markdown and extract stored PNG outputs.
+
+    PNG results are written beside the notebook in ``figures/`` with stable,
+    notebook-specific names. Repeated conversion replaces the same image files.
 
     Args:
         notebook_path: Path to the .ipynb file
@@ -189,7 +283,7 @@ nav_order: 1
     markdown_content = []
     first_h1_stripped = False
 
-    for cell in nb.get('cells', []):
+    for cell_index, cell in enumerate(nb.get('cells', [])):
         cell_type = cell.get('cell_type', '')
         source = ''.join(cell.get('source', []))
 
@@ -224,9 +318,38 @@ nav_order: 1
             if outputs:
                 has_output = False
                 output_text = []
+                image_links = []
 
-                for output in outputs:
+                for output_index, output in enumerate(outputs):
                     output_type = output.get('output_type', '')
+
+                    if output_type in ('display_data', 'execute_result'):
+                        image_data = output.get('data', {}).get('image/png')
+                        if image_data is not None:
+                            encoded = ''.join(image_data) if isinstance(image_data, list) else image_data
+                            try:
+                                image_bytes = base64.b64decode(''.join(encoded.split()), validate=True)
+                            except (binascii.Error, ValueError, TypeError) as error:
+                                raise ValueError(
+                                    f"Invalid PNG output in {notebook_name}, cell {cell_index + 1}"
+                                ) from error
+                            if not image_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+                                raise ValueError(
+                                    f"Output is not PNG in {notebook_name}, cell {cell_index + 1}"
+                                )
+                            image_name = (
+                                f"{notebook_name}_cell_{cell_index + 1}_output_{output_index + 1}.png"
+                            )
+                            image_path = Path(notebook_path).parent / 'figures' / image_name
+                            image_path.parent.mkdir(parents=True, exist_ok=True)
+                            image_path.write_bytes(image_bytes)
+                            image_links.append(
+                                f"![Result figure from cell {cell_index + 1}]"
+                                f"(figures/{quote(image_name, safe='-_.')})\n\n"
+                            )
+                            # The PNG is the useful representation, not Matplotlib's
+                            # accompanying '<Figure size ...>' text/plain fallback.
+                            continue
 
                     if output_type == 'stream':
                         text = ''.join(output.get('text', []))
@@ -261,12 +384,15 @@ nav_order: 1
                     markdown_content.append('```\n\n')
                     markdown_content.append('</details>\n\n')
 
+                markdown_content.extend(image_links)
+
     full_content = front_matter + ''.join(markdown_content)
+    full_content = repair_local_heading_links(full_content)
 
     # Escape Liquid tags
     full_content = escape_liquid_tags(full_content)
 
-    return full_content
+    return full_content.rstrip() + "\n"
 
 
 def convert_all_notebooks(examples_dir):
@@ -566,13 +692,14 @@ reading aid, not execution evidence.
         content += """
 ## Standalone Java source examples
 
-These files are outside Maven's compiled source tree. They are retained as source-only
-references and are not catalogued as build-verified or policy-compliant examples.
-They currently contain legacy console output; review and port the required calls into a
-tested `src/test/java` example before reuse. For a supported starting point, use the
+These files are outside Maven's compiled source tree. The
+`StandaloneJavaDocumentationCompilationTest` compiles the exact catalog against the
+current NeqSim API. This is build verification only, not runtime or engineering-result
+validation. The files retain legacy console output; inspect assumptions and execute the
+required workflow before engineering reuse. For a supported starting point, use the
 [Java getting-started guide](../java-getting-started.md).
 
-| Example | Stored status | Capability |
+| Example | Build status | Capability |
 |---------|---------------|------------|
 """
         for java_file in java_files:
@@ -581,7 +708,7 @@ tested `src/test/java` example before reuse. For a supported starting point, use
             encoded_name = quote(java_file.name, safe='')
             description = JAVA_EXAMPLE_DESCRIPTIONS.get(name, 'Java example')
             content += (
-                f"| [{title}]({encoded_name}) | **Source only** | "
+                f"| [{title}]({encoded_name}) | **Build-verified source** | "
                 f"{description} |\n"
             )
 

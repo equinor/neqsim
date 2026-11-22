@@ -587,6 +587,8 @@ public final class DexpiXmlWriter {
     Map<String, double[]> nozzlePositions = new HashMap<>();
     // Equipment owner for every process nozzle, used to resolve source-backed line properties.
     Map<String, ProcessEquipmentInterface> nozzleOwners = new HashMap<>();
+    // Process role of each nozzle (inlet, gas/liquid/water outlet, split branch) for simulation round trips.
+    Map<String, String[]> portRoles = new HashMap<>();
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof DexpiStream) {
@@ -602,13 +604,10 @@ public final class DexpiXmlWriter {
       } else if (unit instanceof DexpiProcessUnit) {
         String inNozzle = "Nozzle-" + nozzleCounter++;
         List<String> outNozzles = new ArrayList<>();
-        outNozzles.add("Nozzle-" + nozzleCounter++);
-        if (DexpiStreamUtils.isMultiOutlet(unit)) {
+        for (int outlet = 0; outlet < outletNozzleCount(unit); outlet++) {
           outNozzles.add("Nozzle-" + nozzleCounter++);
-          if (unit instanceof ThreePhaseSeparator) {
-            outNozzles.add("Nozzle-" + nozzleCounter++);
-          }
         }
+        registerPortRoles(unit, inNozzle, outNozzles, portRoles);
         registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
         registerNozzleOwners(unit, inNozzle, outNozzles, nozzleOwners);
         appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzles,
@@ -619,13 +618,10 @@ public final class DexpiXmlWriter {
         // Native NeqSim equipment — use reverse mapping
         String inNozzle = "Nozzle-" + nozzleCounter++;
         List<String> outNozzles = new ArrayList<>();
-        outNozzles.add("Nozzle-" + nozzleCounter++);
-        if (DexpiStreamUtils.isMultiOutlet(unit)) {
+        for (int outlet = 0; outlet < outletNozzleCount(unit); outlet++) {
           outNozzles.add("Nozzle-" + nozzleCounter++);
-          if (unit instanceof ThreePhaseSeparator) {
-            outNozzles.add("Nozzle-" + nozzleCounter++);
-          }
         }
+        registerPortRoles(unit, inNozzle, outNozzles, portRoles);
         registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
         registerNozzleOwners(unit, inNozzle, outNozzles, nozzleOwners);
         if (isValveType(unit)) {
@@ -642,6 +638,8 @@ public final class DexpiXmlWriter {
         registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
       }
     }
+
+    annotatePortRoles(document, portRoles);
 
     // Register pass-through streams (e.g., Stream wrapping a separator outlet)
     registerPassThroughStreams(processSystem, outletStreamToNozzle);
@@ -728,15 +726,15 @@ public final class DexpiXmlWriter {
 
     // Symbol legend (ISO 10628)
     List<String[]> legendEntries = new ArrayList<>();
-    legendEntries.add(new String[] { "Process", "Process Line", "0" });
-    legendEntries.add(new String[] { "Measure", "Measuring Connection", "0" });
-    legendEntries.add(new String[] { "Electric", "Electrical Signal", "2" });
-    legendEntries.add(new String[] { "Pneumatic", "Pneumatic Command", "3" });
+    legendEntries.add(new String[] {"Process", "Process Line", "0"});
+    legendEntries.add(new String[] {"Measure", "Measuring Connection", "0"});
+    legendEntries.add(new String[] {"Electric", "Electrical Signal", "2"});
+    legendEntries.add(new String[] {"Pneumatic", "Pneumatic Command", "3"});
     DexpiLayoutEngine.appendSymbolLegend(document, root, legendEntries);
 
     // Revision history (NORSOK Z-003)
     List<String[]> revisions = new ArrayList<>();
-    revisions.add(new String[] { "0", today, "Engineering Proposal", "NeqSim", "-" });
+    revisions.add(new String[] {"0", today, "Engineering Proposal", "NeqSim", "-"});
     DexpiLayoutEngine.appendRevisionHistory(document, root, revisions, sheetSize[0]);
 
     writeDocument(document, outputStream);
@@ -997,7 +995,7 @@ public final class DexpiXmlWriter {
         Map.Entry<String, MeasurementDeviceInterface> deviceEntry = devices.get(index);
         String tag = deviceEntry.getKey();
         String nozzleId = uniqueIdentifier("Nozzle", equipmentName + "-" + tag + "-LevelTap", usedIds);
-        nozzlePositions.put(nozzleId, new double[] { position.x - 18.0, startY - index * 8.0 });
+        nozzlePositions.put(nozzleId, new double[] {position.x - 18.0, startY - index * 8.0});
         Element nozzle = appendNozzle(document, equipmentElement, nozzleId, usedIds, nozzlePositions);
         if (nozzle == null) {
           continue;
@@ -1088,16 +1086,16 @@ public final class DexpiXmlWriter {
     attrs.setAttribute("Set", "MechanicalDesign");
 
     if (md.getInnerDiameter() > 0) {
-      appendNumericAttribute(document, attrs, "InnerDiameter", md.getInnerDiameter(), "mm");
+      appendNumericAttribute(document, attrs, "InnerDiameter", md.getInnerDiameter() * 1000.0, "mm");
     }
     if (md.getOuterDiameter() > 0) {
-      appendNumericAttribute(document, attrs, "OuterDiameter", md.getOuterDiameter(), "mm");
+      appendNumericAttribute(document, attrs, "OuterDiameter", md.getOuterDiameter() * 1000.0, "mm");
     }
     if (md.getWallThickness() > 0) {
-      appendNumericAttribute(document, attrs, "WallThickness", md.getWallThickness(), "mm");
+      appendNumericAttribute(document, attrs, "WallThickness", md.getWallThickness() * 1000.0, "mm");
     }
     if (md.getTantanLength() > 0) {
-      appendNumericAttribute(document, attrs, "TanTanLength", md.getTantanLength(), "mm");
+      appendNumericAttribute(document, attrs, "TanTanLength", md.getTantanLength() * 1000.0, "mm");
     }
     String material = md.getConstrutionMaterial();
     if (material != null && !material.trim().isEmpty()) {
@@ -1235,21 +1233,21 @@ public final class DexpiXmlWriter {
     // Mechanical-design lengths (inner diameter, wall thickness, tan-to-tan length) are stored
     // internally in metres. Convert to millimetres for the P&ID data bar.
     if (md.getInnerDiameter() > 0) {
-      rows.add(new String[] { "ID", formatMechValue(md.getInnerDiameter() * 1000.0) + " mm" });
+      rows.add(new String[] {"ID", formatMechValue(md.getInnerDiameter() * 1000.0) + " mm"});
     }
     if (md.getWallThickness() > 0) {
-      rows.add(new String[] { "Wall Thk.", formatMechValue(md.getWallThickness() * 1000.0) + " mm" });
+      rows.add(new String[] {"Wall Thk.", formatMechValue(md.getWallThickness() * 1000.0) + " mm"});
     }
     if (md.getTantanLength() > 0) {
-      rows.add(new String[] { "Length", formatMechValue(md.getTantanLength() * 1000.0) + " mm" });
+      rows.add(new String[] {"Length", formatMechValue(md.getTantanLength() * 1000.0) + " mm"});
     }
     String material = md.getConstrutionMaterial();
     if (material != null && !material.trim().isEmpty() && !"steel".equals(material)) {
-      rows.add(new String[] { "Material", material });
+      rows.add(new String[] {"Material", material});
     }
     boolean designPressureSet = md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0;
     if (designPressureSet) {
-      rows.add(new String[] { "Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara" });
+      rows.add(new String[] {"Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara"});
     }
     // Only emit a design temperature when it has been meaningfully set. The field defaults to the
     // placeholder value 100.0 K (-173.1 C); emitting that for every unmodified unit produced a
@@ -1257,10 +1255,10 @@ public final class DexpiXmlWriter {
     boolean designTemperatureSet = Math.abs(md.getMaxOperationTemperature() - 100.0) > 0.5;
     if (designTemperatureSet) {
       double designTempC = md.getMaxOperationTemperature() - 273.15;
-      rows.add(new String[] { "Design T.", formatMechValue(designTempC) + " \u00B0C" });
+      rows.add(new String[] {"Design T.", formatMechValue(designTempC) + " \u00B0C"});
     }
     if (md.getWeightTotal() > 0) {
-      rows.add(new String[] { "Weight", formatMechValue(md.getWeightTotal()) + " kg" });
+      rows.add(new String[] {"Weight", formatMechValue(md.getWeightTotal()) + " kg"});
     }
     return rows;
   }
@@ -1501,6 +1499,16 @@ public final class DexpiXmlWriter {
    */
   private static void registerOutletNozzles(ProcessEquipmentInterface unit, List<String> outNozzles,
       Map<Integer, String> outletStreamToNozzle) {
+    if (unit instanceof Splitter) {
+      Splitter splitter = (Splitter) unit;
+      for (int i = 0; i < outNozzles.size(); i++) {
+        StreamInterface branch = splitter.getSplitStream(i);
+        if (branch != null) {
+          outletStreamToNozzle.put(System.identityHashCode(branch), outNozzles.get(i));
+        }
+      }
+      return;
+    }
     StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
     if (gasOut != null && !outNozzles.isEmpty()) {
       outletStreamToNozzle.put(System.identityHashCode(gasOut), outNozzles.get(0));
@@ -1538,7 +1546,7 @@ public final class DexpiXmlWriter {
       return;
     }
     // Inlet nozzle at left edge of equipment shape (center height)
-    nozzlePositions.put(inNozzle, new double[] { position.x - 18.0, position.y });
+    nozzlePositions.put(inNozzle, new double[] {position.x - 18.0, position.y});
 
     // Phase-aware nozzle placement per P&ID convention (ISO 10628):
     // Gas exits TOP of equipment (highest Y in Y-up coords)
@@ -1546,21 +1554,103 @@ public final class DexpiXmlWriter {
     // Water exits below oil (heaviest phase at very bottom)
     if (outNozzles.size() == 1) {
       // Single outlet — same height as center (TwoPortEquipment)
-      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y });
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y});
     } else if (outNozzles.size() == 2) {
       // 2-phase separator: gas at top, liquid at bottom
-      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y + 8.0 }); // gas
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
       // (top)
-      nozzlePositions.put(outNozzles.get(1), new double[] { position.x + 18.0, position.y - 8.0 }); // liquid
+      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 8.0}); // liquid
       // (bottom)
-    } else if (outNozzles.size() >= 3) {
+    } else if (outNozzles.size() > 3) {
+      // Multi-branch splitter: evenly spaced outlets from top to bottom
+      for (int i = 0; i < outNozzles.size(); i++) {
+        nozzlePositions.put(outNozzles.get(i),
+            new double[] {position.x + 18.0, position.y + 8.0 - 16.0 * i / (outNozzles.size() - 1)});
+      }
+    } else if (outNozzles.size() == 3) {
       // 3-phase separator: gas top, oil middle, water bottom
-      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y + 8.0 }); // gas
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
       // (top)
-      nozzlePositions.put(outNozzles.get(1), new double[] { position.x + 18.0, position.y - 4.0 }); // oil
+      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 4.0}); // oil
       // (middle-low)
-      nozzlePositions.put(outNozzles.get(2), new double[] { position.x + 18.0, position.y - 12.0 }); // water
+      nozzlePositions.put(outNozzles.get(2), new double[] {position.x + 18.0, position.y - 12.0}); // water
       // (bottom)
+    }
+  }
+
+  /**
+   * Returns the number of outlet nozzles to create for a unit: one per splitter branch, two for a separator, three for
+   * a three-phase separator and one otherwise.
+   *
+   * @param unit the equipment unit
+   * @return outlet nozzle count, at least one
+   */
+  private static int outletNozzleCount(ProcessEquipmentInterface unit) {
+    if (unit instanceof Splitter) {
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      return Math.max(1, outlets == null ? 1 : outlets.size());
+    }
+    if (!DexpiStreamUtils.isMultiOutlet(unit)) {
+      return 1;
+    }
+    return unit instanceof ThreePhaseSeparator ? 3 : 2;
+  }
+
+  /**
+   * Records the process role and outlet index of the nozzles of one unit.
+   *
+   * <p>
+   * The roles are written as the {@code NeqSimPortAttributes} generic-attribute set on each nozzle so that
+   * {@link DexpiSimulationBuilder} can rebuild a faithful simulation: which separator outlet carries gas, liquid or
+   * water and which splitter branch a line leaves from. Receiving tools that do not know the set can ignore it.
+   * </p>
+   *
+   * @param unit the equipment unit
+   * @param inNozzle the inlet nozzle id
+   * @param outNozzles the outlet nozzle ids in outlet order
+   * @param portRoles map to populate with nozzle id to {role, index}
+   */
+  private static void registerPortRoles(ProcessEquipmentInterface unit, String inNozzle, List<String> outNozzles,
+      Map<String, String[]> portRoles) {
+    portRoles.put(inNozzle, new String[] {DexpiFlowsheetGraph.ROLE_INLET, null});
+    boolean threePhase = unit instanceof ThreePhaseSeparator;
+    boolean separator = threePhase || unit instanceof Separator;
+    for (int i = 0; i < outNozzles.size(); i++) {
+      String role = DexpiFlowsheetGraph.ROLE_OUTLET;
+      if (separator) {
+        if (i == 0) {
+          role = DexpiFlowsheetGraph.ROLE_GAS;
+        } else if (i == 1) {
+          role = threePhase ? DexpiFlowsheetGraph.ROLE_OIL : DexpiFlowsheetGraph.ROLE_LIQUID;
+        } else {
+          role = DexpiFlowsheetGraph.ROLE_WATER;
+        }
+      }
+      portRoles.put(outNozzles.get(i), new String[] {role, Integer.toString(i)});
+    }
+  }
+
+  /**
+   * Writes the recorded port roles as a {@code NeqSimPortAttributes} generic-attribute set on each nozzle.
+   *
+   * @param document the XML document
+   * @param portRoles nozzle id to {role, index}
+   */
+  private static void annotatePortRoles(Document document, Map<String, String[]> portRoles) {
+    NodeList nozzles = document.getElementsByTagName("Nozzle");
+    for (int i = 0; i < nozzles.getLength(); i++) {
+      Element nozzle = (Element) nozzles.item(i);
+      String[] role = portRoles.get(nozzle.getAttribute("ID"));
+      if (role == null) {
+        continue;
+      }
+      Element set = document.createElement("GenericAttributes");
+      set.setAttribute("Set", DexpiFlowsheetGraph.PORT_ATTRIBUTE_SET);
+      appendGenericAttribute(document, set, DexpiFlowsheetGraph.PORT_ROLE, role[0]);
+      if (role[1] != null) {
+        appendGenericAttribute(document, set, DexpiFlowsheetGraph.PORT_INDEX, role[1]);
+      }
+      nozzle.appendChild(set);
     }
   }
 
@@ -1773,9 +1863,9 @@ public final class DexpiXmlWriter {
       double x2 = points[i + 1][0];
       double y2 = points[i + 1][1];
       if (Math.abs(y1 - y2) < 0.5) {
-        horizontalSegments.add(new double[] { x1, x2, y1 });
+        horizontalSegments.add(new double[] {x1, x2, y1});
       } else if (Math.abs(x1 - x2) < 0.5) {
-        verticalSegments.add(new double[] { x1, y1, y2 });
+        verticalSegments.add(new double[] {x1, y1, y2});
       }
     }
   }
@@ -2285,7 +2375,7 @@ public final class DexpiXmlWriter {
         cx = pos[0];
         cy = pos[1];
         hasPosition = true;
-        instrumentPositions.add(new double[] { cx, cy });
+        instrumentPositions.add(new double[] {cx, cy});
       }
 
       // ProcessInstrumentationFunction (the instrument bubble)
@@ -2311,9 +2401,9 @@ public final class DexpiXmlWriter {
 
         String topText = category + functions;
         appendInstrumentLabelText(document, label, topText, cx, cy + 2.25, pifId,
-            new String[] { "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions" });
+            new String[] {"ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions"});
         appendInstrumentLabelText(document, label, loopNumber, cx, cy - 1.2, pifId,
-            new String[] { "ProcessInstrumentationFunctionNumber" });
+            new String[] {"ProcessInstrumentationFunctionNumber"});
 
         pif.appendChild(label);
       }
@@ -2512,7 +2602,7 @@ public final class DexpiXmlWriter {
         }
         if (hasPosition) {
           appendInstrumentPosition(document, ctrlPif, ctrlCx, ctrlCy);
-          instrumentPositions.add(new double[] { ctrlCx, ctrlCy });
+          instrumentPositions.add(new double[] {ctrlCx, ctrlCy});
 
           // Controller label
           String ctrlLabelId = uniqueIdentifier("ProcessInstrumentationFunctionLabel", controllerTag, usedIds);
@@ -2524,9 +2614,9 @@ public final class DexpiXmlWriter {
 
           String ctrlTopText = ctrlCategory + ctrlFunctions;
           appendInstrumentLabelText(document, ctrlLabel, ctrlTopText, ctrlCx, ctrlCy + 2.25, controllerPifId,
-              new String[] { "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions" });
+              new String[] {"ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions"});
           appendInstrumentLabelText(document, ctrlLabel, loopNumber, ctrlCx, ctrlCy - 1.2, controllerPifId,
-              new String[] { "ProcessInstrumentationFunctionNumber" });
+              new String[] {"ProcessInstrumentationFunctionNumber"});
           ctrlPif.appendChild(ctrlLabel);
         }
 
@@ -3000,12 +3090,12 @@ public final class DexpiXmlWriter {
           + Math.abs(route[index + 1][1] - route[index][1]);
       if (remaining <= segmentLength || index + 2 == route.length) {
         double fraction = segmentLength <= 0.0 ? 0.0 : remaining / segmentLength;
-        return new double[] { route[index][0] + fraction * (route[index + 1][0] - route[index][0]),
-            route[index][1] + fraction * (route[index + 1][1] - route[index][1]) };
+        return new double[] {route[index][0] + fraction * (route[index + 1][0] - route[index][0]),
+            route[index][1] + fraction * (route[index + 1][1] - route[index][1])};
       }
       remaining -= segmentLength;
     }
-    return new double[] { fromX, fromY };
+    return new double[] {fromX, fromY};
   }
 
   private static ProcessEquipmentInterface findFinalControlElement(ControllerDeviceInterface controller,
@@ -3239,11 +3329,11 @@ public final class DexpiXmlWriter {
    */
   private static String[] parseIsaTag(String tag) {
     if (tag == null || tag.isEmpty()) {
-      return new String[] { "", "", tag };
+      return new String[] {"", "", tag};
     }
     int dashIndex = tag.indexOf('-');
     if (dashIndex <= 0) {
-      return new String[] { "", "", tag };
+      return new String[] {"", "", tag};
     }
     String prefix = tag.substring(0, dashIndex);
     String loopNumber = tag.substring(dashIndex + 1);
@@ -3253,7 +3343,7 @@ public final class DexpiXmlWriter {
     // Remaining letters are the function (T, IC, C, etc.)
     String functions = prefix.length() > 1 ? prefix.substring(1) : "T";
 
-    return new String[] { category, functions, loopNumber };
+    return new String[] {category, functions, loopNumber};
   }
 
   /**

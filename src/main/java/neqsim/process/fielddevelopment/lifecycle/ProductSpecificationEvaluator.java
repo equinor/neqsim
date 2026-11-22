@@ -164,11 +164,11 @@ public final class ProductSpecificationEvaluator {
       standard.setReferenceState("real");
       standard.setReferenceType("volume");
       standard.calculate();
-      return new double[] { standard.getValue("GCV") / 1000.0, standard.getValue("SuperiorWobbeIndex") / 1000.0,
-          standard.getValue("RelativeDensity") };
+      return new double[] {standard.getValue("GCV") / 1000.0, standard.getValue("SuperiorWobbeIndex") / 1000.0,
+          standard.getValue("RelativeDensity")};
     } catch (RuntimeException ex) {
       violations.add("gas energy quality could not be calculated");
-      return new double[] { Double.NaN, Double.NaN, Double.NaN };
+      return new double[] {Double.NaN, Double.NaN, Double.NaN};
     }
   }
 

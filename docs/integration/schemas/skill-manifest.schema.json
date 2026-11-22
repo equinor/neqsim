@@ -20,7 +20,8 @@
     "description": {
       "type": "string",
       "minLength": 10,
-      "description": "Short description that MUST contain a 'USE WHEN:' clause so agents can decide when to load the skill."
+      "maxLength": 1024,
+      "description": "Short description that MUST contain a 'USE WHEN:' clause so agents can decide when to load the skill. Capped at 1024 characters (Agent Skills spec); clients truncate longer text, silently losing the trigger words used for routing."
     },
     "last_verified": {
       "type": "string",

@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.engineering.EngineeringValidationReport.Severity;
 import neqsim.process.engineering.automation.EngineeringAutomationStudy;
 import neqsim.process.engineering.design.EngineeringDesignModule;
@@ -27,12 +28,16 @@ import neqsim.process.engineering.production.EngineeringProductionReadinessBasis
 import neqsim.process.engineering.verticalslice.InletCompressionExportSliceQualification;
 import neqsim.process.engineering.verticalslice.ProductionVerticalSliceExecutionManifest;
 import neqsim.process.materials.MaterialsReviewInput;
+import neqsim.process.mechanicaldesign.pipeline.NorsokP002LineSizingValidator;
+import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
 import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareInput;
+import neqsim.process.safety.api14c.Api14cDeviceDeclaration;
 import neqsim.process.safety.esd.EmergencyShutdownTestResult;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.scenario.DynamicSafetyScenario;
+import neqsim.process.safety.scenario.DynamicScenarioCriterion;
 
 /**
  * Governed engineering representation associated with a runnable NeqSim process.
@@ -46,6 +51,8 @@ public final class EngineeringProject implements Serializable {
   private static final long serialVersionUID = 1000L;
   private final String projectId;
   private final String name;
+  private String pidSizingSchedule;
+  private NorsokP002LineSizingValidator pidLineSizingRule;
   private String revision = "working";
   private final ProcessSystem processSystem;
   private final EngineeringDesignBasis designBasis;
@@ -68,11 +75,37 @@ public final class EngineeringProject implements Serializable {
   private final List<DynamicSafetyScenario> dynamicSafetyScenarios = new ArrayList<DynamicSafetyScenario>();
   private final List<EngineeringDesignModule> engineeringDesignModules = new ArrayList<EngineeringDesignModule>();
   private transient EngineeringDesignLoopResult latestEngineeringDesignLoopResult;
+  private transient EngineeringSimulationResult latestEngineeringSimulationResult;
   private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
+  private List<Api14cDeviceDeclaration> api14cDevices;
   private MaterialsReviewInput materialsReviewInput;
   private EngineeringProductionReadinessBasis productionReadinessBasis;
   private transient InletCompressionExportSliceQualification.Result latestVerticalSliceQualification;
   private transient ProductionVerticalSliceExecutionManifest latestVerticalSliceExecutionManifest;
+
+  /**
+   * Records a documented protection function for the offshore safety review.
+   * 
+   * @param device tagged device and source reference
+   * @return this project
+   */
+  public EngineeringProject addApi14cDevice(Api14cDeviceDeclaration device) {
+    ProcessEquipmentInterface equipment = device == null ? null : processSystem.getUnit(device.getEquipmentTag());
+    if (equipment == null || equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+      throw new IllegalArgumentException("A device must identify existing protected equipment");
+    }
+    if (api14cDevices == null) {
+      api14cDevices = new ArrayList<Api14cDeviceDeclaration>();
+    }
+    api14cDevices.add(device);
+    return this;
+  }
+
+  /** @return documented devices, empty for projects created before device declarations were available */
+  public List<Api14cDeviceDeclaration> getApi14cDevices() {
+    return api14cDevices == null ? Collections.<Api14cDeviceDeclaration>emptyList()
+        : Collections.unmodifiableList(api14cDevices);
+  }
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
     this(UUID.randomUUID().toString(), name, processSystem, designBasis);
@@ -155,6 +188,16 @@ public final class EngineeringProject implements Serializable {
   /** @return latest design-loop result, or null when the loop has not been run */
   public EngineeringDesignLoopResult getLatestEngineeringDesignLoopResult() {
     return latestEngineeringDesignLoopResult;
+  }
+
+  /** Records the latest coordinated engineering simulation for revision-controlled evidence graphs. */
+  void recordEngineeringSimulationResult(EngineeringSimulationResult result) {
+    latestEngineeringSimulationResult = result;
+  }
+
+  /** @return latest coordinated engineering simulation, or null when it has not been run */
+  public EngineeringSimulationResult getLatestEngineeringSimulationResult() {
+    return latestEngineeringSimulationResult;
   }
 
   /** Records the latest fail-closed inlet/compression/export vertical-slice qualification. */
@@ -271,6 +314,43 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable modules configured for iterative process-to-engineering design */
   public List<EngineeringDesignModule> getEngineeringDesignModules() {
     return Collections.unmodifiableList(engineeringDesignModules);
+  }
+
+  /**
+   * Enables preliminary equipment and material line sizing on professional P&amp;IDs and native DEXPI 2.0.1 engineering
+   * exports. Sizes are calculated from the current solved case at export time.
+   *
+   * @param schedule default pipe schedule, or null to disable calculated sizes
+   * @return this project
+   */
+  public EngineeringProject setPidSizingSchedule(String schedule) {
+    return setPidSizingSchedule(schedule, null);
+  }
+
+  /**
+   * Supplies project-specific velocity and erosion screening limits together with the schedule.
+   * 
+   * @param schedule pipe schedule, or null to disable calculated sizes
+   * @param rule configured line sizing rule, or null for the default screening limits
+   * @return this project
+   */
+  public EngineeringProject setPidSizingSchedule(String schedule, NorsokP002LineSizingValidator rule) {
+    if (schedule != null && !neqsim.process.mechanicaldesign.pipeline.PipeDesign.isSupportedSchedule(schedule)) {
+      throw new IllegalArgumentException("Unsupported pipe schedule: " + schedule);
+    }
+    pidSizingSchedule = schedule;
+    pidLineSizingRule = rule;
+    return this;
+  }
+
+  /** @return project line screening rule or a new validator with the default limits */
+  public NorsokP002LineSizingValidator getPidLineSizingRule() {
+    return pidLineSizingRule == null ? new NorsokP002LineSizingValidator() : pidLineSizingRule;
+  }
+
+  /** @return default schedule for preliminary P&amp;ID sizing, or null if disabled */
+  public String getPidSizingSchedule() {
+    return pidSizingSchedule;
   }
 
   /** Adds a controlled line-list row associated with pipeline equipment. */
@@ -525,12 +605,61 @@ public final class EngineeringProject implements Serializable {
   }
 
   /**
+   * Adds only an actual executable controller and its exposed input to the scenario namespace.
+   *
+   * @param tags declared executable tag set
+   * @param controller registered or equipment-attached controller
+   */
+  private static void addScenarioControllerTags(Set<String> tags, ControllerDeviceInterface controller) {
+    if (controller == null) {
+      return;
+    }
+    if (controller.getName() != null && !controller.getName().trim().isEmpty()) {
+      tags.add(controller.getName());
+    }
+    MeasurementDeviceInterface transmitter = controller.getTransmitter();
+    if (transmitter != null) {
+      if (transmitter.getName() != null && !transmitter.getName().trim().isEmpty()) {
+        tags.add(transmitter.getName());
+      }
+      if (transmitter.getTag() != null && !transmitter.getTag().trim().isEmpty()) {
+        tags.add(transmitter.getTag());
+      }
+    }
+  }
+
+  /**
    * Validates topology identifiers, minimum design data, compressor protection data, and approval governance.
    *
    * @return validation report
    */
   public EngineeringValidationReport validate() {
     EngineeringValidationReport report = new EngineeringValidationReport();
+    Set<String> scenarioTags = new HashSet<String>();
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit != null && unit.getName() != null && !unit.getName().trim().isEmpty()) {
+        scenarioTags.add(unit.getName());
+      }
+    }
+    for (MeasurementDeviceInterface device : processSystem.getMeasurementDevices()) {
+      if (device.getName() != null && !device.getName().trim().isEmpty()) {
+        scenarioTags.add(device.getName());
+      }
+      if (device.getTag() != null && !device.getTag().trim().isEmpty()) {
+        scenarioTags.add(device.getTag());
+      }
+    }
+    // Match the executable P&ID binding namespace: controllers may be
+    // registered directly or attached to actual process equipment. Their real
+    // input transmitters are admissible even when not separately registered.
+    for (ControllerDeviceInterface controller : processSystem.getControllerDevices()) {
+      addScenarioControllerTags(scenarioTags, controller);
+    }
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      for (ControllerDeviceInterface controller : unit.getControllers()) {
+        addScenarioControllerTags(scenarioTags, controller);
+      }
+    }
     Set<String> tags = new HashSet<String>();
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit == null || unit instanceof Stream) {
@@ -584,12 +713,6 @@ public final class EngineeringProject implements Serializable {
             "Engineering metric references unknown equipment: " + metric.getId());
       }
     }
-    for (DynamicSafetyScenario scenario : dynamicSafetyScenarios) {
-      if (scenario.getEvidenceReferences().isEmpty()) {
-        report.add(Severity.REVIEW, "ENG-DYNAMIC-001", scenario.getId(),
-            "Dynamic protection scenario has no SRS, cause-and-effect, or hazard-review evidence reference");
-      }
-    }
     Set<String> boundaryIds = new HashSet<String>();
     for (EngineeringBoundary boundary : boundaries) {
       if (!boundaryIds.add(boundary.getId())) {
@@ -608,6 +731,49 @@ public final class EngineeringProject implements Serializable {
     for (EngineeringRequirement requirement : requirements) {
       if (!requirementIds.add(requirement.getId())) {
         report.add(Severity.ERROR, "ENG-REQ-001", requirement.getId(), "Requirement ID is not unique");
+      }
+    }
+    Set<String> evidenceReferences = new HashSet<String>();
+    for (EngineeringEvidenceRecord evidence : evidenceRecords) {
+      evidenceReferences.add(evidence.getDocumentId());
+      evidenceReferences.add(evidence.getDocumentId() + "@" + evidence.getRevision());
+    }
+    Set<String> scenarioIds = new HashSet<String>();
+    for (DynamicSafetyScenario scenario : dynamicSafetyScenarios) {
+      if (!scenarioIds.add(scenario.getId())) {
+        report.add(Severity.ERROR, "ENG-DYNAMIC-002", scenario.getId(), "Dynamic protection scenario ID is not unique");
+      }
+      if (scenario.getEvidenceReferences().isEmpty()) {
+        report.add(Severity.REVIEW, "ENG-DYNAMIC-001", scenario.getId(),
+            "Dynamic protection scenario has no SRS, cause-and-effect, or hazard-review evidence reference");
+      }
+      boolean unspecifiedBehavior = "UNSPECIFIED".equals(scenario.getCaseConfigurationDefinitionId())
+          || "UNSPECIFIED".equals(scenario.getInitiatingEventDefinitionId())
+          || scenario.getLogicDefinitionIds().contains("UNSPECIFIED");
+      for (DynamicScenarioCriterion criterion : scenario.getCriteria()) {
+        unspecifiedBehavior |= "UNSPECIFIED".equals(criterion.getExtractorDefinitionId());
+      }
+      if (unspecifiedBehavior) {
+        report.add(Severity.REVIEW, "ENG-DYNAMIC-006", scenario.getId(),
+            "Dynamic protection scenario has executable behavior without controlled definition identifiers");
+      }
+      for (String evidenceReference : scenario.getEvidenceReferences()) {
+        if (!evidenceReferences.contains(evidenceReference)) {
+          report.add(Severity.REVIEW, "ENG-DYNAMIC-005", scenario.getId(),
+              "Dynamic protection scenario evidence is not registered in the project: " + evidenceReference);
+        }
+      }
+      for (String requirementId : scenario.getRequirementIds()) {
+        if (!requirementIds.contains(requirementId)) {
+          report.add(Severity.ERROR, "ENG-DYNAMIC-003", scenario.getId(),
+              "Dynamic protection scenario requirement ID does not exist: " + requirementId);
+        }
+      }
+      for (String equipmentTag : scenario.getEquipmentTags()) {
+        if (!scenarioTags.contains(equipmentTag)) {
+          report.add(Severity.ERROR, "ENG-DYNAMIC-004", scenario.getId(),
+              "Dynamic protection scenario tag does not exist: " + equipmentTag);
+        }
       }
     }
     Set<String> sifTags = new HashSet<String>();
@@ -738,6 +904,10 @@ public final class EngineeringProject implements Serializable {
       lineList.add(gson.toJsonTree(input.toMap()));
     }
     root.add("lineList", lineList);
+    if (pidSizingSchedule != null) {
+      root.addProperty("pidSizingSchedule", pidSizingSchedule);
+      root.add("pidLineSizingRule", gson.toJsonTree(getPidLineSizingRule()));
+    }
     root.add("reliefScenarioBases", gson.toJsonTree(reliefScenarioBases));
     root.add("safetyFunctionDesigns", gson.toJsonTree(safetyFunctionDesigns));
     root.add("shutdownSequences", gson.toJsonTree(shutdownSequences));

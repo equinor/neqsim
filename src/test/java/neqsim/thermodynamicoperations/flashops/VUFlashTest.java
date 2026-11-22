@@ -75,6 +75,8 @@ class VUFlashTest {
       assertTrue(flash.getLastIterationCount() <= 20,
           "dynamic CPA VU flash must remain bounded at step " + step + ", iterations=" + flash.getLastIterationCount());
       assertFalse(flash.wasColdFallbackUsed(), "nearby dynamic state must not require a cold fallback");
+      assertFalse(flash.wasEquilibriumRecoveryUsed(), "nearby dynamic state must not require detached recovery");
+      assertEquals(0, flash.getEquilibriumRecoveryFlashCount());
       assertTrue(fluid.hasPhaseType("gas"), "gas phase retained at step " + step);
       assertTrue(fluid.hasPhaseType("oil"), "oil phase retained at step " + step);
       assertTrue(fluid.hasPhaseType("aqueous"), "aqueous phase retained at step " + step);

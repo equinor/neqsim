@@ -62,6 +62,12 @@ public class AsphalteneStabilityAnalyzer {
   /** Cached onset pressure. */
   private double onsetPressure = Double.NaN;
 
+  /** Last calculated lower onset pressure (bara). */
+  private double lowerOnsetPressure = Double.NaN;
+
+  /** True once SARA fractions have been set. */
+  private boolean saraSet = false;
+
   /** Risk level enumeration. */
   public enum AsphalteneRisk {
     /** No significant risk. */
@@ -130,46 +136,34 @@ public class AsphalteneStabilityAnalyzer {
    * Reference: de Boer, R.B. et al. (1995). SPE Production &amp; Facilities.
    * </p>
    *
+   * <p>
+   * Delegates to {@link DeBoerAsphalteneScreening} so both classes give the same classification: NO_PROBLEM maps to
+   * STABLE, SLIGHT_PROBLEM to LOW_RISK, MODERATE_PROBLEM to MODERATE_RISK and SEVERE_PROBLEM to HIGH_RISK. A reservoir
+   * below the saturation pressure returns LOW_RISK. (Earlier versions used a separate density-factor rule with
+   * different thresholds.)
+   * </p>
+   *
    * @param reservoirPressure reservoir pressure (bara)
    * @param saturationPressure bubble point pressure (bara)
    * @param oilDensity in-situ oil density (kg/m3)
    * @return asphaltene risk assessment
    */
   public AsphalteneRisk deBoerScreening(double reservoirPressure, double saturationPressure, double oilDensity) {
-    double undersaturation = reservoirPressure - saturationPressure;
-
-    // De Boer correlation boundaries (approximate)
-    // Based on field experience and the original de Boer plot
-
-    // Convert density to specific gravity for correlation
-    double sg = oilDensity / 1000.0;
-
-    // Light oils (SG < 0.8) are more prone to asphaltene problems
-    double densityFactor = 1.0;
-    if (sg < 0.75) {
-      densityFactor = 2.0; // Light oils - higher risk
-    } else if (sg < 0.85) {
-      densityFactor = 1.5;
-    } else if (sg > 0.95) {
-      densityFactor = 0.5; // Heavy oils often self-stabilizing
-    }
-
-    // Adjusted undersaturation threshold based on density
-    double riskMetric = undersaturation * densityFactor;
-
-    if (undersaturation < 0) {
+    if (reservoirPressure - saturationPressure < 0) {
       // Below bubble point - dissolution risk, not deposition
       return AsphalteneRisk.LOW_RISK;
-    } else if (riskMetric < 50) {
-      return AsphalteneRisk.STABLE;
-    } else if (riskMetric < 150) {
-      return AsphalteneRisk.LOW_RISK;
-    } else if (riskMetric < 300) {
-      return AsphalteneRisk.MODERATE_RISK;
-    } else if (riskMetric < 500) {
-      return AsphalteneRisk.HIGH_RISK;
-    } else {
-      return AsphalteneRisk.SEVERE_RISK;
+    }
+    DeBoerAsphalteneScreening screening =
+        new DeBoerAsphalteneScreening(reservoirPressure, saturationPressure, oilDensity);
+    switch (screening.evaluateRisk()) {
+      case NO_PROBLEM:
+        return AsphalteneRisk.STABLE;
+      case SLIGHT_PROBLEM:
+        return AsphalteneRisk.LOW_RISK;
+      case MODERATE_PROBLEM:
+        return AsphalteneRisk.MODERATE_RISK;
+      default:
+        return AsphalteneRisk.HIGH_RISK;
     }
   }
 
@@ -183,6 +177,7 @@ public class AsphalteneStabilityAnalyzer {
    */
   public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
     saraData.setSARAFractions(saturates, aromatics, resins, asphaltenes);
+    saraSet = true;
   }
 
   /**
@@ -235,33 +230,68 @@ public class AsphalteneStabilityAnalyzer {
    * </p>
    *
    * @param temperature temperature in Kelvin
-   * @return onset pressure in bara, or NaN if not found
+   * @return onset pressure in bara, or NaN if no transition is sampled
+   * @throws IllegalArgumentException if the feed is not characterized or settings are invalid
+   * @throws IllegalStateException if the start is precipitated or the search cannot be completed
    */
   public double calculateOnsetPressure(double temperature) {
     if (system == null) {
       logger.error("System not set - cannot calculate onset pressure");
+      onsetPressure = Double.NaN;
+      lowerOnsetPressure = Double.NaN;
       return Double.NaN;
     }
+    return calculateOnsetPressure(temperature, system.getPressure());
+  }
 
+  /**
+   * Calculates the upper asphaltene onset pressure, searching down from a given start pressure (normally the
+   * reservoir pressure). The lower onset found by the same search is available from {@link #getLowerOnsetPressure()}.
+   *
+   * @param temperature temperature (K)
+   * @param startPressure pressure to start the downward search from (bara); must be undersaturated
+   * @return upper onset pressure (bara), or NaN if not found above 1 bara
+   * @throws IllegalArgumentException if the fluid has no characterized asphaltene component
+   * @throws IllegalStateException if asphaltene is already precipitated at the start pressure
+   */
+  public double calculateOnsetPressure(double temperature, double startPressure) {
+    onsetPressure = Double.NaN;
+    lowerOnsetPressure = Double.NaN;
+    if (system == null) {
+      logger.error("System not set - cannot calculate onset pressure");
+      return Double.NaN;
+    }
     SystemInterface workSystem = system.clone();
     workSystem.setTemperature(temperature);
+    workSystem.setPressure(startPressure);
 
-    AsphalteneOnsetPressureFlash onsetFlash = new AsphalteneOnsetPressureFlash(workSystem);
+    AsphalteneOnsetPressureFlash onsetFlash = new AsphalteneOnsetPressureFlash(workSystem, startPressure, 1.0);
     onsetFlash.run();
 
     if (onsetFlash.isOnsetFound()) {
       onsetPressure = onsetFlash.getOnsetPressure();
+      lowerOnsetPressure = onsetFlash.getLowerOnsetPressure();
       return onsetPressure;
     }
-
     return Double.NaN;
+  }
+
+  /**
+   * Gets the lower onset pressure from the last onset calculation (where the precipitate re-dissolves).
+   *
+   * @return lower onset pressure (bara), or NaN
+   */
+  public double getLowerOnsetPressure() {
+    return lowerOnsetPressure;
   }
 
   /**
    * Calculates the asphaltene onset temperature at a given pressure.
    *
    * @param pressure pressure in bara
-   * @return onset temperature in Kelvin, or NaN if not found
+   * @return onset temperature in Kelvin, or NaN if no transition is sampled
+   * @throws IllegalArgumentException if the feed is not characterized or settings are invalid
+   * @throws IllegalStateException if the search cannot be completed
    */
   public double calculateOnsetTemperature(double pressure) {
     if (system == null) {
@@ -292,9 +322,24 @@ public class AsphalteneStabilityAnalyzer {
       logger.error("System not set");
       return Double.NaN;
     }
+    return calculateBubblePointPressure(system.getTemperature());
+  }
+
+  /**
+   * Calculates the bubble point pressure at a given temperature.
+   *
+   * @param temperature temperature (K)
+   * @return bubble point pressure (bara), or NaN on failure
+   */
+  public double calculateBubblePointPressure(double temperature) {
+    if (system == null) {
+      logger.error("System not set");
+      return Double.NaN;
+    }
 
     try {
       SystemInterface workSystem = system.clone();
+      workSystem.setTemperature(temperature);
       ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
       ops.bubblePointPressureFlash(false);
       bubblePointPressure = workSystem.getPressure();
@@ -309,34 +354,34 @@ public class AsphalteneStabilityAnalyzer {
    * Generates an asphaltene precipitation envelope.
    *
    * <p>
-   * Returns arrays of [temperature, onset pressure upper, onset pressure lower] defining the asphaltene precipitation
-   * region.
+   * For each temperature the search starts at the fluid's own pressure and finds the upper onset and, continuing
+   * down, the lower onset where the precipitate re-dissolves. The bubble point is calculated at the same temperature.
+   * Points where the search fails (for example because asphaltene is already precipitated at the start pressure) are
+   * NaN.
    * </p>
    *
    * @param minTemp minimum temperature (K)
    * @param maxTemp maximum temperature (K)
    * @param numPoints number of points to calculate
-   * @return 2D array: [0]=temperatures, [1]=upper onset P, [2]=lower onset P
+   * @return 2D array: [0]=temperatures, [1]=upper onset P, [2]=lower onset P, [3]=bubble point P (all bara)
    */
   public double[][] generatePrecipitationEnvelope(double minTemp, double maxTemp, int numPoints) {
-    double[][] envelope = new double[3][numPoints];
-    double tempStep = (maxTemp - minTemp) / (numPoints - 1);
+    double[][] envelope = new double[4][numPoints];
+    double tempStep = numPoints > 1 ? (maxTemp - minTemp) / (numPoints - 1) : 0.0;
 
     for (int i = 0; i < numPoints; i++) {
       double temp = minTemp + i * tempStep;
       envelope[0][i] = temp;
-
-      double onsetP = calculateOnsetPressure(temp);
-      envelope[1][i] = onsetP; // Upper onset (above bubble point)
-
-      // Lower onset would require different algorithm
-      // For now, use bubble point as lower bound
-      if (Double.isNaN(bubblePointPressure)) {
-        calculateBubblePointPressure();
+      try {
+        envelope[1][i] = calculateOnsetPressure(temp);
+        envelope[2][i] = lowerOnsetPressure;
+      } catch (IllegalStateException failure) {
+        logger.warn("Onset search failed at {} K: {}", temp, failure.getMessage());
+        envelope[1][i] = Double.NaN;
+        envelope[2][i] = Double.NaN;
       }
-      envelope[2][i] = bubblePointPressure;
+      envelope[3][i] = calculateBubblePointPressure(temp);
     }
-
     return envelope;
   }
 
@@ -357,7 +402,7 @@ public class AsphalteneStabilityAnalyzer {
     // 1. SARA-based screening
     report.append("1. SARA-Based Analysis:\n");
     double cii = getColloidalInstabilityIndex();
-    if (!Double.isNaN(cii)) {
+    if (saraSet && !Double.isNaN(cii)) {
       report.append(String.format("   CII = %.3f%n", cii));
       report.append(String.format("   R/A = %.3f%n", getResinToAsphalteneRatio()));
       report.append("   Risk: ").append(evaluateSARAStability().getDescription()).append("\n");
@@ -376,6 +421,7 @@ public class AsphalteneStabilityAnalyzer {
     report.append("\n");
 
     // 3. Thermodynamic calculations (if system available)
+    AsphalteneRisk thermodynamicRisk = null;
     if (system != null) {
       report.append("3. Thermodynamic Analysis:\n");
 
@@ -385,23 +431,40 @@ public class AsphalteneStabilityAnalyzer {
         report.append(String.format("   Undersaturation: %.1f bar%n", reservoirPressure - bubbleP));
       }
 
-      double onsetP = calculateOnsetPressure(reservoirTemperature);
-      if (!Double.isNaN(onsetP)) {
-        report.append(String.format("   Onset pressure: %.1f bara%n", onsetP));
+      try {
+        double onsetP = calculateOnsetPressure(reservoirTemperature, reservoirPressure);
+        if (!Double.isNaN(onsetP)) {
+          report.append(String.format("   Onset pressure: %.1f bara%n", onsetP));
 
-        // Check if production path crosses onset
-        if (wellheadPressure < onsetP && reservoirPressure > onsetP) {
-          report.append("   WARNING: Production path crosses asphaltene onset!\n");
+          // Check if production path crosses onset
+          if (wellheadPressure < onsetP && reservoirPressure > onsetP) {
+            report.append("   WARNING: Production path crosses asphaltene onset!\n");
+          }
+        } else {
+          report.append("   Onset pressure: Not found in operating range\n");
         }
-      } else {
-        report.append("   Onset pressure: Not found in operating range\n");
+        if (!Double.isNaN(lowerOnsetPressure)) {
+          report.append(String.format("   Lower onset pressure: %.1f bara%n", lowerOnsetPressure));
+        }
+        thermodynamicRisk = thermodynamicRisk(onsetP, reservoirPressure, wellheadPressure);
+      } catch (IllegalArgumentException | IllegalStateException failure) {
+        report.append("   Onset pressure: Unavailable (").append(failure.getMessage()).append(")\n");
+        if (failure instanceof IllegalStateException && failure.getMessage() != null
+            && failure.getMessage().contains("already precipitated")) {
+          thermodynamicRisk = AsphalteneRisk.SEVERE_RISK;
+        }
       }
     }
     report.append("\n");
 
     // 4. Recommendations
     report.append("4. Recommendations:\n");
-    AsphalteneRisk overallRisk = evaluateSARAStability();
+    AsphalteneRisk saraRisk = saraSet ? evaluateSARAStability() : null;
+    AsphalteneRisk overallRisk = combineRisks(saraRisk, thermodynamicRisk);
+    report.append("   Basis: ").append(saraRisk == null ? "" : "SARA " + saraRisk.name())
+        .append(saraRisk != null && thermodynamicRisk != null ? ", " : "")
+        .append(thermodynamicRisk == null ? "" : "thermodynamic " + thermodynamicRisk.name())
+        .append(" -> ").append(overallRisk.name()).append("\n");
     switch (overallRisk) {
     case STABLE:
       report.append("   - No special measures required\n");
@@ -430,6 +493,44 @@ public class AsphalteneStabilityAnalyzer {
     }
 
     return report.toString();
+  }
+
+  /**
+   * Risk implied by the thermodynamic onset along the production path.
+   *
+   * @param onsetPressure upper onset pressure (bara), NaN if none
+   * @param reservoirPressure reservoir pressure (bara)
+   * @param wellheadPressure wellhead pressure (bara)
+   * @return the risk level
+   */
+  static AsphalteneRisk thermodynamicRisk(double onsetPressure, double reservoirPressure, double wellheadPressure) {
+    if (Double.isNaN(onsetPressure)) {
+      return AsphalteneRisk.STABLE;
+    }
+    if (wellheadPressure < onsetPressure && reservoirPressure > onsetPressure) {
+      return reservoirPressure - onsetPressure < 50.0 ? AsphalteneRisk.SEVERE_RISK : AsphalteneRisk.HIGH_RISK;
+    }
+    return reservoirPressure - onsetPressure < 50.0 ? AsphalteneRisk.MODERATE_RISK : AsphalteneRisk.LOW_RISK;
+  }
+
+  /**
+   * Combines SARA and thermodynamic risk: the higher of the available levels; MODERATE_RISK if neither is available.
+   *
+   * @param saraRisk SARA-based risk or null
+   * @param thermodynamicRisk thermodynamic risk or null
+   * @return combined risk
+   */
+  static AsphalteneRisk combineRisks(AsphalteneRisk saraRisk, AsphalteneRisk thermodynamicRisk) {
+    if (saraRisk == null && thermodynamicRisk == null) {
+      return AsphalteneRisk.MODERATE_RISK;
+    }
+    if (saraRisk == null) {
+      return thermodynamicRisk;
+    }
+    if (thermodynamicRisk == null) {
+      return saraRisk;
+    }
+    return saraRisk.ordinal() >= thermodynamicRisk.ordinal() ? saraRisk : thermodynamicRisk;
   }
 
   /**

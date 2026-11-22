@@ -174,7 +174,7 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
    */
   private double roundToStandardPipeSize(double diameter) {
     // Standard pipe sizes in meters (NPS in inches converted)
-    double[] standardSizes = { 0.0127, // 0.5"
+    double[] standardSizes = {0.0127, // 0.5"
         0.0254, // 1"
         0.0381, // 1.5"
         0.0508, // 2"

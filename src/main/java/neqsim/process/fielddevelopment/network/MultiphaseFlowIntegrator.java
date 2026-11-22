@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -437,9 +439,125 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /** Erosional velocity constant (API RP 14E). */
   private double erosionalConstant = 122.0;
 
+  /** Hydraulic model used for the pipeline traverse. */
+  private HydraulicModel hydraulicModel = HydraulicModel.TWO_FLUID;
+
+  /**
+   * Pipeline hydraulic model.
+   *
+   * <p>
+   * The Beggs and Brill two-phase friction multiplier and hold-up correlation were fitted on small-diameter air-water
+   * laboratory loops at liquid fractions around 1 to 2 percent and above. A wet-gas tie-back runs well below that,
+   * where the correlation is extrapolated and over-predicts the pressure drop substantially. The mechanistic two-fluid
+   * model resolves the phases separately and does not rely on that extrapolation, so it is the default for wellstream
+   * pipeline calculations.
+   * </p>
+   */
+  public enum HydraulicModel {
+    /**
+     * Mechanistic two-fluid model, {@link TwoFluidPipe}. Default. Preferred for wellstream and wet-gas lines.
+     */
+    TWO_FLUID,
+    /**
+     * Beggs and Brill correlation, {@link PipeBeggsAndBrills}. Faster, and adequate for liquid-dominated lines inside
+     * the correlation's calibration range.
+     */
+    BEGGS_BRILL
+  }
+
   // ============================================================================
   // CONSTRUCTORS
   // ============================================================================
+
+  /**
+   * Runs the pipeline traverse with the mechanistic two-fluid model.
+   *
+   * @param pipeInlet the pipeline inlet stream
+   * @param result the result object, annotated with the solver diagnostics
+   * @return the pipeline outlet stream
+   */
+  private StreamInterface runTwoFluid(Stream pipeInlet, PipelineResult result) {
+    TwoFluidPipe pipe = createTwoFluidPipe(pipeInlet);
+    pipe.setDiameter(pipelineDiameterM);
+    pipe.setRoughness(pipelineRoughnessM);
+    pipe.setNumberOfSections(numberOfSegments);
+    double totalLength = pipelineLengthKm * 1000.0;
+    double[] lengths = new double[numberOfSegments];
+    double[] elevations = new double[numberOfSegments + 1];
+    for (int i = 0; i < numberOfSegments; i++) {
+      lengths[i] = totalLength / numberOfSegments;
+      elevations[i] = elevationChangeM * i / numberOfSegments;
+    }
+    elevations[numberOfSegments] = elevationChangeM;
+    pipe.setSectionLengths(lengths);
+    pipe.setElevationProfile(elevations);
+    pipe.setSurfaceTemperature(seabedTemperatureC, "C");
+    if (overallHtcWm2K > 0.0) {
+      pipe.setHeatTransferCoefficient(overallHtcWm2K);
+    }
+    pipe.setEnableJouleThomson(true);
+    pipe.run();
+
+    // The solver owns convergence, including short lines that settle on the first sweep.
+    if (!pipe.isSteadyStateConverged()) {
+      throw new IllegalStateException("TwoFluidPipe steady state did not converge properly for the " + pipelineLengthKm
+          + " km flowline (converged=" + pipe.isSteadyStateConverged() + ", iterations="
+          + pipe.getSteadyStateIterationsUsed() + "); hydraulic screening was stopped");
+    }
+    return pipe.getOutletStream();
+  }
+
+  /**
+   * Create the two-fluid solver for a traverse.
+   *
+   * @param inlet the cloned pipeline inlet
+   * @return a new solver
+   */
+  TwoFluidPipe createTwoFluidPipe(Stream inlet) {
+    return new TwoFluidPipe("Flowline", inlet);
+  }
+
+  /**
+   * Runs the pipeline traverse with the Beggs and Brill correlation.
+   *
+   * @param pipeInlet the pipeline inlet stream
+   * @param result the result object
+   * @return the pipeline outlet stream
+   */
+  private StreamInterface runBeggsAndBrill(Stream pipeInlet, PipelineResult result) {
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Flowline", pipeInlet);
+    pipe.setPipeWallRoughness(pipelineRoughnessM);
+    pipe.setLength(pipelineLengthKm * 1000);
+    pipe.setDiameter(pipelineDiameterM);
+    pipe.setAngle(Math.atan(elevationChangeM / (pipelineLengthKm * 1000)) * 180 / Math.PI);
+    pipe.setNumberOfIncrements(numberOfSegments);
+    pipe.setConstantSurfaceTemperature(seabedTemperatureC, "C");
+    if (overallHtcWm2K > 0.0) {
+      pipe.setHeatTransferCoefficient(overallHtcWm2K);
+    } else {
+      pipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
+    }
+    pipe.run();
+    return pipe.getOutletStream();
+  }
+
+  /**
+   * Sets the pipeline hydraulic model.
+   *
+   * @param model {@link HydraulicModel#TWO_FLUID} (default) or {@link HydraulicModel#BEGGS_BRILL}
+   */
+  public void setHydraulicModel(HydraulicModel model) {
+    this.hydraulicModel = model;
+  }
+
+  /**
+   * Returns the pipeline hydraulic model in use.
+   *
+   * @return the selected hydraulic model
+   */
+  public HydraulicModel getHydraulicModel() {
+    return hydraulicModel;
+  }
 
   /**
    * Creates a new integrator with default parameters.
@@ -473,31 +591,26 @@ public class MultiphaseFlowIntegrator implements Serializable {
     result.setInletTemperatureC(pipeInlet.getTemperature("C"));
 
     try {
-      // Create Beggs and Brill pipe
-      PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Flowline", pipeInlet);
-      pipe.setPipeWallRoughness(pipelineRoughnessM);
-      pipe.setLength(pipelineLengthKm * 1000); // Convert to m
-      pipe.setDiameter(pipelineDiameterM);
-      pipe.setAngle(Math.atan(elevationChangeM / (pipelineLengthKm * 1000)) * 180 / Math.PI);
-      pipe.setNumberOfIncrements(numberOfSegments);
-      pipe.setConstantSurfaceTemperature(seabedTemperatureC, "C");
-      if (overallHtcWm2K > 0.0) {
-        pipe.setHeatTransferCoefficient(overallHtcWm2K);
+      StreamInterface outlet;
+      if (hydraulicModel == HydraulicModel.TWO_FLUID) {
+        outlet = runTwoFluid(pipeInlet, result);
       } else {
-        pipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
+        outlet = runBeggsAndBrill(pipeInlet, result);
       }
 
-      // Run calculation
-      pipe.run();
-
-      // Extract results
-      StreamInterface outlet = pipe.getOutletStream();
       result.setArrivalPressureBar(outlet.getPressure("bara"));
       result.setArrivalTemperatureC(outlet.getTemperature("C"));
       result.setPressureDropBar(result.getInletPressureBar() - result.getArrivalPressureBar());
 
       // Flow characteristics
+      // The two-fluid outlet sets the transported flow after its flash, invalidating density/volume caches.
+      // Refresh only the state and mass density needed by the velocity and holdup screening calculations.
+      outlet.getFluid().init(1);
+      outlet.getFluid().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       double mixtureDensity = outlet.getFluid().getDensity("kg/m3");
+      if (!Double.isFinite(mixtureDensity) || mixtureDensity <= 0.0) {
+        throw new IllegalStateException("Outlet mixture density must be finite and positive");
+      }
       double area = Math.PI * Math.pow(pipelineDiameterM / 2, 2);
       double volumeFlowRate = inlet.getFlowRate("kg/hr") / mixtureDensity / 3600; // m3/s
       double mixtureVelocity = volumeFlowRate / area;
@@ -571,29 +684,42 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Size pipeline diameter for given constraints.
    *
+   * <p>
+   * The velocity-ratio limit is inclusive. The configured diameter is restored on every exit, including solver
+   * exceptions. A failed search never returns an unqualified fallback diameter.
+   * </p>
+   *
    * @param inlet inlet stream
    * @param minArrivalP minimum arrival pressure (bara)
    * @param maxVelocityRatio maximum erosional velocity ratio
-   * @return recommended diameter in meters
+   * @return smallest passing standard diameter in meters
+   * @throws IllegalArgumentException if the pressure or velocity-ratio limit is not finite and positive
+   * @throws IllegalStateException if no standard diameter satisfies the screening constraints
    */
   public double sizePipeline(StreamInterface inlet, double minArrivalP, double maxVelocityRatio) {
+    if (!Double.isFinite(minArrivalP) || minArrivalP <= 0.0 || !Double.isFinite(maxVelocityRatio)
+        || maxVelocityRatio <= 0.0) {
+      throw new IllegalArgumentException("Arrival pressure and maximum velocity ratio must be finite and positive");
+    }
     // Try standard pipe sizes (inches to meters)
-    double[] standardSizes = { 0.1524, 0.2032, 0.254, 0.3048, 0.3556, 0.4064, 0.4572, 0.508 };
+    double[] standardSizes = {0.1524, 0.2032, 0.254, 0.3048, 0.3556, 0.4064, 0.4572, 0.508};
 
     double originalDiameter = pipelineDiameterM;
 
-    for (double diameter : standardSizes) {
-      pipelineDiameterM = diameter;
-      PipelineResult result = calculateHydraulics(inlet, minArrivalP);
-
-      if (result.isFeasible() && result.getErosionalVelocityRatio() < maxVelocityRatio) {
-        pipelineDiameterM = originalDiameter;
-        return diameter;
+    try {
+      for (double diameter : standardSizes) {
+        pipelineDiameterM = diameter;
+        PipelineResult result = calculateHydraulics(inlet, minArrivalP);
+        double velocityRatio = result.getErosionalVelocityRatio();
+        if (result.isFeasible() && Double.isFinite(velocityRatio) && velocityRatio >= 0.0
+            && velocityRatio <= maxVelocityRatio) {
+          return diameter;
+        }
       }
+      throw new IllegalStateException("No standard pipeline diameter satisfies the hydraulic screening constraints");
+    } finally {
+      pipelineDiameterM = originalDiameter;
     }
-
-    pipelineDiameterM = originalDiameter;
-    return standardSizes[standardSizes.length - 1]; // Return largest if none work
   }
 
   // ============================================================================
@@ -689,7 +815,16 @@ public class MultiphaseFlowIntegrator implements Serializable {
    * @param minArrivalP minimum required arrival pressure in bar
    */
   private void checkFeasibility(PipelineResult result, double minArrivalP) {
+    if (!Double.isFinite(minArrivalP) || minArrivalP <= 0.0 || !Double.isFinite(seabedTemperatureC)
+        || !Double.isFinite(result.getArrivalPressureBar()) || result.getArrivalPressureBar() <= 0.0
+        || !Double.isFinite(result.getArrivalTemperatureC()) || !Double.isFinite(result.getErosionalVelocityRatio())
+        || result.getErosionalVelocityRatio() < 0.0) {
+      result.setFeasible(false);
+      result.setInfeasibilityReason("Hydraulic screening requires finite evidence and positive absolute pressures");
+      return;
+    }
     result.setFeasible(true);
+    result.setInfeasibilityReason(null);
 
     // Check arrival pressure
     if (result.getArrivalPressureBar() < minArrivalP) {

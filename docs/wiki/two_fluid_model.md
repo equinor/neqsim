@@ -5,6 +5,74 @@ description: "This document describes the two-fluid model implementation in NeqS
 
 # Two-Fluid Transient Multiphase Flow Model
 
+## Pressure balance at phase contacts
+
+`TwoFluidPipe` enables the consistent phase-pressure operator by default. A stationary
+change of gas, oil or water fraction at uniform pressure must not accelerate either
+phase: the nonconservative pressure term cancels the holdup-gradient contribution
+in the phase momentum flux. This consistency requirement is independent of optional
+Bestion interfacial-pressure stabilization. Disabling that stabilization does not
+remove the phase-contact balance.
+
+This change does not qualify the legacy phase-transfer well transient. In the
+synthetic 2 km well tracked in issue #5066, removing the artificial pressure force
+eliminates the rapid outlet-rate increase, but a longer unchanged-boundary replay
+still loses throughflow. Phase-transfer initialization and sustained dynamic
+holdup remain unqualified; a short finite run is not evidence of a steady handoff.
+
+## Well-to-topside slug-control replay
+
+The runnable wellhead-choke, flowline/riser and three-phase inlet-separator
+reference case is described in
+[`../benchmarks/well_to_topside_slug_control.md`](../benchmarks/well_to_topside_slug_control.md).
+Its pipe-to-separator transfer uses the exactly qualified fixed pressure face;
+the replay does not claim that a time-varying downstream pressure boundary is
+qualified.
+
+## Release scope and current validation
+
+The canonical status vocabulary, row-by-row evidence, executable example, and
+supported-use boundary are maintained in the
+[TwoFluidPipe Evidence Matrix and Supported Envelope](../process/twofluidpipe-evidence-matrix).
+Use that matrix before selecting a configuration; implementation, numerical
+verification, and public experimental qualification are different claims.
+
+The evidence chain in merged PRs #3514, #3541, #3543, and #3547 covers
+steady/transient consistency, public benchmark reporting, three-phase steady
+convergence, and coupled component/phase/thermal ledgers. It does not establish
+general experimental accuracy for multiphase transients.
+
+| Configuration | Current evidence | Release interpretation |
+|---|---|---|
+| Existing defaults | Selected steady-state, stratified-transient and phase-consistency regressions pass | No blanket severe-slugging or long-run inventory qualification |
+| Shared slug force balance with interfacial pressure and coupled pressure/momentum enabled | 1800 s inventory drift: 1.323207% at 40 cells and 1.357668% at 80 cells | Meets the unchanged 2% target for these fixtures; requires explicit opt-in |
+| Conservative Lagrangian tracking with implicit slug/film friction | Centered coupled pressure traction restores five-second progress; earlier 600 s characterization missed amplitude, cycle and pressure-limiter gates | Experimental; disabled by default |
+
+The under-2% result requires all three settings before initialization:
+`setSharedSlugForceBalanceEnabled(true)`,
+`setEnableInterfacialPressure(true)`, and
+`setEnableCoupledPressureMomentum(true)`.
+Leaving shared slug forces disabled does not repair the earlier default-mode
+5.757% inventory-drift result. This release preparation does not change defaults.
+
+The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
+experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
+the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
+completed cycle intervals, and pressure limits still activate. Do not use these
+results as qualification of slug loads or extreme pressure transients. This is a historical
+characterization; it does not establish completion with the current corrected detector.
+
+The public Mohmmed slug-kinematics sweep remains experimentally unqualified:
+its baseline passes 3/9 fixed gates and its mesh/time-step refinement is
+non-monotone. The compact uphill gas/oil/water case is numerically verified on
+30 and 60 cells, but the historical 73.8 km free-water input is unavailable and
+is not covered. The coupled component/phase/thermal case is a closed, seeded
+marker conservation test; it does not qualify spontaneous or sustained slugging.
+
+Later sections preserve earlier measurements to explain the repair history.
+Read those results with their stated configuration and revision; they are not
+additional claims about the current defaults or released experimental accuracy.
+
 This document describes the two-fluid model implementation in NeqSim for transient multiphase pipeline simulation.
 
 The selectable closure sets are literature-inspired NeqSim implementations. Historical API names containing `OLGA` are retained for compatibility and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
@@ -47,6 +115,50 @@ neqsim.process.equipment.pipeline.twophasepipe/
 ```
 
 ## Conservation Equations
+
+### Opt-in stratified hydrostatic pressure traction
+
+The default transient operator remains unchanged. For gas with one resolved liquid phase in a
+constant-diameter circular face, enable signed cross-sectional pressure moments explicitly:
+
+```java
+pipe.setStratifiedHydrostaticPressureMomentsEnabled(true);
+```
+
+The thermodynamic pressure is then interpreted at the gas/liquid interface. For phase $k$, the
+additional axial face force is $F_k=\rho_k g\cos(\theta)J_k$ and the matching total-energy flow is
+$Q_kF_k/A_k$, where $Q_k=\dot m_k/\rho_{k,donor}$ uses the same signed donor as mass advection.
+Internal face forces cancel pairwise in the domain ledger; closed faces carry traction but no mass
+or energy. `getLastStratifiedHydrostaticPressureForces()` returns a defensive matrix in N with rows
+in inlet/internal/outlet order and columns in gas/oil/water order.
+
+Exact all-gas and all-liquid limits are supported without seeding an absent phase. Simultaneous
+positive oil and water and diameter changes across a face fail closed because the qualified geometry
+contains one liquid interface. This is operator-level analytical and conservation evidence only; it
+does not qualify elapsed pool retention, shutdown/cooldown/restart, severe slugging, pigging, waves,
+entrainment or hydrocarbon evaporation. See the
+[evidence matrix](../process/twofluidpipe-evidence-matrix#stratified-hydrostatic-pressure-moments).
+
+`IdealGasPiggingModel` is a separate reduced-order API, not a `TwoFluidPipe`
+closure. It couples `PigMotion` to two conservative, well-mixed calorically
+perfect gas chambers and reuses the strict ideal-gas orifice model for signed
+choked/subcritical bypass. Its mass/energy/event/refinement evidence supports
+only that declared approximation. Launcher/receiver contact reuses
+`PigMotion.advanceToPosition`, whose first-crossing search separates both sides
+of a reversal and retains the analytical work ledger. The public Hendrix 62 m/52 mm geometry is
+provenance; synthetic pressure, friction and bypass inputs are not experimental
+trajectory validation. Distributed waves, multiphase moving boundaries,
+swept-liquid slugs, receiver liquid capacity, residual film, physical restart,
+severe slugging and field parity remain unqualified.
+
+The force/work adapter uses `GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups`
+with both independently retained phase fractions. It resolves the smaller area with relative
+accuracy and reflects the moments algebraically, preserving positive traces even when subtracting
+them from one would lose them. The old general-purpose holdup-to-depth approximation is unchanged
+and is not a pressure-work reference. The coupling record includes independent 80-digit inversion,
+trace-force and countercurrent unequal-density work controls. The enabled historical ramp still
+rejects after 0.25 s on both meshes at the unchanged face-volume closure guard; the retained probe
+records that incomplete transient and primary-state rollback.
 
 The two-fluid model solves the following 1D PDEs:
 
@@ -164,6 +276,38 @@ pipe.setSoilThermalResistance(0.5);  // m²·K/W
 // Effective U = 1 / (1/U + R_soil)
 ```
 
+### Surface Temperature Profile Units
+
+Use `setSurfaceTemperatureProfile(profile, "C")` for a seawater profile expressed in
+degrees Celsius, or specify `"K"` for absolute temperatures. The input array is copied
+and stored in Kelvin for both steady and transient heat transfer. The existing
+single-argument setter and `getSurfaceTemperatureProfile()` use **Kelvin**.
+
+For example, a profile from 5 to 8 °C must contain 278.15 to 281.15 K when using the
+single-argument setter. Passing bare values from 5 to 8 to that setter specifies a
+cryogenic ambient near −267 °C. Those values can cause severe wall cooling even when
+Joule–Thomson cooling is disabled; a heat-capacity floor would hide the boundary-input
+error. The legacy setter warns once per call when an entry is below 100 K, while
+retaining its Kelvin interpretation. Neither overload guesses units from magnitudes.
+Both reject non-finite temperatures and temperatures at or below absolute zero before
+replacing the configured profile. A null profile clears the spatial override; shorter
+profiles retain the constant surface temperature in the remaining sections.
+
+Issue [#4450](https://github.com/equinor/neqsim/issues/4450) motivated a public regression
+using SRK with classic mixing, methane/propane/n-heptane/water at 85/6/8/1 molar parts,
+35.8 bara, 10.5 °C and 12.8 t/h. For a 470 m riser with 375 m rise, 0.2286 m ID,
+20 sections and U = 4.8 W/(m² K), a 5–8 K boundary produces about −37 °C without
+Joule–Thomson cooling. The correctly converted 5–8 °C boundary gives about 8.4 °C
+without Joule–Thomson cooling and 5.2 °C with it. The tests also cover a nearby rate
+and a 9 kg/s case, compare explicit Celsius with legacy Kelvin results, and check the
+wall-duty/potential-energy balance against a PH flash. This is synthetic numerical
+validation; the unavailable internal fluid from the issue has not been reproduced.
+
+Wall exchange alone approaches the ambient temperature. Gravity and real expansion
+can lower the fluid below ambient, so the model does not clamp the final temperature
+to the seawater temperature. If extreme cooling remains with a verified Kelvin
+boundary, inspect phase stability and equilibrium enthalpy derivatives separately.
+
 ### Joule-Thomson Effect
 
 Temperature change from pressure drop (enabled by default):
@@ -263,6 +407,14 @@ annular. The two differ only below the Kelvin-Helmholtz threshold, which on a 73
 10 MSm3/d and differ at 4 MSm3/d, where the equilibrium branch moves the maximum holdup error from -25.5 to -2.4
 per cent.
 
+For inclinations above 10 degrees in magnitude, the mechanistic detector retains its gas-lift
+criterion for annular flow. It no longer overrides an annular result with churn merely because
+upward liquid superficial velocity exceeds 0.1 m/s. That dimensional switch produced lower uphill
+holdup in the 500 m, 100 mm validation pipe by selecting a different closure. The unchanged uphill
+comparison now gives approximately 3.26% holdup in both orientations. This removes an inconsistent
+switch; it does not qualify a churn/annular boundary. A film-stability model is still needed to
+resolve churn within this region.
+
 The friction gradient uses per-phase wall shear in stratified flow and the mixture correlation elsewhere. On the same
 export line the pressure drop error across a threefold rate range is +1.4, +1.6, +0.1 and -2.7 per cent, against +5.7,
 +5.6, +1.4 and -0.0 per cent for the earlier mixture-only default.
@@ -324,6 +476,22 @@ detector.setUseMinimumSlipCriterion(true);
 ```
 
 The **minimum slip criterion** selects the flow regime that gives the minimum slip ratio (closest to 1.0), based on the principle that the system tends toward the flow pattern with minimum phase velocity difference.
+
+### Continuous Transient Source Evaluation
+
+The dynamic conservation equations consume the detector's existing dimensionless, normalized
+transition weights. Wall shear, interfacial force and area, and entrainment are evaluated with
+each active regime's authoritative closure and then combined by those weights. Stratified
+geometry stays active whenever its weight is non-zero. This removes a second, hard
+`STRATIFIED_WAVY`/ `SLUG` source switch while preserving the original closure at every
+pure-regime endpoint.
+Interfacial force uses the weighted sum of shear times area, with equal and opposite gas and
+liquid reactions. Effective shear is recovered from that force and the blended area.
+
+No flow-map threshold, transition-band width, hold-up closure, or regime-specific friction
+correlation is changed. Treat this continuation as experimental until conservation, nonlinear
+robustness, Tengesdal, liquid-rich 1,800 s inventory, nearby operating point, and mesh/time-step
+refinement qualification has passed.
 
 ### Wall Friction
 
@@ -553,7 +721,23 @@ double interfacialArea = result.interfacialAreaPerLength;  // m²/m
 
 ### Oil-Water Interfacial Friction (Three-Phase)
 
-For three-phase gas-oil-water systems, the `ThreeFluidConservationEquations` uses a simplified Froude-based correlation for oil-water interfaces:
+For three-phase gas-oil-water systems, the oil-water regime detector supplies the continuous
+phase and Hinze maximum stable droplet diameter. Dispersed states use the spherical-droplet
+interfacial area per pipe length
+
+$$
+a_{ow}=\frac{6 A \alpha_d}{d_{max}},
+$$
+
+where $A$ is pipe area and $\alpha_d$ is dispersed-phase holdup. Stratified states retain a
+line-scale interface. In annular, churn, bubbly and mist gas-liquid flow the detector judges
+dispersion by the larger of the bulk liquid velocity and the total volumetric flux
+$j=\alpha_g u_g+\alpha_l u_l$, since gas shear mixes the liquids there; stratified and slug flow keep
+the liquid velocity. Without this, a modest rate cut in a gas-agitated riser reclassified the
+liquids as stratified, collapsed $a_{ow}$ by orders of magnitude and let water fall back against
+rising oil (equinor/neqsim#5046). The same area is used by the explicit source, its timestep derivative and
+the opt-in conservative friction split, so the force cannot silently change with the integrator.
+The shear stress remains regime dependent:
 
 ```java
 // Froude number based on relative velocity
@@ -714,6 +898,13 @@ Momentum exchange:
 
 ### Stratified Geometry
 
+For normal-depth gravitational energy, query the existing immutable pressure-moment result's
+`getLiquidFirstMomentAboutCentre()`, `getGasFirstMomentAboutCentre()` [m3] and
+`getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)` [J/m]. This is a
+read-only cross-sectional budget relative to the pipe centre, with no change to the transient
+energy state. Its analytical and high-precision evidence is in the
+[gravity-energy record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+
 `GeometryCalculator` computes for stratified flow:
 - Liquid level from holdup
 - Wetted perimeters (gas, liquid, interface)
@@ -729,6 +920,15 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - Shock capturing
 - Low diffusion
 
+The default remains AUSM+. An opt-in internal-face Rusanov operator is available through
+`TwoFluidPipe.setRusanovInternalFluxEnabled(true)` after enabling independent oil/water phase
+faces. Rusanov retains simultaneous left and right donor streams instead of reducing them to one
+net donor; Runge-Kutta staging, pressure work and named-component transport use those same streams.
+The combined-liquid split, AUSM pressure interpolation, reconstructed slug faces and the
+one-direction unsplit complementarity route reject this configuration. An acoustic CFL bound and
+admissible thermodynamic states are still required. This is numerical conservation qualification,
+not physical restart, terrain-pool, evaporation, severe-slugging or pigging validation.
+
 ### Temporal Integration
 
 `TimeIntegrator` supports:
@@ -737,6 +937,31 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - RK4 (Classical 4th order)
 - SSPRK3 (Strong stability preserving)
 - IMEX pressure correction
+
+The legacy IMEX correction raises pressure after compression and lowers it after expansion, so
+its force opposes the imposed velocity convergence. It regularizes phase momentum while retaining
+explicit phase-mass transport; its scalar total-mass residual does not enforce phase-volume closure.
+Do not interpret this route as an unconditionally stable multiphase acoustic solver.
+
+The IMEX timestep is limited by both convection and the explicit wall/interphase drag relaxation.
+An implicit pressure update does not remove the source stability restriction. The estimate excludes
+dispersed-bubble drag when its implicit source option is enabled, and wall/gas-liquid friction
+already advanced by an active conservative slug reconstruction's implicit subcell split.
+The tracked-marker list is refreshed before timestep selection so additions and removals take effect immediately.
+Oil-water shear remains explicit. Euler and Runge-Kutta retain their acoustic/void-wave CFL,
+which does not bound every explicit drag timescale. A global source-bound extension stalled
+previously passing coupled-riser progress cases and is deferred pending implicit mean-cell drag.
+A newly appearing laminar film can have arbitrarily fast relaxation, so an IMEX source limit can become impractically
+small. General phase-appearance stability requires implicit drag, without artificial phase-mass
+or timestep floors. Wall forces use
+regime-specific wetted geometry and are blended after integration: slug/churn volume weights are
+applied once, while annular films and dispersed-liquid continuums use the full wall perimeter.
+
+The unresolved liquid-wall law uses the mass-weighted bulk liquid velocity. Its oil/water force
+split uses the corresponding conservative phase masses, preserving total wall force and
+nonpositive combined wall kinetic power during counterflow. Gravity uses each phase's own
+conservative mass. Exactly absent phases carry zero external mass, momentum and energy flux,
+and do not trigger an outlet-backflow diagnostic; every positive trace remains active.
 
 ### Coupled Pressure-Momentum Correction
 
@@ -783,6 +1008,314 @@ the 50-step liquid-outlet range is -18.55 to 6.88 kg/s versus the stored 0.375 t
 comparison. Do not tune public closures to that commercial trace; use the public Tengesdal
 experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 
+### Experimental Unsplit Solver Foundation
+
+`UnsplitTransientSolver` defines an isothermal common-time-level system with seven unknowns per
+cell: three phase masses, three phase momenta, and pressure. It evaluates conservation at the
+implicit midpoint and retains pressure-dependent volume closure in every cell. A fixed outlet
+pressure belongs to the boundary face supplied to the model callback; it does not replace the last
+cell's closure equation or trigger proportional outlet-cell mass repair.
+
+The kernel provides scaled residuals, a colored block-stencil finite-difference Jacobian, line
+search, fraction-to-boundary mass/pressure limits, and hooks that freeze and refresh donor/regime
+active sets. The adapter delegates those hooks to an explicit, attempt-local active-set owner using
+defensive state copies. When a donor, regime, or complementarity choice changes, the solver
+re-evaluates the residual before every subsequent refresh, bounded by the per-iterate active-set
+budget (default 20). Both the nonlinear solve and diagnostic Jacobian use the same frozen choices
+for their base and perturbed columns. Partial freeze failures are cleaned up, with cleanup exceptions
+suppressed beneath the original error. Its model callback must remain
+transactional so Jacobian probes cannot advance accepted diagnostics or state.
+
+`TwoFluidUnsplitModelAdapter` connects this kernel to the finite-volume flux/source operator
+transactionally. It reconstructs trial sections from accepted clones, evaluates phase densities at
+both selected-time and closure pressure, restores retained equation diagnostics after each probe, and
+uses a prescribed pressure only in the external outlet momentum traction. The last cell still owns
+its volume-closure equation, while outlet phase mass and energy remain conservative advective
+fluxes.
+
+The serializable solver result now distinguishes convergence, iteration/update budgets, a singular
+Jacobian, an inadmissible step and failed line search. Callback counts include actual frozen-base,
+refresh and rejected-trial evaluations rather than estimates.
+
+`evaluateTransactional` returns the trial's immutable RHS and exact phase-face/source/mass-balance
+ledger while restoring previously published diagnostics, including on failure. The optional
+mechanical-force diagnostic retains its documented six gas/liquid columns. Its backflow flag belongs
+only to the current trial. Callers must supply trial section clones and synchronize configuration on
+the equations instance.
+
+Every internal gas/oil/water face also has an immutable directional transport entry. It keeps
+forward and reverse mass transport nonnegative, separates advective momentum from pressure traction,
+and records the two donor masses and momenta used by the free flux. The experimental opt-in
+`UnsplitTransientSolver` complementarity path augments the cell state with mass, advective momentum
+and donor multiplier variables for both one-sided donor streams at those faces. Present donors use the
+normalized conservative advection row; an exactly absent donor uses an exact zero-momentum and
+donor-presence row without an inventory floor. Physical AUSM transport and pressure-interpolation
+transport keep separate donors; zero pressure correction retains the legacy flux bit for bit. The solved flux replaces the free internal flux in
+both neighboring cells and is carried into independent prepared-step verification.
+
+This is a numerical foundation, not a physical qualification. Exact-bound regressions now cover
+phase disappearance after transporting only the available mass, an initially absent donor,
+simultaneous opposing donor streams, and a multi-cell phase-free region. Conflict-free exact-presence
+anchors assign at most one presence row per absent donor cell and per face; other constrained
+streams use exact zero-flow rows, while conservation closes the remaining cell in a connected
+phase-free region.
+Nonnegative variables may land exactly on zero, and rejected line-search
+trials cannot mutate the accepted choices. No inventory threshold or accepted-mass clipping is
+used. Six unchanged 0.1 s Tengesdal lanes pass. All no-pressure-interpolation five-second lanes pass,
+but the pressure-interpolated baseline stops at 1.401953125/1.83203125/1.075 s and the augmented
+two-stream route stops at 1.35078125/1.8427734375/1.74375 s. The full gate therefore remains failed.
+Do not infer 180/600 s severe-slugging, restart or coupled-pigging capability from the augmented
+short-step regressions.
+
+`TwoFluidUnsplitModelAdapter.prepareStep` checks a converged candidate independently against the
+current selected-time operator and endpoint volume closure, then returns defensive endpoint clones and
+the exact phase transport ledger with inventories integrated over each cell length. It rejects
+inconsistent candidates and unsupported thermal, phase-transfer and separately split source modes.
+Density coefficients use the common evaluation time at both rate and end pressure. Strict
+`setConservativeEndpoint` recovery preserves all conservative values, retains positive trace-phase
+velocity, and never normalizes holdup or caps velocity. Endpoint closure diagnostics still require
+an explicit refresh. Preparation does not commit state, reports, clocks or streams; the legacy
+primitive-recovery path is unchanged.
+
+The tests verify a closed three-phase five-second fixed point and a nonuniform flowing candidate.
+The synthetic eight-case **flowing** five-second matrix now completes through
+`TwoFluidUnsplitIntegrator.prepareInterval`, using maximum requested steps of 0.05/0.025 s on
+4/8 cells with Bestion stabilization off/on. A new prescribed-phase-flow inlet lets pressure
+traction follow the trial first cell, and an independent phase-pressure consistency option
+preserves pressure balance even without Bestion stabilization. Production defaults are unchanged.
+The original fixed-inlet-pressure matrix passed only one case; the corrected raw fixed-step
+matrix passes six. Both 4-cell / 0.05 s raw cases still reject at oil-water inversion at 1.400 s.
+Those failures remain documented; the passing eight-case result permits bounded step subdivision.
+
+The interval preparer verifies each substep independently and accumulates only its accepted phase
+face/source transfers. Retry exhaustion discards the entire local interval without publishing a
+partial endpoint, clock or diagnostic. The full five-second duration and original conservation
+tolerances remain; tests also bound phase speeds and pressure excursions. This is nonlinear
+convergence control, not temporal-error control or a change to the discontinuous inversion law.
+These 40 m tests use prescribed isothermal densities, not an EOS flash or experimental data.
+See [the model guide](../process/TWOFLUIDPIPE_MODEL.md#five-second-flowing-gate-boundary-correction-and-bounded-retries)
+for the historical negative evidence, revised boundary contract and reproduction command.
+
+`TwoFluidPipe.prepareUnsplitTransient` now prepares an interval from actual initialized pipe cells
+on deep copies of the operator and inlet fluid. `getSectionSnapshots` provides independent accepted
+cells. `createUnsplitDensityModel` supplies a frozen-composition, fixed-temperature SRK/PR phase
+density response, anchored by a constant specific-volume offset to reproduce accepted densities
+exactly. No flash repartitions mass during Newton probes. Initial density and occupied-volume
+consistency are checked, and unsupported phase appearance/inflow is rejected. The pipe exposes a
+separate maximum nominal step and honors its configured accepted-substep budget.
+
+Real methane and methane/decane/water steady handoffs are tested over `1e-5 s`, including unchanged
+streams, profiles, reports, clocks and equation state on success and failure. Additional tests cover
+independent SRK/PR derivatives, serialization and inlet physical-property cache isolation. These
+short handoffs do not establish a steady fixed point over an engineering time horizon. Energy,
+phase/component transfer, heat, upstream storage and tracked/split slug sources are unsupported.
+Viscosity, sound speed and temperature remain frozen. See the
+[EOS preparation contract](../process/TWOFLUIDPIPE_MODEL.md#pipe-preparation-with-frozen-phase-eos-densities)
+for supported phases, boundaries, units and an executable API example.
+
+The default temporal method remains implicit midpoint. Explicit
+`UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER` evaluates at the endpoint and damps
+stiff decaying modes, with the expected first-order accuracy. Each result captures its temporal
+weight so later solver configuration cannot change preparation or its flux ledger.
+
+Co-current fallback now reverses the correlation coordinate and inclination together for both
+regime detectors and horizontal closure blends, while preserving signed transport and oil/water
+slip. This corrects a reproduced false bubble/slug switch; it does not qualify countercurrent flow.
+The bulk gas/liquid drag reaction now follows conservative oil/water mass, giving continuous
+disappearance limits and dissipative gas-drag work for consistent recovered phase velocities.
+The nonlinear linear solve separately factors exactly homogeneous closed blocks, preserving
+absent phases without projecting endpoints or changing tolerances.
+The optional `setUnsplitPressureInterpolationEnabled(true)` also couples the stationary alternating
+pressure mode inside the conservative face fluxes. It uses each attempted step's temporal weight,
+preserves linear pressure profiles, and leaves external transport unchanged. Closed-domain tests
+check independent phase conservation, damping, donor selection and full/colored Jacobians.
+It remains off by default and has no general nonlinear hydrostatic or severe-slugging qualification.
+See [the direction and pressure-interpolation contract](../process/TWOFLUIDPIPE_MODEL.md#flow-direction-and-conservative-pressure-interpolation).
+
+The actual Tengesdal nitrogen/Crystex riser fixture also completes three short **0.1 s** preparation
+cases on 16/24 cells. The preceding preparation baseline's **5 s** matrix failed line search at locally prepared times
+0.691015625 s (16 cells) and 0.5234375 s (24 cells), even after increasing the initial 256-substep
+cap to honor the pipe's configured budget. Every failed local prefix is discarded. The source
+includes an explicit opt-in reproduction of this failing gate; it is not counted as a passing
+regression. These results block the subsequent 180/600 s characterization and experimental gates.
+
+After the direction, exact-zero-block and bulk-drag corrections, the backward-Euler/interpolation
+option completes all three 0.1 s cases in **1/2/2 steps with zero retries** at the original
+conservation/volume tolerances. The five-second gate at `62aabb7` still fails: midpoint/no-interpolation
+prefixes stop at 0.7250/0.6951/0.5359 s, and backward-Euler/interpolation prefixes at
+0.6000/0.6258/0.4254 s for the same 16/0.1, 16/0.05 and 24/0.05 matrix. The reduced retry burden
+is numerical progress, not physical qualification. The final affected suite passes **327 tests
+in 45 classes**, including maintained three-phase steady refinement; the six explicit long-gate
+failures are recorded separately in the [actual riser evidence](../process/TWOFLUIDPIPE_MODEL.md#actual-tengesdal-handoff-evidence).
+
+The subsequent countercurrent bubble-domain correction rejects negative inferred void fraction
+across a bubble-transport denominator pole, preventing a reproduced 0.620-to-305.31 N/m artificial
+drag jump. The unchanged historical five-second matrix advances farther but still fails: midpoint
+prefixes end at 0.8066/0.8063/0.9000 s, and backward-Euler/interpolation at
+0.6684/0.6883/0.6563 s. Both local branch-constrained solutions at the next annular/slug obstruction
+violate their own regime criteria. This is evidence for a constitutive transition gap; solver
+tolerances and retry budgets remain unchanged. See the
+[branch diagnosis](../process/TWOFLUIDPIPE_MODEL.md#countercurrent-bubble-criterion-and-the-remaining-transition-obstruction).
+
+The separate `setCellFaceElevationProfile` option accepts N+1 finite-volume face elevations.
+It integrates each specified terrain rise once, uses midpoint steady pressure with external-face
+boundary offsets, and preserves signed gravity/energy work under nonuniform mesh refinement.
+Legacy elevation samples retain their convention. The interior operator additionally reconstructs
+the common face pressure from adjacent conservative mixture inertia and signed half-cell heads,
+with the same correction in momentum, phase-pressure diagnostics and signed energy work. Its
+90-case analytical pure-gas/oil matrix passes below `1e-10 m/s2` on flat, affine and curved terrain
+with constant, smooth and alternating density over 12--192 cells; a separate 45-case pure-water
+extension passes the same gates. This is not qualification of a
+stationary multiphase pool with different phase densities or moving-interface dynamics; see the
+[explicit face contract](../process/TWOFLUIDPIPE_MODEL.md#explicit-cell-face-terrain) and
+[analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
+The separately named corrected-face riser represents the same 13.9032247068273 m rise on both
+meshes and passes three 0.1 s preparations. Its five-second attempts at `477964b5` rejected at
+0.8875/0.8014/0.5801 s; those results are kept separate from historical geometry measurements.
+The preceding component/domain/terrain update at `477964b5` passed 365 affected tests across 53 classes,
+including three slow component/phase/thermal/reference tests and maintained three-phase steady
+refinement. Nine explicit five-second qualification failures remain separate from passing regressions.
+
+The transaction/execution/Jacobian update at `1f65f683` passed 422 focused tests across 62 classes,
+including four slow component/phase/thermal/reference tests. At that revision, fifteen riser
+and one coarse-gas five-second cases failed separately. The outlet-consistency repair below
+clears the coarse-gas case; the fifteen unsplit riser cases still fail. The later coupled-predictor repair restores all five
+coupled-pressure progress regressions: coupled Euler, RK2, RK4, SSP-RK3 and IMEX now consistently
+use centered face pressure while retaining AUSM mass and energy advection. The same pressure
+response must not also include the gas-velocity-dependent explicit AUSM pressure term. The
+unchanged five-second shared-closure and subcell-force cases complete with zero rejected
+substeps. The separate unsplit and experimental qualification limits remain in force; see the
+[predictor diagnosis and evidence](../process/TWOFLUIDPIPE_MODEL.md#countercurrent-bubble-criterion-and-the-remaining-transition-obstruction).
+
+The existing named-component route publishes accepted interval-average component outlet flows.
+`setTransactionalTransientEnabled(true)` now also stages the complete legacy pipe interval,
+including component/thermal/slug state, storage, reports, clocks and downstream publication.
+Connected stream, upstream-volume, thermal-calculator and layer identities are retained; other
+owned submodels must be reacquired after acceptance. Supported serializable phases are concrete
+SRK, PR, SRK-CPA and SRK-CPAs; pipe subclasses require a separate commit contract.
+
+`setUnsplitTransientSolver(solver, maximumTimeStep)` separately selects an experimental,
+always-transactional `runTransient` route. It retains original SRK/PR density anchors and one
+initialized frozen composition for each conserved phase across calls. Outlet composition derives
+from exact phase transfers only when present cells, inlet and any explicit outlet-boundary donor
+match those frozen component mass fractions. Negative outlet phase transfer requires
+`setOutletBoundaryFluid(...)`, remains signed in the phase ledger and is excluded from the
+forward downstream stream; it is never clamped or netted against another phase. General component
+transport, energy, phase change and tracked slugs remain unsupported in this route.
+Each accepted unsplit call also records nonlinear diagnostics on its
+`TwoFluidMassBalanceReport`: `getRejectedAttempts()` and `getModelEvaluations()` are non-negative
+for this route and remain -1 when the selected transient algorithm does not publish them. The
+explicit opt-in 600 s Tengesdal slow gate uses these values together with unchanged amplitude,
+period, hold-up, inventory and conservation criteria; a zero-rejection numerical run is necessary but
+not sufficient experimental evidence. The 16-cell/0.1 s replay completed with zero rejected attempts
+but remained flat: `1.945482e-4 Pa` inlet-pressure amplitude, no liquid-production cycle, no
+blowout/fallback and `0.3285387` initial flowline hold-up. Disabling the legacy steady-consistency
+correction reproduced those values exactly. The unsplit route does not yet support tracked-slug
+geometry or conservative slug-force integration, which is therefore the next physical dependency;
+the negative gate remains executable without making ordinary slow CI intentionally red.
+Four-cell/0.1 s and eight-/sixteen-cell/0.05 s gas configurations now complete consecutive
+calls covering five seconds at the unchanged `1e-10` nonlinear and `1e-8` conservation gates.
+The outlet now uses the independently recovered phase fractions consistently with internal
+fluxes and pressure sources. This removes a single-phase clipping kink that gave the Newton
+matrix a derivative of the wrong sign. Midpoint/backward-Euler directional regressions
+verify the correction, and the coarse-gas case now runs in ordinary CI. This remains bounded
+execution evidence rather than general single-phase or multiphase mesh qualification.
+
+The opt-in inclined film-bridging constraint closes the captured high-holdup annular/slug branch
+conflict. Phase-relative Jacobian probes and stable phase-volume differences also correct trace
+derivatives without changing tolerances or nonlinear budgets. With both enabled, the corrected-face
+five-second cases reach approximately 1.303/1.881/1.736 s before rejecting at other regime
+transitions. All six added gates still fail; the 180/600 s sequence remains blocked. Original
+fixture results above are historical evidence, not results of the revised Jacobian and outlet.
+A historical 16-cell backward-Euler replay stops near 0.66328125 s at a countercurrent
+annular/slug switch: a small change in superficial gas velocity changes the interfacial force
+from about 27.02 to 10.81 N/m. None of its phase velocities reaches the legacy caps.
+Selecting `setBlendInclinedAnnularSlugTransitions(true)` removes that point switch by blending
+the existing integrated closures over dimensionless gas-lift and optional film bands. The
+16-cell/0.1 s and 16-cell/0.05 s replays then reach 1.451171875 and 1.6712890625 s; the 24-cell
+case reaches 0.95 s. All three still fail line search before five seconds, and the six separate
+film-constrained gates are unchanged. The option is disabled by default and is numerical
+continuation evidence, not a countercurrent model validation.
+The separate coupled-predictor repair restores the legacy five-second pressure regressions;
+it does not qualify the remaining unsplit transitions or the 600 s experiment.
+
+The transactional unsplit route now gives passive wall and interphase friction a
+single conservative post-transport owner whenever transient pressure
+interpolation is off. Each prepared step exposes the accepted gas/oil/water
+momentum impulse per pipe length, and complete intervals sum it without rejected
+trials. Phase mass and total energy are unchanged, and the independently checked
+rate ledger includes the exact impulse. The unchanged five-second matrix now
+passes all three midpoint/no-interpolation lanes. Its backward-Euler/
+pressure-interpolated lanes still reject at 1.4000, 1.8125 and 0.9750 s, so the
+complete gate remains failed. Pressure interpolation keeps its existing
+friction ownership because combining the operators regresses the unresolved
+trace-phase/donor event; no limiter, phase floor or relaxed tolerance replaces
+that missing formulation.
+The pressure-interpolated donor event is now resolved by the opt-in
+`setSignedDonorTransportEnabled(true)` AUSM path. Instead of selecting one
+finite-density donor from the sign of `M+(ML) + M-(MR)`, it retains the left
+`M+` and right `M-` mass, advective-momentum and enthalpy contributions as two
+conservative streams. Pressure traction is unchanged, and the collocated
+pressure correction remains its own signed donor. Analytical tests cover both
+donor identities, exact absence and continuity through zero net Mach. With this
+option in the backward-Euler/pressure-interpolated fixture, all three unchanged
+16/24-cell five-second lanes pass; the three unchanged midpoint lanes also
+pass. No physical closure, tolerance, inventory floor or accepted state is
+adjusted. Legacy transport remains the default. This closes the short numerical
+gate. The same atomic publication route now also passes the separate 16-cell,
+0.1 s **180 s** and **600 s** numerical duration gates. The interval controller
+distributes 25% of the unchanged `1e-8` cumulative residual budget across
+attempted steps and uses the stricter of that allocation and the configured
+`1e-9` nonlinear tolerance without mutating the solver. Compensated signed-ledger
+summation and independent endpoint checks remain active. These runs do not
+satisfy the distinct experimental pressure-amplitude, period and cycle gates and
+do not qualify physical restart or coupled pigging.
+See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
+and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
+
+### Public severe-slugging qualification
+
+Tengesdal Test 3 pressure metrics use `getPressureProfile()[0]`, the upstream inlet cell.
+They do not measure the physical flowline–riser bend; earlier riser-base labels for this
+implementation were incorrect. The inlet sample and experimental amplitude/period gates
+are retained unchanged. A bend-pressure comparison requires a separate probe and qualification.
+
+The candidate with the wall-force and slip corrections was tested on 6 September 2026 using
+all five existing 100 s characterization trajectories. All seven active checks passed with their
+original fixtures and assertions, including conservation, repeatability, mesh and outer-step
+checks. The resolved reference gave a 29.768 kPa pressure amplitude and a 30.55 s
+liquid-production period. Across the ensemble, amplitudes were 23.640–29.768 kPa and periods
+were 11.30–30.55 s. These short trajectories do not qualify the sustained experimental cycle.
+
+The same candidate completed the exact disabled 600 s Tengesdal Test 3 method, with its
+acceptance targets unchanged, but failed five requirements:
+
+| Metric | Observed | Required |
+|--------|----------|----------|
+| Pressure amplitude | 36.301 kPa | 68.6–127.4 kPa |
+| Liquid-production period | Not resolved | 26.6–49.4 s |
+| Completed settled liquid-production cycles | 0 | At least 2 |
+| Initial steady flowline holdup | 0.330546 | 0.33858–0.34542 |
+| Sticky pressure-correction limit | Activated | Inactive |
+
+No substeps were rejected and outlet backflow was not clamped. Captured phase and total
+mass-closure diagnostics were below $1.6\times10^{-15}$, but the phase-conservation assertions
+came after the failing assertion group and were not reached. The mean settled flowline holdup
+was 0.95; a 0.531 s pressure oscillation is not the required liquid-production cycle. The earlier
+pressure/EOS-only candidate gave a 40.909 kPa amplitude and 56.167 s liquid-production period;
+the new corrections do not establish improved experimental severe-slugging accuracy. Retaining
+the acoustic step for explicit integrators resolves the temporary source-CFL stall, while the
+physical qualification remains open. The holdup target is a historical numerical regression
+value; the pressure amplitude and period targets derive from the experimental pressure trace.
+
+The [public source](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf),
+Table 4-1, reports Crystex oil viscosity of 18.9 cSt at 40 °C. The current density-based surrogate
+gives 5.60685 cSt at 40 °C and atmospheric pressure, 70.3% lower; its value at the assumed 25 °C
+fixture temperature is 8.02907 cSt. A measured 25 °C value or a justified temperature relationship
+is needed before changing that input. No property or closure is tuned to the desired transient
+metrics. See the [full benchmark scope](../process/TWOFLUIDPIPE_MODEL.md#public-severe-slugging-benchmark)
+for the unchanged targets, source assumptions and remaining limitations.
+
 ### Higher-Order Reconstruction
 
 `MUSCLReconstructor` provides:
@@ -791,6 +1324,143 @@ experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 - Second-order accuracy in smooth regions
 
 ## Thermodynamic Coupling
+
+When `setComponentTransportEnabled(true)` and `setIncludeMassTransfer(true)` are both selected
+before initialization, transfer uses equilibrium phase mass fractions from the conserved local
+component inventory. This preserves phase equilibrium when hydraulic slip changes residence
+inventories. Without component transport, the reference-composition/no-slip source remains an
+approximation. The sustained regression covers 120 s of gas, gas/oil and gas/oil/water flow with
+heat and EOS updates active, plus heating/cooling transfer signs and conservative component
+ledgers. Positive-flow boundaries and a fixed named-component slate remain required.
+
+For dry gas/oil grids in conservative-energy Euler mode, interphase sources now relax each
+conserved component phase inventory toward its local equilibrium inventory. This avoids
+withdrawing a depleted heavy species merely because the bulk gas phase is still condensing.
+Signed component transfers use their actual donor velocities, including opposing species fluxes
+at zero net phase transfer. Total energy remains owned once. This is the existing approximate
+relaxation model with corrected component targets; its chosen time constant is not an
+independently validated evaporation rate. Positive aqueous inventory or equilibrium aqueous mass
+retains the previous source path. The original 12/24-cell pressure ramps are regression evidence;
+the refined flat-outlet case and full pooling/restart qualification remain open.
+
+For an explicit finite-rate dry hydrocarbon sensitivity, configure
+`setHydrocarbonPoolTransfer(new HydrocarbonPoolTransfer(...))` on the conservative-energy Euler
+route. The closure multiplies each component's local equilibrium oil-inventory difference by
+$k_i f_wD/(\pi D^2/4)$, applies the actual donor-inventory limit, and gives gas the exact opposite
+source. Supplied component evaporation enthalpies and available W/m impose a separate net
+endothermic heat-rate limit; the conservative energy equation remains the only energy owner.
+Diagnostics report rate constants, donor limiting and heat scaling. A prescribed nonzero interface
+width permits phase appearance without a liquid-mass seed, while zero width is an exact control.
+These are analytical/conservation gates for an explicit parameter set. They do not validate the
+coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; independent public
+multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
+the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
+The executed 100 W/m finite-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
+a same-composition pressure-reservoir ramp with the outlet closed, and a closed hold. The inlet
+reservoir is reflashed at each pressure and acoustic compatibility supplies signed phase flow;
+pressure traction alone is not treated as refill. Its prescribed-area
+screen exercises the finite heat limit. Historical 12/24-cell differences used a level outlet
+defined by cell count and cannot isolate spatial error. Conservative recovery explicitly retains the requested EOS root
+across the cubic model's diagnostic $V/B=1.75$ phase-label transition while preserving positive
+compressibility and Jacobian/admissibility guards. This is numerical screening for the declared heat
+input, not physical shutdown/restart or predictive depletion qualification.
+
+For a stationary or slowly draining stratified pool, opt into
+`HydrocarbonPoolTransfer.forHydrostaticPool(...)`. It uses the volume-preserving inclined-cell
+horizontal-surface diagnostic, reports the actual cell interface area, and uses the equilibrium
+target geometry for an unseeded appearance step. Representable long-cell trace wedges retain their
+positive leading-edge depth without an inventory floor; a still-sub-resolution trace uses a reported
+local-stratified chord fallback without changing mass. This is not an annular, slug-front or pig
+interface closure. For moving stratified states, select
+`HydrocarbonPoolTransfer.forStratifiedFlow(...)` instead: it uses the circular chord at the local
+cell-average liquid holdup, extended along the pipe arclength. Uniform and nonuniform subdivision
+preserve integrated area and conservative component sources, including finite heat limits and
+unseeded first appearance. This is an explicit change in area model; it does not validate the
+historical hydrostatic-cycle convergence failure. Full-liquid cells have zero gas/oil area.
+
+Initialize a deliberate wall inventory with
+`setInitialWallTemperatureProfile(profile, "K")` before `run()`; both configured and accepted wall
+profiles are defensive and survive copy/rollback/replay. Under the multilayer model, each cell value
+initializes all of that cell's radial layers uniformly; the layers then evolve independently and a
+new steady run clears the prior evolved radial state. The wall-coupled 12/24-cell 780 s screening
+comparison now uses the same final 1250 m level outlet at -333.5 m elevation on both meshes.
+The previous "last three cells" rule compared different terrains. See the
+[executed receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md)
+for the corrected inventory, wall and unfiltered pressure diagnostics. The current flowing-area
+run passes the original 10% peak/final inventory gates at 0.791%/0.791%. The historical per-cell
+stationary-puddle model still fails at 11.21%/10.86%; the new area assumption predicts different
+inventories and does not validate that historical trajectory. Maximum single-cell area
+is an extensive diagnostic, not a mesh-convergence target. The pressure-driven boundary and the
+complete declared cycle are numerical restart evidence, including a 0.5/0.25 s time refinement.
+The unfiltered time-refined trace retains one sub-2 kPa opening reversal before rising by about
+10.58 MPa; no filter or threshold adjustment removes it. Independent public restart/surge
+validation, repeated cycles and hydraulic pigging remain unqualified.
+
+With component transport enabled, the downstream outlet composition follows the positive outbound
+component ledger rather than the latest inlet composition or the final cell's instantaneous phase
+split. The signed conservation ledger separately retains reversed material entering from an explicit
+external donor. The outlet TP flash preserves positive outbound component flow; closed or net-inflow
+outlets publish zero product when no phase leaves. Each
+component substep stages boundary/source/latent-heat ledgers together with inventory and discards
+all of them on failure. This is component-substep isolation, not whole-pipe transient rollback.
+Positive trace-phase component inventories receive the same bounded synchronization as larger
+inventories instead of being discarded below the `1e-10 kg` hydrodynamic mass allowance. Empty
+component phases tolerate hydrodynamic round-off within that allowance without creating components.
+Mismatches beyond the unchanged
+synchronization allowance reject without changing the accepted component ledgers.
+See the [component publication contract](../process/TWOFLUIDPIPE_MODEL.md#validated-scope-and-fail-loud-boundaries)
+for the supported boundaries and remaining limits.
+
+For the supported conservative-slug coupling, phase and component source allocations plus their
+partial-enthalpy latent source are frozen at the same integration stage. A moving slug/film
+interface can otherwise advect composition before a post-step flash and make an already accepted
+phase appearance impossible to reconstruct. A disappearing phase uses its conserved donor
+composition in a forced single-phase property state; receiving composition still comes from the
+equilibrium flash. The closed wet-gas coupling regression exercises conservative slug/film
+tracking, water condensation, wall cooling, bounded named-component transport, and phase/total/
+component/thermal closure on three outer-step partitions: 0.05, 0.025 and 0.0125 s over 0.05 s.
+Closed coupled boundaries block the external face flux while retaining physical-cell inertia.
+Aqueous-water transfer is `2.6681e-9` to `2.8518e-9 kg`, latent heat is `0.0058212` to `0.0062209 J`,
+and mean cooling is `0.0305404` to `0.0305461 K`. Adjacent-grid water/heat sensitivity is below 4%;
+marker-displacement sensitivity decreases from 3.14% to 1.99%. Length and accepted age remain
+unchanged by partitioning, and whole-pipe transactions reproduce ordinary execution on the same grid.
+See the [coupled regression results](../process/TWOFLUIDPIPE_MODEL.md#coupled-slugcomponentphasethermal-contract).
+The seeded marker is numerical coupling
+evidence, not spontaneous or experimentally qualified severe slugging.
+
+The four-way conservative slug/film combination is validated with the single-stage Euler
+integrator. It rejects multi-stage integration before state mutation until intermediate phase
+appearance has a stage-local component inventory; this limitation does not change the existing
+stage-weighted paths for other named-component transport cases.
+
+For signed outlet backflow with named-component transport, call
+`setOutletBoundaryFluid(externalFluid)` before `setAllowOutletPhaseBackflow(true)`. The pressure outlet
+then uses the external flashed phase composition, density, and enthalpy for reversed phases while
+retaining the independently configured pressure traction. Without that external state, either setter
+order fails before state mutation; the last interior cell is never treated as a physical reservoir.
+The rich-gas pressure-ramp regression exercises actual same-gas fallback with conservative mass,
+component, and full-energy reports, but does not qualify complete blowdown, low-point pooling,
+physical restart, or predictive evaporation time.
+
+A negative prescribed inlet mass rate is physical outflow and therefore uses the first finite-volume
+cell as phase, composition, density and enthalpy donor; the external feed is not reflashed into an
+unrelated outflow mixture. For a low-level prescribed inlet state with a different face area, positive
+phases retain that supplied area for mass, advective momentum and energy; negative phases use the
+first cell's area. Pressure traction uses the interior cell area and holdups in either direction.
+`getLastBoundaryPhaseMomentumFluxes()` reports total gas/oil/water momentum
+flow at inlet and outlet, while `getLastBoundaryPhasePressureForces()` isolates interior pressure
+traction from donor advection. These are signed boundary-contract diagnostics, not a whole-domain
+momentum residual or physical restart qualification.
+
+`setGasOnlyOutletTakeoff(true)` defines a narrower constant-pressure boundary for a gas takeoff above
+retained liquid. Gas remains open; oil and water keep pressure/hydrostatic traction but have exactly
+zero external mass, component and advected-energy flux. The coupled pressure projection uses gas
+alone to close the outlet-cell volume and therefore cannot rescale retained liquid inventory.
+Liquid can still drain across internal faces. This mode does not infer a separator, valve area or
+evaporation law. If signed gas fallback is enabled, the existing explicit external donor requirement
+still applies.
+
+
 
 ### Flash Calculations
 
@@ -845,7 +1515,44 @@ The `TwoFluidPipe` supports two simulation modes: steady-state initialization vi
 
 ### Steady-State Simulation: `run()`
 
-The `run()` method performs a complete steady-state initialization of the pipeline. This is typically called once at the start to establish initial conditions before transient simulation.
+The `run()` method attempts a steady-state initialization of the pipeline. This is typically called
+once at the start to establish initial conditions before transient simulation; always inspect its
+convergence flags.
+
+An explicit pressure boundary participates in the iterative momentum and EOS-property solve.
+Section flashes use the boundary-aligned local pressure and temperature, and convergence requires
+the thermodynamic properties as well as the hydraulic profile to settle. This replaces a final-only
+pressure shift that could leave densities evaluated at the old pressure. With prescribed flow and
+outlet pressure, the pipe inlet pressure is calculated without modifying the inlet stream. An
+explicit inlet pressure is included in the iteration when it supplies the pressure boundary.
+Friction, holdup, slip and terrain closure defaults are retained; previously inconsistent results
+at an explicit pressure boundary can change and must be rechecked on the tested revision.
+
+Periodic steady flashes refresh properties while preserving the hydraulic in-situ split. With
+phase transfer disabled, the equilibrium inlet gas, oil and water mass rates remain constant along
+the line; local density changes update the transported oil/water volume fraction without changing
+phase mass. With phase transfer enabled, the flash may repartition local phase rates and the
+transient must carry the corresponding conservative sources. Only a newly appearing second liquid
+is seeded from the flash. If one liquid disappears, the remaining liquid retains the total
+hydraulic holdup for the next closure update. The slip calculation first recovers the prescribed
+liquid mass flux, splits its transported volume flow into oil and water, and synchronizes bulk
+liquid velocity and momentum with the phase momenta. This keeps the phase split consistent with the
+specified liquid throughput.
+
+For positive flow, the connected outlet retains the feed's total and component flow rates and is
+TP-flashed at the final section pressure and temperature **after** flow normalization. Thermodynamic
+and transport properties are then initialized before publication. Callers can read heat capacity,
+enthalpy and phase properties, or pass `getOutletStream()` directly to another pipe, without an
+additional stream run or TP flash. The outlet's equilibrium phase fractions are distinct from the
+hydraulic in-situ holdups. This fixes the stale phase state and invalid heat capacity tracked in
+[#3685](https://github.com/equinor/neqsim/issues/3685); downstream heat-transfer results produced by
+affected versions should be recalculated. It does not qualify pipeline thermal accuracy against
+experimental data.
+
+The shared transient publication path still uses the accepted interval-average total outlet flux.
+A closed outlet or clamped nonpositive net flux publishes zero inventory, whose intensive
+thermodynamic properties are undefined. Positive-flow outlet flash or property-initialization
+failures throw an exception before replacing the connected outlet fluid.
 
 **What happens during `run()`:**
 
@@ -873,18 +1580,18 @@ The `run()` method performs a complete steady-state initialization of the pipeli
 │    └─ Converge when max change < tolerance (1e-4)            │
 │                                                              │
 │ 3. updateOutletStream()                                      │
-│    ├─ Flash outlet fluid at outlet P, T                      │
-│    ├─ Calculate outlet mass flow from section state          │
-│    └─ Set outlet stream properties                           │
+│    ├─ Normalize outlet flow to the steady inlet flow         │
+│    ├─ TP-flash at final section pressure and temperature     │
+│    └─ Initialize properties and publish the outlet fluid     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 **Key characteristics:**
-- **Fixed inlet conditions:** Uses inlet stream pressure, temperature, composition
-- **Iterative convergence:** Pressure and holdup profiles converge simultaneously
+- **Inlet specification:** Uses feed flow, temperature and composition; the configured pressure boundary determines the absolute pipe pressure
+- **Iterative convergence:** Pressure, holdup and flashed phase properties must settle together
 - **Terrain-aware holdups:** Liquid accumulates at low points
 - **Single call:** Establishes initial state for subsequent transient runs
-- **Does not throw on failure:** the outcome must be read back (see below)
+- **Convergence limits:** read the outcome report (see below); outlet thermodynamic initialization failures throw
 
 **Example:**
 ```java
@@ -906,14 +1613,46 @@ double[] pressures = pipe.getPressureProfile();
 double[] holdups = pipe.getLiquidHoldupProfile();
 ```
 
-**Checking the outcome.** Three flags describe how the sweep ended, and a profile is only
-trustworthy when the first is true:
+**Checking the outcome.** The legacy flags describe the common failure modes, while
+`getSteadyStateConvergenceReport()` exposes the termination reason and the solved residuals. A
+profile is only trustworthy when the report is converged:
 
 | Query | Meaning when true |
 |-------|-------------------|
 | `isSteadyStateConverged()` | The sweep met the 1e-4 tolerance and the profile is a solution |
 | `isSteadyStateWallClockLimited()` | The wall-clock guard (default 300 s) stopped it early |
 | `isSteadyStatePressureFloorLimited()` | One or more sections rest on the internal 1 bara pressure floor |
+
+`SteadyStateConvergenceReport` distinguishes `CONVERGED`, `ITERATION_LIMIT`,
+`WALL_CLOCK_LIMIT`, `PRESSURE_FLOOR_LIMIT`, and the pre-run `NOT_RUN` state. It reports the
+dimensionless pressure-momentum, pressure-update, total-liquid-holdup, oil/water-split,
+thermodynamic-property, and total-pressure-drop residuals against `getTolerance()`. Convergence
+includes the mandatory final flash and unrelaxed holdup/split resweep, so that pass cannot silently
+change the state after the convergence flag has been set.
+
+The report also checks source-free total mass transport. `getMassFluxResidual()` is the maximum
+over all sections of `abs(gasMassFlow + oilMassFlow + waterMassFlow - inletMassFlow)` divided by
+`max(abs(inletMassFlow), 1e-12 kg/s)`. It must be below `getMassFluxTolerance()` (1e-8), including
+after the final conservative-state initialization. A nonfinite flux fails this check. Reports
+created with the older constructor have no mass-flux measurement and return `NaN` for these two
+getters; reports produced by a new pipe solve always include the check.
+
+Steady phase velocities follow `massFlow / (density * holdup * area)` without the legacy 100 m/s
+gas or 50 m/s liquid caps. Those caps could discard mass while the pressure and holdup iterations
+appeared settled (#3686). The transient boundary velocity guards are unchanged. Phase changes may
+redistribute gas, oil and water flows, but their sum must remain equal to the inlet. Removing a
+numerical velocity cap does not add a critical-flow or choking model; pressure-floor and all
+existing convergence checks still apply.
+
+```java
+SteadyStateConvergenceReport report = pipe.getSteadyStateConvergenceReport();
+if (!report.isConverged()) {
+  throw new IllegalStateException("Steady state stopped at "
+      + report.getTerminationReason() + "; liquid-split residual="
+      + report.getLiquidSplitResidual() + "; mass-flux residual="
+      + report.getMassFluxResidual());
+}
+```
 
 The marching solver clamps section pressure at 1 bara so it stays numerically alive on a line with
 no deliverability. That clamp is a fixed point of itself: the per-section change falls below
@@ -1091,6 +1830,58 @@ This allows the inlet pressure to evolve naturally in response to changing flow 
 
 ## Benchmark Validation
 
+### Phase-limit and steady-boundary regression requirements
+
+`TwoFluidPipeSteadyBoundaryThermodynamicsTest` requires phase densities consistent with independent
+flashes at the reported section pressure and temperature, unchanged feed state, and a fixed-outlet
+gas solution independent of its feed-pressure initial guess. It also exercises a short gas
+transient with thermodynamic refresh and unchanged boundaries.
+
+`TwoFluidPipeDynamicPhaseEnvelopeRegressionTest` defines seven phase combinations:
+
+| Phase count | Present phases | Tests require |
+|-------------|----------------|---------------|
+| One | Gas | Exactly absent oil and water |
+| One | Oil | Exactly absent water and no gas void |
+| One | Water | Exactly absent oil and no gas void |
+| Two | Gas + oil | Positive active inventories and exactly absent water |
+| Two | Gas + water | Positive active inventories and exactly absent oil |
+| Two | Oil + water | Positive liquid inventories and no gas void |
+| Three | Gas + oil + water | Positive, independently conserved phase inventories |
+
+Each row requires a converged stationary reference, an infinitesimal handoff without a pressure or
+holdup jump, and a separate short 10% inlet-flow perturbation with correct phase inlet masses and
+closing phase balances. The final stationary state must also match independently flashed local
+phase mass fluxes and the mass-weighted liquid specific enthalpy after oil/water slip. Both RK2
+and IMEX pressure correction are exercised. These compact cases
+disable phase transfer and thermal evolution and defer transient thermodynamic refresh to isolate
+mechanical transport. They do not establish long-time settling or broad dynamic accuracy; report
+execution results for the tested revision separately.
+
+Oil/water specific enthalpy in J/kg uses mass weights, $h_L=(m_Oh_O+m_Wh_W)/(m_O+m_W)$,
+with the corresponding phase mass-flow weights at initialization. It reduces to the active liquid
+enthalpy in the pure-oil and pure-water limits. This preserves the enthalpy of the combined liquid;
+volume weights are inappropriate for a mass-specific property.
+
+The new phase matrix exercises a one-second 10% feed-rate step. An explicit rerun of the already
+disabled 1800 s liquid-rich fixed-point case still gives **5.7570%** inventory drift, exceeding its
+unchanged **5%** limit. Long-duration liquid-rich behaviour remains unqualified. Metastable trace
+continuity is tested with frozen thermodynamic properties; separate public equilibrium tests
+require dissolved trace liquid to disappear from every cell, including the inlet.
+
+The public severe-slugging, long-horizon liquid-rich and unconverged free-water steady cases retain
+their existing qualification limits. See the
+[model validation status](../process/TWOFLUIDPIPE_MODEL.md#validation-status) for the full scope.
+
+Transient inlet conditions preserve the first physical cell's EOS density at its solved
+pressure. The coupled solver uses an external feed face; the uncoupled solver retains its inlet
+momentum treatment. The unchanged near-zero-time handoff
+and all boundary-condition regressions cover this behavior. Annular holdup now uses
+$\alpha_L=S\lambda_L/[1+(S-1)\lambda_L]$ consistently with $S=v_G/v_L$ in both closure
+paths; dedicated regressions disable minimum-slip enforcement to expose the algebra itself.
+
+### Existing comparison benchmarks
+
 The `TwoFluidPipeBenchmarkTest` provides 19 tests validating `TwoFluidPipe` against `PipeBeggsAndBrills` and analytical results. Key benchmark numbers:
 
 | Test Case | TwoFluidPipe / Beggs&Brill Ratio | Notes |
@@ -1158,7 +1949,14 @@ double liquidInventory = pipe.getLiquidInventory("m3");
 
 ## Terrain-Induced Slug Tracking
 
-The TwoFluidPipe model includes a comprehensive terrain-induced slug tracking system that detects liquid accumulation at terrain low points and tracks the formation, propagation, and arrival of slugs at the outlet.
+The TwoFluidPipe model detects liquid accumulation at terrain low points and tracks slug
+markers through the pipe. During transient tracking it uses
+`LiquidAccumulationTracker.observeConservativeAccumulation(TwoFluidSection[], double)` in
+all enabled tracking modes. Zone volume is measured from conserved oil and water mass and
+their phase densities, allowing both filling and drainage. Observation and marker emission
+leave cell holdup, velocity, mass and momentum unchanged; emitting a marker also leaves the
+measured zone volume unchanged. The legacy empirical `TransientPipe` tracker path is separate.
+See the [conservative observation contract](../process/TWOFLUIDPIPE_MODEL#conservative-terrain-accumulation-observation).
 
 ### Enabling Slug Tracking
 
@@ -1538,17 +2336,27 @@ measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
 - **Terrain response comes from the momentum balance, not a multiplier.** The annular film closure
   now carries the gravity term, so holdup responds to inclination as `sin(theta)`. At 4 MSm3/d the
   maximum holdup fell from 0.222 to 0.022 when the empirical multiplier was removed.
-- **The three-phase free-water case does not converge.** With 15 m3/hr of free water the solve is
-  wall-clock limited after 4078 iterations at a 1200 s budget.
-  The pressure drop does not move between a 300 s and a 1200 s budget, so the criterion is stalling
-  on the three-phase liquid split rather than the solution diverging. Always check
-  `isSteadyStateConverged()` on a water-bearing line.
+- **The historical three-phase free-water case remains unqualified.** With 15 m3/hr of free water,
+  the earlier 73.8 km solve was wall-clock limited after 4078 iterations at a 1200 s budget.
+  Its pressure drop was stationary between 300 s and 1200 s budgets while the oil/water split
+  did not converge. This long case has not been rerun for the pressure-boundary and split
+  corrections described here; the compact regressions do not establish that it is resolved.
+  Always check `isSteadyStateConverged()` on a water-bearing line.
+- The reproducible 3 km, 10-degree uphill gas/oil/water fixture is annular with dispersed oil and
+  water, and converges on 30 and 60 cells without oil-water slip, with closed phase volumes and
+  closed phase mass flow. Refinement changes arrival pressure from 15.840032 bar to 15.694024 bar
+  (0.922%) and mean liquid holdup from 0.228349 to 0.228033 (0.138%) (rerun 2026-11-15). This replay uses the calculated 13.5265 mN/m gas-oil tension instead of
+  an initialization-error fallback of 20 mN/m. The annular film closure approaches intermittent
+  holdup continuously over film holdups 0.16–0.24, reaching the full intermittent closure at
+  the unchanged 0.24 blockage limit. This is numerical evidence for the compact synthetic fixture, not
+  experimental qualification or evidence for the unavailable 73.8 km input.
 - **Pressure drop does not always respond to a temperature change.** In an earlier revision, adding
   10 MW of heating raised the arrival temperature 22 K but left the computed pressure drop
   unchanged; warmer gas at fixed mass rate is less dense and ΔP ~ G²/ρ must rise. Treat pressure
   drop from a case whose temperature field changes as indicative.
-- **Terrain-slug holdup is clamped** at 0.85–0.90 in accumulation zones, so valley inventory is
-  bounded by construction rather than by the momentum balance.
+- **Legacy steady terrain/slug closures include holdup bounds.** These remain distinct from
+  transient accumulation observation, which no longer adds holdup or damps velocity in
+  `TwoFluidPipe`. The correction alone does not qualify physical valley inventory.
 - The steady-state solve is an under-relaxed fixed-point sweep and can fail to settle on long
   transmission lines; always check `isSteadyStateConverged()`. The transient solve is a genuine
   conservative scheme (null-test drift 0.00 bar, closing mass balance).
@@ -1608,3 +2416,103 @@ The model includes comprehensive unit tests:
 - [TwoPhasePipeFlowModel](../fluidmechanics/TwoPhasePipeFlowModel) - Non-equilibrium mass/heat transfer
 - [TwoPhasePipeFlowSystem Development Plan](../fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan) - Implementation status
 - [Pipeline Index](pipeline_index) - Overview of all pipeline models
+
+
+### Shared mechanical slug option
+
+An opt-in reduced liquid-wetted slug force balance is available through
+`setSharedSlugForceBalanceEnabled(true)`, together with interfacial pressure and coupled
+pressure-momentum enabled before `run()`. It shares the steady and transient mechanical
+forces and bypasses incompatible slug minimum-slip/terrain holdup overrides. It changes
+slug steady predictions and does not qualify the default correlation model, three-phase
+liquid slip or experimental severe slugging. See the
+[shared slug closure configuration and measured null result](../process/TWOFLUIDPIPE_MODEL#opt-in-shared-slug-force-balance).
+
+### Experimental implicit slug/film friction and diagnostics
+
+Conservative slug/film face reconstruction can now be paired with an optional local
+implicit friction step. Previously its fluxes used separate body/film velocities but
+its friction sources used only the mean cell state. The option evaluates the shared
+slug wall/drag closure in the body and the annular wall/drag closure in the film,
+then averages updated momenta with the reconstructed length fractions. Phase masses
+and total energy remain unchanged by this friction step. Gravitational and pressure
+terms remain in their existing conservative transport/source treatment.
+
+```java
+pipe.setSharedSlugForceBalanceEnabled(true);
+pipe.setEnableInterfacialPressure(true);
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+pipe.setConservativeSlugForceIntegrationEnabled(true);
+pipe.setMomentumForceDiagnosticsEnabled(true);
+```
+
+The option defaults to false and requires conservative tracking and shared slug forces;
+it cannot be combined with the separate stiff-bubble-drag split. Wall velocity and
+interphase slip are advanced through bounded scalar backward-Euler solves, so a
+falling film has its own signed wall resistance without an explicit friction time-step
+collapse. The explicit RHS omits these same friction forces in active reconstructed
+cells to avoid applying them twice. The local wall/interface splitting is first-order;
+calling it on both sides of transport does not by itself establish second-order accuracy.
+The existing cell-mean steady initialization is retained. This is an experimental
+extension, not a qualified steady body/film equilibrium or a complete churn/annular
+transition model. Independent oil/water subcell dynamics still require qualification.
+
+`getTransientPressureLimitCount()` counts every bounded nonlinear iteration, including
+rejected attempted substeps, since `run()`. `getFirstTransientPressureLimitTime()` gives
+the first attempted-substep start time, and `getMinimumTransientPressureDamping()` gives
+the smallest actual Newton damping. With no events they return 0, NaN and 1 respectively.
+The dedicated Log4j logger `neqsim.process.equipment.pipeline.TwoFluidPipe.pressureLimits`
+at DEBUG records attempted time step, iteration, limiting cell, active bound, and proposed
+and damped pressure correction. The solver's immutable `PressureLimitEvent` list covers
+the latest nonlinear solve; cumulative counters preserve events between outer samples.
+
+`getLastMomentumSourceForcesPerLength()` returns a defensive snapshot indexed by cell,
+then gas wall, liquid wall, gas interface, liquid interface, gas gravity and liquid gravity,
+in signed N/m. It samples the latest RHS state, which may precede the final accepted
+pressure correction. It excludes pressure/advection fluxes, mass-transfer momentum and
+separate oil-water exchange. When subcell friction is implicit it reports the mechanical
+forces before their removal from the explicit RHS; it is not the time-integrated implicit
+impulse. Sampling defaults to off and does not modify the trajectory.
+
+The progress fixture checks convergence, conservation and consistency between limiter
+counts and the sticky flag. Whether that fixture encounters a limit varies across
+runtimes; neither mandatory presence nor mandatory absence is a portable progress
+contract. The full experimental benchmark retains its separate no-limiter requirement.
+A dedicated limited fixture verifies event recording and persistence after recovery.
+
+The unchanged 600 s public-case diagnostic gives the following comparison. Only the
+optional reconstruction/source configuration changes; experimental thresholds and
+pressure sampling remain unchanged.
+
+| Quantity | Shared mean-cell closure | Implicit body/film friction |
+|---|---:|---:|
+| Inlet peak-to-peak pressure | 51.315 kPa | 65.163 kPa |
+| Inlet p10–p90 pressure width | 26.911 kPa | 25.314 kPa |
+| Minimum mass-based riser liquid holdup | 0.935768 | 0.862846 |
+| Mean mass-based riser liquid holdup | 0.982796 | 0.980280 |
+| Completed liquid-trough intervals | 15, irregular | 0 under the unchanged algorithm |
+| Maximum phase mass residual | 1.57e-15 | 1.27e-15 |
+| Rejected coupled substeps | 0 | 0 |
+
+The larger peak-to-peak excursion is not a demonstrated improvement in sustained
+severe-slugging accuracy: the central pressure width decreases, a valid liquid-cycle
+period is absent, and pressure limits still occur. Amplitude remains below the 68.6 kPa
+lower acceptance bound. Initial holdup, experimental amplitude/period and limiter-free
+operation remain unqualified. No experimental gate is enabled or relaxed by this option.
+The diagnostic-only baseline reproduces all 6,000 prior TRACE samples exactly and
+records 387 bounded nonlinear iterations, all limited by correction size; 269 are in
+cell 7 before the bend. The prior outer-step latest flag exposed only five samples.
+
+For ordinary three-phase calculations, flash updates now reuse
+`TwoFluidSection.updateThreePhaseProperties()` for the in-situ mixture density and
+viscosity, as the hydraulic split already does. A separate Brinkman calculation at
+each flash previously forced a three-sweep viscosity/holdup cycle in the uphill
+water/oil regression. Steady convergence now also checks liquid viscosity and
+surface tension changes after a flash, in addition to phase densities and composition.
+
+A supporting 100 s run with the outer reporting/advance interval reduced from 0.1 s to
+0.05 s completes without rejected substeps, but changes peak-to-peak pressure from
+43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
+not yet numerically or experimentally qualified for severe-slug predictions.
+

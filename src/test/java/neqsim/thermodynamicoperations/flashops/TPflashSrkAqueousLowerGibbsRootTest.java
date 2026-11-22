@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -11,9 +12,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashSrkAqueousLowerGibbsRootTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
+  private static final double[] FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021};
 
   @Test
   void multiphaseSrkSelectsSameLowerGibbsGasAqueousRootAsOrdinaryFlash() {
@@ -23,7 +24,7 @@ class TPflashSrkAqueousLowerGibbsRootTest {
     assertEquivalentGasAqueousEquilibrium(ordinary, multiphase);
     assertEquals(0.907958440381479, multiphase.getBeta(0), 1.0e-10);
     assertEquals(0.301266657120460, multiphase.getPhase(0).getZ(), 1.0e-10);
-    assertEquals(4446.598527443467, multiphase.getGibbsEnergy(), 1.0e-7);
+    assertEquals(4446.5991520838725, multiphase.getGibbsEnergy(), 1.0e-7);
 
     double firstGibbsEnergy = multiphase.getGibbsEnergy();
     double firstGasFraction = multiphase.getBeta(0);
@@ -36,7 +37,7 @@ class TPflashSrkAqueousLowerGibbsRootTest {
 
   @Test
   void lowerGibbsRootSelectionRemainsContinuousAcrossNearbySrkStates() {
-    double[][] states = { { 260.0, 100.0 }, { 262.5, 105.0 }, { 265.0, 110.0 }, { 260.0, 100.0 } };
+    double[][] states = {{260.0, 100.0}, {262.5, 105.0}, {265.0, 110.0}, {260.0, 100.0}};
     SystemInterface multiphase = createSystem(new SystemSrkEos(states[0][0], states[0][1]), true);
 
     for (double[] state : states) {
@@ -52,11 +53,14 @@ class TPflashSrkAqueousLowerGibbsRootTest {
 
   @Test
   void genuineThreePhaseSrkStateIsNotCollapsedByTwoPhaseRootRefinement() {
-    SystemInterface multiphase = createAndFlash(new SystemSrkEos(255.0, 90.0), true);
+    // At 90 bara the former third phase was a stalled volume with an EOS pressure of only 54.73 bara.
+    // This 60-bara state has three actual pressure roots and preserves the intended topology protection.
+    SystemInterface multiphase = createAndFlash(new SystemSrkEos(255.0, 60.0), true);
 
     assertEquals(3, multiphase.getNumberOfPhases());
     assertTrue(multiphase.hasPhaseType(PhaseType.GAS));
     assertTrue(multiphase.hasPhaseType(PhaseType.AQUEOUS));
+    assertEosPressureClosure(multiphase);
     assertTrue(maximumComponentMaterialBalanceResidual(multiphase) < 1.0e-10);
     assertTrue(maximumLogFugacityResidual(multiphase) < 1.0e-8);
     double firstGibbsEnergy = multiphase.getGibbsEnergy();
@@ -65,9 +69,39 @@ class TPflashSrkAqueousLowerGibbsRootTest {
     multiphase.init(3);
 
     assertEquals(3, multiphase.getNumberOfPhases());
+    assertEosPressureClosure(multiphase);
     assertEquals(firstGibbsEnergy, multiphase.getGibbsEnergy(), 1.0e-8);
     assertTrue(maximumComponentMaterialBalanceResidual(multiphase) < 1.0e-10);
     assertTrue(maximumLogFugacityResidual(multiphase) < 1.0e-8);
+  }
+
+  /** A spinodal-stalled volume must not produce a spurious third equilibrium phase. */
+  @Test
+  void stalledVolumeDoesNotCreateSpuriousThirdPhase() {
+    SystemInterface fluid = createAndFlash(new SystemSrkEos(255.0, 90.0), true);
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+    assertEosPressureClosure(fluid);
+    assertTrue(maximumComponentMaterialBalanceResidual(fluid) < 1.0e-10);
+    assertTrue(maximumLogFugacityResidual(fluid) < 1.0e-8);
+    double gibbsEnergy = fluid.getGibbsEnergy();
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertEosPressureClosure(fluid);
+    assertEquals(gibbsEnergy, fluid.getGibbsEnergy(), 1.0e-8);
+  }
+
+  /**
+   * Checks the EOS equation independently of fugacity equality and phase-count labels.
+   *
+   * @param fluid equilibrated fluid
+   */
+  private void assertEosPressureClosure(SystemInterface fluid) {
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      assertEquals(fluid.getPressure(), ((PhaseEos) fluid.getPhase(phase)).calcPressure(), 1.0e-8);
+    }
   }
 
   @Test

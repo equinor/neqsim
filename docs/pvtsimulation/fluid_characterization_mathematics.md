@@ -157,6 +157,54 @@ The coefficients are determined by matching:
 2. The plus fraction molecular weight $M_{C7+}$
 3. The plus fraction density $\rho_{C7+}$
 
+The exponential fit uses the same finite SCN interval for the residuals and the
+fractions passed to lumping: the first carbon number is included and
+`getLastPlusFractionNumber()` is the exclusive upper endpoint. Tabulated SCN
+molar masses remain fixed. No unrepresented tail is silently added or removed.
+The two distribution constraints are checked separately:
+
+$$\sum_n z_n=z_+$$
+
+$$\frac{\sum_n z_n M_n}{\sum_n z_n}=M_+$$
+
+Both residuals must be within $10^{-12}$ relative to their supplied plus-fraction
+values. Nonconvergence raises an exception before the plus component is replaced;
+the user's input mass is never adjusted to make a distribution appear closed.
+The Jacobian for the normalized molecular-weight mean uses the square of the
+sum of fractions in its quotient-rule denominator. Earlier versions used the
+sum of squared fractions and a mixed-unit absolute stopping tolerance, which
+could leave a molecular-weight moment error even when total moles nearly closed.
+Corrected slates can therefore change PVT results slightly.
+
+Downstream regression values must describe the corrected slate. For the synthetic
+oil in `WATConsistencyTest`, fresh TP flashes at 60 bara move the wax onset from
+about 64.509 °C to 63.357 °C. The tests check wax appearance on both sides of the
+reported temperature, including when the caller disables wax checking. The
+characterized differential-liberation and wax-curve fixtures also check their
+input mole and mass inventories before using updated internal references;
+composition-setting tests check the supplied heavy mean molar mass and normalized
+heavy distribution. These are conservation and internal-consistency checks, not
+experimental PVT or wax-appearance benchmarks.
+
+Lumping retains the additive mole and mass sums; its mean molar masses are
+mole-weighted. Plus density is fitted on the mass/additive-liquid-volume basis
+$\rho_+=\sum_n z_nM_n/\sum_n(z_nM_n/\rho_n)$, with the existing absolute
+$10^{-6}$ g/cm³ density tolerance. These closure checks qualify bookkeeping,
+not the accuracy of critical-property correlations or the fluid's PVT benchmark.
+`PedersenMomentConservationTest` independently checks initial/final component
+inventories for supported slates with 6/12/28 lumps, the SCN moments, density
+basis and positive finite cuts for light, black and heavy oil means, with Whitson
+Gamma mole/mass controls at 240 g/mol. A conserved heavy distribution does not establish
+that its cuts have supported EOS properties: lumping that requires Pedersen
+estimates at or above 1120 g/mol is rejected, as described below. Heavy-distribution
+moment checks remain separate from EOS-property qualification. The existing Gamma
+final-bin cutoff at 10000 g/mol is not changed:
+for a 590 g/mol, 34.3863 mol plus fraction mixed with 65.6137 mol methane,
+renormalizing the truncated Gamma distribution loses about $8.41\times10^{-7}$ kg
+($3.94\times10^{-8}$ of feed mass). Its correlated cut densities also need not
+reproduce the supplied bulk density. This Pedersen correction does not qualify
+those separate Gamma approximations.
+
 #### Density Correlation (Pedersen)
 
 $$\rho_n = C_1 + C_2 \cdot \ln(n)$$
@@ -169,36 +217,49 @@ where $C_1$ and $C_2$ are fitted to match the measured plus fraction density.
 
 ### Pedersen Correlations
 
-For SRK equation of state, critical properties are calculated using Pedersen et al. correlations:
+For SRK equation of state, the supported Pedersen coefficient set below is used for
+$M < 1120$ g/mol. Estimation at or above 1120 g/mol throws `UnsupportedOperationException`.
+The explicit `PedersenSRKHeavyOil` and `PedersenPRHeavyOil` models are unavailable for
+property estimation at every molecular weight. Their legacy coefficient/form combinations
+can produce $T_b \geq T_c$ and unphysical m-parameters, so they are not listed as usable
+correlations here. The `RiaziDaubert` heavy fallback inherits the same upper boundary.
 
 #### Critical Temperature (K)
 
 $$T_c = a_0 \cdot \rho + a_1 \cdot \ln(M) + a_2 \cdot M + \frac{a_3}{M}$$
 
-| Coefficient | Light Oil (M < 1120 g/mol) | Heavy Oil |
-|-------------|---------------------------|-----------|
-| $a_0$ | 163.12 | 830.63 |
-| $a_1$ | 86.052 | 17.5228 |
-| $a_2$ | 0.43475 | 0.0455911 |
-| $a_3$ | -1877.4 | -11348.4 |
+| Coefficient | Standard oil (M < 1120 g/mol) |
+|-------------|-------------------------------|
+| $a_0$ | 163.12 |
+| $a_1$ | 86.052 |
+| $a_2$ | 0.43475 |
+| $a_3$ | -1877.4 |
 
 #### Critical Pressure (bar)
 
 $$P_c = \exp\left(0.01325 + b_0 + b_1 \cdot \rho^{b_4} + \frac{b_2}{M} + \frac{b_3}{M^2}\right)$$
 
-| Coefficient | Light Oil | Heavy Oil |
-|-------------|-----------|-----------|
-| $b_0$ | -0.13408 | 0.802988 |
-| $b_1$ | 2.5019 | 1.78396 |
-| $b_2$ | 208.46 | 156.740 |
-| $b_3$ | -3987.2 | -6965.59 |
-| $b_4$ | 1.0 | 0.25 |
+| Coefficient | Standard oil (M < 1120 g/mol) |
+|-------------|-------------------------------|
+| $b_0$ | -0.13408 |
+| $b_1$ | 2.5019 |
+| $b_2$ | 208.46 |
+| $b_3$ | -3987.2 |
+| $b_4$ | 1.0 |
 
 #### Acentric Factor (SRK m-parameter)
 
 $$m = c_0 + c_1 \cdot M + c_2 \cdot \rho + c_3 \cdot M^2$$
 
-For Peng-Robinson, different coefficients are used.
+For Peng-Robinson, different coefficients are used within the same molecular-weight boundary.
+
+The SRK relation $m = 0.48 + 1.574\omega - 0.176\omega^2$ is inverted analytically
+on its lower-root branch when assigning m. Non-finite m, a non-real root or a root below
+$\omega=-1$ raises an error; assignment no longer silently clips $\omega$ into
+[-0.99, 1.5]. This mathematical check does not establish that a fitted heavy cut is valid.
+For independently validated critical data, the seven-argument `addTBPfraction` overload
+bypasses the rejected critical-property estimation; see
+[TBP Fraction Models](../wiki/tbp_fraction_models) for inputs, units and dependent properties.
 
 ---
 
@@ -570,7 +631,7 @@ This section documents the PVT regression framework for automatic EOS model tuni
 |-------|-------------|
 | `PVTRegression` | Main regression framework class |
 | `RegressionParameter` | Enum defining tunable parameters (BIPs, volume shifts, critical properties, CSP viscosity factors) |
-| `ExperimentType` | Enum for experiment types (CCE, CVD, DLE, SEPARATOR, etc.) |
+| `ExperimentType` | Implemented targets CCE, CVD, DLE, SEPARATOR and VISCOSITY, plus reserved unsupported identifiers |
 | `CCEDataPoint`, `CVDDataPoint`, `DLEDataPoint`, `SeparatorDataPoint`, `ViscosityDataPoint` | Data point classes for each experiment type |
 | `RegressionParameterConfig` | Configuration for each regression parameter with bounds |
 | `PVTRegressionFunction` | Objective function extending LevenbergMarquardtFunction |
@@ -580,6 +641,19 @@ This section documents the PVT regression framework for automatic EOS model tuni
 ### Overview
 
 PVT regression involves adjusting equation of state parameters to minimize the deviation between calculated and experimental properties. The framework handles multiple experiment types simultaneously while maintaining physical consistency.
+
+The data-ingestion surface consists of `addCCEData`, `addCVDData`, `addDLEData`,
+`addSeparatorData` and `addViscosityData`. The enum identifiers
+`SATURATION_PRESSURE` and `SWELLING` do not have regression implementations or
+public ingestion methods. The evaluator rejects both with a descriptive
+`UnsupportedOperationException`; it never supplies a zero prediction for them.
+A future extension requires the full experimental protocol, units and, for
+swelling, the injection-fluid composition and injection schedule. Existing
+saturation/swelling simulation methods alone do not supply that regression
+contract. See the [PVT workflow](pvt_workflow) for the ingestion and failure
+contract. This support statement does not validate the scientific protocols of
+every existing target.
+
 
 ### Multi-Objective Regression
 
@@ -644,7 +718,7 @@ $$F_{\mu} = \sum_{i} \left(\frac{\mu_i^{calc} - \mu_i^{exp}}{\mu_i^{exp}}\right)
 
 Viscosity data are added with `PVTRegression.addViscosityData(...)`. The framework flashes the fluid at each pressure and temperature, initializes physical properties, and compares the selected phase viscosity in Pa s. Supported phase names are `gas`, `vapor`, `oil`, `liquid`, `aqueous`, and `water`.
 
-When the regression parameters include `VISCOSITY_CSP_1` through `VISCOSITY_CSP_4`, NeqSim activates the PFCT/CSP viscosity model on each phase and fits the four CSP viscosity correction factors. The helper `addCspViscosityRegressionParameters()` registers all four factors with their default bounds.
+When the regression parameters include `VISCOSITY_CSP_1` through `VISCOSITY_CSP_4`, NeqSim activates the PFCT/CSP viscosity model on each phase and fits the four CSP viscosity correction factors. The helper `addCspViscosityRegressionParameters()` registers all four factors with their default bounds. Factors are installed on the gas, oil and aqueous property families of each stored fluid-phase slot, including inactive slots, so phase reindexing or a change of phase type during later flashes preserves the fitted configuration.
 
 ---
 
@@ -840,7 +914,7 @@ System.out.println(summary);
 | `BIP_C2C6_C7PLUS` | BIP between C2-C6 and C7+ fractions | [0.0, 0.05, 0.01] |
 | `BIP_CO2_HC` | BIP between CO₂ and hydrocarbons | [0.08, 0.18, 0.12] |
 | `BIP_N2_HC` | BIP between N₂ and hydrocarbons | [0.02, 0.12, 0.05] |
-| `VOLUME_SHIFT_C7PLUS` | Volume shift multiplier for C7+ | [0.8, 1.2, 1.0] |
+| `VOLUME_SHIFT_C7PLUS` | Multiplier on the effective Peneloux shift of C7+ fractions (Rackett, constant or E300 SSHIFT); needs `useVolumeCorrection(true)` | [0.8, 1.2, 1.0] |
 | `TC_MULTIPLIER_C7PLUS` | Critical temperature multiplier | [0.95, 1.05, 1.0] |
 | `PC_MULTIPLIER_C7PLUS` | Critical pressure multiplier | [0.95, 1.05, 1.0] |
 | `OMEGA_MULTIPLIER_C7PLUS` | Acentric factor multiplier | [0.90, 1.10, 1.0] |
@@ -966,7 +1040,7 @@ SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
 | `inheritReferenceProperties` | Inherit the reference lump properties (molar mass, density, critical constants). When `false`, lump properties are recomputed from the source mass on the reference cut grid | `true` |
 | `delumpBeforeRecharacterization` | Split each coarse source lump into finer single-carbon-number sub-fractions before re-binning onto the reference cuts (Pedersen Ch. 5 delumping). Conserves source moles and mass exactly | `false` |
 | `delumpResolution` | Number of sub-fractions per source lump when delumping (also the fine grid for equal-mass reference boundaries). Values ≤ 1 disable splitting | `12` |
-| `sharedImaginaryBoundaries` | Place reference cut boundaries as carbon-number **equal-mass** cut points on the reference's imaginary (delumped) composition (Pedersen Ch. 5.6, Eqs. 5.58–5.59) instead of boiling-point midpoints | `false` |
+| `sharedImaginaryBoundaries` | Use discrete mass-quantile candidates from the reference's imaginary (delumped) composition, projected into adjacent reference gaps; final cut masses need not be equal | `false` |
 
 #### Property inheritance vs. recomputation (`inheritReferenceProperties`)
 
@@ -978,7 +1052,11 @@ When a field's native lumps already sit close to the reference grid, the naive s
 
 #### Equal-mass reference boundaries (`sharedImaginaryBoundaries`)
 
-By default the reference cut boundaries are the arithmetic boiling-point midpoints between adjacent reference lumps, which ignores how much mass each lump represents. With `sharedImaginaryBoundaries(true)` the reference is first rebuilt into a fine single-carbon-number "imaginary" composition (using `delumpResolution`) and the cut points are placed so each cut carries an **equal mass fraction** — the reference-only (NFLUID = 1) form of the Pedersen Ch. 5.6 common-slate rule (Eqs. 5.58–5.59 with §5.3 cut criterion). Each equal-mass cut is then *clamped* into the gap between the two adjacent reference pseudo-components, guaranteeing every reference lump stays inside its own cut so the one-to-one property inheritance is preserved even when the reference lumps carry unequal mass. With `delumpResolution ≤ 1` it falls back to boiling-point midpoints.
+By default the reference cut boundaries are the arithmetic boiling-point midpoints between adjacent reference lumps. With `sharedImaginaryBoundaries(true)`, the reference is first rebuilt into a fine imaginary composition using `delumpResolution`. The discrete cumulative-mass quantiles provide candidate boundaries on the sorting-key axis (normal boiling point, falling back to molar mass).
+
+Each finite candidate is projected into the gap between the corresponding adjacent reference keys: a candidate below the gap moves to the next representable value above its lower key, while a candidate above the gap moves to the next representable value below its upper key. A candidate already inside the gap is retained. This keeps each distinct reference lump in its own cut when a representable interior exists, without discarding an out-of-gap candidate in favor of the midpoint. Missing or non-finite candidates, equal/non-finite keys, gaps with no representable interior, and `delumpResolution ≤ 1` retain the legacy midpoint fallback. Equal keys cannot define separate ordered cuts.
+
+These are **constrained mass-quantile boundaries**, not a guarantee of equal final cut masses: both projection and the finite imaginary grid can prevent exact equality. Source lumps are assigned whole unless source delumping is enabled, so changing a boundary only changes the result when a source contribution crosses it. With `inheritReferenceProperties(false)`, redistribution preserves source moles and mass; inheriting reference molar masses can change source mass. The synthetic delumping distribution is an approximation and is not independently validated by the cut-placement regression tests.
 
 > **Why reference-only here?** `characterizeToReference` inherits the trusted reference's lump properties one-to-one, so the reference fluid is the correct authority for the grid. The pooled multi-fluid imaginary composition of Eqs. 5.58–5.59 remains used by `characterizeToCommonSlate` (free new slate); applying it to the inherit-from-fixed-reference path would break the inherit alignment.
 
@@ -1051,7 +1129,7 @@ System.out.println(report.toReportString());
 When matching a source fluid to a reference PC structure:
 
 1. **Component Mapping**: Discrete components (C1, C2, CO₂, etc.) are mapped directly
-2. **Cut boundaries**: The reference lumps define cut boundaries on the carbon-number (boiling-point) axis — boiling-point midpoints by default, or carbon-number **equal-mass** cut points with `sharedImaginaryBoundaries(true)`
+2. **Cut boundaries**: The reference lumps define cut boundaries on the carbon-number (boiling-point) axis — boiling-point midpoints by default, or constrained mass-quantile cut points with `sharedImaginaryBoundaries(true)`
 3. **PC binning**: Each source pseudo-component (optionally first delumped into single-carbon-number sub-fractions, see `delumpBeforeRecharacterization`) is assigned to the reference cut whose boundary range contains its boiling point; the lump moles and mass are accumulated per cut
 4. **Lump properties**: Either inherited from the reference (`inheritReferenceProperties(true)`) or recomputed as molar mass = mass / moles per cut (`inheritReferenceProperties(false)`)
 5. **Mass Conservation**: Total source pseudo-fraction moles and mass are preserved through the binning

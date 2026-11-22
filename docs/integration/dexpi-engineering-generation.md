@@ -323,7 +323,7 @@ with a DEXPI 2.0 header while native graphical DEXPI 2.0 coverage is expanded.
 
 `plant-pydexpi.xml` contains the same governed graphical model with the namespace omitted for compatibility with the
 pyDEXPI Proteus importer. Run
-`python devtools/validate_dexpi_interoperability.py engineering-package --require-pydexpi --output
+`uv run --project devtools --locked devtools/validate_dexpi_interoperability.py engineering-package --require-pydexpi --output
 engineering-package/interoperability-report.json` to qualify that import. The
 generated `interoperability-report.json` keeps native schema/semantic status separate from pyDEXPI and commercial-CAE
 qualification. Commercial import and round-trip evidence must follow
@@ -390,7 +390,7 @@ the tool. Supply a local checkout pinned to commit
 `18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad` after installing that checkout's locked Node.js dependencies:
 
 ```text
-python devtools/validate_dexpi_interoperability.py . \
+uv run --project devtools --locked devtools/validate_dexpi_interoperability.py . \
   --native-file src/test/resources/dexpi/2.0/golden/branching-process.dexpi.xml \
   --dexpi-viewer /absolute/path/to/DEXPIViewer \
   --dexpi-viewer-baseline src/test/resources/dexpi/2.0/golden/dexpi-viewer-baseline.json \
@@ -509,6 +509,22 @@ depressurization, concurrent-source aggregation, BDV/orifice checks, PSV sizing,
 header Mach checks. The runner will return readiness blockers instead of calculating when required inventory, valve,
 fire, header, flare or evidence inputs are absent. Use `setMaterialsReviewInput(...)` to overlay project material
 register, aqueous chemistry, inspection, coating and design-life data on the process-derived service conditions.
+
+### Dynamic PSV sizing and BDV discharge
+
+For a vapour PSV, retain the valve settings in `psvBasis(...)` and add
+`psvContingency(scenario, psvBackPressureBara, reference)`. Supply a named, credible
+`ReliefScenario` with the protected contingency's kg/s demand and vapour temperature (K),
+molar mass (kg/mol), compressibility and heat-capacity ratio at relieving conditions.
+The reference identifies the calculation or document supporting those inputs. The PSV
+backpressure is independent of the BDV outlet pressure. Liquid and flashing contingencies
+can be evaluated with the phase-specific methods in `OverpressureProtectionStudy`.
+
+Existing set-pressure-only inputs continue to run the blowdown. Their PSV result reports
+`not_sized_missing_relief_demand`. In the v2 result and compact load handoff, BDV area,
+diameter, discharge coefficient and peak mass flow are under `bdvDischarge[sourceId]`;
+PSV status, contingency and calculated area are under `psvSizing[sourceId]`. A PSV demand
+sizes the valve; it does not add a concurrent opening to the simulated BDV discharge.
 
 ## Controlled line list and piping design
 

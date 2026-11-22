@@ -463,7 +463,7 @@ public final class ModelRegistry {
    * @return the definition as a JSON string, or null when absent
    */
   private static String extractDefinition(JsonObject input) {
-    String[] fields = { "processJson", "definition", "model" };
+    String[] fields = {"processJson", "definition", "model"};
     for (String field : fields) {
       if (!input.has(field) || input.get(field).isJsonNull()) {
         continue;

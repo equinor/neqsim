@@ -36,5 +36,13 @@ public class WaterPhysicalProperties extends LiquidPhysicalProperties {
     viscosityCalc = new Viscosity(this);
     diffusivityCalc = new SiddiqiLucasMethod(this);
     densityCalc = new Density(this);
+    if (phase instanceof neqsim.thermo.phase.PhaseWaterIAPWS) {
+      conductivityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.ReferenceWaterTransportProperties(
+          this);
+      viscosityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.ReferenceWaterTransportProperties(
+          this);
+      densityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.ReferenceWaterTransportProperties(
+          this);
+    }
   }
 }

@@ -318,7 +318,7 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     controller.setMoveWeights(0.0, 0.0, 0.0);
     controller.setPreferredControlVector(80.0, 80.0, 80.0);
     controller.addLinearMoveConstraint(new ModelPredictiveController.LinearMoveConstraint("shared choke movement",
-        new double[] { 1.0, 1.0, 1.0 }, -6.0, 6.0));
+        new double[] {1.0, 1.0, 1.0}, -6.0, 6.0));
 
     controller.runTransient(Double.NaN, 1.0, UUID.randomUUID());
     double[] openingControls = controller.getControlVector();
@@ -326,7 +326,7 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
         "The aggregate opening move should be limited to the shared budget");
 
     controller.synchronizeAppliedControlValues(30.0, 30.0, 30.0);
-    Assertions.assertArrayEquals(new double[] { 30.0, 30.0, 30.0 }, controller.getControlVector(), 1.0e-12,
+    Assertions.assertArrayEquals(new double[] {30.0, 30.0, 30.0}, controller.getControlVector(), 1.0e-12,
         "Measured actuator positions should replace stale requested controls");
     controller.setPreferredControlVector(0.0, 0.0, 0.0);
 
@@ -471,8 +471,8 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     controller.setPreferredControlValue(0.0);
     controller.setOutputLimits(0.0, 120.0);
 
-    double[] setpoints = { ambient + 15.0, ambient + 32.0, ambient + 20.0, ambient + 26.0 };
-    int[] durations = { 80, 110, 90, 90 };
+    double[] setpoints = {ambient + 15.0, ambient + 32.0, ambient + 20.0, ambient + 26.0};
+    int[] durations = {80, 110, 90, 90};
     int stage = 0;
     int elapsedInStage = 0;
 
@@ -571,26 +571,23 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
         "Manual quality measurements should override the default limit baseline");
   }
 
+  /** Forecast samples evaluate the first-order response at finite multiples of the sample interval. */
   @Test
-  public void testPredictedTrajectoryApproachesSteadyState() {
+  public void testPredictedTrajectoryUsesFiniteSampleTimes() {
     ModelPredictiveController controller = new ModelPredictiveController("trajectoryMpc");
     controller.setProcessModel(0.5, 20.0);
     controller.setProcessBias(30.0);
-    controller.setPreferredControlValue(0.0);
     controller.setOutputLimits(0.0, 100.0);
     controller.ingestPlantSample(32.0, 10.0, 2.0);
 
     double[] trajectory = controller.getPredictedTrajectory(8, 2.0);
     Assertions.assertEquals(8, trajectory.length);
-    double steadyState = 30.0 + 0.5 * 10.0;
-    double previous = 32.0;
-    for (double value : trajectory) {
-      Assertions.assertTrue(Double.isFinite(value));
-      Assertions.assertTrue(value >= previous - 1.0e-9, "Trajectory should not decrease for a positive control gain");
-      Assertions.assertTrue(value <= steadyState + 1.0e-6,
-          "Prediction should not overshoot the steady state for a first-order model");
-      previous = value;
+    double steadyState = 35.0;
+    for (int sample = 0; sample < trajectory.length; sample++) {
+      double time = (sample + 1) * 2.0;
+      double expected = steadyState + (32.0 - steadyState) * Math.exp(-time / 20.0);
+      Assertions.assertEquals(expected, trajectory[sample], 1.0e-12, "Forecast at " + time + " s");
     }
-    Assertions.assertEquals(steadyState, trajectory[trajectory.length - 1], 0.5);
+    Assertions.assertArrayEquals(new double[] {trajectory[0]}, controller.getPredictedTrajectory(1, 2.0), 1.0e-12);
   }
 }

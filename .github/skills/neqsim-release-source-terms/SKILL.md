@@ -1,0 +1,132 @@
+---
+name: neqsim-release-source-terms
+description: "This skill guides agents through NeqSim release-source-term calculations. USE WHEN: estimating a leak or rupture rate, selecting an orifice or pipe-decompression model, building a time-resolved source term, or handing release conditions to fire or dispersion analysis. Anchors: ReleaseFlowRequest, ReleaseFlowResult, HomogeneousEquilibriumReleaseModel, ReleaseInventory, SourceTermSession."
+last_verified: "2026-11-17"
+---
+
+# Release Source Terms
+
+## When to use this
+
+Use this skill to calculate an instantaneous release boundary condition or sample a release from a process inventory. First classify the opening as a short orifice, a finite-length pipe, or a depleting vessel/pipe inventory. Keep the selected model and its `ReleaseModelEvidence` with the result.
+
+Use `neqsim-consequence-analysis` for downstream fire, dispersion, explosion, and fatality calculations. Use `neqsim-depressurization-mdmt` for vessel blowdown and MDMT. Use `neqsim-trapped-liquid-fire-rupture` for a pipe that heats and ruptures under fire. Those skills own their consequence workflows; this skill owns the source boundary only.
+
+## Class map
+
+| Class | Package | What it does | Verified API |
+|---|---|---|---|
+| `ReleaseFlowModel`, `ReleaseFlowRequest`, `ReleaseFlowResult` | `neqsim.process.safety.release` | Model-neutral instantaneous boundary and immutable status/evidence result | `calculate(ReleaseFlowRequest)`, `getStatus()`, `isUsable()`, `getMassFlowRateKgS()` |
+| `LegacyScreeningReleaseModel`, `LeakModel` | `neqsim.process.safety.release` | Compatibility adapter for the historical leak-rate screening equation | `getModelId()`, `getEvidence()`; legacy model remains screening-level |
+| `IdealGasReleaseModel` | `neqsim.process.safety.release` | Calorically perfect, single-gas short-orifice equation | `calculate(request)` |
+| `IdealGasFannoPipeReleaseModel`, `RealGasFannoPipeReleaseModel` | `neqsim.process.safety.release` | Finite constant-area pipe release with Darcy friction; ideal-gas or EOS marching | `calculate(request)` |
+| `HomogeneousEquilibriumReleaseModel` | `neqsim.process.safety.release` | EOS-backed, isentropic short-opening flashing with equilibrium phase transfer and zero slip | `calculate(request)`, `getEvidence()` |
+| `DriftFluxHomogeneousEquilibriumReleaseModel`, `SlipCorrectedHomogeneousEquilibriumReleaseModel` | `neqsim.process.safety.release` | Sensitivity alternatives that modify homogeneous phase velocity/area behavior | `calculate(request)`, `getMaximumGasAreaFraction()` on drift-flux model |
+| `FiniteRateDriftFluxReleaseModel`, `RanzMarshallFiniteRateReleaseModel`, `RanzMarshallDropletFiniteRateReleaseModel`, `ComponentSelectiveFiniteRateReleaseModel` | `neqsim.process.safety.release` | Finite-rate phase transfer using declared residence/relaxation inputs; optional component-specific times and a bounded explicit liquid-droplet sensitivity | Constructors accept surface tension and model-specific time/provenance inputs; `calculate(request)` |
+| `PredictiveBubbleTransferZoneReleaseModel` | `neqsim.process.safety.release` | Bounded vertical spherical-bubble transfer-zone screening with predicted bubble diameter, phase slip and residence time | Constructor accepts SI geometry, liquid properties, component diffusivities and provenance; `calculate(request)` |
+| `RanzMarshallMassTransferCorrelation` | `neqsim.process.safety.release` | Mass-transfer correlation used by finite-rate release models; not a standalone release-rate solver | `getApplicabilityMessage()`, `getMorphology()`, `getSauterMeanDiameterM()` |
+| `ReleaseInventory` | `neqsim.process.safety.release` | Coupled vessel inventory and opening whose mass changes during native process transient execution | `run(UUID)`, `getReleaseRequest()`, `getReleaseResult()` |
+| `IdealGasPipeDecompression`, `RealGasPipeDecompression`, `TwoSidedRealGasPipeRupture` | `neqsim.process.safety.release` | Coupled one-dimensional pipe-inventory decompression; EOS path optionally couples a finite upstream vessel, prescribed wall heat and an immutable opening-area history, while the two-sided topology retains opposing branch jets as distinct equipment and frames | `run(UUID)`, `getReleaseResult()`, `getReleaseProvenance()`, `setReleaseOpeningProfile(...)`, `addTo(ProcessSystem)`, `registerSources(...)` |
+| `SourceTermSession`, `SourceTermFrame` | `neqsim.process.safety.release` | Samples one or more process sources into sequenced, fingerprinted JSON/CSV frames | `addSource(...)`, `addLongPipeSource(...)`, `capture(Map<String, UUID>)`, `toJson()`, `toCsvRow()` |
+| `ReleaseModelEvidence`, `ReleaseSolidRiskAssessment` | `neqsim.process.safety.release` | Explicit applicability/validation manifest and solid/hydrate risk guard | `getEvidence()`, `getStatus()` |
+
+### Model-selection ladder
+
+1. **Legacy screening**: use only to reproduce the historical `LeakModel` equation. It is not a qualified physical release model.
+2. **Ideal gas**: use for a dry, single gas phase when constant heat-capacity ratio and ideal-gas behavior are acceptable. The implementation requires usable gas properties; it does not supply missing gamma or molecular weight defaults.
+3. **Real-gas pipe**: for a long, constant-area pipe with a declared length and Darcy factor, select `RealGasFannoPipeReleaseModel`. `IdealGasFannoPipeReleaseModel` is the simpler comparison case. Neither is a transient inventory solver. For finite-speed line packing use `RealGasPipeDecompression`; its opt-in constructor accepts a finite upstream gas-vessel volume and either a prescribed overall heat-transfer coefficient plus fixed external temperature or a typed cell-resolved wall boundary. For an interior full-bore break, use `TwoSidedRealGasPipeRupture` and preserve the left/right directional frames rather than forming one scalar source. The default opening is instantaneous. Use `ReleaseOpeningProfile.linearRamp(delaySeconds, durationSeconds)` only for a declared finite-opening sensitivity; it prescribes effective area and is not a fracture, elasticity or fluid-structure model. Use `WallThermalBoundary.capacitive(...)` for direct effective coefficients/capacity. Use `WallThermalBoundary.cylindricalLumpedWall(...)` to derive outer-area conversion and capacity from explicit cylinder geometry and material properties when $Bi<0.1$. Use `WallThermalBoundary.cylindricalTwoNodeWall(...)` when one conservative inner/outer radial gradient is required; it derives equal-volume node capacities and cylindrical resistance but is not a converged radial mesh. Keep both legacy thermal inputs zero for the adiabatic path.
+4. **Homogeneous equilibrium (HEM)**: for a short opening where EOS phase change matters and equilibrium/zero-slip assumptions are accepted. It is not a pipe-friction, heat-transfer, solid-bearing, or delayed-flashing model.
+5. **Drift-flux / finite-rate**: use as an explicit sensitivity when slip or phase-transfer lag may change the source. Supply measured or justified surface tension, residence/relaxation time, and component-specific time constants as required. For an upward spherical-bubble transfer zone, `PredictiveBubbleTransferZoneReleaseModel` can instead derive a bounded bubble diameter, phase slip and gas residence time from explicit SI geometry before applying Ranz-Marshall transfer. For liquid droplets in gas, use `RanzMarshallDropletFiniteRateReleaseModel` only with an explicit `LIQUID_DROPLETS` correlation, droplet diameter, gas properties, relative speed and residence time; it accepts dilute spherical droplets only and does not predict their hydrodynamics. These remain unqualified screening closures without population-balance, entrainment, heat-transfer, solid-bearing or experimental evidence. They are not substitutes for a validated two-fluid rupture model.
+
+Reject a model if the request has pipe geometry but the chosen model requires a short opening. The request constructor uses SI units: diameter m, receiving absolute pressure Pa, length m, and dimensionless discharge coefficient/Darcy friction factor. Fluid amount establishes composition; it is not the release rate.
+
+## Build pattern
+
+The smallest useful comparison is a one-shot HEM or ideal-gas calculation. Choose one model explicitly; do not silently fall back after an unsupported result.
+
+```java
+import neqsim.process.safety.release.HomogeneousEquilibriumReleaseModel;
+import neqsim.process.safety.release.ReleaseFlowRequest;
+import neqsim.process.safety.release.ReleaseFlowResult;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
+fluid.addComponent("methane", 0.90);
+fluid.addComponent("ethane", 0.08);
+fluid.addComponent("CO2", 0.02);
+fluid.setMixingRule("classic");
+ReleaseFlowRequest request = new ReleaseFlowRequest(fluid, 0.010, 0.62, 101325.0);
+ReleaseFlowResult result = new HomogeneousEquilibriumReleaseModel().calculate(request);
+if (!result.isUsable()) {
+  throw new IllegalStateException("Release calculation: " + result.getStatus());
+}
+double massFlowKgS = result.getMassFlowRateKgS();
+```
+
+Equivalent Python class lookup:
+
+```python
+from neqsim import jneqsim
+
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ReleaseFlowRequest = jneqsim.process.safety.release.ReleaseFlowRequest
+HomogeneousEquilibriumReleaseModel = jneqsim.process.safety.release.HomogeneousEquilibriumReleaseModel
+fluid = SystemSrkEos(300.0, 50.0)
+fluid.addComponent("methane", 0.90)
+fluid.addComponent("ethane", 0.08)
+fluid.addComponent("CO2", 0.02)
+fluid.setMixingRule("classic")
+request = ReleaseFlowRequest(fluid, 0.010, 0.62, 101325.0)
+result = HomogeneousEquilibriumReleaseModel().calculate(request)
+if not result.isUsable():
+    raise RuntimeError("Release calculation: " + str(result.getStatus()))
+mass_flow_kg_s = result.getMassFlowRateKgS()
+```
+
+For a running process, create `SourceTermSession(scenarioId, process)` or `SourceTermSession(scenarioId, processModel)`, register an opening with `addSource(...)`, then call `capture(expectedAreaCalculations)` after the process step. Register `ReleaseInventory`/pipe-decompression equipment with `addInventorySource(...)` so the session does not calculate a second hypothetical withdrawal. The caller must serialize access to the source process.
+
+## Result extraction
+
+| Getter | Unit / meaning |
+|---|---|
+| `getStatus()` / `isUsable()` | `VALID`, `VALID_WITH_WARNINGS`, `INVALID`, or `UNSUPPORTED`; only usable results carry physical values |
+| `getMassFlowRateKgS()` | kg/s; throws for unusable result rather than returning a misleading zero |
+| `isChoked()` | Boolean classification of accepted opening flow |
+| `getStations()` | `Station` to `ReleaseState`; pressure Pa, temperature K, density kg/m3, velocity m/s, mass flux kg/(m2 s) |
+| `getDiagnostics()` | Assumptions, warnings, closure and unsupported-physics codes |
+| `getEvidence()` | Applicability, known limitations and evidence references for the selected model |
+| `SourceTermFrame.getSimulationTimeS()` | Process simulation time s, distinct from frame timestamp |
+| `SourceTermFrame.toJson()` / `toCsvRow()` | Compact versioned frame or reduced time-series row; unavailable mass flow is empty, not zero |
+
+Map the selected station and component/phase mass fractions into the input contract of the downstream consequence model. Keep original pressure/temperature units explicit during conversion; release request pressure is absolute Pa, while many process APIs use bara.
+
+## Gotchas
+
+- `ReleaseFlowResult` numerical validity is not engineering qualification. Inspect status, diagnostics, model identity/version and evidence before consuming any rate.
+- HEM explicitly assumes equilibrium phase transfer, zero slip, no pipe friction, no heat transfer and no solid-bearing flow. It can return `UNSUPPORTED`/`INVALID`; do not read rate on failure.
+- HEM version 1.2.4 retains the independent STEP propane flashing-jet case from Witlox et al. (2007). The experiment declares liquid withdrawal, while the current equilibrium request at the published pressure and temperature resolves gas-only. Treat the raw rate as `NOT_COMPARABLE_UPSTREAM_PHASE`, not a validation error or calibration target. Measurement uncertainty is not reported; retain `EXPERIMENTAL_INPUT_PHASE_MISMATCH`, `MEASUREMENT_UNCERTAINTY_NOT_REPORTED` and `UNQUALIFIED` until a reviewed liquid-inventory reconstruction is available.
+- The same manifest retains six Hammer et al. (2022) dense single-fluid CO2 restriction cases with reported uncertainty. Ambient expansion detects solid CO2 and returns `UNSUPPORTED`/`SOLID_RISK`; never recover its failed source payload. For restriction-only evidence, `SINGLE_MATERIAL_PHASE` accepts exactly one supported upstream material phase without depending on the EOS gas/liquid label. The choked sensitivity is rate-invariant across a 600--800 kPa non-solid receiver-pressure band and reports MAPE 19.39%, maximum error 34.26% and only 1/6 cases inside uncertainty. Treat that result as independent `UNQUALIFIED` accuracy evidence, not an ambient source term or qualification.
+- The pressure in `ReleaseFlowRequest` is absolute Pa. `backPressurePa` is not barg. The supplied fluid is cloned, and its total moles only set composition/state.
+- Short-orifice models reject requests containing finite pipe length. For Fanno models, set both pipe length and Darcy factor positive; request validation requires both zero or both positive.
+- `SourceTermSession` ordinary sources are hypothetical and do not withdraw inventory. Only `CoupledReleaseSource` equipment owns real inventory depletion. A session lock cannot protect concurrent edits through another process reference.
+- `ReleaseInventory`/pipe equipment exports the end-of-step instantaneous rate; cumulative mass/energy balance belongs to the coupled equipment.
+- `RealGasPipeDecompression` distributed environment heat is positive into the complete pipe system and closes as `initial gas + wall energy + cumulative environment heat = vessel + pipe gas + wall + discharged energy`. The massless constant-U and finite-capacitance wall boundaries are prescribed sensitivities. The lumped cylindrical adapter derives area and capacity from caller-supplied geometry/material inputs and applies a $Bi<0.1$ guard. The two-node adapter additionally resolves one conservative radial gradient using cylindrical resistance. Neither predicts fire, ambient, soil, seawater, film coefficients or material properties, and two nodes are not radial-mesh convergence evidence.
+- `TwoSidedRealGasPipeRupture` represents an interior full-bore break as two adiabatic single-gas inventories with opposing axial directions. It defaults to instantaneous opening and can apply one shared, prescribed delayed linear effective-area ramp inside the conservative substeps. It does not predict crack propagation/opening, pipe elasticity, cross-break pressure coupling or multiphase transport. Register both branches and retain both source frames.
+- Correlation and finite-rate inputs are caller supplied. Correlation availability or a good numerical closure is not evidence of field calibration.
+- The liquid-droplet adapter is limited to caller-declared dilute spherical droplets: liquid area fraction at most 0.20, Eotvos at most 4, Weber at most 12, Reynolds below 200 and every Schmidt number below 250. It does not infer breakup, coalescence, entrainment, annular flow, diameter, slip or residence time.
+- The model ladder is not an accuracy ranking. Select by physics required, then validate against an independent reference or test case.
+
+## Validation / benchmarks
+
+The source tree includes analytic ideal-gas choked/high-backpressure tests, HEM conservation and phase-flashing regressions, the fail-closed STEP propane phase-applicability case, six fail-closed dense-CO2 ambient cases plus a non-solid restriction-plane accuracy sensitivity with uncertainty, dilute real-gas Fanno comparison against the ideal-gas limit, and model-specific sensitivity tests. Use these as bounded evidence, not universal accuracy claims. At task level, check mass/energy/entropy closure, zero-forward-flow behavior, monotonic response to backpressure/diameter where expected, and sensitivity to model assumptions. Record the exact NeqSim version and a source-specific validation case.
+
+There is no direct MCP runner for `ReleaseFlowModel` or `SourceTermSession` in `neqsim.mcp.runners` at this verification. Consequence MCP tools operate downstream; transfer a validated source frame explicitly. Do not present a risk or consequence estimate as a certified safety study.
+
+## Related skills
+
+- `neqsim-consequence-analysis` — fire, dispersion, explosion and QRA consequence calculations
+- `neqsim-depressurization-mdmt` — vessel blowdown and MDMT
+- `neqsim-trapped-liquid-fire-rupture` — fire-heated pipe rupture source terms
+- `neqsim-process-safety` — barriers, HAZOP, LOPA/SIL and overpressure context
+- `neqsim-flow-assurance` — hydrate and solid risk context

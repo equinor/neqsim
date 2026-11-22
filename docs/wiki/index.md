@@ -32,11 +32,23 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
+/**
+ * Runs a basic SRK TP-flash and validates its gas-state screening results.
+ *
+ * @author NeqSim
+ * @version 1.0
+ */
 public final class NeqSimQuickStart {
   private static final Logger logger = LogManager.getLogger(NeqSimQuickStart.class);
 
+  /** Utility class. */
   private NeqSimQuickStart() {}
 
+  /**
+   * Run the quick-start flash and fail closed if its gas-state results are invalid.
+   *
+   * @param args command-line arguments; unused
+   */
   public static void main(String[] args) {
     SystemInterface gas = new SystemSrkEos(298.15, 50.0);
     gas.addComponent("methane", 0.90);
@@ -49,8 +61,27 @@ public final class NeqSimQuickStart {
     operations.TPflash();
     gas.initProperties();
 
-    logger.info("Density: {} kg/m3", gas.getDensity("kg/m3"));
-    logger.info("Compressibility: {}", gas.getZ());
+    double density = gas.getDensity("kg/m3");
+    double compressibility = gas.getZ();
+    require(Double.isFinite(density) && density > 0.0 && density < 200.0,
+        "Gas density left the validated 0-200 kg/m3 screening range");
+    require(Double.isFinite(compressibility) && compressibility > 0.0 && compressibility < 2.0,
+        "Compressibility left the validated 0-2 screening range");
+
+    logger.info("Density: {} kg/m3", density);
+    logger.info("Compressibility: {}", compressibility);
+  }
+
+  /**
+   * Fail closed when a quick-start engineering contract is not satisfied.
+   *
+   * @param condition contract result
+   * @param message failure description
+   */
+  private static void require(boolean condition, String message) {
+    if (!condition) {
+      throw new IllegalStateException(message);
+    }
   }
 }
 ```
@@ -142,7 +173,7 @@ public final class NeqSimQuickStart {
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.18.0</version>
+    <version>3.29.0</version>
 </dependency>
 ```
 
@@ -156,3 +187,6 @@ public final class NeqSimQuickStart {
 - **Source Code**: [github.com/equinor/neqsim](https://github.com/equinor/neqsim)
 - **Issues**: [Report bugs or request features](https://github.com/equinor/neqsim/issues)
 - **Discussions**: [Ask questions](https://github.com/equinor/neqsim/discussions)
+
+- [Safety Shutdown forward pump coastdown](water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown):
+  declared actual speed, curve domain, conservation, hydraulic work and applicability.

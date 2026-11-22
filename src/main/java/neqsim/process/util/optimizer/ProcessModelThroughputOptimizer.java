@@ -505,7 +505,7 @@ public class ProcessModelThroughputOptimizer implements Serializable {
    * @return evaluated case row
    */
   private ThroughputCaseRow evaluateCase(ProcessModelSimulationEvaluator evaluator, int caseNumber, double multiplier) {
-    ProcessModelSimulationEvaluator.EvaluationResult evaluation = evaluator.evaluate(new double[] { multiplier });
+    ProcessModelSimulationEvaluator.EvaluationResult evaluation = evaluator.evaluate(new double[] {multiplier});
     return ThroughputCaseRow.fromEvaluation(caseNumber, multiplier, createProducerMultiplierMap(multiplier),
         evaluation);
   }

@@ -763,8 +763,7 @@ public final class DexpiVisualQualityAssessment {
   private static double[] drawingExtent(Element drawing) {
     Element extent = drawing == null ? null : firstDescendant(drawing, "Extent");
     Element max = extent == null ? null : firstDirectChild(extent, "Max");
-    return max == null ? new double[] { 0.0, 0.0 }
-        : new double[] { attribute(max, "X", 0.0), attribute(max, "Y", 0.0) };
+    return max == null ? new double[] {0.0, 0.0} : new double[] {attribute(max, "X", 0.0), attribute(max, "Y", 0.0)};
   }
 
   private static Map<String, Element> shapeCatalogue(Document document) {
@@ -811,7 +810,7 @@ public final class DexpiVisualQualityAssessment {
   private static double[] directLocation(Element parent) {
     Element position = firstDirectChild(parent, "Position");
     Element location = position == null ? null : firstDirectChild(position, "Location");
-    return location == null ? null : new double[] { attribute(location, "X", 0.0), attribute(location, "Y", 0.0) };
+    return location == null ? null : new double[] {attribute(location, "X", 0.0), attribute(location, "Y", 0.0)};
   }
 
   private static Element nearestIdentifiedAncestor(Element element) {

@@ -61,8 +61,8 @@ class TwoFluidPipeMassBalanceTest {
 
   @Test
   void testStageWeightedReportClosesForEveryExplicitIntegrator() {
-    TimeIntegrator.Method[] methods = { TimeIntegrator.Method.EULER, TimeIntegrator.Method.RK2,
-        TimeIntegrator.Method.SSP_RK3 };
+    TimeIntegrator.Method[] methods = {TimeIntegrator.Method.EULER, TimeIntegrator.Method.RK2,
+        TimeIntegrator.Method.SSP_RK3};
 
     for (TimeIntegrator.Method method : methods) {
       TwoFluidPipe pipe = createPipe("stage-balance-" + method, 6);

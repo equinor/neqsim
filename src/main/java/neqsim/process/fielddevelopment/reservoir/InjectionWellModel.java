@@ -3,6 +3,8 @@ package neqsim.process.fielddevelopment.reservoir;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import neqsim.process.equipment.reservoir.RadialDarcyWaterInjectivity;
+import neqsim.process.equipment.reservoir.RadialDarcyWaterInjectivity.Result;
 
 /**
  * Injection well performance model for water and gas injection.
@@ -16,6 +18,16 @@ import java.util.List;
  * <li><b>Fracture Pressure:</b> Maximum safe injection pressure</li>
  * <li><b>Skin Factor Effects:</b> Near-wellbore damage or stimulation</li>
  * </ul>
+ *
+ * <p>
+ * The multi-zone calculation is a water-injection screening model. It evaluates each zone with the radial Darcy
+ * equation using the configured formation-water viscosity and volume factor and reports the resulting coefficient in
+ * Sm3/day/bar. The conversion from m3/s/Pa multiplies by both 86400 s/day and 100000 Pa/bar, then divides by the
+ * formation-water volume factor in reservoir m3/Sm3. The default volume factor is 1.0 to preserve the established
+ * screening result; users must configure a qualified value when a standard-volume PVT conversion is required. The
+ * opt-in ordinary-water mode reuses {@link RadialDarcyWaterInjectivity} for IF97 volume and IAPWS-fitted viscosity
+ * evidence. Relative permeability, crossflow, transient reservoir response and fracture growth are not included.
+ * </p>
  *
  * <h2>Injectivity Index</h2>
  * <p>
@@ -96,6 +108,16 @@ public class InjectionWellModel implements Serializable {
     WAG_INJECTOR
   }
 
+  /**
+   * Formation-water property basis used by the radial-Darcy injection screens.
+   */
+  public enum FormationWaterPvtMode {
+    /** Preserve caller-configured constant viscosity and formation-volume factors. */
+    CONFIGURED_CONSTANT,
+    /** Evaluate pure liquid water with IF97 density and the NeqSim IAPWS-fitted viscosity correlation. */
+    IAPWS_IF97_PURE_WATER
+  }
+
   // Well type
   private InjectionType injectionType = InjectionType.WATER_INJECTOR;
 
@@ -127,6 +149,8 @@ public class InjectionWellModel implements Serializable {
 
   // Formation water properties (for water injection)
   private double formationWaterViscosity = 0.3; // cP at reservoir conditions
+  private double formationWaterVolumeFactor = 1.0; // reservoir m3/Sm3
+  private FormationWaterPvtMode formationWaterPvtMode = FormationWaterPvtMode.CONFIGURED_CONSTANT;
 
   // Pump efficiency
   private double pumpEfficiency = 0.75;
@@ -159,7 +183,7 @@ public class InjectionWellModel implements Serializable {
     result.injectionType = this.injectionType;
 
     // Calculate injectivity index
-    double ii = calculateInjectivityIndex();
+    double ii = calculateInjectivityIndex(result);
     result.injectivityIndex = ii;
 
     // Calculate required BHP for target rate
@@ -213,27 +237,25 @@ public class InjectionWellModel implements Serializable {
    * For radial flow: II = 2π × k × h / (μ × B × (ln(re/rw) + S))
    * </p>
    *
+   * @param result calculation result receiving the applied water-PVT evidence
    * @return injectivity index (Sm3/day/bar)
    */
-  private double calculateInjectivityIndex() {
-    // Convert permeability from mD to m²
-    double kSI = formationPermeability * 9.869e-16; // mD to m²
-
-    // Get fluid properties based on injection type
-    double viscosity;
-    double formationVolumeFactor;
-
+  private double calculateInjectivityIndex(InjectionWellResult result) {
     if (injectionType == InjectionType.WATER_INJECTOR) {
-      viscosity = waterViscosity * 1e-3; // cP to Pa·s
-      formationVolumeFactor = 1.02; // Bw ≈ 1.02 for water
-    } else {
-      // Gas injection
-      viscosity = gasViscosity * 1e-3; // cP to Pa·s
-      // Calculate Bg at reservoir conditions
-      formationVolumeFactor = 1.01325 / reservoirPressure * reservoirTemperature / 288.15 * 0.9;
+      RadialDarcyWaterInjectivity injectivity = createRadialDarcyWaterInjectivity(formationPermeability,
+          formationThickness, skinFactor, waterViscosity, 1.02);
+      Result evidence = injectivity.evaluate(reservoirPressure, reservoirPressure);
+      result.formationWaterPvtMode = getEffectiveFormationWaterPvtMode();
+      result.formationWaterViscosity = evidence.getViscosityCp();
+      result.formationWaterVolumeFactor = evidence.getFormationVolumeFactor();
+      result.formationWaterPvtPressure = evidence.getReservoirPressureBara();
+      return evidence.getInjectivitySm3PerDayPerBar();
     }
 
-    // Radial flow equation (Darcy units)
+    // Preserve the established gas-injection screening equation.
+    double kSI = formationPermeability * 9.869e-16; // mD to m²
+    double viscosity = gasViscosity * 1e-3; // cP to Pa·s
+    double formationVolumeFactor = 1.01325 / reservoirPressure * reservoirTemperature / 288.15 * 0.9;
     double lnRatio = Math.log(drainageRadius / wellboreRadius);
     double denominator = viscosity * formationVolumeFactor * (lnRatio + skinFactor);
 
@@ -594,6 +616,71 @@ public class InjectionWellModel implements Serializable {
   }
 
   /**
+   * Sets formation-water viscosity for the multi-zone radial-Darcy screen.
+   *
+   * @param viscosity formation-water viscosity at reservoir conditions (cP)
+   * @return this for chaining
+   * @throws IllegalArgumentException if viscosity is not finite and positive
+   */
+  public InjectionWellModel setFormationWaterViscosity(double viscosity) {
+    if (!Double.isFinite(viscosity) || viscosity <= 0.0) {
+      throw new IllegalArgumentException("Formation-water viscosity must be finite and positive");
+    }
+    this.formationWaterViscosity = viscosity;
+    return this;
+  }
+
+  /**
+   * Sets formation-water volume factor for the multi-zone radial-Darcy screen.
+   *
+   * <p>
+   * The factor is reservoir volume divided by standard volume. The calculated reservoir-volume rate is divided by this
+   * value before it is reported in Sm3/day. The default value is 1.0 for backward compatibility.
+   * </p>
+   *
+   * @param formationVolumeFactor formation-water volume factor (reservoir m3/Sm3)
+   * @return this for chaining
+   * @throws IllegalArgumentException if the factor is not finite and positive
+   */
+  public InjectionWellModel setFormationWaterVolumeFactor(double formationVolumeFactor) {
+    if (!Double.isFinite(formationVolumeFactor) || formationVolumeFactor <= 0.0) {
+      throw new IllegalArgumentException("Formation-water volume factor must be finite and positive");
+    }
+    this.formationWaterVolumeFactor = formationVolumeFactor;
+    return this;
+  }
+
+  /**
+   * Selects the formation-water property basis used by the radial-Darcy screens.
+   *
+   * <p>
+   * The pure-water option is deliberately opt-in. It derives density from the existing IAPWS-IF97 implementation and
+   * viscosity from NeqSim's IAPWS-fitted water correlation. It is restricted to single-phase pure water within the
+   * documented fit range and is not a brine, relative-permeability, injectivity-calibration or fracture model.
+   * </p>
+   *
+   * @param mode property basis; must not be null
+   * @return this for chaining
+   * @throws IllegalArgumentException if mode is null
+   */
+  public InjectionWellModel setFormationWaterPvtMode(FormationWaterPvtMode mode) {
+    if (mode == null) {
+      throw new IllegalArgumentException("Formation-water PVT mode must not be null");
+    }
+    this.formationWaterPvtMode = mode;
+    return this;
+  }
+
+  /**
+   * Gets the effective formation-water property basis.
+   *
+   * @return configured basis, or the legacy constant basis for an older serialized model
+   */
+  public FormationWaterPvtMode getFormationWaterPvtMode() {
+    return getEffectiveFormationWaterPvtMode();
+  }
+
+  /**
    * Sets drainage radius.
    *
    * @param radius radius (m)
@@ -685,6 +772,18 @@ public class InjectionWellModel implements Serializable {
     /** Achievable rate with interference (Sm3/day). */
     public double achievableRateWithInterference;
 
+    /** Formation-water property basis applied to a water-injection calculation. */
+    public FormationWaterPvtMode formationWaterPvtMode;
+
+    /** Formation-water viscosity applied to the radial-Darcy calculation (cP). */
+    public double formationWaterViscosity;
+
+    /** Formation-water volume factor applied to the radial-Darcy calculation (reservoir m3/Sm3). */
+    public double formationWaterVolumeFactor;
+
+    /** Pressure at which the formation-water properties were evaluated (bara). */
+    public double formationWaterPvtPressure;
+
     /**
      * Gets achievable rate.
      *
@@ -728,6 +827,15 @@ public class InjectionWellModel implements Serializable {
      */
     public double getInjectivityIndex() {
       return injectivityIndex;
+    }
+
+    /**
+     * Gets the formation-water property basis.
+     *
+     * @return property basis, or null for a non-water injection calculation
+     */
+    public FormationWaterPvtMode getFormationWaterPvtMode() {
+      return formationWaterPvtMode;
     }
 
     @Override
@@ -806,12 +914,28 @@ public class InjectionWellModel implements Serializable {
     public List<InjectionZoneResult> zoneResults = new ArrayList<>();
     /** Total achievable rate across all zones (Sm3/day). */
     public double totalRate;
+    /** Requested total rate across all zones (Sm3/day). */
+    public double requestedRate;
     /** Injection efficiency: fraction entering target zone(s). */
     public double injectionEfficiency;
     /** Total out-of-zone rate (Sm3/day). */
     public double outOfZoneRate;
     /** Common BHP used for allocation (bara). */
     public double commonBHP;
+    /** Unconstrained BHP required to meet the requested rate (bara). */
+    public double requiredBHP;
+    /** Applied common-BHP pressure limit (bara). */
+    public double pressureLimit;
+    /** Whether the applied pressure limit prevents delivery of the requested rate. */
+    public boolean limitedByPressure;
+    /** Formation-water viscosity used by the multi-zone screen (cP). */
+    public double formationWaterViscosity;
+    /** Formation-water volume factor used by the multi-zone screen (reservoir m3/Sm3). */
+    public double formationWaterVolumeFactor;
+    /** Formation-water property basis used by the multi-zone screen. */
+    public FormationWaterPvtMode formationWaterPvtMode;
+    /** Pressure for the compatibility-level formation-water properties above (bara). */
+    public double formationWaterPvtPressure;
 
     /**
      * Gets the total injection rate.
@@ -820,6 +944,15 @@ public class InjectionWellModel implements Serializable {
      */
     public double getTotalRate() {
       return totalRate;
+    }
+
+    /**
+     * Gets the requested total injection rate.
+     *
+     * @return requested rate (Sm3/day)
+     */
+    public double getRequestedRate() {
+      return requestedRate;
     }
 
     /**
@@ -840,12 +973,54 @@ public class InjectionWellModel implements Serializable {
       return outOfZoneRate;
     }
 
+    /**
+     * Gets the unconstrained BHP required to meet the requested rate.
+     *
+     * @return required BHP (bara)
+     */
+    public double getRequiredBHP() {
+      return requiredBHP;
+    }
+
+    /**
+     * Gets the applied common-BHP pressure limit.
+     *
+     * @return pressure limit (bara)
+     */
+    public double getPressureLimit() {
+      return pressureLimit;
+    }
+
+    /**
+     * Reports whether the pressure limit prevents delivery of the requested rate.
+     *
+     * @return true when the unconstrained required BHP exceeds the pressure limit
+     */
+    public boolean isLimitedByPressure() {
+      return limitedByPressure;
+    }
+
+    /**
+     * Gets the formation-water property basis.
+     *
+     * @return property basis
+     */
+    public FormationWaterPvtMode getFormationWaterPvtMode() {
+      return formationWaterPvtMode;
+    }
+
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append("Multi-Zone Injection Result\n");
       sb.append("==========================\n");
+      sb.append(String.format("Requested rate: %.0f Sm3/day%n", requestedRate));
+      sb.append(String.format("Required BHP: %.1f bara%n", requiredBHP));
       sb.append(String.format("Common BHP: %.1f bara%n", commonBHP));
+      sb.append(String.format("Pressure limit: %.1f bara%n", pressureLimit));
+      sb.append(String.format("Limited by pressure: %s%n", limitedByPressure));
+      sb.append(String.format("Formation water (%s at %.1f bara): %.3f cP, B=%.5f reservoir m3/Sm3%n",
+          formationWaterPvtMode, formationWaterPvtPressure, formationWaterViscosity, formationWaterVolumeFactor));
       sb.append(String.format("Total rate: %.0f Sm3/day%n", totalRate));
       sb.append(String.format("Injection efficiency: %.1f%%%n", injectionEfficiency * 100));
       sb.append(String.format("Out-of-zone rate: %.0f Sm3/day%n", outOfZoneRate));
@@ -878,6 +1053,12 @@ public class InjectionWellModel implements Serializable {
     public boolean isTargetZone;
     /** Hall slope for this zone (bar day/Sm3). */
     public double hallSlope;
+    /** Formation-water viscosity evaluated for this zone (cP). */
+    public double formationWaterViscosity;
+    /** Formation-water volume factor evaluated for this zone (reservoir m3/Sm3). */
+    public double formationWaterVolumeFactor;
+    /** Pressure at which this zone's formation-water properties were evaluated (bara). */
+    public double formationWaterPvtPressure;
   }
 
   /**
@@ -902,38 +1083,59 @@ public class InjectionWellModel implements Serializable {
    * Calculate multi-zone injection allocation at a given total target rate.
    *
    * <p>
-   * The BHP is determined from the total target rate and the combined injectivity of all zones. Each zone then receives
-   * flow proportional to its individual injectivity and pressure differential.
+   * The BHP is determined from the total target rate and the combined injectivity of the zones whose reservoir pressure
+   * is below the solved common BHP. Zones at or above that pressure remain shut in and are removed from the active set
+   * before the pressure is recomputed. Each accepting zone then receives flow proportional to its individual
+   * injectivity and positive pressure differential.
    * </p>
    *
    * @param totalTargetRate total target injection rate (Sm3/day)
    * @return multi-zone injection result with per-zone breakdown
+   * @throws IllegalArgumentException if the target rate or mutable zone inputs are invalid
+   * @throws IllegalStateException if no configured zone has positive injectivity
    */
   public MultiZoneInjectionResult calculateMultiZone(double totalTargetRate) {
+    if (!Double.isFinite(totalTargetRate) || totalTargetRate < 0.0) {
+      throw new IllegalArgumentException("Total target rate must be finite and non-negative");
+    }
+
     MultiZoneInjectionResult result = new MultiZoneInjectionResult();
+    result.requestedRate = totalTargetRate;
+    result.formationWaterPvtMode = getEffectiveFormationWaterPvtMode();
+    result.formationWaterViscosity = formationWaterViscosity;
+    result.formationWaterVolumeFactor = getEffectiveFormationWaterVolumeFactor();
+    result.formationWaterPvtPressure = Double.NaN;
 
     if (zones.isEmpty()) {
       return result;
     }
 
     // Calculate injectivity index for each zone
-    double totalII = 0.0;
     List<Double> zoneIIs = new ArrayList<>();
+    List<Result> zoneProperties = new ArrayList<>();
     for (InjectionZone zone : zones) {
-      double ii = calculateZoneInjectivityIndex(zone);
+      RadialDarcyWaterInjectivity injectivity = createRadialDarcyWaterInjectivity(zone.permeability, zone.thickness,
+          zone.skinFactor, formationWaterViscosity, getEffectiveFormationWaterVolumeFactor());
+      Result properties = injectivity.evaluate(zone.reservoirPressure, zone.reservoirPressure);
+      double ii = properties.getInjectivitySm3PerDayPerBar();
+      if (!Double.isFinite(ii) || ii < 0.0) {
+        throw new IllegalArgumentException("Zone '" + zone.name + "' has an invalid injectivity index");
+      }
+      if (!Double.isFinite(zone.reservoirPressure)) {
+        throw new IllegalArgumentException("Zone '" + zone.name + "' has a non-finite reservoir pressure");
+      }
       zoneIIs.add(ii);
-      totalII += ii;
+      zoneProperties.add(properties);
+    }
+    if (!zoneProperties.isEmpty()) {
+      Result first = zoneProperties.get(0);
+      result.formationWaterViscosity = first.getViscosityCp();
+      result.formationWaterVolumeFactor = first.getFormationVolumeFactor();
+      result.formationWaterPvtPressure = first.getReservoirPressureBara();
     }
 
-    // Combined: totalRate = totalII × (BHP - avgPres)
-    // Find required BHP for target rate
-    double avgWeightedPres = 0.0;
-    for (int i = 0; i < zones.size(); i++) {
-      avgWeightedPres += zoneIIs.get(i) * zones.get(i).reservoirPressure;
-    }
-    avgWeightedPres /= totalII;
-
-    double requiredBHP = avgWeightedPres + totalTargetRate / totalII;
+    double requiredBHP = calculateRequiredMultiZoneBHP(totalTargetRate, zoneIIs);
+    result.requiredBHP = requiredBHP;
 
     // Limit BHP to minimum fracture pressure across zones
     double minFracPressure = Double.MAX_VALUE;
@@ -942,7 +1144,10 @@ public class InjectionWellModel implements Serializable {
         minFracPressure = zone.fracturePressure;
       }
     }
-    double effectiveBHP = Math.min(requiredBHP, Math.min(maxBHP, minFracPressure));
+    double pressureLimit = Math.min(maxBHP, minFracPressure);
+    double effectiveBHP = Math.min(requiredBHP, pressureLimit);
+    result.pressureLimit = pressureLimit;
+    result.limitedByPressure = totalTargetRate > 0.0 && requiredBHP > pressureLimit;
     result.commonBHP = effectiveBHP;
 
     // Calculate per-zone rates at the effective BHP
@@ -965,6 +1170,9 @@ public class InjectionWellModel implements Serializable {
       zr.isTargetZone = zone.isTargetZone;
       zr.fractureRisk = effectiveBHP > zone.fracturePressure && zone.fracturePressure > 0;
       zr.hallSlope = ii > 0 ? 1.0 / ii : 0.0;
+      zr.formationWaterViscosity = zoneProperties.get(i).getViscosityCp();
+      zr.formationWaterVolumeFactor = zoneProperties.get(i).getFormationVolumeFactor();
+      zr.formationWaterPvtPressure = zoneProperties.get(i).getReservoirPressureBara();
 
       result.zoneResults.add(zr);
       totalRate += zoneRate;
@@ -988,22 +1196,109 @@ public class InjectionWellModel implements Serializable {
   }
 
   /**
-   * Calculate injectivity index for a specific zone using Darcy radial flow.
+   * Solves the piecewise-linear common BHP for the requested multi-zone rate.
    *
-   * @param zone the injection zone
-   * @return injectivity index (Sm3/day/bar)
+   * <p>
+   * The accepting-zone set is reduced until every retained zone has reservoir pressure below the solved BHP. This
+   * enforces {@code q_i = II_i * max(BHP - P_i, 0)} without counting a shut-in zone in the combined pressure equation.
+   * </p>
+   *
+   * @param totalTargetRate requested total rate (Sm3/day)
+   * @param zoneIIs per-zone injectivity indices (Sm3/day/bar)
+   * @return unconstrained common BHP (bara)
+   * @throws IllegalStateException if no zone has positive injectivity
    */
-  private double calculateZoneInjectivityIndex(InjectionZone zone) {
-    double kSI = zone.permeability * 9.869e-16; // mD to m²
-    double viscosity = formationWaterViscosity * 1e-3; // cP to Pa·s
-    double lnRatio = Math.log(drainageRadius / wellboreRadius);
+  private double calculateRequiredMultiZoneBHP(double totalTargetRate, List<Double> zoneIIs) {
+    boolean[] activeZones = new boolean[zones.size()];
+    int activeCount = 0;
+    double minimumReservoirPressure = Double.POSITIVE_INFINITY;
 
-    // II = 2π k h / (μ × (ln(re/rw) + S)) in SI (m³/s/Pa)
-    double iiSI = 2.0 * Math.PI * kSI * zone.thickness / (viscosity * (lnRatio + zone.skinFactor));
+    for (int i = 0; i < zones.size(); i++) {
+      if (zoneIIs.get(i) > 0.0) {
+        activeZones[i] = true;
+        activeCount++;
+        minimumReservoirPressure = Math.min(minimumReservoirPressure, zones.get(i).reservoirPressure);
+      }
+    }
+    if (activeCount == 0) {
+      throw new IllegalStateException("At least one injection zone must have positive injectivity");
+    }
+    if (totalTargetRate == 0.0) {
+      return minimumReservoirPressure;
+    }
 
-    // Convert to Sm3/day/bar
-    // 1 m³/s/Pa = 86400 / 1e5 = 0.864 Sm3/day/bar
-    return iiSI * 86400.0 / 1e5;
+    while (true) {
+      double activeII = 0.0;
+      double pressureWeightedII = 0.0;
+      for (int i = 0; i < zones.size(); i++) {
+        if (activeZones[i]) {
+          activeII += zoneIIs.get(i);
+          pressureWeightedII += zoneIIs.get(i) * zones.get(i).reservoirPressure;
+        }
+      }
+
+      double requiredBHP = (totalTargetRate + pressureWeightedII) / activeII;
+      boolean removedZone = false;
+      for (int i = 0; i < zones.size(); i++) {
+        if (activeZones[i] && requiredBHP <= zones.get(i).reservoirPressure) {
+          activeZones[i] = false;
+          activeCount--;
+          removedZone = true;
+        }
+      }
+      if (!removedZone) {
+        return requiredBHP;
+      }
+      if (activeCount == 0) {
+        throw new IllegalStateException("No injection zone accepts the requested rate");
+      }
+    }
+  }
+
+  /**
+   * Creates the shared radial-Darcy law without duplicating its PVT or unit conversion.
+   *
+   * @param permeabilityMd formation permeability (mD)
+   * @param thicknessM completed thickness (m)
+   * @param zoneSkinFactor dimensionless zone skin factor
+   * @param configuredViscosityCp configured viscosity (cP)
+   * @param configuredVolumeFactor configured reservoir m3/Sm3
+   * @return immutable radial-Darcy water law
+   */
+  private RadialDarcyWaterInjectivity createRadialDarcyWaterInjectivity(double permeabilityMd, double thicknessM,
+      double zoneSkinFactor, double configuredViscosityCp, double configuredVolumeFactor) {
+    if (getEffectiveFormationWaterPvtMode() == FormationWaterPvtMode.IAPWS_IF97_PURE_WATER) {
+      return RadialDarcyWaterInjectivity.iapwsPureWater(permeabilityMd, thicknessM, zoneSkinFactor, drainageRadius,
+          wellboreRadius, reservoirTemperature);
+    }
+    return RadialDarcyWaterInjectivity.configured(permeabilityMd, thicknessM, zoneSkinFactor, drainageRadius,
+        wellboreRadius, configuredViscosityCp, configuredVolumeFactor);
+  }
+
+  /**
+   * Gets the serialization-compatible property basis.
+   *
+   * @return configured basis, or the legacy constant basis when absent from an older stream
+   */
+  private FormationWaterPvtMode getEffectiveFormationWaterPvtMode() {
+    return formationWaterPvtMode == null ? FormationWaterPvtMode.CONFIGURED_CONSTANT : formationWaterPvtMode;
+  }
+
+  /**
+   * Gets the effective multi-zone formation-water volume factor.
+   *
+   * <p>
+   * Java serialization initializes fields absent from an older stream to zero. Treating that value as the legacy
+   * default preserves compatibility when a previously serialized model is rebuilt with zones.
+   * </p>
+   *
+   * @return finite positive volume factor, or the legacy default of 1.0
+   */
+  private double getEffectiveFormationWaterVolumeFactor() {
+    if (!Double.isFinite(formationWaterVolumeFactor) || formationWaterVolumeFactor <= 0.0) {
+      return 1.0;
+    }
+    return formationWaterVolumeFactor;
   }
 
   /**

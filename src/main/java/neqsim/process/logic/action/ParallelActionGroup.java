@@ -1,5 +1,17 @@
 package neqsim.process.logic.action;
 
+import java.io.ObjectOutputStream;
+
+import java.io.ObjectInputStream;
+
+import java.io.IOException;
+
+import neqsim.process.equipment.ProcessEquipmentInterface;
+
+import java.util.Collections;
+
+import java.io.Serializable;
+
 import java.util.ArrayList;
 import java.util.List;
 import neqsim.process.logic.LogicAction;
@@ -42,9 +54,10 @@ import neqsim.process.logic.LogicAction;
  * @author ESOL
  * @version 1.0
  */
-public class ParallelActionGroup implements LogicAction {
+public class ParallelActionGroup implements LogicAction, Serializable {
+  private static final long serialVersionUID = 1L;
   private final String description;
-  private final List<LogicAction> actions = new ArrayList<>();
+  private transient List<LogicAction> actions = new ArrayList<>();
   private boolean executed = false;
 
   /**
@@ -63,6 +76,48 @@ public class ParallelActionGroup implements LogicAction {
    */
   public void addAction(LogicAction action) {
     actions.add(action);
+  }
+
+  /**
+   * Re-arms execution bookkeeping without changing the target equipment.
+   */
+  @Override
+  public void reset() {
+    executed = false;
+    for (LogicAction action : actions) {
+      action.reset();
+    }
+  }
+
+  /**
+   * Returns actual references for every configured target, without issuing equipment commands.
+   *
+   * @return configured physical targets
+   */
+  @Override
+  public List<ProcessEquipmentInterface> getTargetEquipment() {
+    List<ProcessEquipmentInterface> targets = new ArrayList<ProcessEquipmentInterface>();
+    for (LogicAction action : actions) {
+      if (action != null) {
+        targets.addAll(action.getTargetEquipment());
+      }
+    }
+    return Collections.unmodifiableList(targets);
+  }
+
+  /**
+   * Reports whether all configured physical target identities are available.
+   *
+   * @return true when no target is opaque or missing
+   */
+  @Override
+  public boolean isTargetEquipmentIdentityComplete() {
+    for (LogicAction action : actions) {
+      if (action == null || !action.isTargetEquipmentIdentityComplete()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -155,5 +210,38 @@ public class ParallelActionGroup implements LogicAction {
   public String toString() {
     return String.format("%s - %d/%d complete (%.0f%%)", description, getCompletedCount(), getTotalCount(),
         getCompletionPercentage());
+  }
+
+  /**
+   * Writes the child graph explicitly, preserving shared equipment and action references.
+   *
+   * @param output destination stream
+   * @throws IOException if a child or captured payload is not serializable
+   */
+  private void writeObject(ObjectOutputStream output) throws IOException {
+    output.defaultWriteObject();
+    output.writeObject(actions);
+  }
+
+  /**
+   * Restores the child graph without executing any action.
+   *
+   * @param input source stream
+   * @throws IOException if the child list is absent or contains invalid actions
+   * @throws ClassNotFoundException if a child class is unavailable
+   */
+  @SuppressWarnings("unchecked")
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    Object restored = input.readObject();
+    if (!(restored instanceof List<?>)) {
+      throw new IOException("Parallel action definitions are missing");
+    }
+    for (Object child : (List<?>) restored) {
+      if (!(child instanceof LogicAction)) {
+        throw new IOException("Parallel action payload is missing or invalid");
+      }
+    }
+    actions = (List<LogicAction>) restored;
   }
 }

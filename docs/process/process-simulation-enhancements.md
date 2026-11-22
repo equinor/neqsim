@@ -179,9 +179,13 @@ counter-current segment calculations with bidirectional mass transfer.
 
 ### Packing Data Available
 
-Packing data comes from `PackingSpecificationLibrary`, which combines built-in entries with
-`designdata/Packing.csv`. Names are resolved with forgiving aliases such as `pall ring 50`,
-`Mellapak250Y`, and `IMTP 70`.
+Packing data comes from `PackingSpecificationLibrary`. Built-in estimates remain authoritative
+for existing aliases; `designdata/Packing.csv` adds material-qualified entries without replacing
+them. Names are resolved with forgiving aliases such as `pall ring 50`, `Mellapak250Y`, and
+`IMTP 70`. For example, `Pall-Ring-50-metal` and `Pall-Ring-50-plastic` select distinct materials.
+Placeholder CSV rows are excluded, and explicit equipment selection rejects unknown names.
+See [packing data and migration guidance](equipment/absorbers.md#packing-data) for defaults,
+provenance, excluded rows and the separate legacy flow-geometry table.
 
 | Random | Structured |
 |--------|------------|
@@ -256,7 +260,9 @@ The default heat-transfer path is `HeatTransferModel.CHILTON_COLBURN_ANALOGY`. I
 
 The robust default segment solver is `SegmentSolver.SEQUENTIAL_EXPLICIT`. Advanced users can enable `SegmentSolver.SIMULTANEOUS_RESIDUAL` to solve the component transfer rates and interface temperature in one damped residual system. That mode evaluates Maxwell-Stefan flux residuals, computes interface equilibrium and component molar enthalpies at the trial interface temperature, applies PH-flash enthalpy targets after the material transfer, and records residual diagnostics in each `SegmentResult`. Trial interface flashes and PH flashes are guarded with bounded fallback states so thermodynamic failures do not abort the counter-current column profile.
 
-The robust default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. Advanced users can enable `ColumnSolver.EQUATION_ORIENTED` to start from the fixed-point profile and solve the packed section as one column-wide residual problem. The unknowns are all segment component fluxes, gas outlet temperatures, liquid outlet temperatures, and interface temperatures. Gas and liquid compositions and molar flows are reconstructed from the full-column material balances during each residual evaluation. The residual vector includes Maxwell-Stefan flux equations, interfacial heat balance, gas and liquid enthalpy target errors, and component-balance diagnostics. A sparse row/column Jacobian is assembled by finite differences and solved with damped least-squares Newton steps across homotopy continuation factors. JSON output includes `columnSolver`, `columnResidualNorm`, `columnResidualIterations`, component-balance residuals, and column energy-balance diagnostics.
+The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
+The robust default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. Advanced users can enable `ColumnSolver.EQUATION_ORIENTED` to start from the fixed-point profile and solve the packed section as one column-wide residual problem. The unknowns are all segment component fluxes, gas outlet temperatures, liquid outlet temperatures, and interface temperatures. Gas and liquid compositions and molar flows are reconstructed from the full-column material balances during each residual evaluation. The residual vector includes Maxwell-Stefan flux equations, interfacial heat balance, gas and liquid enthalpy target errors, and component-balance diagnostics. A sparse row/column Jacobian is assembled by finite differences and solved with damped least-squares Newton steps across homotopy continuation factors. JSON output includes `columnSolver`, `columnResidualNorm`, `columnResidualIterations`, component-balance residuals, and column energy-balance diagnostics. The experimental solver rejects non-finite or over-tolerance final residuals with `IllegalStateException`, clears the solved flag, and leaves outlets unchanged. Previous outlets are stale after this failure. The CO2/water and TEG cases remain numerically unqualified; see issues #4093 and #4094.
 
 For TEG dehydration, the recommended setup is a CPA glycol/water system, water-only transfer via `setTransferComponents("water")`, and structured packing such as `Mellapak-250Y` for compact contactors. In addition to outlet water content, check the circulation efficiency:
 
@@ -417,6 +423,15 @@ column.calcColumnInternals();          // uses default "sieve"
 
 Fenske-Underwood-Gilliland (FUG) shortcut method for conceptual column design.
 
+The reflux multiplier must be finite and greater than one. Invalid multipliers now throw
+`IllegalArgumentException` instead of continuing after a warning. `run()` also rejects a
+calculated reflux at or below minimum, a Gilliland result rounded to its infinite-stage limit,
+and a stage count above the supported integer tray range. Such a run throws
+`IllegalStateException` and leaves `isSolved()` false. Increase reflux above minimum before
+retrying; no fallback stage count or feed tray is published. Ordinary finite designs retain the
+same FUG correlations and results. These checks validate the shortcut's numerical domain;
+they do not establish rigorous-column convergence or hydraulic feasibility.
+
 ### Results Provided
 
 - Minimum stages (Fenske equation)
@@ -425,11 +440,25 @@ Fenske-Underwood-Gilliland (FUG) shortcut method for conceptual column design.
 - Feed tray location (Kirkbride equation)
 - Condenser and reboiler duties
 
+The Kirkbride correlation uses **product mole fractions**, not recovery fractions:
+
+$$r=\frac{N_R}{N_S}=\left[\frac{z_{HK}}{z_{LK}}\left(\frac{x_{LK,B}}{x_{HK,D}}\right)^2\frac{B}{D}\right]^{0.206}$$
+
+Here $B/D$ is the bottoms-to-distillate molar flow ratio, $z$ denotes feed mole fractions,
+and $x$ denotes normalized product mole fractions. The light-key and heavy-key recoveries
+are converted to product compositions using the calculated product flows. The shortcut
+partitions its Gilliland stage count as $N_R=N r/(1+r)$ and reports
+`getFeedTrayNumber()` as `round(N_R) + 1`, one-based from the top. This conceptual
+estimate does not replace rigorous tray calculations. See equation (24) in
+[Optimum Feed Plate Location for Multi-Component Distillation Separation](https://openresearch.okstate.edu/server/api/core/bitstreams/407cd62a-cdff-43e9-beb3-6d13b8f547ac/content).
+
 ### Java Example
 
 ```java
 import neqsim.process.equipment.distillation.ShortcutDistillationColumn;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 // Feed: light hydrocarbons
 SystemInterface feed = new SystemSrkEos(273.15 + 60.0, 15.0);
@@ -448,17 +477,17 @@ ShortcutDistillationColumn shortcut =
     new ShortcutDistillationColumn("Deethanizer", feedStream);
 shortcut.setLightKey("ethane");
 shortcut.setHeavyKey("propane");
-shortcut.setLightKeyRecoveryInDistillate(0.99);
-shortcut.setHeavyKeyRecoveryInBottoms(0.99);
-shortcut.setRefluxRatio(1.5);
+shortcut.setLightKeyRecoveryDistillate(0.99);
+shortcut.setHeavyKeyRecoveryBottoms(0.99);
+shortcut.setRefluxRatioMultiplier(1.5);
 shortcut.run();
 
-System.out.println("Min stages:    " + shortcut.getMinimumStages());
-System.out.println("Min reflux:    " + shortcut.getMinimumRefluxRatio());
-System.out.println("Actual stages: " + shortcut.getActualStages());
-System.out.println("Feed tray:     " + shortcut.getFeedTray());
-System.out.println("Cond. duty:    " + shortcut.getCondenserDuty("kW") + " kW");
-System.out.println("Reb. duty:     " + shortcut.getReboilerDuty("kW") + " kW");
+double minimumStages = shortcut.getMinimumNumberOfStages();
+double minimumReflux = shortcut.getMinimumRefluxRatio();
+double actualStages = shortcut.getActualNumberOfStages();
+int feedTrayFromTop = shortcut.getFeedTrayNumber();
+double condenserDutyKW = shortcut.getCondenserDuty() / 1000.0;
+double reboilerDutyKW = shortcut.getReboilerDuty() / 1000.0;
 ```
 
 ---

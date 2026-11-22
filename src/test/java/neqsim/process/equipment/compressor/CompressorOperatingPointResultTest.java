@@ -56,7 +56,7 @@ public class CompressorOperatingPointResultTest {
   public void testChartlessResultIsPhysicalAndFeasible() {
     CompressorOperatingPointResult result = compressor.getOperatingPointResult();
 
-    assertEquals("1.0", result.getSchemaVersion());
+    assertEquals("1.1", result.getSchemaVersion());
     assertEquals("export compressor", result.getCompressorName());
     assertTrue(result.getFlowM3PerHour() > 0.0);
     assertTrue(result.getPolytropicHeadKJPerKg() > 0.0);
@@ -92,7 +92,8 @@ public class CompressorOperatingPointResultTest {
   public void testCapacityBottleneckIsPropagated() {
     CapacityConstraint customLimit = new CapacityConstraint("vendorPowerLimit", "kW",
         CapacityConstraint.ConstraintType.HARD).setDesignValue(1000.0).setMaxValue(1000.0).setCurrentValue(1200.0)
-        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD);
+        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+        .setOperatingLimit(900.0, CapacityConstraint.ConstraintSource.USER_RULE, "temporary driver restriction");
     compressor.addCapacityConstraint(customLimit);
 
     CompressorOperatingPointResult result = compressor.getOperatingPointResult();
@@ -100,15 +101,19 @@ public class CompressorOperatingPointResultTest {
     assertTrue(result.isCapacityExceeded());
     assertTrue(result.isHardLimitExceeded());
     assertEquals("vendorPowerLimit", result.getLimitingConstraint());
-    assertEquals(1.2, result.getMaximumCapacityUtilization(), 1.0e-12);
+    assertEquals(1200.0 / 900.0, result.getMaximumCapacityUtilization(), 1.0e-12);
     assertEquals(CompressorOperatingPointResult.OperatingStatus.CAPACITY_LIMIT, result.getOperatingStatus());
     CompressorOperatingPointResult.ConstraintSnapshot snapshot = result.getConstraints().stream()
         .filter(value -> value.getName().equals("vendorPowerLimit")).findFirst().orElse(null);
     assertNotNull(snapshot);
     assertTrue(snapshot.isEnabled());
     assertTrue(snapshot.isViolated());
-    assertEquals(1.2, snapshot.getUtilization(), 1.0e-12);
-    assertEquals(-0.2, snapshot.getMargin(), 1.0e-12);
+    assertEquals(1200.0 / 900.0, snapshot.getUtilization(), 1.0e-12);
+    assertEquals(1.0 - 1200.0 / 900.0, snapshot.getMargin(), 1.0e-12);
+    assertEquals(1000.0, snapshot.getDesignValue(), 0.0);
+    assertEquals(900.0, snapshot.getApplicableLimit(), 0.0);
+    assertEquals(CapacityConstraint.ApplicableLimitRole.CONFIGURED_OPERATING, snapshot.getApplicableLimitRole());
+    assertEquals("temporary driver restriction", snapshot.getApplicableLimitSourceReference());
   }
 
   /** Verifies map margins, recycle screening, JSON, and corrected minimum constraints. */
@@ -235,8 +240,8 @@ public class CompressorOperatingPointResultTest {
     assertNotNull(limitingConstraint);
     assertEquals(0.0, recycleLossKW, 0.0);
     assertEquals(0.02, result.getPressureToleranceFraction(), 0.0);
-    assertEquals("1.0", result.getSchemaVersion());
-    assertTrue(resultJson.contains("\"schemaVersion\":\"1.0\""));
+    assertEquals("1.1", result.getSchemaVersion());
+    assertTrue(resultJson.contains("\"schemaVersion\":\"1.1\""));
     assertThrows(UnsupportedOperationException.class, constraints::clear);
     assertThrows(IllegalArgumentException.class, () -> compressor.getOperatingPointResult(-0.01));
   }

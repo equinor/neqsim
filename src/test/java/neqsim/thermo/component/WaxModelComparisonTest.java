@@ -33,14 +33,8 @@ public class WaxModelComparisonTest {
     system.getWaxModel().addTBPWax();
     system.createDatabase(true);
     system.setMixingRule(2);
+    system.setWaxModelType(waxModelName);
     system.addSolidComplexPhase("wax");
-
-    // Set the wax component model on the wax phase
-    for (int k = 0; k < system.getNumberOfPhases(); k++) {
-      if (system.getPhase(k) instanceof PhaseWax) {
-        ((PhaseWax) system.getPhase(k)).setWaxComponentModel(waxModelName);
-      }
-    }
 
     system.setMultiphaseWaxCheck(true);
     system.setMultiPhaseCheck(true);

@@ -14,7 +14,8 @@ NeqSim covers thermochemical and electrochemical hydrogen production routes nati
 This page documents the hydrogen-production route models, PSA cascade and PSA
 CAPEX additions, electrolysis stack models, and foundation utilities for
 cryogenic H₂ spin-isomer corrections and catalyst life screening. Companion
-guides: [CO₂ injection well analysis](co2_injection_well_analysis.md) and
+guides: [solid hydride hydrogen storage screening](hydride_storage_screening.md),
+[CO₂ injection well analysis](co2_injection_well_analysis.md) and
 [reaction engineering](../chemicalreactions/index.md) reformer kinetics.
 
 ## Applicable standards
@@ -309,6 +310,16 @@ double Vcell   = el.getCellVoltage();   // recomputed from I-V at run time
 
 Sources: IRENA 2022 Hydrogen Decarbonisation Pathways; Buttler & Spliethoff,
 RSER 82 (2018); IEA Global Hydrogen Review 2023.
+
+The SEC column gives illustrative technology ranges, not verified predictions
+from the listed current-efficiency defaults. Their physical provenance and
+consistency are tracked separately in [#4682](https://github.com/equinor/neqsim/issues/4682).
+For any explicitly supplied current efficiency, both native operating modes
+now enforce the [stoichiometric water and Faraday-law contract](equipment/electrolyzers.md#operating-modes).
+Water-feed mode consumes all pure water supplied; power mode writes actual
+water demand to its dedicated inlet. Lower current efficiency increases
+electrical demand for the same hydrogen output. The heat getter includes
+unproductive-current losses on its documented fixed-HHV screening basis.
 
 ### I-V model
 

@@ -1,6 +1,6 @@
 ---
 name: neqsim-subsea-and-wells
-description: "Subsea production systems, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F101 corroded-pipeline screening, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical seabed stability or inspected metal loss, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
+description: "Subsea systems, DNV-RP-F109 on-bottom stability, DNV-RP-F105 free span, DNV-RP-F101 corroded pipe, well design, SURF cost and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical stability or metal loss, sizing flowlines and umbilicals, estimating well cost, casing design, comparing tiebacks, or configuring trees, manifolds, boosters and risers."
 last_verified: "2026-08-02"
 ---
 
@@ -9,7 +9,23 @@ last_verified: "2026-08-02"
 Reference for subsea production system design, well mechanical design, SURF cost
 estimation, and tieback analysis using NeqSim.
 
+For platform-drilled extended-reach wells (reach, torque and drag, slot and riser census) see the
+community skill `neqsim-erd-reach-screening`; NeqSim has no torque-and-drag class yet (NIP-1).
+For 3D well paths, position uncertainty and ISCWSA separation-factor anti-collision against offset
+wells (slot occupancy, sidetrack parent exit, target pull-back) see the community skill
+`neqsim-well-trajectory-anticollision`; NeqSim has no wellbore-positioning class.
+
 ---
+
+## General well/SURF network integration
+
+Load `neqsim-pipeline-and-terminal-networks` for arbitrary gathering/injection
+pressure-flow topology and mixed pipe fidelity. See
+`docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md` for the current source audit.
+Keep mechanical/design equipment as geometry and cost owners; use the existing
+LoopedPipeNetwork for detailed steady hydraulics and TwoFluidPipeNetwork for its
+bounded storage-node transient scope. Architecture builders and PLEM/template
+labels alone do not establish pressure-flow or conservation qualification.
 
 ## Subsea Development Architecture
 
@@ -33,7 +49,7 @@ Reservoir → Wells → Subsea Trees → Jumpers → Manifold → Flowlines → 
 | Flowline | `SimpleFlowLine` | `process.equipment.subsea` |
 | Flexible riser | `FlexiblePipe` | `process.equipment.subsea` |
 | Steel/rigid riser | `SimpleFlowLine` | `process.equipment.subsea` |
-| Umbilical | `Umbilical` | `process.equipment.subsea` |
+| Umbilical | `Umbilical` (design and drawings: skill `neqsim-umbilical-design`) | `process.equipment.subsea` |
 | PLET | `PLET` | `process.equipment.subsea` |
 | PLEM | `PLEM` | `process.equipment.subsea` |
 | Floating production | `FloatingSubstructure` | `process.equipment.subsea` |
@@ -185,13 +201,21 @@ the result against `getCostBreakdown()` / `getLineItems()`, where the reported
 
 ### Regional Cost Factors
 
+`SubseaCostEstimator` applies these factors once to all reported monetary costs
+and BOM rates relative to GOM. Region changes revalue an existing estimate and
+preserve quantities, vessel days and manhours; repeated setters do not compound.
+The default constructor selects NORWAY. The factors and baseline labor/vessel
+rates are Java screening assumptions; `SubseaLaborRates.csv` and
+`SubseaVesselRates.csv` are reference tables, not consumed data sources.
+
+
 | Region | Factor | Basis |
 |--------|--------|-------|
-| Norway (NCS) | 1.0 | Reference |
-| UK (UKCS) | 0.85-0.95 | Lower labor cost |
-| Gulf of Mexico | 0.80-0.90 | Established supply chain |
-| Brazil (pre-salt) | 1.10-1.30 | Deep water, local content |
-| West Africa | 1.05-1.20 | Logistics premium |
+| Norway (NCS) | 1.35 | Uniform screening cost factor |
+| UK (UKCS) | 1.25 | Uniform screening cost factor |
+| Gulf of Mexico | 1.00 | Reference |
+| Brazil (pre-salt) | 0.85 | Uniform screening cost factor |
+| West Africa | 1.10 | Uniform screening cost factor |
 
 ---
 
@@ -298,6 +322,85 @@ CAPEX.
 
 ## Flowline and Pipeline Sizing
 
+### Size selection (API RP 14E)
+
+Do not hand-roll the erosional sweep. `FlowlineSizeSelector` returns the smallest
+standard size that passes, with every candidate and its utilisation:
+
+```java
+FlowlineSizeSelector selector = new FlowlineSizeSelector()
+    .setBasisFromFluid(fluidAtArrivalConditions, 16.13)   // kg/s
+    .setWallThickness(0.0159);
+Map<String, Object> selected = selector.select();   // null when nothing passes
+```
+
+**Evaluate at the least-dense condition — normally the arrival, not the inlet.**
+The erosional velocity is $v_e = 1.22c/\sqrt{\rho}$, so the lowest density gives
+the lowest limit and the highest velocity. Sizing on inlet density under-sizes
+the line.
+
+### Use the two-fluid model for a wellstream
+
+`PipeBeggsAndBrills` is a correlation fitted on small-diameter air-water
+laboratory loops at liquid fractions around 1-2% and above. A wet-gas tie-back
+runs well below that, where the two-phase friction multiplier is extrapolated
+and over-predicts pressure drop substantially. **Prefer `TwoFluidPipe` for
+wellstream and wet-gas lines**, and always assert both convergence conditions:
+
+```java
+pipe.run();
+if (!pipe.isSteadyStateConverged() || pipe.getSteadyStateIterationsUsed() <= 1) {
+  // A single-iteration exit means the pressure profile was frozen on the inlet
+  // densities and never picked up the flash. Reject the result.
+}
+```
+
+`MultiphaseFlowIntegrator` defaults to `HydraulicModel.TWO_FLUID`; switch to
+`BEGGS_BRILL` only for a fast check on a liquid-dominated line.
+
+### Route geometry from a survey
+
+`RouteProfile` converts survey data once and feeds either model. Depths are
+positive downwards as surveyed, elevations negative downwards as the models
+expect:
+
+```java
+RouteProfile route = RouteProfile.fromDepths(kpMetres, depthMetres)
+    .withRiser(216.0, 25.0)
+    .resample(60);
+route.applyTo(twoFluidPipe);            // sets sections, lengths, elevations
+route.getLowPointKp();                  // terrain-slug traps
+```
+
+`getElevationProfile()` has one more entry than `getSectionLengths()` — that
+off-by-one is what `TwoFluidPipe.setElevationProfile` requires.
+
+### Solving for the required inlet pressure
+
+The host imposes an arrival pressure; the question is what inlet the reservoir
+must supply. Both pipe models march forward from a fixed inlet, so use the
+solver rather than bisecting by hand:
+
+```java
+pipe.setCalculationMode(PipeBeggsAndBrills.CalculationMode.CALCULATE_INLET_PRESSURE);
+pipe.setOutletPressure(70.0, "bara");
+pipe.run();
+double requiredInlet = pipe.getSolvedInletPressure();
+```
+
+### Shut-in wellhead pressure sets the design pressure
+
+Start the containment design here, not at the flowing pressure:
+
+```java
+double shutIn = well.calculateShutInWellheadPressure(reservoirFluid, 40.0, 60);
+```
+
+The static column is re-flashed at each step so density follows pressure and
+temperature; a single-density estimate over-predicts the drop badly for gas. The
+result decides whether the line is rated for full shut-in or protected by HIPPS
+— and that choice feeds straight into the cooldown design below.
+
 ### Steady-State Pipe Flow
 
 ```java
@@ -390,6 +493,52 @@ result, including a pass, as `CALCULATED_REVIEW_REQUIRED`.
 ---
 
 ## Flowline Cooldown and No-Touch Time
+
+### CRITICAL: the fluid must carry water
+
+A fluid with no water cannot form hydrates, so `SurfCooldownAnalyzer` reports
+`NO_HYDRATE_RISK` with an **unbounded** no-touch time. Correct for a deliberately
+dry gas — and identical to what a **wet** line gives when its fluid file has no
+water component. The verdict cannot separate the two, so check explicitly:
+
+```java
+analyzer.isWaterPresent();        // false for a dry gas AND for the wrong file
+analyzer.setRequireWater(true);   // design workflows: throw instead
+```
+
+`TiebackThermalDesign` sets `setRequireWater(true)` by default.
+
+Add water through NeqSim's own path, which sets the water kij and enables the
+VLLE flash — **not** a bare `addComponent`:
+
+```java
+SystemInterface wet = EclipseFluidReadWrite.read(file, true);     // kij 0.5
+EclipseFluidReadWrite.addWaterToFluid(existingFluid, 0.5);        // in place
+```
+
+And never call `setMixingRule` after `EclipseFluidReadWrite.read`: `read`
+installs the mixing rule and the file's BIC block, and `setMixingRule` reloads
+database kij, silently discarding the characterisation's regressed values.
+
+### Wall thickness and insulation are coupled
+
+The steel wall is part of the cooldown thermal mass. Thinning the wall — typically
+by crediting HIPPS so the line need not be rated for full shut-in — removes
+stored heat and **lengthens** the insulation needed for the same no-touch time.
+
+A worked case: full shut-in required a 22.2 mm wall, and 75 mm of insulation
+comfortably exceeded an 8 h target. HIPPS dropped the wall to 14.3 mm, and the
+same 75 mm then gave only 7.9 h. Use `TiebackThermalDesign` to sweep both
+together rather than fixing one and then the other:
+
+```java
+TiebackThermalDesign design = new TiebackThermalDesign(wetFluid)
+    .setWallThicknesses(new double[] {0.0143, 0.0222})
+    .setInsulationThicknesses(new double[] {0.050, 0.075, 0.100})
+    .setRequiredNoTouchTime(8.0);
+design.calculate();
+double insulation = design.getRequiredInsulationForWall(14.3);
+```
 
 After a planned or unplanned shutdown, an insulated subsea flowline or riser
 cools toward the seabed temperature. The **no-touch time** is how long operators
@@ -490,6 +639,67 @@ Map<String, Double> allocation = optimizer.optimize();
 
 ---
 
+## Production choke with a measured opening curve
+
+`ThrottlingValve` takes a full-open `setCv(cv, "US")` (US Cv = 1.156 x Kv, the gal/min/psi of historian choke data) and an opening 0-100. The opening curve is a `ValveCharacteristic`; use `TabulatedValveCharacteristic` for a measured or vendor curve instead of linear or equal percentage:
+
+```java
+TabulatedValveCharacteristic curve = TabulatedValveCharacteristic.fromMeasurements(openingPercent, cv); // sorts, averages repeats, makes it monotone
+valve.getMechanicalDesign().setValveCharacterizationMethod(curve);
+valve.setCv(cvAtLastPoint, "US");   // full-open value = Cv at the last curve point
+```
+
+The curve is monotone (no overshoot, flat dead band kept), so `openingForFlowFraction` has one answer. The Kv path and the multiphase choke path (`setValveSizingStandard("Sachdeva")`, Gilbert and others) both follow the same curve; the choke path scales the open area (diameter times the square root of the curve factor), so with a linear characteristic nothing changes. A 202-point Johan Castberg choke curve (dead band 14.4 %, Cv 205 at 100 %) is reproduced within 1 % (p95 0.1 %). `setFoulingFraction` can only lower the flow; to represent erosion (a choke passing more than its curve) set the observed Cv with `setCv` (Kv path) or `ValveMechanicalDesign.setChokeFlowCoefficient(observedCv, cd)` (choke path). Choke sizing, operating-range screening and Cv condition monitoring: see `neqsim-choke-valve-practice`.
+
+IOC choke data (`enterprise-ioc-bottleneck-utilisation`, `choke.py`): the curve is on the choke surveillance model; its measured-looking `Choke Cv` series equals the curve at the measured opening (ratio 1.000 on 12 wells), so it carries no fouling information. Use the daily PDM choke performance models (Cv from measured flow and dP, ELF/Sachdeva/FlowCurve) for calibration.
+
+## Calibrating a daisy-chained tie-back flowline from historian data
+
+Pattern used for Breidablikk to Grane (two flowlines, templates in series, `PipeBeggsAndBrills` per segment):
+
+- Choke margin of a well = wellhead pressure minus the downstream (template) pressure; a well with less than about 3 bar margin is already back-pressure limited, so rate added elsewhere on the line is lost there first. PDM `WH_DSC_PRESS_BARG` is the wellhead downstream-choke pressure.
+- Fit the effective inner diameter of each segment from the measured template-to-template pressure gradient at the measured rates (fit, do not assume the nominal ID), then check line against line (the two parallel flowlines must reproduce each other's pressures) and common-arrival closure (both lines end at the same arrival pressure).
+- Report the unexplained pressure at the receiving end separately instead of hiding it in the roughness (Breidablikk: 6-14 bar unexplained at the Grane end) and use the calibrated chain only for sensitivity per added rate (+0.9 to +1.8 bar per +1000 Sm3/d).
+- Pair with a topside LP-gas model: LP gas per unit oil often binds before the flowline does.
+- **A second fluid on the same calibrated line is a multiplier, not a new calibration.** Run the added wells as BB-type and as the other field's fluid at the same added rate and report the ratio of mean back-pressure rise (Grane Nord heavy oil, GOR 76, lift 150: 1.8 times Breidablikk oil on the same lines; GOR 250 and lift 180: 3 times). Carry the ratio as an oil-equivalent factor into the profile model and keep it in the Monte Carlo (1.3-2.6).
+- **Third-flowline value flips with the trunk diameter.** With the chain-gradient fit (trunk 0.35 m) the back-pressure relief of a third line is worth +30 to +50 MNOK; with the common-arrival fit (0.40 m) the same line is -260 to -310 MNOK. Report both, do not mix them in a median, and name the Grane-end pressure measurement as the discriminating test.
+
+## Siting a new template next to a second field (Sodir polygons)
+
+Pull `fldName` polygons from the Sodir DataService layer 7100 (`returnGeometry=true`, `outSR=4326`; field `rings`) and compute, with haversine, distance from each existing template to (a) the other field's outline vertices and (b) its extreme vertex (the northern tip). Breidablikk J is 2.8 km from the Grane outline and 3.5 km from its north tip, so Grane Nord targets are inside normal reach of a template at or next to J; a template at the far end of the chain (M) is 8 km away. Use the result to decide placement (daisy chain to the nearest template, `J` curves of the back-pressure table) and to test whether spare slots or the host platform can reach the same targets before a new template is bought. Reach is a screening number: the drilling and well team confirms it.
+
+## Shut-in pressure and pressure-rating gate for HPHT gas/condensate tie-backs
+
+For a deep HPHT gas/condensate discovery the pressure rating, not the hydraulics, usually decides concept and cost. Check it before any line sizing:
+
+- **Shut-in tubing head pressure (SITHP)** = reservoir pressure minus the static fluid column, with density from a TP flash at each step and a linear temperature profile. Use `neqsim.process.mechanicaldesign.subsea.ShutInPressureEstimator.estimateShutInTubingHeadPressure(fluid, pRes, tRes, tSeabed, columnHeight, steps)` (about 40 steps) and `classifyPressureRating(sithp, margin)` for the 5/10/15/20 ksi class. Never use a constant gradient: the dense rich gas (about 500 kg/m3 average, 0.05 bar/m) removes about a quarter of the pressure over 4.6 km.
+- Compare SITHP (not the reservoir pressure) with the tree/flowline rating (10 ksi = 689.5 bar, 15 ksi = 1,034 bar) with a 5 % margin; for Kristin-type fluid the 10 ksi margin is lost near 880 bara and the rating is exceeded near 920 bara reservoir pressure.
+- If the virgin pressure is not known, treat the pressure class (A depleted/communicating, B virgin low, C virgin high) as a discrete uncertainty with a prior, cost class C as HIPPS (API STD 17O) or a 15 ksi system plus qualification, and let the value-of-information analysis decide if a data well is justified. Extrapolating the analogue gradient to the deeper reservoir (Kristin 910 bara at 4,605 m, 0.19 bar/m) gave about 977 bara for Ragnfrid.
+- Flowing wellhead pressure is much lower than SITHP (440-640 bara at 1-3 MSm3/d for 700-850 bara bottom-hole pressure); the choke absorbs the difference, so the tie-back line is sized by erosional velocity and arrival pressure, not by the reservoir pressure.
+- `PipeBeggsAndBrills` throws a hydraulic-domain exception (NaN row) when a small line (8 in) is pushed to a rate that makes the outlet pressure negative; record those rows as infeasible instead of retrying.
+
+## Gas-well VLP/IPR chain calibrated on downhole gauges (Troll A integrated model, 2026-10)
+
+Use this when a gas/condensate well + flowline + compressor model must give a production forecast, not a lumped back-pressure.
+
+- **Tubing correlation:** for lean gas with traces of condensate/water use `TubingPerformance` with `CorrelationType.GRAY`.
+  `PipeBeggsAndBrills` over-predicts the vertical pressure drop 2x in the same case (liquid holdup of a 3 % mass-fraction heavy tail at 4 m/s);
+  `HAGEDORN_BROWN`, `HASAN_KABIR`, `DUNS_ROS` threw NaN-Z / absurd results with a 26-component PR78 fluid. Check each correlation on one point first.
+- **One inclination per instance (single-section mode):** `TubingPerformance` (pipeline package) takes one length/diameter/inclination unless a survey is set. For a deviated well call
+  `setSurvey(md, tvd, innerDiameter)` (wellhead first, one ID per interval); it integrates section by section and `calculateInletPressureForOutlet(fluid, whp, tol)` gives the BHP for a wellhead pressure.
+  Chained instances (inclination from `asin(dTVD/dMD)`, outlet pressure carried forward) agree with the survey within 0.05 bar. Gray and Beggs-Brill now read gas and liquid by phase type, so a trace of water no longer jumps the pressure drop.
+- **VFP tables from this chain:** see `neqsim-vfp-lift-curves` (builder, axes, rate cap, validation).
+- **Calibrate roughness, nothing else, on gauge rows:** 173 TWGP downhole-gauge rows gave roughness 1.2e-5 m, wellhead-pressure bias 0.0 bar, RMSE 0.4 bar.
+  Reuse the same roughness for wells without gauges and flag it.
+- **Forward tables:** pipes only run forward. Tabulate p_out(q, p_in) on a (q, p_in) grid once, invert by bisection, and chain forward from the reservoir
+  (IPR -> tubing -> hook-up -> separator); fail points (outlet pressure collapse, trace-water flash repair errors) are set to a very low p_out, not dropped.
+- **IPR identifiability:** with no BHP data the Forchheimer `a` and a reservoir-pressure offset are confounded (recent years fit `a` to its lower bound with delta -4 bar).
+  Constrain b >= 0, fit (a, b, delta) on the last 5-8 years, hold out the last 2-3, and anchor the per-well multipliers to the latest snapshot so the model reproduces today exactly.
+  Parameterise tank uncertainty by the *remaining* volume (pressure at the start state fixed), otherwise a GIIP change moves today's pressure by 10 bar.
+- **`SimpleReservoir` stops producing below 50 bar by default:** call `setLowPressureLimit(1.0, "bara")` for depleted gas tanks (a warning is logged once and `isLowPressureLimitReached()` reports it). It is exact p/z with the NeqSim Z (0.004 bar vs a table tank over 3 years).
+- **Compressor feasibility:** a charted `Compressor` with `setSolveSpeed(true)` throws when the duty is unreachable; treat the exception as "infeasible" in a capacity bisection,
+  and retry once with a tiny flow or temperature perturbation because the trace-water TPflash repair can fail on a perfectly valid point.
+
 ## Design Standards Reference
 
 | Domain | Standard | Used For |
@@ -513,9 +723,27 @@ Map<String, Double> allocation = optimizer.optimize();
 
 | Pitfall | Impact | Prevention |
 |---------|--------|------------|
+| Inferring F22 forging strength without its class, or silently falling back for an unknown alloy | Underestimated tree/hub/jumper wall | Use the table-backed material setters; generic F22 assumes Class 3 (310 MPa), F22-Class1 is 205 MPa; cladding has no structural credit. See `docs/process/SURF_SUBSEA_EQUIPMENT.md` |
 | Ignoring hydrate sub-cooling margin | Hydrate blockage | Design for 3-6°C subcooling below hydrate T |
 | Undersized flowline (low rate sensitivity) | Cannot achieve design rate | Size for peak + 20% surge capacity |
 | Missing umbilical in cost estimate | 10-15% CAPEX underestimate | Always include umbilical with routing factor 1.1× |
 | Wrong water depth for cost curve | Non-physical costs | Verify depth matches field data |
 | Ignoring slugging in riser | Separator flooding, trips | Include slug catcher sizing, check riser stability |
 | No pipeline end expansion | Structural failure | Account for thermal expansion, expansion loops |
+| Cooldown run on a dry E300 fluid | `NO_HYDRATE_RISK` and unbounded no-touch time — indistinguishable from a genuinely dry gas | `EclipseFluidReadWrite.read(file, true)`; check `isWaterPresent()`; `setRequireWater(true)` in design |
+| `setMixingRule` after `EclipseFluidReadWrite.read` | Silently wipes the file BIC block and the regressed kij | Never call it after `read`; `read` installs the mixing rule already |
+| Beggs & Brill on a wet-gas tie-back | Pressure drop over-predicted; concept looks infeasible | Use `TwoFluidPipe`; assert `getSteadyStateIterationsUsed() > 1` |
+| Sizing the flowline on inlet density | Under-sized line — velocity peaks where the mixture is least dense | Evaluate API RP 14E at the arrival condition |
+| Designing wall and insulation independently | Thin HIPPS wall silently fails the no-touch target | `TiebackThermalDesign` sweeps both together |
+| Assuming the shut-in wellhead pressure | Wrong flowline design pressure, wrong wall | `SubseaWell.calculateShutInWellheadPressure(fluid)` |
+
+## Gotchas from the HEP Nordflanken line study (2026-10)
+
+| Pitfall | Impact | Prevention |
+|---------|--------|------------|
+| Tuning GOR by scaling a light-end multiplier on a normalised composition | GOR cannot move (the light-end total is fixed by the C7+ fraction), brentq fails with equal signs | Tune the C7+ multiplier (more C7+ = lower GOR) and scan first for a bracket |
+| `getMolarMass()` on a fresh TBP fluid before init | Returns 0 and a ZeroDivisionError in mole bookkeeping | Call `fluid.init(0)` first; take mass per Sm3 oil from a standard flash |
+| Water-cut applied as `oil / (1 - wc)` on the reservoir fluid | Inflates oil and gas, 2x too high velocity, false infeasible line | Add water as a component (water moles from the WOR) and set the mass flow oil_sm3d x (kg/Sm3 oil + WOR x 1000) |
+| Capacity result taken from an uncalibrated line model | Wrong conclusion on which line limits | Reproduce the PDM median flowing wellhead pressure with the line known to carry the flow before using headroom |
+| `PipeBeggsAndBrills` throws `HydraulicDomainException` (non-positive pressure) | The iteration for required inlet pressure crashes | Catch it and treat as infeasible; raise the trial inlet pressure |
+| Cooldown with only fluid heat capacity | Hydrate time too short by a factor 3-6 | Include the pipe wall (steel m cp) and use the shut-in inventory (liquid-dominated at shut-in pressure, with water) |

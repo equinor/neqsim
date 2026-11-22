@@ -149,7 +149,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(358.0);
+    compressor1.setOutletTemperature(358.0);
     compressor1.run();
     // logger.info("srk polytropic efficiency " +
     // compressor1.getPolytropicEfficiency()*100 + " poly eff");
@@ -175,7 +175,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(358.0);
+    compressor1.setOutletTemperature(358.0);
     compressor1.setUseGERG2008(true);
     // compressor1.setUseRigorousPolytropicMethod(true);
     compressor1.run();
@@ -184,9 +184,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     // logger.info("gerg fluid head " + compressor1.getPolytropicFluidHead()
     // + " kJ/kg");
     // logger.info("gerg power " + compressor1.getPower() + " W");
-    assertEquals(compressor1.getPolytropicEfficiency() * 100, 89.99367027631443, 0.01);
-    // "Test case for rigorous polytropic efficiency with GER2008 calculation should return
-    // approximate 89.992296751");
+    // Temperature fitting now inverts the selected Schultz calculation with GERG properties.
+    assertEquals(90.06534985867269, compressor1.getPolytropicEfficiency() * 100, 0.01);
   }
 
   /**
@@ -269,7 +268,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(inletStream);
     processOps.add(compressor1);
     processOps.run();
-    assertEquals(30.610386, compressor1.getOutletPressure(), 0.01);
+    assertEquals(30.48213527317651, compressor1.getOutletPressure(), 0.01);
     // compressor1.getOutletStream().getFluid().prettyPrint();
 
     processOps = new ProcessSystem();
@@ -280,7 +279,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(inletStream);
     processOps.add(compressor1);
     processOps.run();
-    assertEquals(139.96712736879175, compressor1.getOutletStream().getTemperature("C"), 0.01);
+    assertEquals(139.98100497341142, compressor1.getOutletStream().getTemperature("C"), 0.01);
     // compressor1.getOutletStream().getFluid().prettyPrint();
   }
 
@@ -313,7 +312,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     // Reference values for the shipped Expander.DEFAULT_EXPANDER_CALC_STEPS polytropic
     // resolution. They shift by about 0.3 % if the step count is changed - see
     // ExpanderPolytropicStepsTest for the documented discretization tolerance.
-    assertEquals(480088.3292990218, estream1.getDuty(), 0.01);
+    assertEquals(480085.40729458304, estream1.getDuty(), 0.01);
 
     compressor1 = new Compressor("compressor 1", expander1.getOutletStream());
     compressor1.setUsePolytropicCalc(true);
@@ -323,7 +322,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setCalcPressureOut(true);
     compressor1.run();
 
-    assertEquals(480088.3292990218, compressor1.getPower(), 0.01);
+    assertEquals(480085.40725745936, compressor1.getPower(), 0.01);
 
     processOps = new ProcessSystem();
     processOps.add(inletStream);
@@ -331,7 +330,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(compressor1);
     processOps.run();
 
-    assertEquals(81.52079245659715, compressor1.getOutletPressure(), 0.01);
+    assertEquals(80.71446256929818, compressor1.getOutletPressure(), 0.01);
   }
 
   /**
@@ -355,14 +354,15 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(400.0);
+    compressor1.setOutletTemperature(400.0);
     compressor1.setUseLeachman(true); // Enable the use of Leachman method
 
     // Run the compressor
     compressor1.run();
 
     // Assertions to verify the expected outcomes
-    assertEquals(compressor1.getPolytropicEfficiency() * 100, 63.29499883086769, 0.01);
+    // Temperature fitting now inverts the selected Schultz calculation with Leachman properties.
+    assertEquals(63.43004185655317, compressor1.getPolytropicEfficiency() * 100, 0.01);
     // assertEquals(compressor1.getPower("MW"), 6.820449828263508, 0.0001);
   }
 
@@ -415,7 +415,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(400.0);
+    compressor1.setOutletTemperature(400.0);
     compressor1.setUseVega(true); // Enable the use of Vega method
 
     // Run the compressor
@@ -609,5 +609,66 @@ class CompressorTest extends neqsim.NeqSimTest {
     logger.info("  Template: " + comp.getCurveTemplate());
     logger.info("  Original speed: " + originalSpeed + " RPM");
     logger.info("  Calculated speed: " + comp.getSpeed() + " RPM");
+  }
+
+  /**
+   * getValidatedDistanceToSurge() must honour the {@link Compressor#isChartExtrapolated()} contract at a range of
+   * operating points: NaN whenever the point is outside the chart's validated flow/speed range, and exactly
+   * {@link Compressor#getDistanceToSurge()} otherwise. Motivated by a PEPR blackout/driver-trip anti-surge screening
+   * study where an automated coastdown sweep needed to distinguish "off-chart" points from a genuine surge margin,
+   * instead of silently trusting a finite but physically meaningless value from an extrapolated chart.
+   */
+  @Test
+  public void testGetValidatedDistanceToSurgeFlagsExtrapolation() {
+    SystemSrkEos fluid = new SystemSrkEos(298.0, 5.0);
+    fluid.addComponent("methane", 100.0);
+    Stream inletStream = new Stream("inletStream", fluid);
+    inletStream.setPressure(5.0, "bara");
+    inletStream.setTemperature(35.0, "C");
+    inletStream.setFlowRate(80000.0, "kg/hr");
+    inletStream.run();
+
+    Compressor comp = new Compressor("designComp", inletStream);
+    comp.setOutletPressure(20.0, "bara");
+    comp.setPolytropicEfficiency(0.78);
+    comp.setUsePolytropicCalc(true);
+    comp.run();
+    comp.setSpeed(10000.0);
+    comp.generateCompressorChart();
+    comp.setSolveSpeed(false);
+
+    boolean sawExtrapolated = false;
+    boolean sawInRange = false;
+    double[] speedFractions = {1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2};
+    for (double speedFraction : speedFractions) {
+      comp.setSpeed(10000.0 * speedFraction);
+      inletStream.setFlowRate(80000.0, "kg/hr");
+      inletStream.run();
+      try {
+        comp.run();
+      } catch (IllegalArgumentException invalidPoint) {
+        // No accepted state exists at this point. Qualify extrapolation flags at
+        // the physical points above the design speed instead.
+        Assertions.assertTrue(invalidPoint.getMessage().contains("Invalid compressor chart operating point"));
+        continue;
+      }
+
+      boolean extrapolated = comp.isChartExtrapolated();
+      double validated = comp.getValidatedDistanceToSurge();
+      if (extrapolated) {
+        sawExtrapolated = true;
+        Assertions.assertTrue(Double.isNaN(validated),
+            "Expected NaN at speed fraction " + speedFraction + " (chart extrapolated)");
+      } else {
+        sawInRange = true;
+        assertEquals(comp.getDistanceToSurge(), validated, 1.0e-9,
+            "Expected getValidatedDistanceToSurge() to match getDistanceToSurge() at speed fraction " + speedFraction
+                + " (chart in range)");
+      }
+    }
+    // The sweep must exercise BOTH branches of the contract, otherwise the test would not catch a
+    // regression that always (or never) returns NaN.
+    Assertions.assertTrue(sawExtrapolated, "Expected at least one extrapolated point in the sweep");
+    Assertions.assertTrue(sawInRange, "Expected at least one in-range point in the sweep");
   }
 }

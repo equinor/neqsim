@@ -30,7 +30,7 @@ public class AmineCO2SolubilityTest {
    */
   @Test
   public void mdeaMonotonicAndInBand40C() {
-    double[] loadings = { 0.1, 0.2, 0.4, 0.6, 0.8 };
+    double[] loadings = {0.1, 0.2, 0.4, 0.6, 0.8};
     double prev = -1.0;
     for (int i = 0; i < loadings.length; i++) {
       double p = AmineKentEisenberg.partialPressureCO2Bara(AmineType.MDEA, T40, MDEA_50WT, loadings[i]);
@@ -47,7 +47,7 @@ public class AmineCO2SolubilityTest {
    */
   @Test
   public void meaMonotonicAndInBand40C() {
-    double[] loadings = { 0.2, 0.3, 0.4, 0.5 };
+    double[] loadings = {0.2, 0.3, 0.4, 0.5};
     double prev = -1.0;
     for (int i = 0; i < loadings.length; i++) {
       double p = AmineKentEisenberg.partialPressureCO2Bara(AmineType.MEA, T40, MEA_30WT, loadings[i]);

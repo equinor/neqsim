@@ -421,6 +421,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 11](figures/ProducedWaterEmissions_Tutorial_cell_11_output_1.png)
+
 ## 3. Norwegian Handbook Method (Conventional)
 
 ### Regulatory Background
@@ -1178,4 +1180,3 @@ For more information:
 ```
 
 </details>
-

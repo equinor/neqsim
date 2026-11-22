@@ -202,6 +202,7 @@ public class ShellAndTubeDesignCalculator {
    * Performs the complete TEMA-based design calculation.
    */
   public void calculate() {
+    invalidateCalculatedResults();
     // Get TEMA configuration
     TEMAConfiguration config = TEMAStandard.getConfiguration(temaDesignation);
     if (config == null) {
@@ -242,6 +243,40 @@ public class ShellAndTubeDesignCalculator {
 
     // Calculate costs
     calculateCosts(config);
+  }
+
+  /** Clear all derived results before recalculation or a material-selection change. */
+  private void invalidateCalculatedResults() {
+    shellInsideDiameter = Double.NaN;
+    shellOutsideDiameter = Double.NaN;
+    shellWallThickness = Double.NaN;
+    tubeCount = -1;
+    baffleCount = -1;
+    actualArea = Double.NaN;
+    baffleSpacing = Double.NaN;
+    tubePitch = Double.NaN;
+    shellWeight = Double.NaN;
+    tubeWeight = Double.NaN;
+    tubesheetWeight = Double.NaN;
+    headWeight = Double.NaN;
+    baffleWeight = Double.NaN;
+    totalDryWeight = Double.NaN;
+    operatingWeight = Double.NaN;
+    materialCost = Double.NaN;
+    fabricationCost = Double.NaN;
+    totalCost = Double.NaN;
+    tubesheetThicknessUHX = Double.NaN;
+    nozzleReinforcementArea = Double.NaN;
+    nozzleReinforcementAdequate = false;
+    mawpShellSide = Double.NaN;
+    mawpTubeSide = Double.NaN;
+    hydroTestPressureShell = Double.NaN;
+    hydroTestPressureTube = Double.NaN;
+    sourServiceRequired = false;
+    appliedStandards.clear();
+    naceIssues.clear();
+    thermalCalculator = null;
+    vibrationResult = null;
   }
 
   /**
@@ -472,8 +507,7 @@ public class ShellAndTubeDesignCalculator {
   }
 
   /**
-   * Gets allowable stress for material at temperature. Uses database value if loaded, otherwise falls back to
-   * simplified ASME Section II tables.
+   * Gets allowable stress for a loaded material with the existing simplified temperature derating.
    *
    * @param material material name
    * @param temperature temperature in degrees C
@@ -516,15 +550,47 @@ public class ShellAndTubeDesignCalculator {
    * @param isShell true if this is a shell material, false for tube
    */
   private void loadMaterialFromDB(String materialGrade, boolean isShell) {
+    if (isShell) {
+      shellAllowableStress = Double.NaN;
+      shellSmys = Double.NaN;
+      shellNACECompliant = false;
+      shellMaterial = materialGrade;
+    } else {
+      tubeAllowableStress = Double.NaN;
+      tubeSmys = Double.NaN;
+      tubeThermalConductivity = Double.NaN;
+      tubeNACECompliant = false;
+      tubeMaterial = materialGrade;
+    }
+    if (loadMaterialFromTable(materialGrade, isShell, "HeatExchangerTubeMaterials")) {
+      return;
+    }
+    if (isShell && loadMaterialFromTable(materialGrade, true, "CompressorCasingMaterials")) {
+      return;
+    }
+    throw new IllegalArgumentException("No " + (isShell ? "shell" : "tube") + " material data for " + materialGrade);
+  }
+
+  /**
+   * Load a named row without substituting properties from another material.
+   *
+   * @param materialGrade requested grade
+   * @param isShell whether shell properties are being loaded
+   * @param table bundled material table to query
+   * @return true if the requested row was loaded
+   * @throws IllegalStateException if the table cannot be read or contains invalid properties
+   */
+  private boolean loadMaterialFromTable(String materialGrade, boolean isShell, String table) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-        ResultSet rs = database
-            .getResultSet("SELECT * FROM HeatExchangerTubeMaterials WHERE MaterialGrade='" + materialGrade + "'")) {
+        ResultSet rs = database.getResultSet(
+            "SELECT * FROM " + table + " WHERE MaterialGrade='" + materialGrade.replace("'", "''") + "'")) {
       if (rs.next()) {
         double allowable = rs.getDouble("AllowableStress_MPa");
         double smys = rs.getDouble("SMYS_MPa");
-        double thermalCond = rs.getDouble("ThermalConductivity_WpmK");
-        String naceComp = rs.getString("NACECompliant");
-        boolean nace = "Yes".equalsIgnoreCase(naceComp);
+        boolean nace = rs.getBoolean("NACECompliant");
+        if (!Double.isFinite(allowable) || allowable <= 0.0 || !Double.isFinite(smys) || smys <= 0.0) {
+          throw new IllegalStateException("Invalid material strengths for " + materialGrade);
+        }
 
         if (isShell) {
           shellAllowableStress = allowable;
@@ -534,13 +600,15 @@ public class ShellAndTubeDesignCalculator {
         } else {
           tubeAllowableStress = allowable;
           tubeSmys = smys;
-          tubeThermalConductivity = thermalCond;
+          tubeThermalConductivity = rs.getDouble("ThermalConductivity_WpmK");
           tubeNACECompliant = nace;
           tubeMaterial = rs.getString("Specification") + " " + materialGrade;
         }
+        return true;
       }
+      return false;
     } catch (Exception ex) {
-      // Use default values if database lookup fails
+      throw new IllegalStateException("Cannot load " + materialGrade + " from " + table, ex);
     }
   }
 
@@ -695,9 +763,9 @@ public class ShellAndTubeDesignCalculator {
    */
   private double roundToStandardShellSize(double diameter) {
     // Standard pipe sizes in mm (NPS converted)
-    double[] standardSizes = { 168.3, 219.1, 273.0, 323.9, 355.6, 406.4, 457.2, 508.0, 558.8, 609.6, 660.4, 711.2,
-        762.0, 812.8, 863.6, 914.4, 965.2, 1016.0, 1066.8, 1117.6, 1168.4, 1219.2, 1270.0, 1320.8, 1371.6, 1422.4,
-        1473.2, 1524.0, 1574.8, 1625.6, 1676.4, 1727.2, 1778.0, 1828.8, 1879.6, 1930.4, 1981.2, 2032.0 };
+    double[] standardSizes = {168.3, 219.1, 273.0, 323.9, 355.6, 406.4, 457.2, 508.0, 558.8, 609.6, 660.4, 711.2, 762.0,
+        812.8, 863.6, 914.4, 965.2, 1016.0, 1066.8, 1117.6, 1168.4, 1219.2, 1270.0, 1320.8, 1371.6, 1422.4, 1473.2,
+        1524.0, 1574.8, 1625.6, 1676.4, 1727.2, 1778.0, 1828.8, 1879.6, 1930.4, 1981.2, 2032.0};
 
     for (double size : standardSizes) {
       if (size >= diameter) {
@@ -714,8 +782,8 @@ public class ShellAndTubeDesignCalculator {
    * @return standard thickness
    */
   private double roundToStandardPlateThickness(double thickness) {
-    double[] standardThicknesses = { 3.175, 4.763, 6.35, 7.938, 9.525, 12.7, 15.875, 19.05, 22.225, 25.4, 31.75, 38.1,
-        44.45, 50.8 };
+    double[] standardThicknesses = {3.175, 4.763, 6.35, 7.938, 9.525, 12.7, 15.875, 19.05, 22.225, 25.4, 31.75, 38.1,
+        44.45, 50.8};
 
     for (double t : standardThicknesses) {
       if (t >= thickness) {
@@ -1319,7 +1387,16 @@ public class ShellAndTubeDesignCalculator {
    * @param grade material grade (e.g., "SA-516-70")
    */
   public void setShellMaterialGrade(String grade) {
+    if (grade == null || grade.trim().isEmpty()) {
+      throw new IllegalArgumentException("Shell material grade must be specified");
+    }
     this.shellMaterialGrade = grade;
+    invalidateCalculatedResults();
+    shellMaterial = grade;
+    shellAllowableStress = Double.NaN;
+    shellSmys = Double.NaN;
+    shellWallThickness = Double.NaN;
+    shellNACECompliant = false;
   }
 
   /**
@@ -1337,7 +1414,16 @@ public class ShellAndTubeDesignCalculator {
    * @param grade material grade (e.g., "SA-179", "SA-213-TP316")
    */
   public void setTubeMaterialGrade(String grade) {
+    if (grade == null || grade.trim().isEmpty()) {
+      throw new IllegalArgumentException("Tube material grade must be specified");
+    }
     this.tubeMaterialGrade = grade;
+    invalidateCalculatedResults();
+    tubeMaterial = grade;
+    tubeAllowableStress = Double.NaN;
+    tubeSmys = Double.NaN;
+    tubeThermalConductivity = Double.NaN;
+    tubeNACECompliant = false;
   }
 
   /**

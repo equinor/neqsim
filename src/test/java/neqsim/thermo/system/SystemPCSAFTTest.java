@@ -22,7 +22,14 @@ public class SystemPCSAFTTest {
     ops.TPflash();
     testSystem.initProperties();
     double cp = testSystem.getCp();
-    assertEquals(172.3659584364608, cp, 0.1);
+    // Cp is a fixed-phase-composition derivative, not a derivative of an equilibrium reflash.
+    SystemInterface plus = testSystem.clone();
+    SystemInterface minus = testSystem.clone();
+    plus.setTemperature(testSystem.getTemperature() + 0.01);
+    minus.setTemperature(testSystem.getTemperature() - 0.01);
+    plus.init(2);
+    minus.init(2);
+    assertEquals((plus.getEnthalpy() - minus.getEnthalpy()) / 0.02, cp, 0.01);
   }
 
   @Test
@@ -197,7 +204,7 @@ public class SystemPCSAFTTest {
     feed.setPressure(100.0, "bara");
 
     Cooler cooler = new Cooler("cooler", feed);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     ThrottlingValve valve = new ThrottlingValve("JT valve", cooler.getOutletStream());
     valve.setOutletPressure(30.0);
@@ -235,7 +242,7 @@ public class SystemPCSAFTTest {
     comp.setOutletPressure(50.0, "bara");
 
     Cooler aftercooler = new Cooler("aftercooler", comp.getOutletStream());
-    aftercooler.setOutTemperature(273.15 + 35.0);
+    aftercooler.setOutletTemperature(273.15 + 35.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

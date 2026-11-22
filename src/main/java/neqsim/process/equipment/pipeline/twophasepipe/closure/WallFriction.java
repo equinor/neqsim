@@ -45,6 +45,24 @@ public class WallFriction implements Serializable {
     /** Liquid wall shear stress (Pa). */
     public double liquidWallShear;
 
+    /** Signed gas wall force per unit pipe length (N/m), positive for resistance to positive flow. */
+    public double gasWallForcePerLength;
+
+    /** Signed liquid wall force per unit pipe length (N/m), positive for resistance to positive flow. */
+    public double liquidWallForcePerLength;
+
+    /** Resistance multiplying gas velocity in the gas wall force, kg/(m s). */
+    public double gasWallResistance;
+
+    /** Resistance multiplying bulk liquid velocity in the liquid wall force, kg/(m s). */
+    public double liquidWallResistance;
+
+    /** Resistance multiplying volume-weighted mixture velocity in the gas wall force, kg/(m s). */
+    public double gasMixtureResistance;
+
+    /** Resistance multiplying volume-weighted mixture velocity in the liquid wall force, kg/(m s). */
+    public double liquidMixtureResistance;
+
     /** Gas Fanning friction factor. */
     public double gasFrictionFactor;
 
@@ -83,41 +101,81 @@ public class WallFriction implements Serializable {
   public WallFrictionResult calculate(FlowRegime flowRegime, double gasVelocity, double liquidVelocity,
       double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity, double liquidHoldup,
       double diameter, double roughness) {
+    WallFrictionResult result;
     switch (flowRegime) {
     case STRATIFIED_SMOOTH:
     case STRATIFIED_WAVY:
-      return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+      result = calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
           liquidViscosity, liquidHoldup, diameter, roughness);
+      break;
 
     case SLUG:
-      return calcSlugFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+      result = calcSlugFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
           liquidHoldup, diameter, roughness);
+      break;
 
     case ANNULAR:
     case MIST:
-      return calcAnnularFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-          liquidHoldup, diameter, roughness);
+      result = calcAnnularFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+          liquidViscosity, liquidHoldup, diameter, roughness);
+      break;
 
     case BUBBLE:
     case DISPERSED_BUBBLE:
-      return calcBubbleFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+      result = calcBubbleFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
           liquidHoldup, diameter, roughness);
+      break;
 
     case CHURN:
-      return calcChurnFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+      result = calcChurnFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
           liquidHoldup, diameter, roughness);
+      break;
 
     case SINGLE_PHASE_GAS:
-      return calcSinglePhaseGasFriction(gasVelocity, gasDensity, gasViscosity, diameter, roughness);
+      result = calcSinglePhaseGasFriction(gasVelocity, gasDensity, gasViscosity, diameter, roughness);
+      break;
 
     case SINGLE_PHASE_LIQUID:
-      return calcSinglePhaseLiquidFriction(liquidVelocity, liquidDensity, liquidViscosity, diameter, roughness);
+      result = calcSinglePhaseLiquidFriction(liquidVelocity, liquidDensity, liquidViscosity, diameter, roughness);
+      break;
 
     default:
       // Default to stratified
-      return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+      result = calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
           liquidViscosity, liquidHoldup, diameter, roughness);
+      break;
     }
+    // Each stress must be integrated over the perimeter used by its own closure.
+    // Slug/churn stresses already contain the phase volume weights; weighting their
+    // perimeter again loses part of the homogeneous mixture wall force. Films and
+    // dispersed-liquid continuums wet the full wall, even after a stratified stage.
+    double gasPerimeter = Math.PI * diameter;
+    double liquidPerimeter = gasPerimeter;
+    if (flowRegime == FlowRegime.STRATIFIED_SMOOTH || flowRegime == FlowRegime.STRATIFIED_WAVY) {
+      StratifiedGeometry geometry = geometryCalc.calculateFromHoldup(liquidHoldup, diameter);
+      gasPerimeter = geometry.gasWettedPerimeter;
+      liquidPerimeter = geometry.liquidWettedPerimeter;
+    }
+    result.gasWallForcePerLength = result.gasWallShear * gasPerimeter;
+    result.liquidWallForcePerLength = result.liquidWallShear * liquidPerimeter;
+    // Preserve the native driving velocity in the frozen linear resistance. Mixture-based closures must not be
+    // replaced by independent phase resistances: an individual counterflowing phase may be accelerated by them.
+    if (flowRegime == FlowRegime.SLUG || flowRegime == FlowRegime.CHURN || flowRegime == FlowRegime.BUBBLE
+        || flowRegime == FlowRegime.DISPERSED_BUBBLE) {
+      double mixtureVelocity = (1.0 - liquidHoldup) * gasVelocity + liquidHoldup * liquidVelocity;
+      if (mixtureVelocity != 0.0) {
+        result.gasMixtureResistance = result.gasWallForcePerLength / mixtureVelocity;
+        result.liquidMixtureResistance = result.liquidWallForcePerLength / mixtureVelocity;
+      }
+    } else {
+      if (gasVelocity != 0.0) {
+        result.gasWallResistance = result.gasWallForcePerLength / gasVelocity;
+      }
+      if (liquidVelocity != 0.0) {
+        result.liquidWallResistance = result.liquidWallForcePerLength / liquidVelocity;
+      }
+    }
+    return result;
   }
 
   /**

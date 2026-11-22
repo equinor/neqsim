@@ -1,0 +1,81 @@
+# Synthetic demonstration basis (no real facility or company data). Used by the toolkit tests and `process_study_report demo`.
+document:
+  title: "Synthetic wet-gas compression study"
+  subtitle: "Demonstration of the process-study-report toolkit"
+  document_number: "DEMO-001"
+  revision: "A"
+  issue_status: "Draft for internal review"
+  readiness: "SCREENING"
+  readiness_note: "synthetic demonstration, not for design or construction"
+  readiness_explanation: "The flowsheet is synthetic and exists only to demonstrate the toolkit."
+  date: "2026-10-20"
+  company: "Demonstration"
+  project: "Synthetic demonstration"
+  prepared_by: "not assigned"
+  checked_by: "not assigned"
+  approved_by: "not assigned"
+  revision_history:
+    - {rev: "A", date: "2026-10-20", description: "First issue of the synthetic example", by: "not assigned"}
+objective: "Demonstrate the generation of a complete process-study report from a small synthetic wet-gas flowsheet."
+audience: "Toolkit developers and reviewers of the process-study-report skill."
+maturity: "Screening demonstration; no plant exists behind the numbers."
+boundaries:
+  included: ["Inlet mixer, three-phase separator, export compressor, after-cooler, export scrubber and liquid recycle valve"]
+  excluded: ["Upstream wells and downstream export system"]
+  unmodelled_systems: ["flare and relief system", "utility systems"]
+operating_cases:
+  - {id: "A", label: "Demo case", role: "scenario", description: "Feed of 20000 kg/h wet gas at 45 C and 40 bara, compressed to 90 bara", data_source: "specified inputs of the synthetic fixture"}
+acceptance_criteria:
+  - {id: "AC1", text: "Overall mass balance closes within 0.1 % of feed", source: "study basis", requirement_class: "recommended",
+     check: {metric: "overall_mass_rel", max: 0.001}}
+  - {id: "AC2", text: "Overall energy balance closes within 0.1 % of the largest enthalpy flow", source: "study basis", requirement_class: "recommended",
+     check: {metric: "overall_energy_rel", max: 0.001}}
+inspected_sources:
+  - {id: "S1", kind: "model", title: "psr_demo synthetic flowsheet (devtools)", version: "toolkit version in the repository", status: "used", used_for: "all results"}
+model:
+  name: "psr_demo synthetic flowsheet"
+  version: "devtools/psr_demo.py"
+  simulator: "NeqSim (version recorded in the data file)"
+  eos: "SRK"
+  eos_rationale: "SRK is adequate for a lean hydrocarbon gas with a small water content in a demonstration."
+  mixing_rule: "classic with default interaction parameters"
+  fluid_characterization: "Ten pure components plus two TBP pseudo-components (C7 and C9) defined by molar mass and density in the fixture."
+  convergence: "ProcessModel run; the liquid recycle is closed by a Recycle unit with default tolerance."
+conventions:
+  units: "T in degC, P in bara, mass flow kg/h, molar flow kmol/h, enthalpy kJ/kg and kW"
+  pressure: "Absolute pressure (bara); gauge (barg) = bara - 1.01325"
+  composition_basis: "Mole fraction, all components listed"
+  standard_conditions: {t_c: 15.0, p_bara: 1.01325, definition: "Flash volumes at 15 degC and 1.01325 bara; ideal-gas standard volume also given"}
+  phase_fraction_basis: "Mole fraction of each phase (beta)"
+  heat_sign: "Heat added to the fluid is positive; cooler duty is negative"
+  work_sign: "Shaft work added to the fluid is positive"
+  enthalpy_reference: "NeqSim enthalpy reference; only differences are meaningful"
+data_classification:
+  - {item: "Feed flow, temperature, pressure", class: "specified", note: "fixture inputs"}
+  - {item: "Feed composition", class: "specified", note: "fixture inputs"}
+  - {item: "Stream results, duties, powers", class: "calculated", note: "NeqSim"}
+  - {item: "Compressor efficiency", class: "estimated", note: "0.75 isentropic assumed"}
+  - {item: "Plant measurements", class: "unavailable", note: "no plant exists"}
+assumptions:
+  - {id: "AS1", text: "Isentropic efficiency of 0.75 for the export compressor", effect: "Shaft power and discharge temperature scale with efficiency"}
+exclusions: ["Mechanical design, control system and safety systems"]
+data_gaps:
+  - {id: "G1", item: "No measured data exist for validation", effect_on_conclusions: "Results are model predictions without a plant comparison", mitigation: "Use a real facility with historian data"}
+known_balance_exceptions: []
+process_description: {}
+validation:
+  statement: "No measured data exist for the synthetic flowsheet; validation is limited to balance closure and internal consistency checks."
+  rows: []
+sensitivities: []
+constraint_tables: []
+interpretation:
+  - {topic: "Compression duty", text: "The export compressor absorbs [[unit:export compressor:power_kw:A|.1f]] kW and the after-cooler removes [[unit:after cooler:duty_kw:A|.1f]] kW."}
+principal_findings: []
+conclusions: ["The toolkit produces a complete, internally consistent report for the synthetic flowsheet."]
+recommendations: ["Apply the toolkit to a real model with a documented basis and measured data."]
+references: ["NeqSim documentation, thermodynamic and process modelling guides"]
+figures: []
+bfd_blocks: null
+pfd_sheets: null
+diagram_notes: []
+tolerances: {}

@@ -327,7 +327,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
     // Create sections
     for (int i = 0; i < numberOfSections; i++) {
-      sections[i] = new PipeSection(i * dx, dx, diameter, 0);
+      sections[i] = new PipeSection((i + 0.5) * dx, dx, diameter, 0);
       sections[i].setRoughness(roughness);
     }
 
@@ -381,6 +381,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     // Flash to get phase properties
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
+    fluid.init(2);
+    fluid.initPhysicalProperties("viscosity");
 
     double rho_L = 0, rho_G = 0, mu_L = 0, mu_G = 0, sigma = 0;
     double H_L = 0, H_G = 0, c_L = 0, c_G = 0;
@@ -777,6 +779,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     SystemInterface fluid = inStream.getFluid();
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
+    fluid.init(2);
+    fluid.initPhysicalProperties("viscosity");
 
     // Update inlet section properties
     if (sections != null && sections.length > 0) {
@@ -1845,6 +1849,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
+        fluid.initProperties();
 
         if (fluid.hasPhaseType("gas")) {
           section.setGasDensity(fluid.getPhase("gas").getDensity("kg/m3"));

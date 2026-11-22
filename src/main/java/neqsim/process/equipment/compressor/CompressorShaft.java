@@ -3,10 +3,21 @@ package neqsim.process.equipment.compressor;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.DoubleUnaryOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import neqsim.process.controllerdevice.AntiSurgeController;
+import neqsim.process.equipment.compressor.driver.DriverCurve;
+import neqsim.process.equipment.energy.CompressorPowerTrain;
+import neqsim.process.equipment.energy.ElectricMotor;
 import neqsim.process.equipment.powergeneration.GasTurbine;
+import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineUnit;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
  * Groups several {@link Compressor} bodies that sit on ONE common shaft (driven by a single gas turbine or motor) so
@@ -54,8 +65,24 @@ import neqsim.process.equipment.powergeneration.GasTurbine;
  * and {@link #solveSpeed} returns {@link SolveStatus#OVER_POWER} when the driver cannot deliver.
  * </p>
  *
+ * <h2>Gear ratios, idle members, ambient site rating and control targets</h2>
+ *
+ * <p>
+ * Members can sit behind a gearbox: {@link #addCompressor(Compressor, double)} sets the member rpm per shaft rpm, so a
+ * body with ratio 1.2 runs at 1.2 x the common speed on its own chart. A member that is out of service (train off,
+ * parallel machine not running) is set idle with {@link #setMemberActive(Compressor, boolean)}: it is locked inactive,
+ * leaves the shaft power sum and the surge/stonewall checks, and a shaft with no active member reports
+ * {@link SolveStatus#SHAFT_IDLE}. {@link #setGasTurbineUnitDriver(GasTurbineUnit)} makes a site-rated
+ * {@link GasTurbineUnit} (power versus ambient temperature, exhaust-temperature limit, fuel and exhaust heat) the
+ * driver, and {@link #setAmbientTemperature(double, String)} moves its rating. {@link #solveSpeedToTarget} controls the
+ * common speed from the discharge pressure, the suction pressure or the inlet flow of ONE controlling member, and
+ * {@link #getOperatingReport()} lists, for every member, the speed, power, surge/stonewall margins and the recycle
+ * fraction that anti-surge would need. {@link #findMaxSpeedWithinPowerLimit(Runnable)} gives the highest common speed
+ * the driver can hold, and {@link DriverLimitedThroughputSolver} the highest throughput.
+ * </p>
+ *
  * @author NeqSim Development Team
- * @version 1.0
+ * @version 1.1
  */
 public class CompressorShaft implements Serializable {
   /** Serialization version UID. */
@@ -85,11 +112,53 @@ public class CompressorShaft implements Serializable {
   /** Optional gas turbine driving this shaft. */
   private GasTurbine turbineDriver = null;
 
+  /** Optional site-rated catalogue gas turbine driving this shaft. */
+  private GasTurbineUnit gasTurbineUnitDriver = null;
+
+  /** Gear ratio (member rpm per shaft rpm) per member; absent means 1.0. */
+  private final Map<Compressor, Double> gearRatios = new IdentityHashMap<Compressor, Double>();
+
+  /** Members that are out of service. */
+  private final Map<Compressor, Boolean> idleMembers = new IdentityHashMap<Compressor, Boolean>();
+
+  /** Electrical supply cap on shaft power in watts (0 = none), e.g. power-from-shore or generator capacity. */
+  private double supplyShaftPowerLimitW = 0.0;
+
+  /** Ambient air temperature in K shared with the driver models. */
+  private double ambientTemperatureK = 288.15;
+
   /** Lower speed bound in rpm. */
   private double minSpeed = 500.0;
 
   /** Upper speed bound in rpm. */
   private double maxSpeed = 25000.0;
+
+  /** Driver performance curve (for example an {@code ElectricMotorDriver} with VFD) giving speed band and power. */
+  private DriverCurve driverCurve = null;
+
+  /** Electric motor process unit whose performance model is the driver curve. */
+  private ElectricMotor motorDriverUnit = null;
+
+  /** Optional integrated supply model, including turbine-generator-motor conversion. */
+  private CompressorPowerTrain powerTrain = null;
+
+  /** Supply-side result from the most recent driver update. */
+  private CompressorPowerTrain.Result powerTrainResult = null;
+
+  /** True while the speed bounds follow the driver curve; an explicit {@link #setSpeedBounds} switches it off. */
+  private boolean speedBandFromDriver = false;
+
+  /** Recycle (anti-surge) valve per member. */
+  private final Map<Compressor, ThrottlingValve> antiSurgeValves = new IdentityHashMap<Compressor, ThrottlingValve>();
+
+  /** Anti-surge controller per member, as an alternative way to reach the recycle valve. */
+  private final Map<Compressor, AntiSurgeController> antiSurgeControllers = new IdentityHashMap<Compressor, AntiSurgeController>();
+
+  /** Members whose built-in anti-surge was activated by {@link #applyRequiredRecycle()}. */
+  private final Map<Compressor, Boolean> recycleAutoActivated = new IdentityHashMap<Compressor, Boolean>();
+
+  /** Recycle fraction at which a recycle valve is fully open (linear opening, screening). */
+  private double recycleValveFullOpenFraction = 0.5;
 
   /** Maximum root-finding iterations. */
   private int maxIterations = 60;
@@ -118,12 +187,28 @@ public class CompressorShaft implements Serializable {
     PRESSURE_BELOW_MIN_SPEED,
     /** A body exceeded its installed driver power at the solved speed. */
     OVER_POWER,
+    /** The running turbine is below its configured minimum stable load. */
+    DRIVER_BELOW_MINIMUM_LOAD,
     /** A body ran past its stonewall (maximum-flow) limit at the solved speed. */
     STONEWALL,
     /** A body ran below its surge (minimum-flow) limit at the solved speed. */
     SURGE,
     /** No compressors / no reference body configured. */
-    NOT_CONFIGURED
+    NOT_CONFIGURED,
+    /** No active member on the shaft: the shaft is not turning and no power is drawn. */
+    SHAFT_IDLE,
+    /** The suction-pressure or flow target is not bracketed by the speed bounds. */
+    TARGET_OUT_OF_RANGE
+  }
+
+  /** Quantity of the controlling member that {@link #solveSpeedToTarget} holds by moving the common speed. */
+  public enum ControlTarget {
+    /** Discharge pressure of the controlling member. */
+    DISCHARGE_PRESSURE,
+    /** Suction (inlet) pressure of the controlling member. */
+    SUCTION_PRESSURE,
+    /** Inlet flow of the controlling member (unit given to the solve, e.g. "kg/hr" or "m3/hr"). */
+    INLET_FLOW
   }
 
   /**
@@ -314,10 +399,11 @@ public class CompressorShaft implements Serializable {
   /**
    * Whether the most recent {@link #solveSpeed} call reached a feasible operating point.
    *
-   * @return {@code true} if no solve has run yet or the last solve was feasible; {@code false} otherwise
+   * @return true when the last solve and the current supply power/minimum-load checks are feasible
    */
   public boolean isFeasible() {
-    return lastResult == null || lastResult.isFeasible();
+    return (lastResult == null || lastResult.isFeasible()) && !isOverPower()
+        && (powerTrainResult == null || powerTrainResult.isFeasible());
   }
 
   /**
@@ -331,6 +417,150 @@ public class CompressorShaft implements Serializable {
     }
     compressors.add(compressor);
     registerDrivenLoad(compressor);
+  }
+
+  /**
+   * Add a compressor body behind a gearbox.
+   *
+   * @param compressor the compressor to add (must not be {@code null})
+   * @param gearRatio member rpm per shaft rpm (positive); 1.0 for a direct-coupled body
+   * @throws IllegalArgumentException if the compressor is null or the ratio is not positive
+   */
+  public void addCompressor(Compressor compressor, double gearRatio) {
+    addCompressor(compressor);
+    setGearRatio(compressor, gearRatio);
+  }
+
+  /**
+   * Set the gear ratio of a member.
+   *
+   * @param compressor a member of this shaft
+   * @param gearRatio member rpm per shaft rpm (positive)
+   * @throws IllegalArgumentException if the ratio is not positive or the compressor is not on the shaft
+   */
+  public void setGearRatio(Compressor compressor, double gearRatio) {
+    if (!(gearRatio > 0.0)) {
+      throw new IllegalArgumentException("CompressorShaft " + name + ": gear ratio must be positive.");
+    }
+    requireMember(compressor);
+    gearRatios.put(compressor, Double.valueOf(gearRatio));
+  }
+
+  /**
+   * Get the gear ratio of a member.
+   *
+   * @param compressor a member of this shaft
+   * @return member rpm per shaft rpm (1.0 when none was set)
+   */
+  public double getGearRatio(Compressor compressor) {
+    Double r = gearRatios.get(compressor);
+    return r == null ? 1.0 : r.doubleValue();
+  }
+
+  /**
+   * Get the speed of a member at the current common speed.
+   *
+   * @param compressor a member of this shaft
+   * @return member rpm, gear ratio times the common speed
+   */
+  public double getMemberSpeed(Compressor compressor) {
+    return getGearRatio(compressor) * speed;
+  }
+
+  /**
+   * Put a member in or out of service. An idle member (train off, parallel machine not running) is locked inactive so
+   * the flowsheet does not run it, and it is excluded from the shaft power, the speed application and the limit checks.
+   * The outlet stream of an idle compressor is not updated, so give an idle train a bypass line or zero flow in the
+   * flowsheet.
+   *
+   * @param compressor a member of this shaft
+   * @param active true for in service, false for idle
+   * @throws IllegalArgumentException if the compressor is not on the shaft
+   */
+  public void setMemberActive(Compressor compressor, boolean active) {
+    requireMember(compressor);
+    if (active) {
+      if (idleMembers.remove(compressor) != null) {
+        compressor.setLockedInactive(false);
+      }
+    } else {
+      idleMembers.put(compressor, Boolean.TRUE);
+      compressor.setLockedInactive(true);
+    }
+  }
+
+  /**
+   * Whether a member is in service.
+   *
+   * @param compressor a member of this shaft
+   * @return true if the member is not idle
+   */
+  public boolean isMemberActive(Compressor compressor) {
+    return !idleMembers.containsKey(compressor);
+  }
+
+  /**
+   * Get the members that are in service.
+   *
+   * @return list of active compressors in flow order
+   */
+  public List<Compressor> getActiveCompressors() {
+    List<Compressor> active = new ArrayList<Compressor>();
+    for (Compressor compressor : compressors) {
+      if (isMemberActive(compressor)) {
+        active.add(compressor);
+      }
+    }
+    return active;
+  }
+
+  /**
+   * Whether any member is in service, i.e. the shaft turns.
+   *
+   * @return true if at least one member is active
+   */
+  public boolean isTurning() {
+    return !getActiveCompressors().isEmpty();
+  }
+
+  /**
+   * Remove a member from the shaft, for example when a stage is decoupled onto its own driver in a later year. The
+   * member is unlocked if it was idle, and unregistered from a gas-turbine driver's load list.
+   *
+   * @param compressor a member of this shaft
+   * @throws IllegalArgumentException if the compressor is not on the shaft
+   */
+  public void removeCompressor(Compressor compressor) {
+    requireMember(compressor);
+    if (!isMemberActive(compressor)) {
+      setMemberActive(compressor, true);
+    }
+    compressors.remove(compressor);
+    gearRatios.remove(compressor);
+    requiredDischargeBara.remove(compressor);
+    antiSurgeValves.remove(compressor);
+    antiSurgeControllers.remove(compressor);
+    if (recycleAutoActivated.remove(compressor) != null) {
+      compressor.getAntiSurge().setActive(false);
+    }
+    if (turbineDriver != null) {
+      turbineDriver.getDrivenLoads().remove(compressor);
+    }
+  }
+
+  /**
+   * Check that a compressor is on this shaft.
+   *
+   * @param compressor the compressor to check
+   * @throws IllegalArgumentException if it is null or not a member
+   */
+  private void requireMember(Compressor compressor) {
+    for (Compressor member : compressors) {
+      if (member == compressor) {
+        return;
+      }
+    }
+    throw new IllegalArgumentException("CompressorShaft " + name + ": compressor is not a member of this shaft.");
   }
 
   /**
@@ -361,7 +591,7 @@ public class CompressorShaft implements Serializable {
    * @param efficiency the mechanical efficiency in the range (0, 1]
    */
   public void setMechanicalEfficiency(double efficiency) {
-    if (efficiency <= 0.0 || efficiency > 1.0) {
+    if (!Double.isFinite(efficiency) || efficiency <= 0.0 || efficiency > 1.0) {
       throw new IllegalArgumentException("mechanical efficiency must be in the range (0, 1]");
     }
     this.mechanicalEfficiency = efficiency;
@@ -449,36 +679,197 @@ public class CompressorShaft implements Serializable {
    *
    * <p>
    * Resolution order: an explicit {@link #setMaxShaftPower(double, String)} limit wins, then a {@link CompressorDriver}
-   * curve evaluated at the current speed (ambient-derated for a gas-turbine driver), then the rated power of an
-   * attached {@link GasTurbine}. Returns 0 when no limit is configured.
+   * curve evaluated at the current speed (ambient-derated for a gas-turbine driver), then a driver curve or electric
+   * motor ({@link #setDriverCurve(DriverCurve)}), then the rated power of an attached {@link GasTurbine}. An integrated
+   * {@link #setPowerTrain(CompressorPowerTrain)} takes precedence, with the explicit installed cap applied as an
+   * additional limit.
    * </p>
    *
    * @param unit power unit: "W", "kW" or "MW"
-   * @return the available shaft power in the requested unit, or 0 if no limit is defined
+   * @return available power; legacy unlimited selection returns zero, an unbounded integrated train returns infinity
    */
   public double getAvailableShaftPower(String unit) {
     double availableW = 0.0;
-    if (maxShaftPowerW > 0.0) {
+    if (powerTrain != null) {
+      availableW = powerTrain.getAvailablePowerW(speed, ambientTemperatureK);
+      if (maxShaftPowerW > 0.0) {
+        availableW = Math.min(availableW, maxShaftPowerW);
+      }
+    } else if (maxShaftPowerW > 0.0) {
       availableW = maxShaftPowerW;
-    } else if (driver != null && driver.getMaxAvailablePowerAtSpeed(speed) > 0.0) {
+    } else if (driver != null) {
       availableW = driver.getMaxAvailablePowerAtSpeed(speed) * 1.0e3;
+    } else if (driverCurve != null) {
+      availableW = driverCurvePowerW();
     } else if (turbineDriver != null && turbineDriver.getRatedPower() > 0.0) {
       availableW = turbineDriver.getRatedPower();
+    } else if (gasTurbineUnitDriver != null) {
+      availableW = gasTurbineUnitDriver.getAvailablePowerAtAmbient(ambientTemperatureK);
+    }
+    if (supplyShaftPowerLimitW > 0.0) {
+      availableW = hasDriverPowerLimit() ? Math.min(availableW, supplyShaftPowerLimitW) : supplyShaftPowerLimitW;
     }
     return availableW / powerFactor(unit);
   }
 
   /**
+   * Power the driver curve (or the electric motor with its environmental derating) can deliver at the common speed.
+   *
+   * @return power in W, 0 when no curve is attached or the speed is outside the curve
+   */
+  private double driverCurvePowerW() {
+    if (driverCurve == null || !(speed > 0.0)) {
+      return 0.0;
+    }
+    double w;
+    if (motorDriverUnit != null && motorDriverUnit.hasPerformanceModel()) {
+      motorDriverUnit.setOperatingSpeed(speed);
+      w = motorDriverUnit.getAvailableShaftPower();
+    } else {
+      w = driverCurve.getAvailablePower(speed) * 1.0e3;
+    }
+    return Double.isFinite(w) && w > 0.0 ? w : 0.0;
+  }
+
+  /**
+   * Attach a site-rated catalogue gas turbine as the driver. Its available power follows the shaft ambient temperature
+   * ({@link #setAmbientTemperature(double, String)}), including the vendor site-rating table and the exhaust
+   * temperature limit of the unit. After a solve, {@link #updateDriverOperatingPoint()} runs the unit at the shaft
+   * power demand to give fuel, exhaust and waste-heat figures.
+   *
+   * @param unit the gas turbine unit, or {@code null} to detach
+   */
+  public void setGasTurbineUnitDriver(GasTurbineUnit unit) {
+    this.gasTurbineUnitDriver = unit;
+    if (unit != null) {
+      unit.setAmbientTemperatureK(ambientTemperatureK);
+    }
+  }
+
+  /**
+   * Get the site-rated gas turbine unit driving this shaft.
+   *
+   * @return the unit, or {@code null}
+   */
+  public GasTurbineUnit getGasTurbineUnitDriver() {
+    return gasTurbineUnitDriver;
+  }
+
+  /**
+   * Set the ambient air temperature seen by the driver; it moves the power of an attached {@link GasTurbineUnit} and of
+   * a {@link CompressorDriver}.
+   *
+   * @param temperature the ambient temperature
+   * @param unit "C" or "K"
+   * @throws IllegalArgumentException if the unit is not "C" or "K"
+   */
+  public void setAmbientTemperature(double temperature, String unit) {
+    if ("C".equals(unit)) {
+      this.ambientTemperatureK = temperature + 273.15;
+    } else if ("K".equals(unit)) {
+      this.ambientTemperatureK = temperature;
+    } else {
+      throw new IllegalArgumentException("unsupported temperature unit '" + unit + "' (use C or K).");
+    }
+    if (gasTurbineUnitDriver != null) {
+      gasTurbineUnitDriver.setAmbientTemperatureK(ambientTemperatureK);
+    }
+    if (driver != null) {
+      driver.setAmbientTemperature(ambientTemperatureK);
+    }
+  }
+
+  /**
+   * Get the ambient air temperature used for the driver rating.
+   *
+   * @param unit "C" or "K"
+   * @return the ambient temperature
+   */
+  public double getAmbientTemperature(String unit) {
+    return "C".equals(unit) ? ambientTemperatureK - 273.15 : ambientTemperatureK;
+  }
+
+  /**
+   * Cap the shaft power by an electrical supply: the supply power times the motor/drive efficiency. Use it for an
+   * electric motor driver limited by power-from-shore or generator capacity. The cap combines with the other limits by
+   * taking the smaller one.
+   *
+   * @param supplyPower the electrical power available to the drive (0 or negative clears the cap)
+   * @param unit "W", "kW" or "MW"
+   * @param drivetrainEfficiency electrical-to-shaft efficiency in (0, 1]
+   * @throws IllegalArgumentException if the efficiency is outside (0, 1]
+   */
+  public void setElectricSupplyLimit(double supplyPower, String unit, double drivetrainEfficiency) {
+    if (!(drivetrainEfficiency > 0.0 && drivetrainEfficiency <= 1.0)) {
+      throw new IllegalArgumentException("drivetrain efficiency must be in the range (0, 1]");
+    }
+    this.supplyShaftPowerLimitW = supplyPower > 0.0 ? supplyPower * powerFactor(unit) * drivetrainEfficiency : 0.0;
+  }
+
+  /**
+   * Update the integrated power train, or the legacy attached {@link GasTurbineUnit}, at the present shaft power
+   * demand. Fuel, electrical input, losses and shortfall then describe the current compressor duty. No-op without
+   * either supply model.
+   */
+  public void updateDriverOperatingPoint() {
+    if (powerTrain != null) {
+      powerTrainResult = powerTrain.evaluate(getRequiredDriverPower("W"), speed, ambientTemperatureK,
+          getAvailableShaftPower("W"));
+    } else if (gasTurbineUnitDriver != null) {
+      gasTurbineUnitDriver.setAmbientTemperatureK(ambientTemperatureK);
+      gasTurbineUnitDriver.setDemandedPower(getRequiredDriverPower("W"));
+      gasTurbineUnitDriver.run();
+    }
+  }
+
+  /**
+   * Attaches a supply model for direct turbine, external electric or turbine-generator-motor drive.
+   *
+   * <p>
+   * This model takes precedence over the legacy driver selectors. An explicit shaft power cap remains an additional
+   * limit. Configure compressor charts and shaft speed bounds independently; this adapter does not create OEM maps. The
+   * supplied train remains live: later supply-limit, trip and equipment-configuration changes affect this shaft. The
+   * caller must coordinate updates and evaluation; neither the train nor its equipment is copied or thread-safe.
+   * </p>
+   *
+   * @param train live supply model, or null to restore legacy driver selection
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The shaft must observe later blackout, trip and derating changes in its connected supply train")
+  public void setPowerTrain(CompressorPowerTrain train) {
+    this.powerTrain = train;
+    this.powerTrainResult = null;
+  }
+
+  /**
+   * Gets the latest integrated fuel, electricity, loss and shortfall result.
+   *
+   * @return result, or null before an integrated driver update
+   */
+  public CompressorPowerTrain.Result getPowerTrainResult() {
+    return powerTrainResult;
+  }
+
+  /**
+   * Determines whether zero available driver power means unavailable rather than unbounded.
+   *
+   * @return true when a driver or installed power limit is configured
+   */
+  private boolean hasDriverPowerLimit() {
+    return powerTrain != null || maxShaftPowerW > 0.0 || driver != null || driverCurve != null
+        || turbineDriver != null && turbineDriver.getRatedPower() > 0.0 || gasTurbineUnitDriver != null;
+  }
+
+  /**
    * Get the shaft power utilization: required driver power divided by available driver power.
    *
-   * @return the utilization as a fraction (1.0 = at the limit), or 0 when no power limit is configured
+   * @return utilization as a fraction; zero when unbounded, infinity for positive duty with zero configured capacity
    */
   public double getPowerUtilization() {
     double available = getAvailableShaftPower("W");
-    if (available <= 0.0) {
-      return 0.0;
-    }
     double required = getRequiredDriverPower("W");
+    if (available <= 0.0) {
+      return required > 0.0 && hasDriverPowerLimit() ? Double.POSITIVE_INFINITY : 0.0;
+    }
     if (Double.isNaN(required) || required <= 0.0) {
       return 0.0;
     }
@@ -542,7 +933,8 @@ public class CompressorShaft implements Serializable {
   }
 
   /**
-   * Set the speed search bounds used by {@link #solveSpeed}.
+   * Set the speed search bounds used by {@link #solveSpeed}. An explicit call overrides a speed band derived from a
+   * driver ({@link #setDriverCurve(DriverCurve)}, {@link #setMotorDriverUnit(ElectricMotor)}).
    *
    * @param min the lower speed bound in rpm
    * @param max the upper speed bound in rpm
@@ -550,6 +942,112 @@ public class CompressorShaft implements Serializable {
   public void setSpeedBounds(double min, double max) {
     this.minSpeed = min;
     this.maxSpeed = max;
+    this.speedBandFromDriver = false;
+  }
+
+  /**
+   * Whether the speed bounds follow a driver (VFD range) attached to the shaft.
+   *
+   * @return true while the bounds are derived from the driver
+   */
+  public boolean isSpeedBandFromDriver() {
+    return speedBandFromDriver;
+  }
+
+  /**
+   * Get the lower speed bound in force.
+   *
+   * @return the lower bound in rpm
+   */
+  public double getMinSpeed() {
+    return minSpeed;
+  }
+
+  /**
+   * Get the upper speed bound in force.
+   *
+   * @return the upper bound in rpm
+   */
+  public double getMaxSpeed() {
+    return maxSpeed;
+  }
+
+  /**
+   * Attach a driver performance curve and take the speed band from it. For an electric motor with a variable-frequency
+   * drive this is the VFD range (minimum speed ratio to maximum speed ratio times the rated speed, including a cell
+   * bypass derating of the drive); for a fixed-speed motor it is the narrow band around the rated speed. The band is
+   * re-read at the start of every speed solve, so a change of the drive configuration is picked up. The curve also
+   * supplies the available shaft power at the common speed when no explicit limit, {@link CompressorDriver} or turbine
+   * is configured. The driver speed is the shaft speed: member speeds follow from the gear ratios.
+   *
+   * @param curve the driver performance curve, or {@code null} to detach it (the speed bounds stay as they are)
+   */
+  public void setDriverCurve(DriverCurve curve) {
+    this.driverCurve = curve;
+    if (curve == null) {
+      this.speedBandFromDriver = false;
+      return;
+    }
+    this.speedBandFromDriver = true;
+    refreshSpeedBandFromDriver();
+  }
+
+  /**
+   * Get the driver performance curve.
+   *
+   * @return the curve, or {@code null}
+   */
+  public DriverCurve getDriverCurve() {
+    return driverCurve;
+  }
+
+  /**
+   * Attach an electric motor process unit as the shaft driver. Its performance model (for example an
+   * {@code ElectricMotorDriver} with VFD data) becomes the driver curve, so the speed band is derived from the VFD
+   * automatically, and the available shaft power is evaluated at the common speed including the environmental derating
+   * of the motor. A motor without a performance model gives no speed band and no power limit.
+   *
+   * @param motor the motor, or {@code null} to detach it
+   */
+  public void setMotorDriverUnit(ElectricMotor motor) {
+    this.motorDriverUnit = motor;
+    if (motor != null && motor.hasPerformanceModel()) {
+      setDriverCurve(motor.getPerformanceModel());
+    } else if (motor == null) {
+      setDriverCurve(null);
+    }
+  }
+
+  /**
+   * Get the electric motor driving this shaft.
+   *
+   * @return the motor, or {@code null}
+   */
+  public ElectricMotor getMotorDriverUnit() {
+    return motorDriverUnit;
+  }
+
+  /**
+   * Re-read the speed bounds from the driver curve. Does nothing when no curve is attached or after an explicit
+   * {@link #setSpeedBounds(double, double)}. A non-positive minimum speed of the curve keeps the present lower bound; a
+   * curve with a maximum below the minimum is ignored.
+   */
+  public void refreshSpeedBandFromDriver() {
+    if (driverCurve == null || !speedBandFromDriver) {
+      return;
+    }
+    double lo = driverCurve.getMinSpeed();
+    double hi = driverCurve.getMaxSpeed();
+    if (!Double.isFinite(hi) || hi <= 0.0) {
+      return;
+    }
+    if (Double.isFinite(lo) && lo > 0.0 && lo > hi) {
+      return;
+    }
+    if (Double.isFinite(lo) && lo > 0.0) {
+      minSpeed = lo;
+    }
+    maxSpeed = hi;
   }
 
   /**
@@ -576,8 +1074,11 @@ public class CompressorShaft implements Serializable {
    */
   public void applySpeed() {
     for (Compressor compressor : compressors) {
+      if (!isMemberActive(compressor)) {
+        continue;
+      }
       compressor.setSolveSpeed(false);
-      compressor.setSpeed(speed);
+      compressor.setSpeed(speed * getGearRatio(compressor));
       if (compressor.getCompressorChart() != null) {
         compressor.getCompressorChart().setUseCompressorChart(true);
       }
@@ -601,8 +1102,13 @@ public class CompressorShaft implements Serializable {
     if (compressors.isEmpty()) {
       throw new RuntimeException("CompressorShaft " + name + ": no compressors on the shaft.");
     }
-    if (reference == null) {
-      reference = compressors.get(compressors.size() - 1);
+    refreshSpeedBandFromDriver();
+    if (!isTurning()) {
+      return recordIdle("solveSpeed");
+    }
+    if (reference == null || !isMemberActive(reference)) {
+      List<Compressor> active = getActiveCompressors();
+      reference = active.get(active.size() - 1);
     }
     // Bracket the root at the speed bounds. Discharge pressure rises monotonically with speed,
     // so we expect fa < 0 < fb; then converge with a false-position (Illinois) secant, which is
@@ -702,6 +1208,15 @@ public class CompressorShaft implements Serializable {
    */
   private double record(SolveStatus status, boolean feasible, double target, double achieved, double minAch,
       double maxAch, double solvedSpeed, String unit, String message) {
+    if (feasible && isOverPower()) {
+      status = SolveStatus.OVER_POWER;
+      feasible = false;
+      message = "target reached but the driver cannot supply the required power";
+    } else if (feasible && powerTrainResult != null && powerTrainResult.isBelowMinimumLoad()) {
+      status = SolveStatus.DRIVER_BELOW_MINIMUM_LOAD;
+      feasible = false;
+      message = "target reached but turbine load is below the configured minimum";
+    }
     this.lastResult = new SolveResult(feasible, status, target, achieved, minAch, maxAch, solvedSpeed, unit, message);
     return solvedSpeed;
   }
@@ -735,8 +1250,11 @@ public class CompressorShaft implements Serializable {
     if (isOverPower()) {
       return SolveStatus.OVER_POWER;
     }
+    if (powerTrainResult != null && powerTrainResult.isBelowMinimumLoad()) {
+      return SolveStatus.DRIVER_BELOW_MINIMUM_LOAD;
+    }
     for (Compressor compressor : compressors) {
-      if (compressor.getCompressorChart() == null) {
+      if (!isMemberActive(compressor) || compressor.getCompressorChart() == null) {
         continue;
       }
       try {
@@ -795,6 +1313,7 @@ public class CompressorShaft implements Serializable {
     this.speed = solvedSpeed;
     applySpeed();
     runOnce(processRun);
+    updateDriverOperatingPoint();
     logger.info("CompressorShaft {} solved common speed {} rpm", name, solvedSpeed);
     return solvedSpeed;
   }
@@ -813,6 +1332,8 @@ public class CompressorShaft implements Serializable {
     this.speed = fixedShaftSpeed;
     applySpeed();
     runOnce(processRun);
+    lastResult = null;
+    updateDriverOperatingPoint();
     logger.info("CompressorShaft {} running at fixed speed {} rpm", name, fixedShaftSpeed);
   }
 
@@ -826,7 +1347,9 @@ public class CompressorShaft implements Serializable {
       processRun.run();
     } else {
       for (Compressor compressor : compressors) {
-        compressor.run();
+        if (isMemberActive(compressor)) {
+          compressor.run();
+        }
       }
     }
   }
@@ -839,7 +1362,9 @@ public class CompressorShaft implements Serializable {
   public double getTotalPower() {
     double sum = 0.0;
     for (Compressor compressor : compressors) {
-      sum += compressor.getPower();
+      if (isMemberActive(compressor)) {
+        sum += compressor.getPower();
+      }
     }
     return sum;
   }
@@ -852,6 +1377,541 @@ public class CompressorShaft implements Serializable {
    */
   public double getTotalPower(String unit) {
     return getTotalPower() / powerFactor(unit);
+  }
+
+  /** Process discharge-pressure need per member in bara, used for the report margins. */
+  private final Map<Compressor, Double> requiredDischargeBara = new IdentityHashMap<Compressor, Double>();
+
+  /**
+   * Set the discharge pressure the process needs from a member (for example the next stage's suction requirement). The
+   * report then shows the margin of the chart-delivered discharge pressure over this need: a negative margin means the
+   * common speed is too low for the member, a clearly positive margin means excess head to be throttled or recycled.
+   *
+   * @param compressor a member of this shaft
+   * @param pressure required discharge pressure
+   * @param unit pressure unit, e.g. "bara"
+   * @throws IllegalArgumentException if the compressor is not on the shaft
+   */
+  public void setMemberRequiredDischargePressure(Compressor compressor, double pressure, String unit) {
+    requireMember(compressor);
+    requiredDischargeBara.put(compressor, Double.valueOf(convertToBara(pressure, unit)));
+  }
+
+  /**
+   * Convert a pressure to bara.
+   *
+   * @param pressure pressure value
+   * @param unit "bara", "barg", "Pa", "kPa", "MPa" or "psia"
+   * @return pressure in bara
+   * @throws IllegalArgumentException if the unit is not supported
+   */
+  private static double convertToBara(double pressure, String unit) {
+    if (unit == null || "bara".equals(unit) || "bar".equals(unit)) {
+      return pressure;
+    } else if ("barg".equals(unit)) {
+      return pressure + 1.01325;
+    } else if ("Pa".equals(unit)) {
+      return pressure / 1.0e5;
+    } else if ("kPa".equals(unit)) {
+      return pressure / 100.0;
+    } else if ("MPa".equals(unit)) {
+      return pressure * 10.0;
+    } else if ("psia".equals(unit)) {
+      return pressure * 0.0689476;
+    }
+    throw new IllegalArgumentException("unsupported pressure unit '" + unit + "'.");
+  }
+
+  /**
+   * Record the outcome for a shaft with no active member.
+   *
+   * @param what name of the calling solve, for the message
+   * @return 0 rpm (the shaft is not turning)
+   */
+  private double recordIdle(String what) {
+    this.speed = 0.0;
+    this.lastResult = new SolveResult(true, SolveStatus.SHAFT_IDLE, Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0.0,
+        "bara", what + ": no active member, shaft not turning");
+    updateDriverOperatingPoint();
+    return 0.0;
+  }
+
+  /**
+   * Solve the common speed so that one controlling member holds a target, with every other member floating on its chart
+   * at the same speed (times its gear ratio). This is the "controlling stage sets the speed" pattern: the member whose
+   * process flow and discharge pressure are fixed sets the shaft speed, the other members follow that speed and their
+   * surplus or deficit is read from {@link #getOperatingReport()}.
+   *
+   * <p>
+   * {@link ControlTarget#DISCHARGE_PRESSURE} is {@link #solveSpeed}. For {@link ControlTarget#SUCTION_PRESSURE} and
+   * {@link ControlTarget#INLET_FLOW} the speed is bracketed on the speed bounds and found by false position; the
+   * direction of the response is not assumed, but the target must lie between the values at the two bounds, otherwise
+   * the status is {@link SolveStatus#TARGET_OUT_OF_RANGE} and the speed saturates at the closer bound. The result
+   * fields of {@link SolveResult} carry the controlled quantity in the given unit.
+   * </p>
+   *
+   * @param controlling the controlling member (null selects the last active member)
+   * @param target the quantity to hold
+   * @param value the target value
+   * @param unit pressure unit for the pressure targets, flow unit (e.g. "kg/hr", "m3/hr") for the flow target
+   * @param processRun callback re-solving the flowsheet between speed guesses, or {@code null}
+   * @return the solved common shaft speed in rpm
+   */
+  public double solveSpeedToTarget(Compressor controlling, ControlTarget target, double value, String unit,
+      Runnable processRun) {
+    if (target == null || target == ControlTarget.DISCHARGE_PRESSURE) {
+      return solveSpeed(controlling, value, unit, processRun);
+    }
+    refreshSpeedBandFromDriver();
+    if (compressors.isEmpty()) {
+      throw new RuntimeException("CompressorShaft " + name + ": no compressors on the shaft.");
+    }
+    if (!isTurning()) {
+      return recordIdle("solveSpeedToTarget");
+    }
+    final Compressor ctl;
+    if (controlling == null || !isMemberActive(controlling)) {
+      List<Compressor> active = getActiveCompressors();
+      ctl = active.get(active.size() - 1);
+    } else {
+      ctl = controlling;
+    }
+    final ControlTarget kind = target;
+    final String u = unit;
+    final Runnable run = processRun;
+    final double goal = value;
+    DoubleUnaryOperator error = new DoubleUnaryOperator() {
+      @Override
+      public double applyAsDouble(double trialSpeed) {
+        speed = trialSpeed;
+        applySpeed();
+        runOnce(run);
+        double measured = kind == ControlTarget.SUCTION_PRESSURE ? ctl.getInletStream().getPressure(u)
+            : ctl.getInletStream().getFlowRate(u);
+        return measured - goal;
+      }
+    };
+    double tol = kind == ControlTarget.SUCTION_PRESSURE ? pressureToleranceBar : Math.max(1e-9, 1e-4 * Math.abs(goal));
+    double a = minSpeed;
+    double b = maxSpeed;
+    double fa = error.applyAsDouble(a);
+    if (Math.abs(fa) < tol) {
+      double solved = finalizeSpeed(a, processRun);
+      return record(checkBodyLimits(), isFeasibleAfterLimits(), goal, goal + fa, goal + fa, Double.NaN, solved, unit,
+          "target reached at the minimum-speed bound");
+    }
+    double fb = error.applyAsDouble(b);
+    if (Math.abs(fb) < tol) {
+      double solved = finalizeSpeed(b, processRun);
+      return record(checkBodyLimits(), isFeasibleAfterLimits(), goal, goal + fb, goal + fa, goal + fb, solved, unit,
+          "target reached at the maximum-speed bound");
+    }
+    if (fa * fb > 0.0) {
+      boolean lowerIsCloser = Math.abs(fa) < Math.abs(fb);
+      double solved = finalizeSpeed(lowerIsCloser ? a : b, processRun);
+      logger.warn("CompressorShaft {}: {} target {} {} is not bracketed by the speed bounds ({} .. {})", name, kind,
+          goal, unit, goal + fa, goal + fb);
+      return record(SolveStatus.TARGET_OUT_OF_RANGE, false, goal, goal + (lowerIsCloser ? fa : fb), goal + fa,
+          goal + fb, solved, unit, kind + " target is outside the range reachable by the speed bounds");
+    }
+    double best = 0.5 * (a + b);
+    for (int i = 0; i < maxIterations; i++) {
+      double x = b - fb * (b - a) / (fb - fa);
+      if (!(x > Math.min(a, b) && x < Math.max(a, b))) {
+        x = 0.5 * (a + b);
+      }
+      double fx = error.applyAsDouble(x);
+      best = x;
+      if (Math.abs(fx) < tol) {
+        break;
+      }
+      if (fx * fa < 0.0) {
+        b = x;
+        fb = fx;
+        fa *= 0.5;
+      } else {
+        a = x;
+        fa = fx;
+        fb *= 0.5;
+      }
+    }
+    double solved = finalizeSpeed(best, processRun);
+    double achieved = kind == ControlTarget.SUCTION_PRESSURE ? ctl.getInletStream().getPressure(unit)
+        : ctl.getInletStream().getFlowRate(unit);
+    SolveStatus limit = checkBodyLimits();
+    return record(limit, limit == SolveStatus.FEASIBLE, goal, achieved, Double.NaN, Double.NaN, solved, unit,
+        limit == SolveStatus.FEASIBLE ? kind + " target reached by adjusting the common speed"
+            : kind + " target reached but a body hit a " + limit + " limit");
+  }
+
+  /**
+   * Whether the body limits are all inside after the last run.
+   *
+   * @return true if no surge, stonewall or over-power was detected
+   */
+  private boolean isFeasibleAfterLimits() {
+    return checkBodyLimits() == SolveStatus.FEASIBLE;
+  }
+
+  /**
+   * Find the highest common speed the driver can hold: the speed at which the required driver power equals the power
+   * available at the shaft ambient temperature (the speed bounds limit the search). Required power rises with speed, so
+   * a bisection on the power balance is used. The flowsheet is left at the returned speed. The result fields of
+   * {@link SolveResult} carry the available driver power (target) and the required driver power (achieved) in W.
+   *
+   * @param processRun callback re-solving the flowsheet between speed guesses, or {@code null}
+   * @return the highest feasible common speed in rpm, the minimum speed if even that overloads the driver, the maximum
+   * speed if the driver is never limiting or has no configured limit, and 0 for an idle shaft
+   */
+  public double findMaxSpeedWithinPowerLimit(Runnable processRun) {
+    if (compressors.isEmpty()) {
+      throw new RuntimeException("CompressorShaft " + name + ": no compressors on the shaft.");
+    }
+    refreshSpeedBandFromDriver();
+    if (!isTurning()) {
+      return recordIdle("findMaxSpeedWithinPowerLimit");
+    }
+    double lo = minSpeed;
+    double hi = maxSpeed;
+    double gLo = powerMargin(lo, processRun);
+    if (gLo < 0.0) {
+      double solved = finalizeSpeed(lo, processRun);
+      this.lastResult = new SolveResult(false, SolveStatus.OVER_POWER, getAvailableShaftPower("W"),
+          getRequiredDriverPower("W"), Double.NaN, Double.NaN, solved, "W",
+          "driver power is exceeded even at the minimum speed");
+      return solved;
+    }
+    double gHi = powerMargin(hi, processRun);
+    if (gHi >= 0.0 || getAvailableShaftPower("W") <= 0.0) {
+      double solved = finalizeSpeed(hi, processRun);
+      this.lastResult = new SolveResult(true, SolveStatus.FEASIBLE, getAvailableShaftPower("W"),
+          getRequiredDriverPower("W"), Double.NaN, Double.NaN, solved, "W",
+          "driver is not limiting up to the maximum speed");
+      return solved;
+    }
+    for (int i = 0; i < 40 && (hi - lo) > 1.0e-4 * hi; i++) {
+      double mid = 0.5 * (lo + hi);
+      if (powerMargin(mid, processRun) >= 0.0) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    double solved = finalizeSpeed(lo, processRun);
+    this.lastResult = new SolveResult(true, SolveStatus.FEASIBLE, getAvailableShaftPower("W"),
+        getRequiredDriverPower("W"), Double.NaN, Double.NaN, solved, "W", "speed limited by driver power");
+    return solved;
+  }
+
+  /**
+   * Available minus required driver power at a trial speed.
+   *
+   * @param trialSpeed common shaft speed in rpm
+   * @param processRun flowsheet callback or {@code null}
+   * @return power margin in W (negative when overloaded)
+   */
+  private double powerMargin(double trialSpeed, Runnable processRun) {
+    this.speed = trialSpeed;
+    applySpeed();
+    runOnce(processRun);
+    double available = getAvailableShaftPower("W");
+    return available <= 0.0 ? Double.POSITIVE_INFINITY : available - getRequiredDriverPower("W");
+  }
+
+  /**
+   * Register the recycle (anti-surge) valve of a member so that {@link #applyRequiredRecycle()} can position it.
+   *
+   * @param compressor a member of this shaft
+   * @param valve the member's recycle valve, or {@code null} to remove the registration
+   * @throws IllegalArgumentException if the compressor is not on the shaft
+   */
+  public void setAntiSurgeValve(Compressor compressor, ThrottlingValve valve) {
+    requireMember(compressor);
+    if (valve == null) {
+      antiSurgeValves.remove(compressor);
+    } else {
+      antiSurgeValves.put(compressor, valve);
+    }
+  }
+
+  /**
+   * Register the anti-surge controller of a member. Its recycle valve is positioned by {@link #applyRequiredRecycle()}
+   * (steady-state set point; the controller itself acts only in a transient run).
+   *
+   * @param compressor a member of this shaft
+   * @param controller the member's anti-surge controller, or {@code null} to remove the registration
+   * @throws IllegalArgumentException if the compressor is not on the shaft
+   */
+  public void setAntiSurgeController(Compressor compressor, AntiSurgeController controller) {
+    requireMember(compressor);
+    if (controller == null) {
+      antiSurgeControllers.remove(compressor);
+    } else {
+      antiSurgeControllers.put(compressor, controller);
+    }
+  }
+
+  /**
+   * Set the recycle fraction at which a registered recycle valve is fully open. The valve opening is taken as linear in
+   * the recycle fraction, which is a screening relation; calibrate it to the valve and line when the opening matters.
+   *
+   * @param fraction recycle fraction of the suction flow at 100 percent opening, in (0, 1]
+   * @throws IllegalArgumentException if the fraction is outside (0, 1]
+   */
+  public void setRecycleValveFullOpenFraction(double fraction) {
+    if (!(fraction > 0.0 && fraction <= 1.0)) {
+      throw new IllegalArgumentException("full-open recycle fraction must be in the range (0, 1]");
+    }
+    this.recycleValveFullOpenFraction = fraction;
+  }
+
+  /**
+   * Feed the recycle fraction each member needs (from {@link #getOperatingReport()}, the distance of the operating
+   * point to the anti-surge control line) into the member's anti-surge: the built-in {@link AntiSurge} of the
+   * compressor is activated with the control line of the member (surge control factor from its surge control margin)
+   * and its valve position is set, and a registered recycle valve
+   * ({@link #setAntiSurgeValve(Compressor, ThrottlingValve)} or {@link #setAntiSurgeController}) is opened in
+   * proportion to the fraction. The built-in anti-surge acts inside the compressor run when the operating point is left
+   * of the surge line; between the surge line and the control line the recycle is carried by the valve opening and by
+   * the recycle power of the report. Re-run the flowsheet afterwards.
+   *
+   * <p>
+   * The call is idempotent: the fractions are a function of the current operating point only, so repeating it without a
+   * change of that point gives the same state. A member that needs no recycle (or is idle) has its recycle set to zero,
+   * and a built-in anti-surge that this method switched on is switched off again; an anti-surge the user had activated
+   * stays active.
+   * </p>
+   *
+   * @return applied recycle fraction per member name, in flow order
+   */
+  public Map<String, Double> applyRequiredRecycle() {
+    CompressorShaftReport report = getOperatingReport();
+    Map<String, Double> applied = new LinkedHashMap<String, Double>();
+    for (int i = 0; i < compressors.size(); i++) {
+      Compressor c = compressors.get(i);
+      CompressorShaftReport.MemberReport mr = report.getMembers().get(i);
+      double f = mr.isActive() ? Math.max(0.0, Math.min(0.99, mr.getRequiredRecycleFraction())) : 0.0;
+      if (Double.isNaN(f)) {
+        f = 0.0;
+      }
+      applyRecycle(c, f);
+      applied.put(c.getName(), Double.valueOf(f));
+    }
+    return applied;
+  }
+
+  /**
+   * Apply one recycle fraction to the anti-surge of a member.
+   *
+   * @param c the member
+   * @param f the recycle fraction of the suction flow, in [0, 1)
+   */
+  private void applyRecycle(Compressor c, double f) {
+    AntiSurge as = c.getAntiSurge();
+    double opening = Math.min(1.0, f / recycleValveFullOpenFraction);
+    if (f > 1.0e-6) {
+      if (!as.isActive()) {
+        as.setActive(true);
+        recycleAutoActivated.put(c, Boolean.TRUE);
+      }
+      if (recycleAutoActivated.containsKey(c) && c.isSurgeControlMarginSet()) {
+        as.setSurgeControlFactor(1.0 + c.getSurgeControlMargin());
+      }
+      as.setValvePosition(opening);
+      as.setTargetValvePosition(opening);
+    } else {
+      as.setValvePosition(0.0);
+      as.setTargetValvePosition(0.0);
+      if (recycleAutoActivated.remove(c) != null) {
+        as.setActive(false);
+        as.setCurrentSurgeFraction(0.0);
+      }
+    }
+    ThrottlingValve valve = antiSurgeValves.get(c);
+    if (valve == null && antiSurgeControllers.containsKey(c)) {
+      valve = antiSurgeControllers.get(c).getRecycleValve();
+    }
+    if (valve != null) {
+      valve.setPercentValveOpening(100.0 * opening);
+    }
+  }
+
+  /**
+   * Evaluate how every active member meets its required discharge pressure at the present, fixed shaft speed, using the
+   * member's chart: head deficit, recycle (through-flow, recycle fraction), throttling needed, and the shaft power and
+   * discharge temperature at the controlled operating point. This is the operating model of a constant-speed shaft,
+   * where the speed cannot be solved and the pressure set points are held by recycle or throttling.
+   *
+   * <p>
+   * Set the pressure each stage must deliver with {@link #setMemberRequiredDischargePressure}, run the shaft at its
+   * fixed speed ({@link #runAtFixedSpeed}), then call this method. Idle members and members without a required pressure
+   * or a chart are returned as {@link FixedSpeedControlResult.Status#NOT_EVALUATED}. The flowsheet and the members are
+   * not changed. See {@link CompressorFixedSpeedControl} for the method and its assumptions.
+   * </p>
+   *
+   * @return one result per member, in the order the members were added
+   */
+  public List<FixedSpeedControlResult> evaluateFixedSpeedControl() {
+    List<FixedSpeedControlResult> results = new ArrayList<FixedSpeedControlResult>();
+    for (Compressor c : compressors) {
+      Double need = requiredDischargeBara.get(c);
+      if (!isMemberActive(c)) {
+        results.add(FixedSpeedControlResult.notEvaluated(c.getName(), 0.0,
+            need == null ? Double.NaN : need.doubleValue(), "member idle"));
+      } else if (need == null) {
+        results.add(FixedSpeedControlResult.notEvaluated(c.getName(), c.getSpeed(), Double.NaN,
+            "no required discharge pressure set"));
+      } else {
+        results.add(CompressorFixedSpeedControl.evaluate(c, need.doubleValue()));
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Total shaft power at the controlled operating points of {@link #evaluateFixedSpeedControl()}: the evaluated members
+   * contribute the power at their controlled point (including recycle), the others their present power.
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the controlled shaft power in the requested unit
+   */
+  public double getFixedSpeedControlledPower(String unit) {
+    double sumW = 0.0;
+    List<FixedSpeedControlResult> results = evaluateFixedSpeedControl();
+    for (int i = 0; i < compressors.size(); i++) {
+      Compressor c = compressors.get(i);
+      if (!isMemberActive(c)) {
+        continue;
+      }
+      double kw = results.get(i).getShaftPowerKW();
+      sumW += Double.isNaN(kw) ? c.getPower() : kw * 1000.0;
+    }
+    return sumW / powerFactor(unit);
+  }
+
+  /**
+   * Build the operating-point report at the present state of the flowsheet: member speeds, powers, surge and stonewall
+   * margins, discharge-pressure margins against the process need and the anti-surge recycle fraction each member needs.
+   *
+   * @return the report
+   */
+  public CompressorShaftReport getOperatingReport() {
+    List<CompressorShaftReport.MemberReport> reports = new ArrayList<CompressorShaftReport.MemberReport>();
+    for (Compressor c : compressors) {
+      reports.add(buildMemberReport(c));
+    }
+    double available = getAvailableShaftPower("W");
+    double fuel = Double.NaN;
+    double exhaustT = Double.NaN;
+    if (powerTrain != null) {
+      if (powerTrainResult != null) {
+        fuel = powerTrainResult.getFuelMassKgPerS() * 3600.0;
+        if (powerTrain.getTurbine() != null) {
+          exhaustT = powerTrain.getTurbine().getExhaustTemperatureK();
+        }
+      }
+    } else if (gasTurbineUnitDriver != null) {
+      fuel = gasTurbineUnitDriver.getFuelMassFlowKgPerHr();
+      exhaustT = gasTurbineUnitDriver.getExhaustTemperatureK();
+    }
+    return new CompressorShaftReport(name, isTurning(), speed, ambientTemperatureK, getTotalPower(),
+        getRequiredDriverPower("W"), available, getPowerUtilization(), isOverPower(),
+        lastResult == null ? "NONE" : lastResult.getStatus().name(),
+        isFeasible() && !isOverPower() && (powerTrainResult == null || powerTrainResult.isFeasible()), fuel, exhaustT,
+        reports, powerTrainResult);
+  }
+
+  /**
+   * Build the report of one member.
+   *
+   * @param c the member
+   * @return the member report
+   */
+  private CompressorShaftReport.MemberReport buildMemberReport(Compressor c) {
+    List<String> flags = new ArrayList<String>();
+    boolean active = isMemberActive(c);
+    double ratio = getGearRatio(c);
+    if (!active) {
+      flags.add("idle");
+      return new CompressorShaftReport.MemberReport(c.getName(), false, ratio, 0.0, 0.0, 0.0, Double.NaN, Double.NaN,
+          Double.NaN, Double.NaN, Double.NaN, 0.0, 0.0, false, false, true, flags);
+    }
+    double flow = safe(c, "flow");
+    double pIn = c.getInletStream().getPressure("bara");
+    double pOut = c.getOutletStream().getPressure("bara");
+    Double need = requiredDischargeBara.get(c);
+    boolean hasChart = c.getCompressorChart() != null && c.getCompressorChart().isUseCompressorChart();
+    double dSurge = hasChart ? safe(c, "surge") : Double.NaN;
+    double dStone = hasChart ? safe(c, "stone") : Double.NaN;
+    double recycle = hasChart ? safe(c, "recycle") : 0.0;
+    if (Double.isNaN(recycle)) {
+      recycle = 0.0;
+    }
+    boolean surge = false;
+    boolean stone = false;
+    if (hasChart) {
+      try {
+        surge = c.isSurge();
+      } catch (RuntimeException ex) {
+        surge = false;
+      }
+      try {
+        stone = c.isStoneWall();
+      } catch (RuntimeException ex) {
+        stone = false;
+      }
+    }
+    boolean inRange = true;
+    try {
+      inRange = c.isSpeedWithinRange();
+    } catch (RuntimeException ex) {
+      inRange = true;
+    }
+    if (surge) {
+      flags.add("surge");
+    }
+    if (stone) {
+      flags.add("stonewall");
+    }
+    if (recycle > 0.0) {
+      flags.add("recycle required");
+    }
+    if (need != null) {
+      double margin = pOut - need.doubleValue();
+      if (margin < -0.01 * need.doubleValue()) {
+        flags.add("speed too low for the discharge need");
+      } else if (margin > 0.03 * need.doubleValue()) {
+        flags.add("excess head (throttle or recycle)");
+      }
+    }
+    if (!inRange) {
+      flags.add("outside member speed range");
+    }
+    return new CompressorShaftReport.MemberReport(c.getName(), true, ratio, c.getSpeed(), c.getPower(), flow, pIn, pOut,
+        need == null ? Double.NaN : need.doubleValue(), dSurge, dStone, recycle, recycle * c.getPower(), surge, stone,
+        inRange, flags);
+  }
+
+  /**
+   * Evaluate a chart-dependent member quantity, returning NaN when the chart cannot supply it.
+   *
+   * @param c the member
+   * @param what "flow", "surge", "stone" or "recycle"
+   * @return the value or NaN
+   */
+  private static double safe(Compressor c, String what) {
+    try {
+      if ("flow".equals(what)) {
+        return c.getInletStream().getFlowRate("m3/hr");
+      } else if ("surge".equals(what)) {
+        return c.getDistanceToSurge();
+      } else if ("stone".equals(what)) {
+        return c.getDistanceToStoneWall();
+      }
+      return c.getRequiredRecycleFractionToControlLine();
+    } catch (RuntimeException ex) {
+      return Double.NaN;
+    }
   }
 
   /**

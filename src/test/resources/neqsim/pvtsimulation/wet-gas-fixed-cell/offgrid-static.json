@@ -1,0 +1,59 @@
+{
+  "parentTestFindings": 0,
+  "candidateTestFindings": 0,
+  "testAdded": [],
+  "testRemoved": [],
+  "testAnalysisErrors": [
+    0,
+    0
+  ],
+  "candidateMainFindings": 20,
+  "mainAdded": [],
+  "mainRemoved": [],
+  "mainAnalysisErrors": 0,
+  "strictFailOnError": true,
+  "parentTestClassesStatsCount": 7031,
+  "parentTestClassesRelevantInputs": [
+    "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+    "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion$FixedCellResult",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$NativeResult",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$Result",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$Surface",
+    "neqsim.pvtsimulation.util.WetGasFixedCellHandoffTest"
+  ],
+  "candidateTestClassesStatsCount": 10864,
+  "candidateTestClassesRelevantInputs": [
+    "OffGridMasterProbe",
+    "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+    "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion$FixedCellResult",
+    "neqsim.pvtsimulation.simulation.ConstantVolumeDepletionTest",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$NativeResult",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$Result",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$Surface",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGeneratorTest",
+    "neqsim.pvtsimulation.util.WetGasFixedCellHandoffTest"
+  ],
+  "mainClassesStatsCount": 7030,
+  "mainClassesRelevantInputs": [
+    "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+    "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion$FixedCellResult",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$NativeResult",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$Result",
+    "neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator$Surface"
+  ],
+  "parent-test-staticErrors": {
+    "missingClasses": "0",
+    "errors": "0"
+  },
+  "candidate-test-staticErrors": {
+    "missingClasses": "0",
+    "errors": "0"
+  },
+  "candidate-main-staticErrors": {
+    "missingClasses": "0",
+    "errors": "0"
+  }
+}

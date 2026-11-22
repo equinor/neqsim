@@ -6,6 +6,11 @@ description: "Detailed mathematical and algorithmic documentation for the PT pha
 
 NeqSim traces the PT phase envelope using Michelsen's continuation method (Michelsen & Mollerup, *Thermodynamic Models: Fundamentals & Computational Aspects*, 2nd ed., 2007). This document describes the mathematical formulation, the Newton-Raphson solver, critical point detection, quality line tracing, and the adaptive step-size control implemented in `PTPhaseEnvelopeMichelsen` and `SysNewtonRhapsonPhaseEnvelope`.
 
+For a characterized fluid, specify the units of each cut before tracing the envelope.
+For example, `fluid.addTBPfraction2("C10", 0.02, 0.142, 174.0, "C")` supplies 0.02 mol,
+0.142 kg/mol and 174 °C (447.15 K). The four-argument overload expects kelvin. The inferred
+specific gravity and critical properties influence where the phase boundary lies.
+
 ## 1. Problem Formulation
 
 At every point on the phase boundary, the following $n_c + 2$ equations hold simultaneously:
@@ -151,20 +156,17 @@ $$
 \mathbf{u}^{(k+1)} = \mathbf{u}^{(k)} - \lambda \cdot \mathbf{J}^{-1} \mathbf{f}
 $$
 
-where the damping factor $\lambda$ is:
-
-$$
-\lambda = \begin{cases} 1 & \text{if } \|\Delta \mathbf{u}^{(k)}\| \le 2 \|\Delta \mathbf{u}^{(k-1)}\| \\ \|\Delta \mathbf{u}^{(k-1)}\| / \|\Delta \mathbf{u}^{(k)}\| & \text{otherwise, clamped to } [0.1, 1] \end{cases}
-$$
-
-This prevents overshooting near turning points and in the critical region.
+The damping factor is $\lambda = \min(1, 1/\max(1, \|\Delta \mathbf{u}\|_\infty))$,
+which limits each logarithmic correction to one before re-evaluating the
+residual. It prevents a single Newton update from making an unbounded
+multiplicative change in temperature, pressure or K-values.
 
 ### 4.2 Convergence Criteria
 
 Convergence requires **both** norms to be small (dual criterion):
 
 $$
-\|\mathbf{J}^{-1} \mathbf{f}\|_2 < 10^{-6} \quad \text{AND} \quad \|\mathbf{f}\|_2 < 10^{-6}
+\|\mathbf{J}^{-1} \mathbf{f}\|_2 < 10^{-5} \quad \text{AND} \quad \|\mathbf{f}_{\mathrm{updated}}\|_2 < 10^{-8}
 $$
 
 The dual check prevents false convergence where the correction is small but the residual is not.
@@ -177,7 +179,16 @@ $$
 \Delta s_{\text{bt}} = \Delta s \cdot 0.5^k, \quad k = 1, 2, \dots, 15
 $$
 
-After 15 failed backtrack attempts, a `RuntimeException` signals failure to `PTPhaseEnvelopeMichelsen`, which then either terminates the current tracing pass or starts a second pass from the opposite end.
+Retries use the tangent predictor until four history points are available,
+then use the cubic predictor. A singular cubic history falls back to the
+current tangent, never coefficients from a different variable. Non-finite
+residuals, trivial multicomponent K=1 solutions and stalled specification
+steps cannot be accepted. Only converged states update the solution history. Corrected points may not
+jump more than three configured temperature or pressure steps from the previous
+accepted point. A pressure or point-limit exit throws and leaves extrema
+unavailable; the cutoff is not a computed cricondenbar.
+
+After 15 failed backtrack attempts, an `IllegalStateException` signals failure to `PTPhaseEnvelopeMichelsen`, which then either terminates the current tracing pass or starts a second pass from the opposite end.
 
 ## 5. Two-Pass Envelope Tracing
 
@@ -190,19 +201,40 @@ The envelope is traced in up to two passes:
 2. Flips `bubblePointFirst` and `phaseFraction`
 3. Restarts from the opposite end
 
-This two-pass approach ensures that both dew and bubble branches are captured even when the continuation method fails near the critical point.
+The second pass can recover the other branch when continuation fails near the
+critical point, but does not guarantee that the two branches meet. If neither
+pass yields any converged point, tracing throws `IllegalStateException` and
+returns no invented extrema. The physical branch labels are independent of
+which side was traced first.
+The restart is not stopped by comparing its temperature with the last
+temperature of the failed pass. A dew branch can be warmer than the entire
+low-pressure bubble segment without overlapping it, as in the SAFT-VR Mie
+methane/propane regression. Each pass follows its own continuation and pressure
+termination criteria.
+
+The Michelsen tracer removes negligible species from its private working fluid before solving the continuation equations.
+For standard SRK and PR phases with the classic rule, the reduced phase retains the interaction coefficients of each surviving pair, including
+user-fitted values. An explicitly zero nitrogen or H2S entry therefore gives the same envelope coordinates as omitting
+it in the characterized SRK case. The caller retains its original component list and pair parameters.
+Read the dew coordinates with `dewT` and `dewP`, and the bubble coordinates with `bubT` and `bubP`.
+These arrays include both continuation passes with NaN breaks. The legacy separate second-pass keys return null.
 
 ## 6. Critical Point Detection
 
 ### 6.1 Criterion
 
-The critical point is detected using the Michelsen criterion based on the sum of squared log K-values:
-
-$$
-\Sigma = \sum_{i=1}^{n_c} (\ln K_i)^2
-$$
-
-When $\Sigma < 0.01$, all equilibrium ratios are approaching unity ($K_i \to 1$), indicating the critical point.
+For the first multicomponent crossing, the tracer monitors the lightest and heaviest
+components: $K_{\mathrm{light}} < 1.05$ and $K_{\mathrm{heavy}} > 0.95$.
+After that crossing, another critical point requires both ratios to approach
+unity from either direction: $|\ln K| < \ln(1.05)$. The ratios must first
+diverge, at least 50 points must separate the detections, and pressure must
+exceed 5 bara. A light-component ratio far below unity and a heavy-component
+ratio far above unity are not evidence of another critical point. These
+heuristics do not replace a stability analysis.
+For a pure component, $K=1$ holds along the entire saturation curve and cannot
+identify criticality. The tracer therefore skips this K-based detection and
+rejects candidate saturation points whose two volume roots coincide (relative
+volume separation at most `1e-6`).
 
 ### 6.2 Newton Refinement
 
@@ -221,16 +253,42 @@ $$
 This gives a well-conditioned system at the critical point where the standard specification equation becomes degenerate (the sensitivity of any single variable vanishes as all K-values converge).
 
 Up to 10 Newton iterations are performed with convergence tolerance $\|\mathbf{f}\|_2 < 10^{-8}$.
+Refinement evaluates trial states on a private clone. Only the estimated
+critical temperature and pressure are transferred back; the accepted
+continuation state, phase properties and material-balance sums are preserved.
 
 ## 7. Envelope Closure Check
 
-After tracing completes, the envelope is considered **closed** if both branches contain at least 3 points:
+After tracing completes, the envelope is considered **closed** if both branches contain at least 3 finite points (NaN separators do not count):
 
 $$
 \text{closed} = (n_{\text{dew}} \ge 3) \quad \text{AND} \quad (n_{\text{bub}} \ge 3)
 $$
 
-This check is available via `isEnvelopeClosed()`. A closed envelope means the full dew-bubble-critical loop has been successfully traced, either in a single pass through the critical point or via two passes from each end.
+This legacy check is available via `isEnvelopeClosed()`. It also returns false
+after a pressure or point-limit exit. The point-count heuristic alone does not
+prove that independently restarted segments meet or that the full boundary is
+stable. Inspect the structured segments before treating a partial trace as a
+complete dew-bubble-critical loop.
+
+A highly asymmetric hydrocarbon boundary can continue into liquid-liquid
+coexistence after a critical crossing. The historical dew/bubble array names do
+not certify vapor-liquid phase identity throughout that continuation. For SRK
+with classic mixing and methane/n-hexane/nC10 mole fractions 0.8/0.1/0.1, an
+independent direct-equation reference locates a liquid-liquid onset at
+162.0398908893 K and 152.9444304898 bara, with two distinct pressure-valid liquid
+roots. Nearby multiphase flashes qualify oil/oil coexistence on the lower-pressure
+side and one oil phase on the higher-pressure side. The default continuation
+ultimately reaches its 1000-bara pressure bound; it retains diagnostic segments,
+reports `isEnvelopeClosed() == false`, throws an explicit incomplete-trace
+exception and leaves overall extrema NaN. Do not report the largest retained
+point as a certified cricondenbar or silently discard this liquid-liquid branch
+in order to manufacture a closed VLE loop.
+
+The [independent reference and reproduction](../../src/test/resources/neqsim/thermodynamicoperations/phaseenvelopeops/asymmetric-srk-liquid-liquid/README.md)
+and `AsymmetricSrkLiquidLiquidEnvelopeTest` qualify the numerical topology.
+They do not validate cryogenic interaction parameters against experiments or
+account for solid formation.
 
 ## 8. Quality Lines
 
@@ -303,6 +361,15 @@ These extrema are tracked incrementally during tracing:
 - **Cricondentherm**: The point with the highest temperature encountered. Updated whenever $T_{\text{current}} > T_{\text{cricondentherm}}$.
 
 Both include the phase compositions $\mathbf{x}$ and $\mathbf{y}$ at the extremum, accessible via `"cricondenbarX"`, `"cricondenbarY"`, `"cricondenthermX"`, `"cricondenthermY"`.
+
+Direct callers of the legacy `PTphaseEnvelope` operation receive `NaN` in both
+the temperature (K) and pressure (bara) coordinates of an extremum when
+neither branch yields a finite, positive pressure–temperature point. Check
+both coordinates before reading the corresponding phase compositions. Each
+call to `run()` starts a fresh trace. The public
+`ThermodynamicOperations.calcPTphaseEnvelope(...)` facade uses the Michelsen
+implementation described in this guide.
+
 
 ## 11. Direct Cricondenbar and Cricondentherm Refinement
 

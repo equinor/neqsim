@@ -32,7 +32,7 @@ class ControllerPerformanceMetricsTest {
   @Test
   void testConstantErrorIntegralCriteria() {
     // Constant error of 2.0 over 10 s: IAE = 2*10 = 20, ISE = 4*10 = 40.
-    double[] time = { 0.0, 2.0, 4.0, 6.0, 8.0, 10.0 };
+    double[] time = {0.0, 2.0, 4.0, 6.0, 8.0, 10.0};
     double[] sp = new double[time.length];
     double[] pv = new double[time.length];
     double[] op = new double[time.length];
@@ -55,10 +55,10 @@ class ControllerPerformanceMetricsTest {
   @Test
   void testValveTravelAndReversals() {
     // Output goes 50 -> 60 -> 55 -> 65: travel = 10 + 5 + 10 = 25, one reversal (up, down, up).
-    double[] time = { 0.0, 1.0, 2.0, 3.0 };
-    double[] sp = { 10.0, 10.0, 10.0, 10.0 };
-    double[] pv = { 10.0, 10.0, 10.0, 10.0 };
-    double[] op = { 50.0, 60.0, 55.0, 65.0 };
+    double[] time = {0.0, 1.0, 2.0, 3.0};
+    double[] sp = {10.0, 10.0, 10.0, 10.0};
+    double[] pv = {10.0, 10.0, 10.0, 10.0};
+    double[] op = {50.0, 60.0, 55.0, 65.0};
     ControllerPerformanceMetrics m = ControllerPerformanceMetrics.fromArrays(time, pv, sp, op);
     Assertions.assertEquals(25.0, m.getControllerOutputTravel(), 1e-9);
     Assertions.assertEquals(2, m.getControllerOutputReversals());
@@ -67,10 +67,10 @@ class ControllerPerformanceMetricsTest {
   @Test
   void testProcessValueVariability() {
     // PV alternates 9, 11 around mean 10 -> population std dev = 1.
-    double[] time = { 0.0, 1.0, 2.0, 3.0 };
-    double[] sp = { 10.0, 10.0, 10.0, 10.0 };
-    double[] pv = { 9.0, 11.0, 9.0, 11.0 };
-    double[] op = { 50.0, 50.0, 50.0, 50.0 };
+    double[] time = {0.0, 1.0, 2.0, 3.0};
+    double[] sp = {10.0, 10.0, 10.0, 10.0};
+    double[] pv = {9.0, 11.0, 9.0, 11.0};
+    double[] op = {50.0, 50.0, 50.0, 50.0};
     ControllerPerformanceMetrics m = ControllerPerformanceMetrics.fromArrays(time, pv, sp, op);
     Assertions.assertEquals(10.0, m.getMeanProcessValue(), 1e-9);
     Assertions.assertEquals(1.0, m.getProcessValueStandardDeviation(), 1e-9);
@@ -79,10 +79,10 @@ class ControllerPerformanceMetricsTest {
   @Test
   void testSettlingTime() {
     // Error settles inside 2% band (band = 0.02*max(|10|,1) = 0.2) at t = 6 s.
-    double[] time = { 0.0, 2.0, 4.0, 6.0, 8.0, 10.0 };
-    double[] sp = { 10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };
-    double[] pv = { 13.0, 11.0, 10.3, 10.05, 10.02, 10.0 };
-    double[] op = { 50.0, 50.0, 50.0, 50.0, 50.0, 50.0 };
+    double[] time = {0.0, 2.0, 4.0, 6.0, 8.0, 10.0};
+    double[] sp = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0};
+    double[] pv = {13.0, 11.0, 10.3, 10.05, 10.02, 10.0};
+    double[] op = {50.0, 50.0, 50.0, 50.0, 50.0, 50.0};
     ControllerPerformanceMetrics m = ControllerPerformanceMetrics.fromArrays(time, pv, sp, op);
     // Last sample outside the band is at t = 4 s (error 0.3 > 0.2).
     Assertions.assertEquals(4.0, m.getSettlingTime(), 1e-9);
@@ -90,10 +90,10 @@ class ControllerPerformanceMetricsTest {
 
   @Test
   void testMismatchedArrayLengthsThrows() {
-    double[] time = { 0.0, 1.0 };
-    double[] pv = { 1.0 };
-    double[] sp = { 1.0, 1.0 };
-    double[] op = { 1.0, 1.0 };
+    double[] time = {0.0, 1.0};
+    double[] pv = {1.0};
+    double[] sp = {1.0, 1.0};
+    double[] op = {1.0, 1.0};
     Assertions.assertThrows(IllegalArgumentException.class,
         () -> ControllerPerformanceMetrics.fromArrays(time, pv, sp, op));
   }

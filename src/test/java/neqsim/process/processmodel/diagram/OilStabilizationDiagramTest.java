@@ -454,6 +454,9 @@ public class OilStabilizationDiagramTest {
     process.add(condensateMixer);
 
     Pump condensatePump = new Pump("Condensate Pump", condensateMixer.getOutletStream());
+    // Liquid head and a pressure-enthalpy flash. The isentropic compressor path crosses an entropy gap at this
+    // condensate phase boundary.
+    condensatePump.calculateAsCompressor(false);
     condensatePump.setOutletPressure(15.0, "bara");
     process.add(condensatePump);
 

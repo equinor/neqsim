@@ -1,6 +1,7 @@
 package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
@@ -226,5 +227,52 @@ class PseudoComponentCombinerTest {
     assertThrows(IllegalArgumentException.class,
         () -> PseudoComponentCombiner.combineReservoirFluids(0, createFluid1()));
     assertThrows(IllegalArgumentException.class, () -> PseudoComponentCombiner.combineReservoirFluids(3));
+  }
+
+  /**
+   * A one-cut combine must copy CpD, and a further combine must leave that copy unchanged.
+   *
+   * <p>
+   * The default TBP coefficient is zero. An explicit non-zero coefficient is combined as well, so a skipped copy cannot
+   * look like a stable zero.
+   * </p>
+   */
+  @Test
+  @DisplayName("one-cut combine does not drift the ideal-gas CpD coefficient")
+  void testOneCutCombineDoesNotDriftCpD() {
+    SystemInterface fluid = new SystemPrEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addTBPfraction("C7", 0.2, 0.100, 0.80);
+    ComponentInterface source = fluid.getComponent("C7_PC");
+
+    double defaultCpD = source.getCpD();
+    SystemInterface defaultOnce = PseudoComponentCombiner.combineReservoirFluids(1, fluid);
+    assertEquals(defaultCpD, recombinedPseudoComponent(defaultOnce).getCpD(), 0.0,
+        "a one-cut combine changed the default CpD");
+    SystemInterface defaultTwice = PseudoComponentCombiner.combineReservoirFluids(1, defaultOnce);
+    assertEquals(defaultCpD, recombinedPseudoComponent(defaultTwice).getCpD(), 0.0,
+        "a second combine changed the default CpD");
+
+    final double coefficient = -1.08e-7;
+    source.setCpD(coefficient);
+    double before = source.getCpD();
+    SystemInterface once = PseudoComponentCombiner.combineReservoirFluids(1, fluid);
+    ComponentInterface combined = recombinedPseudoComponent(once);
+    assertEquals(before, combined.getCpD(), 0.0, "a one-cut combine changed CpD");
+    assertEquals(coefficient, combined.getCpD(), 0.0);
+    SystemInterface twice = PseudoComponentCombiner.combineReservoirFluids(1, once);
+    assertEquals(coefficient, recombinedPseudoComponent(twice).getCpD(), 0.0, "a second combine changed CpD");
+  }
+
+  /**
+   * Returns the single pseudo component created by a one-cut combine.
+   *
+   * @param fluid combined fluid
+   * @return the PC1 pseudo component
+   */
+  private static ComponentInterface recombinedPseudoComponent(SystemInterface fluid) {
+    ComponentInterface component = fluid.getComponent("PC1_PC");
+    assertNotNull(component, "combined fluid is missing PC1_PC");
+    return component;
   }
 }

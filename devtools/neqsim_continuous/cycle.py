@@ -1,0 +1,365 @@
+"""Run one cycle of a living task.
+
+A cycle runs the planned stages in order, writes an immutable folder
+``continuous/cycles/<cycle_id>/`` and a ``cycle.json`` manifest, and never raises for a
+stage failure: the failure is recorded, dependants are skipped and the cycle is marked
+``degraded``. An interrupted cycle reuses completed work and revalidates production
+gates, constraints and proposals before publishing advice.
+"""
+
+import csv
+import json
+import os
+import platform
+import re
+import sys
+import time
+from datetime import datetime, timedelta, timezone
+
+from . import stages as _builtin_stages  # noqa: F401 - registers the built-in stages
+from . import production as _production_stages  # noqa: F401 - registers gates/constraints/guard/outcome
+from . import user_input as _user_input_stage  # noqa: F401 - registers the inputs stage
+from . import calibrate as _calibrate_stage  # noqa: F401 - registers the calibrate stage
+from . import notify as _builtin_notifiers  # noqa: F401 - registers the built-in notifiers
+from .contracts import StageResult, resolve
+from .plan import continuous_dir, load_baseline, load_goal, load_plan, read_json, write_json
+
+SCHEMA_VERSION = "1.0"
+NEEDS = {"drift": ["kpis"], "diff": ["kpis"], "goal": ["kpis"], "notify": ["digest"], "calibrate": ["kpis"],
+         "gates": ["kpis"], "constraints": ["kpis"], "guard": ["gates", "constraints"],
+         "ledger": ["guard"], "outcome": ["kpis"]}
+LOCK_HOURS = 6.0
+# These cheap checks mutate in-memory blocks/proposals, not model or optimizer state.
+# Restoring their status alone would lose the filtering performed before interruption.
+REVALIDATE_ON_RESUME = ("gates", "constraints", "guard")
+
+
+def _utc(value=None):
+    if value is None:
+        return datetime.now(timezone.utc).replace(microsecond=0)
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def _host():
+    return re.sub(r"[^A-Za-z0-9_-]", "", os.environ.get("NEQSIM_CONTINUOUS_HOST", "")
+                  or platform.node().split(".")[0] or "host").lower() or "host"
+
+
+class CycleContext(object):
+    """Everything a stage may read or write during one cycle."""
+
+    def __init__(self, task_dir, plan, goal, baseline, now, mode, cycle_id, cycle_dir,
+                 state_dir, data_dir, dry_run=False, no_agent=False, next_action=None,
+                 evidence_analysis=None):
+        self.task_dir = str(task_dir)
+        self.plan, self.goal, self.baseline = plan, goal, baseline
+        self.now, self.mode, self.cycle_id, self.cycle_dir = now, mode, cycle_id, cycle_dir
+        self.state_dir, self.data_dir = state_dir, data_dir
+        self.dry_run, self.no_agent, self.next_action = dry_run, no_agent, next_action
+        self.new_rows, self.kpis, self.sources = {}, {}, {}
+        self.triggers, self.proposals, self.new_proposals = [], [], []
+        self.stage_results, self.versions, self.summary = {}, {}, {}
+        self.solve, self.stop_state, self.digest_text = {}, None, ""
+        self.notifications, self.agent_run, self.previous_kpis = [], {}, {}
+        self.guard_blocks, self.sections = [], []
+        self.guarded_proposals = set()
+        self.user_levers = {}
+        self.evidence_analysis = evidence_analysis
+
+
+class _Lock(object):
+    def __init__(self, state_dir, now):
+        self.path = os.path.join(state_dir, "LOCK")
+        self.now = now
+
+    def __enter__(self):
+        existing = read_json(self.path)
+        if existing and existing.get("expires", "") > _utc().isoformat():
+            raise RuntimeError("Task is locked by {} (pid {}) until {}".format(
+                existing.get("host"), existing.get("pid"), existing.get("expires")))
+        write_json(self.path, {"host": _host(), "pid": os.getpid(),
+                               "expires": (_utc() + timedelta(hours=LOCK_HOURS)).isoformat()})
+        return self
+
+    def __exit__(self, *args):
+        if os.path.exists(self.path):
+            os.remove(self.path)
+
+
+def _stage_name(entry):
+    return entry if isinstance(entry, str) else entry.get("name")
+
+
+def _previous_kpis(cycles_dir, current):
+    if not os.path.isdir(cycles_dir):
+        return {}
+    for name in sorted(os.listdir(cycles_dir), reverse=True):
+        if name == current:
+            continue
+        meta = read_json(os.path.join(cycles_dir, name, "cycle.json"), {})
+        if meta.get("status") == "complete":
+            return read_json(os.path.join(cycles_dir, name, "kpis.json"), {})
+    return {}
+
+
+def _new_cycle_id(cycles_dir, now, mode):
+    base = "bt-{:%Y%m%d}".format(now) if mode == "backtest" else "{:%Y-%m-%dT%H%MZ}@{}".format(now, _host())
+    cycle_id, rerun = base, 2
+    while os.path.exists(os.path.join(cycles_dir, cycle_id, "cycle.json")):
+        cycle_id, rerun = "{}-r{}".format(base, rerun), rerun + 1
+    return cycle_id
+
+
+def find_incomplete_cycle(task_dir, state_dir=None, mode=None):
+    """Return the newest non-superseded incomplete cycle, across clock or host changes."""
+    state_dir = state_dir or continuous_dir(task_dir)
+    cycles_dir = os.path.join(state_dir, "cycles")
+    if not os.path.isdir(cycles_dir):
+        return None
+    records = []
+    for name in os.listdir(cycles_dir):
+        meta = read_json(os.path.join(cycles_dir, name, "cycle.json"), {}) or {}
+        if mode is not None and meta.get("mode") != mode:
+            continue
+        item = dict(meta)
+        item.setdefault("cycle_id", name)
+        records.append(item)
+
+    def _key(item):
+        return (item.get("started_at") or item.get("now") or "", item.get("cycle_id") or "")
+
+    completed = [_key(item) for item in records if item.get("status") == "complete"]
+    latest_complete = max(completed) if completed else None
+    found = [item for item in records if item.get("status") in ("running", "interrupted")
+             and (latest_complete is None or _key(item) > latest_complete)]
+    return max(found, key=_key) if found else None
+
+
+def _append_kpi_history(state_dir, cycle_id, now, kpis):
+    path = os.path.join(state_dir, "kpi_history.csv")
+    new = not os.path.exists(path)
+    with open(path, "a", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        if new:
+            writer.writerow(["cycle_id", "time", "kpi", "value"])
+        for name, value in sorted(kpis.items()):
+            writer.writerow([cycle_id, now.isoformat(), name, value])
+
+
+def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no_agent=False,
+              state_dir=None, next_action=None, standard_first=False, evidence_analysis=None):
+    """Run one cycle and return its manifest (the content of ``cycle.json``)."""
+    task_dir = os.path.abspath(str(task_dir))
+    plan = load_plan(task_dir)
+    requested_now = _utc(now)
+    state_dir = state_dir or continuous_dir(task_dir)
+    data_root = plan.get("data_root")
+    data_dir = data_root if data_root and mode != "backtest" else os.path.join(state_dir, "data")
+    cycles_dir = os.path.join(state_dir, "cycles")
+    previous = find_incomplete_cycle(task_dir, state_dir=state_dir, mode=mode)
+    resumed = bool(previous)
+    if resumed:
+        cycle_id = previous["cycle_id"]
+        cycle_dir = os.path.join(cycles_dir, cycle_id)
+        try:
+            now = _utc(datetime.fromisoformat(str(previous.get("now")).replace("Z", "+00:00")))
+        except (TypeError, ValueError):
+            now = requested_now
+        previous = read_json(os.path.join(cycle_dir, "cycle.json"), {}) or previous
+    else:
+        now = requested_now
+        cycle_id = _new_cycle_id(cycles_dir, now, mode)
+        cycle_dir = os.path.join(cycles_dir, cycle_id)
+        os.makedirs(cycle_dir, exist_ok=True)
+        previous = {}
+    done = {record["name"]: record for record in previous.get("stages", [])
+            if record.get("status") in ("ok", "warn")}
+    effective_dry_run = previous.get("dry_run", dry_run) if resumed else dry_run
+
+    standard_status = previous.get("standard_first") if resumed else None
+    ctx = CycleContext(task_dir, plan, load_goal(task_dir), load_baseline(task_dir), now, mode,
+                       cycle_id, cycle_dir, state_dir, data_dir, effective_dry_run, no_agent,
+                       next_action, evidence_analysis=evidence_analysis)
+    ctx.previous_kpis = _previous_kpis(cycles_dir, cycle_id)
+    if evidence_analysis is not None and not evidence_analysis.get("full_rerun"):
+        ctx.kpis.update(ctx.baseline.get("kpis", {}))
+        ctx.kpis.update(ctx.previous_kpis)
+        for affected_kpi in evidence_analysis.get("affected_kpis") or []:
+            ctx.kpis.pop(affected_kpi, None)
+    manifest = {"schema_version": SCHEMA_VERSION, "cycle_id": cycle_id,
+                "task": os.path.basename(task_dir), "mode": mode,
+                "host": previous.get("host", _host()) if resumed else _host(),
+                "now": now.isoformat(),
+                "started_at": previous.get("started_at", _utc().isoformat()),
+                "dry_run": effective_dry_run,
+                "baseline_id": previous.get("baseline_id", ctx.baseline.get("meta", {}).get("id")),
+                "status": "running", "stages": [],
+                "versions": dict(previous.get("versions") or {"python": sys.version.split()[0]})}
+    if evidence_analysis is not None:
+        requested = [_stage_name(entry) for entry in (stages or plan["stages"])]
+        planned = [_stage_name(entry) for entry in plan["stages"]]
+        manifest["selective_rerun"] = {
+            "enabled": not evidence_analysis.get("full_rerun"),
+            "requested_stages": requested,
+            "retained_stages": [name for name in planned if name not in requested],
+            "retained_results_from_cycle": next((name for name in reversed(list_cycles(
+                task_dir, state_dir=state_dir)) if name != cycle_id and (load_cycle(
+                    task_dir, name, state_dir=state_dir) or {}).get("status") == "complete"), None),
+        }
+    if resumed:
+        manifest["resume_count"] = int(previous.get("resume_count", 0) or 0) + 1
+        manifest["resumed_at"] = _utc().isoformat()
+        manifest["recovery"] = {"kind": "interrupted_cycle",
+                                "previous_host": previous.get("host"),
+                                "resumed_host": _host(),
+                                "completed_stages": sorted(done)}
+    write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+
+    if standard_first and mode != "backtest" and not ctx.dry_run:
+        from .standard_first import ensure
+        standard_status = ensure(task_dir)
+        if not standard_status.get("ready"):
+            ctx.triggers.append("standard_first:{}".format(standard_status.get(
+                "readiness", "incomplete")))
+        manifest["standard_first"] = standard_status
+        if not standard_status.get("ready"):
+            manifest.setdefault("triggers", []).append("standard_first:{}".format(
+                standard_status.get("readiness", "incomplete")))
+        write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+
+    with _Lock(state_dir, now):
+        for entry in stages or plan["stages"]:
+            name = _stage_name(entry)
+            spec = entry if isinstance(entry, dict) else {"name": name}
+            spec = dict(spec, name=name)
+            started = time.time()
+            proposal_start = len(ctx.proposals)
+            if name in done and name not in REVALIDATE_ON_RESUME:
+                saved = done[name]
+                result = StageResult(**{k: v for k, v in saved.items() if k in (
+                    "name", "status", "outputs", "kpis", "triggers", "message")})
+                if name == "refresh":
+                    _builtin_stages.restore_refresh(ctx, result)
+                elif name == "evidence":
+                    _builtin_stages.restore_evidence(ctx)
+                elif name == "inputs":
+                    try:
+                        _user_input_stage.restore_inputs(ctx)
+                    except Exception as error:
+                        ctx.guard_blocks.append("user_input_resume_state_invalid")
+                        result = StageResult(name, "fail", message="{}: {}".format(
+                            type(error).__name__, error))
+                if name.startswith("script:") or name == "kpis":
+                    ctx.kpis.update(result.kpis)
+                if saved.get("solve"):
+                    ctx.solve = saved["solve"]
+                ctx.proposals.extend(saved.get("proposals") or [])
+                if name == "digest":
+                    ctx.summary = dict(saved.get("summary") or {})
+                    ctx.digest_text = saved.get("digest_text") or ""
+                    if not ctx.digest_text:
+                        digest_path = os.path.join(ctx.cycle_dir, "digest.md")
+                        if os.path.exists(digest_path):
+                            with open(digest_path, "r", encoding="utf-8") as f:
+                                ctx.digest_text = f.read()
+                elif name == "notify":
+                    ctx.notifications = list(saved.get("notifications") or [])
+                elif name == "agent":
+                    ctx.agent_run = dict(saved.get("agent_run") or {})
+            elif any(ctx.stage_results.get(n) is None or ctx.stage_results[n].status in ("fail", "skipped")
+                     for n in NEEDS.get(name, []) if n in [_stage_name(e) for e in (stages or plan["stages"])]):
+                result = StageResult(name, "skipped", message="a required stage did not complete")
+            else:
+                stage = resolve("stages", "script" if name.startswith("script:") else name)
+                if stage is None:
+                    result = StageResult(name, "not_installed", message="stage plugin not installed")
+                else:
+                    try:
+                        result = stage(ctx, spec)
+                    except Exception as error:
+                        result = StageResult(name, "fail", message="{}: {}".format(
+                            type(error).__name__, error))
+            ctx.stage_results[name] = result
+            ctx.triggers += [t for t in result.triggers if t not in ctx.triggers]
+            record = result.to_dict()
+            has_saved_solve = name in done and bool(done[name].get("solve"))
+            if ctx.solve and (name.startswith("script:") or has_saved_solve):
+                record["solve"] = ctx.solve
+            new_proposals = ctx.proposals[proposal_start:]
+            if new_proposals:
+                record["proposals"] = new_proposals
+            if name == "digest":
+                record["summary"] = dict(ctx.summary)
+                record["digest_text"] = ctx.digest_text
+            elif name == "notify":
+                record["notifications"] = list(ctx.notifications)
+            elif name == "agent":
+                record["agent_run"] = dict(ctx.agent_run)
+            record["seconds"] = round(time.time() - started, 3)
+            manifest["stages"].append(record)
+            write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+
+    manifest["versions"].update(ctx.versions)
+    manifest["triggers"] = list(ctx.triggers)
+    manifest["sources"] = {k: v.get("status") for k, v in ctx.sources.items()}
+    manifest["notifications"] = ctx.notifications
+    manifest["agent_review"] = ctx.agent_run
+    manifest["standard_first"] = standard_status
+    missing_affected_kpis = []
+    if ctx.evidence_analysis is not None:
+        missing_affected_kpis = [name for name in ctx.evidence_analysis.get("affected_kpis") or []
+                                 if name not in ctx.kpis]
+        ctx.evidence_analysis["missing_affected_kpis"] = missing_affected_kpis
+    manifest["degraded"] = any(s["status"] in ("fail", "skipped", "not_installed")
+                               for s in manifest["stages"]) or any(
+        v not in ("ok",) for v in manifest["sources"].values()) or (
+            bool(standard_first) and bool(standard_status) and not standard_status.get("ready")) or bool(
+                missing_affected_kpis)
+    manifest["solve"] = ctx.solve
+    if ctx.evidence_analysis is not None:
+        manifest["evidence"] = {key: value for key, value in ctx.evidence_analysis.items()
+                                if key != "inventory"}
+    manifest["finished_at"] = _utc().isoformat()
+    manifest["status"] = "complete"
+    write_json(os.path.join(cycle_dir, "kpis.json"), ctx.kpis)
+    write_json(os.path.join(cycle_dir, "triggers.json"), {"triggers": ctx.triggers})
+    if not ctx.dry_run:
+        _append_kpi_history(state_dir, cycle_id, now, ctx.kpis)
+    write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+    if (ctx.evidence_analysis is not None and not ctx.dry_run and mode != "backtest"
+            and not manifest["degraded"]):
+        from .evidence import accept
+        accept(task_dir, ctx.evidence_analysis, cycle_id)
+    if not ctx.dry_run and mode != "backtest" and os.path.abspath(state_dir) == os.path.abspath(
+            continuous_dir(task_dir)):
+        from .living_report import update
+        update(task_dir, event="cycle")
+        from . import hypotheses
+        try:
+            if hypotheses.load(task_dir) is not None:
+                hypotheses.run(task_dir)
+        except Exception as error:  # a bad hypotheses file must not fail the monitoring cycle
+            manifest.setdefault("warnings", []).append("hypotheses: {}".format(error))
+            write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+        from . import daily_report
+        daily_report.update(task_dir)
+    return manifest
+
+
+def load_cycle(task_dir, cycle_id, state_dir=None):
+    state_dir = state_dir or continuous_dir(task_dir)
+    return read_json(os.path.join(state_dir, "cycles", cycle_id, "cycle.json"))
+
+
+def list_cycles(task_dir, state_dir=None):
+    cycles_dir = os.path.join(state_dir or continuous_dir(task_dir), "cycles")
+    if not os.path.isdir(cycles_dir):
+        return []
+    return sorted(n for n in os.listdir(cycles_dir)
+                  if os.path.exists(os.path.join(cycles_dir, n, "cycle.json")))
+
+
+def dumps(manifest):
+    return json.dumps(manifest, indent=2, sort_keys=True, default=str)

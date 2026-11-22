@@ -1,7 +1,9 @@
 package neqsim.process.equipment.network;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+import static neqsim.util.util.ArrayUtils.copyMatrixArrayOrEmpty;
+
 import java.io.Serializable;
-import java.util.Arrays;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
@@ -47,14 +49,14 @@ public final class TransientSpeciesConservationReport implements Serializable {
     this.locationName = locationName;
     this.locationType = locationType;
     this.elapsedTimeSeconds = elapsedTimeSeconds;
-    this.componentNames = copy(componentNames);
-    this.massFractionProfile = copy(massFractionProfile);
-    this.initialInventoryKg = copy(initialInventoryKg);
-    this.finalInventoryKg = copy(finalInventoryKg);
-    this.inletBoundaryMassKg = copy(inletBoundaryMassKg);
-    this.outletBoundaryMassKg = copy(outletBoundaryMassKg);
-    this.inventoryResidualKg = copy(inventoryResidualKg);
-    this.relativeInventoryResidual = copy(relativeInventoryResidual);
+    this.componentNames = copyArrayOrEmpty(componentNames);
+    this.massFractionProfile = copyMatrixArrayOrEmpty(massFractionProfile);
+    this.initialInventoryKg = copyArrayOrEmpty(initialInventoryKg);
+    this.finalInventoryKg = copyArrayOrEmpty(finalInventoryKg);
+    this.inletBoundaryMassKg = copyArrayOrEmpty(inletBoundaryMassKg);
+    this.outletBoundaryMassKg = copyArrayOrEmpty(outletBoundaryMassKg);
+    this.inventoryResidualKg = copyArrayOrEmpty(inventoryResidualKg);
+    this.relativeInventoryResidual = copyArrayOrEmpty(relativeInventoryResidual);
     this.maximumRelativeInventoryResidual = maximumRelativeInventoryResidual;
     this.minimumMassFraction = minimumMassFraction;
     this.maximumMassFraction = maximumMassFraction;
@@ -80,42 +82,42 @@ public final class TransientSpeciesConservationReport implements Serializable {
 
   /** @return defensive copy of component names */
   public String[] getComponentNames() {
-    return copy(componentNames);
+    return copyArrayOrEmpty(componentNames);
   }
 
   /** @return defensive component-by-cell mass-fraction profile, empty for non-edge reports */
   public double[][] getMassFractionProfile() {
-    return copy(massFractionProfile);
+    return copyMatrixArrayOrEmpty(massFractionProfile);
   }
 
   /** @return component inventories at the beginning of the run in kg */
   public double[] getInitialInventoryKg() {
-    return copy(initialInventoryKg);
+    return copyArrayOrEmpty(initialInventoryKg);
   }
 
   /** @return component inventories at this accepted time in kg */
   public double[] getFinalInventoryKg() {
-    return copy(finalInventoryKg);
+    return copyArrayOrEmpty(finalInventoryKg);
   }
 
   /** @return cumulative integrated inlet component masses through this accepted time in kg */
   public double[] getInletBoundaryMassKg() {
-    return copy(inletBoundaryMassKg);
+    return copyArrayOrEmpty(inletBoundaryMassKg);
   }
 
   /** @return cumulative integrated outlet component masses through this accepted time in kg */
   public double[] getOutletBoundaryMassKg() {
-    return copy(outletBoundaryMassKg);
+    return copyArrayOrEmpty(outletBoundaryMassKg);
   }
 
   /** @return final minus initial minus inlet plus outlet component residuals in kg */
   public double[] getInventoryResidualKg() {
-    return copy(inventoryResidualKg);
+    return copyArrayOrEmpty(inventoryResidualKg);
   }
 
   /** @return component residuals divided by their conservative balance scale */
   public double[] getRelativeInventoryResidual() {
-    return copy(relativeInventoryResidual);
+    return copyArrayOrEmpty(relativeInventoryResidual);
   }
 
   /** @return maximum absolute relative component residual */
@@ -164,22 +166,4 @@ public final class TransientSpeciesConservationReport implements Serializable {
     return gsonBuilder.create().toJson(this);
   }
 
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static String[] copy(String[] values) {
-    return values == null ? new String[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static double[][] copy(double[][] values) {
-    if (values == null) {
-      return new double[0][0];
-    }
-    double[][] result = new double[values.length][];
-    for (int index = 0; index < values.length; index++) {
-      result[index] = copy(values[index]);
-    }
-    return result;
-  }
 }

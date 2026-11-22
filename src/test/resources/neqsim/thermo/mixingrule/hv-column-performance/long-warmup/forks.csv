@@ -1,0 +1,13 @@
+fork,arm,eos,components,operation,init,rule,median_ns_per_op,min_ns_per_op,max_ns_per_op
+0,baseline,SRK,4,flash,3,4,934167.4,706963.7,1658650.05
+0,candidate,SRK,4,flash,3,4,768788.25,687976.05,1104393.15
+0,control,SRK,4,flash,3,4,748989.575,690343.55,1161029.3
+0,classical,SRK,4,flash,3,2,186002.3,162290.5,211859.8
+1,baseline,SRK,4,flash,3,4,747279.675,683678.45,2405226.1
+1,classical,SRK,4,flash,3,2,162792.40000000002,157038.5,220473.15
+1,control,SRK,4,flash,3,4,898692.925,691637.3,1303485.3
+1,candidate,SRK,4,flash,3,4,778277.5,718582.2,909296.2
+2,control,SRK,4,flash,3,4,785021.45,669969.1,1055750.8
+2,classical,SRK,4,flash,3,2,163646.5,155533.75,203983.35
+2,baseline,SRK,4,flash,3,4,785106.475,694956.2,899352.7
+2,candidate,SRK,4,flash,3,4,747063.625,691187.05,860058.15

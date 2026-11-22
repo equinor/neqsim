@@ -15,9 +15,9 @@ class TPflashNearCricondenbarConsistencyTest extends neqsim.NeqSimTest {
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
   private static final double STATE_TOLERANCE = 1.0e-7;
-  private static final Case[] REGRESSION_CASES = { new Case(Eos.SRK, 273.15, 100.0), new Case(Eos.SRK, 283.15, 100.0),
+  private static final Case[] REGRESSION_CASES = {new Case(Eos.SRK, 273.15, 100.0), new Case(Eos.SRK, 283.15, 100.0),
       new Case(Eos.PR, 268.15, 95.0), new Case(Eos.PR, 273.15, 100.0), new Case(Eos.PR, 278.15, 100.0),
-      new Case(Eos.PR, 283.15, 100.0) };
+      new Case(Eos.PR, 283.15, 100.0)};
 
   @Test
   void nearCricondenbarEndpointsCloseAndAgreeAcrossAlgorithms() {
@@ -34,8 +34,8 @@ class TPflashNearCricondenbarConsistencyTest extends neqsim.NeqSimTest {
 
   @Test
   void poorInitializationRepeatsAndChangedStateRemainDeterministic() {
-    for (Case regression : new Case[] { new Case(Eos.SRK, 283.15, 100.0), new Case(Eos.PR, 273.15, 100.0) }) {
-      for (boolean multiphase : new boolean[] { false, true }) {
+    for (Case regression : new Case[] {new Case(Eos.SRK, 283.15, 100.0), new Case(Eos.PR, 273.15, 100.0)}) {
+      for (boolean multiphase : new boolean[] {false, true}) {
         SystemInterface reference = flash(createSystem(regression, multiphase), false);
         SystemInterface poorGuess = flash(createSystem(regression, multiphase), true);
         assertEquivalent(reference, poorGuess, regression.label() + " poor initialization", STATE_TOLERANCE);
@@ -60,8 +60,8 @@ class TPflashNearCricondenbarConsistencyTest extends neqsim.NeqSimTest {
 
   @Test
   void phaseAppearanceAndDisappearanceRemainContinuous() {
-    Case[][] transitions = { { new Case(Eos.SRK, 293.15, 100.0), new Case(Eos.SRK, 303.15, 100.0) },
-        { new Case(Eos.PR, 288.15, 100.0), new Case(Eos.PR, 293.15, 100.0) } };
+    Case[][] transitions = {{new Case(Eos.SRK, 293.15, 100.0), new Case(Eos.SRK, 303.15, 100.0)},
+        {new Case(Eos.PR, 288.15, 100.0), new Case(Eos.PR, 293.15, 100.0)}};
     for (Case[] transition : transitions) {
       SystemInterface twoPhase = flash(createSystem(transition[0], false), false);
       SystemInterface twoPhaseMultiphase = flash(createSystem(transition[0], true), false);

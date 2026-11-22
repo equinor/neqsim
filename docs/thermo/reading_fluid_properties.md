@@ -99,7 +99,28 @@ double viscosity = fluid.getPhase("gas").getViscosity("cP");          // Returns
 double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK"); // Returns 0.0!
 ```
 
-> **Note:** When using `ProcessSystem.run()` for process simulations, `initProperties()` is called internally by each equipment's `run()` method, so you do not need to call it separately on streams obtained from process equipment.
+### Properties on process streams
+
+A stream normally uses `Stream.PropertyInitLevel.FULL`: after its flash,
+`Stream.run()` initializes thermodynamic and physical properties. This is not
+an unconditional guarantee for every equipment outlet. In `DENSITY_ONLY` mode,
+the stream initializes thermodynamic properties and mass density, but skips
+viscosity, thermal conductivity and diffusion calculations. Transport getters
+can therefore expose zero or stale values; a successful process run alone does
+not qualify those values for use.
+
+Before consuming transport properties, initialize the **current stream fluid**
+explicitly with `stream.getFluid().initProperties()`. Retrieve that fluid after
+the run: a stream run can replace its internal fluid with a clone. Initialization
+does not perform a new equilibrium calculation; run the appropriate flash or
+equipment calculation first if the thermodynamic state has changed.
+
+For subsequent runs, select `FULL` at the controlling stream or flowsheet level.
+Changing the mode does not itself recalculate properties already stored on the
+fluid. A configured `ProcessSystem` override is reapplied at execution, so it
+can supersede a stream-level selection. See
+[physical-property initialization levels](../process/processmodel/process_system.md#physical-property-initialization-level)
+for flowsheet override and reset behavior.
 
 ---
 
@@ -179,6 +200,22 @@ double enthalpy = fluid.getEnthalpy("J/mol");
 double entropy = fluid.getEntropy("J/molK");
 double Cp = fluid.getCp("kJ/kgK");
 ```
+
+#### Caloric getters after a flash at init level 1
+
+A TP flash leaves every phase at init level 1. The temperature derivatives behind enthalpy, entropy, Cp and Cv
+are then those of the last `init(2)`/`init(3)` call, which may belong to another temperature, pressure or
+composition. Until this was fixed, reading a caloric property at that point silently returned a value for the old
+state. For an SRK-CPA gas/oil/water fluid flashed at 65 °C and 100 bara, the aqueous Cp came out as 9.1 kJ/(kg·K)
+instead of 3.9 kJ/(kg·K) when only `initPhysicalProperties()` was called after `TPflash()`. SRK, PR and UMR fluids
+gave errors of up to 25 % in oil Cp and about 1.3 kJ/mol in mixture enthalpy (`CaloricPropertiesAfterTPflashTest`,
+measured 2026-11-21).
+
+`Phase.getCp()`, `getCv()`, `getEnthalpy()` and `getEntropy()` (and everything built on them, such as the
+Joule-Thomson coefficient, speed of sound, Cp/Cv, Gibbs and internal energy, and the `SystemInterface` totals) now
+re-initialise a phase that is at init level 1 to level 2 for its current state before returning the value. The
+result is the same as calling `fluid.init(2)` first. Calling `initProperties()` after a flash is still the
+recommended pattern: it also fills the transport properties and does the level-2 work once for all phases.
 
 ### init(3) - Composition Derivatives
 
@@ -372,13 +409,20 @@ For gases, NeqSim provides specialized high-accuracy density methods:
 | `getDensity_GERG2008()` | GERG-2008 density | Natural gas |
 | `getDensity_EOSCG()` | EOS-CG density | CO2-rich gases |
 | `getDensity_Leachman()` | Leachman EoS | Hydrogen |
-| `getDensity_Vega()` | Vega EoS | Helium |
+| `getDensity_Vega()` | Vega EoS | Pure helium; selects the root from the phase type |
 
 ```java
 // High-accuracy gas density for custody transfer
 double densityAGA8 = fluid.getPhase("gas").getDensity_AGA8();
 double densityGERG = fluid.getPhase("gas").getDensity_GERG2008();
 ```
+
+For pure helium, `SystemVegaEos` uses the gas root for a gas phase and the dense
+root for a liquid phase. You can also call `getDensity_Vega()` on a helium phase
+with an explicitly assigned phase type. A failed Vega density solve throws
+`IllegalStateException`; its ideal-gas fallback is not a valid calculated state.
+The Vega density solver does not locate the saturation boundary, so a forced
+phase type does not establish thermodynamic stability or perform a flash.
 
 ---
 
@@ -439,6 +483,63 @@ double Pc = fluid.getComponent("methane").getPC();  // Critical pressure in Pa
 double omega = fluid.getComponent("methane").getAcentricFactor();
 ```
 
+### Formation enthalpy reference
+
+For Cp-polynomial/EOS-departure models such as SRK, PR and CPA, stream enthalpy
+uses a sensible reference at 273.15 K by default. Formation-based enthalpy is an
+explicit option:
+
+```java
+SystemInterface fluid = new SystemSrkEos(298.15, 1.0);
+fluid.addComponent("methane", 1.0);
+fluid.setMixingRule("classic");
+fluid.setUseIdealGasEnthalpyOfFormation(true);
+double idealEnthalpy = fluid.getComponent("methane").getHID(298.15);
+// idealEnthalpy = -74873.10 J/mol; real-fluid enthalpy also includes the EOS departure.
+```
+
+The selected ideal-gas reference is
+
+$$h_i^{ig}(T)=\Delta_f H_i^{ig,\circ}(298.15\,\mathrm{K})+\int_{298.15\,\mathrm{K}}^T C_{p,i}^{ig}(T')\,dT'.$$
+
+`getHID(T, true)` evaluates this reference for a single component without changing
+its selection. `getHID(T, false)` evaluates the legacy sensible reference.
+`hasIdealGasEnthalpyOfFormation()` and `getFormationEnthalpySource()` expose data
+availability and provenance. See the [database guide](component_database_guide.md#formation-enthalpy-availability-and-sources)
+for the initial 13 reviewed species. Unsupported data cause an exception, including
+an attempted system switch; the switch validates every phase before modifying it.
+
+The choice propagates to subsequently added supported components and is retained
+by cloning, phase extraction and Java serialization. Old serialized objects keep
+the legacy default. Set the option explicitly when rebuilding a model from input
+data; no JSON schema migration is introduced by this API.
+
+For conserved component inventories the added reference cancels in enthalpy
+differences: heater duty, latent heat, compressor work, Cp and phase equilibrium
+are unchanged. Reactions change the inventory and therefore include formation
+heat. At 298.15 K the ideal-gas methane combustion benchmark with water vapor is
+-802.3021 kJ/mol, water-gas shift is -41.1689 kJ/mol, and ammonia synthesis
+(`N2 + 3 H2 -> 2 NH3`) is -91.79612 kJ per stoichiometric reaction.
+
+Select a common reference on all connected streams **before** recording PH-flash
+targets or energy balances. Do not reuse a saved numerical enthalpy target from
+another reference. `ReactiveMultiphasePHflash` detects the option and does not
+add formation heat again. Its legacy sensible-plus-formation convention remains
+available for existing workflows. Reactors or combustion equipment that calculate
+reaction heat from separate datasets still have their own energy contracts; this
+option does not replace those correlations.
+
+Entropy is unchanged. Consequently `H - T*S` shifts with the enthalpy reference
+but is not thereby a standard Gibbs energy of formation or an absolute chemical
+potential. Native caloric models such as GERG, IAPWS, Vega and Span-Wagner retain
+their own reference conventions and reject this system option. Solids and aqueous
+ions are not qualified for it. The Cp polynomial's original temperature validity
+is unchanged; enabling formation data does not extend it.
+
+The example and reference equations are exercised by `FormationEnthalpyReferenceTest`
+and `SystemFormationEnthalpyTest`; `FormationEnthalpyDatabaseTest` covers both
+database loading routes.
+
 ### Derivative Properties (requires init(3))
 
 | Method | Description |
@@ -482,6 +583,17 @@ fluid.setPressure(725.0, "psia");     // 725 psi absolute
 ```
 
 #### Flow Rate Setters
+
+For a nonempty fluid, changing the total flow preserves the component ratios, including
+trace components when scaling reservoir inventories down to stream rates. For a downward
+change, the setter checks whether its established difference update retains
+each component and the total inventory to `1e-12` relative accuracy. If this check fails,
+it rebuilds positive component inventories from normalized overall fractions. This avoids
+loss of precision when a reservoir inventory is converted to a much smaller producer flow,
+while preserving accurate ordinary process endpoints. Upward and same-rate updates retain
+their established arithmetic and empty-stream initialization. The check adds no EOS
+initialization or system clone. Unit conversion and the existing initialization behavior
+are unchanged; reflash after changing temperature, pressure or composition.
 
 | Method | Description | Supported Units |
 |--------|-------------|-----------------|
@@ -591,6 +703,13 @@ neqsim.util.unit.Units.activateMetricUnits();
 
 #### Speed of Sound
 - Default unit: m/s (meters per second)
+- `fluid.getPhase(i).getSoundSpeed()` is phase-specific.
+- `fluid.getSoundSpeed()` is the legacy **molar-phase-fraction weighted average**. It is neither
+  a homogeneous-equilibrium derivative nor a frozen-phase mixture acoustic model.
+- `fluid.calculateEquilibriumSoundSpeed()` returns an explicit equilibrium derivative with
+  entropy closure, step convergence and phase-boundary diagnostics. Check `isConverged()` before
+  using its `getSoundSpeed()` value. See [Homogeneous-equilibrium acoustic speed](equilibrium_sound_speed)
+  for the density convention, assumptions, executable example and decompression-wave distinction.
 
 #### Molar Mass
 - `"kg/mol"` - kilograms per mole (default)

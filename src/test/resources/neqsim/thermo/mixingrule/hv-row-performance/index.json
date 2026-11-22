@@ -1,0 +1,137 @@
+{
+  "schema": 1,
+  "production_runtime": "Unchanged baseline evaluator; all proposals HELD",
+  "baseline_head": "f1982968aac7dd2bf02340fe13a97635462e624f",
+  "baseline_evaluator_git_blob": "ccda7017ce553a6c76ea6412e70c38053ef285b6",
+  "matrix": {
+    "path": "raw.zip",
+    "bytes": 544180,
+    "sha256": "e71471096112aaaaff853df95443a946a3210d452ff73c908ebebbca2fb76ba2"
+  },
+  "held": {
+    "bytes": 734606,
+    "sha256": "97f55495a848a00d7a8cd5fb0259301b83f9a892941bf846abc6a78794d7bd43",
+    "parts": [
+      {
+        "path": "held.zip.part00",
+        "bytes": 734606,
+        "sha256": "97f55495a848a00d7a8cd5fb0259301b83f9a892941bf846abc6a78794d7bd43"
+      }
+    ]
+  },
+  "compiler_diagnostics": {
+    "bytes": 6689646,
+    "sha256": "82f18afb5cfad1e3564497b971d9065f18158d4812dcca8504891d5f7cafe919",
+    "compression": "ZIP_LZMA; lossless full exports; read with Python3.11+ zipfile",
+    "parts": [
+      {
+        "path": "compiler.zip.part00",
+        "bytes": 800000,
+        "sha256": "9390cafd761fbf3ddef2d0b04ae75dbafe4532ac705e1e38c6001ea0a15d1479"
+      },
+      {
+        "path": "compiler.zip.part01",
+        "bytes": 800000,
+        "sha256": "474011bb35c16c41c25500ef9e6bb5525de5a9b040291e5709d9c2ee116e91fb"
+      },
+      {
+        "path": "compiler.zip.part02",
+        "bytes": 800000,
+        "sha256": "0906c4ef4325f7a2c7e5a3a18a1829f68b38aefd872e10977f3e0b07bb83adf9"
+      },
+      {
+        "path": "compiler.zip.part03",
+        "bytes": 800000,
+        "sha256": "69dada14d03e89362abb2be1161686cc42ddf7d0094d54be12b074ac09fa9b96"
+      },
+      {
+        "path": "compiler.zip.part04",
+        "bytes": 800000,
+        "sha256": "0fd697087efed7cedf34f0025cd9927853a3896c5fd48618b2c7621c81e5fc96"
+      },
+      {
+        "path": "compiler.zip.part05",
+        "bytes": 800000,
+        "sha256": "a8d3af0a906a252df9f30a3e481501888ec111f591fd81ece969b0e438ca1692"
+      },
+      {
+        "path": "compiler.zip.part06",
+        "bytes": 800000,
+        "sha256": "1366584d7b64c83fcbf4307eb422a9c7d2e9bad1d4ae4c758a605e1c12c39839"
+      },
+      {
+        "path": "compiler.zip.part07",
+        "bytes": 800000,
+        "sha256": "0e18792e92c13dcdd50155effa99db810cb7cc674e5f0989cb731faab078b460"
+      },
+      {
+        "path": "compiler.zip.part08",
+        "bytes": 289646,
+        "sha256": "916071cbca26cdbdd6ab5ecba7aa58ddbee3beecc2f03822d4d672565d3c37c1"
+      }
+    ]
+  },
+  "omitted_from_compiler_archive": "Original JFR containers include non-task environment/system-property events. Complete CPU-event exports, raw compiler XML/PrintCompilation, CSV/states and original diagnostic manifest retained; instrumented timings excluded from acceptance",
+  "prototypes": {
+    "1": {
+      "ComponentGENRTLmodifiedHV.java": {
+        "bytes": 21971,
+        "sha256": "8c146ebad763404420ebaf37d810229b8a3b32890b909eb93bafeb0658d35a1c",
+        "git_blob": "effdc706e02392b7e881f24ad875125e6fcf8d43"
+      },
+      "ComponentGENRTLmodifiedHV.class": {
+        "bytes": 11463,
+        "sha256": "ba70e3f710894a163b4e50e4bfc54445d11e506d1799dcc399e8bd4463e6ebda",
+        "git_blob": "d22acbcef875901c1da55f63f458a77178ffcbe2"
+      }
+    },
+    "2": {
+      "ComponentGENRTLmodifiedHV.java": {
+        "bytes": 22251,
+        "sha256": "695eb59593e5e9b5e4847bdfb6a0c764ddfc49fc70da47f5ba598e6a05c34308",
+        "git_blob": "38c1b770503e87b022f08d57f941ddac315a1131"
+      },
+      "ComponentGENRTLmodifiedHV.class": {
+        "bytes": 11489,
+        "sha256": "bc22ff45f1a5f350ce5f0ecd9a1fda6a38540158720a780d4f972fa30ca3e1d1",
+        "git_blob": "c186803265db4ffa53076fd911ef4d67afdfe3b1"
+      }
+    },
+    "3": {
+      "ComponentGENRTLmodifiedHV.java": {
+        "bytes": 22589,
+        "sha256": "56485418aa05003e92d4d21a3fd6e9723dfd070f2f5197f977e496cc627add60",
+        "git_blob": "0f8c2c2a92847b613132eb2f114fd2ee65045152"
+      },
+      "ComponentGENRTLmodifiedHV.class": {
+        "bytes": 11766,
+        "sha256": "bae536efc65c9f9910630c2ff330b40467def1b4c8da47fe0d5e078ce59001f7",
+        "git_blob": "66e3731ab623cefcfc0242ec80aa2693251bffc2"
+      }
+    },
+    "4": {
+      "ComponentGENRTLmodifiedHV.java": {
+        "bytes": 23213,
+        "sha256": "9e74c6adeeab8fc5856adb6eaa9374c12aeb22e1bfe1ba2af9f04c9cb9d05bd3",
+        "git_blob": "f8110d3cf38e61f99900138ec97ed27dd281f3f9"
+      },
+      "ComponentGENRTLmodifiedHV.class": {
+        "bytes": 11952,
+        "sha256": "5ac4f568676ee636b9687107ea32005a0bcef08ce07adb0fd361b394706549a6",
+        "git_blob": "b0caa7d136408606e6a4c05beec2bcece4a853b8"
+      }
+    },
+    "5": {
+      "ComponentGENRTLmodifiedHV.java": {
+        "bytes": 21809,
+        "sha256": "3bf5dfddee7858e696df6fa8cba61e2cf4db7f980a4c1a17656baa91910f68fa",
+        "git_blob": "c8a32dcb6ef52a7ad07786aa2b7b0a89a95472fd"
+      },
+      "ComponentGENRTLmodifiedHV.class": {
+        "bytes": 11332,
+        "sha256": "54da9c717c1dd2a22e908c44becc246099a2b2414c0a8e8d246fdd38010cc2ac",
+        "git_blob": "ed08b81721fcecaed9ad4ef2ac7e0b84c03aaf6a"
+      }
+    }
+  }
+}

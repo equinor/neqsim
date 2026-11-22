@@ -63,8 +63,8 @@ public final class PitzerTemperatureFunction implements Serializable {
     if (coefficients == null || coefficients.length != 6) {
       throw new IllegalArgumentException("Kaasa Pitzer temperature function requires exactly six coefficients");
     }
-    return new PitzerTemperatureFunction(KAASA_REFERENCE_TEMPERATURE_K, new double[] { coefficients[0], coefficients[3],
-        coefficients[4], coefficients[1], coefficients[2], coefficients[5] });
+    return new PitzerTemperatureFunction(KAASA_REFERENCE_TEMPERATURE_K, new double[] {coefficients[0], coefficients[3],
+        coefficients[4], coefficients[1], coefficients[2], coefficients[5]});
   }
 
   /**

@@ -7,7 +7,9 @@
 package neqsim.process.equipment.reservoir;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.process.equipment.stream.Stream;
@@ -53,11 +55,18 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   double reservoirVolume = 0.0;
   double lowPressureLimit = 50.0;
 
+  /** True once a transient step was skipped because the reservoir pressure fell below the low pressure limit. */
+  private boolean lowPressureLimitReached = false;
+
   /** Cumulative water produced at surface conditions (Sm3). */
   double waterProductionTotal = 0.0;
 
   /** Flag enabling recording of the pressure/production surveillance history during transient runs. */
   private boolean recordProductionHistory = true;
+  /** True after molar replay, whose surface-volume production history is deliberately unavailable. */
+  private boolean componentHistoryReplayUsed = false;
+  /** Segregated support volume retained between measured-component intervals, reservoir m3. */
+  private double externalReplayWaterVolumeM3;
   /** Reservoir time at each recorded history point (s). */
   private final ArrayList<Double> timeHistory = new ArrayList<Double>();
   /** Average reservoir pressure at each recorded history point (bara). */
@@ -172,6 +181,46 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     gasInStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
     newWell.setStream(gasInStream);
     return newWell.getStream();
+  }
+
+  /**
+   * Returns gas and water injection streams in that order. Exposing these connections makes process graph scheduling
+   * wait for upstream injection streams before running the reservoir.
+   *
+   * @return a new list containing the reservoir's injection streams
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    List<StreamInterface> streams = new ArrayList<StreamInterface>();
+    for (Well well : gasInjector) {
+      streams.add(well.getStream());
+    }
+    for (Well well : waterInjector) {
+      streams.add(well.getStream());
+    }
+    return streams;
+  }
+
+  /**
+   * Returns gas, oil and water production streams in that order. These streams are flashed by {@link #run(UUID)};
+   * reporting their ownership prevents a separately registered producer stream from being flashed concurrently with the
+   * reservoir by a parallel process scheduler.
+   *
+   * @return a new list containing the reservoir's production streams
+   */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> streams = new ArrayList<StreamInterface>();
+    for (Well well : gasProducer) {
+      streams.add(well.getStream());
+    }
+    for (Well well : oilProducer) {
+      streams.add(well.getStream());
+    }
+    for (Well well : waterProducer) {
+      streams.add(well.getStream());
+    }
+    return streams;
   }
 
   /**
@@ -294,6 +343,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @param waterVolume a double
    */
   public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume, double waterVolume) {
+    externalReplayWaterVolumeM3 = 0.0;
     this.thermoSystem = thermoSystem;
     this.oilVolume = oilVolume;
     this.gasVolume = gasVolume;
@@ -458,9 +508,18 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (componentHistoryReplayUsed) {
+      throw new IllegalStateException("A component-replay tank cannot resume stream-based production accounting");
+    }
     increaseTime(dt);
     if (thermoSystem.getPressure("bara") < lowPressureLimit) {
-      logger.info("low pressure reservoir limit reached");
+      if (!lowPressureLimitReached) {
+        logger.warn(
+            "Reservoir {} pressure {} bara is below the low pressure limit {} bara: production is stopped; "
+                + "lower it with setLowPressureLimit(...) to keep producing",
+            getName(), thermoSystem.getPressure("bara"), lowPressureLimit);
+      }
+      lowPressureLimitReached = true;
       setCalculationIdentifier(id);
       return;
     }
@@ -566,6 +625,102 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
     }
     recordProductionHistoryPoint();
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Replays measured component amounts through the existing isothermal, fixed-volume tank TV flash.
+   *
+   * <p>
+   * Amounts are mol per interval, in {@link SystemInterface#getComponentNames()} order, not flow rates or surface
+   * volumes. Injection is mixed before withdrawal for the interval inventory check. Use a dedicated tank with no
+   * connected wells and production-history recording disabled: surface production counters cannot be reconstructed from
+   * component amounts without a separator protocol. This path does not apply the stream production pressure cutoff. All
+   * checks and flashes run on a deep copy; rejection leaves fluid, time and calculation identity intact.
+   * </p>
+   *
+   * @param dt interval duration in seconds, strictly positive
+   * @param producedMoles nonnegative component amounts withdrawn during the interval
+   * @param injectedMoles nonnegative component amounts injected during the interval
+   * @param id accepted calculation identity
+   * @throws IllegalArgumentException if inputs are invalid or a component inventory is overdrawn
+   * @throws IllegalStateException if setup is incompatible or the flash fails conservation/volume checks
+   */
+  public void advanceComponentAmounts(double dt, double[] producedMoles, double[] injectedMoles, UUID id) {
+    advanceComponentAmounts(dt, producedMoles, injectedMoles, externalReplayWaterVolumeM3, id);
+  }
+
+  /**
+   * Replays component amounts with an explicitly segregated, immiscible external water volume.
+   *
+   * <p>
+   * The external water occupies pore space but is not mixed into the tracked EOS inventory. It cannot be produced
+   * through the component schedule. The caller must supply its complete cumulative volume on every step; this is not an
+   * incremental injection amount. This overload supports an immiscible aquifer approximation, not compositional water
+   * mixing, water chemistry, rock expansion or a change in total pore volume.
+   * </p>
+   *
+   * @param dt interval duration in seconds
+   * @param producedMoles nonnegative tracked component withdrawals in mol
+   * @param injectedMoles nonnegative tracked component injections in mol
+   * @param externalWaterVolumeM3 cumulative segregated water occupying the fixed pore volume, reservoir m3
+   * @param id accepted calculation identity
+   * @throws IllegalArgumentException if amounts or the remaining tracked-fluid volume are invalid
+   * @throws IllegalStateException if setup or conservation checks fail
+   */
+  public void advanceComponentAmounts(double dt, double[] producedMoles, double[] injectedMoles,
+      double externalWaterVolumeM3, UUID id) {
+    if (thermoSystem == null || recordProductionHistory || !getInletStreams().isEmpty() || !getOutletStreams().isEmpty()
+        || !(reservoirVolume > 0.0) || !Double.isFinite(reservoirVolume)) {
+      throw new IllegalStateException("Component replay requires an initialized dedicated tank, no wells and "
+          + "setRecordProductionHistory(false)");
+    }
+    double trackedVolume = reservoirVolume - externalWaterVolumeM3;
+    if (!Double.isFinite(externalWaterVolumeM3) || externalWaterVolumeM3 < 0.0 || !(trackedVolume > 0.0)) {
+      throw new IllegalArgumentException("Segregated water must be nonnegative and smaller than total pore volume");
+    }
+    int count = thermoSystem.getNumberOfComponents();
+    if (!Double.isFinite(dt) || dt <= 0.0 || !Double.isFinite(getTime() + dt) || id == null || producedMoles == null
+        || injectedMoles == null || producedMoles.length != count || injectedMoles.length != count) {
+      throw new IllegalArgumentException("Positive finite duration, identity and one amount per component required");
+    }
+    double[] remaining = new double[count];
+    double total = 0.0;
+    for (int i = 0; i < count; i++) {
+      double available = thermoSystem.getComponent(i).getNumberOfmoles() + injectedMoles[i];
+      remaining[i] = available - producedMoles[i];
+      if (!Double.isFinite(producedMoles[i]) || producedMoles[i] < 0.0 || !Double.isFinite(injectedMoles[i])
+          || injectedMoles[i] < 0.0 || !Double.isFinite(remaining[i]) || remaining[i] < 0.0) {
+        throw new IllegalArgumentException("Invalid or overdrawn component: " + thermoSystem.getComponentNames()[i]);
+      }
+      total += remaining[i];
+    }
+    if (!Double.isFinite(total) || total <= 0.0) {
+      throw new IllegalArgumentException("The replay interval must retain a positive finite tank inventory");
+    }
+    SystemInterface candidate = SerializationUtils.clone(thermoSystem);
+    for (int i = 0; i < count; i++) {
+      candidate.addComponent(i, remaining[i] - candidate.getComponent(i).getNumberOfmoles());
+    }
+    new ThermodynamicOperations(candidate).TVflash(trackedVolume, "m3");
+    candidate.initProperties();
+    if (!Double.isFinite(candidate.getPressure()) || candidate.getPressure() <= 0.0
+        || !Double.isFinite(candidate.getVolume("m3"))
+        || Math.abs(candidate.getVolume("m3") - trackedVolume) > trackedVolume * 1.0e-7
+        || Math.abs(candidate.getTemperature() - thermoSystem.getTemperature()) > 1.0e-8) {
+      throw new IllegalStateException("Component replay TV flash did not close the isothermal tank volume");
+    }
+    for (int i = 0; i < count; i++) {
+      double actual = candidate.getComponent(i).getNumberOfmoles();
+      if (!Double.isFinite(actual) || Math.abs(actual - remaining[i]) > 1.0e-8 * Math.max(1.0, remaining[i])) {
+        throw new IllegalStateException("Component replay flash did not conserve " + candidate.getComponentNames()[i]);
+      }
+    }
+    thermoSystem = candidate;
+    externalReplayWaterVolumeM3 = externalWaterVolumeM3;
+    componentHistoryReplayUsed = true;
+    clearProductionHistory();
+    increaseTime(dt);
     setCalculationIdentifier(id);
   }
 
@@ -689,7 +844,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     testPipe.setDiameter(2.69);
     testPipe.setPressureOutLimit(80.0);
     testPipe.setFlowLimit(producedOilStream.getFlowRate("kg/hr") * 0.4, "kg/hr");
-    testPipe.setOutTemperature(273.15 + 50.0);
+    testPipe.setOutletTemperature(273.15 + 50.0);
     testPipe.run();
     System.out.println(" flow limit " + producedOilStream.getFlowRate("kg/hr") * 0.4);
     System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr"));
@@ -801,6 +956,15 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     return conver.getValue(unit);
   }
 
+  /**
+   * Tells whether a transient step was skipped because the pressure fell below the low pressure limit.
+   *
+   * @return true if production stopped at the low pressure limit
+   */
+  public boolean isLowPressureLimitReached() {
+    return lowPressureLimitReached;
+  }
+
   // ============================================================
   // Production-history surveillance support
   // ============================================================
@@ -811,6 +975,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @param record {@code true} to record the history (default), {@code false} to disable
    */
   public void setRecordProductionHistory(boolean record) {
+    if (record && componentHistoryReplayUsed) {
+      throw new IllegalStateException("Surface production recording is unavailable after component replay");
+    }
     this.recordProductionHistory = record;
   }
 

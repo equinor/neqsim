@@ -11,80 +11,9 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * High Integrity Pressure Protection System (HIPPS) Valve.
  *
  * <p>
- * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure by shutting down the source of pressure
- * rather than relieving it. It provides an alternative or complement to traditional pressure relief devices
- * (PSVs/rupture disks).
- *
- * <p>
- * <b>Key Features:</b>
- * <ul>
- * <li>SIL-rated (Safety Integrity Level) protection, typically SIL 2 or SIL 3</li>
- * <li>Redundant pressure transmitters (voting logic: 1oo2, 2oo3, etc.)</li>
- * <li>Fast-acting isolation valve(s) with partial stroke testing capability</li>
- * <li>Closes on high pressure to prevent overpressure before PSV setpoint</li>
- * <li>Prevents loss of containment and flaring/venting</li>
- * <li>Diagnostic monitoring with proof testing support</li>
- * </ul>
- *
- * <p>
- * <b>HIPPS vs. PSV:</b>
- * <table border="1">
- * <caption>Comparison between HIPPS and PSV protection systems</caption>
- * <tr>
- * <th>Aspect</th>
- * <th>HIPPS</th>
- * <th>PSV</th>
- * </tr>
- * <tr>
- * <td>Action</td>
- * <td>Stops flow (isolation)</td>
- * <td>Relieves pressure (venting)</td>
- * </tr>
- * <tr>
- * <td>Set Point</td>
- * <td>Below MAWP (e.g., 90%)</td>
- * <td>At/above MAWP</td>
- * </tr>
- * <tr>
- * <td>Emissions</td>
- * <td>Prevents flaring</td>
- * <td>Releases to flare</td>
- * </tr>
- * <tr>
- * <td>SIL Rating</td>
- * <td>SIL 2 or SIL 3</td>
- * <td>Mechanical (not SIL)</td>
- * </tr>
- * <tr>
- * <td>Testing</td>
- * <td>Partial stroke, diagnostics</td>
- * <td>Periodic inspection</td>
- * </tr>
- * <tr>
- * <td>Response</td>
- * <td>2-5 seconds typical</td>
- * <td>Instantaneous (spring)</td>
- * </tr>
- * </table>
- *
- * <p>
- * <b>Typical Applications:</b>
- * <ul>
- * <li>Subsea pipelines (prevents overpressure at receiving platform)</li>
- * <li>Blocked outlet scenarios (pump/compressor deadhead protection)</li>
- * <li>Thermal expansion protection (isolated segments)</li>
- * <li>High-pressure gas injection systems</li>
- * <li>Where flaring is environmentally/economically undesirable</li>
- * </ul>
- *
- * <p>
- * <b>Voting Logic:</b>
- * <ul>
- * <li><b>1oo1</b> (1 out of 1): Single transmitter trips (simple, lower SIL)</li>
- * <li><b>1oo2</b> (1 out of 2): Any one of two transmitters trips (high availability)</li>
- * <li><b>2oo2</b> (2 out of 2): Both transmitters must trip (low spurious trips)</li>
- * <li><b>2oo3</b> (2 out of 3): Any two of three transmitters trip (balanced, common for SIL 3)</li>
- * </ul>
+ * Transmitter alarms or an external safety solver can latch the valve closed. In transient mode, its actual position
+ * follows the configured actuator. Use a process model to evaluate pressure response and feedback. SIL and proof-test
+ * settings are study metadata.
  *
  * <p>
  * <b>Usage Example:</b>
@@ -152,7 +81,7 @@ public class HIPPSValve extends ThrottlingValve {
   private VotingLogic votingLogic = VotingLogic.TWO_OUT_OF_THREE;
 
   /** Indicates if HIPPS has tripped. */
-  private boolean hasTripped = false;
+  private volatile boolean hasTripped = false;
 
   /** Time required for valve to close (seconds). */
   private double closureTime = 3.0; // Typical SIL-rated actuator: 2-5 seconds
@@ -164,16 +93,22 @@ public class HIPPSValve extends ThrottlingValve {
   private boolean tripEnabled = true;
 
   /** Timestamp of last trip event (for diagnostics). */
-  private double lastTripTime = -1.0;
+  private volatile double lastTripTime = -1.0;
 
   /** Cumulative time in simulation (for diagnostics). */
-  private double cumulativeTime = 0.0;
+  private volatile double cumulativeTime = 0.0;
 
   /** Count of spurious trips (for diagnostics). */
   private int spuriousTripCount = 0;
 
+  /** Number of transitions into the trip latch. */
+  private int tripCount;
+
+  /** A simulated loss of motion holds measured position while preserving the requested target. */
+  private volatile boolean actuatorStuck;
+
   /** Flag indicating if partial stroke test is active. */
-  private boolean partialStrokeTestActive = false;
+  private volatile boolean partialStrokeTestActive = false;
 
   /** Target opening for partial stroke test. */
   private double partialStrokeTestTarget = 0.0;
@@ -223,6 +158,8 @@ public class HIPPSValve extends ThrottlingValve {
    */
   public HIPPSValve(String name) {
     super(name);
+    super.setClosingTravelTime(closureTime);
+    super.setTravelModel(ValveTravelModel.LINEAR_RATE_LIMIT);
     // HIPPS valves start fully open
     setPercentValveOpening(100.0);
   }
@@ -235,6 +172,8 @@ public class HIPPSValve extends ThrottlingValve {
    */
   public HIPPSValve(String name, StreamInterface inletStream) {
     super(name, inletStream);
+    super.setClosingTravelTime(closureTime);
+    super.setTravelModel(ValveTravelModel.LINEAR_RATE_LIMIT);
     // HIPPS valves start fully open
     setPercentValveOpening(100.0);
   }
@@ -292,9 +231,15 @@ public class HIPPSValve extends ThrottlingValve {
    * @param closureTime time in seconds for valve to close completely
    */
   public void setClosureTime(double closureTime) {
+    if (!Double.isFinite(closureTime) || closureTime <= 0.0) {
+      throw new IllegalArgumentException("Closure time must be positive and finite");
+    }
     this.closureTime = Math.max(0.1, closureTime);
     // Use the valve closing travel time mechanism
-    setClosingTravelTime(closureTime);
+    setClosingTravelTime(this.closureTime);
+    if (getTravelModel() == ValveTravelModel.NONE) {
+      setTravelModel(ValveTravelModel.LINEAR_RATE_LIMIT);
+    }
   }
 
   /**
@@ -333,6 +278,15 @@ public class HIPPSValve extends ThrottlingValve {
    */
   public boolean hasTripped() {
     return hasTripped;
+  }
+
+  /**
+   * Reports the count of transitions into the trip latch, including trips from an external solver.
+   *
+   * @return cumulative trip count
+   */
+  public synchronized int getTripCount() {
+    return tripCount;
   }
 
   /**
@@ -375,8 +329,10 @@ public class HIPPSValve extends ThrottlingValve {
    * <p>
    * The valve will not automatically reopen after reset - it must be manually opened via setPercentValveOpening().
    */
-  public void reset() {
-    hasTripped = false;
+  public synchronized void reset() {
+    if (!evaluateVotingLogic()) {
+      hasTripped = false;
+    }
   }
 
   /**
@@ -449,8 +405,11 @@ public class HIPPSValve extends ThrottlingValve {
    *
    * @param strokeFraction fraction of full stroke to test (0.0-0.9, e.g., 0.15 for 15%)
    */
-  public void performPartialStrokeTest(double strokeFraction) {
-    if (strokeFraction < 0.0 || strokeFraction >= 1.0) {
+  public synchronized void performPartialStrokeTest(double strokeFraction) {
+    if (hasTripped) {
+      throw new IllegalStateException("Cannot start a partial stroke while isolation is latched");
+    }
+    if (!Double.isFinite(strokeFraction) || strokeFraction < 0.0 || strokeFraction >= 1.0) {
       throw new IllegalArgumentException("Stroke fraction must be between 0.0 and 1.0");
     }
     partialStrokeTestActive = true;
@@ -532,63 +491,97 @@ public class HIPPSValve extends ThrottlingValve {
    * @param id unique identifier for this calculation
    */
   @Override
-  public void runTransient(double dt, UUID id) {
-    // Update cumulative time for diagnostics
+  public synchronized void runTransient(double dt, UUID id) {
+    if (!Double.isFinite(dt) || dt < 0.0) {
+      throw new IllegalArgumentException("HIPPS timestep must be finite and nonnegative");
+    }
+    if (dt == 0.0) {
+      return;
+    }
+    if (tripEnabled && !hasTripped && evaluateVotingLogic()) {
+      trip();
+    }
     cumulativeTime += dt;
-    timeSinceProofTest += dt / 3600.0; // Convert to hours
+    timeSinceProofTest += dt / 3600.0;
 
-    // Handle partial stroke test
     if (partialStrokeTestActive) {
-      double testElapsedTime = cumulativeTime - partialStrokeTestStartTime;
-
-      if (testElapsedTime < partialStrokeTestDuration / 2.0) {
-        // First half: close to test position
-        setPercentValveOpening(partialStrokeTestTarget);
-      } else if (testElapsedTime < partialStrokeTestDuration) {
-        // Second half: return to full open
-        setPercentValveOpening(100.0);
-      } else {
-        // Test complete
-        partialStrokeTestActive = false;
-        setPercentValveOpening(100.0);
-      }
-    } else if (tripEnabled && !hasTripped) {
-      // Normal operation: check voting logic for trip condition
-      if (evaluateVotingLogic()) {
-        // Trip condition met - initiate shutdown
-        hasTripped = true;
-        lastTripTime = cumulativeTime;
-        // Command valve to close
-        setPercentValveOpening(0.0);
-      }
+      double elapsed = cumulativeTime - partialStrokeTestStartTime;
+      commandOpening(elapsed < partialStrokeTestDuration / 2.0 ? partialStrokeTestTarget : 100.0);
+      partialStrokeTestActive = elapsed < partialStrokeTestDuration;
     }
-
-    // If tripped, ensure valve stays closed
-    if (hasTripped && !partialStrokeTestActive) {
-      setPercentValveOpening(0.0);
-    }
-
     // Run base class transient calculation
     super.runTransient(dt, id);
   }
 
   /**
-   * Overrides setPercentValveOpening to prevent opening when tripped.
-   *
-   * <p>
-   * If HIPPS has tripped, it cannot be opened until reset() is called. This prevents inadvertent reopening during an
-   * alarm condition.
-   *
-   * @param opening desired valve opening percentage (0-100)
+   * Latches a shutdown demand from an external logic solver and takes priority over partial-stroke testing. Transient
+   * equipment advances its actual stem through the normal valve actuator step.
    */
+  public synchronized void trip() {
+    if (!hasTripped) {
+      hasTripped = true;
+      lastTripTime = cumulativeTime;
+      tripCount++;
+    }
+    partialStrokeTestActive = false;
+    commandOpening(0.0);
+  }
+
+  /**
+   * Applies an instantaneous steady-state position or a transient actuator demand.
+   *
+   * @param opening commanded percent opening
+   */
+  private void commandOpening(double opening) {
+    if (getCalculateSteadyState() && !actuatorStuck) {
+      super.setPercentValveOpening(opening);
+    } else {
+      super.setTargetPercentValveOpening(opening);
+    }
+  }
+
+  /**
+   * Changes the actuator motion availability for an offline failure scenario.
+   *
+   * @param available false to hold the current stem position despite an isolation demand
+   */
+  public synchronized void setActuatorAvailable(boolean available) {
+    actuatorStuck = !available;
+  }
+
+  /**
+   * Reports whether the modeled stem can move.
+   *
+   * @return false for the stuck actuator state
+   */
+  public boolean isActuatorAvailable() {
+    return !actuatorStuck;
+  }
+
+  /** {@inheritDoc} */
   @Override
-  public void setPercentValveOpening(double opening) {
-    if (hasTripped && opening > 0.0 && !partialStrokeTestActive) {
-      // Cannot open valve while tripped (unless doing partial stroke test)
-      super.setPercentValveOpening(0.0);
+  public synchronized void runController(double dt, UUID id) {
+    if (actuatorStuck || dt == 0.0) {
+      setCalculationIdentifier(id);
+      return;
+    }
+    super.runController(dt, id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public synchronized void setPercentValveOpening(double opening) {
+    if (hasTripped) {
+      commandOpening(0.0);
     } else {
       super.setPercentValveOpening(opening);
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public synchronized void setTargetPercentValveOpening(double opening) {
+    super.setTargetPercentValveOpening(hasTripped ? 0.0 : opening);
   }
 
   /**
@@ -639,9 +632,9 @@ public class HIPPSValve extends ThrottlingValve {
           .append(String.format("%.2f", pt.getMeasuredValue("bara"))).append(" bara)\n");
     }
     sb.append("\nOperational History:\n");
-    sb.append("  Total Trips: ").append(hasTripped ? 1 : 0).append("\n");
+    sb.append("  Total Trips: ").append(getTripCount()).append("\n");
     sb.append("  Spurious Trips: ").append(spuriousTripCount).append("\n");
-    sb.append("  Last Trip: ").append(lastTripTime > 0 ? String.format("%.1f s", lastTripTime) : "Never").append("\n");
+    sb.append("  Last Trip: ").append(lastTripTime >= 0 ? String.format("%.1f s", lastTripTime) : "Never").append("\n");
     sb.append("  Runtime: ").append(String.format("%.1f", cumulativeTime)).append(" s\n");
     sb.append("\nMaintenance:\n");
     sb.append("  Proof Test Interval: ").append(String.format("%.0f", proofTestInterval)).append(" hrs\n");

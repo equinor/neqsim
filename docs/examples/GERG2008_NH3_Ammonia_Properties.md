@@ -237,6 +237,8 @@ Saved: nh3_density_vs_pressure.png
 
 </details>
 
+![Result figure from cell 9](figures/GERG2008_NH3_Ammonia_Properties_cell_9_output_1.png)
+
 **Discussion:** The density increases approximately linearly at low pressures
 (ideal gas behavior) and shows compressibility effects at higher pressures,
 especially at lower temperatures closer to the critical point (405.56 K).
@@ -284,6 +286,8 @@ Saved: nh3_compressibility_vs_pressure.png
 
 </details>
 
+![Result figure from cell 12](figures/GERG2008_NH3_Ammonia_Properties_cell_12_output_1.png)
+
 **Discussion:** The compressibility factor drops well below 1.0 at higher pressures,
 reflecting the strong attractive intermolecular forces in ammonia (hydrogen bonding).
 At 350 K (near $T_c$ = 405.56 K) the departure is most pronounced, with Z reaching
@@ -329,6 +333,8 @@ Saved: nh3_mixture_density.png
 
 </details>
 
+![Result figure from cell 15](figures/GERG2008_NH3_Ammonia_Properties_cell_15_output_1.png)
+
 **Discussion:** The mixture density increases with ammonia content due to ammonia's
 higher molar mass (17.03 g/mol vs 16.04 g/mol for methane) and stronger intermolecular
 interactions. The non-linear shape reflects the mixing rules and binary interaction
@@ -345,4 +351,3 @@ parameters from Neumann et al. (2020).
 1. Neumann, T., Thol, M., Lemmon, E.W., & Span, R. (2020). *Molecular Physics*, 118(21-22), e1769856.
 2. Gao, K., Wu, J., & Lemmon, E.W. (2020). *Int. J. Thermophysics*, 41, 68.
 3. Kunz, O. & Wagner, W. (2012). *J. Chem. Eng. Data*, 57(11), 3032-3091.
-

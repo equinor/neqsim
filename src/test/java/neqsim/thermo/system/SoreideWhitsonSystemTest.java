@@ -5,12 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.process.equipment.mixer.StaticMixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -43,9 +46,9 @@ public class SoreideWhitsonSystemTest {
     testOps.TPflash();
 
     // Check phase mole fractions for both gas and aqueous phases
-    double[] expectedGasFractions = { 1.10818E-1, 2.21422E-1, 3.32456E-1, 3.32456E-1, 2.84796E-3 };
-    double[] expectedAqueousFractions = { 4.43467E-5, 2.07206E-3, 1.26653E-4, 1.29507E-4, 9.97627E-1 };
-    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "water" };
+    double[] expectedGasFractions = {1.10818E-1, 2.21422E-1, 3.32456E-1, 3.32456E-1, 2.84796E-3};
+    double[] expectedAqueousFractions = {4.43467E-5, 2.07206E-3, 1.26653E-4, 1.29507E-4, 9.97627E-1};
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "water"};
     double tolerance = 1e-6;
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
@@ -107,9 +110,9 @@ public class SoreideWhitsonSystemTest {
     testOps.TPflash();
 
     // Check phase mole fractions for both gas and aqueous phases (with salinity)
-    double[] expectedGasFractions = { 1.10836E-1, 2.2151E-1, 3.32509E-1, 3.3251E-1, 2.63456E-3 };
-    double[] expectedAqueousFractions = { 2.53209E-5, 1.55814E-3, 7.67909E-5, 7.0922E-5, 9.98269E-1 };
-    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "water" };
+    double[] expectedGasFractions = {1.10836E-1, 2.2151E-1, 3.32509E-1, 3.3251E-1, 2.63456E-3};
+    double[] expectedAqueousFractions = {2.53209E-5, 1.55814E-3, 7.67909E-5, 7.0922E-5, 9.98269E-1};
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "water"};
     double tolerance = 0.001;
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
@@ -141,7 +144,7 @@ public class SoreideWhitsonSystemTest {
     testSystem.setMixingRule(11);
 
     SystemSoreideWhitson testSystem2 = testSystem.clone();
-    double[] molarComposition = { 0.2, 0.4, 0.1, 0.2, 0.1 };
+    double[] molarComposition = {0.2, 0.4, 0.1, 0.2, 0.1};
     testSystem2.setMolarComposition(molarComposition);
     testSystem2.setSalinity(0.00, "mole/sec");
 
@@ -166,8 +169,7 @@ public class SoreideWhitsonSystemTest {
     SystemSoreideWhitson mixedSystem = (SystemSoreideWhitson) mixer.getOutletStream().getFluid();
     double mixedSalinity = ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
 
-    org.junit.jupiter.api.Assertions.assertTrue(mixedSalinity > 0.96 && mixedSalinity < 0.97,
-        "Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
+    assertEquals(0.95925575, mixedSalinity, 1e-6, "Mixed concentration with salinity-dependent water alpha");
 
     Separator separator = new Separator("Stream Separator");
     separator.addStream(mixer.getOutletStream());
@@ -241,12 +243,68 @@ public class SoreideWhitsonSystemTest {
     assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getSoreideWhitsonParameterization());
   }
 
+  /**
+   * Check the binary TP flash against the authors' tagged procedure-1 check values.
+   *
+   * @param gas NeqSim gas component name
+   * @param temperatureC check temperature in degrees Celsius
+   * @param pressureBara check pressure in bara
+   * @param molality check NaCl molality in mol/kg
+   * @param expectedAqueousGas dissolved-gas mole fraction from the reference solver
+   * @param expectedVapourWater vapour water mole fraction from the reference solver
+   */
+  @ParameterizedTest
+  @CsvSource({"CO2, 80, 100, 0.0, 1.502273e-02, 1.029166e-02", "CO2, 150, 300, 0.0, 2.676163e-02, 5.808266e-02",
+      "CO2, 80, 100, 2.0, 9.929649e-03, 9.600217e-03", "H2S, 80, 100, 0.0, 4.344899e-02, 3.170066e-02",
+      "H2S, 150, 300, 0.0, 8.570484e-02, 1.066951e-01", "H2S, 80, 100, 2.0, 3.264386e-02, 3.005893e-02",
+      "methane, 80, 100, 0.0, 1.243985e-03, 6.248312e-03", "methane, 150, 300, 0.0, 3.812144e-03, 2.612455e-02",
+      "methane, 80, 100, 2.0, 7.444597e-04, 5.781603e-03", "nitrogen, 80, 100, 0.0, 7.441271e-04, 5.895154e-03",
+      "nitrogen, 150, 300, 0.0, 2.444649e-03, 2.328153e-02", "nitrogen, 80, 100, 2.0, 4.361799e-04, 5.449174e-03",
+      "hydrogen, 80, 100, 0.0, 1.343956e-03, 5.512070e-03", "hydrogen, 150, 300, 0.0, 5.964519e-03, 2.147956e-02",
+      "hydrogen, 80, 100, 2.0, 9.657500e-04, 5.092664e-03", "ethane, 80, 100, 0.0, 7.365275e-04, 5.586771e-03",
+      "ethane, 150, 300, 0.0, 1.866783e-03, 2.631329e-02", "ethane, 80, 100, 2.0, 3.801125e-04, 5.186435e-03",
+      "propane, 80, 100, 0.0, 2.504517e-04, 3.244081e-03", "propane, 150, 300, 0.0, 7.629749e-04, 1.954148e-02",
+      "propane, 80, 100, 2.0, 1.180524e-04, 3.021930e-03"})
+  void testCoupledRefitBinaryFlash(String gas, double temperatureC, double pressureBara, double molality,
+      double expectedAqueousGas, double expectedVapourWater) {
+    SystemSoreideWhitson system = new SystemSoreideWhitson(temperatureC + 273.15, pressureBara);
+    system.addComponent(gas, 1.0, "mole/sec");
+    system.addComponent("water", 1.0, "mole/sec");
+    system.setSoreideWhitsonParameterization(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026);
+    system.setTotalFlowRate(2.0, "mole/sec");
+    system.createDatabase(true);
+    system.setMixingRule(11);
+    system.init(0);
+    system.init(1);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    PhaseSoreideWhitson aqueous = (PhaseSoreideWhitson) system.getPhase(PhaseType.AQUEOUS);
+    // Match the reference phase molality through NeqSim's salt-flow input.
+    for (int iteration = 0; molality > 0.0 && iteration < 6; iteration++) {
+      double aqueousMassFlow = aqueous.getNumberOfMolesInPhase() * aqueous.getMolarMass();
+      system.setSalinity(molality * aqueousMassFlow, "mole/sec");
+      operations.TPflash();
+      aqueous = (PhaseSoreideWhitson) system.getPhase(PhaseType.AQUEOUS);
+    }
+    assertEquals(2, system.getNumberOfPhases());
+    assertEquals(molality, aqueous.getSalinityConcentration(), 2.0e-6);
+    PhaseInterface vapour = system.getPhase(1 - system.getPhaseNumberOfPhase(PhaseType.AQUEOUS));
+    // NeqSim retains its own EOS pure-component properties, which differ from the reference solver inputs.
+    assertEquals(expectedAqueousGas, aqueous.getComponent(gas).getx(), expectedAqueousGas * 0.05,
+        "aqueous gas mole fraction");
+    assertEquals(expectedVapourWater, vapour.getComponent("water").getx(), expectedVapourWater * 0.01,
+        "vapour water mole fraction");
+  }
+
   @Test
   public void testChabab2019Table2CO2Solubility() {
-    double[][] points = { { 1.13, 323.02, 53.450, 0.01030, 0.010872 }, { 1.13, 322.97, 75.550, 0.01290, 0.013990 },
-        { 1.13, 323.03, 100.350, 0.01510, 0.016205 }, { 1.13, 323.04, 145.080, 0.01700, 0.018000 },
-        { 3.01, 342.82, 30.391, 0.00441, 0.003586 }, { 3.01, 342.81, 72.559, 0.00880, 0.007407 },
-        { 3.01, 342.82, 100.910, 0.01057, 0.009160 } };
+    // Columns: salt flow (1 kg/s water basis), T, P, Table 2 measurement,
+    // and NeqSim LEGACY regression with the salinity-dependent water alpha active.
+    double[][] points = {{1.13, 323.02, 53.450, 0.01030, 0.010427149}, {1.13, 322.97, 75.550, 0.01290, 0.013400356},
+        {1.13, 323.03, 100.350, 0.01510, 0.015507269}, {1.13, 323.04, 145.080, 0.01700, 0.017211938},
+        {3.01, 342.82, 30.391, 0.00441, 0.003179698}, {3.01, 342.81, 72.559, 0.00880, 0.006532422},
+        {3.01, 342.82, 100.910, 0.01057, 0.008060441}};
     double legacyHighSalinityAbsoluteDeviation = 0.0;
     double chababHighSalinityAbsoluteDeviation = 0.0;
 
@@ -256,7 +314,7 @@ public class SoreideWhitsonSystemTest {
       double chababValue = calculateAqueousCO2MoleFraction(point[0], point[1], point[2],
           SoreideWhitsonParameterization.CHABAB_2019);
 
-      assertEquals(point[4], legacyValue, 2.0e-5, "Legacy default must remain backward compatible");
+      assertEquals(point[4], legacyValue, 2.0e-5, "Legacy correlation with salinity propagated to the water alpha");
       assertEquals(point[3], chababValue, point[3] * 0.12,
           "Chabab parameterization should reproduce the Table 2 CO2 solubility point");
 

@@ -70,6 +70,110 @@ public class InterfacialFriction implements Serializable {
     this.geometryCalc = new GeometryCalculator();
   }
 
+  /** Reference gas density of the Andritsos-Hanratty transition velocity (air at 1 atm), kg/m3. */
+  public static final double ANDRITSOS_HANRATTY_REFERENCE_GAS_DENSITY = 1.3;
+
+  /** Andritsos-Hanratty wave-transition superficial gas velocity at the reference density, m/s. */
+  public static final double ANDRITSOS_HANRATTY_TRANSITION_VELOCITY = 5.0;
+
+  /**
+   * Andritsos-Hanratty (1987) wave enhancement of the stratified interfacial friction factor.
+   *
+   * <p>
+   * {@code f_i/f_G = 1 + 15 sqrt(h_L/D) (U_SG/U_SG,t - 1)} above the wave transition {@code U_SG,t = 5 sqrt(1.3/rho_G)}
+   * m/s, and one below it. The transition scales with the gas density, not with the liquid-to-gas density ratio. The
+   * transient two-fluid momentum closure retains this published, bounded form because its interfacial shear is
+   * validated against the severe-slugging cycle benchmark. The steady stratified hold-up root uses
+   * {@link #stratifiedWaveEnhancement(double, double, double)} instead.
+   * </p>
+   *
+   * @param superficialGasVelocity superficial gas velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param liquidLevelFraction equilibrium liquid level divided by the pipe diameter, 0-1
+   * @return enhancement factor, at least one
+   */
+  public static double andritsosHanrattyEnhancement(double superficialGasVelocity, double gasDensity,
+      double liquidLevelFraction) {
+    if (!(gasDensity > 0.0) || !(liquidLevelFraction > 0.0) || !Double.isFinite(superficialGasVelocity)) {
+      return 1.0;
+    }
+    double transition = ANDRITSOS_HANRATTY_TRANSITION_VELOCITY
+        * Math.sqrt(ANDRITSOS_HANRATTY_REFERENCE_GAS_DENSITY / gasDensity);
+    double ratio = Math.abs(superficialGasVelocity) / transition;
+    if (ratio <= 1.0) {
+      return 1.0;
+    }
+    return Math.min(ANDRITSOS_HANRATTY_MAXIMUM_ENHANCEMENT,
+        1.0 + 15.0 * Math.sqrt(Math.min(1.0, liquidLevelFraction)) * (ratio - 1.0));
+  }
+
+  /**
+   * Upper bound on the wave enhancement.
+   *
+   * <p>
+   * The correlation was fitted to near-atmospheric air-water data. At the gas densities of a production or export line
+   * (20-100 kg/m3) the transition velocity falls below 1 m/s and the unbounded form reaches twenty-fold or more. On a
+   * 0.5 m, 100 bara wet-gas line that cut the stratified hold-up from 0.024 to 0.018 and removed the uphill liquid
+   * accumulation of undulating terrain, so the pressure drop fell as the terrain grew. A bound of five kept that
+   * response but left the interface too smooth for gas to carry a thin film up a gentle upslope: the stratified
+   * momentum balance then only had the thick, near-bridging root and flagged slug flow where a thin stratified film is
+   * observed. The bound of twelve admits the thin-film root on those slopes while still limiting the high-pressure
+   * extrapolation. It is an engineering limit, not part of the published correlation.
+   * </p>
+   */
+  public static final double ANDRITSOS_HANRATTY_MAXIMUM_ENHANCEMENT = 12.0;
+
+  /** Coefficient of the squared liquid level fraction in {@link #stratifiedWaveEnhancement}. */
+  public static final double WAVE_ENHANCEMENT_DEPTH_COEFFICIENT = 80.0;
+
+  /** Largest value of {@code U_SG/U_SG,t - 1} credited by {@link #stratifiedWaveEnhancement}. */
+  public static final double WAVE_ENHANCEMENT_RATIO_LIMIT = 4.0;
+
+  /**
+   * Wavy-stratified interfacial friction enhancement used by the steady two-fluid stratified hold-up closure.
+   *
+   * <p>
+   * {@code f_i/f_G = 1 + 80 (h_L/D)^2 min(U_SG/U_SG,t - 1, 4)} above the Andritsos-Hanratty wave transition
+   * {@code U_SG,t = 5 sqrt(1.3/rho_G)} m/s, and one below it. It differs from the published form in two ways. The
+   * velocity-ratio term is not credited beyond four, about the end of the near-atmospheric data it was fitted to; at
+   * production-line gas densities the transition falls below 1 m/s and the ratio reaches 5 to 15, where the unbounded
+   * form (or a flat cap on it) makes the interface equally rough at every liquid level. The level enters squared
+   * instead of as a square root, so a thin layer is credited with little wave roughness and a thick one with much. At
+   * atmospheric air-water conditions (h_L/D 0.25, 10 m/s) the two forms give 6 and 8.5.
+   * </p>
+   *
+   * <p>
+   * The form was selected against a reference transient multiphase simulator on thirteen stratified sections of lean
+   * wet gas, gas condensate and gas-oil lines at 30 to 100 bara (flat, 0.6 to 4.7 degrees up and down). With the capped
+   * square-root form the flat holdups were 20 to 30 per cent low and the uphill Taitel-Dukler balance lost its thin
+   * root between 1.6 and 2.5 degrees, jumping from 0.025 to 0.32 where the reference rises smoothly 0.028, 0.072, 0.14.
+   * With this form the same sections give 0.030, 0.089, 0.137, eleven of the thirteen sections are within 10 per cent,
+   * and the mean log holdup error falls from 0.24 to 0.06 on flat and from 0.49 to 0.10 on inclined sections. A linear
+   * level dependence (slope 20, ratio limit 3) scores 0.13 and 0.15; the square-root forms do not get below 0.2 on
+   * either group whatever their slope, limit or cap.
+   * </p>
+   *
+   * @param superficialGasVelocity superficial gas velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param liquidLevelFraction equilibrium liquid level divided by the pipe diameter, 0-1
+   * @return enhancement factor, at least one
+   */
+  public static double stratifiedWaveEnhancement(double superficialGasVelocity, double gasDensity,
+      double liquidLevelFraction) {
+    if (!(gasDensity > 0.0) || !(liquidLevelFraction > 0.0) || !Double.isFinite(superficialGasVelocity)) {
+      return 1.0;
+    }
+    double transition = ANDRITSOS_HANRATTY_TRANSITION_VELOCITY
+        * Math.sqrt(ANDRITSOS_HANRATTY_REFERENCE_GAS_DENSITY / gasDensity);
+    double ratio = Math.abs(superficialGasVelocity) / transition;
+    if (ratio <= 1.0) {
+      return 1.0;
+    }
+    double level = Math.min(1.0, liquidLevelFraction);
+    return 1.0
+        + WAVE_ENHANCEMENT_DEPTH_COEFFICIENT * level * level * Math.min(WAVE_ENHANCEMENT_RATIO_LIMIT, ratio - 1.0);
+  }
+
   /**
    * Calculate interfacial friction for the current flow conditions.
    *
@@ -230,19 +334,10 @@ public class InterfacialFriction implements Serializable {
       f_smooth = 0.079 / Math.pow(Re_G, 0.25);
     }
 
-    // Andritsos-Hanratty enhancement factor
-    // f_i = f_smooth * (1 + 15 * sqrt(h_L/D) * (v_G/v_G,t - 1)) for v_G > v_G,t
-    // where v_G,t is transition velocity to wavy flow
-
-    // Transition gas velocity (simplified)
-    double vG_t = 5.0 * Math.sqrt(rhoL / rhoG); // Approximate transition velocity
-
-    double enhancementFactor = 1.0;
-    if (Math.abs(vG) > vG_t && geom.liquidLevel > 1e-10) {
-      double sqrtHD = Math.sqrt(geom.liquidLevel / D);
-      enhancementFactor = 1.0 + 15.0 * sqrtHD * (Math.abs(vG) / vG_t - 1.0);
-      enhancementFactor = Math.min(enhancementFactor, 20.0); // Cap enhancement
-    }
+    // Retain the published bounded wave law for transient interfacial shear. The calibrated depth-squared law is a
+    // steady hold-up closure: using it here weakens thin-film gas-to-liquid momentum transfer enough to suppress the
+    // validated severe-slugging blowout/fallback cycle.
+    double enhancementFactor = andritsosHanrattyEnhancement(Math.abs(vG) * (1.0 - alphaL), rhoG, geom.liquidLevel / D);
 
     result.frictionFactor = f_smooth * enhancementFactor;
 
@@ -338,9 +433,12 @@ public class InterfacialFriction implements Serializable {
     result.slipVelocity = vG - vL;
 
     // In slug body, phases are mixed - use bubble swarm approach
-    // Interfacial area based on bubble diameter (Hinze correlation for max stable bubble)
-    double d_b = 2.0 * Math.pow(0.725 * 0.02 / ((rhoL - rhoG) * GRAVITY), 0.5); // ~5mm bubbles
-    d_b = Math.min(d_b, D / 10.0);
+    // The capillary size uses the magnitude of the buoyancy contrast. At equal
+    // densities the buoyancy length is unbounded and pipe confinement sets the size.
+    double densityContrast = Math.abs(rhoL - rhoG);
+    double diameterLimit = D / 10.0;
+    double d_b = densityContrast == 0.0 ? diameterLimit
+        : Math.min(2.0 * Math.sqrt(0.725 * 0.02 / (densityContrast * GRAVITY)), diameterLimit);
 
     // Interfacial area concentration for dispersed bubbles: a = 6 * (1-alphaL) / d_b
     double alphaG = 1.0 - alphaL;
@@ -400,6 +498,30 @@ public class InterfacialFriction implements Serializable {
   }
 
   /**
+   * Evaluate bubble drag from the independently transported gas volume fraction.
+   *
+   * <p>
+   * Using the gas fraction directly retains positive trace inertia when the liquid fraction rounds to one. The force
+   * remains proportional to gas holdup and vanishes only at the exactly absent endpoint.
+   * </p>
+   *
+   * @param vG gas velocity in m/s
+   * @param vL liquid velocity in m/s
+   * @param rhoG gas density in kg/m3
+   * @param rhoL liquid density in kg/m3
+   * @param muG gas viscosity in Pa s
+   * @param muL liquid viscosity in Pa s
+   * @param alphaG independently represented gas volume fraction
+   * @param diameter pipe diameter in m
+   * @param sigma surface tension in N/m
+   * @return configured bubble drag and interface area per length
+   */
+  public InterfacialFrictionResult calculateBubbleWithGasHoldup(double vG, double vL, double rhoG, double rhoL,
+      double muG, double muL, double alphaG, double diameter, double sigma) {
+    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, alphaG, diameter, sigma, useCorrectedBubbleDrag);
+  }
+
+  /**
    * Calculate interfacial friction for bubble flow.
    *
    * <p>
@@ -414,15 +536,31 @@ public class InterfacialFriction implements Serializable {
    * @param muL liquid viscosity in Pa·s
    * @param alphaL liquid holdup (volume fraction)
    * @param D pipe diameter in m
+   * @param surfaceTension surface tension in N/m
    * @return interfacial friction calculation result
    */
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
       double alphaL, double D, double surfaceTension) {
-    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, surfaceTension, useCorrectedBubbleDrag);
+    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, 1.0 - alphaL, D, surfaceTension, useCorrectedBubbleDrag);
   }
 
+  /**
+   * Evaluate the configured force law without subtracting the liquid fraction from unity.
+   *
+   * @param vG gas velocity in m/s
+   * @param vL liquid velocity in m/s
+   * @param rhoG gas density in kg/m3
+   * @param rhoL liquid density in kg/m3
+   * @param muG gas viscosity in Pa s
+   * @param muL liquid viscosity in Pa s
+   * @param alphaG gas volume fraction
+   * @param D pipe diameter in m
+   * @param surfaceTension surface tension in N/m
+   * @param useCorrectedDrag true for the dimensionally corrected force scaling
+   * @return interfacial force representation
+   */
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
-      double alphaL, double D, double surfaceTension, boolean useCorrectedDrag) {
+      double alphaG, double D, double surfaceTension, boolean useCorrectedDrag) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
@@ -431,8 +569,7 @@ public class InterfacialFriction implements Serializable {
     double d_b = getBubbleSizeClosure().estimateDiameter(D, rhoL, rhoG, GRAVITY, surfaceTension);
 
     // Interfacial area concentration
-    double alphaG = 1.0 - alphaL;
-    if (alphaG < 1e-10) {
+    if (alphaG <= 0.0) {
       return result;
     }
 
@@ -526,7 +663,7 @@ public class InterfacialFriction implements Serializable {
           liquidViscosity, liquidHoldup, diameter, surfaceTension);
     }
     InterfacialFrictionResult result = calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-        liquidViscosity, liquidHoldup, diameter, surfaceTension, true);
+        liquidViscosity, 1.0 - liquidHoldup, diameter, surfaceTension, true);
     return result.interfacialShear * result.interfacialAreaPerLength;
   }
 

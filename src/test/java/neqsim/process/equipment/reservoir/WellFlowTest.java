@@ -1,5 +1,7 @@
 package neqsim.process.equipment.reservoir;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -256,5 +258,24 @@ public class WellFlowTest {
     process.run();
 
     assert (Math.abs(wellflow.getOutletStream().getPressure("bara") - 100.0) < 1.0);
+  }
+
+  /** Reservoir-layer pressure updates keep the typed boundary and its stream synchronized. */
+  @Test
+  void updatesReservoirLayerPressureWithUnitsAndValidation() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 100.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    StreamInterface zone = new neqsim.process.equipment.stream.Stream("injection zone", fluid);
+    WellFlow well = new WellFlow("injection well");
+    well.setInletStream(new neqsim.process.equipment.stream.Stream("injection fluid", fluid.clone()));
+    well.addInjectionZone("target", zone, 100.0, 1.0e-8, 200.0);
+
+    well.getLayer(0).setReservoirPressure(1450.38, "psia");
+
+    assertEquals(100.0, well.getLayer(0).getReservoirPressure("bara"), 1.0e-3);
+    assertEquals(well.getLayer(0).getReservoirPressure("bara"), zone.getPressure("bara"), 1.0e-12);
+    assertThrows(IllegalArgumentException.class, () -> well.getLayer(0).setReservoirPressure(Double.NaN, "bara"));
+    assertThrows(IllegalArgumentException.class, () -> well.getLayer(0).setReservoirPressure(0.0, "bara"));
   }
 }

@@ -272,6 +272,24 @@ fluid.addComponent("oxygen", 0.02);
 | `SystemBWRSEos` | Benedict-Webb-Rubin-Starling |
 | `SystemBnsEos` | Burgoyne-Nielsen-Stanko Peng-Robinson correlation |
 
+For BNS gas calculations, set the overall specific gravity relative to air, the mole fractions of
+CO₂, H₂S, N₂, H₂ and optionally He, and the associated-gas flag. The hydrocarbon fraction is the
+balance. The temperature-dependent mixing rule (`EosMixingRuleType.CLASSIC_T2`, or 12) is the
+default. The `setComposition(sg, yCO2, yH2S, yN2, yH2, yHe, associatedGas)` overload
+accepts helium. The existing overloads set helium to zero. If the supplied specific gravity implies
+a hydrocarbon molar mass below methane, the model uses methane's molar mass.
+
+Volume correction is enabled by default. The constant Peneloux shift applies to density,
+`getZvolcorr()`, enthalpy, fugacity coefficients and the Joule–Thomson coefficient. `getZ()` continues
+to report the untranslated cubic root. Enthalpy uses NeqSim's usual reference convention.
+The fitted BNS Lohrenz–Bray–Clark viscosity is selected for BNS gas and dense fluid phases. Use
+`initProperties()` after the flash before reading density and viscosity.
+
+The helium extension uses an effective critical temperature of 6.35 °R fitted together with the
+acentric factor, volume shift and viscosity critical volume. The parameter set comes from Mark W.
+Burgoyne's [MIT-licensed BNS reference implementation](https://github.com/mwburgoyne/5_Component_PengRobinson_Z-Factor/tree/90b802abd25789b0e5383dd8f7936479a21d505e)
+and extends the correlation in SPE-229932-MS.
+
 ---
 
 ## 6. Activity Coefficient Models
@@ -288,7 +306,14 @@ import neqsim.thermo.system.SystemUNIFAC;
 SystemInterface fluid = new SystemUNIFAC(300.0, 1.0);
 fluid.addComponent("methanol", 0.3);
 fluid.addComponent("water", 0.7);
+fluid.setMixingRule("classic");
+fluid.init(0);
 ```
+
+UNIFAC group lists and indexed arrays are synchronized automatically during component
+construction and group alignment. Repeated initialization requires no manual group
+copying. `SystemUNIFACpsrk` uses the same group assignments with its temperature-dependent
+interaction parameters; UMR-PRU retains its separate group table.
 
 ### 6.2 NRTL
 
@@ -304,7 +329,13 @@ fluid.addComponent("water", 0.6);
 
 ### 6.3 GE-Wilson
 
-Wilson equation for activity coefficients.
+Wilson equation for activity coefficients. The calculated coefficients are stored for use by
+both solvent vapor-pressure and solute Henry-law fugacity calculations.
+
+Standalone UNIQUAC is currently unsupported: direct UNIQUAC construction and the
+`"UNIQUAC"`/`"UNIQUAQ"` Huron–Vidal selectors throw `UnsupportedOperationException` because
+the implementation and parameter data are incomplete. Use a supported GE model explicitly;
+see [GE model support](thermodynamic_models.md#64-other-ge-models).
 
 ```java
 import neqsim.thermo.system.SystemGEWilson;
@@ -382,6 +413,19 @@ new ThermodynamicOperations(fluid).TPflash();
 boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 ```
 
+For reactive CO2/H2S brines with Na+, K+, Ca++, Cl- and/or SO4--, add the feed components and
+call `chemicalReactionInit()` before setting the mixing rule. The bounded reactive acid-base
+parameter family loads automatically, including HSO4- formation and first H2S dissociation.
+Sulfate-only feeds also work. Elemental sulfur and sulfate/sulfide redox conversion are outside
+this setup; the two sulfur oxidation-state inventories stay separate.
+Its source-defined zeros and partial qualification are explained in
+[Pitzer parameter provenance](pitzer_parameter_provenance.md#automatic-carbonate-parameter-evidence-and-qualification-boundary).
+TBP and characterized plus-fraction pseudo components are supported in this setup. Complete
+`getCharacterization().characterisePlusFraction()` before `chemicalReactionInit()`; the
+[characterized-oil Python example](../../examples/neqsim/pitzer_characterized_oil_brine.py)
+shows the seven-pseudo-component sour gas/brine case tested by `PitzerCharacterizedOilBrineTest`.
+The automatic setup does not establish full reactive pH, VLE or mineral qualification.
+
 The creation-order role objects are stable even when active phases are density-ordered or disappear. A later flash
 reconsiders inactive roles from the current feed and conditions. Neutral non-water species in the Pitzer phase use an
 aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Calling
@@ -389,6 +433,13 @@ aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent conv
 activity-based scale-potential screening after reactive gas-aqueous or gas-oil-aqueous flashes. The result is a
 saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
 supported by the hybrid strategy.
+
+Hybrid initialization preserves the EOS gas root, EOS oil root and GE liquid role
+through the inner phase-fraction iterations, including phase-specific
+initialization. An oil trial temporarily classified as gas by density does not
+change the EOS root used at the next iteration. Pure fluids use the supported
+remaining role; no water Henry coefficient is interpreted as a pure-fluid EOS.
+See [integrated reference conventions and derivative validation](henry_water_database.md#integrated-eos-gasoil-and-ge-liquid-references).
 
 Neutral-gas dissolution also requires a qualified Henry-law reference and, for brines, separately qualified Pitzer
 neutral-ion interactions. See [Henry-law reference states and aqueous gas-solubility evidence](henry_law_reference.md)
@@ -412,7 +463,14 @@ new ThermodynamicOperations(fluid).TPflash();
 `enableHybridEosGeFlash()` configures topology, not electrolyte parameters. Scale calculations require a GE phase
 with meaningful activities for all requested aqueous species. Pitzer has the broadest concentrated-brine parameter
 coverage; the amine models retain their narrower component and validity ranges. `SystemDuanSun` remains excluded from
-this topology because its current public API accepts only CO2.
+this topology because its current public API accepts only CO2. Accordingly, `setModel("Duan-Sun")`
+rejects conversion explicitly: it cannot preserve a brine's water and ion inventory. The historical
+`SystemDuanSun` constructor remains available for compatibility, but is not a usable gas-in-brine
+system. `PhaseDuanSun` remains available for direct correlation evaluation with explicitly supplied
+state and salinity; this does not establish a complete or validated multiphase brine model.
+
+`setModel` throws `IllegalArgumentException` with the original cause when conversion fails,
+including unknown model names. It never returns a partially copied fluid as a successful conversion.
 
 For imported Pitzer datasets, check both interaction coverage and scientific qualification. Coverage answers whether
 the active binary, same-sign, ternary, and neutral topology is explicit; qualification answers which systems and
@@ -550,6 +608,12 @@ NeqSim uses a database-backed component catalog. Verify exact names in the
 
 For petroleum fluids, NeqSim supports TBP (True Boiling Point) and plus-fraction characterization.
 
+Fraction setup assigns molecular weight, density, volume correction and other fraction properties
+to every configured phase, including candidates that are initially inactive. This preserves the
+characterized oil properties when a later flash activates another phase, including the oil role
+in a hybrid Pitzer gas–oil–water calculation. Both TBP overloads and plus-fraction setup use this
+same rule; `PitzerCharacterizedOilBrineTest` covers inactive Pitzer and ordinary SRK roles.
+
 ### 10.1 TBP Fractions
 
 ```java
@@ -564,6 +628,45 @@ oil.addTBPfraction("C10", 0.02, 0.134, 0.792);
 oil.setMixingRule("classic");
 ```
 
+### 10.1.1 Defining a Cut by Boiling Point
+
+A gas chromatograph reports a retention time, so a boiling point is often better known than a density. Two
+alternatives take a boiling point instead of the missing property:
+
+```java
+// molar mass known, specific gravity unknown
+oil.addTBPfraction2("C10", 0.02, 0.142, 174.0, "C");  // 0.142 kg/mol, 174 °C = 447.15 K
+
+// specific gravity known, molar mass unknown
+oil.addTBPfraction3("C10", 0.02, 0.734, 447.3);   // name, moles, specificGravity [-], Tb [K]
+```
+
+`addTBPfraction2` obtains the specific gravity from the Riazi-Daubert (1980) correlation
+$M = 4.5673\times10^{-5}\,T_b^{2.1962}\,SG^{-1.0164}$ (with $T_b$ in degrees Rankine and $M$ in g/mol) inverted
+analytically for $SG$. `addTBPfraction3` inverts the selected TBP model for molar mass, which is the better
+conditioned direction. In both cases the supplied boiling point is then used by the TBP model itself, so it reaches
+the critical properties for the boiling-point based models (Lee-Kesler, Twu, Cavett).
+
+**Molar mass and boiling point are not independent.** In the correlation, a relative error in molar mass carries
+almost one-for-one into specific gravity, and a relative error in boiling point is amplified by about 2.2. A pair
+that implies a specific gravity outside 0.5 to 1.3 is rejected rather than silently accepted:
+
+```java
+oil.addTBPfraction2("C10", 0.02, 0.129, 560.0);  // throws: a 129 g/mol cut cannot boil at 560 K
+```
+
+If the paraffin, naphthene and aromatic character of the cut is known, the Watson characterization factor is a
+markedly more accurate route to the density, because $K_w$ encodes exactly that character:
+
+```java
+double sg = oil.calculateDensityFromBoilingPointAndWatsonK(447.3, 12.66);  // Tb [K], Kw [-]
+oil.addTBPfraction("C10", 0.02, 0.142, sg);
+```
+
+Indicative values are about 12.7 for paraffinic cuts, 11.0 for naphthenic and 10.0 for aromatic. Against pure
+components this route reproduces the specific gravity to better than 1 %, where the molar-mass route is typically
+5 % out for paraffins.
+
 ### 10.2 Plus Fractions
 
 ```java
@@ -571,6 +674,10 @@ oil.setMixingRule("classic");
 // addPlusFraction(name, molarFlow, molarMass [kg/mol], specificGravity)
 oil.addPlusFraction("C20", 0.10, 0.350, 0.88);
 ```
+
+A zero-mole plus fraction stays in the fluid with its original name and properties when
+`characterisePlusFraction()` runs. After adding material to that fraction, call the same
+method again to split and lump it.
 
 ### 10.3 TBP Characterization Models
 
@@ -584,6 +691,14 @@ fluid.getCharacterization().setTBPModel("Lee-Kesler");
 fluid.getCharacterization().setTBPModel("Twu");
 fluid.getCharacterization().setTBPModel("RiaziDaubert");
 ```
+
+Pedersen critical-property estimation requires MW < 1120 g/mol (1.120 kg/mol for
+`addTBPfraction`), and the explicit `PedersenSRKHeavyOil` and `PedersenPRHeavyOil`
+property models are unavailable. The `RiaziDaubert` fallback inherits the Pedersen boundary.
+Unsupported estimation throws `UnsupportedOperationException`. For a heavy cut with
+independently validated critical temperature, critical pressure and acentric factor, use the
+seven-argument `addTBPfraction` overload; see [TBP Fraction Models](../wiki/tbp_fraction_models)
+for units and dependent-property behavior.
 
 ---
 

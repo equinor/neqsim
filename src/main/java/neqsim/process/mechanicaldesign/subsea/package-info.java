@@ -26,6 +26,8 @@
  * <h2>Control Systems</h2>
  * <ul>
  * <li>{@link neqsim.process.mechanicaldesign.subsea.UmbilicalMechanicalDesign} - Umbilical tube and armor design</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.UmbilicalFunctionalDesign} - Umbilical hydraulic response,
+ * electrical, optical, weight ratio and J-tube pull-in checks</li>
  * </ul>
  *
  * <h2>Supported Design Standards</h2>

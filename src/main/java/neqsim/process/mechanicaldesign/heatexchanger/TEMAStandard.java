@@ -292,15 +292,15 @@ public class TEMAStandard {
    */
   public enum StandardTubeSize {
     /** 3/8 inch OD. */
-    TUBE_3_8_INCH(9.525, new double[] { 0.711, 0.889, 1.245 }),
+    TUBE_3_8_INCH(9.525, new double[] {0.711, 0.889, 1.245}),
     /** 1/2 inch OD. */
-    TUBE_1_2_INCH(12.7, new double[] { 0.889, 1.245, 1.651 }),
+    TUBE_1_2_INCH(12.7, new double[] {0.889, 1.245, 1.651}),
     /** 5/8 inch OD. */
-    TUBE_5_8_INCH(15.875, new double[] { 1.245, 1.651, 2.108 }),
+    TUBE_5_8_INCH(15.875, new double[] {1.245, 1.651, 2.108}),
     /** 3/4 inch OD. */
-    TUBE_3_4_INCH(19.05, new double[] { 1.245, 1.651, 2.108, 2.769 }),
+    TUBE_3_4_INCH(19.05, new double[] {1.245, 1.651, 2.108, 2.769}),
     /** 1 inch OD. */
-    TUBE_1_INCH(25.4, new double[] { 1.245, 1.651, 2.108, 2.769, 3.404 });
+    TUBE_1_INCH(25.4, new double[] {1.245, 1.651, 2.108, 2.769, 3.404});
 
     private final double outerDiameterMm;
     private final double[] availableWallThicknessesMm;

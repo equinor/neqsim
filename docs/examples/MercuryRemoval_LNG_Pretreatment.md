@@ -361,6 +361,8 @@ Plot saved to mercury_bed_loading.png
 
 </details>
 
+![Result figure from cell 10](figures/MercuryRemoval_LNG_Pretreatment_cell_10_output_2.png)
+
 ## Part 4: Axial loading profile
 
 The profiles expose the state of each discretized axial cell. They are model outputs for the
@@ -415,6 +417,8 @@ Bed length: 5.0 m
 ```
 
 </details>
+
+![Result figure from cell 12](figures/MercuryRemoval_LNG_Pretreatment_cell_12_output_2.png)
 
 ## Part 5: Configured degradation sensitivity
 
@@ -498,6 +502,8 @@ Severe channelling        | 74.36           | 329.2        | 1.1
 
 </details>
 
+![Result figure from cell 14](figures/MercuryRemoval_LNG_Pretreatment_cell_14_output_2.png)
+
 ## Part 6: Bed pre-loading
 
 `preloadBed()` initializes a uniform spent fraction for restart and sensitivity studies. It does
@@ -565,6 +571,8 @@ Breakthrough occurred: True
 ```
 
 </details>
+
+![Result figure from cell 16](figures/MercuryRemoval_LNG_Pretreatment_cell_16_output_2.png)
 
 ## Part 7: JSON reporting
 
@@ -1058,6 +1066,8 @@ plt.savefig("mercury_internal_sensitivity.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
 
+![Result figure from cell 30](figures/MercuryRemoval_LNG_Pretreatment_cell_30_output_1.png)
+
 ### Interpretation limits
 
 - The feed and equipment dimensions are synthetic.
@@ -1103,4 +1113,3 @@ This notebook cleanly executes the complete public workflow:
 The saved values belong to one top-to-bottom execution. They show how the current NeqSim model
 responds to the declared synthetic inputs. They do not establish vendor performance, field life,
 pressure-vessel compliance, cost accuracy, or operating approval.
-

@@ -24,6 +24,78 @@ The official DEXPI XML V2.0.0 XSD is bundled under CC BY 4.0 for deterministic o
 `Dexpi20ConformanceAssessment` verifies its reviewed SHA-256 fingerprint before using the result as
 conformance evidence.
 
+## DEXPI 2.0.1 explicit export
+
+Use `Dexpi201XmlWriter.writeAndAssess(process, file, metadata)` for the corrected
+DEXPI 2.0.1 Plant/P&ID profile. Supply `Dexpi20PlantExportMetadata` with controlled
+originating-system identity, export date/time and a real plant identity. This path
+uses exact Core and Plant 2.0.1 imports, typed `ProcessNozzle` objects and explicit
+feed/product boundary connectors. Existing `Dexpi20XmlWriter` overloads remain
+2.0.0 to preserve older consumers and golden fixtures; selecting 2.0.1 is explicit.
+The same selection is available through
+`Dexpi20PlantExportOptions.Builder.specification201(true)`.
+
+For a governed project, use
+`DexpiEngineeringExporter.exportDexpi201(project, file, metadata)`. This adds
+project requirements as native instrumentation/safety functions, uses
+`ProcessSafetyFunction` for trip/fire-and-gas requirements, binds sensing to
+`InstrumentNozzle` objects, and binds piping endpoints to the actual node-owning
+nozzle/component. Inferred trip/control requirements do not create extra material
+routes. Relief branches require both a complete governed `ReliefScenarioBasis`
+and an explicitly resolved flare boundary; otherwise the physical proposal is
+withheld. A declared relief proposal still requires a live equipment/path binding
+before dynamic use. The adjacent `<native-file>.engineering-projection.json`
+retains unconfigured final elements, unresolved boundaries and review-required
+states. All inferred requirements remain review-required. The modern
+semantic export omits the legacy text-only diagram placeholders; the controlled
+SVG/PDF drawing set and native graphical projection must be separately checked
+for object coverage and project conventions. No drawing qualification is inferred.
+
+`Dexpi201ProcessModelWriter.writeAndAssess(process, file, metadata)` provides the
+optional 2.0.1 Process/PFD/BFD exchange. A single-stream `Recycle` is closed by stream
+identity, as in the Plant profile: the recycled feed is not written as a separate source and the
+return connection goes to the actual consumer, so a recycle solver is never exported as a
+physical step. `Calculator` and `Adjuster` are rejected explicitly because their projection has
+not been reviewed for the Process profile; a recycle with several inlets or outlets is also
+rejected. The supported Plant/P&ID
+projection described below is separate. The existing multi-area package APIs keep
+their declared 2.0.0 manifest contract; they must not be relabelled as 2.0.1 packages.
+
+The Plant physical projection supports generic `Mixer` equipment with distinct
+nozzles for every real inlet, including two-sided exchanger inlets. A two-outlet
+`Splitter` becomes an official `PipeTee` with three owned piping nodes. Larger
+fanout has no reviewed mapping and fails explicitly. `Recycle`, `Calculator` and
+`Adjuster` remain executable simulation utilities and are omitted as physical
+items. A single-input recycle closes the physical return path through exact
+inlet/outlet stream-identity aliases; ambiguous/multi-input or cyclic aliases
+fail rather than inventing a physical mixer. Registered stream wrappers retain
+their upstream identity through the same projection.
+
+The adjacent `<native-file>.process-projection.json` records every intentionally
+omitted numerical helper and its alias mapping. Calculator/adjuster logic remains
+in the executable simulation model; it is not automatically reinterpreted as
+instrumentation or shutdown logic. The fresh branched/recycle regression checks
+convergence, material balance, distinct inlet nozzles, both cycle directions,
+node ownership, correct boundaries and deterministic regeneration.
+
+The authentic schema and Core, Plant, Process and Builtin declarations are bundled
+under `src/main/resources/dexpi/2.0.1/` with official source URLs, attribution and
+reviewed SHA-256 fingerprints. The schema itself is unchanged from 2.0.0. The
+additional offline checks use the actual model declarations, including inheritance,
+property kinds, multiplicities, typed class relationships and enumeration identifiers.
+This catches semantic defects that XSD-only validation cannot detect. Data-value
+constraints beyond this supported scope and external-tool qualification remain
+separate requirements.
+
+Assess final enriched files with `Dexpi201XmlWriter.assess(path)`. The returned
+report records specification version 2.0.1, release date, actual XML digest and
+separate schema/import/semantic decisions. Legacy 2.0.0 assessment does not accept
+2.0.1 imports. Never change a URI or namespace alone to claim migration.
+
+`Dexpi201XmlWriterTest` exercises Plant and Process exports, controlled metadata,
+genuine safety/nozzle classes, deterministic output and negative model-property,
+required-field and typed-relationship cases alongside legacy compatibility.
+
 ## Process-model export
 
 ```java
@@ -140,6 +212,15 @@ and information connection. It independently reruns the bundled DEXPI 2.0 schema
 import, and NeqSim supported-profile assessment for each XML. A restarted package cannot promote
 `REVIEW_REQUIRED`, `fitnessForConstruction=false`, or
 `nativeWholePlantDexpiExchange=false`; altered approval fields fail closed.
+
+The single-area professional P&ID package has a separate controlled intake contract in
+`ProfessionalPidPackageReader`. It verifies the deterministic package manifest before restoring the
+canonical `PidDesignModel` and revision-bound `PidSimulationBindings`, then reassesses the exact native
+2.0.1 file and retains supported-import diagnostics. Re-exporting that same canonical model and
+comparing the two verified reads establishes supported semantic equivalence; it does not establish
+byte identity, arbitrary third-party model reconstruction, unknown-extension preservation, named-tool
+round-trip qualification or construction approval. Any unsupported or incomplete native relationship
+prevents a lossless equivalence result.
 
 After assessment, use the bounded reader when a caller needs exact per-area XML and connection
 evidence without extracting archive paths or trusting the embedded manifest:
@@ -263,6 +344,25 @@ replace import/export/reimport testing in the exact CAE product and version used
 Record that separate evidence through `DexpiToolQualificationRunner` and
 `DexpiToolQualificationEvidence`.
 
+### Independent check with pyDEXPI
+
+The assessment above is NeqSim checking its own pinned declarations. Always add an independent
+load and rule check with [pyDEXPI](https://github.com/process-intelligence-research/pyDEXPI), the
+community reference implementation of DEXPI 2.0.1 (Python 3.12+, `uv tool install "pydexpi>=2.1"`):
+
+```
+neqsim dexpi-check plant.dexpi.xml --expect-version 2.0.1 --output dexpi-check.json
+```
+
+The command reports the detected version and profile, the NeqSim assessment and the pyDEXPI findings
+(rule id, object id, XML line) as separate layers with a conservative verdict (`PASS`, `PASS_NEQSIM_ONLY`,
+`UNVERIFIED`, `FAIL`). Agent: `@dexpi-validation`; skill: `neqsim-dexpi-conformance-validation`.
+
+The first pyDEXPI run on the 17-unit HP/LP train found four mandatory `segment_connectivity` violations on the two
+in-line valve segments while the NeqSim assessment reported `CONFORMANT`. The 2.0.1 writer now declares
+`SourceItem`/`SourceNode`/`TargetItem`/`TargetNode` on valve segments (2.0.0 output is unchanged), and the same export
+passes with zero pyDEXPI issues.
+
 ## Release and review controls
 
 - Pin exchange evidence to DEXPI 2.0.0 model URIs and the file digest; never silently reinterpret a
@@ -282,3 +382,56 @@ Record that separate evidence through `DexpiToolQualificationRunner` and
 
 Official references: [DEXPI Specification 2.0.0](https://dexpi.gitlab.io/-/Specification/-/jobs/11676485644/artifacts/src/.build/html/html/index.html)
 and the [DEXPI specification source](https://gitlab.com/dexpi/Specification), licensed CC BY 4.0.
+
+
+## Connected native P&ID proposal projection
+
+`Dexpi201PidMaterializer.materialize(project, pid, bindings, nativeFile)` enriches an
+existing assessed native 2.0.1 Plant file using the same `PidPhysicalProjection`
+attachment register as the professional drawing path. It preserves actual source
+identities: a bound sensor has a `ProcessSignalGeneratingFunction` at an actual
+piping segment or equipment `InstrumentNozzle`; an inserted inline valve splits
+the existing physical pipe, with owned inlet/outlet nodes. A controller's signal
+terminates at an `ActuatingFunction` whose `ActuatingSystem` contains an
+`OperatedValveReference` to the actual native valve. Declared signal direction is
+retained. Tag presence by itself is not treated as a successful projection.
+
+Auxiliary routes need explicit source and destination evidence. On a P&ID element,
+set `physicalSourceEquipmentTag` plus `physicalSourceStreamTag`, and either
+`physicalTargetEquipmentTag` plus `physicalTargetStreamTag`, or a controlled
+`destinationTag`. Both equipment/stream pairs must identify actual source ports.
+The materializer inserts native tee nodes on those existing physical lines and a
+connected auxiliary-device route. Unconfigured blowdown, relief, recycle, drain,
+vent and utility paths remain HOLD; no disposal destination or return tie-in is
+inferred from a generic tag. A source-backed route is still a design proposal,
+not an executed auxiliary model, a capacity check, or approval.
+
+The shared functional-link graph includes only measurement/control/safety signal
+sources; a PSV-to-flare connection remains a physical disposal path. Process
+nozzle synthesis skips streams, piping valves/tees and numerical helpers, whose
+actual ports are already retained by the process graph. It does not manufacture
+nozzle tags for native piping nodes that have no nozzle-tag property.
+
+The returned result and `<native-file>.pid-projection.json` list mapped native
+identities, every unresolved tag, and each native or unresolved signal link. Its
+assessment applies to the final serialized bytes. Keep it with the original
+engineering projection, exact XML and package manifest. Existing 2.0.0 and Proteus
+paths are not modified. `completeSupportedProjection` is separate from named-tool
+qualification, full semantic equivalence, engineering approval and fitness for
+construction.
+
+The Process writers supply the mandatory compression and heat
+exchange method literals, in the compatibility 2.0.0 path as well as the 2.0.1 path
+(without them pyDEXPI cannot instantiate those steps and drops their ports). Generic `Compressor` source equipment uses the official
+`CompressionMethod.Unspecified` value: the isentropic calculation method does not
+establish a physical centrifugal or reciprocating machine type. Cooler and heat
+exchanger steps use `HeatExchangeMethod.Generic` unless a future reviewed subtype
+mapping supplies stronger source evidence. Quantity values also carry the mandatory
+`DisplayText` in both versions. The 2.0.0 path still writes no `EngineeringModel`
+provenance because its API takes no metadata; use the 2.0.1 writer when a file must
+be fully conformant.
+
+Regression evidence is in `PidPhysicalProjectionTest` and
+`Dexpi201PidMaterializerTest`; the tests independently inspect sensing locations,
+pipe-node ownership, directed signal targets, connected valve paths, explicit
+recycle tees, missing-route HOLDs and raw compression/cooling conformance.

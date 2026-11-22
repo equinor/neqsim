@@ -79,7 +79,7 @@ class ThreePhaseSeparatorTest {
 
     testOps.TPflash();
 
-    double[] intParameter = { -0.24, // "CO2"
+    double[] intParameter = {-0.24, // "CO2"
         -0.721, // "methane"
         0.11, // "ethane"
         0.205, // "propane"
@@ -201,7 +201,7 @@ class ThreePhaseSeparatorTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "volume", "mass", "mole" })
+  @ValueSource(strings = {"volume", "mass", "mole"})
   void testEntrainmentSep(String specification) {
     neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
@@ -471,7 +471,7 @@ class ThreePhaseSeparatorTest {
    * fractions are achieved.
    */
   @ParameterizedTest
-  @ValueSource(strings = { "mole", "mass", "volume" })
+  @ValueSource(strings = {"mole", "mass", "volume"})
   void testThreePhaseSeparatorEntrainmentSpecTypes(String specType) {
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
     fluid.addComponent("methane", 72.0);
@@ -920,8 +920,9 @@ class ThreePhaseSeparatorTest {
     // Switch to transient mode
     separator.setCalculateSteadyState(false);
 
-    double timeStep = 10.0; // 10 seconds per step
-    int numSteps = 120; // 1200 seconds total
+    // A one-second controller interval remains inside the validated transient V/U closure range.
+    double timeStep = 1.0;
+    int numSteps = 120; // 120 seconds total
     double currentTime = 0.0;
 
     // Data collection
@@ -939,16 +940,16 @@ class ThreePhaseSeparatorTest {
     for (int i = 0; i < numSteps; i++) {
       currentTime = i * timeStep;
 
-      // Simulate disturbance at t=400s: increase inlet flow rate
+      // Simulate disturbance at t=40s: increase inlet flow rate
       if (i == 40) {
-        logger.info("\n*** Disturbance at t=400s: Inlet flow increased to 6000 kg/hr ***");
+        logger.info("\n*** Disturbance at t=40s: Inlet flow increased to 6000 kg/hr ***");
         inletStream.setFlowRate(6000.0, "kg/hr");
         inletStream.run();
       }
 
-      // Simulate disturbance at t=800s: decrease inlet flow rate
+      // Simulate disturbance at t=80s: decrease inlet flow rate
       if (i == 80) {
-        logger.info("\n*** Disturbance at t=800s: Inlet flow decreased to 4000 kg/hr ***");
+        logger.info("\n*** Disturbance at t=80s: Inlet flow decreased to 4000 kg/hr ***");
         inletStream.setFlowRate(4000.0, "kg/hr");
         inletStream.run();
       }
@@ -1309,5 +1310,15 @@ class ThreePhaseSeparatorTest {
         "oil outlet should be inlet - pressureDrop");
     Assertions.assertEquals(9.8, sep.getWaterOutStream().getPressure("bara"), 1e-6,
         "water outlet should be inlet - pressureDrop");
+
+    sep.setPressureDrop(0.5);
+    sep.run();
+
+    Assertions.assertEquals(9.5, sep.getGasOutStream().getPressure("bara"), 1e-6,
+        "gas outlet should reflect a changed pressureDrop with an unchanged inlet");
+    Assertions.assertEquals(9.5, sep.getOilOutStream().getPressure("bara"), 1e-6,
+        "oil outlet should reflect a changed pressureDrop with an unchanged inlet");
+    Assertions.assertEquals(9.5, sep.getWaterOutStream().getPressure("bara"), 1e-6,
+        "water outlet should reflect a changed pressureDrop with an unchanged inlet");
   }
 }

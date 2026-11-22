@@ -5,6 +5,17 @@ description: "This document provides comprehensive documentation for hydrate pha
 
 This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim.
 
+`hydrateFormationTemperature()` and `hydrateFormationPressure()` add the hydrate phase when
+`setHydrateCheck(true)` has not been called (previously CPA and e-CPA failed with "can not return phase number 4").
+The cavity model follows the fluid family; see [hydrate models](../thermo/hydrate_models.md#which-model-a-fluid-system-uses).
+`SystemPitzer` supports MEG through a fitted neutral dataset; see
+[Pitzer hydrate equilibrium](../thermo/pitzer_hydrate_equilibrium.md#meg-monoethylene-glycol).
+
+For `SystemPitzer`, temperature, pressure and equilibrium-line calls dispatch to `PitzerHydrateFlash`.
+See [Pitzer hydrate equilibrium](../thermo/pitzer_hydrate_equilibrium.md) for CO2/brine setup,
+parameter requirements and temperature limits. Hydrate amount operations (`hydrateTPflash` and
+gas-hydrate TP flash) reject Pitzer systems because this coupling calculates onset only.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -30,6 +41,10 @@ This document provides comprehensive documentation for hydrate phase equilibrium
 
 NeqSim provides specialized flash calculations for systems containing gas hydrates. These operations extend the standard thermodynamic operations to include hydrate phase equilibrium.
 
+The fragments below assume a class-level Log4j2 logger, for example
+`private static final Logger logger = LogManager.getLogger(YourClass.class);`.
+The complete example includes the required imports and declaration.
+
 **Key Classes:**
 - `TPHydrateFlash` - TP flash with hydrate phase equilibrium
 - `HydrateFormationTemperatureFlash` - Calculate hydrate formation temperature
@@ -48,11 +63,57 @@ Performs a temperature-pressure flash calculation including hydrate phase equili
 **Method:** `ThermodynamicOperations.hydrateTPflash()`
 
 **Algorithm:**
-1. Perform standard TPflash (gas/liquid/aqueous equilibrium)
-2. Calculate hydrate water fugacity using vdWP model
-3. Compare with fluid water fugacity
-4. If hydrate is stable (lower fugacity), calculate hydrate fraction
-5. Update system with hydrate phase
+1. Flash a private copy of the original feed and test hydrate stability using the host-water fugacity.
+2. For each trial hydrate-water amount, withdraw water and guests and reflash the residual fluid.
+3. Couple guest uptake to both small and large cavity occupancies, weighted by cavities per water molecule.
+   Use distribution-ratio iteration with a damped Newton fallback in logarithmic fluid amounts for guest-limited feeds.
+4. Bracket and solve water-fugacity equality with safeguarded interpolation and bisection.
+   If a trial amount fails the inner guest-inventory solve, reduce that trial toward the last
+   balanced state. Do not use the failed trial's fugacity residual as a bracket endpoint.
+5. Assemble the solved fluid and hydrate inventories on the original feed basis, validate every component balance,
+   and only then replace the caller's phase state.
+
+The fraction is **not** a fixed water-limited conversion. Dissolved/vapour water remains when required by equilibrium,
+including below 1 mol% feed water. A missing bracket, iteration limit, non-finite fugacity, or failed balance throws
+`IllegalStateException`; the supplied fluid retains its pre-call state. Reactive systems are explicitly rejected by
+this amount solver because reactions require element and charge balances. Incipient hydrate operations have their
+own documented reactive/electrolyte support.
+
+For structure $s$, the amount equations on a one-mole feed basis are
+
+$$r_i^s=\sum_{c=0}^{1}\nu_c^s\theta_{ic}^s,\qquad n_i^H=h r_i^s,\qquad n_w^H=h.$$
+
+Here $h$ is hydrate water, $r_i^s$ is guest moles per mole of hydrate water, and $\theta_{ic}^s$ is cavity occupancy.
+The weights are $(2/46,6/46)$ for sI and $(16/136,8/136)$ for sII. Empty cages are retained through occupancies below
+unity; the water mole fraction is $x_w^H=1/(1+\sum_i r_i^s)$, not a hard-coded fully occupied lattice value.
+The residual fluid has $n_i^F=z_i-n_i^H$ and determines all guest fugacities. The outer equation is
+
+$$R(h)=\ln(f_w^H/f_w^F)=0.$$
+
+`ComponentHydrate.fugcoef(hydrate) * pressure` is the **host-water fugacity** used in this equation. The component
+model returns the host fugacity divided by pressure; multiplying it by the hydrate's material-balance water mole
+fraction would introduce a spurious activity factor. Use `TPHydrateFlash.getLastResidual()` for the equilibrium check.
+
+**Diagnostics:** `isConverged()`, `getLastResidual()`, `getMaximumBalanceResidual()` (mol/mol feed), and
+`getFluidFlashCount()`. `setMaximumIterations(int)` sets the bracketing/root iteration budget. Acceptance requires
+an absolute log-fugacity residual below $10^{-8}$ and component and normalization residuals below $10^{-8}$.
+Material components present above $10^{-12}$ in two residual fluid phases must also match fugacities within $10^{-6}$
+in logarithmic ratio.
+Failure diagnostics do not represent an accepted hydrate-free result.
+
+In guest-limited feeds, cage occupancies change as gas is consumed. The first occupancy-based
+amount estimate is therefore only a search estimate. In particular, cold water-rich CPA feeds
+can require a smaller trial step before water-fugacity equality is bracketed. The retry budget
+is bounded; exhausting it still throws, retaining the original caller state and the inner
+failure diagnostic. Invalid thermodynamic states and unrelated fluid-flash errors are not
+converted to successful hydrate-free results.
+
+`getHydrateFraction()` reports a **mole fraction of material in the hydrate phase**, including
+both host water and guest molecules. It is neither a mass fraction nor the fraction of feed
+water converted. Calculate hydrate mass from the hydrate component mole amounts and molar
+masses, and compare each component's sum over all phases with its original feed amount.
+Numerical material balance and fugacity closure establish consistency with the chosen model;
+experimental accuracy requires a separate comparison with independent measurements.
 
 **Example:**
 ```java
@@ -67,10 +128,10 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateTPflash();
 
 // Check results
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-System.out.println("Has hydrate: " + fluid.hasHydratePhase());
+logger.info("Number of phases: {}", fluid.getNumberOfPhases());
+logger.info("Has hydrate: {}", fluid.hasHydratePhase());
 if (fluid.hasHydratePhase()) {
-    System.out.println("Hydrate fraction: " + fluid.getBeta(PhaseType.HYDRATE));
+    logger.info("Hydrate fraction: {}", fluid.getBeta(PhaseType.HYDRATE));
 }
 fluid.prettyPrint();
 ```
@@ -84,7 +145,7 @@ fluid.prettyPrint();
 
 ### Gas-Hydrate TPflash
 
-Specialized flash targeting gas-hydrate equilibrium without aqueous phase. This is useful for systems with trace water where all water can be consumed by hydrate formation.
+Compatibility entry point for trace-water gas-hydrate equilibrium. It uses the same conservative solve as `hydrateTPflash()`; the residual-fluid flash determines whether an aqueous phase is stable.
 
 **Method:** `ThermodynamicOperations.gasHydrateTPflash()`
 
@@ -111,19 +172,33 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
         hasAqueous = true;
     }
 }
-System.out.println("Has aqueous phase: " + hasAqueous);  // false
+logger.info("Has aqueous phase: {}", hasAqueous);  // false
 ```
 
 **Algorithm:**
-1. Perform standard TPflash
-2. Enable gas-hydrate-only mode
-3. Calculate hydrate equilibrium from gas phase fugacity
-4. Remove aqueous phase if all water consumed by hydrate
-5. Redistribute phase fractions
+1. Enable the gas-hydrate compatibility option.
+2. Solve the same coupled water/guest inventories and fugacity equality as the general hydrate TP flash.
+3. Retain any stable aqueous phase and the equilibrium water content of gas and oil. No phase is removed by a feed-water threshold.
 
 ### Hydrate Formation Temperature
 
 Calculates the temperature at which hydrate first forms at given pressure.
+
+The solver checks the water-fugacity residual and repeats the equilibrium check on a copy of
+the starting fluid. A failed or unreproducible root is reported as `NaN`, rather than returning
+the last temperature iterate. The no-argument `hydrateFormationTemperature()` method retries
+several initial temperatures and throws `IsNaNException` if none succeeds. Such a failure is
+not evidence that the fluid is hydrate-free. For non-reactive electrolyte fluids, each trial flash and the
+verification flash must conserve the input component inventories. A failed search restores its
+input species amounts before reporting `NaN`, so retries cannot silently use a salt-depleted
+fluid. Reactive fluids can change species through equilibrium reactions and are excluded from
+this species-by-species comparison. When using the overload with an explicit initial
+temperature, handle inventory diagnostics and check that the resulting temperature is finite. The underlying
+`HydrateFormationTemperatureFlash` also exposes `isConverged()` and `getLastResidual()`.
+For a non-reactive brine that collapses to one aqueous phase, verification also tests a gas
+composed of the hydrate guests. A negative tangent-plane distance rejects an unstable aqueous
+state with artificially elevated guest fugacity. This trial is an additional rejection check,
+not a complete phase-stability analysis or an extension of the model's validated salinity range.
 
 **Methods:**
 ```java
@@ -145,9 +220,141 @@ fluid.setHydrateCheck(true);
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateFormationTemperature();
 
-System.out.println("Hydrate formation T: " + fluid.getTemperature("C") + " °C");
-System.out.println("At pressure: " + fluid.getPressure("bara") + " bara");
+logger.info("Hydrate formation T: {} °C", fluid.getTemperature("C"));
+logger.info("At pressure: {} bara", fluid.getPressure("bara"));
 ```
+
+For non-reactive electrolyte fluids, every fluid evaluation must conserve the
+input component inventory, normalize material phases, and confine ions to the
+aqueous phase. The underlying operation and the explicit-initial-temperature overload raise
+`IllegalStateException` with a diagnostic. The no-argument wrapper retries those rejected
+states from the restored feed and reports `IsNaNException` if all starts fail. A small hydrate
+fugacity residual cannot override a failed material balance.
+The original multiphase-check setting is restored even when evaluation fails.
+See [Electrolyte CPA component conservation](../thermo/ElectrolyteCPAModel#component-conservation-in-hydrate-temperature-calculations)
+for the mixed-brine regression scope.
+
+#### CO2/brine phase-state diagnostics
+
+For water-rich, non-reactive `SystemElectrolyteCPAstatoil` fluids containing only
+CO2, water, optional explicit ions and MEG when ions are present, the
+temperature operation uses
+`CO2BrinePhaseEquilibrium` for each fluid evaluation, including the independent
+verification on a copy of the starting feed. It initializes independent
+vapour and liquid CO2 trials, confines ions to the aqueous phase, and solves the
+constrained component balances and molecular fugacity equations. Conserved
+candidate states are ranked by Gibbs energy. A single aqueous result is accepted
+only when both normalized CO2 stability trials are non-negative within numerical
+tolerance. Between the initial and final checks of each stability trial, only the
+CO2-rich phase is reinitialized because the aqueous composition and fraction
+stay fixed. Both EOS roots and the full phase-split checks are evaluated.
+
+MEG partitions between the material phases and its inhibition enters
+through the aqueous water fugacity. This path uses the existing EOS and hydrate
+parameters. Other gases, methanol-containing mixtures, prescribed phase types
+and solid-phase calculations use their existing fluid solver.
+
+The 44 bara regression uses 10 mol CO2, 1 kg water, 100 g NaCl and 50 g MEG.
+The NaCl and MEG dosages are percentages of the water mass. The numerical
+hydrate onset is approximately 2.71 °C. Using 10 wt% NaCl in water plus salt
+and 5 wt% MEG in water plus glycol instead gives 111.11 g NaCl and 52.63 g MEG
+per kilogram of water and approximately 1.90 °C. These calculated values
+describe incipient hydrate equilibrium and have no experimental calibration
+for this combined-inhibitor recipe.
+
+Water-rich reactive `SystemElectrolyteCPAstatoil` fluids with CO2 and water as
+their only molecular components use `ReactiveCO2BrinePhaseEquilibrium` during
+both temperature iteration and independent verification. Add the input species,
+call `chemicalReactionInit()`, and then set the mixing rule and hydrate check.
+Component insertion order is preserved and must not change the equilibrium.
+
+The coupling alternates the existing constrained phase solver at fixed species
+amounts with chemical equilibrium on an isolated aqueous phase. Only the
+reaction-induced changes in aqueous species amounts are transferred to the full
+fluid inventory. Acceptance requires molecular log-fugacity residuals below
+`1e-8`, reaction `ln(Q/K)` residuals below `2e-6`, aqueous charge below `1e-8` mol
+of elementary charge, and conserved feed elements, including spectator ions.
+Unlike non-reactive calculations, the total number of moles and individual
+molecular species amounts may change through reactions.
+
+Each fluid evaluation allows at most 30 coupling iterations and checks thread
+interruption between iterations. Failed chemistry or conservation returns an
+explicit diagnostic instead of continuing failed generic multiphase iterations.
+The no-argument temperature method retries rejected reactive starts from the
+restored feed; the explicit-temperature overload reports the failure directly.
+Only qualified fluid states are committed. This bounded coupling is not a hard
+wall-clock deadline for the inner EOS or chemical solver.
+
+The regression for issue #3758 uses 10 mol CO2, 1 kg water, 3 wt% NaCl and
+2 wt% KCl on a water-plus-salts basis at 50 bara. Four insertion orders return
+approximately 280.6501 K (7.5001 °C) with reactions enabled. Without reactions,
+the same feed retains its previous value of 280.6780 K. These are numerical
+regression values, not experimental validation of a drilling-fluid formulation.
+Other molecular components, unsupported models and solid-phase calculations
+retain their existing solvers.
+
+```java
+SystemInterface brine = new SystemElectrolyteCPAstatoil(283.15, 200.0);
+double waterMoles = 1.0 / 0.01801528;
+double saltMoles = (10.0 / 90.0) / 0.05844277;
+brine.addComponent("CO2", 10.0);
+brine.addComponent("water", waterMoles);
+brine.addComponent("Na+", saltMoles);
+brine.addComponent("Cl-", saltMoles);
+brine.setMixingRule(10);
+brine.setHydrateCheck(true);
+ThermodynamicOperations operations = new ThermodynamicOperations(brine);
+operations.hydrateFormationTemperature();
+HydrateFormationTemperatureFlash operation =
+    (HydrateFormationTemperatureFlash) operations.getOperation();
+HydrateEquilibriumDiagnostics evidence = operation.getDiagnostics();
+boolean converged = evidence.isConverged();
+boolean saturatedCO2Boundary = evidence.isSaturatedCO2Boundary();
+double temperatureK = evidence.getTemperature();
+```
+
+Import the two diagnostic/operation classes from
+`neqsim.thermodynamicoperations.flashops.saturationops`. The example uses 1 kg
+water and 10 wt% NaCl on the water-plus-salt basis, excluding CO2. It returns
+approximately 278.8180 K (5.6680 °C) with a CO2-rich phase and aqueous brine. The
+same feed gives about 277.2851 K at 40 bara and 277.9238 K at 100 bara. These are
+numerical regression values, not experimental measurements.
+
+`getDiagnostics()` returns an immutable snapshot. It reports the dimensionless
+hydrate-water residual, molecular log-fugacity residual, component and charge
+balance residuals, material phase labels and CO2-rich-phase presence. The
+minimum CO2 trial distance refers to the **homogeneous aqueous feed**: a negative
+value calls for a CO2-rich split. It is not the tangent-plane distance of the
+final two-phase equilibrium. A snapshot is null before the first run. Its
+convergence flag includes the independent verification and agrees with
+`isConverged()`; the hydrate residual agrees with `getLastResidual()`. A failed
+search captures diagnostic evidence before restoring the input inventory and
+setting the system temperature to `NaN`.
+
+A converged single-aqueous result is a finite-inventory hydrate calculation;
+`isSaturatedCO2Boundary()` is false. Do not append it to a saturated CO2/brine
+curve. For example, at 100 bara and 5 wt% NaCl, 0.5 and 1 mol CO2 per kg water
+remain single aqueous, whereas 2 mol CO2 produces a CO2-rich/aqueous split.
+Nonconvergence in the constrained CO2/brine path raises `IllegalStateException`.
+Neither a failed search nor an undersaturated label means hydrate-free operation.
+
+**Experimental assessment:**
+`CO2BrineHydrateReferenceAssessmentTest` compares six saturated and six
+undersaturated points from Burgass et al. (2023), Tables 4 and 5
+([DOI](https://doi.org/10.2516/stet/2023005), CC BY 4.0). It writes the complete
+comparison to `target/co2-brine-hydrate-reference-assessment.csv`. The separate
+1 K temperature-comparison criterion is met by five of the six saturated points
+and two of the six undersaturated points. Maximum absolute errors are about
+1.12 K and 4.10 K, respectively. The test requires conservation, phase-state
+classification and fugacity closure for every point; **a passing test suite does
+not mean all reference temperatures meet the accuracy criterion**. Table 5 CO2
+mole fractions exclude salt, so its feed conversion differs from ionic overall
+mole fractions. No parameters were fitted to these observations.
+
+The numerical phase-selection repair does not qualify high-pressure drilling
+fluids, concentrated brines with precipitating salts, or finite-inventory
+temperature accuracy over the full experimental range. Polymers, solids, kinetic
+effects and actual hydrate amounts are outside this incipient-equilibrium test.
 
 ### Hydrate Formation Pressure
 
@@ -163,7 +370,7 @@ void hydrateFormationPressure(int structure)
 ```java
 fluid.setTemperature(278.15);  // 5°C
 ops.hydrateFormationPressure();
-System.out.println("Hydrate formation P: " + fluid.getPressure("bara") + " bara");
+logger.info("Hydrate formation P: {} bara", fluid.getPressure("bara"));
 ```
 
 ### Hydrate Inhibitor Calculations
@@ -198,7 +405,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
 // What MEG concentration prevents hydrate at 5°C?
 ops.hydrateInhibitorConcentration("MEG", 273.15 + 5.0);
-System.out.println("Required MEG (wt%): " + 
+logger.info("Required MEG (wt%): {}",
     fluid.getPhase("aqueous").getComponent("MEG").getwtfrac() * 100);
 ```
 
@@ -217,10 +424,10 @@ fluid.setMixingRule(10);
 fluid.setHydrateCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.calcHydrateEquilibriumLine();
+ops.hydrateEquilibriumLine(1.0, 200.0);
 
 // Get curve data
-double[][] curve = ops.getOperation().get2DData();
+double[][] curve = ops.getOperation().getPoints(0);
 // curve[0] = temperatures (K)
 // curve[1] = pressures (bar)
 ```
@@ -279,16 +486,16 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateTPflash();
 
 // Expected phases: GAS, OIL, AQUEOUS, HYDRATE
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+logger.info("Number of phases: {}", fluid.getNumberOfPhases());
 for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-    System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType() + 
-        ", beta = " + fluid.getBeta(i));
+    logger.info("Phase {}: {}, beta = {}", i, fluid.getPhase(i).getType(),
+        fluid.getBeta(i));
 }
 ```
 
 ### Gas-Hydrate Only (No Aqueous)
 
-For systems with very low water content where hydrate consumes all water.
+For systems where the remaining equilibrium water is dissolved in gas or oil and no separate aqueous phase is stable.
 
 ```java
 // 500 ppm water at extreme conditions
@@ -307,7 +514,7 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
         hasAqueous = true;
     }
 }
-System.out.println("Has aqueous: " + hasAqueous);  // false
+logger.info("Has aqueous: {}", hasAqueous);  // false
 ```
 
 ---
@@ -328,7 +535,7 @@ System.out.println("Has aqueous: " + hasAqueous);  // false
 | `hydrateFormationPressure(int structure)` | For specific structure |
 | `hydrateInhibitorConcentration(String, double)` | Calculate inhibitor needed |
 | `hydrateInhibitorConcentrationSet(String, double)` | Set inhibitor and calculate |
-| `calcHydrateEquilibriumLine()` | Generate PT curve |
+| `hydrateEquilibriumLine(double, double)` | Generate PT curve over a pressure range |
 
 ### SystemInterface Methods
 
@@ -360,8 +567,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class HydrateAnalysis {
+    private static final Logger logger = LogManager.getLogger(HydrateAnalysis.class);
     public static void main(String[] args) {
         // 1. Create production fluid
         SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
@@ -378,19 +588,19 @@ public class HydrateAnalysis {
         // 2. Calculate hydrate formation temperature
         ops.hydrateFormationTemperature();
         double Thyd = fluid.getTemperature("C");
-        System.out.println("Hydrate formation temperature: " + Thyd + " °C");
+        logger.info("Hydrate formation temperature: {} °C", Thyd);
         
         // 3. At 5°C, check if hydrate exists
         fluid.setTemperature(273.15 + 5.0);
         ops.hydrateTPflash();
         
         if (fluid.hasHydratePhase()) {
-            System.out.println("Hydrate forms at 5°C, 100 bar");
+            logger.info("Hydrate forms at 5°C, 100 bar");
             
             // Get phase fractions
             for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-                System.out.printf("Phase %d (%s): %.4f mol%%\n", 
-                    i, fluid.getPhase(i).getType(), fluid.getBeta(i) * 100);
+                logger.info("Phase {} ({}): {} mol%", i, fluid.getPhase(i).getType(),
+                    fluid.getBeta(i) * 100);
             }
         }
         
@@ -399,7 +609,7 @@ public class HydrateAnalysis {
         fluid.createDatabase(true);
         ops.hydrateInhibitorConcentration("MEG", 273.15 + 5.0);
         double megWt = fluid.getPhase("aqueous").getComponent("MEG").getwtfrac();
-        System.out.println("Required MEG in aqueous phase: " + megWt * 100 + " wt%");
+        logger.info("Required MEG in aqueous phase: {} wt%", megWt * 100);
     }
 }
 ```
@@ -427,7 +637,7 @@ HydrateEquilibriumTemperatureAnalyser hydrateAnalyser =
 hydrateAnalyser.run();
 
 double hydrateT = hydrateAnalyser.getMeasuredValue("C");
-System.out.println("Hydrate equilibrium temperature: " + hydrateT + " °C");
+logger.info("Hydrate equilibrium temperature: {} °C", hydrateT);
 ```
 
 ---
@@ -450,14 +660,12 @@ fluid.setHydrateCheck(true);
 
 ### 3. Verify Mass Conservation
 
-After hydrate flash, verify beta sum equals 1.0:
-```java
-double betaSum = 0.0;
-for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-    betaSum += fluid.getBeta(i);
-}
-assert Math.abs(betaSum - 1.0) < 1e-6 : "Mass conservation violated";
-```
+The sum of phase fractions is necessary but does not prove component conservation. Check each component against its
+**original feed amount**, as well as phase normalization. `TPHydrateFlashBalanceTest` verifies both
+$\sum_p\beta_p x_{i,p}=z_i$ and absolute component moles, including the issue #3871 mixture at 278.15, 283.15 and
+288.15 K and 100 bara. It also checks host-water fugacity equality, cavity stoichiometry, feed scaling, component
+insertion order, repeated calls and heating/cooling across hydrate disappearance.
+
 
 ### 4. Check Phase Types
 
@@ -494,9 +702,9 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
 
 ### Convergence Issues
 
-1. Provide good initial temperature guess
-2. Reduce step size for near-critical conditions
-3. Check component fugacity calculations
+For hydrate amounts at fixed T/P, inspect the exception and the operation's convergence diagnostics. Do not treat a
+failed flash as zero hydrate or accept a material-bound fraction. Check the fluid EOS, mixing rule, guest parameters
+and the validity of the fluid phase split. Hydrate formation-temperature calculations are separate operations.
 
 ### Unexpected Phase Fractions
 
@@ -510,9 +718,56 @@ This is expected behavior. Use `gasHydrateTPflash()` for systems with trace wate
 
 ---
 
+## Thermodynamic scope and validation
+
+The implementation uses NeqSim's existing hydrate parameterizations and the fluid model chosen by the caller. It
+selects one stable sI or sII structure at the current guest fugacities and solves its non-stoichiometric composition.
+Numerical conservation and convergence do not establish experimental accuracy for every fluid. This change does not
+fit Langmuir parameters, introduce structure H, calculate growth/deposition rates, or implement coexistence of two
+hydrate structures. Reactive amount flashes and a global all-solid Gibbs minimizer remain outside this solver's scope.
+Residual-fluid solid checks can be enabled through the existing overload; they are not a new validation of ice/wax
+competition. Property estimates on `PhaseHydrate` (such as density and caloric properties) have separate limitations.
+
+The regression on the reported SRK/mixing-rule-2 feed (79 methane, 10.10 ethane, 2.050 propane and 10 water mol,
+100 bara) gives the following numerical evidence. These are solver regression results, not experimental measurements.
+
+| Temperature (K) | Hydrate fraction (mol/mol feed) | Structure | Absolute log-fugacity residual | Maximum component error (mol/mol feed) |
+|---|---|---|---|---|
+| 288.15 | 0.1149236748 | sII | $1.59\times10^{-11}$ | $7.30\times10^{-13}$ |
+| 283.15 | 0.1151642441 | sII | $1.19\times10^{-11}$ | $4.06\times10^{-13}$ |
+| 278.15 | 0.1153651039 | sII | $1.14\times10^{-11}$ | $2.40\times10^{-13}$ |
+
+`TPHydrateFlashBalanceTest` writes the current results and fluid-flash counts to
+`target/hydrate-3871-validation.csv`. A phase fraction close to a material bound can be physically legitimate;
+the acceptance criteria are equilibrium and conservation, not distance from a bound.
+
+The numerical design follows the equilibrium requirements emphasized by
+[Cole and Goodwin (1990), *Flash calculations for gas hydrates: a rigorous approach*](https://www.sciencedirect.com/science/article/pii/0009250990870019)
+and [Izadpanah et al. (2006), *Multi-Component-Multiphase Flash Calculations for Systems Containing Gas Hydrates by Direct Minimization of Gibbs Free Energy*](https://www.sid.ir/EN/VEWSSID/J_pdf/84320060305.pdf):
+component balances, phase normalization, guest partitioning and hydrate stability must be satisfied together.
+The present algorithm is a nested residual-fluid/host-water solve, not an implementation of those papers' global
+minimizers. [Mahabadian et al. (2016), *Development of a multiphase flash in presence of hydrates*](https://www.sciencedirect.com/science/article/abs/pii/S0378381216300097)
+provides a relevant CPA-based experimental-validation reference. No numerical data from that publication were used
+to tune or claim experimental validation of this fix.
+
 ## Related Documentation
 
 - [Hydrate Models](../thermo/hydrate_models) - Thermodynamic model details
 - [Flash Calculations Guide](../thermo/flash_calculations_guide) - General flash operations
 - [Fluid Creation Guide](../thermo/fluid_creation_guide) - Setting up fluids
 - [Process Equipment](../process/) - Process integration
+
+## Exact-zero composition and numerical safeguards
+
+TP flash bounds successive-substitution K-values to the same numerical range
+used by the ionic gas/aqueous endpoint refinement (1e-50 to 1e50). Stability-trial
+weights are normalized after scaling by their largest value, so finite weights
+whose sum overflows cannot erase an entire phase. These safeguards act on solver
+iterates; the component setter still preserves exact zero and positive traces.
+
+The legacy high-salinity regression contains 0.06 mol water and 0.02 mol each of
+Na+ and Cl-, corresponding to about 52 wt% salt in the brine, not 10 wt%. It is
+retained as a numerical stress test, not a physical validation of concentrated
+brine or sub-freezing equilibria. Separate 10 wt% brine tests at 80 and 100 bara
+check finite hydrate temperatures and inhibition without relaxing the inventory
+or independent-equilibrium checks.

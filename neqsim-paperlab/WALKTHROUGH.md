@@ -106,7 +106,7 @@ This executes the full benchmark matrix and produces:
 ## Step 4: Generate Figures
 
 Create `papers/tpflash_characterization_2026/generate_figures.py` using the
-`generate_publication_figures` skill as a template. Then:
+`generate-publication-figures` skill as a template. Then:
 
 ```bash
 python paperflow.py figures papers/tpflash_characterization_2026/

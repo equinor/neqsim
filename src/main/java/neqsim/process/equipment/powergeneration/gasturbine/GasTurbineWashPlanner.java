@@ -355,7 +355,7 @@ public class GasTurbineWashPlanner implements Serializable {
   private double[] integrateCycle(double washIntervalHours) {
     double r = efficiencyLossRatePerFiredHour;
     if (r <= 0.0 || washIntervalHours <= 0.0) {
-      return new double[] { 0.0, 0.0 };
+      return new double[] {0.0, 0.0};
     }
     double e = recoveryEffectiveness;
     double residual;
@@ -377,7 +377,7 @@ public class GasTurbineWashPlanner implements Serializable {
       sumLoss += loss;
       sumExtraFuel += 1.0 / (1.0 - loss) - 1.0;
     }
-    return new double[] { sumLoss / CYCLE_STEPS, sumExtraFuel / CYCLE_STEPS };
+    return new double[] {sumLoss / CYCLE_STEPS, sumExtraFuel / CYCLE_STEPS};
   }
 
   /**

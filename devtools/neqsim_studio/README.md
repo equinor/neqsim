@@ -320,7 +320,7 @@ wrappers touch the JVM.
 Run the pure-Python test suite (no Java required):
 
 ```bash
-python devtools/test_neqsim_studio.py
+uv run --project devtools --locked devtools/test_neqsim_studio.py
 # 27 passed, 0 failed
 ```
 

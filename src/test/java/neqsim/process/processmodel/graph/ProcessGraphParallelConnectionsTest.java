@@ -31,7 +31,7 @@ class ProcessGraphParallelConnectionsTest {
     feed.run();
 
     Splitter splitter = new Splitter("parallel splitter", feed);
-    splitter.setSplitFactors(new double[] { 0.4, 0.6 });
+    splitter.setSplitFactors(new double[] {0.4, 0.6});
     splitter.run();
 
     StreamInterface firstBranch = splitter.getSplitStream(0);

@@ -1,0 +1,118 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "devtools/run_spotless.py",
+      "apply"
+    ],
+    "exit": 0,
+    "seconds": 2.309513459011214,
+    "changedJava": []
+  },
+  {
+    "name": "stable-apply",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "devtools/run_spotless.py",
+      "apply"
+    ],
+    "exit": 0,
+    "seconds": 2.1214477149915183,
+    "changedJava": []
+  },
+  {
+    "name": "inventory",
+    "command": [
+      "uv",
+      "run",
+      "--project",
+      "devtools",
+      "--locked",
+      "devtools/build_engineering_coverage.py"
+    ],
+    "exit": 0,
+    "seconds": 1.2859402950125514
+  },
+  {
+    "name": "stage",
+    "command": [
+      "git",
+      "add",
+      "."
+    ],
+    "exit": 0,
+    "seconds": 0.09639086799870711
+  },
+  {
+    "name": "precommit",
+    "command": [
+      "uv",
+      "run",
+      "--project",
+      "devtools",
+      "--locked",
+      "--with",
+      "pre-commit",
+      "pre-commit",
+      "run",
+      "--all-files",
+      "--hook-stage",
+      "pre-commit"
+    ],
+    "exit": 0,
+    "seconds": 11.845033966994379
+  },
+  {
+    "name": "spotless-check",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "devtools/run_spotless.py",
+      "check"
+    ],
+    "exit": 0,
+    "seconds": 2.0639983220025897
+  },
+  {
+    "name": "documentation-search",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "devtools/check_documentation_search.py"
+    ],
+    "exit": 0,
+    "seconds": 1.7062410000071395
+  },
+  {
+    "name": "inventory-fresh",
+    "command": [
+      "uv",
+      "run",
+      "--project",
+      "devtools",
+      "--locked",
+      "devtools/build_engineering_coverage.py",
+      "--check"
+    ],
+    "exit": 0,
+    "seconds": 1.3380943259980995
+  },
+  {
+    "name": "prepush",
+    "command": [
+      "uv",
+      "run",
+      "--project",
+      "devtools",
+      "--locked",
+      "--with",
+      "pre-commit",
+      "pre-commit",
+      "run",
+      "--all-files",
+      "--hook-stage",
+      "pre-push"
+    ],
+    "exit": 0,
+    "seconds": 3.8831768029922387
+  }
+]

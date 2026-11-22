@@ -23,7 +23,11 @@ public class AttractiveTermPr extends AttractiveTermBaseClass {
         - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermPr clone() {
     AttractiveTermPr attractiveTerm = null;
@@ -31,6 +35,7 @@ public class AttractiveTermPr extends AttractiveTermBaseClass {
       attractiveTerm = (AttractiveTermPr) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermPr", ex);
     }
     return attractiveTerm;
   }
@@ -41,7 +46,7 @@ public class AttractiveTermPr extends AttractiveTermBaseClass {
     this.m = val;
     neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = { -0.26992, 1.54226, (0.37464 - this.m) };
+    double[] acentricConstants = {-0.26992, 1.54226, (0.37464 - this.m)};
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));
     // System.out.println("solve accen " + component.getAcentricFactor());

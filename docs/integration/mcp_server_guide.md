@@ -31,7 +31,7 @@ to compute answers with rigorous thermodynamic models.
 ```
 neqsim-mcp-server/                         # Separate Maven project (Java 21+)
 ├── pom.xml                                 # Quarkus 3.33.1 + MCP Server 1.12.0
-├── test_mcp_server.py                      # Comprehensive integration test suite
+├── tests/protocol/test_mcp_server.py                      # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
   ├── NeqSimTools.java                    # 63 @Tool MCP tools
     ├── NeqSimResources.java                # 7 @Resource + 6 @ResourceTemplate
@@ -542,6 +542,12 @@ For workflow-style agents, the same runner can be reached through `runPipeline`
 when the payload sets `mode`, `analysis`, or `studyType` to `waterHammer`,
 `liquidHammer`, or `hydraulicTransient`.
 
+The synthetic wellhead-choke/riser/inlet-separator replay is selected with
+`analysis: "wellToTopsideSlugControl"`. The response contains both open-loop
+and regulated metrics plus sampled time series. Use the committed input in
+`docs/benchmarks/data/well_to_topside_slug_control_input.json`; do not route
+this case through a second scheduler or topology implementation.
+
 > **Assistant:** The gas density is **62.3 kg/m3** at 80 bara and 35 °C.
 >
 > | Property | Value | Unit |
@@ -750,7 +756,7 @@ The LLM uses `eos: "CPA"` which is the correct choice for associating fluids:
 
 ### Integration Test Suite
 
-The `test_mcp_server.py` script launches the server as a subprocess, communicates
+The `tests/protocol/test_mcp_server.py` script launches the server as a subprocess, communicates
 over STDIO, and validates protocol behavior, catalogs, core calculations,
 advanced tools, governance, and error handling:
 
@@ -770,7 +776,7 @@ advanced tools, governance, and error handling:
 
 ```bash
 cd neqsim-mcp-server
-python test_mcp_server.py
+python tests/protocol/test_mcp_server.py
 ```
 
 ### Unit Tests (Core Layer)
@@ -796,9 +802,9 @@ cd ..  # parent neqsim directory
 ./mvnw install -DskipTests -Dmaven.javadoc.skip=true
 ```
 
-### "No matching toolchain found for JDK 17+"
+### "No matching toolchain found for JDK 21+"
 
-The MCP server requires JDK 17+. Check with `java -version`. The parent neqsim
+The MCP server requires JDK 21+. Check with `java -version`. The parent neqsim
 project compiles with Java 8 — both can coexist.
 
 ### Server Hangs or Returns Garbled Output

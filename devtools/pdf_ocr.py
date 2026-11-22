@@ -52,6 +52,12 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 # ---------------------------------------------------------------------------
 # Defaults

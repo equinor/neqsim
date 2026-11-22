@@ -1,0 +1,375 @@
+package neqsim.process.engineering;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import neqsim.process.controllerdevice.AntiSurgeController;
+import neqsim.process.engineering.pid.PidDesignModel;
+import neqsim.process.engineering.pid.PidElement;
+import neqsim.process.util.scenario.CompressorAutomationAcceptancePolicy;
+import neqsim.process.util.scenario.CompressorAutomationStudy;
+import neqsim.process.util.scenario.CompressorAutomationStudy.CaseDefinition;
+import neqsim.process.util.scenario.CompressorAutomationStudy.Design;
+import neqsim.process.util.scenario.CompressorAutomationStudy.Profile;
+import neqsim.process.util.scenario.CompressorReliefDisposalStudy;
+
+/**
+ * Verifies the public agent input, native execution, canonical rerun and artifact handoff contract.
+ *
+ * @author Even Solbraa
+ * @version 1.0
+ */
+public class CompressorAutomationWorkflowTest {
+  @TempDir
+  Path temporary;
+
+  /** Confirms omitted scalar fields retain native defaults while explicit edits stay typed. */
+  @Test
+  void defaultsAndFiniteEditsStayTyped() {
+    Design defaults = CompressorAutomationWorkflow.designFromJson("{}");
+    Design edited = CompressorAutomationWorkflow.designFromJson("{\"feedFlowKgPerSecond\":6.0}");
+    assertEquals(new Design().getFeedPressureBara(), defaults.getFeedPressureBara(), 0.0);
+    assertEquals(6.0, edited.getFeedFlowKgPerSecond(), 0.0);
+    Design methane = CompressorAutomationWorkflow.designFromJson("{\"composition\":{\"methane\":1.0}}");
+    assertEquals(1, methane.getComposition().size());
+    assertEquals(1.0, methane.getComposition().get("methane"), 0.0);
+    assertEquals(defaults.getAntiSurgeOpeningSeconds(), edited.getAntiSurgeOpeningSeconds(), 0.0);
+  }
+
+  /** Rejects misspellings, duplicate policy fields, nulls, strings and non-finite numeric inputs. */
+  @Test
+  void unknownOrAmbiguousScalarInputIsRejected() {
+    for (String invalid : Arrays.asList("{\"antiSurgeOpeningSecond\":0.3}",
+        "{\"antiSurgeOpeningSeconds\":0.3,\"antiSurgeOpeningSeconds\":5}", "{\"feedFlowKgPerSecond\":null}",
+        "{\"feedFlowKgPerSecond\":\"6\"}", "{\"feedFlowKgPerSecond\":1e309}", "{\"feedFlowKgPerSecond\":NaN}", "[]",
+        "{} {}", "{\"composition\":{\"methane\":1,\"methane\":2}}", "{\"composition\":{\"methane\":\"1\"}}")) {
+      assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.designFromJson(invalid));
+    }
+  }
+
+  /** Native physical validation must reject invalid finite inputs before publishing results. */
+  @Test
+  void physicalInputValidationPrecedesNativeSimulation() {
+    Design invalid = CompressorAutomationWorkflow.designFromJson("{\"feedFlowKgPerSecond\":-1.0}");
+    Path output = temporary.resolve("invalid");
+    assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.run(invalid, output));
+    assertFalse(Files.exists(output));
+  }
+
+  /**
+   * Existing user artifacts must never be replaced by an agent retry.
+   *
+   * @throws IOException if test fixture files cannot be written
+   */
+  @Test
+  void existingOutputIsNeverOverwritten() throws IOException {
+    Path output = temporary.resolve("existing");
+    Files.createDirectory(output);
+    Path marker = output.resolve("retain.txt");
+    Files.write(marker, "retain".getBytes(StandardCharsets.UTF_8));
+    assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.run(new Design(), output));
+    assertEquals("retain", new String(Files.readAllBytes(marker), StandardCharsets.UTF_8));
+  }
+
+  /** Complete profile selection must remain explicit and include future public native profiles. */
+  @Test
+  void nativeCaseSelectionIsExplicit() {
+    assertEquals(Profile.values().length, CompressorAutomationWorkflow.defaultCases().size());
+    assertThrows(UnsupportedOperationException.class, () -> CompressorAutomationWorkflow.defaultCases().clear());
+    assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.main(new String[0]));
+  }
+
+  /**
+   * Executes actual native cases, then proves an edited proposal reaches fresh runtime readback and artifacts.
+   *
+   * @throws IOException if actual artifacts cannot be written or read
+   */
+  @Test
+  void workflowConsumesCanonicalRevisionAndWritesStrictNativeEvidence() throws IOException {
+    Design design = CompressorAutomationWorkflow.designFromJson("{\"feedFlowKgPerSecond\":6.0}");
+    List<CaseDefinition> cases = Arrays.asList(new CaseDefinition(Profile.NORMAL, 0.2, 8.0, 1.0),
+        new CaseDefinition(Profile.MANUAL_ESD, 0.2, 8.0, 1.0));
+    Path first = temporary.resolve("first");
+    Map<String, Object> initial = CompressorAutomationWorkflow.run(design, null, cases, first);
+    assertEquals(0, ((Number) initial.get("nativeExecutionErrorCount")).intValue());
+    assertEquals(2, ((Number) initial.get("nativeProfileCount")).intValue());
+    assertEquals(Boolean.FALSE, initial.get("allPublicProfilesSelected"));
+    JsonObject steady = read(first.resolve("steady-state.json"));
+    assertEquals(6.0,
+        steady.getAsJsonObject("streams").getAsJsonObject("30-FEED-001").get("massFlowKgPerSecond").getAsDouble(),
+        1.0e-10);
+    PidDesignModel canonical = PidDesignModel.fromJson(text(first.resolve("canonical-pid.json")));
+    boolean found = false;
+    for (PidElement element : canonical.getElements()) {
+      Object raw = element.getAttributes().get("nativeControlConfiguration");
+      if (raw instanceof Map && AntiSurgeController.class.getName().equals(((Map<?, ?>) raw).get("nativeClass"))) {
+        Map<String, Object> revised = new LinkedHashMap<String, Object>();
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) raw).entrySet()) {
+          revised.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        revised.put("surgeMarginSetPoint", Double.valueOf(0.30));
+        element.attribute("nativeControlConfiguration", revised);
+        found = true;
+      }
+    }
+    assertTrue(found);
+    Path second = temporary.resolve("revised");
+    Map<String, Object> rerun = CompressorAutomationWorkflow.run(design, canonical, cases, second);
+    assertEquals(0, ((Number) rerun.get("nativeExecutionErrorCount")).intValue());
+    assertEquals(Boolean.TRUE, rerun.get("canonicalControlEditsApplied"));
+    JsonObject configuration = read(second.resolve("case-NORMAL-dt-0.2/configuration.json"));
+    boolean consumed = false;
+    for (JsonElement element : configuration.getAsJsonObject("controlSystem").getAsJsonArray("nativeControls")) {
+      JsonObject nativeConfiguration = element.getAsJsonObject().getAsJsonObject("nativeConfiguration");
+      if (nativeConfiguration.has("surgeMarginSetPoint")) {
+        assertEquals(0.30, nativeConfiguration.get("surgeMarginSetPoint").getAsDouble(), 0.0);
+        consumed = true;
+      }
+    }
+    assertTrue(consumed);
+    assertTrue(Files.isRegularFile(second.resolve("native-pid-package/plant.dexpi.xml")));
+    JsonObject crosswalk = read(second.resolve("native-evidence-crosswalk.json"));
+    for (JsonElement element : crosswalk.getAsJsonArray("cases")) {
+      JsonObject row = element.getAsJsonObject();
+      Path directory = second.resolve(row.get("caseDirectory").getAsString());
+      assertEquals(row.get("nativeResultFingerprint").getAsString(),
+          sha256(Files.readAllBytes(directory.resolve("native-result.raw.txt"))));
+      assertEquals(row.get("strictNativeResultFileSha256").getAsString(),
+          sha256(Files.readAllBytes(directory.resolve("native-result.json"))));
+    }
+    try (Stream<Path> files = Files.walk(second)) {
+      for (Path file : files.filter(path -> path.toString().endsWith(".json")).collect(Collectors.toList())) {
+        assertStrictJson(text(file));
+      }
+    }
+    assertNotNull(read(second.resolve("dynamic-pid-feedback.json")).getAsJsonArray("safetyFunctionResults"));
+  }
+
+  /**
+   * Binds the actual blocked-outlet result to relief/disposal evidence and preserves deterministic traceability.
+   *
+   * @throws IOException if actual artifacts cannot be written or read
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  void integratedBlockedOutletStudyRetainsPhysicalAndTraceableEvidence() throws IOException {
+    Design design = new Design();
+    CaseDefinition blocked = new CaseDefinition(Profile.BLOCKED_OUTLET, 0.1, 12.0, 1.0);
+    CompressorReliefDisposalStudy.Design relief = new CompressorReliefDisposalStudy.Design().setTimeStepSeconds(1.0)
+        .setMaximumTimeSeconds(300.0).addEvidenceReference("SYNTHETIC-DYN-C040");
+    Path first = temporary.resolve("integrated-first");
+    Map<String, Object> status = CompressorAutomationWorkflow.run(design, null, Arrays.asList(blocked), relief, first);
+
+    assertEquals(Boolean.TRUE, status.get("reliefDisposalEnabled"));
+    assertEquals(1, ((Number) status.get("integratedReliefStudyCount")).intValue());
+    assertEquals(status.get("integratedSafetyStudySha256"),
+        sha256(Files.readAllBytes(first.resolve("integrated-safety-study.json"))));
+    JsonObject crosswalk = read(first.resolve("native-evidence-crosswalk.json")).getAsJsonArray("cases").get(0)
+        .getAsJsonObject();
+    assertEquals("REQ-COMPRESSOR-BLOCKED_OUTLET", crosswalk.getAsJsonArray("requirementIds").get(0).getAsString());
+    Path reliefFile = first.resolve(crosswalk.get("reliefDisposalFile").getAsString());
+    assertEquals(crosswalk.get("reliefDisposalFileSha256").getAsString(), sha256(Files.readAllBytes(reliefFile)));
+    JsonObject integrated = read(first.resolve("integrated-safety-study.json")).getAsJsonArray("studies").get(0)
+        .getAsJsonObject();
+    JsonObject integratedRelief = integrated.getAsJsonObject("reliefDisposal");
+    JsonObject integratedMetrics = integratedRelief.getAsJsonObject("metrics");
+    assertEquals("PASS", integratedMetrics.get("status").getAsString());
+    assertEquals("bara absolute",
+        integratedRelief.getAsJsonObject("inputUnits").get("reliefSetPressureBara").getAsString());
+    assertEquals(Boolean.FALSE, integratedRelief.get("sourceTrainMutated").getAsBoolean());
+
+    CompressorAutomationStudy.Result directCompressor = CompressorAutomationStudy
+        .run(CompressorAutomationStudy.create(design), blocked);
+    Map<String, Object> directReport = CompressorReliefDisposalStudy.run(directCompressor, relief).toMap();
+    Map<String, Object> directMetrics = (Map<String, Object>) directReport.get("metrics");
+    assertEquals(((Number) directMetrics.get("releasedMassKg")).doubleValue(),
+        integratedMetrics.get("releasedMassKg").getAsDouble(), 0.0);
+    assertEquals(((Number) directMetrics.get("minimumFluidTemperatureK")).doubleValue(),
+        integratedMetrics.get("minimumFluidTemperatureK").getAsDouble(), 0.0);
+
+    Path second = temporary.resolve("integrated-second");
+    Map<String, Object> repeated = CompressorAutomationWorkflow.run(design, null, Arrays.asList(blocked), relief,
+        second);
+    assertEquals(text(reliefFile), text(second.resolve("case-BLOCKED_OUTLET-dt-0.1/relief-disposal.json")));
+    assertEquals(status.get("integratedSafetyStudySha256"), repeated.get("integratedSafetyStudySha256"));
+    assertStrictJson(text(first.resolve("integrated-safety-study.json")));
+
+    Path changed = temporary.resolve("integrated-changed-source");
+    CaseDefinition shorterBlocked = new CaseDefinition(Profile.BLOCKED_OUTLET, 0.1, 10.0, 1.0);
+    Map<String, Object> changedStatus = CompressorAutomationWorkflow.run(design, null, Arrays.asList(shorterBlocked),
+        relief, changed);
+    JsonObject changedStudy = read(changed.resolve("integrated-safety-study.json")).getAsJsonArray("studies").get(0)
+        .getAsJsonObject();
+    assertFalse(integrated.get("nativeResultFingerprint").getAsString()
+        .equals(changedStudy.get("nativeResultFingerprint").getAsString()));
+    assertFalse(status.get("integratedSafetyStudySha256").equals(changedStatus.get("integratedSafetyStudySha256")));
+
+    Path rejected = temporary.resolve("rejected-relief-source");
+    assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.run(design, null,
+        Arrays.asList(new CaseDefinition(Profile.NORMAL, 0.1, 12.0, 1.0)), relief, rejected));
+    assertFalse(Files.exists(rejected));
+  }
+
+  /**
+   * Publishes a strict aggregate acceptance study and proves policy-only verdict changes retain the physical trace.
+   *
+   * @throws IOException if actual artifacts cannot be written or read
+   */
+  @Test
+  void explicitAcceptancePolicyProducesTraceableFailWithoutChangingPhysics() throws IOException {
+    Design design = new Design();
+    CaseDefinition normal = new CaseDefinition(Profile.NORMAL, 0.2, 8.0, 1.0);
+    CompressorAutomationAcceptancePolicy defaults = CompressorAutomationAcceptancePolicy.defaultPolicy();
+    CompressorAutomationAcceptancePolicy revised = defaults.withOverrides(Profile.NORMAL,
+        defaults.getCriterion(Profile.NORMAL, "DISCHARGE_ENVELOPE").withAcceptanceRange(1.0, 1.0));
+    CompressorAutomationAcceptancePolicy late = defaults.withOverrides(Profile.NORMAL,
+        defaults.getCriterion(Profile.NORMAL, "DISCHARGE_ENVELOPE").withDeadlineSeconds(20.0));
+    Path invalidPath = temporary.resolve("acceptance-invalid");
+    assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.runWithAcceptancePolicy(design,
+        null, Arrays.asList(normal), late, invalidPath));
+    assertFalse(Files.exists(invalidPath));
+
+    Path baselinePath = temporary.resolve("acceptance-baseline");
+    Map<String, Object> baseline = CompressorAutomationWorkflow.runWithAcceptancePolicy(design, null,
+        Arrays.asList(normal), defaults, baselinePath);
+    Path revisedPath = temporary.resolve("acceptance-revised");
+    Map<String, Object> changed = CompressorAutomationWorkflow.runWithAcceptancePolicy(design, null,
+        Arrays.asList(normal), revised, revisedPath);
+
+    assertEquals("PASS", baseline.get("acceptanceStudyStatus"));
+    assertEquals("FAIL", changed.get("acceptanceStudyStatus"));
+    assertFalse(baseline.get("acceptancePolicyFingerprint").equals(changed.get("acceptancePolicyFingerprint")));
+    JsonObject baselineSummary = read(baselinePath.resolve("acceptance-study-summary.json"));
+    JsonObject changedSummary = read(revisedPath.resolve("acceptance-study-summary.json"));
+    JsonObject baselineCase = baselineSummary.getAsJsonArray("cases").get(0).getAsJsonObject();
+    JsonObject changedCase = changedSummary.getAsJsonArray("cases").get(0).getAsJsonObject();
+    assertEquals(baselineCase.get("physicalTrajectoryFingerprint").getAsString(),
+        changedCase.get("physicalTrajectoryFingerprint").getAsString());
+    assertFalse(baselineCase.get("nativeResultFingerprint").getAsString()
+        .equals(changedCase.get("nativeResultFingerprint").getAsString()));
+    assertEquals("REQ-COMPRESSOR-NORMAL", changedCase.getAsJsonArray("requirementIds").get(0).getAsString());
+    assertTrue(changedCase.getAsJsonArray("equipmentTags").size() > 0);
+    assertTrue(changedCase.getAsJsonArray("unresolvedActions").size() >= 2);
+    assertEquals(changed.get("acceptanceStudySha256"),
+        sha256(Files.readAllBytes(revisedPath.resolve("acceptance-study-summary.json"))));
+    assertStrictJson(text(revisedPath.resolve("acceptance-policy.json")));
+    assertStrictJson(text(revisedPath.resolve("acceptance-study-summary.json")));
+  }
+
+  /**
+   * Reads a UTF-8 artifact without modifying it.
+   *
+   * @param file actual output file
+   * @return original text
+   * @throws IOException if reading fails
+   */
+  private static String text(Path file) throws IOException {
+    return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Reads an expected strict JSON object.
+   *
+   * @param file artifact
+   * @return parsed original output
+   * @throws IOException if reading fails
+   */
+  private static JsonObject read(Path file) throws IOException {
+    return new Gson().fromJson(text(file), JsonObject.class);
+  }
+
+  /**
+   * Requires one complete strict JSON document with finite number tokens.
+   *
+   * @param source original artifact text
+   * @throws IOException if strict JSON cannot be read
+   */
+  private static void assertStrictJson(String source) throws IOException {
+    try (JsonReader reader = new JsonReader(new StringReader(source))) {
+      reader.setLenient(false);
+      consume(reader);
+      assertEquals(JsonToken.END_DOCUMENT, reader.peek());
+    }
+  }
+
+  /**
+   * Consumes one value while rejecting unsupported numeric encodings.
+   *
+   * @param reader strict native artifact reader
+   * @throws IOException if reading fails
+   */
+  private static void consume(JsonReader reader) throws IOException {
+    switch (reader.peek()) {
+    case BEGIN_OBJECT:
+      reader.beginObject();
+      while (reader.hasNext()) {
+        reader.nextName();
+        consume(reader);
+      }
+      reader.endObject();
+      break;
+    case BEGIN_ARRAY:
+      reader.beginArray();
+      while (reader.hasNext()) {
+        consume(reader);
+      }
+      reader.endArray();
+      break;
+    case NUMBER:
+      assertTrue(Double.isFinite(reader.nextDouble()));
+      break;
+    case STRING:
+      reader.nextString();
+      break;
+    case BOOLEAN:
+      reader.nextBoolean();
+      break;
+    case NULL:
+      reader.nextNull();
+      break;
+    default:
+      throw new IllegalArgumentException("Unexpected strict JSON token: " + reader.peek());
+    }
+  }
+
+  /**
+   * Checks the exact output-file representation, separately from native-result fingerprints.
+   *
+   * @param bytes original artifact bytes
+   * @return lowercase SHA-256
+   */
+  private static String sha256(byte[] bytes) {
+    try {
+      StringBuilder result = new StringBuilder();
+      for (byte value : MessageDigest.getInstance("SHA-256").digest(bytes)) {
+        result.append(String.format("%02x", Integer.valueOf(value & 0xff)));
+      }
+      return result.toString();
+    } catch (NoSuchAlgorithmException failure) {
+      throw new IllegalStateException(failure);
+    }
+  }
+}

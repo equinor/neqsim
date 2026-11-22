@@ -8,6 +8,14 @@ reservoir-fluid characterization, laboratory-test reconstruction, and PVT qualit
 control. Build and characterize the thermodynamic system first, then give each
 experiment its own clone so that one pressure path does not affect another.
 
+See the [Pedersen-method qualification matrix](pedersen_method_qualification)
+for the distinction between implemented APIs, numerical verification and measured
+accuracy, including current gas-injection limitations.
+
+For a complete sample-to-model study with professional reporting, full parameter
+capture and fresh-process E300 replay, use the
+[PVT and fluid-characterization study workflow](pvt_fluid_study_report).
+
 ## Choose a simulation
 
 | Engineering task | Main class | Typical results |
@@ -31,17 +39,56 @@ This complete example uses kelvin and bara in the thermodynamic-system
 constructor. `setReservoirConditions` and `addSeparatorStage` use degrees Celsius
 and bara.
 
+<!-- pvt-separator-quickstart-example: multi-stage -->
 ```java
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.simulation.MultiStageSeparatorTest;
 import neqsim.pvtsimulation.simulation.MultiStageSeparatorTest.SeparatorStageResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * Runs the PVT landing-page separator workflow.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
 public final class PvtSeparatorQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(PvtSeparatorQuickStart.class);
+
   private PvtSeparatorQuickStart() {}
 
+  /**
+   * Runs the example and reports its stage results.
+   *
+   * @param args command-line arguments; not used
+   */
   public static void main(String[] args) {
+    MultiStageSeparatorTest separatorTest = runExample();
+    List<SeparatorStageResult> stages = separatorTest.getStageResults();
+    for (SeparatorStageResult stage : stages) {
+      logger.info(
+          "{}: {} bara, {} C, cumulative GOR {} Sm3/Sm3",
+          stage.getStageName(), stage.getPressure(), stage.getTemperature(),
+          stage.getCumulativeGOR());
+    }
+
+    logger.info("Total GOR: {} Sm3/Sm3", separatorTest.getTotalGOR());
+    logger.info("Oil FVF: {} m3/Sm3", separatorTest.getBo());
+    logger.info(
+        "Stock-tank density: {} kg/m3",
+        separatorTest.getStockTankOilDensity());
+  }
+
+  /**
+   * Builds and executes the documented multi-stage separator study.
+   *
+   * @return completed separator study
+   */
+  public static MultiStageSeparatorTest runExample() {
     SystemInterface reservoirFluid = new SystemSrkEos(373.15, 300.0);
     reservoirFluid.addComponent("nitrogen", 0.5);
     reservoirFluid.addComponent("CO2", 2.0);
@@ -64,27 +111,14 @@ public final class PvtSeparatorQuickStart {
     separatorTest.addSeparatorStage(10.0, 30.0, "LP separator");
     separatorTest.addStockTankStage();
     separatorTest.run();
-
-    List<SeparatorStageResult> stages = separatorTest.getStageResults();
-    for (SeparatorStageResult stage : stages) {
-      System.out.printf(
-          "%s: %.3f bara, %.2f C, cumulative GOR %.3f Sm3/Sm3%n",
-          stage.getStageName(), stage.getPressure(), stage.getTemperature(),
-          stage.getCumulativeGOR());
-    }
-
-    System.out.printf("Total GOR: %.3f Sm3/Sm3%n", separatorTest.getTotalGOR());
-    System.out.printf("Oil FVF: %.5f m3/Sm3%n", separatorTest.getBo());
-    System.out.printf(
-        "Stock-tank density: %.2f kg/m3%n",
-        separatorTest.getStockTankOilDensity());
+    return separatorTest;
   }
 }
 ```
 
 The repository test
-`neqsim.pvtsimulation.PvtSimulationDocumentationTest` compiles and executes this
-same workflow. The result magnitudes depend on the fluid characterization and
+`neqsim.pvtsimulation.PvtSimulationDocumentationTest` extracts, compiles, and executes this exact
+marked source, then checks the returned stage results. The result magnitudes depend on the fluid characterization and
 equation of state; do not use the example composition as calibrated field data.
 
 ## Working with laboratory data
@@ -111,6 +145,6 @@ Javadocs before building an automated regression workflow.
 - [Eclipse E300 fluid import](eclipse_e300_fluid_import)
 - [NeqSim JSON fluid format](json_fluid_format)
 - [Black-oil package](../blackoil/README)
-- [Reservoir material balance](reservoir_material_balance)
+- [Reservoir material balance, generalized Rs/Rv history estimates and tuned PVT](reservoir_material_balance)
 - [Relative-permeability tables](relative_permeability)
 - [Flow-assurance screening](flowassurance/README)

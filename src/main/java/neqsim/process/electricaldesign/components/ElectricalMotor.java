@@ -22,10 +22,10 @@ public class ElectricalMotor implements java.io.Serializable {
   /**
    * Standard IEC motor rated power steps in kW. Motors are selected as the next size up from the required power.
    */
-  private static final double[] IEC_STANDARD_POWERS_KW = { 0.37, 0.55, 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0,
+  private static final double[] IEC_STANDARD_POWERS_KW = {0.37, 0.55, 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0,
       15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0, 75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 355.0, 400.0,
       450.0, 500.0, 560.0, 630.0, 710.0, 800.0, 900.0, 1000.0, 1120.0, 1250.0, 1400.0, 1600.0, 1800.0, 2000.0, 2240.0,
-      2500.0, 2800.0, 3150.0, 3550.0, 4000.0, 4500.0, 5000.0, 5600.0, 6300.0, 7100.0, 8000.0, 9000.0, 10000.0 };
+      2500.0, 2800.0, 3150.0, 3550.0, 4000.0, 4500.0, 5000.0, 5600.0, 6300.0, 7100.0, 8000.0, 9000.0, 10000.0};
 
   // === Nameplate data ===
   private double ratedPowerKW;

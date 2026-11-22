@@ -1,14 +1,12 @@
 package neqsim.statistics.parameterfitting;
 
-import java.io.Serializable;
-
 /**
  * Objective function type used by high-level parameter fitting studies.
  *
  * @author Even Solbraa
  * @version 1.0
  */
-public enum ObjectiveFunctionType implements Serializable {
+public enum ObjectiveFunctionType {
   /** Weighted least squares using the experimental standard deviations. */
   WEIGHTED_LEAST_SQUARES,
   /** Iteratively reweighted least squares approximation of least absolute deviation. */

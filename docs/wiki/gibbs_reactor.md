@@ -1,272 +1,158 @@
 ---
 title: "Gibbs Reactor"
-description: "The Gibbs Reactor is a chemical equilibrium reactor that computes outlet compositions by minimizing the total Gibbs free energy of the system. It is used for modeling chemical reactions at thermodynam..."
+description: "Run and qualify Gibbs free-energy equilibrium calculations with NeqSim's GibbsReactor, explicit units, solver diagnostics, and engineering boundaries."
 ---
 
-# Gibbs Reactor
+`GibbsReactor` calculates a thermodynamic-equilibrium outlet by minimizing Gibbs free energy while conserving the supported elements. Use it for equilibrium screening when the feed species, thermodynamic model, temperature/pressure basis, and allowed product species are explicitly defined. It is not a kinetic, residence-time, catalyst, emissions, or equipment-design model.
 
-The Gibbs Reactor is a chemical equilibrium reactor that computes outlet compositions by minimizing the total Gibbs free energy of the system. It is used for modeling chemical reactions at thermodynamic equilibrium.
+## Execution contract
 
-## Overview
-
-The `GibbsReactor` class performs chemical equilibrium calculations using Gibbs free energy minimization with Lagrange multipliers. The reactor automatically determines the equilibrium composition based on:
-
-- Inlet stream composition
-- Temperature and pressure conditions
-- Elemental mass balance constraints
-- Thermodynamic properties from the Gibbs database
-
-## Key Features
-
-- **Isothermal and Adiabatic Modes**: Supports both constant-temperature and heat-balanced operation
-- **Multi-component Systems**: Handles complex mixtures with multiple reacting species
-- **Inert Components**: Allows marking specific components as non-reactive
-- **Convergence Diagnostics**: Provides detailed iteration metrics and mass balance verification
-- **Customizable Solver**: Adjustable damping, tolerance, and iteration limits
-
-## Mathematical Background
-
-The reactor minimizes the objective function:
-
-$$G = \sum_i n_i \left( \mu_i^0 + RT \ln(\phi_i y_i P) \right) - \sum_j \lambda_j \left( \sum_i a_{ij} n_i - b_j \right)$$
-
-Where:
-- $n_i$ = molar amount of component $i$
-- $\mu_i^0$ = standard chemical potential of component $i$
-- $\phi_i$ = fugacity coefficient of component $i$
-- $y_i$ = mole fraction of component $i$
-- $P$ = pressure
-- $\lambda_j$ = Lagrange multiplier for element $j$
-- $a_{ij}$ = number of atoms of element $j$ in component $i$
-- $b_j$ = total moles of element $j$ (conserved)
-
-The Newton-Raphson method iteratively solves for compositions and Lagrange multipliers until convergence.
-
-## Basic Usage
+The example below is one complete Java 8 program. It uses an isothermal methane/oxygen fixture already exercised by the reactor regression suite. Temperatures are in K, pressure is absolute bara, and reported compositions are dimensionless mole fractions.
 
 ```java
+package examples;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.reactor.GibbsReactor;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create inlet stream
-SystemSrkEos system = new SystemSrkEos(298.15, 10.0);
-system.addComponent("methane", 1.0, "mol/sec");
-system.addComponent("oxygen", 2.0, "mol/sec");
-system.addComponent("CO2", 0.0, "mol/sec");
-system.addComponent("water", 0.0, "mol/sec");
-system.setMixingRule(2);
+public final class GibbsReactorGuideExample {
+  private static final Logger logger = LogManager.getLogger(GibbsReactorGuideExample.class);
 
-Stream inlet = new Stream("inlet", system);
-inlet.run();
+  private GibbsReactorGuideExample() {}
 
-// Create and configure reactor
-GibbsReactor reactor = new GibbsReactor("combustion reactor", inlet);
-reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-reactor.setMaxIterations(5000);
-reactor.setConvergenceTolerance(1e-6);
-reactor.setDampingComposition(0.01);
-reactor.run();
+  public static void main(String[] args) {
+    SystemInterface feedFluid = new SystemSrkEos(1300.0, 1.0);
+    feedFluid.addComponent("methane", 0.1);
+    feedFluid.addComponent("oxygen", 0.4);
+    feedFluid.addComponent("CO2", 0.0);
+    feedFluid.addComponent("water", 0.0);
+    feedFluid.setMixingRule(2);
 
-// Get results
-Stream outlet = (Stream) reactor.getOutletStream();
-System.out.println("Outlet temperature: " + outlet.getTemperature("C") + " °C");
-System.out.println("Conversion completed: " + reactor.hasConverged());
-```
+    Stream feed = new Stream("equilibrium feed", feedFluid);
+    feed.setTemperature(1300.0, "K");
+    feed.setPressure(1.0, "bara");
+    feed.run();
 
-## Configuration Options
+    GibbsReactor reactor = new GibbsReactor("isothermal equilibrium reactor", feed);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+    reactor.setUseAdaptiveStepSize(true);
+    reactor.setMinIterations(3);
+    reactor.setMaxIterations(10000);
+    reactor.setConvergenceTolerance(1.0e-3);
+    reactor.run();
 
-### Energy Mode
+    if (!reactor.hasConverged()) {
+      throw new IllegalStateException(
+          "Gibbs solver did not converge; final error=" + reactor.getFinalConvergenceError());
+    }
+    if (!reactor.getElementMassBalanceConverged()) {
+      throw new IllegalStateException(
+          "Element balance did not converge; error=" + reactor.getElementMassBalanceError()
+              + " percent");
+    }
 
-```java
-// Isothermal: temperature remains constant
-reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+    SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+    double outletTemperatureK = outlet.getTemperature("K");
+    double outletPressureBara = outlet.getPressure("bara");
+    double methaneMoleFraction = outlet.getComponent("methane").getz();
+    double carbonDioxideMoleFraction = outlet.getComponent("CO2").getz();
+    double waterMoleFraction = outlet.getComponent("water").getz();
 
-// Adiabatic: temperature changes based on reaction enthalpy
-reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+    requireFiniteFraction("methane", methaneMoleFraction);
+    requireFiniteFraction("CO2", carbonDioxideMoleFraction);
+    requireFiniteFraction("water", waterMoleFraction);
+    if (Math.abs(outletTemperatureK - 1300.0) > 1.0e-6) {
+      throw new IllegalStateException("Isothermal outlet temperature changed unexpectedly");
+    }
 
-// Using string (case-insensitive)
-reactor.setEnergyMode("adiabatic");
-```
+    assert reactor.hasConverged();
+    assert reactor.getElementMassBalanceConverged();
+    assert carbonDioxideMoleFraction > 0.0;
+    assert waterMoleFraction > 0.0;
 
-### Solver Parameters
+    logger.info(
+        "Equilibrium screen: T={} K, P={} bara, methane={}, CO2={}, water={}, iterations={}",
+        outletTemperatureK, outletPressureBara, methaneMoleFraction,
+        carbonDioxideMoleFraction, waterMoleFraction, reactor.getActualIterations());
+    logger.info(
+        "Qualification boundary: equilibrium composition is a screening result, not kinetic, "
+            + "residence-time, catalyst, emissions, or equipment-design evidence.");
+  }
 
-| Parameter | Method | Default | Description |
-|-----------|--------|---------|-------------|
-| Max Iterations | `setMaxIterations(int)` | 5000 | Maximum Newton-Raphson iterations |
-| Convergence Tolerance | `setConvergenceTolerance(double)` | 1e-3 | Convergence criterion for delta norm |
-| Damping Factor | `setDampingComposition(double)` | 0.05 | Step size for composition updates |
-| Min Iterations | `setMinIterations(int)` | 100 | Minimum iterations before convergence check |
-| Adaptive Step Size | `setUseAdaptiveStepSize(boolean)` | false | NASA CEA-style adaptive step limiting |
-| Armijo Line Search | `setUseArmijoLineSearch(boolean)` | false | Backtracking line search for guaranteed descent |
-| Regularization | `setUseRegularization(boolean)` | false | Tikhonov regularization for ill-conditioned systems |
-
-```java
-reactor.setMaxIterations(10000);
-reactor.setConvergenceTolerance(1e-8);
-reactor.setDampingComposition(0.001);  // Smaller = more stable, slower
-```
-
-### Inert Components
-
-Mark components that should not participate in reactions:
-
-```java
-// By name
-reactor.setComponentAsInert("nitrogen");
-reactor.setComponentAsInert("argon");
-
-// By index
-reactor.setComponentAsInert(0);
-```
-
-### Database Species
-
-```java
-// Use only components present in inlet stream (default)
-reactor.setUseAllDatabaseSpecies(false);
-
-// Add all species from Gibbs database (for product prediction)
-reactor.setUseAllDatabaseSpecies(true);
-```
-
-## Results and Diagnostics
-
-### Convergence Status
-
-```java
-if (reactor.hasConverged()) {
-    System.out.println("Solution converged in " + reactor.getActualIterations() + " iterations");
-} else {
-    System.out.println("Failed to converge. Final error: " + reactor.getFinalConvergenceError());
+  private static void requireFiniteFraction(String component, double value) {
+    if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+      throw new IllegalStateException(component + " mole fraction must be finite and in [0, 1]");
+    }
+  }
 }
 ```
 
-### Thermodynamic Results
+The zero-amount `CO2` and `water` entries deliberately make those products available while `setUseAllDatabaseSpecies(false)` limits the candidate set to species already present in the thermodynamic system. A converged numerical flag is necessary but not sufficient: the example also checks supported-element closure, bounded outputs, and the isothermal temperature contract.
 
-```java
-// Enthalpy of reaction (kJ)
-double deltaH = reactor.getEnthalpyOfReactions();
+## Energy modes
 
-// Temperature change in adiabatic mode (K)
-double deltaT = reactor.getTemperatureChange();
+| Mode | Calculation contract |
+| --- | --- |
+| `ISOTHERMAL` | Keeps the reactor temperature at the inlet value and reports the calculated heat effect through the reactor diagnostics. |
+| `ADIABATIC` | Adjusts temperature to satisfy the implemented enthalpy balance. Validate the resulting temperature, phase state, and species range independently. |
 
-// Reactor power (W, kW, or MW)
-double powerW = reactor.getPower("W");
-double powerKW = reactor.getPower("kW");
-```
+Select the enum form when possible. The string setter accepts only `"isothermal"` and `"adiabatic"` case-insensitively and rejects other values.
 
-### Mass Balance Verification
+## Species ownership
 
-```java
-// Check mass balance closure
-double massError = reactor.getMassBalanceError();  // Percentage error
-boolean balanced = reactor.getMassBalanceConverged();  // True if error < 0.001%
+By default, `useAllDatabaseSpecies` is false. In that mode the caller owns the candidate-species list and should add allowed products at zero amount before running the reactor. Setting it true admits all species that the implementation can load from the packaged Gibbs database; that broader search can change the solution space and must be qualified for the intended chemistry.
 
-// Element-wise balance
-double[] elementIn = reactor.getElementMoleBalanceIn();
-double[] elementOut = reactor.getElementMoleBalanceOut();
-double[] elementDiff = reactor.getElementMoleBalanceDiff();
-String[] elementNames = reactor.getElementNames();  // ["O", "N", "C", "H", "S", "Ar", "Z"]
-```
+Components absent from the Gibbs database are not automatically given reaction data. Treat database coverage, aliases, elemental definitions, thermodynamic-model selection, and phase validity as input responsibilities.
 
-### Molar Flows
+## Solver configuration
 
-```java
-List<Double> inletMoles = reactor.getInletMoles();
-List<Double> outletMoles = reactor.getOutletMoles();
-```
+| Setting | Default | Meaning |
+| --- | ---: | --- |
+| Maximum iterations | 5000 | Upper iteration limit |
+| Convergence tolerance | $10^{-3}$ | Implemented solver convergence criterion |
+| Composition damping | 0.05 | Fixed composition step when adaptive sizing is disabled |
+| Minimum iterations | 100 | Iterations required before convergence may be declared |
+| Adaptive step sizing | false | Enables implementation-provided step limiting |
+| Armijo line search | false | Enables backtracking of the trial step |
+| Regularization | false | Enables conditioning support for the constrained Jacobian |
 
-## Specialized Reactor: GibbsReactorCO2
+Do not tighten tolerances or increase iteration limits merely to force a nominal pass. Record the final error and iteration count, then investigate species coverage, feed state, phase behavior, damping, and initialization.
 
-For CO2/acid gas systems, use `GibbsReactorCO2` which provides pre-configured reaction pathways:
+## Diagnostics and units
 
-```java
-import neqsim.process.equipment.reactor.GibbsReactorCO2;
+| Method | Reported quantity |
+| --- | --- |
+| `hasConverged()` | Solver convergence flag |
+| `getFinalConvergenceError()` | Final implemented convergence metric |
+| `getMassBalanceError()` | Relative stream-mass difference in percent |
+| `getElementMassBalanceError()` | Supported-element-derived relative mass difference in percent |
+| `getEnthalpyOfReactions()` | Cumulative implemented reaction-enthalpy diagnostic in kJ |
+| `getTemperatureChange()` | Cumulative implemented temperature-change diagnostic in K |
+| `getPower("W"|"kW"|"MW")` | Signed heat-effect diagnostic in the requested supported unit |
+| `getGibbsEnergyHistory()` | Recorded iteration history for diagnostic review |
+| `getConditionNumberHistory()` | Recorded constrained-system condition estimates |
+| `getStepSizeHistory()` | Recorded solver step sizes |
+| `getElementBalanceErrorHistory()` | Recorded supported-element balance error history |
 
-GibbsReactorCO2 acidGasReactor = new GibbsReactorCO2("acid gas reactor", inlet);
-acidGasReactor.run();
-```
-
-**Important Limitations of GibbsReactorCO2:**
-- Only bulk (homogeneous) phase reactions are modeled
-- Surface reactions and heterogeneous catalysis are not included
-- Reactions are disabled when CO2 density falls below 300 kg/m³
+The cumulative enthalpy and temperature-change values are solver diagnostics. They are not, by themselves, a rated reactor duty, a transient temperature rise, or a substitute for an energy-balance and equipment-design review.
 
 ## Troubleshooting
 
-### Convergence Issues
+- Fail closed when `hasConverged()` is false or a balance/result is non-finite.
+- Confirm every allowed reactant and product has valid Gibbs-database data.
+- Keep pressure on an absolute basis and label temperature units explicitly.
+- Check both stream-mass and supported-element closure for reacting systems.
+- Compare fixed damping and adaptive sizing on a controlled fixture before changing defaults.
+- Treat a broadened all-database species search as a model change, not a harmless convenience.
+- Recheck phase stability and the chosen equation of state across the intended operating envelope.
 
-1. **Reduce damping factor**: Try `setDampingComposition(0.001)` or smaller
-2. **Increase iterations**: Use `setMaxIterations(20000)`
-3. **Check initial compositions**: Ensure products have small non-zero initial amounts
-4. **Mark inerts**: Components that don't react should be marked as inert
+## Qualification boundary
 
-### Mass Balance Errors
+Gibbs minimization predicts equilibrium for the selected species and thermodynamic model. It does not establish reaction rates, residence time, catalyst activity or deactivation, mixing limits, flame stability, pollutant formation, heat-transfer area, metallurgy, relief adequacy, controls, or safe operating limits. Validate chemistry, thermodynamic data, operating envelope, and equipment design with accountable engineering evidence.
 
-If mass balance doesn't close:
-- Reduce the damping factor for better numerical stability
-- Check that all relevant species are included in the system
-- Verify component names match the Gibbs database
-
-### Numerical Instabilities
-
-For stiff systems:
-```java
-reactor.setDampingComposition(0.0001);  // Very small steps
-reactor.setMaxIterations(50000);        // Allow more iterations
-reactor.setConvergenceTolerance(1e-4);  // Relax tolerance slightly
-```
-
-For ill-conditioned systems, enable Tikhonov regularization:
-```java
-reactor.setUseRegularization(true);
-reactor.setRegularizationThreshold(1e10);  // Condition number trigger
-reactor.setRegularizationTau(1e-6);        // Regularization scale
-```
-
-For guaranteed monotonic descent, enable the Armijo backtracking line search:
-```java
-reactor.setUseArmijoLineSearch(true);
-// Optional tuning:
-reactor.setArmijoC1(1e-4);          // Sufficient decrease constant
-reactor.setArmijoRho(0.5);           // Step contraction factor
-reactor.setArmijoMaxBacktracks(20);  // Max backtracks per iteration
-```
-
-### Convergence History
-
-For diagnosing solver behavior, the reactor records iteration-level histories:
-
-```java
-List<Double> gibbsHistory = reactor.getGibbsEnergyHistory();           // Should decrease
-List<Double> condHistory = reactor.getConditionNumberHistory();         // Monitor stability
-List<Double> stepHistory = reactor.getStepSizeHistory();                // Track step control
-List<Double> balanceHistory = reactor.getElementBalanceErrorHistory();  // Constraint check
-```
-
-## Gibbs Database
-
-The reactor uses thermodynamic data from CSV files in `src/main/resources/data/GibbsReactDatabase/`:
-
-- `GibbsReactDatabase.csv` - Component properties (elements, heat capacity, formation enthalpies)
-- `DatabaseGibbsFreeEnergyCoeff.csv` - Polynomial coefficients for Gibbs energy calculations
-
-### Supported Elements
-
-The reactor tracks mass balance for: O, N, C, H, S, Ar, Z (charge)
-
-### Adding Custom Components
-
-Custom components can be added to the database files following the existing format. Each component requires:
-- Elemental composition
-- Heat capacity coefficients (A, B, C, D)
-- Standard enthalpy of formation (ΔHf° at 298.15 K)
-- Standard Gibbs energy of formation (ΔGf° at 298.15 K)
-- Standard entropy (ΔSf° at 298.15 K)
-
-## See Also
-
-- [Process Equipment Overview](./index)
-- [Stream Documentation](./getting_started)
-- [Thermodynamic Systems](../thermo/)
+For algorithm details and the broader API, see the [maintained Gibbs reactor reference](../process/gibbs-reactor-documentation.md) and the [reactor equipment overview](../process/equipment/reactors.md).

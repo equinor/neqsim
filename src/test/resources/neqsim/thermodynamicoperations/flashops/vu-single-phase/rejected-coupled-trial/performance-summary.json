@@ -1,0 +1,626 @@
+[
+  {
+    "eos": "SRK",
+    "state": "gas",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 19408839.0,
+        "allocated_bytes": 47554348.0,
+        "iterations": 219.0,
+        "solves": 40.0,
+        "worst": {
+          "max_volume_error": 3.1759263419139927e-07,
+          "max_energy_error": 6.809545680456799e-06,
+          "max_returned_enthalpy_drift": 2.3555961888360327e-07,
+          "max_pressure_error": 1.7763577143252625e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 16221595.5,
+        "allocated_bytes": 19993960.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 6.973389199416147e-09,
+          "max_energy_error": 4.3047768763761e-06,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.776357048269457e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.9407346128456566,
+      0.6188678284312725
+    ]
+  },
+  {
+    "eos": "SRK",
+    "state": "gas",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 29781609.0,
+        "allocated_bytes": 49166372.0,
+        "iterations": 219.0,
+        "solves": 40.0,
+        "worst": {
+          "max_volume_error": 3.1759263419139927e-07,
+          "max_energy_error": 6.809545685425572e-06,
+          "max_returned_enthalpy_drift": 2.3555961888360327e-07,
+          "max_pressure_error": 1.7763577139504104e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 17425579.0,
+        "allocated_bytes": 21333816.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 6.973389199416147e-09,
+          "max_energy_error": 4.3047768763761e-06,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.776357048269457e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.5750110546915539,
+      0.6164592020811663
+    ]
+  },
+  {
+    "eos": "SRK",
+    "state": "oil",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 23131868.0,
+        "allocated_bytes": 64830672.0,
+        "iterations": 398.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1311585113027434e-08,
+          "max_energy_error": 1.529570047005613e-08,
+          "max_returned_enthalpy_drift": 2.1329608940712673e-09,
+          "max_pressure_error": 5.698027283549362e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 14830633.0,
+        "allocated_bytes": 17069168.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1260543719693317e-07,
+          "max_energy_error": 2.6299063617380405e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 6.540493377992212e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.568343071051512,
+      0.47692116195788287
+    ]
+  },
+  {
+    "eos": "SRK",
+    "state": "oil",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 26162003.5,
+        "allocated_bytes": 65636696.0,
+        "iterations": 398.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1313295078529961e-08,
+          "max_energy_error": 1.529392900629103e-08,
+          "max_returned_enthalpy_drift": 2.1330051042382468e-09,
+          "max_pressure_error": 7.844579695222363e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 16585532.0,
+        "allocated_bytes": 17829420.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1260479015895442e-07,
+          "max_energy_error": 2.6299175725165563e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 7.066632571522644e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.6382550641742608,
+      0.5832228780101927
+    ]
+  },
+  {
+    "eos": "SRK",
+    "state": "aqueous",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 20095809.0,
+        "allocated_bytes": 68208832.0,
+        "iterations": 418.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1201940486316175e-09,
+          "max_energy_error": 1.523502445538976e-09,
+          "max_returned_enthalpy_drift": 7.767669174113112e-10,
+          "max_pressure_error": 1.5646168461786015e-12,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 13454159.5,
+        "allocated_bytes": 17193920.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.079198829247787e-08,
+          "max_energy_error": 7.66020948722608e-08,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 8.606093941069107e-13,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.591369703973909,
+      0.6726593685080386
+    ]
+  },
+  {
+    "eos": "SRK",
+    "state": "aqueous",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 25299318.0,
+        "allocated_bytes": 68706856.0,
+        "iterations": 418.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1540800537446216e-09,
+          "max_energy_error": 1.563550217302076e-09,
+          "max_returned_enthalpy_drift": 7.908061019269525e-10,
+          "max_pressure_error": 1.1409881398219726e-12,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 13676403.0,
+        "allocated_bytes": 17862288.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.0579161647281694e-08,
+          "max_energy_error": 7.550715887254487e-08,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.3656631896611764e-12,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.4215975005454877,
+      0.673986956323984
+    ]
+  },
+  {
+    "eos": "SRK",
+    "state": "large",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 123245434.5,
+        "allocated_bytes": 204019488.0,
+        "iterations": 179.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.340017140640583e-07,
+          "max_energy_error": 1.3006452763257435e-06,
+          "max_returned_enthalpy_drift": 1.212473178585012e-09,
+          "max_pressure_error": 1.7763578935868715e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 110130906.0,
+        "allocated_bytes": 132948160.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.511801960343064e-11,
+          "max_energy_error": 3.6028110544516545e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.7763569667450474e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.8960761503907879,
+      0.8767081993451188
+    ]
+  },
+  {
+    "eos": "SRK",
+    "state": "large",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 1676147798.0,
+        "allocated_bytes": 302149144.0,
+        "iterations": 179.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.340015455322032e-07,
+          "max_energy_error": 1.3006444530600668e-06,
+          "max_returned_enthalpy_drift": 1.2125235354464823e-09,
+          "max_pressure_error": 1.776357893586257e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 908299073.0,
+        "allocated_bytes": 178049168.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.5117353469615864e-11,
+          "max_energy_error": 3.602810749423596e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.7763569668466988e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.5444907957042339,
+      0.5387900011221909
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "gas",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 16535182.0,
+        "allocated_bytes": 47570372.0,
+        "iterations": 219.0,
+        "solves": 40.0,
+        "worst": {
+          "max_volume_error": 3.340422807251997e-07,
+          "max_energy_error": 6.565926764881914e-06,
+          "max_returned_enthalpy_drift": 1.8261162173823588e-07,
+          "max_pressure_error": 1.776357743349239e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 16215654.5,
+        "allocated_bytes": 19999440.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 9.293407154942201e-09,
+          "max_energy_error": 4.052851990603556e-06,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.7763570530027524e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      1.0515951400777266,
+      0.7550596848341488
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "gas",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 26467341.0,
+        "allocated_bytes": 49178264.0,
+        "iterations": 219.0,
+        "solves": 40.0,
+        "worst": {
+          "max_volume_error": 3.340422805031551e-07,
+          "max_energy_error": 6.565926766448834e-06,
+          "max_returned_enthalpy_drift": 1.8261162330514624e-07,
+          "max_pressure_error": 1.7763577429524536e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 22235096.5,
+        "allocated_bytes": 21344624.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 9.293407154942201e-09,
+          "max_energy_error": 4.052851990603563e-06,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.7763570528454452e-16,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.8654678939255496,
+      0.6893857175357245
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "oil",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 22853163.5,
+        "allocated_bytes": 64848448.0,
+        "iterations": 398.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.124284942921605e-08,
+          "max_energy_error": 1.5069934453448696e-08,
+          "max_returned_enthalpy_drift": 1.8291277515782844e-09,
+          "max_pressure_error": 1.6379762303874635e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 10735588.0,
+        "allocated_bytes": 17074504.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1185599579910388e-07,
+          "max_energy_error": 2.5897384205756596e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.3336530450873323e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.4991666204246537,
+      0.3983119547806758
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "oil",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 27395129.5,
+        "allocated_bytes": 65653072.0,
+        "iterations": 398.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1242931141630663e-08,
+          "max_energy_error": 1.506986496358958e-08,
+          "max_returned_enthalpy_drift": 1.8291348787433235e-09,
+          "max_pressure_error": 1.6637866572595606e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 15452076.0,
+        "allocated_bytes": 17832728.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.1185613857378485e-07,
+          "max_energy_error": 2.589736596912304e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.3350208397156006e-11,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.515383250685079,
+      0.6111002922203447
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "aqueous",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 29761321.5,
+        "allocated_bytes": 68317356.0,
+        "iterations": 419.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.0132914507465784e-09,
+          "max_energy_error": 1.4270608618486289e-09,
+          "max_returned_enthalpy_drift": 6.728768382224442e-10,
+          "max_pressure_error": 1.7269009664971364e-12,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 14599366.0,
+        "allocated_bytes": 17164128.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 2.911306229425037e-08,
+          "max_energy_error": 7.398277747898513e-08,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 2.0420997799175074e-12,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.45615765199746117,
+      0.47756843364325224
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "aqueous",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 28543708.5,
+        "allocated_bytes": 68844888.0,
+        "iterations": 419.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.0518351745147925e-09,
+          "max_energy_error": 1.476191643164847e-09,
+          "max_returned_enthalpy_drift": 6.906577939263e-10,
+          "max_pressure_error": 1.6194716379547352e-12,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 15561594.5,
+        "allocated_bytes": 17855776.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 2.8942425234212976e-08,
+          "max_energy_error": 7.302155714810315e-08,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.2799717319946918e-12,
+          "max_balance": 0.0,
+          "max_normalization": 0.0
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.437418934669697,
+      0.6236664721577847
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "large",
+    "rule": "2",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 124024026.5,
+        "allocated_bytes": 204137104.0,
+        "iterations": 179.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.355818449790604e-07,
+          "max_energy_error": 1.3058778562220353e-06,
+          "max_returned_enthalpy_drift": 9.543464713250188e-10,
+          "max_pressure_error": 1.7763578969837662e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 112233855.0,
+        "allocated_bytes": 133014736.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.417648221035961e-10,
+          "max_energy_error": 3.6046841868829397e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.7763569670160295e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.9049363914983037,
+      0.9036009011285289
+    ]
+  },
+  {
+    "eos": "PR",
+    "state": "large",
+    "rule": "4",
+    "metrics": {
+      "baseline": {
+        "elapsed_ns": 1662748082.0,
+        "allocated_bytes": 302216168.0,
+        "iterations": 179.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 3.355817941308459e-07,
+          "max_energy_error": 1.3058775492517785e-06,
+          "max_returned_enthalpy_drift": 9.54399874668225e-10,
+          "max_pressure_error": 1.7763578969835325e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      },
+      "candidate": {
+        "elapsed_ns": 902567072.5,
+        "allocated_bytes": 178125264.0,
+        "iterations": 80.0,
+        "solves": 20.0,
+        "worst": {
+          "max_volume_error": 1.4176815277266996e-10,
+          "max_energy_error": 3.604684221802941e-07,
+          "max_returned_enthalpy_drift": 0.0,
+          "max_pressure_error": 1.7763569671177635e-16,
+          "max_balance": 0.0,
+          "max_normalization": 4.440892098500626e-16
+        }
+      }
+    },
+    "process_pair_time_ratios": [
+      0.513131674806731,
+      0.5740470890083162
+    ]
+  }
+]

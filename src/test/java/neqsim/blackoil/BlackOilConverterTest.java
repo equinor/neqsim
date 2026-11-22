@@ -31,7 +31,7 @@ class BlackOilConverterTest {
     oil.useVolumeCorrection(true);
     oil.setMultiPhaseCheck(true);
 
-    double[] pressures = { 25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0 };
+    double[] pressures = {25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0};
     BlackOilConverter.Result result = BlackOilConverter.convert(oil, 373.15, pressures, 1.01325, 288.15);
 
     assertNotNull(result);
@@ -66,7 +66,7 @@ class BlackOilConverterTest {
     wetOil.setMixingRule(10);
     wetOil.setMultiPhaseCheck(true);
 
-    double[] pressures = { 50.0, 100.0, 150.0, 200.0 };
+    double[] pressures = {50.0, 100.0, 150.0, 200.0};
     BlackOilConverter.Result result = BlackOilConverter.convert(wetOil, 353.15, pressures, 1.01325, 288.15);
 
     assertNotNull(result);
@@ -115,7 +115,7 @@ class BlackOilConverterTest {
     double expectedOilDensity = reference.getPhase("oil").getDensity("kg/m3");
     double expectedGasDensity = reference.getPhase("gas").getDensity("kg/m3");
 
-    double[] pressures = { 25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0 };
+    double[] pressures = {25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0};
     BlackOilConverter.Result result = BlackOilConverter.convert(oil, 373.15, pressures, 1.01325, 288.15);
 
     assertEquals(expectedOilDensity, result.rho_o_sc, 0.01 * expectedOilDensity);
@@ -149,7 +149,7 @@ class BlackOilConverterTest {
     oil.useVolumeCorrection(true);
     oil.setMultiPhaseCheck(true);
 
-    double[] pressures = { 20.0, 30.0, 40.0, 50.0, 55.0, 60.0, 65.0, 70.0 };
+    double[] pressures = {20.0, 30.0, 40.0, 50.0, 55.0, 60.0, 65.0, 70.0};
     BlackOilConverter.Result result = BlackOilConverter.convert(oil, 290.4, pressures, 1.01325, 288.15);
 
     double previous = 0.0;
@@ -163,7 +163,7 @@ class BlackOilConverterTest {
 
     // A dissolved-gas step of this size between neighbouring points is a solver artefact, not
     // physics; the historical failure jumped from 0 to about 40 Sm3/Sm3 across one bar.
-    double[] finer = { 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0 };
+    double[] finer = {50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0};
     BlackOilConverter.Result fine = BlackOilConverter.convert(oil, 290.4, finer, 1.01325, 288.15);
     for (int i = 1; i < finer.length; i++) {
       double jump = Math.abs(fine.pvt.Rs(finer[i]) - fine.pvt.Rs(finer[i - 1]));

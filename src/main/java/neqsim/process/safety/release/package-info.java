@@ -7,6 +7,44 @@
  * <li>{@link neqsim.process.safety.release.LeakModel} - Mass flow, jet velocity, and momentum calculations</li>
  * <li>{@link neqsim.process.safety.release.SourceTermResult} - Time-series release data with export capabilities</li>
  * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion modeling</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseSolidRiskAssessment} - Fail-closed mixture-specific solid and hydrate
+ * applicability assessment</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventory} - Conservative rigid-inventory depletion coupled to a
+ * selected release model</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventoryHeatTransfer} - Explicit adiabatic, constant-power or
+ * lumped-conductance external inventory heat boundary</li>
+ * <li>{@link neqsim.process.safety.release.NonEquilibriumReleaseInventory} - Opt-in retained gas/liquid component
+ * inventory with finite-rate two-way transfer and rigid volume/energy closure</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventoryInterphaseTransfer} - Provenance-required prescribed
+ * component-film coefficients with donor limits</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventoryInterphaseHeatTransfer} - Provenance-required prescribed
+ * equal-and-opposite interfacial heat transfer for separate phase-energy inventories</li>
+ * <li>{@link neqsim.process.safety.release.DriftFluxHomogeneousEquilibriumReleaseModel} - Bounded vertical-upward
+ * gas/liquid drift-flux short-opening screening</li>
+ * <li>{@link neqsim.process.safety.release.FiniteRateDriftFluxReleaseModel} - Caller-parameterized first-order
+ * phase-split relaxation with bounded vertical drift flux</li>
+ * <li>{@link neqsim.process.safety.release.ComponentSelectiveFiniteRateReleaseModel} - Component-resolved first-order
+ * phase-partition relaxation with bounded vertical drift flux</li>
+ * <li>{@link neqsim.process.safety.release.RanzMarshallFiniteRateReleaseModel} - Explicit Ranz-Marshall external-film
+ * component transfer coupled to bounded vertical gas-bubble drift flux</li>
+ * <li>{@link neqsim.process.safety.release.RanzMarshallDropletFiniteRateReleaseModel} - Explicit Ranz-Marshall
+ * external-gas-film component transfer coupled to bounded prescribed liquid-droplet slip</li>
+ * <li>{@link neqsim.process.safety.release.PredictiveBubbleTransferZoneReleaseModel} - Bounded spherical-bubble
+ * diameter, phase-velocity and residence-time prediction coupled to Ranz-Marshall transfer</li>
+ * <li>{@link neqsim.process.safety.release.IdealGasFannoPipeReleaseModel} - Assessed quasi-steady ideal-gas pipe
+ * release with specified Darcy friction</li>
+ * <li>{@link neqsim.process.safety.release.RealGasFannoPipeReleaseModel} - EOS-backed quasi-steady single-gas pipe
+ * release with specified Darcy friction</li>
+ * <li>{@link neqsim.process.safety.release.IdealGasPipeDecompression} - Conservative one-dimensional perfect-gas
+ * transient decompression and line packing</li>
+ * <li>{@link neqsim.process.safety.release.RealGasPipeDecompression} - Conservative one-dimensional EOS-backed
+ * single-gas transient decompression and line packing with optional finite upstream gas-vessel coupling, prescribed
+ * delayed linear effective-area opening and distributed constant-U or finite-capacitance wall heat exchange, including
+ * cylindrical material/geometry adapters for fail-closed lumped capacity or conservative two-node radial
+ * conduction</li>
+ * <li>{@link neqsim.process.safety.release.TwoSidedRealGasPipeRupture} - Two distinct, directional EOS-backed branch
+ * inventories and source frames for an adiabatic full-bore rupture inside a finite gas pipe, with instantaneous default
+ * opening or one shared prescribed delayed linear effective-area ramp</li>
  * </ul>
  *
  * <p>
@@ -17,6 +55,37 @@
  * <li>KFX (DNV)</li>
  * <li>OpenFOAM</li>
  * </ul>
+ *
+ * <p>
+ * LeakModel time integration is limited to a rigid, adiabatic, well-mixed gas inventory. It conserves component mass
+ * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods. The
+ * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
+ * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
+ * separate perfect-gas transient model resolves waves and line packing but excludes heat transfer. The EOS-backed
+ * transient model optionally applies prescribed distributed constant-U wall heat exchange or retains a cell-resolved
+ * finite-capacitance wall with separate prescribed gas/environment coefficients. Its cylindrical adapter derives
+ * outer-area conversion and capacity from explicit wall geometry and material properties. The lumped factory rejects Bi
+ * &gt;= 0.1; the two-node factory resolves one conservative radial gradient through cylindrical resistance. Both
+ * exclude predictive thermal correlations, higher-order radial convergence, pipe elasticity and solid-bearing
+ * transport. The two-sided topology composes two adiabatic EOS-backed branches around an interior rupture plane,
+ * preserves the opposing jets as separate frames and can impose one prescribed delayed linear effective-area ramp; it
+ * does not predict fracture/opening, pipe-wall motion or pressure coupling across the open break. Separate
+ * short-opening models can either apply a caller-declared gas/liquid velocity ratio or predict vertical-upward
+ * bubbly/dispersed slip with a bounded Zuber-Findlay/Harmathy closure. A third model applies caller-parameterized
+ * first-order phase-split relaxation before the same drift-flux closure. A fourth resolves component-specific
+ * phase-partition relaxation and emits phase compositions while retaining exact component conservation. A fifth
+ * predicts external-film component relaxation times from explicit Ranz-Marshall inputs for spherical gas bubbles. A
+ * separate adapter accepts explicit spherical liquid-droplet diameter, gas-film properties, relative speed and
+ * residence time, then fails closed outside dilute area, Eotvos, Weber, Reynolds and Schmidt limits. A seventh predicts
+ * a conservative spherical-bubble diameter, resolved phase velocities and gas residence time from explicit
+ * transfer-zone geometry before iterating the Ranz-Marshall and component-transfer calculations to a checked fixed
+ * point. These models retain explicit phase-area and kinetic-energy closure; none predicts droplet hydrodynamics,
+ * interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe models fail closed if
+ * an equilibrium phase appears. The inventory heat boundary accepts caller-imposed power or conductance with
+ * provenance; it does not predict fire heat flux or wall inertia. The opt-in non-equilibrium inventory retains
+ * gas/liquid component partitions and thermodynamic latent-energy effects. Its default path assumes one common phase
+ * temperature; an explicit sensitivity path retains separate phase energies and temperatures with prescribed
+ * interfacial conductance. Neither path predicts coefficients, nucleation, entrainment or population balance.
  *
  * <p>
  * Example usage:
@@ -33,8 +102,8 @@
  *     .scenarioName("HP Separator Leak").build();
  *
  * SourceTermResult result = leak.calculateSourceTerm(300.0, 1.0); // 5 minutes
- * System.out.println("Peak flow: " + result.getPeakMassFlowRate() + " kg/s");
- * System.out.println("Total released: " + result.getTotalMassReleased() + " kg");
+ * double peakFlowKgS = result.getPeakMassFlowRate();
+ * double totalReleasedKg = result.getTotalMassReleased();
  * </pre>
  *
  * @see neqsim.process.safety.risk Probabilistic risk analysis

@@ -48,8 +48,8 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTMethaneGasPressureSeries() {
-    double[][] cases = { { 300.0, 1.0, 0.03437 }, { 300.0, 10.0, 0.03530 }, { 300.0, 50.0, 0.03823 },
-        { 300.0, 100.0, 0.04436 }, { 300.0, 200.0, 0.05915 } };
+    double[][] cases = {{300.0, 1.0, 0.03437}, {300.0, 10.0, 0.03530}, {300.0, 50.0, 0.03823}, {300.0, 100.0, 0.04436},
+        {300.0, 200.0, 0.05915}};
 
     logger.info("\n=== PFCT Methane Gas at 300 K ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "P(bar)", "PFCT", "NIST", "Error%");
@@ -77,8 +77,8 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTMethaneGasTemperatureSeries() {
-    double[][] cases = { { 200.0, 1.0, 0.02168 }, { 250.0, 1.0, 0.02809 }, { 300.0, 1.0, 0.03437 },
-        { 350.0, 1.0, 0.04042 }, { 400.0, 1.0, 0.04624 } };
+    double[][] cases = {{200.0, 1.0, 0.02168}, {250.0, 1.0, 0.02809}, {300.0, 1.0, 0.03437}, {350.0, 1.0, 0.04042},
+        {400.0, 1.0, 0.04624}};
 
     logger.info("\n=== PFCT Methane Gas Temperature Series at 1 bar ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT", "NIST", "Error%");
@@ -110,7 +110,7 @@ public class PFCTAccuracyTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-10s%n", "T(K)", "P(bar)", "PFCT",
         "NIST", "Error%");
 
-    double[][] cases = { { 120.0, 10.0, 0.1857 }, { 120.0, 50.0, 0.1890 }, { 110.0, 10.0, 0.1996 } };
+    double[][] cases = {{120.0, 10.0, 0.1857}, {120.0, 50.0, 0.1890}, {110.0, 10.0, 0.1996}};
 
     for (double[] c : cases) {
       SystemInterface system = new SystemSrkEos(c[0], c[1]);
@@ -145,10 +145,10 @@ public class PFCTAccuracyTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST",
         "Error%");
 
-    String[] names = { "ethane", "propane", "n-butane" };
-    double[] nistValues = { 0.02122, 0.01787, 0.01589 };
+    String[] names = {"ethane", "propane", "n-butane"};
+    double[] nistValues = {0.02122, 0.01787, 0.01589};
     // Tolerance increases with MW: ethane 20%, propane 25%, butane 35%
-    double[] tolerances = { 0.20, 0.25, 0.35 };
+    double[] tolerances = {0.20, 0.25, 0.35};
 
     for (int k = 0; k < names.length; k++) {
       SystemInterface system = new SystemSrkEos(300.0, 1.0);
@@ -177,8 +177,8 @@ public class PFCTAccuracyTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST",
         "Error%");
 
-    String[] names = { "nitrogen", "CO2" };
-    double[] nistValues = { 0.02583, 0.01662 };
+    String[] names = {"nitrogen", "CO2"};
+    double[] nistValues = {0.02583, 0.01662};
 
     for (int k = 0; k < names.length; k++) {
       SystemInterface system = new SystemSrkEos(300.0, 1.0);
@@ -207,8 +207,8 @@ public class PFCTAccuracyTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST",
         "Error%");
 
-    String[] names = { "n-pentane", "n-hexane", "n-heptane", "n-octane" };
-    double[] nistValues = { 0.1127, 0.1191, 0.1232, 0.1274 };
+    String[] names = {"n-pentane", "n-hexane", "n-heptane", "n-octane"};
+    double[] nistValues = {0.1127, 0.1191, 0.1232, 0.1274};
 
     for (int k = 0; k < names.length; k++) {
       SystemInterface system = new SystemSrkEos(300.0, 10.0);
@@ -239,7 +239,7 @@ public class PFCTAccuracyTest {
     logger.info("\n=== PFCT Natural Gas Mixture at 300 K ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s%n", "P(bar)", "PFCT");
 
-    double[] pressures = { 1.0, 10.0, 50.0, 100.0, 200.0 };
+    double[] pressures = {1.0, 10.0, 50.0, 100.0, 200.0};
     double prevLambda = 0;
 
     for (double p : pressures) {
@@ -275,7 +275,7 @@ public class PFCTAccuracyTest {
     logger.info("\n=== PFCT Methane High Temperature (known limitation) ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT", "NIST", "Error%");
 
-    double[][] cases = { { 500.0, 1.0, 0.05722 }, { 600.0, 1.0, 0.06810 } };
+    double[][] cases = {{500.0, 1.0, 0.05722}, {600.0, 1.0, 0.06810}};
 
     for (double[] c : cases) {
       SystemInterface system = new SystemSrkEos(c[0], c[1]);

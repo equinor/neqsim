@@ -1,5 +1,7 @@
 package neqsim.process.equipment.network;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -308,7 +310,7 @@ public final class TransientCompositionalPipeNetwork implements Serializable {
     if (edge.massFractionProfile == null) {
       throw new IllegalStateException("Transient compositional network has not run");
     }
-    return copy(edge.massFractionProfile);
+    return copyMatrixArray(edge.massFractionProfile);
   }
 
   /**
@@ -601,14 +603,6 @@ public final class TransientCompositionalPipeNetwork implements Serializable {
   private static double balanceScale(double initial, double closing, double inlet, double outlet) {
     return Math.max(MINIMUM_SCALE_KG,
         Math.max(Math.max(Math.abs(initial), Math.abs(closing)), Math.max(Math.abs(inlet), Math.abs(outlet))));
-  }
-
-  private static double[][] copy(double[][] values) {
-    double[][] result = new double[values.length][];
-    for (int index = 0; index < values.length; index++) {
-      result[index] = Arrays.copyOf(values[index], values[index].length);
-    }
-    return result;
   }
 
   private static final class NetworkNode implements Serializable {

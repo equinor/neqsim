@@ -76,7 +76,7 @@ public class AmineCaptureProcessTest {
 
     // --- Lean amine cooler back to absorber temperature ---
     Cooler leanCooler = new Cooler("lean cooler", regenerator.getLeanAmineOutStream());
-    leanCooler.setOutTemperature(45.0 + 273.15);
+    leanCooler.setOutletTemperature(45.0 + 273.15);
 
     // --- Circulation pump back to absorber pressure ---
     Pump leanPump = new Pump("lean pump", leanCooler.getOutletStream());

@@ -164,7 +164,7 @@ class SafetyEnvelopeTest {
     SafetyEnvelope co2Env = calc.calculateCO2FreezingEnvelope(1.0, 100.0, 5);
     SafetyEnvelope mdmtEnv = calc.calculateMDMTEnvelope(1.0, 100.0, 300.0, 5);
 
-    SafetyEnvelope[] envelopes = { co2Env, mdmtEnv };
+    SafetyEnvelope[] envelopes = {co2Env, mdmtEnv};
 
     // Test combined safety check
     boolean safe = SafetyEnvelopeCalculator.isOperatingPointSafe(envelopes, 50.0, 280.0);

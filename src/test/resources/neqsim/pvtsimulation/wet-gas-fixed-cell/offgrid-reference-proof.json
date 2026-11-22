@@ -1,0 +1,53 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+  "numpy": "2.3.5",
+  "scipy": "1.17.0",
+  "executions": [
+    {
+      "name": "original-repeat",
+      "command": [
+        "python3",
+        "independent_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 2.24608843399983,
+      "sha256": "b81a1910cf8f37c9805d5c8a747e8a3e6681c8b34b7e32b770606c2732bf7376"
+    },
+    {
+      "name": "offgrid",
+      "command": [
+        "python3",
+        "offgrid_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 2.99480920300266,
+      "sha256": "4e9f0e0cce15c1b7cdf91f43f9a0517ef3ecbb839bd1be70680a4c0c89a4d19b"
+    },
+    {
+      "name": "offgrid-repeat",
+      "command": [
+        "python3",
+        "offgrid_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 2.9914738109982864,
+      "sha256": "4e9f0e0cce15c1b7cdf91f43f9a0517ef3ecbb839bd1be70680a4c0c89a4d19b"
+    },
+    {
+      "name": "offgrid-optimized",
+      "command": [
+        "python3",
+        "-O",
+        "offgrid_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 4.137770323002769,
+      "sha256": "4e9f0e0cce15c1b7cdf91f43f9a0517ef3ecbb839bd1be70680a4c0c89a4d19b"
+    }
+  ],
+  "originalReferencePreserved": true,
+  "offgridReferenceSHA256": "4e9f0e0cce15c1b7cdf91f43f9a0517ef3ecbb839bd1be70680a4c0c89a4d19b",
+  "referenceGeneratorSHA256": "b92ca6b7def5ef82201e08dd44cdeb33e7781533e0bcc3163310a0def6bade0d",
+  "offgridGeneratorSHA256": "06a94c0315261bae2b4874f6806b091ec17d226826f9334cc370b34ef8eae6bc"
+}

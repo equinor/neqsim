@@ -1,488 +1,138 @@
 ---
 title: "Pump Usage Guide - Quick Reference"
-description: "SystemInterface fluid = new SystemSrkEos(298.15, 1.0);"
+description: "Executable quick reference for liquid-pump curves, power, NPSH screening, units, and engineering boundaries in NeqSim."
 ---
 
-# Pump Usage Guide - Quick Reference
+Use this guide for a compact, copy-paste pump calculation. The example uses a vendor-style
+head, efficiency, and required-net-positive-suction-head (NPSHr) map. For API 610 screening,
+mechanical design, response JSON, and detailed model ownership, continue with the
+[comprehensive pump guide](../process/equipment/pumps).
 
-## Basic Pump Setup
+## Calculation basis
 
-### Simple Pump (Specified Pressure)
-```java
-SystemInterface fluid = new SystemSrkEos(298.15, 1.0);
-fluid.addComponent("water", 1.0);
-fluid.setTotalFlowRate(100.0, "m3/hr");
+| Item | Basis in the example |
+| --- | --- |
+| Thermodynamic state | 298.15 K and 5.0 bara |
+| Liquid | Pure n-hexane with the classic mixing rule |
+| Actual inlet flow | 100.0 m3/hr |
+| Vendor-map speed | 1000 rpm |
+| Head curve | metres of pumped liquid |
+| Efficiency curve | percent |
+| NPSHr curve | metres of pumped liquid |
+| Reported shaft power | kW |
 
-Stream feed = new Stream("Feed", fluid);
-feed.setTemperature(20.0, "C");
-feed.setPressure(1.0, "bara");
+The program is a screening example, not a vendor selection. Run it with assertions enabled
+(`-ea`); the assertions are part of the published engineering evidence.
 
-Pump pump = new Pump("Pump1", feed);
-pump.setOutletPressure(10.0, "bara");
-pump.setIsentropicEfficiency(0.75); // 75% efficiency
-pump.run();
-
-double power = pump.getPower("kW");
-double outletTemp = pump.getOutletStream().getTemperature("C");
-```
-
-### Pump with Specified Outlet Temperature
-
-When the discharge temperature is known (e.g. from plant data), use `setOutletTemperature`
-to have the pump perform a TP flash and back-calculate the power:
+## Executable Java example
 
 ```java
-Pump pump = new Pump("Pump2", feed);
-pump.setOutletPressure(10.0, "bara");
-pump.setOutletTemperature(35.0, "C"); // supports "K", "C", "F", "R"
-pump.run();
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-double power = pump.getPower("kW"); // back-calculated from enthalpy difference
-```
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-> **Note:** `setOutTemperature(double)` is deprecated — use `setOutletTemperature` instead.
+public final class PumpUsageGuideExample {
+  private static final Logger logger = LogManager.getLogger(PumpUsageGuideExample.class);
 
----
+  private PumpUsageGuideExample() {}
 
-## Using Pump Curves
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
+    fluid.addComponent("n-hexane", 1.0);
+    fluid.setMixingRule("classic");
 
-### Setting Up Pump Curves
-```java
-// Define pump performance at different speeds
-double[] speed = new double[] {1000.0, 1500.0, 2000.0};
+    Stream feed = new Stream("pump feed", fluid);
+    feed.setFlowRate(100.0, "m3/hr");
+    feed.run();
 
-// Flow rates in m³/hr for each speed
-double[][] flow = new double[][] {
-    {10.0, 20.0, 30.0, 40.0, 50.0, 60.0},
-    {15.0, 30.0, 45.0, 60.0, 75.0, 90.0},
-    {20.0, 40.0, 60.0, 80.0, 100.0, 120.0}
-};
+    Pump pump = new Pump("P-100", feed);
+    double[] speedRpm = new double[] {1000.0};
+    double[][] flowM3PerHour = new double[][] {{50.0, 75.0, 100.0, 125.0, 150.0}};
+    double[][] headM = new double[][] {{120.0, 115.0, 105.0, 90.0, 70.0}};
+    double[][] efficiencyPercent = new double[][] {{65.0, 75.0, 82.0, 78.0, 68.0}};
+    double[][] npshRequiredM = new double[][] {{2.0, 2.4, 3.0, 4.0, 5.5}};
 
-// Head in meters for each speed and flow
-double[][] head = new double[][] {
-    {120.0, 118.0, 115.0, 110.0, 103.0, 94.0},
-    {270.0, 265.5, 258.8, 247.5, 231.8, 211.5},
-    {480.0, 472.0, 460.0, 440.0, 412.0, 376.0}
-};
+    pump.getPumpChart().setCurves(
+        new double[] {}, speedRpm, flowM3PerHour, headM, efficiencyPercent);
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.getPumpChart().setNPSHCurve(npshRequiredM);
+    pump.setSpeed(1000.0);
+    pump.setCheckNPSH(true);
+    pump.setNPSHMargin(1.15);
+    pump.run();
 
-// Efficiency in % for each speed and flow
-double[][] efficiency = new double[][] {
-    {65.0, 72.0, 78.0, 82.0, 80.0, 74.0},
-    {66.0, 73.0, 79.0, 83.0, 81.0, 75.0},
-    {67.0, 74.0, 80.0, 84.0, 82.0, 76.0}
-};
+    double actualFlowM3PerHour = feed.getFlowRate("m3/hr");
+    double vendorHeadM =
+        pump.getPumpChart().getHead(actualFlowM3PerHour, pump.getSpeed());
+    double powerKw = pump.getPower("kW");
+    double npshAvailableM = pump.getNPSHAvailable();
+    double requiredNpshM = pump.getNPSHRequired();
 
-pump.getPumpChart().setCurves(new double[]{}, speed, flow, head, efficiency);
-pump.getPumpChart().setHeadUnit("meter"); // or "kJ/kg"
-pump.setSpeed(1500.0); // Set operating speed in rpm
-```
+    assert Math.abs(actualFlowM3PerHour - 100.0) < 1.0e-9 : "Unexpected inlet flow";
+    assert Math.abs(vendorHeadM - 105.0) < 1.0e-9 : "Unexpected map head";
+    assert Double.isFinite(powerKw) && powerKw > 0.0 : "Pump power must be positive";
+    assert Double.isFinite(npshAvailableM) : "NPSHa calculation failed";
+    assert Math.abs(requiredNpshM - 3.0) < 0.02 : "Unexpected map NPSHr";
+    assert npshAvailableM > requiredNpshM : "NPSHa must exceed NPSHr";
+    assert !pump.isCavitating() : "Configured NPSH margin is not satisfied";
 
-### Head Units
-
-**Meters (most common):**
-```java
-pump.getPumpChart().setHeadUnit("meter");
-// Head represents height of fluid column
-// ΔP = ρ × g × H
-```
-
-**Specific Energy (kJ/kg):**
-```java
-pump.getPumpChart().setHeadUnit("kJ/kg");
-// Head represents specific energy
-// ΔP = E × ρ
-```
-
----
-
-## NPSH Monitoring
-
-### Enable Cavitation Detection
-```java
-pump.setCheckNPSH(true);
-pump.setNPSHMargin(1.3); // Recommended: 1.1-1.5
-
-pump.run();
-
-// Check for cavitation risk
-if (pump.isCavitating()) {
-    double npsha = pump.getNPSHAvailable();
-    double npshr = pump.getNPSHRequired();
-    System.out.println("Warning: NPSHa = " + npsha + " m, NPSHr = " + npshr + " m");
-    // Take corrective action: increase suction pressure or decrease temperature
+    logger.info(
+        "Pump result: flow={} m3/hr, head={} m, power={} kW, NPSHa={} m, NPSHr={} m",
+        actualFlowM3PerHour,
+        vendorHeadM,
+        powerKw,
+        npshAvailableM,
+        requiredNpshM);
+  }
 }
 ```
 
-### Manual NPSH Check
-```java
-double npsha = pump.getNPSHAvailable();
-double npshr = pump.getNPSHRequired();
+## What the example verifies
 
-if (npsha < 1.3 * npshr) {
-    // Insufficient NPSH - risk of cavitation
-    // Solutions:
-    // 1. Increase suction pressure
-    // 2. Decrease fluid temperature
-    // 3. Reduce pump speed
-    // 4. Select different pump
-}
-```
+- `setCurves(...)` activates the pump map at the supplied speed, flow, head, and efficiency
+  points. All curve arrays must use the same point ordering.
+- `setHeadUnit("meter")` declares the head-curve basis. Do not pass a pressure value into this
+  curve.
+- `setNPSHCurve(...)` supplies NPSHr from vendor data. At 100 m3/hr and 1000 rpm, the example
+  interpolates exactly 3.0 m.
+- `getNPSHAvailable()` estimates NPSHa from absolute suction pressure, calculated vapor
+  pressure, liquid density, and zero velocity-head contribution. Elevation is not added inside
+  this method; represent upstream pressure losses and static head in the suction system before
+  the pump inlet.
+- `setNPSHMargin(1.15)` makes `isCavitating()` compare NPSHa with 1.15 times NPSHr. A failed or
+  non-finite NPSH calculation is treated as cavitation risk when checking is enabled.
 
----
+## Common operating modes
 
-## Operating Status Monitoring
+| Objective | Configuration | Boundary |
+| --- | --- | --- |
+| Specify discharge pressure | `setOutletPressure(value, "bara")` | Uses absolute bara; specify efficiency separately when required |
+| Use vendor curves | `getPumpChart().setCurves(...)` and `setSpeed(rpm)` | Curve range, interpolation, fluid correction, and speed range require review |
+| Specify outlet temperature | `setOutletTemperature(value, "C")` | A calculation mode, not a vendor-performance guarantee |
+| Monitor cavitation screening | `setCheckNPSH(true)` and `setNPSHMargin(factor)` | Requires credible suction state and NPSHr evidence |
 
-### Check Pump Operating Region
-```java
-double flow = feed.getFlowRate("m3/hr");
-double speed = pump.getSpeed();
-
-String status = pump.getPumpChart().getOperatingStatus(flow, speed);
-
-switch (status) {
-    case "OPTIMAL":
-        // Operating near best efficiency point
-        break;
-    case "NORMAL":
-        // Operating within acceptable range
-        break;
-    case "LOW_EFFICIENCY":
-        // Operating far from BEP - inefficient
-        // Consider adjusting speed or selecting different pump
-        break;
-    case "SURGE":
-        // Flow too low - risk of instability and damage
-        // Increase flow or reduce speed immediately
-        break;
-    case "STONEWALL":
-        // Flow too high - maximum capacity reached
-        // Reduce flow or increase speed
-        break;
-}
-```
-
-### Find Best Efficiency Point
-```java
-double bepFlow = pump.getPumpChart().getBestEfficiencyFlowRate();
-double bepHead = pump.getPumpChart().getHead(bepFlow, speed);
-double bepEfficiency = pump.getPumpChart().getEfficiency(bepFlow, speed);
-
-System.out.println("Best efficiency: " + bepEfficiency + "% at " + bepFlow + " m³/hr");
-```
-
----
-
-## Pump Selection and Sizing
-
-### Calculate Specific Speed
-```java
-double ns = pump.getPumpChart().getSpecificSpeed();
-
-if (ns < 1000) {
-    System.out.println("Radial flow (centrifugal) pump");
-} else if (ns < 4000) {
-    System.out.println("Mixed flow pump");
-} else {
-    System.out.println("Axial flow pump");
-}
-```
-
-### Variable Speed Operation
-```java
-// Affinity laws: Q ∝ N, H ∝ N², P ∝ N³
-
-double baseSpeed = 1500.0;
-double baseFlow = 50.0; // m³/hr
-double baseHead = pump.getPumpChart().getHead(baseFlow, baseSpeed);
-
-// To increase head by 44% (factor of 1.44 = 1.2²):
-double newSpeed = baseSpeed * 1.2;
-double newFlow = baseFlow * 1.2;
-double newHead = baseHead * 1.44;
-
-pump.setSpeed(newSpeed);
-// Efficiency stays approximately constant at same reduced flow
-```
-
----
-
-## Common Patterns
-
-### Pump with Minimum Flow Protection
-```java
-pump.setMinimumFlow(0.05); // kg/sec
-
-// When flow drops below minimum, pump idles with no pressure rise
-// In practice, add minimum flow recirculation loop
-```
-
-### Multi-stage Pump System
-```java
-Stream stage1Out = new Stream("Stage 1 Out");
-Pump stage1 = new Pump("Stage 1", feed);
-stage1.setOutletPressure(5.0, "bara");
-stage1.setOutStream(stage1Out);
-
-Pump stage2 = new Pump("Stage 2", stage1Out);
-stage2.setOutletPressure(10.0, "bara");
-
-// Total head = stage1 head + stage2 head
-```
-
-### Pump with Different Chart Type
-```java
-// Default: Simple fan law interpolation
-pump.setPumpChartType("fan law");
-
-// Alternative: Map lookup with extrapolation
-pump.setPumpChartType("interpolate and extrapolate");
-```
-
----
+Do not combine an outlet-pressure target with a vendor curve without first deciding which
+quantity owns the operating point. Retain typed `Pump` and `Stream` references so the result can
+be embedded in a larger `ProcessSystem`.
 
 ## Troubleshooting
 
-### Low Outlet Pressure
-1. Check pump curve covers operating flow rate
-2. Verify speed setting matches curve
-3. Check for cavitation (low NPSH)
-4. Verify head unit setting ("meter" vs "kJ/kg")
+| Observation | Check first |
+| --- | --- |
+| Non-finite NPSHa | Inlet phase, bubble-point calculation, absolute pressure, and initialized density |
+| Unexpected head | Head unit, actual-flow unit, speed, curve ordering, and extrapolation outside vendor data |
+| Unexpected power | Liquid density, efficiency curve, head basis, and whether the pump is using a map or a specified target |
+| Cavitation warning | Suction pressure and temperature, upstream losses, static head, NPSHr data, and the selected margin |
+| Result changes after composition update | Re-run the inlet stream and pump after changing composition, temperature, pressure, or flow |
 
-### High Power Consumption
-1. Operating far from BEP - reduce or increase flow
-2. Check efficiency curve - may need different pump
-3. Verify outlet pressure requirement is reasonable
+## Engineering limits
 
-### Cavitation Warnings
-1. Increase suction pressure
-2. Reduce fluid temperature
-3. Reduce pump speed
-4. Check for air entrainment
-5. Verify NPSH_r curve is accurate
-
-### Surge/Instability
-1. Increase minimum flow setpoint
-2. Add recirculation line from discharge to suction
-3. Reduce speed if possible
-4. Check for blockage downstream
-
----
-
-## Performance Calculations
-
-### Hydraulic Power
-```java
-double rho = feed.getThermoSystem().getDensity("kg/m3");
-double Q = feed.getFlowRate("m3/s");
-double H = pump.getPumpChart().getHead(feed.getFlowRate("m3/hr"), pump.getSpeed());
-double g = 9.81; // m/s²
-
-double hydraulicPower = rho * g * Q * H; // Watts
-```
-
-### Shaft Power (with losses)
-```java
-double efficiency = pump.getIsentropicEfficiency() / 100.0; // Convert % to decimal
-double shaftPower = hydraulicPower / efficiency;
-```
-
-### Energy Cost Estimate
-```java
-double powerKW = pump.getPower("kW");
-double hoursPerYear = 8760;
-double costPerKWh = 0.10; // $/kWh
-
-double annualEnergyCost = powerKW * hoursPerYear * costPerKWh;
-System.out.println("Annual energy cost: $" + annualEnergyCost);
-```
-
----
-
-## Best Practices
-
-1. **Always set pump curves when available** - more accurate than fixed efficiency
-2. **Enable NPSH checking** for all liquid pumps
-3. **Monitor operating status** to avoid damage and inefficiency
-4. **Operate near BEP** (±20% flow) when possible
-5. **Use correct head units** - "meter" for liquid pumps
-6. **Set realistic efficiency** - typical centrifugal pumps: 70-85%
-7. **Consider minimum flow** - typically 10-20% of BEP flow
-8. **Document curve source** - manufacturer data sheets
-9. **Validate with measurements** - adjust curves if needed
-10. **Check affinity laws** - verify speed changes follow theory
-
----
-
-## Example: Complete Pump System
-
-```java
-// Create fluid system
-SystemInterface water = new SystemSrkEos(298.15, 1.5);
-water.addComponent("water", 1.0);
-water.setTemperature(25.0, "C");
-water.setPressure(1.5, "bara");
-water.setTotalFlowRate(75.0, "m3/hr");
-
-Stream feed = new Stream("Pump Feed", water);
-feed.run();
-
-// Create pump with curve
-Pump pump = new Pump("Booster Pump", feed);
-
-double[] speed = new double[] {1450.0};
-double[] flowPoints = {30, 50, 70, 90, 110, 130};
-double[] headPoints = {45, 44, 42, 38, 32, 24};
-double[] effPoints = {68, 76, 82, 84, 80, 70};
-double[][] flow = new double[][] {flowPoints};
-double[][] head = new double[][] {headPoints};
-double[][] eff = new double[][] {effPoints};
-
-pump.getPumpChart().setCurves(new double[]{}, speed, flow, head, eff);
-pump.getPumpChart().setHeadUnit("meter");
-pump.setSpeed(1450.0);
-pump.setCheckNPSH(true);
-pump.setNPSHMargin(1.3);
-
-// Run simulation
-pump.run();
-
-// Check results
-System.out.println("Outlet pressure: " + pump.getOutletPressure() + " bara");
-System.out.println("Power: " + pump.getPower("kW") + " kW");
-System.out.println("Outlet temp: " + pump.getOutletStream().getTemperature("C") + " °C");
-System.out.println("NPSHa: " + pump.getNPSHAvailable() + " m");
-System.out.println("Status: " + pump.getPumpChart().getOperatingStatus(75.0, 1450.0));
-
-if (pump.isCavitating()) {
-    System.out.println("WARNING: Cavitation risk!");
-}
-```
-
----
-
-## Example: Pump with Suction Line (Python)
-
-This example demonstrates a realistic pump configuration where a suction line connects an upstream separator to the pump. The suction piping introduces pressure losses and static head changes that directly affect the NPSH available at the pump inlet. Properly modeling the suction line is critical for accurate cavitation assessment.
-
-### Why Model the Suction Line?
-
-In real installations, the pump does not receive fluid directly at separator conditions. The suction system introduces:
-
-1. **Valve pressure drop** - Control or isolation valves at the separator outlet cause pressure loss depending on Cv and flow rate
-2. **Frictional pressure losses** - Depends on pipe length, diameter, roughness, flow rate, and fluid properties
-3. **Static head changes** - Elevation difference between liquid source and pump centerline
-4. **Minor losses** - Elbows, filters, and other fittings
-
-These effects reduce the pressure at the pump suction flange relative to the source, directly impacting NPSHa. Ignoring suction system effects can lead to:
-- Underestimating cavitation risk
-- Pump damage in operation
-- Performance degradation and efficiency loss
-
-### Example Code
-
-```python
-import neqsim
-
-# Get the oil outlet stream from an upstream separator
-# (This would typically come from a configured process system)
-pump_feed = oseberg_process.get('main process').getUnit('3RD stage separator').getOilOutStream()
-
-# --- Separator Outlet Valve ---
-# Model the isolation/control valve at the separator oil outlet
-# Cv sizing: For a 6" valve (DN150) with full port, typical Cv ≈ 400-500
-# For a 4" valve (DN100), typical Cv ≈ 150-200
-
-separatorValve = neqsim.process.equipment.valve.ThrottlingValve("SeparatorOutletValve", pump_feed)
-separatorValve.setCv(350)              # Valve Cv (flow coefficient in US gpm/psi^0.5)
-separatorValve.setIsCalcOutPressure(True)
-separatorValve.setPercentValveOpening(80)  # 80% open - allows for control margin
-
-separatorValve.run()
-
-# --- Suction Line Configuration ---
-# Model the piping between separator valve and pump using Beggs & Brill correlation
-# This accounts for friction losses and elevation effects
-
-suctionLine = neqsim.process.equipment.pipeline.PipeBeggsAndBrills("SuctionLine", separatorValve.getOutletStream())
-suctionLine.setLength(20.0)           # Pipe length in meters
-suctionLine.setDiameter(0.2)          # Internal diameter in meters (200 mm)
-suctionLine.setPipeWallRoughness(1.0e-5)  # Internal roughness in meters (~smooth pipe)
-suctionLine.setElevation(-20)         # Pump is 20 m below separator (positive static head)
-
-suctionLine.run()
-
-# --- Pump Configuration ---
-# Create the pump taking suction from the pipe outlet
-
-pump1 = neqsim.process.equipment.pump.Pump('oil pump', suctionLine.getOutStream())
-pump1.setOutletPressure(60.0, 'bara')  # Required discharge pressure
-pump1.setCheckNPSH(True)               # Enable cavitation monitoring
-pump1.setNPSHMargin(1.3)               # Require NPSHa >= 1.3 × NPSHr
-
-# --- Pump Performance Curves ---
-# Define pump characteristic curves at the operating speed
-# These are typically from manufacturer datasheets
-
-speed = [3259]                            # Pump speed in RPM
-flow = [[1, 50, 70, 130]]                 # Flow points in m³/hr
-head = [[250, 240, 230, 180]]             # Head in meters at each flow
-eff = [[5, 40, 50, 52]]                   # Efficiency in % at each flow
-npsh = [[2.0, 4.3, 6.0, 8.0]]             # NPSHr curve in meters
-
-pump1.getPumpChart().setCurves([], speed, flow, head, eff)
-pump1.getPumpChart().setNPSHCurve(npsh)
-pump1.getPumpChart().setHeadUnit("meter")
-pump1.setSpeed(3259)
-
-pump1.run()
-
-# --- Results Analysis ---
-print("=== Pump & Suction System Results ===")
-print(f"Flow rate (m3/hr): {pump_feed.getFlowRate('idSm3/hr')}")
-print(f"Separator outlet pressure (bara): {pump_feed.getPressure('bara')}")
-print(f"Valve outlet pressure (bara): {separatorValve.getOutletPressure()}")
-print(f"Valve pressure drop (bar): {separatorValve.getDeltaP()}")
-print(f"Pump inlet pressure (bara): {pump1.getInletPressure()}")
-print(f"Pump outlet pressure (bara): {pump1.getOutletPressure()}")
-print(f"Pump NPSHa (meter): {pump1.getNPSHAvailable()}")
-print(f"Pump NPSHr (meter): {pump1.getNPSHRequired()}")
-print(f"Pump power (kW): {pump1.getPower('kW')}")
-print(f"Cavitation risk: {'YES' if pump1.isCavitating() else 'NO'}")
-```
-
-### Key Points
-
-| Parameter | Purpose |
-|-----------|---------|
-| `setCv(350)` | Valve flow coefficient - determines pressure drop for given flow |
-| `setPercentValveOpening(80)` | Valve position (0-100%); partially open for control margin |
-| `setLength(20.0)` | Total equivalent length of suction piping including fittings |
-| `setDiameter(0.2)` | Internal pipe diameter - larger diameter reduces friction loss |
-| `setPipeWallRoughness(1.0e-5)` | Surface roughness; affects friction factor |
-| `setElevation(-20)` | Negative elevation means pump is below source (increases NPSHa) |
-| `setCheckNPSH(True)` | Enables automatic cavitation detection |
-| `setNPSHMargin(1.3)` | Safety factor; typical values 1.1–1.5 |
-| `setNPSHCurve(npsh)` | Required NPSH as function of flow from pump datasheet |
-
-### Understanding the Results
-
-- **Separator outlet pressure vs. Pump inlet pressure**: The difference shows the pressure drop across the suction line. If the pump inlet pressure is much lower than expected, consider increasing pipe diameter or reducing length.
-
-- **NPSHa vs. NPSHr**: NPSHa must exceed NPSHr by the specified margin. If `isCavitating()` returns `True`, consider:
-  - Raising the liquid level in the source vessel
-  - Lowering the pump elevation (more negative elevation)
-  - Increasing pipe diameter to reduce friction losses
-  - Reducing fluid temperature (lowers vapor pressure)
-  - Reducing pump speed (lowers NPSHr)
-
-- **Static head contribution**: With a -20 m elevation (pump below separator), the static head adds approximately 20 m × ρ × g to the suction pressure, which is beneficial for NPSHa.
-
-### Design Considerations
-
-1. **Suction pipe sizing**: Velocity in suction lines should typically be 1–2 m/s for liquids to minimize friction losses while avoiding sedimentation.
-
-2. **Elevation effects**: Locating the pump below the liquid source is the most reliable way to ensure adequate NPSHa.
-
-3. **Temperature sensitivity**: Hot liquids have higher vapor pressure, reducing NPSHa. Consider subcooling or elevated suction pressure for near-boiling liquids.
-
-4. **Transient conditions**: During startup or upset conditions, flow rates may exceed design, increasing NPSHr while simultaneously increasing suction line losses—always check NPSHa at maximum expected flow.
+This example checks software execution and basic physical consistency. It does not qualify a
+pump, suction vessel, piping system, driver, seal system, minimum-flow recycle, transient
+startup, or protection function. Use approved vendor curves over their documented speed and
+flow ranges, model the full suction system, evaluate maximum and minimum operating cases, and
+obtain accountable mechanical, process, electrical, and safety review before design use.

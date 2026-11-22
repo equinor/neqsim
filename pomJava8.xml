@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.18.0</revision>
+		<revision>3.29.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -62,6 +62,14 @@
 	</pluginRepositories>
 
 	<dependencies>
+		<!-- Compile-time annotations used by production sources; version 4.10.5 targets Java 8. -->
+		<dependency>
+			<groupId>com.github.spotbugs</groupId>
+			<artifactId>spotbugs-annotations</artifactId>
+			<version>4.10.5</version>
+			<scope>provided</scope>
+			<optional>true</optional>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
 		<dependency>
 			<groupId>com.h2database</groupId>
@@ -90,12 +98,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>colt</groupId>
-			<artifactId>colt</artifactId>
-			<version>1.2.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.20.0</version>
@@ -109,11 +111,6 @@
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
 			<version>0.41</version> <!-- Last version supporting java 8-->
-		</dependency>
-		<dependency>
-			<groupId>gov.nist.math</groupId>
-			<artifactId>jama</artifactId>
-			<version>1.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
@@ -170,19 +167,12 @@
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
 						<version>0.11.0</version>
+						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>central</publishingServerId>
 							<autoPublish>true</autoPublish>
+							<waitUntil>published</waitUntil>
 						</configuration>
-						<executions>
-							<execution>
-								<id>publish-to-central</id>
-								<phase>deploy</phase>
-								<goals>
-									<goal>publish</goal>
-								</goals>
-							</execution>
-						</executions>
 					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -240,6 +230,12 @@
 	</profiles>
 	<build>
 		<plugins>
+			<!-- Pin the Java 8 resource lifecycle instead of inheriting runner Maven defaults. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.1</version>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>

@@ -8,11 +8,17 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Generates lift curves (VLP tables) for reservoir simulator integration.
+ * Generates process inlet-pressure requirements and flow screening matrices.
  *
  * <p>
- * This class generates flow rate vs. pressure tables for use in Eclipse and other reservoir simulators. It sweeps
- * through specified THP (outlet pressure) values and calculates the required BHP (inlet pressure) for each flow rate.
+ * This class generates diagnostic flow rate vs. pressure tables for the configured process. It sweeps through specified
+ * THP (outlet pressure) values and calculates the required BHP (inlet pressure) for each flow rate.
+ * </p>
+ *
+ * <p>
+ * A required process inlet pressure is well BHP only if the caller independently qualifies the model as a well with the
+ * correct datum, fluid recombination, surface rate basis and boundary conditions. These generic process calculations do
+ * not establish that qualification.
  * </p>
  *
  * <h2>Modes of Operation</h2>
@@ -34,14 +40,14 @@ import neqsim.thermo.system.SystemInterface;
  * generator.setMaxVelocity(20.0); // m/s constraint
  *
  * // Define operating envelope
- * double[] flowRates = { 1000, 5000, 10000, 20000, 30000 }; // kg/hr
- * double[] thpValues = { 20, 40, 60, 80 }; // bara
+ * double[] flowRates = {1000, 5000, 10000, 20000, 30000}; // kg/hr
+ * double[] thpValues = {20, 40, 60, 80}; // bara
  *
  * // Generate table
  * LiftCurveTable table = generator.generateTable(flowRates, thpValues, "bara", "kg/hr");
  *
- * // Export to Eclipse format
- * String eclipseFormat = table.toEclipseFormat();
+ * // Inspect the diagnostic matrix (not a reservoir deck)
+ * String diagnostic = table.toDiagnosticTable();
  * </pre>
  *
  * @author ESOL

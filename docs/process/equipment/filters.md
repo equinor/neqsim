@@ -167,6 +167,13 @@ the accumulated loading state.
 
 Actual volumetric flow is evaluated at the filter inlet.
 
+`setDeltaP(value)` takes a pressure difference in bar. The unit overload
+`setDeltaP(value, unit)` converts the pressure scale only: `barg` and `psig`
+are treated as differential bar and psi, with no atmospheric offset. Zero
+remains zero in every supported unit, and negative drops are clamped to zero.
+This overload delegates to `PressureUnit.convertDifference(value, fromUnit, toUnit)`;
+use that API for pressure differences outside the filter as well.
+
 | Model | Relation | Required data |
 | --- | --- | --- |
 | `FIXED` | Constant clean differential pressure | `setDeltaP(...)` |
@@ -262,6 +269,22 @@ during `runTransient(...)`. The sulfur element capacity and installed element
 count define the inherited loading capacity. See the
 [reactor guide](reactors.md#sulfur-oxidation-reactor) for a complete
 `SulfurOxidationReactor` to `SulfurFilter` example.
+
+Sulfur capture is evaluated at the inlet temperature and the pressure after the
+filter pressure drop. The effective efficiency includes configured breakthrough
+and bypass. Capture uses only the S8 inventory physically present in solid
+phases, rather than the total S8 inventory or the mass of unrelated solids.
+The outlet is re-equilibrated after subtracting the captured S8; dissolved S8
+and any remaining solids can still leave the filter, including at 100% solid
+capture efficiency.
+
+`getSolidSulfurRemovalRate()` is the captured mass flow in kg/hr. It equals the
+inlet-minus-outlet total mass flow, and inlet S8 equals outlet S8 plus captured
+S8. Every other component flow is conserved. The capture rate is converted to
+accumulated loading only during transient steps; repeated steady-state runs
+leave the inlet and accumulated loading unchanged. These balances are covered
+by `SulfurFilterMassBalanceTest`, including dry gas/solid and wet multiphase
+feeds at 0%, 90%, and 100% efficiency and the sulfur-oxidation reactor feed.
 
 For molecular removal, use the dedicated
 [mercury guard-bed model](../mercury_removal.md),

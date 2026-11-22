@@ -27,6 +27,19 @@ If temperature, pressure, composition, or phase-equilibrium settings change mate
 appropriate flash again before reinitializing physical properties. Calling
 `initPhysicalProperties()` alone does not perform a new equilibrium calculation.
 
+Cloning a phase retains its selected transport models and parameters. Every copied
+gas, oil, aqueous and solid property family belongs to the cloned phase, and each
+calculation method belongs to its copied family, including inactive families before
+the next initialization. Repeated cloning and phase-role changes therefore do not
+retain a growing chain of historical phase states. This ownership contract concerns
+transport-property objects; Huron–Vidal mixing-rule calculation-state isolation is
+tracked separately in issue #4575.
+
+Enabling `setMultiPhaseCheck(true)` allocates an additional equilibrium-search template without
+calculating its transport properties. This avoids viscosity, conductivity and density work for
+an inactive trial phase during repeated flashes. The template initializes those properties on
+first access; initialize the active phases after the flash as described above.
+
 ## Thermodynamic and physical-property APIs are different
 
 Thermodynamic quantities such as compressibility factor, enthalpy, heat capacity, and phase
@@ -49,7 +62,10 @@ when the equilibrium state changes.
 
 `fluid.setPhysicalPropertyModel(PhysicalPropertyModel.DEFAULT)` selects a coordinated model set.
 Other supported sets include `WATER`, `SALT_WATER`, `GLYCOL`, `AMINE`, `CO2WATER`, and
-`BASIC`. Select the set before calling `initPhysicalProperties()`.
+`BASIC`. Select the set before calling `initPhysicalProperties()`. The aqueous phases
+of `GLYCOL`, `AMINE` and `CO2WATER` use Filippov conductivity, including its enabled
+CHEMPAK Missenard-derived pressure factor. See its
+[units, cutoffs and qualification limits](../physical_properties/thermal_conductivity_models#filippov-liquid-mixing-and-pressure-factor).
 
 An EOS mixing rule, such as `fluid.setMixingRule("classic")`, configures thermodynamic mixture
 behavior. It is not a viscosity or conductivity model selector. For a specialized transport
@@ -74,6 +90,14 @@ For effective multicomponent diffusivity, call `calcEffectiveDiffusionCoefficien
 `getEffectiveDiffusionCoefficient(...)`. The
 [diffusivity guide](../physical_properties/diffusivity_models.md) documents model keys, equations,
 units, and executable access patterns.
+
+Fuller's maintained organic diffusion volumes use explicit published atomic
+sums and aromatic/heterocyclic ring corrections. Unknown-structure fallbacks
+remain approximate. Direct Fuller evaluation returns NaN for invalid state or
+mass inputs; its warning interval is not a universal accuracy range. The guide
+separates independent arithmetic checks from the selected CH4/He measured-fit
+comparisons. Gas-diffusion clones own their mutable coefficient/parameter arrays;
+clone the fluid or phase as well when thermodynamic states must be independent.
 
 ## Surface and interfacial tension
 

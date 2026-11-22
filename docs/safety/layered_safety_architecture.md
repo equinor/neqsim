@@ -1,474 +1,172 @@
 ---
-title: Layered Safety System Architecture
-description: NeqSim now implements a comprehensive **defense-in-depth** safety architecture with multiple independent protection layers. This document describes how HIPPS, fire/gas detection, and ESD systems work ...
+title: Layered Safety Logic Architecture
+description: Current NeqSim HIPPS, voting, detector, ESD action, and valve-state APIs with an executable Java 8 quick start and engineering review boundaries.
 ---
 
-# Layered Safety System Architecture
+NeqSim can exercise detector voting, HIPPS isolation, safety-instrumented
+function logic, ESD action sequences, and transient final-element response. These
+objects support simulation and verification studies. They do not establish a
+Safety Integrity Level (SIL), probability of failure on demand, standards
+compliance, independence, proof-test interval, or suitability for a real
+installation.
 
-## Overview
+## Maintained software layers
 
-NeqSim now implements a comprehensive **defense-in-depth** safety architecture with multiple independent protection layers. This document describes how HIPPS, fire/gas detection, and ESD systems work together to provide robust safety protection.
+| Layer | Current NeqSim owner | Simulation responsibility |
+|---|---|---|
+| Measurement | `Detector` | Applies a configured high or low threshold to an explicit measured value and unit |
+| Voting | `VotingLogic` | Evaluates the required number of tripped channels, such as two out of three |
+| HIPPS logic | `HIPPSLogic` | Closes a configured `ThrottlingValve` and optionally activates backup logic after a sustained demand |
+| Fire/gas SIF logic | `SafetyInstrumentedFunction` | Votes configured detectors and activates linked `ProcessLogic` instances |
+| ESD sequence | `ESDLogic` and `LogicAction` implementations | Executes ordered actions after their configured relative delays |
+| Final element | `ESDValve` | Tracks trip demand, actuator availability, stroke time, fail-safe position, and transient travel |
 
-## Safety Layer Hierarchy
+The configured detector unit and setpoint belong to the model case. NeqSim does
+not select plant trip settings, voting architecture, SIL targets, or response
+times. Those decisions require the applicable project basis, hazard analysis,
+failure data, independence assessment, and accountable functional-safety
+review.
 
-### The Onion Model
+## Execution ownership
 
-Safety protection follows the "onion model" with multiple layers:
+- `HIPPSLogic.update(...)` updates the configured pressure detectors and
+  evaluates their voting state.
+- `HIPPSLogic.execute(dt)` advances the escalation timer. It does not calculate
+  process pressure.
+- `ESDLogic.execute(dt)` advances one ordered action sequence. Activating the
+  sequence alone does not advance it.
+- `TripValveAction` issues a trip demand to an `ESDValve`. Physical valve
+  travel is advanced separately by the process transient step through
+  `ESDValve.runTransient(dt, calculationId)`.
+- Detector trips are latched by the current `Detector` implementation.
+  Resetting logic bookkeeping does not prove that a process demand has cleared
+  or that plant restart permissives are satisfied.
 
-```
-┌─────────────────────────────────────────────────┐
-│  1. Process Control System (PCS)                │  ← Normal operation
-│     • Pressure controllers: 80-85% MAOP         │
-│     • Temperature controllers                    │
-│     • Level controllers                          │
-└──────────────────┬──────────────────────────────┘
-                   │ If PCS fails ↓
-┌─────────────────────────────────────────────────┐
-│  2. Basic Process Control Alarms (BPCS)         │  ← Operator intervention
-│     • High pressure alarm: 90% MAOP             │
-│     • High temperature alarm                     │
-│     • Manual operator actions                    │
-└──────────────────┬──────────────────────────────┘
-                   │ If operator fails ↓
-┌─────────────────────────────────────────────────┐
-│  3. HIPPS (High Integrity Pressure Protection)  │  ← First SIS layer
-│     • Activation: 90-95% MAOP                   │  
-│     • SIL: 2 or 3                               │
-│     • Response: <2 seconds                      │
-│     • Action: Close isolation valve             │
-└──────────────────┬──────────────────────────────┘
-                   │ If HIPPS fails ↓
-┌─────────────────────────────────────────────────┐
-│  4. Fire & Gas Detection SIS                    │  ← Hazard detection
-│     • Fire detectors: 2oo3 voting               │
-│     • Gas detectors: 2oo3 voting                │
-│     • SIL: 2 or 3                               │
-│     • Action: Activate ESD                      │
-└──────────────────┬──────────────────────────────┘
-                   │ If hazard detected ↓
-┌─────────────────────────────────────────────────┐
-│  5. ESD (Emergency Shutdown)                    │  ← Emergency response
-│     • Activation: 98% MAOP or hazard            │
-│     • SIL: 1 or 2                               │
-│     • Response: 2-10 seconds                    │
-│     • Action: Full/partial shutdown             │
-└──────────────────┬──────────────────────────────┘
-                   │ If ESD fails ↓
-┌─────────────────────────────────────────────────┐
-│  6. Pressure Relief (PSV/Rupture Disk)          │  ← Passive protection
-│     • Activation: 100-110% MAOP                 │
-│     • Mechanical device (fail-safe)             │
-│     • Action: Vent to flare/atmosphere          │
-└─────────────────────────────────────────────────┘
-```
+## Complete Java 8 quick start
 
-## Implemented Safety Systems
+This program checks the discrete demand path. Two of three pressure channels
+cross an explicit 95 bara screening setpoint, the HIPPS isolation valve closes,
+the sustained vote activates ESD after two seconds, and the ESD action places
+its final element in the closing state. The example deliberately stops before a
+physical process transient; a full scenario must also run the process model and
+the ESD valve transient state with a stable calculation identity.
 
-### 1. HIPPS (High Integrity Pressure Protection System)
-
-**Purpose**: Prevent overpressure before PSV activation
-
-**Key Features**:
-- **Voting Logic**: 2oo3 (two out of three pressure transmitters)
-- **Setpoint**: 95% MAOP (adjustable 90-95%)
-- **Response Time**: <2 seconds (rapid valve closure)
-- **SIL Level**: SIL 2 or SIL 3
-- **Escalation**: Activates ESD after 5 seconds if pressure remains high
-
-**When It Activates**:
-```
-Normal: 50 bara → Upset: 96 bara → HIPPS trips at 95 bara
-Result: Isolation valve closes, prevents PSV lifting
-```
-
-**Code Example**:
+<!-- layered-safety-example: hipps-esd-quickstart -->
 ```java
-HIPPSLogic hipps = new HIPPSLogic("HIPPS-101", VotingLogic.TWO_OUT_OF_THREE);
-hipps.addPressureSensor(pt1);
-hipps.addPressureSensor(pt2);
-hipps.addPressureSensor(pt3);
-hipps.setIsolationValve(isolationValve);
-hipps.linkToEscalationLogic(esdLogic, 5.0);
-```
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.valve.ESDValve;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.logic.action.TripValveAction;
+import neqsim.process.logic.esd.ESDLogic;
+import neqsim.process.logic.hipps.HIPPSLogic;
+import neqsim.process.logic.sis.Detector;
+import neqsim.process.logic.sis.Detector.AlarmLevel;
+import neqsim.process.logic.sis.Detector.DetectorType;
+import neqsim.process.logic.sis.VotingLogic;
 
-**Benefits**:
-- ✓ Prevents flaring (environmental benefit)
-- ✓ Reduces emissions (economic benefit)
-- ✓ Protects equipment from overpressure
-- ✓ Maintains production (fast recovery)
+/**
+ * Exercises a 2oo3 HIPPS demand and timed escalation into an ESD trip action.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
+public final class LayeredSafetyQuickStart {
+  private static final Logger logger = LogManager.getLogger(LayeredSafetyQuickStart.class);
 
----
+  /** Prevents instantiation of this example utility. */
+  private LayeredSafetyQuickStart() {}
 
-### 2. Fire & Gas Detection SIS
+  /**
+   * Runs one bounded safety-logic scenario.
+   *
+   * @param args command-line arguments (unused)
+   */
+  public static void main(String[] args) {
+    double pressureSetpointBara = 95.0;
 
-**Purpose**: Detect hazardous conditions and initiate safe shutdown
+    ThrottlingValve hippsIsolation = new ThrottlingValve("HIPPS isolation");
+    hippsIsolation.setPercentValveOpening(100.0);
 
-**Key Features**:
-- **Fire Detection**: 2oo3 voting, temperature-based (60°C typical)
-- **Gas Detection**: 2oo3 voting, combustible gas (25% LEL typical)
-- **Setpoint**: Based on hazard assessment
-- **SIL Level**: SIL 2 or SIL 3
-- **Integration**: Automatically activates ESD logic
+    ESDValve esdShutdown = new ESDValve("ESD shutdown");
+    esdShutdown.setStrokeTime(2.0);
 
-**When It Activates**:
-```
-Fire: 2 of 3 detectors above 60°C → Fire SIF trips → ESD activated
-Gas: 2 of 3 detectors above 25% LEL → Gas SIF trips → ESD activated
-```
+    ESDLogic esd = new ESDLogic("ESD level 1");
+    esd.addAction(new TripValveAction(esdShutdown), 0.0);
 
-**Code Example**:
-```java
-SafetyInstrumentedFunction fireSIF = 
-    new SafetyInstrumentedFunction("Fire Detection", VotingLogic.TWO_OUT_OF_THREE);
-fireSIF.addDetector(fireDetector1);
-fireSIF.addDetector(fireDetector2);
-fireSIF.addDetector(fireDetector3);
-fireSIF.linkToLogic(esdLogic);
-```
+    HIPPSLogic hipps = new HIPPSLogic("HIPPS-101", VotingLogic.TWO_OUT_OF_THREE);
+    hipps.addPressureSensor(pressureDetector("PT-101A", pressureSetpointBara));
+    hipps.addPressureSensor(pressureDetector("PT-101B", pressureSetpointBara));
+    hipps.addPressureSensor(pressureDetector("PT-101C", pressureSetpointBara));
+    hipps.setIsolationValve(hippsIsolation);
+    hipps.linkToEscalationLogic(esd, 2.0);
 
-**Benefits**:
-- ✓ Early hazard detection
-- ✓ Automatic emergency response
-- ✓ High reliability (2oo3 voting)
-- ✓ Maintenance capability (bypass 1 detector)
-
----
-
-### 3. ESD (Emergency Shutdown)
-
-**Purpose**: Emergency shutdown of process facilities
-
-**Key Features**:
-- **Activation Sources**:
-  - HIPPS escalation (pressure control failure)
-  - Fire detection SIF (fire detected)
-  - Gas detection SIF (gas leak detected)
-  - Manual push button (operator initiated)
-- **Actions**: Sequential logic with timed delays
-- **SIL Level**: SIL 1 or SIL 2
-
-**ESD Levels**:
-```
-ESD Level 1: Partial shutdown (specific area)
-ESD Level 2: Full shutdown (entire facility)
-ESD Level 3: Total evacuation + shutdown
-```
-
-**Code Example**:
-```java
-ESDLogic esdLogic = new ESDLogic("ESD Level 1");
-esdLogic.addAction(new TripValveAction(esdValve), 0.0);      // Immediate
-esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5); // After 0.5s
-esdLogic.addAction(new SetSplitterAction(splitter, [...]), 0.5); // After 1.0s
-```
-
-**Benefits**:
-- ✓ Coordinated multi-equipment shutdown
-- ✓ Timed action sequences
-- ✓ Multiple activation sources
-- ✓ Configurable logic
-
----
-
-## Integration Examples
-
-### Example 1: HIPPS with ESD Escalation
-
-**Scenario**: Pressure protection with backup
-
-```java
-// Create HIPPS (first line of defense)
-HIPPSLogic hipps = new HIPPSLogic("HIPPS-101", VotingLogic.TWO_OUT_OF_THREE);
-hipps.addPressureSensor(pt1); // 95 bara setpoint
-hipps.addPressureSensor(pt2);
-hipps.addPressureSensor(pt3);
-hipps.setIsolationValve(hippsValve);
-
-// Create ESD (backup)
-ESDLogic esd = new ESDLogic("ESD Level 1");
-esd.addAction(new TripValveAction(esdValve), 0.0);
-
-// Link HIPPS to escalate to ESD after 5 seconds if pressure remains high
-hipps.linkToEscalationLogic(esd, 5.0);
-
-// Simulation
-hipps.update(pressure, pressure, pressure);
-hipps.execute(timeStep);
-
-// Check status
-if (hipps.isTripped() && !hipps.hasEscalated()) {
-    System.out.println("HIPPS controlling pressure");
-} else if (hipps.hasEscalated()) {
-    System.out.println("HIPPS failed - ESD activated");
-}
-```
-
-**Flow**:
-```
-t=0s:   Pressure rises to 96 bara
-t=0s:   HIPPS trips (2/3 sensors above 95 bara)
-t=0s:   Isolation valve closes rapidly
-t=0-5s: HIPPS monitors pressure
-t=5s:   If pressure still high → Escalate to ESD
-t=5s:   ESD valve trips → Full shutdown
-```
-
----
-
-### Example 2: Fire Detection Activating ESD
-
-**Scenario**: Fire detected in process area
-
-```java
-// Create fire detection SIF
-SafetyInstrumentedFunction fireSIF = 
-    new SafetyInstrumentedFunction("Fire Detection", VotingLogic.TWO_OUT_OF_THREE);
-fireSIF.addDetector(new Detector("FD-101", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C"));
-fireSIF.addDetector(new Detector("FD-102", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C"));
-fireSIF.addDetector(new Detector("FD-103", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C"));
-
-// Create ESD logic
-ESDLogic esd = new ESDLogic("Fire ESD");
-esd.addAction(new TripValveAction(esdValve), 0.0);
-esd.addAction(new ActivateBlowdownAction(blowdownValve), 0.5);
-
-// Link fire SIF to ESD
-fireSIF.linkToLogic(esd);
-
-// Simulation
-fireSIF.update(temp1, temp2, temp3);
-
-// Check status
-if (fireSIF.isTripped()) {
-    System.out.println("Fire detected - ESD activated");
-}
-```
-
-**Flow**:
-```
-t=0s:  Temperatures: FD-101=55°C, FD-102=65°C, FD-103=70°C
-t=0s:  Fire SIF evaluates: 2/3 detectors above 60°C → TRIP
-t=0s:  Fire SIF activates linked ESD logic
-t=0s:  ESD action 1: Trip ESD valve
-t=0.5s: ESD action 2: Activate blowdown
-```
-
----
-
-### Example 3: Complete Layered System
-
-**Scenario**: All safety layers configured
-
-```java
-// Layer 1: HIPPS for pressure protection
-HIPPSLogic hipps = new HIPPSLogic("HIPPS-101", VotingLogic.TWO_OUT_OF_THREE);
-hipps.addPressureSensor(pt1); // 95 bara
-hipps.addPressureSensor(pt2);
-hipps.addPressureSensor(pt3);
-hipps.setIsolationValve(hippsValve);
-
-// Layer 2: Fire detection
-SafetyInstrumentedFunction fireSIF = 
-    new SafetyInstrumentedFunction("Fire SIF", VotingLogic.TWO_OUT_OF_THREE);
-fireSIF.addDetector(fd1); // 60°C
-fireSIF.addDetector(fd2);
-fireSIF.addDetector(fd3);
-
-// Layer 3: Gas detection
-SafetyInstrumentedFunction gasSIF = 
-    new SafetyInstrumentedFunction("Gas SIF", VotingLogic.TWO_OUT_OF_THREE);
-gasSIF.addDetector(gd1); // 25% LEL
-gasSIF.addDetector(gd2);
-gasSIF.addDetector(gd3);
-
-// Layer 4: ESD (final layer)
-ESDLogic esd = new ESDLogic("ESD Level 1");
-esd.addAction(new TripValveAction(esdValve), 0.0);
-esd.addAction(new ActivateBlowdownAction(blowdownValve), 0.5);
-
-// Integrate layers
-hipps.linkToEscalationLogic(esd, 5.0);
-fireSIF.linkToLogic(esd);
-gasSIF.linkToLogic(esd);
-
-// Simulation
-hipps.update(pressure, pressure, pressure);
-fireSIF.update(temp1, temp2, temp3);
-gasSIF.update(gas1, gas2, gas3);
-hipps.execute(timeStep);
-
-// Any layer can trigger ESD
-if (hipps.hasEscalated() || fireSIF.isTripped() || gasSIF.isTripped()) {
-    System.out.println("ESD activated from safety layer");
-}
-```
-
----
-
-## Activation Matrix
-
-| Condition | HIPPS | Fire SIF | Gas SIF | ESD | Result |
-|-----------|-------|----------|---------|-----|--------|
-| Normal operation | ✗ | ✗ | ✗ | ✗ | All systems idle |
-| Pressure 96 bara | ✓ | ✗ | ✗ | ✗ | HIPPS isolates, ESD standby |
-| Fire detected | ✗ | ✓ | ✗ | ✓ | Fire SIF triggers ESD |
-| Gas leak | ✗ | ✗ | ✓ | ✓ | Gas SIF triggers ESD |
-| HIPPS fails | ✓ | ✗ | ✗ | ✓ | HIPPS escalates to ESD |
-| Fire + Gas | ✗ | ✓ | ✓ | ✓ | Both SIFs trigger ESD |
-| All hazards | ✓ | ✓ | ✓ | ✓ | Multiple layers activated |
-
----
-
-## Configuration Best Practices
-
-### Setpoint Selection
-
-```
-Process Control: 80-85% MAOP (PID controller setpoint)
-BPCS High Alarm: 90% MAOP (operator warning)
-HIPPS Activation: 95% MAOP (first SIS layer)
-ESD Activation:   98% MAOP (backup SIS layer)
-PSV Set Pressure: 100% MAOP (passive protection)
-```
-
-**Example for 100 bara MAOP**:
-- Control setpoint: 85 bara
-- High alarm: 90 bara
-- HIPPS: 95 bara
-- ESD: 98 bara
-- PSV: 100 bara
-
-### Voting Logic Selection
-
-| Application | Criticality | Availability Need | Recommended Voting |
-|-------------|-------------|-------------------|-------------------|
-| HIPPS | High | High | 2oo3 (SIL 3) |
-| Fire Detection | High | Medium | 2oo3 (SIL 2/3) |
-| Gas Detection | High | Medium | 2oo3 (SIL 2/3) |
-| ESD | Medium | Medium | 1oo2 or 2oo3 (SIL 1/2) |
-
-### Response Time Targets
-
-| System | Target Response | Typical |
-|--------|----------------|---------|
-| HIPPS | <2 seconds | 1-2 seconds |
-| Fire Detection | <5 seconds | 2-5 seconds |
-| Gas Detection | <10 seconds | 5-10 seconds |
-| ESD | <10 seconds | 5-10 seconds |
-
----
-
-## Maintenance and Testing
-
-### Proof Testing Schedule
-
-| Component | Test Type | Frequency | Bypass Allowed |
-|-----------|-----------|-----------|----------------|
-| Pressure transmitters | Calibration | Annual | Yes (1 at a time) |
-| Fire detectors | Functional test | 6 months | Yes (1 at a time) |
-| Gas detectors | Calibration | 6 months | Yes (1 at a time) |
-| HIPPS valve | Partial stroke | Quarterly | No |
-| HIPPS valve | Full stroke | Annual | Yes (with backup) |
-| ESD valve | Partial stroke | Quarterly | No |
-| ESD valve | Full stroke | Annual | Yes (with backup) |
-
-### Bypass Management
-
-```java
-// Bypass detector for maintenance (max 1 at a time)
-Detector pt1 = hipps.getPressureSensor(0);
-pt1.setBypass(true);
-
-// Check bypass status
-for (Detector sensor : hipps.getPressureSensors()) {
-    if (sensor.isBypassed()) {
-        System.out.println("WARNING: " + sensor.getName() + " bypassed");
+    hipps.update(96.0, 96.0, 90.0);
+    if (!hipps.isTripped() || hippsIsolation.getPercentValveOpening() != 0.0) {
+      throw new IllegalStateException("Expected the 2oo3 vote to close HIPPS isolation");
     }
-}
 
-// Verify bypass constraint
-if (bypassCount > maxAllowed) {
-    System.out.println("ERROR: Too many sensors bypassed");
+    hipps.execute(1.0);
+    if (hipps.hasEscalated()) {
+      throw new IllegalStateException("ESD escalated before the configured delay");
+    }
+
+    hipps.execute(1.0);
+    if (!hipps.hasEscalated() || !esd.isActive()) {
+      throw new IllegalStateException("Expected sustained HIPPS demand to activate ESD");
+    }
+
+    esd.execute(0.0);
+    if (!esdShutdown.isClosing()) {
+      throw new IllegalStateException("Expected the ESD action to demand valve closure");
+    }
+
+    logger.info(
+        "HIPPS tripped: {}; ESD active: {}; ESD valve closing: {}",
+        hipps.isTripped(),
+        esd.isActive(),
+        esdShutdown.isClosing());
+  }
+
+  /**
+   * Creates one high-high pressure channel with an explicit absolute-pressure unit.
+   *
+   * @param name channel tag
+   * @param setpointBara high-high threshold in absolute bar
+   * @return configured pressure detector
+   */
+  private static Detector pressureDetector(String name, double setpointBara) {
+    return new Detector(
+        name, DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, setpointBara, "bara");
+  }
 }
 ```
 
----
+The quick start verifies software state transitions only. It does not demonstrate
+sensor independence, diagnostic coverage, process response, final-element
+capacity, closure against differential pressure, relief adequacy, flare load,
+or risk reduction.
 
-## Standards Compliance
+## Engineering validation checklist
 
-### IEC 61511 (Process Industry SIS)
+Before using these objects in a safety study:
 
-All implemented safety systems comply with IEC 61511:
-- ✓ Risk-based SIL determination
-- ✓ Voting logic for redundancy
-- ✓ Bypass management procedures
-- ✓ Proof testing requirements
-- ✓ Functional safety assessment
+1. Define every pressure as absolute or gauge and keep detector units explicit.
+2. Derive trip settings and timing from the approved design basis; do not copy
+   the example values.
+3. Model the initiating event, protected inventory, valves, relief path, flare
+   boundary, utilities, and failure modes that matter to the scenario.
+4. Check mass and energy balance, pressure and temperature histories, valve
+   travel, action timing, and the response at nearby operating points.
+5. Exercise channel bypass, detected faults, unavailable actuators, delayed or
+   failed final elements, and reset/restart permissives.
+6. Keep software configuration evidence separate from SIL verification,
+   functional-safety assessment, proof-test design, and operating approval.
 
-### IEC 61508 (Functional Safety)
+## Related documentation
 
-- ✓ Hardware fault tolerance (2oo3 = 1 fault tolerant)
-- ✓ Systematic capability
-- ✓ Safe failure fraction
-- ✓ Diagnostic coverage
-
-### ISA-84 / ANSI/ISA-84.00.01
-
-- ✓ SIF specification
-- ✓ SIL verification calculations
-- ✓ Pre-startup acceptance testing
-
----
-
-## Benefits of Layered Approach
-
-### Safety Benefits
-
-1. **Defense in Depth**: Multiple independent barriers
-2. **Redundancy**: Backup if primary layer fails
-3. **High Reliability**: 2oo3 voting reduces false trips and dangerous failures
-4. **Fail-Safe Design**: All systems fail to safe state
-
-### Operational Benefits
-
-1. **Reduced Flaring**: HIPPS prevents PSV lifting
-2. **Faster Recovery**: HIPPS trips are easier to reset than full ESD
-3. **Maintenance Flexibility**: Bypass capability without compromising safety
-4. **Production Continuity**: Lower spurious trip rate
-
-### Compliance Benefits
-
-1. **Standards Adherence**: IEC 61511, IEC 61508, ISA-84
-2. **SIL Achievement**: Meets SIL 2/3 requirements
-3. **Audit Trail**: Complete activation and reset history
-4. **Documentation**: Comprehensive test and maintenance records
-
----
-
-## Future Enhancements
-
-### Planned Features
-
-1. **PFD Calculation**: Automatic probability of failure on demand
-2. **Proof Test Tracking**: Integrated test scheduling and reporting
-3. **Performance Dashboards**: Real-time safety system KPIs
-4. **Alarm Management**: Integration with process alarms
-5. **Event Logging**: Comprehensive audit trail
-
-### Advanced Capabilities
-
-- **Predictive Maintenance**: AI/ML for sensor drift detection
-- **Dynamic Risk Assessment**: Real-time SIL verification
-- **Cyber Security**: IEC 62443 compliance for safety systems
-- **Cloud Integration**: Remote monitoring and diagnostics
-
----
-
-## See Also
-
-- [HIPPS Safety Logic](hipps_safety_logic) - Detailed HIPPS documentation
-- [SIS Logic Implementation](sis_logic_implementation) - Fire and gas detection
-- [Process Logic Framework](../simulation/process_logic_framework) - Base architecture
-- [ESD Blowdown System](ESD_BLOWDOWN_SYSTEM) - Emergency shutdown details
-- [HIPPS Summary](HIPPS_SUMMARY) - High-level overview
-- [HIPPS Implementation](hipps_implementation) - Implementation details
+- [HIPPS safety logic](hipps_safety_logic.md)
+- [SIS logic implementation](sis_logic_implementation.md)
+- [ESD blowdown system](ESD_BLOWDOWN_SYSTEM.md)
+- [Process-safety overview](../process/safety/README.md)
+- [Integrated safety-chain tests](integration_safety_chain_tests.md)

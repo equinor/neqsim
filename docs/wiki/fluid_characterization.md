@@ -48,21 +48,24 @@ system.getCharacterization().setPlusFractionModel("Pedersen");
 
 #### Available TBP Models
 
-NeqSim provides 10 TBP models for estimating critical properties (Tc, Pc, ω) from molecular weight and density:
+NeqSim recognizes the following TBP model names for estimating critical properties (Tc, Pc, ω) from molecular weight and density:
 
 | Model | Best Application |
 |-------|------------------|
-| `PedersenSRK` | General SRK EOS (default) |
-| `PedersenPR` | General Peng-Robinson EOS |
-| `PedersenSRKHeavyOil` | Heavy oils with SRK |
-| `PedersenPRHeavyOil` | Heavy oils with PR |
+| `PedersenSRK` | General SRK EOS (default), MW < 1120 g/mol |
+| `PedersenPR` | General Peng-Robinson EOS, MW < 1120 g/mol |
+| `PedersenSRKHeavyOil` | Property estimation unavailable; throws `UnsupportedOperationException` |
+| `PedersenPRHeavyOil` | Property estimation unavailable; throws `UnsupportedOperationException` |
 | `Lee-Kesler` | General purpose, uses Watson K-factor |
 | `RiaziDaubert` | Light fractions (MW < 300 g/mol) |
 | `Twu` | Paraffinic fluids, gas condensates |
 | `Cavett` | Refining industry, API gravity corrections |
 | `Standing` | Reservoir engineering |
 
-See [TBP Fraction Models](tbp_fraction_models) for detailed mathematical correlations and model selection guidelines.
+Pedersen property estimation rejects molecular weights at or above 1120 g/mol, including
+through the `RiaziDaubert` fallback. For heavy cuts with independently validated critical
+properties, use the seven-argument `addTBPfraction` overload. See
+[TBP Fraction Models](tbp_fraction_models) for units, restrictions and model selection guidance.
 
 #### Available Plus Fraction Models
 

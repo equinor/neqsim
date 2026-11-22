@@ -1,0 +1,706 @@
+---
+title: Model-explicit release source terms
+description: Explicit equilibrium, finite-rate, drift-flux and ideal/real-gas release models with immutable stations and fail-closed diagnostics.
+---
+
+# Model-explicit release source terms
+
+Use the [neutral source-term contract](source-term-contract) to export these results as
+versioned JSON, newline-delimited frames or a reduced CSV time series.
+Use [uncertainty ensembles](source-term-uncertainty) to propagate joint input cases without
+discarding failures. The [implementation status](source-term-platform-status) records remaining work.
+
+`ReleaseFlowModel` calculates an instantaneous short-opening source term from a NeqSim
+fluid. It is independent of downstream safety software and process orchestration. Requests
+defensively copy the fluid; results and station snapshots are immutable and serializable.
+This is the first implementation layer of [NRC-3860](https://github.com/equinor/neqsim/pull/3861).
+
+## Usage
+
+The following example is executed by `ReleaseFlowModelTest.documentationExampleAndEnergyClosure`:
+
+```java
+SystemInterface gas = new SystemSrkEos(300.0, 50.0);
+gas.addComponent("methane", 1.0);
+gas.setMixingRule("classic");
+ReleaseFlowModel model = new HomogeneousEquilibriumReleaseModel();
+ReleaseFlowResult result = LeakModel.builder().fluid(gas).holeDiameter(0.01)
+    .dischargeCoefficient(0.62).backPressure(101325.0).build()
+    .calculateReleaseFlow(gas, model);
+```
+
+Import the types from `neqsim.process.safety.release` and `neqsim.thermo.system`.
+Check `result.isUsable()` and inspect `getDiagnostics()` before accessing the release rate.
+The rate getter throws on invalid or unsupported results; failure cannot look like zero flow.
+For direct use, construct `ReleaseFlowRequest(fluid, diameterM, dischargeCoefficient,
+backPressurePa)` and call the model's `calculate` method. Malformed request geometry throws
+at construction; thermodynamic/model failures produce diagnostic results.
+
+## Explicit model selection
+
+Model selection is never inferred from phase count. Choose one implementation and retain its
+identity, version and diagnostics with every frame:
+
+| Model | Intended use | Required behavior |
+|---|---|---|
+| `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
+| `SlipCorrectedHomogeneousEquilibriumReleaseModel` | Short-opening gas/liquid flow with equilibrium thermodynamics and caller-declared velocity slip. | Requires exactly one gas and one liquid phase at the opening, exposes phase densities and velocities, and closes phase area and kinetic energy. It does not infer a slip or entrainment correlation. |
+| `DriftFluxHomogeneousEquilibriumReleaseModel` | Vertical-upward, short-opening gas/liquid screening with equilibrium thermodynamics and predictive slip. | Solves Zuber-Findlay/Harmathy drift flux together with phase-area and kinetic-energy closure. Exactly one gas and one liquid phase, caller-declared positive interfacial tension and gas area fraction at most 0.80 are required. |
+| `FiniteRateDriftFluxReleaseModel` | Sensitivity screening for delayed gas/liquid phase-split response at a vertical short opening. | Applies an exact first-order relaxation between upstream and equilibrium phase mass fractions, then solves the bounded drift-flux closure. Relaxation time, residence time, surface tension and parameter provenance are mandatory. |
+| `ComponentSelectiveFiniteRateReleaseModel` | Sensitivity screening for component-dependent gas/liquid phase-partition response at a vertical short opening. | Applies an exact first-order relaxation to each component's gas-held mass, reconstructs phase compositions with exact component conservation, then solves the bounded drift-flux closure. A relaxation time for every component, residence time, surface tension and parameter provenance are mandatory. |
+| `RanzMarshallFiniteRateReleaseModel` | Component-selective external-film sensitivity for explicit spherical gas bubbles. | Predicts component relaxation times from caller-declared diameter, liquid properties, relative speed and diffusivities, then uses the bounded drift-flux closure. Residence time remains explicit. |
+| `RanzMarshallDropletFiniteRateReleaseModel` | Component-selective external-gas-film sensitivity for explicit spherical liquid droplets. | Uses caller-declared droplet diameter, gas properties, gas-to-droplet relative speed and residence time. It closes phase area, kinetic energy and component inventories and fails outside dilute spherical-droplet limits. |
+| `PredictiveBubbleTransferZoneReleaseModel` | Bounded vertical spherical-bubble transfer-zone screening. | Predicts a conservative bubble diameter, phase-relative speed and residence time from explicit SI geometry and resolved drift-flux velocities, then iterates Ranz-Marshall transfer and component/energy-conservative release to a checked fixed point. |
+| `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
+| `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
+| `RealGasFannoPipeReleaseModel` | Quasi-steady one-sided single-gas flow through a constant-area pipe using the selected EOS. | Requires explicit pipe length and Darcy friction and one equilibrium gas phase throughout; phase appearance, sonic-step failure and unresolved solid risk fail closed. |
+| `LegacyScreeningReleaseModel` | Reproduce the historical `LeakModel.calculateMassFlowRate` rate during migration. | Always returns `VALID_WITH_WARNINGS` when usable and carries `SCREENING_ONLY`, unresolved-station and legacy-fallback diagnostics. |
+
+Every implementation also returns an immutable `ReleaseModelEvidence` manifest. Stable
+applicability and limitation codes state the modeled boundary, while evidence records distinguish
+analytical, conservation, numerical and experimental comparisons. A custom model that does not
+override `getEvidence()` fails closed to `NO_DECLARED_VALIDATION_EVIDENCE`. The current built-in
+records are primarily repository-owned analytical and regression evidence. The ideal-gas Fanno
+manifest additionally references the independently published NASA GFSSP nitrogen case described
+below. The HEM manifest references the published STEP flashing-propane case described under its
+applicability section, including the current adverse rate mismatch. All emitted frames remain
+`UNQUALIFIED`; an independent record does not self-promote a model's evidence level.
+
+For example:
+
+```java
+ReleaseFlowModel idealGas = new IdealGasReleaseModel();
+ReleaseFlowModel legacyCompatibility = new LegacyScreeningReleaseModel();
+ReleaseFlowResult analytical = idealGas.calculate(
+    new ReleaseFlowRequest(gas, 0.01, 0.62, 101325.0));
+```
+
+The legacy adapter delegates the numeric rate to the historical scalar method, including its
+documented density, molar-mass and heat-capacity-ratio fallback policy. It does not relabel that
+behavior as strict physics. Because the legacy equation never solves throat or exit thermodynamics,
+its opening snapshots alias the initialized upstream pressure and temperature. Consumers can detect
+this limitation from `UNRESOLVED_STATIONS`; they must not interpret those snapshots as a nozzle
+solution.
+
+## Prescribed gas/liquid slip
+
+`SlipCorrectedHomogeneousEquilibriumReleaseModel` separates thermodynamic equilibrium from
+hydrodynamic equilibrium. The HEM calculation first resolves the isentropic opening state and
+homogeneous velocity $u_h$. The caller supplies the gas-to-liquid velocity ratio
+$S=u_g/u_l\ge 1$. With gas and liquid mass fractions $y_g$ and $y_l$, conservation of the HEM
+specific kinetic energy gives
+
+$$u_l=\frac{u_h}{\sqrt{y_gS^2+y_l}},\qquad u_g=Su_l.$$
+
+The total mass flux $G$ then follows from phase-area closure using the EOS phase densities
+$\rho_g$ and $\rho_l$:
+
+$$G=\left(\frac{y_g}{\rho_gu_g}+\frac{y_l}{\rho_lu_l}\right)^{-1},\qquad \alpha_g+\alpha_l=1.$$
+
+The station's scalar velocity is $G/\rho_{mix}$ so its existing `massFlux` field remains the total
+mass flux. The optional `phaseDensities` and `phaseVelocities` maps retain the phase-resolved SI
+basis. At $S=1$ the calculation reproduces HEM. Tests enforce that limit, phase-area closure,
+phase kinetic-energy closure, immutable inputs, deterministic schema output, and steady/dynamic
+frames from both process-container types.
+
+This is a prescribed-slip sensitivity model, not a general non-equilibrium qualification. It
+does not predict slip, entrainment, droplet size, finite-rate vaporization/condensation, wall
+friction, heat transfer, solids, or pipe decompression. Select $S$ from an independently justified
+engineering basis and retain it with scenario provenance. Results and evidence remain
+`UNQUALIFIED` pending experimental validation and accountable domain review.
+
+## Predictive vertical drift flux
+
+`DriftFluxHomogeneousEquilibriumReleaseModel` removes the caller-declared slip ratio for a bounded
+vertical-upward bubbly/dispersed screening case. It retains the HEM equilibrium thermodynamic
+station and specific kinetic energy, then solves the Zuber-Findlay relation
+
+$$u_g=C_0j+V_{gj},\qquad C_0=1.2,$$
+
+where $j=\alpha_gu_g+\alpha_lu_l$ is total volumetric flux [m/s]. The bubble drift velocity uses
+the Harmathy relation
+
+$$V_{gj}=1.53\left[\frac{g\sigma(\rho_l-\rho_g)}{\rho_l^2}\right]^{1/4}.$$
+
+Here $g$ is gravitational acceleration [m/s²], $\sigma$ is the caller-declared gas/liquid
+interfacial tension [N/m], and $\rho_g$ and $\rho_l$ are native-phase densities [kg/m³]. The solver
+couples this relation to the same phase-area and kinetic-energy equations documented for prescribed
+slip. It returns explicit phase velocities and densities and checks the drift residual, phase-area
+sum and specific kinetic-energy error.
+
+```java
+ReleaseFlowModel model = new DriftFluxHomogeneousEquilibriumReleaseModel(0.020); // N/m
+```
+
+The closure requires exactly one gas and one oil, generic-liquid or aqueous phase. The caller must
+retain the source and applicability of the mixture-specific interfacial tension with scenario
+provenance; missing, non-finite or non-positive values are rejected at construction. A predicted
+gas area fraction above 0.80 is `UNSUPPORTED` rather than being silently extrapolated toward annular
+flow. The opening is assumed vertical and upward because the current request contract carries no
+orientation field.
+
+The model basis is Zuber and Findlay, *Journal of Heat Transfer* 87 (1965), 453–468,
+[doi:10.1115/1.3689137](https://doi.org/10.1115/1.3689137), and Harmathy, *AIChE Journal* 6
+(1960), 281–288, [doi:10.1002/aic.690060222](https://doi.org/10.1002/aic.690060222). These
+correlations are model provenance, not independent rate validation. The implementation excludes
+finite-rate phase transfer, entrainment and droplet-size transport, annular/high-Weber jets, pipe
+friction, heat transfer and solid-bearing flow. It remains `UNQUALIFIED` pending experimental
+multiphase evidence and accountable domain review.
+
+## Finite-rate phase-split relaxation
+
+`FiniteRateDriftFluxReleaseModel` adds a bounded delayed-phase-response sensitivity without
+presenting a caller assumption as predictive kinetics. For upstream gas mass fraction $y_{g,0}$,
+equilibrium station fraction $y_{g,eq}$, residence time $t_r$ [s] and phase-transfer relaxation
+time $\tau$ [s], the exact first-order solution is
+
+$$\chi=1-\exp\left(-\frac{t_r}{\tau}\right),\qquad y_g=y_{g,0}+\chi(y_{g,eq}-y_{g,0}).$$
+
+The liquid mass fraction is $1-y_g$. Phase densities and equilibrium specific enthalpy come from
+the resolved EOS station. Mixture density is recomputed from phase specific volumes. The shared
+vertical drift-flux solver then partitions the HEM kinetic energy, so the reported station closes
+phase area, drift flux and stagnation energy while retaining the HEM overall component mass
+fractions exactly.
+
+```java
+ReleaseFlowModel finiteRate = new FiniteRateDriftFluxReleaseModel(
+    0.020,  // gas/liquid interfacial tension, N/m
+    0.50,   // phase-transfer relaxation time, s
+    0.25,   // available residence time, s
+    "public-screening-assumption:v1");
+```
+
+`FiniteRateDriftFluxReleaseModelTest.schemaCarriesFiniteRateProvenanceThroughBothProcessContainers`
+executes this construction through steady and dynamic `ProcessSystem` and `ProcessModel` paths.
+The analytical exponential is timestep independent; a retained explicit-Euler refinement receipt
+demonstrates convergence toward it. Frames retain the supplied parameter provenance in diagnostics.
+
+This is a uniform phase-split relaxation model. It does not supply component-selective mass-transfer
+coefficients, infer residence time, predict entrainment or droplet size, represent annular/high-Weber
+jets, transport solids, or provide experimental qualification. If the resolved opening does not
+retain one gas and one supported liquid phase, or the bubbly/dispersed drift-flux applicability
+limit is exceeded, the result fails closed with no numeric source payload.
+
+## Component-selective phase-partition relaxation
+
+`ComponentSelectiveFiniteRateReleaseModel` generalizes the bounded relaxation sensitivity to a
+separate caller-declared time constant $\tau_i$ [s] for every overall component $i$. Let $w_i$ be
+the overall component mass fraction, and let $q_{i,g,0}$ and $q_{i,g,eq}$ be the fractions of total
+mixture mass held as component $i$ in the upstream and equilibrium-station gas phases. The exact
+component endpoint is
+
+$$\chi_i=1-\exp\left(-\frac{t_r}{\tau_i}\right),\qquad q_{i,g}=q_{i,g,0}+\chi_i(q_{i,g,eq}-q_{i,g,0}).$$
+
+The gas mass fraction is $y_g=\sum_i q_{i,g}$ and the liquid fraction is $y_l=1-y_g$. The reported
+within-phase component mass fractions are reconstructed as
+
+$$w_{i,g}=\frac{q_{i,g}}{y_g},\qquad w_{i,l}=\frac{w_i-q_{i,g}}{y_l}.$$
+
+Every emitted component therefore satisfies $w_i=y_gw_{i,g}+y_lw_{i,l}$ within the enforced
+numerical tolerance. When all $\tau_i$ are equal, the model reproduces the uniform
+`FiniteRateDriftFluxReleaseModel` phase fraction and mass flow. The optional
+`phaseComponentMassFractions` station field exposes the reconstructed gas and liquid compositions;
+older version-one frames without this field remain schema compatible.
+
+```java
+Map<String, Double> relaxationTimesS = new TreeMap<String, Double>();
+relaxationTimesS.put("methane", 0.10);
+relaxationTimesS.put("n-heptane", 1.00);
+ReleaseFlowModel componentSelective = new ComponentSelectiveFiniteRateReleaseModel(
+    0.020, relaxationTimesS, 0.25, "public-component-screening-assumption:v1");
+```
+
+The supplied map must match the fluid component names exactly; missing, extra, non-finite or
+non-positive entries fail closed. These time constants are sensitivity parameters, not predicted
+mass-transfer coefficients. The model retains equilibrium station enthalpy and phase densities,
+does not solve interfacial heat transfer or composition-dependent latent heat, and does not infer
+residence time, area, droplet size, entrainment, annular/high-Weber flow, solids or experimental
+accuracy. Results remain `UNQUALIFIED` pending independent multiphase evidence and accountable
+domain review.
+
+## Ranz-Marshall external-film component transfer
+
+`RanzMarshallMassTransferCorrelation` replaces caller-declared component relaxation times with an
+explicit spherical-dispersion external-film calculation. The caller must identify the morphology
+as `GAS_BUBBLES` or `LIQUID_DROPLETS` and supply the Sauter mean diameter $d_{32}$ [m],
+continuous-phase density $\rho_c$ [kg/m³], dynamic viscosity $\mu_c$ [Pa s], relative speed
+$u_r$ [m/s], and continuous-phase diffusivity $D_i$ [m²/s] for every fluid component. The
+correlation evaluates
+
+$$Re=\frac{\rho_cu_rd_{32}}{\mu_c},\qquad Sc_i=\frac{\mu_c}{\rho_cD_i},$$
+
+$$Sh_i=2+0.6\sqrt{Re}\sqrt[3]{Sc_i},\qquad k_i=\frac{Sh_iD_i}{d_{32}},\qquad \tau_i=\frac{d_{32}}{6k_i}.$$
+
+At zero relative speed, $Sh_i=2$ and the implementation recovers the exact stagnant-sphere limit
+$\tau_i=d_{32}^2/(12D_i)$. The supported screening range is $0\le Re<200$ and
+$0<Sc_i<250$ for every component. Values at or beyond either upper boundary are retained in
+diagnostics but produce `UNSUPPORTED`; values are never clamped. Missing, extra, non-finite or
+non-positive inputs produce `INVALID` or constructor rejection rather than a zero coefficient.
+
+`RanzMarshallFiniteRateReleaseModel` couples the calculated $\tau_i$ values to the existing
+component-selective phase reconstruction and bounded vertical Zuber-Findlay/Harmathy closure:
+
+```java
+Map<String, Double> diffusivitiesM2S = new TreeMap<String, Double>();
+diffusivitiesM2S.put("methane", 1.0e-8);
+diffusivitiesM2S.put("n-heptane", 2.0e-8);
+RanzMarshallMassTransferCorrelation transfer = new RanzMarshallMassTransferCorrelation(
+    RanzMarshallMassTransferCorrelation.Morphology.GAS_BUBBLES,
+    1.0e-3,  // d32, m
+    800.0,   // continuous-liquid density, kg/m3
+    1.0e-3,  // continuous-liquid dynamic viscosity, Pa s
+    0.010,   // bubble-to-liquid relative speed, m/s
+    diffusivitiesM2S,
+    "ranz-marshall-public-basis:v1");
+ReleaseFlowModel model = new RanzMarshallFiniteRateReleaseModel(
+    0.020,  // gas/liquid interfacial tension, N/m
+    0.25,   // available transfer residence time, s
+    transfer);
+```
+
+`RanzMarshallFiniteRateReleaseModel` remains specific to gas bubbles and reports
+`LIQUID_DROPLET_HYDRODYNAMICS_UNSUPPORTED` for droplet correlations. Use the separate
+`RanzMarshallDropletFiniteRateReleaseModel` only when a defensible droplet diameter, continuous-gas
+properties, gas-to-droplet relative speed and residence time are available. For gas mass fraction
+$w_g$, liquid mass fraction $w_l$, homogeneous velocity $u_h$ and declared slip $u_r=u_g-u_l>0$,
+the droplet adapter resolves
+
+$$u_g=w_lu_r+\sqrt{u_h^2-w_gw_lu_r^2},\qquad u_l=u_g-u_r,$$
+
+then derives the mass flux from phase continuity. It requires both velocities positive, liquid
+area fraction at most 0.20, $Eo\le4$, $We\le12$, $Re<200$ and every $Sc_i<250$. Component
+inventories, phase area, kinetic energy and stagnation energy must close; no value is clamped.
+The declared relative speed is specifically gas velocity minus droplet velocity and must be
+positive; reverse or recirculating droplets are outside this adapter rather than reinterpreted.
+
+```java
+Map<String, Double> gasDiffusivitiesM2S = new TreeMap<String, Double>();
+gasDiffusivitiesM2S.put("methane", 2.0e-6);
+gasDiffusivitiesM2S.put("propane", 1.0e-6);
+RanzMarshallMassTransferCorrelation droplets = new RanzMarshallMassTransferCorrelation(
+    RanzMarshallMassTransferCorrelation.Morphology.LIQUID_DROPLETS,
+    2.0e-4, 25.0, 1.0e-5, 0.05, gasDiffusivitiesM2S,
+    "project-droplet-basis:v1");
+ReleaseFlowModel dropletSensitivity = new RanzMarshallDropletFiniteRateReleaseModel(
+    0.020, 0.10, droplets);
+```
+
+The droplet adapter is a prescribed sensitivity, not predictive droplet hydrodynamics. Both
+adapters exclude interfacial heat and latent-heat kinetics, internal dispersed-phase resistance,
+Stefan-flow corrections, predictive residence time, breakup, coalescence, entrainment,
+annular/high-Weber flow and solids. Ranz and Marshall,
+*Chemical Engineering Progress* 48 (1952), 141–146 and 173–180, is independent correlation
+provenance, not release-rate or facility qualification. Results remain `UNQUALIFIED` pending
+experimental multiphase evidence and accountable domain review.
+
+## Predictive vertical bubble transfer zone
+
+`PredictiveBubbleTransferZoneReleaseModel` removes the remaining caller-declared bubble diameter,
+relative speed and residence time for the bounded gas-bubble path. The caller still supplies the
+gas/liquid surface tension $\sigma$ [N/m], transfer-zone hydraulic diameter $D_h$ [m], vertical
+contact length $L$ [m], continuous-liquid viscosity $\mu_l$ [Pa s], one liquid-phase diffusivity
+$D_i$ [m²/s] per component, and provenance. Liquid density and both phase velocities come from the
+resolved one-gas/one-liquid Zuber-Findlay/Harmathy opening state.
+
+The model uses the conservative largest spherical-bubble proxy satisfying $Eo\le4$, $We\le3$,
+$d_{32}\le0.25D_h$, and $d_{32}\le D_o$:
+
+$$d_{Eo}=\sqrt{\frac{4\sigma}{g(\rho_l-\rho_g)}},\qquad d_{We}=\frac{3\sigma}{\rho_lu_r^2},$$
+
+$$d_{32}=\min(d_{Eo},d_{We},0.25D_h,D_o),\qquad u_r=|u_g-u_l|,\qquad t_r=\frac{L}{u_g}.$$
+
+The selected $d_{32}$ is a maximum-stable spherical-bubble screening proxy rather than a measured
+population mean. The adapter uses it with the existing Ranz-Marshall correlation, recalculates the
+component-selective phase split and drift-flux velocities, and repeats until diameter, both phase
+velocities, relative speed, residence time and mass rate change by at most $10^{-8}$ relatively.
+Failure to converge within 24 iterations returns `INVALID`; Ranz-Marshall range violations return
+`UNSUPPORTED`. Inputs are never silently defaulted or clamped.
+
+```java
+Map<String, Double> liquidDiffusivitiesM2S = new TreeMap<String, Double>();
+liquidDiffusivitiesM2S.put("methane", 1.0e-8);
+liquidDiffusivitiesM2S.put("n-heptane", 2.0e-8);
+ReleaseFlowModel predictiveTransferZone = new PredictiveBubbleTransferZoneReleaseModel(
+    0.020,  // gas/liquid interfacial tension, N/m
+    0.10,   // transfer-zone hydraulic diameter, m
+    0.50,   // vertical contact length, m
+    1.0e-3, // continuous-liquid dynamic viscosity, Pa s
+    liquidDiffusivitiesM2S,
+    "project-property-and-geometry-basis:v1");
+```
+
+The model supports exactly one gas and one `OIL`, `LIQUID` or `AQUEOUS` phase and remains
+`UNQUALIFIED`. It excludes measured or predicted bubble-size distributions, population balance,
+breakup/coalescence kinetics, entrainment, liquid-droplet or annular/high-Weber transport,
+interfacial heat/latent kinetics, internal bubble resistance, Stefan flow, solids and experimental
+qualification. Clift, Grace and Weber (1978) and Ranz-Marshall (1952) provide independent model
+bases, not validation of the coupled release rate.
+
+## Ideal-gas equations
+
+The ideal-gas adapter uses the initialized mixture molar mass $M$ [kg/mol] and heat-capacity ratio
+$\gamma$ [1] without replacement values. With $R=8.31446261815324$ J/(mol K), the critical pressure
+ratio, isentropic station temperature, density and velocity are:
+
+$$r_c=\left(\frac{2}{\gamma+1}\right)^{\gamma/(\gamma-1)},\quad \frac{T}{T_0}=\left(\frac{p}{p_0}\right)^{(\gamma-1)/\gamma}.$$
+
+$$\rho=\frac{pM}{RT},\quad c_p=\frac{\gamma R}{(\gamma-1)M},\quad u=\sqrt{2c_p(T_0-T)},\quad \dot m=C_dA\rho u.$$
+
+The accepted throat pressure is $p_0r_c$ when $p_b/p_0\le r_c$ and $p_b$ otherwise. For a choked
+state, the analytical velocity equals $\sqrt{\gamma RT/M}$. Station enthalpy uses the upstream
+NeqSim reference minus $u^2/2$ and station entropy retains the upstream reference. This preserves
+relative energy/entropy consistency without presenting an arbitrary absolute ideal-gas reference
+as new property data. The adapter supports one gas phase only and excludes reaction, forced phases,
+solid/hydrate checks, real-gas departure, phase change, friction, heat transfer and depletion.
+
+## Independent Fanno benchmark
+
+`IdealGasFannoPipeReleaseModel` version 1.0.1 reproduces Case 1 from NASA NTRS
+[20070036728](https://ntrs.nasa.gov/citations/20070036728). The external case specifies nitrogen at
+50 psia, 80 °F and inlet Mach 0.5 in a 6-inch-diameter, 3207-inch-long adiabatic pipe with Darcy
+friction factor 0.002; the published analytical boundary is Mach 1 at the exit.
+
+The repository retains the converted SI inputs in
+`src/test/resources/neqsim/process/safety/release/nasa-gfssp-fanno-2007.csv`. A test independently
+converts the published inlet state to the reservoir stagnation boundary required by the API,
+requires a choked exit, checks the exit Mach number, and limits inlet mass-flux error to 1%. It
+writes the expected value, calculated value and relative error to
+`target/source-term-benchmarks/nasa-gfssp-fanno-2007-receipt.csv`.
+
+This is independently sourced analytical evidence for one calorically perfect single-gas case. It
+is not experimental qualification and does not validate real-gas departure, transient
+decompression waves, heat transfer, multiphase slip, phase change or solid-bearing transport.
+
+## Ideal-gas Fanno pipe equations
+
+`IdealGasFannoPipeReleaseModel` uses a separate finite-pipe request:
+
+```java
+ReleaseFlowModel pipeModel = new IdealGasFannoPipeReleaseModel();
+ReleaseFlowRequest pipe = new ReleaseFlowRequest(
+    gas, 0.10, 1.0, 101325.0, 100.0, 0.02);
+ReleaseFlowResult pipeResult = pipeModel.calculate(pipe);
+```
+
+The final two values are pipe length [m] and specified Darcy friction factor [1]. Both
+must be positive together. Existing short-opening models reject this geometry instead of
+silently discarding it. `SourceTermSession.addLongPipeSource` carries the same geometry through
+steady and dynamic `ProcessSystem` and `ProcessModel` paths. The corresponding
+`ReleaseInventory` constructor preserves it while pressure, composition and energy evolve.
+
+For exit Mach number $M_e$, inlet Mach number $M_i$, pipe length $L$, internal diameter $D$
+and Darcy factor $f_D$, the model solves:
+
+$$\frac{f_DL}{D}=F(M_i)-F(M_e),$$
+
+$$F(M)=\frac{1-M^2}{\gamma M^2}+\frac{\gamma+1}{2\gamma}
+\ln\left(\frac{(\gamma+1)M^2}{2+(\gamma-1)M^2}\right).$$
+
+The stagnation-pressure relation is:
+
+$$\frac{p_0}{p_0^*}=\frac{1}{M}
+\left(\frac{2+(\gamma-1)M^2}{\gamma+1}\right)^{(\gamma+1)/(2(\gamma-1))}.$$
+
+The pipe is choked when the receiving pressure is at or below the calculated static exit
+pressure for $M_e=1$. Otherwise a bounded solve finds $0<M_e<1$ whose exit pressure equals the
+receiving pressure. Mass flux is $G=\rho Ma$ and the requested effective full-bore area remains
+$C_d\pi D^2/4$. Tests check Mach and energy closure, constant-area mass conservation,
+friction-length and backpressure trends, no-flow behavior, process-container frames and coupled
+inventory conservation.
+
+This is a steady, adiabatic, calorically perfect, constant-area, one-sided pipe model. The
+specified friction factor is not calculated from roughness or Reynolds number. The model does
+not represent the opposite side of a rupture, transient decompression waves, line packing,
+heat transfer, real-gas departure, multiphase flow, slip, delayed flashing, entrainment,
+finite-rate phase transfer or solid-bearing transport. It is software-validated against its
+analytical equations, not independently qualified for facility decisions.
+
+## Real-gas Fanno pipe equations
+
+`RealGasFannoPipeReleaseModel` uses the same finite-pipe request and process/inventory integration
+as the ideal model, but obtains density, enthalpy, entropy and acoustic speed from the selected
+NeqSim EOS at each numerical station. It preserves constant mass flux $G$ and stagnation enthalpy
+$h_0$:
+
+$$G=\rho u,\qquad h+\frac{u^2}{2}=h_0.$$
+
+For specified Darcy factor $f_D$, diameter $D$ and axial coordinate $x$, the steady momentum
+balance is:
+
+$$\frac{dp}{dx}=-\frac{f_DG^2}{2D\rho\left(1+G\left.\frac{du}{dp}\right|_{h_0,G}\right)}.$$
+
+The solver finds the subsonic isentropic inlet state connected to the reservoir, marches this
+equation with EOS enthalpy flashes, and brackets the largest solution whose exit Mach number
+remains below one. A receiving pressure above the critical exit pressure triggers a second
+bounded mass-flux solve so the physical exit pressure matches the receiver. A lower receiving
+pressure retains the critical pipe state and reports a separately resolved isentropic
+ambient-expanded station. The requested effective area remains $C_d\pi D^2/4$.
+
+This is a quasi-steady model, not a transient pipe solver. It represents neither pressure-wave
+propagation nor line packing, finite pipe inventory, the second side of a rupture, heat transfer,
+roughness/Reynolds friction correlations, non-equilibrium phase transfer, slip or solid-bearing
+flow. Every EOS marching and ambient state must remain one equilibrium gas phase. Phase
+appearance is not replaced with ideal-gas or homogeneous-equilibrium physics. The result remains
+`UNQUALIFIED`; dense-gas regression and dilute analytical agreement are software validation, not
+independent experimental qualification.
+
+## EOS-backed transient pipe decompression
+
+`RealGasPipeDecompression` is the state-owning transient counterpart to the quasi-steady model.
+It stores cell-centred conservative density, momentum and total-energy values for a rigid,
+constant-area pipe. A local Lax-Friedrichs finite-volume update advances
+
+$$\frac{\partial}{\partial t}\begin{bmatrix}\rho\\ \rho u\\ E\end{bmatrix}
++\frac{\partial}{\partial x}\begin{bmatrix}\rho u\\ \rho u^2+p\\ u(E+p)\end{bmatrix}
+=\begin{bmatrix}0\\ -f_D\rho u|u|/(2D)\\ 0\end{bmatrix}.$$
+
+For every candidate cell, a NeqSim volume/internal-energy flash recovers pressure, temperature,
+phase state and acoustic speed from the selected EOS. The CFL limit therefore follows the local
+EOS signal speed rather than a constant heat-capacity ratio. The closed upstream boundary reflects
+momentum. The downstream ghost state uses the declared constant receiver pressure and the local
+exit temperature; the declared discharge coefficient multiplies the complete conservative
+boundary flux. The same mass and total-enthalpy flux is accumulated in pipe accounting and
+exported through `CoupledReleaseSource`, so `ProcessSystem` and `ProcessModel` frames do not
+perform a second hypothetical withdrawal.
+
+Construct the unit with the initial gas, pipe length and diameter, effective area coefficient,
+receiver pressure, specified Darcy friction factor, cell count and CFL number. It must run in
+dynamic mode. The input state must be one nonreacting equilibrium gas phase, and every VU-flashed
+cell plus the receiver ghost state must remain one gas phase. Phase appearance, unresolved
+properties, density closure failures, and detected or unresolved mixture-specific solid/hydrate
+risk abort the whole caller step without committing partial state.
+
+Tests retain exact pipe-plus-discharge mass and total-energy closure, fixed composition, atomic
+isolation, both process-container paths, a dilute-gas comparison with the perfect-gas solver, and
+spatial/CFL refinement receipts. Optional boundaries cover a finite rigid well-mixed upstream gas
+vessel and prescribed constant-$U$, finite-capacitance, lumped-cylinder or two-node radial wall
+sensitivities with explicit energy accounting.
+
+`TwoSidedRealGasPipeRupture` divides an initially uniform finite pipe at an interior rupture plane
+and creates two independently conservative `RealGasPipeDecompression` branches. Cell counts are
+allocated in proportion to branch length while retaining at least eight cells per branch. The
+left and right equipment are added to the same `ProcessSystem`; the helper registers both in a
+single-process `SourceTermSession` or in a named `ProcessModel` area. Each branch retains its own
+thermodynamic station, inventory and provenance. The frame directions are respectively
+`POSITIVE_PIPE_AXIS` and `NEGATIVE_PIPE_AXIS`; consumers must not add the opposing jets into one
+scalar source state. Whole-pipe mass and total energy close by summing the two branches.
+
+The default is an instantaneous full-bore opening. An immutable
+`ReleaseOpeningProfile.linearRamp(delaySeconds, durationSeconds)` can instead prescribe a delayed
+linear effective-area fraction shared by both branches. Each conservative CFL substep evaluates
+the fraction at its midpoint; finite ramps are divided into at least 20 internal intervals and
+split exactly at delay and full-opening boundaries. The end-of-frame fraction and the immutable
+profile code, delay and duration are retained in provenance. Tests cover exact branch
+synchronization, mass/total-energy closure and external caller-step refinement. The refinement
+test writes `target/source-term-benchmarks/two-sided-finite-opening-timestep-refinement.csv` with
+the caller step, released mass and closure residuals. The receipt is numerical regression evidence,
+not independent physical qualification.
+
+This is software evidence only. The finite-opening profile multiplies the declared maximum
+discharge coefficient and is a prescribed sensitivity, not a fracture model. The topology retains
+one constant-pressure receiver, rigid adiabatic single-gas branches and closed remote ends. It
+excludes pipe elasticity and fluid-structure coupling, predictive crack propagation/opening, heat
+transfer, pressure coupling across the open rupture plane, finite-rate phase transfer, multiphase
+slip/entrainment and solid-bearing transport, and it has no independent experimental qualification.
+
+## Homogeneous-equilibrium equations and station semantics
+
+The upstream TP flash establishes stagnation enthalpy $h_0$ [J/kg] and entropy $s_0$
+[J/(kg K)]. Pure-fluid pressure samples use PS flashes to retain the saturation-quality
+degree of freedom. Mixtures use cold TP flashes in a bracketed temperature root at fixed
+specific entropy and inventory (target residual `1e-7 J/(kg K)`). Numerical model version
+`1.1.0` adds guarded continuation at an incipient vapour/liquid phase when the cold-TP entropy
+bracket stalls or its candidate fails fugacity closure. The selected numerical route is
+recorded in `ENTROPY_SOLVER`:
+
+$$u(p)=\sqrt{2(h_0-h(p,s_0))},\quad G(p)=\rho(p,s_0)u(p),\quad \dot m=C_d A\max_{p_b\le p\le p_0}G(p).$$
+
+Here $u$ is velocity [m/s], $G$ inviscid mass flux [kg/(m2 s)], $\rho$ EOS total density
+[kg/m3], $C_d$ the supplied discharge coefficient, and $A=\pi d^2/4$ physical area [m2].
+The coefficient multiplies effective flow area; it does not change the isentropic velocity.
+Phase amounts are converted to mass fractions from phase mass, never from molar phase fraction.
+EOS mass/volume density is used consistently with EOS enthalpy and entropy.
+
+| Station | Definition |
+|---|---|
+| `UPSTREAM_STAGNATION` | Equilibrated reservoir state with zero velocity. |
+| `THROAT_CRITICAL` | Maximum sampled/refined mass-flux state; receiving-pressure state when unchoked. |
+| `ORIFICE_EXIT` | Explicit alias of the throat for the zero-length opening assumption. |
+| `AMBIENT_EXPANDED` | Ideal isentropic state at receiving pressure; excludes shocks, entrainment and mixing. |
+
+An interior maximum indicates choking. A 48-interval logarithmic pressure scan brackets
+each resolved local maximum, then golden-section refinement reduces bracket width below
+`1e-7 * upstreamPressure`. This finite search is not a proof that arbitrarily narrow maxima
+cannot exist. Phase-boundary cases require resolution/sensitivity and benchmark evidence.
+
+Every trial checks entropy closure (absolute `1e-5 J/(kg K)`), component conservation
+(`1e-8` of total moles), phase composition normalization (`1e-8`), interphase log-fugacity
+ratios (`1e-5`, for components above `1e-10` in both phases), and finite physical properties.
+Negative enthalpy drops below `-1e-5 J/kg` fail; smaller roundoff is clipped to zero.
+
+At a choked state the equilibrium acoustic API supplies an independent diagnostic. An unavailable
+acoustic derivative or a Mach discrepancy greater than 5% produces `VALID_WITH_WARNINGS`,
+with the reason retained. Acoustic speed is optional; required flash or closure failures
+always invalidate the calculation. No ideal-gas property defaults or replacement model are used.
+
+For upstream pressure at or below back pressure, the result is valid zero forward flow, with
+`NO_FORWARD_FLOW`; there is no ambient-expanded station and no reverse-flow calculation.
+
+## Applicability and evidence
+
+| Case | Behavior |
+|---|---|
+| Nonreacting gas, liquid or equilibrium fluid mixture | Calculates the stated homogeneous-equilibrium model. |
+| Flashing hydrocarbon liquid | Supports equilibrium phase redistribution with zero slip. |
+| Forced phases, reactions, solid or hydrate checking enabled | `UNSUPPORTED`. |
+| Mixture-specific equilibrium solid or hydrate risk at a resolved station | `UNSUPPORTED`; a separately assessed solid-capable model is required. |
+| Required solid or hydrate assessment cannot resolve | `INVALID`; absence of risk is never inferred from a failed check. |
+| Full-bore calorically perfect gas pipe with specified constant Darcy friction | Select `IdealGasFannoPipeReleaseModel`; outside HEM physics. |
+| Full-bore single-equilibrium-gas pipe requiring EOS departure | Select `RealGasFannoPipeReleaseModel`; phase appearance fails closed. |
+| Transient decompression waves, line packing, multiphase slip, delayed flashing or heat transfer | Outside the delivered models. |
+| Failed flash, unclosed inventory/entropy/fugacity or invalid density | `INVALID`, without a numeric release payload. |
+
+Version `1.2.4` assesses the upstream, accepted throat and ambient-expanded states on defensive
+fluid copies. Components present above `1e-12` mole fraction are checked when the station is at
+or below their database triple-point temperature. The selected-component solid flash uses the
+same EOS and mixture; a stable solid mass fraction above `1e-12` returns `SOLID_RISK`. A
+water-containing mixture with a recognized hydrate former is compared with its calculated
+hydrate equilibrium temperature and returns `HYDRATE_RISK` at or below the boundary. Failed
+required checks return `SOLID_RISK_ASSESSMENT_FAILED` and no numeric release payload. Clear
+stations carry `SOLID_RISK_ASSESSED` diagnostics.
+
+These are applicability controls, not solid-bearing release physics or experimental
+qualification. Candidate screening is limited by the component data and hydrate model available
+to the selected NeqSim thermodynamic system. Turning off solid checks on the caller does not
+disable the defensive assessment or establish absence of solids outside the checked stations.
+
+The HEM manifest also retains one independent experimental applicability case without converting
+it into qualification. Table 1 of Witlox et al., *Journal of Hazardous Materials* 142 (2007)
+797--809, DOI `10.1016/j.jhazmat.2006.06.126`, reports a STEP liquid-propane withdrawal at
+10.75 bar and 302.95 K through a 5 mm opening to 0.91 atm with a mass flow of 0.2 kg/s. The source
+table does not report measurement uncertainty. At those pressure and temperature inputs, the
+current SRK equilibrium request resolves a gas-only upstream state. Its raw 0.05969 kg/s result is
+therefore not a rate-validation point for the published liquid withdrawal. Version `1.2.4` retains a
+fail-closed phase-applicability assessment; the generated receipt leaves relative error empty and
+records `NOT_COMPARABLE_UPSTREAM_PHASE`, `NOT_REPORTED` uncertainty and `UNQUALIFIED`. The model
+manifest retains `EXPERIMENTAL_INPUT_PHASE_MISMATCH` and
+`MEASUREMENT_UNCERTAINTY_NOT_REPORTED`. An explicit, independently reviewed representation of the
+experimental liquid inventory is required before computing a rate error.
+
+Hammer et al., *International Journal of Multiphase Flow* 152 (2022) 104201, DOI
+`10.1016/j.ijmultiphaseflow.2022.104201`, report six dense single-fluid CO2 restriction tests with
+explicit mass-flow uncertainty. The retained cases cover 11.4--12.77 MPa, 295.15--298.35 K,
+4.5--12.7 mm restrictions and both orifice and nozzle geometries. At the reported ambient receiver
+pressure, the equilibrium expansion detects an ambient dry-ice phase and returns `UNSUPPORTED`
+with `SOLID_RISK`; it exposes no station or numeric rate. `ReleaseBenchmarkApplicability` records
+`RESULT_UNUSABLE` and the diagnostic code without recovering a failed value.
+
+The benchmark gate separately accepts `SINGLE_MATERIAL_PHASE` when exactly one supported material
+phase occupies the upstream state, independent of whether an EOS labels that sole compressed phase
+as gas or liquid. This does not accept gas/liquid coexistence, aqueous coexistence, solids or an
+unsupported native phase. Because all six restrictions remain choked with invariant calculated
+rates across a 600--800 kPa non-solid receiver-pressure band, version `1.2.4` also retains a
+restriction-plane sensitivity comparison without using it as an ambient source payload. Across the
+six cases the mean absolute relative error is 19.39%, the
+signed bias is +9.86%, the relative RMSE is 21.19%, and the maximum absolute error is 34.26%. Only
+one of six predictions is inside the reported experimental uncertainty; the largest deviation is
+10.27 reported uncertainty intervals. These results are independent accuracy evidence and a clear
+model limitation, not calibration or qualification. The live ambient path remains fail-closed and
+solid-capable physics plus accountable domain review are still required.
+
+The frame's `model.evidence` object retains the exact manifest ID,
+applicability codes, limitation codes and evidence references used by the selected model; it does
+not infer a higher evidence level from successful calculation status. Tests cover the ideal-gas choked limit (rate and pressure),
+unchoked/no-flow limits, energy/entropy closure, flashing pure propane, a methane/ethane
+gas mixture, input
+immutability, serialization, invalid/unsupported inputs, and area/coefficient scaling.
+No method is certified for a facility or safety decision by these tests.
+
+### Incipient-phase numerical continuation
+
+Cold TP phase selection can discard a trace vapour phase or assign its liquid cubic root near
+phase appearance. This creates an entropy discontinuity even when an equilibrium entropy root
+exists. Version `1.1.0` retains a vapour/liquid seed observed inside the same temperature bracket
+and can refine its phase fractions with the existing `TPmultiflash.solveBeta` equations. Each
+candidate uses the same EOS, pressure, components and inventory. It does not switch physical
+models, use default properties, force phase types or weaken the final closure limits.
+
+The refinement is bounded by 100 temperature bisections and 20 phase-split updates per
+candidate. Both phase fractions must lie strictly between `1e-10` and `1-1e-10`; the active
+set must still contain gas and liquid. Accepted candidates must pass composition, component
+inventory, fugacity and finite-property checks. Their extensive Gibbs energy cannot exceed
+the cold result by more than numerical noise (`1e-9 J/mol` times total moles plus 16 floating-point
+units in the reference Gibbs energy). A rejected candidate leaves the cold reference intact;
+an unresolved entropy, inventory or equilibrium residual still returns `INVALID` without a rate.
+
+`INCIPIENT_PHASE_CONTINUATION` records resolved entropy roots, accepted/rejected candidate
+counts and the last rejection reason. This diagnostic is distinct from acoustic warnings.
+The original pressure-search bounds and closure tolerances are unchanged. The source-frame
+schema remains v1, while model provenance identifies numerical version `1.2.4`.
+
+The former failing regression (80 mol% propane, 20 mol% n-butane, SRK/classic, 300 K,
+20 bara to 3 bara, 10 mm opening and discharge coefficient 0.62) now gives approximately
+**1.617324 kg/s**, a critical pressure of **8.231285 bara**, and an ambient gas mass fraction
+of **0.205319**. `ReleaseFlowFlashingTest` checks nine composition/temperature neighbours,
+inventory scaling, back-pressure sensitivity, station conservation and a schema fixture.
+It retains the matrix in `target/source-term-benchmarks/mixture-flashing.csv`.
+
+A separate saturation-path calculation solves bubble pressure while matching saturated-liquid
+entropy to upstream entropy. It shares SRK property data but does not reuse the HEM temperature
+root or pressure maximizer. For the regression case, rate agreement is within `1e-5` relative
+and critical pressure within 2 Pa; generated reference values are retained in
+`mixture-saturation-reference.csv`. This is an independent numerical-algorithm check, not
+independent experimental validation. The separate STEP case above is single-component,
+short-opening applicability evidence whose current upstream phase does not match the declared
+liquid withdrawal; it does not qualify the multicomponent continuation.
+
+The maximum is at phase appearance and is nonsmooth. The equilibrium acoustic diagnostic
+still reports `THROAT_MACH_MISMATCH` (Mach approximately 0.1215), so this example remains
+`VALID_WITH_WARNINGS`; frames remain `UNQUALIFIED`. Full mixture-flashing qualification
+requires independent release measurements and domain review.
+
+## Transient ideal-gas pipe decompression
+
+`IdealGasPipeDecompression` owns the line-pack state and advances it during native process
+transient execution. It is deliberately not a stateless `ReleaseFlowModel`: direct calls through
+its model identity fail closed with `TRANSIENT_STATE_REQUIRED`. Register the process unit through
+`SourceTermSession.addInventorySource` so the session exports the committed boundary flux rather
+than recalculating a hypothetical steady opening.
+
+For conservative state $U=(\rho,\rho u,\rho E)$ and perfect-gas pressure
+$p=(\gamma-1)[\rho E-(\rho u)^2/(2\rho)]$, each finite-volume cell advances as
+
+$$U_i^{n+1}=U_i^n-\frac{\Delta t}{\Delta x}\left(F_{i+1/2}-F_{i-1/2}\right)+\Delta t S_i.$$
+
+The local Lax--Friedrichs interface flux is
+
+$$F_{i+1/2}=\frac{F(U_L)+F(U_R)}{2}-\frac{a_{\max}}{2}(U_R-U_L),$$
+
+where $a_{\max}=\max(|u_L|+c_L,|u_R|+c_R)$. The timestep satisfies the configured
+Courant bound. The closed-end ghost state reflects velocity; the receiver ghost state retains
+the outlet temperature at the declared absolute backpressure. Specified Darcy friction contributes
+$-f_D\rho u|u|/(2D)$ to momentum only. Internal interface fluxes cancel exactly, and tests close
+remaining plus discharged mass and total energy while checking pressure-wave and discharge
+refinement.
+
+This is a first-order, one-sided, calorically perfect single-gas model. It excludes EOS-property
+evolution, pipe elasticity, heat transfer, an upstream vessel, two-sided rupture, phase change,
+non-equilibrium multiphase flow and solids. Its evidence is numerical/conservative and remains
+`UNQUALIFIED`; it is not an experimental dense-gas validation.
+
+## Compatibility and extension
+
+Existing scalar `LeakModel` methods keep their screening rate equations. Its lumped gas
+blowdown integration now conserves physical inventory and energy; see the
+[gas blowdown compatibility note](release-dispersion-scenarios#conservative-gas-blowdown-and-compatibility)
+for the correction of #3905, gas-only applicability, and changed numerical results. `LegacyScreeningReleaseModel` is an opt-in compatibility adapter that proves
+rate equality while exposing screening limitations in machine-readable diagnostics. The
+`calculateReleaseFlow` method still requires explicit model selection and does not change legacy
+selected blowdown orifice law. Use `ReleaseInventory` and process dynamics for model-explicit
+time-dependent state evolution.
+
+Additional models implement the serializable `ReleaseFlowModel` interface and return checked
+`ReleaseFlowResult.success` or `.failure` objects with stable identity/version and diagnostic
+codes. Station snapshots expose overall component mole and mass fractions and native phase
+mass fractions in deterministic name order. A new physical model needs its own applicability
+documentation and independent validation evidence.

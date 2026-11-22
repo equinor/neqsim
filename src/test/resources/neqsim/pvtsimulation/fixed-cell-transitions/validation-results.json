@@ -1,0 +1,244 @@
+{
+  "baseRevision": "eb672b7a3d2836393f54326a50d19426d2b7659e",
+  "independentPaths": 27,
+  "independentStates": 243,
+  "limitExperiments": 6,
+  "frozenBounds": {
+    "relativeVolume": 1e-08,
+    "absoluteAmountMol": 1e-08,
+    "absoluteComposition": 1e-08,
+    "componentClosure": "1e-10*max(1,initial_i) mol",
+    "separatorAmountMol": 1e-08
+  },
+  "matrix": {
+    "stateExecutions": 1458,
+    "oilAppearances": 60,
+    "oilDisappearances": 90,
+    "maxAmountErrorMol": 1.1289102985756472e-10,
+    "maxCompositionError": 7.362443987801726e-13,
+    "maxRelativeVolumeError": 5.795364188543317e-14,
+    "elapsedSeconds": 38.577315429
+  },
+  "exactApiTestTotals": {
+    "classes": 77,
+    "tests": 667,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "localRuntime": "OpenJDK17.0.20; Java8 API/bytecode targeting, not a local Java8 runtime",
+  "toolingTests": 50,
+  "newFocusedJacocoTests": 6,
+  "focusedMethodCoverage": {
+    "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell": {
+      "INSTRUCTION": {
+        "covered": 11,
+        "missed": 0
+      },
+      "LINE": {
+        "covered": 1,
+        "missed": 0
+      },
+      "COMPLEXITY": {
+        "covered": 1,
+        "missed": 0
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    },
+    "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion": {
+      "INSTRUCTION": {
+        "covered": 6,
+        "missed": 0
+      },
+      "LINE": {
+        "covered": 1,
+        "missed": 0
+      },
+      "COMPLEXITY": {
+        "covered": 1,
+        "missed": 0
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    },
+    "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.runFixedCellProtocol": {
+      "INSTRUCTION": {
+        "covered": 294,
+        "missed": 75
+      },
+      "BRANCH": {
+        "covered": 43,
+        "missed": 15
+      },
+      "LINE": {
+        "covered": 47,
+        "missed": 10
+      },
+      "COMPLEXITY": {
+        "covered": 15,
+        "missed": 15
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    },
+    "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion$FixedCellResult.allowsDryPhaseChanges": {
+      "INSTRUCTION": {
+        "covered": 3,
+        "missed": 0
+      },
+      "LINE": {
+        "covered": 1,
+        "missed": 0
+      },
+      "COMPLEXITY": {
+        "covered": 1,
+        "missed": 0
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    }
+  },
+  "checkstyle": {
+    "exit": 0,
+    "analyzedJavaFiles": 1,
+    "unchangedBaselineWarnings": 8,
+    "exclusions": "util and test Java files excluded by checked-in configuration"
+  },
+  "spotbugs": {
+    "exit": 1,
+    "baselineExit": 1,
+    "findingsUnchanged": true,
+    "newFindings": 0,
+    "findings": [
+      {
+        "type": "EI_EXPOSE_REP",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "getCummulativeMolePercDepleted",
+        "descriptor": "()[D",
+        "field": "cummulativeMolePercDepleted",
+        "count": 1
+      },
+      {
+        "type": "EI_EXPOSE_REP",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "getLiquidDropoutCurve",
+        "descriptor": "()[D",
+        "field": "liquidRelativeVolume",
+        "count": 1
+      },
+      {
+        "type": "EI_EXPOSE_REP",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "getLiquidRelativeVolume",
+        "descriptor": "()[D",
+        "field": "liquidRelativeVolume",
+        "count": 1
+      },
+      {
+        "type": "EI_EXPOSE_REP",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "getRelativeVolume",
+        "descriptor": "()[D",
+        "field": "relativeVolume",
+        "count": 1
+      },
+      {
+        "type": "EI_EXPOSE_REP",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "getZgas",
+        "descriptor": "()[D",
+        "field": "Zgas",
+        "count": 1
+      },
+      {
+        "type": "EI_EXPOSE_REP",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "getZmix",
+        "descriptor": "()[D",
+        "field": "Zmix",
+        "count": 1
+      },
+      {
+        "type": "EI_EXPOSE_REP2",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "setTemperaturesAndPressures",
+        "descriptor": "([D[D)V",
+        "field": "pressure",
+        "count": 1
+      },
+      {
+        "type": "EI_EXPOSE_REP2",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "setTemperaturesAndPressures",
+        "descriptor": "([D[D)V",
+        "field": "temperatures",
+        "count": 1
+      },
+      {
+        "type": "IL_INFINITE_LOOP",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "calcSaturationConditions",
+        "descriptor": "()V",
+        "field": "",
+        "count": 1
+      },
+      {
+        "type": "NP_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "calculateKValues",
+        "descriptor": "()[[D",
+        "field": "thermoOps",
+        "count": 1
+      },
+      {
+        "type": "NP_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "calculateOilDensityQC",
+        "descriptor": "()[D",
+        "field": "thermoOps",
+        "count": 1
+      },
+      {
+        "type": "NP_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "restoreSaturationVolume",
+        "descriptor": "(Z)V",
+        "field": "thermoOps",
+        "count": 1
+      },
+      {
+        "type": "NP_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "runCalc",
+        "descriptor": "()V",
+        "field": "thermoOps",
+        "count": 1
+      },
+      {
+        "type": "NP_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "runSaturationTPflash",
+        "descriptor": "()V",
+        "field": "thermoOps",
+        "count": 1
+      },
+      {
+        "type": "VA_FORMAT_STRING_USES_NEWLINE",
+        "className": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion",
+        "method": "generateQCReport",
+        "descriptor": "()Ljava/lang/String;",
+        "field": "",
+        "count": 5
+      }
+    ]
+  }
+}

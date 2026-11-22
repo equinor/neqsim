@@ -24,6 +24,7 @@ SEARCH_SCRIPT = DOCS / "assets" / "js" / "search.js"
 SEARCH_PAGE = DOCS / "search.md"
 LANDING_PAGE = DOCS / "index.md"
 NON_CONTENT_HTML_DIRS = {"_includes", "_layouts"}
+NON_CONTENT_SOURCE_DIRS = {".jekyll-cache", "_site", "vendor"}
 NOTEBOOK_LINK_PATTERN = re.compile(
     r"""(?:\[[^\]]*\]\(\s*|href\s*=\s*["'])
     (?P<target>[^)\s"']+\.ipynb(?:[?#][^)\s"']*)?)""",
@@ -41,7 +42,13 @@ INCLUDE_RELATIVE_PATTERN = re.compile(
 
 def markdown_files() -> List[Path]:
     """Return every Markdown documentation source that Jekyll should index."""
-    return sorted(DOCS.rglob("*.md"))
+    return sorted(
+        path
+        for path in DOCS.rglob("*.md")
+        if not any(
+            part in NON_CONTENT_SOURCE_DIRS for part in path.relative_to(DOCS).parts
+        )
+    )
 
 
 def content_html_files() -> List[Path]:
@@ -49,13 +56,17 @@ def content_html_files() -> List[Path]:
     return sorted(
         path
         for path in DOCS.rglob("*.html")
-        if not any(part in NON_CONTENT_HTML_DIRS for part in path.relative_to(DOCS).parts)
+        if not any(
+            part in NON_CONTENT_HTML_DIRS | NON_CONTENT_SOURCE_DIRS
+            for part in path.relative_to(DOCS).parts
+        )
     )
 
 
-def parse_front_matter(path: Path) -> Tuple[Dict[str, str], str]:
+def parse_front_matter(path: Path, text: str = None) -> Tuple[Dict[str, str], str]:
     """Parse the leading flat YAML fields needed by search without external packages."""
-    text = path.read_text(encoding="utf-8-sig")
+    if text is None:
+        text = path.read_text(encoding="utf-8-sig")
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         raise ValueError("missing leading YAML front matter")
@@ -153,12 +164,19 @@ def is_external_link(target: str) -> bool:
     return bool(re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target)) or target.startswith("//")
 
 
-def included_markdown_sources(paths: Iterable[Path]) -> List[Path]:
+def included_markdown_sources(
+    paths: Iterable[Path], source_texts: Dict[Path, str] = None
+) -> List[Path]:
     """Return Markdown sources inserted into pages through ``include_relative``."""
 
     included = set()
     for path in paths:
-        text = path.read_text(encoding="utf-8-sig")
+        if source_texts is not None:
+            if path not in source_texts:
+                continue
+            text = source_texts[path]
+        else:
+            text = path.read_text(encoding="utf-8-sig")
         for match in INCLUDE_RELATIVE_PATTERN.finditer(text):
             target = match.group("target").strip("\"'")
             included.add((path.parent / target).resolve())
@@ -227,11 +245,14 @@ def source_audit() -> List[str]:
     errors: List[str] = []
     markdown = markdown_files()
     html = content_html_files()
+    markdown_texts: Dict[Path, str] = {}
 
     for path in markdown:
         try:
-            fields, body = parse_front_matter(path)
-        except ValueError as exc:
+            text = path.read_text(encoding="utf-8-sig")
+            markdown_texts[path] = text
+            fields, body = parse_front_matter(path, text)
+        except (UnicodeDecodeError, ValueError) as exc:
             errors.append(f"{path.relative_to(ROOT)}: {exc}")
             continue
         for field in ("title", "description"):
@@ -242,7 +263,7 @@ def source_audit() -> List[str]:
         errors.extend(relative_notebook_link_errors(path, body))
         errors.extend(internal_document_link_errors(path, body))
 
-    for path in included_markdown_sources(markdown):
+    for path in included_markdown_sources(markdown, markdown_texts):
         if not path.is_file():
             errors.append(f"{path.relative_to(ROOT)}: include_relative target does not exist")
             continue

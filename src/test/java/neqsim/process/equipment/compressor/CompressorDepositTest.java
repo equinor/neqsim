@@ -233,11 +233,11 @@ public class CompressorDepositTest {
   @Test
   public void testDegradedChartScalesHeadAndEfficiency() {
     CompressorChart chart = new CompressorChart();
-    double[] chartConditions = new double[] { 1.0, 1.0, 1.0, 1.0 };
-    double[] speed = new double[] { 1000.0, 1500.0 };
-    double[][] flow = new double[][] { { 500.0, 700.0, 900.0 }, { 600.0, 800.0, 1000.0 } };
-    double[][] head = new double[][] { { 100.0, 90.0, 75.0 }, { 150.0, 135.0, 110.0 } };
-    double[][] polyEff = new double[][] { { 78.0, 80.0, 76.0 }, { 77.0, 79.0, 75.0 } };
+    double[] chartConditions = new double[] {1.0, 1.0, 1.0, 1.0};
+    double[] speed = new double[] {1000.0, 1500.0};
+    double[][] flow = new double[][] {{500.0, 700.0, 900.0}, {600.0, 800.0, 1000.0}};
+    double[][] head = new double[][] {{100.0, 90.0, 75.0}, {150.0, 135.0, 110.0}};
+    double[][] polyEff = new double[][] {{78.0, 80.0, 76.0}, {77.0, 79.0, 75.0}};
     chart.setCurves(chartConditions, speed, flow, head, polyEff);
     chart.setHeadUnit("kJ/kg");
     chart.setUseCompressorChart(true);
@@ -257,11 +257,11 @@ public class CompressorDepositTest {
   public void testBuildDegradedChartFromDepositAfterOperatingHours() {
     Compressor comp = buildCompressor(0.60);
     CompressorChart chart = new CompressorChart();
-    double[] chartConditions = new double[] { 1.0, 1.0, 1.0, 1.0 };
-    double[] speed = new double[] { 1000.0, 1500.0 };
-    double[][] flow = new double[][] { { 500.0, 700.0, 900.0 }, { 600.0, 800.0, 1000.0 } };
-    double[][] head = new double[][] { { 100.0, 90.0, 75.0 }, { 150.0, 135.0, 110.0 } };
-    double[][] polyEff = new double[][] { { 78.0, 80.0, 76.0 }, { 77.0, 79.0, 75.0 } };
+    double[] chartConditions = new double[] {1.0, 1.0, 1.0, 1.0};
+    double[] speed = new double[] {1000.0, 1500.0};
+    double[][] flow = new double[][] {{500.0, 700.0, 900.0}, {600.0, 800.0, 1000.0}};
+    double[][] head = new double[][] {{100.0, 90.0, 75.0}, {150.0, 135.0, 110.0}};
+    double[][] polyEff = new double[][] {{78.0, 80.0, 76.0}, {77.0, 79.0, 75.0}};
     chart.setCurves(chartConditions, speed, flow, head, polyEff);
     chart.setHeadUnit("kJ/kg");
     chart.setUseCompressorChart(true);

@@ -18,7 +18,7 @@ class StaticPhaseMixerTest {
 
   @Test
   void testSeparatorRecombinationConservesMassAtBaseAndNearbyTemperatures() {
-    double[] temperatures = new double[] { 288.15, 293.15 };
+    double[] temperatures = new double[] {288.15, 293.15};
 
     for (double temperature : temperatures) {
       SystemInterface fluid = createSeparatorFeed(temperature);

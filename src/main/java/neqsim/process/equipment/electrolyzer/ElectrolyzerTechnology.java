@@ -4,18 +4,19 @@ package neqsim.process.equipment.electrolyzer;
  * Water-electrolyzer technology selector with typical operating-point defaults.
  *
  * <p>
- * Defaults are taken from the IRENA Hydrogen Decarbonisation Pathways report (2022) and Buttler &amp; Spliethoff,
- * Renewable and Sustainable Energy Reviews 82 (2018) 2440-2454. They cover the commercially relevant water-electrolysis
- * technologies and the SOEC research demonstrators.
+ * Operating-point estimates originate from IRENA (2022) and Buttler &amp; Spliethoff, Renewable and Sustainable Energy
+ * Reviews 82 (2018) 2440-2454. These estimates are not a qualification of current efficiency. The alkaline
+ * current-efficiency reference is documented below; PEM, SOEC and AEM retain unqualified legacy values pending issue
+ * 4682. Supply measured current efficiency for equipment-specific calculations.
  * </p>
  *
  * <ul>
  * <li>{@link #PEM} - proton-exchange-membrane, 60-80 &deg;C, current density 1.5-2.5 A/cm&sup2;, cell voltage ~1.8 V,
- * specific energy ~52 kWh/kgH2.</li>
+ * with an unqualified legacy current efficiency.</li>
  * <li>{@link #ALKALINE} - liquid KOH, 70-90 &deg;C, current density 0.2-0.5 A/cm&sup2;, cell voltage ~1.85 V, specific
- * energy ~50 kWh/kgH2.</li>
+ * energy ~51.32 kWh/kgH2 at fixed voltage, before balance-of-plant losses.</li>
  * <li>{@link #SOEC} - solid-oxide electrolysis cell, 700-850 &deg;C, current density ~1 A/cm&sup2;, cell voltage ~1.3
- * V, specific energy ~40 kWh/kgH2 (electricity only).</li>
+ * V; external steam and heat requirements are separate from current efficiency.</li>
  * <li>{@link #AEM} - anion-exchange-membrane, 50-70 &deg;C, intermediate properties.</li>
  * </ul>
  *
@@ -27,8 +28,13 @@ public enum ElectrolyzerTechnology {
   /** Proton-exchange-membrane electrolysis. */
   PEM(1.8, 2.0, 80.0, 30.0, 0.65),
 
-  /** Liquid-alkaline (KOH) electrolysis. */
-  ALKALINE(1.85, 0.4, 80.0, 7.0, 0.62),
+  /**
+   * Liquid-alkaline reference using Ulleberg (2003), Eq. (9), Table 3, PHOEBUS coefficients at 80 degrees C and
+   * reported 7 bar: f1 = 250 (mA/cm2)^2 and f2 = 0.96. Evaluating at the existing nominal 400 mA/cm2 extrapolates
+   * beyond the current-efficiency measurements in Fig. 6; this is a screening estimate, not a measured nominal
+   * efficiency or an off-design correlation. DOI: 10.1016/S0360-3199(02)00033-2.
+   */
+  ALKALINE(1.85, 0.4, 80.0, 7.0, 0.96 * 400.0 * 400.0 / (250.0 + 400.0 * 400.0)),
 
   /** Solid-oxide electrolysis cell (high-temperature steam electrolysis). */
   SOEC(1.30, 1.0, 800.0, 1.0, 0.85),
@@ -88,9 +94,11 @@ public enum ElectrolyzerTechnology {
   }
 
   /**
-   * Get the typical faradaic (current) efficiency for this technology. Equals the fraction of the stack current that
-   * actually splits water (the rest is lost to leakage, crossover, parasitic reactions). PEM and alkaline typically
-   * 0.6-0.7; SOEC approaches 0.9 because thermal energy partially substitutes for electricity.
+   * Get the nominal Faradaic (current) efficiency: the fraction of charge producing hydrogen according to
+   * {@code etaF = 2 F nH2 / I}. This is distinct from LHV/HHV energy efficiency. Thermal substitution in SOEC does not
+   * determine current efficiency. The alkaline reference is a fixed screening estimate; the other technologies retain
+   * unqualified legacy values. This getter does not recalculate efficiency with current density, temperature or
+   * pressure. See {@link #ALKALINE} for provenance and extrapolation limits.
    *
    * @return faradaic efficiency (dimensionless, 0..1)
    */

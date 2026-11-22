@@ -23,6 +23,9 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.CandidateEvidence;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.CandidateStatus;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.ObjectiveCandidateEvidence;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.ObjectiveRankingPolicy;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.ObjectiveRankingResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.RankingDirection;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.RankingOutcome;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.RankingPolicy;
@@ -66,7 +69,7 @@ class ProcessModelDebottleneckRankingTest {
   @Test
   void ranksCompatibleAlternativesDeterministicallyAndSerializes() throws Exception {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     List<double[]> candidates = commonCandidates();
 
     StudyResult result1100 = createStudy(fixture, "study-1100", 1100.0, 0.90, "kg/hr", "wet feed mass rate", candidates)
@@ -104,7 +107,7 @@ class ProcessModelDebottleneckRankingTest {
     assertEquals(first.getBestCandidate().getDelta(), restored.getBestCandidate().getDelta(), 0.0);
     assertEquals(first.getPolicy().getMetricProvenance(), restored.getPolicy().getMetricProvenance());
 
-    RankingResult second = ranking.rank(new StudyResult[] { result1100, result1150, result1200 });
+    RankingResult second = ranking.rank(new StudyResult[] {result1100, result1150, result1200});
     for (int index = 0; index < first.getRankedCandidates().size(); index++) {
       CandidateEvidence expected = first.getRankedCandidates().get(index);
       CandidateEvidence actual = second.getRankedCandidates().get(index);
@@ -114,22 +117,59 @@ class ProcessModelDebottleneckRankingTest {
     }
   }
 
+  /** Transactional objective evidence ranks without resampling callbacks after the live state is restored. */
+  @Test
+  void ranksCompatibleTransactionalObjectivesDeterministically() {
+    Fixture fixture = createFixture();
+    fixture.evaluator.evaluate(new double[] {800.0});
+    List<double[]> candidates = commonCandidates();
+    StudyResult result1100 = createStudy(fixture, "objective-1100", 1100.0, 0.90, "kg/hr", "wet feed mass rate",
+        candidates).evaluate();
+    StudyResult result1150 = createStudy(fixture, "objective-1150", 1150.0, 0.90, "kg/hr", "wet feed mass rate",
+        candidates).evaluate();
+    StudyResult result1200 = createStudy(fixture, "objective-1200", 1200.0, 0.90, "kg/hr", "wet feed mass rate",
+        candidates).evaluate();
+
+    ProcessModelDebottleneckRanking ranking = new ProcessModelDebottleneckRanking("objective-portfolio",
+        "Objective portfolio", "synthetic transactional objective ranking");
+    ObjectiveRankingPolicy policy = new ObjectiveRankingPolicy("production-objective", "Production objective",
+        "exact frozen evaluator objective", 0, "feed production",
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE, "kg/hr", 1.0, 0.50, 1.0e-8);
+    ObjectiveRankingResult result = ranking.rankObjectives(Arrays.asList(result1100, result1150, result1200), policy);
+
+    assertEquals(RankingOutcome.COMPLETED, result.getOutcome());
+    assertEquals(3, result.getRankedCandidates().size());
+    assertEquals(0, result.getRejectedCandidates().size());
+    assertEquals("separator-gas-1200", result.getBestCandidate().getAlternativeDefinition().getId());
+    assertEquals(200.0, result.getBestCandidate().getDelta(), 1.0e-8);
+    assertEquals(1, result.getBestCandidate().getRank());
+    ObjectiveCandidateEvidence second = result.getRankedCandidates().get(1);
+    ObjectiveCandidateEvidence third = result.getRankedCandidates().get(2);
+    assertEquals("separator-gas-1100", second.getAlternativeDefinition().getId());
+    assertEquals("separator-gas-1150", third.getAlternativeDefinition().getId());
+    assertEquals(2, second.getRank());
+    assertEquals(2, third.getRank());
+    assertEquals("kg/hr", result.getPolicy().getUnit());
+    assertOriginalStateRestored(fixture);
+    assertThrows(IllegalStateException.class, () -> ranking.rank(Arrays.asList(result1100, result1150, result1200)));
+  }
+
   /** Incompatible units, baselines and confidence must be rejected without a synthetic score. */
   @Test
   void rejectsIncompatibleEvidenceWithoutComparingUnlikeMetrics() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
 
     StudyResult reference = createStudy(fixture, "reference", 1100.0, 0.90, "kg/hr", "wet feed mass rate",
         commonCandidates()).evaluate();
     StudyResult wrongUnit = createStudy(fixture, "wrong-unit", 1150.0, 0.90, "t/day", "wet feed mass rate",
         commonCandidates()).evaluate();
     List<double[]> differentBaselineCandidates = new ArrayList<double[]>();
-    differentBaselineCandidates.add(new double[] { 800.0 });
-    differentBaselineCandidates.add(new double[] { 899.0 });
-    differentBaselineCandidates.add(new double[] { 1099.0 });
-    differentBaselineCandidates.add(new double[] { 1199.0 });
-    differentBaselineCandidates.add(new double[] { 1400.0 });
+    differentBaselineCandidates.add(new double[] {800.0});
+    differentBaselineCandidates.add(new double[] {899.0});
+    differentBaselineCandidates.add(new double[] {1099.0});
+    differentBaselineCandidates.add(new double[] {1199.0});
+    differentBaselineCandidates.add(new double[] {1400.0});
     StudyResult wrongBaseline = createStudy(fixture, "wrong-baseline", 1200.0, 0.90, "kg/hr", "wet feed mass rate",
         differentBaselineCandidates).evaluate();
     StudyResult lowConfidence = createStudy(fixture, "low-confidence", 1250.0, 0.40, "kg/hr", "wet feed mass rate",
@@ -154,7 +194,7 @@ class ProcessModelDebottleneckRankingTest {
   @Test
   void duplicateIdentityFailsClosed() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     StudyResult result = createStudy(fixture, "duplicate", 1100.0, 0.90, "kg/hr", "wet feed mass rate",
         commonCandidates()).evaluate();
 
@@ -193,11 +233,11 @@ class ProcessModelDebottleneckRankingTest {
   /** @return common deterministic candidate set with exact baseline and alternative incumbents */
   private List<double[]> commonCandidates() {
     List<double[]> candidates = new ArrayList<double[]>();
-    candidates.add(new double[] { 800.0 });
-    candidates.add(new double[] { 999.0 });
-    candidates.add(new double[] { 1099.0 });
-    candidates.add(new double[] { 1199.0 });
-    candidates.add(new double[] { 1400.0 });
+    candidates.add(new double[] {800.0});
+    candidates.add(new double[] {999.0});
+    candidates.add(new double[] {1099.0});
+    candidates.add(new double[] {1199.0});
+    candidates.add(new double[] {1400.0});
     return candidates;
   }
 

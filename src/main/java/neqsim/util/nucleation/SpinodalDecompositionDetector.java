@@ -265,7 +265,7 @@ public class SpinodalDecompositionDetector {
       stabilityState = StabilityState.STABLE;
     }
     stabilityMargin = 1.0; // Cannot compute Hessian for pure component
-    hessianMatrix = new double[][] { { 0.0 } };
+    hessianMatrix = new double[][] {{0.0}};
   }
 
   /**

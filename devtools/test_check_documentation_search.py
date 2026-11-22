@@ -2,6 +2,8 @@
 
 import unittest
 from pathlib import Path
+import tempfile
+from unittest import mock
 
 from devtools import check_documentation_search as audit
 
@@ -58,6 +60,42 @@ class DocumentationNotebookLinkAuditTest(unittest.TestCase):
 
 
 class DocumentationPageLinkAuditTest(unittest.TestCase):
+    def test_include_scan_reuses_the_audited_source_text(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            docs = Path(temporary_directory)
+            source = docs / "source.md"
+            target = docs / "included.md"
+            audited_text = "{% include_relative included.md %}\n"
+            source.write_text(audited_text, encoding="utf-8")
+            target.write_text("included\n", encoding="utf-8")
+            source.write_bytes(b"\xaa\x00")
+
+            self.assertEqual(
+                audit.included_markdown_sources([source], {source: audited_text}),
+                [target.resolve()],
+            )
+
+    def test_include_scan_does_not_reread_a_source_that_failed_decoding(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            source = Path(temporary_directory) / "invalid.md"
+            source.write_bytes(b"\xaa\x00")
+
+            self.assertEqual(audit.included_markdown_sources([source], {}), [])
+
+    def test_generated_and_dependency_directories_are_not_document_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            docs = Path(temporary_directory)
+            (docs / "guide.md").write_text("---\ntitle: Guide\n---\ntext\n", encoding="utf-8")
+            for directory in ("vendor", "_site", ".jekyll-cache"):
+                generated = docs / directory / "nested"
+                generated.mkdir(parents=True)
+                (generated / "not-source.md").write_bytes(b"\xaa\x00")
+                (generated / "not-source.html").write_bytes(b"\xaa\x00")
+
+            with mock.patch.object(audit, "DOCS", docs):
+                self.assertEqual(audit.markdown_files(), [docs / "guide.md"])
+                self.assertEqual(audit.content_html_files(), [])
+
     def test_included_markdown_requires_extensionless_links(self) -> None:
         errors = audit.included_markdown_suffix_errors(
             audit.DOCS / "process" / "equipment" / "README.md",

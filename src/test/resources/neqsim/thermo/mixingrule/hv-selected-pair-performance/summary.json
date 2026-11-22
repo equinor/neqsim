@@ -1,0 +1,2109 @@
+{
+  "declared_source_head": "ab66ca997b22cf965ee7d6d9f63a8fc7b8559d92",
+  "jvms": 144,
+  "rounds": 1440,
+  "measured_operations": 1944000,
+  "state_rows": 39600,
+  "max_residuals": {
+    "balance": 4.163336342344337e-15,
+    "normalization": 3.3306690738754696e-16,
+    "log_fugacity": 8.742340185108333e-12
+  },
+  "topologies": [
+    "GAS/AQUEOUS",
+    "GAS/OIL/AQUEOUS"
+  ],
+  "retained_process_log_bytes": 0,
+  "max_same_case_beta_z_x_logphi_difference": 0.0,
+  "interpretation": "Model cost characterization; different thermodynamics/solver work; no speedup acceptance",
+  "cells": [
+    {
+      "profile": 0,
+      "components": 5,
+      "scenario": "init1",
+      "HV_over_CLASSICAL_per_fork": [
+        7.9635324575313735,
+        9.393782929467218,
+        9.026103310342556,
+        9.346359753101938
+      ],
+      "ratio_median": 9.186231531722246,
+      "ratio_range": [
+        7.9635324575313735,
+        9.393782929467218
+      ],
+      "CLASSICAL_ns_per_fork": [
+        1282.9765,
+        1164.75275,
+        1214.98,
+        1237.06925
+      ],
+      "HV_ns_per_fork": [
+        10217.025,
+        10941.4345,
+        10966.535,
+        11562.09425
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9078519754648664,
+        1.018180751946534
+      ],
+      "HV_same_binary_later_earlier": [
+        1.070902195110612,
+        1.0543069666033984
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        304.024,
+        304.024,
+        304.024,
+        304.024
+      ],
+      "HV_bytes_per_fork": [
+        0.024,
+        0.024,
+        0.024,
+        0.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "components": 5,
+      "scenario": "init3",
+      "HV_over_CLASSICAL_per_fork": [
+        13.573075774144032,
+        13.369930818557137,
+        13.136031533109763,
+        12.878845933463829
+      ],
+      "ratio_median": 13.252981175833451,
+      "ratio_range": [
+        12.878845933463829,
+        13.573075774144032
+      ],
+      "CLASSICAL_ns_per_fork": [
+        2394.36225,
+        2432.19125,
+        2497.375,
+        2432.39875
+      ],
+      "HV_ns_per_fork": [
+        32498.860249999998,
+        32518.228750000002,
+        32805.59675,
+        31326.488749999997
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.0157991966336755,
+        0.9739821812903549
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0005959747465298,
+        0.9549129372261762
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        416.024,
+        416.024,
+        416.024,
+        416.024
+      ],
+      "HV_bytes_per_fork": [
+        5440.024,
+        5440.024,
+        5440.024,
+        5440.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6132114256666763,
+          "rich_water": 0.008213751130293554,
+          "aqueous_CO2": 0.0014310320443947757
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123329127036985,
+          "rich_water": 0.008192784111117776,
+          "aqueous_CO2": 0.0034132385170464333
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "components": 5,
+      "scenario": "flash",
+      "HV_over_CLASSICAL_per_fork": [
+        3.882267607601853,
+        3.714185279670935,
+        3.730587257126101,
+        3.879684260820758
+      ],
+      "ratio_median": 3.80513575897343,
+      "ratio_range": [
+        3.714185279670935,
+        3.882267607601853
+      ],
+      "CLASSICAL_ns_per_fork": [
+        245900.04,
+        251748.72,
+        259188.0,
+        241713.43
+      ],
+      "HV_ns_per_fork": [
+        954649.76,
+        935041.3899999999,
+        966923.45,
+        937771.79
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.0237847866962526,
+        0.9325795561522909
+      ],
+      "HV_same_binary_later_earlier": [
+        0.9794601425343676,
+        0.9698511190311913
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        583048.96,
+        583048.96,
+        583048.96,
+        583048.96
+      ],
+      "HV_bytes_per_fork": [
+        682400.96,
+        682400.96,
+        682400.96,
+        682400.96
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.613300864030564,
+          "rich_water": 0.008281338694222252,
+          "aqueous_CO2": 0.0014323764794119994
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.613300864030564,
+          "rich_water": 0.008281338694222252,
+          "aqueous_CO2": 0.0014323764794119994
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.613300864030564,
+          "rich_water": 0.008281338694222252,
+          "aqueous_CO2": 0.0014323764794119994
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.613300864030564,
+          "rich_water": 0.008281338694222252,
+          "aqueous_CO2": 0.0014323764794119994
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6124245628512365,
+          "rich_water": 0.008260066968804828,
+          "aqueous_CO2": 0.00340851396417049
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6124245628512365,
+          "rich_water": 0.008260066968804828,
+          "aqueous_CO2": 0.00340851396417049
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6124245628512365,
+          "rich_water": 0.008260066968804828,
+          "aqueous_CO2": 0.00340851396417049
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6124245628512365,
+          "rich_water": 0.008260066968804828,
+          "aqueous_CO2": 0.00340851396417049
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "components": 15,
+      "scenario": "init1",
+      "HV_over_CLASSICAL_per_fork": [
+        51.34357456708684,
+        55.49555750105664,
+        48.97323805624643,
+        50.953996266454524
+      ],
+      "ratio_median": 51.14878541677068,
+      "ratio_range": [
+        48.97323805624643,
+        55.49555750105664
+      ],
+      "CLASSICAL_ns_per_fork": [
+        5259.311,
+        4996.42775,
+        5584.833500000001,
+        5550.755999999999
+      ],
+      "HV_ns_per_fork": [
+        270031.8265,
+        277279.5435,
+        273507.38049999997,
+        282833.20050000004
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9500156484375996,
+        0.9938982066340919
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0268402324790409,
+        1.0340971420330651
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1056.024,
+        1056.024,
+        1056.024,
+        1056.024
+      ],
+      "HV_bytes_per_fork": [
+        0.024,
+        0.024,
+        0.024,
+        0.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "components": 15,
+      "scenario": "init3",
+      "HV_over_CLASSICAL_per_fork": [
+        52.61961716553704,
+        53.28579058736555,
+        55.72937031638595,
+        59.5196957135617
+      ],
+      "ratio_median": 54.507580451875754,
+      "ratio_range": [
+        52.61961716553704,
+        59.5196957135617
+      ],
+      "CLASSICAL_ns_per_fork": [
+        17304.62025,
+        17211.292,
+        16866.14875,
+        16732.72075
+      ],
+      "HV_ns_per_fork": [
+        910562.49275,
+        917117.30125,
+        939939.8495,
+        995926.4475
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9946067438261178,
+        0.9920890060927513
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0071986366143897,
+        1.0595640221337377
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1464.024,
+        1464.024,
+        1464.024,
+        1464.024
+      ],
+      "HV_bytes_per_fork": [
+        175680.024,
+        175680.024,
+        175680.024,
+        175680.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4891954105904803,
+          "rich_water": 0.00893033963230905,
+          "aqueous_CO2": 0.0003657076376743596
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4888922536441789,
+          "rich_water": 0.008919210416117916,
+          "aqueous_CO2": 0.0011252975180619665
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "components": 15,
+      "scenario": "flash",
+      "HV_over_CLASSICAL_per_fork": [
+        26.0173928129987,
+        28.03471239107389,
+        23.804959342536314,
+        26.344647717258475
+      ],
+      "ratio_median": 26.181020265128588,
+      "ratio_range": [
+        23.804959342536314,
+        28.03471239107389
+      ],
+      "CLASSICAL_ns_per_fork": [
+        819102.12,
+        738440.92,
+        907107.74,
+        798441.47
+      ],
+      "HV_ns_per_fork": [
+        21310901.61,
+        20701978.810000002,
+        21593662.87,
+        21034659.25
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9015248550449363,
+        0.8802057735721668
+      ],
+      "HV_same_binary_later_earlier": [
+        0.9714266992948687,
+        0.9741126077884349
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1588168.96,
+        1588168.96,
+        1588168.96,
+        1588168.96
+      ],
+      "HV_bytes_per_fork": [
+        2673184.96,
+        2673184.96,
+        2673184.96,
+        2673184.96
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4896308759141313,
+          "rich_water": 0.009003993954071062,
+          "aqueous_CO2": 0.00036621090802424375
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4896308759141313,
+          "rich_water": 0.009003993954071062,
+          "aqueous_CO2": 0.00036621090802424375
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4896308759141313,
+          "rich_water": 0.009003993954071062,
+          "aqueous_CO2": 0.00036621090802424375
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4896308759141313,
+          "rich_water": 0.009003993954071062,
+          "aqueous_CO2": 0.00036621090802424375
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48932830503181063,
+          "rich_water": 0.008992681670835582,
+          "aqueous_CO2": 0.0011235107637918298
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48932830503181063,
+          "rich_water": 0.008992681670835582,
+          "aqueous_CO2": 0.0011235107637918298
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48932830503181063,
+          "rich_water": 0.008992681670835582,
+          "aqueous_CO2": 0.0011235107637918298
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48932830503181063,
+          "rich_water": 0.008992681670835582,
+          "aqueous_CO2": 0.0011235107637918298
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "components": 5,
+      "scenario": "init1",
+      "HV_over_CLASSICAL_per_fork": [
+        24.693442894848918,
+        25.44938952939225,
+        22.81754008708865,
+        24.95697202196207
+      ],
+      "ratio_median": 24.825207458405494,
+      "ratio_range": [
+        22.81754008708865,
+        25.44938952939225
+      ],
+      "CLASSICAL_ns_per_fork": [
+        1346.03225,
+        1388.25275,
+        1373.02625,
+        1347.414
+      ],
+      "HV_ns_per_fork": [
+        33238.1705,
+        35330.185,
+        31329.0815,
+        33627.3735
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.0313666333031768,
+        0.9813461323117457
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0629401218096526,
+        1.0733596993579273
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        304.024,
+        304.024,
+        304.024,
+        304.024
+      ],
+      "HV_bytes_per_fork": [
+        0.024,
+        0.024,
+        0.024,
+        0.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "components": 5,
+      "scenario": "init3",
+      "HV_over_CLASSICAL_per_fork": [
+        24.46118514106547,
+        25.01874427015561,
+        25.66643149114892,
+        26.230903741956944
+      ],
+      "ratio_median": 25.342587880652268,
+      "ratio_range": [
+        24.46118514106547,
+        26.230903741956944
+      ],
+      "CLASSICAL_ns_per_fork": [
+        4073.93275,
+        3957.62275,
+        4082.76625,
+        4088.73625
+      ],
+      "HV_ns_per_fork": [
+        99653.22325,
+        99014.7515,
+        104790.04024999999,
+        107251.247
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9714501914642553,
+        1.0014622438891767
+      ],
+      "HV_same_binary_later_earlier": [
+        0.9935930647381243,
+        1.0234870293410352
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        416.024,
+        416.024,
+        416.024,
+        416.024
+      ],
+      "HV_bytes_per_fork": [
+        5440.024,
+        5440.024,
+        5440.024,
+        5440.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123071373239726,
+          "rich_water": 0.009943985468882387,
+          "aqueous_CO2": 0.00247585388527078
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6087758732783024,
+          "rich_water": 0.010049363477189734,
+          "aqueous_CO2": 0.010852866101108194
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "components": 5,
+      "scenario": "flash",
+      "HV_over_CLASSICAL_per_fork": [
+        11.884006121054025,
+        11.257834599930355,
+        9.517871589243246,
+        7.960151904622615
+      ],
+      "ratio_median": 10.3878530945868,
+      "ratio_range": [
+        7.960151904622615,
+        11.884006121054025
+      ],
+      "CLASSICAL_ns_per_fork": [
+        253113.27,
+        242492.28000000003,
+        302003.36,
+        367164.6
+      ],
+      "HV_ns_per_fork": [
+        3007999.65,
+        2729937.98,
+        2874429.2,
+        2922685.99
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9580385888104564,
+        1.2157632948189716
+      ],
+      "HV_same_binary_later_earlier": [
+        0.9075592744832932,
+        1.016788303569975
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        585064.96,
+        585064.96,
+        585064.96,
+        585064.96
+      ],
+      "HV_bytes_per_fork": [
+        682440.96,
+        682440.96,
+        682440.96,
+        682440.96
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123987164172886,
+          "rich_water": 0.010021353959302995,
+          "aqueous_CO2": 0.0024751262117332605
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123987164172886,
+          "rich_water": 0.010021353959302995,
+          "aqueous_CO2": 0.0024751262117332605
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123987164172886,
+          "rich_water": 0.010021353959302995,
+          "aqueous_CO2": 0.0024751262117332605
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6123987164172886,
+          "rich_water": 0.010021353959302995,
+          "aqueous_CO2": 0.0024751262117332605
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6088795760969992,
+          "rich_water": 0.010127235898054521,
+          "aqueous_CO2": 0.01082281774626224
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6088795760969992,
+          "rich_water": 0.010127235898054521,
+          "aqueous_CO2": 0.01082281774626224
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6088795760969992,
+          "rich_water": 0.010127235898054521,
+          "aqueous_CO2": 0.01082281774626224
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6088795760969992,
+          "rich_water": 0.010127235898054521,
+          "aqueous_CO2": 0.01082281774626224
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "components": 15,
+      "scenario": "init1",
+      "HV_over_CLASSICAL_per_fork": [
+        90.51503737786014,
+        98.34562902383824,
+        99.12926439061263,
+        90.96133439163142
+      ],
+      "ratio_median": 94.65348170773484,
+      "ratio_range": [
+        90.51503737786014,
+        99.12926439061263
+      ],
+      "CLASSICAL_ns_per_fork": [
+        5818.4845000000005,
+        6059.047,
+        5333.78525,
+        5758.302
+      ],
+      "HV_ns_per_fork": [
+        526660.342,
+        595880.7885,
+        528734.2082499999,
+        523782.83375
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.0413445288029897,
+        1.0795901466036713
+      ],
+      "HV_same_binary_later_earlier": [
+        1.1314328058899108,
+        0.9906354186607522
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1056.024,
+        1056.024,
+        1056.024,
+        1056.024
+      ],
+      "HV_bytes_per_fork": [
+        0.024,
+        0.024,
+        0.024,
+        0.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "components": 15,
+      "scenario": "init3",
+      "HV_over_CLASSICAL_per_fork": [
+        95.89486335628526,
+        106.84457992768252,
+        106.55314627275592,
+        97.46774762628894
+      ],
+      "ratio_median": 102.01044694952243,
+      "ratio_range": [
+        95.89486335628526,
+        106.84457992768252
+      ],
+      "CLASSICAL_ns_per_fork": [
+        21028.327250000002,
+        19257.24075,
+        20083.823750000003,
+        21575.5515
+      ],
+      "HV_ns_per_fork": [
+        2016508.56825,
+        2057531.7985,
+        2139994.60975,
+        2102920.4085
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9157761585624933,
+        1.0742750866851238
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0203436925068965,
+        0.9826755632555864
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1464.024,
+        1464.024,
+        1464.024,
+        1464.024
+      ],
+      "HV_bytes_per_fork": [
+        175680.024,
+        175680.024,
+        175680.024,
+        175680.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48790819154211135,
+          "rich_water": 0.010526092533440817,
+          "aqueous_CO2": 0.0007226116537505556
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48670468940718614,
+          "rich_water": 0.010649934295949588,
+          "aqueous_CO2": 0.00395835505703626
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "components": 15,
+      "scenario": "flash",
+      "HV_over_CLASSICAL_per_fork": [
+        53.439244783627416,
+        56.85720837991308,
+        46.97401734083504,
+        48.91388376848387
+      ],
+      "ratio_median": 51.17656427605564,
+      "ratio_range": [
+        46.97401734083504,
+        56.85720837991308
+      ],
+      "CLASSICAL_ns_per_fork": [
+        759943.8,
+        724742.6000000001,
+        855442.0800000001,
+        916507.36
+      ],
+      "HV_ns_per_fork": [
+        40610822.75,
+        41206841.03,
+        40183551.1,
+        44829934.480000004
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9536792062781485,
+        1.0713844705885873
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0146763409268778,
+        1.1156289887978568
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1587384.96,
+        1587384.96,
+        1587384.96,
+        1587384.96
+      ],
+      "HV_bytes_per_fork": [
+        2672752.96,
+        2672752.96,
+        2672752.96,
+        2672752.96
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488340540142512,
+          "rich_water": 0.010608528523457448,
+          "aqueous_CO2": 0.0007225024094855583
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488340540142512,
+          "rich_water": 0.010608528523457448,
+          "aqueous_CO2": 0.0007225024094855583
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488340540142512,
+          "rich_water": 0.010608528523457448,
+          "aqueous_CO2": 0.0007225024094855583
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488340540142512,
+          "rich_water": 0.010608528523457448,
+          "aqueous_CO2": 0.0007225024094855583
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4871413359609278,
+          "rich_water": 0.010733017451970714,
+          "aqueous_CO2": 0.003945911172402026
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4871413359609278,
+          "rich_water": 0.010733017451970714,
+          "aqueous_CO2": 0.003945911172402026
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4871413359609278,
+          "rich_water": 0.010733017451970714,
+          "aqueous_CO2": 0.003945911172402026
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4871413359609278,
+          "rich_water": 0.010733017451970714,
+          "aqueous_CO2": 0.003945911172402026
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "components": 5,
+      "scenario": "init1",
+      "HV_over_CLASSICAL_per_fork": [
+        22.252507408433605,
+        23.099229866940888,
+        21.940465291211073,
+        24.495074592870967
+      ],
+      "ratio_median": 22.675868637687245,
+      "ratio_range": [
+        21.940465291211073,
+        24.495074592870967
+      ],
+      "CLASSICAL_ns_per_fork": [
+        1409.3735000000001,
+        1396.4470000000001,
+        1466.3505,
+        1308.3690000000001
+      ],
+      "HV_ns_per_fork": [
+        31362.094250000002,
+        32256.850250000003,
+        32172.41225,
+        32048.59625
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9908281942295637,
+        0.8922621160493348
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0285298549538031,
+        0.9961514853459581
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        304.024,
+        304.024,
+        304.024,
+        304.024
+      ],
+      "HV_bytes_per_fork": [
+        0.024,
+        0.024,
+        0.024,
+        0.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "components": 5,
+      "scenario": "init3",
+      "HV_over_CLASSICAL_per_fork": [
+        25.06397668117311,
+        24.49176917634381,
+        26.613129286568984,
+        25.32878730380449
+      ],
+      "ratio_median": 25.1963819924888,
+      "ratio_range": [
+        24.49176917634381,
+        26.613129286568984
+      ],
+      "CLASSICAL_ns_per_fork": [
+        3962.54925,
+        4356.702499999999,
+        3929.75275,
+        3880.2174999999997
+      ],
+      "HV_ns_per_fork": [
+        99317.242,
+        106703.352,
+        104583.01800000001,
+        98281.20374999999
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.099469615424969,
+        0.9873948176510595
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0743688593366296,
+        0.9397434270829703
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        416.024,
+        416.024,
+        416.024,
+        416.024
+      ],
+      "HV_bytes_per_fork": [
+        5440.024,
+        5440.024,
+        5440.024,
+        5440.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6133924182695637,
+          "rich_water": 0.008838058270169891,
+          "aqueous_CO2": 0.0014290069353155219
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6095765591312396,
+          "rich_water": 0.009032188346580343,
+          "aqueous_CO2": 0.010466839942490815
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "components": 5,
+      "scenario": "flash",
+      "HV_over_CLASSICAL_per_fork": [
+        10.337504171573599,
+        10.409184790039035,
+        10.890311542663012,
+        11.323290448912303
+      ],
+      "ratio_median": 10.649748166351024,
+      "ratio_range": [
+        10.337504171573599,
+        11.323290448912303
+      ],
+      "CLASSICAL_ns_per_fork": [
+        262910.38,
+        243712.92,
+        235503.53999999998,
+        244374.68
+      ],
+      "HV_ns_per_fork": [
+        2717837.15,
+        2536852.8200000003,
+        2564706.92,
+        2767125.4800000004
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        0.9269809735165269,
+        1.0376688180568328
+      ],
+      "HV_same_binary_later_earlier": [
+        0.9334086922757681,
+        1.0789246359580145
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        582984.96,
+        582984.96,
+        582984.96,
+        582984.96
+      ],
+      "HV_bytes_per_fork": [
+        682640.96,
+        682640.96,
+        682640.96,
+        682640.96
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6134836489787251,
+          "rich_water": 0.008908634810867663,
+          "aqueous_CO2": 0.0014296102128642993
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6134836489787251,
+          "rich_water": 0.008908634810867663,
+          "aqueous_CO2": 0.0014296102128642993
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6134836489787251,
+          "rich_water": 0.008908634810867663,
+          "aqueous_CO2": 0.0014296102128642993
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6134836489787251,
+          "rich_water": 0.008908634810867663,
+          "aqueous_CO2": 0.0014296102128642993
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6096799207991845,
+          "rich_water": 0.00910381710041127,
+          "aqueous_CO2": 0.010438780330179531
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6096799207991845,
+          "rich_water": 0.00910381710041127,
+          "aqueous_CO2": 0.010438780330179531
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6096799207991845,
+          "rich_water": 0.00910381710041127,
+          "aqueous_CO2": 0.010438780330179531
+        },
+        {
+          "topologies": [
+            "GAS/AQUEOUS"
+          ],
+          "beta0": 0.6096799207991845,
+          "rich_water": 0.00910381710041127,
+          "aqueous_CO2": 0.010438780330179531
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "components": 15,
+      "scenario": "init1",
+      "HV_over_CLASSICAL_per_fork": [
+        81.00923124321666,
+        75.03640813312245,
+        84.86445856245342,
+        82.64999481924967
+      ],
+      "ratio_median": 81.82961303123317,
+      "ratio_range": [
+        75.03640813312245,
+        84.86445856245342
+      ],
+      "CLASSICAL_ns_per_fork": [
+        5487.01825,
+        5943.1295,
+        5213.514499999999,
+        5703.807
+      ],
+      "HV_ns_per_fork": [
+        444499.13025000005,
+        445951.09075,
+        442442.08525,
+        471419.61899999995
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.0831255208600774,
+        1.0940426079183247
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0032665092037036,
+        1.0654945239524996
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1056.024,
+        1056.024,
+        1056.024,
+        1056.024
+      ],
+      "HV_bytes_per_fork": [
+        0.024,
+        0.024,
+        0.024,
+        0.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "components": 15,
+      "scenario": "init3",
+      "HV_over_CLASSICAL_per_fork": [
+        84.1315617531956,
+        82.75333503410837,
+        79.95348163562483,
+        90.56950928289956
+      ],
+      "ratio_median": 83.44244839365199,
+      "ratio_range": [
+        79.95348163562483,
+        90.56950928289956
+      ],
+      "CLASSICAL_ns_per_fork": [
+        20233.292999999998,
+        21085.485249999998,
+        21602.307249999998,
+        19632.982
+      ],
+      "HV_ns_per_fork": [
+        1702258.5395,
+        1744894.2252500001,
+        1727179.676,
+        1778149.5455
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.0421183170727573,
+        0.908837272463107
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0250465395007056,
+        1.029510461597164
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1464.024,
+        1464.024,
+        1464.024,
+        1464.024
+      ],
+      "HV_bytes_per_fork": [
+        175680.024,
+        175680.024,
+        175680.024,
+        175680.024
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.48986527082366055,
+          "rich_water": 0.009643345345292745,
+          "aqueous_CO2": 0.00037295197909729
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.488565038452945,
+          "rich_water": 0.009826548893320264,
+          "aqueous_CO2": 0.003895950585643079
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "components": 15,
+      "scenario": "flash",
+      "HV_over_CLASSICAL_per_fork": [
+        44.18741844065418,
+        42.908856817600494,
+        41.66572376490689,
+        45.73556721140452
+      ],
+      "ratio_median": 43.54813762912734,
+      "ratio_range": [
+        41.66572376490689,
+        45.73556721140452
+      ],
+      "CLASSICAL_ns_per_fork": [
+        784030.3200000001,
+        813353.3200000001,
+        842289.94,
+        804563.1599999999
+      ],
+      "HV_ns_per_fork": [
+        34644275.82,
+        34900061.15,
+        35094619.97,
+        36797152.480000004
+      ],
+      "CLASSICAL_same_binary_later_earlier": [
+        1.0374003393134081,
+        0.9552092715247198
+      ],
+      "HV_same_binary_later_earlier": [
+        1.0073831917090423,
+        1.0485126355964358
+      ],
+      "CLASSICAL_bytes_per_fork": [
+        1588456.96,
+        1588456.96,
+        1588456.96,
+        1588456.96
+      ],
+      "HV_bytes_per_fork": [
+        2673472.96,
+        2673472.96,
+        2673472.96,
+        2673472.96
+      ],
+      "CLASSICAL_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4903046146723933,
+          "rich_water": 0.009720483736695538,
+          "aqueous_CO2": 0.00037324493289237105
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4903046146723933,
+          "rich_water": 0.009720483736695538,
+          "aqueous_CO2": 0.00037324493289237105
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4903046146723933,
+          "rich_water": 0.009720483736695538,
+          "aqueous_CO2": 0.00037324493289237105
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4903046146723933,
+          "rich_water": 0.009720483736695538,
+          "aqueous_CO2": 0.00037324493289237105
+        }
+      ],
+      "HV_endpoints_per_fork": [
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4890087967385863,
+          "rich_water": 0.009904714287811188,
+          "aqueous_CO2": 0.00388412201077379
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4890087967385863,
+          "rich_water": 0.009904714287811188,
+          "aqueous_CO2": 0.00388412201077379
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4890087967385863,
+          "rich_water": 0.009904714287811188,
+          "aqueous_CO2": 0.00388412201077379
+        },
+        {
+          "topologies": [
+            "GAS/OIL/AQUEOUS"
+          ],
+          "beta0": 0.4890087967385863,
+          "rich_water": 0.009904714287811188,
+          "aqueous_CO2": 0.00388412201077379
+        }
+      ]
+    }
+  ]
+}

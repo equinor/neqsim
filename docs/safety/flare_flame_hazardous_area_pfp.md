@@ -47,6 +47,10 @@ With zero wind the flame is vertical (`flameTiltRad() == 0`); increasing wind
 tilts it downwind. The flux thresholds `FLUX_1_58_KW`, `FLUX_4_73_KW`, and
 `FLUX_9_46_KW` correspond to the API 521 / API 537 personnel-exposure limits.
 
+`setStackHeightM` and `setWindSpeedMPerS` require finite values of zero or
+greater. `setTransmissivity` requires a finite fraction from 0 to 1 inclusive.
+Values outside these ranges throw `IllegalArgumentException`.
+
 ## IEC 60079-10-1 hazardous-area classification
 
 `HazardousAreaCalculator` estimates the hazardous distance from a gas release
@@ -95,6 +99,13 @@ PfpRating rating = res.getRating();                  // H60
 short required survival time may not need PFP at all
 (`isPfpRequired() == false`, rating `NONE`). Longer jet-fire durations escalate
 the rating (e.g. a 120 min jet-fire case yields `J120`).
+
+The steel temperatures must be finite and satisfy $0 < T_\mathrm{initial} < T_\mathrm{critical}$
+in kelvin. Both `bareSteelTimeToCriticalS()` and `evaluate(...)` throw
+`IllegalArgumentException` for invalid steel temperatures. `evaluate(...)` also
+requires a finite effective fire temperature strictly above the arithmetic mean
+of the initial and critical steel temperatures. When PFP is required, the
+thickness uses the actual temperature difference, including differences below 1 K.
 
 ## Verification
 

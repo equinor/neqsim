@@ -3,7 +3,6 @@ title: "Characterization Package"
 description: "Petroleum TBP, plus-fraction, assay, lumping, asphaltene, and pseudo-component characterization in NeqSim."
 ---
 
-# Characterization Package
 
 The `neqsim.thermo.characterization` package converts petroleum assay, TBP, and plus-fraction information into pseudo-components suitable for NeqSim equations of state and process calculations.
 
@@ -13,7 +12,8 @@ The `neqsim.thermo.characterization` package converts petroleum assay, TBP, and 
 | --- | --- | --- |
 | Pre-binned TBP fractions | `SystemInterface.addTBPfraction(...)` | Add a petroleum cut from moles, molar mass, and specific gravity |
 | Plus fraction | `SystemInterface.addPlusFraction(...)` + `Characterise` | Represent and split a C7+/C20+ heavy end |
-| Refinery assay | `OilAssayCharacterisation` | Convert mass- or volume-basis refinery cuts/TBP boundaries to pseudo-components |
+| Refinery assay | `OilAssayCharacterisation` | Convert assay data, export, split, re-lump, re-ingest and recharacterize an auditable TBP cut table, with invertible recovery/cut-point queries and conservative target-grid resampling |
+| Assay blend screening | `RefineryAssayBlend` | Combine whole-assay SG/API and optional sulfur/nitrogen on an explicit mass basis |
 | TBP property model selection | `Characterise.setTBPModel(...)` | Select Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing, and related models |
 | Lumping | `Characterise.configureLumping()` | Reduce a detailed heavy-end slate while preserving configured grouping rules |
 | Common-slate characterization | `PseudoComponentCombiner` | Align multiple characterized fluids to a shared pseudo-component definition |
@@ -46,9 +46,47 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 
 - one explicit composition basis per assay: mass or liquid volume;
 - volume-to-mass conversion using cut density;
+- literature-qualified ASTM D86 reference-point conversion at 0, 10, 30, 50, 70, 90, and 95 vol% with an explicit caller-supplied 100 vol% TBP terminal boundary;
+- auditable TBP cut-table export with mass/volume-basis round-trip closure and fail-closed contiguous boundaries;
+- bounded, invertible TBP liquid-volume and ideal-additive-volume mass recovery/cut-point queries with unit-explicit interval-yield receipts;
+- immutable TBP boiling-range mass-yield, temperature-moment, distribution-spread, SG60/60, API-gravity, density, and Watson-factor receipts with additive raw-moment closure;
+- conservative adjacent whole-cut re-lumping with exact liquid-volume and implied-mass closure;
 - kg/mol and g/mol explicit molar-mass helpers;
 - specific-gravity, kg/m3, and API-gravity density inputs;
 - exact API-gravity/SG60/60 round-tripping and explicit bulk density at 60 degF;
+- immutable whole-assay blend screening with ideal additive liquid volumes and mass-linear sulfur/nitrogen;
+- auditable optimizer property bounds, margins, and binding-constraint receipts;
+- auditable blend-batch mass, additive-volume, specific-gravity, and optimizer-cost receipts;
+- immutable label-addressable source ledgers for qualified blend batches;
+- complete optimized blend plans with source-level cost closure and retained quality receipts;
+- stoichiometric hydrotreating sulfur/hydrogen screening receipts with explicit H2/S assumptions;
+- single- and multi-cut catalytic-reforming naphthene/paraffin-to-aromatic receipts with explicit hydrogen-recovery allocation;
+- caller-defined hydrocracking conversion/product-lump receipts with reformer-hydrogen supply allocation;
+- caller-defined FCC conversion/product-lump receipts with coke-carbon, dry-air, CO/CO2, and dry-flue-gas closure;
+- caller-defined delayed-coking conversion/product-lump receipts with feed-basis duty, fuel, steam, and closure;
+- stoichiometric hydrotreating nitrogen/hydrogen/ammonia receipts with explicit H2/N assumptions;\n- coupled hydrotreating sulfur/nitrogen receipts solved on one liquid-product mass basis;\n- unit-explicit coupled sulfur/nitrogen throughput receipts in kg/h;\n- coupled sulfur/nitrogen makeup- and outlet-gas receipts with H2, H2S, NH3, and non-H2 closure;
+- coupled sulfur/nitrogen recycle/purge receipts with explicit H2, H2S, NH3, and non-H2 recovery;
+- unit-explicit coupled recycle-throughput receipts in kg/h and kmol/h;
+- coupled sulfur/nitrogen hydrogen energy and caller-priced utility receipts;
+- coupled sulfur/nitrogen external liquid-product and export-gas distribution receipts;
+- caller-owned coupled sulfur/nitrogen reaction-heat and net thermal-duty receipts;
+- caller-owned coupled sulfur/nitrogen fired-heater fuel, cost, and emissions receipts;\n- caller-owned CHSON fuel/air/complete-combustion flue-gas closure receipts;
+- caller-owned wet-flue-gas sensible stack-loss receipts reconciled to qualified furnace loss;
+- caller-owned wet-flue-gas heat-recovery receipts with explicit recovered/remaining loss closure;
+- caller-owned recovered-heat utilization with avoided/net fired-heater fuel, cost, and emissions receipts;
+- integrated net hydrogen/fired-heater energy, emissions, and caller-priced operating receipts;
+- liquid-product-basis energy, emissions, and caller-priced operating-intensity receipts;
+- caller-priced coupled sulfur/nitrogen screening-economics receipts;
+- single-variable break-even economics and price-sensitivity receipts;
+- same-physical-case economics scenario-delta attribution receipts;\n- fixed-screening-price economics case-delta receipts;\n- symmetric total economics-delta attribution receipts;
+- scenario-based coupled sulfur/nitrogen hydrogen-supply emissions and carbon-cost receipts;
+- integrated coupled sulfur/nitrogen material, energy, emissions, and scenario-cost receipts;
+- hydrotreating makeup-gas and outlet-gas receipts with explicit H2 purity, excess, and non-H2 molar mass;
+- hydrotreating recycle/purge receipts with explicit component recovery and purge assumptions;
+- unit-explicit hydrotreating throughput receipts in kg/h and kmol/h;
+- explicit hydrotreating hydrogen energy and caller-priced utility receipts;
+- scenario-based hydrotreating hydrogen-supply emissions and carbon-cost receipts;
+- integrated hydrotreating material, energy, emissions, and scenario-cost receipts;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;
@@ -57,14 +95,79 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - preserved finite and one-sided lower/upper boiling boundaries;
 - closure, duplicate-name, monotonicity, and repeated-application guards.
 
-See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), whole-assay density/API evidence in [DOE/OEDI COA bulk density qualification](refinery_oedi_coa_bulk_density_validation), per-cut characterization evidence in [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation), terminal representative-temperature evidence in [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation), composition-resolved light-end evidence in [DOE Big Hill light-end qualification](refinery_big_hill_light_ends_validation), PIANO aggregate molar-mass evidence in [DOE Big Hill C5-175 degF qualification](refinery_big_hill_piano_molar_mass_validation), assay-quality evidence in [DOE Big Hill sulfur qualification](refinery_big_hill_sulfur_validation) and [DOE Big Hill nitrogen qualification](refinery_big_hill_nitrogen_validation), terminal-boundary evidence in [DOE Big Hill terminal-cut qualification](refinery_big_hill_terminal_boundary_validation), and the process-integration gate in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation).
+See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), whole-assay density/API evidence in [DOE/OEDI COA bulk density qualification](refinery_oedi_coa_bulk_density_validation), per-cut characterization evidence in [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation), terminal representative-temperature evidence in [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation), composition-resolved light-end evidence in [DOE Big Hill light-end qualification](refinery_big_hill_light_ends_validation), PIANO aggregate molar-mass evidence in [DOE Big Hill C5-175 degF qualification](refinery_big_hill_piano_molar_mass_validation), assay-quality evidence in [DOE Big Hill sulfur qualification](refinery_big_hill_sulfur_validation) and [DOE Big Hill nitrogen qualification](refinery_big_hill_nitrogen_validation), terminal-boundary evidence in [DOE Big Hill terminal-cut qualification](refinery_big_hill_terminal_boundary_validation), the atmospheric process-integration gate in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation), and the connected material/energy boundary in [DOE Big Hill atmospheric-to-vacuum workflow](refinery_big_hill_atmospheric_vacuum_workflow).
 
 The qualified inputs are assembled into one reusable reference composition by
 [DOE Big Hill Sweet complete modeled assay slate](refinery_big_hill_complete_slate).
 
+A second public operating case is retained by
+[Al-Diwiniya atmospheric operating reference](refinery_al_diwiniya_atmospheric_reference).
+Its 2-60 liquid-vol% partial TBP curve, plant configuration, product rates, and draw
+temperatures remain explicitly separate from the complete DOE modeled slate. The
+source fixed its HYSYS product rates, so those values are operating specifications
+rather than independent yield-validation evidence.
+
+[Sarir atmospheric validation reference](refinery_sarir_atmospheric_reference)
+adds a CC BY 4.0, complete-range TBP case with 34-tray operating data, numeric
+product ASTM D86 endpoints, and plant product rates that remain independent
+validation targets.
+
+## Persistent PR covolume tuning
+
+`ComponentPR.setOmegaB(value)` sets a positive, finite, dimensionless per-component
+coefficient in $b_i = \Omega_{B,i} R T_{c,i}/P_{c,i}$. With SI $R$, $T_c$ in K and
+$P_c$ in Pa, this gives $b_i$ in m³/mol. NeqSim uses bara internally;
+multiply the existing internal `getb()` value by $10^{-5}$ to obtain m³/mol. The
+ordinary PR default remains exactly **0.077803333**. Set the coefficient on the
+component in **every allocated phase** (`getMaxNumberOfPhases()`), then call
+`fluid.init(0)` before flashing or reading updated properties. This is the same
+phase-ownership requirement as other component-property tuning. The public
+methods are callable from Java and JPype's `ComponentPR` wrapper.
+The older `setb(...)` call changes only transient storage and is still replaced
+by component initialization; use `setOmegaB(...)` for persistent tuning.
+
+`hasOmegaBOverride()` reports whether tuning is active and
+`getOmegaBOverride()` returns the supplied value, or NaN when unset.
+`getOmegaB()` returns the active coefficient, including the default.
+`clearOmegaBOverride()` removes tuning; initialize again to rebuild the cached
+covolume. The override survives repeated initialization, flashes, fluid cloning,
+and Java serialization. Older serialized PR components without this field keep
+the default because zero represents an unset override.
+
+The storage belongs to PR components rather than all EOS components. BNS retains
+its supplied constructor coefficient when no override is active, and resetting
+returns to that coefficient. PR-based CPA components reject `setOmegaB` with
+`UnsupportedOperationException`: their covolumes belong to the association
+parameterization. SRK is outside this API's scope. No flash calls or fitting
+iterations are added to the normal initialization path.
+
+[E300](../../pvtsimulation/eclipse_e300_fluid_import) exports explicit PR
+coefficients in `OMEGAB`; reload them with the opt-in
+`EclipseFluidReadWrite.readWithPrOmegaB(...)` reader. Ordinary E300 readers retain
+their historical coefficient behavior. [JSON fluid files](../../pvtsimulation/json_fluid_format)
+preserve explicit PR overrides in optional `omegaB` component fields. Diagnostic
+`fluid.toJson()` output is not a reloadable fluid definition. Retain coefficient
+provenance, fit conditions and uncertainty separately: supplying a number does
+not validate an assay or reproduce a paper whose other tuning inputs are missing.
+The text formats do not reproduce the specialized BNS or CPA model from these
+coefficients; the supported tuning round trip here is ordinary PR/PR1978.
+
+Regressions: `ComponentPrOmegaBTest` checks the analytical coefficient,
+initialization, flash, invalid input, reset, clone/serialization and BNS/CPA
+boundaries; `PrOmegaBFluidRoundTripTest` checks the text-persistence contract.
+
 ## TBP fraction models
 
-TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS. Available implementations include Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert, Twu, Cavett, and Standing.
+TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS.
+Available implementations include standard Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert,
+Twu, Cavett, and Standing. Pedersen estimation rejects molecular weights at or above
+1120 g/mol (1.120 kg/mol at the system API); the explicit `PedersenSRKHeavyOil` and
+`PedersenPRHeavyOil` property models are unavailable at every molecular weight. The
+`RiaziDaubert` fallback inherits the same upper boundary. These paths throw
+`UnsupportedOperationException` rather than constructing an unphysical component.
+The seven-argument `addTBPfraction` overload accepts independently validated critical
+properties for heavier cuts; see [TBP Fraction Models](../../wiki/tbp_fraction_models)
+for units and limitations.
 
 ```java
 SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
@@ -143,6 +246,34 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 ## Related documentation
 
 - [Refinery Assay and TBP Cut Characterization](refinery_assay)
+- [Hydrotreating sulfur and hydrogen balance](refinery_hydrotreating_sulfur_balance)
+- [Catalytic reforming stoichiometric balance](refinery_catalytic_reforming_stoichiometric_balance)
+- [Hydrocracking yield and hydrogen-supply balance](refinery_hydrocracking_yield_balance)
+- [FCC yield and coke-regenerator screening balance](refinery_fcc_yield_regenerator_balance)
+- [Delayed-coking yield and utility screening balances](refinery_delayed_coking_balance)
+- [Hydrotreating nitrogen and ammonia balance](refinery_hydrotreating_nitrogen_balance)\n- [Coupled hydrotreating sulfur and nitrogen balance](refinery_hydrotreating_sulfur_nitrogen_balance)\n- [Coupled hydrotreating sulfur/nitrogen throughput balance](refinery_hydrotreating_sulfur_nitrogen_throughput_balance)\n- [Coupled sulfur/nitrogen hydrotreating hydrogen supply](refinery_hydrotreating_sulfur_nitrogen_hydrogen_supply_balance)
+- [Coupled sulfur/nitrogen hydrotreating hydrogen recycle and purge](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_balance)
+- [Coupled sulfur/nitrogen recycle-throughput balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_throughput_balance)
+- [Coupled sulfur/nitrogen product-distribution receipt](refinery_hydrotreating_sulfur_nitrogen_product_distribution_receipt)
+- [Coupled sulfur/nitrogen thermal-duty balance](refinery_hydrotreating_sulfur_nitrogen_thermal_duty_balance)
+- [Coupled sulfur/nitrogen fired-heater utility balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_utility_balance)\n- [Coupled sulfur/nitrogen fired-heater combustion balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_combustion_balance)
+- [Coupled sulfur/nitrogen fired-heater stack-loss balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_stack_loss_balance)
+- [Coupled sulfur/nitrogen fired-heater heat-recovery balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_heat_recovery_balance)
+- [Coupled sulfur/nitrogen fired-heater heat-recovery credit balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_heat_recovery_credit_balance)
+- [Net coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_net_operating_receipt)
+- [Net coupled sulfur/nitrogen hydrotreating liquid-product intensity receipt](refinery_hydrotreating_sulfur_nitrogen_net_product_intensity_receipt)
+- [Coupled sulfur/nitrogen hydrotreating screening-economics receipt](refinery_hydrotreating_sulfur_nitrogen_screening_economics_receipt)
+- [Coupled sulfur/nitrogen hydrotreating break-even economics receipt](refinery_hydrotreating_sulfur_nitrogen_break_even_economics_receipt)
+- [Coupled sulfur/nitrogen hydrotreating economics scenario-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_scenario_delta_receipt)\n- [Coupled sulfur/nitrogen hydrotreating economics case-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_case_delta_receipt)\n- [Coupled sulfur/nitrogen hydrotreating total economics-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_total_delta_receipt)
+- [Coupled sulfur/nitrogen hydrogen utility balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_utility_balance)
+- [Coupled sulfur/nitrogen hydrogen-supply emissions balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_emissions_balance)
+- [Integrated coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_operating_receipt)
+- [Hydrotreating hydrogen supply and outlet gas balance](refinery_hydrotreating_hydrogen_supply_balance)
+- [Hydrotreating hydrogen recycle and purge balance](refinery_hydrotreating_hydrogen_recycle_balance)
+- [Hydrotreating throughput-rate balance](refinery_hydrotreating_throughput_balance)
+- [Hydrotreating hydrogen utility balance](refinery_hydrotreating_hydrogen_utility_balance)
+- [Hydrotreating hydrogen-supply emissions balance](refinery_hydrotreating_hydrogen_emissions_balance)
+- [Integrated hydrotreating operating receipt](refinery_hydrotreating_operating_receipt)
 - [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
 - [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation)
 - [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation)
@@ -153,6 +284,9 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [DOE Big Hill assay nitrogen qualification](refinery_big_hill_nitrogen_validation)
 - [DOE Big Hill terminal-cut boundary qualification](refinery_big_hill_terminal_boundary_validation)
 - [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
+- [DOE Big Hill atmospheric-to-vacuum workflow](refinery_big_hill_atmospheric_vacuum_workflow)
+- [Al-Diwiniya atmospheric operating reference](refinery_al_diwiniya_atmospheric_reference)
+- [Sarir atmospheric validation reference](refinery_sarir_atmospheric_reference)
 - [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation)
 - [Fluid Characterization Guide](../../wiki/fluid_characterization)
 - [TBP Fraction Models](../../wiki/tbp_fraction_models)

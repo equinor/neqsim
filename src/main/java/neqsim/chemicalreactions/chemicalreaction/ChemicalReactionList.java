@@ -12,7 +12,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -30,14 +31,15 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionList.class);
 
+  /** Dense linear algebra used for the stoichiometric rank test. */
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
+
   ArrayList<ChemicalReaction> chemicalReactionList = new ArrayList<ChemicalReaction>();
   String[] reactiveComponentList;
   double[][] reacMatrix;
   double[][] reacGMatrix;
   double[][] tempReacMatrix;
   double[][] tempStocMatrix;
-  /** Components array for reference potential calculations. */
-  private ComponentInterface[] refPotComponents;
   private ChemicalReactionDataSource reactionDataSource = ChemicalReactionDataSource.STANDARD;
 
   /**
@@ -102,6 +104,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
           ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT, reference,
               validationStatus);
+          // Preserve database kinetic behavior until each rate's units and provenance are qualified.
+          reaction.useLegacyKineticRateLaw();
           chemicalReactionList.add(reaction);
           // System.out.println("reaction added ok...");
         }
@@ -243,8 +247,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       }
 
-      Matrix mat = new Matrix(matrixData);
-      int rank = mat.rank();
+      int rank = ALGEBRA.rank(matrixData);
 
       if (rank < independentReactions.size()) {
         // Rank didn't increase (or is less than rows), so this reaction is dependent
@@ -316,7 +319,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * @return an array of type double
    */
   public double[][] createReactionMatrix(PhaseInterface phase, ComponentInterface[] components) {
-    this.refPotComponents = components; // Store for use in calcReferencePotentials
     Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
     ChemicalReaction reaction;
     int reactionNumber = 0;
@@ -343,10 +345,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       logger.error(ex.getMessage(), ex);
     }
 
-    /*
-     * Matrix reacMatr; if (reacGMatrix.length > 0) { reacMatr = new Matrix(reacGMatrix); }
-     * System.out.println("reac matrix: "); reacMatr.print(10,3);
-     */
     return reacMatrix;
   }
 
@@ -358,7 +356,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * @return an array of type double
    */
   public double[] updateReferencePotentials(PhaseInterface phase, ComponentInterface[] components) {
-    this.refPotComponents = components; // Store for use in calcReferencePotentials
     for (int i = 0; i < chemicalReactionList.size(); i++) {
       // Store -RT*ln(K) to match equilibrium relationship: Σ(ν_i * μ_i) = -RT*ln(K)
       // Must be consistent with createReactionMatrix()
@@ -396,8 +393,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    *
    * <p>
    * The method first identifies linearly independent columns (components) and solves for their reference potentials
-   * directly. Then it iteratively propagates these values to dependent components using the reaction stoichiometry,
-   * processing them in dependency order.
+   * directly. Dependent component potentials are set to zero as a reference choice; the independent potentials satisfy
+   * all reaction equations simultaneously.
    * </p>
    *
    * @return an array of reference potentials for all reactive components
@@ -409,47 +406,36 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     }
     int nCols = reacGMatrix[0].length - 1;
 
-    // Get B matrix (last column contains -RT*ln(K) for each reaction)
-    double[][] bData = new double[nRows][1];
+    // The last column is the required reaction potential, -RT*ln(K).
+    double[] reactionPotentials = new double[nRows];
     for (int i = 0; i < nRows; i++) {
-      bData[i][0] = reacGMatrix[i][nCols];
+      reactionPotentials[i] = reacGMatrix[i][nCols];
     }
-    Matrix Bmatrix = new Matrix(bData);
 
     // Find independent columns (components with linearly independent stoichiometry)
     ArrayList<Integer> independentColumns = new ArrayList<>();
-    ArrayList<Integer> dependentColumns = new ArrayList<>();
-    Matrix currentMat = null;
+    double[][] currentMat = null;
+    int currentRank = 0;
 
     for (int j = 0; j < nCols; j++) {
       // Create a candidate matrix with the new column added
-      Matrix nextMat;
-      if (currentMat == null) {
-        nextMat = new Matrix(nRows, 1);
-        for (int i = 0; i < nRows; i++) {
-          nextMat.set(i, 0, reacGMatrix[i][j]);
-        }
-      } else {
-        nextMat = new Matrix(nRows, currentMat.getColumnDimension() + 1);
-        nextMat.setMatrix(0, nRows - 1, 0, currentMat.getColumnDimension() - 1, currentMat);
-        for (int i = 0; i < nRows; i++) {
-          nextMat.set(i, currentMat.getColumnDimension(), reacGMatrix[i][j]);
-        }
+      int nextCols = (currentMat == null) ? 1 : currentMat[0].length + 1;
+      double[][] nextMat = new double[nRows][nextCols];
+      if (currentMat != null) {
+        nextMat = ALGEBRA.withSubmatrix(nextMat, 0, 0, currentMat);
+      }
+      for (int i = 0; i < nRows; i++) {
+        nextMat[i][nextCols - 1] = reacGMatrix[i][j];
       }
 
-      int currentRank = (currentMat == null) ? 0 : currentMat.rank();
-      if (nextMat.rank() > currentRank) {
+      int nextRank = ALGEBRA.rank(nextMat);
+      if (nextRank > currentRank) {
         currentMat = nextMat;
+        currentRank = nextRank;
         independentColumns.add(j);
         if (independentColumns.size() == nRows) {
-          // Remaining columns are dependent
-          for (int k = j + 1; k < nCols; k++) {
-            dependentColumns.add(k);
-          }
           break;
         }
-      } else {
-        dependentColumns.add(j);
       }
     }
 
@@ -458,101 +444,15 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       return null;
     }
 
-    // Solve A_indep * x_indep = -B for independent component reference potentials
-    Matrix solv = currentMat.solve(Bmatrix.times(-1.0));
+    // Solve A_indep * x_indep = -RT*ln(K) for independent reference potentials
+    double[] solv = ALGEBRA.solve(currentMat, reactionPotentials);
 
     double[] result = new double[nCols];
-    boolean[] computed = new boolean[nCols];
-
-    // Mark independent components as computed
+    // Dependent species define the zero reference (a gauge choice). Solving the
+    // independent columns against -RT ln(K) then satisfies every reaction at once.
+    // Reassigning dependent potentials afterwards would invalidate that solution.
     for (int i = 0; i < nRows; i++) {
-      int col = independentColumns.get(i);
-      result[col] = solv.get(i, 0);
-      computed[col] = true;
-    }
-
-    // Iteratively compute reference potentials for dependent components
-    // A component can be computed when a reaction exists where all OTHER components are known
-    // If stuck (multiple unknowns in same reaction), use Gibbs energy fallback for one component
-    int maxIterations = dependentColumns.size() * 2 + 1; // Extra iterations for fallback handling
-    for (int iter = 0; iter < maxIterations; iter++) {
-      boolean progress = false;
-
-      for (int depCol : dependentColumns) {
-        if (computed[depCol]) {
-          continue; // Already computed
-        }
-
-        // Find a reaction where this component appears and all other components are known
-        for (int r = 0; r < nRows; r++) {
-          double nuDep = reacGMatrix[r][depCol];
-          if (Math.abs(nuDep) < 1e-10) {
-            continue; // Component not in this reaction
-          }
-
-          // Check if all other components in this reaction are already computed
-          boolean allOthersKnown = true;
-          int unknownCol = -1;
-          for (int j = 0; j < nCols; j++) {
-            if (j != depCol && Math.abs(reacGMatrix[r][j]) > 1e-10 && !computed[j]) {
-              allOthersKnown = false;
-              unknownCol = j;
-              break;
-            }
-          }
-
-          if (allOthersKnown) {
-            // Calculate: mu_dep = (B - sum(nu_i * mu_i for i != dep)) / nu_dep
-            // where B = -RT*ln(K) is stored in reacGMatrix
-            double negRTlnK = reacGMatrix[r][nCols];
-            double sumOthers = 0.0;
-            for (int j = 0; j < nCols; j++) {
-              if (j != depCol) {
-                double term = reacGMatrix[r][j] * result[j];
-                sumOthers += term;
-              }
-            }
-            result[depCol] = (negRTlnK - sumOthers) / nuDep;
-            computed[depCol] = true;
-            progress = true;
-            break; // Found reference potential for this component
-          }
-        }
-      }
-
-      if (!progress) {
-        // No progress using reactions alone - use Gibbs energy fallback for ONE component
-        // to break the deadlock, then continue iterating to propagate to others
-        boolean usedFallback = false;
-        for (int depCol : dependentColumns) {
-          if (!computed[depCol] && refPotComponents != null && depCol < refPotComponents.length) {
-            // Use Gibbs energy of formation as reference potential for this
-            // component
-            double gf = refPotComponents[depCol].getGibbsEnergyOfFormation();
-            result[depCol] = gf; // Use Gibbs energy directly (not negated)
-            computed[depCol] = true;
-            usedFallback = true;
-            break; // Only use fallback for one component, then try propagating
-          }
-        }
-        if (!usedFallback) {
-          break; // Truly stuck
-        }
-        // Continue loop to propagate from the fallback value
-      }
-    }
-
-    // Final check: any remaining components get Gibbs energy fallback
-    for (int depCol : dependentColumns) {
-      if (!computed[depCol]) {
-        if (refPotComponents != null && depCol < refPotComponents.length) {
-          double gf = refPotComponents[depCol].getGibbsEnergyOfFormation();
-          result[depCol] = gf;
-          computed[depCol] = true;
-        } else {
-          logger.warn("Could not compute reference potential for component index " + depCol);
-        }
-      }
+      result[independentColumns.get(i)] = solv[i];
     }
 
     return result;
@@ -593,10 +493,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       }
     }
 
-    // Matrix temp = new Matrix(tempReacMatrix);
-    // Matrix temp2 = new Matrix(tempStocMatrix);
-    // temp.print(10,10);
-    // temp2.print(10,10);
   }
 
   /**
@@ -618,25 +514,24 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * calcReacRates.
+   * Calculates the reaction rates for the given phase and components.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @return a {@link Jama.Matrix} object
+   * @return component rates in the supplied component order
    */
-  public Matrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
-    Matrix modReacMatrix = new Matrix(reacMatrix).copy();
+  public double[] calcReationRates(PhaseInterface phase, ComponentInterface[] components) {
+    double[][] modReacMatrix = new double[reacMatrix.length][components.length];
     // System.out.println(" vol " + system.getPhases()[1].getMolarVolume());
 
     for (int i = 0; i < chemicalReactionList.size(); i++) {
       for (int j = 0; j < components.length; j++) {
         // System.out.println("mol cons " +
         // components[j].getx()/system.getPhases()[1].getMolarMass());
-        modReacMatrix.set(i, j,
-            Math.pow(components[j].getx() * phase.getDensity() / phase.getMolarMass(), Math.abs(reacMatrix[i][j])));
+        modReacMatrix[i][j] = Math.pow(components[j].getx() * phase.getDensity() / phase.getMolarMass(),
+            Math.abs(reacMatrix[i][j]));
       }
     }
-    // modReacMatrix.print(10,10);
     double[] tempForward = new double[chemicalReactionList.size()];
     double[] tempBackward = new double[chemicalReactionList.size()];
     double[] reacVec = new double[chemicalReactionList.size()];
@@ -646,30 +541,23 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       tempBackward[i] = (chemicalReactionList.get(i)).getK(phase) / (chemicalReactionList.get(i)).getRateFactor();
       for (int j = 0; j < components.length; j++) {
         if (reacMatrix[i][j] > 0) {
-          tempForward[i] *= modReacMatrix.get(i, j);
+          tempForward[i] *= modReacMatrix[i][j];
         }
         if (reacMatrix[i][j] < 0) {
-          tempBackward[i] *= modReacMatrix.get(i, j);
+          tempBackward[i] *= modReacMatrix[i][j];
         }
       }
       reacVec[i] = tempForward[i] - tempBackward[i];
     }
 
-    Matrix reacMatVec = new Matrix(reacVec, 1);
-    Matrix reacMat = new Matrix(reacMatrix).transpose().times(reacMatVec);
-
-    double[] reactRates = new double[phase.getComponents().length];
-    for (int j = 0; j < components.length; j++) {
-      reactRates[components[j].getComponentNumber()] = reacMat.get(j, 0);
+    double[] componentRates = new double[components.length];
+    for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
+      for (int reactionIndex = 0; reactionIndex < chemicalReactionList.size(); reactionIndex++) {
+        componentRates[componentIndex] += reacMatrix[reactionIndex][componentIndex] * reacVec[reactionIndex];
+      }
     }
 
-    for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-      // System.out.println("reac " +j + " " + reactRates[j] );
-    }
-
-    // System.out.println("reac matrix ");
-    // reacMat.print(10,10);
-    return reacMat;
+    return componentRates;
   }
 
   /**

@@ -125,7 +125,7 @@ public class SevereSlugTest {
     Pipe pipe = labPipe();
     FluidSevereSlug fluid = airWater();
     double previous = 0.0;
-    for (double usl : new double[] { 0.01, 0.05, 0.1, 0.5, 1.0 }) {
+    for (double usl : new double[] {0.01, 0.05, 0.1, 0.5, 1.0}) {
       SevereSlugAnalyser analyser = new SevereSlugAnalyser("holdup", usl, 0.5);
       double holdUp = analyser.stratifiedHoldUp(fluid, pipe, analyser);
       assertTrue(holdUp > previous && holdUp < 1.0, "holdup at usl=" + usl + " was " + holdUp);

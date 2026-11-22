@@ -24,6 +24,9 @@ public class SeparatorTest extends BasePVTsimulation {
   private double[] Bofactor;
   private double[] GOR = null;
   double oilVolumeStdCond = 0;
+  private double[] gasGravity = null;
+  private double stockTankOilDensity = Double.NaN;
+  private double stockTankGasGravity = Double.NaN;
 
   /**
    * Constructor for SeparatorTest.
@@ -53,6 +56,10 @@ public class SeparatorTest extends BasePVTsimulation {
     m3oil = new double[pressure.length];
     GOR = new double[pressure.length];
     Bofactor = new double[pressure.length];
+    gasGravity = new double[pressure.length];
+    java.util.Arrays.fill(gasGravity, Double.NaN);
+    stockTankOilDensity = Double.NaN;
+    stockTankGasGravity = Double.NaN;
     for (int i = 0; i < pressure.length; i++) {
       thermoOps.setSystem(getThermoSystem());
       getThermoSystem().setPressure(pressure[i]);
@@ -64,6 +71,7 @@ public class SeparatorTest extends BasePVTsimulation {
         m3oil[i] = getThermoSystem().getVolume();
       }
       if (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
+        gasGravity[i] = relativeGasDensity(getThermoSystem().getPhase(0));
         getThermoSystem().getPhase(0).setPressure(ThermodynamicConstantsInterface.referencePressure);
         getThermoSystem().getPhase(0).setTemperature(288.15);
         getThermoSystem().init(1);
@@ -75,6 +83,11 @@ public class SeparatorTest extends BasePVTsimulation {
     getThermoSystem().setTemperature(288.15);
     thermoOps.TPflash();
     oilVolumeStdCond = getThermoSystem().getPhase("oil").getVolume();
+    getThermoSystem().initPhysicalProperties();
+    stockTankOilDensity = getThermoSystem().getPhase("oil").getDensity("kg/m3");
+    if (getThermoSystem().hasPhaseType(PhaseType.GAS)) {
+      stockTankGasGravity = relativeGasDensity(getThermoSystem().getPhase(PhaseType.GAS));
+    }
 
     for (int i = 0; i < pressure.length; i++) {
       if (Sm3gas[i] > 1e-10) {
@@ -122,8 +135,8 @@ public class SeparatorTest extends BasePVTsimulation {
     tempSystem.setMixingRule(2);
 
     SeparatorTest sepSim = new SeparatorTest(tempSystem);
-    double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
-    double[] pres = { 500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure };
+    double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
+    double[] pres = {500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure};
     sepSim.setSeparatorConditions(temps, pres);
     sepSim.runCalc();
   }
@@ -144,5 +157,56 @@ public class SeparatorTest extends BasePVTsimulation {
    */
   public double[] getBofactor() {
     return Bofactor;
+  }
+
+  /**
+   * Relative density (air = 1) of a gas phase from its molar mass and the molar mass of air, 28.96546 g/mol.
+   *
+   * @param gas gas phase
+   * @return gas specific gravity relative to air
+   */
+  private static double relativeGasDensity(neqsim.thermo.phase.PhaseInterface gas) {
+    return gas.getMolarMass() * 1000.0 / ThermodynamicConstantsInterface.molarMassAir;
+  }
+
+  /**
+   * Returns the gas specific gravity (air = 1) of the gas separated at each stage.
+   *
+   * @return copy of the per-stage gas gravity, NaN where no gas is separated, null before runCalc()
+   */
+  public double[] getGasGravity() {
+    return gasGravity == null ? null : gasGravity.clone();
+  }
+
+  /**
+   * Returns the density of the stock-tank oil at standard conditions (288.15 K, 1.01325 bara).
+   *
+   * <p>
+   * The density is Peneloux-corrected when the fluid uses volume correction.
+   * </p>
+   *
+   * @return stock-tank oil density in kg/m3; NaN before {@link #runCalc()}
+   */
+  public double getStockTankOilDensity() {
+    return stockTankOilDensity;
+  }
+
+  /**
+   * Returns the API gravity of the stock-tank oil, 141.5 / SG - 131.5, with SG relative to water at 999.012 kg/m3 (60
+   * degF).
+   *
+   * @return stock-tank oil API gravity; NaN before {@link #runCalc()}
+   */
+  public double getStockTankOilAPIGravity() {
+    return 141.5 / (stockTankOilDensity / 999.012) - 131.5;
+  }
+
+  /**
+   * Returns the specific gravity (air = 1) of gas released when the last-stage oil is brought to standard conditions.
+   *
+   * @return stock-tank gas gravity; NaN when no gas is released at standard conditions
+   */
+  public double getStockTankGasGravity() {
+    return stockTankGasGravity;
   }
 }

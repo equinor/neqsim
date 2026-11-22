@@ -16,9 +16,9 @@ You help choose where a PaperLab paper belongs and how it should be framed.
 
 ## Loaded Skills
 
-- `paperlab_journal_positioning`
-- `journal_formatting`
-- `paperlab_publication_opportunity_mining`
+- `paperlab-journal-positioning`
+- `journal-formatting`
+- `paperlab-publication-opportunity-mining`
 
 ## Required Context
 

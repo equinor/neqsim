@@ -1,0 +1,129 @@
+package neqsim;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+/**
+ * Compiles every standalone Java source linked from the documentation examples catalog.
+ *
+ * @author esol
+ * @version 1.0
+ */
+public class StandaloneJavaDocumentationCompilationTest {
+  private static final int EXPECTED_EXAMPLE_COUNT = 16;
+  private static final List<String> LOG4J2_EXAMPLES = Arrays.asList("AcousticCompressibilityConversionExample.java",
+      "ChemicalReactionEquilibriumExample.java", "EclipseE300ExportImportExample.java", "FlowRegimeDebug.java",
+      "FlowRegimeDetectionExample.java", "MultiScenarioVFPExample.java", "MultiphaseModelPressureDropComparison.java",
+      "OffshoreEmissionReportingExample.java", "RealTimeIntegrationExample.java", "SlugTrackingComparisonExample.java",
+      "TransientPipelineLiquidAccumulationExample.java", "TwoFluidPipeExample.java",
+      "TwoFluidPipeSlugTrackingExample.java", "WellToOilStabilizationExample.java");
+
+  @TempDir
+  Path compilationOutput;
+
+  /** Verifies that modernized standalone examples use the repository logging policy. */
+  @Test
+  void testModernizedStandaloneExamplesUseLog4j2() throws IOException {
+    Path examplesDirectory = Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
+
+    for (String example : LOG4J2_EXAMPLES) {
+      Path sourceFile = examplesDirectory.resolve(example);
+      String source = new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
+      String className = example.substring(0, example.length() - ".java".length());
+
+      assertFalse(source.contains("System.out"), example + " must not write to System.out");
+      assertFalse(source.contains("System.err"), example + " must not write to System.err");
+      assertFalse(source.contains("printStackTrace"), example + " must preserve exception context through Log4j2");
+      assertTrue(source.contains("LogManager.getLogger(" + className + ".class)"),
+          example + " must declare a class-scoped Log4j2 logger");
+    }
+  }
+
+  /** Verifies that the well-to-stabilization example uses current temperature and pressure-difference APIs. */
+  @Test
+  void testWellToOilStabilizationExampleUsesCurrentApis() throws IOException {
+    Path examplesDirectory = Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
+    Path sourceFile = examplesDirectory.resolve("WellToOilStabilizationExample.java");
+    String source = new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
+
+    assertFalse(source.contains("setOutTemperature("), "The example must not advertise the deprecated heater alias");
+    assertTrue(source.contains("setOutletTemperature("), "The example must use the maintained heater API");
+    assertTrue(source.contains("getDrawdown(\"bar\")"), "Drawdown must use a pressure-difference unit");
+    assertFalse(source.contains("getDrawdown(\"bara\")"), "Drawdown must not be labelled as absolute pressure");
+  }
+
+  /** Verifies that the chemical-reactions package guide uses the maintained public workflow. */
+  @Test
+  void testChemicalReactionGuideUsesCurrentExecutableContract() throws IOException {
+    Path guidePath = Paths.get(System.getProperty("user.dir"), "docs", "chemicalreactions", "README.md")
+        .toAbsolutePath();
+    String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
+
+    assertTrue(guide.contains("../examples/ChemicalReactionEquilibriumExample.java"));
+    assertTrue(guide.contains("operations.reactiveTPflash();"));
+    assertTrue(guide.contains("ReactiveFlashBenchmarkTest.testWaterGasShiftEquilibrium"));
+
+    List<String> retiredCalls = Arrays.asList("setChemicalReactions(", "calcChemicalEquilibrium(",
+        "addChemicalReaction(", ".addReaction(", "new Kinetics(", "getNumberOfmable(");
+    for (String retiredCall : retiredCalls) {
+      assertFalse(guide.contains(retiredCall), "Package guide must not advertise retired call " + retiredCall);
+    }
+  }
+
+  /** Verifies that the complete standalone documentation-example corpus matches the current API. */
+  @Test
+  void testStandaloneDocumentationExamplesCompile() throws IOException {
+    Path examplesDirectory = Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
+    List<File> sourceFiles;
+    try (Stream<Path> paths = Files.list(examplesDirectory)) {
+      sourceFiles = paths.filter(path -> path.getFileName().toString().endsWith(".java")).sorted().map(Path::toFile)
+          .collect(Collectors.toList());
+    }
+
+    assertEquals(EXPECTED_EXAMPLE_COUNT, sourceFiles.size(),
+        "The compilation contract must track every catalogued standalone Java example");
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "A full JDK is required to verify documentation examples");
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+
+    try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null,
+        StandardCharsets.UTF_8)) {
+      Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFiles);
+      List<String> options = Arrays.asList("-classpath", System.getProperty("java.class.path"), "-d",
+          compilationOutput.toString(), "-encoding", StandardCharsets.UTF_8.name(), "-proc:none");
+
+      Boolean compiled = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits).call();
+      assertTrue(Boolean.TRUE.equals(compiled), formatDiagnostics(diagnostics));
+    }
+  }
+
+  private static String formatDiagnostics(DiagnosticCollector<JavaFileObject> diagnostics) {
+    return diagnostics.getDiagnostics().stream()
+        .map(diagnostic -> (diagnostic.getSource() == null ? "<compiler>" : diagnostic.getSource().getName()) + ":"
+            + diagnostic.getLineNumber() + ": " + diagnostic.getKind() + ": " + diagnostic.getMessage(null))
+        .collect(Collectors.joining(System.lineSeparator()));
+  }
+}

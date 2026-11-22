@@ -66,7 +66,7 @@ class ESDBlowdownVerificationTest {
 
     // Gas splitter (process/flare/blowdown)
     Splitter gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 3);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0, 0.0 }); // Normal: all to process
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0, 0.0}); // Normal: all to process
 
     Stream processStream = new Stream("Process Stream", gasSplitter.getSplitStream(0));
 
@@ -100,7 +100,7 @@ class ESDBlowdownVerificationTest {
     esdLogic = new ESDLogic("ESD Level 1");
     esdLogic.addAction(new CloseValveAction(inletValve), 0.0);
     esdLogic.addAction(new CloseValveAction(esdInletValve), 0.0);
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 0.0, 1.0 }), 0.5);
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 0.0, 1.0}), 0.5);
     esdLogic.addAction(new EnergizeESDValveAction(bdValve, 100.0), 0.5);
     esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0);
 
@@ -185,7 +185,7 @@ class ESDBlowdownVerificationTest {
     logger.info("Initial pressure: " + String.format("%.1f", initialPressure) + " bara\n");
 
     // Monitor pressure over time
-    double[] timePoints = { 0.0, 2.0, 5.0, 10.0, 15.0 };
+    double[] timePoints = {0.0, 2.0, 5.0, 10.0, 15.0};
     double previousPressure = initialPressure;
 
     for (double duration : timePoints) {

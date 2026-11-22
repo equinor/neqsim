@@ -87,8 +87,8 @@ public class DistillationColumnCapacityTest {
 
     DistillationColumn column = new DistillationColumn("debutanizer", 4, true, true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 + 95.0);
-    column.getCondenser().setOutTemperature(273.15 + 40.0);
+    column.getReboiler().setOutletTemperature(273.15 + 95.0);
+    column.getCondenser().setOutletTemperature(273.15 + 40.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
     column.setInternalDiameter(0.5);

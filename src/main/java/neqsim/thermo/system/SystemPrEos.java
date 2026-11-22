@@ -86,8 +86,7 @@ public class SystemPrEos extends SystemEos {
   /**
    * {@inheritDoc}
    *
-   * <p>
-   * Creates a deep copy of this {@code SystemPrEos} instance.
+   * @throws IllegalStateException if a required part of the clone cannot be copied
    */
   @Override
   public SystemPrEos clone() {
@@ -96,6 +95,7 @@ public class SystemPrEos extends SystemEos {
       clonedSystem = (SystemPrEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemPrEos", ex);
     }
 
     return clonedSystem;

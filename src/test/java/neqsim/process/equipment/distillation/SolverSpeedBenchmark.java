@@ -38,13 +38,13 @@ public class SolverSpeedBenchmark {
   private static final Logger logger = LogManager.getLogger(SolverSpeedBenchmark.class);
 
   /** Solver labels reported in the profile. */
-  private static final String[] SOLVER_LABELS = { "DIRECT", "INSIDE_OUT", "MATRIX_IO", "NEWTON", "NAPHTALI", "AUTO" };
+  private static final String[] SOLVER_LABELS = {"DIRECT", "INSIDE_OUT", "MATRIX_IO", "NEWTON", "NAPHTALI", "AUTO"};
 
   /** Solver types matching {@link #SOLVER_LABELS}. */
   private static final DistillationColumn.SolverType[] SOLVER_TYPES = {
       DistillationColumn.SolverType.DIRECT_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
       DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.NEWTON,
-      DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.AUTO };
+      DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.AUTO};
 
   /**
    * Create a standard deethanizer feed.
@@ -78,7 +78,7 @@ public class SolverSpeedBenchmark {
     StringBuilder report = new StringBuilder();
     appendHeader(report);
 
-    String[] caseNames = { "deethanizer_5", "deethanizer_10", "depropanizer", "debutanizer", "lean_demethanizer" };
+    String[] caseNames = {"deethanizer_5", "deethanizer_10", "depropanizer", "debutanizer", "lean_demethanizer"};
     for (int caseIndex = 0; caseIndex < caseNames.length; caseIndex++) {
       for (int solverIndex = 0; solverIndex < SOLVER_LABELS.length; solverIndex++) {
         DistillationColumn column = createBenchmarkColumn(caseNames[caseIndex], SOLVER_TYPES[solverIndex],
@@ -185,7 +185,7 @@ public class SolverSpeedBenchmark {
 
     DistillationColumn column = new DistillationColumn("bench_" + caseName + "_" + solverLabel, trayCount, true, false);
     column.addFeedStream(feed, trayCount);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(trayCount <= 5 ? 50 : 80);
@@ -225,8 +225,8 @@ public class SolverSpeedBenchmark {
     column.addFeedStream(feed, 3);
     column.setTopPressure(pressure);
     column.setBottomPressure(pressure + 0.2);
-    column.getCondenser().setOutTemperature(condenserTemperature);
-    column.getReboiler().setOutTemperature(reboilerTemperature);
+    column.getCondenser().setOutletTemperature(condenserTemperature);
+    column.getReboiler().setOutletTemperature(reboilerTemperature);
     column.setCondenserRefluxRatio(1.8);
     column.setMaxNumberOfIterations(80);
     column.setTemperatureTolerance(1.0e-1);
@@ -262,7 +262,7 @@ public class SolverSpeedBenchmark {
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
-    column.getReboiler().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 100.0);
     column.setMaxNumberOfIterations(80);
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(2.0e-1);

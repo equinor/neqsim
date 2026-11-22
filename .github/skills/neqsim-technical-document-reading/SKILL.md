@@ -1,6 +1,6 @@
 ---
 name: neqsim-technical-document-reading
-description: "Reads and extracts structured engineering data from technical documents (PDFs, Word, Excel, CSV) and engineering images/drawings (P&IDs, vendor datasheets, mechanical arrangements, performance maps). USE WHEN: a user provides engineering documents or images — equipment data sheets, technical requirements, design basis, well test reports, P&ID descriptions, inspection reports, standards, vendor drawings, compressor maps, phase envelopes, material certificates, trapped-liquid fire rupture evidence packs, or water-hammer route/event evidence — and needs structured data for process simulation. Covers document classification, extraction patterns by document type, image/figure analysis with view_image, unit normalization, data quality scoring, and output formats."
+description: "Extracts structured engineering data from documents (PDF, Word, Excel, CSV) and drawings/images (P&IDs, datasheets, arrangements, performance maps). USE WHEN: a user provides datasheets, technical requirements, design basis, well tests, inspection reports, standards, vendor drawings, compressor maps, phase envelopes, material certificates or rupture/water-hammer evidence and needs data for simulation. Covers classification, extraction patterns, view_image, units and quality scoring."
 last_verified: "2026-07-04"
 ---
 
@@ -248,10 +248,10 @@ engineering drawings, P&IDs, charts, tables, and compressor maps:
 
 ```python
 # CLI — convert all PDFs in the references folder
-python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
 
 # CLI — specific pages only (1-indexed)
-python devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
 
 # Python / Notebook — programmatic use
 from devtools.pdf_to_figures import pdf_to_pngs, pdf_folder_to_pngs
@@ -781,13 +781,13 @@ PDF/Image Document → pdf_to_figures.py → PNG pages → view_image → Struct
 
 ```bash
 # Single file
-python devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/ --dpi 200
+uv run --project devtools --locked devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/ --dpi 200
 
 # Specific pages
-python devtools/pdf_to_figures.py document.pdf --outdir figures/ --pages 1,3,5
+uv run --project devtools --locked devtools/pdf_to_figures.py document.pdf --outdir figures/ --pages 1,3,5
 
 # Batch (all PDFs in a folder)
-python devtools/pdf_to_figures.py references/ --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py references/ --outdir figures/
 ```
 
 **Step 2: View and analyze each page with `view_image`**

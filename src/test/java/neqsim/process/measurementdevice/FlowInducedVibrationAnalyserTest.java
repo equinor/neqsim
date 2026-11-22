@@ -348,8 +348,8 @@ public class FlowInducedVibrationAnalyserTest {
     double rho = pipe.getSegmentMixtureDensity(segment);
     double velocity = pipe.getSegmentMixtureSuperficialVelocity(segment);
     double gvf = pipe.getSegmentGasSuperficialVelocity(segment) / velocity;
-    return new double[] { analyzer.getMeasuredValue(""), rho, velocity, gvf,
-        pipe.getSegmentMixtureViscosity(segment).doubleValue() };
+    return new double[] {analyzer.getMeasuredValue(""), rho, velocity, gvf,
+        pipe.getSegmentMixtureViscosity(segment).doubleValue()};
   }
 
   @Test

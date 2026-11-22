@@ -32,9 +32,10 @@ public class Units {
   private static Map<String, UnitDescription> siUnits = new ConcurrentHashMap<>();
   private static Map<String, UnitDescription> fieldUnits = new ConcurrentHashMap<>();
 
-  private static String[] pressureUnits = new String[] { "Pa", "bara", "barg", "psi", "psig", "psia" };
-  private static String[] temperatureUnits = new String[] { "K", "C", "F", "R" };
-  private static String[] molarVolumeUnits = new String[] { "mol/m3", "litre/m3", "ft3/lbmole" };
+  private static String[] pressureUnits = new String[] {"Pa", "bara", "bar", "barg", "psi", "psia", "psig", "kPa",
+      "MPa", "atm"};
+  private static String[] temperatureUnits = new String[] {"K", "C", "F", "R"};
+  private static String[] molarVolumeUnits = new String[] {"mol/m3", "litre/m3", "ft3/lbmole"};
 
   /**
    * Constructor for Units.
@@ -142,44 +143,57 @@ public class Units {
   /**
    * getSymbol.
    *
-   * @param name a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    * @return a {@link java.lang.String} object
    */
-  public static synchronized String getSymbol(String name) {
+  public static synchronized String getSymbol(String unit) {
+    Unit.validateUnitInput(unit, "property");
     if (activeUnits.size() == 0) {
       new Units();
     }
-    return activeUnits.get(name).symbol;
+    UnitDescription unitDescription = activeUnits.get(unit);
+    if (unitDescription == null) {
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+    return unitDescription.symbol;
   }
 
   /**
    * getSymbolName.
    *
-   * @param name a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    * @return a {@link java.lang.String} object
    */
-  public static synchronized String getSymbolName(String name) {
+  public static synchronized String getSymbolName(String unit) {
+    Unit.validateUnitInput(unit, "property");
     if (activeUnits.size() == 0) {
       new Units();
     }
-    return activeUnits.get(name).symbolName;
+    UnitDescription unitDescription = activeUnits.get(unit);
+    if (unitDescription == null) {
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+    return unitDescription.symbolName;
   }
 
   /**
    * setUnit.
    *
-   * @param name a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    * @param symbol a {@link java.lang.String} object
    * @param symbolName a {@link java.lang.String} object
    */
-  public static synchronized void setUnit(String name, String symbol, String symbolName) {
+  public static synchronized void setUnit(String unit, String symbol, String symbolName) {
+    Unit.validateUnitInput(unit, "property");
     if (activeUnits.size() == 0) {
       new Units();
     }
-    UnitDescription unit = activeUnits.get(name);
-    if (unit != null) {
-      unit.symbol = symbol;
-      unit.symbolName = symbolName;
+    UnitDescription unitDescription = activeUnits.get(unit);
+    if (unitDescription != null) {
+      unitDescription.symbol = symbol;
+      unitDescription.symbolName = symbolName;
+    } else {
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
     }
   }
 
@@ -189,7 +203,7 @@ public class Units {
    * @return an array of {@link java.lang.String} objects
    */
   public String[] getTemperatureUnits() {
-    return temperatureUnits;
+    return temperatureUnits.clone();
   }
 
   /**
@@ -198,7 +212,7 @@ public class Units {
    * @return an array of {@link java.lang.String} objects
    */
   public String[] getPressureUnits() {
-    return pressureUnits;
+    return pressureUnits.clone();
   }
 
   /**
@@ -207,6 +221,6 @@ public class Units {
    * @return an array of {@link java.lang.String} objects
    */
   public String[] getMolarVolumeUnits() {
-    return molarVolumeUnits;
+    return molarVolumeUnits.clone();
   }
 }

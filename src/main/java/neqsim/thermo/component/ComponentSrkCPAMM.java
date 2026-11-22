@@ -305,16 +305,12 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * Debye-Hückel contribution to dF/dN_i.
    *
    * <p>
-   * For the Debye-Hückel term: F^DH = -κ³V / (12πRT·N_A)
+   * For the Debye-Hückel term: F^DH = -κ³Vτ(κd) / (12πN_A)
    * </p>
    *
    * <p>
-   * The full derivative at constant T, P is: dF^DH/dn_i = (∂F^DH/∂κ)(∂κ/∂n_i) + (∂F^DH/∂V)(∂V/∂n_i)
-   * </p>
-   *
-   * <p>
-   * For ions: ∂κ/∂n_i has contribution from z_i² term. For all components: adding moles changes V which affects κ
-   * through the dilution effect.
+   * The derivative follows the fixed-temperature, fixed-total-volume Helmholtz contract used by {@link ComponentEos}.
+   * It includes ionic strength, ion-packing dielectric, solvent dielectric and mean-ion-diameter paths.
    * </p>
    *
    * @param phase the phase
@@ -328,57 +324,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (mmPhase == null || !mmPhase.isDebyeHuckelOn()) {
       return 0.0;
     }
-
-    double kappa = mmPhase.getKappa();
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-
-    double Vm = phase.getMolarVolume() * 1e-5; // m³/mol
-    double nT = phase.getNumberOfMolesInPhase();
-    double V = Vm * nT; // total volume in m³
-    double z = getIonicCharge();
-    double eps = mmPhase.getMixturePermittivity();
-
-    // Extended DH screening factor and correction
-    double tauDH = mmPhase.getTauDH();
-    double tauDHp = mmPhase.getTauDHprime();
-    double dMean = mmPhase.getMeanIonDiameter();
-
-    // DHLL partials: F = -κ³V/(12πN_A)
-    // ∂F/∂κ|_V = -3κ²V/(12πN_A)
-    // ∂F/∂V|_κ = -κ³/(12πN_A)
-    double factor = 1.0 / (12.0 * Math.PI * N_A);
-    double dFdkappa_DHLL = -3.0 * kappa * kappa * V * factor;
-    double dFdV_DHLL = -kappa * kappa * kappa * factor;
-    double F_DHLL = -kappa * kappa * kappa * V * factor;
-
-    // Extended DH partials:
-    // ∂F_ext/∂κ|_V = ∂F_DHLL/∂κ × τ + F_DHLL × τ'(χ) × d
-    // ∂F_ext/∂V|_κ = ∂F_DHLL/∂V × τ
-    double dFdkappa = dFdkappa_DHLL * tauDH + F_DHLL * tauDHp * dMean;
-    double dFdV = dFdV_DHLL * tauDH;
-
-    // κ² = C × S / V where C = e²N_A/(ε₀εk_BT), S = Σ(n_j z_j²)
-    double C = E_CHARGE * E_CHARGE * N_A / (EPSILON_0 * eps * K_B * temperature);
-
-    double S = 0.0;
-    for (int j = 0; j < numberOfComponents; j++) {
-      double zj = phase.getComponent(j).getIonicCharge();
-      if (zj != 0) {
-        S += phase.getComponent(j).getNumberOfMolesInPhase() * zj * zj;
-      }
-    }
-
-    // ∂κ²/∂n_i = C z_i²/V - κ² Vm/V
-    double dkappa2dni = C * z * z / V - kappa * kappa * Vm / V;
-    double dkappaDni = dkappa2dni / (2.0 * kappa);
-
-    // ∂V/∂n_i = Vm
-    double dVdni = Vm;
-
-    // dF^DH_ext/dn_i = ∂F_ext/∂κ × ∂κ/∂n_i + ∂F_ext/∂V × ∂V/∂n_i
-    return dFdkappa * dkappaDni + dFdV * dVdni;
+    return mmPhase.getDebyeHuckelDerivativeN(getComponentNumber());
   }
 
   /**
@@ -443,15 +389,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       return 0.0;
     }
 
-    double kappa = mmPhase.getKappa();
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-
-    // The main temperature dependence comes from 1/T and κ(T)
-    // Approximate: d/dT[dF^DH/dn_i] ≈ -dF^DH/dn_i / T (dominant 1/T term)
-    double dFDHdn = dFDebyeHuckeldN(phase, numberOfComponents, temperature, pressure);
-    return -dFDHdn / temperature;
+    return mmPhase.getDebyeHuckelDerivativeNT(getComponentNumber());
   }
 
   /**
@@ -517,49 +455,14 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * @param numberOfComponents number of components
    * @param temperature temperature in K
    * @param pressure pressure in bar
-   * @return d²F^DH/(dn_i dV) contribution
+   * @return d²F^DH/(dn_i dV) contribution in NeqSim's {@code 1e-5 m3} volume coordinate
    */
   public double dFDebyeHuckeldNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
     if (mmPhase == null || !mmPhase.isDebyeHuckelOn()) {
       return 0.0;
     }
-
-    double kappa = mmPhase.getKappa();
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-
-    double tauDH = mmPhase.getTauDH();
-
-    double Vm = phase.getMolarVolume() * 1e-5;
-    double nT = phase.getNumberOfMolesInPhase();
-    double V = Vm * nT;
-    double z = getIonicCharge();
-    double eps = mmPhase.getMixturePermittivity();
-
-    // κ² = C * S / V, so dκ²/dV = -C * S / V² = -κ²/V
-    // dκ/dV = -κ/(2V)
-    double dkappadV = -kappa / (2.0 * V);
-
-    // dκ/dn_i = C * z_i² / (2κV)
-    double C = E_CHARGE * E_CHARGE * N_A / (EPSILON_0 * eps * K_B * temperature);
-    double dkappaDni = (z != 0 && kappa > 1e-30) ? C * z * z / (2.0 * kappa * V) : 0.0;
-
-    // d²κ/(dn_i dV) = d/dV[C * z_i² / (2κV)]
-    double d2kappaDniDV = 0.0;
-    if (z != 0 && kappa > 1e-30) {
-      d2kappaDniDV = -C * z * z / (2.0 * kappa * V * V) + C * z * z / (4.0 * kappa * kappa * V * V);
-    }
-
-    // Extended DH: multiply DHLL terms by tauDH
-    double factor = 1.0 / (12.0 * Math.PI * R * temperature * N_A);
-
-    double term1 = -3.0 * 2.0 * kappa * dkappadV * V * factor * dkappaDni;
-    double term2 = -3.0 * kappa * kappa * factor * dkappaDni;
-    double term3 = -3.0 * kappa * kappa * V * factor * d2kappaDniDV;
-
-    return 1e-5 * (term1 + term2 + term3) * tauDH;
+    return mmPhase.getDebyeHuckelDerivativeNV(getComponentNumber());
   }
 
   /**
@@ -596,36 +499,7 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       return 0.0;
     }
 
-    double kappa = mmPhase.getKappa();
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-
-    double tauDH = mmPhase.getTauDH();
-
-    double Vm = phase.getMolarVolume() * 1e-5;
-    double nT = phase.getNumberOfMolesInPhase();
-    double V = Vm * nT;
-    double zi = getIonicCharge();
-    double zj = phase.getComponent(j).getIonicCharge();
-    double eps = mmPhase.getMixturePermittivity();
-
-    double C = E_CHARGE * E_CHARGE * N_A / (EPSILON_0 * eps * K_B * temperature);
-
-    // dκ/dn_i and dκ/dn_j
-    double dkappaDni = (zi != 0 && kappa > 1e-30) ? C * zi * zi / (2.0 * kappa * V) : 0.0;
-    double dkappaDnj = (zj != 0 && kappa > 1e-30) ? C * zj * zj / (2.0 * kappa * V) : 0.0;
-
-    // d²κ/(dn_i dn_j) = -C * z_i² * dκ/dn_j / (2κ²V)
-    double d2kappaDniDnj = 0.0;
-    if (zi != 0 && kappa > 1e-30) {
-      d2kappaDniDnj = -C * zi * zi * dkappaDnj / (2.0 * kappa * kappa * V);
-    }
-
-    // Extended DH: multiply DHLL terms by tauDH
-    double factor = V / (12.0 * Math.PI * R * temperature * N_A);
-
-    return -factor * (6.0 * kappa * dkappaDni * dkappaDnj + 3.0 * kappa * kappa * d2kappaDniDnj) * tauDH;
+    return mmPhase.getDebyeHuckelDerivativeNN(getComponentNumber(), j);
   }
 
   /**

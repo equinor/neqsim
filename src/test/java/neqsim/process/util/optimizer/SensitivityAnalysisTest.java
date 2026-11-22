@@ -37,7 +37,7 @@ public class SensitivityAnalysisTest extends neqsim.NeqSimTest {
     comp.setOutletPressure(100.0);
 
     Cooler cooler = new Cooler("Cooler", comp.getOutletStream());
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     process = new ProcessSystem();
     process.add(feed);

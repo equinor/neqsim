@@ -58,7 +58,7 @@ class PitzerCo2SodiumSulfateVleValidationTest extends neqsim.NeqSimTest {
 
   @Test
   void malformedReferenceStateReportsPointContext() {
-    String[] fields = { "invalid-point", "not-a-number", "0.01", "323.15", "75.0", "1.0", "50.0" };
+    String[] fields = {"invalid-point", "not-a-number", "0.01", "323.15", "75.0", "1.0", "50.0"};
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ReferenceState(fields));
 

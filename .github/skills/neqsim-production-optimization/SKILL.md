@@ -1,7 +1,7 @@
 ---
 name: neqsim-production-optimization
-description: "Production optimization, bottleneck analysis, decline modeling, decline-curve history matching (Arps + Duong), reservoir material balance surveillance (OGIP/OOIP, drive indices, aquifer influx), and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, fitting decline curves to production history, estimating reserves from pressure/production data, analyzing gas lift allocation, evaluating IOR/EOR options, or running multi-scenario production comparisons."
-last_verified: "2026-08-15"
+description: "Production optimization, bottleneck analysis, decline curves and history matching (Arps, Duong), material-balance surveillance (OGIP/OOIP, drive indices, aquifer) and IOR/EOR screening with NeqSim. USE WHEN: optimizing rates, finding facility bottlenecks, forecasting profiles, fitting decline curves, estimating reserves, allocating gas lift, comparing production scenarios, or generating Eclipse/OPM VFPPROD lift-curve tables from a NeqSim pipe model."
+last_verified: "2026-09-21"
 ---
 
 # NeqSim Production Optimization Skill
@@ -304,6 +304,112 @@ double annualCO2 = net.getAnnualCO2EmissionsTonnes();
 See [production_well_networks.md](docs/process/equipment/production_well_networks.md)
 for full API documentation of all features.
 
+### Lift curves / VFPPROD tables for Eclipse and OPM Flow
+
+> Authoritative guide: `neqsim-vfp-lift-curves` (`VfpTableBuilder`, tubing/flowline/full-system providers, validation).
+> The recipe below is the manual flowline-only route with `PipeBeggsAndBrills`; prefer the builder.
+
+A reservoir simulator wants `VFPPROD`: a 5-D table `BHP[flow][THP][WFR][GFR][ALQ]`
+in **standard surface volumes** (Sm3/d, METRIC) with explicit axis definitions.
+NeqSim gives you the hydraulics (`PipeBeggsAndBrills`) and the validated keyword
+writer (`EclipseVFPExporter`); the piece in between is a surface-rate
+recombination loop that you write yourself (verified 2026-09-21, 216 points in
+~100 s at 20 pipe increments):
+
+```python
+# 1. Wellstream at standard conditions -> separator gas/condensate basis.
+#    read(file, True) adds a zero-mole water slot with kij 0.5 and VLLE on.
+#    NEVER call setMixingRule() after read(): it wipes the E300 BIC block.
+base = EclipseFluidReadWrite.read(e300_path, True)
+std = base.clone(); std.setTemperature(288.15); std.setPressure(1.01325)
+ThermodynamicOperations(std).TPflash(); std.initProperties()
+names = [str(std.getComponent(i).getComponentName()) for i in range(std.getNumberOfComponents())]
+def basis(kind):                       # composition + mol per standard m3
+    ph = std.getPhase(kind)
+    x = [float(ph.getComponent(i).getx()) for i in range(len(names))]
+    return x, float(ph.getDensity("kg/m3")) / float(ph.getMolarMass())
+y_gas, gas_mol_sm3 = basis("gas"); x_oil, oil_mol_sm3 = basis("oil")
+
+# 2. Recombine one table point (gas basis: GAS / WGR / OGR).
+def recombine(q_gas_sm3_d, ogr, wgr):
+    n_gas, n_oil = q_gas_sm3_d * gas_mol_sm3, q_gas_sm3_d * ogr * oil_mol_sm3
+    moles = [n_gas * y_gas[i] + n_oil * x_oil[i] for i in range(len(names))]
+    moles[names.index("water")] += q_gas_sm3_d * wgr * 999.0 / 0.018015
+    fluid = base.clone()
+    fluid.setMolarComposition(jpype.JArray(jpype.JDouble)([m / sum(moles) for m in moles]))
+    fluid.setTotalFlowRate(sum(moles) / 86400.0, "mol/sec")
+    return fluid
+
+# 3. Arrival pressure for a trial inlet pressure; None = march failed (P_in too low).
+def p_out(fluid, p_in):
+    feed = Stream("inlet", fluid.clone()); feed.setTemperature(40.0, "C"); feed.setPressure(p_in, "bara")
+    pipe = PipeBeggsAndBrills("line", feed)
+    pipe.setLength(25000.0); pipe.setElevation(350.0); pipe.setDiameter(0.254)
+    pipe.setPipeWallRoughness(4.5e-5); pipe.setNumberOfIncrements(20)
+    pipe.setConstantSurfaceTemperature(4.0, "C"); pipe.setHeatTransferCoefficient(2.0)  # W/m2K, SPECIFIED_U
+    try:
+        feed.run(); pipe.run()
+        p = float(pipe.getOutletStream().getPressure("bara"))
+        return p if p > 0 else None
+    except Exception:
+        return None
+
+# 4. Secant on the residual p_out(P_in) - THP for every (rate, THP, WGR, OGR); dP is a
+#    weak function of P_in so 3-6 pipe runs per point suffice. Fill BHP[f][t][w][g][0].
+
+# 5. Validated keyword. Axis order [flow][THP][WFR][GFR][ALQ]; every value finite and > 0.
+exp = EclipseVFPExporter(1)
+exp.setDatumDepth(350.0); exp.setUnitSystem("METRIC"); exp.setInputUnits("Sm3/day", "bara")
+exp.setFlowRateType("GAS"); exp.setWaterCutType("WGR"); exp.setGORType("OGR"); exp.setALQType("")
+exp.setFlowRates(JD(gas_rates)); exp.setTHPs(JD(thps)); exp.setWaterCuts(JD(wgrs)); exp.setGORs(JD(ogrs))
+exp.setBHPTable(jpype.JArray(jpype.JDouble, 5)(bhp))
+Path("vfp_flowline.inc").write_text(str(exp.getVFPPRODString()))
+```
+
+Basis by fluid type: gas condensate → `'GAS' 'WGR' 'OGR'` (OGR ≈ 1/GOR, e.g.
+GOR 2990 → 3.3e-4); oil → `'OIL' 'WCT' 'GOR'`. Supported definitions in the
+exporter: FLO ∈ {OIL, LIQ, GAS}, WFR ∈ {WCT, WOR, WGR}, GFR ∈ {GOR, GLR, OGR},
+ALQ ∈ {'' (singleton 0), GRAT}; METRIC or FIELD output.
+
+| Trap | Effect | Fix |
+|------|--------|-----|
+| `LiftCurveGenerator` / `FlowRateOptimizer` / `ProcessSystem.generateLiftCurve` | Rates in kg/hr or actual volume — `EclipseVFPExporter` rejects them ("mass/actual volume is not VFP flow") | Recombine per point at standard conditions and run in Sm3/d as above |
+| `RecombinationFlashGenerator` / `MultiScenarioVFPGenerator` on an E300 fluid | Calls `setMixingRule("classic")` on the recombined fluid → wipes the file's BIC block; output is diagnostic, not a deck keyword | Use the loop above on `read(file, True)`; feed the result to `EclipseVFPExporter` |
+| Point does not reach the target THP inside the inlet-pressure cap | Exporter throws on NaN / non-positive BHP — no nearest-neighbour fill | Write the cap value and say so in a `--` comment, or trim the rate axis |
+| Flowline table used as a well table | The "BHP" column is the flowline **inlet** pressure, not a bottomhole pressure | Use as a network branch (`NETWORK` + `BRANPROP 'A' 'B' <table> /`); for a well table set `datum_depth` to the well datum and replace the geometry by the tubing |
+| Lift-curve minimum in P_in(Q) (riser liquid loading) | Rates below the minimum are hydraulically unstable; a THP-controlled well there oscillates or dies | Expected physics — keep the low-rate points so the simulator sees the turning point, note it in the report |
+| `pipe.getFlowRegime()` next to `getSegmentLiquidHoldup(0)` | Compares outlet and inlet states | Use `getSegmentFlowRegime(i)` with the matching segment index |
+
+The arrival temperature is not part of `VFPPROD`; keep it in a side JSON
+(`arrival_temperature_C` per point) for the flow-assurance hand-off.
+
+### Gas-lifted well lift curves with `TwoFluidPipe`
+
+Verified on a deviated oil producer on 2026-09-24. The well had 4.7 km MD, 58 % water cut, and
+gas lift. The two-fluid model gave BHP within 4.3 % of Beggs & Brill tubing ΔP at the operating point.
+
+- **The default boundary conditions already give BHP.** The inlet is `STREAM_CONNECTED` and the
+  outlet is `CONSTANT_PRESSURE` = WHP. The steady solve marches top-down, so `getInletPressure()`
+  is the bottom-hole pressure and no shooting loop is needed. The inlet stream pressure is only
+  an initial guess.
+- **Use two legs with a `Mixer` at the gas-lift valve.** Upper leg: well fluid plus lift gas,
+  with the outlet at WHP. Lower leg: well fluid only, with the outlet at the upper leg's inlet
+  pressure. Run the lower leg once at a guessed pressure first, only to get the temperature
+  arriving at the valve.
+- **Fix the injection depth from data.** March a static lift-gas column down from the measured
+  surface casing pressure (`ANNULUS_PRESS_BARG` in PDM). The operating valve is where casing
+  pressure minus tubing pressure equals the valve differential.
+- **Calibrate the heat-transfer coefficient on WHT.** Use a secant on U with a geothermal
+  `setSurfaceTemperatureProfile` in K, one value per section.
+- **The pip wheel may be too old.** `neqsim` 3.18.0 has no `setCellFaceElevationProfile` or
+  `getSteadyStateConvergenceReport`, and there the same well did not converge. Load the source
+  checkout with `neqsim_dev_setup.neqsim_init(project_root=..., recompile=False)`.
+- `getPressureProfile()` returns cell-centre values, so the last cell sits one half-cell above
+  the outlet BC. On a vertical liquid column that is 2–3 bar at 36 cells.
+- **Parallel runs need care.** A `ProcessPoolExecutor` with one JVM per worker is fine, but CPU
+  contention can push points past `setSteadyStateMaxWallClockTime`. Re-run non-converged points
+  with a longer limit before marking them as failed.
+
 ---
 
 ## Gas Lift Optimization
@@ -380,6 +486,31 @@ Screening-grade: choke is a linear deliverability scale, the facility relief is 
 "choke back the least valuable barrels first" search. Use `LoopedPipeNetwork` for a
 rigorous coupled network solve. Distinct from `GasLiftOptimizer` (lift gas + compression
 only) and `ReservoirToMarketOptimizer` (choke + one throughput cap only).
+
+**Naturally flowing wells, gas-limited plant stop (verified Snorre A, Oct 2026).** For a
+choke list with no lift gas (e.g. a gas-compression train out of service) use a flat
+curve and the PDM GOR; it reproduced a two-constraint LP to 0.06 % in oil and the same shut set:
+
+```python
+I = jneqsim.process.fielddevelopment.integrated
+curve = I.GasLiftPerformanceCurve([0.0, 1.0], [oil, oil])          # no lift response
+w = I.ChokeableGasLiftWell(name, curve)
+w.setMaxChokeFraction(1.0).setCurrentChokeFraction(1.0).setGor(gor).setWaterCut(wat / (oil + wat))
+if pre_decided_shut:
+    w.setForcedShut(True, "operator pre-decision")
+opt = I.ChokeAndGasLiftAllocationOptimizer().addWell(w)            # add all wells first
+opt.setGasHandlingLimit(gas_budget_sm3d)
+res = opt.optimize()                                               # res.getWells()[name].getOilRate()
+```
+
+Gotchas: (1) the gas limit must be on the **same basis as the GOR x oil you pass** - a compressor
+meter capacity (e.g. 2.75 MSm3/d) is not the PDM-allocated gas the wells report; measure the
+ratio in the same operating regime first (Snorre A: PDM gas = 0.79 x WAG meter with the Vigdis
+train off) or the list is ~30 % too generous; (2) the class has only gas, water and lift-gas
+ceilings - a second stage limit such as a recompressor's 2nd-stage gas must be checked after
+the solve (or solved as a small LP with `scipy.optimize.linprog`); (3) the allocator is greedy
+by GOR, so a pre-decided low-GOR shut-in (swing wells) costs its full oil and is not re-ranked -
+report that cost explicitly.
 
 ---
 
@@ -544,6 +675,7 @@ Map<String, Double> breakdown = decom.getBreakdown();
 | Interpolating a discrete operating choice or mutating a candidate without a restoration token | A solver can invent an invalid line-up, target the wrong area, hide conversion resolution behind a false rejection, or leave a rejected point in the model | Define a provenance-bearing `ProcessModelOperatingAction` with an area-qualified address. Enumerate `getAllowedValues()` for discrete actions, capture the baseline before mutation, and restore the identity-matched state after candidate validation. Keep the strict default read-back comparison unless the exact automation conversion or control tag has a known resolution; then declare it with `withReadBackTolerance(absolute, relative, provenance)` and retain the numeric residual/tolerance diagnostics. Capability or read-back success is not process feasibility or operating approval. |
 | Screening a well or gathering action from a live model without rerunning and restoring the baseline | A rejected candidate can leak into the next evaluation, an exact hydraulic limit can be missing, or evidence can be used outside its validity range | Configure a zero-parameter `ProcessModelSimulationEvaluator`, wrap one action with `ProcessModelOperatingActionEvaluator`, and bind every required hydraulic constraint by exact area/equipment/constraint identity and provenance. Require candidate convergence, finite utilization/margin, no violation, in-range evidence when a range is declared, and successful baseline restoration and reconvergence. Use separate model instances for parallel candidates. |
 | Applying coupled well-allocation actions independently or simulating a partial vector | A later rejected write can leave earlier wells changed, shared limits can be evaluated at an impossible mixed state, and rollback evidence is lost | Use one provenance-bearing `ProcessModelOperatingActionSetEvaluator` with unique action IDs and addresses. Require exact per-well and shared constraints. Inspect every `ActionCandidateEvidence`, reject any partial application, and require reverse-order restoration plus baseline reconvergence before the next candidate. Validate total/component balance and nearby monotonic constraint response; the transaction does not choose or approve the allocation. |
+| Routing a well by splitting its solved outlet downstream or writing independent HP/LP availabilities | Separator pressure does not feed back into well deliverability, both routes can be open or closed, and rejected candidates can leave an invalid line-up | Register the existing alternative edges with `FieldWellNetworkProcessUnit.registerExclusiveRouteSelector(...)` and use one discrete `route.<selector>.selection` action. The selector applies an exact one-hot line-up atomically; rerun the coupled model, require finite convergence and per-route constraints, and verify exact selection restoration. Zero availability is an exact closed edge in the Newton solve; fractional values remain deratings. |
 | Reducing fixed-total allocation to a score-only callback or continuing after rollback failure | Constraint provenance and rejected-point evidence disappear, a shared total can drift, or later trials can start from a corrupted process state | For continuous common-unit actions, compose the atomic action set with `ProcessModelAllocationOptimizer`. Declare the fixed total, seed, objective row, budget, transfer tolerance and objective tolerance provenance. Require `isModelRecovered()`, retain the full candidate trace, and inspect utilization-ranked constraints at the best feasible and best sampled objective points. Treat the sampled opportunity gap and transfer convergence as local search diagnostics, not production loss, global optimality, a shadow price, or approval. |
 | Labelling normalized installed-capacity utilization or margin with RPM, kW, or a flow unit | External solvers and AI agents can mistake a fraction for physical headroom, resample a mutable supplier, or join relief to only a selected hydraulic subset | Register capacities with `addEquipmentCapacityConstraints()` and retain `EvaluationResult.getInstalledEquipmentCapacityEvidence()`. Treat `getNormalizedUnit()` as `"1"`; use `getPhysicalUnit()` only for current, applicable limit, physical margin, and required relief. Preserve qualified identity, origin, evidence status, and validity applicability. |
 | Joining an improving rejected allocation to mutable constraint definitions or calling one sampled gap causal debottleneck value | Archived rows can be relabelled, normalized capacity margins can be mistaken for engineering-unit relief, and coupled or weak evidence can look isolated | Retain `CandidateSetEvaluationResult.getObjectiveEvidence()` and `getConstraintEvidence()`, then call `ProcessModelAllocationBottleneckAnalyzer.analyze(search)`. Require complete recovery, inspect every hard violation and its evidence class, and keep unlike relief units separate. Treat results as sampled non-causal associations, not capacity sizing, production loss, shadow price, economics, or approval. |

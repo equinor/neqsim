@@ -344,7 +344,7 @@ public class ScalePredictionTest {
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 200, 5, 0, 150, 10, 50000, 80, 100, 2.0, 6.5);
     screener.setInjectionWater(20, 0, 0, 0, 100, 2700, 35000, 20, 100, 0.5, 8.0);
-    screener.setMixingRatios(new double[] { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 });
+    screener.setMixingRatios(new double[] {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100});
     screener.calculate();
 
     double worstRatio = screener.getWorstCaseRatio();
@@ -368,7 +368,7 @@ public class ScalePredictionTest {
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 10, 5, 0, 150, 10, 50000, 80, 100, 2.0, 6.5);
     screener.setInjectionWater(20, 0, 0, 0, 100, 2700, 35000, 20, 100, 0.5, 8.0);
-    screener.setMixingRatios(new double[] { 0 });
+    screener.setMixingRatios(new double[] {0});
     screener.calculate();
 
     List<WaterCompatibilityScreener.MixingResult> results = screener.getResults();

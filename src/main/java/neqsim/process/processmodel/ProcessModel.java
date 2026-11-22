@@ -29,6 +29,7 @@ import neqsim.process.dynamics.IntegratorStrategy;
 import neqsim.process.dynamics.TransientStepTransaction;
 import neqsim.process.dynamics.TransientTransactionCoverage;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.EquipmentDesignData;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
@@ -54,6 +55,14 @@ public class ProcessModel implements Runnable, Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
+  /** Opt-in time, cancellation and stall budget shared by all areas during a run (off by default). */
+  private transient volatile RunBudget runBudget = null;
+  /** Diagnostics of the last run. */
+  private transient volatile RunDiagnostics lastRunDiagnostics = null;
+  /** Whether run() closes implicit feedback loops with generated recycles. */
+  private boolean autoRecycles = false;
+  /** Re-entrancy guard so the seeding run inside makeRecycles() does not trigger insertion again. */
+  private transient boolean autoRecycleInProgress = false;
 
   /** Active multi-area transient transaction, or {@code null} outside a trial step. */
   private transient ProcessModelStepTransaction activeTransientStepTransaction = null;
@@ -1168,6 +1177,89 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Closes every feedback loop that has no {@link neqsim.process.equipment.util.Recycle} with an automatically inserted
+   * one.
+   *
+   * <p>
+   * Both loop kinds are covered: a stream produced by an area that runs after its consumer, and a loop entirely inside
+   * one area. A cross-area feedback stream left implicit is only closed by the outer sweep, with no tolerance and no
+   * acceleration of its own, which floors the plant residual; rewiring it through a tear stream and a {@code Recycle}
+   * gives it both. The model is run once first when its streams have no fluid yet, so the tear streams start from a
+   * physical state; calling this again is a no-op for loops that are already closed.
+   * </p>
+   *
+   * @return the recycles created
+   */
+  public java.util.List<neqsim.process.equipment.util.Recycle> makeRecycles() {
+    return makeRecycles(AutoRecycleBuilder.DEFAULT_TOLERANCE);
+  }
+
+  /**
+   * Closes every feedback loop that has no {@link neqsim.process.equipment.util.Recycle} with an automatically inserted
+   * one.
+   *
+   * @param tolerance relative tear tolerance for the created recycles, must be positive
+   * @return the recycles created
+   */
+  public java.util.List<neqsim.process.equipment.util.Recycle> makeRecycles(double tolerance) {
+    if (autoRecycleInProgress) {
+      return new ArrayList<neqsim.process.equipment.util.Recycle>();
+    }
+    autoRecycleInProgress = true;
+    try {
+      if (needsSeedRun()) {
+        run();
+      }
+      return AutoRecycleBuilder.insertRecycles(this, tolerance);
+    } finally {
+      autoRecycleInProgress = false;
+    }
+  }
+
+  /**
+   * Whether {@link #run()} closes implicit feedback loops with generated recycles before iterating.
+   *
+   * @return true when automatic recycle insertion is enabled
+   */
+  public boolean isAutoRecycles() {
+    return autoRecycles;
+  }
+
+  /**
+   * Enables automatic recycle insertion on {@link #run()} and therefore on {@link #runUntilConverged(int)}.
+   *
+   * <p>
+   * With this enabled the caller no longer has to run the plant, call {@link #makeRecycles()} and run again: the first
+   * run seeds and closes every implicit loop, including the cross-area feedback streams that otherwise have no
+   * convergence criterion of their own. Disabled by default, because inserting a tear changes how an existing model
+   * iterates.
+   * </p>
+   *
+   * @param autoRecycles true to close implicit loops automatically
+   */
+  public void setAutoRecycles(boolean autoRecycles) {
+    this.autoRecycles = autoRecycles;
+  }
+
+  /**
+   * Checks whether the model still has streams without a fluid, which a tear stream cannot be seeded from.
+   *
+   * @return true when at least one outlet stream in any area has no fluid yet
+   */
+  private boolean needsSeedRun() {
+    for (ProcessSystem area : processes.values()) {
+      for (neqsim.process.equipment.ProcessEquipmentInterface unit : area.getUnitOperations()) {
+        for (StreamInterface outlet : unit.getOutletStreams()) {
+          if (outlet != null && outlet.getFluid() == null) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Retrieves a process by its name.
    *
    * @param name a {@link java.lang.String} object
@@ -1262,6 +1354,12 @@ public class ProcessModel implements Runnable, Serializable {
       }
     }
     aggregate.markComplete(!anyFailure);
+    RunDiagnostics diag = lastRunDiagnostics;
+    if (diag != null && !RunBudget.Outcome.NONE.name().equals(diag.getOutcome())) {
+      aggregate.recordConvergence(false, false, diag.getPassCount(), Collections.<String>emptyList(),
+          diag.getOutcome());
+      aggregate.recordBudget(RunBudget.Outcome.valueOf(diag.getOutcome()), diag.getReason(), diag.getUnitName());
+    }
     return aggregate;
   }
 
@@ -1793,6 +1891,26 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Accepts one coordinated multi-area interval using transactional numerical step doubling.
+   *
+   * <p>
+   * All areas use the same accepted interval and physical child identities. A failed or rejected trial restores every
+   * area. Shared start-of-interval events execute before any area integrates.
+   * </p>
+   *
+   * @param dt requested upper bound on accepted physical time in seconds
+   * @param id non-null, new parent physical-interval identity
+   * @param options explicit timestep, retry, method-order and numerical-state policy
+   * @return accepted interval, numerical error, retry and physical-child evidence
+   * @throws IllegalArgumentException if the request or numerical policy is invalid
+   * @throws IllegalStateException if coverage, clock alignment or bounded acceptance fails
+   */
+  public synchronized neqsim.process.dynamics.AdaptiveTransientResult runTransientAdaptive(double dt, UUID id,
+      neqsim.process.dynamics.AdaptiveTransientOptions options) {
+    return AdaptiveTransientStepper.advance(this, dt, id, options);
+  }
+
+  /**
    * Rolls back open child transactions in reverse area order.
    *
    * @param areaCheckpoints child transactions captured so far
@@ -2088,6 +2206,115 @@ public class ProcessModel implements Runnable, Serializable {
    */
   @Override
   public void run() {
+    final RunBudget budget = modelBudget();
+    budget.enter();
+    List<ProcessSystem> attached = new ArrayList<ProcessSystem>(processes.values());
+    for (ProcessSystem area : attached) {
+      area.attachRunBudget(budget);
+    }
+    try {
+      runInternal(budget);
+    } finally {
+      lastRunDiagnostics = budget.snapshot(lastIterationCount);
+      for (ProcessSystem area : attached) {
+        area.attachRunBudget(null);
+      }
+      budget.exit();
+    }
+  }
+
+  /**
+   * Returns the run budget of this model, creating it on first use.
+   *
+   * @return the model run budget (never null)
+   */
+  private RunBudget modelBudget() {
+    RunBudget b = runBudget;
+    if (b == null) {
+      synchronized (RunBudget.class) {
+        b = runBudget;
+        if (b == null) {
+          b = new RunBudget();
+          runBudget = b;
+        }
+      }
+    }
+    return b;
+  }
+
+  /**
+   * Sets an opt-in wall-clock budget for {@link #run()} that spans all process areas and all outer iterations. It is
+   * checked between unit operations of every area and between outer iterations; when exceeded the run stops, returns
+   * normally and {@link #getRunStatus()} reports {@link RunStatus#TIMED_OUT} with the unit that was running. A single
+   * unit operation that never returns cannot be interrupted. Zero (default) disables the budget.
+   *
+   * @param seconds maximum wall-clock time of one model run in seconds; zero or negative disables the budget
+   */
+  public void setMaxRunTimeSeconds(double seconds) {
+    modelBudget().setMaxRunTimeSeconds(seconds);
+  }
+
+  /**
+   * Returns the wall-clock budget of a model run.
+   *
+   * @return maximum run time in seconds, zero if disabled
+   */
+  public double getMaxRunTimeSeconds() {
+    return modelBudget().getMaxRunTimeSeconds();
+  }
+
+  /**
+   * Enables opt-in stagnation detection of the outer iterations (and of the recycle and adjuster iterations of every
+   * area). A run whose worst tolerance-normalised residual does not improve by the minimum fraction for the given
+   * number of consecutive iterations stops and reports {@link RunStatus#STALLED}. Window zero (default) disables it.
+   *
+   * @param window number of consecutive iterations without improvement; zero or negative disables detection
+   * @param minRelativeImprovement minimum relative improvement of the best residual that counts as progress
+   */
+  public void setStallDetection(int window, double minRelativeImprovement) {
+    modelBudget().setStallDetection(window, minRelativeImprovement);
+    for (ProcessSystem area : processes.values()) {
+      area.setStallDetection(window, minRelativeImprovement);
+    }
+  }
+
+  /**
+   * Requests cooperative cancellation of the model run in progress (see {@link ProcessSystem#requestStop()}). The run
+   * stops at the next check between unit operations or outer iterations and reports {@link RunStatus#STOPPED}.
+   */
+  public void requestStop() {
+    modelBudget().requestStop();
+  }
+
+  /**
+   * Returns whether a stop request is pending.
+   *
+   * @return true if {@link #requestStop()} was called during the current run
+   */
+  public boolean isStopRequested() {
+    return modelBudget().isStopRequested();
+  }
+
+  /**
+   * Returns the diagnostics of the last model run: elapsed time, budget outcome, the unit that was running when the
+   * budget tripped and the outer-iteration residual history.
+   *
+   * @return diagnostics of the last run
+   */
+  public RunDiagnostics getLastRunDiagnostics() {
+    RunDiagnostics d = lastRunDiagnostics;
+    return d != null ? d : modelBudget().snapshot(0);
+  }
+
+  /**
+   * Runs the model; see {@link #run()}.
+   *
+   * @param budget the run budget in force for this run
+   */
+  private void runInternal(RunBudget budget) {
+    if (autoRecycles && !autoRecycleInProgress) {
+      makeRecycles();
+    }
     int totalAreas = processes.size();
 
     // Publish model-start event and notify listener
@@ -2147,7 +2374,9 @@ public class ProcessModel implements Runnable, Serializable {
       }
 
       int iterations = 0;
-      while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
+      double bestOuterResidual = Double.POSITIVE_INFINITY;
+      int outerNoProgress = 0;
+      while (!Thread.currentThread().isInterrupted() && iterations < maxIterations && !budget.checkStop(null)) {
         // Notify before-iteration
         notifyBeforeIteration(iterations + 1);
 
@@ -2205,6 +2434,24 @@ public class ProcessModel implements Runnable, Serializable {
         // Update previous states for next iteration
         previousBoundaryStreamStates = currentBoundaryStreamStates;
         dirtyAreas = autoTuningChanged ? null : getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
+        if (budget.getStallWindow() > 0 && !budget.isTripped()) {
+          double normalized = Math.max(lastMaxFlowError / Math.max(flowTolerance, 1.0e-300),
+              Math.max(lastMaxTemperatureError / Math.max(temperatureTolerance, 1.0e-300),
+                  lastMaxPressureError / Math.max(pressureTolerance, 1.0e-300)));
+          if (Double.isFinite(normalized) && normalized < bestOuterResidual * (1.0 - budget.getStallMinImprovement())) {
+            bestOuterResidual = normalized;
+            outerNoProgress = 0;
+          } else {
+            outerNoProgress++;
+          }
+          if (outerNoProgress >= budget.getStallWindow()) {
+            budget.trip(RunBudget.Outcome.STALLED,
+                String.format(Locale.US,
+                    "outer boundary residual %.3e did not improve (best %.3e) for %d iterations, stopped at "
+                        + "iteration %d",
+                    normalized, bestOuterResidual, outerNoProgress, iterations));
+          }
+        }
       }
       lastIterationCount = iterations;
 
@@ -2214,7 +2461,7 @@ public class ProcessModel implements Runnable, Serializable {
         massClosureAccepted();
       }
 
-      if (!modelConverged && iterations >= maxIterations) {
+      if (!modelConverged && iterations >= maxIterations && !budget.isTripped()) {
         logger.warn("ProcessModel reached max iterations (" + maxIterations + ") without full convergence. Flow error: "
             + lastMaxFlowError + formatWorstStreamSuffix("flow") + ", Temp error: " + lastMaxTemperatureError
             + formatWorstStreamSuffix("temperature"));
@@ -3017,7 +3264,7 @@ public class ProcessModel implements Runnable, Serializable {
         double flow = stream.getFlowRate("kg/hr");
         double temp = stream.getTemperature("K");
         double press = stream.getPressure("bara");
-        states.put(boundaryObject, new double[] { flow, temp, press });
+        states.put(boundaryObject, new double[] {flow, temp, press});
       } catch (Exception exception) {
         // Skip streams that cannot be read.
       }
@@ -3199,7 +3446,7 @@ public class ProcessModel implements Runnable, Serializable {
 
     lastBoundaryStreamErrors = streamErrors;
     boundaryStreamErrorCache = nextStreamErrors;
-    return new double[] { maxFlowErr, maxTempErr, maxPressErr };
+    return new double[] {maxFlowErr, maxTempErr, maxPressErr};
   }
 
   /** Returns whether an immutable cached diagnostic exactly represents the current boundary observation. */
@@ -6024,6 +6271,83 @@ public class ProcessModel implements Runnable, Serializable {
       count += processSystem.applyMechanicalDesignCapacityConstraints();
     }
     return count;
+  }
+
+  /**
+   * Applies normalized design capacities to explicitly area-qualified equipment in this model.
+   *
+   * <p>
+   * Keys must have the form {@code area::equipment}. All target identities, supported properties and values across all
+   * areas are validated before any design value changes. Names containing the {@code ::} delimiter, and multiple area
+   * aliases for the same target instance, are rejected. The property schema and units are identical to
+   * {@link ProcessSystem#applyDesignCapacities(Map)}. No process run or sizing is performed.
+   * </p>
+   *
+   * @param designCapacities map from area-qualified equipment name to normalized numeric capacity properties
+   * @return application reports keyed by area-qualified equipment name
+   * @throws IllegalArgumentException if any target or property is missing, ambiguous, unsupported or invalid
+   */
+  public Map<String, EquipmentDesignData.ApplyResult> applyDesignCapacities(
+      Map<String, Map<String, Object>> designCapacities) {
+    if (designCapacities == null) {
+      throw new IllegalArgumentException("Design capacities must not be null");
+    }
+    for (String name : designCapacities.keySet()) {
+      if (name == null) {
+        throw new IllegalArgumentException("Design capacity name must be area::equipment: null");
+      }
+    }
+    Map<String, Map<String, Map<String, Object>>> byArea = new java.util.TreeMap<String, Map<String, Map<String, Object>>>();
+    for (Map.Entry<String, Map<String, Object>> entry : new java.util.TreeMap<String, Map<String, Object>>(
+        designCapacities).entrySet()) {
+      String qualifiedName = entry.getKey();
+      int separator = qualifiedName == null ? -1 : qualifiedName.indexOf("::");
+      if (separator <= 0 || separator + 2 == qualifiedName.length()
+          || qualifiedName.indexOf("::", separator + 2) >= 0) {
+        throw new IllegalArgumentException("Design capacity name must be area::equipment: " + qualifiedName);
+      }
+      String area = qualifiedName.substring(0, separator);
+      String name = qualifiedName.substring(separator + 2);
+      if (!processes.containsKey(area)) {
+        throw new IllegalArgumentException("Design capacity area not found: " + area);
+      }
+      if (!byArea.containsKey(area)) {
+        byArea.put(area, new LinkedHashMap<String, Map<String, Object>>());
+      }
+      byArea.get(area).put(name, entry.getValue());
+    }
+    Map<String, JsonObject> prepared = new LinkedHashMap<String, JsonObject>();
+    Map<ProcessEquipmentInterface, String> targets = new IdentityHashMap<ProcessEquipmentInterface, String>();
+    for (Map.Entry<String, Map<String, Map<String, Object>>> area : byArea.entrySet()) {
+      ProcessSystem process = processes.get(area.getKey());
+      prepared.put(area.getKey(), process.prepareDesignCapacities(area.getValue()));
+      for (String name : area.getValue().keySet()) {
+        ProcessEquipmentInterface target = null;
+        for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+          if (name.equals(equipment.getName())) {
+            target = equipment;
+            break;
+          }
+        }
+        String previous = targets.put(target, area.getKey() + "::" + name);
+        if (previous != null) {
+          throw new IllegalArgumentException("Design capacity target is aliased by multiple areas: " + previous);
+        }
+      }
+    }
+    Map<String, EquipmentDesignData.ApplyResult> results = new LinkedHashMap<String, EquipmentDesignData.ApplyResult>();
+    for (Map.Entry<String, JsonObject> area : prepared.entrySet()) {
+      Map<String, EquipmentDesignData.ApplyResult> applied = processes.get(area.getKey())
+          .applyDesignCapacitiesJson(area.getValue());
+      for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : applied.entrySet()) {
+        String name = area.getKey() + "::" + entry.getKey();
+        EquipmentDesignData.ApplyResult qualified = new EquipmentDesignData.ApplyResult(name, entry.getValue().status,
+            entry.getValue().message);
+        qualified.appliedProperties.addAll(entry.getValue().appliedProperties);
+        results.put(name, qualified);
+      }
+    }
+    return results;
   }
 
   /**

@@ -135,7 +135,7 @@ public class WhitsonPVTReaderTest {
     }
 
     // Specify molar composition
-    double[] composition = { 0.02, 0.01, 0.70, 0.10, 0.05, 0.08, 0.04 };
+    double[] composition = {0.02, 0.01, 0.70, 0.10, 0.05, 0.08, 0.04};
 
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
 
@@ -202,7 +202,7 @@ public class WhitsonPVTReaderTest {
       writer.write(createSampleFileContent());
     }
 
-    double[] composition = { 0.02, 0.01, 0.70, 0.10, 0.05, 0.08, 0.04 };
+    double[] composition = {0.02, 0.01, 0.70, 0.10, 0.05, 0.08, 0.04};
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
 
     // Set conditions and initialize
@@ -389,7 +389,7 @@ public class WhitsonPVTReaderTest {
     }
 
     // Composition: typical gas condensate (mole fractions)
-    double[] composition = { 0.02, 0.01, 0.70, 0.10, 0.05, 0.08, 0.04 };
+    double[] composition = {0.02, 0.01, 0.70, 0.10, 0.05, 0.08, 0.04};
 
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
 
@@ -417,7 +417,7 @@ public class WhitsonPVTReaderTest {
     // Run CCE
     ConstantMassExpansion cce = new ConstantMassExpansion(fluid);
     cce.setTemperature(reservoirTemperatureC, "C");
-    double[] ccePressures = { psat * 1.2, psat * 1.1, psat, psat * 0.9, psat * 0.8, psat * 0.7 };
+    double[] ccePressures = {psat * 1.2, psat * 1.1, psat, psat * 0.9, psat * 0.8, psat * 0.7};
     cce.setPressures(ccePressures);
     cce.runCalc();
 
@@ -430,7 +430,7 @@ public class WhitsonPVTReaderTest {
 
     // Run Viscosity simulation at various pressures
     ViscositySim viscSim = new ViscositySim(fluid);
-    double[] viscPressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] viscPressures = {300.0, 250.0, 200.0, 150.0, 100.0};
     double[] viscTemps = new double[viscPressures.length];
     for (int i = 0; i < viscTemps.length; i++) {
       viscTemps[i] = reservoirTemperatureC + 273.15;

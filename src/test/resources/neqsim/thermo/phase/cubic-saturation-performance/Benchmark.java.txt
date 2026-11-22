@@ -1,0 +1,45 @@
+import java.io.*;
+import neqsim.thermo.phase.*;
+import neqsim.thermo.system.*;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+public class Benchmark {
+  static volatile double sink;
+  static SystemInterface[] fixtures() {
+    SystemInterface[] fluids = new SystemInterface[8];
+    String[] names={"hydrogen","CO2","methane","water"};
+    double[] temperatures={20.369,302,150,373.15};
+    for(int i=0;i<8;i++) {
+      SystemInterface f=i<4?new SystemSrkEos(temperatures[i%4],10):new SystemPrEos(temperatures[i%4],10);
+      f.addComponent(names[i%4],1); f.setMixingRule(2); f.init(3); fluids[i]=f;
+    }
+    return fluids;
+  }
+  static double batch(SystemInterface[] f, boolean full, int repeats) throws Exception {
+    double sum=0;
+    for(int j=0;j<repeats;j++) for(SystemInterface fluid:f) {
+      if(full) {
+        SystemInterface copy=fluid.clone();
+        new ThermodynamicOperations(copy).bubblePointPressureFlash();
+        sum+=copy.getPressure();
+      } else sum+=CubicPureSaturation.pressure((PhaseEos)fluid.getPhase(0));
+    }
+    return sum;
+  }
+  public static void main(String[] args) throws Exception {
+    SystemInterface[] f=fixtures();
+    boolean full=args[2].equals("full"); int repeats=Integer.parseInt(args[5]);
+    try(PrintWriter out=new PrintWriter(new FileWriter(args[1],true))) {
+      for(int j=0;j<Integer.parseInt(args[3]);j++) sink=batch(f,full,repeats);
+      for(int j=0;j<Integer.parseInt(args[4]);j++) {long t=System.nanoTime(); double sum=batch(f,full,repeats); long dt=System.nanoTime()-t; sink=sum;
+        out.println(args[0]+","+args[2]+","+j+","+dt+","+sum);
+      }
+    }
+    try(PrintWriter out=new PrintWriter(new FileWriter(args[1]+".states",true))) {
+      for(int i=0;i<f.length;i++) for(double factor:new double[]{.45,.6,.75,.9,.98,.995}) {
+        SystemInterface fluid=f[i]; fluid.setTemperature(factor*fluid.getComponent(0).getTC()); fluid.init(3);
+        try {double p=CubicPureSaturation.pressure((PhaseEos)fluid.getPhase(0)); out.println(i+","+factor+","+Long.toHexString(Double.doubleToLongBits(p)));}
+        catch(RuntimeException e) {out.println(i+","+factor+","+e.getClass().getName());}
+      }
+    }
+  }
+}

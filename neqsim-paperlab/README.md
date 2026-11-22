@@ -34,6 +34,9 @@ improvement to become publishable.
 
 ## Setup
 
+Use Python 3.11 or newer. Figure tools require Pillow 13.0.0 or newer, including
+the fix for [CVE-2026-96639](https://github.com/python-pillow/Pillow/security/advisories/GHSA-v9pv-5gc8-w2m6).
+
 ```bash
 cd neqsim-paperlab
 pip install -r requirements.txt
@@ -209,8 +212,8 @@ PaperLab also supports **multi-chapter scientific books** (textbooks, monographs
 edited volumes). Books follow publisher-specific formatting via YAML profiles
 and reuse the same quality infrastructure as papers.
 
-> **For full book creation guidance**, see the `book_creation` skill at
-> `skills/book_creation/SKILL.md` and the `book_author` agent at
+> **For full book creation guidance**, see the `book-creation` skill at
+> `skills/book-creation/SKILL.md` and the `book_author` agent at
 > `agents/book_author.paperlab.md`.
 
 ```bash
@@ -297,15 +300,15 @@ neqsim-paperlab/
 │   ├── reviewer_response.paperlab.md
 │   └── book_author.paperlab.md         # Book creation and management
 ├── skills/                       # Canonical reusable scientific procedures
-│   ├── book_creation/SKILL.md       # Book lifecycle (setup → render)
-│   ├── design_flash_benchmark/SKILL.md
-│   ├── design_reactor_benchmark/SKILL.md
-│   ├── run_flash_experiments/SKILL.md
-│   ├── analyze_convergence/SKILL.md
-│   ├── analyze_gibbs_convergence/SKILL.md
-│   ├── generate_publication_figures/SKILL.md
-│   ├── write_methods_section/SKILL.md
-│   └── journal_formatting/SKILL.md
+│   ├── book-creation/SKILL.md       # Book lifecycle (setup → render)
+│   ├── design-flash-benchmark/SKILL.md
+│   ├── design-reactor-benchmark/SKILL.md
+│   ├── run-flash-experiments/SKILL.md
+│   ├── analyze-convergence/SKILL.md
+│   ├── analyze-gibbs-convergence/SKILL.md
+│   ├── generate-publication-figures/SKILL.md
+│   ├── write-methods-section/SKILL.md
+│   └── journal-formatting/SKILL.md
 ├── tools/                        # Python tooling
 │   ├── __init__.py
 │   ├── neqsim_bootstrap.py         # NeqSim JVM bootstrap (local build)
@@ -396,7 +399,7 @@ neqsim-paperlab/
 
 | Skill | Purpose |
 |-------|---------|
-| `book_creation` | Complete book lifecycle: project setup, chapter writing, equations, notebooks, building, rendering, troubleshooting |
+| `book-creation` | Complete book lifecycle: project setup, chapter writing, equations, notebooks, building, rendering, troubleshooting |
 
 ## CLI Commands
 
@@ -447,41 +450,60 @@ a GitHub Issue suggesting new paper opportunities when changes are detected.
 
 **How it works:**
 
-1. `.github/workflows/research-scan.yml` triggers daily at 06:00 UTC
-2. `neqsim-paperlab/tools/daily_scan.py` runs the scanner on the full repo
+1. `.github/workflows/ai-daily-research-scan.yml` triggers daily at 06:00 UTC
+2. `neqsim-paperlab/tools/daily_scan.py` selects one opportunity from trending
+   research, falling back to the codebase scanner when no trending suggestion
+   is available
 3. If opportunities changed since the last scan, a GitHub Issue is created
-   with the full `scout_report.md` as the issue body
+   with the full report named by `report_file` in `.pr_metadata.json`
+
+| Scanner mode | Issue report |
+|--------------|--------------|
+| Default daily suggestion | `daily_suggestion.md` |
+| Full trending scan (`--full-scan`) | `trending_report.md` |
+| Legacy codebase scan (`--legacy`) or fallback | `scout_report.md` |
+
+The workflow uses the metadata from the current scan, even if reports from
+other modes already exist in the output directory. Pull requests that change
+the scanner or its workflow run offline publication-contract tests; they do
+not run the live scanner or create research issues.
 
 **Manual trigger:**
 
 ```bash
 # From GitHub: Actions → Daily Research Scan → Run workflow
 # Or use the gh CLI:
-gh workflow run research-scan.yml -f force=true -f since_days=90
+gh workflow run ai-daily-research-scan.yml -f force=true -f since_days=90
 ```
 
 **What the issue contains:**
 
-- Ranked table of paper opportunities with scores and readiness
-- Detailed cards per opportunity with NeqSim code improvements
-- Domain and paper-type breakdowns
+- The daily research suggestion, its inspiring paper, score and research angle
+- Relevant NeqSim classes and proposed improvements
+- A ranked opportunity report when the legacy fallback is used
 
 **Change detection:** A content hash tracks whether opportunities changed
 between scans. Issues are only created when new or modified opportunities
 appear (or when `force=true` is set).
 
+The workflow restores the latest successful scan hash and suggestion history.
+It saves a new cache entry only after the scan and any required issue creation
+succeed, so a failed publication does not mark an unpublished report as sent.
+Cache keys include the workflow run and attempt to allow state updates without
+trying to overwrite an immutable cache entry.
+
 ## Skills
 
 | Skill | When to Use |
 |-------|-------------|
-| `design_flash_benchmark` | Creating test matrices for flash algorithm comparisons |
-| `design_reactor_benchmark` | Creating test matrices for Gibbs reactor / chemical equilibrium benchmarks |
-| `run_flash_experiments` | Executing NeqSim flash calculations in batch |
-| `analyze_convergence` | Interpreting convergence metrics, stability analysis |
-| `analyze_gibbs_convergence` | Analyzing Gibbs reactor convergence, Jacobian conditioning, element balance |
-| `generate_publication_figures` | Producing publication-ready matplotlib figures |
-| `write_methods_section` | Drafting the Methods section with proper math notation |
-| `journal_formatting` | Applying journal-specific formatting rules |
+| `design-flash-benchmark` | Creating test matrices for flash algorithm comparisons |
+| `design-reactor-benchmark` | Creating test matrices for Gibbs reactor / chemical equilibrium benchmarks |
+| `run-flash-experiments` | Executing NeqSim flash calculations in batch |
+| `analyze-convergence` | Interpreting convergence metrics, stability analysis |
+| `analyze-gibbs-convergence` | Analyzing Gibbs reactor convergence, Jacobian conditioning, element balance |
+| `generate-publication-figures` | Producing publication-ready matplotlib figures |
+| `write-methods-section` | Drafting the Methods section with proper math notation |
+| `journal-formatting` | Applying journal-specific formatting rules |
 
 ## Workflow Stages
 

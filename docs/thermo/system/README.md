@@ -150,13 +150,25 @@ fluid.setMixingRule("classic");
 
 ### ePCSAFT (Electrolyte PC-SAFT)
 
-```java
-import neqsim.thermo.system.SystemElectrolytePCSAFT;
+`SystemElectrolytePCSAFT` is not an implemented NeqSim system class. For an
+implemented electrolyte model, the following example uses **electrolyte CPA**;
+it is a different equation of state, not an ePC-SAFT calculation. Amounts are
+mol, with equal sodium and chloride amounts for charge balance.
 
-SystemElectrolytePCSAFT brine = new SystemElectrolytePCSAFT(298.15, 1.0);
+<!-- doc-test: thermo-electrolyte -->
+```java
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+SystemElectrolyteCPAstatoil brine = new SystemElectrolyteCPAstatoil(298.15, 10.01325);
+brine.addComponent("methane", 0.1);
 brine.addComponent("water", 1.0);
-brine.addComponent("Na+", 0.1);
-brine.addComponent("Cl-", 0.1);
+brine.addComponent("Na+", 0.001);
+brine.addComponent("Cl-", 0.001);
+brine.setMixingRule(10);
+new ThermodynamicOperations(brine).TPflash();
+brine.initProperties();
+double aqueousDensity = brine.getPhase("aqueous").getDensity("kg/m3");
 ```
 
 ---
@@ -217,13 +229,22 @@ gas.addComponent("propane", 0.04);
 
 Universal Mixing Rule with PR EoS.
 
-```java
-import neqsim.thermo.system.SystemUMRPRU;
+Use the implemented `SystemUMRPRUEos` class and select its UNIFAC mixing rule
+explicitly. Constructor temperature is in K and pressure is in bara.
 
-SystemUMRPRU lng = new SystemUMRPRU(110.0, 1.0);
+<!-- doc-test: thermo-umr -->
+```java
+import neqsim.thermo.system.SystemUMRPRUEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+SystemUMRPRUEos lng = new SystemUMRPRUEos(110.0, 1.0);
 lng.addComponent("methane", 0.92);
 lng.addComponent("ethane", 0.05);
 lng.addComponent("propane", 0.03);
+lng.setMixingRule("HV", "UNIFAC_UMRPRU");
+new ThermodynamicOperations(lng).TPflash();
+lng.initProperties();
+double density = lng.getDensity("kg/m3");
 ```
 
 ---
@@ -255,7 +276,7 @@ fluid.addComponent("methane", 100.0);
 fluid.addComponent(0, 100.0);
 
 // TBP fraction (for plus fractions)
-fluid.addTBPfraction("C7+", 10.0, 150.0, 0.78);  // name, moles, MW, SG
+fluid.addTBPfraction("C7+", 10.0, 150.0 / 1000.0, 0.78);  // name, moles, MW [g/mol], SG
 
 // Set mole fractions directly
 double[] z = {0.85, 0.10, 0.05};
@@ -275,6 +296,16 @@ fluid.setPhaseType(1, "oil");
 // Allow solid phases
 fluid.setSolidPhaseCheck(true);
 ```
+
+Enabling a solid check, either for all components or with `setSolidPhaseCheck(name)`,
+preserves `doMultiPhaseCheck()`. Call `setMultiPhaseCheck(true)` separately if the
+fluid calculation needs additional liquid phases; solid allocation no longer
+implicitly enables that search.
+
+`setSolidPhaseCheck(false)` safely disables solid checking even on a fresh fluid.
+Repeated calls clear the component flags in every allocated phase while preserving
+the phase count and composition. Existing phases remain allocated; the setter
+does not recalculate equilibrium.
 
 ---
 
@@ -312,6 +343,15 @@ double gasZ = fluid.getGasPhase().getZ();
 double liqRho = fluid.getLiquidPhase().getDensity("kg/m3");
 ```
 
+For an active phase, `getPhaseFraction(phaseName, "mass")` uses its mole fraction
+and molar mass relative to the overall molar mass, consistently with
+`getWtFraction(logicalPhaseNumber)`. It needs no density or transport-property
+initialization. Use `"mole"` for the mole fraction and `"volume"` for the fraction
+of EOS volume; mass fractions must not be reconstructed by mixing EOS volumes
+with volume-corrected densities. The same mass basis applies to fluid and solid
+phases, including wax. Check `hasPhaseType(phaseName)` before requesting a phase
+that may be absent. This behavior is covered by `NamedComponentWaxFractionTest`.
+
 ### Cloning
 
 ```java
@@ -321,6 +361,18 @@ SystemInterface copy = fluid.clone();
 // Modify copy without affecting original
 copy.setTemperature(400.0);
 ```
+
+The repaired system, phase and component clone wrappers propagate required-state
+copy failures with `IllegalStateException` context and retain the original cause
+instead of returning null or a partially copied fluid. Successful deep copies
+retain their normal independent phase, component and physical-property state.
+
+EOS component clones retain independent attraction and covolume derivative work
+arrays. Initializing a clone at a different temperature therefore cannot overwrite
+the source component's cached composition curvature. Ordinary SRK-CPA component
+clones also own each row of their association composition derivatives. This is a
+component-storage guarantee; it does not establish thread safety for every phase
+cache or for concurrent changes to shared mixing-rule configuration.
 
 ---
 

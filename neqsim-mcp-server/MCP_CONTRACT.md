@@ -96,9 +96,9 @@ industrial validation.
 | `queryDataCatalog` | ADVISORY | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
 | `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
 | `runRelief` | CALCULATION | v1.3 | PSV sizing per API 520 (gas/liquid/two-phase) and API 521 fire heat input |
-| `runLOPA` | CALCULATION | v1.3 | Layer of Protection Analysis per IEC 61511 / CCPS, with required-SIL gap analysis |
-| `runSIL` | CALCULATION | v1.3 | SIL verification per IEC 61508 / 61511 (1oo1, 1oo2, 2oo3 architectures) |
-| `runRiskMatrix` | CALCULATION | v1.3 | 5×5 risk matrix scoring per ISO 31000 / NORSOK Z-013 |
+| `runLOPA` | CALCULATION | v1.3 | Bounded caller-supplied LOPA screening with canonical numerical evidence; no IPL, SIL, risk-acceptance, or standards-conformance claim |
+| `runSIL` | CALCULATION | v1.3 | Bounded caller-supplied SIF PFD screening; indicative SIL band only, with no standards-conformance or approval claim |
+| `runRiskMatrix` | CALCULATION | v1.3 | Bounded generic 5×5 screening; caller owns project criteria and qualified review |
 | `runFlareNetwork` | CALCULATION | v1.3 | Flare radiation profile and API 521 safe-distance contour |
 | `runHAZOP` | CALCULATION | v1.4 | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios and document evidence |
 | `runBarrierRegister` | CALCULATION | v1.4 | Evidence-linked PSF/SCE barrier register validation with LOPA/SIL/bow-tie/QRA handoffs |
@@ -126,7 +126,7 @@ domain-specific runners with limited qualification evidence.
 | `runDynamic` | CALCULATION | v1.1 | Dynamic transient simulation with auto-instrumented controllers |
 | `runBioprocess` | CALCULATION | v1.1 | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
 | `streamSimulation` | PLATFORM | v1.2 | Async simulation with incremental polling |
-| `composeMultiServerWorkflow` | PLATFORM | v1.2 | Multi-server orchestration across MCP servers |
+| `composeMultiServerWorkflow` | PLATFORM | v1.2 | Bounded metadata-only planning across MCP servers |
 | `manageSecurity` | PLATFORM | v1.2 | API key management, rate limiting, audit logging |
 | `manageState` | PLATFORM | v1.2 | Persist/restore simulation states across server restarts |
 | `manageValidationProfile` | PLATFORM | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
@@ -136,6 +136,26 @@ domain-specific runners with limited qualification evidence.
 Execution tools (`solveTask`, `composeWorkflow`, `manageSession`) perform
 multi-step or stateful operations. They are **not part of any governed tier**
 and must not be used for engineering decisions without independent validation.
+
+### Bounded multi-server composition metadata
+
+`composeMultiServerWorkflow` publishes metadata and deterministic host-execution
+plans only. It does not connect to, authenticate with, or execute another
+server. The complete request is limited to 16,384 UTF-8 bytes, a plan task to
+4096 characters, each name to 64 characters, each description to 512
+characters, each tool/format list to 64 unique entries, and the process-local
+custom registry to 32 records. Built-in metadata is immutable. Connection URLs,
+commands, arguments, environment data, headers, credentials, tokens, API keys,
+and secrets are rejected.
+
+The host is responsible for external identity, authorization, transport
+security, schema/unit compatibility, data governance, execution, and
+engineering review. Custom records are not durable, distributed, authenticated,
+encrypted, or tenant-isolated. Suggested steps are not proof of availability,
+feasibility, model fidelity, convergence, conservation, standards
+applicability, safety adequacy, plant authority, certification, or accountable
+engineering approval. See
+[`MULTI_SERVER_COMPOSITION_CONTRACT.md`](docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md).
 
 ## Browsable Resources (Stable)
 
@@ -220,13 +240,13 @@ Schema resource paths use snake_case tool names such as `run_flash`, but respons
 the MCP method names such as `runFlash`. Schema lookups accept only `input` and `output` as schema
 types; any other type is treated as schema-not-found.
 
-Responses larger than 256 KiB are reduced by the shared transport guard unless
+Responses larger than 280 KiB are reduced by the shared transport guard unless
 `neqsim.mcp.maxResponseBytes` or `NEQSIM_MCP_MAX_RESPONSE_BYTES` configures another limit. The
 `truncation` block identifies omitted root fields and focused retrieval routes, and the legacy
 top-level and canonical `data` views are reduced together. For `getCapabilities`,
-`phase0EvidenceInventory` is retained because it has no equivalent selective-retrieval route;
-larger catalog sections may be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and
-the MCP catalog resources.
+`implementationInventory` and `phase0EvidenceInventory` are retained because neither has an
+equivalent selective-retrieval route; larger catalog sections may be queried through `getSchema`,
+`getExample`, `getBenchmarkTrust`, and the MCP catalog resources.
 
 ### Warning taxonomy
 
@@ -442,6 +462,18 @@ An operation exceeding its timeout is cancelled and reported with status
 `timed_out`. Exceeding the per-principal cap returns a `CONCURRENCY_LIMIT`
 error rather than queueing. Active limits are reported by `getCapabilities`
 under `modelLifecycle.executionPolicy` and by `streamSimulation(action='list')`.
+
+`streamSimulation` also applies fixed request bounds: 1–1000 parametric
+points, 1–10,000 dynamic time steps, 1–1000 Monte Carlo iterations, a 256 KiB
+dynamic process definition, and at most 100 result records per poll. Invalid
+variables, units, ranges, distributions, compositions, process definitions,
+timings, and negative poll cursors fail closed before background work is
+registered. Retained terminal results do not consume the 20-operation global
+active-work allowance. Operations and results are in-process and
+principal-scoped; they are not durable or distributed. Cancellation and timeout
+remain cooperative, not hard process isolation. The detailed evidence and
+advisory boundary are recorded in
+`docs/evidence/STREAMING_SIMULATION_CONTRACT.md`.
 
 `runCapability(action='invoke')` has a separate five-second in-process worker budget for bounded
 static calculations. It rejects MCP runners and dispatchers, raw generic containers, requests over

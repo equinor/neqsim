@@ -90,9 +90,7 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test method for {@link neqsim.standards.gasquality.Standard_ISO6976#calculate()} if wrong reference state is gven.
-   * Valid reference states should be 0, 15 and 20 C and 15F (15.55C). If wrong reference state is given, the program
-   * should use standard conditions (15C).
+   * Unsupported reference temperatures reject calculation instead of substituting defaults.
    */
   @Test
   void testCalculateWithWrongReferenceState() {
@@ -110,9 +108,10 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
     volumeReferenceState = 1.15; // example of wrong volume reference condition
     standard.setEnergyRefT(energyReferenceState);
     standard.setVolRefT(volumeReferenceState);
-    standard.calculate();
-    GCV = standard.getValue("GCV");
-    assertEquals(37496.955002184994, GCV, 0.01);
+    Assertions.assertThrows(IllegalArgumentException.class, standard::calculate);
+    Assertions.assertThrows(IllegalArgumentException.class, () -> standard.getValue("GCV"));
+    assertEquals(energyReferenceState, standard.getEnergyRefT());
+    assertEquals(volumeReferenceState, standard.getVolRefT());
   }
 
   /**
@@ -203,6 +202,24 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
     Assertions.assertEquals(0.6045115156, standard.getValue("RelativeDensity"), 1e-5);
     Assertions.assertEquals(0.99773023373, standard.getValue("CompressionFactor"), 1e-5);
     Assertions.assertEquals(17.477288925, standard.getValue("MolarMass"), 1e-5);
+  }
+
+  /**
+   * Regression test: n-decane molar mass in ISO6976constants2016.csv must be 142.28168 g/mol (ISO 6976:2016 Table A.2),
+   * not 42.28168.
+   */
+  @Test
+  void testMolarMassWithDecane() {
+    SystemInterface gas = new SystemSrkEos(273.15 + 20.0, 1.0);
+    gas.addComponent("methane", 0.999);
+    gas.addComponent("nC10", 0.001);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    Standard_ISO6976_2016 standard = new Standard_ISO6976_2016(gas, 0, 15.55, "volume");
+    standard.setReferenceState("real");
+    standard.calculate();
+    double expected = 0.999 * 16.04246 + 0.001 * 142.28168;
+    assertEquals(expected, standard.getValue("MolarMass"), 1e-6);
   }
 
   @Test

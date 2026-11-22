@@ -79,10 +79,10 @@ public class GaussianEliminationTest {
   @Test
   public void testSimple2x2() {
     // A = [[4, 7], [2, 6]], inv = [[0.6, -0.7], [-0.2, 0.4]]
-    double[][] a = { { 4, 7 }, { 2, 6 } };
+    double[][] a = {{4, 7}, {2, 6}};
     double[][] invGE = invertGE(a, 2);
 
-    SimpleMatrix sm = new SimpleMatrix(new double[][] { { 4, 7 }, { 2, 6 } });
+    SimpleMatrix sm = new SimpleMatrix(new double[][] {{4, 7}, {2, 6}});
     SimpleMatrix invEJML = sm.invert();
 
     for (int i = 0; i < 2; i++) {
@@ -178,7 +178,7 @@ public class GaussianEliminationTest {
     }
 
     // RHS = KlkV * ksi (some test values)
-    double[] rhs = { 0.1, 0.2, -0.15, -0.25 };
+    double[] rhs = {0.1, 0.2, -0.15, -0.25};
 
     // GE solve
     double[][] hessCopy = new double[4][4];
@@ -191,7 +191,7 @@ public class GaussianEliminationTest {
 
     // EJML solve via inverse
     SimpleMatrix sm = new SimpleMatrix(hess);
-    SimpleMatrix rhsSM = new SimpleMatrix(new double[][] { { 0.1 }, { 0.2 }, { -0.15 }, { -0.25 } });
+    SimpleMatrix rhsSM = new SimpleMatrix(new double[][] {{0.1}, {0.2}, {-0.15}, {-0.25}});
     SimpleMatrix xvEJML = sm.invert().mult(rhsSM);
 
     logger.info("Single RHS solve comparison:");

@@ -1,7 +1,8 @@
 package neqsim.pvtsimulation.regression;
 
 /**
- * Enumeration of PVT experiment types supported by the regression framework.
+ * PVT experiment identifiers, including reserved protocols without regression implementations. Evaluator and
+ * data-ingestion support currently cover CCE, CVD, DLE, separator and viscosity targets.
  *
  * @author ESOL
  * @version 1.0
@@ -33,12 +34,12 @@ public enum ExperimentType {
   VISCOSITY,
 
   /**
-   * Saturation pressure.
+   * Reserved saturation-pressure target; regression data ingestion and evaluation are not implemented.
    */
   SATURATION_PRESSURE,
 
   /**
-   * Swelling test.
+   * Reserved swelling target; regression data ingestion and evaluation are not implemented.
    */
   SWELLING
 }

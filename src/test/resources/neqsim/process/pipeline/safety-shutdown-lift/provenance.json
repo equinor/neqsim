@@ -1,0 +1,219 @@
+{
+  "study": "Safety Shutdown ideal translating check-valve acoustic verification",
+  "publicationBase": "fd3d28142b2139691ce606e4cba5ab8241469486",
+  "unmodifiedReproductionBase": "a01d663990a8f43de366a8c02f1ea6280b61c143",
+  "baseAdoption": "Only disjoint diagnostic/test/docs #4744 changed; no production main source changed. Same225 tests rerun.",
+  "implementationHead": "Recorded by the containing Git commit and #4707/PR ledger; not self-referentially embedded.",
+  "contracts": [
+    "https://github.com/equinor/neqsim/issues/4707#issuecomment-6523836074",
+    "https://github.com/equinor/neqsim/issues/4707#issuecomment-6523980161",
+    "https://github.com/equinor/neqsim/issues/4707#issuecomment-6524243912"
+  ],
+  "versions": {
+    "java": "17.0.20",
+    "maven": "3.10.0",
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "matplotlib": "3.10.8",
+    "preCommit": "4.7.0"
+  },
+  "bootstrap": "Loaded work-with-neqsim scripts/prepare_maven.py evaluated before Maven/Spotless; cached repository and -o used; no build/source configuration changed.",
+  "sourceAcquisition": "Every materialized unmodified source verified against exact base Git blob SHA. All remote GitHub reads/writes use connected GitHub plugin; no release-source or water-property fallback.",
+  "model": "Ideal translating equal-area two-port: signed jet plus reciprocal swept flow; constant declared mass/spring/preload/damping; backward Euler, previous accepted lift area; inelastic discrete contact, no rebound.",
+  "gateClassification": {
+    "idealMechanicalAndConstantCharacteristicVerification": "PASS",
+    "frozenCoupledCaseExecutionAndDeclaredBalances": "PASS",
+    "sharpFrontSlamEvidenceGate": "FAIL",
+    "fullPumpTripVendorAssetSafetyShutdownQualification": "NOT_EVALUATED",
+    "fullPipeEosEnergyAndPhaseBoundaryQualification": "NOT_EVALUATED",
+    "supportLoadsAndSIL_SRS_ProofTestApproval": "NOT_EVALUATED"
+  },
+  "sharpFrontFailureReason": "First impact and reopening remain mesh dependent; no mesh-independent full-pipe slam benchmark or experimental accuracy tolerance is claimed. Six mesh rows retained.",
+  "frozenTolerances": {
+    "equilibriumPressure_Pa": 0.0001,
+    "equilibriumLift_m": 1e-12,
+    "characteristicAbsolute_Pa": 1e-08,
+    "characteristicRelative": 1e-10,
+    "energyAbsoluteRoundoff_J": 1e-10,
+    "energyNormalized": 1e-12,
+    "acousticVolume_m3": 1e-09,
+    "momentum_kg_m_s": 1e-07,
+    "halvedStepErrorRatioMinimum": 1.7
+  },
+  "synthetic51FaceCase": {
+    "nodes": 51,
+    "dt_s": 0.0001,
+    "mass_kg": 0.2,
+    "damping_N_s_m": 2.0,
+    "minimumPreSeatJet_m3_s": -0.0002258719993853125,
+    "lastContactTime_s": 0.10566845116269626,
+    "firstContactTime_s": 0.10566845116269626,
+    "firstImpactLoss_J": 0.0208855910863662,
+    "courantNumber": 0.05,
+    "contactCount": 1,
+    "minimumPressure_bara": 88.07850067073225,
+    "maximumPressure_bara": 100.0,
+    "impactLoss_J": 0.0208855910863662,
+    "dampingLoss_J": 0.002419239155002467,
+    "numericalLoss_J": 0.00024588933452583607,
+    "maximumEnergyResidual_J": 4.783489142984321e-14,
+    "maximumVolumeResidual_m3": 1.0028870095490916e-18,
+    "maximumMomentumResidual_kg_m_s": 2.424727085781342e-12
+  },
+  "timing": {
+    "coupledCases": 13,
+    "wall_s": 4.464450809000001,
+    "basis": "Same warmed JUnit process, includes EOS fixtures/outlet updates, excludes JVM/build startup; Javadoc/Checkstyle ran concurrently. No throughput/speedup threshold or claim."
+  },
+  "commands": [
+    {
+      "command": "Maven test: 17 classes listed in junit-summary.json",
+      "exit": 0,
+      "tests": 225,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsed_reported": "01:18 min",
+      "logFinishedUtc": "2026-10-30T14:00:16Z"
+    },
+    {
+      "command": "java com.sun.tools.javac.Main --release 8: four changed/new production classes and lift test",
+      "exit": 0
+    },
+    {
+      "command": "./mvnw -o -B javadoc:javadoc -DjavadocExecutable=<environment-only JDK17 module launcher>",
+      "exit": 0,
+      "elapsed_reported": "01:08 min",
+      "warnings": 100,
+      "note": "Full private Javadoc; existing missing-comment warnings retained; no weakened doclint."
+    },
+    {
+      "command": "./mvnw -o -B checkstyle:check",
+      "exit": 0,
+      "configuredViolations": 0,
+      "elapsed_s": 143.0,
+      "note": "Full gate before final rejection wrapper; focused final WaterHammerPipe gate also passed."
+    },
+    {
+      "command": "./mvnw -o -B checkstyle:check -Dcheckstyle.includes=**/WaterHammerPipe.java",
+      "exit": 0,
+      "configuredViolations": 0,
+      "elapsed_s": 5.691
+    },
+    {
+      "command": "python3 devtools/run_spotless.py apply",
+      "exit": 0,
+      "javaBytesUnchanged": true
+    },
+    {
+      "command": "python3 devtools/run_spotless.py apply",
+      "exit": 0,
+      "javaBytesUnchanged": true
+    },
+    {
+      "command": "python3 devtools/run_spotless.py check",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/check_documentation_search.py",
+      "exit": 0
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/build_engineering_coverage.py",
+      "exit": 0
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/build_engineering_coverage.py --check",
+      "exit": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "exit": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/verify_skills_agents.py",
+      "exit": 0
+    }
+  ],
+  "baselineCommands": {
+    "selectedTests": 109,
+    "exit": 0,
+    "elapsed_s": 48.862,
+    "unmodifiedLegacyRejection": "PASS reproduction; see retained source and JSON"
+  },
+  "retainedDevelopmentFailures": [
+    "Initial finite-high-backpressure guard expectation was wrong; corrected to unrepresentable Pa conversion without changing finite-case physics.",
+    "Intermediate history declared12 columns but wrote10; fixed and final tests assert all row lengths.",
+    "Historical omitted-swept-flow energy FAIL and midpoint stiff-velocity FAIL retained unchanged.",
+    "Finite implicit-denominator overflow originally escaped as IllegalArgumentException; failing regression retained and final local wrapper preserves the structured last-accepted report."
+  ],
+  "historicalSignedPowerCsv": {
+    "originalCrlfSha256": "67bc121c2406e51bde95c71f1b4879d7f6e582e9ce6fedd8c54b324a8b334507",
+    "storedLineEndings": "LF per repository attributes; numerical rows unchanged"
+  },
+  "publicOutput": {
+    "compression": "Deterministic gzip, full JSON retained",
+    "uncompressedBytes": 1731908,
+    "uncompressedSha256": "59f228f818e397282ed8adfa47f5db367dc53780b9d2a75d3261307ea4224ece",
+    "alignedSamples": 501,
+    "acceptedIntervals": 5001,
+    "columns": [
+      "time_s",
+      "lift_m",
+      "velocity_m_s",
+      "pressureWork_J",
+      "orificeLoss_J",
+      "dampingLoss_J",
+      "numericalLoss_J",
+      "impactLoss_J",
+      "jetFlow_m3_s",
+      "sweptFlow_m3_s",
+      "pressureDifference_Pa",
+      "contactEvent"
+    ]
+  },
+  "sourceSha256": {
+    "src/main/java/neqsim/process/equipment/pipeline/AcousticLiftCheckValve.java": "cca927c282e41cb1ce817efa0e4085bf73c126b501aa9c1ee1558e851aec2ef5",
+    "src/main/java/neqsim/process/equipment/pipeline/WaterHammerPipe.java": "b866b5d9ac1576eb4d83a91c83ba05f79d25879654bbb3d22aafa8a1052a70ba",
+    "src/main/java/neqsim/process/operations/WaterHammerStudy.java": "9230f739c6b7c33762fbc55e778a6182e71bc948be11b6cde491a6eb21b020cb",
+    "src/main/java/neqsim/mcp/catalog/SchemaCatalog.java": "903fa9357e7960c9236371076ed68cb24978580e66d9d6c6e2143cd3dec47839",
+    "src/test/java/neqsim/process/equipment/pipeline/AcousticLiftCheckValveTest.java": "013c078a119649041e031dca9657330739b4c5b158b48be56c40df7ca42fca18"
+  },
+  "artifactSha256": {
+    "README.md": "ddbfe202bfb9fea60e7bdb457f837154f8b8667220ea612ee4cd5ef55dab55cf",
+    "contact-refinement.json": "9c8ec243f884a99e10a08dd75af8abfe8c2b56d1d80c303d57341c92a1c294f7",
+    "coupled-characteristic-refinement.json": "9370aa59c43257a5c7de320e4d168d2dbb24398b9494e5a5910690b83273732b",
+    "coupled-oracle.json": "7ebdad43876a479f3cb8760e9e6e8721bfcf216ea9de7d7319f3e6521e027a26",
+    "finer-mesh-diagnostic.json": "64c4b33e0cad893209e9ca75af0e712f5096ae6e86234d872089ab41fad0beb0",
+    "independent-energy-results.json": "d52682c003d8da163edd9845b3d2dfabc5cf43312e84bda3a8328d0b8360f706",
+    "independent_continuous.py": "e2903bbcd659204096589fc00074d7e7ee35c2ba7180721252fa32e3f34bdbe3",
+    "independent_energy_prerequisite.py": "1fddafcc0cc0edef6b216950099a95618ccf884e1b97f1abf04adeaf546ef530",
+    "initial-guard-test-failure.txt.gz": "09229526de59ca628b1e67e299b09c9a055166e9923b6549bab1f6cdc3b1c941",
+    "initial-history-schema-failure.txt.gz": "98b228da41951d229591a3d4f302a57e0153364b4bb8d30a6e0769aa78f49670",
+    "junit-summary.json": "4f53f6c463d514d16170fbf2d7cc1576f089f16d8d6b6ae909fbd8a865e30472",
+    "legacy-negative-control.json": "0c64ee0372841ea24b9159dc731bdbf4e6bfa59426bbf75f88ce156324b662e1",
+    "mechanical-refinement.json": "a1ce730f891fd27ce9b686f3ee89517d340de5cb8b5f528571668f7112b214ba",
+    "mesh-refinement.json": "53f140c1045f61978b5460b98bb86f64ee12bcdbc9606c4137beee1931f885a5",
+    "nearby.json": "1f1c5cad47154e4e3e2476b1c6251bde0f1fe2e4fcae520b84f91596a82e6916",
+    "plot_evidence.py": "50247921d9c5d501a48838a6f9c65854cda3748c41bcf8e81f5383332d5bf227",
+    "public-input.json": "cc8c3fabbac77e58eeebe051722bc4e6767b974dbb5c0e70dbadfa25f54b5fb1",
+    "public-output.json.gz": "506785ad89c0342b8cf1bedec9c7f364c344db3e36591e00650acd5b665b8602",
+    "runtime.json": "b0f6a7bc09868b9110639d18d46b9b4f178ac6bdc9f3edd3a21cc16d41fa6124",
+    "signed-power.csv": "3a91445b8de1fe2ff0ba53ceffe3550b9d48f7826460e64655bac5ce486ab05d",
+    "time-refinement.json": "9cf9123eebb1122030a39f05ab8d2a54875f256b79ed6ce27392df7ea41d3623",
+    "unmodified-master-rejection.json": "0b127fd58ac10791ca8e41d57848a22a84f5687f7a0de2c0a9ec6e777b365793",
+    "unmodified-master-reproducer.txt": "874eaf800e3f604e0c41b5277f90090f2ef19bdfe3a9842bc6152a42e1b74c20",
+    "unrepresentable-boundary-rejected.json": "3deed86dde12bf1504a5a020cf60efad7dd0b874ed2c33b44235afc97224f916",
+    "unrepresentable-interval-reproduction.txt.gz": "79ff6c55917e573ea089c0cabf399ecf55c5aca99d461f9328f1f488ac7c8e19",
+    "validation.svg": "e3dd78e5826707dbfae1fb93f2e585382b48ca87d7b1ec7aec225be357450069"
+  },
+  "documentation": "API/private Javadocs; water-hammer, safety and process guides; examples/navigation; skill handoffs; explicit experimental capability registration and regenerated engineering coverage.",
+  "visualInspection": "Matplotlib SVG plus rendered PNG inspected: four panels, equations described in guide, axes/units/legends/labels and contact/refinement annotations readable.",
+  "governance": "NRC-4707 PROPOSED; independent owner/domain review and exact-head hosted CI pending. Draft only; no readiness or engineering approval.",
+  "nextGenericGate": "Review/merge bounded ideal model; independently qualify discontinuous-front/contact refinement and full-pipe coupled continuation before full pump-trip/slam claims. Asset data absence is separate NOT_EVALUATED debt."
+}

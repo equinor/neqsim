@@ -169,7 +169,13 @@ final class ColumnSolverFactory {
         bestResult = warmBaseResult;
         bestSolver = warmBaseResult.getSolverType();
       }
-      if (shouldAcceptWarmBaseResult(column, candidateSource, warmBaseResult)) {
+      if (shouldAcceptWarmBaseResult(candidateSource, warmBaseResult)) {
+        for (DistillationColumn.SolverType skippedSolver : candidates) {
+          if (skippedSolver != warmBaseResult.getSolverType()) {
+            appendAutoCandidateSummary(summary, skippedSolver, null,
+                "probe skipped: warmed base satisfies all active convergence gates");
+          }
+        }
         column.acceptAutoSolverCandidate(candidateSource, warmBaseResult.getSolverType());
         column.setLastAutoFeasibilityReport(feasibilityReport);
         column.setLastAutoSolverSummary(summary.toString());
@@ -598,36 +604,36 @@ final class ColumnSolverFactory {
    */
   private static DistillationColumn.SolverType[] selectCandidateSolvers(DistillationColumn column) {
     if (column.isReactive()) {
-      return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
-          DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+          DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
     }
     if (hasAdjustableProductSpecification(column)) {
       if (column.numberOfTrays >= 12) {
-        return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
             DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.MESH_RESIDUAL,
-            DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
-      return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.INSIDE_OUT,
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
           DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.MESH_RESIDUAL,
-          DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
     }
     if (column.hasCondenser && column.hasReboiler) {
       if (column.numberOfTrays >= 12) {
-        return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
             DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.MESH_RESIDUAL,
-            DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
       if (column.numberOfTrays >= 6) {
-        return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.INSIDE_OUT,
-            DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
+            DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
     }
     if (!column.hasCondenser || !column.hasReboiler) {
-      return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-          DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.DIRECT_SUBSTITUTION };
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+          DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
     }
-    return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-        DistillationColumn.SolverType.DIRECT_SUBSTITUTION };
+    return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
   }
 
   /**
@@ -830,21 +836,18 @@ final class ColumnSolverFactory {
    * Check whether AUTO can stop after the relaxed base solve.
    *
    * <p>
-   * Fixed-specification, small condenser/reboiler columns usually do not benefit from extra simultaneous-correction
-   * probes once the warmed damped solve already satisfies the active tolerances. Accepting the base result avoids
-   * copying and flashing the same column for every candidate while preserving the full homotopy/probe ladder for
-   * product specifications and larger columns.
+   * A warmed result that satisfies every active convergence gate is already a qualified candidate, including at an
+   * adjustable-specification continuation stage or in a larger column. Repeating other solvers cannot improve that
+   * acceptance decision. A failed or fallback-only base still proceeds through the complete candidate ladder, and the
+   * outer specification continuation retains all of its stages.
    * </p>
    *
-   * @param column live AUTO column
    * @param candidate warmed candidate source
    * @param result warmed base result
    * @return {@code true} when the warmed base solve is a sufficient AUTO result
    */
-  private static boolean shouldAcceptWarmBaseResult(DistillationColumn column, DistillationColumn candidate,
-      ColumnSolveResult result) {
-    return column.hasCondenser && column.hasReboiler && column.numberOfTrays <= 8
-        && !hasAdjustableProductSpecification(column) && isAcceptableAutoCandidate(candidate, result);
+  private static boolean shouldAcceptWarmBaseResult(DistillationColumn candidate, ColumnSolveResult result) {
+    return isAcceptableAutoCandidate(candidate, result) && candidate.solved();
   }
 
   /**

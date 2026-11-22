@@ -79,6 +79,48 @@ The containment check uses: net pressure = BHP - fracture pressure. If net press
 
 The `InjectionWellModel` provides rate allocation across multiple zones based on their individual injectivity indices, plus thermal stress effects on effective fracture pressure.
 
+This is a steady water-injection screening calculation. For each zone it evaluates the radial
+Darcy coefficient in m3/s/Pa, converts it with `86400 s/day * 100000 Pa/bar`, and divides by the
+configured formation-water volume factor in reservoir m3/Sm3. The default factor is `1.0`, which
+preserves the established screening result; configure an independently justified value before
+interpreting the output as a standard-volume PVT conversion. Multi-zone results produced before the
+dimensional correction in #4228 were lower by a factor of `1e10` and must be recalculated rather than
+reused.
+
+An opt-in `IAPWS_IF97_PURE_WATER` property basis reuses NeqSim's canonical IF97 specific-volume
+implementation and IAPWS-fitted water-viscosity correlation. It evaluates every zone at its own
+reservoir pressure and the configured reservoir temperature. The volume factor is the ratio of the
+reservoir specific volume to the IF97 value at 288.15 K and 1.01325 bara; the result records each
+zone's applied pressure, viscosity and volume factor. The implementation fails closed outside
+275.15--573.15 K, 1--700 bara or the IF97 Region-1 liquid state. Constant configured inputs remain the
+default and serialized legacy behavior.
+
+The reference tests reproduce the official IF97 Region-1 specific-volume verification point at
+300 K and 3 MPa and compare the fitted viscosity with the IAPWS R12-08 298.15 K, 998 kg/m3 sample.
+See the [IAPWS-IF97 release](https://iapws.org/technical-guidance/release/IF97-Rev) and the
+[IAPWS viscosity release](https://iapws.org/technical-guidance/release/viscosity). This evidence is
+limited to ordinary pure water. Salinity, dissolved gas, relative permeability, formation damage,
+crossflow, reservoir transients and fracture growth still require separate qualified inputs and
+models.
+
+The same immutable radial-Darcy law can be attached to a live `WellFlow` zone with
+`addRadialDarcyWaterInjectionZone`. The live path accepts only the ordinary pure-water basis,
+reevaluates each zone at its current reservoir pressure, and converts the reported Sm3/day to
+the canonical network kg/s using the law's explicit IF97 standard density. Its most recent
+pressure, viscosity, volume factor, standard density, injectivity and rate are available from
+`ReservoirLayer.getRadialDarcyWaterInjectivityResult()`. A controlled reservoir-pressure update
+therefore changes live well demand without rebuilding the field graph. Constant configured PVT
+is intentionally not accepted by this bridge because it does not define the standard density
+needed for the mass conversion. This shares one software law; it does not turn the screening
+model into field-qualified injectivity or add the excluded physics above.
+
+The common BHP is solved from the piecewise-linear accepting-zone equation
+$q = \sum_i II_i\max(p_{bh}-p_{r,i},0)$. A zone whose reservoir pressure is at or above the
+solved BHP remains shut in and is excluded before the BHP is recomputed. This prevents a closed,
+higher-pressure zone from biasing the pressure and over-allocating the requested rate to lower-pressure
+zones. The result records the requested rate, unconstrained required BHP, applied pressure limit and
+whether that limit caused a rate shortfall. The calculation does not model inter-zone crossflow.
+
 ### Zone Allocation
 
 ```java
@@ -86,6 +128,8 @@ InjectionWellModel model = new InjectionWellModel();
 model.setMaxBHP(350.0, "bara");
 model.setDrainageRadius(500.0);
 model.setWellboreRadius(0.1);
+model.setFormationWaterViscosity(0.45); // cP at reservoir conditions
+model.setFormationWaterVolumeFactor(1.02); // reservoir m3/Sm3
 
 // Define injection zones
 InjectionWellModel.InjectionZone target = new InjectionWellModel.InjectionZone(
@@ -106,6 +150,8 @@ InjectionWellModel.MultiZoneInjectionResult result =
 System.out.println("Total rate: " + result.totalRate + " Sm3/day");
 System.out.println("Injection efficiency: " + result.injectionEfficiency);
 System.out.println("Out-of-zone rate: " + result.outOfZoneRate + " Sm3/day");
+System.out.println("Required BHP: " + result.requiredBHP + " bara");
+System.out.println("Pressure limited: " + result.limitedByPressure);
 ```
 
 ### Thermal Stress Effects

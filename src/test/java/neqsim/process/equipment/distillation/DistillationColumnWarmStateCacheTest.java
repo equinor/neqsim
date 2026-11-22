@@ -50,7 +50,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
     return column;
   }
@@ -90,7 +90,7 @@ public class DistillationColumnWarmStateCacheTest {
     double firstBottomFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
     assertTrue(firstGasFlow > 0.0, "the first solve should produce overhead flow");
 
-    column.getReboiler().setOutTemperature(273.15 + 110.0);
+    column.getReboiler().setOutletTemperature(273.15 + 110.0);
     column.run();
 
     assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0,
@@ -127,7 +127,12 @@ public class DistillationColumnWarmStateCacheTest {
     assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0,
         "activating ratio mode must update the bottoms flow");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+    double vaporReturn = column.getReboiler().getGasOutStream().getFlowRate("mol/hr");
+    double bottoms = column.getReboiler().getLiquidOutStream().getFlowRate("mol/hr");
+    assertEquals(storedRatio, vaporReturn / bottoms, 1.0e-6,
+        "the activated reboiler must achieve its physical boilup ratio");
+    // Cold feed can condense all vapor before the overhead on this condenser-free stripper.
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(3).get(0), column);
   }
 
   /**
@@ -157,6 +162,24 @@ public class DistillationColumnWarmStateCacheTest {
     assertFalse(column.wasSequentialWarmStateReused(),
         "activating ratio mode must solve the changed condenser equations instead of reusing equilibrium products");
     assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
+  }
+
+  /** Verify active convergence-gate changes invalidate exact sequential reuse. */
+  @Test
+  public void sequentialConvergenceGateChangeInvalidatesExactReuse() {
+    DistillationColumn column = buildCondenserColumn();
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused());
+
+    column.setMassBalanceTolerance(column.getMassBalanceTolerance() * 0.5);
+    column.run();
+
+    assertFalse(column.wasSequentialWarmStateReused(), "An active gate change requires a new solver invocation");
+    assertTrue(column.getLastIterationCount() > 0);
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
   }
@@ -270,7 +293,7 @@ public class DistillationColumnWarmStateCacheTest {
    */
   @Test
   public void inactiveToleranceChangesRetainNaphtaliExactReuse() {
-    for (double feedTemperatureC : new double[] { 20.0, 25.0 }) {
+    for (double feedTemperatureC : new double[] {20.0, 25.0}) {
       DistillationColumn column = buildColumn();
       StreamInterface feed = column.getFeedStreams(3).get(0);
       feed.setTemperature(feedTemperatureC, "C");
@@ -305,16 +328,25 @@ public class DistillationColumnWarmStateCacheTest {
     }
   }
 
-  /** Internal pumparound returns must never be captured as legacy external tray feeds. */
+  /**
+   * Internal pumparound returns must stay out of the external feed registry across a repeated solve.
+   *
+   * <p>
+   * The column uses a 0.001 K temperature tolerance. With the adaptive default, the first accepted temperature residual
+   * is about 0.022 K and the next iteration still moves the overhead flow by 1.75 percent at 20 C. At 0.001 K the same
+   * two runs agree to well within 0.5 percent and both report solved.
+   * </p>
+   */
   @Test
   public void pumparoundReturnIsNotCapturedAsExternalFeed() {
-    for (double feedTemperatureC : new double[] { 20.0, 25.0 }) {
+    for (double feedTemperatureC : new double[] {20.0, 25.0}) {
       DistillationColumn column = buildColumn();
       StreamInterface feed = column.getFeedStreams(3).get(0);
       feed.setTemperature(feedTemperatureC, "C");
       feed.run();
       column.addLiquidPumparound("PA-1", 2, 4, 0.01, 2.0);
       column.setPumparoundTolerance(1.0e-3);
+      column.setTemperatureTolerance(1.0e-3);
       column.run();
 
       assertTrue(column.solved(), column.getConvergenceDiagnostics());
@@ -426,7 +458,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
     return new ColumnCase(feed, column);
   }
@@ -796,7 +828,7 @@ public class DistillationColumnWarmStateCacheTest {
     assertNextRunReusesExactly(mutated);
 
     int initializationCountBeforeNearbyPoint = mutated.column.getInitializationCount();
-    mutated.column.getReboiler().setOutTemperature(273.15 + 82.0);
+    mutated.column.getReboiler().setOutletTemperature(273.15 + 82.0);
     mutated.column.run();
     assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
         "a nearby operating point must be solved rather than exactly reused");
@@ -804,7 +836,7 @@ public class DistillationColumnWarmStateCacheTest {
         "an unchanged thermodynamic identity should preserve the iterative warm start");
 
     ColumnCase nearbyColdReference = buildIdentityColumnCase(createIdentityTestFluid(true, "n-butane", 2));
-    nearbyColdReference.column.getReboiler().setOutTemperature(273.15 + 82.0);
+    nearbyColdReference.column.getReboiler().setOutletTemperature(273.15 + 82.0);
     nearbyColdReference.column.run();
     assertColdReferenceEquivalent(nearbyColdReference.column, mutated.column);
     assertPhysicalAndBalanced(mutated);
@@ -852,7 +884,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.addFeedStream(registeredFeed, 2);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     configureDampedSubstitution(column);
 
     column.run();
@@ -894,7 +926,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.getTray(3).addStream(directFeed);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     configureDampedSubstitution(column);
 
     column.run();
@@ -1118,7 +1150,7 @@ public class DistillationColumnWarmStateCacheTest {
         "column initialization must not change the caller-owned feed temperature");
     int baselineInitializationCount = warmCase.column.getInitializationCount();
 
-    warmCase.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    warmCase.column.getReboiler().setOutletTemperature(273.15 + targetTemperatureC);
     warmCase.column.run();
 
     assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
@@ -1126,17 +1158,22 @@ public class DistillationColumnWarmStateCacheTest {
         "column reinitialization must not change the caller-owned feed temperature");
     assertEquals(baselineInitializationCount + 1, warmCase.column.getInitializationCount(),
         "a changed fixed reboiler temperature must rebuild the sequential initialization exactly once");
-    assertTrue(warmCase.column.getLastIterationCount() <= 30,
-        "the rebuilt solve should remain within the established cold-reference iteration budget");
+    int rebuiltIterationCount = warmCase.column.getLastIterationCount();
     assertPhysicalAndBalanced(warmCase);
 
     ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     configureDampedSubstitution(coldReference.column);
-    coldReference.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    coldReference.column.getReboiler().setOutletTemperature(273.15 + targetTemperatureC);
     coldReference.column.run();
 
     assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
     assertColdReferenceEquivalent(coldReference.column, warmCase.column);
+    // The budget is the cold solve itself rather than a fixed sweep count: the damped solver needs
+    // more sweeps once acceptance also requires settled internal flows (issue 4961), and a rebuild
+    // after a specification change must not cost more than starting cold.
+    assertTrue(rebuiltIterationCount <= coldReference.column.getLastIterationCount(),
+        "the rebuilt solve should remain within the established cold-reference iteration budget, rebuilt="
+            + rebuiltIterationCount + " cold=" + coldReference.column.getLastIterationCount());
     assertPhysicalAndBalanced(coldReference);
 
     int acceptedInitializationCount = warmCase.column.getInitializationCount();

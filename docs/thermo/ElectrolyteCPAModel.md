@@ -1,6 +1,6 @@
 ---
 title: "Electrolyte CPA Model Documentation"
-description: "The electrolyte CPA (Cubic Plus Association) model in NeqSim extends the standard CPA equation of state to handle aqueous electrolyte solutions. The model is based on the work of Solbraa (2002) and co..."
+description: "Theory, supported interactions, implementation structure, and usage boundaries for NeqSim's electrolyte CPA model for aqueous electrolyte solutions."
 ---
 
 ## Overview
@@ -29,6 +29,41 @@ system.createDatabase(true);
 system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composition dependency
 ```
 
+### Reaction species and mixing-rule initialization order
+
+`chemicalReactionInit()` can add species such as `H3O+`, `OH-`, `HCO3-`, and
+`CO3--`. Select the mixing rule **after** reaction initialization and
+`createDatabase(true)`, as in the example above. The interaction matrices must
+cover the final component set.
+
+If the rule was selected first and the component count subsequently changes,
+Fürst/electrolyte-CPA `init(...)` throws an `IllegalStateException` reporting the configured and
+current counts and the recovery steps. Direct electrolyte `calcWij(...)` calls
+also reject this stale state. Previously the reported four-to-eight-component
+case failed with an `ArrayIndexOutOfBoundsException`. The check covers species
+addition and removal in both Fürst phase implementations and their electrolyte
+CPA subclasses. It is not a global guard on ordinary cubic-EOS initialization:
+non-electrolyte component projection, characterization, and stream-union setup
+retain their existing initialization sequence.
+
+To recover, complete reaction initialization, call `createDatabase(true)`, and
+reapply the chosen mixing rule (10 for electrolyte CPA). Apply any custom
+interaction parameters **after** rebuilding the rule, then call `init(0)` before
+property calculations or a flash. The check does not silently reload fitted
+parameters or fill missing interactions with zeros. Changing only component
+amounts, or repeating chemistry initialization without adding species, does not
+require a mixing-rule refresh.
+
+This count check does not detect same-count component replacement or renaming;
+rebuild the database and mixing rule after those changes as well. The separate
+chemical-reaction topology guard still requires `chemicalReactionInit()` again
+when component identities change after chemistry was initialized.
+
+Regression coverage: `MixingRuleComponentCountTest` checks all five Fürst/CPA
+electrolyte variants, species removal, explicit recovery, unchanged initialized properties and
+inventories relative to a correctly ordered setup, and preservation of custom
+parameters when stale state is rejected.
+
 ### Key Features of the Statoil Implementation
 
 | Feature | Description |
@@ -40,6 +75,33 @@ system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composi
 | **Attractive Term** | Term 15 (Mathias-Copeman alpha function) |
 | **Volume Correction** | Enabled by default |
 | **Fürst Parameters** | Uses `electrolyteCPA` parameter set |
+
+### Ionic covolume selection and compatibility
+
+CPA ionic components read covolume coefficients `[0]` and `[1]` directly from
+`FurstElectrolyteConstants.furstParamsCPA`, including construction and
+`initFurstParam()` reinitialization. This also applies to the Statoil and Advanced
+subclasses. ScRK components retain their separate `furstParams` defaults.
+Constructing an electrolyte CPA system no longer reassigns those shared ScRK
+defaults. Interleaving systems, adding ions later, cloning and serialization must
+therefore preserve each model's covolume identity.
+
+With the default tables, Na+ covolume is approximately `2.58461732544` for ScRK
+and `3.87214760778` for CPA in NeqSim internal units. Earlier versions could give
+the CPA value to ScRK solely because a CPA system had been constructed first.
+Removing that construction-order dependence can change affected ScRK results; it
+is not a new parameter fit or an estimate of fluid-property error.
+
+For deliberate customization, use `setFurstParamCPA(index, value)` for the CPA
+table and `setFurstParam(index, value)` for the ScRK table, then reinitialize the
+affected components/phases. These remain process-wide mutable customization APIs,
+not per-system or thread-safe parameter stores. The legacy
+`setFurstParams("electrolyteCPA")` explicitly aliases the ScRK table to CPA and
+should not be used to select a system model. Code that relied on a CPA constructor
+making `setFurstParam` target CPA must migrate to `setFurstParamCPA`.
+
+The covolume correction is independent of the reference-interaction correction
+described below. Neither changes fitted database pairs.
 
 ### Class Hierarchy
 
@@ -129,12 +191,53 @@ Where:
 
 The Born term accounts for the solvation energy of ions in the dielectric medium:
 
-$$\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{8\pi\varepsilon_0 k_B T} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)$$
+$$\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{4\pi\varepsilon_0 RT} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)$$
 
 Where:
 - $z_i$ = ionic charge
 - $\sigma_i$ = ionic diameter
 - $\varepsilon_r$ = relative permittivity (dielectric constant) of the solvent mixture
+
+Here $n_i$ is in mol and $\sigma_i$ is the diameter in metres used by the
+Furst-based implementation. The equivalent radius convention uses
+$8\pi\varepsilon_0 RT$ and $r_i=\sigma_i/2$. Do not combine a diameter with the
+radius prefactor, or use $N_A/k_B$ in place of $N_A/R$ for this molar expression.
+
+The mole derivative includes both the ionic contribution and the derivative of
+solvent permittivity. The latter must scale inversely with phase amount so that
+the chemical potential stays intensive. See
+[Born derivatives and phase-size invariance](ElectrolyteBornDerivatives.md) for
+the chain rule, the legacy Mod2004 correction, the related EOS audit, and the
+literature-based development recommendations.
+
+The base Furst/electrolyte CPA derivative implementation includes the implicit
+response of the stationary shielding parameter and the complete dielectric/Born
+second-derivative chain rules. See the same guide for finite-difference
+qualification and the remaining nitrogen, n-butane and n-hexane dielectric-data
+limitations. Those components share malformed default coefficients; replacing them
+requires species-valid property data and separate salting-out validation. A converged
+flash or consistent Jacobian does not by itself qualify the model's salting-out
+or mixed-inhibitor accuracy.
+
+Call `system.init(3)` before inspecting composition derivatives or running their
+consistency checks. A flash followed only by `initProperties()` may leave those
+arrays uninitialized. Derivative initialization refreshes electrolyte and CPA
+association caches at the final returned volume; repeated initialization and
+detached copies are covered by the final-volume regression tests.
+Component clones preserve fugacity composition-derivative caches in independently
+owned arrays. Electrolyte CPA component clones also own their association-composition
+derivative rows, so initializing one liquid phase cannot overwrite another phase's
+component derivatives. This does not qualify concurrent access to all cloned phase
+workspaces.
+
+Ionic shielding requires finite positive phase permittivity. If an extrapolated
+dielectric correlation violates that domain, the calculation raises an explicit
+error; ion-free states retain exactly zero shielding. In particular, a 1000 K
+endpoint for aqueous-phase disappearance in gas/oil/brine is invalid with the
+current solvent correlation. These model corrections do not qualify the legacy
+TP-flash boundary solver: brine boiling and gas/oil/brine pressure boundaries
+require the [general equilibrium solver work](https://github.com/equinor/neqsim/pull/4306)
+for strict conservation, ion-confinement and fugacity-closure checks.
 
 ## Short-Range Interaction Parameters (Wij)
 
@@ -144,7 +247,45 @@ The short-range Wij parameters capture specific ion-solvent and ion-ion interact
 
 ### Parameter Correlations
 
-The Wij values are calculated using linear correlations with ionic diameter:
+The reference coefficient `wij[0]` for calculated cation-water and ordinary
+cation-anion pairs follows the phase's EOS family. `SystemFurstElectrolyteEos`
+and `SystemFurstElectrolyteEosMod2004` use the existing ScRK `furstParams` table;
+the three electrolyte CPA variants use `furstParamsCPA`. Selection follows the
+phase type, including CPA subclasses, and is independent of construction order.
+Database pairs marked fitted (`CalcWij != 0`) retain their reference and
+temperature coefficients. The named-solvent tables, the Piperazine approximation,
+the MDEA+ ion-ion override, and gas-ion/organic-inhibitor overrides are unchanged.
+
+For ScRK, the existing six-coefficient table gives the same correlation for
+monovalent and divalent cations, with diameters in angstroms:
+
+```
+Wij(cation-water, 298.15 K) = 6.99219e-5 * stokesDiameter + 4.3984e-6
+Wij(cation-anion, 298.15 K) = -6.06e-8 * (d_cat + d_an)^4 - 2.1795e-5
+```
+
+These are the current ScRK table values, not a new fit. The separate ScRK/CPA
+model identity follows the correlations discussed by Solbraa (2002), equations
+8.14-8.15 and table 8-12; the mutable repository tables remain the exact numerical
+source. The CPA-specific valence fits are described below and are unchanged.
+
+**Numerical compatibility:** correcting the unconditional CPA dispatch introduced
+in #1787 changes calculated ScRK pairs. With the default Na+ Stokes diameter
+of 5.68 angstroms, `wij[0](Na+, water)` changes from `1.6297556353584585e-4`
+to `4.01554792e-4`. ScRK phase equilibria and properties that depend on these
+pairs can therefore change. This is a model-selection regression correction
+(#3850), not evidence that the original or corrected calibration meets a given
+experimental accuracy target. CPA reference interactions retain their values.
+
+The current shared `furstParamsCPA_TDep` temperature correction is deliberately
+retained for both families; the correction does **not** restore a complete
+historical ScRK calibration. Regressions check the reference coefficients,
+symmetric/reversed pairs, both valences, repeated initialization, CPA interleaving,
+fitted precedence, and the retained temperature formula at 298.15 and 323.15 K.
+Qualification of the combined ScRK correlation against experimental data,
+including temperature dependence, remains part of [#3144](https://github.com/equinor/neqsim/issues/3144).
+
+The CPA Wij values are calculated using the following ionic-diameter correlations:
 
 #### Monovalent (1+) Cations
 
@@ -221,6 +362,33 @@ The model has been validated against Robinson & Stokes experimental data for mea
 - **Mean activity coefficient (γ±)**: 6.0% average error
 - **Osmotic coefficient (φ)**: 4.3% average error
 
+## Computational cost
+
+Measured 21 Nov 2026 (gas + C6–C10 oil + water + 30 wt% MEG, no ions, 100 bara, one TP flash):
+
+| Model | Before | After |
+|---|---|---|
+| `SystemSrkCPAstatoil` | 13–24 ms | unchanged |
+| `SystemElectrolyteCPAstatoil` | 430–530 ms | 87–172 ms |
+| e-CPA hydrate temperature, gas + oil + 30 wt% MEG | 9.1 s | 1.7 s |
+| e-CPA hydrate temperature, gas + oil + 30 wt% MEG + 5 wt% NaCl | 43.1 s | 2.6 s |
+| e-CPA hydrate temperature, methane + water | 0.81 s | 0.76 s |
+
+Two changes, with identical results on the hydrate benchmark set (all temperatures equal to 0.01 K):
+
+- `PhaseModifiedFurstElectrolyteEos.volInit()` evaluates the volume-independent terms — short-range `W`, `WT`,
+  `WTT`, solvent dielectric constant and derivatives, and the per-component packing-fraction numerators — once per
+  temperature and composition instead of in every volume iteration. The cache is cleared at every `init`. The
+  packing fractions keep the original summation order, so results are bit-identical. This matters: a
+  near-degenerate CO2/brine flash at 323 K and 399 bar changed phase split when only the rounding order changed.
+- `PhaseElectrolyteCPA.calcRootVolFinder(GAS)` returns 1.0 directly. Its 2000-point scan could never record a gas
+  root (`solvedBonVlow` starts at 1.0 and is only assigned while below 1e-3), so every GAS call scanned the whole
+  grid and returned 1.0. This fallback ran about 26 times per flash for gas-type trial phases with liquid-like
+  composition. The intended lowest-density-root search was never active and is not introduced here.
+
+The remaining gap to SRK-CPA is the association-site solver (`PhaseElectrolyteCPA.solveX`/`initCPAMatrix`).
+Use `SystemSrkCPAstatoil` when no ions are present.
+
 ## Dielectric Constant Mixing Rules
 
 The model supports three dielectric constant mixing rules:
@@ -229,7 +397,7 @@ The model supports three dielectric constant mixing rules:
 
 $$\varepsilon_{mix} = \sum_i x_i \varepsilon_i$$
 
-- Thermodynamically consistent (passes all derivative checks)
+- Validated by the targeted derivative checks described above
 - Recommended for general use
 
 ### 2. VOLUME_AVERAGE
@@ -304,14 +472,36 @@ double phi = system.getPhase(aq).getOsmoticCoefficientOfWater();
 The model supports mixed solvent systems including:
 
 - Water + MEG (monoethylene glycol)
+- Water + TEG (triethylene glycol; initial parameter estimates)
 - Water + Methanol
 - Water + MDEA (methyldiethanolamine)
 
 Separate Wij parameters are available for each solvent system.
 
-## Gas-Ion Interaction Parameters (Salting-Out Effect)
+For calculated cation-glycol pairs, `TEG` and the mixing-rule alias
+`triethylene glycol` use `furstParamsCPA_TEG`; `MEG` and `ethylene glycol`
+use `furstParamsCPA_MEG`. Each set uses indices `[2]`/`[3]` for the
+monovalent slope/intercept and `[6]`/`[7]` for divalent cations. The TEG
+parameters are initial estimates based on water parameters and have **not
+been fitted to experimental TEG-water-electrolyte data**.
 
-The electrolyte CPA model includes gas-ion interaction parameters to correctly predict the salting-out effect. The salting-out coefficient (k_s) determines how much dissolved gas solubility decreases with salt concentration.
+The correction in [issue #3846](https://github.com/equinor/neqsim/issues/3846)
+removes an earlier MEG fallback that shadowed the TEG-specific branch. With
+the default parameters and the Na+ Stokes diameter of 5.68, the calculated
+Na+-TEG reference parameter is now `0.000160864`, instead of the MEG value
+`0.0003394`. TEG-containing calculations using the shared Furst short-range
+mixing rule can therefore change. Explicitly fitted pair parameters retain
+precedence, and the existing temperature-dependent coefficients are unchanged.
+This corrects parameter selection; it does not validate the TEG estimates
+against experimental data.
+
+## Gas-Ion Interaction Parameters
+
+The electrolyte CPA model includes legacy gas-ion short-range interaction
+parameters. They are model coefficients in m3/mol, not measured Setschenow
+coefficients, and the original generic parameter provenance has not been
+independently reconstructed. Gas-ion behavior therefore requires a
+source-specific check rather than relying on the generic labels alone.
 
 ### Setschenow Equation
 
@@ -323,19 +513,11 @@ Where:
 - $k_s$ = Setschenow (salting-out) coefficient (L/mol)
 - $c_{salt}$ = salt concentration (mol/L)
 
-### Fitted Gas-Ion Parameters
-
-| Gas | k_s (L/mol) | W_cation | W_anion | Notes |
-|-----|-------------|----------|---------|-------|
-| CO₂ | 0.10 | 1.05e-4 | 1.05e-4 | Polar, acidic gas |
-| CH₄ | 0.12 | 1.10e-4 | 1.10e-4 | Reference hydrocarbon |
-| C₂H₆ | 0.13 | 1.13e-4 | 1.13e-4 | Slightly larger |
-| C₃H₈ | 0.14 | 1.15e-4 | 1.15e-4 | Larger hydrocarbon |
-| C₄ (butanes) | 0.15 | 1.20e-4 | 1.20e-4 | Heavier hydrocarbon |
-| C₅+ | 0.16 | 1.25e-4 | 1.25e-4 | Heaviest fractions |
-| N₂ | 0.10-0.12 | 1.05e-4 | 1.05e-4 | Similar to CH₄ |
-| H₂S | 0.06-0.08 | 1.10e-4 | 1.10e-4 | Polar, acidic |
-| H₂ | 0.10 | 1.30e-4 | 1.30e-4 | Very small molecule |
+`SystemElectrolyteCPAstatoil` has one source-reconstructed specialization: its
+default CO2/K+ coefficient reproduces the Onda et al. (1970) KCl ion-contribution
+correlation at 298.15 K. The calibration, coefficient units, override priority,
+independent holdouts, and unqualified regions are documented in
+[CO2–KCl interaction provenance](./co2_kcl_interaction_provenance.md).
 
 **Usage Example - Methane Solubility with Salt:**
 ```java
@@ -401,6 +583,54 @@ ops.hydrateFormationTemperature();
 // Combined effect is additive per Hu-Lee-Sum correlation
 System.out.println("Hydrate T: " + fluid.getTemperature("C") + " °C");
 ```
+
+### Component conservation in hydrate-temperature calculations
+
+Non-reactive brines retain the supplied molecular and ionic inventories. The
+multiphase solver temporarily uses a normalized, ion-free molecular feed for
+phase discovery. Stripped ions are excluded from its phase-fraction equations;
+their very small fugacity coefficients must not enter the molecular Newton
+matrix. Restoring the ions transforms both phase fractions and aqueous
+composition back to the full feed basis. Charge balance alone does not establish
+component conservation.
+
+The final ionic gas/aqueous refinement compares Gibbs energies only when the
+reference state conserves the feed. A converged, normalized, conservative
+candidate must not be rejected because a state with a different inventory has
+a lower extensive Gibbs energy.
+
+At every fluid evaluation, the hydrate-temperature operation checks phase and
+composition normalization, each component's recovered inventory against the
+input, and aqueous ion confinement. An invalid non-reactive electrolyte state
+raises `IllegalStateException` with the failed diagnostic instead of returning
+a hydrate temperature. The caller's multiphase-check setting is restored on
+success and failure. Reactive calculations retain their existing species and
+element-balance handling.
+
+Regression coverage includes CO2 with NaCl–CaCl2 and NaCl–KCl mixtures on a
+1 kg water / 10 mol CO2 basis, nearby pressures and salt concentrations, and
+equivalent salt-addition orders and repeated calculations. These are numerical
+conservation checks, not experimental qualification of mixed-salt hydrate
+temperatures.
+
+For the CO2/water/explicit-ion subset, including brines with MEG,
+hydrate-temperature calculations also compare independently initialized vapour and liquid CO2 trials with a conserved
+aqueous feed. The constrained solver keeps ions in water, checks molecular
+fugacity equality for both gas/aqueous and liquid-CO2/aqueous splits, and accepts
+a single aqueous phase only after CO2 stability testing. This addresses the
+phase-state failures in [issue #3584](https://github.com/equinor/neqsim/issues/3584).
+The hydrate-temperature calculation includes MEG in the molecular fugacity and
+material balances for this brine subset. The generic `TPflash()` API continues
+to use the ordinary fluid solver.
+
+Use the operation's `getDiagnostics()` snapshot to distinguish a numerically
+converged finite-inventory result from a saturated CO2 boundary. The
+[hydrate phase-state guide](../thermodynamicoperations/hydrate_flash_operations#co2brine-phase-state-diagnostics)
+documents the public API and the separate saturated/undersaturated experimental
+assessment. The selected public data give maximum absolute temperature errors
+of 1.12 K for saturated systems and 4.10 K for undersaturated systems, so this
+numerical correction does not establish full-range experimental accuracy or
+high-pressure drilling-fluid applicability.
 
 ## Known Limitations
 

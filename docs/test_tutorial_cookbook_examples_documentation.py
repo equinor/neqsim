@@ -1,5 +1,6 @@
 """Contracts for tutorials, cookbook, troubleshooting, and examples."""
 
+import json
 from pathlib import Path
 import re
 import unittest
@@ -64,6 +65,56 @@ INDEX_PAGES = (
     DOCS / "examples/index.md",
     DOCS / "troubleshooting/index.md",
     DOCS / "tutorials/index.md",
+)
+
+
+CO2_KINETICS_ASSETS = (
+    DOCS / "tutorials/CO2_CSTR_Experiment_Tutorial.ipynb",
+    DOCS / "tutorials/CO2_Impurity_Kinetics_Tutorial.ipynb",
+    DOCS / "tutorials/neqsim_co2_kinetics.py",
+    DOCS / "tutorials/run_master_long_experiment_960h.py",
+    DOCS / "tutorials/run_stepwise_10ppm_every100h.py",
+    DOCS / "tutorials/run_user_20bar_minus24C_experiment.py",
+)
+CO2_KINETICS_NOTEBOOKS = CO2_KINETICS_ASSETS[:2]
+CO2_KINETICS_LINK_TARGETS = {
+    CO2_KINETICS_ASSETS[0]: (
+        "https://github.com/equinor/neqsim/blob/master/docs/tutorials/"
+        "CO2_CSTR_Experiment_Tutorial.ipynb"
+    ),
+    CO2_KINETICS_ASSETS[1]: (
+        "https://github.com/equinor/neqsim/blob/master/docs/tutorials/"
+        "CO2_Impurity_Kinetics_Tutorial.ipynb"
+    ),
+    **{asset: asset.name for asset in CO2_KINETICS_ASSETS[2:]},
+}
+TUTORIAL_INDEX = DOCS / "tutorials/index.md"
+
+TASK_SOLVING_TUTORIAL = DOCS / "tutorials/solve-engineering-task.md"
+PYTHON_QUICKSTART = DOCS / "quickstart/python-quickstart.md"
+DEVTOOLS_PYPROJECT = DOCS.parent / "devtools/pyproject.toml"
+NEQSIM_CLI = DOCS.parent / "devtools/neqsim_cli.py"
+PROCESS_COMPARISON_PAGE = DOCS / "examples/comparesimulations_quickstart.md"
+COMBINED_MODELS_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/process/processmodel/CombinedModelsTest.java"
+)
+
+NORWEGIAN_COMPARISON_PAGE = DOCS / "examples/NorwegianEmissionMethods_Comparison.md"
+PRODUCED_WATER_GUIDE = DOCS / "process/equipment/util/produced_water_degassing.md"
+EMISSIONS_SOURCE = (
+    DOCS.parent / "src/main/java/neqsim/process/equipment/util/EmissionsCalculator.java"
+)
+PRODUCED_WATER_SOURCE = (
+    DOCS.parent
+    / "src/main/java/neqsim/process/equipment/util/ProducedWaterDegassingSystem.java"
+)
+EMISSIONS_TEST = (
+    DOCS.parent / "src/test/java/neqsim/process/equipment/util/EmissionsCalculatorTest.java"
+)
+PRODUCED_WATER_DOC_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/process/equipment/util/ProducedWaterDegassingDocumentationTest.java"
 )
 
 
@@ -140,8 +191,248 @@ def link_candidates(page, raw_target):
     )
 
 
+def section_after_heading(source, heading):
+    """Return the Markdown section that starts at an exact level-two heading."""
+    match = re.search(
+        rf"^{re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
+        source,
+        re.MULTILINE | re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError(f"Missing section: {heading}")
+    return match.group("section")
+
+
 class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-6 documentation surface."""
+
+    def test_task_solving_pull_request_example_keeps_further_reading_rendered(self):
+        page = TASK_SOLVING_TUTORIAL.read_text(encoding="utf-8")
+        rendered = remove_fenced_code(page)
+        contribution = section_after_heading(page, "## After the Task: Contributing Back")
+        command = (
+            'gh pr create --title "Add hydrate formation analysis" '
+            '--body "From task-solving workflow"'
+        )
+
+        self.assertIn(command, contribution)
+        self.assertNotIn(command, rendered)
+        self.assertIn("## Further Reading", rendered)
+        self.assertIn(
+            "[Agentic Workflow Examples](../integration/ai_workflow_examples)",
+            rendered,
+        )
+
+    def test_task_solving_runtime_and_report_commands_match_current_sources(self):
+        page = TASK_SOLVING_TUTORIAL.read_text(encoding="utf-8")
+        quickstart = PYTHON_QUICKSTART.read_text(encoding="utf-8")
+        pyproject = DEVTOOLS_PYPROJECT.read_text(encoding="utf-8")
+        cli = NEQSIM_CLI.read_text(encoding="utf-8")
+        prerequisites = section_after_heading(page, "## Prerequisites")
+        report = section_after_heading(page, "### Step 3: Generate Reports")
+
+        for marker in (
+            "| Python 3.11+ |",
+            "| Java JDK 17+ |",
+            "Source compatibility is not the same as the runtime prerequisite.",
+        ):
+            with self.subTest(prerequisite=marker):
+                self.assertIn(marker, prerequisites)
+
+        self.assertIn('requires-python = ">=3.11"', pyproject)
+        self.assertIn("requires Java 17 or newer", quickstart)
+        self.assertIn("neqsim report .", report)
+        self.assertIn("Install JDK 17+ and set `JAVA_HOME`", page)
+        self.assertIn('print("Usage: neqsim report [TASK_DIR]', cli)
+
+        for stale in (
+            "Python 3.8+",
+            "Java JDK 8+",
+            "Install JDK 8+",
+            "python step3_report/generate_report.py",
+            "python -m pip install python-docx matplotlib",
+        ):
+            with self.subTest(stale=stale):
+                self.assertNotIn(stale, page)
+
+    def test_process_comparison_quickstart_matches_executable_regression(self):
+        page = PROCESS_COMPARISON_PAGE.read_text(encoding="utf-8")
+        java_test = COMBINED_MODELS_TEST.read_text(encoding="utf-8")
+        section = section_after_heading(page, "## Step-by-step Java example")
+
+        self.assertNotIn("System.out", section)
+        self.assertIn("ProcessComparisonQuickStart", section)
+        self.assertIn("LogManager.getLogger(ProcessComparisonQuickStart.class)", section)
+        self.assertIn("logger.info(", section)
+        self.assertIn("testProcessComparisonQuickStart", java_test)
+
+        workflow_markers = (
+            "new SystemSrkEos(310.0, 50.0)",
+            'setFlowRate(10.0, "MSm3/day")',
+            'new ThreePhaseSeparator("1st stage separator", wellStreamHP)',
+            "firstStageSeparator.getGasOutStream()",
+            'setOutletPressure(100.0, "bara")',
+            "combinedProcess.setRunStep(true)",
+            "combinedProcess.run()",
+            "reporter.generateJsonReport()",
+        )
+        for marker in workflow_markers:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, section)
+                self.assertIn(marker, java_test)
+
+        regression_markers = (
+            "Double.isFinite(gasFlow)",
+            "gasFlow > 0.0",
+            "gasFlow <= 10.0",
+            "Double.isFinite(outletTemperature)",
+            "outletTemperature > 36.85",
+            "outletTemperature < 300.0",
+            "Assertions.assertFalse(jsonReport.isEmpty())",
+            "Assertions.assertEquals(combinedProcess.getReport_json(), jsonReport)",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
+
+
+    def test_norwegian_comparison_reuses_executable_supported_example(self):
+        page = NORWEGIAN_COMPARISON_PAGE.read_text(encoding="utf-8")
+        supported_guide = PRODUCED_WATER_GUIDE.read_text(encoding="utf-8")
+        java_test = PRODUCED_WATER_DOC_TEST.read_text(encoding="utf-8")
+        section = section_after_heading(page, "## Thermodynamic screening calculation")
+        supported_section = section_after_heading(supported_guide, "## Executable Java example")
+        fence = re.compile(r"```java\n(?P<source>.*?)```", re.DOTALL)
+        page_example = fence.search(section)
+        supported_example = fence.search(supported_section)
+
+        self.assertIsNotNone(page_example)
+        self.assertIsNotNone(supported_example)
+        self.assertEqual(supported_example.group("source"), page_example.group("source"))
+        self.assertNotIn("System.out", section)
+        self.assertNotIn("System.err", section)
+        self.assertIn("supportedGuideExampleCompilesAndRuns", java_test)
+        self.assertIn(
+            'Paths.get("docs/process/equipment/util/produced_water_degassing.md")',
+            java_test,
+        )
+        self.assertIn('example.getMethod("runExample").invoke(null)', java_test)
+
+    def test_norwegian_comparison_matches_current_source_and_tests(self):
+        page = NORWEGIAN_COMPARISON_PAGE.read_text(encoding="utf-8")
+        emissions_source = EMISSIONS_SOURCE.read_text(encoding="utf-8")
+        produced_water_source = PRODUCED_WATER_SOURCE.read_text(encoding="utf-8")
+        emissions_test = EMISSIONS_TEST.read_text(encoding="utf-8")
+
+        emissions_markers = (
+            "HANDBOOK_F_CH4 = 14.0",
+            "HANDBOOK_F_NMVOC = 3.5",
+            "GWP_METHANE = 28.0",
+            "GWP_NMVOC = 2.2",
+            "calculateConventionalCH4(double producedWaterVolume_m3, double pressureDrop_bar)",
+            "calculateConventionalNMVOC(double producedWaterVolume_m3, double pressureDrop_bar)",
+            "calculateConventionalEmissions(double producedWaterVolume_m3,",
+        )
+        for marker in emissions_markers:
+            with self.subTest(emissions_marker=marker):
+                self.assertIn(marker, page)
+                self.assertIn(marker, emissions_source)
+
+        produced_water_markers = (
+            "mixing rule 10",
+            "Salinity is reporting metadata only",
+            "public String getMethodComparisonReport()",
+            "public Map<String, Object> getValidationResults()",
+            "public Map<String, Object> toMap()",
+        )
+        for marker in produced_water_markers:
+            with self.subTest(produced_water_marker=marker):
+                self.assertIn(marker, produced_water_source)
+
+        for marker in (
+            "testConventionalHandbookMethods",
+            "testMethodComparisonReport",
+            'report.contains("Aktivitetsforskriften")',
+        ):
+            with self.subTest(test_marker=marker):
+                self.assertIn(marker, emissions_test)
+
+    def test_norwegian_comparison_has_safe_claims_and_provenance(self):
+        page = NORWEGIAN_COMPARISON_PAGE.read_text(encoding="utf-8")
+        for marker in (
+            "screening and software-integration guide",
+            "does not establish field accuracy",
+            "not a regulatory decision",
+            "must not be transferred to this convenience builder",
+            "`setSalinity` stores metadata only",
+            "representative pressurized-water sampling",
+        ):
+            with self.subTest(required_boundary=marker):
+                self.assertIn(marker, page)
+
+        for marker in (
+            "System.out",
+            "System.err",
+            "TEGAbsorber",
+            "TEGRegeneration",
+            "±3.6%",
+            "±7.4%",
+            "11,000 tonnes",
+            "4,700 tonnes",
+            "✅ More accurate",
+            "jNeqSim",
+        ):
+            with self.subTest(forbidden_claim=marker):
+                self.assertNotIn(marker, page)
+
+        link_markers = (
+            "(ProducedWaterEmissions_Tutorial.md)",
+            "(index.md)",
+            "(../REFERENCE_MANUAL_INDEX.md#chapter-43-sustainability--emissions)",
+            "(../process/equipment/util/produced_water_degassing.md)",
+        )
+        for marker in link_markers:
+            with self.subTest(link_marker=marker):
+                self.assertIn(marker, page)
+
+
+    def test_co2_kinetics_tutorial_assets_are_discoverable_and_executed(self):
+        index = TUTORIAL_INDEX.read_text(encoding="utf-8")
+        section = section_after_heading(
+            index, "## CO2 Impurity Kinetics Tutorials"
+        )
+
+        self.assertIn("experimental screening", section)
+        self.assertIn("uncalibrated", section)
+        self.assertIn("not a current-`master` rerun", section)
+        for asset in CO2_KINETICS_ASSETS:
+            with self.subTest(asset=asset.name):
+                self.assertTrue(asset.is_file())
+                self.assertEqual(
+                    1, section.count(f"({CO2_KINETICS_LINK_TARGETS[asset]})")
+                )
+
+        for notebook_path in CO2_KINETICS_NOTEBOOKS:
+            with self.subTest(notebook=notebook_path.name):
+                notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
+                code_cells = [
+                    cell for cell in notebook["cells"] if cell["cell_type"] == "code"
+                ]
+                self.assertTrue(code_cells)
+                self.assertTrue(
+                    all(cell.get("execution_count") is not None for cell in code_cells)
+                )
+                outputs = [
+                    output
+                    for cell in code_cells
+                    for output in cell.get("outputs", [])
+                ]
+                self.assertFalse(
+                    any(output.get("output_type") == "error" for output in outputs)
+                )
+                self.assertFalse(
+                    any(output.get("name") == "stderr" for output in outputs)
+                )
 
     def test_frozen_scope_exists(self):
         self.assertEqual(48, len(SCOPE_PAGES))

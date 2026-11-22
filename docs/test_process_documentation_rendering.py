@@ -47,6 +47,7 @@ SCOPE_PAGES = (
     DOCS / "process/equipment/pipelines.md",
     DOCS / "process/equipment/plug_flow_reactor.md",
     DOCS / "process/equipment/power_generation.md",
+    DOCS / "process/equipment/private-extensions.md",
     DOCS / "process/equipment/production_well_networks.md",
     DOCS / "process/equipment/pumps.md",
     DOCS / "process/equipment/reactors.md",
@@ -174,10 +175,71 @@ class ProcessDocumentationRenderingContractTest(unittest.TestCase):
     """Protect the curated process-equipment and flowsheet documentation surface."""
 
     def test_frozen_scope_exists(self):
-        self.assertEqual(len(SCOPE_PAGES), 80)
+        self.assertEqual(len(SCOPE_PAGES), 81)
         for page in SCOPE_PAGES:
             with self.subTest(page=page):
                 self.assertTrue(page.is_file())
+
+    def test_private_entrainment_extension_is_indexed_and_source_backed(self):
+        equipment_index = DOCS / "process/equipment/README.md"
+        guide = DOCS / "process/equipment/private-extensions.md"
+        target = "private-extensions"
+        visible_index = remove_fenced_code(
+            equipment_index.read_text(encoding="utf-8")
+        )
+        self.assertEqual(1, visible_index.count("]({})".format(target)))
+        candidates = target_candidates(equipment_index, target)
+        self.assertIn(guide.resolve(), candidates)
+        self.assertTrue(any(candidate.exists() for candidate in candidates))
+
+        source_root = (
+            DOCS.parent
+            / "src/main/java/neqsim/process/equipment/separator"
+        )
+        interface_source = (
+            source_root / "entrainment/EnhancedEntrainmentProvider.java"
+        ).read_text(encoding="utf-8")
+        registry_source = (
+            source_root / "entrainment/EntrainmentProviderRegistry.java"
+        ).read_text(encoding="utf-8")
+        separator_source = (source_root / "Separator.java").read_text(
+            encoding="utf-8"
+        )
+        regression = (
+            DOCS.parent
+            / "src/test/java/neqsim/process/equipment/separator/entrainment"
+            / "EntrainmentProviderSpiTest.java"
+        ).read_text(encoding="utf-8")
+        guide_source = guide.read_text(encoding="utf-8")
+
+        contracts = (
+            (interface_source, "public interface EnhancedEntrainmentProvider"),
+            (
+                registry_source,
+                "public static final int CURRENT_API_VERSION = 1;",
+            ),
+            (
+                registry_source,
+                "ServiceLoader.load(EnhancedEntrainmentProvider.class)",
+            ),
+            (
+                separator_source,
+                "public void setEntrainmentProvider(String providerId)",
+            ),
+            (
+                separator_source,
+                "public EntrainmentResult getEntrainmentResult()",
+            ),
+            (regression, "selectingAModelDoesNotChangeSeparatorResults"),
+            (
+                guide_source,
+                "META-INF/services/neqsim.process.equipment.separator."
+                "entrainment.EnhancedEntrainmentProvider",
+            ),
+        )
+        for source, token in contracts:
+            with self.subTest(source_contract=token):
+                self.assertIn(token, source)
 
     def test_pages_have_searchable_front_matter(self):
         for page in SCOPE_PAGES:
@@ -233,6 +295,50 @@ class ProcessDocumentationRenderingContractTest(unittest.TestCase):
                 )
                 rendered_markdown = remove_fenced_code(body)
                 self.assertIsNone(unsupported.search(rendered_markdown))
+
+
+    def test_lng_quickstart_is_complete_and_executable(self):
+        page = DOCS / "process/equipment/LNGHeatExchanger.md"
+        _title, _description, body = parse_front_matter(
+            page.read_text(encoding="utf-8")
+        )
+        match = re.search(
+            r"### Java.*?```java\n(?P<source>.*?)\n```",
+            body,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        source = match.group("source")
+        for token in (
+            "import org.apache.logging.log4j.LogManager;",
+            "import org.apache.logging.log4j.Logger;",
+            "import neqsim.thermo.system.SystemInterface;",
+            "public final class LNGHeatExchangerQuickStart",
+            "public static void main(String[] args)",
+            "mche.setStreamPressureDrop(0, 1.5);",
+            "mche.setStreamPressureDrop(1, 0.3);",
+            'logger.info("MITA: {} degC", mche.getMITA());',
+            "mche.getSecondLawEfficiency()",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, source)
+        self.assertNotIn("System.out", source)
+        self.assertNotIn("System.err", source)
+
+        regression = (
+            DOCS.parent
+            / "src/test/java/neqsim/documentation/LNGHeatExchangerQuickStartTest.java"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "testDocumentedQuickStartRunsAndReturnsBoundedDiagnostics",
+            "assertTrue(Double.isFinite(mitaC));",
+            "assertTrue(mitaC >= 0.0);",
+            "assertTrue(Double.isFinite(secondLawEfficiency));",
+            "assertTrue(secondLawEfficiency > 0.0);",
+            "assertTrue(secondLawEfficiency <= 1.0);",
+        ):
+            with self.subTest(regression_token=token):
+                self.assertIn(token, regression)
 
 
 if __name__ == "__main__":

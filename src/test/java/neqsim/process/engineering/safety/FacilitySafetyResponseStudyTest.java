@@ -125,7 +125,7 @@ class FacilitySafetyResponseStudyTest {
         .addSource(source).flareHeader(0.30, 1.5, 288.15, 0.020, 1.30).flareGeometry(0.5, 35.0, 0.20)
         .flareDesignCapacity(5.0e8, 500.0, 30000.0).build();
     CoupledReliefBlowdownFlareInput input = CoupledReliefBlowdownFlareInput.builder("coupled-1")
-        .addReliefStudy(relief, "FIRE-ZONE-1").dynamicStudy(dynamic).scenarioSelectionReviewed(true)
+        .addReliefStudy(relief, "FIRE-ZONE-1", fluid).dynamicStudy(dynamic).scenarioSelectionReviewed(true)
         .addEvidenceReference("RELIEF-BASIS-REV-4").build();
     CoupledReliefBlowdownFlareCalculation calculation = new CoupledReliefBlowdownFlareCalculation(
         DynamicBlowdownFlareStudyRunner.builder().timeStepSeconds(5.0).maxTimeSeconds(60.0).build());

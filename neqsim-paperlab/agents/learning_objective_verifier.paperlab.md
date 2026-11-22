@@ -16,9 +16,9 @@ You verify that a PaperLab book keeps the promises it makes to students.
 
 ## Loaded Skills
 
-- `paperlab_learning_objective_matrix`
-- `paperlab_student_readability`
-- `paperlab_exam_alignment`
+- `paperlab-learning-objective-matrix`
+- `paperlab-student-readability`
+- `paperlab-exam-alignment`
 
 ## Required Context
 

@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import java.util.Locale;
+import neqsim.util.annotation.AIExposable;
 
 /**
  * Standalone liquid-slug momentum impact-force utility for pipework loading screening.
@@ -49,6 +50,7 @@ public final class SlugImpactForce {
    * @return effective slug density [kg/m3]
    * @throws IllegalArgumentException if inputs are out of physical range
    */
+  @AIExposable(description = "Calculate homogeneous effective slug density", category = "flow-assurance", safe = true)
   public static double effectiveSlugDensity(double liquidDensity, double gasDensity, double gasVoidFraction) {
     if (liquidDensity <= 0.0) {
       throw new IllegalArgumentException("liquidDensity must be positive");
@@ -71,6 +73,7 @@ public final class SlugImpactForce {
    * @return momentum impact force [N]
    * @throws IllegalArgumentException if density or area is non-positive
    */
+  @AIExposable(description = "Calculate static slug momentum force", category = "flow-assurance", safe = true)
   public static double momentumForce(double density, double area, double velocity) {
     if (density <= 0.0) {
       throw new IllegalArgumentException("density must be positive");
@@ -91,6 +94,7 @@ public final class SlugImpactForce {
    * @return resultant bend reaction force magnitude [N]
    * @throws IllegalArgumentException if density or area is non-positive
    */
+  @AIExposable(description = "Calculate static slug bend reaction force", category = "flow-assurance", safe = true)
   public static double bendForce(double density, double area, double velocity, double bendAngleDeg) {
     double axial = momentumForce(density, area, velocity);
     return 2.0 * axial * Math.sin(Math.toRadians(bendAngleDeg) / 2.0);
@@ -108,6 +112,7 @@ public final class SlugImpactForce {
    * @return design impact force [N]
    * @throws IllegalArgumentException if inputs are out of physical range
    */
+  @AIExposable(description = "Calculate static slug design force", category = "flow-assurance", safe = true)
   public static double designForce(double liquidDensity, double gasDensity, double area, double velocity,
       double gasVoidFraction, double dynamicLoadFactor) {
     double rhoEff = effectiveSlugDensity(liquidDensity, gasDensity, gasVoidFraction);
@@ -121,6 +126,7 @@ public final class SlugImpactForce {
    * @return flow area [m2]
    * @throws IllegalArgumentException if diameter is non-positive
    */
+  @AIExposable(description = "Calculate circular pipe area from diameter", category = "flow-assurance", safe = true)
   public static double areaFromDiameter(double diameter) {
     if (diameter <= 0.0) {
       throw new IllegalArgumentException("diameter must be positive");

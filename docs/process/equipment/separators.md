@@ -6,6 +6,34 @@ keywords: "separator, two-phase, three-phase, gas-oil-water, test separator, scr
 
 Documentation for separator equipment in NeqSim process simulation.
 
+Plate allowables used by `MaterialPlateDesignStandard` are selected by material name,
+specification and grade, then converted from the bundled table's psi to MPa. The
+SA-516 grade 55 division-1 row supplies 95.14765 MPa; it must not be replaced by an
+unloaded field default. Unknown grades, invalid divisions and failed database loads
+stop sizing. A failed reload invalidates the previous allowable until a valid row
+or an explicit positive allowable is supplied. These bundled values are screening
+inputs; they do not replace edition- and temperature-specific code verification.
+
+Mechanical sizing automatically loads the layered process requirements described in
+[Mechanical design database](../mechanical_design_database). Project parameter setters retain
+ownership across reloads. Foam allowance and flow margin multiply the required liquid inventory:
+
+$$V_{req}=Q_L t_R f_{foam} f_{flow}$$
+
+Here $Q_L$ is actual total liquid flow in m³/s, $t_R$ is retention time in seconds, and the two
+$f$ factors are dimensionless. The cylindrical tangent section must supply this inventory in its
+available liquid cross section. The screening length is $L=V_{req}/A_L$, without a square root.
+If the required tangent length exceeds $5D$, sizing increases the diameter; it never truncates
+the required liquid inventory to force the length/diameter envelope. The minimum tangent length
+is $2D$. Both `calcDesign()` and `performSizingCalculations()` apply this check after the gas
+and settling diameter requirements. The gas-velocity limit also caps the Souders–Brown value.
+Both exported design-flow capacities are recomputed from the final diameter in m³/hr, so an
+inventory-driven increase in diameter is reflected in capacity utilization. Comprehensive
+validation converts actual gas flow to m³/s and uses the orientation-specific gas area.
+Without an explicit retention-time setter, sizing enforces the loaded oil retention minimum,
+and the water minimum when an aqueous phase is present. These are preliminary cylindrical-volume
+checks; detailed level geometry and separation performance still require their dedicated methods.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -106,6 +134,29 @@ StreamInterface condensate = scrubber.getLiquidOutStream();
 ## Three-Phase Separator in Detail
 
 The `ThreePhaseSeparator` extends `Separator` and separates a multiphase feed into three outlet streams: gas, oil, and water (aqueous). During `run()`, it temporarily enables the thermodynamic multiphase check for its internal flash and restores the cloned fluid setting afterward. Calling `setMultiPhaseCheck(true)` on the feed is therefore not a separator prerequisite; use it when the upstream feed itself must be initialized or inspected as multiphase. Distinct oil and aqueous phases still depend on the selected thermodynamic model, composition, temperature, and pressure.
+
+With entrainment, an outlet's name identifies its destination rather than a guaranteed single thermodynamic phase. For example, water entrained into the oil outlet can form a separate aqueous phase when that outlet is flashed. Retaining this split conserves the entrained component inventory and determines the outlet enthalpy used by downstream valves and other equipment.
+
+Absent product phases use a negligible-inventory fluid template. Its component
+amounts are scaled from the conserved feed inventory, including inactive physical
+phase slots; reinitialization must never restore the original feed into an absent
+gas, oil, or water outlet. This matters after phase disappearance and repeated
+calculations on water-rich placeholder streams such as a 1 kg/hr feed. Check total
+mass and each component's molar flow across all outlets when diagnosing such cases.
+
+The public PR78 regression `WaterRichSmallFeedTest` checks the mixer/heater/separator
+sequence at 12.53 barg and 20.75 °C against a fresh TP flash at several feed sizes.
+`SystemThermoEmptySystemCloneTest` checks the non-identity phase mapping left by
+gas removal. These are numerical regression fluids; they do not establish a PVT
+match for a proprietary E300 reservoir fluid. Issue
+[#4427](https://github.com/equinor/neqsim/issues/4427) was reported with version
+3.18.0, so reproduce against the current version before attributing a remaining
+heater phase-selection difference to the same defect.
+
+During transient simulation, each populated draw retains its configured withdrawal rate and is refreshed from
+the corresponding vessel phase. The extracted stream keeps that phase's identity and intensive properties as its
+amount is scaled to the withdrawal rate. A downstream pressure-driven gas valve can therefore use the draw's
+compressibility and actual volume consistently across the steady-to-transient handoff.
 
 ### Creating a Three-Phase Separator
 
@@ -483,6 +534,32 @@ double effectiveGasLength = design.getEffectiveLengthGas();
 double effectiveLiquidLength = design.getEffectiveLengthLiquid();
 ```
 
+### Outlet Nozzle Sizing
+
+After running the separator, `calcDesign()` calculates outlet nozzle IDs. The
+individual `calcGasOutletNozzleID()` and `calcOilOutletNozzleID()` methods also
+recalculate and store their results. Sizing uses actual phase flow in **m3/s**
+at operating conditions: minimum area is flow divided by the velocity limit,
+and minimum ID is the square root of four times that area divided by pi.
+
+| Method | Flow basis | Velocity limit | Upward ID rounding | Absent phase / zero flow |
+| --- | --- | --- | --- | --- |
+| `calcGasOutletNozzleID()` | Named gas phase | 20 m/s | 50 mm increments | 0 m |
+| `calcOilOutletNozzleID()` on `Separator` | Oil + aqueous phases in the common liquid outlet | 1.5 m/s | 25 mm increments, minimum 50 mm | 0.05 m |
+| `calcOilOutletNozzleID()` on `ThreePhaseSeparator` | Named oil phase only | 1.5 m/s | 25 mm increments, minimum 50 mm | 0.05 m |
+
+Phase selection does not depend on phase indices. No additional division by
+3,600 is applied to flow already expressed per second. For example, a gas flow
+of 3,580.35 actual m3/h requires approximately 0.2516 m ID at 20 m/s, rounded
+up to 0.30 m. These are preliminary velocity-based dimensions with simple
+rounding increments, not a pipe schedule or a certified nozzle design.
+
+The calculation return values and `getGasOutletNozzleID()` /
+`getOilOutletNozzleID()` use **metres**. The corresponding `toJson()` fields
+`gasOutletNozzleDiameter` and `liquidOutletNozzleDiameter` use **millimetres**.
+Recalculation at zero flow resets the stored values and subsequent JSON exports.
+Water outlet sizing for `ThreePhaseSeparator` is separate from these methods.
+
 ### Pre-Designed Separator Setup
 
 Pre-designed geometry is configured on `SeparatorMechanicalDesign`. Set the process-equipment geometry as well when runtime or dynamic vessel holdup uses the imported dimensions. All values below are in meters.
@@ -783,6 +860,39 @@ for (int i = 0; i < 100; i++) {
 }
 ```
 
+### Time step and stability
+
+The separator integrates its inventory explicitly and solves a VU flash for pressure and temperature
+each step. A step longer than the gas-cap inventory time constant (gas mass divided by the largest
+boundary mass flow) overshoots the pressure, and the next VU flash is rejected with
+`IllegalStateException: Separator '...' rejected transient VU state`. `getMaxStableTransientTimeStep()`
+returns `0.1` times that time constant, and `ProcessSystem.runTransient` sub-steps automatically to stay
+below it (see [ProcessSystem: Automatic transient sub-stepping](../processmodel/process_system.md#automatic-transient-sub-stepping)).
+When calling `separator.runTransient(dt, id)` directly, keep `dt` below that value yourself.
+
+If the ordinary VU Newton solve misses the volume/energy specification, it
+returns its best iterate and two fallbacks run, cheapest first. A detached
+equilibrium recovery searches from the incoming pressure and temperature
+(`OptimizedVUflash.wasEquilibriumRecoveryUsed()`,
+`getEquilibriumRecoveryFlashCount()`). Then an equilibrium polish solves the
+volume for pressure along a constant-volume path
+(`OptimizedVUflash.wasEquilibriumPolishUsed()`). The polish is what closes
+states near the bubble point, such as a small gas cap in an almost
+liquid-filled vessel. Either way the accepted state must close both
+specifications.
+
+In a healthy gas–oil–water run both fallbacks stay at zero. A nonzero count on
+a slow vessel step points at the inner TP flash; see the
+[flash guide](../../thermo/flash_calculations_guide) for the stage order and
+the measurement behind it.
+
+The reported level stops at the minimum headspace (5 % of the vessel volume, a level of about 0.90 for
+a horizontal vessel and 0.95 for a vertical one). A vessel that keeps receiving more liquid than it
+discharges becomes liquid-full; liquid overfill and carry-over into the gas outlet are not modelled,
+and the separator then rejects the step with a message saying the vessel is liquid-full. Make sure the
+level control can make the liquid outflow exceed the inflow: setpoint below the maximum level, an inlet
+valve minimum opening that passes less than the liquid outlet capacity.
+
 ---
 
 ## Separation Efficiency
@@ -796,6 +906,25 @@ separator.setLiquidCarryOverFraction(0.0001); // 0.01% gas in liquid
 ```
 
 For detailed phase-to-phase entrainment specification, see the [Entrainment](#entrainment) section above.
+
+---
+
+## Free mercury accumulation
+
+A separator can hold back mercury that its gas, oil and aqueous phases cannot dissolve:
+
+```java
+separator.setFreeMercuryAccumulation(true);
+process.run();
+double gramPerDay = separator.getFreeMercuryAccumulationRate("g/day");
+String state = separator.getFreeMercuryState(); // "none", "liquid" or "solid"
+```
+
+The outlets then leave saturated with mercury, and the held back amount is included in
+`getMassBalance(unit)`. The option is off by default; a separator then does no mercury calculation and its
+results and speed are unchanged. It applies to steady-state calculations of `Separator`, `GasScrubber`,
+`TwoPhaseSeparator`, `ThreePhaseSeparator` and `ThreePhaseGasScrubber`. See
+[Mercury distribution studies](../mercury-distribution-study.md).
 
 ---
 
@@ -1342,6 +1471,99 @@ per train — matching the format of the standard Sulzer
 
 ---
 
+## Constraint provenance: where a limit comes from
+
+Every `CapacityConstraint` carries two independent descriptors, and it is worth
+keeping them apart when reading a capacity report:
+
+| Descriptor | Question it answers | Type |
+|------------|---------------------|------|
+| `ConstraintSeverity` | How is a violation handled? | `CRITICAL`, `HARD`, `SOFT`, `ADVISORY` |
+| `ConstraintSource`   | What authority backs the number? | `CONFORMITY_STANDARD`, `VENDOR_DATASHEET`, `PROCESS_EMPIRICAL`, `USER_RULE`, `AUTO_SIZE`, `DEFAULT` |
+
+A vendor surge limit and a company K-factor may both be `HARD`, but they are not
+renegotiable on the same terms — the first is a machine limit, the second is a
+policy choice. Recording the source lets a report say *why* a limit binds.
+
+```java
+constraint.setSource(CapacityConstraint.ConstraintSource.CONFORMITY_STANDARD, "API 12J");
+constraint.getSource();           // CONFORMITY_STANDARD
+constraint.getSourceReference();  // "API 12J"
+```
+
+`ConstraintSource` is distinct from the free-text `dataSource`. The data source
+records *which part of the model* supplied the number (`"equipment"`,
+`"mechanicalDesign"`, `"installed_capacity_table"`); the constraint source
+classifies the underlying authority. Both are emitted per constraint in the
+`getUtilizationSnapshot()` JSON.
+
+### Hard, binding constraints from empirical observations
+
+The constraint that actually limits production on many field cases is not a
+standard's K-factor; it is an empirical relationship between an operating
+variable (gas rate, suction pressure) and a downstream consequence — typically
+liquid carry-over from the last scrubber accumulating in the suction drum of a
+compressor or expander downstream.
+
+`EmpiricalCarryOverConstraint` packages this pattern as a piecewise-linear
+correlation calibrated against measured points, for example suction-drum level
+instrumentation:
+
+```java
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.EmpiricalCarryOverConstraint;
+
+double[] gasRate   = {2.0, 3.0, 4.5, 5.5};   // Am3/s at the scrubber gas outlet
+double[] carryOver = {0.0, 0.5, 3.0, 12.0};  // kg/h observed downstream
+double maxCarry = 5.0;                       // kg/h, the binding limit
+
+EmpiricalCarryOverConstraint co = EmpiricalCarryOverConstraint.fromObservations(
+    "carryOver", "kg/h",
+    () -> scrubber.getThermoSystem().getPhase(0).getFlowRate("m3/sec"),
+    gasRate, carryOver, maxCarry);
+co.setSourceReference("Suction drum level instrument, May-Aug 2025");
+scrubber.addCapacityConstraint(co);
+```
+
+The `xPoints` and `yPoints` arrays carry no implied units. The driver supplier
+must return the operating variable in the unit of `xPoints`, and `yPoints` and
+`maxAllowable` must share the unit passed as the constraint unit.
+
+Behaviour:
+
+- Created as a `HARD` constraint with severity `HARD` and source
+  `PROCESS_EMPIRICAL`, so exceeding the allowable carry-over shows up both in
+  `isViolated()` and in `isHardLimitExceeded()`, and therefore in the plant-wide
+  `anyHardLimitExceeded` feasibility gate.
+- Below the lowest calibration point the value clamps to the first observation.
+  Above the highest, the slope of the last segment is extrapolated, which keeps
+  the correlation conservative outside the calibrated envelope.
+- It is an ordinary `CapacityConstraint`, so it participates in bottleneck
+  detection, the utilization snapshot, and the production optimiser.
+
+Because it extrapolates, a value far above the calibration range is an
+engineering judgement, not a measurement. Keep the calibration envelope in
+`getSourceReference()` so a reader can see where the data ends.
+
+### Choosing what is binding
+
+A reasonable default for a gas-export train:
+
+| Layer | Source | Severity | Effect on optimiser |
+|-------|--------|----------|---------------------|
+| Standard K-factor  | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block |
+| Standard inlet ρv² | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block |
+| Drainage head %    | `CONFORMITY_STANDARD` | `SOFT`     | Reported, does not block |
+| Carry-over kg/h    | `PROCESS_EMPIRICAL`   | `HARD`     | **Binds capacity** |
+| Compressor surge   | `VENDOR_DATASHEET`    | `CRITICAL` | Stops optimisation immediately |
+
+This separation lets you produce a single capacity report that shows both *what
+limits production today* — the empirical and vendor constraints — and *what
+would limit production if conformity were enforced* — the standards-driven
+constraints.
+
+---
+
 ## Related Documentation
 
 - [Process Package](../) - Package overview
@@ -1349,3 +1571,33 @@ per train — matching the format of the standard Sulzer
 - [Enhanced Entrainment Modeling](separator-entrainment-modeling.md) - Physics-based performance calculation
 - [Design Framework](../DESIGN_FRAMEWORK) - Auto-sizing and design specifications
 - [Bottleneck Analysis](../../wiki/bottleneck_analysis) - Capacity utilization
+
+## Raw constraint values and design basis
+
+The `CapacityConstraint` objects returned by `getCapacityConstraints()` expose the
+operating value and the limit separately from utilization. For `gasLoadFactor`
+and `kValue`, both quantities are in m/s; `inletMomentum` is in Pa. Retention
+requirements are in minutes and use minimum/current utilization, so shorter
+retention increases utilization.
+
+| API | Meaning |
+| --- | --- |
+| `getRawValue()` | Current operating value, alias of `getCurrentValue()` |
+| `getDesignLimit()` | Value used to normalize utilization, including minimum requirements |
+| `getUnit()` | Unit shared by the operating value and limit |
+| `getBasis()` | `default`, `custom`, `datasheet`, `autoSize`, `standard`, or `empirical` |
+| `getSourceReference()` | Explicit source document or other reference, when supplied |
+
+Built-in separator limits carry a `default` basis, not vessel datasheet evidence.
+Calling a separator limit setter marks the affected constraint `custom`.
+An actual datasheet limit must be assigned together with
+`setSource(ConstraintSource.VENDOR_DATASHEET, reference)`; the enum is nested in
+`CapacityConstraint`. Assigning a number alone never implies a datasheet basis.
+The gas-load constraint derived by `autoSize()` carries `autoSize` provenance.
+Serialization retains assigned limits, enabled flags and source metadata while
+rebinding built-in value suppliers to the restored vessel.
+
+The existing constraint enablement defaults are unchanged. The raw values remain
+available for ranking while disabled; a capacity check requires appropriate geometry,
+phase-property validity and a qualified design basis. `SeparatorConstraintBasisTest`
+verifies the default values, custom minimum direction and datasheet serialization.

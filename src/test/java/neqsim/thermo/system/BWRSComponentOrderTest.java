@@ -122,7 +122,7 @@ public class BWRSComponentOrderTest {
     assertEquals(bwrs1.getPhase(0).getZ(), bwrs2.getPhase(0).getZ(), 1e-10,
         "Z should be order-independent for 3-component mixture");
 
-    for (String comp : new String[] { "methane", "ethane", "nitrogen" }) {
+    for (String comp : new String[] {"methane", "ethane", "nitrogen"}) {
       double fug1 = bwrs1.getPhase(0).getComponent(comp).getFugacityCoefficient();
       double fug2 = bwrs2.getPhase(0).getComponent(comp).getFugacityCoefficient();
       assertFalse(Double.isNaN(fug1), comp + " fugacity should not be NaN (order 1)");

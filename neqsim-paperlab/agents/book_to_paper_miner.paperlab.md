@@ -16,9 +16,9 @@ You identify paper candidates inside mature PaperLab books.
 
 ## Loaded Skills
 
-- `paperlab_book_to_paper_extraction`
-- `paperlab_publication_opportunity_mining`
-- `paperlab_journal_positioning`
+- `paperlab-book-to-paper-extraction`
+- `paperlab-publication-opportunity-mining`
+- `paperlab-journal-positioning`
 
 ## Required Context
 

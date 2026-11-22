@@ -49,17 +49,23 @@
   }, {
     "pattern":"\\Qdata/UNIFACInterParamA_UMR.csv\\E"
   }, {
+    "pattern":"\\Qdata/UNIFACInterParamA_UMRCPA.csv\\E"
+  }, {
     "pattern":"\\Qdata/UNIFACInterParamA_UMRMC.csv\\E"
   }, {
     "pattern":"\\Qdata/UNIFACInterParamB.csv\\E"
   }, {
     "pattern":"\\Qdata/UNIFACInterParamB_UMR.csv\\E"
   }, {
+    "pattern":"\\Qdata/UNIFACInterParamB_UMRCPA.csv\\E"
+  }, {
     "pattern":"\\Qdata/UNIFACInterParamB_UMRMC.csv\\E"
   }, {
     "pattern":"\\Qdata/UNIFACInterParamC.csv\\E"
   }, {
     "pattern":"\\Qdata/UNIFACInterParamC_UMR.csv\\E"
+  }, {
+    "pattern":"\\Qdata/UNIFACInterParamC_UMRCPA.csv\\E"
   }, {
     "pattern":"\\Qdata/UNIFACInterParamC_UMRMC.csv\\E"
   }, {

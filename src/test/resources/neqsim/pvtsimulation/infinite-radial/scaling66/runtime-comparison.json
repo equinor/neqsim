@@ -1,0 +1,41 @@
+{
+  "claim": "Ordinary-workload ABBA cost and original CT agreement; not a general speedup",
+  "java": "1.8.0_512-b09",
+  "originalHistories": 42,
+  "maximumOriginalHistoryDifferenceOverMaxOneVolume": 8.071290872327939e-16,
+  "metrics": {
+    "coldFirstQueryNs": {
+      "before": [
+        4562189,
+        5857570
+      ],
+      "after": [
+        4437143,
+        6859447
+      ],
+      "maximumCandidateToMinimumParent": 1.5035429264329032
+    },
+    "separatePressureDerivative20000QueriesNs": {
+      "before": [
+        326766526,
+        327698985
+      ],
+      "after": [
+        295790520,
+        326207638
+      ],
+      "maximumCandidateToMinimumParent": 0.9982896412100669
+    },
+    "carterTracy1000IntervalsNs": {
+      "before": [
+        8447772,
+        8219585
+      ],
+      "after": [
+        7626813,
+        8643525
+      ],
+      "maximumCandidateToMinimumParent": 1.0515768131846073
+    }
+  }
+}

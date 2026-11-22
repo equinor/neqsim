@@ -7,12 +7,32 @@ from urllib.parse import unquote, urlsplit
 
 
 DOCS = Path(__file__).resolve().parent
+HOST_TIE_IN_PAGE = DOCS / "fielddevelopment/HOST_TIE_IN_CAPACITY.md"
+HOST_TIE_IN_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/process/fielddevelopment/FieldDevelopmentOverviewDocumentationTest.java"
+)
+FIELD_LIFECYCLE_PAGE = DOCS / "fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md"
+FIELD_LIFECYCLE_CASE = DOCS.parent / (
+    "src/main/java/neqsim/process/fielddevelopment/lifecycle/NorwegianOilFieldCase.java"
+)
+FIELD_LIFECYCLE_TEST = DOCS.parent / (
+    "src/test/java/neqsim/process/fielddevelopment/lifecycle/NorwegianOilFieldLifecycleTest.java"
+)
+PRESSURE_MONITORING_PAGE = DOCS / "safety/PRESSURE_MONITORING_ESD.md"
+ESD_BLOWDOWN_EXAMPLE = DOCS.parent / (
+    "src/test/java/neqsim/process/util/example/ESDBlowdownSystemExample.java"
+)
+ESD_BLOWDOWN_TEST = DOCS.parent / (
+    "src/test/java/neqsim/process/equipment/valve/BlowdownValveESDSystemTest.java"
+)
 SCOPE_PAGES = (
     DOCS / "examples/FieldDevelopmentWorkflow.md",
     DOCS / "fielddevelopment/API_GUIDE.md",
     DOCS / "fielddevelopment/DECISION_ENGINE_WORKFLOWS.md",
     DOCS / "fielddevelopment/DIGITAL_FIELD_TWIN.md",
     DOCS / "fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md",
+    DOCS / "fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md",
     DOCS / "fielddevelopment/HOST_TIE_IN_CAPACITY.md",
     DOCS / "fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md",
     DOCS / "fielddevelopment/INTEGRATED_PRODUCTION_MODELLING.md",
@@ -50,6 +70,7 @@ SCOPE_PAGES = (
     DOCS / "risk/sis-integration.md",
     DOCS / "risk/stid-tagging.md",
     DOCS / "risk/topology.md",
+    PRESSURE_MONITORING_PAGE,
 )
 
 
@@ -139,7 +160,7 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-4 documentation surface."""
 
     def test_frozen_scope_exists(self):
-        self.assertEqual(42, len(SCOPE_PAGES))
+        self.assertEqual(44, len(SCOPE_PAGES))
         for page in SCOPE_PAGES:
             with self.subTest(page=page):
                 self.assertTrue(page.is_file())
@@ -199,6 +220,105 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
                         any(candidate.exists() for candidate in candidates),
                         "Unresolved repository-relative target",
                     )
+
+    def test_host_tie_in_nameplate_quickstart_is_executable(self):
+        page = HOST_TIE_IN_PAGE.read_text(encoding="utf-8")
+        section = page.split("## Nameplate Ullage Example", 1)[1].split(
+            "## Process-Equipment Capacity Layer", 1
+        )[0]
+
+        self.assertIn("public final class HostTieInCapacityQuickStart", section)
+        self.assertIn(
+            "LogManager.getLogger(HostTieInCapacityQuickStart.class)", section
+        )
+        self.assertIn('logger.info("{}", result.toMarkdownTable());', section)
+        self.assertNotIn("System.out", section)
+
+        regression = HOST_TIE_IN_TEST.read_text(encoding="utf-8")
+        for source_contract in (
+            "hostCapacityQuickStartReportsTheDocumentedHoldback",
+            'gasCapacity(5.0)',
+            'addPeriod(2028, 4.0, 0.0, 0.0, 0.0)',
+            'addPeriod(2028, 3.0, 0.0, 0.0, 0.0)',
+            "assertEquals(1.0, period.getAcceptedSatellite().getGasRateMSm3d()",
+            "assertEquals(2.0, period.getHeldBackSatellite().getGasRateMSm3d()",
+        ):
+            with self.subTest(source_contract=source_contract):
+                self.assertIn(source_contract, regression)
+
+    def test_field_lifecycle_reference_case_has_executable_source_evidence(self):
+        page = FIELD_LIFECYCLE_PAGE.read_text(encoding="utf-8")
+        case = FIELD_LIFECYCLE_CASE.read_text(encoding="utf-8")
+        regression = FIELD_LIFECYCLE_TEST.read_text(encoding="utf-8")
+
+        for source_link in (
+            "../../src/main/java/neqsim/process/fielddevelopment/lifecycle/"
+            "NorwegianOilFieldCase.java",
+            "../../src/test/java/neqsim/process/fielddevelopment/lifecycle/"
+            "NorwegianOilFieldLifecycleTest.java",
+        ):
+            with self.subTest(source_link=source_link):
+                self.assertIn(source_link, page)
+
+        for source_contract in (
+            "public static FieldLifecycleConcept createGasInjectionCase()",
+            "public static FieldLifecycleConcept createNaturalDepletionCase()",
+            "public static List<FieldLifecycleConcept> createDevelopmentPortfolio()",
+        ):
+            with self.subTest(source_contract=source_contract):
+                self.assertIn(source_contract, case)
+
+        for regression_contract in (
+            "void gasInjectionCaseRunsFromReservoirToEconomics()",
+            "assertTrue(result.getCumulativeOilSm3() > 0.0)",
+            "assertTrue(result.getCumulativeGasInjectedSm3() > 0.0)",
+            "assertTrue(Double.isFinite(result.getNpvMusd()))",
+        ):
+            with self.subTest(regression_contract=regression_contract):
+                self.assertIn(regression_contract, regression)
+
+    def test_pressure_monitoring_esd_has_executable_source_evidence(self):
+        page = PRESSURE_MONITORING_PAGE.read_text(encoding="utf-8")
+        example = ESD_BLOWDOWN_EXAMPLE.read_text(encoding="utf-8")
+        regression = ESD_BLOWDOWN_TEST.read_text(encoding="utf-8")
+
+        self.assertNotIn("System.out", page)
+        self.assertNotIn("System.err", page)
+        for source_link in (
+            "../../src/test/java/neqsim/process/util/example/"
+            "ESDBlowdownSystemExample.java",
+            "../../src/test/java/neqsim/process/equipment/valve/"
+            "BlowdownValveESDSystemTest.java",
+        ):
+            with self.subTest(source_link=source_link):
+                self.assertIn(source_link, page)
+
+        for source_contract in (
+            "esdButton.push();",
+            "gasSplitter.setSplitFactors(new double[] {0.0, 1.0});",
+            "separator.setCalculateSteadyState(false);",
+            "separator.runTransient(timeStep, java.util.UUID.randomUUID());",
+            "flare.updateCumulative(timeStep);",
+            'double currentPressure = separator.getGasOutStream().getPressure("bara");',
+            "pressureAtEnd = currentPressure;",
+        ):
+            with self.subTest(source_contract=source_contract):
+                self.assertIn(source_contract, example)
+
+        for regression_contract in (
+            "void testPressureReliefViaBlowdown()",
+            'assertTrue(maxPressure > initialPressure,',
+            'assertTrue(finalPressure < pressureAtEsdActivation,',
+            'assertTrue(hpBdValve.isActivated(),',
+            'assertTrue(hpFlare.getCumulativeGasBurned("kg") > 0,',
+        ):
+            with self.subTest(regression_contract=regression_contract):
+                self.assertIn(regression_contract, regression)
+
+        self.assertIn(
+            "./mvnw test -Dtest=BlowdownValveESDSystemTest#testPressureReliefViaBlowdown",
+            page,
+        )
 
 
 if __name__ == "__main__":

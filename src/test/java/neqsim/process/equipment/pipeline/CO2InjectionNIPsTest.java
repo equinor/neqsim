@@ -12,6 +12,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.ImpurityMonitor;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -458,6 +459,87 @@ public class CO2InjectionNIPsTest {
     // At 90 bar, 25C, 97% CO2 should be single-phase
     boolean safe = analyzer.isSafeToOperate();
     assertTrue(safe, "High-pressure injection should be safe");
+  }
+
+  private CO2InjectionWellAnalyzer designAlarmAnalyzer() {
+    SystemInterface fluid = new SystemPrEos(298.15, 40.0);
+    fluid.addComponent("CO2", 0.99);
+    fluid.addComponent("nitrogen", 0.01);
+    fluid.setMixingRule("classic");
+    CO2InjectionWellAnalyzer analyzer = new CO2InjectionWellAnalyzer("design-alarm");
+    analyzer.setFluid(fluid);
+    analyzer.setWellGeometry(1.0, 0.1571, 4.5e-5);
+    analyzer.setOperatingConditions(40.0, 25.0, 1000.0);
+    analyzer.setFormationTemperature(25.0, 25.0);
+    return analyzer;
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testAnalyzerDesignGasAlarmExceedsThreshold() {
+    CO2InjectionWellAnalyzer analyzer = designAlarmAnalyzer();
+    analyzer.addTrackedComponent("nitrogen", 0.005);
+    analyzer.runFullAnalysis();
+
+    Map<String, Object> designCase = (Map<String, Object>) analyzer.getResults().get("design_case");
+    Map<String, Object> alarms = (Map<String, Object>) designCase.get("alarm_results");
+    Map<String, Object> nitrogen = (Map<String, Object>) alarms.get("nitrogen");
+    assertEquals(1, designCase.get("n_phases"));
+    assertTrue((double) nitrogen.get("gas_mol_frac") > 0.005);
+    assertEquals("exceeded", nitrogen.get("status"));
+    assertEquals(true, designCase.get("any_alarm_exceeded"));
+    assertFalse(analyzer.isSafeToOperate());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testAnalyzerDesignGasAlarmCompliantAndConfigurationInvalidation() {
+    CO2InjectionWellAnalyzer analyzer = designAlarmAnalyzer();
+    analyzer.addTrackedComponent("nitrogen", 0.02);
+    analyzer.runFullAnalysis();
+
+    Map<String, Object> designCase = (Map<String, Object>) analyzer.getResults().get("design_case");
+    Map<String, Object> alarms = (Map<String, Object>) designCase.get("alarm_results");
+    Map<String, Object> nitrogen = (Map<String, Object>) alarms.get("nitrogen");
+    assertEquals(1, designCase.get("n_phases"));
+    assertEquals("within_limit", nitrogen.get("status"));
+    assertTrue(analyzer.isSafeToOperate());
+    analyzer.addTrackedComponent("nitrogen", 0.005);
+    assertFalse(analyzer.isSafeToOperate(), "A new threshold needs a new analysis");
+    analyzer.runFullAnalysis();
+    assertFalse(analyzer.isSafeToOperate());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testAnalyzerMissingRegisteredComponentFailsClosed() {
+    CO2InjectionWellAnalyzer analyzer = designAlarmAnalyzer();
+    analyzer.addTrackedComponent("hydrogen", 0.01);
+    analyzer.runFullAnalysis();
+
+    Map<String, Object> designCase = (Map<String, Object>) analyzer.getResults().get("design_case");
+    Map<String, Object> alarms = (Map<String, Object>) designCase.get("alarm_results");
+    Map<String, Object> hydrogen = (Map<String, Object>) alarms.get("hydrogen");
+    assertEquals("component_missing", hydrogen.get("status"));
+    assertEquals(false, designCase.get("alarms_evaluable"));
+    assertFalse(analyzer.isSafeToOperate());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testAnalyzerTwoPhaseDesignIsUnsafeEvenWithCompliantAlarm() {
+    CO2InjectionWellAnalyzer analyzer = new CO2InjectionWellAnalyzer("two-phase-design");
+    SystemInterface fluid = co2Fluid.clone();
+    analyzer.setFluid(fluid);
+    analyzer.setWellGeometry(1.0, 0.1571, 4.5e-5);
+    analyzer.setOperatingConditions(50.0, 4.0, 1000.0);
+    analyzer.setFormationTemperature(4.0, 4.0);
+    analyzer.addTrackedComponent("nitrogen", 1.0);
+    analyzer.runFullAnalysis();
+
+    Map<String, Object> designCase = (Map<String, Object>) analyzer.getResults().get("design_case");
+    assertTrue((int) designCase.get("n_phases") > 1, "The regression fluid must have two phases at the design outlet");
+    assertFalse(analyzer.isSafeToOperate());
   }
 
   @Test

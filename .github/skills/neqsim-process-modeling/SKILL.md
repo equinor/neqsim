@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-modeling
-description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation."
-last_verified: "2026-08-29"
+description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation - for example a multi-stage gas compression train with intercooling, an HP/LP separation train, or a gas treatment unit."
+last_verified: "2026-11-21"
 ---
 
 # NeqSim Process Modeling Skill
@@ -23,16 +23,40 @@ specialists such as mechanical design, safety, plant data, and reporting.
 
 ## Core Workflow
 
-1. **Define the fluid** using the EOS and component sequence from
-   `neqsim-api-patterns`.
-2. **Create feed streams** with explicit temperature, pressure, and flow units.
-3. **Add equipment in topological order** to a `ProcessSystem`.
-4. **Connect by outlet stream objects**, for example separator gas outlet to
-   compressor inlet or valve outlet to downstream separator.
-5. **Run once after assembly** unless recycle initialization requires a staged solve.
-6. **Validate results** using conservation checks, phase sanity checks, equipment
-   limits, and applicable standards.
-7. **Report outputs with units** and include assumptions for missing design data.
+1. **Agree the model basis**: engineering question, battery limits, feed/assay,
+   units, product specifications, data provenance and required fidelity. Follow
+   [model-build-contract](references/model-build-contract.md) for every new or
+   revised flowsheet; use its handoff checklist when another agent consumes it.
+2. **Select the task pattern** from
+   [oil-and-gas-task-patterns](references/oil-and-gas-task-patterns.md). Load only
+   the relevant specialist skills. Discover additional capabilities rather than
+   treating an equipment class name as proof of a validated application. For
+   several platforms exchanging streams (hub plus satellites, shared export chain)
+   load [multi-platform-complex](references/multi-platform-complex.md).
+3. **Define fluids and feeds** with the EOS/component sequence in
+   `neqsim-api-patterns`. Verify the EOS and phase options for the composition,
+   pressure/temperature range and property being calculated.
+4. **Assemble a reusable builder** with named streams/equipment, live outlet
+   connections, explicit terminal products and one `ProcessSystem` per area.
+   Return the process/plant and stream/equipment registries, not just numbers.
+5. **Solve progressively**: establish the feed and once-through base case,
+   close physical recycles, then add adjusters and operating constraints. Use
+   `makeRecycles()` or `setAutoRecycles(true)` for supported mixer/manifold loops.
+   For coupled models, check the boolean from `runUntilConverged(n)` and retain
+   residual/iteration evidence. A returned `run()` call is not convergence proof.
+6. **Validate each accepted case**: external total/component balances, energy
+   closure where heat/work matters, phase identity, feasible equipment limits,
+   independent benchmark and repeat/nearby-point behavior. Missing evidence
+   stays incomplete; never insert zero as a closure result.
+7. **Deliver reusable outputs** with explicit units, inputs, version, assumptions,
+   data gaps, failed cases and validation evidence. Store notebooks/scripts in
+   the task folder; publish sanitized examples only when requested.
+
+Do not silently fill composition, heavy-end characterization, maps, geometry,
+Cv, design limits or protection settings from generic defaults. A synthetic
+screening case may use labeled assumptions; an asset-specific verdict must
+identify missing decision-critical data. A thermodynamic operating-point model
+can answer duties without establishing installed capacity or safe operation.
 
 ## Modeling Choices
 
@@ -159,6 +183,44 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 `runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
 `runDataflow(UUID)` and `runTransient(double, UUID)`.
 
+> **Parallel runs with GERG-2008 / EOS-CG.** `runParallel` and other multi-threaded
+> drivers are safe with GERG-2008 (incl. H2/NH3 variants) and EOS-CG: the wrappers
+> hold one kernel per thread, and `ReferenceEosThreadConfinementTest` requires
+> concurrent results to match serial ones exactly. Each branch must still own its
+> fluid — `clone()` it; never share one fluid, phase or wrapper across threads.
+> Details: `docs/thermo/gerg2008_eoscg.md` ("Thread safety").
+
+## Closing Feedback Loops Automatically (`makeRecycles`)
+
+Do **not** hand-write a tear stream (`Stream` clone + `Recycle`) per feedback
+stream any more. A loop wired straight back into an upstream mixer, with no
+`Recycle` in it, is an *implicit tear*: it converges only through the surrounding
+sweep, so it has no tolerance, no acceleration and no convergence report. Across
+`ProcessModel` areas it is worse — a stream produced by an area that runs after its
+consumer is closed only by the outer Gauss-Seidel pass, which has no relaxation
+setting, so the plant residual sits on a floor no tolerance can reach.
+
+```python
+created = process.makeRecycles()        # ProcessSystem — SCCs of one flowsheet
+created = plant.makeRecycles()          # ProcessModel — cross-area streams, then each area
+plant.setAutoRecycles(True)             # or let run()/runUntilConverged() do it
+```
+
+- Tear point = inlet with the smallest **recycle ratio** (tear flow / total inlet
+  flow of the consuming unit), which sets the contraction rate of the tear. One edge
+  torn per round, structure recomputed after — nested cycles get the minimum number
+  of tears.
+- Generated recycles start on direct substitution with `setAdaptiveAcceleration(true)`
+  (never pin `setAccelerationMethod(...)` — that sets `accelerationMethodExplicit` and
+  disables the self-upgrade) plus an absolute flow tolerance at 1e-6 of the area's
+  largest flow, so a near-zero leg converges on absolute change.
+- Self-seeding (runs once when streams have no fluid) and idempotent — call order is
+  not your problem, repeat calls insert nothing.
+- Only `Mixer` and `Manifold` inlets are tearable (`replaceStream(int, StreamInterface)`).
+  Loops closing on other equipment are logged and left alone; route them through a mixer.
+- `setAutoRecycles` defaults to **false**: inserting a tear changes how an existing
+  flowsheet iterates, so it must be opted into.
+
 ## Required Checks
 
 - Temperatures and pressures use explicit units in setters.
@@ -187,11 +249,12 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
   Verified: with the correct orientation, `getGasLoadFactor()` matches a hand
   Souders-Brown `v·sqrt(ρg/(ρl−ρg))`. `setInternalDiameter()` itself propagates
   correctly through `run()` — the trap is orientation, not diameter.
-- Every suction/export scrubber in a recompression/export-compression train has its
-  liquid knock-out (`scrubber.getLiquidOutStream()`) closed back to the separator
-  operating at the matching pressure — never leave it unconnected (it is silently
-  dropped, under-counting oil/condensate recovery). See `neqsim-platform-modeling`
-  Section 4 for the seed + TP-setter + `Recycle` pattern.
+- Every suction/interstage/export scrubber liquid outlet has a physical route to
+  an appropriate pressure section or a declared external drain/product. Include
+  required letdown/pumping and heat/work; a TP setter is not a physical pressure
+  lift. Preserve all returns in recovery and boundary balances. Consult
+  `neqsim-platform-modeling` for initialization patterns, with the routing and
+  validation requirements in the model-build contract.
 - **Overall mass balance MUST be verified before accepting any solution.** Sum the mass
   flow (`kg/hr`) of all feed streams and all product/export streams; the closure error
   must be `< 0.1 %` (`abs(sum_in - sum_out) / sum_in`). A larger imbalance means a stream
@@ -210,6 +273,9 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 - Use `Dexpi20XmlWriter` for native Plant/P&ID exchange and `Dexpi20ProcessModelWriter` for native Process/PFD/BFD
   exchange. A Proteus document with a changed header is not native DEXPI 2.0. Preserve the conformance report and still
   require a named-CAE round-trip before project qualification.
+- To rebuild a runnable model from a Proteus P&ID (including NeqSim's own `DexpiXmlWriter` output), use
+  `DexpiSimulationBuilder` with an explicit fluid template and feed, then check `getDiagnostics()` for missing outlet
+  specifications before `run()`. Native DEXPI 2.x files are rejected; DEXPI does not carry composition.
 - Keep an explicitly registered terminal product as `new Stream(productName, upstreamOutlet)` when the product must
   remain a named topology node. NeqSim reports the wrapped outlet as that stream's inlet and the DEXPI Process exporter
   maps the node to a sink. Zero-flow and isolated empty streams must not be deleted merely to avoid invalid empty port
@@ -223,6 +289,50 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 
+## Process Safety Is Part of a Capacity or Tie-in Study
+
+A capacity, debottlenecking or tie-in study that reports only throughput is
+incomplete, and in an oil-and-gas setting it will not pass review. **More flow
+through a plant changes its relief demand, its blowdown inventory and its
+overpressure exposure.** Run these checks in the same study, not as a follow-on:
+
+1. **Overpressure protection per affected pressure section.** Record design
+   pressure/MAWP, PSV set pressure, operating pressure, protected equipment and
+   source/reference conditions. Investigate discrepancies using the applicable
+   project/code basis; do not excuse them with an invented rounding allowance or
+   confuse set pressure with allowable accumulation.
+2. **Relief adequacy against credible governing cases.** Use
+   `neqsim-relief-flare-network` with documented scenarios, inflow and device data.
+   Compare required capacity with installed capacity including applicable backpressure.
+   A small relief load does not by itself establish adequate blowby protection or
+   credit a shutdown function. Missing protection evidence remains a gap.
+3. **Inflow bounding.** The maximum flow into each pressure step is set by the
+   upstream chokes and control valves. Without a choke `Cv` the blowby and
+   overpressure cases cannot be closed from first principles — record that as a
+   gap rather than assuming a number.
+4. **Blowdown.** Restriction-orifice sizes give the depressurisation time
+   (`neqsim-depressurization-mdmt`); without them, state that time-to-blowdown is
+   unknown.
+5. **The safety meaning of an over-capacity vessel.** A separator or scrubber
+   above its Souders-Brown gas-load limit carries liquid over into downstream
+   equipment. That is a **safety** finding, not only a production one: liquid to
+   a compressor, liquid to a dehydration bed, liquid to the flare KO drum. If a
+   capacity calculation shows an exceedance, follow the carry-over path and say
+   what it reaches.
+
+**Ordering rule.** Establish the capacity answer first, then the safety
+consequence of it — the safety question depends on which unit is loaded and by
+how much. Reporting capacity without step 5 is the most common way a
+throughput-increase study is quietly wrong.
+
+**Data-retrieval expectations** (verified on an NCS platform): design pressure
+and relief-device orifice/rated capacity are typically **not** tag attributes in
+an engineering register — they live in the mechanical and relief data sheets and
+often need OCR. Budget for that. Vessel *geometry* on a tag record may be an
+L×W×H envelope rather than an internal diameter; **where a data sheet exists it
+governs the tag field**, and the difference can move a utilisation result by tens
+of percent.
+
 ## Related Skills
 
 - `neqsim-api-patterns` — fluid setup, equipment APIs, and result extraction.
@@ -230,3 +340,49 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 - `neqsim-troubleshooting` — flash and process convergence recovery.
 - `neqsim-process-extraction` — JSON builder and route extraction from documents.
 - `neqsim-notebook-patterns` — executable notebook structure and devtools setup.
+- `neqsim-process-safety` — barrier, HAZOP, LOPA and SIL framing for the safety
+  step above.
+- `neqsim-relief-flare-network` — PSV sizing per API 520/521 and flare loads.
+- `neqsim-depressurization-mdmt` — blowdown time and low-temperature screening.
+- `neqsim-future-operation-study` — per-year strategy, modification register and
+  design-basis deviation register on top of a finished multi-year model.
+
+## Diagnose unresolved recycles before accepting a plant result
+
+After `ProcessSystem.runUntilConverged(n)`, inspect `getRunStatus().isConverged()`
+and `getOpenRecycles()`. `RunStatus.isSuccess()` means execution did not fail;
+it does not prove numerical convergence. The status also names open loops,
+reports their count, the full-process pass count and a termination reason.
+Never accept repeated mass-balance values as a convergence criterion while loops
+remain open. Separator constraints expose `getRawValue()`, `getDesignLimit()`,
+`getUnit()` and `getBasis()`; built-in limits are defaults and explicit setters
+are custom unless actual datasheet provenance is declared.
+
+## Ejector (gas-jet compressor) pitfalls
+
+`neqsim.process.equipment.ejector.Ejector` (motive + suction streams, discharge pressure, four efficiencies) is a design-point model by default (both flows are inputs, `setThroatArea` is a no-op, `generatePerformanceCurve` has a constant entrainment ratio). For an
+installed ejector at a new year / motive pressure / gas MW use the **fixed-geometry mode**: `setFixedGeometry(throatM2, mixingM2)` (or `setFixedGeometryAreaRatio`),
+`autoSizeFixedGeometry(designSuctionFlow, 0.10)` to size it once, then `run()`; flows are results (`getOperatingPoint()`, `getOperatingWindowReport()`, `isInBreakdown()`,
+`getBreakdownMargin()`, `generateFixedGeometryCurve`). Pitfalls: stream flow rates are ignored in this mode (use `setLimitEntrainmentToSuctionSupply(true)` to cap by supply),
+only the vapour phase is used, the regimes are CRITICAL / SUBCRITICAL (entrainment falling) / BREAKDOWN (ER = 0), and a subcritical result is not a capacity guarantee.
+See `docs/process/equipment/ejectors.md`. Practical rules learned on an ejector off-design study:
+
+- **Outlet stream:** `run()` used to replace `mixedStream` (jneqsim 3.18: every run); wire downstream equipment to a `Mixer` outlet (adiabatic energy balance = the
+  ejector outlet state, kinetic terms cancel) or re-fetch `getMixedStream()` after each run.
+- **Suction must be vapour:** a two-phase suction gas (4th stage gas + cold flare gas) makes any 1-D isentropic nozzle model return nonsense (entrainment 8x too high); knock the
+  liquid out first and use the gas phase (`fluid.phaseToSystem("gas")`).
+- **Capacity vs motive pressure:** a constant-pressure-mixing model gives a HIGHER capacity at lower motive pressure (primary jet area shrinks); never throttle the motive
+  pressure to turn down - model turndown as recycle at full motive pressure (motive flow is fixed by throat area x choked flux).
+- **Critical back pressure margin** (`P_cb / P_d - 1`) is the robust off-design indicator; a lighter suction gas or a falling motive pressure moves it to breakdown long before
+  the entrainment ratio looks wrong. Size with ~10 % margin and re-check every year / case with the FIXED geometry.
+- Compressors downstream see the motive gas as extra flow and a much lower MW (25-30 vs 44-46 g/mol design): check head / speed / surge / stonewall on the vendor charts with the actual MW.
+
+For a fixed minimum-flow compressor return at suction state, see
+`neqsim-compressor-antisurge-recycle` and `MinimumFlowSpill` in the compressor guide.
+
+## Reference cooling water and seawater
+
+Load [neqsim-cooling-water](../neqsim-cooling-water/SKILL.md) for water-cooled
+process equipment, seawater utilities, reference IAPWS properties, coolant flow
+and pumping. Keep each exchanger side on its own fluid model and distinguish
+fixed-salinity bulk utilities from electrolyte chemistry and salt mixing.

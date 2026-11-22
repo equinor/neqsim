@@ -1,5 +1,7 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -21,8 +23,8 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
 
   // todo: is this parameter required?
   int phaseTypeNumb = 1;
-  double[] GVcoef = { -2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3, -9.627993e1, 4.274152,
-      -8.141531e-2 };
+  double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3, -9.627993e1, 4.274152,
+      -8.141531e-2};
   double visRefA = 1.696985927;
 
   double visRefB = -0.133372346;
@@ -35,15 +37,15 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
 
   double visRefG = 0.0;
 
-  double[] viscRefJ = { -1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2, 4.2903609488e-2,
-      1.4529023444e2, 6.1276818706e3 };
-  double[] viscRefK = { -9.74602, 18.0834, -4126.66, 44.6055, 0.976544, 81.8134, 15649.9 };
+  double[] viscRefJ = {-1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2, 4.2903609488e-2, 1.4529023444e2,
+      6.1276818706e3};
+  double[] viscRefK = {-9.74602, 18.0834, -4126.66, 44.6055, 0.976544, 81.8134, 15649.9};
 
   /** Number of CSP viscosity correction factors. */
   private static final int CSP_VISCOSITY_CORRECTION_FACTOR_COUNT = 4;
 
   /** CSP viscosity correction factors for temperature, pressure, molar mass and alpha terms. */
-  private double[] cspViscosityCorrectionFactors = { 1.0, 1.0, 1.0, 1.0 };
+  private double[] cspViscosityCorrectionFactors = {1.0, 1.0, 1.0, 1.0};
 
   /**
    * Constructor for PFCTViscosityMethodHeavyOil.
@@ -314,10 +316,26 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     return refVisc;
   }
 
+  /**
+   * Restores historical unity factors when reading a saved model predating CSP tuning.
+   *
+   * @param input serialized model state
+   * @throws IOException if the state cannot be read
+   * @throws ClassNotFoundException if a serialized class is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (cspViscosityCorrectionFactors == null) {
+      cspViscosityCorrectionFactors = new double[] {1.0, 1.0, 1.0, 1.0};
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public PFCTViscosityMethodHeavyOil clone() {
     PFCTViscosityMethodHeavyOil method = (PFCTViscosityMethodHeavyOil) super.clone();
+    // The methane reference is mutated during every viscosity evaluation.
+    method.referenceSystem = referenceSystem.clone();
     method.cspViscosityCorrectionFactors = cspViscosityCorrectionFactors.clone();
     return method;
   }

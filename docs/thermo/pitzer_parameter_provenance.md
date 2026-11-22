@@ -12,18 +12,18 @@ derived and reviewed equation mapping.
 
 ## Current dataset and coverage contract
 
-New `SystemPitzer` phases use a catalog-first default: on the first Pitzer activity/property
-evaluation, NeqSim selects the complete bundled PHREEQC topology when every required active aqueous
-interaction exists. EOS-role pure hydrocarbons are identified by molecular formula as well as
-component-type metadata and do not create aqueous neutral-interaction requirements; this includes
-normal database components such as methane whose GE-phase type is not reliably `HC`. Other
-non-hydrocarbon aqueous neutrals still require explicit complete
-`lambda` and `zeta` families. If the catalog is incomplete, loading falls back to the historical
-binary table; mixed primary-salt coverage then still fails closed on missing binary, `theta`, or
-`psi` rows. No missing interaction is silently converted to zero. Call
-`SystemPitzer.useLegacyPitzerParameters()` before the first property evaluation only to reproduce
-a historical result.
+New `SystemPitzer` phases use a catalog-first default. Nonreactive calculations select the
+complete bundled PHREEQC topology when every required active aqueous interaction exists.
+After `chemicalReactionInit()`, the default additionally recognizes the bounded
+water/CO2/H2S/Na/K/Ca/Cl/sulfate/bisulfate/carbonate/HS topology. It selects the reviewed reactive definition set described
+below without a Python parameter loader or an explicit dataset method. EOS-role hydrocarbons
+remain outside the aqueous neutral-interaction topology; other neutral solutes and salts are
+not silently added to this family.
 
+The strict generic catalog still requires explicit source rows. Unsupported topologies retain
+the existing legacy fallback and coverage errors. `useLegacyPitzerParameters()` and named manual
+datasets retain their selection. Call the legacy method before the first property evaluation
+only when reproducing a historical result.
 The compatibility table is identified as `neqsim-legacy-pitzer-parameters-v1`. It stores
 molality-scale binary coefficients at 298.15 K and a NeqSim three-term temperature expression:
 
@@ -51,17 +51,201 @@ input topology. After a reactive calculation converges, call
 `getPitzerReactionParameterCoverage()` to audit every active ion, or
 `requireCompletePitzerReactionParameterCoverage()` to fail closed. The complete reactive diagnostic
 is calculated on demand, so it adds no work to ordinary Pitzer properties or non-electrolyte models.
-On the current carbonate reproducer, the legacy dataset reports the active `H3O+|HCO3-` binary as
-missing; the bundled PHREEQC 3.9.0 catalog also has no explicit `H+|HCO3-` binary row. No zero or
-name-based proton convention is inferred. A qualified source row and an independently reviewed
-`H3O+`/PHREEQC-`H+` standard-state mapping remain adoption dependencies. The primary diagnostic is
+For the carbonate reproducer, the legacy dataset lacks important reaction-ion interactions.
+Automatic reactive selection maps NeqSim H3O+ to the source H+ identity and uses the finite
+reviewed definitions in
+`src/main/resources/neqsim/thermo/phase/phreeqc/reactive-carbonate-source-zeros.csv`.
+A source-omitted row is usable only if that exact family/species tuple appears in this
+version-pinned list; a general missing row is still an error. These source-defined zeros
+reproduce PHREEQC executable semantics, rather than experimental measurements of zero.
+`PhasePitzer.getReactiveCarbonateSourceZeroDefinitions()` returns the immutable, sorted list
+actually used. No user coefficient, empirical offset, or global missing-as-zero rule is needed.
+
+The automatic dataset identity is
+`usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nakca-clso4-carbonate-sulfide-auto-v2`.
+It accepts Na+, K+, Ca++, Cl-, SO4--, HSO4-, CO2, H2S, HS-, the water/carbonate reaction
+ions and EOS-role hydrocarbons. At least one supported salt cation and one carbonate, sulfate
+or H2S acid-base system are needed; CO2 and chloride are optional. Other declared salts or aqueous
+neutral solutes do not enter this family,
+even at zero amount. Reinitializing a previously selected automatic family after adding an
+unsupported component fails instead of reusing stale coefficients.
+
+The expanded finite list contains **225** source-omitted definitions for the complete bounded
+family; only the definitions used by the declared species are loaded and audited. The original
+Na/K/Cl/carbonate topology still uses 54. The H2S and HS- aliases are the source's redox-uncoupled
+`H2Sg` and `HSg-` identities. Calcium/sulfate beta2, temperature functions and unequal-charge
+common-ion terms use the existing Pitzer kernel; no coefficients are refitted.
+
+The dedicated `PITZER` reaction table adds `bisulfate`:
+$\mathrm{HSO_4^- + H_2O \rightleftharpoons SO_4^{2-} + H_3O^+}$.
+The pinned source association expression is
+$\log_{10}K_{\mathrm{assoc}}=-56.889+0.006473T+2307.9/T+19.8858\log_{10}T$,
+with $T$ in kelvin. Its negative maps **exactly** into NeqSim's four-term natural-log dissociation
+constant. The reaction-row `VALIDATED` label identifies this checked constant mapping; it does
+not grant whole-dataset reactive-speciation qualification. The standard reaction table is unchanged.
+`HSO4-` is registered with charge -1 and explicit H/S/O elemental counts; its identity and reference
+formation values follow sulfate plus the source association Gibbs energy and temperature derivative
+at 298.15 K. Other ion property scaffold fields follow the existing sulfate record and are not
+independent HSO4 transport, density or caloric-property qualification.
+The aqueous formation values are not reviewed ideal-gas formation enthalpies, so
+`FORMATIONENTHALPYSOURCE` stays blank, consistently with the other aqueous ions. Their
+provenance is the pinned sulfate-plus-bisulfate association mapping above; the numeric
+formation fields remain available to the existing reaction model. `BisulfateDatabaseTest`
+checks the identity, elemental counts and formation-reference boundary in both standard
+and extended database modes, including lower-case `hso4-` input.
+
+The inherited sulfate `NORMBOIL=62.0` value is an ion-property scaffold, not a measured
+bisulfate boiling point. Adding HSO4- makes four ion records share that value (ClO4-, NO3-,
+SO4-- and HSO4-), crossing the database screener's three-record threshold. The exact
+`over_shared_normboil 62.0` finding is recorded in `data/comp_known_issues.tsv` for this
+intentional shared scaffold; no property is perturbed to evade the check. This does not
+qualify ionic boiling, transport or caloric properties.
+
+Sulfate/bisulfate S(VI) and H2S/HS- S(-II) inventories are conserved separately. This path adds no
+sulfate reduction, sulfide oxidation, elemental sulfur/polysulfides, second sulfide dissociation,
+H2S dimer, explicit calcium ion pairs or mineral precipitation. In particular, source-defined
+omissions are not permission to use `S--`, a species absent from the pinned source topology.
+Calcite/gypsum/anhydrite saturation and precipitation need their own existing mineral workflows
+and appropriate qualification; this selector does not automatically invoke them. The existing
+dissolved-salt `calcSaltSaturationWithDiagnostics("CaCO3")` operation can now resolve the
+previously missing calcium/carbonate interactions while preserving the reactive topology.
+Its convergence is not evidence for qualified mineral precipitation.
+
+The existing explicit `applyPhreeqcReactiveSodiumChlorideCarbonateParameters()` method remains
+available for compatibility. Its narrower NaCl-only topology and dataset identity are unchanged.
+Its ten frozen IPhreeqc comparisons retain pH MAE 0.000434 (maximum 0.000922) and water-activity
+MAE 0.0000131 (maximum 0.0000261). The primary
+diagnostic is
 cached by active primary-salt topology and parameter revision, and the automatic gate runs once
 after each standard
 level-zero state initialization. Call `init(0)` after changing composition, as required by the
 general NeqSim state contract. This work is confined to `PhasePitzer` and `ComponentGePitzer`;
 neutral PR, SRK, CPA, Electrolyte-CPA, and Fürst electrolyte-EOS paths do no new work.
 
+## Automatic carbonate parameter evidence and qualification boundary
+
+The new automatic path is checked against 54 independently generated IPhreeqc 3.7.3 aqueous
+states: 298.15, 313.15 and 323.15 K; 0.1, 1 and 3 mol/kg total chloride; NaCl, KCl and a
+50/50 mixture; and 0.001 or 0.1 mol/kg total dissolved inorganic carbon. MacInnes scaling is
+explicitly disabled. Frozen species molalities, unscaled pH, water activity and individual
+activity coefficients are stored with their reproducible generator under
+`src/test/resources/neqsim/thermo/phase/reactive-carbonate/`. The exact full database input is
+Git blob `324f852784be84650b77bd7f07f8316aafd8188b`; the older reference executable omits only
+unused gas-EOS and mean-gamma reporting blocks, leaving all aqueous reactions and interactions
+unchanged. The frozen regression limits are 0.001 pH unit, 0.00005 water activity and
+0.01 in log10 activity coefficient. The previously established ten-state regression keeps its
+original, tighter limits. These comparisons establish implementation agreement.
+
+A further **135 independently generated IPhreeqc states** check CaCl2, Na/Ca and K/Ca
+chlorides, mixed chloride/sulfate brines, Na/K/Ca sulfate-only feeds and acidic sulfate brines.
+They span 298.15–323.15 K and up to 3 mol/kg cation charge equivalents, including dilute H2S.
+The frozen table retains free species, native pH, water activity and individual log10 gammas;
+NeqSim replays those free species rather than equating different speciation sets. The source-only
+H2S dimer is retained in PHREEQC and recorded (maximum $1.56\times10^{-7}$ mol/kg).
+`PitzerAutomaticCalciumSulfurTest` checks native pH to 0.001, water activity to 0.00006 and log10 gamma to 0.01 and
+separately checks exact bisulfate constants, a three-phase reactive feed, elemental closure,
+ion confinement, and separate sulfate/sulfide inventories. The 0.00006 water-activity bound
+retains a maximum reference discrepancy of approximately 0.0000565 at concentrated CaCl2;
+it is a regression bound, not an experimental accuracy claim. These comparisons are implementation
+evidence; calcium/sulfur experimental pH and high-pressure speciation remain unqualified.
+
+The expanded reference matrix exposed a missing Pitzer ternary derivative: the activity of an
+ion opposite in sign to the two other members must include their molality product times the
+source psi coefficient. `ComponentGePitzer` now includes that contribution once per pair.
+This corrects calcium/chloride/sulfate activities and applies consistently to existing Pitzer
+datasets; it changes no coefficient, water-activity kernel or non-Pitzer model.
+
+Characterized petroleum fractions are checked separately by `PitzerCharacterizedOilBrineTest`
+and the executable [characterized-oil Python example](../../examples/neqsim/pitzer_characterized_oil_brine.py).
+The synthetic feed uses C7/C8/C9 TBP cuts and a C10+ fraction (0.281 kg/mol, 0.882888 g/cm3),
+with sour gas and the Na/K/Ca chloride-sulfate brine above. Both the default characterization
+and explicit PVT lumping are exercised. The latter keeps the three TBP cuts and splits C10+
+into four additional pseudo components. Characterize before `chemicalReactionInit()` so the
+reaction topology captures the final component identities; adding brine before or after
+characterization gives matching results.
+
+Fraction setup now assigns complete pseudo-component properties to every configured phase role,
+including the initially inactive hybrid oil phase. Previously that role could retain zero molecular
+weight/density and missing TBP metadata even though the flash returned three phases. Both TBP
+overloads and plus-fraction assignment now follow the same configured-phase coverage as component
+creation. This also covers ordinary EOS systems starting with a single active phase.
+
+The pseudo-component properties match standard SRK characterization. The selector recognizes
+the TBP flags without requiring molecular formulas or additional neutral Pitzer interactions.
+Tests check every pseudo-component molar inventory, the **0.332530 kg** heavy-fraction mass,
+gas/oil fugacity equality, reactive elemental closure, charge balance, ion confinement, positive aqueous activities,
+repeated flashes and cloning. Petroleum pseudo components do not have exact elemental formulas;
+these tests do not invent whole-oil carbon/hydrogen atom counts.
+
+| Temperature (K) | Pressure (bara) | Phases | Native pH |
+| --- | --- | --- | --- |
+| 298.15 | 10 | gas, oil, aqueous | 3.949947 |
+| 313.15 | 50 | gas, oil, aqueous | 3.719220 |
+| 333.15 | 100 | gas, oil, aqueous | 3.710758 |
+
+These are synthetic regression results, not measured-oil qualification. Pseudo hydrocarbons
+retain the existing insoluble-Henry aqueous treatment; their negligible calculated water-phase
+amounts do not qualify hydrocarbon solubility, polar petroleum chemistry, or experimental pH.
+
+Experimental evidence is assessed separately against the NaCl conditional carbonate-dissociation
+correlation of Millero, Huang, Graham and Pierrot (2007), DOI
+[10.1016/j.gca.2006.08.041](https://doi.org/10.1016/j.gca.2006.08.041).
+The comparison covers both dissociation steps at 298.15, 313.15 and 323.15 K and
+0.1, 1, 3 and 5 mol/kg NaCl at atmospheric pressure. The model is not refitted to this
+correlation. Using native molality-scale coefficients, maximum discrepancies are approximately 0.174 pK
+for the first dissociation and 0.218 pK for the second. The latter occurs at 323.15 K and
+5 mol/kg. These discrepancies exceed the published fit standard deviations of 0.013 and
+0.020 pK; those fit deviations are not individual-measurement uncertainty estimates. These retained failures are
+not an accepted range extension or a basis for fitting a compensating coefficient.
+
+Accordingly the automatic dataset is `PARTIALLY_EXPERIMENTALLY_VALIDATED`.
+`requirePitzerDatasetValidationFor(REACTIVE_SPECIATION)` and the complete-dataset qualification
+gate still reject it. Complete parameter definitions do not qualify coupled gas/oil VLE,
+pressure extrapolation, buffered/high-pH brines, KCl/mixed-brine experimental pH, minerals,
+hydrates or a broad operating envelope. Published NaCl/NaHCO3 measurements by Li et al. (2018),
+DOI [10.1016/j.fluid.2017.11.023](https://doi.org/10.1016/j.fluid.2017.11.023), and KCl measurements
+by Mutailipu et al. (2021), DOI [10.1016/j.ces.2020.116434](https://doi.org/10.1016/j.ces.2020.116434),
+use a MacInnes pH convention. A comparison with their measured numbers must implement the same
+single-ion convention and account for gas fugacity, CO2 solubility and reaction constants.
+Those abstract-level results are not silently substituted for a numerical experimental benchmark.
+
+The synthetic 313.15 K, 50 bara methane/heptane/CO2/NaCl-KCl case retains GAS+OIL+AQUEOUS,
+complete reaction/neutral interaction coverage and pH near 3.66555 on the **unscaled molality**
+convention. `PhasePitzer.getPitzerActivity(int)` returns native dimensionless activities and
+`getPitzerPH()` reads hydronium activity without an acid-gas estimate or neutral-pH fallback.
+Use these explicit readouts for the coefficient audit; the established fugacity-reference
+accessors and reaction solver retain their compatibility behavior. Reaction, whole-fluid elemental and charge closure are numerical checks, not a
+claim of experimental accuracy for that three-phase state. Use the executable example
+`examples/neqsim/pitzer_reactive_carbonate.py` for the ordinary setup without external loading.
+
+## Candidate catalog preflight for unsupported mixtures
+
+`SystemPitzer.getMissingPhreeqcPitzerCatalogRows()` lists every absent required source row in the
+candidate PHREEQC catalog without selecting parameters or running a flash. Call it after `init(0)`.
+It is separate from the selected-dataset coverage diagnostic: for Na–Ba–Cl–SO4 the legacy exception
+lists missing theta/psi interactions, whereas the source catalog lacks Ba–SO4 B0/B1/C0 and three
+psi rows. See the [barite qualification report](pitzer_barite_qualification.md) for the frozen
+feeds, precise source inventory, primary literature and outstanding independent validation gates.
+Neither an empty source-gap list nor an explicit zero proves scientific qualification.
+
 ## Complete-dataset qualification publication gate
+
+For CO2 with Na/K/Ca/Mg chlorides, the explicit
+`SystemPitzer.applyPhreeqcCo2ChlorideParameters(Map<String, Double>)` helper combines catalog ionic
+and CO2 lambda rows with caller-supplied constant CO2-cation-Cl zeta values. Every present cation
+requires a supplied value; an explicit zero is a screening assumption. Use this on a fresh system
+before flashing or defining custom interactions. The dataset identity is
+`usgs-phreeqc-pitzer-co2-chlorides-user-zeta-v1` and remains unqualified. It does not change the
+automatic catalog policy. See [Pitzer hydrate equilibrium](pitzer_hydrate_equilibrium.md) for the
+salt basis, independent comparisons and remaining limits.
+
+The catalog also lacks a K+-Mg++ theta row. When both ions are present, use
+`applyPhreeqcCo2ChlorideParameters(zeta, potassiumMagnesiumTheta)` with an explicit finite constant.
+This overload uses identity `usgs-phreeqc-pitzer-co2-chlorides-user-theta-zeta-v1` and remains
+unqualified. The original overload rejects that topology; it does not insert a zero theta.
+The 57-point hydrate reference assessment preserves six mixed-brine errors beyond 1 K,
+unavailable cold/precipitating cases and a CO2 phase mismatch. Neither a complete topology nor
+a passing regression suite promotes these manual parameters to a qualified dataset.
 
 Interaction coverage and scientific qualification remain independent contracts. A complete topology
 may still use a dataset whose full species/range matrix lacks held-out evidence.
@@ -258,6 +442,46 @@ mineral `log K`, gas binary, SIT, eNRTL, Extended-UNIQUAC, or electrolyte-EOS co
 imported. The resource is parsed lazily on the first catalog-eligible Pitzer evaluation and cached as
 one immutable catalog. Neutral EOS paths do no catalog I/O or lookup work; a Pitzer phase performs
 automatic topology selection only once when its parameter dataset is first loaded.
+
+#### Stored neutral rows versus supported aqueous species
+
+The 37 neutral-family source rows are an archival inventory, not 37 usable interactions for
+registered NeqSim components. Nine rows use `CO2` (eight `lambda` and one `zeta`); the other
+28 contain the source-only species below. The bundled block contains no `mu` or `eta` rows;
+those supported equation families require an explicit caller-supplied dataset.
+
+| Source species | Current support boundary |
+|---|---|
+| `CO2` | Automatic complete neutral topology is CO2 / Na+ / SO4--. CO2 in chloride brines needs caller-supplied missing `zeta` values through `applyPhreeqcCo2ChlorideParameters`. |
+| `B(OH)3` | No registered boron component/speciation model for these rows. Preserved for source completeness. |
+| `H4SiO4` | No registered silica component/speciation model for these rows. Preserved for source completeness. |
+| `H2Sg`, `(H2Sg)2` | No automatic alias to `H2S`. The source distinguishes dissolved monomer and dimer; NeqSim does not model that dimer here. It also lacks the required explicit monomer self-`lambda` row. |
+| `Hdg` | No automatic alias to `hydrogen`. Its self-`lambda` row is absent; activating an aqueous hydrogen model needs complete interactions and a validated species/standard-state mapping. |
+
+In this exact source version, `zeta(H2Sg, Na+, Cl-)` **is present**, while
+`lambda(H2Sg, H2Sg)` is absent. Renaming `H2S` alone therefore cannot produce a complete
+supported topology. The remaining source-only neutrals also lack self-`lambda` rows.
+Adding names or assuming missing coefficients are zero would not qualify those chemistries.
+
+For water / Na+ / Cl- with `H2S`, `hydrogen`, or `CO2`, automatic selection retains the legacy
+binary dataset and `hasNeutralPitzerInteractions()` is false. The neutral Pitzer contribution is
+then ideal (`gamma = 1`); this does **not** validate salting-out or solubility for that neutral.
+Call `applyCompletePhreeqcPitzerCatalog` explicitly when missing source coverage should be an
+error: it reports the missing family and species tuple. If supplying a complete neutral dataset,
+use `auditNeutralPitzerParameterCoverage()` to check it before relying on the result.
+
+`PitzerNeutralCatalogSupportTest` checks these exact source rows, absence of implicit aliases,
+legacy fallback, and explicit missing-coverage diagnostics. Existing CO2 / Na+ / SO4-- tests
+retain independent IPhreeqc activity references.
+
+#### Dilute-limit numerical contract
+
+Activity and volumetric calculations share `PitzerAttenuation`: `g(0) = 1` and the scaled
+derivative `(x/2) dg/dx` tends to zero. A convergent series avoids subtracting nearly equal
+numbers near zero. Both `beta1` and `beta2`, including PHREEQC common-ion terms, use this
+evaluation without discarding small positive ionic strengths. Independent integral references
+and amplified dilute-activity probes cover the limit and series transition; existing brine
+reference tests cover ordinary concentrations.
 
 The default selector and explicit `applyCompletePhreeqcPitzerCatalog` API select rows by the active
 aqueous species. Every active opposite-sign pair requires explicit `B0`, `B1`, and `C0`; every
@@ -648,6 +872,17 @@ corrections, or species definitions. The Kaasa Appendix F `lambda` and `ksi` (`z
 H2S, and CH4 are now structurally representable, but no thesis value is copied or adopted. Row-level
 lineage, reuse rights, range, uncertainty, complete companion interactions, and held-out validation
 remain mandatory before a versioned parameter dataset can use them.
+
+### NeqSim MEG neutral dataset
+
+`PitzerMegParameters` (`neqsim-pitzer-meg-nacl-v1`) is a NeqSim regression, not a PHREEQC row. It defines
+`lambda(MEG,MEG)` and `mu(MEG,MEG,MEG)` fitted to Tsurko et al. (2026) freezing points and 298.15 K isopiestic
+water activities, and `lambda(MEG,Na+)` fitted to the Benson et al. (2010) water/NaCl/ethylene-glycol melting-point
+equation, with `lambda(MEG,Cl-)` = 0 and `zeta(MEG,Na+,Cl-)` = 0 as explicit conventions. It is applied after the
+PHREEQC catalog subset (MEG is excluded from the catalog topology) or after the legacy table. Because it activates
+the mu family, it also defines explicit zero rows for dilute gases and hydrocarbons, reported by
+`PhasePitzer.getMegAssumedZeroRows()`. Coefficients, data ranges and fit statistics are in
+[Pitzer hydrate equilibrium](pitzer_hydrate_equilibrium.md#meg-monoethylene-glycol).
 
 ## PHREEQC `C0` and NeqSim `Cphi` convention
 

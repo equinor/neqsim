@@ -48,10 +48,10 @@ public class TimeIntegrator implements Serializable {
     /** Strong Stability Preserving RK3. */
     SSP_RK3,
     /**
-     * IMEX (Implicit-Explicit) pressure correction method. Treats transport (advection) explicitly and the pressure
-     * wave equation implicitly, removing the acoustic CFL constraint. Allows time steps 10-100x larger than fully
-     * explicit schemes for long pipelines. Based on the pressure-correction approach of Harlow and Amsden (1971)
-     * adapted for two-fluid models.
+     * IMEX (Implicit-Explicit) pressure correction method. Treats transport explicitly and applies either the selected
+     * coupled phase-volume correction or the legacy scalar momentum correction. The usable step depends on the
+     * correction, source stiffness and transient qualification; a material-advection CFL bound alone is insufficient to
+     * establish stability of the legacy split.
      */
     IMEX_PRESSURE_CORRECTION
   }
@@ -62,7 +62,7 @@ public class TimeIntegrator implements Serializable {
   /** CFL number for time step control (0 &lt; CFL &lt; 1). */
   private double cflNumber = 0.5;
 
-  /** Minimum allowed time step (s). */
+  /** Preferred minimum time step (s); a smaller CFL bound always takes priority. */
   private double minTimeStep = 1e-6;
 
   /** Maximum allowed time step (s). */
@@ -112,6 +112,26 @@ public class TimeIntegrator implements Serializable {
    * @return Updated state at t + dt
    */
   public double[][] step(double[][] U, RHSFunction rhs, double dt) {
+    lastCoupledPressureMomentumResult = null;
+    try {
+      return stepWithCorrections(U, rhs, dt);
+    } catch (RuntimeException exception) {
+      // A failed attempt must not expose transfers from an earlier successful
+      // step or from a correction followed by a failed downstream operator.
+      lastCoupledPressureMomentumResult = null;
+      throw exception;
+    }
+  }
+
+  /**
+   * Perform the selected stages and corrections within the full-step result lifecycle.
+   *
+   * @param U current conservative state
+   * @param rhs spatial right-hand side
+   * @param dt time step in seconds
+   * @return updated conservative state
+   */
+  private double[][] stepWithCorrections(double[][] U, RHSFunction rhs, double dt) {
     double[][] advancedState;
     switch (method) {
     case EULER:
@@ -256,24 +276,20 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
-   * Calculate stable time step based on CFL condition.
+   * Calculate stable time step based on CFL condition. The CFL bound may be smaller than the configured preferred
+   * minimum time step.
    *
    * @param maxWaveSpeed Maximum wave speed in the domain (|v| + c)
    * @param dx Minimum cell size
    * @return Stable time step
    */
   public double calcStableTimeStep(double maxWaveSpeed, double dx) {
-    if (maxWaveSpeed < 1e-10) {
-      return maxTimeStep;
+    if (!(maxWaveSpeed >= 0.0) || !Double.isFinite(maxWaveSpeed) || !(dx > 0.0) || !Double.isFinite(dx)) {
+      throw new IllegalArgumentException("Wave speed must be finite and nonnegative and cell size positive and finite");
     }
-
-    double dt = cflNumber * dx / maxWaveSpeed;
-
-    // Apply limits
-    dt = Math.max(minTimeStep, Math.min(maxTimeStep, dt));
-    currentDt = dt;
-
-    return dt;
+    // A requested minimum cannot enlarge a physically stable upper bound.
+    currentDt = maxWaveSpeed == 0.0 ? maxTimeStep : Math.min(maxTimeStep, cflNumber * dx / maxWaveSpeed);
+    return currentDt;
   }
 
   /**
@@ -379,24 +395,28 @@ public class TimeIntegrator implements Serializable {
    * Set CFL number.
    *
    * @param cflNumber New CFL number (0 &lt; CFL &lt; 1)
+   * @throws IllegalArgumentException if the CFL number is not finite and strictly between zero and one
    */
   public void setCflNumber(double cflNumber) {
-    this.cflNumber = Math.max(0.01, Math.min(0.99, cflNumber));
+    if (!Double.isFinite(cflNumber) || cflNumber <= 0.0 || cflNumber >= 1.0) {
+      throw new IllegalArgumentException("CFL number must be finite and strictly between zero and one");
+    }
+    this.cflNumber = cflNumber;
   }
 
   /**
-   * Get minimum time step.
+   * Get preferred minimum time step. CFL calculations may return a smaller stable bound.
    *
-   * @return Minimum time step (s)
+   * @return Preferred minimum time step (s)
    */
   public double getMinTimeStep() {
     return minTimeStep;
   }
 
   /**
-   * Set minimum time step.
+   * Set preferred minimum time step. This value never enlarges a CFL stability bound.
    *
-   * @param minTimeStep Minimum time step (s)
+   * @param minTimeStep Preferred minimum time step (s)
    */
   public void setMinTimeStep(double minTimeStep) {
     this.minTimeStep = minTimeStep;
@@ -507,6 +527,9 @@ public class TimeIntegrator implements Serializable {
   /** Whether outlet pressure BC is fixed for IMEX. */
   private boolean imexOutletPressureFixed = true;
 
+  /** Gas, oil and water ownership of external pressure-face mass transfer. */
+  private boolean[] coupledOutletPhaseOpen = {true, true, true};
+
   /**
    * Set cell properties required for the IMEX pressure correction step. Must be called before stepping with
    * IMEX_PRESSURE_CORRECTION.
@@ -613,6 +636,18 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
+   * Set phase ownership of external pressure-outlet mass correction.
+   *
+   * @param outletPhaseOpen gas, oil and water flags; retained phases remain closed externally
+   */
+  public void setCoupledPressureMomentumOutletPhaseOpen(boolean[] outletPhaseOpen) {
+    if (outletPhaseOpen == null || outletPhaseOpen.length != 3) {
+      throw new IllegalArgumentException("Outlet phase ownership must contain gas, oil and water flags");
+    }
+    coupledOutletPhaseOpen = outletPhaseOpen.clone();
+  }
+
+  /**
    * Enable or disable the coupled pressure-momentum correction.
    *
    * @param enabled true to apply the configured correction
@@ -644,6 +679,45 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
+   * Set the numerical lower bound for coupled absolute cell pressure.
+   *
+   * @param minimumPressure positive finite pressure in Pa
+   * @see CoupledPressureMomentumSolver#setMinimumPressure(double)
+   */
+  public void setCoupledPressureMomentumMinimumPressure(double minimumPressure) {
+    coupledPressureMomentumSolver.setMinimumPressure(minimumPressure);
+  }
+
+  /** @return numerical lower bound for coupled absolute cell pressure in Pa */
+  public double getCoupledPressureMomentumMinimumPressure() {
+    return coupledPressureMomentumSolver.getMinimumPressure();
+  }
+
+  /**
+   * Select the coupled gas pressure-density response.
+   *
+   * @param model non-null gas density response model
+   */
+  public void setCoupledPressureMomentumGasDensityModel(CoupledPressureMomentumSolver.GasDensityModel model) {
+    coupledPressureMomentumSolver.setGasDensityModel(model);
+  }
+
+  /** @return coupled gas density response model */
+  public CoupledPressureMomentumSolver.GasDensityModel getCoupledPressureMomentumGasDensityModel() {
+    return coupledPressureMomentumSolver.getGasDensityModel();
+  }
+
+  /** @param enabled true to enable implicit face/cell pressure-gradient interpolation */
+  public void setCoupledPressureMomentumCheckerboardCorrectionEnabled(boolean enabled) {
+    coupledPressureMomentumSolver.setCheckerboardCorrectionEnabled(enabled);
+  }
+
+  /** @return whether coupled pressure-velocity momentum interpolation is enabled */
+  public boolean isCoupledPressureMomentumCheckerboardCorrectionEnabled() {
+    return coupledPressureMomentumSolver.isCheckerboardCorrectionEnabled();
+  }
+
+  /**
    * Set the convergence tolerance for the relative cell-volume residual.
    *
    * @param tolerance positive finite relative tolerance
@@ -652,7 +726,7 @@ public class TimeIntegrator implements Serializable {
     coupledPressureMomentumSolver.setRelativeVolumeTolerance(tolerance);
   }
 
-  /** @return convergence tolerance for the relative cell-volume residual */
+  /** @return convergence tolerance for relative cell-volume and fixed-outlet pressure residuals */
   public double getCoupledPressureMomentumRelativeVolumeTolerance() {
     return coupledPressureMomentumSolver.getRelativeVolumeTolerance();
   }
@@ -663,7 +737,8 @@ public class TimeIntegrator implements Serializable {
     }
     lastCoupledPressureMomentumResult = coupledPressureMomentumSolver.correct(state, dt, coupledCellPressure, cellAreas,
         coupledCellLengths, cellGasDensities, cellOilDensities, cellWaterDensities, coupledGasSoundSpeeds,
-        coupledOilSoundSpeeds, coupledWaterSoundSpeeds, imexOutletPressure, imexOutletPressureFixed);
+        coupledOilSoundSpeeds, coupledWaterSoundSpeeds, imexOutletPressure, imexOutletPressureFixed,
+        coupledOutletPhaseOpen);
     return lastCoupledPressureMomentumResult.getState();
   }
 
@@ -683,9 +758,21 @@ public class TimeIntegrator implements Serializable {
     return lastCoupledPressureMomentumResult == null ? 0 : lastCoupledPressureMomentumResult.getIterations();
   }
 
+  /** @return immutable diagnostics from every limited iteration in the latest coupled solve */
+  public java.util.List<CoupledPressureMomentumSolver.PressureLimitEvent> getCoupledPressureLimitEvents() {
+    return lastCoupledPressureMomentumResult == null ? java.util.Collections.emptyList()
+        : lastCoupledPressureMomentumResult.getPressureLimitEvents();
+  }
+
   /** @return true when the latest nonlinear solve limited at least one pressure correction */
   public boolean isCoupledPressureMomentumPressureCorrectionLimited() {
     return lastCoupledPressureMomentumResult != null && lastCoupledPressureMomentumResult.isPressureCorrectionLimited();
+  }
+
+  /** @return smallest phase-mass positivity scale used by the latest correction */
+  public double getCoupledPressureMomentumMinimumMassFluxCorrectionScale() {
+    return lastCoupledPressureMomentumResult == null ? Double.NaN
+        : lastCoupledPressureMomentumResult.getMinimumMassFluxCorrectionScale();
   }
 
   /** @return signed gas, oil, and water outlet mass corrections in kg */
@@ -704,6 +791,17 @@ public class TimeIntegrator implements Serializable {
     return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getGasDensity();
   }
 
+  /** @return corrected gas sound speed in m/s, or null before a coupled correction */
+  public double[] getCoupledPressureMomentumGasSoundSpeed() {
+    return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getGasSoundSpeed();
+  }
+
+  /** @return exact signed gas/oil/water correction transfers in kg by face, or an empty matrix before correction */
+  public double[][] getCoupledPressureMomentumPhaseMassCorrectionsKg() {
+    return lastCoupledPressureMomentumResult == null ? new double[0][0]
+        : lastCoupledPressureMomentumResult.getPhaseMassCorrectionsKg();
+  }
+
   /** @return corrected oil density from the latest coupled correction, or null */
   public double[] getCoupledPressureMomentumOilDensity() {
     return lastCoupledPressureMomentumResult == null ? null : lastCoupledPressureMomentumResult.getOilDensity();
@@ -715,23 +813,25 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
-   * IMEX (Implicit-Explicit) pressure correction step.
+   * Legacy IMEX (Implicit-Explicit) momentum correction from a scalar acoustic pressure response.
    *
    * <p>
-   * The algorithm follows a two-stage splitting:
+   * The algorithm follows an explicit predictor and an implicit momentum correction:
    * </p>
    * <ol>
    * <li><b>Predictor (explicit):</b> Advance mass and momentum using the explicit RHS (advection + source terms) to
    * obtain intermediate values U*.</li>
-   * <li><b>Pressure correction (implicit):</b> Solve a tridiagonal Helmholtz equation for the pressure correction dp.
-   * The pressure wave equation dp - (c*dt/dx)^2 * d^2(dp)/dx^2 = RHS removes the acoustic CFL constraint.</li>
+   * <li><b>Pressure correction (implicit):</b> Smooth the linearized pressure response to the predictor's mixture-mass
+   * change with a tridiagonal Helmholtz equation. Compression produces a positive pressure increment.</li>
    * <li><b>Corrector:</b> Update phase momenta using the pressure correction gradient while leaving the phase masses
    * from the conservative predictor unchanged.</li>
    * </ol>
    *
    * <p>
-   * This allows the convective CFL (based on material velocity |v|) to govern the time step instead of the acoustic CFL
-   * (based on |v|+c). For typical gas-liquid flows where c=300 m/s and v=5 m/s, this gives a factor of ~60 speedup.
+   * Phase-mass transport remains explicit, and the scalar mixture-mass response does not enforce separate phase-volume
+   * closure. Acoustic and timestep-refinement checks remain necessary for this legacy split. Select the coupled
+   * pressure-momentum correction for phase-resolved volume closure; its convergence and physical qualification gates
+   * must also be checked for the chosen transient.
    * </p>
    *
    * @param U Current state [nCells][nVars]
@@ -801,9 +901,10 @@ public class TimeIntegrator implements Serializable {
       lower[i] = -sig;
       upper[i] = -sig;
 
-      // RHS: pressure correction to absorb the mass residual
-      // mass per length = area * density, and density correction is dp / c^2.
-      b[i] = -c * c * massResidual[i] / area;
+      // The acoustic EOS gives deltaP = c^2 * deltaRho = c^2 * deltaMassPerLength / area.
+      // The positive sign makes compression raise pressure, so -A*grad(deltaP) opposes convergence.
+      // Reversing this sign adds inward momentum to a compressing cell and amplifies the acoustic mode.
+      b[i] = c * c * massResidual[i] / area;
     }
 
     // Boundary conditions for pressure correction
@@ -1063,22 +1164,22 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
-   * Calculate stable time step for IMEX method. The IMEX scheme removes the acoustic CFL constraint, so the time step
-   * is limited only by the convective CFL based on material velocities (not sound speed).
+   * Calculate the material-advection CFL bound for the IMEX method.
    *
    * <p>
    * dt_IMEX = CFL * dx / max(|v_G|, |v_L|)
    * </p>
    *
    * <p>
-   * For typical gas-liquid flows where c=300 m/s and v=5 m/s, this gives a speedup factor of ~60 compared to the
-   * standard acoustic CFL.
+   * This bound omits acoustic and momentum-source relaxation times. The selected pressure correction, explicit sources
+   * and nonlinear convergence impose additional requirements. In particular, the legacy scalar correction retains
+   * explicit phase-mass transport and requires independent acoustic/timestep-refinement checks.
    * </p>
    *
    * @param gasVelocities gas velocities at each cell (m/s)
    * @param liquidVelocities liquid velocities at each cell (m/s)
    * @param dx cell size (m)
-   * @return stable time step (s), typically 10-100x larger than acoustic CFL
+   * @return material-advection time-step bound in s
    */
   public double calcIMEXTimeStep(double[] gasVelocities, double[] liquidVelocities, double dx) {
     double maxMaterialSpeed = 1.0; // Minimum to avoid division by zero
@@ -1089,8 +1190,7 @@ public class TimeIntegrator implements Serializable {
       maxMaterialSpeed = Math.max(maxMaterialSpeed, Math.max(gasSpeed, liqSpeed));
     }
 
-    double dt = cflNumber * dx / maxMaterialSpeed;
-    return Math.max(minTimeStep, Math.min(maxTimeStep, dt));
+    return calcStableTimeStep(maxMaterialSpeed, dx);
   }
 
   /**
@@ -1099,5 +1199,6 @@ public class TimeIntegrator implements Serializable {
   public void reset() {
     currentTime = 0;
     currentDt = 0.01;
+    lastCoupledPressureMomentumResult = null;
   }
 }

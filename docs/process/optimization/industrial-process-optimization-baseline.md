@@ -2,8 +2,32 @@
 title: Industrial Process Optimization Baseline
 description: Capability inventory, restriction coverage, and frozen benchmark contract for large ProcessSystem and ProcessModel optimization.
 ---
-
 # Industrial Process Optimization Baseline
+
+## Common configuration and coverage increment
+
+The additive `ProcessSystem.applyDesignCapacities(...)` and area-qualified
+`ProcessModel.applyDesignCapacities(...)` methods share normalized input application with the
+legacy JSON builder. Their strict preflight rejects invalid batches before input application;
+the JSON builder retains its advisory compatibility contract. Repeated supported rating changes
+refresh the affected equipment constraint evidence without discarding its operating metadata.
+
+`UtilizationCoverageReport` captures declared equipment and constraint expectations independently
+of discovery, including missing observations/ratings, omitted registrations and screening evidence.
+Binding this report with `PlantUtilizationSnapshot.Builder.expectedCoverage(...)` requires the same
+registry digest and an explicit full-model convergence declaration. Completeness remains scoped to
+the declared expectations; neither an empty registry nor successful constraint discovery establishes
+that every engineering restriction is covered. Registry-only snapshot construction remains available
+as the existing lower-level evidence path.
+
+The legacy `ProcessModelOptimizationView` now stops on failed cross-area convergence. It does not
+provide automatic rollback; a caller must restore or discard the candidate model. Shared-resource
+arithmetic, common-shaft balance, complete equipment-fidelity adapters, compiled restoration/caching,
+MCP parity and the L/C/B/R industrial acceptance matrix remain open campaign milestones.
+
+The campaign recovery plan brings the 150+ unit, six-area fixture into equipment/evaluator development
+with explicit evaluation, runtime, memory and response-size budgets. Existing S/M timings are baseline
+observations and must not be presented as an optimization speedup or large-plant qualification.
 
 This document freezes the starting point for industrial-scale optimization in
 [roadmap #3154](https://github.com/equinor/neqsim/issues/3154). It distinguishes an
@@ -75,7 +99,7 @@ an explicit limit basis, provenance, applicability, and failure status.
 | Gathering, routing, and export hydraulics | Network actions, boundary evidence, pipe equipment | Composable | One network constraint registry covering pressure, capacity, line-up availability, and line/route identity. |
 | Compressor map envelope | Speed, power, surge margin, stonewall margin, and discharge-temperature constraints | Composable | Installed-map provenance, corrected-flow/head basis, interpolation/extrapolation status, and complete evidence for chartless or out-of-map points. |
 | Compressor driver and total power | Equipment power constraints, `ProcessModel.getPower(unit)`, power-generation capacity | Composable | Shared driver identity, plant total-power budget, fuel/electrical basis, reserve/spinning margin, and load-shed priority. |
-| Common-shaft trains | `MechanicalShaft`, `EnergyBus`, motor-assisted and motor drive trains | Calculation only | Common speed, driver power, torque, gearbox, train availability, and per-casing map constraints evaluated as one resource. |
+| Common-shaft trains | `PlantCommonShaftEvidence`, `MechanicalShaft`, `CompressorDriver`, `Gearbox`, compressor operating points | Optimizer-qualified for declared steady-state train scope | Requires exact casing/driver participant coverage, current calculation identity, explicit limits, complete convergence, and full candidate replay; it does not add machine physics or restore a candidate. |
 | Two-phase separators | Gas load factor and liquid level; mechanical-design retention and internals calculations | Composable | Gas, liquid, residence, settling, carry-over/carry-under, level, inlet momentum, demister, and slug limits in one immutable snapshot. |
 | Three-phase separators | Gas load factor, level, three-phase process and mechanical-design calculations | Composable | Independent oil/water residence and settling, interface/boot/weir limits, oil-in-water, water-in-oil, slug volume, and phase-availability status. |
 | Pumps | Power, NPSH margin, and flow-rate constraints | Composable | Installed curve/basis, operating envelope, minimum continuous stable flow, driver/shared-power identity, and non-calculable NPSH status. |
@@ -212,20 +236,54 @@ It exposes deterministic complete coverage and bottleneck ladders without retain
 mutable process state. Existing installed-equipment and boundary evidence are adapted rather than
 recalculated or duplicated.
 
-This snapshot layer does not aggregate total power, coordinate a common shaft, compute separator or
-piping physics, alter process solving, or accept an optimizer proposal. Those operations remain later
-increments and must provide qualified samples after a complete full-model solve.
+`PlantSharedResourceEvidence` now supplies participant-complete maximum-budget evidence for
+`ProcessSystem`/`ProcessModel` compressor-and-pump shaft power and solved `EnergyBus` requested
+electrical demand. Its aggregate is cross-checked against the existing authoritative total; units,
+basis and conversions remain explicit. Missing, extra, stale, non-finite, unconverged, or ambiguous
+load evidence fails closed. It produces the common snapshot sample without retaining live process
+state.
+
+The maintained 27-unit M fixture qualifies a controlled transition from equipment-local compressor
+power at a 120% total budget to the shared total-shaft-power constraint at a 95% budget, then verifies
+the restored line-up reproduces the cold total power. The same tests exercise an ordered 180-
+participant/six-area evidence ledger with 2 s capture, 64 MB used-heap growth, 500 kB Java
+serialization, and 1 MB JSON budgets. This is evidence-path scale qualification, not the still-open
+full L process-model acceptance fixture or a generic execution speedup claim.
+
+`PlantCommonShaftEvidence` now qualifies case-C evidence for one declared steady-state train. It
+freezes the solved shaft allocation, driver and gearbox configuration, maximum torque, common speed,
+power balance, and every casing map margin as deterministic registry samples. Missing or stale
+participant evidence is unavailable, while finite physical limit violations remain complete and
+infeasible. The adapter does not compute new compressor or gearbox physics, run or restore process
+equipment, alter process solving, or accept an optimizer proposal.
+
+`PlantPipelineEvidence` now provides a strict post-solve adapter for one completed
+`PipeBeggsAndBrills` calculation. It freezes maximum absolute pressure, inlet-to-outlet pressure
+drop, receiving pressure, maximum mixture superficial velocity, and minimum/maximum bulk
+temperature with their exact profile-node locations. Geometry provenance and all six installed
+limits are explicit caller inputs. Missing profiles or limits, unverified geometry, stale calculation
+identity, non-finite values, and incomplete process convergence remain unavailable. The adapter
+does not qualify API RP 14E, FIV, AIV, hydrate, wax, liquid-dropout, slug, transient, or pipeline
+numerical-internals envelopes.
+
+An unmodified-master scale observation at
+`32600dc09e38ababc41c9dfb24da0752ddffba80` executed 162 units in 20 areas. One measured
+model solve took 1.368788351 s and allocated 466,032,584 bytes on the main thread; its JSON result
+was 56,908 bytes. The run completed two model iterations with zero validation failures and relative
+mass, maximum-component, and energy residuals of `6.0633e-16`, `5.3624e-16`, and `7.0818e-11`.
+This is early real-model scale evidence, not the complete frozen L fixture: it has no recycle,
+pipeline-bottleneck sequence, three-phase water handling, shared-resource transition, discrete
+line-up, cache comparison, or selective optimizer result. The 512 MB heap value is a JVM maximum,
+not measured peak usage. Raw evidence is retained in
+`benchmarks/industrial-large-baseline-32600dc.json`.
 
 ## Next dependency-ready increments
 
-1. Add first-class total-power/shared-utility evidence, using the complete immutable utilization
-   snapshot without adding execution-layer scheduling or caching.
-2. Add a common-shaft compressor-train
-   resource constraint.
-3. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
-   and solver orchestration.
-4. Expose the stable result through Java JSON and Python/JPype, then execute M, L, C, B, and R as
-   maintained workflows.
+1. Integrate the strict separator and piping snapshots into compiled fail-closed scalable evaluation
+   before solver orchestration.
+2. Extend the measured >=150-unit fixture to the complete frozen L topology and transition sequence.
+3. Expose the stable evaluator result through current Java and Python workflows and execute C, B,
+   and R as maintained workflows.
 
 Until those increments are merged and measured, this page is the authoritative baseline contract,
 not a declaration that industrial-scale optimization is complete.

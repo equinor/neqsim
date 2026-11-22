@@ -56,7 +56,7 @@ if [ -z "$PYTHON" ]; then
     echo ""
     echo "ERROR: No working Python interpreter was found." >&2
     echo "" >&2
-    echo "Fix: install Python 3.8+:" >&2
+    echo "Fix: install Python 3.11 or newer:" >&2
     echo "  * macOS:        brew install python   (or https://www.python.org/downloads/)" >&2
     echo "  * Debian/Ubuntu: sudo apt install python3 python3-pip python3-venv" >&2
     echo "  * Fedora/RHEL:   sudo dnf install python3 python3-pip" >&2
@@ -75,18 +75,31 @@ fi
 
 if [ "$USE_UV" -eq 1 ]; then
     # Fast path: install with uv into the detected interpreter's environment.
-    if ! command -v uv >/dev/null 2>&1; then
-        echo "" >&2
-        echo "ERROR: --uv was requested but 'uv' is not installed." >&2
-        echo "Install uv with one of:" >&2
-        echo "  * curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
-        echo "  * brew install uv" >&2
-        echo "  * $PYTHON -m pip install uv" >&2
-        echo "Or re-run without --uv to use pip." >&2
+    UV_INSTALL_DIR="$HOME/.local/bin"
+    UV_EXECUTABLE="$UV_INSTALL_DIR/uv"
+    if ! command -v uv >/dev/null 2>&1 && [ ! -x "$UV_EXECUTABLE" ]; then
+        echo "uv not found - installing it for the current user..."
+        if ! command -v curl >/dev/null 2>&1; then
+            echo "ERROR: curl is required to bootstrap uv automatically." >&2
+            echo "Install curl or install uv manually: https://docs.astral.sh/uv/getting-started/installation/" >&2
+            exit 1
+        fi
+        mkdir -p "$UV_INSTALL_DIR"
+        if ! curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$UV_INSTALL_DIR" sh; then
+            echo "ERROR: could not install uv. Check network access or install uv manually." >&2
+            echo "  https://docs.astral.sh/uv/getting-started/installation/" >&2
+            exit 1
+        fi
+    fi
+    if [ ! -x "$UV_EXECUTABLE" ]; then
+        UV_EXECUTABLE="$(command -v uv || true)"
+    fi
+    if [ -z "$UV_EXECUTABLE" ] || [ ! -x "$UV_EXECUTABLE" ]; then
+        echo "ERROR: uv installation completed but the executable was not found." >&2
         exit 1
     fi
     echo "Installing (editable, via uv): $TARGET"
-    uv pip install --python "$PYEXE" -e "$TARGET"
+    "$UV_EXECUTABLE" pip install --python "$PYEXE" -e "$TARGET"
 else
     # Ensure pip is available for this interpreter.
     if ! "$PYTHON" -m pip --version >/dev/null 2>&1; then
@@ -106,11 +119,43 @@ echo ""
 echo "Ensuring the 'neqsim' command is on your PATH..."
 "$PYTHON" "$DEVTOOLS/ensure_on_path.py" || true
 
+# This script runs in a child process, so it cannot change the caller's PATH.
+# Report what the caller's shell will actually see rather than predicting it.
 echo ""
-echo "Done. Verify with:"
-echo "  $PYTHON -m neqsim_cli --help"
-echo "If 'neqsim' is not found in this shell, open a NEW terminal (or 'source'"
-echo "your shell rc file), or use the line above."
+if command -v neqsim >/dev/null 2>&1; then
+    CLI="neqsim"
+    echo "Done. The 'neqsim' command works in this shell:"
+    echo "  $(command -v neqsim)"
+    echo "Try it now:  neqsim doctor --skip-jar"
+else
+    # Keep the examples below runnable for whoever is reading them.
+    CLI="$PYTHON -m neqsim_cli"
+    SCRIPT_DIR_FOUND=$("$PYTHON" "$DEVTOOLS/ensure_on_path.py" --print-script-dir 2>/dev/null | tail -n 1)
+    echo "Done, but 'neqsim' is not on PATH in this shell yet."
+    if [ -n "$SCRIPT_DIR_FOUND" ]; then
+        echo "Enable it here and now with:"
+        echo "  export PATH=\"\$PATH:$SCRIPT_DIR_FOUND\""
+        echo "A new terminal picks it up automatically."
+    fi
+    echo "Or use the same entry point, which always works:"
+    echo "  $CLI --help"
+    echo "To find out why:  $CLI doctor --skip-jar"
+fi
+
+echo ""
+echo "Where solved tasks are saved:"
+echo "  Default (nothing set): <this repository>/task_solve"
+echo "  Change it:  $CLI --set-task-root \"/data/engineering-tasks\"   (or 'cwd')"
+echo "  Check it:   $CLI --show-task-root"
+echo "The setting is saved in ~/.neqsim/task_defaults.json and is used by"
+echo "'neqsim new-task' and the AI agents, so tasks can live outside the clone."
+
+echo ""
+echo "Word template for generated reports:"
+echo "  Default (nothing set): built-in NeqSim report styling"
+echo "  Change it:  $CLI --set-report-template \"/path/company template.docx\""
+echo "  Check it:   $CLI --show-report-template"
+echo "Every Word report then inherits its styles, fonts, headers, and footers."
 
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────
 # The Python devtools do not need Java, but building the NeqSim JAR

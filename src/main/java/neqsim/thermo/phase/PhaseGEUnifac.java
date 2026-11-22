@@ -46,6 +46,12 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   public PhaseGEUnifac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
     super(phase, alpha, Dij, mixRule, intparam);
+    if (!this.getClass().equals(PhaseGEUnifac.class)) {
+      // PSRK and UMR-PRU rebuild componentArray from their own group table straight after this
+      // constructor returns. Building the classic components here would discard them again while
+      // forcing every component to also carry a row in UNIFACcomp.csv.
+      return;
+    }
     componentArray = new ComponentGEUnifac[alpha[0].length];
     for (int i = 0; i < alpha[0].length; i++) {
       componentArray[i] = new ComponentGEUnifac(phase.getComponent(i).getName(),
@@ -126,9 +132,14 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * checkGroups.
+   * Align all components to the sorted union of their UNIFAC subgroups without changing group counts. Repeated calls
+   * also reconcile lists edited through the legacy mutable group-list accessor.
    */
   public void checkGroups() {
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentGEUnifac component = (ComponentGEUnifac) getComponent(i);
+      component.setUnifacGroups(component.getUnifacGroups2());
+    }
     ArrayList<neqsim.thermo.atomelement.UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
 
     for (int i = 0; i < numberOfComponents; i++) {

@@ -57,7 +57,7 @@ class SevereSluggingSystemDiagnosticTest {
         section(100.0, 0.20, Math.toRadians(-2.0), 0.60, 0.40, PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
         section(200.0, 0.30, 0.0, 0.50, 0.50, PipeSection.FlowRegime.STRATIFIED_WAVY, 280_000.0),
         section(20.0, 0.10, Math.toRadians(30.0), 0.20, 0.80, PipeSection.FlowRegime.SLUG, 240_000.0),
-        section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0) };
+        section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0)};
 
     Input input = SevereSluggingSystemDiagnostic.fromSections(sections, 2, 0.89, 0.0);
     double expectedGasVolume = sections[0].getArea() * 100.0 * 0.60 + sections[1].getArea() * 200.0 * 0.50;
@@ -78,7 +78,7 @@ class SevereSluggingSystemDiagnosticTest {
     TwoFluidSection[] sections = new TwoFluidSection[] {
         section(100.0, 0.20, 0.0, 0.60, 0.40, PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
         section(20.0, 0.10, Math.toRadians(30.0), 0.20, 0.80, PipeSection.FlowRegime.SLUG, 240_000.0),
-        section(30.0, 0.12, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0) };
+        section(30.0, 0.12, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0)};
 
     Input input = SevereSluggingSystemDiagnostic.fromSections(sections, 1, 0.89, 0.0);
 
@@ -115,6 +115,47 @@ class SevereSluggingSystemDiagnosticTest {
         .evaluate(baseInput().validFlowlineRiserTopology(false).build());
     assertFalse(notApplicable.isApplicable());
     assertTrue(Double.isNaN(notApplicable.getStabilityRatio()));
+  }
+
+  @Test
+  void liquidMixtureBasisEvaluatesThreePhaseSystemAndFlagsTheResult() {
+    Result rejected = SevereSluggingSystemDiagnostic.evaluate(baseInput().threePhase(true).build());
+    Result mixture = SevereSluggingSystemDiagnostic
+        .evaluate(baseInput().threePhase(true).treatLiquidsAsMixture(true).build());
+    Result twoPhase = SevereSluggingSystemDiagnostic.evaluate(baseInput().treatLiquidsAsMixture(true).build());
+
+    assertEquals(Status.NOT_VALIDATED_THREE_PHASE, rejected.getStatus());
+    assertFalse(rejected.isLiquidMixtureBasis());
+    assertEquals(Status.UNSTABLE, mixture.getStatus());
+    assertTrue(mixture.isLiquidMixtureBasis());
+    assertEquals(twoPhase.getCriticalTopPressurePa(), mixture.getCriticalTopPressurePa(), 0.0);
+    assertFalse(twoPhase.isLiquidMixtureBasis(), "A two-phase system is not on the mixture basis even when selected");
+  }
+
+  @Test
+  void riserColumnDensityIsTheInSituOilWaterMixture() {
+    TwoFluidSection[] sections = new TwoFluidSection[] {
+        section(200.0, 0.20, 0.0, 0.50, 0.50, PipeSection.FlowRegime.STRATIFIED_WAVY, 280_000.0),
+        section(20.0, 0.20, Math.toRadians(90.0), 0.20, 0.80, PipeSection.FlowRegime.SLUG, 240_000.0),
+        section(20.0, 0.20, Math.toRadians(90.0), 0.40, 0.60, PipeSection.FlowRegime.SLUG, 200_000.0)};
+    setOilAndWater(sections[0], 0.30, 0.20);
+    setOilAndWater(sections[1], 0.20, 0.60);
+    setOilAndWater(sections[2], 0.45, 0.15);
+
+    Input rejected = SevereSluggingSystemDiagnostic.fromSections(sections, 1, 0.89, 0.0);
+    Input mixture = SevereSluggingSystemDiagnostic.fromSections(sections, 1, 0.89, 0.0, true);
+    double expectedDensity = ((0.20 + 0.45) * 800.0 + (0.60 + 0.15) * 1000.0) / (0.80 + 0.60);
+
+    assertTrue(rejected.isThreePhase());
+    assertEquals(Status.NOT_VALIDATED_THREE_PHASE, SevereSluggingSystemDiagnostic.evaluate(rejected).getStatus());
+    assertEquals(expectedDensity, mixture.getLiquidDensityKgPerM3(), 1.0e-9);
+    assertEquals(0.70, mixture.getRiserLiquidHoldup(), 1.0e-12);
+    Result result = SevereSluggingSystemDiagnostic.evaluate(mixture);
+    assertTrue(result.isApplicable());
+    assertTrue(result.isLiquidMixtureBasis());
+    double expectedCritical = Math.max(0.0, 0.70 * expectedDensity * SevereSluggingSystemDiagnostic.STANDARD_GRAVITY
+        * (mixture.getUpstreamGasVolumeM3() / (mixture.getRiserAreaM2() * 0.89) - 40.0));
+    assertEquals(expectedCritical, result.getCriticalTopPressurePa(), 1.0e-6);
   }
 
   @Test
@@ -202,7 +243,7 @@ class SevereSluggingSystemDiagnosticTest {
   void extractsOilAndWaterDensitiesForThreePhaseRiser() {
     TwoFluidSection[] sections = new TwoFluidSection[] {
         section(100.0, 0.20, Math.toRadians(-2.0), 0.60, 0.40, PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
-        section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0) };
+        section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0)};
     for (TwoFluidSection section : sections) {
       section.setOilHoldup(0.75 * section.getLiquidHoldup());
       section.setWaterHoldup(0.25 * section.getLiquidHoldup());
@@ -225,7 +266,7 @@ class SevereSluggingSystemDiagnosticTest {
     assertFalse(SevereSluggingSystemDiagnostic.fromSections(
         new TwoFluidSection[] {
             section(100.0, 0.20, 0.0, 0.60, 0.40, PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
-            section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0) },
+            section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0)},
         1, 0.89, 0.0).hasThreePhaseDensities());
   }
 
@@ -252,6 +293,14 @@ class SevereSluggingSystemDiagnosticTest {
     assertThrows(IllegalArgumentException.class, () -> baseInput().riserAreaM2(Double.NaN).build());
     assertThrows(IllegalArgumentException.class, () -> baseInput().gasCapVoidFraction(0.0).build());
     assertThrows(IllegalArgumentException.class, () -> baseInput().riserLiquidHoldup(1.01).build());
+  }
+
+  private static void setOilAndWater(TwoFluidSection section, double oilHoldup, double waterHoldup) {
+    section.setOilHoldup(oilHoldup);
+    section.setWaterHoldup(waterHoldup);
+    section.setOilDensity(800.0);
+    section.setWaterDensity(1000.0);
+    section.setLiquidDensity((oilHoldup * 800.0 + waterHoldup * 1000.0) / (oilHoldup + waterHoldup));
   }
 
   private static TwoFluidSection section(double lengthM, double diameterM, double inclinationRad, double gasHoldup,

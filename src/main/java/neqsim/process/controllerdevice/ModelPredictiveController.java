@@ -1804,7 +1804,7 @@ public class ModelPredictiveController extends NamedBaseClass
         return null;
       }
       double rateOfChange = (nextMeasurement - measurement) / dt;
-      double[] row = { measurement / measurementScale, control / controlScale, 1.0 };
+      double[] row = {measurement / measurementScale, control / controlScale, 1.0};
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
         double value = row[rowIndex];
         for (int colIndex = 0; colIndex < 3; colIndex++) {
@@ -2204,7 +2204,7 @@ public class ModelPredictiveController extends NamedBaseClass
    *
    * @param steps number of steps ahead to predict (must be positive)
    * @param dt sampling interval in seconds
-   * @return predicted measurements for each step into the future
+   * @return predictions at times {@code dt} through {@code steps * dt}, in the measurement unit
    */
   public double[] getPredictedTrajectory(int steps, double dt) {
     if (steps <= 0) {
@@ -2222,9 +2222,6 @@ public class ModelPredictiveController extends NamedBaseClass
     for (int i = 0; i < steps; i++) {
       measurement = decay * measurement + (1.0 - decay) * steadyState;
       trajectory[i] = measurement;
-    }
-    if (steps > 0) {
-      trajectory[steps - 1] = steadyState;
     }
     return trajectory;
   }
@@ -2244,17 +2241,6 @@ public class ModelPredictiveController extends NamedBaseClass
     if (getClass() != ModelPredictiveController.class) {
       return "MPC subclass " + getClass().getName()
           + " must provide a complete transient-state snapshot before transactional execution";
-    }
-    if (transmitter != null && transmitter.isOnlineSignal()) {
-      return "MPC transmitter '" + transmitter.getName()
-          + "' uses online/external I/O without a rejected-step commit/defer contract";
-    }
-    for (QualityConstraint constraint : qualityConstraints) {
-      MeasurementDeviceInterface measurement = constraint.getMeasurement();
-      if (measurement != null && measurement.isOnlineSignal()) {
-        return "MPC quality constraint '" + constraint.getName() + "' uses online/external I/O through measurement '"
-            + measurement.getName() + "'";
-      }
     }
     return null;
   }

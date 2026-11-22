@@ -197,8 +197,7 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     // extended-Huckel recommendations synthesize vapor-pressure,
     // electrochemical, cryoscopic, and solubility evidence independently of
     // the PHREEQC implementation used for the equation-convention regressions.
-    double[][] reference = { { 0.2, 0.7344, 0.9242 }, { 0.5, 0.684, 0.924 }, { 1.0, 0.662, 0.940 },
-        { 2.0, 0.677, 0.989 } };
+    double[][] reference = {{0.2, 0.7344, 0.9242}, {0.5, 0.684, 0.924}, {1.0, 0.662, 0.940}, {2.0, 0.677, 0.989}};
     for (double[] state : reference) {
       double molality = state[0];
       PhasePitzer phase = createNaKClPhase(REFERENCE_TEMPERATURE, molality, 0.0, molality);
@@ -220,7 +219,7 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     // are reproduced in Table 2 of Dash et al. (2012), DOI
     // 10.5402/2012/730154 (CC BY), independently of PHREEQC. Values are on
     // the molality scale at 298.15 K and rounded to 0.001.
-    double[][] reference = { { 0.0982, 0.768 }, { 0.5001, 0.649 }, { 0.9926, 0.604 }, { 1.9895, 0.573 } };
+    double[][] reference = {{0.0982, 0.768}, {0.5001, 0.649}, {0.9926, 0.604}, {1.9895, 0.573}};
     for (double[] state : reference) {
       double molality = state[0];
       PhasePitzer phase = createNaKClPhase(REFERENCE_TEMPERATURE, 0.0, molality, molality);
@@ -411,7 +410,7 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     // NIST ThermoML archive values are molality-scale mean ionic activity
     // coefficients at 298.15 K and 101 kPa, uncertainty 0.001. No parameter was
     // fitted to these held-out values.
-    double[][] reference = { { 0.1, 0.517 }, { 0.5, 0.449 }, { 1.0, 0.502 }, { 2.0, 0.790 } };
+    double[][] reference = {{0.1, 0.517}, {0.5, 0.449}, {1.0, 0.502}, {2.0, 0.790}};
     for (double[] state : reference) {
       double molality = state[0];
       PhasePitzer phase = createCalciumMagnesiumChlorideSulfatePhase(REFERENCE_TEMPERATURE, molality, 0.0,
@@ -430,7 +429,7 @@ class PitzerParameterDatasetsTest extends neqsim.NeqSimTest {
     // DOI 10.1016/j.jct.2013.06.016. The publisher-permitted NIST ThermoML
     // archive records the paper's molality-scale quantities at 298.15 K and
     // 101.325 kPa. No PHREEQC parameter was fitted to these held-out values.
-    double[][] reference = { { 0.1667, 0.5018 }, { 0.3333, 0.4796 }, { 1.0, 0.5776 }, { 2.0, 1.0695 } };
+    double[][] reference = {{0.1667, 0.5018}, {0.3333, 0.4796}, {1.0, 0.5776}, {2.0, 1.0695}};
     for (double[] state : reference) {
       double molality = state[0];
       PhasePitzer phase = createCalciumMagnesiumChlorideSulfatePhase(REFERENCE_TEMPERATURE, 0.0, molality,

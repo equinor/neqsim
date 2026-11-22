@@ -1,11 +1,10 @@
 ---
 title: NeqSim Base Modules
-description: This document provides an overview of the seven foundational modules that make up NeqSim. Each module resides under `src/main/java/neqsim` and works together to support fluid characterization and proc...
+description: "Overview of NeqSim's seven foundational thermodynamic, property, fluid-mechanics, reaction, fitting, and process module groups plus process-safety capabilities."
 ---
 
-# NeqSim Base Modules
 
-This document provides an overview of the seven foundational modules that make up NeqSim. Each module resides under `src/main/java/neqsim` and works together to support fluid characterization and process design.
+This page groups NeqSim into seven foundational module areas. Each area maps to one or more packages under `src/main/java/neqsim`; process safety is a cross-cutting capability implemented primarily inside the process hierarchy.
 
 ## Thermodynamic routines
 - **Location:** `thermo` and `thermodynamicoperations`
@@ -22,7 +21,7 @@ This document provides an overview of the seven foundational modules that make u
 ## Unit operations
 - **Location:** `process/equipment`
 - **Features:** library of process equipment including separators, heat exchangers, valves and other common unit operations.
-- **Distillation columns:** nine solver modes (direct substitution, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm simultaneous MESH correction, and MESH residual monitoring) with convergence diagnostics and Murphree efficiency support. See [distillation column docs](wiki/distillation_column.md).
+- **Distillation columns:** nine solver modes (direct substitution, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm simultaneous MESH correction, and MESH residual monitoring) with convergence diagnostics and Murphree efficiency support. See [distillation column docs](wiki/distillation_column).
 
 ## Chemical reactions routines
 - **Location:** `chemicalreactions`
@@ -36,7 +35,7 @@ This document provides an overview of the seven foundational modules that make u
 - **Location:** `process`
 - **Features:** framework for assembling flowsheets and running dynamic or steady-state process simulations that couple unit operations and property packages.
 
-## Process safety simulation
+## Cross-cutting process safety capabilities
 - **Location:** `process/safety`, `process/equipment/tank`, `process/util/fire`
 - **Features:** comprehensive safety simulation capabilities including:
   - **Depressurization:** Dynamic vessel blowdown with multiple thermodynamic modes (isothermal, isentropic, energy balance), fire case modeling, and transient wall heat transfer
@@ -45,3 +44,8 @@ This document provides an overview of the seven foundational modules that make u
   - **Safety envelopes:** Hydrate, WAX, CO2 freezing, and MDMT envelope calculations with operating point validation
   - **Risk framework:** Monte Carlo and deterministic risk analysis with event trees, sensitivity analysis, and F-N curve generation
 
+## Related documentation
+
+- [Documentation home](index)
+- [Package guide](README)
+- [Reference manual index](REFERENCE_MANUAL_INDEX)

@@ -36,12 +36,15 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-        * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
-            * system.getPhases()[1].getComponents()[componentNumber].getx()
-            - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
-                * system.getPhases()[0].getComponents()[componentNumber].getx()),
-        4.0);
+    if (!validateInterface(0, 1)) {
+      return 0.0;
+    }
+    double firstMolarDensity = physicalDensity(0) / system.getPhase(0).getMolarMass();
+    double secondMolarDensity = physicalDensity(1) / system.getPhase(1).getMolarMass();
+    return validateResult(1.0e-3 * Math.pow(system.getPhase(0).getComponent(componentNumber).getParachorParameter()
+        * 1.0e-6 * (secondMolarDensity * system.getPhase(1).getComponent(componentNumber).getx()
+            - firstMolarDensity * system.getPhase(0).getComponent(componentNumber).getx()),
+        4.0));
   }
 
   /**
@@ -53,28 +56,19 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
-    double temp = 0;
-    if (system.getNumberOfPhases() < 2) {
+    if (!validateInterface(interface1, interface2)) {
       return 0.0;
     }
-    // if(interface1>=2 || interface2>=2) return 0.0;
-    // return 0.0;
-    try {
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        // System.out.println("density1 parachor " +
-        // system.getPhase(interface1).getPhysicalProperties().getDensity());
-        // System.out.println("density2 parachor " +
-        // system.getPhase(interface2).getPhysicalProperties().getDensity());
-        temp += system.getPhase(interface1).getComponent(i).getParachorParameter() * 1.0e-6
-            * (system.getPhase(interface2).getPhysicalProperties().getDensity()
-                / system.getPhase(interface2).getMolarMass() * system.getPhase(interface2).getComponent(i).getx()
-                - system.getPhase(interface1).getPhysicalProperties().getDensity()
-                    / system.getPhase(interface1).getMolarMass() * system.getPhase(interface1).getComponent(i).getx());
-      }
-    } catch (Exception ex) {
-      // logger.error(ex.getMessage(), ex);
-      temp = 0.0;
+    double firstMolarDensity = physicalDensity(interface1) / system.getPhase(interface1).getMolarMass();
+    double secondMolarDensity = physicalDensity(interface2) / system.getPhase(interface2).getMolarMass();
+
+    double temp = 0.0;
+    for (int i = 0; i < system.getPhase(interface1).getNumberOfComponents(); i++) {
+      temp += system.getPhase(interface1).getComponent(i).getParachorParameter() * 1.0e-6
+          * (secondMolarDensity * system.getPhase(interface2).getComponent(i).getx()
+              - firstMolarDensity * system.getPhase(interface1).getComponent(i).getx());
     }
-    return Math.pow(temp, 4.0) / 1000.0;
+    return validateResult(Math.pow(temp, 4.0) / 1000.0);
   }
+
 }

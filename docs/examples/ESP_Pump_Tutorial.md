@@ -435,4 +435,3 @@ degradation = esp.getHeadDegradationFactor()
 is_surging = esp.isSurging()
 is_locked = esp.isGasLocked()
 ```
-

@@ -4,6 +4,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating how to export a NeqSim fluid to Eclipse E300
@@ -24,6 +26,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class EclipseE300ExportImportExample {
+  private static final Logger logger =
+      LogManager.getLogger(EclipseE300ExportImportExample.class);
 
   /**
    * Main method demonstrating the E300 export/import workflow.
@@ -33,7 +37,7 @@ public class EclipseE300ExportImportExample {
   public static void main(String[] args) {
     try {
       // Step 1: Create a compositional fluid
-      System.out.println("=== Step 1: Creating compositional fluid ===");
+      logger.info("=== Step 1: Creating compositional fluid ===");
       SystemInterface originalFluid = createFluid();
       originalFluid.init(0);
       originalFluid.init(1);
@@ -45,22 +49,22 @@ public class EclipseE300ExportImportExample {
       ops.TPflash();
       originalFluid.initPhysicalProperties();
 
-      System.out.println("Original fluid composition:");
+      logger.info("Original fluid composition:");
       printFluidSummary(originalFluid);
 
       // Step 2: Export to E300 file using the new API
-      System.out.println("\n=== Step 2: Exporting to E300 format ===");
+      logger.info("\n=== Step 2: Exporting to E300 format ===");
       String outputFile = "exported_fluid.e300";
       EclipseFluidReadWrite.write(originalFluid, outputFile, 100.0); // 100 C reservoir temp
-      System.out.println("Exported to: " + outputFile);
+      logger.info("Exported to: {}", outputFile);
 
       // You can also get the E300 content as a string for inspection
       String e300Content = EclipseFluidReadWrite.toE300String(originalFluid, 100.0);
-      System.out.println("\nFirst 500 characters of E300 content:");
-      System.out.println(e300Content.substring(0, Math.min(500, e300Content.length())));
+      logger.info("\nFirst 500 characters of E300 content:");
+      logger.info("{}", e300Content.substring(0, Math.min(500, e300Content.length())));
 
       // Step 3: Read the E300 file back
-      System.out.println("\n=== Step 3: Reading E300 file back ===");
+      logger.info("\n=== Step 3: Reading E300 file back ===");
       SystemInterface importedFluid = EclipseFluidReadWrite.read(outputFile);
 
       // Set same conditions as original
@@ -70,18 +74,17 @@ public class EclipseE300ExportImportExample {
       ops2.TPflash();
       importedFluid.initPhysicalProperties();
 
-      System.out.println("Imported fluid composition:");
+      logger.info("Imported fluid composition:");
       printFluidSummary(importedFluid);
 
       // Step 4: Compare properties
-      System.out.println("\n=== Step 4: Comparing properties ===");
+      logger.info("\n=== Step 4: Comparing properties ===");
       compareFluidProperties(originalFluid, importedFluid);
 
-      System.out.println("\n=== Export/Import completed successfully! ===");
+      logger.info("\n=== Export/Import completed successfully! ===");
 
     } catch (Exception e) {
-      System.err.println("Error: " + e.getMessage());
-      e.printStackTrace();
+      logger.error("E300 export/import failed: {}", e.getMessage(), e);
     }
   }
 
@@ -125,19 +128,19 @@ public class EclipseE300ExportImportExample {
    * @param fluid the fluid to summarize
    */
   private static void printFluidSummary(SystemInterface fluid) {
-    System.out.println("  Number of components: " + fluid.getNumberOfComponents());
-    System.out.println("  Temperature: " + String.format("%.2f", fluid.getTemperature("C")) + " C");
-    System.out.println("  Pressure: " + String.format("%.2f", fluid.getPressure("bara")) + " bara");
-    System.out.println("  Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("  Number of components: {}", fluid.getNumberOfComponents());
+    logger.info("  Temperature: {} C", String.format("%.2f", fluid.getTemperature("C")));
+    logger.info("  Pressure: {} bara", String.format("%.2f", fluid.getPressure("bara")));
+    logger.info("  Number of phases: {}", fluid.getNumberOfPhases());
 
     if (fluid.hasPhaseType("gas")) {
-      System.out.println("  Gas density: "
-          + String.format("%.2f", fluid.getGasPhase().getDensity("kg/m3")) + " kg/m3");
-      System.out.println("  Gas Z-factor: " + String.format("%.4f", fluid.getGasPhase().getZ()));
+      logger.info("  Gas density: {} kg/m3",
+          String.format("%.2f", fluid.getGasPhase().getDensity("kg/m3")));
+      logger.info("  Gas Z-factor: {}", String.format("%.4f", fluid.getGasPhase().getZ()));
     }
     if (fluid.hasPhaseType("oil")) {
-      System.out.println("  Oil density: "
-          + String.format("%.2f", fluid.getPhase("oil").getDensity("kg/m3")) + " kg/m3");
+      logger.info("  Oil density: {} kg/m3",
+          String.format("%.2f", fluid.getPhase("oil").getDensity("kg/m3")));
     }
   }
 
@@ -148,22 +151,22 @@ public class EclipseE300ExportImportExample {
    * @param imported imported fluid
    */
   private static void compareFluidProperties(SystemInterface original, SystemInterface imported) {
-    System.out.println("Property comparison:");
-    System.out.println("  Original components: " + original.getNumberOfComponents());
-    System.out.println("  Imported components: " + imported.getNumberOfComponents());
+    logger.info("Property comparison:");
+    logger.info("  Original components: {}", original.getNumberOfComponents());
+    logger.info("  Imported components: {}", imported.getNumberOfComponents());
 
     if (original.hasPhaseType("gas") && imported.hasPhaseType("gas")) {
       double origGasDens = original.getGasPhase().getDensity("kg/m3");
       double impGasDens = imported.getGasPhase().getDensity("kg/m3");
       double gasDiff = Math.abs(origGasDens - impGasDens) / origGasDens * 100;
-      System.out.println("  Gas density difference: " + String.format("%.2f", gasDiff) + "%");
+      logger.info("  Gas density difference: {}%", String.format("%.2f", gasDiff));
     }
 
     if (original.hasPhaseType("oil") && imported.hasPhaseType("oil")) {
       double origOilDens = original.getPhase("oil").getDensity("kg/m3");
       double impOilDens = imported.getPhase("oil").getDensity("kg/m3");
       double oilDiff = Math.abs(origOilDens - impOilDens) / origOilDens * 100;
-      System.out.println("  Oil density difference: " + String.format("%.2f", oilDiff) + "%");
+      logger.info("  Oil density difference: {}%", String.format("%.2f", oilDiff));
     }
   }
 }

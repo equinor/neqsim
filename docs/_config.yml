@@ -65,8 +65,10 @@ nav:
     url: /examples/
   - title: Reference Manual
     url: /manual/neqsim_reference_manual.html
-  - title: API Reference
+  - title: Documentation Index
     url: /REFERENCE_MANUAL_INDEX
+  - title: API Reference
+    url: /javadoc/index.html
 
 # Collections for organizing documentation
 collections:

@@ -21,7 +21,7 @@ public class SystemWaterIF97Test {
     double pMPa = 0.1; // 1 bar
     double molarMass = sys.getPhase(0).getComponent(0).getMolarMass();
 
-    double expectedVm = Iapws_if97.v_pt(pMPa, 373.15) * molarMass;
+    double expectedVm = Iapws_if97.v_pt(pMPa, 373.15) * molarMass * 1e5;
     assertEquals(expectedVm, sys.getPhase(0).getMolarVolume(), 1e-8, "molar volume");
 
     double expectedH = Iapws_if97.h_pt(pMPa, 373.15) * molarMass * 1e3;
@@ -40,7 +40,7 @@ public class SystemWaterIF97Test {
     opsGas.TPflash();
     assertEquals(PhaseType.GAS, gas.getPhase(0).getType());
     double molarMassG = gas.getPhase(0).getComponent(0).getMolarMass();
-    double expectedVmG = Iapws_if97.v_pt(0.1, 400.0) * molarMassG;
+    double expectedVmG = Iapws_if97.v_pt(0.1, 400.0) * molarMassG * 1e5;
     assertEquals(expectedVmG, gas.getPhase(0).getMolarVolume(), 1e-8, "molar volume");
     double expectedHG = Iapws_if97.h_pt(0.1, 400.0) * molarMassG * 1e3;
     assertEquals(expectedHG, gas.getPhase(0).getEnthalpy(), 1e-4, "enthalpy");
@@ -59,7 +59,7 @@ public class SystemWaterIF97Test {
     opsLiq.TPflash();
     assertEquals(PhaseType.AQUEOUS, liq.getPhase(0).getType());
     double molarMassL = liq.getPhase(0).getComponent(0).getMolarMass();
-    double expectedVmL = Iapws_if97.v_pt(0.1, 300.0) * molarMassL;
+    double expectedVmL = Iapws_if97.v_pt(0.1, 300.0) * molarMassL * 1e5;
     assertEquals(expectedVmL, liq.getPhase(0).getMolarVolume(), 1e-8, "molar volume");
     double expectedHL = Iapws_if97.h_pt(0.1, 300.0) * molarMassL * 1e3;
     assertEquals(expectedHL, liq.getPhase(0).getEnthalpy(), 1e-4, "enthalpy");

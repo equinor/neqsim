@@ -144,7 +144,9 @@ Selected regression anchors (verified in
 > runs a full electrolyte-CPA equilibrium (`SystemElectrolyteCPAstatoil`, mixing
 > rule 10, amine physical-property model, chemical reactions enabled). It is
 > **experimental and not yet calibrated** — it may return `NaN` when the
-> equilibrium does not converge. Use `getCO2PartialPressure()` for design work.
+> equilibrium does not converge or the CO2 property cannot be read. An unavailable
+> result is never substituted with zero partial pressure; check that the returned
+> value is finite before using it. Use `getCO2PartialPressure()` for design work.
 
 ---
 

@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-01",
+  "parent_head": "8e88e8755a3422474ca1a50402bff5935858887d",
+  "base": "0ed75c2f10d9030ec8d9270c51e4ade28f5603f8",
+  "production_changed": false,
+  "fresh_focused_tests": 16,
+  "focused_exit": 0,
+  "experimental_ramp_exit": 1,
+  "dry_wet_detection_harness_exit": 0,
+  "dry_wet_physics_contract": "FAIL: oil mass and source zero, momentum source -27.25192515168584 N/m",
+  "candidate_decision": "Rejected; do not change production guard or EOS thresholds",
+  "rollback_probe_fix": "Compare observed pre-call simulation time exactly, not nominal requested-minus-dt",
+  "standalone_probes_compile": "--release 8 on JDK17",
+  "fresh_gates": {
+    "spotless_apply_stable": 0,
+    "spotless_check": 0,
+    "documentation_search_827md_1html": 0,
+    "source_generated_inventory": 0,
+    "all_file_precommit": 0,
+    "all_file_prepush": 0
+  },
+  "prior_150_regressions": "Previous exact-head results retained; not rerun or relabeled as fresh",
+  "notebook": false,
+  "limits": "No pooling, full-cycle, mesh convergence or physical evaporation-time result"
+}

@@ -1,215 +1,173 @@
 ---
-title: Storage Tanks
-description: Documentation for liquid storage tanks in NeqSim.
+title: Storage tanks and LNG boil-off
+description: Current Tank and LNGTank APIs, units, execution boundaries, and an executable LNG boil-off example.
 ---
 
-Documentation for liquid storage tanks in NeqSim.
+NeqSim provides two related process-equipment models in
+`neqsim.process.equipment.tank`:
 
-## Table of Contents
-- [Overview](#overview)
-- [Tank Class](#tank-class)
-- [Dynamic Operation](#dynamic-operation)
-- [Boil-off Gas](#boil-off-gas)
-- [Examples](#examples)
+| Class | Maintained purpose |
+| --- | --- |
+| `Tank` | A thermodynamic vessel with gas and liquid outlet streams, steady-state execution, optional lumped transient execution, auto-sizing, capacity constraints, and mechanical-design access. |
+| `LNGTank` | A `Tank` extension that adds a steady heat-ingress and boil-off-gas (BOG) calculation for an LNG inventory. |
 
----
+These models do not have the same contract. Use `Tank` for the generic vessel
+state and outlet APIs. Use `LNGTank` when the required result is the simplified
+steady LNG heat-leak/BOG screen described below.
 
-## Overview
+## API and unit map
 
-**Location:** `neqsim.process.equipment.tank`
+`Tank` accepts an inlet `StreamInterface` in its constructor or through
+`setInletStream`/`addStream`. Its maintained outlets are
+`getGasOutStream()` and `getLiquidOutStream()`.
 
-**Classes:**
-| Class     | Description                    |
-| --------- | ------------------------------ |
-| `Tank`    | Basic storage tank             |
-| `LNGTank` | LNG storage tank with boil-off |
+- `setVolume(double)` takes a volume in m³. There is no unit-string overload.
+- The public API does not provide `setLiquidLevel` or `setPressure` methods.
+  Pressure and temperature enter through the connected stream state.
+- `setDesignResidenceTime(double)` uses seconds, and
+  `setDesignLiquidLevel(double)` uses a fraction from 0 to 1.
+- `setCalculateSteadyState(false)` selects the lumped transient route.
+  A dynamic study must provide consistent inlet/outlet streams, a time step,
+  initialization, and controls; it is not created by setting a level and calling
+  a no-argument transient loop.
 
----
+`LNGTank` adds the following explicit inputs and outputs:
 
-## Tank Class
+| Method | Quantity and unit |
+| --- | --- |
+| `setAmbientTemperature(value, "C" or "K")` | Ambient temperature |
+| `setTankSurfaceArea(value)` | External area in m² |
+| `setOverallHeatTransferCoefficient(value)` | Overall coefficient in W/m²/K |
+| `setLNGInventory(value)` | LNG inventory in kg |
+| `setStoragePressure(value)` | Storage pressure in bara |
+| `getHeatIngress()` | Heat ingress in W |
+| `getBOGMassFlowRate()` | BOG mass flow in kg/hr |
+| `getBoilOffRatePctPerDay()` | Percent of inventory per day |
+| `getBOGStream()` | BOG outlet stream |
+| `getLNGProductStream()` | LNG liquid outlet stream when created |
 
-### Basic Usage
+`getBoilOffRatePctPerDay()` already returns percent/day; do not multiply it by
+100 again.
+
+## Model equations
+
+The steady screen calculates heat ingress as
+
+$$
+\dot{Q}_{\mathrm{in}} = U A (T_{\mathrm{ambient}} - T_{\mathrm{LNG}})
+$$
+
+and BOG mass flow as
+
+$$
+\dot{m}_{\mathrm{BOG}} =
+\frac{\dot{Q}_{\mathrm{in}}}{\Delta h_{\mathrm{vap}}}.
+$$
+
+Here, `U` is in W/m²/K, `A` is in m², both temperatures use the same absolute
+scale, and the latent heat is in J/kg. NeqSim attempts to obtain the latent heat
+from the flashed inlet fluid at the storage pressure. If that calculation cannot
+supply a usable two-phase value, the implementation retains its documented
+default latent heat. The resulting mass rate is converted from kg/s to kg/hr.
+
+## Executable LNG boil-off example
+
+The following is one complete Java 8 program. It uses Log4j2, runs the actual
+`LNGTank` implementation, and checks heat-ingress closure plus bounded,
+positive BOG results.
 
 ```java
-import neqsim.process.equipment.tank.Tank;
-
-Tank tank = new Tank("T-100", liquidStream);
-tank.setVolume(1000.0, "m3");
-tank.setLiquidLevel(0.5);  // 50% full
-tank.run();
-```
-
-### Operating Pressure
-
-```java
-// Atmospheric tank
-tank.setPressure(1.013, "bara");
-
-// Pressurized storage
-tank.setPressure(5.0, "bara");
-```
-
----
-
-## Dynamic Operation
-
-### Fill and Drain
-
-```java
-// Initial conditions
-tank.setLiquidLevel(0.3);  // 30% full
-tank.run();
-
-// Simulate filling
-for (double t = 0; t < 3600; t += 60) {
-    tank.setInletStream(inletStream);
-    tank.runTransient();
-
-    double level = tank.getLiquidLevel();
-    System.out.println("Time: " + t + " s, Level: " + level * 100 + " %");
-}
-```
-
-### Level Calculation
-
-$$\frac{dV_{liq}}{dt} = \dot{Q}_{in} - \dot{Q}_{out}$$
-
-$$L = \frac{V_{liq}}{V_{tank}}$$
-
----
-
-## Boil-off Gas
-
-For cryogenic storage (LNG, LPG).
-
-### LNG Tank
-
-```java
-import neqsim.process.equipment.tank.LNGTank;
-
-LNGTank lngTank = new LNGTank("LNG Storage", lngStream);
-lngTank.setVolume(160000.0, "m3");
-lngTank.setHeatInput(500.0, "kW");  // Heat leak
-lngTank.run();
-
-// Boil-off rate
-double bogRate = lngTank.getBoilOffGasRate("kg/hr");
-Stream bog = lngTank.getBoilOffGasStream();
-```
-
-### Boil-off Calculation
-
-$$\dot{m}_{BOG} = \frac{\dot{Q}_{heat}}{\Delta H_{vap}}$$
-
-Where:
-- $\dot{Q}_{heat}$ = heat leak rate
-- $\Delta H_{vap}$ = latent heat of vaporization
-
----
-
-## Examples
-
-### Example 1: Simple Storage Tank
-
-```java
-import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.tank.LNGTank;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Crude oil
-SystemSrkEos oil = new SystemSrkEos(298.15, 1.013);
-oil.addComponent("n-heptane", 0.50);
-oil.addComponent("n-decane", 0.50);
-oil.setMixingRule("classic");
+public final class LNGTankGuideExample {
+  private static final Logger logger = LogManager.getLogger(LNGTankGuideExample.class);
 
-Stream oilStream = new Stream("Crude", oil);
-oilStream.setFlowRate(100.0, "m3/hr");
-oilStream.run();
+  private LNGTankGuideExample() {}
 
-// Storage tank
-Tank storage = new Tank("Crude Storage", oilStream);
-storage.setVolume(10000.0, "m3");
-storage.setLiquidLevel(0.6);
-storage.run();
+  public static void main(String[] args) {
+    double lngTemperatureC = -162.0;
+    double ambientTemperatureC = 25.0;
+    double storagePressureBara = 1.1;
+    double overallHeatTransferCoefficientWm2K = 0.04;
+    double surfaceAreaM2 = 12000.0;
+    double inventoryKg = 60000000.0;
 
-double inventory = storage.getLiquidVolume("m3");
-System.out.println("Inventory: " + inventory + " m³");
-```
+    SystemInterface lng = new SystemSrkEos(273.15 + lngTemperatureC, storagePressureBara);
+    lng.addComponent("methane", 0.92);
+    lng.addComponent("ethane", 0.05);
+    lng.addComponent("propane", 0.02);
+    lng.addComponent("nitrogen", 0.01);
+    lng.setMixingRule("classic");
 
-### Example 2: LNG Storage with Boil-off
+    Stream feed = new Stream("LNG feed", lng);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.setTemperature(lngTemperatureC, "C");
+    feed.setPressure(storagePressureBara, "bara");
 
-```java
-// LNG composition
-SystemSrkEos lng = new SystemSrkEos(112.0, 1.013);  // -161°C
-lng.addComponent("nitrogen", 0.01);
-lng.addComponent("methane", 0.92);
-lng.addComponent("ethane", 0.05);
-lng.addComponent("propane", 0.02);
-lng.setMixingRule("classic");
+    LNGTank tank = new LNGTank("LNG storage", feed);
+    tank.setInsulationType(LNGTank.InsulationType.MEMBRANE);
+    tank.setAmbientTemperature(ambientTemperatureC, "C");
+    tank.setTankSurfaceArea(surfaceAreaM2);
+    tank.setOverallHeatTransferCoefficient(overallHeatTransferCoefficientWm2K);
+    tank.setLNGInventory(inventoryKg);
+    tank.setStoragePressure(storagePressureBara);
 
-Stream lngIn = new Stream("LNG In", lng);
-lngIn.setFlowRate(1000.0, "m3/hr");
-lngIn.run();
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(tank);
+    process.run();
 
-// LNG tank
-LNGTank tank = new LNGTank("LNG Tank", lngIn);
-tank.setVolume(160000.0, "m3");  // 160,000 m³ tank
-tank.setHeatInput(300.0, "kW");  // Heat leak
-tank.run();
+    double expectedHeatIngressW = overallHeatTransferCoefficientWm2K * surfaceAreaM2
+        * (ambientTemperatureC - lngTemperatureC);
+    double bogMassFlowKgPerHr = tank.getBOGMassFlowRate();
+    double boilOffRatePctPerDay = tank.getBoilOffRatePctPerDay();
 
-// Results
-System.out.println("BOG rate: " + tank.getBoilOffGasRate("kg/hr") + " kg/hr");
-System.out.println("BOG temp: " + tank.getBoilOffGasStream().getTemperature("C") + " °C");
-System.out.println("BOG rate %: " + tank.getBoilOffRate() * 100 + " %/day");
-```
+    assert Math.abs(tank.getHeatIngress() - expectedHeatIngressW) < 1.0e-6;
+    assert bogMassFlowKgPerHr > 0.0;
+    assert boilOffRatePctPerDay > 0.0 && boilOffRatePctPerDay < 1.0;
+    assert tank.getBOGStream() != null;
+    assert Math.abs(tank.getBOGStream().getFlowRate("kg/hr") - bogMassFlowKgPerHr) < 1.0e-6;
 
-### Example 3: Tank with Level Control
-
-```java
-ProcessSystem process = new ProcessSystem();
-
-// Feed stream
-Stream feed = new Stream("Feed", oilFluid);
-feed.setFlowRate(100.0, "m3/hr");
-process.add(feed);
-
-// Storage tank
-Tank tank = new Tank("T-100", feed);
-tank.setVolume(5000.0, "m3");
-tank.setLiquidLevel(0.5);
-process.add(tank);
-
-// Outlet with level control
-ThrottlingValve outlet = new ThrottlingValve("LV-100", tank.getOutletStream());
-outlet.setOutletPressure(1.0, "bara");
-process.add(outlet);
-
-// Level controller
-PIDController lc = new PIDController("LC-100");
-lc.setMeasuredVariable(tank, "liquidLevel");
-lc.setControlledVariable(outlet, "opening");
-lc.setSetPoint(0.5);
-lc.setKp(5.0);
-lc.setKi(0.1);
-process.add(lc);
-
-// Run transient
-for (double t = 0; t < 7200; t += 60) {
-    // Disturb inlet at t=1800
-    if (Math.abs(t - 1800) < 30) {
-        feed.setFlowRate(150.0, "m3/hr");
-    }
-
-    process.runTransient();
-    System.out.printf("%.0f, %.3f, %.1f%n",
-        t, tank.getLiquidLevel(), outlet.getOpening() * 100);
+    logger.info("Heat ingress: {} W", tank.getHeatIngress());
+    logger.info("BOG rate: {} kg/hr ({} %/day)", bogMassFlowKgPerHr, boilOffRatePctPerDay);
+  }
 }
 ```
 
----
+Run documentation examples with assertions enabled (`java -ea`) so the
+engineering checks are not skipped.
 
-## Related Documentation
+## Engineering boundaries
 
-- [Equipment Index](index.md) - All equipment
-- [Separators](separators) - Phase separation
-- [Controllers](../controllers) - Level control
+This model is an engineering screen, not a detailed storage-tank design or
+operations simulator. It does not resolve stratification, rollover, weather
+transients, filling and withdrawal schedules, pressure-relief sizing, vent
+hydraulics, sloshing, structural loads, or a dynamic vapor-space pressure
+balance. It also does not replace a vendor thermal design, an API/NFPA/EN code
+assessment, or an independent process-safety review.
+
+Before using the result, confirm:
+
+1. the inlet composition and storage state represent the design case;
+2. `U`, area, ambient temperature, inventory, and storage pressure use the
+   units listed above;
+3. the calculated latent heat is appropriate for the fluid and pressure;
+4. BOG handling, pressure control, relief, and disposal capacity are assessed
+   in their dedicated models.
+
+For API 650/620 mechanical screening, see
+[Mechanical design](../mechanical_design). For API 2000 vent-demand and
+rated-capacity screening, see
+[API 2000 tank venting](../mechanical_design/api_2000_tank_venting).
+
+## Related documentation
+
+- [Equipment index](index.md)
+- [Dynamic simulation](../../simulation/dynamic_simulation_guide)
+- [Process safety and release models](../safety/release-flow-models)

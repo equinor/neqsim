@@ -1,7 +1,9 @@
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+import static neqsim.util.util.ArrayUtils.copyMatrixArrayOrEmpty;
+
 import java.io.Serializable;
-import java.util.Arrays;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
@@ -101,16 +103,16 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
       double maximumThermodynamicMassFractionError, int couplingIterations, double[] maximumMassFractionChangeHistory,
       double[] densityResidualHistory, SpeciesTransportDiagnostics transportDiagnostics, String message) {
     this.reason = reason;
-    this.componentNames = copy(componentNames);
-    this.massFractionProfile = copy(massFractionProfile);
-    this.finalCellInventoryKg = copy(finalCellInventoryKg);
+    this.componentNames = copyArrayOrEmpty(componentNames);
+    this.massFractionProfile = copyMatrixArrayOrEmpty(massFractionProfile);
+    this.finalCellInventoryKg = copyArrayOrEmpty(finalCellInventoryKg);
     this.finalComponentCellInventoryKg = componentCellInventory(this.massFractionProfile, this.finalCellInventoryKg);
-    this.initialInventoryKg = copy(initialInventoryKg);
-    this.finalInventoryKg = copy(finalInventoryKg);
-    this.inletBoundaryMassKg = copy(inletBoundaryMassKg);
-    this.outletBoundaryMassKg = copy(outletBoundaryMassKg);
-    this.inventoryResidualKg = copy(inventoryResidualKg);
-    this.relativeInventoryResidual = copy(relativeInventoryResidual);
+    this.initialInventoryKg = copyArrayOrEmpty(initialInventoryKg);
+    this.finalInventoryKg = copyArrayOrEmpty(finalInventoryKg);
+    this.inletBoundaryMassKg = copyArrayOrEmpty(inletBoundaryMassKg);
+    this.outletBoundaryMassKg = copyArrayOrEmpty(outletBoundaryMassKg);
+    this.inventoryResidualKg = copyArrayOrEmpty(inventoryResidualKg);
+    this.relativeInventoryResidual = copyArrayOrEmpty(relativeInventoryResidual);
     this.maximumRelativeInventoryResidual = maximumRelativeInventoryResidual;
     this.minimumMassFraction = minimumMassFraction;
     this.maximumMassFraction = maximumMassFraction;
@@ -119,8 +121,8 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
     this.transportDiagnostics = transportDiagnostics == null ? SpeciesTransportDiagnostics.notRun()
         : transportDiagnostics;
     this.couplingIterations = couplingIterations;
-    this.maximumMassFractionChangeHistory = copy(maximumMassFractionChangeHistory);
-    this.densityResidualHistory = copy(densityResidualHistory);
+    this.maximumMassFractionChangeHistory = copyArrayOrEmpty(maximumMassFractionChangeHistory);
+    this.densityResidualHistory = copyArrayOrEmpty(densityResidualHistory);
     this.message = message;
   }
 
@@ -147,52 +149,52 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
 
   /** @return defensive copy of component names in solver order */
   public String[] getComponentNames() {
-    return copy(componentNames);
+    return copyArrayOrEmpty(componentNames);
   }
 
   /** @return defensive copy of component-by-cell mass fractions */
   public double[][] getMassFractionProfile() {
-    return copy(massFractionProfile);
+    return copyMatrixArrayOrEmpty(massFractionProfile);
   }
 
   /** @return defensive copy of final total inventory by physical finite-volume cell in kg */
   public double[] getFinalCellInventoryKg() {
-    return copy(finalCellInventoryKg);
+    return copyArrayOrEmpty(finalCellInventoryKg);
   }
 
   /** @return defensive copy of final component-by-cell inventories in kg */
   public double[][] getFinalComponentCellInventoryKg() {
-    return copy(finalComponentCellInventoryKg);
+    return copyMatrixArrayOrEmpty(finalComponentCellInventoryKg);
   }
 
   /** @return defensive copy of previous-time component inventories in kg */
   public double[] getInitialInventoryKg() {
-    return copy(initialInventoryKg);
+    return copyArrayOrEmpty(initialInventoryKg);
   }
 
   /** @return defensive copy of final component inventories in kg */
   public double[] getFinalInventoryKg() {
-    return copy(finalInventoryKg);
+    return copyArrayOrEmpty(finalInventoryKg);
   }
 
   /** @return defensive copy of integrated inlet component masses in kg */
   public double[] getInletBoundaryMassKg() {
-    return copy(inletBoundaryMassKg);
+    return copyArrayOrEmpty(inletBoundaryMassKg);
   }
 
   /** @return defensive copy of integrated outlet component masses in kg */
   public double[] getOutletBoundaryMassKg() {
-    return copy(outletBoundaryMassKg);
+    return copyArrayOrEmpty(outletBoundaryMassKg);
   }
 
   /** @return defensive copy of component inventory residuals in kg */
   public double[] getInventoryResidualKg() {
-    return copy(inventoryResidualKg);
+    return copyArrayOrEmpty(inventoryResidualKg);
   }
 
   /** @return defensive copy of relative component inventory residuals */
   public double[] getRelativeInventoryResidual() {
-    return copy(relativeInventoryResidual);
+    return copyArrayOrEmpty(relativeInventoryResidual);
   }
 
   /** @return maximum relative component inventory residual */
@@ -232,12 +234,12 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
 
   /** @return defensive copy of maximum mass-fraction changes by coupling iteration */
   public double[] getMaximumMassFractionChangeHistory() {
-    return copy(maximumMassFractionChangeHistory);
+    return copyArrayOrEmpty(maximumMassFractionChangeHistory);
   }
 
   /** @return defensive copy of EOS/FV density residuals by coupling iteration */
   public double[] getDensityResidualHistory() {
-    return copy(densityResidualHistory);
+    return copyArrayOrEmpty(densityResidualHistory);
   }
 
   /** @return diagnostic summary */
@@ -307,22 +309,4 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
     return inventory;
   }
 
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static String[] copy(String[] values) {
-    return values == null ? new String[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static double[][] copy(double[][] values) {
-    if (values == null) {
-      return new double[0][0];
-    }
-    double[][] result = new double[values.length][];
-    for (int i = 0; i < values.length; i++) {
-      result[i] = copy(values[i]);
-    }
-    return result;
-  }
 }

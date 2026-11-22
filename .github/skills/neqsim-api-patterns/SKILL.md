@@ -1,12 +1,60 @@
 ---
 name: neqsim-api-patterns
-description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
-last_verified: "2026-08-22"
+description: "NeqSim Java/Python API patterns for fluids, flashes, process equipment and units. USE WHEN: selecting EOS/mixing-rule selection and property retrieval, including viscosity, thermal conductivity, binary/effective diffusion, gas-oil-water interfacial tension and black-oil PVT table conversion. Follow linked references for exact model selection, initialization and tested examples."
+last_verified: "2026-11-19"
 ---
 
 # NeqSim API Patterns
 
 Copy-paste reference for common NeqSim operations. All Java code must be Java 8 compatible.
+
+For declarative flowsheets, `ProcessSystem.fromYamlFile(path)` and `fromYaml(text)` accept the same named equipment, inlets and units as `fromJson`. See the [canonical process schema](../../../docs/process/json_process_models_and_systems.md).
+
+Use progressive disclosure: search headings and read only the task-relevant section.
+For property-model selection, diffusion or gas-oil-water interfacial tension, read
+[references/physical-properties.md](references/physical-properties.md) and its tested guides.
+For black-oil tables, conversion and reservoir export, use `docs/blackoil/README.md` and
+the `pvt-simulation` agent. For APIs absent from this recipe list, follow
+[source/runtime discovery](../../../docs/development/AGENT_CAPABILITY_DISCOVERY.md).
+
+## MCP server vs. Python/Java API — which to use
+
+**Default policy: MCP first.** For any single calculation, always check whether
+a NeqSim MCP tool (`mcp_neqsim_*`) already covers it before writing Python or
+Java. Only drop to code when MCP genuinely cannot do the job. Concretely:
+
+1. **Curated tool exists** (`runFlash`, `runProcess`, `runPVT`, `getPhaseEnvelope`,
+   `sizeEquipment`, `calculateStandard`, `runFlowAssurance`, `runBatch`, ...) →
+   use it directly. Confirm field names with `getSchema`/`validateInput` first.
+2. **No curated tool, but it might still be reachable** → use `runCapability`
+   (`search` → `inspectApi` → invoke) before writing any code.
+3. **`runCapability` reports `inspect-only`, or the task needs loops/plotting/
+   state/notebooks/reports** → fall back to the Python API (`import neqsim`)
+   or Java in a checkout. This is the *only* reason to write code for a
+   calculation MCP already exposes.
+4. **NeqSim itself lacks the capability** (not a packaging gap, an engine gap)
+   → implement it in Java with tests (`spotless:apply`) rather than working
+   around it with ad-hoc Python; see `neqsim-troubleshooting` and the
+   continuous-improvement rule in `AGENTS.md`.
+
+Both the MCP tools and the Python/Java API call the same NeqSim engine — the
+difference is packaging, not physics — but MCP additionally gives a stable
+JSON contract, schema validation, and provenance/quality-gate info (EOS,
+convergence, benchmark trust, standards) for free.
+
+| Use the **MCP server** (`mcp_neqsim_*` tools) when... | Use the **Python/Java API** (`import neqsim`, or Java in a checkout) when... |
+|---|---|
+| No dev environment is available (chat-only client, no terminal/Python/JVM) | Building a task notebook, multi-unit flowsheet, or anything with loops, custom logic, plotting, or state you inspect between steps |
+| The need is one bounded calculation a curated tool already covers (`runFlash`, `runProcess`, `getPhaseEnvelope`, `sizeEquipment`, `calculateStandard`, ...) | The calculation is not covered by a curated tool and `runCapability` routes it `inspect-only` (no safe generic invocation exists) |
+| You want the built-in provenance/quality-gate envelope (EOS, convergence, benchmark trust, standards) with no extra code | The run is long or iterative (Monte Carlo, sweeps, optimizer loops) — `runCapability`'s cooperative timeout is for short calls; a script has none |
+| A different agent/tool needs the result over a stable JSON contract (`composeWorkflow`, `composeMultiServerWorkflow`, cross-client interoperability) | You are inside the `/solve-task` workflow — task folders, validators, report generation, and the NeqSim Runner are Python-only, not exposed over MCP |
+| Doing bounded discovery of a capability before writing code (`runCapability` search, `inspectApi`) | You need direct object access (intermediate phase properties, custom equipment subclassing, mechanical design classes) beyond what any tool exposes |
+
+In a session with both available (e.g. this workspace), default to a curated MCP
+tool for a single quick calculation or lookup; switch to writing code as soon as
+the task needs more than one call, custom logic, or a deliverable (notebook,
+report, task folder). See `neqsim-task-workflow` skill §0.6 for the matrix by
+*environment* (workspace checkout / pip toolkit / chat-only) rather than by task.
 
 ## MCP Runtime Capability Routing
 
@@ -28,6 +76,27 @@ uses cooperative Java interruption, so route long-running calculations through a
 `runProcess`. Treat runtime presence as capability evidence, then check tests, benchmark trust, and
 standards before using the result for engineering decisions.
 
+### MCP tool inputs: schema first, validate, then run
+
+Every calculation tool (`run*`, `sizeEquipment`, `designUtilities`, `calculateStandard`) has a
+tool-specific input schema whose field names and units mirror the runner exactly. Do not guess
+field names such as `flowRate_kg_hr` or `setPressure_barg`:
+
+1. `getSchema("run_relief", "input")` — snake_case or camelCase (`runRelief`) both resolve.
+   `required` / `allOf` (mode-dependent, e.g. `case: gas`) / `oneOf` tell you what to send.
+2. `validateInput({"tool": "runRelief", "input": {...}})` — any tool; returns
+   `SCHEMA_VIOLATION` issues naming the missing or mistyped field. Flash and process JSON may
+   also be passed bare (auto-detected).
+3. Run, then read `status`, `qualityGate`, `provenance.converged` and `warnings`.
+
+Process JSON pre-flight is strict: `UNRESOLVED_INLET` (an `inlet` naming no unit — feeds are
+units of `"type": "Stream"`), `MISPLACED_UNIT_PARAMETERS` (keys beside `properties`, e.g.
+`outletPressure_bara`; they are otherwise ignored and the unit runs on defaults) and
+`UNRECOGNIZED_INPUT_SHAPE` (no `process`/`areas`/`components`) are errors, and `runProcess`
+refuses to report success for a disconnected flowsheet. `runFlowAssurance` `hydrateRiskMap`
+requires `water` in the composition; an unavailable hydrate temperature is returned as
+`RESULT_NOT_AVAILABLE`, never as `LOW` risk (`RiskLevel.UNKNOWN` in Java).
+
 ## EOS Selection Guide
 
 | Fluid Type | Java Class | Mixing Rule |
@@ -39,6 +108,31 @@ standards before using the result for engineering decisions.
 | Custody transfer, fiscal metering | `SystemGERG2008Eos` | (none needed) |
 | Electrolyte systems, **hydrate with salt brine** | `SystemElectrolyteCPAstatoil` | `10` |
 | Volume-corrected SRK | `SystemSrkEosvolcor` | `"classic"` |
+| Predictive group contribution (UMR-PRU) | `SystemUMRPRUMCEos` | `setMixingRule("HV", "UNIFAC_UMRPRU")` |
+
+**UMR-PRU mixing rule:** the two-argument form is required. `setMixingRule(EosMixingRuleType.HV)` (or copying
+`otherFluid.getMixingRule()`) selects NRTL-modified Huron-Vidal, not the UMR-PRU UNIFAC model, and silently changes
+dew points (about 2 C in a lean-gas check).
+
+**Mercury and water with UMR-PRU:** `SystemUMRPRUMCEos` uses the mercury and water group parameters of the mercury
+calculator (libhg 2.0.3), so it forms an aqueous phase and distributes mercury between gas, oil and water like that
+calculator. Checked 2026-11-19 on 13 cases (-30 to 60 C, 21 to 70 bara): mercury mole fractions within 1 % for
+fluids up to nC20 and within 5 % with n-alkanes up to nC39. It is not valid for mercury with MEG or TEG (gas
+mercury 130 to 2400 times too low). UMR-CPA keeps its own water parameters in the `UNIFAC*_UMRCPA` tables. For a
+fluid that may hold more mercury than it dissolves, run `new MercuryPhaseEquilibrium(fluid).run()`
+(`neqsim.thermo.util.mercury`) and read `getFreeMercuryState()`, `getFreeMercuryFraction()` and
+`getMercuryConcentration(phase, "ug/Sm3")`; an ordinary `TPflash` instead forms a mercury-rich liquid. Details:
+[Mercury thermodynamics](../../../docs/thermo/mercury_thermodynamics.md).
+
+**Mercury through a process:** convert the study fluid with
+`MercuryFluidConverter.toUmrPruMc(fluid, content, unit)` (keeps E300 pseudo-components; content of the whole
+fluid in `ug/Sm3`, `ug/kg`, `ppb` or `mole fraction`), build the process with it, call
+`MercuryProcessAnalyzer.setFreeMercuryAccumulation(process, true)` so separators hold back free mercury, run, and
+read `MercuryProcessAnalyzer.analyze(process)` (`neqsim.process.util.mercury`): per stream
+`getMercuryFlowRate("g/day")`, `getSaturationRatio()`, `getFreeMercuryState()` and
+`getMercuryConcentration("gas", "ug/Sm3")`. With `setMixingRule("HV")` a UMR-PRU fluid uses `UNIFAC_UMRPRU`; never
+use the classic mixing rule with it. Workflow: `neqsim-mercury-distribution-study` skill and
+[Mercury distribution studies](../../../docs/process/mercury-distribution-study.md).
 
 **PR-LK vs PR78**: `SystemPrLeeKeslerEos` uses PR76 alpha for ALL ω:
 `m = 0.37464 + 1.54226ω − 0.26992ω²`. Standard `SystemPrEos1978` uses a modified
@@ -68,10 +162,21 @@ fluid.setMultiPhaseCheck(true);
 ```java
 fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);   // name, moleFrac, MW_kg/mol, density
 fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
-fluid.addPlusFraction("C20+", 0.02, 350.0 / 1000, 0.88);
-fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
+fluid.addPlusFraction("C20", 0.02, 350.0 / 1000, 0.88); // no "+" in the name -- breaks parsing
+fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
 fluid.getCharacterization().characterisePlusFraction();
+fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
 ```
+
+**Do not call `fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(n)`
+directly on the default ("standard") lumping model** -- confirmed
+(2026-10-12, PR review) that `StandardLumpingModel.generateLumpedComposition()`
+overwrites `numberOfLumpedComponents` with `numberOfPseudocomponents` (both
+default to 7) at generation time, so `setNumberOfLumpedComponents(6)` alone
+silently produces 7 pseudo-components, not 6. Use
+`configureLumping().model("standard").totalPseudoComponents(n).build()`,
+which sets `numberOfPseudocomponents` directly and is the value the
+generator actually reads.
 
 ## Loading Fluids from E300 Files
 
@@ -164,6 +269,65 @@ ops.hydrateFormationTemperature();       // Hydrate T at given P
 ops.calcPTphaseEnvelope();              // Phase envelope
 ```
 
+> **Saturation flashes can fail without throwing.** A failed continuation in
+> `dewPointPressureFlash()` / `bubblePointPressureFlash()` can leave a
+> non-physical pressure on the system and return normally. In a single run someone
+> notices; inside a Monte Carlo loop it silently poisons a percentile. Validate the
+> result on physical grounds instead of trusting the absence of an exception:
+> ```python
+> ops.dewPointPressureFlash()
+> p_dew = fluid.getPressure()
+> if not (10.0 < p_dew < 3.0 * p_reservoir):
+>     p_dew = float("nan")     # reject, do not propagate
+> ```
+>
+> **A plausible value can still be a false root — the start pressure matters.**
+> For a CO2-rich volatile oil (GOR 383 Sm3/Sm3, 43 % CO2 in gas, 80 C) the same
+> fluid gave Psat = 474 bara when the flash started at 300 or 450 bara, but
+> 584 bara when it started at the 641 bara reservoir pressure — and a TP flash
+> at 480-640 bara is single-phase. Start below the expected saturation pressure
+> and confirm the root with a stability check either side:
+> ```python
+> b = fluid.clone(); b.setPressure(0.5 * p_reservoir)
+> ThermodynamicOperations(b).bubblePointPressureFlash(False); psat = b.getPressure()
+> phases = []
+> for dp in (-5.0, 5.0):
+>     c = fluid.clone(); c.setPressure(psat + dp)
+>     ThermodynamicOperations(c).TPflash(); phases.append(c.getNumberOfPhases())
+> assert phases == [2, 1], "bubble point not bracketed by a phase change"
+> ```
+
+### Re-flashing a characterised fluid many times (CRITICAL for loops)
+
+To take a phase's composition and flash it somewhere else — produced gas at each
+depletion step, a recycle stream, a Monte Carlo realization — **clone the already
+characterised fluid and overwrite its composition**. Do NOT rebuild it with
+`addTBPfraction`: that re-runs the TBP characterisation on every call.
+
+```python
+probe = fluid.clone()
+probe.setTemperature(T_res + 273.15)
+probe.setPressure(p)
+ns.ThermodynamicOperations(probe).TPflash()
+probe.initProperties()
+
+gas_phase = probe.getPhase("gas")
+produced = fluid.clone()                        # keeps the characterisation
+produced.setMolarComposition(
+    [gas_phase.getComponent(i).getx()
+     for i in range(probe.getNumberOfComponents())])
+produced.setTemperature(288.15)
+produced.setPressure(1.01325)
+ns.ThermodynamicOperations(produced).TPflash()  # -> CGR, gas gravity, etc.
+```
+
+Measured on a 26-component P/A gas condensate with nine pressure nodes: the
+`addTBPfraction` rebuild cost **4.96 s** per realization against **0.97 s** for
+the clone-and-overwrite route, for bit-identical results. Over a 4000-member
+ensemble that is the difference between three hours and four minutes — i.e.
+between propagating uncertainty through the model and deciding not to.
+
+
 ## Unit Conventions
 
 | Quantity | Constructor default | Setter pattern |
@@ -194,8 +358,24 @@ Benchmarked against CoolProp (Span-Wagner) — density deviation at 40 °C / 100
 | `SystemSrkCPAstatoil` | −17.5 % / −10.3 % |
 | **`SystemGERG2008Eos`** | **+0.01 % / +0.02 %** |
 
-Use `SystemGERG2008Eos` for any CO₂ compression, injection or transport duty. Cubics are
-acceptable for the gas-phase part of the train but not near or above the critical density.
+These two pure-CO₂ density comparisons do not qualify every mixture, caloric property,
+phase boundary or equipment duty. Select the model for the actual composition and required
+properties; verify component support and validate the relevant pressure-temperature range.
+Use a reference EOS benchmark where applicable. For water, inhibitors, electrolytes or
+multiphase CO₂ mixtures, assess the appropriate mixture/association model separately rather
+than extrapolating this density table into a universal GERG recommendation.
+
+### CPA liquid-water caloric accuracy
+
+Default `SystemSrkCPAstatoil` water Cp can be 8–17% low at 5–60 °C even when
+density is accurate. For qualified pure-water duty calculations, explicitly
+select `setUseCaloricWaterAlpha(true)`, then TP flash and initialize properties.
+The calibration changes the EOS alpha and its derivatives consistently; never
+patch Cp alone or fit water ideal-gas Cp to compensate for a liquid error.
+Caloric checks cover 5–150 °C and 1–100 bara (stable liquid); density qualification
+is 5–60 °C. Mixtures, electrolytes, hydrates and near-critical states need separate
+validation. See [CPA water caloric guidance](../../../docs/thermo/cpa_water_caloric.md)
+for results, provenance and limitations. Legacy behavior remains the default.
 
 ## Process Equipment Patterns
 
@@ -214,6 +394,15 @@ the live public stream objects, not clones or solver-internal tray streams. Once
 an outlet has been handed to downstream equipment, preserve its object identity
 across `run(...)` calls by updating its thermodynamic system in place or using
 the established identity-preserving adoption helper.
+
+When publishing an equilibrium outlet, apply `SystemInterface.setTotalFlowRate(...)`
+before the final TP flash: the rate setter calls `init(0)` and resets the phase state.
+Initialize thermodynamic and transport properties with `initProperties()` after the
+flash, then publish without further rate mutations. Check raw outlet Cp, phase identity
+and component closure before any caller-side reflash; a sequential heat-transfer test
+can expose stale properties that a mass-balance test misses. See
+`TwoFluidPipeOutletThermodynamicsTest` and issue #3685. Handle zero inventory separately
+because its intensive properties are undefined.
 
 For phase-separated equipment, add a focused contract test after a successful
 solve that verifies:
@@ -421,7 +610,7 @@ A `Compressor` can hold several performance maps at once via a
 `CompressorChartLibrary` and switch the active chart by name — the professional
 way to keep vendor-expected, as-tested and field-fitted curves for the same
 machine side by side (revamp studies, digital twins, design-vs-tested checks).
-See the [Compressor Chart Library](../../docs/process/equipment/compressor_curves.md#compressor-chart-library-multiple-named-charts) doc.
+See the [Compressor Chart Library](../../../docs/process/equipment/compressor_curves.md#compressor-chart-library-multiple-named-charts) doc.
 
 ```java
 comp.addChart("BCL405B-design", expectedChart);
@@ -444,7 +633,7 @@ comp.setChartLibrary(CompressorChartLibrary.loadFromFile("BCL405B_charts.json"))
 Model deposit (fouling) mass from process thermodynamics, its effect on
 performance, where it lands per impeller, the degraded chart after N hours, and
 online washing. Package `neqsim.process.equipment.compressor`. See the
-[Compressor Deposit and Performance Degradation](../../docs/process/compressor_deposit_degradation.md)
+[Compressor Deposit and Performance Degradation](../../../docs/process/compressor_deposit_degradation.md)
 doc.
 
 ```java
@@ -909,6 +1098,23 @@ List<String> areas = plantAuto.getAreaList();
 double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
 ```
 
+## Full-Object Archives (`.neqsim`) Across NeqSim Versions
+
+`ProcessSystem.loadFromNeqsim(path)` / `NeqSimXtream.openNeqsim(path)` read files from older NeqSim versions:
+unknown fields and classes are skipped, `tagName` maps to `tagNumber`, and files without a `neqsim-meta.properties`
+entry load in legacy mode with new fields restored to their declared defaults. Always inspect the report:
+
+```java
+Object loaded = NeqSimXtream.openNeqsim("old_model.neqsim");
+NeqSimXtream.LoadReport report = NeqSimXtream.getLastLoadReport();
+// report.isLegacyFormat(), getIgnoredElements() (dropped fields, e.g. separator geometry),
+// getRestoredFields(), getFieldsWithoutTemplate()
+```
+
+Re-enter removed data (separator geometry now lives in `SeparatorMechanicalDesign`) and re-save with the current
+version so the file carries a version stamp. Check one known result (a dew point or a separator liquid rate) against
+a model rebuilt from the same specification before trusting a legacy archive.
+
 ## Lifecycle State (Save / Restore / Compare)
 
 JSON snapshots for reproducibility and version tracking.
@@ -1325,7 +1531,25 @@ When writing code examples for documentation (markdown guides, cookbook recipes,
 3. **Run the test** and confirm it passes before publishing the doc
 4. **Common pitfalls**:
    - Plus fraction names: use `"C20"` not `"C20+"` (the `+` character breaks parsing)
-   - Set mixing rule BEFORE calling `characterisePlusFraction()`
+   - Set mixing rule AFTER calling `characterisePlusFraction()`, not before.
+     `characterisePlusFraction()` can SPLIT a plus/TBP fraction into several
+     lumped pseudo-components (confirmed: 9 components in, 15 out on a real
+     test fluid), and a mixing rule set beforehand leaves the EOS's kij
+     matrix sized for the PRE-split component count. The first flash that
+     actually needs the matrix then throws
+     `ArrayIndexOutOfBoundsException: Index N out of bounds for length N`
+     inside `EosMixingRuleHandler$ClassicSRK.getkij` -- confirmed against a
+     real NeqSim 3.24.0 build (2026-10-12). This reverses the ordering
+     previously stated here; `neqsim-flow-assurance` and
+     `neqsim-wax-calculations` already documented the correct order.
    - `getUnit("name")` not `getUnitOperation("name")`
    - `setDepreciationYears` takes `double`, not `int`
    - Risk thresholds: always read source for actual comparison logic (subcooling direction, enum ordering)
+   - Lumping component count: `getLumpingModel().setNumberOfLumpedComponents(n)`
+     does NOT reliably control the pseudo-component count on the default
+     ("standard") model -- `StandardLumpingModel.generateLumpedComposition()`
+     overwrites it with `numberOfPseudocomponents` (also defaulting to 7) at
+     generation time. Use
+     `configureLumping().model("standard").totalPseudoComponents(n).build()`
+     instead, confirmed by a failing-then-passing JUnit assertion
+     (2026-10-12, PR review on `#4303`).

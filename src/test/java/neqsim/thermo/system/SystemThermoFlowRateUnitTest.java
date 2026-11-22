@@ -49,8 +49,8 @@ public class SystemThermoFlowRateUnitTest extends neqsim.NeqSimTest {
 
   @Test
   void testSetterGetterParityForUnitsAddedHere() {
-    String[] units = new String[] { "Am3/sec", "Am3/min", "Am3/hr", "Am3/day", "m3/day", "Sm3/min", "idSm3/sec",
-        "idSm3/min", "idSm3/hr", "idSm3/day" };
+    String[] units = new String[] {"Am3/sec", "Am3/min", "Am3/hr", "Am3/day", "m3/day", "Sm3/min", "idSm3/sec",
+        "idSm3/min", "idSm3/hr", "idSm3/day"};
     for (String unit : units) {
       SystemInterface sys = new SystemSrkEos(298.15, 10.0);
       sys.addComponent("methane", 1.0);

@@ -1,0 +1,32 @@
+{
+  "baseline_commit": "3ec4b8cff4d5c2dc4875cb28229be88660c67504",
+  "publication_base": "7bb4400c2a55907d720a7c88cc8ad73f5d6c9734",
+  "main_source_delta_at_publication_base": [],
+  "baseline_coverage_blob": "db1cb0095c36375ecb33ce133eed573f9ad0f7b5",
+  "activity_evaluations": 224,
+  "activity_values": 1512,
+  "activity_csv_sha256": "ee6fa7aa8b13e09d006cfd624213b87c77a61579eff552ac74e8a424a1c55088",
+  "activity_baseline_candidate_byte_identical": true,
+  "screen_caveat": "Build and validation jobs overlap parts of the default screen; retain all wall times as diagnostic. Subsequent longer-warmup matrices run without concurrent local build/test work.",
+  "rejected_or_removed_successful_rounds": 0,
+  "jvm_object_layout": {
+    "alignment_bytes": 8,
+    "compressed_oops": true,
+    "compressed_class_pointers": true
+  },
+  "expected_removed_phase_allocation_bytes": {
+    "4/init1": 192,
+    "4/init3": 832,
+    "20/init1": 3520,
+    "20/init3": 19520
+  },
+  "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "parameter_catalog_impact": "None: no coefficients, alpha model, pure properties or fitted range introduced or activated.",
+  "java8_api_compile": "Passed --release 8 on OpenJDK 17.0.20+8; hosted Java8 runtime checks separate.",
+  "javadoc": "Passed -private -Xdoclint:all for changed main and new lifecycle test.",
+  "accepted_evidence_jvms": 356,
+  "diagnostic_only_instrumented_jvms": 2,
+  "pinned_cpu": 0,
+  "identity_control_candidate_over_baseline": 1.5905190042548003,
+  "performance_status": "Allocation reduction established; wall-time speedup and non-regression remain unqualified. Retain adverse pinned SRK-HV ratio1.474 and same-binary control ratio1.591; do not treat either noisy ratio as an established code regression."
+}

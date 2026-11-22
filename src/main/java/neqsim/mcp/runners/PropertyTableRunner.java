@@ -86,7 +86,7 @@ public class PropertyTableRunner {
     }
 
     // --- Parse mixing rule ---
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
 
     // --- Parse sweep variable ---
     String sweep = input.has("sweep") ? input.get("sweep").getAsString().toLowerCase() : "temperature";

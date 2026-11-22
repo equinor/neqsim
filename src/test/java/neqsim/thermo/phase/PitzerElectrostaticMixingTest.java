@@ -13,9 +13,9 @@ class PitzerElectrostaticMixingTest {
 
   @Test
   void matchesPublicDomainPhreeqcReferenceValues() {
-    double[] ionicStrength = { 0.01, 0.1, 1.0, 5.0 };
-    double[] expectedTheta = { -1.0359898656543214, -0.41477912893379515, -0.14413003876826347, -0.06569004968633078 };
-    double[] expectedDerivative = { 37.21045792015009, 1.795520864060653, 0.06915494279053402, 0.006497453538073315 };
+    double[] ionicStrength = {0.01, 0.1, 1.0, 5.0};
+    double[] expectedTheta = {-1.0359898656543214, -0.41477912893379515, -0.14413003876826347, -0.06569004968633078};
+    double[] expectedDerivative = {37.21045792015009, 1.795520864060653, 0.06915494279053402, 0.006497453538073315};
     double[] result = new double[2];
 
     for (int i = 0; i < ionicStrength.length; i++) {

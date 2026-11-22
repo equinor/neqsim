@@ -3,6 +3,8 @@ package neqsim.process.processmodel.dexpi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -214,27 +216,37 @@ public class DexpiXmlReaderTest extends NeqSimTest {
   @Test
   public void testReadWithDiagnosticsIncludesValidInstrumentationInventory() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Nozzle ID=\"N-SENSE\"/><Nozzle ID=\"N-ACT\"/><FinalControlElement ID=\"V-100\"/>"
-        + "<ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\" ID=\"PIF-PT-100\">"
-        + instrumentAttributes("PT-100", "P", "T", "100")
+        + "<Nozzle ID=\"N-SENSE\" ComponentClass=\"Nozzle\" ComponentName=\"SenseNozzleShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"NS-100\"/>"
+        + "</GenericAttributes></Nozzle>"
+        + "<Nozzle ID=\"N-ACT\" ComponentClass=\"Nozzle\" ComponentName=\"NozzleShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"NZ-100\"/></GenericAttributes></Nozzle>"
+        + "<FinalControlElement ID=\"V-100\" ComponentClass=\"GateValve\" ComponentName=\"GateValveShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"XV-100\"/></GenericAttributes>"
+        + "</FinalControlElement>" + "<ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\""
+        + " ComponentName=\"TransmitterShape\" ID=\"PIF-PT-100\">" + instrumentAttributes("PT-100", "P", "T", "100")
         + "<InformationFlow ComponentClass=\"MeasuringLineFunction\" ID=\"MLF-100\">"
         + "<Association Type=\"has logical start\" ItemID=\"PSGF-100\"/>"
         + "<Association Type=\"has logical end\" ItemID=\"PIF-PT-100\"/>"
         + "<Association Type=\"is attached to\" ItemID=\"N-SENSE\"/>" + "</InformationFlow>"
-        + "<ProcessSignalGeneratingFunction ComponentClass=\"ProcessSignalGeneratingFunction\" ID=\"PSGF-100\"/>"
-        + "</ProcessInstrumentationFunction>"
-        + "<ProcessInstrumentationFunction ComponentClass=\"ProcessControlFunction\" ID=\"PIF-PC-100\">"
-        + instrumentAttributes("PC-100", "P", "C", "100")
+        + "<ProcessSignalGeneratingFunction ComponentClass=\"ProcessSignalGeneratingFunction\""
+        + " ComponentName=\"PressureSignalShape\" ID=\"PSGF-100\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"PSGF-100-TAG\"/>"
+        + "</GenericAttributes></ProcessSignalGeneratingFunction>" + "</ProcessInstrumentationFunction>"
+        + "<ProcessInstrumentationFunction ComponentClass=\"ProcessControlFunction\""
+        + " ComponentName=\"ControllerShape\" ID=\"PIF-PC-100\">" + instrumentAttributes("PC-100", "P", "C", "100")
         + signalFlow("SIG-MEASURED", "PIF-PT-100", "PIF-PC-100", "ElectricalSignalConveying")
-        + "<ActuatingFunction ComponentClass=\"ActuatingFunction\" ID=\"AF-100\">"
+        + "<ActuatingFunction ComponentClass=\"ActuatingFunction\" ComponentName=\"ActuatorShape\" ID=\"AF-100\">"
         + "<GenericAttributes><GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"PC-100\"/>"
         + "<GenericAttribute Name=\"FinalControlElementID\" Value=\"V-100\"/>"
+        + "<GenericAttribute Name=\"TagName\" Value=\"AF-100-TAG\"/>"
         + "</GenericAttributes><Association Type=\"is located in\" ItemID=\"N-ACT\"/>" + "</ActuatingFunction>"
         + signalFlow("SIG-ACTUATE", "PIF-PC-100", "AF-100", "PneumaticSignalConveying")
         + "</ProcessInstrumentationFunction>"
         + "<InstrumentationLoopFunction ComponentClass=\"InstrumentationLoopFunction\" ID=\"LOOP-100\">"
         + "<GenericAttributes><GenericAttribute Name=\"InstrumentationLoopFunctionNumberAssignmentClass\" Value=\"100\"/>"
         + "</GenericAttributes><Association Type=\"is a collection including\" ItemID=\"PIF-PT-100\"/>"
+        + "<Association Type=\"is a collection including\" ItemID=\"PIF-PC-100\"/>"
         + "<Association Type=\"is a collection including\" ItemID=\"PIF-PC-100\"/>"
         + "</InstrumentationLoopFunction></PlantModel>";
 
@@ -248,9 +260,133 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("100", first.getInstruments().get(0).getLoopNumber());
     assertEquals("PC-100", first.getInstruments().get(1).getTagName());
     assertEquals("PC-100", first.getInstruments().get(1).getActuatingTag());
+
+    List<DexpiInstrumentationLoopInfo> instrumentationLoops = first.getInstrumentationLoops();
+    assertEquals(1, instrumentationLoops.size());
+    DexpiInstrumentationLoopInfo loop = instrumentationLoops.get(0);
+    assertEquals("LOOP-100", loop.getId());
+    assertEquals("InstrumentationLoopFunction", loop.getComponentClass());
+    assertEquals("100", loop.getLoopNumber());
+    assertEquals(3, loop.getMembers().size());
+    DexpiInstrumentationLoopInfo.Member transmitterMember = loop.getMembers().get(0);
+    assertEquals("PIF-PT-100", transmitterMember.getMemberId());
+    assertTrue(transmitterMember.isResolved());
+    assertEquals("ProcessInstrumentationFunction", transmitterMember.getElementName());
+    assertEquals("ProcessInstrumentationFunction", transmitterMember.getMemberComponentClass());
+    assertEquals("TransmitterShape", transmitterMember.getMemberComponentName());
+    assertEquals("PT-100", transmitterMember.getMemberTagName());
+    DexpiInstrumentationLoopInfo.Member firstControllerMember = loop.getMembers().get(1);
+    assertEquals("PIF-PC-100", firstControllerMember.getMemberId());
+    assertEquals("ProcessControlFunction", firstControllerMember.getMemberComponentClass());
+    assertEquals("ControllerShape", firstControllerMember.getMemberComponentName());
+    assertEquals("PC-100", firstControllerMember.getMemberTagName());
+    DexpiInstrumentationLoopInfo.Member repeatedControllerMember = loop.getMembers().get(2);
+    assertEquals("PIF-PC-100", repeatedControllerMember.getMemberId());
+    assertEquals("ProcessControlFunction", repeatedControllerMember.getMemberComponentClass());
+    assertEquals("ControllerShape", repeatedControllerMember.getMemberComponentName());
+    assertEquals("PC-100", repeatedControllerMember.getMemberTagName());
+    assertThrows(UnsupportedOperationException.class, () -> instrumentationLoops.clear());
+    assertThrows(UnsupportedOperationException.class, () -> loop.getMembers().clear());
+
+    List<DexpiActuatingFunctionInfo> actuatingFunctions = first.getActuatingFunctions();
+    assertEquals(1, actuatingFunctions.size());
+    DexpiActuatingFunctionInfo actuatingFunction = actuatingFunctions.get(0);
+    assertEquals("AF-100", actuatingFunction.getId());
+    assertEquals(DexpiActuatingFunctionInfo.Kind.ACTUATING_FUNCTION, actuatingFunction.getKind());
+    assertEquals("ActuatingFunction", actuatingFunction.getComponentClass());
+    assertEquals("PC-100", actuatingFunction.getFunctionNumber());
+    assertEquals("PIF-PC-100", actuatingFunction.getInstrumentationFunctionId());
+    assertTrue(actuatingFunction.isInstrumentationFunctionResolved());
+    assertEquals("ProcessInstrumentationFunction", actuatingFunction.getInstrumentationFunctionElementName());
+    assertEquals("V-100", actuatingFunction.getFinalControlElementId());
+    assertTrue(actuatingFunction.isFinalControlElementResolved());
+    assertEquals("FinalControlElement", actuatingFunction.getFinalControlElementName());
+    assertEquals("GateValve", actuatingFunction.getFinalControlElementComponentClass());
+    assertEquals("GateValveShape", actuatingFunction.getFinalControlElementComponentName());
+    assertEquals("XV-100", actuatingFunction.getFinalControlElementTagName());
+    assertEquals("N-ACT", actuatingFunction.getLocationId());
+    assertTrue(actuatingFunction.isLocationResolved());
+    assertEquals("Nozzle", actuatingFunction.getLocationElementName());
+    assertEquals("Nozzle", actuatingFunction.getLocationComponentClass());
+    assertEquals("NozzleShape", actuatingFunction.getLocationComponentName());
+    assertEquals("NZ-100", actuatingFunction.getLocationTagName());
+    assertThrows(UnsupportedOperationException.class, () -> actuatingFunctions.clear());
+
+    List<DexpiInformationFlowInfo> informationFlows = first.getInformationFlows();
+    assertEquals(3, informationFlows.size());
+    DexpiInformationFlowInfo measuring = informationFlows.get(0);
+    assertEquals("MLF-100", measuring.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.MEASURING_LINE, measuring.getKind());
+    assertEquals("PSGF-100", measuring.getSourceId());
+    assertTrue(measuring.isSourceResolved());
+    assertEquals("ProcessSignalGeneratingFunction", measuring.getSourceElementName());
+    assertEquals("ProcessSignalGeneratingFunction", measuring.getSourceComponentClass());
+    assertEquals("PressureSignalShape", measuring.getSourceComponentName());
+    assertEquals("PSGF-100-TAG", measuring.getSourceTagName());
+    assertEquals("PIF-PT-100", measuring.getTargetId());
+    assertTrue(measuring.isTargetResolved());
+    assertEquals("ProcessInstrumentationFunction", measuring.getTargetElementName());
+    assertEquals("ProcessInstrumentationFunction", measuring.getTargetComponentClass());
+    assertEquals("TransmitterShape", measuring.getTargetComponentName());
+    assertEquals("PT-100", measuring.getTargetTagName());
+    assertTrue(measuring.hasAttachment());
+    assertEquals("N-SENSE", measuring.getAttachmentId());
+    assertTrue(measuring.isAttachmentResolved());
+    assertEquals("Nozzle", measuring.getAttachmentElementName());
+    assertEquals("Nozzle", measuring.getAttachmentComponentClass());
+    assertEquals("SenseNozzleShape", measuring.getAttachmentComponentName());
+    assertEquals("NS-100", measuring.getAttachmentTagName());
+    assertEquals("", measuring.getSignalConveyingType());
+
+    DexpiInformationFlowInfo measuredSignal = informationFlows.get(1);
+    assertEquals("SIG-MEASURED", measuredSignal.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.SIGNAL_LINE, measuredSignal.getKind());
+    assertEquals("PIF-PT-100", measuredSignal.getSourceId());
+    assertTrue(measuredSignal.isSourceResolved());
+    assertEquals("ProcessInstrumentationFunction", measuredSignal.getSourceElementName());
+    assertEquals("ProcessInstrumentationFunction", measuredSignal.getSourceComponentClass());
+    assertEquals("TransmitterShape", measuredSignal.getSourceComponentName());
+    assertEquals("PT-100", measuredSignal.getSourceTagName());
+    assertEquals("PIF-PC-100", measuredSignal.getTargetId());
+    assertTrue(measuredSignal.isTargetResolved());
+    assertEquals("ProcessInstrumentationFunction", measuredSignal.getTargetElementName());
+    assertEquals("ProcessControlFunction", measuredSignal.getTargetComponentClass());
+    assertEquals("ControllerShape", measuredSignal.getTargetComponentName());
+    assertEquals("PC-100", measuredSignal.getTargetTagName());
+    assertFalse(measuredSignal.hasAttachment());
+    assertEquals("", measuredSignal.getAttachmentComponentClass());
+    assertEquals("", measuredSignal.getAttachmentComponentName());
+    assertEquals("", measuredSignal.getAttachmentTagName());
+    assertEquals("ElectricalSignalConveying", measuredSignal.getSignalConveyingType());
+
+    DexpiInformationFlowInfo actuatingSignal = informationFlows.get(2);
+    assertEquals("SIG-ACTUATE", actuatingSignal.getId());
+    assertEquals("AF-100", actuatingSignal.getTargetId());
+    assertTrue(actuatingSignal.isTargetResolved());
+    assertEquals("ActuatingFunction", actuatingSignal.getTargetElementName());
+    assertEquals("ActuatingFunction", actuatingSignal.getTargetComponentClass());
+    assertEquals("ActuatorShape", actuatingSignal.getTargetComponentName());
+    assertEquals("AF-100-TAG", actuatingSignal.getTargetTagName());
+    assertEquals("PneumaticSignalConveying", actuatingSignal.getSignalConveyingType());
+    assertThrows(UnsupportedOperationException.class, () -> informationFlows.clear());
+
     assertTrue(first.getDiagnostics().isEmpty());
     assertFalse(first.hasLosses());
     assertTrue(first.toJson().contains("\"instrumentCount\": 2"));
+    assertTrue(first.toJson().contains("\"instrumentationLoopCount\": 1"));
+    assertTrue(first.toJson().contains("\"memberCount\": 3"));
+    assertTrue(first.toJson().contains("\"memberComponentName\": \"TransmitterShape\""));
+    assertTrue(first.toJson().contains("\"memberTagName\": \"PT-100\""));
+    assertTrue(first.toJson().contains("\"actuatingFunctionCount\": 1"));
+    assertTrue(first.toJson().contains("\"finalControlElementResolved\": true"));
+    assertTrue(first.toJson().contains("\"finalControlElementTagName\": \"XV-100\""));
+    assertTrue(first.toJson().contains("\"locationTagName\": \"NZ-100\""));
+    assertTrue(first.toJson().contains("\"informationFlowCount\": 3"));
+    assertTrue(first.toJson().contains("\"kind\": \"MEASURING_LINE\""));
+    assertTrue(first.toJson().contains("\"sourceComponentName\": \"PressureSignalShape\""));
+    assertTrue(first.toJson().contains("\"targetTagName\": \"PT-100\""));
+    assertTrue(first.toJson().contains("\"attachmentTagName\": \"NS-100\""));
+    assertTrue(first.toJson().contains("\"signalConveyingType\": \"ElectricalSignalConveying\""));
     assertEquals(first.toJson(), second.toJson());
   }
 
@@ -276,6 +412,40 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
 
     assertEquals(1, first.getInstruments().size());
+    assertEquals(1, first.getInstrumentationLoops().size());
+    DexpiInstrumentationLoopInfo loop = first.getInstrumentationLoops().get(0);
+    assertEquals("", loop.getId());
+    assertEquals("InstrumentationLoopFunction", loop.getComponentClass());
+    assertEquals("", loop.getLoopNumber());
+    assertEquals(1, loop.getMembers().size());
+    assertEquals("UNKNOWN-MEMBER", loop.getMembers().get(0).getMemberId());
+    assertFalse(loop.getMembers().get(0).isResolved());
+    assertEquals("", loop.getMembers().get(0).getElementName());
+    assertEquals("", loop.getMembers().get(0).getMemberComponentClass());
+    assertEquals("", loop.getMembers().get(0).getMemberComponentName());
+    assertEquals("", loop.getMembers().get(0).getMemberTagName());
+    List<DexpiActuatingFunctionInfo> actuatingFunctions = first.getActuatingFunctions();
+    assertEquals(1, actuatingFunctions.size());
+    DexpiActuatingFunctionInfo actuatingFunction = actuatingFunctions.get(0);
+    assertEquals("AF-BROKEN", actuatingFunction.getId());
+    assertEquals(DexpiActuatingFunctionInfo.Kind.ACTUATING_FUNCTION, actuatingFunction.getKind());
+    assertEquals("", actuatingFunction.getFunctionNumber());
+    assertEquals("", actuatingFunction.getInstrumentationFunctionId());
+    assertFalse(actuatingFunction.isInstrumentationFunctionResolved());
+    assertEquals("", actuatingFunction.getInstrumentationFunctionElementName());
+    assertEquals("UNKNOWN-FINAL", actuatingFunction.getFinalControlElementId());
+    assertFalse(actuatingFunction.isFinalControlElementResolved());
+    assertEquals("", actuatingFunction.getFinalControlElementName());
+    assertEquals("", actuatingFunction.getFinalControlElementComponentClass());
+    assertEquals("", actuatingFunction.getFinalControlElementComponentName());
+    assertEquals("", actuatingFunction.getFinalControlElementTagName());
+    assertEquals("", actuatingFunction.getLocationId());
+    assertFalse(actuatingFunction.isLocationResolved());
+    assertEquals("", actuatingFunction.getLocationElementName());
+    assertEquals("", actuatingFunction.getLocationComponentClass());
+    assertEquals("", actuatingFunction.getLocationComponentName());
+    assertEquals("", actuatingFunction.getLocationTagName());
+
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_ID_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_FUNCTION_METADATA_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_INSTRUMENT_NUMBER_MISSING");
@@ -292,17 +462,102 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertDiagnostic(first, "DEXPI_IMPORT_SIGNAL_MEDIUM_MISSING");
     assertDiagnostic(first, "DEXPI_IMPORT_FINAL_ELEMENT_UNRESOLVED");
     assertDiagnostic(first, "DEXPI_IMPORT_ACTUATION_LOCATION_MISSING");
+
+    List<DexpiInformationFlowInfo> informationFlows = first.getInformationFlows();
+    assertEquals(2, informationFlows.size());
+    DexpiInformationFlowInfo measuring = informationFlows.get(0);
+    assertEquals("MLF-BROKEN", measuring.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.MEASURING_LINE, measuring.getKind());
+    assertEquals("", measuring.getSourceId());
+    assertFalse(measuring.isSourceResolved());
+    assertEquals("", measuring.getSourceComponentClass());
+    assertEquals("", measuring.getSourceComponentName());
+    assertEquals("", measuring.getSourceTagName());
+    assertEquals("UNKNOWN-INSTRUMENT", measuring.getTargetId());
+    assertFalse(measuring.isTargetResolved());
+    assertEquals("", measuring.getTargetComponentClass());
+    assertEquals("", measuring.getTargetComponentName());
+    assertEquals("", measuring.getTargetTagName());
+    assertFalse(measuring.hasAttachment());
+    assertFalse(measuring.isAttachmentResolved());
+    assertEquals("", measuring.getAttachmentComponentClass());
+    assertEquals("", measuring.getAttachmentComponentName());
+    assertEquals("", measuring.getAttachmentTagName());
+
+    DexpiInformationFlowInfo signal = informationFlows.get(1);
+    assertEquals("SIG-BROKEN", signal.getId());
+    assertEquals(DexpiInformationFlowInfo.Kind.SIGNAL_LINE, signal.getKind());
+    assertEquals("UNKNOWN-SOURCE", signal.getSourceId());
+    assertFalse(signal.isSourceResolved());
+    assertEquals("", signal.getSourceComponentClass());
+    assertEquals("", signal.getSourceComponentName());
+    assertEquals("", signal.getSourceTagName());
+    assertEquals("", signal.getTargetId());
+    assertFalse(signal.isTargetResolved());
+    assertEquals("", signal.getTargetComponentClass());
+    assertEquals("", signal.getTargetComponentName());
+    assertEquals("", signal.getTargetTagName());
+    assertEquals("", signal.getSignalConveyingType());
+
     assertTrue(first.hasLosses());
     assertFalse(first.hasErrors());
+    assertTrue(first.toJson().contains("\"actuatingFunctionCount\": 1"));
+    assertTrue(first.toJson().contains("\"finalControlElementResolved\": false"));
+    assertTrue(first.toJson().contains("\"informationFlowCount\": 2"));
     assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsPreservesActuatingElectricalFunctionKind() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Nozzle ID=\"N-ELECTRICAL\" ComponentClass=\"Nozzle\" ComponentName=\"MotorNozzle\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"NZ-200\"/></GenericAttributes></Nozzle>"
+        + "<FinalControlElement ID=\"M-200\" ComponentClass=\"ElectricMotor\" ComponentName=\"MotorShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"M-200\"/></GenericAttributes>"
+        + "</FinalControlElement>"
+        + "<ActuatingElectricalFunction ComponentClass=\"ActuatingElectricalFunction\" ID=\"AEF-200\">"
+        + "<GenericAttributes>" + "<GenericAttribute Name=\"ActuatingFunctionNumberAssignmentClass\" Value=\"YC-200\"/>"
+        + "<GenericAttribute Name=\"FinalControlElementID\" Value=\"M-200\"/>"
+        + "</GenericAttributes><Association Type=\"is located in\" ItemID=\"N-ELECTRICAL\"/>"
+        + "</ActuatingElectricalFunction></PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(1, result.getActuatingFunctions().size());
+    DexpiActuatingFunctionInfo function = result.getActuatingFunctions().get(0);
+    assertEquals(DexpiActuatingFunctionInfo.Kind.ACTUATING_ELECTRICAL_FUNCTION, function.getKind());
+    assertEquals("AEF-200", function.getId());
+    assertEquals("YC-200", function.getFunctionNumber());
+    assertEquals("M-200", function.getFinalControlElementId());
+    assertTrue(function.isFinalControlElementResolved());
+    assertEquals("FinalControlElement", function.getFinalControlElementName());
+    assertEquals("ElectricMotor", function.getFinalControlElementComponentClass());
+    assertEquals("MotorShape", function.getFinalControlElementComponentName());
+    assertEquals("M-200", function.getFinalControlElementTagName());
+    assertEquals("N-ELECTRICAL", function.getLocationId());
+    assertTrue(function.isLocationResolved());
+    assertEquals("Nozzle", function.getLocationComponentClass());
+    assertEquals("MotorNozzle", function.getLocationComponentName());
+    assertEquals("NZ-200", function.getLocationTagName());
+    assertTrue(result.getDiagnostics().isEmpty());
   }
 
   @Test
   public void testReadWithDiagnosticsPreservesParallelMaterialConnections() throws Exception {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "<Equipment ID=\"E-OUT\"><Nozzle ID=\"N-OUT\"/></Equipment>"
-        + "<Equipment ID=\"E-IN\"><Nozzle ID=\"N-IN\"/></Equipment>"
-        + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\">"
+        + "<Equipment ID=\"E-OUT\" ComponentClass=\"CentrifugalPump\" ComponentName=\"ExportPump\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"P-101\"/></GenericAttributes>"
+        + "<Nozzle ID=\"N-OUT\" ComponentClass=\"ProcessConnection\" ComponentName=\"PumpDischargeNozzle\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"NZ-OUT\"/></GenericAttributes>"
+        + "</Nozzle></Equipment>"
+        + "<Equipment ID=\"E-IN\" ComponentClass=\"Separator\" ComponentName=\"InletSeparator\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"V-101\"/></GenericAttributes>"
+        + "<Nozzle ID=\"N-IN\" ComponentClass=\"ProcessConnection\" ComponentName=\"SeparatorInletNozzle\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"NZ-IN\"/>"
+        + "</GenericAttributes></Nozzle></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-1\" ComponentClass=\"PipingNetworkSegment\" ComponentName=\"MainSegment\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"L-100-1\"/></GenericAttributes>"
         + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>"
         + "<PipingNetworkSegment ID=\"S-2\" ComponentClass=\"PipingNetworkSegment\">"
         + "<Connection FromID=\"N-OUT\" ToID=\"N-IN\"/></PipingNetworkSegment>" + "</PlantModel>";
@@ -317,21 +572,83 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("S-1/connection-1", firstConnection.getId());
     assertFalse(firstConnection.hasSourceId());
     assertEquals("S-1", firstConnection.getSegmentId());
+    assertEquals("PipingNetworkSegment", firstConnection.getSegmentComponentClass());
+    assertEquals("MainSegment", firstConnection.getSegmentComponentName());
+    assertEquals("L-100-1", firstConnection.getSegmentTagName());
     assertEquals("N-OUT", firstConnection.getFromId());
     assertEquals("N-IN", firstConnection.getToId());
     assertEquals("Nozzle", firstConnection.getFromElementName());
     assertEquals("Nozzle", firstConnection.getToElementName());
+    assertEquals("ProcessConnection", firstConnection.getFromComponentClass());
+    assertEquals("PumpDischargeNozzle", firstConnection.getFromComponentName());
+    assertEquals("NZ-OUT", firstConnection.getFromTagName());
+    assertEquals("ProcessConnection", firstConnection.getToComponentClass());
+    assertEquals("SeparatorInletNozzle", firstConnection.getToComponentName());
+    assertEquals("NZ-IN", firstConnection.getToTagName());
     assertEquals("E-OUT", firstConnection.getFromOwnerId());
     assertEquals("E-IN", firstConnection.getToOwnerId());
     assertEquals("Equipment", firstConnection.getFromOwnerElementName());
     assertEquals("Equipment", firstConnection.getToOwnerElementName());
+    assertEquals("CentrifugalPump", firstConnection.getFromOwnerComponentClass());
+    assertEquals("ExportPump", firstConnection.getFromOwnerComponentName());
+    assertEquals("P-101", firstConnection.getFromOwnerTagName());
+    assertEquals("Separator", firstConnection.getToOwnerComponentClass());
+    assertEquals("InletSeparator", firstConnection.getToOwnerComponentName());
+    assertEquals("V-101", firstConnection.getToOwnerTagName());
     assertTrue(firstConnection.isResolved());
     assertTrue(firstConnection.isOwnershipResolved());
+    DexpiConnectionEndpointInfo sourceEndpoint = first.getConnectionEndpoints().get(0);
+    assertEquals("ProcessConnection", sourceEndpoint.getComponentClass());
+    assertEquals("PumpDischargeNozzle", sourceEndpoint.getComponentName());
+    assertEquals("NZ-OUT", sourceEndpoint.getTagName());
+    assertEquals("CentrifugalPump", sourceEndpoint.getOwnerComponentClass());
+    DexpiConnectionEndpointInfo targetEndpoint = first.getConnectionEndpoints().get(1);
+    assertEquals("ProcessConnection", targetEndpoint.getComponentClass());
+    assertEquals("SeparatorInletNozzle", targetEndpoint.getComponentName());
+    assertEquals("NZ-IN", targetEndpoint.getTagName());
+    assertEquals("Separator", targetEndpoint.getOwnerComponentClass());
     assertEquals("S-2/connection-1", first.getConnections().get(1).getId());
     assertEquals(2, countDiagnostics(first, "DEXPI_IMPORT_CONNECTION_ID_SYNTHESIZED"));
     assertTrue(first.toJson().contains("\"connectionCount\": 2"));
+    assertTrue(first.toJson().contains("\"segmentTagName\": \"L-100-1\""));
+    assertTrue(first.toJson().contains("\"fromTagName\": \"NZ-OUT\""));
+    assertTrue(first.toJson().contains("\"componentName\": \"PumpDischargeNozzle\""));
     assertEquals(first.toJson(), second.toJson());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnections().clear());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsPreservesDirectConnectionOwnerProvenance() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<PipingComponent ID=\"PC-DIRECT\" ComponentClass=\"GlobeValve\" ComponentName=\"ValveShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagName\" Value=\"XV-101\"/></GenericAttributes>"
+        + "</PipingComponent><Equipment ID=\"E-DIRECT\" ComponentClass=\"Tank\" ComponentName=\"TankShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"TK-101\"/>"
+        + "</GenericAttributes></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-DIRECT\"><Connection ID=\"C-DIRECT\" FromID=\"PC-DIRECT\""
+        + " ToID=\"E-DIRECT\"/></PipingNetworkSegment></PlantModel>";
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiConnectionInfo connection = result.getConnections().get(0);
+
+    assertEquals("PipingComponent", connection.getFromElementName());
+    assertEquals("GlobeValve", connection.getFromComponentClass());
+    assertEquals("ValveShape", connection.getFromComponentName());
+    assertEquals("XV-101", connection.getFromTagName());
+    assertEquals("PC-DIRECT", connection.getFromOwnerId());
+    assertEquals("GlobeValve", connection.getFromOwnerComponentClass());
+    assertEquals("ValveShape", connection.getFromOwnerComponentName());
+    assertEquals("XV-101", connection.getFromOwnerTagName());
+    assertEquals("Equipment", connection.getToElementName());
+    assertEquals("Tank", connection.getToComponentClass());
+    assertEquals("TankShape", connection.getToComponentName());
+    assertEquals("TK-101", connection.getToTagName());
+    assertEquals("E-DIRECT", connection.getToOwnerId());
+    assertEquals("Tank", connection.getToOwnerComponentClass());
+    assertEquals("TankShape", connection.getToOwnerComponentName());
+    assertEquals("TK-101", connection.getToOwnerTagName());
+    assertTrue(connection.isOwnershipResolved());
   }
 
   @Test
@@ -347,6 +664,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(2, result.getConnections().size());
     assertEquals("C-1", result.getConnections().get(0).getId());
     assertFalse(result.getConnections().get(0).isResolved());
+    assertEquals("", result.getConnections().get(0).getFromComponentClass());
+    assertEquals("", result.getConnections().get(0).getFromComponentName());
+    assertEquals("", result.getConnections().get(0).getFromTagName());
+    assertEquals("", result.getConnections().get(0).getToComponentClass());
+    assertEquals("", result.getConnections().get(0).getToComponentName());
+    assertEquals("", result.getConnections().get(0).getToTagName());
     assertEquals("C-1#2", result.getConnections().get(1).getId());
     assertTrue(result.getConnections().get(1).isSelfReference());
     assertDiagnostic(result, "DEXPI_IMPORT_CONNECTION_SOURCE_MISSING");
@@ -381,6 +704,15 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionInfo legacy = new DexpiConnectionInfo("C", "C", "S", "A", "B", "Nozzle", "Nozzle", true, true);
     assertEquals("", legacy.getFromOwnerId());
     assertEquals("", legacy.getToOwnerId());
+    assertEquals("", legacy.getFromOwnerComponentClass());
+    assertEquals("", legacy.getFromOwnerComponentName());
+    assertEquals("", legacy.getFromOwnerTagName());
+    assertEquals("", legacy.getToOwnerComponentClass());
+    assertEquals("", legacy.getToOwnerComponentName());
+    assertEquals("", legacy.getToOwnerTagName());
+    assertEquals("", legacy.getSegmentComponentClass());
+    assertEquals("", legacy.getSegmentComponentName());
+    assertEquals("", legacy.getSegmentTagName());
   }
 
   @Test
@@ -388,7 +720,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
         + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
         + "<Equipment ID=\"E-B\"><Nozzle ID=\"N-B\"/></Equipment>"
-        + "<PipingComponent ID=\"PC-J\"><Nozzle ID=\"N-J\"/></PipingComponent>"
+        + "<PipingComponent ID=\"PC-J\" ComponentClass=\"PipeFitting\" ComponentName=\"TeeShape\">"
+        + "<GenericAttributes><GenericAttribute Name=\"TagNameAssignmentClass\" Value=\"TEE-101\"/>"
+        + "</GenericAttributes><Nozzle ID=\"N-J\"/></PipingComponent>"
         + "<Equipment ID=\"E-C\"><Nozzle ID=\"N-C\"/></Equipment>"
         + "<PipingNetworkSegment ID=\"S-1\"><Connection ID=\"C-1\" FromID=\"N-A\" ToID=\"N-J\"/>"
         + "</PipingNetworkSegment>"
@@ -408,6 +742,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("N-J", junction.getEndpointId());
     assertEquals("Nozzle", junction.getElementName());
     assertEquals("PC-J", junction.getOwnerId());
+    assertEquals("PipingComponent", junction.getOwnerElementName());
+    assertEquals("PipeFitting", junction.getOwnerComponentClass());
+    assertEquals("TeeShape", junction.getOwnerComponentName());
+    assertEquals("TEE-101", junction.getOwnerTagName());
     assertTrue(junction.isResolved());
     assertEquals(2, junction.getIncomingConnectionCount());
     assertEquals(1, junction.getOutgoingConnectionCount());
@@ -421,6 +759,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionEndpointInfo unresolved = first.getConnectionEndpoints().get(4);
     assertEquals("UNKNOWN", unresolved.getEndpointId());
     assertFalse(unresolved.isResolved());
+    assertEquals("", unresolved.getOwnerComponentClass());
+    assertEquals("", unresolved.getOwnerComponentName());
+    assertEquals("", unresolved.getOwnerTagName());
     assertEquals(Collections.singletonList("C-4"), unresolved.getOutgoingConnectionIds());
     assertEquals(0, unresolved.getIncomingConnectionCount());
     assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SOURCE, unresolved.getIncidenceRole());
@@ -430,6 +771,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertTrue(first.toJson().contains("\"connectionEndpointCount\": 5"));
     assertTrue(first.toJson().contains("\"incidenceRole\": \"MERGE\""));
     assertTrue(first.toJson().contains("\"potentialMultiConnectionNode\": true"));
+    assertTrue(first.toJson().contains("\"ownerComponentClass\": \"PipeFitting\""));
+    assertTrue(first.toJson().contains("\"ownerComponentName\": \"TeeShape\""));
+    assertTrue(first.toJson().contains("\"ownerTagName\": \"TEE-101\""));
     assertEquals(first.toJson(), second.toJson());
   }
 
@@ -522,6 +866,15 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(2, chain.getConnectionCount());
     assertFalse(chain.hasUnresolvedEndpoints());
     assertFalse(chain.hasPotentialMultiConnectionNodes());
+    assertTrue(chain.hasCompleteEvidence());
+    assertEquals(Arrays.asList("N-A", "N-J", "N-C"), Arrays.asList(chain.getEndpoints().get(0).getEndpointId(),
+        chain.getEndpoints().get(1).getEndpointId(), chain.getEndpoints().get(2).getEndpointId()));
+    assertEquals("E-A", chain.getEndpoints().get(0).getOwnerId());
+    assertSame(first.getConnectionEndpoints().get(0), chain.getEndpoints().get(0));
+    assertEquals(Arrays.asList("C-1", "C-2"),
+        Arrays.asList(chain.getConnections().get(0).getId(), chain.getConnections().get(1).getId()));
+    assertEquals("S-1", chain.getConnections().get(0).getSegmentId());
+    assertSame(first.getConnections().get(0), chain.getConnections().get(0));
 
     DexpiConnectionComponentInfo parallel = first.getConnectionComponents().get(1);
     assertEquals("component-2", parallel.getId());
@@ -529,6 +882,10 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(Arrays.asList("C-3", "C-4"), parallel.getConnectionIds());
     assertEquals(Arrays.asList("N-X", "N-Y"), parallel.getPotentialMultiConnectionEndpointIds());
     assertTrue(parallel.hasPotentialMultiConnectionNodes());
+    assertEquals(Arrays.asList("C-3", "C-4"),
+        Arrays.asList(parallel.getConnections().get(0).getId(), parallel.getConnections().get(1).getId()));
+    assertSame(first.getConnections().get(2), parallel.getConnections().get(0));
+    assertSame(first.getConnections().get(3), parallel.getConnections().get(1));
 
     DexpiConnectionComponentInfo unresolved = first.getConnectionComponents().get(2);
     assertEquals("component-3", unresolved.getId());
@@ -537,11 +894,27 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals(Collections.singletonList("UNKNOWN"), unresolved.getSourceEndpointIds());
     assertEquals(Collections.singletonList("UNKNOWN"), unresolved.getUnresolvedEndpointIds());
     assertTrue(unresolved.hasUnresolvedEndpoints());
+    assertFalse(unresolved.getEndpoints().get(0).isResolved());
+    assertEquals("C-5", unresolved.getConnections().get(0).getId());
 
     assertThrows(UnsupportedOperationException.class, () -> chain.getEndpointIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> chain.getEndpoints().clear());
+    assertThrows(UnsupportedOperationException.class, () -> chain.getConnections().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionComponents().clear());
+
+    DexpiConnectionComponentInfo legacy = new DexpiConnectionComponentInfo("legacy",
+        Collections.singletonList("N-LEGACY"), Collections.singletonList("C-LEGACY"),
+        Collections.singletonList("N-LEGACY"), Collections.<String>emptyList(), Collections.<String>emptyList(),
+        Collections.<String>emptyList());
+    assertFalse(legacy.hasCompleteEvidence());
+    assertTrue(legacy.getEndpoints().isEmpty());
+    assertTrue(legacy.getConnections().isEmpty());
+
     assertTrue(first.toJson().contains("\"connectionComponentCount\": 3"));
     assertTrue(first.toJson().contains("\"hasUnresolvedEndpoints\": true"));
+    assertTrue(first.toJson().contains("\"completeEvidence\": true"));
+    assertTrue(first.toJson().contains("\"connections\": ["));
+    assertTrue(first.toJson().contains("\"endpoints\": ["));
     assertEquals(first.toJson(), second.toJson());
   }
 
@@ -593,8 +966,34 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleInfo threeEndpointCycle = first.getConnectionCycles().get(0);
     assertEquals("cycle-1", threeEndpointCycle.getId());
     assertEquals("component-2", threeEndpointCycle.getConnectionComponentId());
+    assertTrue(threeEndpointCycle.hasConnectionComponentEvidence());
+    assertSame(first.getConnectionComponents().get(1), threeEndpointCycle.getConnectionComponent());
+    assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getConnectionComponent().getEndpointIds());
     assertEquals(Arrays.asList("N-X", "N-Y", "N-Z"), threeEndpointCycle.getEndpointIds());
+    List<DexpiConnectionEndpointInfo> cycleEndpoints = threeEndpointCycle.getEndpoints();
+    assertEquals(3, cycleEndpoints.size());
+    assertEquals("N-X", cycleEndpoints.get(0).getEndpointId());
+    assertEquals("Nozzle", cycleEndpoints.get(0).getElementName());
+    assertEquals("E-X", cycleEndpoints.get(0).getOwnerId());
+    assertEquals("Equipment", cycleEndpoints.get(0).getOwnerElementName());
+    assertTrue(cycleEndpoints.get(0).isResolved());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SPLIT, cycleEndpoints.get(0).getIncidenceRole());
+    assertEquals("N-Y", cycleEndpoints.get(1).getEndpointId());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.MERGE, cycleEndpoints.get(1).getIncidenceRole());
+    assertEquals("N-Z", cycleEndpoints.get(2).getEndpointId());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.PASS_THROUGH, cycleEndpoints.get(2).getIncidenceRole());
     assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), threeEndpointCycle.getConnectionIds());
+    List<DexpiConnectionInfo> internalConnections = threeEndpointCycle.getConnections();
+    assertEquals(Arrays.asList("C-3", "C-3P", "C-4", "C-5"), Arrays.asList(internalConnections.get(0).getId(),
+        internalConnections.get(1).getId(), internalConnections.get(2).getId(), internalConnections.get(3).getId()));
+    assertEquals("C-3", internalConnections.get(0).getSourceId());
+    assertEquals("S-3", internalConnections.get(0).getSegmentId());
+    assertEquals("N-X", internalConnections.get(0).getFromId());
+    assertEquals("N-Y", internalConnections.get(0).getToId());
+    assertEquals("E-X", internalConnections.get(0).getFromOwnerId());
+    assertEquals("E-Y", internalConnections.get(0).getToOwnerId());
+    assertTrue(internalConnections.get(0).isResolved());
+    assertEquals("S-3P", internalConnections.get(1).getSegmentId());
     assertEquals(3, threeEndpointCycle.getEndpointCount());
     assertEquals(4, threeEndpointCycle.getConnectionCount());
     assertFalse(threeEndpointCycle.hasSelfReference());
@@ -603,15 +1002,30 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     DexpiConnectionCycleInfo selfReference = first.getConnectionCycles().get(1);
     assertEquals("cycle-2", selfReference.getId());
     assertEquals("component-4", selfReference.getConnectionComponentId());
+    assertTrue(selfReference.hasConnectionComponentEvidence());
+    assertSame(first.getConnectionComponents().get(3), selfReference.getConnectionComponent());
     assertEquals(Collections.singletonList("N-S"), selfReference.getEndpointIds());
     assertEquals(Collections.singletonList("C-8"), selfReference.getConnectionIds());
+    assertEquals("C-8", selfReference.getConnections().get(0).getSourceId());
+    assertEquals("S-8", selfReference.getConnections().get(0).getSegmentId());
+    assertTrue(selfReference.getConnections().get(0).isSelfReference());
     assertTrue(selfReference.hasSelfReference());
 
     DexpiConnectionCycleInfo unresolved = first.getConnectionCycles().get(2);
     assertEquals("cycle-3", unresolved.getId());
     assertEquals("component-5", unresolved.getConnectionComponentId());
+    assertTrue(unresolved.hasConnectionComponentEvidence());
+    assertSame(first.getConnectionComponents().get(4), unresolved.getConnectionComponent());
     assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getEndpointIds());
     assertEquals(Arrays.asList("C-9", "C-10"), unresolved.getConnectionIds());
+    assertEquals(2, unresolved.getConnections().size());
+    assertEquals("S-9", unresolved.getConnections().get(0).getSegmentId());
+    assertFalse(unresolved.getConnections().get(0).isResolved());
+    assertEquals(2, unresolved.getEndpoints().size());
+    assertEquals("UNKNOWN-1", unresolved.getEndpoints().get(0).getEndpointId());
+    assertFalse(unresolved.getEndpoints().get(0).isResolved());
+    assertEquals("", unresolved.getEndpoints().get(0).getElementName());
+    assertEquals("", unresolved.getEndpoints().get(0).getOwnerId());
     assertEquals(Arrays.asList("UNKNOWN-1", "UNKNOWN-2"), unresolved.getUnresolvedEndpointIds());
     assertTrue(unresolved.hasUnresolvedEndpoints());
 
@@ -620,9 +1034,23 @@ public class DexpiXmlReaderTest extends NeqSimTest {
       assertFalse(cycle.getEndpointIds().contains("N-Q"));
     }
     assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpointIds().clear());
+    assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getEndpoints().clear());
+    assertThrows(UnsupportedOperationException.class, () -> threeEndpointCycle.getConnections().clear());
     assertThrows(UnsupportedOperationException.class, () -> first.getConnectionCycles().clear());
+
+    DexpiConnectionCycleInfo legacy = new DexpiConnectionCycleInfo("legacy-cycle", "legacy-component",
+        Collections.singletonList("N-LEGACY"), Collections.singletonList("C-LEGACY"), Collections.<String>emptyList(),
+        Collections.<String>emptyList(), Collections.<String>emptyList(), false);
+    assertFalse(legacy.hasConnectionComponentEvidence());
+    assertNull(legacy.getConnectionComponent());
+
     assertTrue(first.toJson().contains("\"connectionCycleCount\": 3"));
+    assertTrue(first.toJson().contains("\"endpoints\": ["));
+    assertTrue(first.toJson().contains("\"connections\": ["));
+    assertTrue(first.toJson().contains("\"segmentId\": \"S-3\""));
     assertTrue(first.toJson().contains("\"connectionComponentId\": \"component-4\""));
+    assertTrue(first.toJson().contains("\"hasConnectionComponentEvidence\": true"));
+    assertTrue(first.toJson().contains("\"connectionComponent\": {"));
     assertTrue(first.toJson().contains("\"selfReference\": true"));
     assertEquals(first.toJson(), second.toJson());
   }
@@ -677,6 +1105,9 @@ public class DexpiXmlReaderTest extends NeqSimTest {
         Arrays.asList(boundaries.get(0).getConnectionId(), boundaries.get(1).getConnectionId(),
             boundaries.get(2).getConnectionId(), boundaries.get(3).getConnectionId()));
     assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, boundaries.get(0).getDirection());
+    assertEquals("C-IN-1", boundaries.get(0).getSourceId());
+    assertTrue(boundaries.get(0).hasSourceId());
+    assertEquals("S-IN-1", boundaries.get(0).getSegmentId());
     assertEquals("N-X", boundaries.get(0).getInternalEndpointId());
     assertEquals("N-A", boundaries.get(0).getExternalEndpointId());
     assertTrue(boundaries.get(0).isInternalEndpointResolved());
@@ -687,7 +1118,29 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("Nozzle", boundaries.get(0).getExternalEndpointElementName());
     assertEquals("E-A", boundaries.get(0).getExternalOwnerId());
     assertEquals("Equipment", boundaries.get(0).getExternalOwnerElementName());
+    assertTrue(boundaries.get(0).hasCompleteEvidence());
+    assertTrue(boundaries.get(0).hasConnectionEvidence());
+    DexpiConnectionInfo boundaryConnection = boundaries.get(0).getConnection();
+    assertEquals("C-IN-1", boundaryConnection.getId());
+    assertEquals("C-IN-1", boundaryConnection.getSourceId());
+    assertEquals("S-IN-1", boundaryConnection.getSegmentId());
+    assertEquals("N-A", boundaryConnection.getFromId());
+    assertEquals("N-X", boundaryConnection.getToId());
+    assertTrue(boundaryConnection.isResolved());
+    assertTrue(boundaries.get(0).hasInternalEndpointEvidence());
+    DexpiConnectionEndpointInfo internalEndpoint = boundaries.get(0).getInternalEndpoint();
+    assertEquals("N-X", internalEndpoint.getEndpointId());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.MERGE, internalEndpoint.getIncidenceRole());
+    assertEquals(Arrays.asList("C-IN-1", "C-IN-2", "C-YX"), internalEndpoint.getIncomingConnectionIds());
+    assertEquals(Collections.singletonList("C-XY"), internalEndpoint.getOutgoingConnectionIds());
+    assertTrue(boundaries.get(0).hasExternalEndpointEvidence());
+    DexpiConnectionEndpointInfo externalEndpoint = boundaries.get(0).getExternalEndpoint();
+    assertEquals("N-A", externalEndpoint.getEndpointId());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SOURCE, externalEndpoint.getIncidenceRole());
+    assertEquals(Collections.singletonList("C-IN-1"), externalEndpoint.getOutgoingConnectionIds());
     assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, boundaries.get(1).getDirection());
+    assertEquals("C-OUT-1", boundaries.get(1).getSourceId());
+    assertEquals("S-OUT-1", boundaries.get(1).getSegmentId());
     assertEquals("N-Y", boundaries.get(1).getInternalEndpointId());
     assertEquals("N-B", boundaries.get(1).getExternalEndpointId());
     assertEquals("E-Y", boundaries.get(1).getInternalOwnerId());
@@ -700,6 +1153,12 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertEquals("", boundaries.get(2).getExternalEndpointElementName());
     assertEquals("", boundaries.get(2).getExternalOwnerId());
     assertEquals("", boundaries.get(2).getExternalOwnerElementName());
+    assertTrue(boundaries.get(2).hasCompleteEvidence());
+    assertFalse(boundaries.get(2).getConnection().isResolved());
+    assertFalse(boundaries.get(2).getExternalEndpoint().isResolved());
+    assertEquals("UNKNOWN-U", boundaries.get(2).getExternalEndpoint().getEndpointId());
+    assertEquals(DexpiConnectionEndpointInfo.IncidenceRole.SOURCE,
+        boundaries.get(2).getExternalEndpoint().getIncidenceRole());
 
     DexpiConnectionCycleInfo closedSelfReference = first.getConnectionCycles().get(1);
     assertEquals("cycle-2", closedSelfReference.getId());
@@ -715,24 +1174,225 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getIncomingBoundaryConnectionIds().clear());
     assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getOutgoingBoundaryConnectionIds().clear());
     assertThrows(UnsupportedOperationException.class, () -> connectedCycle.getBoundaryConnections().clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> boundaries.get(0).getInternalEndpoint().getIncomingConnectionIds().clear());
     DexpiConnectionCycleInfo legacy = new DexpiConnectionCycleInfo("legacy", "component-legacy",
         Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
         Collections.<String>emptyList(), Collections.<String>emptyList(), false);
+    assertTrue(legacy.getEndpoints().isEmpty());
+    assertTrue(legacy.getConnections().isEmpty());
     assertTrue(legacy.getBoundaryConnections().isEmpty());
     DexpiConnectionCycleBoundaryInfo legacyBoundary = new DexpiConnectionCycleBoundaryInfo("legacy-boundary",
         DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, "N-INTERNAL", "N-EXTERNAL", true, false);
+    assertEquals("", legacyBoundary.getSourceId());
+    assertFalse(legacyBoundary.hasSourceId());
+    assertEquals("", legacyBoundary.getSegmentId());
     assertEquals("", legacyBoundary.getInternalEndpointElementName());
     assertEquals("", legacyBoundary.getInternalOwnerId());
     assertEquals("", legacyBoundary.getExternalEndpointElementName());
     assertEquals("", legacyBoundary.getExternalOwnerId());
+    assertFalse(legacyBoundary.hasCompleteEvidence());
+    assertFalse(legacyBoundary.hasConnectionEvidence());
+    assertFalse(legacyBoundary.hasInternalEndpointEvidence());
+    assertFalse(legacyBoundary.hasExternalEndpointEvidence());
     assertTrue(first.toJson().contains("\"incomingBoundaryConnectionCount\": 2"));
     assertTrue(first.toJson().contains("\"boundaryConnectionCount\": 4"));
     assertTrue(first.toJson().contains("\"direction\": \"INCOMING\""));
     assertTrue(first.toJson().contains("\"externalEndpointId\": \"UNKNOWN-U\""));
+    assertTrue(first.toJson().contains("\"sourceId\": \"C-IN-1\""));
+    assertTrue(first.toJson().contains("\"segmentId\": \"S-IN-1\""));
     assertTrue(first.toJson().contains("\"internalOwnerId\": \"E-X\""));
     assertTrue(first.toJson().contains("\"externalOwnerElementName\": \"Equipment\""));
+    assertTrue(first.toJson().contains("\"completeEvidence\": true"));
+    assertTrue(first.toJson().contains("\"connection\": {"));
+    assertTrue(first.toJson().contains("\"internalEndpoint\": {"));
+    assertTrue(first.toJson().contains("\"externalEndpoint\": {"));
+    assertTrue(first.toJson().contains("\"incidenceRole\": \"MERGE\""));
     assertTrue(first.toJson().contains("\"outgoingBoundaryConnectionIds\": ["));
     assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
+  public void testReadWithDiagnosticsSummarizesCycleTransitionsExactlyOnce() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
+        + "<Equipment ID=\"E-A\"><Nozzle ID=\"N-A\"/></Equipment>"
+        + "<Equipment ID=\"E-B\"><Nozzle ID=\"N-B\"/></Equipment>"
+        + "<Equipment ID=\"E-X\"><Nozzle ID=\"N-X\"/></Equipment>"
+        + "<Equipment ID=\"E-Y\"><Nozzle ID=\"N-Y\"/></Equipment>"
+        + "<Equipment ID=\"E-V\"><Nozzle ID=\"N-V\"/></Equipment>"
+        + "<PipingNetworkSegment ID=\"S-IN-1\"><Connection ID=\"C-IN-1\" FromID=\"UNKNOWN-U\" ToID=\"N-A\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-IN-2\"><Connection ID=\"C-IN-2\" FromID=\"UNKNOWN-U\" ToID=\"N-A\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-AB\"><Connection ID=\"C-AB\" FromID=\"N-A\" ToID=\"N-B\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-BA\"><Connection ID=\"C-BA\" FromID=\"N-B\" ToID=\"N-A\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-BX\"><Connection ID=\"C-BX\" FromID=\"N-B\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-XY\"><Connection ID=\"C-XY\" FromID=\"N-X\" ToID=\"N-Y\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-YX\"><Connection ID=\"C-YX\" FromID=\"N-Y\" ToID=\"N-X\"/>"
+        + "</PipingNetworkSegment>"
+        + "<PipingNetworkSegment ID=\"S-OUT\"><Connection ID=\"C-OUT\" FromID=\"N-Y\" ToID=\"N-V\"/>"
+        + "</PipingNetworkSegment>" + "</PlantModel>";
+
+    DexpiXmlReader.ImportResult first = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    DexpiXmlReader.ImportResult second = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(2, first.getConnectionCycles().size());
+    List<DexpiConnectionCycleTransitionInfo> transitions = first.getConnectionCycleTransitions();
+    assertEquals(4, transitions.size());
+    assertEquals(Arrays.asList("C-IN-1", "C-IN-2", "C-BX", "C-OUT"),
+        Arrays.asList(transitions.get(0).getConnectionId(), transitions.get(1).getConnectionId(),
+            transitions.get(2).getConnectionId(), transitions.get(3).getConnectionId()));
+
+    DexpiConnectionCycleTransitionInfo entering = transitions.get(0);
+    assertEquals(DexpiConnectionCycleTransitionInfo.Kind.ENTERING, entering.getKind());
+    assertEquals("", entering.getFromCycleId());
+    assertFalse(entering.hasFromCycle());
+    assertFalse(entering.hasFromCycleEvidence());
+    assertNull(entering.getFromCycle());
+    assertFalse(entering.hasFromCycleBoundaryEvidence());
+    assertNull(entering.getFromCycleBoundary());
+    assertFalse(entering.hasFromCycleComponentEvidence());
+    assertNull(entering.getFromCycleComponent());
+    assertEquals("cycle-1", entering.getToCycleId());
+    assertTrue(entering.hasToCycle());
+    assertTrue(entering.hasToCycleEvidence());
+    assertSame(first.getConnectionCycles().get(0), entering.getToCycle());
+    assertTrue(entering.hasToCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(0).getConnectionComponent(), entering.getToCycleComponent());
+    assertTrue(entering.hasToCycleBoundaryEvidence());
+    assertSame(findCycleBoundary(first.getConnectionCycles().get(0), "C-IN-1",
+        DexpiConnectionCycleBoundaryInfo.Direction.INCOMING), entering.getToCycleBoundary());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, entering.getToCycleBoundary().getDirection());
+    assertEquals("S-IN-1", entering.getConnection().getSegmentId());
+    assertEquals("UNKNOWN-U", entering.getFromEndpoint().getEndpointId());
+    assertFalse(entering.getFromEndpoint().isResolved());
+    assertEquals("N-A", entering.getToEndpoint().getEndpointId());
+    assertEquals("E-A", entering.getToEndpoint().getOwnerId());
+    assertEquals(Arrays.asList("C-IN-1", "C-IN-2", "C-BA"), entering.getToEndpoint().getIncomingConnectionIds());
+    assertEquals(Collections.singletonList("C-AB"), entering.getToEndpoint().getOutgoingConnectionIds());
+
+    DexpiConnectionCycleTransitionInfo parallelEntering = transitions.get(1);
+    assertEquals(DexpiConnectionCycleTransitionInfo.Kind.ENTERING, parallelEntering.getKind());
+    assertEquals("cycle-1", parallelEntering.getToCycleId());
+    assertSame(first.getConnectionCycles().get(0), parallelEntering.getToCycle());
+    assertFalse(parallelEntering.hasFromCycleComponentEvidence());
+    assertNull(parallelEntering.getFromCycleComponent());
+    assertTrue(parallelEntering.hasToCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(0).getConnectionComponent(), parallelEntering.getToCycleComponent());
+    assertFalse(parallelEntering.hasFromCycleBoundaryEvidence());
+    assertNull(parallelEntering.getFromCycleBoundary());
+    assertTrue(parallelEntering.hasToCycleBoundaryEvidence());
+    assertSame(findCycleBoundary(first.getConnectionCycles().get(0), "C-IN-2",
+        DexpiConnectionCycleBoundaryInfo.Direction.INCOMING), parallelEntering.getToCycleBoundary());
+    assertEquals("S-IN-2", parallelEntering.getConnection().getSegmentId());
+
+    DexpiConnectionCycleTransitionInfo between = transitions.get(2);
+    assertEquals(DexpiConnectionCycleTransitionInfo.Kind.BETWEEN_CYCLES, between.getKind());
+    assertEquals("cycle-1", between.getFromCycleId());
+    assertEquals("cycle-2", between.getToCycleId());
+    assertTrue(between.hasFromCycle());
+    assertTrue(between.hasToCycle());
+    assertTrue(between.hasFromCycleEvidence());
+    assertTrue(between.hasToCycleEvidence());
+    assertSame(first.getConnectionCycles().get(0), between.getFromCycle());
+    assertSame(first.getConnectionCycles().get(1), between.getToCycle());
+    assertTrue(between.hasFromCycleComponentEvidence());
+    assertTrue(between.hasToCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(0).getConnectionComponent(), between.getFromCycleComponent());
+    assertSame(first.getConnectionCycles().get(1).getConnectionComponent(), between.getToCycleComponent());
+    assertTrue(between.hasFromCycleBoundaryEvidence());
+    assertTrue(between.hasToCycleBoundaryEvidence());
+    assertSame(findCycleBoundary(first.getConnectionCycles().get(0), "C-BX",
+        DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING), between.getFromCycleBoundary());
+    assertSame(findCycleBoundary(first.getConnectionCycles().get(1), "C-BX",
+        DexpiConnectionCycleBoundaryInfo.Direction.INCOMING), between.getToCycleBoundary());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, between.getFromCycleBoundary().getDirection());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.INCOMING, between.getToCycleBoundary().getDirection());
+    assertEquals("N-B", between.getFromEndpoint().getEndpointId());
+    assertEquals("N-X", between.getToEndpoint().getEndpointId());
+
+    DexpiConnectionCycleTransitionInfo leaving = transitions.get(3);
+    assertEquals(DexpiConnectionCycleTransitionInfo.Kind.LEAVING, leaving.getKind());
+    assertEquals("cycle-2", leaving.getFromCycleId());
+    assertEquals("", leaving.getToCycleId());
+    assertTrue(leaving.hasFromCycle());
+    assertTrue(leaving.hasFromCycleEvidence());
+    assertSame(first.getConnectionCycles().get(1), leaving.getFromCycle());
+    assertTrue(leaving.hasFromCycleComponentEvidence());
+    assertSame(first.getConnectionCycles().get(1).getConnectionComponent(), leaving.getFromCycleComponent());
+    assertFalse(leaving.hasToCycle());
+    assertFalse(leaving.hasToCycleEvidence());
+    assertNull(leaving.getToCycle());
+    assertFalse(leaving.hasToCycleComponentEvidence());
+    assertNull(leaving.getToCycleComponent());
+    assertTrue(leaving.hasFromCycleBoundaryEvidence());
+    assertSame(findCycleBoundary(first.getConnectionCycles().get(1), "C-OUT",
+        DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING), leaving.getFromCycleBoundary());
+    assertEquals(DexpiConnectionCycleBoundaryInfo.Direction.OUTGOING, leaving.getFromCycleBoundary().getDirection());
+    assertFalse(leaving.hasToCycleBoundaryEvidence());
+    assertNull(leaving.getToCycleBoundary());
+    assertEquals("E-V", leaving.getToEndpoint().getOwnerId());
+
+    assertThrows(UnsupportedOperationException.class, () -> transitions.clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> entering.getToEndpoint().getIncomingConnectionIds().clear());
+    assertThrows(IllegalArgumentException.class, () -> new DexpiConnectionCycleTransitionInfo(entering.getConnection(),
+        entering.getFromEndpoint(), entering.getToEndpoint(), "", ""));
+    assertThrows(IllegalArgumentException.class, () -> new DexpiConnectionCycleTransitionInfo(between.getConnection(),
+        between.getFromEndpoint(), between.getToEndpoint(), "cycle-1", "cycle-1"));
+
+    DexpiConnectionCycleTransitionInfo legacy = new DexpiConnectionCycleTransitionInfo(between.getConnection(),
+        between.getFromEndpoint(), between.getToEndpoint(), "cycle-1", "cycle-2");
+    assertTrue(legacy.hasFromCycle());
+    assertTrue(legacy.hasToCycle());
+    assertFalse(legacy.hasFromCycleEvidence());
+    assertFalse(legacy.hasToCycleEvidence());
+    assertNull(legacy.getFromCycle());
+    assertNull(legacy.getToCycle());
+    assertFalse(legacy.hasFromCycleBoundaryEvidence());
+    assertFalse(legacy.hasToCycleBoundaryEvidence());
+    assertNull(legacy.getFromCycleBoundary());
+    assertNull(legacy.getToCycleBoundary());
+    assertFalse(legacy.hasFromCycleComponentEvidence());
+    assertFalse(legacy.hasToCycleComponentEvidence());
+    assertNull(legacy.getFromCycleComponent());
+    assertNull(legacy.getToCycleComponent());
+
+    assertTrue(first.toJson().contains("\"connectionCycleTransitionCount\": 4"));
+    assertTrue(first.toJson().contains("\"kind\": \"BETWEEN_CYCLES\""));
+    assertTrue(first.toJson().contains("\"fromCycleId\": \"cycle-1\""));
+    assertTrue(first.toJson().contains("\"toCycleId\": \"cycle-2\""));
+    assertTrue(first.toJson().contains("\"hasFromCycleEvidence\": true"));
+    assertTrue(first.toJson().contains("\"hasToCycleEvidence\": true"));
+    assertTrue(first.toJson().contains("\"fromCycle\": {"));
+    assertTrue(first.toJson().contains("\"toCycle\": {"));
+    assertTrue(first.toJson().contains("\"hasFromCycleBoundaryEvidence\": true"));
+    assertTrue(first.toJson().contains("\"hasToCycleBoundaryEvidence\": true"));
+    assertTrue(first.toJson().contains("\"fromCycleBoundary\": {"));
+    assertTrue(first.toJson().contains("\"toCycleBoundary\": {"));
+    assertTrue(first.toJson().contains("\"hasFromCycleComponentEvidence\": true"));
+    assertTrue(first.toJson().contains("\"hasToCycleComponentEvidence\": true"));
+    assertTrue(first.toJson().contains("\"fromCycleComponent\": {"));
+    assertTrue(first.toJson().contains("\"toCycleComponent\": {"));
+    assertTrue(first.toJson().contains("\"fromEndpoint\": {"));
+    assertTrue(first.toJson().contains("\"toEndpoint\": {"));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
+  private static DexpiConnectionCycleBoundaryInfo findCycleBoundary(DexpiConnectionCycleInfo cycle, String connectionId,
+      DexpiConnectionCycleBoundaryInfo.Direction direction) {
+    for (DexpiConnectionCycleBoundaryInfo boundary : cycle.getBoundaryConnections()) {
+      if (connectionId.equals(boundary.getConnectionId()) && direction == boundary.getDirection()) {
+        return boundary;
+      }
+    }
+    throw new AssertionError("Missing " + direction + " boundary " + connectionId + " in " + cycle.getId());
   }
 
   private static int countDiagnostics(DexpiXmlReader.ImportResult result, String expectedCode) {
@@ -768,5 +1428,68 @@ public class DexpiXmlReaderTest extends NeqSimTest {
       }
     }
     throw new AssertionError("Missing diagnostic " + expectedCode + " in " + result.toJson());
+  }
+
+  /**
+   * Reads the DEXPI reference example C01V04, which uses the standard Proteus form where {@code <Equipment>} and
+   * {@code <PipingComponent>} carry their own ComponentClass (issue #4963).
+   *
+   * @throws Exception if reading fails
+   */
+  @Test
+  public void testReadsStandardProteusReferenceExampleC01V04() throws Exception {
+    File file = new File("src/test/resources/dexpi/C01V04-VER.EX01.xml");
+    DexpiXmlReader.ImportResult result = DexpiXmlReader.readWithDiagnostics(file);
+    ProcessSystem process = result.getProcessSystem();
+
+    String[][] expected = {{"H1007", "PlateHeatExchanger"}, {"H1008", "TubularHeatExchanger"},
+        {"P4711", "CentrifugalPump"}, {"P4712", "ReciprocatingPump"}, {"T4750", "Tank"}};
+    for (String[] item : expected) {
+      ProcessEquipmentInterface unit = process.getUnit(item[0]);
+      assertNotNull(unit, "Missing equipment " + item[0] + " in " + process.getAllUnitNames());
+      assertTrue(unit instanceof DexpiProcessUnit);
+      assertEquals(item[1], ((DexpiProcessUnit) unit).getDexpiClass());
+    }
+
+    int equipmentCount = 0;
+    int pipingCount = 0;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof DexpiProcessUnit) {
+        String id = ((DexpiProcessUnit) unit).getDexpiId();
+        if (id != null && id.matches(".*(Valve|Reducer|Flange|Tee).*")) {
+          pipingCount++;
+        } else {
+          equipmentCount++;
+        }
+      }
+    }
+    assertEquals(5, equipmentCount, "Expected the five reference equipment items");
+    assertTrue(pipingCount > 0, "Expected piping components to be imported");
+
+    for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+      assertFalse("DEXPI_IMPORT_COMPONENT_CLASS_MISSING".equals(diagnostic.getCode()),
+          "Unexpected missing-class diagnostic: " + diagnostic.getElementName() + " " + diagnostic.getElementId());
+      if ("DEXPI_IMPORT_COMPONENT_UNSUPPORTED".equals(diagnostic.getCode())) {
+        assertFalse(Arrays.asList("Nozzle", "Label", "Chamber", "Impeller", "TubeBundle", "Displacer").contains(
+            diagnostic.getComponentClass()), "Sub-item reported as unsupported: " + diagnostic.getComponentClass());
+      }
+    }
+  }
+
+  /**
+   * Tests that a wrapper element and a standard-form item nested in it produce one unit, not two.
+   *
+   * @throws Exception if reading fails
+   */
+  @Test
+  public void testWrappedStandardFormItemIsImportedOnce() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><PlantModel><Equipment>"
+        + "<Equipment ComponentClass=\"CentrifugalPump\" ID=\"P-1\">" + "<Nozzle ComponentClass=\"Nozzle\" ID=\"N-1\"/>"
+        + "<Label ComponentClass=\"EquipmentTagNameLabel\" ID=\"L-1\"/>"
+        + "<Equipment ComponentClass=\"Impeller\" ID=\"I-1\"/>" + "</Equipment></Equipment></PlantModel>";
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    assertEquals(Collections.singletonList("P-1"), result.getProcessSystem().getAllUnitNames());
+    assertTrue(result.getDiagnostics().isEmpty(), result.toJson());
   }
 }

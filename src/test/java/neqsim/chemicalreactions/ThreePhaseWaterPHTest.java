@@ -92,7 +92,7 @@ public class ThreePhaseWaterPHTest {
    */
   @Test
   public void testMethaneDecaneWaterThreePhase() {
-    double[] pressures = { 10.0 };
+    double[] pressures = {10.0};
     double temperature = 298.15; // 25°C
 
     for (double P : pressures) {

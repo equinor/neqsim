@@ -1,0 +1,19 @@
+# Zlobin et al., AIChE Journal 2026, DOI 10.1002/aic.70429, experimental Figure 7a.
+# Source: https://zenodo.org/records/18781329, version DOI 10.5281/zenodo.18781329.
+# Original: data_exp_Fig7a.txt, MD5 410914df3193bb119241f333f7b55907.
+# Selected unchanged Qw3 column; decimal commas changed to decimal points.
+# Authors: A. Zlobin, J.E. Andino-Enriquez, T. Gouezec, M. Bourrel, E. Santanach-Carreras,
+# N. Passade-Boupat, L. Talini, F. Lequeux and P. Panizza. License CC BY 4.0.
+# Initial observation at200s:2.7778mm. Feed stops680s; fitted omega9300m^-2s^-1 from
+# data_num_Fig7a_and_Fig7b_Qw3.txt (MD5 9c372ad3d08c7af53bb65f62feb3fc16).
+# Negative optical-baseline observations are retained, not interpreted as physical model states.
+time_s,measured_layer_mm
+300,1.8519
+400,2.5463
+500,3.3565
+600,2.8935
+675,2.5463
+680,2.4306
+700,1.6204
+800,-0.69444
+900,-0.69444

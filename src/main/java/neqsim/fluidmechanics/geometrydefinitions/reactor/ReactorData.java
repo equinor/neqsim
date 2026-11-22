@@ -1,5 +1,6 @@
 package neqsim.fluidmechanics.geometrydefinitions.reactor;
 
+import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
@@ -64,31 +65,53 @@ public class ReactorData extends GeometryDefinition {
   /**
    * setPackingType.
    *
-   * @param name a {@link java.lang.String} object
+   * @param name packing family (Pall ring or Raschig ring), including legacy class-name aliases
+   * @throws IllegalArgumentException if the family is not supported
    */
   public void setPackingType(String name) {
-    if (name.equals("pallring")) {
+    String family = normalizePackingFamily(name);
+    if (family.equals("pallring")) {
       packing = new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.PallRingPacking();
-    } else if (name.equals("rashigring")) {
+    } else if (family.equals("rashigring")) {
       packing = new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.RachigRingPacking();
     } else {
-      System.out.println("packing " + name + " not defined in database - using pallrings");
-      packing = new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.PallRingPacking();
+      throw new IllegalArgumentException("Unknown packing family: " + name);
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public void setPackingType(String name, String material, int size) {
-    if (name.equals("pallring")) {
+    String family = normalizePackingFamily(name);
+    if (family.equals("pallring")) {
       packing = new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.PallRingPacking(material, size);
-    } else if (name.equals("rashigring")) {
+    } else if (family.equals("rashigring")) {
       packing = new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.RachigRingPacking(material,
           size);
     } else {
-      System.out.println("packing " + name + " not defined in database - using pallrings");
-      packing = new neqsim.fluidmechanics.geometrydefinitions.internalgeometry.packings.PallRingPacking(material, size);
+      throw new IllegalArgumentException("Unknown packing family: " + name);
     }
+  }
+
+  /**
+   * Normalize supported historical packing family spellings.
+   *
+   * @param name family name or legacy class name
+   * @return canonical family key
+   * @throws IllegalArgumentException if the name is missing
+   */
+  private static String normalizePackingFamily(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Packing family must be specified");
+    }
+    String family = name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    if (family.equals("pallringpacking")) {
+      return "pallring";
+    }
+    if (family.equals("raschigring") || family.equals("rachigring") || family.equals("rachigringpacking")) {
+      return "rashigring";
+    }
+    return family;
   }
 
   /** {@inheritDoc} */

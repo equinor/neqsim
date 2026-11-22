@@ -3,8 +3,6 @@ title: Getting Started as a NeqSim Developer
 description: From git clone to first contribution in 30 minutes - environment setup, project structure, common workflows, and contribution paths
 ---
 
-# Getting Started as a NeqSim Developer
-
 **Goal**: From `git clone` to first contribution in 30 minutes.
 
 ---
@@ -14,16 +12,20 @@ description: From git clone to first contribution in 30 minutes - environment se
 ### Prerequisites
 
 **Required:**
-- ☑️ Java 8+ (JDK, not just JRE) - [Download OpenJDK](https://adoptium.net/)
+- ☑️ Java 17+ (JDK, not just JRE) - [Download OpenJDK](https://adoptium.net/)
 - ☑️ Git - [Download](https://git-scm.com/downloads)
 
 **Recommended:**
 - VS Code with [Java Extension Pack](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack)
-- Python 3.8+ (for Jupyter notebook development)
+- Python 3.11+ (for repository tooling, reports, and Jupyter notebook development)
+
+NeqSim source remains Java 8 compatible, and a separate Java 8 artifact is published for
+compatibility. The standard artifact, normal development build, and supported Python gateway use
+Java 17 or newer. Do not silently substitute the Java 8 artifact for the standard build.
 
 **Verify Installation:**
 ```powershell
-java -version    # Should show 1.8.0 or higher
+java -version    # Should show 17 or newer for the standard build
 git --version    # Should show 2.x or higher
 ```
 
@@ -156,7 +158,7 @@ NeqSim has an **AI-assisted workflow** for solving engineering tasks:
 #### Fast Path: Use AI Agent
 ```
 # In VS Code Copilot Chat:
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 The agent creates a task folder, researches the topic, builds a simulation, validates results, and generates a Word report.
@@ -165,6 +167,10 @@ The agent creates a task folder, researches the topic, builds a simulation, vali
 ```bash
 neqsim new-task "Your task description" --type B --intake-pause always
 ```
+
+Both paths create the task folder under the task root: the default saved with
+`neqsim --set-task-root "PATH"` (`cwd` follows the terminal folder), or
+`<repo>/task_solve` when nothing is set. Check it with `neqsim --show-task-root`.
 
 The intake pause creates the folder first, then lets you edit
 `study_config.yaml`, add details to `user_input.md`, or place document inputs
@@ -242,7 +248,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 #### Jupyter Notebooks
 
 1. **Create notebook**:
-   - Use AI agent: `@notebook.example 3-stage compression with intercooling`
+   - Use AI agent: `@notebook-example 3-stage compression with intercooling`
    - Or manually create in `examples/notebooks/`
 
 2. **Follow structure**:
@@ -296,7 +302,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 3. **Add comments**: Explain each step
 4. **Test compilation**: `javac YourExample.java`
 
-**See**: [notebook.example.agent.md](../../.github/agents/notebook.example.agent.md) for guidelines.
+**See**: [notebook-example.agent.md](../../.github/agents/notebook-example.agent.md) for guidelines.
 
 ### E. Contribute a Skill
 
@@ -363,7 +369,7 @@ python generate_manual.py
 - `String.repeat()` → Use `StringUtils.repeat()`
 - Text blocks `"""..."""` → Regular strings with `\n`
 
-See [copilot-instructions.md](../../.github/copilot-instructions.md#java-8-compatibility) for complete list.
+See [AGENT_REFERENCE.md](AGENT_REFERENCE.md) (Part B, Java 8 Compatibility) for complete list.
 
 ---
 
@@ -445,7 +451,7 @@ git commit               # If merging
 ./mvnw test -Dtest=SeparatorTest
 
 # Single test method
-./mvnw test -Dtest=SeparatorTest#testTwoPhase
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator
 
 # All tests in a package
 ./mvnw test -Dtest=neqsim.thermo.**
@@ -496,7 +502,7 @@ rm -rf .vscode .idea .project .classpath
 
 ### Documentation
 - **User docs**: [https://equinor.github.io/neqsim/](https://equinor.github.io/neqsim/)
-- **JavaDoc**: [API Reference](https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html)
+- **JavaDoc**: [API Reference](https://equinor.github.io/neqsim/javadoc/index.html)
 - **Reference manual**: [REFERENCE_MANUAL_INDEX.md](../REFERENCE_MANUAL_INDEX.md)
 
 ### Community
@@ -516,7 +522,7 @@ Once you're comfortable with the basics:
 
 ### Deepen Understanding
 - **[Code Patterns](CODE_PATTERNS.md)** - Copy-paste starters for common tasks
-- **[Task Log](TASK_LOG.md)** - See what problems have been solved before
+- **Local task log (`docs/development/TASK_LOG.md`; ignored by Git)** - See what problems have been solved before
 - **[AI Agents](../../.github/agents/)** - Automate repetitive tasks
 
 ### Advanced Topics

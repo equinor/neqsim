@@ -3,11 +3,15 @@ package neqsim.thermo.util.readwrite;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChart;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -21,6 +25,7 @@ import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -121,14 +126,14 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
   @Test
   void testSetAllocationComposition() throws IOException {
-    String[] fluids = new String[] { "A19", "A13" };
+    String[] fluids = new String[] {"A19", "A13"};
     testSystem = EclipseFluidReadWrite.read(fileA19, fluids);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
 
     double x1 = testSystem.getPhase(1).getComponent("methane_A19").getx();
 
-    fluids = new String[] { "A19" };
+    fluids = new String[] {"A19"};
     testSystem = EclipseFluidReadWrite.read(fileA19, fluids);
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
@@ -141,7 +146,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     double[] molcomp = testSystem.getMolarComposition();
 
-    fluids = new String[] { "A19", "A13", "A20" };
+    fluids = new String[] {"A19", "A13", "A20"};
     testSystem = EclipseFluidReadWrite.read(fileA19, fluids);
 
     testSystem.setMolarCompositionOfNamedComponents("A19", molcomp);
@@ -159,6 +164,190 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
 
     // logger.info(Arrays.deepToString(interactionParams));
+  }
+
+  /**
+   * Named field copies must preserve each component's Eclipse EOS parameters in every block and phase.
+   *
+   * @param directory temporary directory for the EOS fixture
+   * @throws IOException if the fixture cannot be read or written
+   */
+  @Test
+  void testNamedFluidsPreserveEosParameters(@TempDir Path directory) throws IOException {
+    String previousName = EclipseFluidReadWrite.pseudoName;
+    try {
+      SystemInterface original = EclipseFluidReadWrite.read(fluid_water, "");
+      int componentCount = original.getNumberOfComponents();
+      String fixture = new String(Files.readAllBytes(new File(fluid_water).toPath()), StandardCharsets.UTF_8);
+      String withoutOmegaA = fixture.replaceFirst("(?s)OMEGAA\\s+.*?/", "");
+      Assertions.assertNotEquals(fixture, withoutOmegaA, "replace the fixture's existing OMEGAA section");
+      StringBuilder content = new StringBuilder(withoutOmegaA);
+      content.append("\nOMEGAA\n");
+      for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+        content.append(0.44 + 0.001 * componentIndex).append('\n');
+      }
+      content.append("/\n");
+      Path taggedFile = directory.resolve("tagged.e300");
+      Files.write(taggedFile, content.toString().getBytes(StandardCharsets.UTF_8));
+      original = EclipseFluidReadWrite.read(taggedFile.toString(), "");
+      String[] fieldNames = {"rest", "mikkel", "morvin"};
+      SystemInterface tagged = EclipseFluidReadWrite.read(taggedFile.toString(), fieldNames);
+      assertEquals(componentCount * fieldNames.length, tagged.getNumberOfComponents());
+      Assertions.assertTrue(original.doMultiPhaseCheck(), "water-containing reference enables aqueous search");
+      Assertions.assertTrue(tagged.doMultiPhaseCheck(), "water-containing named slate enables aqueous search");
+      for (int phaseIndex = 0; phaseIndex < original.getMaxNumberOfPhases(); phaseIndex++) {
+        if (original.getPhases()[phaseIndex] == null) {
+          assertEquals(null, tagged.getPhases()[phaseIndex]);
+          continue;
+        }
+        for (int componentIndex = 0; componentIndex < tagged.getNumberOfComponents(); componentIndex++) {
+          ComponentEos expected = (ComponentEos) original.getPhases()[phaseIndex]
+              .getComponent(componentIndex % componentCount);
+          ComponentEos actual = (ComponentEos) tagged.getPhases()[phaseIndex].getComponent(componentIndex);
+          String label = actual.getComponentName() + " phase " + phaseIndex;
+          assertEquals(expected.getTC(), actual.getTC(), 1e-12, label);
+          assertEquals(expected.getPC(), actual.getPC(), 1e-12, label);
+          assertEquals(expected.getMolarMass(), actual.getMolarMass(), 1e-12, label);
+          assertEquals(expected.getAcentricFactor(), actual.getAcentricFactor(), 1e-12, label);
+          double expectedOmegaA = 0.44 + 0.001 * (componentIndex % componentCount);
+          assertEquals(expectedOmegaA, expected.getOmegaAOverride(), 1e-12, label + " reference OmegaA");
+          assertEquals(expectedOmegaA, actual.getOmegaAOverride(), 1e-12, label + " replicated OmegaA");
+          assertEquals(expected.calca(), actual.calca(), 1e-9, label + " attraction");
+          assertEquals(expected.calcb(), actual.calcb(), 1e-12, label + " covolume");
+          assertEquals(expected.getVolumeCorrectionConst(), actual.getVolumeCorrectionConst(), 1e-12, label);
+          for (int otherIndex = 0; otherIndex < tagged.getNumberOfComponents(); otherIndex++) {
+            assertEquals(
+                ((PhaseEos) original.getPhases()[phaseIndex]).getMixingRule()
+                    .getBinaryInteractionParameter(componentIndex % componentCount, otherIndex % componentCount),
+                ((PhaseEos) tagged.getPhases()[phaseIndex]).getMixingRule()
+                    .getBinaryInteractionParameter(componentIndex, otherIndex),
+                1e-12, label + " interaction");
+          }
+        }
+      }
+      double[] composition = original.getMolarComposition();
+      double[] taggedComposition = new double[tagged.getNumberOfComponents()];
+      for (int componentIndex = 0; componentIndex < taggedComposition.length; componentIndex++) {
+        taggedComposition[componentIndex] = composition[componentIndex % componentCount] / fieldNames.length;
+      }
+      original.setMolarComposition(composition);
+      tagged.setMolarComposition(taggedComposition);
+      for (double[] conditions : new double[][] {{303.15, 30.0}, {338.15, 60.0}, {288.15, 1.01325}}) {
+        for (SystemInterface fluid : new SystemInterface[] {original, tagged}) {
+          fluid.setTemperature(conditions[0]);
+          fluid.setPressure(conditions[1]);
+          fluid.setTotalFlowRate(1000.0, "kg/hr");
+          new ThermodynamicOperations(fluid).TPflash();
+          fluid.initProperties();
+        }
+        assertEquals(original.getNumberOfPhases(), tagged.getNumberOfPhases(), "phase count");
+        for (int phaseIndex = 0; phaseIndex < original.getNumberOfPhases(); phaseIndex++) {
+          String label = original.getPhase(phaseIndex).getPhaseTypeName();
+          assertEquals(label, tagged.getPhase(phaseIndex).getPhaseTypeName());
+          assertEquals(original.getBeta(phaseIndex), tagged.getBeta(phaseIndex), 1e-7, label + " fraction");
+          assertEquals(original.getPhase(phaseIndex).getDensity("kg/m3"),
+              tagged.getPhase(phaseIndex).getDensity("kg/m3"), 1e-4, label + " density");
+          for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+            double totalFraction = 0.0;
+            for (int block = 0; block < fieldNames.length; block++) {
+              totalFraction += tagged.getPhase(phaseIndex).getComponent(block * componentCount + componentIndex).getx();
+            }
+            assertEquals(original.getPhase(phaseIndex).getComponent(componentIndex).getx(), totalFraction, 1e-7,
+                label + " component " + componentIndex);
+          }
+        }
+      }
+    } finally {
+      EclipseFluidReadWrite.pseudoName = previousName;
+    }
+  }
+
+  /**
+   * Field labels must survive mixing, separation, and recirculation without changing product recovery.
+   *
+   * @throws IOException if the EOS fixture cannot be read
+   */
+  @Test
+  void testNamedFluidsPreserveRecycledComponentRecovery() throws IOException {
+    String previousName = EclipseFluidReadWrite.pseudoName;
+    try {
+      String[] fieldNames = {"rest", "mikkel", "morvin"};
+      double[] fieldShares = {0.2, 0.3, 0.5};
+      SystemInterface original = EclipseFluidReadWrite.read(fluid_water, "");
+      SystemInterface tagged = EclipseFluidReadWrite.read(fluid_water, fieldNames);
+      double[] composition = original.getMolarComposition();
+      int componentCount = composition.length;
+      double[][] expectedOutlets = new double[3][componentCount];
+      for (boolean useTags : new boolean[] {false, true}) {
+        SystemInterface template = useTags ? tagged : original;
+        ProcessSystem process = new ProcessSystem();
+        Mixer mixer = new Mixer("field mixer");
+        double[] inletMoles = new double[template.getNumberOfComponents()];
+        for (int fieldIndex = 0; fieldIndex < fieldNames.length; fieldIndex++) {
+          SystemInterface fluid = template.clone();
+          double[] fractions = new double[fluid.getNumberOfComponents()];
+          System.arraycopy(composition, 0, fractions, useTags ? fieldIndex * componentCount : 0, componentCount);
+          fluid.setMolarComposition(fractions);
+          Stream feed = new Stream(fieldNames[fieldIndex], fluid);
+          feed.setTemperature(303.15, "K");
+          feed.setPressure(30.0, "bara");
+          feed.setFlowRate(1000.0 * fieldShares[fieldIndex], "kg/hr");
+          for (int componentIndex = 0; componentIndex < inletMoles.length; componentIndex++) {
+            inletMoles[componentIndex] += fluid.getTotalNumberOfMoles() * fluid.getComponent(componentIndex).getz();
+          }
+          process.add(feed);
+          mixer.addStream(feed);
+        }
+        Stream returnGas = new Stream("return gas", template.clone());
+        returnGas.setTemperature(303.15, "K");
+        returnGas.setPressure(30.0, "bara");
+        returnGas.setFlowRate(1e-10, "kg/hr");
+        mixer.addStream(returnGas);
+        process.add(mixer);
+        ThreePhaseSeparator separator = new ThreePhaseSeparator("separator", mixer.getOutletStream());
+        process.add(separator);
+        Splitter gasSplitter = new Splitter("gas split", separator.getGasOutStream(), 2);
+        gasSplitter.setSplitFactors(new double[] {0.5, 0.5});
+        process.add(gasSplitter);
+        Recycle recycle = new Recycle("gas recycle");
+        recycle.addStream(gasSplitter.getSplitStream(1));
+        recycle.setOutletStream(returnGas);
+        recycle.setTolerance(1e-9);
+        process.add(recycle);
+        process.run();
+        Assertions.assertTrue(recycle.solved(), "gas recycle must converge");
+        StreamInterface[] outlets = {gasSplitter.getSplitStream(0), separator.getOilOutStream(),
+            separator.getWaterOutStream()};
+        double[] outletMoles = new double[inletMoles.length];
+        for (int outletIndex = 0; outletIndex < outlets.length; outletIndex++) {
+          SystemInterface fluid = outlets[outletIndex].getFluid();
+          for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+            double totalMoles = 0.0;
+            for (int block = 0; block < (useTags ? fieldNames.length : 1); block++) {
+              int taggedIndex = block * componentCount + componentIndex;
+              double moles = fluid.getTotalNumberOfMoles() * fluid.getComponent(taggedIndex).getz();
+              outletMoles[taggedIndex] += moles;
+              totalMoles += moles;
+              if (useTags) {
+                double expected = expectedOutlets[outletIndex][componentIndex] * fieldShares[block];
+                assertEquals(expected, moles, Math.max(1e-7, expected * 1e-5),
+                    fieldNames[block] + " outlet " + outletIndex + " component " + componentIndex);
+              }
+            }
+            if (!useTags) {
+              expectedOutlets[outletIndex][componentIndex] = totalMoles;
+            }
+          }
+        }
+        for (int componentIndex = 0; componentIndex < inletMoles.length; componentIndex++) {
+          assertEquals(inletMoles[componentIndex], outletMoles[componentIndex],
+              Math.max(1e-7, inletMoles[componentIndex] * 1e-5), "external component balance " + componentIndex);
+        }
+      }
+      Assertions.assertArrayEquals(composition, original.getMolarComposition(), 1e-15, "source unchanged");
+    } finally {
+      EclipseFluidReadWrite.pseudoName = previousName;
+    }
   }
 
   @Test
@@ -249,10 +438,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.init(0);
 
-    double molcomp[] = new double[] { .005823483446243756, 0.011911670685498591, 0.7510528953701038,
-        0.06432302170169239, 0.027440959875481938, 0.003176445516132957, 0.0068822986182880755, 0.0015882227580664785,
-        0.002029395746418279, 0.0018529265510775586, 0.0021176303440886383, 0.001235284367385039, 0.001235284367385039,
-        0.0008823459767035993, 0.00044117298835179964, 0.00017646919534071987, 0.00405500399809711783049249174136 };
+    double molcomp[] = new double[] {.005823483446243756, 0.011911670685498591, 0.7510528953701038, 0.06432302170169239,
+        0.027440959875481938, 0.003176445516132957, 0.0068822986182880755, 0.0015882227580664785, 0.002029395746418279,
+        0.0018529265510775586, 0.0021176303440886383, 0.001235284367385039, 0.001235284367385039, 0.0008823459767035993,
+        0.00044117298835179964, 0.00017646919534071987, 0.00405500399809711783049249174136};
 
     testSystem.setMolarComposition(molcomp);
 
@@ -264,6 +453,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
+  /**
+   * Rejects an unsolved aqueous seed in undersaturated gas and retains real water condensation on cooling.
+   *
+   * @throws IOException if the E300 fluid cannot be read
+   */
   @Test
   void testFluidWater222() throws IOException {
     testSystem = EclipseFluidReadWrite.read(fluid_water);
@@ -271,20 +465,81 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.init(0);
 
-    double molcomp[] = new double[] { 0.00010073836721612647, 0.008498223381288974, 0.4966714442086843,
+    double molcomp[] = new double[] {0.00010073836721612647, 0.008498223381288974, 0.4966714442086843,
         0.17280427751505803, 0.1606550990492106, 0.08304099784638264, 0.031567842584520195, 0.007037046430749713,
         0.008472609878881437, 0.00669797852869787, 0.00639411397776832, 0.0034358957032069003, 0.0009595908295842405,
-        0.00015500703470607276, 5.872676388764145e-09, 4.1608474953608437e-17, 0.01350912879136841 };
+        0.00015500703470607276, 5.872676388764145e-09, 4.1608474953608437e-17, 0.01350912879136841};
 
     testSystem.setMolarComposition(molcomp);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testSystem.setPressure(2.099970727022911, "bara");
-    testSystem.setTemperature(30.0, "C");
-    testOps.TPflash();
+    for (double temperature : new double[] {30.0, 25.0, 20.0, 10.0, 30.0}) {
+      testSystem.setTemperature(temperature, "C");
+      // At 30 C water fugacity is below the pure-liquid-water trial fugacity.
+      // A third phase here was the old unsolved 1e-5 seed, not condensed water.
+      for (int repeat = 0; repeat < 2; repeat++) {
+        testOps.TPflash();
+        Assertions.assertEquals(temperature == 30.0 ? 2 : 3, testSystem.getNumberOfPhases());
+        Assertions.assertTrue(testSystem.hasPhaseType("gas"));
+        Assertions.assertTrue(testSystem.hasPhaseType("oil"));
+        Assertions.assertEquals(temperature < 30.0, testSystem.hasPhaseType("aqueous"));
+        assertEquilibriumPhaseBalances(testSystem);
+      }
 
-    // testSystem.prettyPrint();
-    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+      // Keep the imported water EOS parameters in an independent liquid-root trial.
+      SystemInterface water = testSystem.phaseToSystem(0);
+      double[] pureWater = new double[testSystem.getNumberOfComponents()];
+      pureWater[testSystem.getComponent("water").getComponentNumber()] = 1.0;
+      water.setMolarComposition(pureWater);
+      water.setPhaseType(0, neqsim.thermo.phase.PhaseType.AQUEOUS);
+      water.init(1);
+      double liquidWaterFugacity = water.getPhase(0).getComponent("water").getFugacityCoefficient()
+          * water.getPressure();
+      double gasWaterFugacity = testSystem.getPhase(0).getComponent("water").getx()
+          * testSystem.getPhase(0).getComponent("water").getFugacityCoefficient() * testSystem.getPressure();
+      if (temperature == 30.0) {
+        Assertions.assertTrue(gasWaterFugacity < liquidWaterFugacity, "Water remains undersaturated at 30 C");
+      } else {
+        Assertions.assertEquals(liquidWaterFugacity, gasWaterFugacity, 1e-7 * liquidWaterFugacity,
+            "Condensed water reaches equilibrium with gas");
+      }
+    }
+  }
+
+  /**
+   * Checks phase normalization, component conservation and equality of component fugacities.
+   *
+   * @param fluid flashed fluid to check
+   */
+  private void assertEquilibriumPhaseBalances(SystemInterface fluid) {
+    fluid.init(1);
+    double betaSum = 0.0;
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      double beta = fluid.getBeta(phase);
+      Assertions.assertTrue(Double.isFinite(beta) && beta > 0.0 && beta <= 1.0);
+      betaSum += beta;
+      double compositionSum = 0.0;
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        double fraction = fluid.getPhase(phase).getComponent(component).getx();
+        Assertions.assertTrue(Double.isFinite(fraction) && fraction >= 0.0 && fraction <= 1.0);
+        compositionSum += fraction;
+      }
+      Assertions.assertEquals(1.0, compositionSum, 1e-10, "Phase composition normalization");
+    }
+    Assertions.assertEquals(1.0, betaSum, 1e-12, "Phase fraction normalization");
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+      double recoveredFeed = 0.0;
+      double referenceLogFugacity = Math.log(fluid.getPhase(0).getComponent(component).getx())
+          + fluid.getPhase(0).getComponent(component).getLogFugacityCoefficient();
+      for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+        recoveredFeed += fluid.getBeta(phase) * fluid.getPhase(phase).getComponent(component).getx();
+        double logFugacity = Math.log(fluid.getPhase(phase).getComponent(component).getx())
+            + fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient();
+        Assertions.assertEquals(referenceLogFugacity, logFugacity, 1e-8, "Component fugacity equality");
+      }
+      Assertions.assertEquals(fluid.getComponent(component).getz(), recoveredFeed, 1e-10, "Component mole balance");
+    }
   }
 
   @Test
@@ -293,10 +548,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.init(0);
 
-    double molcomp[] = new double[] { 0.0049752318083319345, 0.009802256678856439, 0.6127328136798169,
+    double molcomp[] = new double[] {0.0049752318083319345, 0.009802256678856439, 0.6127328136798169,
         0.05318413284932072, 0.022876807664082562, 0.0027497115252020565, 0.00583830266751484, 0.001287341207321444,
         0.0016384794380879418, 0.0016725772874843416, 0.0020738533986531414, 0.001425440397298664,
-        0.0010756267985809135, 0.001450404269771801, 0.0007258366746739167, 0.000253086850706585, 0.276238096804296 };
+        0.0010756267985809135, 0.001450404269771801, 0.0007258366746739167, 0.000253086850706585, 0.276238096804296};
 
     testSystem.setMolarComposition(molcomp);
 
@@ -348,10 +603,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // testSystem.init(0);
 
-    double molcomp[] = new double[] { 0.0017264947889263874, 0.007402331403631907, 0.36802882183084096,
+    double molcomp[] = new double[] {0.0017264947889263874, 0.007402331403631907, 0.36802882183084096,
         0.05169506737490504, 0.03388449522583478, 0.006558258623105914, 0.014887151553907825, 0.009077822719104057,
         0.012438044055263933, 0.019147621313098974, 0.030786253313698466, 0.031557200635259686, 0.021582189815237608,
-        0.06076824533807442, 0.04616741968199379, 0.020877439498187718, 0.26341514282892897 };
+        0.06076824533807442, 0.04616741968199379, 0.020877439498187718, 0.26341514282892897};
 
     testSystem.setMolarComposition(molcomp);
 
@@ -373,13 +628,33 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double ent = separator.getOilOutStream().getFluid().getEnthalpy();
     separator.getOilOutStream().run();
     // separator.getOilOutStream().getFluid().prettyPrint();
-    // Updated expected value: OMEGAA from file (0.45724) now applied instead of
-    // default
-    // (0.45724333333)
-    Assertions.assertEquals(-4639.239569750378, ent, 1e-3);
-
-    // Oil outlet stream is single-phase oil after separation
-    Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());
+    // Entrained water exceeds its oil solubility. Distinct phase slots retain the lower-Gibbs
+    // oil/aqueous equilibrium instead of collapsing it through aliased storage.
+    Assertions.assertEquals(-4678.030028524407, ent, 1e-3);
+    SystemInterface oilProduct = separator.getOilOutStream().getFluid();
+    Assertions.assertEquals(2, oilProduct.getNumberOfPhases());
+    Assertions.assertTrue(oilProduct.hasPhaseType("oil"));
+    Assertions.assertTrue(oilProduct.hasPhaseType("aqueous"));
+    Assertions.assertEquals(1.0, oilProduct.getBeta(0) + oilProduct.getBeta(1), 1e-12);
+    for (int component = 0; component < oilProduct.getNumberOfComponents(); component++) {
+      double recoveredMoles = 0.0;
+      for (int phase = 0; phase < oilProduct.getNumberOfPhases(); phase++) {
+        recoveredMoles += oilProduct.getPhase(phase).getComponent(component).getNumberOfMolesInPhase();
+      }
+      double entrainedMoles = separator.getThermoSystem().getPhase("oil").getComponent(component)
+          .getNumberOfMolesInPhase();
+      Assertions.assertEquals(entrainedMoles, recoveredMoles, 1e-10);
+      double logFugacityRatio = Math
+          .log(oilProduct.getPhase(0).getFugacity(component) / oilProduct.getPhase(1).getFugacity(component));
+      Assertions.assertEquals(0.0, logFugacityRatio, 1e-8);
+    }
+    SystemInterface homogeneousOil = oilProduct.clone();
+    homogeneousOil.init(0);
+    homogeneousOil.setNumberOfPhases(1);
+    homogeneousOil.setPhaseType(0, neqsim.thermo.phase.PhaseType.OIL);
+    homogeneousOil.setBeta(0, 1.0);
+    homogeneousOil.init(1);
+    Assertions.assertTrue(oilProduct.getGibbsEnergy() < homogeneousOil.getGibbsEnergy() - 1e-6);
 
     ThrottlingValve throttlingValve = new ThrottlingValve("throttlingValve", separator.getOilOutStream());
     throttlingValve.setOutletPressure(3.0, "bara");
@@ -388,13 +663,13 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // throttlingValve.getOutletStream().getFluid().prettyPrint();
     // After throttling, may flash to 2 or 3 phases depending on conditions
     Assertions.assertTrue(throttlingValve.getOutletStream().getFluid().getNumberOfPhases() >= 2);
-    // Updated expected temperature due to thermodynamic model changes
-    Assertions.assertEquals(55.35081, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
+    // Isenthalpic throttling starts from the qualified oil/aqueous product above.
+    Assertions.assertEquals(54.53885745110426, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
   }
 
   @Test
   void testSetAllocationComposition2() throws IOException {
-    String[] fluids = new String[] { "A", "B" };
+    String[] fluids = new String[] {"A", "B"};
     testSystem = EclipseFluidReadWrite.read(example, fluids);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
@@ -405,10 +680,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-    double[] moleFractions = { 2.416120417100702e-07, 0.00011528576517550497, 0.0008371259734404491,
+    double[] moleFractions = {2.416120417100702e-07, 0.00011528576517550497, 0.0008371259734404491,
         0.004125688540309072, 0.016506471715686536, 0.007445430041947814, 0.023751140326894123, 0.014074464672789768,
         0.022995570140592198, 0.06406911413410432, 0.13427982438504948, 0.14903860624984122, 0.11563770449499852,
-        0.22014618406983588, 0.1588584627903986, 0.06588672605995642, 0.0022319590269387086 };
+        0.22014618406983588, 0.1588584627903986, 0.06588672605995642, 0.0022319590269387086};
 
     testSystem.setMolarComposition(moleFractions);
     testSystem.setTemperature(37.0, "C");
@@ -440,8 +715,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-    double[] moleFractions = { 0.00540071, 0.0127938, 0.724541, 0.0972789, 0.0746364, 0.0124884, 0.0296084, 0.00701328,
-        0.00872348, 0.00703798, 0.00641995, 0.00266744, 0.00123526, 0.00015286, 4.30823E-08, 7.49295E-16, 0.0100024 };
+    double[] moleFractions = {0.00540071, 0.0127938, 0.724541, 0.0972789, 0.0746364, 0.0124884, 0.0296084, 0.00701328,
+        0.00872348, 0.00703798, 0.00641995, 0.00266744, 0.00123526, 0.00015286, 4.30823E-08, 7.49295E-16, 0.0100024};
 
     testSystem.setMolarComposition(moleFractions);
 
@@ -450,6 +725,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.setTemperature(20.0, "C");
     testOps.TPflash();
 
+    // At 4 bara and 20 C the water is only about 1.7 times its saturation content and the flash may
+    // leave the aqueous phase out; the three-phase state is checked at 10 C.
+    Assertions.assertTrue(testSystem.getNumberOfPhases() >= 2);
+    testSystem.setTemperature(10.0, "C");
+    testOps.TPflash();
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
@@ -458,11 +738,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-    double molcompHighWater[] = new double[] { 0.006412157523628081, 0.010284556325774607, 0.5948031004752822,
+    double molcompHighWater[] = new double[] {0.006412157523628081, 0.010284556325774607, 0.5948031004752822,
         0.05547161269670469, 0.02244981369291901, 0.002427305705540153, 0.0051926405125144355, 0.001019338910149834,
         0.0013514578158311205, 0.0015380316247187251, 0.002930764400688029, 0.0027918580247969812,
         0.0009663155244097777, 0.0037156646050503844, 0.0024900059190517826, 0.0008201394784577446,
-        0.32500853352367648164 };
+        0.32500853352367648164};
 
     testSystem.setMolarComposition(molcompHighWater);
 
@@ -476,11 +756,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
   @Test
   void testGOW3() throws IOException {
-    double molcompLowWater[] = new double[] { 0.006412157523628081, 0.010284556325774607, 0.5948031004752822,
+    double molcompLowWater[] = new double[] {0.006412157523628081, 0.010284556325774607, 0.5948031004752822,
         0.05547161269670469, 0.02244981369291901, 0.002427305705540153, 0.0051926405125144355, 0.001019338910149834,
         0.0013514578158311205, 0.0015380316247187251, 0.002930764400688029, 0.0027918580247969812,
         0.0009663155244097777, 0.0037156646050503844, 0.0024900059190517826, 0.0008201394784577446,
-        0.0002500853352367648164 };
+        0.0002500853352367648164};
 
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
@@ -499,10 +779,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-    double[] molcompLowWater = new double[] { 0.01206177683974074, 0.027345937050178615, 0.671140783011007,
+    double[] molcompLowWater = new double[] {0.01206177683974074, 0.027345937050178615, 0.671140783011007,
         0.06351261548338824, 0.023585809555430968, 0.003243942277664318, 0.00531903453294321, 0.0029453595855580728,
         0.003041059592933105, 0.0021510810982620153, 0.0031940205365572558, 0.00323662007843437, 0.0016271200382793763,
-        0.0029353835821057748, 0.0010067063083738046, 5.49033694408053e-05, 0.17359784705970216 };
+        0.0029353835821057748, 0.0010067063083738046, 5.49033694408053e-05, 0.17359784705970216};
 
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
@@ -525,10 +805,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-    double[] molcompLowWater = new double[] { 4.9107930618050546e-05, 0.0012546826725008057, 0.026343316936642148,
+    double[] molcompLowWater = new double[] {4.9107930618050546e-05, 0.0012546826725008057, 0.026343316936642148,
         0.015782513912485484, 0.021507966038800383, 0.005719038644454519, 0.014456587791398226, 0.010316784218293597,
         0.01494526854482507, 0.02174974260520435, 0.046008119779292554, 0.055040972592013085, 0.02538455516611449,
-        0.0906953549264313, 0.057955349835511455, 0.02339737645058884, 0.5693932619548259 };
+        0.0906953549264313, 0.057955349835511455, 0.02339737645058884, 0.5693932619548259};
 
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
@@ -564,22 +844,22 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double COMPRESSOR_SPEED_RPM = 10250.0;
     double POLYTROPIC_EFFICIENCY = 0.80;
     String HEAD_UNIT = "kJ/kg";
-    double[] CHART_REFERENCE = new double[] { 17.3, 298.15, 1.01325, 0.92 };
-    double[] SURGE_FLOW_KGH = new double[] { 5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97,
-        9006.93, 9248.64, 9397.9, 9578.11, 9758.49 };
-    double[] SURGE_HEAD_KJKG = new double[] { 150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29,
-        132.13, 127.56, 121.13, 112.65 };
+    double[] CHART_REFERENCE = new double[] {17.3, 298.15, 1.01325, 0.92};
+    double[] SURGE_FLOW_KGH = new double[] {5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97,
+        9006.93, 9248.64, 9397.9, 9578.11, 9758.49};
+    double[] SURGE_HEAD_KJKG = new double[] {150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29,
+        132.13, 127.56, 121.13, 112.65};
     double SURGE_CONTROL_FACTOR = 0.15;
     double LP_GAS_SPLIT_FACTOR = 0.25;
 
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-    double[] molcompLowWater = new double[] { 4.9107930618050546e-05, 0.0012546826725008057, 0.26343316936642148,
+    double[] molcompLowWater = new double[] {4.9107930618050546e-05, 0.0012546826725008057, 0.26343316936642148,
         0.015782513912485484, 0.021507966038800383, 0.005719038644454519, 0.00014456587791398226,
         0.00010316784218293597, 0.001494526854482507, 0.0002174974260520435, 0.00046008119779292554,
         0.00055040972592013085, 0.0002538455516611449, 0.000906953549264313, 0.000057955349835511455,
-        0.0002339737645058884, 0.00005693932619548259 };
+        0.0002339737645058884, 0.00005693932619548259};
 
     testSystem.setMolarComposition(molcompLowWater);
     SystemInterface suctionGas = testSystem;
@@ -644,7 +924,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     Splitter antiSurgeSplitter = new Splitter("2nd stage anti surge splitter", secondStageCompressor.getOutletStream(),
         2);
-    antiSurgeSplitter.setFlowRates(new double[] { -1.0, 1.0 }, "kg/hr");
+    antiSurgeSplitter.setFlowRates(new double[] {-1.0, 1.0}, "kg/hr");
     separationProcess.add(antiSurgeSplitter);
     antiSurgeSplitter.run();
 
@@ -699,8 +979,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem.setMultiPhaseCheck(true);
 
     // Lean single-phase gas (methane dominated), trace water.
-    double[] leanGas = new double[] { 1.0e-8, 0.0065, 0.882, 0.0684, 0.0233, 0.0020, 0.0031, 0.00029, 0.00025, 0.00008,
-        0.0001, 0.00007, 0.00006, 0.00003, 1.0e-8, 1.0e-15, 0.0 };
+    double[] leanGas = new double[] {1.0e-8, 0.0065, 0.882, 0.0684, 0.0233, 0.0020, 0.0031, 0.00029, 0.00025, 0.00008,
+        0.0001, 0.00007, 0.00006, 0.00003, 1.0e-8, 1.0e-15, 0.0};
     testSystem.setMolarComposition(leanGas);
 
     ProcessSystem process = new ProcessSystem("low flow polytropic PHflash NaN");
@@ -744,10 +1024,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-    double[] moleFractions = { 1.1269232486923688e-06, 0.002642638817095049, 0.015237623814512286, 0.09479920295855006,
+    double[] moleFractions = {1.1269232486923688e-06, 0.002642638817095049, 0.015237623814512286, 0.09479920295855006,
         0.2664367133684378, 0.072638890369372, 0.18433074090670493, 0.05893425834431258, 0.07525119431180687,
         0.07925100506320992, 0.0814576540555948, 0.04665775189490658, 0.01708982141273816, 0.004685723238493833,
-        5.666335741724731e-06, 2.608641697723448e-12, 0.0 };
+        5.666335741724731e-06, 2.608641697723448e-12, 0.0};
 
     testSystem.setMolarComposition(moleFractions);
 
@@ -779,7 +1059,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     neqsim.process.equipment.heatexchanger.Heater feedHeater = new neqsim.process.equipment.heatexchanger.Heater(
         "deethanizer feed heater", waterDehydration.getSplitStream(0));
-    feedHeater.setOutTemperature(273.15 + 20.0);
+    feedHeater.setOutletTemperature(273.15 + 20.0);
     feedHeater.run();
     processSystem.add(feedHeater);
 
@@ -797,7 +1077,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     deethanizer.setEnforceEnergyBalanceTolerance(true);
     deethanizer.addFeedStream(feedHeater.getOutletStream(), 3);
     deethanizer.addFeedStream(lqiuidrefluc, 5);
-    deethanizer.getReboiler().setOutTemperature(273.15 + 78.0);
+    deethanizer.getReboiler().setOutletTemperature(273.15 + 78.0);
     deethanizer.setTopPressure(14.8);
     deethanizer.setBottomPressure(14.8);
     deethanizer.run();
@@ -855,7 +1135,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     debutanizer.setTemperatureTolerance(9.0e-3);
     debutanizer.setEnforceEnergyBalanceTolerance(true);
     debutanizer.addFeedStream(valveDebutanizer.getOutletStream(), 1);
-    debutanizer.getReboiler().setOutTemperature(273.15 + 120.0);
+    debutanizer.getReboiler().setOutletTemperature(273.15 + 120.0);
     debutanizer.getCondenser().setRefluxRatio(0.1);
     // debutanizer.getCondenser().setSeparation_with_liquid_reflux(true, 2000.0,
     // "kg/hr");
@@ -881,13 +1161,13 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     Cooler napthaLiquidToDethanizerCooler = new Cooler("naphta liquid to deethanizer cooler",
         napthaLiquidToDethanizerPump.getOutletStream());
-    napthaLiquidToDethanizerCooler.setOutTemperature(273.15 + 50.0);
+    napthaLiquidToDethanizerCooler.setOutletTemperature(273.15 + 50.0);
     napthaLiquidToDethanizerCooler.run();
     processSystem.add(napthaLiquidToDethanizerCooler);
 
     Splitter napthaLiquidSplitter = new Splitter("butane liquid splitter",
         napthaLiquidToDethanizerCooler.getOutletStream(), 2);
-    napthaLiquidSplitter.setFlowRates(new double[] { -1.0, 11000.0 }, "kg/hr");
+    napthaLiquidSplitter.setFlowRates(new double[] {-1.0, 11000.0}, "kg/hr");
     napthaLiquidSplitter.run();
     processSystem.add(napthaLiquidSplitter);
 
@@ -1023,6 +1303,92 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * An E300 file uses reservoir shorthand names (C1, iC4, N2 ...). Components read from it must carry the same
+   * ideal-gas Cp and binary interaction parameters as the database components they came from.
+   */
+  @Test
+  void testE300ShortNamesKeepDatabaseCpAndBinaryParameters() throws IOException {
+    String[] dbNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane"};
+    double[] moles = {0.01, 0.02, 0.80, 0.08, 0.05, 0.02, 0.02};
+    SystemInterface original = new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
+    for (int i = 0; i < dbNames.length; i++) {
+      original.addComponent(dbNames[i], moles[i]);
+    }
+    original.setMixingRule(2);
+    original.init(0);
+
+    File tmp = File.createTempFile("shortnames", ".e300");
+    try {
+      EclipseFluidReadWrite.write(original, tmp.getAbsolutePath(), 100.0);
+      EclipseFluidReadWrite.pseudoName = "";
+      SystemInterface imported = EclipseFluidReadWrite.read(tmp.getAbsolutePath());
+
+      Assertions.assertEquals(dbNames.length, imported.getNumberOfComponents());
+      for (int i = 0; i < dbNames.length; i++) {
+        Assertions.assertEquals(original.getPhase(0).getComponent(i).getCpA(),
+            imported.getPhase(0).getComponent(i).getCpA(), 1e-12, "CpA " + dbNames[i]);
+        Assertions.assertEquals(original.getPhase(0).getComponent(i).getCpB(),
+            imported.getPhase(0).getComponent(i).getCpB(), 1e-12, "CpB " + dbNames[i]);
+        for (int j = 0; j < dbNames.length; j++) {
+          Assertions.assertEquals(
+              ((PhaseEos) original.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(i, j),
+              ((PhaseEos) imported.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(i, j), 1e-5,
+              "kij " + dbNames[i] + "-" + dbNames[j]);
+        }
+      }
+
+      for (SystemInterface s : new SystemInterface[] {original, imported}) {
+        s.setPressure(30.0, "bara");
+        s.setTemperature(40.0, "C");
+        new ThermodynamicOperations(s).TPflash();
+        s.initProperties();
+      }
+      Assertions.assertEquals(original.getCp(), imported.getCp(), 0.01 * original.getCp());
+      Assertions.assertEquals(original.getEnthalpy(), imported.getEnthalpy(),
+          0.02 * Math.abs(original.getEnthalpy()) + 1.0);
+    } finally {
+      Files.deleteIfExists(tmp.toPath());
+    }
+  }
+
+  /**
+   * Upper/lower case variants of E300 component names (IC4, IC5, c1, NC4) must give the same database components as the
+   * standard spelling, with database Cp.
+   */
+  @Test
+  void testE300NameCaseVariantsMapToDatabaseComponents() throws IOException {
+    String[] dbNames = {"methane", "ethane", "i-butane", "n-butane", "i-pentane", "n-pentane"};
+    double[] moles = {0.80, 0.10, 0.03, 0.03, 0.02, 0.02};
+    SystemInterface original = new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
+    for (int i = 0; i < dbNames.length; i++) {
+      original.addComponent(dbNames[i], moles[i]);
+    }
+    original.setMixingRule(2);
+    original.init(0);
+
+    String text = EclipseFluidReadWrite.toE300String(original, 100.0);
+    String variant = text.replaceAll("(?m)^\\s*C1\\s*$", "c1").replaceAll("(?m)^\\s*iC4\\s*$", "IC4")
+        .replaceAll("(?m)^\\s*nC4\\s*$", "NC4").replaceAll("(?m)^\\s*iC5\\s*$", "IC5")
+        .replaceAll("(?m)^\\s*nC5\\s*$", "Nc5");
+    Assertions.assertNotEquals(text, variant, "name variants should have been substituted");
+
+    File tmp = File.createTempFile("namecase", ".e300");
+    try {
+      Files.write(tmp.toPath(), variant.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      EclipseFluidReadWrite.pseudoName = "";
+      SystemInterface imported = EclipseFluidReadWrite.read(tmp.getAbsolutePath());
+      Assertions.assertEquals(dbNames.length, imported.getNumberOfComponents());
+      for (int i = 0; i < dbNames.length; i++) {
+        Assertions.assertEquals(dbNames[i], imported.getPhase(0).getComponent(i).getComponentName());
+        Assertions.assertEquals(original.getPhase(0).getComponent(i).getCpA(),
+            imported.getPhase(0).getComponent(i).getCpA(), 1e-12, "CpA " + dbNames[i]);
+      }
+    } finally {
+      Files.deleteIfExists(tmp.toPath());
+    }
+  }
+
+  /**
    * Test LBCCOEF reading - verifies that LBC viscosity model is applied when LBCCOEF is present.
    */
   @Test
@@ -1074,7 +1440,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     fluid.init(0);
 
     // Set LBC viscosity model with custom parameters
-    double[] customLbcParams = { 0.1084806, -0.0295031, 0.1130421, -0.0553108, 0.0093324 };
+    double[] customLbcParams = {0.1084806, -0.0295031, 0.1130421, -0.0553108, 0.0093324};
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
       fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("LBC");
       fluid.getPhase(phase).getPhysicalProperties().setLbcParameters(customLbcParams);
@@ -1263,6 +1629,31 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * FluidMagic universal P/A E300 files have an unclosed EOS block (no slash after PR) and a separate PRCORR line. The
+   * reader must still produce a 26-component PR-1978 fluid that flashes.
+   */
+  @Test
+  void testReadFluidMagicPaUniversalFile() {
+    String paFile = file.getAbsolutePath() + "/pa_universal.e300";
+    SystemInterface fluid = EclipseFluidReadWrite.read(paFile);
+
+    assertEquals(26, fluid.getNumberOfComponents());
+    Assertions.assertTrue(fluid instanceof neqsim.thermo.system.SystemPrEos1978);
+    assertEquals(190.6, fluid.getComponent(2).getTC(), 0.05, "C1 critical temperature from TCRIT");
+
+    double sumZi = 0.0;
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      sumZi += fluid.getComponent(i).getz();
+    }
+    assertEquals(1.0, sumZi, 1e-4);
+
+    fluid.setPressure(100.0, "bara");
+    fluid.setTemperature(90.0, "C");
+    new ThermodynamicOperations(fluid).TPflash();
+    Assertions.assertTrue(fluid.getNumberOfPhases() >= 1);
+  }
+
+  /**
    * A plain (1976) Peng-Robinson fluid must not be written with PRCORR, otherwise it is read back as PR-1978 and the
    * saturation pressure shifts. Also checks that PR-1978 and the regressed binary interaction parameters survive the
    * round trip.
@@ -1272,7 +1663,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
    */
   @Test
   void testPengRobinsonVariantRoundTrip() throws IOException, neqsim.util.exception.IsNaNException {
-    String[] classNames = new String[] { "SystemPrEos", "SystemPrEos1978" };
+    String[] classNames = new String[] {"SystemPrEos", "SystemPrEos1978"};
     for (String className : classNames) {
       SystemInterface fluid = "SystemPrEos".equals(className) ? new neqsim.thermo.system.SystemPrEos(290.15, 70.0)
           : new neqsim.thermo.system.SystemPrEos1978(290.15, 70.0);
@@ -1309,5 +1700,72 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
       java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
     }
+  }
+
+  /**
+   * VCRIT must be written in E300 units (m3/kmol), ZCRIT must be dimensionless, and the critical volume must round-trip
+   * in NeqSim units (cm3/mol).
+   *
+   * @throws IOException if writing or reading the file fails
+   */
+  @Test
+  void testVcritAndZcritWrittenInE300Units() throws IOException {
+    SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(373.15, 200.0);
+    fluid.addComponent("methane", 80.0);
+    fluid.addComponent("n-butane", 15.0);
+    fluid.addTBPfraction("C7", 5.0, 0.092, 0.732);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    String outputFile = file.getAbsolutePath() + "/vcrit_units_test.e300";
+    EclipseFluidReadWrite.write(fluid, outputFile, 100.0);
+
+    java.util.List<String> lines = Files.readAllLines(java.nio.file.Paths.get(outputFile));
+    int vcritIdx = lines.indexOf("VCRIT");
+    int zcritIdx = lines.indexOf("ZCRIT");
+    Assertions.assertTrue(vcritIdx >= 0 && zcritIdx >= 0, "VCRIT and ZCRIT sections must be written");
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      double vcrit = Double.parseDouble(lines.get(vcritIdx + 1 + i).trim());
+      double zcrit = Double.parseDouble(lines.get(zcritIdx + 1 + i).trim());
+      assertEquals(fluid.getComponent(i).getCriticalVolume() / 1000.0, vcrit, 1e-5, "VCRIT must be in m3/kmol");
+      Assertions.assertTrue(vcrit > 0.008 && vcrit < 24.0, "VCRIT must be in the PVTsim range");
+      Assertions.assertTrue(zcrit > 0.1 && zcrit < 0.5, "ZCRIT must be dimensionless, got " + zcrit);
+    }
+
+    EclipseFluidReadWrite.pseudoName = "";
+    SystemInterface imported = EclipseFluidReadWrite.read(outputFile);
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      assertEquals(fluid.getComponent(i).getCriticalVolume(), imported.getComponent(i).getCriticalVolume(),
+          fluid.getComponent(i).getCriticalVolume() * 1e-4, "Critical volume must round-trip in cm3/mol");
+    }
+
+    Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
+  }
+
+  /**
+   * Case C rim oil and gas cap against native Eclipse E300 2026.1 INIT output. The file has LBCCOEF and VCRIT but no
+   * VCRITVIS, so E300 uses VCRIT for the LBC critical volumes and pseudo-critical mixing for the reducing parameter.
+   */
+  @Test
+  void testCaseCLbcViscosityMatchesE300() {
+    SystemInterface fluid = EclipseFluidReadWrite.read(file.getAbsolutePath() + "/case_c_lbc_rim.e300");
+
+    fluid.setPressure(336.0, "bara");
+    fluid.setTemperature(119.1, "C");
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    assertEquals(1, fluid.getNumberOfPhases(), "Rim oil is single phase at 336 bara");
+    assertEquals(0.2748, fluid.getPhase(0).getViscosity("cP"), 0.2748 * 0.01, "Rim oil LBC viscosity");
+    assertEquals(635.4, fluid.getPhase(0).getDensity("kg/m3"), 635.4 * 0.005, "Rim oil density");
+
+    SystemInterface gas = fluid.clone();
+    gas.setMolarComposition(new double[] {0.7150221, 0.1756687, 0.0532843, 0.0453746, 0.0092351, 0.0013289, 0.0000862});
+    gas.setPressure(334.14, "bara");
+    gas.setTemperature(117.34, "C");
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(gas).TPflash();
+    gas.initProperties();
+    assertEquals(1, gas.getNumberOfPhases(), "Gas cap is single phase at 334.14 bara");
+    assertEquals(0.04357, gas.getPhase(0).getViscosity("cP"), 0.04357 * 0.02, "Gas cap LBC viscosity");
+    assertEquals(314.94, gas.getPhase(0).getDensity("kg/m3"), 314.94 * 0.01, "Gas cap density");
   }
 }

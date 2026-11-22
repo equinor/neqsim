@@ -169,53 +169,53 @@ What do you want to do?
 | Agent | Owns | Reads | Produces | Skills it should load |
 |-------|------|-------|----------|-----------------------|
 | `research-scout` | Topic discovery | NeqSim source, recent papers | `papers/_research_scan/topics.md` | - |
-| `paper-opportunity-miner` | Publication roadmap | source, tests, books, papers, changelog | `publication_opportunities.md`, `opportunity_rankings.json` | `paperlab_publication_opportunity_mining`, `paperlab_journal_positioning` |
+| `paper-opportunity-miner` | Publication roadmap | source, tests, books, papers, changelog | `publication_opportunities.md`, `opportunity_rankings.json` | `paperlab-publication-opportunity-mining`, `paperlab-journal-positioning` |
 | `paper-planner` | Project setup | topic, refs.bib, NeqSim source | `plan.json`, `outline.md`, `benchmark_config.json` | - |
-| `hypothesis-benchmark-compiler` | Falsifiable benchmark design | plan, research questions, APIs | `hypothesis_matrix.json`, `benchmark_design.md` | `paperlab_hypothesis_to_benchmark_matrix` |
+| `hypothesis-benchmark-compiler` | Falsifiable benchmark design | plan, research questions, APIs | `hypothesis_matrix.json`, `benchmark_design.md` | `paperlab-hypothesis-to-benchmark-matrix` |
 | `literature-reviewer` | Prior-art mapping | web, papers/*/refs.bib | `refs.bib`, `literature_map.md`, `gap_statement.md` | - |
-| `dataset-and-reference-curator` | Reference datasets | refs, sources, raw data | `reference_data_manifest.json`, normalized datasets | `paperlab_reference_dataset_curation` |
+| `dataset-and-reference-curator` | Reference datasets | refs, sources, raw data | `reference_data_manifest.json`, normalized datasets | `paperlab-reference-dataset-curation` |
 | `algorithm-engineer` | Code design | NeqSim Java sources | implementation tickets, pseudocode | - |
-| `mathematical-derivation-verifier` | Derivation correctness | papers, chapters, equations, Java source | `derivation_audit.json` | `paperlab_derivation_symbolic_checking`, `paperlab_equation_dimensional_audit` |
-| `benchmark-runner` | Experiments | Java code, test matrices | `results.json`, JUnit fixtures | `design_flash_benchmark`, `design_reactor_benchmark`, `run_flash_experiments` |
-| `validation-agent` | Statistical gating | `results.json` | `approved_claims.json` | `analyze_convergence`, `analyze_gibbs_convergence` |
-| `figure-generator` | Plots and diagrams | `results.json`, captions | `figures/*.png`, `figures/*.pdf` | `generate_publication_figures` |
-| `scientific-writer` | Manuscript prose | plan, results, approved claims | `paper.md`, `claims_manifest.json` | `write_methods_section`, `neqsim_in_writing`, `figure-discussion` |
+| `mathematical-derivation-verifier` | Derivation correctness | papers, chapters, equations, Java source | `derivation_audit.json` | `paperlab-derivation-symbolic-checking`, `paperlab-equation-dimensional-audit` |
+| `benchmark-runner` | Experiments | Java code, test matrices | `results.json`, JUnit fixtures | `design-flash-benchmark`, `design-reactor-benchmark`, `run-flash-experiments` |
+| `validation-agent` | Statistical gating | `results.json` | `approved_claims.json` | `analyze-convergence`, `analyze-gibbs-convergence` |
+| `figure-generator` | Plots and diagrams | `results.json`, captions | `figures/*.png`, `figures/*.pdf` | `generate-publication-figures` |
+| `scientific-writer` | Manuscript prose | plan, results, approved claims | `paper.md`, `claims_manifest.json` | `write-methods-section`, `neqsim-in-writing`, `figure-discussion` |
 | `section-writer` | One section at a time | section spec, chapter context | a single markdown section | - |
 | `narrative-framer` | Abstract / intro / discussion as story | `paper.md`, `gap_statement.md`, `approved_claims.json` | edits to abstract, intro, discussion, `narrative_notes.md` | - |
 | `adversarial-reviewer` | Hostile paper critique | `paper.md`, `approved_claims.json`, `results.json` | `adversarial_review.md`, `required_fixes.json` | - |
-| `journal-formatter` | Submission package | `paper.md`, journal profile | LaTeX/Word, cover letter, checklist | `journal_formatting` |
-| `journal-fit-strategist` | Journal selection and positioning | plan, manuscript, journal profiles | `journal_fit_report.md`, `journal_ranking.json` | `paperlab_journal_positioning` |
+| `journal-formatter` | Submission package | `paper.md`, journal profile | LaTeX/Word, cover letter, checklist | `journal-formatting` |
+| `journal-fit-strategist` | Journal selection and positioning | plan, manuscript, journal profiles | `journal_fit_report.md`, `journal_ranking.json` | `paperlab-journal-positioning` |
 | `reviewer-response` | Revision round | reviewer letter, manuscript | response letter, redline patches | - |
-| `reviewer-simulator-panel` | Pre-submission review simulation | manuscript, claims, figures, journal profile | `simulated_review_round.md`, `required_fixes.json` | `paperlab_multireviewer_simulation` |
-| `replication-package-engineer` | Reproducibility capsule | raw results, scripts, notebooks | `replication_package/`, `reproducibility_manifest.json` | `paperlab_reproducibility_capsule` |
-| `grant-and-special-issue-scout` | Publication calendar | roadmaps, public calls, journal fit | `publication_calendar.md`, `call_match_matrix.json` | `paperlab_publication_calendar_scout` |
-| `book-author` | Books end-to-end | `book.yaml`, refs.bib, papers/ | chapters, notebooks, rendered book | `book_creation`, `neqsim_in_writing` |
-| `paper-to-book-synthesizer` | Paper-to-chapter conversion | finished paper, results, target book | `paper_to_chapter_mapping.md`, `chapter_insert_plan.json` | `paperlab_paper_to_book_chapter` |
-| `book-to-paper-miner` | Paper extraction from books | chapters, notebooks, book audits | `book_paper_opportunities.md` | `paperlab_book_to_paper_extraction` |
-| `book-adversarial-reviewer` | Book release critique | book checks, evidence, chapters | `book_adversarial_review.md`, `required_fixes.json` | `paperlab_scientific_traceability_audit`, `paperlab_student_readability` |
-| `book-conciseness-editor` | Repetition control | `conciseness_audit.md`, chapters | concise restructuring plan | `paperlab_chapter_flow_editor` |
-| `chapter-synthesis-editor` | Chapter narrative synthesis | chapters, figures, notebooks | improved transitions and discussions | `paperlab_chapter_flow_editor`, `figure_discussion` |
+| `reviewer-simulator-panel` | Pre-submission review simulation | manuscript, claims, figures, journal profile | `simulated_review_round.md`, `required_fixes.json` | `paperlab-multireviewer-simulation` |
+| `replication-package-engineer` | Reproducibility capsule | raw results, scripts, notebooks | `replication_package/`, `reproducibility_manifest.json` | `paperlab-reproducibility-capsule` |
+| `grant-and-special-issue-scout` | Publication calendar | roadmaps, public calls, journal fit | `publication_calendar.md`, `call_match_matrix.json` | `paperlab-publication-calendar-scout` |
+| `book-author` | Books end-to-end | `book.yaml`, refs.bib, papers/ | chapters, notebooks, rendered book | `book-creation`, `neqsim-in-writing` |
+| `paper-to-book-synthesizer` | Paper-to-chapter conversion | finished paper, results, target book | `paper_to_chapter_mapping.md`, `chapter_insert_plan.json` | `paperlab-paper-to-book-chapter` |
+| `book-to-paper-miner` | Paper extraction from books | chapters, notebooks, book audits | `book_paper_opportunities.md` | `paperlab-book-to-paper-extraction` |
+| `book-adversarial-reviewer` | Book release critique | book checks, evidence, chapters | `book_adversarial_review.md`, `required_fixes.json` | `paperlab-scientific-traceability-audit`, `paperlab-student-readability` |
+| `book-conciseness-editor` | Repetition control | `conciseness_audit.md`, chapters | concise restructuring plan | `paperlab-chapter-flow-editor` |
+| `chapter-synthesis-editor` | Chapter narrative synthesis | chapters, figures, notebooks | improved transitions and discussions | `paperlab-chapter-flow-editor`, `figure_discussion` |
 | `figure-context-editor` | Figure explanation quality | figures, captions, nearby prose | stronger figure context | `figure_discussion` |
-| `lecture-coverage-scout` | Source-to-chapter mapping | lectures, exercises, `coverage_matrix.md` | `coverage_audit.md` | `paperlab_book_knowledge_graph` |
-| `exam-alignment-reviewer` | Assessment fit | exams, objectives, exercises | alignment review | `paperlab_exam_alignment` |
-| `notebook-verifier` | Notebook existence and figure links | notebooks, figures, manifests | verification summary | `neqsim_in_writing` |
-| `source-librarian` | Source and citation hygiene | source folders, refs, chapters | source manifest and fixes | `paperlab_source_pdf_to_html` |
-| `technical-figure-reader` | Technical figure interpretation | figures and source images | structured figure notes | `technical_figure_understanding` |
-| `curriculum-architect` | Prerequisite graph | objectives, headings, glossary, exercises | `learning_path_audit.md` | `paperlab_curriculum_prerequisite_graph` |
-| `learning-objective-verifier` | Objective achievement | chapters, objectives, exercises, notebooks | `lo_achievement_matrix.json`, `lo_coverage_report.md` | `paperlab_learning_objective_matrix` |
-| `equation-consistency-auditor` | Equation and notation quality | chapters, equations, `nomenclature.yaml` | `equation_audit.json`, `notation_consistency_report.md` | `paperlab_equation_dimensional_audit` |
-| `neqsim-api-verifier` | NeqSim API accuracy | code blocks, notebooks, Java source | `neqsim_api_audit.json` | `paperlab_neqsim_api_claim_verification` |
-| `notebook-regression-monitor` | Notebook baselines and drift | notebooks, figures, baselines | `replication_status.json`, `stale_figure_alert.md` | `paperlab_notebook_regression_baselines` |
-| `exercise-progression-builder` | Exercise difficulty ramp | exercises, objectives, cases | `exercise_difficulty_ramp.json`, proposals | `paperlab_exercise_difficulty_ramp` |
-| `concept-spiral-editor` | Cross-chapter concept deepening | objectives, glossary, chapter sequence | `concept_spiral_audit.md`, `concept_spiral_matrix.json` | `paperlab_concept_spiral_learning` |
-| `worked-example-factory` | Worked examples | notebooks, equations, chapter context | worked-example blocks, `worked_example_manifest.json` | `paperlab_worked_example_generation` |
-| `standards-traceability-curator` | Standards evidence | standards statements, sources | `standards_traceability_matrix.json` | `paperlab_standards_clause_traceability` |
-| `case-thread-continuity-editor` | Recurring case consistency | case-study chapters, notebooks | case registry and drift report | `paperlab_case_thread_continuity` |
-| `figure-accessibility-and-style-reviewer` | Figure readability and accessibility | figures, captions, style rules | `figure_style_audit.json` | `paperlab_figure_accessibility_style` |
-| `interactive-lab-designer` | Interactive HTML learning | notebooks, rendered HTML constraints | `interactive_lab_manifest.json` | `paperlab_interactive_html_labs` |
-| `chapter-readiness-scorer` | Composite chapter health | audit outputs | `chapter_health_dashboard.md` | `paperlab_chapter_health_dashboard` |
-| `instructor-resource-builder` | Teaching resources | chapters, objectives, exercises, notebooks | instructor resource pack | `paperlab_instructor_resource_pack` |
-| `book-release-orchestrator` | Full release gate | all audit outputs and render configs | `release_gate_report.md`, final artifacts | `paperlab_book_release_orchestration` |
+| `lecture-coverage-scout` | Source-to-chapter mapping | lectures, exercises, `coverage_matrix.md` | `coverage_audit.md` | `paperlab-book-knowledge-graph` |
+| `exam-alignment-reviewer` | Assessment fit | exams, objectives, exercises | alignment review | `paperlab-exam-alignment` |
+| `notebook-verifier` | Notebook existence and figure links | notebooks, figures, manifests | verification summary | `neqsim-in-writing` |
+| `source-librarian` | Source and citation hygiene | source folders, refs, chapters | source manifest and fixes | `paperlab-source-pdf-to-html` |
+| `technical-figure-reader` | Technical figure interpretation | figures and source images | structured figure notes | `technical-figure-understanding` |
+| `curriculum-architect` | Prerequisite graph | objectives, headings, glossary, exercises | `learning_path_audit.md` | `paperlab-curriculum-prerequisite-graph` |
+| `learning-objective-verifier` | Objective achievement | chapters, objectives, exercises, notebooks | `lo_achievement_matrix.json`, `lo_coverage_report.md` | `paperlab-learning-objective-matrix` |
+| `equation-consistency-auditor` | Equation and notation quality | chapters, equations, `nomenclature.yaml` | `equation_audit.json`, `notation_consistency_report.md` | `paperlab-equation-dimensional-audit` |
+| `neqsim-api-verifier` | NeqSim API accuracy | code blocks, notebooks, Java source | `neqsim_api_audit.json` | `paperlab-neqsim-api-claim-verification` |
+| `notebook-regression-monitor` | Notebook baselines and drift | notebooks, figures, baselines | `replication_status.json`, `stale_figure_alert.md` | `paperlab-notebook-regression-baselines` |
+| `exercise-progression-builder` | Exercise difficulty ramp | exercises, objectives, cases | `exercise_difficulty_ramp.json`, proposals | `paperlab-exercise-difficulty-ramp` |
+| `concept-spiral-editor` | Cross-chapter concept deepening | objectives, glossary, chapter sequence | `concept_spiral_audit.md`, `concept_spiral_matrix.json` | `paperlab-concept-spiral-learning` |
+| `worked-example-factory` | Worked examples | notebooks, equations, chapter context | worked-example blocks, `worked_example_manifest.json` | `paperlab-worked-example-generation` |
+| `standards-traceability-curator` | Standards evidence | standards statements, sources | `standards_traceability_matrix.json` | `paperlab-standards-clause-traceability` |
+| `case-thread-continuity-editor` | Recurring case consistency | case-study chapters, notebooks | case registry and drift report | `paperlab-case-thread-continuity` |
+| `figure-accessibility-and-style-reviewer` | Figure readability and accessibility | figures, captions, style rules | `figure_style_audit.json` | `paperlab-figure-accessibility-style` |
+| `interactive-lab-designer` | Interactive HTML learning | notebooks, rendered HTML constraints | `interactive_lab_manifest.json` | `paperlab-interactive-html-labs` |
+| `chapter-readiness-scorer` | Composite chapter health | audit outputs | `chapter_health_dashboard.md` | `paperlab-chapter-health-dashboard` |
+| `instructor-resource-builder` | Teaching resources | chapters, objectives, exercises, notebooks | instructor resource pack | `paperlab-instructor-resource-pack` |
+| `book-release-orchestrator` | Full release gate | all audit outputs and render configs | `release_gate_report.md`, final artifacts | `paperlab-book-release-orchestration` |
 
 Skill files live under [../skills/](../skills/). Every skill has a `SKILL.md`.
 

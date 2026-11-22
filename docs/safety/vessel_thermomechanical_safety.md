@@ -99,6 +99,16 @@ The `NemResult` exposes time-series lists (`timeS`, `pressureBara`,
 `finalGasTemperatureK`, `finalLiquidTemperatureK`,
 `maxTemperatureBifurcationK`, `flashFallbackCount`).
 
+**Cold blowdown and expansion cooling.** The vapour energy balance includes the flow work of the discharged gas,
+$m c_v \, dT = Q - (h - u)\, dm_{out}$ with $h - u = Z R T / M$, so the vapour now cools on depressurization
+(isentropic in the adiabatic limit). Before this term was added the vapour temperature changed only by heat
+exchange, so a no-fire blowdown kept the gas at its initial temperature. In a fire case the vapour first dips below
+the liquid and is then superheated by the wall. The fire is applied by default (also when `setFireExposure` is not
+called). For an MDMT check without fire, call `model.setFireEnabled(false)`: the wall then exchanges heat only with
+the contents and the outside is adiabatic. Each step also flashes the liquid zone isenthalpically at the new pressure and moves the vapour it forms to the vapour zone (`setFlashBoilOffEnabled(false)` restores the earlier wall-heat-only boil-off); without it a cold blowdown emptied the vapour zone and stopped early. Only the first liquid phase (oil, else aqueous) forms the liquid zone, so
+an oil/water inventory should be lumped into one liquid phase before use. `NonEquilibriumBlowdownModelTest` covers
+both cases (measured 2026-11-21).
+
 ---
 
 ## Dynamic PSV Sizing (Fire Case)
@@ -120,15 +130,31 @@ DynamicPsvSizingStudy study =
 study.setBlowdownFraction(0.1).setDischargeCoefficient(0.975);
 
 SizingComparison cmp = study.run();
+if (cmp.status != DynamicPsvSizingStudy.SizingStatus.FEASIBLE) {
+  throw new IllegalStateException(cmp.status + " at " + cmp.elapsedSeconds + " s: " + cmp.terminationReason);
+}
 double ratio = cmp.oversizingRatio;          // steady / dynamic required area (> 1 => conservative)
 double steadyArea = cmp.steadyRequiredAreaM2;
 double dynamicArea = cmp.dynamicRequiredAreaM2;
 double peakP = cmp.peakDynamicPressurePa;
 ```
 
-The dynamically required orifice area is found by bisection as the smallest area
-that keeps the peak vessel pressure at or below the allowable accumulated
-pressure, then compared against the steady-state API 521 area from
+Both calculations apply the overpressure fraction to gauge set pressure relative to 1.01325 bara.
+At 50 bara set pressure, 21% gives an absolute limit of 60.2872175 bara.
+
+The search samples areas from 0.001 to 10 times the steady area, then refines a
+passing interval by bisection. A feasible result identifies a tested area whose
+trajectory reached the requested horizon within the pressure limit, including
+the last partial step. The answer depends on the timestep and search bounds.
+`NO_FEASIBLE_AREA_IN_SEARCH` means every sampled candidate exceeded the limit.
+`INCOMPLETE` identifies an unresolved trajectory or invalid search basis.
+For either outcome, the required dynamic area and oversizing ratio are NaN.
+Inspect `attemptedAreaM2`, `peakDynamicPressurePa`, `elapsedSeconds`,
+`timeStepSeconds` and `terminationReason`. Historical serialized results
+without an outcome require a rerun. Earlier versions could return the last
+attempted area after an unsuccessful search or early integration exit.
+
+The steady reference comes from
 `ReliefValveSizing.calculateRequiredArea`. The cycling dynamics use ideal-gas
 energy bookkeeping seeded from a single NeqSim flash for molar mass, heat-capacity
 ratio, and compressibility.

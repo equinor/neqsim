@@ -1,0 +1,137 @@
+[
+  {
+    "temperatureK": 340,
+    "methane": 0.5,
+    "pressureBara": 300,
+    "volumeM3": 5.944630787336236e-05,
+    "gasMoleFraction": 0.5009340321209687,
+    "liquidComposition": [
+      1.0256492666777467e-05,
+      0.9999897435073333
+    ],
+    "gasComposition": [
+      0.9981252006707708,
+      0.001874799329229182
+    ]
+  },
+  {
+    "temperatureK": 340,
+    "methane": 0.5,
+    "pressureBara": 150,
+    "volumeM3": 9.966428990081817e-05,
+    "gasMoleFraction": 0.5012678543562594,
+    "liquidComposition": [
+      6.649571804611842e-06,
+      0.9999933504281954
+    ],
+    "gasComposition": [
+      0.9974640889089015,
+      0.0025359110910985194
+    ]
+  },
+  {
+    "temperatureK": 340,
+    "methane": 0.5,
+    "pressureBara": 50,
+    "volumeM3": 0.0002844396319647072,
+    "gasMoleFraction": 0.5027567142015684,
+    "liquidComposition": [
+      2.7518481460250248e-06,
+      0.999997248151854
+    ],
+    "gasComposition": [
+      0.9945140811416855,
+      0.005485918858314509
+    ]
+  },
+  {
+    "temperatureK": 350,
+    "methane": 0.5,
+    "pressureBara": 300,
+    "volumeM3": 6.147381761299953e-05,
+    "gasMoleFraction": 0.5013789523348681,
+    "liquidComposition": [
+      1.6933614751901154e-05,
+      0.9999830663852481
+    ],
+    "gasComposition": [
+      0.9972328399803473,
+      0.0027671600196527146
+    ]
+  },
+  {
+    "temperatureK": 350,
+    "methane": 0.5,
+    "pressureBara": 150,
+    "volumeM3": 0.0001037301572779715,
+    "gasMoleFraction": 0.50192243166788,
+    "liquidComposition": [
+      1.0851412422972633e-05,
+      0.999989148587577
+    ],
+    "gasComposition": [
+      0.9961590947298642,
+      0.003840905270135808
+    ]
+  },
+  {
+    "temperatureK": 350,
+    "methane": 0.5,
+    "pressureBara": 50,
+    "volumeM3": 0.00029509744134590077,
+    "gasMoleFraction": 0.5042932582178711,
+    "liquidComposition": [
+      4.429126212312702e-06,
+      0.9999955708737877
+    ],
+    "gasComposition": [
+      0.9914822304371578,
+      0.008517769562842226
+    ]
+  },
+  {
+    "temperatureK": 360,
+    "methane": 0.5,
+    "pressureBara": 300,
+    "volumeM3": 6.350664748552377e-05,
+    "gasMoleFraction": 0.5019906941193042,
+    "liquidComposition": [
+      2.7127393007771546e-05,
+      0.9999728726069922
+    ],
+    "gasComposition": [
+      0.996007488112937,
+      0.003992511887062955
+    ]
+  },
+  {
+    "temperatureK": 360,
+    "methane": 0.5,
+    "pressureBara": 150,
+    "volumeM3": 0.0001077652640425908,
+    "gasMoleFraction": 0.5028439358800172,
+    "liquidComposition": [
+      1.7201179668146145e-05,
+      0.9999827988203318
+    ],
+    "gasComposition": [
+      0.9943272905423287,
+      0.005672709457671288
+    ]
+  },
+  {
+    "temperatureK": 360,
+    "methane": 0.5,
+    "pressureBara": 50,
+    "volumeM3": 0.00030605752196417765,
+    "gasMoleFraction": 0.5065089194306368,
+    "liquidComposition": [
+      6.929589436382214e-06,
+      0.9999930704105636
+    ],
+    "gasComposition": [
+      0.9871426960683414,
+      0.012857303931658626
+    ]
+  }
+]

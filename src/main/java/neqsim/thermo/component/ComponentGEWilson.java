@@ -62,11 +62,12 @@ public class ComponentGEWilson extends ComponentGE {
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
-    return 0.0;
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt);
   }
 
   /**
-   * getWilsonActivityCoefficient.
+   * Calculates and stores the Wilson activity coefficient and its logarithm for the supplied phase state. The cached
+   * coefficient is consumed by the GE fugacity and infinite-dilution reference calculations.
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -87,7 +88,9 @@ public class ComponentGEWilson extends ComponentGE {
           * ((ComponentGEWilson) phase1.getComponent(i)).getCharEnergyParamter(phase1, i, this.getComponentNumber())
           / tempSum;
     }
-    return Math.exp(1.0 - Math.log(sum1) - sum2);
+    lngamma = 1.0 - Math.log(sum1) - sum2;
+    gamma = Math.exp(lngamma);
+    return gamma;
   }
 
   /**

@@ -12,6 +12,9 @@ public class LGTSurfaceTension extends SurfaceTension {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** True only after every integration step succeeds. */
+  private boolean profileComplete;
+
   int ite_step = 200;
   SystemInterface localSystem = null;
   double[][] den_interface = null;
@@ -37,15 +40,43 @@ public class LGTSurfaceTension extends SurfaceTension {
    * {@inheritDoc}
    *
    * <p>
-   * Using the Gradient Theory for mixtures Units: N/m
+   * Computes a complete gradient-theory profile in N/m. If integration leaves the physical domain, a linear solve
+   * fails, or convergence is not reached, discards the profile and logs a warning before using the default correlation
+   * for the phase pair. Profile getters are unavailable after fallback; no partial integral is returned.
    * </p>
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
+    clearProfile();
+    if (!validateInterface(interface1, interface2)) {
+      return 0.0;
+    }
+    try {
+      double tension = validateResult(integrateProfile(interface1, interface2));
+      profileComplete = true;
+      return tension;
+    } catch (RuntimeException failure) {
+      clearProfile();
+      return correlationFallback(interface1, interface2, failure);
+    }
+  }
+
+  /**
+   * Integrates every density step, rejecting invalid intermediate states.
+   *
+   * @param interface1 first bulk phase index
+   * @param interface2 second bulk phase index
+   * @return complete surface-tension integral in N/m
+   * @throws IllegalStateException if a profile step is invalid or does not converge
+   */
+  private double integrateProfile(int interface1, int interface2) {
+    if (ite_step < 2) {
+      throw new IllegalStateException("At least two density-profile grid points are required");
+    }
     double surdenstemp = 0.0;
     localSystem = system.clone();
 
-    int referenceComponentNumber = getComponentWithHighestBoilingpoint();
+    int referenceComponentNumber = getReferenceComponent(interface1, interface2);
     // double influenceParamReferenceComponent =
     // localSystem.getPhase(0).getComponent(referenceComponentNumber).getSurfaceTenisionInfluenceParameter(localSystem.getPhase(0).getTemperature());
     double pressure_equi = 1e5 * system.getPressure();
@@ -92,6 +123,7 @@ public class LGTSurfaceTension extends SurfaceTension {
     localSystem.initBeta();
     localSystem.init_x_y();
     localSystem.init(3);
+    GTSurfaceTensionUtils.validateState(localSystem.getPhase(0));
 
     // localSystem.display();
     // System.out.println("inerface1 + " + interface1 + " pressure " +
@@ -108,6 +140,9 @@ public class LGTSurfaceTension extends SurfaceTension {
 
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
         den_interface[j][i] = den_interface[j - 1][i] + del_den_interface[i];
+      }
+      GTSurfaceTensionUtils.validateDensities(den_interface[j]);
+      for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
         localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
             (del_den_interface[i] - del_den_interface_old[i]) / 1.0e5);
         del_den_interface_old[i] = del_den_interface[i];
@@ -115,6 +150,7 @@ public class LGTSurfaceTension extends SurfaceTension {
 
       localSystem.init_x_y();
       localSystem.init(3);
+      GTSurfaceTensionUtils.validateState(localSystem.getPhase(0));
       // localSystem.init(3); //need to be fixed
       // System.out.println("pressure " + localSystem.getPressure());
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -170,11 +206,12 @@ public class LGTSurfaceTension extends SurfaceTension {
       mu_times_den[j] += -(pressure_interface[j] - pressure_equi);
       z_step[j] = z_step[j - 1]
           + Math.sqrt(kappa / (2.0 * mu_times_den[j])) * del_den_interface[referenceComponentNumber];
-      if (Double.isNaN(z_step[j])) {
-        break;
+      if (!Double.isFinite(kappa) || kappa <= 0.0 || !Double.isFinite(mu_times_den[j]) || mu_times_den[j] <= 0.0
+          || !Double.isFinite(z_step[j])) {
+        throw new IllegalStateException("Invalid gradient-theory integrand at density step " + j);
       }
       surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
-      // thermo.ThermodynamicConstantsInterface.avagadroNumber;
+      GTSurfaceTensionUtils.requireFinite(surdenstemp, "surface-tension integral");
       // System.out.println("surdenstemp " + surdenstemp + " kappa " + kappa + "
       // mu_times_den[j] " + mu_times_den[j] + " z " + z_step[j]);
     }
@@ -185,6 +222,7 @@ public class LGTSurfaceTension extends SurfaceTension {
       // den_interface[j][1]);
     }
 
+    GTSurfaceTensionUtils.validateEndpoint(system, interface1, interface2, den_interface[ite_step - 1], ite_step);
     return Math.abs(surdenstemp);
   }
 
@@ -193,8 +231,10 @@ public class LGTSurfaceTension extends SurfaceTension {
    *
    * @param compnum a int
    * @return an array of type double
+   * @throws IllegalStateException if the latest calculation did not complete a density profile
    */
   public double[] getMolarDensity(int compnum) {
+    requireCompleteProfile();
     double[] temp = new double[ite_step];
     for (int i = 0; i < ite_step; i++) {
       temp[i] = den_interface[i][compnum];
@@ -206,8 +246,10 @@ public class LGTSurfaceTension extends SurfaceTension {
    * getMolarDensityTotal.
    *
    * @return an array of type double
+   * @throws IllegalStateException if the latest calculation did not complete a density profile
    */
   public double[] getMolarDensityTotal() {
+    requireCompleteProfile();
     double[] temp = new double[ite_step];
     for (int i = 0; i < ite_step; i++) {
       for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
@@ -221,8 +263,10 @@ public class LGTSurfaceTension extends SurfaceTension {
    * getz.
    *
    * @return an array of type double
+   * @throws IllegalStateException if the latest calculation did not complete a density profile
    */
   public double[] getz() {
+    requireCompleteProfile();
     return z_step;
   }
 
@@ -230,8 +274,31 @@ public class LGTSurfaceTension extends SurfaceTension {
    * getPressure.
    *
    * @return an array of type double
+   * @throws IllegalStateException if the latest calculation did not complete a density profile
    */
   public double[] getPressure() {
+    requireCompleteProfile();
     return pressure_interface;
+  }
+
+  /** Discards all profile data before a new calculation and after any failed integration. */
+  @Override
+  protected void clearProfile() {
+    profileComplete = false;
+    localSystem = null;
+    den_interface = null;
+    z_step = null;
+    pressure_interface = null;
+  }
+
+  /**
+   * Requires a complete profile rather than a fallback or a previous calculation.
+   *
+   * @throws IllegalStateException if no complete profile is available
+   */
+  private void requireCompleteProfile() {
+    if (!profileComplete) {
+      throw new IllegalStateException("No complete gradient-theory density profile is available");
+    }
   }
 }

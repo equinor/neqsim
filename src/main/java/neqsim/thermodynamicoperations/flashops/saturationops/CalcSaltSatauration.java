@@ -16,11 +16,17 @@ import neqsim.thermodynamicoperations.flashops.TPflash;
 public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  private static final int MAX_SATURATION_ITERATIONS = 80;
+  private static final double SATURATION_RATIO_TOLERANCE = 1.0e-6;
+  static final double PRESSURE_CORRECTION_REFERENCE_BARA = 1.01325;
+  private static final double GAS_CONSTANT_CM3_BAR_PER_MOL_K = 83.1446;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CalcSaltSatauration.class);
 
   String saltName;
   private transient SaltData saltDataCache;
+  private transient SaltSaturationResult result;
+  private transient int thermodynamicInitializationCount;
 
   /**
    * Constructor for calcSaltSatauration.
@@ -37,6 +43,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    result = null;
+    thermodynamicInitializationCount = 0;
+
     SaltData saltData = readSaltData();
     ensureSaltIonsPresent(saltData);
 
@@ -44,7 +53,11 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     int aqueousPhaseNumber = getAqueousPhaseNumber();
 
     double saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+    double initialSaturationRatio = saturationRatio;
     if (saturationRatio >= 1.0) {
+      boolean converged = Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE;
+      result = new SaltSaturationResult(saltName, initialSaturationRatio, saturationRatio, 0.0, 0, 0,
+          thermodynamicInitializationCount, true, converged, false);
       logger.info("{} is already saturated, SR={}", saltName, saturationRatio);
       return;
     }
@@ -52,12 +65,16 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     double lowerAddition = 0.0;
     double upperAddition = 1.0e-6;
     double upperSaturationRatio = saturationRatio;
+    double acceptedAddition = 0.0;
     int bracketIterations = 0;
+    int solveIterations = 0;
 
     SystemInterface baseSystem = system.clone();
 
-    if (system instanceof neqsim.thermo.system.SystemPitzer || "FeCO3".equals(saltName)) {
-      while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
+    // Reactive speciation changes between trials. Rebuild each candidate from the
+    // same feed so bisection does not accumulate reaction and inventory history.
+    if (system instanceof neqsim.thermo.system.SystemPitzer || system.isChemicalSystem()) {
+      while (upperSaturationRatio < 1.0 && bracketIterations < MAX_SATURATION_ITERATIONS) {
         upperSaturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, upperAddition);
         if (upperSaturationRatio < 1.0) {
           lowerAddition = upperAddition;
@@ -70,11 +87,12 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         throw new IllegalStateException("Could not bracket salt saturation for " + saltName);
       }
 
-      for (int i = 0; i < 80; i++) {
+      for (int i = 0; i < MAX_SATURATION_ITERATIONS; i++) {
         double trialAddition = 0.5 * (lowerAddition + upperAddition);
         saturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, trialAddition);
+        solveIterations++;
 
-        if (Math.abs(saturationRatio - 1.0) < 1.0e-6) {
+        if (Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE) {
           lowerAddition = trialAddition;
           upperAddition = trialAddition;
           break;
@@ -86,13 +104,13 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         }
       }
 
-      double finalAddition = 0.5 * (lowerAddition + upperAddition);
-      addSaltAmount(saltData, finalAddition);
+      acceptedAddition = 0.5 * (lowerAddition + upperAddition);
+      addSaltAmount(saltData, acceptedAddition);
       initialiseSystem();
     } else {
       double currentAddition = 0.0;
 
-      while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
+      while (upperSaturationRatio < 1.0 && bracketIterations < MAX_SATURATION_ITERATIONS) {
         lowerAddition = currentAddition;
         addSaltAmount(saltData, upperAddition - currentAddition);
         currentAddition = upperAddition;
@@ -109,15 +127,16 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         throw new IllegalStateException("Could not bracket salt saturation for " + saltName);
       }
 
-      for (int i = 0; i < 80; i++) {
+      for (int i = 0; i < MAX_SATURATION_ITERATIONS; i++) {
         double trialAddition = 0.5 * (lowerAddition + upperAddition);
         addSaltAmount(saltData, trialAddition - currentAddition);
         currentAddition = trialAddition;
         initialiseSystem();
         aqueousPhaseNumber = getAqueousPhaseNumber();
         saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+        solveIterations++;
 
-        if (Math.abs(saturationRatio - 1.0) < 1.0e-6) {
+        if (Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE) {
           break;
         }
         if (saturationRatio < 1.0) {
@@ -126,12 +145,30 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
           upperAddition = trialAddition;
         }
       }
+      acceptedAddition = currentAddition;
     }
 
     aqueousPhaseNumber = getAqueousPhaseNumber();
     saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+    boolean converged = Math.abs(saturationRatio - 1.0) < SATURATION_RATIO_TOLERANCE;
+    boolean iterationLimitReached = !converged && solveIterations >= MAX_SATURATION_ITERATIONS;
+    result = new SaltSaturationResult(saltName, initialSaturationRatio, saturationRatio, acceptedAddition,
+        bracketIterations, solveIterations, thermodynamicInitializationCount, false, converged, iterationLimitReached);
 
     logger.info("solution found for {} in calcSaltSatauration(), SR={}", saltName, saturationRatio);
+  }
+
+  /**
+   * Returns diagnostics for the completed dissolved-salt saturation calculation.
+   *
+   * @return immutable convergence and work diagnostics
+   * @throws java.lang.IllegalStateException if {@link #run()} has not completed successfully
+   */
+  public SaltSaturationResult getResult() {
+    if (result == null) {
+      throw new IllegalStateException("Salt saturation has not completed for " + saltName);
+    }
+    return result;
   }
 
   /**
@@ -478,6 +515,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    * Initialises thermodynamic and physical properties for the current system state.
    */
   private void initialiseSystem() {
+    thermodynamicInitializationCount++;
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
       neqsim.thermo.system.SystemPitzer pitzerSystem = (neqsim.thermo.system.SystemPitzer) system;
       system.init(0);
@@ -624,6 +662,37 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   }
 
   /**
+   * Returns the lumped constant reaction-volume coefficient used by the COMPSALT pressure correction.
+   *
+   * <p>
+   * This is a reaction-volume parameter, not a pure-mineral molar volume. The current correlation does not separately
+   * resolve aqueous-species partial or apparent molar volumes.
+   * </p>
+   *
+   * @return COMPSALT {@code Vdelta} in cm3/mol
+   */
+  double getLumpedReactionVolumeCm3PerMol() {
+    return readSaltData().vdelta;
+  }
+
+  /**
+   * Returns the exact logarithmic pressure correction applied by the COMPSALT Ksp path.
+   *
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara absolute pressure in bara
+   * @return {@code ln(Ksp(T,P)/Ksp(T,P0))}
+   */
+  double getLogPressureCorrection(double temperatureK, double pressureBara) {
+    if (!(temperatureK > 0.0) || !Double.isFinite(temperatureK)) {
+      throw new IllegalArgumentException("Temperature must be finite and positive");
+    }
+    if (!(pressureBara > 0.0) || !Double.isFinite(pressureBara)) {
+      throw new IllegalArgumentException("Pressure must be finite and positive");
+    }
+    return calculateLogPressureCorrection(readSaltData().vdelta, temperatureK, pressureBara);
+  }
+
+  /**
    * Calculates Ksp from the same COMPSALT correlations used by scale-potential calculations.
    *
    * @param saltData salt data from COMPSALT
@@ -647,18 +716,24 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
           + temperatureK * saltData.kspwater4 + saltData.kspwater5 / (temperatureK * temperatureK);
       ksp = Math.exp(lnKsp);
     }
-    if (Math.abs(saltData.vdelta) > 1.0e-10 && pressureBara > 1.013) {
-      double gasConstantCm3Bar = 83.1446;
-      double deltaPbar = pressureBara - 1.01325;
-      double lnCorrection = -saltData.vdelta * deltaPbar / (gasConstantCm3Bar * temperatureK);
-      if (lnCorrection > 50.0) {
-        lnCorrection = 50.0;
-      } else if (lnCorrection < -50.0) {
-        lnCorrection = -50.0;
-      }
-      ksp *= Math.exp(lnCorrection);
-    }
+    ksp *= Math.exp(calculateLogPressureCorrection(saltData.vdelta, temperatureK, pressureBara));
     return ksp;
+  }
+
+  private static double calculateLogPressureCorrection(double reactionVolumeCm3PerMol, double temperatureK,
+      double pressureBara) {
+    if (Math.abs(reactionVolumeCm3PerMol) <= 1.0e-10 || pressureBara <= 1.013) {
+      return 0.0;
+    }
+    double deltaPbar = pressureBara - PRESSURE_CORRECTION_REFERENCE_BARA;
+    double lnCorrection = -reactionVolumeCm3PerMol * deltaPbar / (GAS_CONSTANT_CM3_BAR_PER_MOL_K * temperatureK);
+    if (lnCorrection > 50.0) {
+      return 50.0;
+    }
+    if (lnCorrection < -50.0) {
+      return -50.0;
+    }
+    return lnCorrection;
   }
 
   /**

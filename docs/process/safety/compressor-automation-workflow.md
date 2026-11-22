@@ -1,0 +1,283 @@
+---
+title: "Compressor automation engineering workflow"
+description: "Run a public natural-gas compressor model with explicit acceptance policy, canonical control and safety proposal, native dynamic cases and DEXPI 2.0.1 P&ID export."
+---
+
+# Compressor automation engineering workflow
+
+`neqsim.process.engineering.CompressorAutomationWorkflow` is a public, packaged entrypoint for a
+synthetic natural-gas compression train. It composes the native compressor study, canonical
+instrument/control import, actual safety-function import, configured-copy readback, strict dynamic
+runner and professional package exporter. Its physical process and acceptance results come from
+those APIs; there is no second solver or independent verdict engine in the wrapper.
+
+The template includes a suction mixer/scrubber, mapped centrifugal compressor and native driver,
+aftercooler, discharge check valve/receiver, export isolation and a cooled anti-surge recycle.
+Actual field channels, a held calculated map-margin signal, native controllers and actual shutdown
+actions supply the P&ID objects and automation registers. A calculated margin is not a separate
+physical transmitter. Documentary machinery-protection requirements remain unresolved requirements
+until actual hardware, native behavior and accountable engineering evidence are supplied.
+
+## Agent invocation
+
+Build the current source and its runtime classpath, then invoke the main class. The example assumes
+the Java runtime required by the current POM. Java 8 source syntax does not establish whole-JAR
+Java 8 runtime compatibility. Java 17 serialization may require the module opens shown here.
+
+```bash
+./mvnw -DskipTests package dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
+java --add-opens java.base/java.util=ALL-UNNAMED \
+  --add-opens java.base/java.lang=ALL-UNNAMED \
+  --add-opens java.base/java.io=ALL-UNNAMED \
+  --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
+  -cp "target/classes:$(cat target/runtime-classpath.txt)" \
+  neqsim.process.engineering.CompressorAutomationWorkflow - target/compressor-default
+```
+
+The positional contract is `<design.json|-> <new-output-dir> [canonical-pid.json]`. A dash selects
+the public `Design` constructor defaults. The output directory must not exist: retries use a new
+directory and never replace previous evidence. The main class runs every public native profile at
+0.1 s using the model's declared 20 s duration and event at 2 s. Programmatic callers can supply an
+explicit list of `CaseDefinition` objects; `allPublicProfilesSelected` discloses subsets.
+
+The public matrix includes healthy and load-rejection control, slow/stuck recycle, held flow-signal
+faults, cooling loss, high pressure/temperature/level signals, manual ESD, unavailable driver or
+isolation/recycle final elements, a physically closing blocked export, and loss of control air to
+the three spring-return gas valves. The blocked-export case exercises actual anti-surge recycle and
+pressure control before any native pressure SIF demand; a trip is neither assumed nor injected. The control-air-loss case deliberately removes valve motive supply
+without inventing a simultaneous driver trip; its shaft-stop and sustained-safe-state failures
+remain visible as a design action.
+
+A design file is a strict JSON object of scalar and composition `CompressorAutomationStudy.Design` field names.
+For example, `{"feedFlowKgPerSecond":6.0,"antiSurgeOpeningSeconds":0.3}` retains all other typed
+defaults. Pressure fields end in `Bara`, temperature fields in `K`, motion fields in `Seconds`,
+flow in `KgPerSecond`, and fractional setpoints identify their physical quantity. Unknown keys,
+duplicates, nulls, numeric strings and non-finite values are rejected. The native constructor then
+checks physical design relationships before execution. `design-input.json` retains the accepted
+values. Optional `composition` maps component names to finite numeric mole fractions; duplicate
+component names and numeric strings are rejected. The native factory validates and normalizes the
+positive composition sum. `steady-state.json` and configuration receipts separately retain actual native readback.
+
+The design also declares the quantitative reporting policy: pressure, temperature and level
+setpoints; absolute settling bands of 0.5 bar, 1 K and 0.01 level fraction by default; and a minimum
+two-second sustained evidence window. These values are normal strict design-file fields and may be
+changed explicitly. They are reporting criteria, not hidden solver tolerances.
+
+The default mixture and map are public synthetic assumptions. Changing a design scalar can rebuild
+that synthetic reference template; it is not a vendor-map similarity assessment or proof that an
+installed machine accepts a different duty. Vendor curves, margins, gas cases and driver limits
+must replace the assumptions in a controlled application.
+
+## Explicit scenario acceptance policy
+
+`CompressorAutomationAcceptancePolicy.defaultPolicy()` exposes the previous native criterion
+settings as a complete immutable public policy. Every public profile has one ordered criterion
+list. Each entry declares its stable criterion identity, exact unit, lower/upper bounds,
+event-relative deadline basis, evaluation mode and required/optional status. Case-horizon
+deadlines resolve explicitly from `durationSeconds - eventSeconds`; fixed deadlines are seconds
+after the initiating event.
+
+Programmatic callers use `runWithAcceptancePolicy` to execute a complete policy. They may replace
+existing criterion settings with `withOverrides`, but cannot change the native observation
+extractor, identity or unit. Unknown identities, unit mismatches, duplicate overrides, missing
+profiles/criteria, non-finite or inverted bounds and deadlines beyond a selected case horizon are
+rejected before the output directory or any physical step is created. The legacy `run` overloads
+delegate to the explicit default policy and retain their behavior.
+
+The canonical policy fingerprint is present in `acceptance-policy.json`, each native scenario,
+case result, crosswalk row and aggregate acceptance study. Policy-only changes are therefore
+reviewable and invalidate the acceptance evidence without masquerading as a physical-model
+revision. The workflow separately fingerprints the configured-copy physical sample history. The
+regression contract requires identical physical samples for identical design/event inputs even
+when a limit deliberately changes a scenario from PASS to FAIL.
+
+## Canonical revision and fresh execution
+
+An agent can edit supported control settings in `canonical-pid.json` and pass that file as the
+third argument on a new invocation using the same physical design. The wrapper imports the actual
+source, applies the chosen canonical settings to an isolated healthy train, reads them back, and
+uses that governed train for the saved runnable process and all scenario copies.
+
+Actual PID/anti-surge gains, setpoints and supported valve/instrument settings are governed by the
+native control configuration. Unsupported SIF setpoint, voting or action-tree edits fail safety
+readback; they are not silently ignored. To change the template's trip design, revise its explicit
+`Design` trip inputs and regenerate the native source and proposal, then review the new cause/effect
+and configuration evidence. Structural safety changes still require a compatible native factory.
+
+Each mechanical fault is a separate declared override. A preflight copied prototype produces the
+frozen fault-specific receipt. The actual runner-owned copy must match it before events or physical
+steps. The observer never reapplies healthy settings after a fault, and the evidence collector never
+executes native SIFs a second time. Event-injected measurement faults remain event declarations and
+actual sampled evidence; they are not relabeled as a healthy physical process disturbance.
+
+Runtime verification observers retain live governed model identities. They are
+not reusable serialized authority: deserialization fails explicitly, and a new
+run must construct its verifier from the governed inputs. Equipment getters
+return the connected instances so controller, measurement and trip changes act
+on the same process graph. Coordinate configuration and execution with one owner.
+
+## Actual outputs and review gates
+
+| Artifact | Meaning |
+|---|---|
+| `design-input.json`, `steady-state.json` | Accepted inputs; actual stream P/T/mass/enthalpy readback and native work/heat duties |
+| `acceptance-policy.json` | Complete ordered caller-declared bounds, deadlines, modes, required status and canonical policy fingerprint |
+| `canonical-pid.json` | The proposal selected for this run; corresponding current bindings are in the native package |
+| `automation-registers.json` | Source-backed I/O, control loops, cause/effect and unresolved requirements |
+| `case-*/scenario.json`, `configuration.json` | Exact declared case and frozen actual control/safety settings |
+| `case-*/result.json`, `full-trace.json` | Native case output, quantitative metrics and actual ordered configured-copy physical samples |
+| `case-*/native-result.raw.txt` | Exact native result text, preserved independently from strict JSON normalization |
+| `native-evidence-crosswalk.json` | Native-result fingerprint and separate strict output-file SHA-256 values |
+| `acceptance-study-summary.json` | Requirement/tag/scenario/criterion/result/review traceability, status, metrics, checksums and unresolved actions |
+| `case-BLOCKED_OUTLET-*/relief-disposal.json` | Optional physical receiver depressurization and disposal result from the exact completed blocked-outlet copy |
+| `integrated-safety-study.json` | Optional requirement/tag/scenario/native-result/relief-result/review crosswalk with strict file checksums |
+| `dynamic-pid-feedback.json` | Current per-function demand/no-demand/failed/incomplete evidence without SIL credit |
+| `engineering-simulation-results.json` | The coordinated strict runner's typed results; failures remain failures |
+| `native-pid-package/` | DEXPI 2.0.1, professional native P&IDs/PFD, registers and governed runnable process |
+| `workflow-status.json` | Execution completion, native criteria counts, errors, selected scope and retained HOLDs |
+
+Agent-facing JSON is strict: undefined native floating-point values become `null` with their path
+and native kind retained in `nonFiniteValues`, never a substituted zero. Authoritative map-margin
+validity/reason flags remain in the native samples. Exact native text/fingerprints and normalized
+file hashes are separate quantities and must not be described as byte-identical representations.
+The generated MCP engineering-coverage inventory exposes the public acceptance-policy type to the
+compressor skill and control/rotating-equipment agents; the inventory is routing evidence, not a
+safety approval or an additional acceptance criterion.
+
+Each result computes peak/minimum, overshoot, undershoot, integral absolute error and sustained
+settling time from accepted-step samples using the declared policy. It also reports sampled
+constraint violations, first native SIF vote, final-element actuation delay, sustained complete
+safe-state time, and integrated export/recycle routing after the event. The base template has no
+connected PSV, blowdown or flare model: relief mass and disposal load are therefore explicitly
+`NOT_EVALUATED`, never substituted with zero. Call
+`CompressorReliefDisposalStudy.run(result, design)` to opt into the separate governed connection.
+That study copies the actual executed discharge-scrubber fluid, uses the declared cylindrical
+receiver geometry, extracts the actual gas phase for blocked-outlet PSV screening, and sends the
+whole multiphase receiver inventory through the existing dynamic blowdown/flare calculation. It
+does not mutate the compressor result or introduce a second source-term correlation. Continuous-
+time peaks between samples remain outside this fixed-step evidence.
+
+The aggregate acceptance status uses only required criteria. A required criterion with physical
+samples is PASS or FAIL from the native evaluator. A required criterion without samples, or a case
+with retained native execution errors, is `NOT_EVALUATED`; the workflow never relabels it as FAIL
+or substitutes a passing value. Optional diagnostic failures remain visible actions without
+silently changing the required verdict. Every case retains at least the accountable engineering
+review action because simulation alone does not establish hazard completeness, SIL, installed
+independence, vendor qualification or construction approval. The summary lists the exact policy,
+project, control-configuration, native-result, physical-trajectory and strict-file fingerprints
+whose change requires a rerun and review.
+
+### Acceptance-policy separation proof
+
+The public DYN-C041 regression ran the `NORMAL` profile for 8.0 s with a 0.2 s
+physical step and event at 1.0 s. The explicit default discharge envelope
+(1.0–68.0 bara) passed. Replacing only its upper bound with 1.0 bara changed the
+required result to FAIL at event-relative time 0.0 s. Both runs retained the
+same exact configured-copy physical-trajectory fingerprint,
+`4216bf7286fe52c3fd6434ad34a95c4506c55be6c7b4ea9157afdbca2b5c20c6`.
+
+| Evidence | Default policy | Revised pressure limit |
+|---|---:|---:|
+| Aggregate status | PASS | FAIL |
+| Monitored pressure range | 59.99105–59.99842 bara | 59.99105–59.99842 bara |
+| Pressure IAE | 0.0401064 bar·s | 0.0401064 bar·s |
+| Surge-margin range | 0.497843–0.499310 | 0.497843–0.499310 |
+| Sampled constraint violations in physical KPI report | 0 | 0 |
+| Required discharge-envelope result | PASS | FAIL (36 monitored samples) |
+| Open actions | 1 engineering-review hold | 1 criterion action + 1 engineering-review hold |
+
+The native-result and aggregate-summary fingerprints changed with the policy as
+required, while exported mass (35.1893 kg after the event), temperatures,
+levels, routing and every stored physical sample remained identical. This is a
+software/traceability qualification of policy separation, not an assertion that
+the synthetic pressure limits are project requirements.
+
+For the default synthetic design, accepted-step runs at 0.1 s gave the following new-profile
+evidence. The event was at 1.0 s; blocked export ran to 12.0 s and control-air loss to 6.2 s.
+
+| Profile | Native verdict | Peak discharge | Pressure IAE | Temperature overshoot | Recycled mass after event | Complete safe state |
+|---|---|---:|---:|---:|---:|---|
+| Blocked outlet | PASS | 62.4539 bara | 20.8914 bar·s | 0.00150 K | 32.7311 kg | Not demanded; control case |
+| Control-air loss | FAIL (`SHAFT_STOP`) | 59.9984 bara | 7.22064 bar·s | 4.29857 K | 48.7147 kg | Not achieved |
+
+Neither run sampled a declared pressure/temperature/level/surge constraint violation. That does not
+qualify continuous peaks, control-air architecture, driver shutdown wiring or vendor machinery
+response.
+
+### Synthetic connected relief and disposal proof
+
+The public DYN-C039 proof connects the completed blocked-outlet case above to one declared
+synthetic BDV/PSV/header/flare basis. The protected volume is 7.06858 m³ from the existing 1.5 m
+diameter by 4.0 m tangent-length receiver. Declared screening inputs are a 25 mm equivalent BDV
+orifice with Cd 0.72, 1.5 bara backpressure, a 300 mm header with Mach limit 0.5, and a 500 kg/s /
+500 MW flare capacity. These are public test assumptions, not vendor or site values. Fire input is
+zero for this blocked-outlet/depressuring case; the configured wall inventory is retained for cold
+blowdown screening.
+
+| Physical timestep | Initial inventory | Released mass at 300 s | Peak disposal load | Half-pressure time | 7 barg time | Minimum fluid / wall temperature | Header Mach | Flare heat utilization |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1.0 s | 1183.9332 kg | 420.2962 kg | 4.78701 kg/s | 61.2530 s | 200.5485 s | 267.980 / 298.918 K | 0.13705 | 44.653% |
+| 0.5 s | 1183.9332 kg | 420.1142 kg | 4.78701 kg/s | 61.4380 s | 201.1106 s | 268.003 / 298.920 K | 0.13705 | 44.653% |
+
+Both runs close the source inventory balance to the reported double precision (0.0 kg residual),
+meet the configured half-pressure and 7 barg screening criteria, remain below the declared header
+Mach and flare capacities, and reproduce identically on repeated execution. Halving the timestep
+changes released mass by 0.0433%, half-pressure time by 0.301% and 7 barg time by 0.280%.
+The flare handoff integrates interval withdrawals at the header and separately reports vapor sent
+to the tip and condensed mass sent to knockout.
+
+The calculation verdict is `CALCULATED_REVIEW_REQUIRED` because scenario credibility/concurrency,
+detailed diagrams and line lists, vendor BDV/PSV data, MDMT, detailed flare-network hydraulics and
+controlled standards editions are not reviewed project evidence. Simulation PASS is not HAZOP,
+SIL/IPL/SRS, relief design or construction approval. API 520/521-related routines are existing
+screening implementations; this proof adds no clause-derived rule and claims no standards
+certification.
+
+### Integrated blocked-outlet safety-study package
+
+The additive five-argument workflow overload accepts an explicit
+`CompressorReliefDisposalStudy.Design`. The legacy overload passes no relief design and retains its
+existing execution cost and artifacts. An integrated run requires exactly one selected
+`BLOCKED_OUTLET` case and rejects a missing or duplicate source before creating the output
+directory. The relief design is validated before any process execution.
+
+The integrated path writes the physical result beside the originating case and records its strict
+file checksum in both the native evidence crosswalk and `integrated-safety-study.json`. Each public
+compressor scenario now carries one stable synthetic requirement identity of the form
+`REQ-COMPRESSOR-<PROFILE>` plus the actual ordered equipment tags. The integrated study joins those
+identities to the exact native-result fingerprint, declared relief input units, calculated metrics,
+review-required state and relief-result checksum. A changed scenario result, connection basis or
+output file therefore changes the corresponding evidence fingerprint instead of silently retaining
+approval.
+
+The join does not turn the modeled response into an approved requirement, HAZOP decision, SRS or
+relief basis. Project requirement identities, controlled clauses, actual pipe routes/elevations,
+isolation inventory, vendor data, concurrency, MDMT and accountable reviews remain supplied
+evidence or explicit blockers. The integrated package only proves that the declared synthetic
+blocked-outlet result and the declared physical relief/disposal calculation were executed and
+linked without reconstructing or mutating the source train.
+
+The wrapper does not grant layout approval. Run the repository's strict external PFD/layout checks,
+native P&ID QC and independent visual inspection on every generated sheet. Check actual port/line/
+signal identities, feedback crosswalks, dynamic-capability diagnostics, full-window acceptance,
+mass/component/energy closure, timestep sensitivity and all retained failed or incomplete cases.
+Expected-failure assertions are software checks, not successful protection. No-demand monitoring is
+not observed trip response. Native response PASS cannot clear numerical or engineering HOLDs.
+
+The NORSOK-derived requirements are a disclosed template, not an assertion of jurisdiction or
+applicability. ISO 15519/10628/14617, ISA 5.1, IEC 62424, machinery/protection and functional-safety
+requirements need controlled editions and accountable review. Missing vendor curves, machinery
+monitoring, installed independence, relief/disposal design, restart permissives and SRS/SIL/PLC
+application or construction approval remain explicit HOLDs.
+
+`CompressorAutomationAcceptancePolicyTest` verifies complete ordered coverage, deterministic
+fingerprinting, invalid-policy rejection and exact physical-sample equality across a deliberate
+policy-only PASS-to-FAIL change. `CompressorAutomationWorkflowTest` verifies strict input handling,
+actual steady readback, native configured-copy execution, changed canonical anti-surge readback,
+separate raw/strict hashes, strict JSON artifacts and the aggregate acceptance-study checksums.
+The native physical model and P&ID/control tests provide their own distinct physics, identity,
+fault and layout coverage.
+
+See [P&ID synthesis](../../pid-design-synthesis.md),
+[closed-loop verification](closed-loop-sif-verification.md), and
+[compressor anti-surge control](../equipment/compressor_antisurge_control.md).

@@ -14,6 +14,7 @@ This guide documents the thermal conductivity calculation methods available in N
   - [Chung Dense Method](#chung-dense-method)
   - [Polynomial Correlation](#polynomial-correlation)
   - [CO₂ Reference](#co2-reference)
+  - [Filippov Liquid Mixing and Pressure Factor](#filippov-liquid-mixing-and-pressure-factor)
 - [Model Selection Guide](#model-selection-guide)
 - [Usage Examples](#usage-examples)
 
@@ -125,6 +126,36 @@ fluid.getPhase("gas").initPhysicalProperties();
 density-dependent contributions. Use it when pressure or liquid-like density makes the dilute
 `Chung` model insufficient.
 
+The implementation uses Chung's conformal mixture rules with unity binary combining factors,
+including the effective transport molar mass, critical volume, critical temperature, acentric
+factor, dipole and association terms. The actual mixture molar mass converts EOS mass density
+to molar density. Ideal-gas molar heat capacity is independent of the total phase amount.
+The association input is the component's **viscosity correction factor**, not its CPA association volume.
+
+The dense equation is evaluated consistently in SI:
+
+$$\lambda = \frac{31.2\eta_0\Psi}{M}\left(H_2^{-1}+B_6 y\right)+q B_7 y^2\sqrt{T_r}H_2$$
+
+Here $M$ is in kg/mol, $\eta_0$ in Pa s, $y=\rho_{mol}V_c/6$ with matched volume units,
+$T_r=T/T_c$, and $q=3.586\times10^{-3}\sqrt{T_c/M}/V_c^{2/3}$ for $V_c$ in cm³/mol.
+The collision integral uses $T^*=1.2593T_r$. Coefficients follow the original Chung table
+reproduced in [Bouraba et al. (2017), Table A.2](https://doi.org/10.1016/j.ijrefrig.2017.05.008),
+including the negative association coefficient in $B_6$ and the original $B_7$ row.
+They differ from some reproductions of the fifth-edition table. This choice is explicit;
+it is not a claim that every later handbook coefficient table has been independently inspected.
+
+Zero density uses the analytic limit; `expm1` prevents cancellation at very low density.
+Nonfinite inputs, nonpositive required constants, unnormalized compositions, negative density,
+$y\geq1$, and $T^*$ outside 0.3–100 are rejected. There is **no critical enhancement**;
+these bounds are mathematical/domain guards, not a guarantee of accuracy for every fluid
+within them. Use a qualified reference-fluid model for near-critical design calculations.
+
+This corrects the earlier amount-dependent heat capacity, reduced temperature, mixture rules,
+transport-association input, mixed CGS/SI conversion and missing $B_7$ dense term.
+Only explicitly selected `Chung-dense` calculations change. PFCT defaults are unchanged.
+Frozen equation checks, amount invariance and lifecycle regressions are described in the
+[method audit](method_alignment_audit).
+
 **Class:** `ChungDenseConductivityMethod`
 
 **Applicable phases:** Gas and liquid
@@ -193,6 +224,66 @@ fluid.getPhase("gas").initPhysicalProperties();
 
 ---
 
+## Filippov Liquid Mixing and Pressure Factor
+
+The `Filippov` key combines database liquid polynomials using mass fractions. It is also
+the built-in aqueous conductivity model in the explicitly selected `GLYCOL`, `AMINE` and
+`CO2WATER` model sets:
+
+$$k_0=\sum_i w_i k_i-0.72\sum_{i<j}w_iw_j|k_i-k_j|$$
+
+Its enabled-by-default pressure option now evaluates the complete Missenard-derived
+Danner/Daubert expression published in the
+[AFT CHEMPAK manual, section 8.6.5](https://docs.aft.com/fathom/ChempakTechnicalInformationDetailedDiscussion.html):
+
+$$F=0.98+0.0079P_rT_r^{1.4}+0.63T_r^{1.2}\frac{P_r}{30+P_r}$$
+
+Here $T_r=T/\sum_i x_iT_{c,i}$ and $P_r=P/\sum_i x_iP_{c,i}$; T is K,
+and P and Pc use the same pressure unit (internally bara). The output is $k=k_0\max(1,F)$
+in W/(m K). The previously implemented square-root factor omitted the rational term.
+
+The unity floor and bypass at $T_r\geq0.95$ or $P_r<0.01$ are retained implementation
+choices, not accuracy bounds supplied by CHEMPAK. Pseudo-critical data below 1e-10
+(K or bara) bypasses the correction; this does not qualify the uncorrected polynomials.
+Nonfinite pseudo-critical data returns NaN; nonfinite state values can also yield NaN.
+The cutoff at 0.95 is discontinuous.
+No saturation pressure is calculated or subtracted.
+
+This qualifies implementation of that analytic derived expression, not the original
+Missenard tabulated-Q variant or sixth-edition conformance. The mixture pseudo-critical
+extension and database polynomial fits need independent physical validation. Do not infer
+an uncertainty or a design validity envelope from the numerical tests. Default PFCT
+selection is unchanged. The specialized sets above receive this correction automatically
+for their aqueous phases; their physical accuracy is not established by the route tests.
+For positive Tr below 0.95 and Pr at most 0.5, the full factor is below 0.994, so the unity
+floor can return one without evaluating a fractional power. Higher-pressure calculations
+use one fifth root to supply both temperature powers.
+
+The following example, including the disable switch, executes in
+`FilippovConductivityMethodTest.guideExampleAndPressureUnits`:
+
+```java
+SystemInterface fluid = new SystemSrkEos(350, 100);
+fluid.addComponent("n-hexane", 1);
+fluid.setMixingRule("classic");
+new ThermodynamicOperations(fluid).TPflash();
+fluid.initProperties();
+fluid.getPhase(0).getPhysicalProperties().setConductivityModel("Filippov");
+fluid.getPhase(0).initPhysicalProperties();
+double corrected = fluid.getPhase(0).getThermalConductivity("W/mK");
+FilippovConductivityMethod model = (FilippovConductivityMethod)
+    fluid.getPhase(0).getPhysicalProperties().getConductivityModel();
+model.setUsePressureCorrection(false);
+fluid.getPhase(0).initPhysicalProperties();
+double uncorrected = fluid.getPhase(0).getThermalConductivity("W/mK");
+```
+
+Use the existing Java phase/property interfaces (or the same objects through the Python
+bridge). No detached conductivity implementation or new invocation protocol is introduced.
+See the [method audit](method_alignment_audit) for frozen equation values and exclusions.
+
+---
+
 ## Model Selection Guide
 
 | Application | Recommended Model | Notes |
@@ -205,7 +296,7 @@ fluid.getPhase("gas").initPhysicalProperties();
 | Wide P-T range | PFCT | Robust extrapolation |
 | Polar systems | Chung | Includes polar corrections |
 
-Additional implemented keys are `friction theory`, `Filippov`, `WaterModel`, and `H2Model`.
+Additional implemented keys are `friction theory`, `WaterModel`, and `H2Model`.
 They are specialized models and should be selected only with a composition and phase appropriate
 to the underlying correlation.
 
@@ -215,28 +306,34 @@ to the underlying correlation.
 
 ### Basic Conductivity Calculation
 
+This complete Java 8 program is compiled and executed directly from this page by the
+documentation regression suite.
+
+<!-- thermal-conductivity-example: basic -->
+
 ```java
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create and flash fluid
-SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.setMixingRule("classic");
+public class ThermalConductivityQuickStart {
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
 
-// Initialize physical properties
-fluid.initPhysicalProperties();
-
-// Get thermal conductivity
-double gasConductivity = fluid.getPhase("gas").getThermalConductivity("W/mK");
-if (!(gasConductivity > 0.0)) {
-    throw new IllegalStateException("Expected positive gas thermal conductivity");
+    double gasConductivityWPerMeterK =
+        fluid.getPhase("gas").getThermalConductivity("W/mK");
+    if (!Double.isFinite(gasConductivityWPerMeterK)
+        || gasConductivityWPerMeterK <= 0.0) {
+      throw new IllegalStateException("Expected finite positive gas thermal conductivity");
+    }
+  }
 }
 ```
 

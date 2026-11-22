@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
+import neqsim.thermo.component.ComponentUMRCPA;
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
@@ -29,10 +30,13 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   int[][] assosSchemeType = null; // 0- ER - 1 - CR1
   double[][] cpaBetaCross = null;
   double[][] cpaEpsCross = null;
-  final int[] charge4C = { 1, 1, -1, -1 };
-  final int[] charge1A = { -1 };
-  final int[] charge2A = { -1, -1 };
-  final int[] charge2B = { 1, -1 };
+  final int[] charge4C = {1, 1, -1, -1};
+  final int[] charge1A = {-1};
+  final int[] charge2A = {-1, -1};
+  final int[] charge2B = {1, -1};
+  // P/N are association-site selector signs, not electrical charges.
+  final int[] charge4P = {1, 1, 1, 1};
+  final int[] charge4N = {-1, -1, -1, -1};
 
   /**
    * Constructor for CPAMixingRules.
@@ -79,6 +83,33 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
       return new PCSAFTa_Radoch();
     }
     throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMixingRule", "mr"));
+  }
+
+  /**
+   * Sets explicit cross-association energy and volume between two components. Non-zero values switch the pair to the
+   * explicit-parameter branch (scheme type 1); zero for both restores the default Elliott combining rule
+   * sqrt(Delta_ii * Delta_jj). The arrays are rebuilt each time the mixing rule is set, so call this after
+   * {@code setMixingRule}.
+   *
+   * @param compnumb1 first component index
+   * @param compnumb2 second component index
+   * @param energy cross-association energy in J/mol (0 restores the combining rule)
+   * @param volume cross-association volume, dimensionless (0 restores the combining rule)
+   * @throws IllegalStateException if the CPA mixing rule has not been set
+   */
+  public void setCrossAssociationParameters(int compnumb1, int compnumb2, double energy, double volume) {
+    if (cpaEpsCross == null || cpaBetaCross == null) {
+      throw new IllegalStateException("Set the CPA mixing rule before setting cross-association parameters");
+    }
+    cpaEpsCross[compnumb1][compnumb2] = energy;
+    cpaEpsCross[compnumb2][compnumb1] = energy;
+    cpaBetaCross[compnumb1][compnumb2] = volume;
+    cpaBetaCross[compnumb2][compnumb1] = volume;
+    // Scheme type 0 uses the Elliott rule sqrt(Delta_ii * Delta_jj), which ignores explicit cross parameters and is
+    // zero when one component does not self-associate. Type 1 uses the explicit (or CR-1) cross parameters.
+    int type = (Math.abs(energy) > 1e-10 || Math.abs(volume) > 1e-10) ? 1 : 0;
+    assosSchemeType[compnumb1][compnumb2] = type;
+    assosSchemeType[compnumb2][compnumb1] = type;
   }
 
   /**
@@ -164,10 +195,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
 
     double eps = 12000.76;
     double beta = 0.03;
-    protected double[][] epsab = { { 0, eps, eps, eps }, { eps, 0, eps, eps }, { eps, eps, 0, eps },
-        { eps, eps, eps, 0 } };
-    protected double[][] betamat = { { 0, beta, beta, beta }, { beta, 0, beta, beta }, { beta, beta, 0, beta },
-        { beta, beta, beta, 0 } };
+    protected double[][] epsab = {{0, eps, eps, eps}, {eps, 0, eps, eps}, {eps, eps, 0, eps}, {eps, eps, eps, 0}};
+    protected double[][] betamat = {{0, beta, beta, beta}, {beta, 0, beta, beta}, {beta, beta, 0, beta},
+        {beta, beta, beta, 0}};
 
     public double calcXi(int siteNumber, int compnumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
@@ -368,9 +398,11 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double logarithmicDerivative = phase.getComponent(derivativeComp) instanceof ComponentUMRCPA
+          ? ((ComponentUMRCPA) phase.getComponent(derivativeComp)).calc_lngi(phase)
+          : ((ComponentSrkCPA) phase.getComponent(derivativeComp)).calc_lngi(phase);
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1, siteNumber2)
-          * calcDelta(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
-          * ((ComponentSrkCPA) phase.getComponent(derivativeComp)).calc_lngi(phase);
+          * calcDelta(compnumb1, compnumb2, phase, temperature, pressure, numbcomp) * logarithmicDerivative;
     }
 
     /** {@inheritDoc} */
@@ -415,10 +447,11 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
       }
       double derivative = -getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
           / (R * phase.getTemperature() * phase.getTemperature());
+      // d(exp(epsilon/RT) - 1)/dT contains exp(epsilon/RT), not exp(epsilon/RT) - 1.
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1, siteNumber2)
           * derivative
           * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
-              / (R * phase.getTemperature())) - 1.0)
+              / (R * phase.getTemperature())))
           * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
               + ((ComponentEosInterface) phase.getComponent(compnumb2)).getb())
           / 2.0 * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
@@ -651,7 +684,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * setAssociationScheme.
+   * Build the self-association matrix. In the 1A and 2A schemes, equivalent sites on different molecules can associate;
+   * donor/acceptor charge filtering would incorrectly suppress every bond. Cross-solvation between different components
+   * retains the existing donor/acceptor selection in setCrossAssociationScheme.
    *
    * @param compnumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -660,12 +695,16 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   public int[][] setAssociationScheme(int compnumb, PhaseInterface phase) {
     if (phase.getComponent(compnumb).getAssociationScheme().equals("4C")) {
       return getInteractionMatrix(charge4C, charge4C);
+    } else if (phase.getComponent(compnumb).getAssociationScheme().equals("4P")) {
+      return getInteractionMatrix(charge4P, charge4P);
+    } else if (phase.getComponent(compnumb).getAssociationScheme().equals("4N")) {
+      return getInteractionMatrix(charge4N, charge4N);
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("2B")) {
       return getInteractionMatrix(charge2B, charge2B);
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("1A")) {
-      return getInteractionMatrix(charge1A, charge1A);
+      return new int[][] {{1}};
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("2A")) {
-      return getInteractionMatrix(charge2A, charge2A);
+      return new int[][] {{1, 1}, {1, 1}};
     } else {
       return new int[0][0];
     }
@@ -680,12 +719,21 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * @return an array of int objects
    */
   public int[][] setCrossAssociationScheme(int compnumb, int compnumb2, PhaseInterface phase) {
+    if (compnumb == compnumb2) {
+      return setAssociationScheme(compnumb, phase);
+    }
     int[] comp1Scheme = new int[0];
     int[] comp2Scheme = new int[0];
     if (phase.getComponent(compnumb).getOrginalNumberOfAssociationSites()
         * phase.getComponent(compnumb2).getOrginalNumberOfAssociationSites() > 0) {
       if (phase.getComponent(compnumb).getAssociationScheme().equals("4C")) {
         comp1Scheme = charge4C;
+      }
+      if (phase.getComponent(compnumb).getAssociationScheme().equals("4P")) {
+        comp1Scheme = charge4P;
+      }
+      if (phase.getComponent(compnumb).getAssociationScheme().equals("4N")) {
+        comp1Scheme = charge4N;
       }
       if (phase.getComponent(compnumb).getAssociationScheme().equals("2A")) {
         comp1Scheme = charge2A;
@@ -699,6 +747,12 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
 
       if (phase.getComponent(compnumb2).getAssociationScheme().equals("4C")) {
         comp2Scheme = charge4C;
+      }
+      if (phase.getComponent(compnumb2).getAssociationScheme().equals("4P")) {
+        comp2Scheme = charge4P;
+      }
+      if (phase.getComponent(compnumb2).getAssociationScheme().equals("4N")) {
+        comp2Scheme = charge4N;
       }
       if (phase.getComponent(compnumb2).getAssociationScheme().equals("2A")) {
         comp2Scheme = charge2A;

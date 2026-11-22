@@ -1,0 +1,33 @@
+{
+  "baseline": {
+    "getGamma_compilation_lines": [
+      "2242 2336       2       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4510 bytes)",
+      "2331 2442 %     3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2256 (4510 bytes)",
+      "2379 2473       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4510 bytes)",
+      "2395 2336       2       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4510 bytes)   made not entrant",
+      "2463 2553       4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4510 bytes)",
+      "3373 2473       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4510 bytes)   made not entrant",
+      "7681 2336       2       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4510 bytes)   made zombie",
+      "7755 2473       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4510 bytes)   made zombie"
+    ],
+    "compiler_skip_lines": []
+  },
+  "candidate": {
+    "getGamma_compilation_lines": [
+      "2896 2396       2       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4573 bytes)",
+      "2977 2469 %     3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2281 (4573 bytes)",
+      "3012 2498       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4573 bytes)",
+      "3028 2396       2       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4573 bytes)   made not entrant",
+      "3115 2578 %     4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2281 (4573 bytes)",
+      "3449 2469 %     3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2281 (4573 bytes)   made not entrant",
+      "3463 2785       4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4573 bytes)",
+      "4147 2498       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4573 bytes)   made not entrant",
+      "10945 2396       2       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4573 bytes)   made zombie",
+      "10945 2469 %     3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2281 (4573 bytes)   made zombie",
+      "10980 2498       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4573 bytes)   made zombie"
+    ],
+    "compiler_skip_lines": [
+      "2481 1828   !   4       org.h2.schema.FunctionAlias$JavaMethod::resultSetToResult (406 bytes)   COMPILE SKIPPED: concurrent class loading"
+    ]
+  }
+}

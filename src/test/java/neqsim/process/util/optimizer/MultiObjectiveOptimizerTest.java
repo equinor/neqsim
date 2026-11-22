@@ -99,9 +99,9 @@ public class MultiObjectiveOptimizerTest {
         .maxIterations(20).defaultUtilizationLimit(0.95).searchMode(SearchMode.BINARY_FEASIBILITY);
 
     // Run multi-objective optimization with progress tracking
-    final int[] successCount = { 0 };
-    final int[] failCount = { 0 };
-    final int[] feasibleCount = { 0 };
+    final int[] successCount = {0};
+    final int[] failCount = {0};
+    final int[] feasibleCount = {0};
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer().includeInfeasible(true) // Include
         // all
         // solutions
@@ -204,7 +204,7 @@ public class MultiObjectiveOptimizerTest {
         .defaultUtilizationLimit(0.95).maxIterations(20);
 
     // Run sampling-based Pareto generation
-    final int[] sampleCount = { 0 };
+    final int[] sampleCount = {0};
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer().includeInfeasible(true) // Include
         // all for
         // analysis
@@ -390,7 +390,7 @@ public class MultiObjectiveOptimizerTest {
         .maxIterations(10);
 
     // Track progress
-    final int[] progressCalls = { 0 };
+    final int[] progressCalls = {0};
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer().onProgress((iteration, total, solution) -> {
       progressCalls[0]++;
       logger.printf(org.apache.logging.log4j.Level.INFO, "Progress: %d/%d - %s%n", iteration, total,
@@ -406,18 +406,18 @@ public class MultiObjectiveOptimizerTest {
   @Test
   public void testDominanceRelation() {
     // Create test solutions
-    double[] values1 = { 100.0, 50.0 }; // Higher throughput, higher power
-    double[] values2 = { 80.0, 40.0 }; // Lower throughput, lower power
-    double[] values3 = { 70.0, 60.0 }; // Lower throughput, higher power (dominated)
+    double[] values1 = {100.0, 50.0}; // Higher throughput, higher power
+    double[] values2 = {80.0, 40.0}; // Lower throughput, lower power
+    double[] values3 = {70.0, 60.0}; // Lower throughput, higher power (dominated)
 
-    String[] names = { "Throughput", "Power" };
-    String[] units = { "kg/hr", "kW" };
+    String[] names = {"Throughput", "Power"};
+    String[] units = {"kg/hr", "kW"};
 
     // For normalized: throughput should maximize (keep positive)
     // Power should minimize (negate for normalized)
-    double[] norm1 = { 100.0, -50.0 };
-    double[] norm2 = { 80.0, -40.0 };
-    double[] norm3 = { 70.0, -60.0 };
+    double[] norm1 = {100.0, -50.0};
+    double[] norm2 = {80.0, -40.0};
+    double[] norm3 = {70.0, -60.0};
 
     ParetoSolution sol1 = new ParetoSolution(norm1, values1, names, units, Collections.emptyMap(), true);
     ParetoSolution sol2 = new ParetoSolution(norm2, values2, names, units, Collections.emptyMap(), true);
@@ -588,7 +588,7 @@ public class MultiObjectiveOptimizerTest {
         "Production Manifold");
     manifold.addStream(inlet1);
     manifold.addStream(inlet2);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 }); // Split to 2 outlets
+    manifold.setSplitFactors(new double[] {0.5, 0.5}); // Split to 2 outlets
     process.add(manifold);
 
     process.run();

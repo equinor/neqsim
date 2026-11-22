@@ -20,6 +20,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.OilAssayCharacterisation;
+import neqsim.thermo.characterization.TbpClosure;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -125,22 +126,22 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** Fraction of moles_in_phase / moles_in_system. Cached. */
   protected double[] beta = new double[MAX_PHASES];
-  protected String[] CapeOpenProperties10 = { "molecularWeight", "speedOfSound", "jouleThomsonCoefficient", "energy",
+  protected String[] CapeOpenProperties10 = {"molecularWeight", "speedOfSound", "jouleThomsonCoefficient", "energy",
       "energy.Dtemperature", "gibbsFreeEnergy", "helmholtzFreeEnergy", "fugacityCoefficient", "logFugacityCoefficient",
       "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure", "logFugacityCoefficient.Dmoles",
       "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature", "enthalpy.Dpressure", "entropy", "entropy.Dtemperature",
       "entropy.Dpressure", "entropy.Dmoles", "heatCapacity", "heatCapacityCv", "density", "density.Dtemperature",
       "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure", "volume.Dtemperature",
-      "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles", "compressibilityFactor" };
+      "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles", "compressibilityFactor"};
   // protected ArrayList<String> resultArray1 = new ArrayList<String>();
-  protected String[] CapeOpenProperties11 = { "molecularWeight", "speedOfSound", "jouleThomsonCoefficient",
+  protected String[] CapeOpenProperties11 = {"molecularWeight", "speedOfSound", "jouleThomsonCoefficient",
       "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
       "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
       "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature", "enthalpy.Dpressure",
       "entropy", "entropy.Dtemperature", "entropy.Dpressure", "entropy.Dmoles", "heatCapacityCp", "heatCapacityCv",
       "density", "density.Dtemperature", "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure",
       "volume.Dtemperature", "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles",
-      "compressibilityFactor" };
+      "compressibilityFactor"};
 
   public neqsim.thermo.characterization.Characterise characterization = null;
   protected boolean checkStability = true;
@@ -210,6 +211,8 @@ public abstract class SystemThermo implements SystemInterface {
   protected boolean solidPhaseCheck = false;
   protected neqsim.standards.StandardInterface standard = null;
   private double totalNumberOfMoles = 0;
+  /** Opt-in formation-enthalpy reference, preserved by cloning and Java serialization. */
+  private boolean useIdealGasEnthalpyOfFormation;
   private boolean useTVasIndependentVariables = false;
   protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;
   protected transient OilAssayCharacterisation oilAssayCharacterisation = null;
@@ -295,8 +298,8 @@ public abstract class SystemThermo implements SystemInterface {
         getPhase(i).getComponent(componentName).setIsTBPfraction(true);
         getPhase(i).getComponent(componentName).setParachorParameter(inComponent.getParachorParameter());
         getPhase(i).getComponent(componentName).setTriplePointTemperature(inComponent.getTriplePointTemperature());
-        getPhase(i).getComponent(componentName)
-            .setIdealGasEnthalpyOfFormation(inComponent.getIdealGasEnthalpyOfFormation());
+        getPhase(i).getComponent(componentName).setIdealGasEnthalpyOfFormation(
+            inComponent.getIdealGasEnthalpyOfFormation(), inComponent.getFormationEnthalpySource());
         getPhase(i).getComponent(componentName).setCpA(inComponent.getCpA());
         getPhase(i).getComponent(componentName).setCpB(inComponent.getCpB());
         getPhase(i).getComponent(componentName).setCpC(inComponent.getCpC());
@@ -372,10 +375,12 @@ public abstract class SystemThermo implements SystemInterface {
         String msg = "is negative input for component: " + componentName;
         throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg));
       }
+      validateNewFormationEnthalpyComponent(componentName);
       // System.out.println("adding " + componentName);
       componentNames.add(componentName);
       for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         getPhase(i).addComponent(componentName, moles, moles, numberOfComponents);
+        getPhase(i).getComponent(numberOfComponents).setUseIdealGasEnthalpyOfFormation(useIdealGasEnthalpyOfFormation);
         getPhase(i).setAttractiveTerm(attractiveTermNumber);
       }
       numberOfComponents++;
@@ -406,9 +411,13 @@ public abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     String comNam = componentName;
-    if (getPhase(0).hasComponent(componentName)) {
+    if (getPhase(0).hasComponent(componentName) || neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+      // Database components (also via aliases such as C1, iC4) keep their database Cp coefficients.
       addComponent(componentName, moles);
     } else {
+      logger.warn(
+          "Component {} is not in the database: ideal-gas Cp is a generic placeholder. Use addTBPfraction or set CpA..CpE.",
+          componentName);
       addComponent("default", moles);
       comNam = "default";
       // componentNames.set(componentNames.indexOf("default"), componentName);
@@ -453,6 +462,7 @@ public abstract class SystemThermo implements SystemInterface {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "addComponent", "moles", msg));
     }
 
+    validateNewFormationEnthalpyComponent(componentName);
     componentNames.add(componentName);
     double k = 1.0;
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
@@ -464,6 +474,7 @@ public abstract class SystemThermo implements SystemInterface {
         k = 1.0e-30;
       }
       getPhase(i).addComponent(componentName, moles, moles * k, numberOfComponents);
+      getPhase(i).getComponent(numberOfComponents).setUseIdealGasEnthalpyOfFormation(useIdealGasEnthalpyOfFormation);
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
     }
     numberOfComponents++;
@@ -532,6 +543,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface addFluid(SystemInterface addSystem) {
+    if (isUsingIdealGasEnthalpyOfFormation() != addSystem.isUsingIdealGasEnthalpyOfFormation()) {
+      throw new IllegalArgumentException("Cannot combine fluids using different enthalpy references");
+    }
     boolean addedNewComponent = false;
     int index = -1;
     for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -614,7 +628,7 @@ public abstract class SystemThermo implements SystemInterface {
       ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
     }
 
-    phaseArray[4] = new PhaseHydrate(getModelName());
+    phaseArray[4] = new PhaseHydrate(this);
     phaseArray[4].setTemperature(phaseArray[0].getTemperature());
     phaseArray[4].setPressure(phaseArray[0].getPressure());
     phaseArray[4].setType(PhaseType.HYDRATE);
@@ -814,12 +828,20 @@ public abstract class SystemThermo implements SystemInterface {
     init_x_y();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Fraction properties are assigned to every configured phase, including currently inactive phase candidates that may
+   * be activated by a later flash.
+   * </p>
+   */
   @Override
   public void addPlusFraction(String componentName, double numberOfMoles, double molarMass, double density) {
     addTBPfraction(componentName, numberOfMoles, molarMass, density);
     componentName = (componentName + "_" + "PC"); // getFluidName());
-    for (int i = 0; i < numberOfPhases; i++) {
+    // A later flash may activate an oil or other configured role that is currently inactive.
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       // System.out.println("comp " + componentName);
       getPhase(i).getComponent(componentName).setIsPlusFraction(true);
       getPhase(i).getComponent(componentName)
@@ -876,6 +898,13 @@ public abstract class SystemThermo implements SystemInterface {
         phaseArray[5].getComponent(i).setIsPlusFraction(true);
       } else {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
+        // A named component reads database fusion data; keep any wax-model properties already assigned to
+        // the fluid phases (for example by getWaxModel().addTBPWax()) so the call order does not matter.
+        ComponentInterface fluidComponent = getPhase(0).getComponent(i);
+        ComponentInterface solidComponent = phaseArray[5].getComponent(i);
+        solidComponent.setWaxFormer(fluidComponent.isWaxFormer());
+        solidComponent.setTriplePointTemperature(fluidComponent.getTriplePointTemperature());
+        solidComponent.setHeatOfFusion(fluidComponent.getHeatOfFusion());
       }
     }
     ((PhaseSolid) phaseArray[5]).setSolidRefFluidPhase(phaseArray[0]);
@@ -883,11 +912,16 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * addSolidPhase.
+   * Allocate pure-solid phase storage without changing the fluid multiphase-check setting.
    */
   public void addSolidPhase() {
-    if (!multiPhaseCheck) {
-      setMultiPhaseCheck(true);
+    // Keep the fluid storage slot available before the solid slot, independently of
+    // whether the caller has requested a search for additional liquid phases.
+    if (phaseArray[2] == null && phaseArray[1] != null) {
+      phaseArray[2] = phaseArray[1].clone();
+      phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleType());
+      phaseArray[2].resetPhysicalProperties();
+      phaseArray[2].initPhysicalProperties();
     }
     phaseArray[3] = new PhasePureComponentSolid();
     phaseArray[3].setTemperature(phaseArray[0].getTemperature());
@@ -905,11 +939,19 @@ public abstract class SystemThermo implements SystemInterface {
     ((PhaseSolid) phaseArray[3]).setSolidRefFluidPhase(phaseArray[0]);
 
     if (getMaxNumberOfPhases() < 4) {
-      setMaxNumberOfPhases(4);
+      // The phase slots are managed here, so the limit is set without allocating phase templates.
+      setPhaseLimit(4);
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Fraction properties are assigned to every configured phase, including currently inactive phase candidates that may
+   * be activated by a later flash.
+   * </p>
+   */
   @Override
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density) {
     if (density < 0.0) {
@@ -1029,7 +1071,7 @@ public abstract class SystemThermo implements SystemInterface {
     double cpc = (-1.6658e-7 + CF * (0.536 - 0.6828 * acsKeslerLee) * 1.0e-7) * 4.18682 * molarMass * 1.8 * 1.8 * 1.0e3;
     double cpd = 0.0;
 
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
       getPhase(i).getComponent(componentName).setMolarMass(molarMass);
       getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
@@ -1053,7 +1095,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName)
           .setHeatOfFusion(0.1426 / 0.238845 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
               * getPhase(i).getComponent(componentName).getTriplePointTemperature());
-      getPhase(i).getComponent(componentName).setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0);
+      getPhase(i).getComponent(componentName).setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0, "");
       // getPhase(i).getComponent(componentName).set
 
       // System.out.println(" plusTC " + TC + " plusPC " + PC + " plusm " + m + "
@@ -1073,7 +1115,7 @@ public abstract class SystemThermo implements SystemInterface {
       double pcAtm = PC / 1.01325;
       double ljSigma = (2.3551 - 0.087 * acs) * Math.pow(TC / pcAtm, 1.0 / 3.0);
       double ljEpsOverK = TC * (0.7915 + 0.1693 * acs * acs);
-      for (int i = 0; i < numberOfPhases; i++) {
+      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         getPhase(i).getComponent(componentName).setLennardJonesMolecularDiameter(ljSigma);
         getPhase(i).getComponent(componentName).setLennardJonesEnergyParameter(ljEpsOverK);
       }
@@ -1082,13 +1124,20 @@ public abstract class SystemThermo implements SystemInterface {
     // (0.076) from the temp DB insert. Hydrocarbons are non-polar (dipole ~ 0)
     // and have no association correction. These affect Chung and FrictionTheory
     // viscosity models through the Fc correction factor.
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).getComponent(componentName).setDebyeDipoleMoment(0.0);
       getPhase(i).getComponent(componentName).setViscosityAssociationFactor(0.0);
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Fraction properties are assigned to every configured phase, including currently inactive phase candidates that may
+   * be activated by a later flash.
+   * </p>
+   */
   @Override
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density,
       double criticalTemperature, double criticalPressure, double acentricFactor) {
@@ -1112,7 +1161,6 @@ public abstract class SystemThermo implements SystemInterface {
     SystemInterface refSystem = null;
     double TC = 0.0;
     double PC = 0.0;
-    double m = 0.0;
     double TB = 0.0;
     double acs = 0.0;
     // double penelouxC = 0.0;
@@ -1132,7 +1180,6 @@ public abstract class SystemThermo implements SystemInterface {
       TC = criticalTemperature;
       // characterization.getTBPModel().calcPC(molarMass, density);
       PC = criticalPressure;
-      m = characterization.getTBPModel().calcm(molarMass, density);
       // acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass,
       // density);
       acs = acentricFactor;
@@ -1147,10 +1194,9 @@ public abstract class SystemThermo implements SystemInterface {
         refSystem.getPhase(i).getComponent(0).setPC(PC);
         refSystem.getPhase(i).getComponent(0).setComponentType("TBPfraction");
         refSystem.getPhase(i).getComponent(0).setIsTBPfraction(true);
-        if (characterization.getTBPModel().isCalcm()) {
-          refSystem.getPhase(i).getComponent(0).getAttractiveTerm().setm(m);
-          acs = refSystem.getPhase(i).getComponent(0).getAcentricFactor();
-        }
+        // The caller supplied the acentric factor explicitly, so the calcm
+        // correlation must not override it; the attractive term derives m from
+        // the supplied value instead.
       }
 
       refSystem.setTemperature(273.15 + 15.0);
@@ -1181,8 +1227,15 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error(ex.getMessage(), ex);
     }
 
-    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
-    // acs)*ThermodynamicConstantsInterface.R*TC/PC*10.0;
+    // Derive dependent properties from the supplied critical data, without re-entering
+    // a potentially unsupported or inconsistent TBP critical-property correlation.
+    double criticalZ = 0.2918 - 0.0928 * acs;
+    if (criticalZ < 0.0) {
+      criticalZ = 0.2918 - 0.0928;
+    }
+    double critVol = criticalZ * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
+    double criticalViscosity = 7.94830 * Math.sqrt(molarMass * 1000.0) * Math.pow(PC, 2.0 / 3.0)
+        / Math.pow(TC, 1.0 / 6.0) * 1e-7;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
@@ -1197,7 +1250,7 @@ public abstract class SystemThermo implements SystemInterface {
     double cpc = (-1.6658e-7 + CF * (0.536 - 0.6828 * acsKeslerLee) * 1.0e-7) * 4.18682 * molarMass * 1.8 * 1.8 * 1.0e3;
     double cpd = 0.0;
 
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
       getPhase(i).getComponent(componentName).setMolarMass(molarMass);
       getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
@@ -1211,17 +1264,14 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setIsTBPfraction(true);
       getPhase(i).getComponent(componentName)
           .setParachorParameter(characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
-      // //0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
-      getPhase(i).getComponent(componentName)
-          .setCriticalViscosity(characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
-      // 1.0/6.0)*1e-7);
+      getPhase(i).getComponent(componentName).setCriticalViscosity(criticalViscosity);
       getPhase(i).getComponent(componentName)
           .setTriplePointTemperature(374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
               - 20172.0 / (getPhase(i).getComponent(componentName).getMolarMass() * 1000.0));
       getPhase(i).getComponent(componentName)
           .setHeatOfFusion(0.1426 / 0.238845 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
               * getPhase(i).getComponent(componentName).getTriplePointTemperature());
-      getPhase(i).getComponent(componentName).setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0);
+      getPhase(i).getComponent(componentName).setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0, "");
       // getPhase(i).getComponent(componentName).set
 
       // System.out.println(" plusTC " + TC + " plusPC " + PC + " plusm " + m + "
@@ -1239,12 +1289,12 @@ public abstract class SystemThermo implements SystemInterface {
       double pcAtm = PC / 1.01325;
       double ljSigma = (2.3551 - 0.087 * acs) * Math.pow(TC / pcAtm, 1.0 / 3.0);
       double ljEpsOverK = TC * (0.7915 + 0.1693 * acs * acs);
-      for (int i = 0; i < numberOfPhases; i++) {
+      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         getPhase(i).getComponent(componentName).setLennardJonesMolecularDiameter(ljSigma);
         getPhase(i).getComponent(componentName).setLennardJonesEnergyParameter(ljEpsOverK);
       }
     }
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).getComponent(componentName).setDebyeDipoleMoment(0.0);
       getPhase(i).getComponent(componentName).setViscosityAssociationFactor(0.0);
     }
@@ -1293,7 +1343,8 @@ public abstract class SystemThermo implements SystemInterface {
       this.setMixingRule(4);
     } else if (modelName.equals("Kent Eisenberg-model")) {
       this.setMixingRule(4);
-    } else if (modelName.equals("UMR-PRU-EoS") || modelName.equals("UMR-PRU-MC-EoS") || modelName.equals("UMR-CPA")) {
+    } else if (modelName.equals("UMR-PRU-EoS") || modelName.equals("UMR-PRU-MC-EoS")
+        || modelName.equals(SystemUMRCPAEoS.MODEL_NAME)) {
       this.setMixingRule("HV", "UNIFAC_UMRPRU");
     } else if (modelName.equals("GERG-water-EOS")) {
       this.setMixingRule(8);
@@ -1532,10 +1583,6 @@ public abstract class SystemThermo implements SystemInterface {
     clonedSystem.phaseIndex = phaseIndex.clone();
 
     clonedSystem.componentNames = new ArrayList<String>(componentNames);
-    if (interfaceProp != null) {
-      // clonedSystem.interfaceProp = (InterphasePropertiesInterface)
-      // interfaceProp.clone();
-    }
     clonedSystem.characterization = characterization.clone();
     clonedSystem.characterization.setThermoSystem(clonedSystem);
     if (waxCharacterisation != null) {
@@ -1556,11 +1603,31 @@ public abstract class SystemThermo implements SystemInterface {
       clonedSystem.phaseArray[i] = phaseArray[i].clone();
     }
 
+    if (interfaceProp != null) {
+      if (neqsim.thermo.phase.Phase.isThermoOnlyCloneActive()) {
+        clonedSystem.interfaceProp = new InterfaceProperties(clonedSystem);
+      } else {
+        clonedSystem.interfaceProp = interfaceProp.clone();
+        clonedSystem.interfaceProp.init(clonedSystem);
+      }
+    }
+
     if (chemicalReactionOperations != null) {
       clonedSystem.chemicalReactionInit();
     }
 
     return clonedSystem;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface cloneThermoOnly() {
+    neqsim.thermo.phase.Phase.beginThermoOnlyClone();
+    try {
+      return clone();
+    } finally {
+      neqsim.thermo.phase.Phase.endThermoOnlyClone();
+    }
   }
 
   /** {@inheritDoc} */
@@ -1804,6 +1871,7 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  @Deprecated
   public void addTBPfraction2(String componentName, double numberOfMoles, double molarMass, double boilingPoint) {
     if (boilingPoint <= 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "addTBPfraction2",
@@ -1814,59 +1882,70 @@ public abstract class SystemThermo implements SystemInterface {
           new neqsim.util.exception.InvalidInputException(this, "addTBPfraction2", "molarMass", "must be positive."));
     }
 
-    // Calculate density from boiling point and molar mass using inverse Søreide
-    // correlation
     double density = calculateDensityFromBoilingPoint(molarMass, boilingPoint);
 
-    // Call the existing addTBPfraction method with the calculated density
-    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    // Pin the boiling point so Tb-based TBP models (Lee-Kesler, Twu, Cavett) use the
+    // requested value for Tc/Pc rather than back-correlating it from molar mass.
+    characterization.getTBPModel().setBoilingPoint(boilingPoint);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public double calculateDensityFromBoilingPoint(double molarMass, double boilingPoint) {
-    double TB = boilingPoint;
-
-    double lower = 0.5;
-    double upper = 1.5;
-    double tolerance = 1e-5;
-    int maxIterations = 1000;
-    double density = 0.8;
-    double calculated_density = 0.0;
-    double fmidOLD = 9999.0;
-    double f_mid;
-    double calculated_TB;
-    double lowerOLD = 0.1;
-    double upperOLD = 1.5;
-
-    for (int i = 0; i < maxIterations; i++) {
-      density = 0.5 * (lower + upper);
-      calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
-      f_mid = calculated_TB - TB;
-
-      if (Math.abs(f_mid) < tolerance) {
-        return calculated_density;
-      }
-
-      if (Math.abs(lower - upper) < tolerance) {
-        return calculated_density; // Return the midpoint as density
-      }
-
-      if (f_mid < 0) {
-        lowerOLD = lower;
-        lower = density;
-      } else {
-        upperOLD = upper;
-        upper = density;
-      }
-
-      if ((Math.abs(f_mid) < Math.abs(fmidOLD))) {
-        fmidOLD = f_mid;
-        calculated_density = density;
-      }
+    if (molarMass <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPoint", "molarMass", "must be positive."));
     }
-    return calculated_density;
-    // Return the midpoint as density
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPoint", "boilingPoint", "must be positive."));
+    }
+
+    // Riazi-Daubert (1980) is the only closure that is monotonic in specific gravity and so the
+    // only one this inverse has a unique root for; see TbpClosure. The TBP model's own calcTB
+    // cannot be used either, because for the Pedersen models it carries no density dependence
+    // below 540 g/mol (see PedersenTBPModelSRK.calcTB).
+    double molarMassGmol = molarMass * 1000.0;
+    double density = TbpClosure.RIAZI_DAUBERT_1980.calcDensity(boilingPoint, molarMass, characterization.getTBPModel());
+
+    if (boilingPoint < 300.0 || boilingPoint > 620.0 || molarMassGmol < 70.0 || molarMassGmol > 300.0) {
+      logger.warn("calculateDensityFromBoilingPoint: molar mass {} g/mol and boiling point {} K fall outside the "
+          + "Riazi-Daubert (1980) validated range (70-300 g/mol, 300-620 K). Specific gravity {} is an "
+          + "extrapolation.", molarMassGmol, boilingPoint, density);
+    }
+    if (density < 0.5 || density > 1.3) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "calculateDensityFromBoilingPoint", "boilingPoint",
+              "molar mass " + molarMassGmol + " g/mol combined with boiling point " + boilingPoint
+                  + " K gives a non-physical specific gravity of " + density
+                  + ". Expected 0.5-1.3. Check that the boiling point is in K and the molar mass in kg/mol."));
+    }
+    return density;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateDensityFromBoilingPointAndWatsonK(double boilingPoint, double watsonK) {
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPointAndWatsonK", "boilingPoint", "must be positive."));
+    }
+    if (watsonK <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPointAndWatsonK", "watsonK", "must be positive."));
+    }
+    double density = Math.pow(1.8 * boilingPoint, 1.0 / 3.0) / watsonK;
+    if (density < 0.5 || density > 1.3) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateDensityFromBoilingPointAndWatsonK", "watsonK", "boiling point " + boilingPoint + " K with Watson K "
+              + watsonK + " gives a non-physical specific gravity of " + density + ". Expected 0.5-1.3."));
+    }
+    return density;
   }
 
   /**
@@ -1876,6 +1955,7 @@ public abstract class SystemThermo implements SystemInterface {
    * Add TBP fraction using density and boiling point, calculating molar mass.
    */
   @Override
+  @Deprecated
   public void addTBPfraction3(String componentName, double numberOfMoles, double density, double boilingPoint) {
     if (boilingPoint <= 0.0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "addTBPfraction3",
@@ -1886,7 +1966,12 @@ public abstract class SystemThermo implements SystemInterface {
           new neqsim.util.exception.InvalidInputException(this, "addTBPfraction3", "density", "must be positive."));
     }
     double molarMass = calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
-    addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    characterization.getTBPModel().setBoilingPoint(boilingPoint);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
   }
 
   /**
@@ -1897,43 +1982,45 @@ public abstract class SystemThermo implements SystemInterface {
    */
   @Override
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint) {
-    double TB = boilingPoint;
+    if (density <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateMolarMassFromDensityAndBoilingPoint", "density", "must be positive."));
+    }
+    if (boilingPoint <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateMolarMassFromDensityAndBoilingPoint", "boilingPoint", "must be positive."));
+    }
 
     double lower = 0.01;
     double upper = 0.5;
-    double tolerance = 1e-5;
-    int maxIterations = 1000;
-    double molarMass = 0.8;
-    double calculatedMolarMass = 0.0;
-    double fmidOLD = 9999.0;
-    double f_mid;
-    double calculated_TB;
+    double fLower = characterization.getTBPModel().calcTB(lower * 1000.0, density) - boilingPoint;
+    double fUpper = characterization.getTBPModel().calcTB(upper * 1000.0, density) - boilingPoint;
 
-    for (int i = 0; i < maxIterations; i++) {
+    if (fLower * fUpper > 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
+          "calculateMolarMassFromDensityAndBoilingPoint", "boilingPoint",
+          "boiling point " + boilingPoint + " K is not attainable with TBP model '"
+              + characterization.getTBPModel().getName() + "' at specific gravity " + density + ". Attainable range is "
+              + (fLower + boilingPoint) + " to " + (fUpper + boilingPoint) + " K for molar mass 10-500 g/mol."));
+    }
+
+    double tolerance = 1e-8;
+    double molarMass = 0.5 * (lower + upper);
+    for (int i = 0; i < 200 && (upper - lower) > tolerance; i++) {
       molarMass = 0.5 * (lower + upper);
-      calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
-      f_mid = calculated_TB - TB;
-
-      if (Math.abs(f_mid) < tolerance) {
-        return calculatedMolarMass;
+      double fMid = characterization.getTBPModel().calcTB(molarMass * 1000.0, density) - boilingPoint;
+      if (fMid == 0.0) {
+        return molarMass;
       }
-
-      if (Math.abs(lower - upper) < tolerance) {
-        return calculatedMolarMass; // Return the midpoint as density
-      }
-
-      if (f_mid < 0) {
-        lower = molarMass;
-      } else {
+      if (fLower * fMid < 0.0) {
         upper = molarMass;
-      }
-
-      if ((Math.abs(f_mid) < Math.abs(fmidOLD))) {
-        fmidOLD = f_mid;
-        calculatedMolarMass = molarMass;
+        fUpper = fMid;
+      } else {
+        lower = molarMass;
+        fLower = fMid;
       }
     }
-    return calculatedMolarMass;
+    return 0.5 * (lower + upper);
   }
 
   /**
@@ -1943,19 +2030,246 @@ public abstract class SystemThermo implements SystemInterface {
    * Add TBP fraction using density and boiling point, calculating molar mass.
    */
   @Override
+  @Deprecated
   public void addTBPfraction4(String componentName, double numberOfMoles, double molarMass, double density,
       double boilingPoint) {
     characterization.getTBPModel().setBoilingPoint(boilingPoint);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      // Without this the boiling point stays on the shared TBP model and overrides calcTB for
+      // every fraction added afterwards.
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
+  }
+
+  /**
+   * Watson factor of a pure paraffin. The n-alkanes C5 to C16 in COMP.csv give 12.647 to 13.136, median 12.785.
+   */
+  private static final double PARAFFIN_WATSON_K = 12.8;
+  /**
+   * Watson factor of a pure naphthene. Cyclohexane is the only naphthene in COMP.csv with both a measured boiling point
+   * and a credible density; it gives 10.989.
+   */
+  private static final double NAPHTHENE_WATSON_K = 11.0;
+  /**
+   * Watson factor of a pure aromatic. Benzene, toluene and m-xylene in COMP.csv give 9.706, 10.149 and 10.430, median
+   * 10.149. The o- and p-xylene rows are excluded because their stored density is wrong.
+   */
+  private static final double AROMATIC_WATSON_K = 10.1;
+
+  /** Lower molar mass of the range the characterization correlations were fitted over, g/mol. */
+  private static final double CORRELATION_MOLAR_MASS_LOWER = 70.0;
+  /** Upper molar mass of the range the characterization correlations were fitted over, g/mol. */
+  private static final double CORRELATION_MOLAR_MASS_UPPER = 300.0;
+  /** Lower boiling point of the range the characterization correlations were fitted over, K. */
+  private static final double CORRELATION_BOILING_POINT_LOWER = 300.0;
+  /** Upper boiling point of the range the characterization correlations were fitted over, K. */
+  private static final double CORRELATION_BOILING_POINT_UPPER = 620.0;
+
+  /**
+   * Reject a non-positive argument before it reaches a correlation.
+   *
+   * @param methodName name of the calling method, used in the exception message
+   * @param inputName name of the offending argument
+   * @param value the supplied value
+   */
+  private void requirePositive(String methodName, String inputName, double value) {
+    if (value <= 0.0) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, methodName, inputName, "must be positive."));
+    }
+  }
+
+  /**
+   * Reject a specific gravity no petroleum fraction can have.
+   *
+   * <p>
+   * A value outside this range almost always means an argument was supplied in the wrong unit, so the message says so
+   * rather than letting a nonsensical fraction into the fluid.
+   * </p>
+   *
+   * @param methodName name of the calling method, used in the exception message
+   * @param density specific gravity to check
+   */
+  private void requirePhysicalSpecificGravity(String methodName, double density) {
+    if (density < 0.5 || density > 1.3) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, methodName, "density",
+          "of " + density + " is outside the physical range 0.5 to 1.3 for a petroleum fraction. "
+              + "Check that the boiling point is in K and the molar mass in kg/mol."));
+    }
+  }
+
+  /**
+   * Warn when a fraction sits outside the range the characterization correlations were fitted over.
+   *
+   * @param methodName name of the calling method, used in the log message
+   * @param molarMass molar mass in kg/mol
+   * @param boilingPoint normal boiling point in K
+   */
+  private void warnIfOutsideCorrelationRange(String methodName, double molarMass, double boilingPoint) {
+    double molarMassGmol = molarMass * 1000.0;
+    if (molarMassGmol < CORRELATION_MOLAR_MASS_LOWER || molarMassGmol > CORRELATION_MOLAR_MASS_UPPER
+        || boilingPoint < CORRELATION_BOILING_POINT_LOWER || boilingPoint > CORRELATION_BOILING_POINT_UPPER) {
+      logger.warn(
+          "{}: molar mass {} g/mol and boiling point {} K fall outside the range the characterization "
+              + "correlations were fitted over ({}-{} g/mol, {}-{} K). The result is an extrapolation.",
+          methodName, molarMassGmol, boilingPoint, CORRELATION_MOLAR_MASS_LOWER, CORRELATION_MOLAR_MASS_UPPER,
+          CORRELATION_BOILING_POINT_LOWER, CORRELATION_BOILING_POINT_UPPER);
+    }
+  }
+
+  /**
+   * Add a fraction while the supplied boiling point overrides the TBP model correlation.
+   *
+   * <p>
+   * The pin has to be cleared in a finally block: it lives on the characterization's shared TBP model instance, so
+   * leaving it set would silently apply the same boiling point to every fraction added afterwards.
+   * </p>
+   *
+   * @param componentName name of the fraction
+   * @param numberOfMoles number of moles to be added
+   * @param molarMass molar mass in kg/mol
+   * @param density specific gravity (relative density, g/cm3)
+   * @param boilingPoint normal boiling point in K
+   */
+  private void addFractionWithPinnedBoilingPoint(String componentName, double numberOfMoles, double molarMass,
+      double density, double boilingPoint) {
+    characterization.getTBPModel().setBoilingPoint(boilingPoint);
+    try {
+      addTBPfraction(componentName, numberOfMoles, molarMass, density);
+    } finally {
+      characterization.getTBPModel().setBoilingPoint(0.0);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Sg(String componentName, double numberOfMoles, double molarMass, double density) {
     addTBPfraction(componentName, numberOfMoles, molarMass, density);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void deleteFluidPhase(int phaseNum) {
-    for (int i = phaseNum; i < numberOfPhases; i++) {
-      phaseIndex[i] = phaseIndex[i + 1];
+  public void addTBPfraction_Mw_Tb(String componentName, double numberOfMoles, double molarMass, double boilingPoint) {
+    addTBPfraction_Mw_Tb(componentName, numberOfMoles, molarMass, boilingPoint, TbpClosure.RIAZI_DAUBERT_1980);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Tb(String componentName, double numberOfMoles, double molarMass, double boilingPoint,
+      TbpClosure closure) {
+    requirePositive("addTBPfraction_Mw_Tb", "molarMass", molarMass);
+    requirePositive("addTBPfraction_Mw_Tb", "boilingPoint", boilingPoint);
+    double density = closure.calcDensity(boilingPoint, molarMass, characterization.getTBPModel());
+    warnIfOutsideCorrelationRange("addTBPfraction_Mw_Tb", molarMass, boilingPoint);
+    requirePhysicalSpecificGravity("addTBPfraction_Mw_Tb", density);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Sg_Tb(String componentName, double numberOfMoles, double density, double boilingPoint) {
+    addTBPfraction_Sg_Tb(componentName, numberOfMoles, density, boilingPoint, TbpClosure.RIAZI_DAUBERT_1987);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Sg_Tb(String componentName, double numberOfMoles, double density, double boilingPoint,
+      TbpClosure closure) {
+    requirePositive("addTBPfraction_Sg_Tb", "density", density);
+    requirePositive("addTBPfraction_Sg_Tb", "boilingPoint", boilingPoint);
+    requirePhysicalSpecificGravity("addTBPfraction_Sg_Tb", density);
+    double molarMass = closure.calcMolarMass(boilingPoint, density, characterization.getTBPModel());
+    warnIfOutsideCorrelationRange("addTBPfraction_Sg_Tb", molarMass, boilingPoint);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Kw(String componentName, double numberOfMoles, double boilingPoint, double watsonK) {
+    addTBPfraction_Tb_Kw(componentName, numberOfMoles, boilingPoint, watsonK, TbpClosure.RIAZI_DAUBERT_1987);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Kw(String componentName, double numberOfMoles, double boilingPoint, double watsonK,
+      TbpClosure closure) {
+    requirePositive("addTBPfraction_Tb_Kw", "boilingPoint", boilingPoint);
+    requirePositive("addTBPfraction_Tb_Kw", "watsonK", watsonK);
+    // Exact from the definition of the Watson factor, no correlation error enters here.
+    double density = calculateDensityFromBoilingPointAndWatsonK(boilingPoint, watsonK);
+    double molarMass = closure.calcMolarMass(boilingPoint, density, characterization.getTBPModel());
+    warnIfOutsideCorrelationRange("addTBPfraction_Tb_Kw", molarMass, boilingPoint);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Pna(String componentName, double numberOfMoles, double boilingPoint,
+      double paraffinFraction, double naphtheneFraction, double aromaticFraction) {
+    addTBPfraction_Tb_Pna(componentName, numberOfMoles, boilingPoint, paraffinFraction, naphtheneFraction,
+        aromaticFraction, PARAFFIN_WATSON_K, NAPHTHENE_WATSON_K, AROMATIC_WATSON_K, TbpClosure.RIAZI_DAUBERT_1987);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Tb_Pna(String componentName, double numberOfMoles, double boilingPoint,
+      double paraffinFraction, double naphtheneFraction, double aromaticFraction, double paraffinWatsonK,
+      double naphtheneWatsonK, double aromaticWatsonK, TbpClosure closure) {
+    double watsonK = calculateWatsonKFromPna(paraffinFraction, naphtheneFraction, aromaticFraction, paraffinWatsonK,
+        naphtheneWatsonK, aromaticWatsonK);
+    addTBPfraction_Tb_Kw(componentName, numberOfMoles, boilingPoint, watsonK, closure);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Sg_Tb(String componentName, double numberOfMoles, double molarMass, double density,
+      double boilingPoint) {
+    requirePositive("addTBPfraction_Mw_Sg_Tb", "molarMass", molarMass);
+    requirePositive("addTBPfraction_Mw_Sg_Tb", "density", density);
+    requirePositive("addTBPfraction_Mw_Sg_Tb", "boilingPoint", boilingPoint);
+    addFractionWithPinnedBoilingPoint(componentName, numberOfMoles, molarMass, density, boilingPoint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addTBPfraction_Mw_Sg_Crit(String componentName, double numberOfMoles, double molarMass, double density,
+      double criticalTemperature, double criticalPressure, double acentricFactor) {
+    addTBPfraction(componentName, numberOfMoles, molarMass, density, criticalTemperature, criticalPressure,
+        acentricFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateWatsonKFromPna(double paraffinFraction, double naphtheneFraction, double aromaticFraction) {
+    return calculateWatsonKFromPna(paraffinFraction, naphtheneFraction, aromaticFraction, PARAFFIN_WATSON_K,
+        NAPHTHENE_WATSON_K, AROMATIC_WATSON_K);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateWatsonKFromPna(double paraffinFraction, double naphtheneFraction, double aromaticFraction,
+      double paraffinWatsonK, double naphtheneWatsonK, double aromaticWatsonK) {
+    if (paraffinFraction < 0.0 || naphtheneFraction < 0.0 || aromaticFraction < 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "calculateWatsonKFromPna",
+          "paraffinFraction", "P, N and A fractions must all be non-negative. Got P=" + paraffinFraction + ", N="
+              + naphtheneFraction + ", A=" + aromaticFraction + "."));
     }
-    numberOfPhases--;
+    double sum = paraffinFraction + naphtheneFraction + aromaticFraction;
+    if (Math.abs(sum - 1.0) > 1.0e-6) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "calculateWatsonKFromPna",
+          "paraffinFraction", "P, N and A fractions must sum to 1. Got " + sum + " from P=" + paraffinFraction + ", N="
+              + naphtheneFraction + ", A=" + aromaticFraction + "."));
+    }
+    return paraffinFraction * paraffinWatsonK + naphtheneFraction * naphtheneWatsonK
+        + aromaticFraction * aromaticWatsonK;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void deleteFluidPhase(int phaseNum) {
+    recycleRemovedPhaseSlot(phaseNum);
   }
 
   /** {@inheritDoc} */
@@ -1970,7 +2284,7 @@ public abstract class SystemThermo implements SystemInterface {
     java.awt.Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new java.awt.BorderLayout());
 
-    String[] names = { "", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4", "Unit" };
+    String[] names = {"", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4", "Unit"};
     String[][] table = createTable(name);
     javax.swing.JTable Jtab = new javax.swing.JTable(table, names);
     javax.swing.JScrollPane scrollpane = new javax.swing.JScrollPane(Jtab);
@@ -2366,45 +2680,110 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getEmptySystemClone() {
-    int phaseNumber = 0;
-
     SystemInterface newSystem = this.clone();
-
+    double[] scaledMoles = new double[numberOfComponents];
     double totalMolesInSystem = 0.0;
-    double scaleFactor = 1.0e30;
-
-    for (int j = 0; j < getMaxNumberOfPhases(); j++) {
-      phaseNumber = j;
-      double phaseMoles = 0.0;
-      for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-        double scaledMoles = getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / scaleFactor;
-        newSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledMoles);
-        newSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(scaledMoles);
-        phaseMoles += scaledMoles;
-      }
-      totalMolesInSystem += phaseMoles;
+    for (int i = 0; i < numberOfComponents; i++) {
+      scaledMoles[i] = getPhase(0).getComponent(i).getNumberOfmoles() * 1.0e-30;
+      totalMolesInSystem += scaledMoles[i];
     }
 
-    if (totalMolesInSystem <= 0.0) {
-      totalMolesInSystem = 1.0e-50;
+    // init(0) restores the identity phase mapping. A removed phase can leave repeated logical
+    // indices, so iterating getPhase(j) would skip a physical slot and resurrect its full inventory.
+    // Overall component inventories are duplicated in each slot, not summed over phase slots.
+    for (int j = 0; j < getMaxNumberOfPhases(); j++) {
+      PhaseInterface storedPhase = newSystem.getPhases()[j];
+      for (int i = 0; i < storedPhase.getNumberOfComponents(); i++) {
+        storedPhase.getComponent(i).setNumberOfmoles(scaledMoles[i]);
+        storedPhase.getComponent(i).setNumberOfMolesInPhase(scaledMoles[i]);
+      }
     }
 
     ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(totalMolesInSystem);
-    ((SystemThermo) newSystem).isInitialized = false;
-
     newSystem.init(0);
-    // newSystem.init(1);
     return newSystem;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getEnthalpy() {
+    if (getTotalNumberOfMoles() == 0.0) {
+      // An empty phase template can retain EOS derivatives from its last flowing state.
+      return 0.0;
+    }
+    if (useIdealGasEnthalpyOfFormation) {
+      applyFormationEnthalpyReference();
+    }
     double enthalpy = 0;
     for (int i = 0; i < numberOfPhases; i++) {
       enthalpy += getPhase(i).getEnthalpy();
     }
     return enthalpy;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isUsingIdealGasEnthalpyOfFormation() {
+    return useIdealGasEnthalpyOfFormation;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setUseIdealGasEnthalpyOfFormation(boolean useFormationEnthalpy) {
+    if (useFormationEnthalpy) {
+      // Complete the validation pass first, so a rejected selection changes no component.
+      for (PhaseInterface phase : phaseArray) {
+        if (phase != null) {
+          validateFormationEnthalpyPhase(phase);
+          for (int i = 0; i < phase.getNumberOfComponents(); i++) {
+            phase.getComponent(i).getHID(298.15, true);
+          }
+        }
+      }
+    }
+    useIdealGasEnthalpyOfFormation = useFormationEnthalpy;
+    applyFormationEnthalpyReference();
+  }
+
+  /**
+   * Reject models with an independent caloric reference rather than silently ignoring this option.
+   *
+   * @param phase phase whose enthalpy implementation is checked
+   */
+  private void validateFormationEnthalpyPhase(PhaseInterface phase) {
+    try {
+      Class<?> owner = phase.getClass().getMethod("getEnthalpy").getDeclaringClass();
+      if (owner != neqsim.thermo.phase.Phase.class) {
+        throw new IllegalStateException("Formation reference is not supported for " + phase.getClass().getSimpleName());
+      }
+    } catch (NoSuchMethodException ex) {
+      throw new IllegalStateException("Cannot determine the phase enthalpy reference", ex);
+    }
+  }
+
+  /** Apply the system reference to all allocated phase slots, including newly created phases. */
+  private void applyFormationEnthalpyReference() {
+    for (PhaseInterface phase : phaseArray) {
+      if (phase != null) {
+        if (useIdealGasEnthalpyOfFormation) {
+          validateFormationEnthalpyPhase(phase);
+        }
+        for (int i = 0; i < phase.getNumberOfComponents(); i++) {
+          phase.getComponent(i).setUseIdealGasEnthalpyOfFormation(useIdealGasEnthalpyOfFormation);
+        }
+      }
+    }
+  }
+
+  /**
+   * Preflight new database components before mutating a system using formation enthalpy.
+   *
+   * @param name canonical component name
+   */
+  private void validateNewFormationEnthalpyComponent(String name) {
+    if (useIdealGasEnthalpyOfFormation) {
+      new neqsim.thermo.component.ComponentSrk(name, 0.0, 0.0, 0).getHID(298.15, true);
+    }
   }
 
   /**
@@ -2478,6 +2857,10 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropy() {
+    if (getTotalNumberOfMoles() == 0.0) {
+      // An empty phase template can retain EOS derivatives from its last flowing state.
+      return 0.0;
+    }
     double entropy = 0;
     for (int i = 0; i < numberOfPhases; i++) {
       entropy += getPhase(i).getEntropy();
@@ -3230,8 +3613,7 @@ public abstract class SystemThermo implements SystemInterface {
     case "volume":
       return getVolumeFraction(phaseNumber);
     case "mass":
-      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3") / getDensity("kg/m3");
+      return getWtFraction(phaseNumber);
     default:
       throw new RuntimeException("unit not supported " + unit);
     }
@@ -3707,6 +4089,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int initType) {
+    if (useIdealGasEnthalpyOfFormation) {
+      applyFormationEnthalpyReference();
+    }
     if (!this.isInitialized) {
       initBeta();
       init_x_y();
@@ -3723,6 +4108,9 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int type, int phaseNum) {
+    if (useIdealGasEnthalpyOfFormation) {
+      applyFormationEnthalpyReference();
+    }
     if (this.numericDerivatives) {
       initNumeric(type, phaseNum);
     } else {
@@ -4365,22 +4753,25 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface phaseToSystem(int phaseNumber) {
+    PhaseInterface sourcePhase = getPhase(phaseNumber);
     SystemInterface newSystem = this.clone();
 
+    // A solid flash can leave repeated entries in phaseIndex and skip an inactive storage slot.
+    // Reset every cloned storage slot directly: init(0) restores the identity phase mapping.
     for (int j = 0; j < getMaxNumberOfPhases(); j++) {
-      for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-        newSystem.getPhase(j).getComponent(i)
-            .setNumberOfmoles(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
-        newSystem.getPhase(j).getComponent(i)
-            .setNumberOfMolesInPhase(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
+      PhaseInterface storedPhase = newSystem.getPhases()[j];
+      for (int i = 0; i < sourcePhase.getNumberOfComponents(); i++) {
+        double moles = sourcePhase.getComponent(i).getNumberOfMolesInPhase();
+        storedPhase.getComponent(i).setNumberOfmoles(moles);
+        storedPhase.getComponent(i).setNumberOfMolesInPhase(moles);
       }
     }
 
-    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(getPhase(phaseNumber).getNumberOfMolesInPhase());
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(sourcePhase.getNumberOfMolesInPhase());
 
     newSystem.init(0);
     newSystem.setNumberOfPhases(1);
-    newSystem.setPhaseType(0, getPhase(phaseNumber).getType()); // phaseType[phaseNumber]);
+    newSystem.setPhaseType(0, sourcePhase.getType());
     newSystem.init(3);
     return newSystem;
   }
@@ -4551,7 +4942,7 @@ public abstract class SystemThermo implements SystemInterface {
       beta[i] = 1.0;
     }
 
-    phaseIndex = new int[] { 0, 1, 2, 3, 4, 5 };
+    phaseIndex = new int[] {0, 1, 2, 3, 4, 5};
   }
 
   /** {@inheritDoc} */
@@ -4591,43 +4982,31 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (specPhase != i) {
-        phaseList.add(phaseArray[phaseIndex[i]]);
-      }
-    }
-
-    // phaseArray = new PhaseInterface[numberOfPhases - 1];
-    for (int i = 0; i < numberOfPhases - 1; i++) {
-      // phaseArray[i] = (PhaseInterface) phaseList.get(i);
-      if (i >= specPhase) {
-        phaseIndex[i] = phaseIndex[i + 1];
-        phaseType[i] = phaseType[i + 1];
-      }
-    }
-    numberOfPhases--;
+    recycleRemovedPhaseSlot(specPhase);
   }
 
   /** {@inheritDoc} */
   @Override
   public void removePhaseKeepTotalComposition(int specPhase) {
-    ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (specPhase != i) {
-        phaseList.add(phaseArray[phaseIndex[i]]);
-      }
-    }
+    recycleRemovedPhaseSlot(specPhase);
+  }
 
-    // phaseArray = new PhaseInterface[numberOfPhases - 1];
-    for (int i = 0; i < numberOfPhases - 1; i++) {
-      // phaseArray[i] = (PhaseInterface) phaseList.get(i);
-      if (i >= specPhase) {
-        phaseIndex[i] = phaseIndex[i + 1];
-        phaseType[i] = phaseType[i + 1];
-      }
+  /**
+   * Removes a logical phase and returns its physical storage slot to the inactive tail.
+   *
+   * <p>
+   * Phase type and beta are owned by the physical slot, so only the logical-to-physical mapping is permuted.
+   * </p>
+   *
+   * @param phaseNumber logical phase position to remove
+   */
+  private void recycleRemovedPhaseSlot(int phaseNumber) {
+    int removedPhaseIndex = phaseIndex[phaseNumber];
+    for (int i = phaseNumber; i < numberOfPhases - 1; i++) {
+      phaseIndex[i] = phaseIndex[i + 1];
     }
     numberOfPhases--;
+    phaseIndex[numberOfPhases] = removedPhaseIndex;
   }
 
   /** {@inheritDoc} */
@@ -5072,6 +5451,27 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setMaxNumberOfPhases(int maxNumberOfPhases) {
     this.maxNumberOfPhases = maxNumberOfPhases;
+    // Cloning, adding components and the flash loop over every phase below the maximum, so each must exist.
+    for (int i = 2; i < maxNumberOfPhases && i < phaseArray.length; i++) {
+      if (phaseArray[i] == null && phaseArray[1] != null) {
+        phaseArray[i] = phaseArray[1].clone();
+        phaseArray[i].resetMixingRule(phaseArray[0].getMixingRuleType());
+        phaseArray[i].resetPhysicalProperties();
+      }
+    }
+  }
+
+  /**
+   * Set the maximum number of phases without allocating phase templates.
+   *
+   * <p>
+   * For fluid classes that fill the phase slots themselves right after setting the limit.
+   * </p>
+   *
+   * @param maxNumberOfPhases maximum number of phases the flash may report
+   */
+  protected final void setPhaseLimit(int maxNumberOfPhases) {
+    this.maxNumberOfPhases = maxNumberOfPhases;
   }
 
   /** {@inheritDoc} */
@@ -5132,6 +5532,8 @@ public abstract class SystemThermo implements SystemInterface {
         tempModel = new SystemSrkCPAstatoil(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("Electrolyte-CPA-EOS-statoil") || model.equals("Electrolyte-CPA-EOS")) {
         tempModel = new SystemElectrolyteCPAstatoil(getPhase(0).getTemperature(), getPhase(0).getPressure());
+      } else if (SystemUMRCPAEoS.MODEL_NAME.equalsIgnoreCase(model) || "UMR-CPA-EoS".equalsIgnoreCase(model)) {
+        tempModel = new SystemUMRCPAEoS(getTemperature(), getPressure());
       } else if (model.equals("UMR-PRU-EoS")) {
         tempModel = new SystemUMRPRUMCEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("PC-SAFT")) {
@@ -5143,9 +5545,10 @@ public abstract class SystemThermo implements SystemInterface {
       } else if (model.equals("SRK-TwuCoon-Param-EOS")) {
         tempModel = new SystemSrkTwuCoonParamEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("Duan-Sun")) {
-        tempModel = new SystemDuanSun(getPhase(0).getTemperature(), getPhase(0).getPressure());
+        throw new UnsupportedOperationException("Duan-Sun system conversion is not supported: SystemDuanSun cannot "
+            + "preserve an aqueous brine composition. Use PhaseDuanSun only for explicit correlation evaluation.");
       } else {
-        logger.error("model : " + model + " not defined.....");
+        throw new IllegalArgumentException("Thermodynamic model is not defined: " + model);
       }
       // tempModel.getCharacterization().setTBPModel("RiaziDaubert");
       tempModel.useVolumeCorrection(true);
@@ -5156,7 +5559,10 @@ public abstract class SystemThermo implements SystemInterface {
             + getPhase(0).getComponent(i).getNumberOfmoles() + " isPlus "
             + getPhase(0).getComponent(i).isIsPlusFraction() + " isTBP "
             + getPhase(0).getComponent(i).isIsTBPfraction());
-        if (getPhase(0).getComponent(i).isIsTBPfraction()) {
+        ComponentInterface source = getPhase(0).getComponent(i);
+        if (tempModel instanceof SystemUMRCPAEoS && (source.isIsTBPfraction() || source.isIsPlusFraction())) {
+          ((SystemUMRCPAEoS) tempModel).addCharacterizedCut(source);
+        } else if (source.isIsTBPfraction()) {
           tempModel.addTBPfraction(getPhase(0).getComponent(i).getName(),
               getPhase(0).getComponent(i).getNumberOfmoles(), getPhase(0).getComponent(i).getMolarMass(),
               getPhase(0).getComponent(i).getNormalLiquidDensity());
@@ -5177,18 +5583,33 @@ public abstract class SystemThermo implements SystemInterface {
         tempModel.createDatabase(true);
       }
       logger.info("done ... set mixing rule ......");
+      if (tempModel instanceof SystemUMRCPAEoS) {
+        tempModel.setMultiPhaseCheck(doMultiPhaseCheck());
+        tempModel.setEnhancedMultiPhaseCheck(doEnhancedMultiPhaseCheck());
+      }
       tempModel.autoSelectMixingRule();
       if (model.equals("Electrolyte-ScRK-EOS")) { // ||
         // model.equals("Electrolyte-CPA-EOS-statoil"
         logger.info("chemical reaction init......");
         tempModel.setMultiPhaseCheck(false);
         tempModel.chemicalReactionInit();
-      } else {
+      } else if (!(tempModel instanceof SystemUMRCPAEoS)) {
         tempModel.setMultiPhaseCheck(true);
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      throw new IllegalArgumentException(
+          "Could not convert fluid to thermodynamic model '" + model + "': " + ex.getMessage(), ex);
     }
+    if (useIdealGasEnthalpyOfFormation) {
+      for (int i = 0; i < numberOfComponents; i++) {
+        ComponentInterface source = getComponent(i);
+        for (int p = 0; p < tempModel.getMaxNumberOfPhases(); p++) {
+          tempModel.getPhase(p).getComponent(i).setIdealGasEnthalpyOfFormation(source.getIdealGasEnthalpyOfFormation(),
+              source.getFormationEnthalpySource());
+        }
+      }
+    }
+    tempModel.setUseIdealGasEnthalpyOfFormation(useIdealGasEnthalpyOfFormation);
     return tempModel;
   }
 
@@ -5371,15 +5792,17 @@ public abstract class SystemThermo implements SystemInterface {
   public void setMultiPhaseCheck(boolean multiPhaseCheck) {
     if (getMaxNumberOfPhases() < 3) {
       if (multiPhaseCheck) {
-        setMaxNumberOfPhases(3);
+        // The third phase template is created below, so the limit is set without allocating it twice.
+        setPhaseLimit(3);
         if (phaseArray[1] != null) {
           phaseArray[2] = phaseArray[1].clone();
           phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleType());
           phaseArray[2].resetPhysicalProperties();
-          phaseArray[2].initPhysicalProperties();
+          // This is an inactive equilibrium-search template. Transport properties are
+          // initialized lazily if the phase becomes active or a caller requests them.
         }
       } else {
-        setMaxNumberOfPhases(2);
+        setPhaseLimit(2);
       }
     }
     this.multiPhaseCheck = multiPhaseCheck;
@@ -5409,11 +5832,34 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void setWaxModelType(String modelName) {
-    this.waxModelTypeName = modelName;
-    // If wax phase already exists, update it
+    String selected = PhaseWax.validateWaxComponentModel(modelName);
     if (phaseArray[5] instanceof PhaseWax) {
-      ((PhaseWax) phaseArray[5]).setWaxComponentModel(modelName);
+      ((PhaseWax) phaseArray[5]).setWaxComponentModel(selected);
     }
+    this.waxModelTypeName = selected;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void enableWaxModel(String modelName) {
+    // Validate/select the model before constructing a wax phase because PhaseWax components are
+    // created using the selected solid-solution model.
+    setWaxModelType(modelName);
+
+    // A raw plus fraction must be split/lumped before wax formers are generated. Calling
+    // characterization only when one is still present keeps this convenience method safe for
+    // already-characterized fluids.
+    if (hasPlusFraction()) {
+      getCharacterization().characterisePlusFraction();
+    }
+
+    getWaxModel().addTBPWax();
+    createDatabase(true);
+    addSolidComplexPhase("wax");
+    setMultiphaseWaxCheck(true);
+    setMultiPhaseCheck(true);
+    init(0);
+    init(1);
   }
 
   /** {@inheritDoc} */
@@ -5421,7 +5867,7 @@ public abstract class SystemThermo implements SystemInterface {
   public void setNumberOfPhases(int number) {
     this.numberOfPhases = number;
     if (numberOfPhases > getMaxNumberOfPhases()) {
-      setMaxNumberOfPhases(number);
+      setPhaseLimit(number);
     }
   }
 
@@ -5578,12 +6024,14 @@ public abstract class SystemThermo implements SystemInterface {
     if (solidPhaseCheck && !this.hasSolidPhase()) {
       addSolidPhase();
     }
-    // init(0);
 
-    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
-      for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-        getPhase(phaseNum).getComponent(k).setSolidCheck(solidPhaseCheck);
-        getPhase(3).getComponent(k).setSolidCheck(solidPhaseCheck);
+    // Include cached phases without requiring a solid phase or a particular phase-index mapping.
+    for (PhaseInterface phase : phaseArray) {
+      if (phase == null) {
+        continue;
+      }
+      for (int k = 0; k < phase.getNumberOfComponents(); k++) {
+        phase.getComponent(k).setSolidCheck(solidPhaseCheck);
       }
     }
     setNumberOfPhases(oldphase);
@@ -5600,13 +6048,11 @@ public abstract class SystemThermo implements SystemInterface {
     this.solidPhaseCheck = true;
     init(0);
 
-    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
-      try {
-        if (getPhase(phaseNum) != null && getPhase(phaseNum).hasComponent(solidComponent)) {
-          getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
-        }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+    // The configured solid can be inactive after a fluid-only flash. Its selection must
+    // agree with the fluid components now that ComponentSolid honors the check flag.
+    for (PhaseInterface phase : phaseArray) {
+      if (phase != null && phase.hasComponent(solidComponent)) {
+        phase.getComponent(solidComponent).setSolidCheck(true);
       }
     }
     setNumberOfPhases(oldphase);
@@ -5667,9 +6113,26 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Downward flow changes retain the established difference update when its component and total inventories are
+   * accurate to 1e-12 relative. Otherwise, positive component amounts are rebuilt from normalized overall fractions.
+   * Upward and same-rate changes retain the established update. This limits cancellation repair to subtractive rate
+   * changes while avoiding unnecessary changes to ordinary process endpoints and empty-stream initialization. An
+   * initialized zero-flow request clears material amounts while retaining the existing intensive phase state.
+   * Restarting an empty fluid uses its stored normalized overall composition.
+   * </p>
+   */
   @Override
   public void setTotalFlowRate(double flowRate, String flowunit) {
+    if (flowRate < 1e-100 && isInitialized()) {
+      // Validate the unit without resetting the phase map or evaluating an unnecessary EOS state.
+      new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), 0.0, 0.0).getSIvalue();
+      setEmptyFluid();
+      return;
+    }
     init(0);
     try {
       init(1);
@@ -5690,21 +6153,78 @@ public abstract class SystemThermo implements SystemInterface {
     }
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), density, 0);
     double SIval = unit.getSIvalue();
-    double totalNumberOfMolesLocal = totalNumberOfMoles;
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (flowRate < 1e-100) {
-        setEmptyFluid();
-      } else if (totalNumberOfMolesLocal > 1e-100) {
-        // (SIval / totalNumberOfMolesLocal - 1) * ...
-        double change = SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-            - getPhase(0).getComponent(i).getNumberOfmoles();
-        if (Math.abs(change) > 1e-12) {
-          addComponent(i, change);
+    if (flowRate < 1e-100) {
+      setEmptyFluid();
+      return;
+    }
+    if (totalNumberOfMoles > 1e-100) {
+      // Preserve the established update when its component and total inventories remain accurate.
+      // Rebuilding every ordinary flow perturbs floating-point endpoints throughout process recycles.
+      if (SIval >= totalNumberOfMoles || canScaleFlowInventoryByDifference(SIval)) {
+        double previousTotal = totalNumberOfMoles;
+        for (int i = 0; i < numberOfComponents; i++) {
+          double moles = getPhase(0).getComponent(i).getNumberOfmoles();
+          double change = SIval / previousTotal * moles - moles;
+          if (Math.abs(change) > 1e-12) {
+            addComponent(i, change);
+          }
         }
-      } else {
-        addComponent(i, SIval);
+        return;
+      }
+      // Large downward changes can lose significant digits through cancellation. Rebuild only
+      // when the prospective difference update fails the component or total inventory check.
+      double sumz = 0.0;
+      for (int i = 0; i < numberOfComponents; i++) {
+        sumz += getPhase(0).getComponent(i).getz();
+      }
+      setEmptyFluid();
+      for (int i = 0; i < numberOfComponents; i++) {
+        addComponent(i, SIval * (getPhase(0).getComponent(i).getz() / sumz));
+      }
+    } else {
+      double sumz = 0.0;
+      for (int i = 0; i < numberOfComponents; i++) {
+        sumz += getPhase(0).getComponent(i).getz();
+      }
+      if (!(sumz > 0.0) || !Double.isFinite(sumz)) {
+        throw new IllegalStateException("Cannot restore flow without a defined overall composition");
+      }
+      for (int i = 0; i < numberOfComponents; i++) {
+        addComponent(i, SIval * (getPhase(0).getComponent(i).getz() / sumz));
       }
     }
+  }
+
+  /**
+   * Checks the rounding error of the established difference update without modifying the fluid.
+   *
+   * @param target requested total molar flow
+   * @return true when every component and the total retain relative inventory accuracy of 1e-12
+   */
+  private boolean canScaleFlowInventoryByDifference(double target) {
+    if (!Double.isFinite(target) || target <= 0.0) {
+      return false;
+    }
+    double inventory = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      inventory += getPhase(0).getComponent(i).getNumberOfmoles();
+    }
+    if (!(inventory > 0.0) || !Double.isFinite(inventory)) {
+      return false;
+    }
+    double updatedTotal = totalNumberOfMoles;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double moles = getPhase(0).getComponent(i).getNumberOfmoles();
+      double change = target / totalNumberOfMoles * moles - moles;
+      double appliedChange = Math.abs(change) > 1e-12 ? change : 0.0;
+      double expectedMoles = target * (moles / inventory);
+      double updatedMoles = moles + appliedChange;
+      if (!Double.isFinite(updatedMoles) || Math.abs(updatedMoles - expectedMoles) > 1e-12 * Math.abs(expectedMoles)) {
+        return false;
+      }
+      updatedTotal += appliedChange;
+    }
+    return Double.isFinite(updatedTotal) && Math.abs(updatedTotal - target) <= 1e-12 * Math.abs(target);
   }
 
   /** {@inheritDoc} */
@@ -5722,12 +6242,17 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * Sets the scalar total-moles field only, leaving the per-component mole numbers untouched. For internal bookkeeping
-   * where the caller has already updated the component moles.
+   * {@inheritDoc}
    *
-   * @param totalNumberOfMoles new total number of moles, negative values are clipped to zero
+   * <p>
+   * Sets the scalar total-moles field only, leaving the per-component mole numbers untouched. Also used internally
+   * where the caller (this class) has already updated the component moles consistently (e.g. {@code addComponent},
+   * {@code clearAll}, {@code phaseToSystem}, {@code removeComponent}/{@code removePhase}, {@code replacePhase},
+   * {@code initTotalNumberOfMoles}, {@code getEmptySystemClone}).
+   * </p>
    */
-  protected final void setTotalNumberOfMolesRaw(double totalNumberOfMoles) {
+  @Override
+  public final void setTotalNumberOfMolesRaw(double totalNumberOfMoles) {
     this.totalNumberOfMoles = totalNumberOfMoles < 0 ? 0.0 : totalNumberOfMoles;
   }
 

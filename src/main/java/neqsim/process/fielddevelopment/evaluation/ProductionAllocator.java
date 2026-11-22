@@ -364,14 +364,14 @@ public class ProductionAllocator implements Serializable {
     Map<String, Double> allocation = allocateByOil();
     Double fraction = allocation.get(sourceName);
     if (fraction == null) {
-      return new double[] { 0, 0, 0 };
+      return new double[] {0, 0, 0};
     }
 
     double allocated = fraction * exportVolume;
     double uncertainty = getSourceUncertainty(sourceName);
     double range = allocated * uncertainty;
 
-    return new double[] { allocated, allocated - range, allocated + range };
+    return new double[] {allocated, allocated - range, allocated + range};
   }
 
   // ============================================================================

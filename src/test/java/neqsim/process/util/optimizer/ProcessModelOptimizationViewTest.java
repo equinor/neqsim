@@ -3,10 +3,13 @@ package neqsim.process.util.optimizer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessModel;
@@ -29,6 +32,111 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ProcessModelOptimizationViewTest {
+
+  @Test
+  void energyObjectivesReadNonzeroDutiesAcrossAreasAndUnits() {
+    ProcessModel plant = buildTwoAreaPlant();
+    ProcessSystem compression = plant.get("compression");
+    Cooler exportCooler = (Cooler) compression.getUnit("export cooler");
+    Heater exportHeater = new Heater("export heater", exportCooler.getOutletStream());
+    exportHeater.setOutTemperature(200.0, "C");
+    compression.add(exportHeater);
+
+    SystemSrkEos liquid = new SystemSrkEos(298.15, 10.0);
+    liquid.addComponent("n-decane", 1.0);
+    liquid.setMixingRule("classic");
+    Stream oil = new Stream("oil", liquid);
+    oil.setFlowRate(2500.0, "kg/hr");
+    Pump pump = new Pump("oil pump", oil);
+    pump.setOutletPressure(80.0);
+    Heater oilHeater = new Heater("oil heater", pump.getOutletStream());
+    oilHeater.setOutTemperature(150.0, "C");
+    Cooler oilCooler = new Cooler("oil cooler", oilHeater.getOutletStream());
+    oilCooler.setOutTemperature(50.0, "C");
+    ProcessSystem oilArea = new ProcessSystem();
+    oilArea.add(oil);
+    oilArea.add(pump);
+    oilArea.add(oilHeater);
+    oilArea.add(oilCooler);
+    plant.add("oil", oilArea);
+
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(plant);
+    view.run();
+    Compressor compressor = (Compressor) compression.getUnit("export compressor");
+    double expectedPowerW = compressor.getPower() + pump.getPower();
+    double expectedCoolerW = exportCooler.getDuty() + oilCooler.getDuty();
+    Assertions.assertTrue(compressor.getPower() > 0.0);
+    Assertions.assertTrue(pump.getPower() > 0.0);
+    Assertions.assertTrue(expectedCoolerW < 0.0);
+    Assertions.assertTrue(Math.abs(plant.getHeaterDuty("W")) > 1.0);
+
+    for (String unit : Arrays.asList("W", "kW", "MW")) {
+      double divisor = "MW".equals(unit) ? 1.0e6 : "kW".equals(unit) ? 1.0e3 : 1.0;
+      Assertions.assertEquals(expectedPowerW / divisor, view.getPower(unit), 1.0e-8);
+      Assertions.assertEquals(expectedCoolerW / divisor, view.getCoolerDuty(unit), 1.0e-8);
+      Assertions.assertEquals(plant.getPower(unit), view.getPower(unit), 1.0e-8);
+      Assertions.assertEquals(plant.getCoolerDuty(unit), view.getCoolerDuty(unit), 1.0e-8);
+      Assertions.assertEquals(plant.getHeaterDuty(unit), view.getHeaterDuty(unit), 1.0e-8);
+    }
+
+    OptimizationObjective powerObjective = new OptimizationObjective("plant power", process -> process.getPower("kW"),
+        1.0, ObjectiveType.MINIMIZE);
+    Assertions.assertTrue(powerObjective.evaluate(view) > 0.0,
+        "An optimizer callback must not sample the empty adapter's zero power");
+  }
+
+  @Test
+  void convergenceToleranceMustBeFiniteAndPositive() {
+    for (double invalid : new double[] {Double.NaN, Double.POSITIVE_INFINITY, 0.0, -1.0}) {
+      Assertions.assertThrows(IllegalArgumentException.class,
+          () -> new ProcessModelOptimizationView(new ProcessModel(), 3, invalid));
+    }
+  }
+
+  @Test
+  void failedCrossAreaSolveRejectsTheView() {
+    ProcessModel failedModel = new ProcessModel() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public boolean runUntilConverged(int maxIterations, double tolerance) {
+        return false;
+      }
+    };
+    IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class,
+        () -> new ProcessModelOptimizationView(failedModel, 3, 1.0e-4).run());
+    Assertions.assertTrue(failure.getMessage().contains("cross-area convergence"));
+  }
+
+  @Test
+  void failedCrossAreaSolveNeverSamplesOptimizerObjectives() {
+    ProcessModel failedModel = new ProcessModel() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public boolean runUntilConverged(int maxIterations, double tolerance) {
+        return false;
+      }
+    };
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(5000.0, "kg/hr");
+    ProcessSystem area = new ProcessSystem();
+    area.add(feed);
+    failedModel.add("feed area", area);
+    AtomicInteger objectiveCalls = new AtomicInteger();
+    OptimizationObjective objective = new OptimizationObjective("feed", process -> {
+      objectiveCalls.incrementAndGet();
+      return feed.getFlowRate("kg/hr");
+    }, 1.0);
+    Assertions.assertThrows(IllegalStateException.class,
+        () -> new ProductionOptimizer().optimize(failedModel, feed,
+            new OptimizationConfig(1000.0, 6000.0).rateUnit("kg/hr"), Collections.singletonList(objective),
+            Collections.<OptimizationConstraint>emptyList()));
+    Assertions.assertEquals(0, objectiveCalls.get(), "Unconverged state must never reach objective callbacks");
+  }
 
   /**
    * Builds a two-area plant: a "separation" area (feed -&gt; inlet separator) and a "compression" area (export

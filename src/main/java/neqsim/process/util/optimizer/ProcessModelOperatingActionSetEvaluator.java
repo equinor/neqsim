@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -696,7 +698,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
       this.name = definition.getName();
       this.type = definition.getType();
       this.unit = definition.getUnit();
-      this.physicalUnit = definition.getCapacityPhysicalUnit();
+      this.physicalUnit = definition.isPlantConstraint() ? definition.getPlantConstraintDefinition().getUnit()
+          : definition.getCapacityPhysicalUnit();
       this.hard = definition.isHard();
       this.penaltyWeight = definition.getPenaltyWeight();
       this.lowerBound = definition.getLowerBound();
@@ -865,6 +868,9 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** Complete qualified boundary evidence from the candidate operating point. */
     private final List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence;
 
+    /** Complete typed plant-wide/shared/coupled evidence from the candidate operating point. */
+    private final List<PlantConstraintEvidence> plantConstraintEvidence;
+
     /** Immutable diagnostics. */
     private final List<String> diagnostics;
 
@@ -877,7 +883,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
         double[] constraintValues, double[] constraintMargins, List<CandidateConstraintEvidence> constraintEvidence,
         List<HydraulicConstraintSnapshot> hydraulicConstraints,
         List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence,
-        List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence, List<String> diagnostics) {
+        List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence,
+        List<PlantConstraintEvidence> plantConstraintEvidence, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -903,6 +910,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
       this.processBoundaryConstraintEvidence = Collections
           .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+      this.plantConstraintEvidence = Collections
+          .unmodifiableList(new ArrayList<PlantConstraintEvidence>(plantConstraintEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -915,7 +924,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           new double[0], Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
           Collections.<CandidateConstraintEvidence>emptyList(), Collections.<HydraulicConstraintSnapshot>emptyList(),
           Collections.<InstalledEquipmentCapacityEvidence>emptyList(),
-          Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
+          Collections.<ProcessBoundaryConstraintEvidence>emptyList(), Collections.<PlantConstraintEvidence>emptyList(),
+          diagnostics);
     }
 
     /** Creates a result from an optional candidate simulation. */
@@ -931,14 +941,16 @@ public final class ProcessModelOperatingActionSetEvaluator {
             Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
             Collections.<CandidateConstraintEvidence>emptyList(), hydraulicConstraints,
             Collections.<InstalledEquipmentCapacityEvidence>emptyList(),
-            Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
+            Collections.<ProcessBoundaryConstraintEvidence>emptyList(),
+            Collections.<PlantConstraintEvidence>emptyList(), diagnostics);
       }
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
-          copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), objectiveEvidence,
-          copy(evaluation.getConstraintValues()), copy(evaluation.getConstraintMargins()), constraintEvidence,
-          hydraulicConstraints, evaluation.getInstalledEquipmentCapacityEvidence(),
-          evaluation.getProcessBoundaryConstraintEvidence(), diagnostics);
+          copyArrayOrEmpty(evaluation.getObjectivesRaw()), copyArrayOrEmpty(evaluation.getObjectives()),
+          objectiveEvidence, copyArrayOrEmpty(evaluation.getConstraintValues()),
+          copyArrayOrEmpty(evaluation.getConstraintMargins()), constraintEvidence, hydraulicConstraints,
+          evaluation.getInstalledEquipmentCapacityEvidence(), evaluation.getProcessBoundaryConstraintEvidence(),
+          evaluation.getPlantConstraintEvidence(), diagnostics);
     }
 
     /** Snapshots objective definitions and sampled values without retaining evaluator callbacks. */
@@ -947,8 +959,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
       if (evaluation == null) {
         return Collections.emptyList();
       }
-      double[] rawValues = copy(evaluation.getObjectivesRaw());
-      double[] minimizerValues = copy(evaluation.getObjectives());
+      double[] rawValues = copyArrayOrEmpty(evaluation.getObjectivesRaw());
+      double[] minimizerValues = copyArrayOrEmpty(evaluation.getObjectives());
       List<CandidateObjectiveEvidence> evidence = new ArrayList<CandidateObjectiveEvidence>();
       for (int index = 0; index < definitions.size(); index++) {
         evidence.add(new CandidateObjectiveEvidence(index, definitions.get(index), valueAt(rawValues, index),
@@ -963,8 +975,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
       if (evaluation == null) {
         return Collections.emptyList();
       }
-      double[] values = copy(evaluation.getConstraintValues());
-      double[] margins = copy(evaluation.getConstraintMargins());
+      double[] values = copyArrayOrEmpty(evaluation.getConstraintValues());
+      double[] margins = copyArrayOrEmpty(evaluation.getConstraintMargins());
       List<CandidateConstraintEvidence> evidence = new ArrayList<CandidateConstraintEvidence>();
       for (int index = 0; index < definitions.size(); index++) {
         evidence.add(new CandidateConstraintEvidence(index, definitions.get(index), valueAt(values, index),
@@ -976,11 +988,6 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** Returns an indexed scalar or NaN when a result array is shorter than its definition list. */
     private static double valueAt(double[] values, int index) {
       return index < values.length ? values[index] : Double.NaN;
-    }
-
-    /** Returns a defensive array or an empty array for null. */
-    private static double[] copy(double[] values) {
-      return values == null ? new double[0] : Arrays.copyOf(values, values.length);
     }
 
     /** @return stable action-set identifier */
@@ -1101,6 +1108,11 @@ public final class ProcessModelOperatingActionSetEvaluator {
     public List<ProcessBoundaryConstraintEvidence> getProcessBoundaryConstraintEvidence() {
       return Collections
           .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+    }
+
+    /** @return fresh immutable typed plant evidence in registration order */
+    public List<PlantConstraintEvidence> getPlantConstraintEvidence() {
+      return Collections.unmodifiableList(new ArrayList<PlantConstraintEvidence>(plantConstraintEvidence));
     }
 
     /** @return fresh immutable diagnostics */

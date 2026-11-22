@@ -82,8 +82,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <pre>{@code
  * // Setup well as above, then generate lift curves
- * double[] whPressures = { 30, 40, 50, 60, 70 }; // bara
- * double[] waterCuts = { 0.0, 0.2, 0.4, 0.6, 0.8 };
+ * double[] whPressures = {30, 40, 50, 60, 70}; // bara
+ * double[] waterCuts = {0.0, 0.2, 0.4, 0.6, 0.8};
  *
  * // Generate lift curve table
  * LiftCurveTable liftTable = well.generateLiftCurves(whPressures, waterCuts);
@@ -1154,9 +1154,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * @return calculated bottom-hole pressure in bara
    */
   private double calculateVLP_BHP_TwoFluid(double flowRate) {
-    // Get fluid properties
+    // VLP uses intensive properties; apply the requested rate only to the velocities below.
+    // Retain the reference inventory to avoid roundoff at shut-in and near-zero trial rates.
     SystemInterface tempFluid = reservoirStream.getThermoSystem().clone();
-    tempFluid.setTotalFlowRate(flowRate / 86400.0, "Sm3/sec");
 
     // March up the tubing from wellhead to bottomhole
     int numSegments = 20;
@@ -1257,7 +1257,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       flows[i] = calculateFlowFromIPR(bhp);
     }
 
-    return new double[][] { flows, bhps };
+    return new double[][] {flows, bhps};
   }
 
   /**
@@ -1299,7 +1299,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       bhps[i] = calculateVLP_BHP(flowRates[i]);
     }
 
-    return new double[][] { flowRates, bhps };
+    return new double[][] {flowRates, bhps};
   }
 
   // Getters for results

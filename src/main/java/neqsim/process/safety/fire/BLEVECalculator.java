@@ -39,11 +39,16 @@ public class BLEVECalculator implements Serializable {
    *
    * @param fuelMassKg total mass of vaporizing fuel in kg
    * @param heatOfCombustionJPerKg lower heating value, J/kg
-   * @param radiativeFraction fraction of combustion energy radiated (0.25 – 0.40)
+   * @param radiativeFraction fraction of combustion energy radiated in [0,1] (typically 0.25–0.40)
+   * @throws IllegalArgumentException if fuel mass or heat of combustion is non-positive, or the radiative fraction is
+   * outside [0,1] or NaN
    */
   public BLEVECalculator(double fuelMassKg, double heatOfCombustionJPerKg, double radiativeFraction) {
     if (fuelMassKg <= 0.0 || heatOfCombustionJPerKg <= 0.0) {
       throw new IllegalArgumentException("fuelMass > 0 and heatOfCombustion > 0 required");
+    }
+    if (!(radiativeFraction >= 0.0 && radiativeFraction <= 1.0)) {
+      throw new IllegalArgumentException("radiativeFraction must be in [0,1]");
     }
     this.fuelMassKg = fuelMassKg;
     this.heatOfCombustionJPerKg = heatOfCombustionJPerKg;
@@ -92,16 +97,13 @@ public class BLEVECalculator implements Serializable {
   }
 
   /**
-   * Atmospheric transmissivity (Wayne, simplified).
+   * Atmospheric transmissivity (Wayne, simplified). Dry air has unit transmissivity in this approximation.
    *
    * @param distanceM distance to receiver in m
    * @return transmissivity τ ∈ [0,1]
    */
   public double transmissivity(double distanceM) {
-    double pw = humidityRH * 1700.0;
-    double xpw = pw * Math.max(distanceM, 1.0);
-    double tau = 1.006 - 0.01171 * Math.log10(xpw) - 0.02368 * Math.pow(Math.log10(xpw), 2);
-    return Math.max(0.0, Math.min(1.0, tau));
+    return JetFireModel.atmosphericTransmissivity(humidityRH, distanceM);
   }
 
   /**
@@ -124,25 +126,15 @@ public class BLEVECalculator implements Serializable {
   }
 
   /**
-   * Distance to a target heat-flux contour.
+   * Find the outer distance of a target heat-flux contour by bisection. Searches from the fireball radius plus 0.1 m to
+   * 5000 m.
    *
    * @param targetFluxWperM2 target heat flux in W/m²
-   * @return distance in m
+   * @return distance in m, or {@code Double.NaN} if the target is not bracketed in the search range
+   * @throws IllegalArgumentException if the target is non-positive or non-finite
    */
   public double distanceToFlux(double targetFluxWperM2) {
-    double lo = fireballDiameterM() / 2.0 + 0.1;
-    double hi = 5000.0;
-    if (incidentHeatFlux(lo) < targetFluxWperM2) {
-      return lo;
-    }
-    for (int i = 0; i < 60; i++) {
-      double mid = 0.5 * (lo + hi);
-      if (incidentHeatFlux(mid) > targetFluxWperM2) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
-    }
-    return 0.5 * (lo + hi);
+    return ConsequenceContour.findDistance(this::incidentHeatFlux, targetFluxWperM2, fireballDiameterM() / 2.0 + 0.1,
+        5000.0);
   }
 }

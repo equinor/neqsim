@@ -16,6 +16,7 @@ analysis, a certified laboratory method, or the governing contract.
 | LNG density from composition | `Standard_ISO6578` | [ISO 6578](iso6578_lng_density) |
 | Water or hydrocarbon dew point | `Draft_ISO18453` or `BestPracticeHydrocarbonDewPoint` | [Dew-point methods](dew_point_standards) |
 | CNG methane number and motor octane number | `Standard_ISO15403` | [ISO 15403](iso15403_cng_quality) |
+| European H-gas and biomethane composition screening | `Standard_EN16726` and `Standard_EN16723` | [EN 16726 / EN 16723](en16723_en16726_gas_quality) |
 | Simulated crude-oil vapour pressure | `Standard_ASTM_D6377` | [ASTM D6377](astm_d6377_rvp) |
 | Other simulated oil-quality properties | Classes in `neqsim.standards.oilquality` | [Oil-quality methods](oil_quality_standards) |
 | Delivery-point specification checks | `BaseContract` and `ContractSpecification` | [Sales contracts](sales_contracts) |
@@ -61,6 +62,23 @@ and basis with every result. Supported combustion-energy reference temperatures
 are 0, 15, 15.55, 20, and 25°C. Although `checkReferenceCondition()` currently
 accepts 25°C as a volume reference temperature, volume-dependent corrections
 are implemented only for 0, 15, 15.55, and 20°C; use one of those four values.
+
+Both ISO 6976 editions reject unsupported or non-finite reference temperatures with
+`IllegalArgumentException` on `calculate()`, `getValue(...)` or explicit
+`checkReferenceCondition()`. The requested references are preserved on rejection;
+there is no fallback to 15°C/25°C. Roundoff within 1e-9°C is canonicalized to an
+existing table key. The historical `15.55` key approximates 60°F; the exact
+conversion, 15.555555...°C, is rejected and must not be silently rounded by an
+integration. Select the legacy key explicitly if that is the intended convention.
+
+The 2016 implementation uses an air compression factor of **0.999601** at
+the **15.55°C volume reference** and 101.325 kPa, as specified in ISO 6976:2016,
+clause 10.5. The correction in [issue #4458](https://github.com/equinor/neqsim/issues/4458)
+replaces the erroneous factor `999601`: real relative density is reduced by
+10^6 and both Wobbe indices increase by 1000 at that volume reference.
+See the [air-factor provenance and regression](iso6976_calorific_values#step-5---relative-density).
+The combustion reference remains independent; the quick start above uses
+15.55°C only for combustion. Select the intended reference conditions explicitly.
 
 `GCV` and `LCV` are aliases for `SuperiorCalorificValue` and
 `InferiorCalorificValue`. `WI` and `WobbeIndex` are aliases for

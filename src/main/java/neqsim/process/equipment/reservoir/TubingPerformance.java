@@ -36,6 +36,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li><b>ISOTHERMAL</b> - Constant temperature throughout tubing</li>
  * <li><b>LINEAR_GRADIENT</b> - Linear temperature profile from BH to WH</li>
  * <li><b>RAMEY</b> - Ramey (1962) steady-state geothermal model</li>
+ * <li>{@link TemperatureModel#HASAN_KABIR_ENERGY} - Uses the Ramey temperature calculation</li>
  * </ul>
  *
  * <h2>Usage Example - VLP Curve Generation</h2>
@@ -67,7 +68,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * tubing.setGeothermalGradient(0.03, "K/m");
  *
  * // Generate VLP curve
- * double[] flowRates = { 1000, 2000, 3000, 5000, 7000, 10000 }; // Sm3/day
+ * double[] flowRates = {1000, 2000, 3000, 5000, 7000, 10000}; // Sm3/day
  * double[][] vlpCurve = tubing.generateVLPCurve(flowRates, "Sm3/day", "bara");
  *
  * // vlpCurve[0] = flow rates
@@ -158,7 +159,8 @@ public class TubingPerformance extends TwoPortEquipment {
     RAMEY,
 
     /**
-     * Hasan-Kabir energy balance - Coupled flow and heat transfer. Includes Joule-Thomson effect and friction heating.
+     * Reserved for a coupled Hasan-Kabir energy balance. Currently uses the same temperature calculation as
+     * {@link #RAMEY}, without Joule-Thomson or friction-heating terms.
      */
     HASAN_KABIR_ENERGY
   }
@@ -538,13 +540,14 @@ public class TubingPerformance extends TwoPortEquipment {
       A = 100.0; // Default relaxation distance for low flow
     }
 
-    // Ramey temperature profile
-    // T(z) = Tf(z) - gG*A + [Tbh - Tf(L) + gG*A] * exp(-(L-z)/A)
+    // Ramey temperature profile for upward flow, z = depth from surface:
+    // T(z) = Tf(z) + gG*A + [Tbh - Tf(L) - gG*A] * exp(-(L-z)/A)
+    // High-rate limit (A -> infinity): T(z) -> Tbh, i.e. no heat loss.
     double gG = geothermalGradient;
     double L = tubingLength;
     double TfL = Ts + gG * L; // Formation temp at BH
 
-    double T = Tf - gG * A + (bhTemp - TfL + gG * A) * Math.exp(-(L - depth) / A);
+    double T = Tf + gG * A + (bhTemp - TfL - gG * A) * Math.exp(-(L - depth) / A);
 
     return T;
   }
@@ -946,7 +949,7 @@ public class TubingPerformance extends TwoPortEquipment {
       vlpWellheadPressures[i] = convertPressure(targetWHP, "bara", pressureUnit);
     }
 
-    return new double[][] { vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures };
+    return new double[][] {vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures};
   }
 
   /**
@@ -1018,13 +1021,13 @@ public class TubingPerformance extends TwoPortEquipment {
         double fraction = diff1 / (diff1 - diff2);
         double opFlow = testFlows[i] + fraction * (testFlows[i + 1] - testFlows[i]);
         double opBHP = iprBHP1 + fraction * (iprBHP2 - iprBHP1);
-        return new double[] { opFlow, opBHP };
+        return new double[] {opFlow, opBHP};
       }
     }
 
     // No intersection found - well cannot flow at this WHP
     logger.warn("No operating point found - well may not flow at WHP = {} bara", targetWHP);
-    return new double[] { 0.0, reservoirPressure };
+    return new double[] {0.0, reservoirPressure};
   }
 
   /**
@@ -1193,7 +1196,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * @return VLP curve: [0]=flow rates, [1]=BHP, [2]=WHP
    */
   public double[][] getVLPCurve() {
-    return new double[][] { vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures };
+    return new double[][] {vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures};
   }
 
   /**

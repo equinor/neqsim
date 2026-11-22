@@ -41,9 +41,28 @@ For dense releases (CO₂, propane, chlorine), use `HeavyGasDispersion`
 
 ```java
 JetFireModel jet = new JetFireModel(30.0, 50.0e6, 0.25);  // ṁ, HoC, η
-double q50 = jet.radiationFluxAt(50.0);          // W/m² at 50 m
-double r12 = jet.distanceForFlux(12500.0);       // m to 12.5 kW/m²
+double q50 = jet.incidentHeatFlux(50.0);          // W/m² at 50 m
+double r12 = jet.distanceToFlux(12500.0);       // m to 12.5 kW/m²
 ```
+
+`JetFireModel` and `BLEVECalculator` use unit transmissivity at zero
+relative humidity in their water-vapour-dependent approximation.
+`BLEVECalculator` accepts a radiative fraction in the inclusive range 0 to 1.
+
+Construct a pool-fire model with `PoolFireModel(poolDiameterM, burnRateKgPerM2PerS)`.
+The diameter is in m and the prescribed mass burning rate per unit area is in
+kg/(m²·s). Mudan's smoke-corrected surface emissive power depends on pool
+diameter. The deprecated five-argument constructor delegates to the two-input
+constructor for compatibility.
+
+The pool-fire and BLEVE `distanceToFlux` methods and the VCE
+`distanceToOverpressure` method require a positive, finite target in W/m² or
+Pa, respectively. They throw `IllegalArgumentException` for invalid targets
+and return `Double.NaN` when the target is outside the modeled values over
+the search interval. The pool-fire and BLEVE intervals start 0.1 m outside
+the modeled radius and end at 1000 m and 5000 m, respectively. The VCE
+interval is 0.1 to 50,000 m. Check the result before using it as a contour
+distance.
 
 ## Probit fatality
 

@@ -15,9 +15,37 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Regression coverage for the hydrocarbon-scrubber export-gas saturation boundary.
+ *
+ * @author Even Solbraa
+ * @version 1.0
  */
 @Tag("slow")
 class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTest {
+  /** Verifies repeated phase appearance and disappearance with both Wilson stability paths. */
+  @Test
+  void pressureSweepRetainsPhysicalEquilibriumWithReusedPhaseSlots() {
+    SystemInterface exportGas = runScrubberProcess().getGasOutStream().getFluid();
+    double[] pressures = {151.0, 106.0, 105.0, 101.0, 81.0, 61.0, 41.0, 31.0, 41.0, 61.0, 81.0, 101.0, 105.0, 106.0,
+        151.0};
+    for (boolean enhanced : new boolean[] {false, true}) {
+      SystemInterface fluid = exportGas.clone();
+      fluid.setTemperature(0.0, "C");
+      fluid.setMultiPhaseCheck(true);
+      fluid.setEnhancedMultiPhaseCheck(enhanced);
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      for (double pressure : pressures) {
+        fluid.setPressure(pressure, "bara");
+        operations.TPflash();
+        fluid.init(1);
+        if (pressure >= 106.0) {
+          assertEquals(1, fluid.getNumberOfPhases());
+        } else {
+          assertPhysicalEquilibrium(fluid);
+        }
+      }
+    }
+  }
+
   @Test
   void ordinaryAndEnhancedChecksRetainPhysicalSaturationBoundary() {
     ThreePhaseSeparator scrubber = runScrubberProcess();
@@ -47,11 +75,11 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
 
   private static ThreePhaseSeparator runScrubberProcess() {
     SystemInterface fluid = new SystemUMRPRUMCEos(280.0, 10.0);
-    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
         "n-pentane", "2-m-C5", "3-m-C5", "n-hexane", "c-hexane", "n-heptane", "benzene", "n-octane", "c-C7", "toluene",
-        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12" };
-    double[] componentAmounts = { 0.01, 0.01, 0.9, 0.1, 0.03, 0.01, 0.01, 0.01, 0.001, 0.001, 0.001, 0.001, 0.001,
-        0.001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.00001, 0.00001, 3.0e-12, 3.0e-12, 3.0e-12 };
+        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12"};
+    double[] componentAmounts = {0.01, 0.01, 0.9, 0.1, 0.03, 0.01, 0.01, 0.01, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+        0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.00001, 0.00001, 3.0e-12, 3.0e-12, 3.0e-12};
     for (int componentIndex = 0; componentIndex < componentNames.length; componentIndex++) {
       fluid.addComponent(componentNames[componentIndex], componentAmounts[componentIndex]);
     }

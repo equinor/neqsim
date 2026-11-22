@@ -1,0 +1,15 @@
+{
+  "jvms": 356,
+  "baseline_candidate_jvms": 352,
+  "identical_candidate_binary_control_jvms": 4,
+  "snapshots": 356,
+  "raw_rounds": 3648,
+  "state_rows": 8880,
+  "maximum_independently_reconstructed_residuals": {
+    "normalization": 1.5543122344752192e-15,
+    "balance": 5.240252676230739e-14,
+    "logfugacity": 1.715960706860642e-12
+  },
+  "bit_identical_beta_x_logphi_in_every_four_JVM_cell": true,
+  "method": "Python stdlib csv/math.fsum; recomputed feed inventories and log(x)+logphi from final state rows, independent of NeqSim and stored residual columns."
+}

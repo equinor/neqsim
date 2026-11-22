@@ -170,7 +170,7 @@ public class TransientPipeHeatTransferExample {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Effectiveness (1-e^-NTU): %.3f%n", effectiveness);
 
     // Expected outlet temperatures at different inlet temps
-    double[] testInletTemps = { 40.0, 60.0, 90.0 };
+    double[] testInletTemps = {40.0, 60.0, 90.0};
     logger.info("Expected steady-state outlet temperatures:");
     logger.info("Inlet T    Expected Outlet T    Cooling (ΔT)");
     for (double Tin : testInletTemps) {

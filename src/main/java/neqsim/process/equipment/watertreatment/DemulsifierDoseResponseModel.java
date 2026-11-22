@@ -124,9 +124,9 @@ public class DemulsifierDoseResponseModel implements Serializable {
     }
 
     double[] halfDoseCandidates = buildHalfDoseCandidates(minPositiveDose, maxDose);
-    double[] hillCandidates = { 0.8, 1.0, 1.5, 2.0, 3.0 };
-    double[] optimumCandidates = { 0.6 * maxDose, 0.8 * maxDose, maxDose, 1.25 * maxDose };
-    double[] overdoseCandidates = { 0.0, 0.15, 0.30, 0.60, 1.0 };
+    double[] hillCandidates = {0.8, 1.0, 1.5, 2.0, 3.0};
+    double[] optimumCandidates = {0.6 * maxDose, 0.8 * maxDose, maxDose, 1.25 * maxDose};
+    double[] overdoseCandidates = {0.0, 0.15, 0.30, 0.60, 1.0};
 
     double bestError = Double.POSITIVE_INFINITY;
     double bestMaxRemoval = maxRemovalFraction;

@@ -35,7 +35,7 @@ public class AntiSurgeControllerTest {
   void testRecycleValveOpensWhenMarginLow() {
     Stream feed = gasStream();
     // stub compressor exposing a controllable surge margin
-    final double[] marginHolder = new double[] { 0.02 };
+    final double[] marginHolder = new double[] {0.02};
     Compressor comp = new Compressor("comp", feed) {
       private static final long serialVersionUID = 1L;
 
@@ -58,7 +58,9 @@ public class AntiSurgeControllerTest {
     }
     double openLow = controller.getValveOpening();
     Assertions.assertTrue(openLow > 5.0, "Recycle valve should open when surge margin is low");
-    Assertions.assertEquals(openLow, recycle.getPercentValveOpening(), 1e-9);
+    // Controller output is a request; actual motion belongs to the valve physical step (issue #4899).
+    Assertions.assertEquals(openLow, recycle.getTargetPercentValveOpening(), 1e-9);
+    Assertions.assertEquals(0.0, recycle.getPercentValveOpening(), 1e-9);
 
     // restore a healthy margin: controller should close the valve back down
     controller.reset();
@@ -81,7 +83,7 @@ public class AntiSurgeControllerTest {
     controller.runTransient(0.0, 1.0);
     Assertions.assertTrue(controller.getValveOpening() <= 60.0);
 
-    final double[] marginHolder = new double[] { -0.5 };
+    final double[] marginHolder = new double[] {-0.5};
     Compressor comp = new Compressor("comp", feed) {
       private static final long serialVersionUID = 1L;
 
@@ -102,7 +104,7 @@ public class AntiSurgeControllerTest {
   @Test
   void testPredictiveActionOpensBeforeCurrentMarginCrossesSetpoint() {
     Stream feed = gasStream();
-    final double[] marginHolder = new double[] { 0.30 };
+    final double[] marginHolder = new double[] {0.30};
     Compressor comp = new Compressor("comp", feed) {
       private static final long serialVersionUID = 1L;
 

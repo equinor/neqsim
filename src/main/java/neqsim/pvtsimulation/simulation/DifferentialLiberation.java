@@ -19,6 +19,13 @@ public class DifferentialLiberation extends BasePVTsimulation {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DifferentialLiberation.class);
 
+  /** Standard temperature for gas and stock-tank oil volumes [K]. */
+  private static final double STANDARD_TEMPERATURE = 288.15;
+
+  private boolean recordDepletionSnapshots;
+  private boolean useIdealGasStandardVolume = true;
+  private DepletionSnapshot[] depletionSnapshots = new DepletionSnapshot[0];
+
   double VoilStd = 0.0;
   double[] relativeVolume = null;
   double[] totalVolume = null;
@@ -48,6 +55,86 @@ public class DifferentialLiberation extends BasePVTsimulation {
   }
 
   /**
+   * Replays isothermal differential liberation without a saturation estimate or a surface-volume convention.
+   *
+   * <p>
+   * At each decreasing pressure, equilibrate the retained sample and remove the entire physically present gas phase.
+   * Oil and aqueous phases remain in the cell, including mutually dissolved components. Two liquid phases alone do not
+   * imply gas liberation. This route requires oil at every step and rejects other phase types; it does not implement
+   * wet CVD, liquid withdrawal or critical-degenerate equilibrium qualification. The supplied fluid is copied and
+   * remains unchanged. Completed immutable snapshots are published only after the whole path succeeds; legacy
+   * normalized PVT arrays are not populated by this method.
+   * </p>
+   *
+   * @return complete equilibrium, retained and named component-withdrawal evidence
+   */
+  public DepletionSnapshot[] runNativeLiberation() {
+    if (pressures == null || pressures.length == 0) {
+      throw new IllegalArgumentException("A complete decreasing DLE pressure schedule is required");
+    }
+    double[] schedule = pressures.clone();
+    for (int row = 0; row < schedule.length; row++) {
+      if (!Double.isFinite(schedule[row]) || schedule[row] <= 0 || row > 0 && schedule[row] >= schedule[row - 1]) {
+        throw new IllegalArgumentException("DLE pressures must be finite, positive and strictly decreasing");
+      }
+    }
+    SystemInterface cell = org.apache.commons.lang3.SerializationUtils.clone(getThermoSystem());
+    if (!Double.isNaN(temperature)) {
+      cell.setTemperature(temperature, temperatureUnit);
+    }
+    if (!Double.isFinite(cell.getTemperature()) || cell.getTemperature() <= 0
+        || !Double.isFinite(cell.getTotalNumberOfMoles()) || cell.getTotalNumberOfMoles() <= 0) {
+      throw new IllegalArgumentException("A finite positive temperature and sample inventory are required");
+    }
+    DepletionSnapshot[] completed = new DepletionSnapshot[schedule.length];
+    double[] previous = DepletionSnapshot.inventory(cell);
+    for (int row = 0; row < schedule.length; row++) {
+      cell.setPressure(schedule[row]);
+      try {
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(cell).TPflash();
+        cell.init(1);
+        cell.initPhysicalProperties(neqsim.physicalproperties.PhysicalPropertyType.MASS_DENSITY);
+      } catch (Exception ex) {
+        throw new IllegalStateException("Native DLE equilibrium failed at " + schedule[row] + " bara", ex);
+      }
+      if (!cell.hasPhaseType("oil")) {
+        throw new IllegalStateException("Native DLE requires retained oil at row " + row);
+      }
+      int gas = -1;
+      for (int phase = 0; phase < cell.getNumberOfPhases(); phase++) {
+        String type = cell.getPhase(phase).getType().getDesc();
+        if ("gas".equals(type)) {
+          gas = phase;
+        } else if (!"oil".equals(type) && !"aqueous".equals(type)) {
+          throw new IllegalStateException("Unsupported native DLE phase at row " + row);
+        }
+        for (int other = 0; other < phase; other++) {
+          double distance = 0;
+          for (int component = 0; component < cell.getNumberOfComponents(); component++) {
+            distance += Math.abs(cell.getPhase(phase).getComponent(component).getx()
+                - cell.getPhase(other).getComponent(component).getx());
+          }
+          if (distance <= 1e-8) {
+            throw new IllegalStateException("Critical-degenerate native DLE split is not qualified");
+          }
+        }
+      }
+      SystemInterface equilibrium = org.apache.commons.lang3.SerializationUtils.clone(cell);
+      if (gas >= 0) {
+        cell.removePhase(gas);
+        cell.initBeta();
+        cell.init_x_y();
+        cell.init(1);
+        cell.initPhysicalProperties(neqsim.physicalproperties.PhysicalPropertyType.MASS_DENSITY);
+      }
+      completed[row] = new DepletionSnapshot(equilibrium, cell, previous);
+      previous = DepletionSnapshot.inventory(cell);
+    }
+    depletionSnapshots = completed;
+    return completed.clone();
+  }
+
+  /**
    * calcSaturationConditions.
    */
   public void calcSaturationConditions() {
@@ -70,12 +157,14 @@ public class DifferentialLiberation extends BasePVTsimulation {
         maxPres = getThermoSystem().getPressure();
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
-    /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
-     */
+    // Finish on the single-phase side of the bracket: the last midpoint can lie just below the
+    // saturation pressure and hold a trace incipient phase as phase 0 (#5209).
+    getThermoSystem().setPressure(maxPres);
+    thermoOps.TPflash();
     getThermoSystem().initPhysicalProperties();
-    saturationVolume = getThermoSystem().getPhase(0).getMass()
-        / getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    // The saturation volume is the volume of the whole cell, summed over every phase present, so it
+    // never depends on which phase happens to be stored first.
+    saturationVolume = getThermoSystem().getCorrectedVolume();
     saturationPressure = getThermoSystem().getPressure();
     saturationConditionFound = true;
   }
@@ -85,6 +174,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
    */
   public void runCalc() {
     saturationConditionFound = false;
+    depletionSnapshots = recordDepletionSnapshots ? new DepletionSnapshot[pressures.length] : new DepletionSnapshot[0];
+    double[] previousInventory = recordDepletionSnapshots ? DepletionSnapshot.inventory(getThermoSystem()) : null;
     relativeVolume = new double[pressures.length];
     double[] mass = new double[pressures.length];
     totalVolume = new double[pressures.length];
@@ -109,7 +200,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        throw new IllegalStateException("DLE equilibrium flash failed at " + pressures[i] + " bara", ex);
       }
       getThermoSystem().initPhysicalProperties();
       oilDensity[i] = getThermoSystem().getDensity("kg/m3");
@@ -117,6 +208,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
 
       totalVolume[i] = mass[i] / oilDensity[i];
       liquidVolume[i] = totalVolume[i];
+      SystemInterface equilibriumSnapshot = null;
       if (getThermoSystem().getNumberOfPhases() > 1) {
         if (!saturationConditionFound) {
           calcSaturationConditions();
@@ -124,21 +216,20 @@ public class DifferentialLiberation extends BasePVTsimulation {
           try {
             thermoOps.TPflash();
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            throw new IllegalStateException("DLE post-saturation flash failed at " + pressures[i] + " bara", ex);
           }
         }
-        gasStandardVolume[i] = getThermoSystem().getPhase(PhaseType.GAS).getMass()
-            / getThermoSystem().getPhase(PhaseType.GAS).getPhysicalProperties().getDensity()
-            * getThermoSystem().getPhase(0).getPressure() / ThermodynamicConstantsInterface.referencePressure
-            / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
+        // Physical properties (Peneloux-corrected densities) must describe the stage state, not
+        // the single-phase saturation state evaluated in calcSaturationConditions().
+        getThermoSystem().initPhysicalProperties();
+        gasStandardVolume[i] = standardGasVolume(getThermoSystem().getPhase(PhaseType.GAS));
         totalGasStandardVolume += getGasStandardVolume()[i];
-        // if (totalVolume[i] > saturationVolume) {
-        Zgas[i] = getThermoSystem().getPhase(0).getZ();
-        relGasGravity[i] = getThermoSystem().getPhase(0).getMolarMass() / 0.028;
+        Zgas[i] = getThermoSystem().getPhase(PhaseType.GAS).getZvolcorr();
+        relGasGravity[i] = getThermoSystem().getPhase(PhaseType.GAS).getMolarMass() * 1000.0
+            / ThermodynamicConstantsInterface.molarMassAir;
         if (getThermoSystem().hasPhaseType(PhaseType.GAS) && getThermoSystem().hasPhaseType(PhaseType.OIL)) {
-          oilDensity[i] = getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
-          liquidVolume[i] = getThermoSystem().getPhase(1).getMass() / oilDensity[i];
-          getThermoSystem().getPhase(1).getMass();
+          oilDensity[i] = getThermoSystem().getPhase(PhaseType.OIL).getPhysicalProperties().getDensity();
+          liquidVolume[i] = getThermoSystem().getPhase(PhaseType.OIL).getMass() / oilDensity[i];
         } else if (getThermoSystem().hasPhaseType("oil")) {
           oilDensity[i] = getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
           liquidVolume[i] = getThermoSystem().getPhase(0).getMass() / oilDensity[i];
@@ -153,7 +244,18 @@ public class DifferentialLiberation extends BasePVTsimulation {
         }
 
         liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
-        getThermoSystem().removePhase(0);
+        if (recordDepletionSnapshots) {
+          equilibriumSnapshot = org.apache.commons.lang3.SerializationUtils
+              .deserialize(org.apache.commons.lang3.SerializationUtils.serialize(getThermoSystem()));
+        }
+        // Liberate the gas phase itself rather than whichever phase is stored first.
+        getThermoSystem().removePhase(getThermoSystem().getPhaseNumberOfPhase(PhaseType.GAS));
+      }
+      if (recordDepletionSnapshots) {
+        depletionSnapshots[i] = new DepletionSnapshot(
+            equilibriumSnapshot == null ? getThermoSystem() : equilibriumSnapshot, getThermoSystem(),
+            previousInventory);
+        previousInventory = DepletionSnapshot.inventory(getThermoSystem());
       }
     }
     getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
@@ -161,13 +263,13 @@ public class DifferentialLiberation extends BasePVTsimulation {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      throw new IllegalStateException("DLE final standard-condition flash failed", ex);
     }
     getThermoSystem().initPhysicalProperties();
     VoilStd = getThermoSystem().getPhase(PhaseType.OIL).getMass()
         / getThermoSystem().getPhase(PhaseType.OIL).getPhysicalProperties().getDensity();
     if (getThermoSystem().hasPhaseType(PhaseType.GAS)) {
-      totalGasStandardVolume += getThermoSystem().getPhase(PhaseType.GAS).getCorrectedVolume();
+      totalGasStandardVolume += standardGasVolume(getThermoSystem().getPhase(PhaseType.GAS));
     }
 
     double total = 0;
@@ -185,6 +287,79 @@ public class DifferentialLiberation extends BasePVTsimulation {
        * " gasstdvol " + getGasStandardVolume()[i]);
        */
     }
+  }
+
+  /**
+   * Returns the volume a liberated gas phase occupies at standard conditions (288.15 K, 1.01325 bara).
+   *
+   * <p>
+   * With the default laboratory convention (Pedersen et al., 2015, Sec. 3.1, Eq. 3.7) the gas is taken as ideal at
+   * standard conditions, Z = 1, so V = n R T_std / P_std. Any liquid that would drop out of the gas at standard
+   * conditions is thereby counted as its equivalent gas volume. With {@link #setUseIdealGasStandardVolume(boolean)} set
+   * to false, the gas is instead evaluated as a single gas phase at standard conditions and its Peneloux-corrected
+   * (when enabled) real-gas Z is used.
+   * </p>
+   *
+   * @param gas the liberated gas phase
+   * @return standard volume in m3
+   */
+  private double standardGasVolume(neqsim.thermo.phase.PhaseInterface gas) {
+    double moles = gas.getNumberOfMolesInPhase();
+    double idealVolume = moles * ThermodynamicConstantsInterface.R * STANDARD_TEMPERATURE
+        / (ThermodynamicConstantsInterface.referencePressure * 1.0e5);
+    if (useIdealGasStandardVolume) {
+      return idealVolume;
+    }
+    SystemInterface gasAtStd = getThermoSystem().phaseToSystem(PhaseType.GAS.getDesc());
+    gasAtStd.setTemperature(STANDARD_TEMPERATURE);
+    gasAtStd.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    gasAtStd.init(1);
+    gasAtStd.getPhase(0).setType(PhaseType.GAS);
+    gasAtStd.initPhysicalProperties();
+    return idealVolume * gasAtStd.getPhase(0).getZvolcorr();
+  }
+
+  /**
+   * Selects the standard-condition convention for the liberated gas used in {@link #getRs()}, {@link #getBg()} and
+   * {@link #getGasStandardVolume()}.
+   *
+   * <p>
+   * The default (true) is the usual laboratory convention: Z = 1 at standard conditions and any liquid dropout
+   * converted to equivalent gas (Pedersen et al., 2015, Eq. 3.7). Set false to use the real-gas Z of each liberated gas
+   * evaluated as a single gas phase at standard conditions.
+   * </p>
+   *
+   * @param ideal true for Z = 1 at standard conditions (default), false for real-gas Z
+   */
+  public void setUseIdealGasStandardVolume(boolean ideal) {
+    this.useIdealGasStandardVolume = ideal;
+  }
+
+  /**
+   * Returns whether the liberated gas is taken as ideal (Z = 1) at standard conditions.
+   *
+   * @return true for the Z = 1 laboratory convention (default)
+   */
+  public boolean isUseIdealGasStandardVolume() {
+    return useIdealGasStandardVolume;
+  }
+
+  /**
+   * Enables immutable per-pressure native phase and component-withdrawal evidence for the next run.
+   *
+   * @param record true to record; false preserves the default calculation and memory cost
+   */
+  public void setRecordDepletionSnapshots(boolean record) {
+    recordDepletionSnapshots = record;
+  }
+
+  /**
+   * Returns a copy of the recorded snapshot array, empty when recording was disabled.
+   *
+   * @return immutable completed-step evidence in supplied pressure order
+   */
+  public DepletionSnapshot[] getDepletionSnapshots() {
+    return depletionSnapshots.clone();
   }
 
   /**
@@ -213,7 +388,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
 
     DifferentialLiberation differentialLiberation = new DifferentialLiberation(tempSystem);
     differentialLiberation
-        .setPressures(new double[] { 350.0, 250.0, 200.0, 150.0, 100.0, 70.0, 50.0, 40.0, 30.0, 20.0, 1.0 });
+        .setPressures(new double[] {350.0, 250.0, 200.0, 150.0, 100.0, 70.0, 50.0, 40.0, 30.0, 20.0, 1.0});
     differentialLiberation.setTemperature(83.5, "C");
     differentialLiberation.runCalc();
   }

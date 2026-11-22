@@ -43,9 +43,9 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
 
   @Test
   public void testProcess2() {
-    double[] values = { 91.7877475, 166.4337708, 9439.315801, 818.1486699, 344.9999383, 44.79751175, 87.37151962,
+    double[] values = {91.7877475, 166.4337708, 9439.315801, 818.1486699, 344.9999383, 44.79751175, 87.37151962,
         29.04201342, 33.49897183, 50.83560884, 52.79138188, 43.39787788, 35.33509333, 118.1702641, 74.28553034,
-        26.39921569 };
+        26.39921569};
 
     // Calculate HP1 and LP1
     double[] HP1 = new double[values.length];

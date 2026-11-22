@@ -1,0 +1,194 @@
+[
+  {
+    "eos": "SRK",
+    "scenario": "phase_init1",
+    "rule": "2",
+    "baseline_ns": 8918795.5,
+    "candidate_ns": 8896902.5,
+    "candidate_over_baseline": 0.9975452963351386,
+    "checksums": {
+      "baseline": [
+        -6885.641694916463
+      ],
+      "candidate": [
+        -6885.641694916463
+      ]
+    }
+  },
+  {
+    "eos": "SRK",
+    "scenario": "phase_init1",
+    "rule": "4",
+    "baseline_ns": 17644925.5,
+    "candidate_ns": 17861126.0,
+    "candidate_over_baseline": 1.0122528428924225,
+    "checksums": {
+      "baseline": [
+        -7450.631531882124
+      ],
+      "candidate": [
+        -7450.631531882124
+      ]
+    }
+  },
+  {
+    "eos": "SRK",
+    "scenario": "phase_init3",
+    "rule": "2",
+    "baseline_ns": 11796396.0,
+    "candidate_ns": 11138736.0,
+    "candidate_over_baseline": 0.9442490740392235,
+    "checksums": {
+      "baseline": [
+        -6685.656815593018
+      ],
+      "candidate": [
+        -6685.656815593018
+      ]
+    }
+  },
+  {
+    "eos": "SRK",
+    "scenario": "phase_init3",
+    "rule": "4",
+    "baseline_ns": 32544519.5,
+    "candidate_ns": 31820827.5,
+    "candidate_over_baseline": 0.9777630147527604,
+    "checksums": {
+      "baseline": [
+        -7141.8503327121025
+      ],
+      "candidate": [
+        -7141.8503327121025
+      ]
+    }
+  },
+  {
+    "eos": "SRK",
+    "scenario": "flash_init3",
+    "rule": "2",
+    "baseline_ns": 22127404.5,
+    "candidate_ns": 22898886.0,
+    "candidate_over_baseline": 1.034865431234829,
+    "checksums": {
+      "baseline": [
+        84.18486665690783
+      ],
+      "candidate": [
+        84.18486665690783
+      ]
+    }
+  },
+  {
+    "eos": "SRK",
+    "scenario": "flash_init3",
+    "rule": "4",
+    "baseline_ns": 58491326.0,
+    "candidate_ns": 56296819.5,
+    "candidate_over_baseline": 0.9624815053773956,
+    "checksums": {
+      "baseline": [
+        83.72853815971463
+      ],
+      "candidate": [
+        83.72853815971463
+      ]
+    }
+  },
+  {
+    "eos": "PR",
+    "scenario": "phase_init1",
+    "rule": "2",
+    "baseline_ns": 9635745.0,
+    "candidate_ns": 9795150.0,
+    "candidate_over_baseline": 1.0165430903370731,
+    "checksums": {
+      "baseline": [
+        -6638.863346913128
+      ],
+      "candidate": [
+        -6638.863346913128
+      ]
+    }
+  },
+  {
+    "eos": "PR",
+    "scenario": "phase_init1",
+    "rule": "4",
+    "baseline_ns": 18394573.5,
+    "candidate_ns": 18971127.5,
+    "candidate_over_baseline": 1.0313437003581518,
+    "checksums": {
+      "baseline": [
+        -7231.289095376985
+      ],
+      "candidate": [
+        -7231.289095376985
+      ]
+    }
+  },
+  {
+    "eos": "PR",
+    "scenario": "phase_init3",
+    "rule": "2",
+    "baseline_ns": 11670555.0,
+    "candidate_ns": 9774146.0,
+    "candidate_over_baseline": 0.8375048144668356,
+    "checksums": {
+      "baseline": [
+        -6452.437982713206
+      ],
+      "candidate": [
+        -6452.437982713206
+      ]
+    }
+  },
+  {
+    "eos": "PR",
+    "scenario": "phase_init3",
+    "rule": "4",
+    "baseline_ns": 30546918.0,
+    "candidate_ns": 31022279.0,
+    "candidate_over_baseline": 1.0155616681198412,
+    "checksums": {
+      "baseline": [
+        -7034.5564705869765
+      ],
+      "candidate": [
+        -7034.5564705869765
+      ]
+    }
+  },
+  {
+    "eos": "PR",
+    "scenario": "flash_init3",
+    "rule": "2",
+    "baseline_ns": 20573732.0,
+    "candidate_ns": 20792527.0,
+    "candidate_over_baseline": 1.0106346772671093,
+    "checksums": {
+      "baseline": [
+        83.99081574477175
+      ],
+      "candidate": [
+        83.99081574477175
+      ]
+    }
+  },
+  {
+    "eos": "PR",
+    "scenario": "flash_init3",
+    "rule": "4",
+    "baseline_ns": 59203685.0,
+    "candidate_ns": 59667854.5,
+    "candidate_over_baseline": 1.0078402129867423,
+    "checksums": {
+      "baseline": [
+        83.65446375876543
+      ],
+      "candidate": [
+        83.65446375876543
+      ]
+    }
+  }
+]

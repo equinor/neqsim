@@ -201,7 +201,7 @@ The automation API covers 20+ equipment types:
 | `Separator` | temperature, pressure, liquidLevel + stream ports |
 | `ThreePhaseSeparator` | Same as Separator + waterLevel + waterOutStream |
 | `Tank` | temperature, pressure, liquidLevel + stream ports |
-| `Compressor` | outletPressure (INPUT), power, polytropicEfficiency, isentropicEfficiency, speed |
+| `Compressor` | outletPressure, polytropicEfficiency, isentropicEfficiency, speed (INPUT); power (OUTPUT) |
 | `CompressorTrain` | Same as Compressor (applied to first stage) |
 | `Expander` | outletPressure (INPUT), power, isentropicEfficiency |
 | `Pump` | outletPressure (INPUT), power |

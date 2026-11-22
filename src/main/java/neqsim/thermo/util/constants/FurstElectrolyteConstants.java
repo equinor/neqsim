@@ -19,8 +19,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   // public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6,
   // -25.314e-6, -0.05813e-6, -44.383e-6};
   /** Constant <code>furstParams</code>. */
-  public static double[] furstParams = { 0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606,
-      -0.0000217950 };
+  public static double[] furstParams = {0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606,
+      -0.0000217950};
   // public static double[] furstParams = {0.0000001018, 0.0000064366,
   // 0.0001103447, -0.0001631115, -0.0000000565, -0.0000565052};
   // public static double[] furstParams = {0.10688e-6, 6.5665e-6, 35.09e-6,
@@ -129,7 +129,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Some ions (KCl, CaCl2) may have numerical issues at certain compositions
       8.0e-05, -1.5e-04, 1.0e-07, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17 };
+      9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17};
 
   // 0.0000001880, 0.0000014139, 0.0000284666, 0.0000389043, -0.0000000451,
   // 0.0000088136
@@ -168,7 +168,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Na+, K+, Li+, Br salts, and divalent cations all tested
       8.0e-05, -1.15e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      9.6e-05, -1.38e-04, -4.4e-08, -6.0e-17 };
+      9.6e-05, -1.38e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in methanol solvent.
@@ -198,7 +198,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Methanol has higher dielectric than ethanol so needs different balance
       6.0e-05, -8.0e-05, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - adjusted for higher γ
-      5.0e-05, -5.0e-05, -4.4e-08, -6.0e-17 };
+      5.0e-05, -5.0e-05, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in ethanol solvent.
@@ -229,7 +229,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Similar to MEG but adjusted for ethanol's lower dielectric constant (24.5)
       9.0e-05, -1.3e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent (1.2x)
-      1.08e-04, -1.56e-04, -4.4e-08, -6.0e-17 };
+      1.08e-04, -1.56e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in MEA (monoethanolamine) solvent.
@@ -265,7 +265,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Parameters fitted for reasonable γ± across Na+, K+, Li+, divalent cations
       1.3e-04, -1.6e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      1.56e-04, -1.92e-04, -4.4e-08, -6.0e-17 };
+      1.56e-04, -1.92e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in TEG (triethylene glycol) solvent.
@@ -291,7 +291,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // SR parameters for monovalent (1+) cations [2-5] - NEED FITTING
       4.98e-05, -1.22e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - NEED FITTING
-      5.4e-05, -1.72e-04, -4.4e-08, -6.0e-17 };
+      5.4e-05, -1.72e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Temperature-dependent Wij parameters for electrolyte interactions.
@@ -332,7 +332,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // wij[1] for 2+ cation-anion: prefactor, intercept
       -3.0e-06, 1.2e-02,
       // wij[2] for 2+ cation-anion: prefactor, intercept
-      -6.0e-09, 2.3e-05 };
+      -6.0e-09, 2.3e-05};
 
   /**
    * Dummy constructor, not for use. Class is to be considered static.
@@ -569,8 +569,9 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * The Setchenow equation gives: ln(S/S0) = -k_s * m where k_s is typically 0.1-0.12 L/mol for CO2 and 0.12-0.15 L/mol
-   * for CH4 in NaCl solutions.
+   * The Setschenow convention must be stated with its logarithm and concentration basis. For example, Onda et al.
+   * (1970), DOI 10.1252/jcej.3.18, use a base-10 logarithm and solution molarity. The values below are legacy
+   * short-range interaction coefficients in m3/mol, not measured Setschenow coefficients.
    * </p>
    *
    * <p>
@@ -578,9 +579,9 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Calibration 2024-12: These parameters compensate for excessive salting out from the SR2 term's packing fraction
-   * derivative (FSR2eps * epsi). The positive Wij values reduce the net dFSR2dN contribution for CO2/CH4. Validation
-   * results for CO2 in NaCl at 298 K: 0.5 mol/kg: ~5%, 1.0 mol/kg: ~10%, 2.0 mol/kg: ~18%, matching k_s ~ 0.1 L/mol.
+   * These parameters compensate for implicit contributions from the SR2 term. Their original NaCl-oriented calibration
+   * and the hydrocarbon values have not been independently source-reconstructed. Ion-specific use therefore requires
+   * separate provenance and validation.
    * </p>
    *
    * <p>
@@ -620,6 +621,9 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       1.30e-4, // [16] W_H2-cation
       1.30e-4 // [17] W_H2-anion
   };
+
+  /** Immutable snapshot used to detect explicit changes to the mutable legacy gas-ion constants. */
+  private static final double[] defaultGasIonParameters = furstParamsGasIon.clone();
 
   /**
    * Parameters for organic inhibitor-ion interactions to ensure additive hydrate inhibition.
@@ -691,9 +695,19 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   }
 
   /**
+   * Check whether a mutable gas-ion parameter still has its library default value.
+   *
+   * @param i gas-ion parameter index
+   * @return {@code true} when the parameter has not been changed from its startup value
+   */
+  public static boolean isDefaultGasIonParameter(int i) {
+    return furstParamsGasIon[i] == defaultGasIonParameters[i];
+  }
+
+  /**
    * Set gas-ion interaction parameter.
    *
-   * @param i index: 0-3=legacy fixed params, 4=CO2-ion slope, 5=CO2-ion intercept, 6=CH4-ion slope, 7=CH4-ion intercept
+   * @param i gas-ion parameter index documented by {@link #getFurstParamGasIon(int)}
    * @param value the Wij parameter value to set
    */
   public static void setFurstParamGasIon(int i, double value) {
@@ -923,7 +937,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
     }
-    ionSpecificWij.put(cation + "-" + anion, new double[] { wijCatWater, wijCatAnion });
+    ionSpecificWij.put(cation + "-" + anion, new double[] {wijCatWater, wijCatAnion});
   }
 
   /**

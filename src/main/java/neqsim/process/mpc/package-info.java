@@ -206,7 +206,7 @@
  * softExporter.addViscositySensor("sep_oil_visc", "separator", "oil outlet");
  * softExporter.addPhaseFractionSensor("sep_gas_frac", "separator");
  * softExporter.addCompositionEstimator("sep_comp", "separator", "gas outlet",
- *     new String[] { "methane", "ethane", "propane" });
+ *     new String[] {"methane", "ethane", "propane"});
  *
  * // Export in JSON and CVT formats
  * softExporter.exportConfiguration("soft_sensors.json");

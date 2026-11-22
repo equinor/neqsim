@@ -1,0 +1,70 @@
+# SYNTHETIC workflow-test route: single satellite template, 12 km flowline in three segments and a riser to a host inlet.
+# No real field. Coordinates are a synthetic local grid.
+schema: flow_assurance_route.v1
+route_status: synthetic
+georeferenced: false
+crs: "SYNTHETIC-LOCAL-XY (metres, x east, y north); not a geodetic CRS"
+horizontal_datum: "none (synthetic local grid)"
+vertical_datum: "MSL (synthetic); elevations positive up, seabed negative"
+chainage:
+  origin: "Template outlet (path start); chainage runs along the flow direction"
+  direction: "downstream (along flow)"
+  measure: "measured (as-laid) route length, not horizontal projection"
+assets:
+  - {id: TMPL-S, kind: template, name: "Satellite template S", x_m: -12000, y_m: 0, elev_m: -350, modeled: true}
+  - {id: N-1, kind: waypoint, name: "KP 4.01", x_m: -8000, y_m: 0, elev_m: -380, modeled: true}
+  - {id: N-2, kind: waypoint, name: "KP 8.03", x_m: -4000, y_m: 0, elev_m: -330, modeled: true}
+  - {id: RB-1, kind: riser_base, name: "Riser base", x_m: -100, y_m: 0, elev_m: -345, modeled: true}
+  - {id: HOST-IN, kind: host_interface, name: "Host inlet (riser top / battery limit)", x_m: 0, y_m: 0, elev_m: 25, modeled: true}
+segments:
+  - &fl1
+    id: FL-01
+    kind: flowline
+    line_tag: "FL-01-10in-WI50"
+    from: TMPL-S
+    to: N-1
+    length_m: 4010
+    id_m: 0.2540
+    roughness_m: 4.5e-5
+    ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}
+    burial: null
+    layers: &layers_wi50
+      - {name: "steel (X65)", material: "carbon steel", thickness_m: 0.0159, k_w_mk: 45.0, rho_kg_m3: 7850.0, cp_j_kgk: 490.0}
+      - {name: "FBE coating", material: "fusion-bonded epoxy", thickness_m: 0.0004, k_w_mk: 0.30, rho_kg_m3: 1300.0, cp_j_kgk: 1700.0}
+      - {name: "PP insulation", material: "solid PP", thickness_m: 0.050, k_w_mk: 0.17, rho_kg_m3: 900.0, cp_j_kgk: 1900.0}
+      - {name: "outer PE sheath", material: "PE", thickness_m: 0.003, k_w_mk: 0.40, rho_kg_m3: 950.0, cp_j_kgk: 2000.0}
+    source: TEST-DB-001
+  - {id: FL-02, kind: flowline, line_tag: "FL-02-10in-WI50", from: N-1, to: N-2, length_m: 4015, id_m: 0.2540, roughness_m: 4.5e-5,
+     ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}, burial: null, layers: *layers_wi50, source: TEST-DB-001}
+  - id: FL-03
+    kind: flowline
+    line_tag: "FL-03-10in-WI50-TR"
+    from: N-2
+    to: RB-1
+    length_m: 3910
+    id_m: 0.2540
+    roughness_m: 4.5e-5
+    ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}
+    burial: {depth_m: 1.0, k_soil_w_mk: 1.5, note: "trenched and backfilled section (synthetic); depth to pipe axis"}
+    layers: *layers_wi50
+    source: TEST-DB-001
+  - id: RS-01
+    kind: riser
+    line_tag: "RS-01-10in-WI60"
+    from: RB-1
+    to: HOST-IN
+    length_m: 395
+    length_note: "riser length exceeds the 3D chord (383 m) because of the synthetic lazy-wave shape; no fabrication geometry is implied"
+    id_m: 0.2540
+    roughness_m: 4.5e-5
+    ambient: {t_c: 8.0, type: water_column_mean, external_h_w_m2k: 300.0, note: "depth-averaged seawater temperature over the riser (synthetic)"}
+    burial: null
+    layers:
+      - {name: "steel (X65)", material: "carbon steel", thickness_m: 0.0206, k_w_mk: 45.0, rho_kg_m3: 7850.0, cp_j_kgk: 490.0}
+      - {name: "FBE coating", material: "fusion-bonded epoxy", thickness_m: 0.0004, k_w_mk: 0.30, rho_kg_m3: 1300.0, cp_j_kgk: 1700.0}
+      - {name: "PU insulation", material: "polyurethane", thickness_m: 0.060, k_w_mk: 0.17, rho_kg_m3: 700.0, cp_j_kgk: 1800.0}
+      - {name: "outer PE sheath", material: "PE", thickness_m: 0.003, k_w_mk: 0.40, rho_kg_m3: 950.0, cp_j_kgk: 2000.0}
+    source: TEST-DB-001
+features:
+  - {id: INJ-S, kind: injection_point, at_node: TMPL-S, label: "MEG injection, template S", modeled: true, note: "inhibitor mixed into the template stream"}
+  - {id: PR-HOST, kind: pig_receiver, at_node: HOST-IN, label: "Pig receiver (host)", modeled: false, note: "interface only; slug receiving is not simulated"}

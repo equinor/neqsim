@@ -1,5 +1,7 @@
 package neqsim.process.equipment.distillation;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.List;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -30,6 +32,8 @@ final class ColumnMeshState implements Serializable {
   private final double[][] liquidComponentFlowsMolHr;
   /** Feed component molar flow per tray and component in mol/hr. */
   private final double[][] feedComponentFlowsMolHr;
+  /** Side-product and pumparound draw component flows in mol/hr. */
+  private final double[][] externalOutletComponentFlowsMolHr;
   /** Vapor mole fractions per tray and component. */
   private final double[][] vaporMoleFractions;
   /** Liquid mole fractions per tray and component. */
@@ -45,21 +49,24 @@ final class ColumnMeshState implements Serializable {
    * @param vaporComponentFlowsMolHr vapor component flows in mol/hr
    * @param liquidComponentFlowsMolHr liquid component flows in mol/hr
    * @param feedComponentFlowsMolHr feed component flows in mol/hr
+   * @param externalOutletComponentFlowsMolHr side-product and pumparound draw component flows
    * @param vaporMoleFractions vapor mole fractions
    * @param liquidMoleFractions liquid mole fractions
    */
   private ColumnMeshState(String[] componentNames, double[] trayTemperatures, double[] vaporFlowsMolHr,
       double[] liquidFlowsMolHr, double[][] vaporComponentFlowsMolHr, double[][] liquidComponentFlowsMolHr,
-      double[][] feedComponentFlowsMolHr, double[][] vaporMoleFractions, double[][] liquidMoleFractions) {
+      double[][] feedComponentFlowsMolHr, double[][] externalOutletComponentFlowsMolHr, double[][] vaporMoleFractions,
+      double[][] liquidMoleFractions) {
     this.componentNames = componentNames.clone();
     this.trayTemperatures = trayTemperatures.clone();
     this.vaporFlowsMolHr = vaporFlowsMolHr.clone();
     this.liquidFlowsMolHr = liquidFlowsMolHr.clone();
-    this.vaporComponentFlowsMolHr = copy(vaporComponentFlowsMolHr);
-    this.liquidComponentFlowsMolHr = copy(liquidComponentFlowsMolHr);
-    this.feedComponentFlowsMolHr = copy(feedComponentFlowsMolHr);
-    this.vaporMoleFractions = copy(vaporMoleFractions);
-    this.liquidMoleFractions = copy(liquidMoleFractions);
+    this.vaporComponentFlowsMolHr = copyMatrixArray(vaporComponentFlowsMolHr);
+    this.liquidComponentFlowsMolHr = copyMatrixArray(liquidComponentFlowsMolHr);
+    this.feedComponentFlowsMolHr = copyMatrixArray(feedComponentFlowsMolHr);
+    this.externalOutletComponentFlowsMolHr = copyMatrixArray(externalOutletComponentFlowsMolHr);
+    this.vaporMoleFractions = copyMatrixArray(vaporMoleFractions);
+    this.liquidMoleFractions = copyMatrixArray(liquidMoleFractions);
   }
 
   /**
@@ -78,6 +85,7 @@ final class ColumnMeshState implements Serializable {
     double[][] vaporComponentFlows = new double[trayCount][componentCount];
     double[][] liquidComponentFlows = new double[trayCount][componentCount];
     double[][] feedComponentFlows = new double[trayCount][componentCount];
+    double[][] externalOutletComponentFlows = new double[trayCount][componentCount];
     double[][] vaporFractions = new double[trayCount][componentCount];
     double[][] liquidFractions = new double[trayCount][componentCount];
 
@@ -95,6 +103,29 @@ final class ColumnMeshState implements Serializable {
         vaporFractions[trayIndex][compIndex] = componentFraction(vapor, componentName);
         liquidFractions[trayIndex][compIndex] = componentFraction(liquid, componentName);
       }
+      for (int compIndex = 0; compIndex < componentCount; compIndex++) {
+        String name = componentNames[compIndex];
+        double externalOutletFlow = 0.0;
+        if (tray.getGasSideDrawFraction() > 0.0) {
+          externalOutletFlow += componentFlow(tray.getGasSideDrawStream(), name);
+        }
+        if (tray.getLiquidSideDrawFraction() > 0.0) {
+          externalOutletFlow += componentFlow(tray.getLiquidSideDrawStream(), name);
+        }
+        if (tray.getLiquidPumparoundDrawFraction() > 0.0) {
+          externalOutletFlow += componentFlow(tray.getLiquidPumparoundDrawStream(), name);
+        }
+        externalOutletComponentFlows[trayIndex][compIndex] = externalOutletFlow;
+        if (tray instanceof Condenser && !((Condenser) tray).isTotalCondenser()) {
+          externalOutletComponentFlows[trayIndex][compIndex] += componentFlow(
+              ((Condenser) tray).getLiquidProductStream(), name);
+        }
+        for (DistillationColumn.ColumnPumparound pumparound : column.getPumparounds()) {
+          if (pumparound.getReturnTrayNumber() == trayIndex) {
+            feedComponentFlows[trayIndex][compIndex] += componentFlow(pumparound.getReturnStream(), name);
+          }
+        }
+      }
       List<StreamInterface> feeds = column.getExternalFeedStreams(trayIndex);
       for (StreamInterface feed : feeds) {
         for (int compIndex = 0; compIndex < componentCount; compIndex++) {
@@ -104,7 +135,18 @@ final class ColumnMeshState implements Serializable {
     }
 
     return new ColumnMeshState(componentNames, trayTemperatures, vaporFlows, liquidFlows, vaporComponentFlows,
-        liquidComponentFlows, feedComponentFlows, vaporFractions, liquidFractions);
+        liquidComponentFlows, feedComponentFlows, externalOutletComponentFlows, vaporFractions, liquidFractions);
+  }
+
+  /**
+   * Get component flow removed through side products or a pumparound draw.
+   *
+   * @param tray tray index
+   * @param component component index
+   * @return component molar flow in mol/hr
+   */
+  double getExternalOutletComponentFlow(int tray, int component) {
+    return externalOutletComponentFlowsMolHr[tray][component];
   }
 
   /**
@@ -197,20 +239,6 @@ final class ColumnMeshState implements Serializable {
     } catch (Exception ex) {
       return 0.0;
     }
-  }
-
-  /**
-   * Copy a two-dimensional double array.
-   *
-   * @param values array to copy
-   * @return copied array
-   */
-  private static double[][] copy(double[][] values) {
-    double[][] copied = new double[values.length][];
-    for (int i = 0; i < values.length; i++) {
-      copied[i] = values[i].clone();
-    }
-    return copied;
   }
 
   /**

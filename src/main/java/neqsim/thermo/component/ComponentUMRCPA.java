@@ -1,5 +1,7 @@
 package neqsim.thermo.component;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseUMRCPA;
@@ -19,6 +21,9 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   private double[][] xsitedni = new double[0][0];
   double[] xsiteOld = new double[0];
   double[] xsitedV = new double[0];
+  double[] xsitedVdV = new double[0];
+  double[] xsitedVdVdV = new double[0];
+  double[] xsitedTdV = new double[0];
   double[] xsitedT = new double[0];
   double[] xsitedTdT = new double[0];
 
@@ -33,8 +38,11 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   public ComponentUMRCPA(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
-    xsitedni = new double[numberOfAssociationSites][100];
+    xsitedni = new double[numberOfAssociationSites][compIndex + 1];
     xsitedV = new double[numberOfAssociationSites];
+    xsitedVdV = new double[numberOfAssociationSites];
+    xsitedVdVdV = new double[numberOfAssociationSites];
+    xsitedTdV = new double[numberOfAssociationSites];
     xsitedT = new double[numberOfAssociationSites];
     xsitedTdT = new double[numberOfAssociationSites];
     xsiteOld = new double[numberOfAssociationSites];
@@ -72,8 +80,11 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   public ComponentUMRCPA(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
     xsite = new double[numberOfAssociationSites];
-    xsitedni = new double[numberOfAssociationSites][100];
+    xsitedni = new double[numberOfAssociationSites][1];
     xsitedV = new double[numberOfAssociationSites];
+    xsitedVdV = new double[numberOfAssociationSites];
+    xsitedVdVdV = new double[numberOfAssociationSites];
+    xsitedTdV = new double[numberOfAssociationSites];
     xsitedT = new double[numberOfAssociationSites];
     xsitedTdT = new double[numberOfAssociationSites];
     xsiteOld = new double[numberOfAssociationSites];
@@ -103,13 +114,55 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     // physical PR term is consistent with the association term. Pure-component critical
     // properties, association energy/volume, scheme and the aCPA_PR/bCPA_PR/mCPA_PR parameters
     // are read from the component database (see Component.createComponent).
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       a = aCPA;
       b = bCPA;
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Association-site metadata alone does not imply fitted CPA physical parameters.
+   *
+   * @return true when both fitted energy and co-volume parameters are available
+   */
+  private boolean hasCpaPhysicalParameters() {
+    return cpaon == 1 && Double.isFinite(aCPA) && aCPA > 0.0 && Double.isFinite(bCPA) && bCPA > 0.0;
+  }
+
+  /**
+   * Selects dedicated UMR-CPA alpha and translation parameters when sharing the association implementation.
+   *
+   * @return true for UMR-CPA, false for generic PR-CPA
+   */
+  protected boolean useUmrParameters() {
+    return true;
+  }
+
+  /**
+   * Initializes site-response buffers absent from older UMR-CPA serialized components.
+   *
+   * @param input serialized component data
+   * @throws IOException if the component cannot be read
+   * @throws ClassNotFoundException if a serialized field type cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (xsitedVdV == null) {
+      xsitedVdV = new double[xsite.length];
+    }
+    if (xsitedVdVdV == null) {
+      xsitedVdVdV = new double[xsite.length];
+    }
+    if (xsitedTdV == null) {
+      xsitedTdV = new double[xsite.length];
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentUMRCPA clone() {
     ComponentUMRCPA clonedComponent = null;
@@ -117,6 +170,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       clonedComponent = (ComponentUMRCPA) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentUMRCPA", ex);
     }
 
     clonedComponent.xsite = xsite.clone();
@@ -124,19 +178,27 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     clonedComponent.xsiteOld = xsiteOld.clone();
     System.arraycopy(this.xsiteOld, 0, clonedComponent.xsiteOld, 0, xsiteOld.length);
     clonedComponent.xsitedV = xsitedV.clone();
+    clonedComponent.xsitedVdV = xsitedVdV.clone();
+    clonedComponent.xsitedVdVdV = xsitedVdVdV.clone();
+    clonedComponent.xsitedTdV = xsitedTdV.clone();
     System.arraycopy(this.xsitedV, 0, clonedComponent.xsitedV, 0, xsitedV.length);
     clonedComponent.xsitedT = xsitedT.clone();
     System.arraycopy(this.xsitedT, 0, clonedComponent.xsitedT, 0, xsitedT.length);
     clonedComponent.xsitedTdT = xsitedTdT.clone();
     System.arraycopy(this.xsitedTdT, 0, clonedComponent.xsitedTdT, 0, xsitedTdT.length);
     clonedComponent.xsitedni = xsitedni.clone();
-    System.arraycopy(this.xsitedni, 0, clonedComponent.xsitedni, 0, xsitedni.length);
+    for (int site = 0; site < xsitedni.length; site++) {
+      clonedComponent.xsitedni[site] = xsitedni[site].clone();
+    }
     return clonedComponent;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
+    if (!useUmrParameters()) {
+      return hasCpaPhysicalParameters() ? 0.0 : super.getVolumeCorrection();
+    }
     // The Peneloux volume translation for the PR-based UMR-CPA model uses a Rackett Z that is
     // regressed specifically for this model (UMRCPA_racketZ / UMRCPA_volcorr_T columns), because
     // the PR Peneloux shift constants differ from the SRK ones used by SRK-CPA. When no dedicated
@@ -168,6 +230,13 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public void setAttractiveTerm(int i) {
+    if (!useUmrParameters()) {
+      super.setAttractiveTerm(i);
+      if (hasCpaPhysicalParameters()) {
+        getAttractiveTerm().setm(mCPA);
+      }
+      return;
+    }
     double[] umrcpaMc = getMatiascopemanParamsUMRCPA();
     boolean hasUmrcpaMc = false;
     if (umrcpaMc != null) {
@@ -178,7 +247,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
         }
       }
     }
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       // Associating compounds (water, glycols, ...). When a dedicated UMR-CPA Mathias-Copeman
       // alpha is available (UMRCPA_MC columns, see Tasios et al., Fluid Phase Equilibria 2025),
       // install the five-parameter Mathias-Copeman term (term 22) so the energy parameter uses
@@ -225,7 +294,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double calca() {
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       return aCPA;
     }
     return super.calca();
@@ -234,7 +303,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double calcb() {
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       return bCPA;
     }
     return super.calcb();
@@ -664,5 +733,95 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     } else {
       return super.getSurfaceTenisionInfluenceParameter(temperature);
     }
+  }
+
+  /**
+   * Returns the second volume derivatives of the association-site fractions.
+   *
+   * @return site-fraction second volume derivatives
+   */
+  public double[] getXsitedVdV() {
+    return this.xsitedVdV;
+  }
+
+  /**
+   * Sets one second volume derivative of an association-site fraction.
+   *
+   * @param i association-site index
+   * @param xsitedVdV second volume derivative
+   */
+  public void setXsitedVdV(int i, double xsitedVdV) {
+    this.xsitedVdV[i] = xsitedVdV;
+  }
+
+  /**
+   * Returns the third volume derivatives of the association-site fractions.
+   *
+   * @return site-fraction third volume derivatives
+   */
+  public double[] getXsitedVdVdV() {
+    return this.xsitedVdVdV;
+  }
+
+  /**
+   * Sets one third volume derivative of an association-site fraction.
+   *
+   * @param i association-site index
+   * @param xsitedVdVdV third volume derivative
+   */
+  public void setXsitedVdVdV(int i, double xsitedVdVdV) {
+    this.xsitedVdVdV[i] = xsitedVdVdV;
+  }
+
+  /**
+   * Returns the mixed temperature-volume derivatives of the association-site fractions.
+   *
+   * @return site-fraction mixed temperature-volume derivatives
+   */
+  public double[] getXsitedTdV() {
+    return this.xsitedTdV;
+  }
+
+  /**
+   * Sets one mixed temperature-volume derivative of an association-site fraction.
+   *
+   * @param i association-site index
+   * @param xsitedTdV mixed temperature-volume derivative
+   */
+  public void setXsitedTdV(int i, double xsitedTdV) {
+    this.xsitedTdV[i] = xsitedTdV;
+  }
+
+  /**
+   * Ensure that the xsitedni array has capacity for the specified number of components.
+   *
+   * @param numComp desired number of components
+   */
+  public void resizeXsitedni(int numComp) {
+    if (numberOfAssociationSites == 0) {
+      xsitedni = new double[0][0];
+      return;
+    }
+    if (xsitedni.length != numberOfAssociationSites || (xsitedni.length > 0 && xsitedni[0].length != numComp)) {
+      double[][] newArr = new double[numberOfAssociationSites][numComp];
+      for (int i = 0; i < Math.min(xsitedni.length, numberOfAssociationSites); i++) {
+        System.arraycopy(xsitedni[i], 0, newArr[i], 0, Math.min(xsitedni[i].length, numComp));
+      }
+      xsitedni = newArr;
+    }
+  }
+
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Not supported for this CPA variant: its site-fraction arrays are sized at construction.
+   * </p>
+   */
+  @Override
+  public void setAssociationSites(int numberOfSites, String scheme) {
+    throw new UnsupportedOperationException(
+        getClass().getSimpleName() + " does not support changing the number of association sites; use SRK-CPA");
   }
 }

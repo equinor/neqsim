@@ -18,7 +18,7 @@ equality constraints, inequality constraints, and variable bounds.
 | Minimize/maximize an objective (no constraints) | `ProductionOptimizer` or SQP |
 | Minimize/maximize with equality & inequality constraints | **SQP** |
 | External optimizer integration | `ProcessSimulationEvaluator` + SciPy |
-| Multi-objective Pareto | `ProductionOptimizer.optimizePareto()` |
+| Multi-objective Pareto | `MultiObjectiveOptimizer` |
 
 SQP is the right choice when you have a **constrained optimization** problem:
 minimise cost, maximise throughput, or optimise operating conditions subject to
@@ -26,14 +26,15 @@ equipment limits, product specs, or safety constraints.
 
 ## Algorithm
 
-The solver implements a textbook SQP method:
+The solver implements a reduced SQP method for smooth local optimization:
 
-1. **Quadratic sub-problem (QP):** At each iteration, approximate the Lagrangian
-   with a quadratic model and linearise constraints, then solve the resulting QP
-   with an active-set method.
+1. **Quadratic sub-problem (QP):** At each iteration, build a quadratic objective
+   model and linearise constraints. The reduced active-set solve releases
+   inequalities with negative multipliers; variable bounds use projection.
 
-2. **BFGS Hessian update:** The Hessian of the Lagrangian is approximated using
-   a damped BFGS update (Powell's modification) for guaranteed positive definiteness.
+2. **BFGS Hessian update:** Objective-gradient differences update the Hessian
+   approximation with damped BFGS (Powell's modification). Nonlinear constraint
+   curvature is not included in this update.
 
 3. **L1 merit function:** An exact penalty merit function combines the objective
    and constraint violations to determine step acceptance:
@@ -46,7 +47,19 @@ The solver implements a textbook SQP method:
 5. **KKT convergence:** The solver checks Karush-Kuhn-Tucker optimality conditions
    and stops when the KKT error falls below the tolerance.
 
+Check `isConverged()` and replay the selected process state before using the result.
+The reported KKT error checks stationarity and primal feasibility; independently
+check constraint values and solution quality for the intended application.
+
 ## Basic Usage
+
+Each example is a Java method body: put imports above your class and executable
+statements inside `public static void main(String[] args)`. Run the algebraic and
+process examples separately because they reuse local names.
+
+
+Java output uses Log4j2. Declare this field inside your example class:
+`private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger("OptimizationExample");`.
 
 ```java
 import neqsim.process.util.optimizer.SQPoptimizer;
@@ -74,16 +87,17 @@ sqp.setVariableBounds(
 sqp.setMaxIterations(100);
 sqp.setTolerance(1e-8);
 
-// Solve from initial point
-sqp.setInitialPoint(new double[] {0.0, 0.0});
+// Start from a point satisfying the equality, inequality, and bounds.
+sqp.setInitialPoint(new double[] {1.0, 3.0});
 OptimizationResult result = sqp.solve();
+logger.info("Converged={}, KKT error={}", result.isConverged(), result.getKktError());
 
 if (result.isConverged()) {
     double[] xOpt = result.getOptimalPoint();
-    System.out.printf("x* = [%.4f, %.4f]%n", xOpt[0], xOpt[1]);
-    System.out.printf("f* = %.6f%n", result.getOptimalValue());
-    System.out.printf("Iterations: %d%n", result.getIterations());
-    System.out.printf("KKT error: %.2e%n", result.getKktError());
+    logger.info(String.format("x* = [%.4f, %.4f]%n", xOpt[0], xOpt[1]));
+    logger.info(String.format("f* = %.6f%n", result.getOptimalValue()));
+    logger.info(String.format("Iterations: %d%n", result.getIterations()));
+    logger.info(String.format("KKT error: %.2e%n", result.getKktError()));
 }
 ```
 
@@ -92,6 +106,14 @@ if (result.isConverged()) {
 Optimise compressor interstage pressures to minimise total power:
 
 ```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.SQPoptimizer;
+import neqsim.process.util.optimizer.SQPoptimizer.OptimizationResult;
+
 // Build process: 2-stage compression with intercooling
 SystemSrkEos gas = new SystemSrkEos(288.15, 5.0);
 gas.addComponent("methane", 0.9);
@@ -104,10 +126,12 @@ feed.setFlowRate(50000.0, "kg/hr");
 
 Compressor comp1 = new Compressor("LP Comp", feed);
 comp1.setOutletPressure(20.0);
+comp1.setIsentropicEfficiency(0.75);
 Cooler cooler1 = new Cooler("Intercooler", comp1.getOutletStream());
 cooler1.setOutTemperature(303.15);
 Compressor comp2 = new Compressor("HP Comp", cooler1.getOutletStream());
 comp2.setOutletPressure(80.0);
+comp2.setIsentropicEfficiency(0.75);
 
 ProcessSystem process = new ProcessSystem();
 process.add(feed);
@@ -133,15 +157,18 @@ sqp.setVariableBounds(
 
 sqp.setMaxIterations(30);
 sqp.setTolerance(1e-4);
-sqp.setFiniteDifferenceStep(0.5);  // pressure step for gradients
+sqp.setFiniteDifferenceStep(1e-4);  // Relative step, multiplied by max(1, |x[i]|)
 
 sqp.setInitialPoint(new double[] {20.0});
 OptimizationResult result = sqp.solve();
+logger.info("Converged={}, KKT error={}", result.isConverged(), result.getKktError());
 
 if (result.isConverged()) {
     double pOpt = result.getOptimalPoint()[0];
-    System.out.printf("Optimal interstage P: %.1f bara%n", pOpt);
-    System.out.printf("Min total power: %.0f kW%n", result.getOptimalValue());
+    comp1.setOutletPressure(pOpt);
+    process.run(); // Restore the optimum after finite-difference trial evaluations
+    logger.info(String.format("Optimal interstage P: %.1f bara%n", pOpt));
+    logger.info(String.format("Min total power: %.0f kW%n", result.getOptimalValue()));
 }
 ```
 
@@ -167,8 +194,8 @@ SQPoptimizer sqp = new SQPoptimizer();
 | Method | Default | Description |
 |--------|---------|-------------|
 | `setMaxIterations(int)` | 100 | Maximum iterations |
-| `setTolerance(double)` | 1e-8 | KKT error convergence tolerance |
-| `setFiniteDifferenceStep(double)` | 1e-6 | Step for central-difference gradients |
+| `setTolerance(double)` | 1e-6 | KKT error convergence tolerance |
+| `setFiniteDifferenceStep(double)` | 1e-6 | Relative step for central-difference gradients |
 
 ### Result
 

@@ -13,6 +13,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos1978;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -84,7 +85,7 @@ class MixerTest {
     testSystem.setMultiPhaseCheck(true);
 
     waterSystem = testSystem.clone();
-    waterSystem.setMolarComposition(new double[] { 1.0, 0.0, 0.0, 0.0, 0.0 });
+    waterSystem.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0, 0.0});
 
     gasStream = new Stream("turbine stream", testSystem);
     gasStream.setFlowRate(1.0, "MSm3/day");
@@ -200,6 +201,53 @@ class MixerTest {
 
     assertFalse(matchedMixer.isPressureMismatch(), "equal inlet pressures must not raise the mismatch flag");
     assertEquals(0.0, matchedMixer.getInletPressureSpread(), 1e-6);
+  }
+
+  /**
+   * An explicitly specified outlet pressure must override the lowest-active-inlet rule, so a low-pressure make-up
+   * stream cannot drag a high-pressure header down to its own pressure.
+   */
+  @Test
+  void testSpecifiedOutletPressureOverridesLowestInlet() {
+    Stream header = new Stream("header", testSystem.clone());
+    header.setFlowRate(1.0, "MSm3/day");
+    header.setTemperature(60.0, "C");
+    header.setPressure(57.5, "bara");
+    header.run();
+
+    Stream makeUp = new Stream("make-up", testSystem.clone());
+    makeUp.setFlowRate(0.01, "MSm3/day");
+    makeUp.setTemperature(15.0, "C");
+    makeUp.setPressure(1.013, "bara"); // defined at standard conditions, boosted into the header
+    makeUp.run();
+
+    Mixer defaultMixer = new Mixer("default mixer");
+    defaultMixer.addStream(header);
+    defaultMixer.addStream(makeUp);
+    defaultMixer.run();
+    assertEquals(1.013, defaultMixer.getOutletStream().getPressure("bara"), 1e-6,
+        "default behaviour must still collapse to the lowest active inlet");
+
+    Mixer specifiedMixer = new Mixer("specified mixer");
+    specifiedMixer.addStream(header);
+    specifiedMixer.addStream(makeUp);
+    assertFalse(specifiedMixer.hasOutletPressureSpecification());
+    specifiedMixer.setOutletPressure(57.5, "bara");
+    assertTrue(specifiedMixer.hasOutletPressureSpecification());
+    assertEquals(57.5, specifiedMixer.getOutletPressure(), 1e-9);
+    specifiedMixer.run();
+
+    assertEquals(57.5, specifiedMixer.getOutletStream().getPressure("bara"), 1e-6,
+        "specified outlet pressure must override the lowest inlet");
+    assertFalse(specifiedMixer.isPressureMismatch(),
+        "a specified outlet pressure is deliberate, not an upstream shortfall");
+
+    specifiedMixer.clearOutletPressureSpecification();
+    assertFalse(specifiedMixer.hasOutletPressureSpecification());
+    assertTrue(specifiedMixer.needRecalculation(), "clearing the specification must invalidate the cached mix");
+    specifiedMixer.run();
+    assertEquals(1.013, specifiedMixer.getOutletStream().getPressure("bara"), 1e-6,
+        "clearing the specification must restore the lowest-inlet behaviour");
   }
 
   /**
@@ -388,10 +436,42 @@ class MixerTest {
     assertEquals(0.5, molarComposition[1], 1e-6);
   }
 
+  /** Direct mixer runs must conserve disjoint uninitialized feeds and ignore a genuinely empty inlet. */
+  @Test
+  void directRunResolvesFreshPr78FeedsBeforeLowFlowSelection() {
+    SystemInterface nitrogen = new SystemPrEos1978(298.15, 10.0);
+    nitrogen.addComponent("nitrogen", 1.0);
+    SystemInterface methane = new SystemPrEos1978(320.15, 12.0);
+    methane.addComponent("methane", 1.0);
+    SystemInterface empty = new SystemPrEos1978(280.15, 1.0);
+    empty.addComponent("water", 0.0);
+
+    Stream first = new Stream("nitrogen", nitrogen);
+    Stream second = new Stream("methane", methane);
+    Mixer mixer = new Mixer("fresh feeds");
+    mixer.addStream(first);
+    mixer.addStream(second);
+    mixer.addStream(new Stream("zero water", empty));
+
+    for (int run = 0; run < 2; run++) {
+      mixer.run();
+      SystemInterface mixed = mixer.getThermoSystem();
+      assertTrue(mixer.isActive());
+      assertEquals(2, mixed.getNumberOfComponents());
+      assertEquals(1.0, mixed.getComponent("nitrogen").getNumberOfmoles(), 1e-12);
+      assertEquals(1.0, mixed.getComponent("methane").getNumberOfmoles(), 1e-12);
+      assertEquals(0.5, mixed.getComponent("methane").getz(), 1e-12);
+      assertEquals(10.0, mixed.getPressure(), 1e-10);
+      assertEquals(first.getFlowRate("kg/hr") + second.getFlowRate("kg/hr"), mixed.getFlowRate("kg/hr"), 1e-8);
+      assertEquals(first.getThermoSystem().getEnthalpy() + second.getThermoSystem().getEnthalpy(), mixed.getEnthalpy(),
+          1e-3);
+    }
+  }
+
   @Test
   void testInletOrderPermutationsProduceEquivalentMultiphaseState() {
-    List<int[]> permutations = Arrays.asList(new int[] { 0, 1, 2 }, new int[] { 0, 2, 1 }, new int[] { 1, 0, 2 },
-        new int[] { 1, 2, 0 }, new int[] { 2, 0, 1 }, new int[] { 2, 1, 0 });
+    List<int[]> permutations = Arrays.asList(new int[] {0, 1, 2}, new int[] {0, 2, 1}, new int[] {1, 0, 2},
+        new int[] {1, 2, 0}, new int[] {2, 0, 1}, new int[] {2, 1, 0});
     SystemInterface reference = null;
 
     for (int mixerType = 0; mixerType < 2; mixerType++) {
@@ -464,11 +544,11 @@ class MixerTest {
     gasFluid.setMultiPhaseCheck(true);
 
     SystemInterface megFluid = gasFluid.clone();
-    megFluid.setMolarComposition(new double[] { 0.0, 0.1099744114900417, 0.8900255885099583 });
+    megFluid.setMolarComposition(new double[] {0.0, 0.1099744114900417, 0.8900255885099583});
     megFluid.setMultiPhaseCheck(false);
 
     SystemInterface waterFluid = gasFluid.clone();
-    waterFluid.setMolarComposition(new double[] { 0.0, 1.0, 0.0 });
+    waterFluid.setMolarComposition(new double[] {0.0, 1.0, 0.0});
     waterFluid.setMultiPhaseCheck(false);
 
     Stream gas = new Stream("bulk gas", gasFluid);
@@ -488,7 +568,7 @@ class MixerTest {
     water.setTemperature(29.0, "C");
     water.setPressure(74.1, "barg");
     water.run();
-    return new Stream[] { gas, meg, water };
+    return new Stream[] {gas, meg, water};
   }
 
   private static void assertEquivalentThermodynamicState(SystemInterface expected, SystemInterface actual) {

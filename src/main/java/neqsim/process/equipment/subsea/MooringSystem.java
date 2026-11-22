@@ -723,7 +723,7 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
         double t = (double) i / nPoints;
         double x = t * anchorRadius;
         double z = fairleadDepth + t * effectiveDepth;
-        profile.add(new double[] { x, z });
+        profile.add(new double[] {x, z});
       }
       return profile;
     }
@@ -741,7 +741,7 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
       // Convert to waterline reference
       double x = xCat;
       double z = waterDepth - zCat;
-      profile.add(new double[] { x, z });
+      profile.add(new double[] {x, z});
     }
 
     // Add touchdown segment
@@ -750,7 +750,7 @@ public class MooringSystem extends ProcessEquipmentBaseClass {
         double t = (double) i / 10;
         double x = xSuspended + t * touchdownLength;
         double z = waterDepth;
-        profile.add(new double[] { x, z });
+        profile.add(new double[] {x, z});
       }
     }
 

@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -62,6 +63,7 @@ public class TwoFluidPipeInterfacialPressureTest {
    * </p>
    */
   @Test
+  @Tag("slow")
   void testImplicitCouplingReproducesTheExplicitStabilizer() {
     double explicitInventory = runInventory(false, 0.05);
     double implicitAtSameStep = runInventory(true, 0.05);

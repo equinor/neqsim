@@ -1,95 +1,63 @@
-# devtools — Jupyter Development Helpers for NeqSim
+# devtools — Python Development Tools for NeqSim
 
-This directory contains a small pip-installable Python package that makes it
-easy to use **Jupyter notebooks** for NeqSim Java development — edit Java code,
-compile, and immediately test from Python without rebuilding a JAR.
+This directory is the Python project for NeqSim development scripts, CLI tools,
+and Jupyter helpers. Use `uv` to resolve its dependencies and run its commands
+from the repository root.
 
-## Setting up a Python environment (recommended)
+## Set up with uv
 
-A **virtual environment (venv)** is an isolated, per-project Python. It keeps
-NeqSim's dependencies separate from other projects and — importantly — puts the
-`neqsim` command on your PATH automatically, avoiding the most common install
-problems. Use one whenever you can.
+Python 3.11 or newer is required. Pillow 13.0.0 or newer is required to fix
+[CVE-2026-96639 / GHSA-v9pv-5gc8-w2m6](https://github.com/python-pillow/Pillow/security/advisories/GHSA-v9pv-5gc8-w2m6).
+These constraints apply to both the locked uv project and editable pip installs.
 
-**1. Create the environment (once per clone).** Run from the project root:
-
-```powershell
-# Windows (PowerShell)
-py -3 -m venv .venv        # or: python -m venv .venv
-```
+Install `uv`, then sync the devtools environment from the repository root:
 
 ```bash
-# macOS / Linux
-python3 -m venv .venv
+uv sync --project devtools --locked
+uv run --project devtools --locked neqsim --help
 ```
 
-This creates a `.venv/` folder containing a private copy of Python + pip.
-
-**2. Activate it (every new terminal session).** Activation points `python`,
-`pip`, and `neqsim` at the venv for the current shell:
-
-```powershell
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-```
-
-```bat
-:: Windows Command Prompt (cmd.exe)
-.\.venv\Scripts\activate.bat
-```
+Use the test dependency group when running devtools tests:
 
 ```bash
-# macOS / Linux (bash / zsh)
-source .venv/bin/activate
+uv sync --project devtools --locked --group test
+uv run --project devtools --locked --group test python -m pytest devtools/
 ```
 
-Your prompt now shows `(.venv)`. Confirm the right Python is active:
-
-```powershell
-python -c "import sys; print(sys.executable)"   # should print a path inside .venv
-```
-
-> **PowerShell blocks the activation script?** If you see
-> *"running scripts is disabled on this system"*, allow local scripts for the
-> current session and try again:
-> ```powershell
-> Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-> ```
-
-**3. Install NeqSim devtools into the active venv:**
-
-```powershell
-.\install.ps1            # Windows  (uses the active venv automatically)
-./install.sh             # macOS / Linux
-```
-
-**4. Deactivate when you're done** (or just close the terminal):
+Declare dependency changes in `pyproject.toml` and keep the committed lockfile
+in sync with uv:
 
 ```bash
-deactivate
+uv lock --project devtools
+uv lock --project devtools --upgrade  # refresh compatible package versions
+uv sync --project devtools --locked
 ```
 
-**Using [uv](https://docs.astral.sh/uv/)?** uv can create and manage the venv
-for you (and is much faster):
+CI uses `--locked`, so it fails rather than silently resolving dependencies
+when `uv.lock` is stale.
 
-```bash
-uv venv                        # create .venv
-# activate as in step 2 above, then:
-.\install.ps1 -Uv              # Windows   (or: ./install.sh --uv)
-# ...or install directly with uv into the active venv:
-uv pip install -e devtools/
-```
+## Versioning and releases
 
-> **No venv?** The installer still works — it falls back to your system/user
-> Python. But then the `neqsim` command may not be on PATH; see
-> [Troubleshooting](#troubleshooting-neqsim-not-found) below, or use
-> `python -m neqsim_cli` as a fallback.
+The package version is maintained in `devtools/pyproject.toml`. Bump it when
+preparing a new devtools package release, not for every code or dependency
+change. While the version is below `1.0.0`, use a patch bump for fixes and
+dependency refreshes that preserve user-facing behavior, and a minor bump for
+new user-facing features or breaking CLI, API, or installation changes. Once
+the package reaches `1.0.0`, follow SemVer: patch for compatible fixes, minor
+for backward-compatible features, and major for breaking changes. Before
+publishing, build and test the package from the updated project metadata; the
+generated `devtools/neqsim_dev_setup.egg-info/` files are local build artifacts
+and should not be committed.
+
+The `install.sh` and `install.ps1` scripts remain available for users who need
+to install the CLI into an existing Python environment. For repository
+development and CI, use the uv project and committed lockfile.
 
 ## Recommended no-admin runbook for the user
 
 On a locked-down / corporate PC (e.g. no administrator rights), everything
 below installs into your **user profile** and needs **no elevation**.
-Prerequisites — Git, Python 3.8+, a JDK, and VS Code — must already be
+Prerequisites — Git, Python 3.11 or newer, a JDK, and VS Code — must already be
 provisioned per-user (via your software portal or `winget --scope user`).
 
 ```powershell
@@ -101,22 +69,128 @@ cd $HOME\Documents\GitHub
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
 
-# 2. Python devtools in a venv (keeps the 'neqsim' command on PATH)
+# 2. Python devtools in a venv ('neqsim' works in terminals where it is activated)
 py -3 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
 .\.venv\Scripts\Activate.ps1
 .\install.ps1
-neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
+neqsim doctor --skip-jar  # checks the CLI setup before building the Java JAR
 
 # 3. Java build — needs a JDK. No admin? Let the installer fetch a PORTABLE JDK:
 .\install.ps1 -InstallJdk       # downloads Temurin into ~/.neqsim\jdk, sets user env vars
 # (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
 .\mvnw.cmd install -DskipTests
+neqsim doctor                # full check, including the built JAR
 
 # 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
+#    Start over from a blank slate (only what NeqSim installed is removed —
+#    core, community and enterprise agents/skills plus their ~/.copilot exports;
+#    anything else in ~/.copilot is left alone). Preview first with --dry-run:
+neqsim agent remove --all --with-skills --dry-run
+neqsim agent remove --all --with-skills --yes
+#    Or per catalog / per kind:
+neqsim agent remove --all --source private --yes    # enterprise agents only
+neqsim skill remove --all --source community --yes  # community skills only
+
+# 5. Choose where solved tasks are saved (optional; defaults to <repo>\task_solve)
+neqsim --set-task-root "D:\Engineering Tasks"   # or: cwd, to follow the terminal folder
+neqsim --show-task-root
+
+# 6. Choose the Word template reports are built from (optional)
+neqsim --set-report-template "C:\Users\you\Documents\company report template.docx"
+neqsim --show-report-template
+
+# 7. Choose the folder agents read source documents from (optional)
+neqsim --set-document-root "C:\Users\you\Documents\Engineering Documents"
+neqsim --show-document-root
+neqsim documents "C-12345"      # search the root and every subfolder
 ```
+
+The task root is the parent folder `neqsim new-task` and the AI agents create each
+dated task folder in. It is stored in `~/.neqsim/task_defaults.json`, so it is shared
+by every NeqSim clone and keeps studies outside the repository. Precedence:
+`--task-root PATH` > `NEQSIM_TASK_ROOT` > the saved default > `<repo>/task_solve`.
+`neqsim --reset-task-root` removes the setting without moving existing tasks.
+Add `--vscode` to any `--set-task-root` / `--set-document-root` command to also
+add the folder to the VS Code workspace, or `--explorer` to open it in the file
+explorer right away (both combine freely).
+
+The report template is a `.docx`/`.dotx` file whose styles, fonts, headers, and
+footers every generated Word report inherits — set it once and all later tasks
+follow it. It is stored in the same settings file. Precedence:
+`generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` > the saved
+default > built-in styling. The template's own body text is dropped (pass
+`--keep-template-content` to keep it), `--no-template` ignores the setting for one
+run, and `neqsim --reset-report-template` removes it. The scientific paper keeps
+journal formatting and ignores the template.
+
+Report files are named after the report title — a study titled "Hydrate margin
+for the export line" produces `Hydrate_margin_for_the_export_line.docx` and
+`.html` (paper: `..._Paper.docx`). Report files written under an earlier title
+are deleted on regeneration, so a renamed study leaves no superseded deliverable.
+
+The report language is English unless the task says otherwise. Set
+`report.language` in the task's `study_config.yaml` (`en` default, `nb`/`no` for
+Norwegian, or any ISO code); precedence is `generate_report.py --language CODE` >
+`NEQSIM_REPORT_LANGUAGE` > `report.language` > English. It translates the report
+furniture the generator owns — section headings, cover labels, caption prefixes,
+navigation — and sets the document language of the `.docx` and `.html` so Word
+spell-checks in that language. Write the study content (`results.json`,
+`task_spec.md`) in the same language. A code with no built-in wording table still
+gets its document language set, the headings stay English, and the generator says
+so. The scientific paper stays English for journal submission.
+
+For a formatting-only pilot, use
+`neqsim report-design "SOURCE.docx" --output "formatting_pilot\PILOT.docx" --render`.
+This opt-in finishing pass preserves the source, template fonts, branding and
+technical wording. It improves table readability, adds missing numbered table
+captions and page numbering, and writes a PDF, all-page PNG previews and a QA
+JSON next to the derivative. The command refuses source overwrites and requires
+`--overwrite` to replace an existing derivative. Use `--table-label Tabell` for
+new Norwegian captions. Rendering needs Microsoft Word with pywin32 on Windows
+or an installed LibreOffice; it never uses an online converter. The QA record
+stays `PENDING` until someone actually inspects the page images. See the
+[report-design and visual-QA skill](../.github/skills/neqsim-report-design-and-visual-qa/SKILL.md).
+Normal report generation and scientific-paper styles are unchanged.
+
+The canonical generator accepts both `benchmark_validation.tests` lists and
+named benchmark mappings. Word and HTML outputs retain the source, numerical
+comparisons, and PASS/FAIL status. Before rendering, the generator checks for
+contradictions between benchmarks, validation, risk, discussions, and conclusions.
+Findings appear in the console and the technical report's **Report Consistency
+Review** section; calculation findings are written to `fixes_needed.json`.
+These checks request review and do not rewrite the study's conclusions.
+
+The document root is the folder the AI agents read source documents from —
+standards, datasheets, P&IDs, vendor documents, historian exports — and **every
+subfolder below it is in scope**. The setting is optional: it is either set or
+undefined, and when undefined agents simply work from the documents you supply.
+It is stored in the same settings file, so one setting covers all tasks, and each
+new task records the resolved value as `inputs.document_root` in its
+`study_config.yaml`. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the
+saved default > none. `neqsim documents [PATTERN]` lists matches from the root and
+all subfolders, `neqsim documents --index [TASK_DIR]` refreshes the per-task
+listing at `step1_scope_and_research/references/document_root_index.md` (written
+at task creation so agents see the library without running the CLI;
+`--index --all [ROOT]` backfills existing tasks, `--dry-run` shows the scope
+first), and
+`neqsim --reset-document-root` removes the setting. A
+configured folder that no longer exists is reported as an error rather than
+silently ignored.
+
+The document root is the folder the AI agents read source documents from —
+standards, datasheets, P&IDs, vendor documents, historian exports — and **every
+subfolder below it is in scope**. The setting is optional: it is either set or
+undefined, and when undefined agents simply work from the documents you supply.
+It is stored in the same settings file, so one setting covers all tasks, and each
+new task records the resolved value as `inputs.document_root` in its
+`study_config.yaml`. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the
+saved default > none. `neqsim documents [PATTERN]` lists matches from the root and
+all subfolders, and `neqsim --reset-document-root` removes the setting. A
+configured folder that no longer exists is reported as an error rather than
+silently ignored.
 
 **Behind a corporate proxy?** Set it for the current session (user-scope, no
 admin) so `git`, `pip`, and agent-catalog downloads work:
@@ -140,8 +214,9 @@ sign you in with browser SSO in a single command:
 
 ```powershell
 # GitHub (registers the repo and runs `gh auth login --web`):
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+# --catalog-path points at the catalog file published in the repo
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
 
 # Internal Git server instead of GitHub:
 neqsim agent private-init --url https://git.internal.company.com/neqsim/enterprise-agents.git
@@ -159,6 +234,11 @@ neqsim skill install <name> --target vscode
 > `private-init` and `add-repo` accept the same repo options — use `private-init`
 > for first-time setup and `add-repo` to register additional repos later. Both
 > print the catalog file path when they finish.
+
+> **`neqsim` not recognized?** Without elevated privileges the console script may
+> not be on PATH. Run every command above as `python -m neqsim_cli ...` instead
+> (same arguments), or see
+> [Troubleshooting](#troubleshooting-neqsim-not-found).
 
 **Which file gets edited, and where?** `private-init` writes a per-user catalog:
 
@@ -178,10 +258,15 @@ and the [Skills & Agents Guide](../docs/integration/skills_guide.md#private-skil
 
 ## One-time setup
 
-**Recommended (works even when `pip`/`python` are not on PATH).** Run the
-bootstrap installer from the **project root** — it finds a working Python
-interpreter for you (preferring an active venv) and runs `python -m pip` under
-the hood:
+**Recommended:** sync the uv project from the repository root:
+
+```bash
+uv sync --project devtools --locked
+uv run --project devtools --locked neqsim --help
+```
+
+The platform installer scripts remain available for existing Python
+environments. They find a working interpreter and install the package there:
 
 ```powershell
 # Windows (PowerShell):
@@ -195,8 +280,7 @@ the hood:
 
 > **"install.ps1 is not digitally signed" / execution-policy error on Windows?**
 > That is PowerShell blocking scripts, not a problem with the file. Use the
-> pure-batch installer instead — it calls Python/pip directly and never touches
-> PowerShell, so it works even on locked-down machines where the execution
+> pure-batch installer instead — it avoids PowerShell, so it works even on locked-down machines where the execution
 > policy is enforced by **Group Policy** (where even
 > `powershell -ExecutionPolicy Bypass` is ignored):
 >
@@ -207,37 +291,31 @@ the hood:
 > install.cmd uv         :: install with the fast 'uv' package manager
 > ```
 >
-> Equivalent one-liner (no script at all): `py -m pip install -e devtools/`.
+> Equivalent one-liner (no script at all): `uv sync --project devtools --locked`.
 > The `-InstallJdk` option is `install.ps1`-only; on a GPO-locked machine
-> install a JDK separately. After install, if the `neqsim` command is not on
-> PATH, use `py -m neqsim_cli --help`.
+> install a JDK separately. With uv, use `uv run --project devtools --locked neqsim`
+> instead of relying on a shell PATH entry.
 
-**Using [uv](https://docs.astral.sh/uv/)?** Pass the `uv` flag to install with
-the fast `uv` package manager instead of pip:
+**Using [uv](https://docs.astral.sh/uv/)?** The installer scripts also support
+uv when installing into an existing environment. If uv is missing, the selected
+uv installer path bootstraps it before installing the package:
 
 ```powershell
 .\install.ps1 -Uv        # Windows
 ./install.sh --uv        # macOS / Linux
 ```
 
-**Manual alternative.** If you prefer to install by hand, always use
-`python -m pip` (not bare `pip`) so it targets the interpreter you are running:
+**Manual alternative.** From the repository root, sync the uv project:
 
 ```bash
-# From the project root (with your venv active):
-python -m pip install -e devtools/
-
-# ...or with uv:
-uv pip install -e devtools/
+uv sync --project devtools --locked
 ```
 
-> Do **not** use bare `pip install -e devtools/`. If `pip` is not on PATH it
-> fails with "pip not available"; `python -m pip` avoids that. On Windows, if
-> `python` opens the Microsoft Store, use the `py` launcher (`py -m pip ...`)
-> or run `.\install.ps1`, which handles this automatically.
+Run the CLI without activating the project environment with
+`uv run --project devtools --locked neqsim --help`.
 
-This installs `neqsim_dev_setup` as an editable package and registers the **`neqsim` CLI**
-so every notebook in the venv can import it — no `sys.path` hacks needed.
+This installs `neqsim_dev_setup` and the **`neqsim` CLI** into the project
+environment, so notebooks can import it without `sys.path` hacks.
 
 ### The `neqsim` CLI
 
@@ -246,9 +324,15 @@ After installation you get a single `neqsim` command:
 ```bash
 neqsim try               # interactive playground — explore NeqSim in 30 seconds
 neqsim onboard           # interactive setup wizard
-neqsim doctor            # check your environment is healthy
+neqsim doctor            # check your environment is healthy (including a built JAR)
+neqsim doctor --skip-jar # initial CLI/agent setup; explicitly omit only the JAR check
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
+neqsim process-report MODEL   # process-study report (stream tables, BFD/PFD, balances, validation) from a Python/JSON/.neqsim model; see docs/development/PROCESS_STUDY_REPORT.md
+neqsim process-overview SRC --out DIR  # one-sheet A3 process overview (colour + mono) and 16:9 slide from process_data.json or a model; see docs/development/PROCESS_OVERVIEW.md
+neqsim flow-assurance-report ROUTE --basis B --cases C   # flow-assurance report + A3 pipeline drawings (--init DIR scaffolds inputs, --demo runs the synthetic example); see docs/development/FLOW_ASSURANCE_STUDY_REPORT.md
+neqsim surf-study STUDY.yaml --out DIR                    # SURF design study: generated and solved NeqSim network, concept comparison, 15 A3 sheets, 20-chapter report (--init DIR scaffolds, --demo runs the synthetic example, --stage build-model|run|report); see docs/development/SURF_DESIGN_STUDY.md
+neqsim file-issue TASK   # offer to file a recorded NeqSim gap as an issue (and PR)
 neqsim new-skill NAME    # scaffold a new AI skill
 neqsim skill CMD         # manage community/private skills (list/search/install/export/doctor)
 neqsim agent CMD         # manage community/private agents (list/search/install/export/doctor/validate/schema)
@@ -258,42 +342,42 @@ Run `neqsim --help` for the full list.
 
 ### Troubleshooting: `neqsim` not found
 
-If `neqsim` is not recognized after `pip install -e devtools/`, the Python
-Scripts directory is not on your PATH.
+If `neqsim` is not recognized in your shell, run it through the project:
+`uv run --project devtools --locked neqsim`. The project environment does not need to be
+activated or added to PATH.
 
-**Using a virtual environment (easiest — always works):**
+**Unblock yourself immediately (no setup, always works):**
 ```bash
-python -m venv .venv
-# Windows:  .venv\Scripts\Activate.ps1
-# macOS/Linux:  source .venv/bin/activate
-pip install -e devtools/
-neqsim --help   # works immediately — venv puts scripts on PATH
+uv run --project devtools --locked neqsim --help
 ```
+This is the same entry point the `neqsim` command runs, so every command in this
+README works with it — prefix commands with `uv run --project devtools --locked`.
 
-**Windows (PowerShell) — without venv:**
-```powershell
-# Check where pip installed it:
+**Find out why, and fix it:**
+```bash
+uv run --project devtools --locked neqsim doctor --skip-jar   # names the cause under "CLI command"
+uv run --project devtools --locked devtools/ensure_on_path.py  # puts the Scripts dir on your user PATH
+```
+Use `ensure_on_path.py` rather than editing PATH by hand: it writes the user
+PATH through the registry, which avoids the truncation and the
+machine-PATH-duplicated-into-user-PATH damage that `setx %PATH%` and
+`SetEnvironmentVariable("PATH", $env:PATH + ...)` cause. Then open a **new**
+terminal — and in VS Code, fully quit and reopen the window, because VS Code
+captures PATH at launch and a new integrated terminal is not enough.
+
+**Using the project environment:**
+```bash
+uv sync --project devtools --locked
+uv run --project devtools --locked neqsim --help
+```
+`uv run` selects the project environment automatically in every terminal.
+
+**Where did pip put it?**
+```bash
 python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-
-# Add it permanently (typical path for Python 3.12):
-$scripts = [System.IO.Path]::Combine($env:APPDATA, 'Python', 'Python312', 'Scripts')
-[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$scripts", "User")
-# Restart your terminal for the change to take effect.
-# If running neqsim later shows "The term 'neqsim' is not recognized" in a VS Code
-# terminal, fully quit and reopen VS Code (a new integrated terminal is not enough
-# — VS Code captures PATH at launch). A virtualenv avoids this.
 ```
-
-**Linux / macOS — without venv:**
-```bash
-# The scripts directory is usually ~/.local/bin
-export PATH="$HOME/.local/bin:$PATH"
-# Add the line above to ~/.bashrc or ~/.zshrc to make it permanent.
-
-# macOS with Homebrew Python: scripts may be at
-#   /opt/homebrew/bin/ (Apple Silicon) or /usr/local/bin/ (Intel)
-# Check with: python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-```
+Typical locations: `%APPDATA%\Python\Python312\Scripts` (Windows, no admin),
+`~/.local/bin` (Linux), `/opt/homebrew/bin` or `/usr/local/bin` (macOS Homebrew).
 
 **GitHub Codespaces:**
 
@@ -306,7 +390,7 @@ export PATH="$HOME/.local/bin:$PATH"
 **Alternative — run without PATH (works everywhere):**
 ```bash
 python -m neqsim_cli          # runs the CLI module directly
-python devtools/neqsim_cli.py  # runs the script file directly
+uv run --project devtools --locked devtools/neqsim_cli.py  # runs the script file directly
 ```
 
 ## Usage (any notebook, any directory)
@@ -349,18 +433,18 @@ for a full explanation of the architecture and internals.
 | `neqsim_try.py` | Interactive playground — drops into a Python REPL with a sample fluid ready |
 | `neqsim_contribute.py` | Guided contribution wizard — walks new contributors through their first PR |
 | `neqsim_dev_setup.py` | JVM bootstrap, class imports, compile + kernel restart |
-| `pyproject.toml` | Makes it pip-installable (`pip install -e devtools/`) |
+| `pyproject.toml`, `uv.lock` | Define and lock the uv-managed devtools project |
 | `new_task.py` | Create task-solving folders for the 4-step AI workflow |
 | `new_skill.py` | Scaffold a new skill for the agentic system (`neqsim new-skill "name"`) |
-| `install_skill.py` | Community/private skill manager — `neqsim skill list/search/install/remove/publish` |
-| `install_agent.py` | Community/private agent manager — `neqsim agent list/search/install[/--all]/remove/validate/schema` |
+| `install_skill.py` | Community/private skill manager — `neqsim skill list/search/info/install[/--all]/installed/export/remove/publish/sync-packages/ensure/doctor/private-init/add-repo` |
+| `install_agent.py` | Community/private agent manager — `neqsim agent list/search/info/install[/--all]/installed/export/remove/validate/run/schema/doctor/private-init/add-repo` |
 | `neqsim_doctor.py` | Diagnostic tool — checks Java, Maven, JAR, Python, agents, skills, cross-tool configs |
 | `onboard.py` | Interactive onboarding wizard — walks new contributors through full environment setup |
 | `consistency_checker.py` | **Pre-report quality gate.** Extracts numerical values from notebooks and results.json, detects inconsistencies (numerical mismatches, scope mismatches, contradictory claims). Run before `generate_report.py`. Produces `consistency_report.json`. |
 | `unisim_reader.py` | UniSim/HYSYS .usc COM reader → NeqSim Python/notebook/EOT/JSON. Full-mode conversion with E300 full-fluid export, registry-driven operation mapping, port-specific forward refs, and auto-recycle wiring. |
 | `test_unisim_outputs.py` | Pure-Python regression tests for UniSim converter output modes, E300 fluid export, operation handler strategies, and mapping summaries (no COM needed) |
 | `explore_unisim_com.py` | Diagnostic: dump UniSim COM object model from any .usc file |
-| `pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf` (`pip install pymupdf`). |
+| `pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires the `pdf` extra (`uv sync --project devtools --locked --extra pdf`). |
 | `neqsim_runner/` | Supervised simulation execution — isolated subprocesses with own JVM, auto-retry, checkpointing, rate limiting, and context-window-exhaustion resilience. See [`neqsim_runner/README.md`](neqsim_runner/README.md). |
 
 ## Solving Engineering Tasks
@@ -368,11 +452,11 @@ for a full explanation of the architecture and internals.
 The `new_task.py` script creates structured task folders for the
 [AI-Supported Task Solving](../docs/development/TASK_SOLVING_GUIDE.md) workflow.
 
-**Recommended:** Use the `@solve.task` Copilot agent instead — it runs the
+**Recommended:** Use the `@solve-task` Copilot agent instead — it runs the
 script automatically and handles all 4 steps:
 
 ```
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 **Manual alternative:**

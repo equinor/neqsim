@@ -151,7 +151,7 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
     assertThrows(IllegalArgumentException.class,
         () -> scheduler.scheduleTransactionalEvent(1.0, "duplicate", action, "area/device", "area/device"));
 
-    String[] identities = new String[] { " area/device " };
+    String[] identities = new String[] {" area/device "};
     EventScheduler.ScheduledEvent event = scheduler.scheduleTransactionalEvent(1.0, "valid", action, identities);
     identities[0] = "changed";
 

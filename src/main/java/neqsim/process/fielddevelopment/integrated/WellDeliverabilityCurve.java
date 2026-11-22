@@ -129,6 +129,36 @@ public class WellDeliverabilityCurve implements Serializable {
   }
 
   /**
+   * Builds a curve from a Rawlins-Schellhardt law at a given reservoir pressure.
+   *
+   * <p>
+   * The sampled table spans the minimum wellhead pressure to the shut-in pressure (the reservoir pressure, where the
+   * rate is zero), so the curve can be re-built every time step as the reservoir depletes.
+   * </p>
+   *
+   * @param law fitted deliverability law with rate in Sm3/day
+   * @param reservoirPressureBara current reservoir pressure in bara
+   * @param minWellheadPressureBara lowest wellhead pressure to tabulate in bara (&ge; 1)
+   * @param nPoints number of sample points (&ge; 3)
+   * @return a deliverability curve in Sm3/day versus wellhead pressure in bara
+   */
+  public static WellDeliverabilityCurve fromRawlinsSchellhardt(RawlinsSchellhardtFit law, double reservoirPressureBara,
+      double minWellheadPressureBara, int nPoints) {
+    if (nPoints < 3 || reservoirPressureBara <= minWellheadPressureBara) {
+      throw new IllegalArgumentException(
+          "need nPoints >= 3 and reservoir pressure above the minimum wellhead pressure");
+    }
+    double[] p = new double[nPoints];
+    double[] q = new double[nPoints];
+    for (int i = 0; i < nPoints; i++) {
+      double frac = (double) i / (nPoints - 1);
+      p[i] = minWellheadPressureBara + frac * (reservoirPressureBara - minWellheadPressureBara);
+      q[i] = i == nPoints - 1 ? 0.0 : law.rate(reservoirPressureBara, p[i] - 1.01325);
+    }
+    return new WellDeliverabilityCurve(p, q);
+  }
+
+  /**
    * Samples a configured {@link neqsim.process.equipment.reservoir.WellSystem} to build a deliverability curve.
    *
    * <p>

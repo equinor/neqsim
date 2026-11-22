@@ -61,10 +61,46 @@ All three original constraint classes now implement `ProcessConstraint`.
 
 ---
 
+## Runnable Setup
+
+The blocks below are Java method bodies using this setup. Run alternatives in
+separate scopes when they reuse a local variable name. Put imports above your
+class and statements inside `main(String[] args) throws Exception`. The interface
+listing is API reference, not an additional class to copy into NeqSim.
+
+Java output uses Log4j2. Declare this field inside your example class:
+`private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger("OptimizationExample");`.
+
+```java
+import java.util.*;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.util.optimizer.*;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemSrkEos gas = new SystemSrkEos(298.15, 30.0);
+gas.addComponent("methane", 1.0);
+gas.setMixingRule("classic");
+Stream feed = new Stream("feed", gas);
+feed.setFlowRate(5000.0, "kg/hr");
+Compressor compressor = new Compressor("compressor", feed);
+compressor.setOutletPressure(60.0, "bara");
+compressor.setIsentropicEfficiency(0.75);
+compressor.getMechanicalDesign().setMaxDesignPower(5000.0); // kW
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(compressor);
+process.run();
+```
+
 ## ProcessConstraint Interface
 
 ```java
 package neqsim.process.util.optimizer;
+
+import neqsim.process.processmodel.ProcessSystem;
 
 public interface ProcessConstraint {
 
@@ -139,12 +175,12 @@ ConstraintSeverityLevel level =
         CapacityConstraint.ConstraintSeverity.HARD);
 
 // Optimizer -> Unified
-ConstraintSeverityLevel level =
+ConstraintSeverityLevel optimizerLevel =
     ConstraintSeverityLevel.fromOptimizerSeverity(
         ProductionOptimizer.ConstraintSeverity.HARD);
 
 // Boolean -> Unified
-ConstraintSeverityLevel level =
+ConstraintSeverityLevel booleanLevel =
     ConstraintSeverityLevel.fromIsHard(true);  // Returns HARD
 
 // Unified -> Equipment
@@ -169,22 +205,18 @@ Equipment constraints are provided by `EquipmentCapacityStrategy` implementation
 import neqsim.process.util.optimizer.CapacityConstraintAdapter;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 
-// Wrap an equipment constraint
+// Explicit installed power limit; current power is supplied dynamically in kW.
 CapacityConstraint eqConstraint = new CapacityConstraint(
-    "surge_margin",
-    compressor.getSurgeMargin(), // utilization fraction
-    CapacityConstraint.ConstraintSeverity.CRITICAL,
-    "%",
-    "Compressor surge margin"
-);
-
+    "power", "kW", CapacityConstraint.ConstraintType.HARD)
+    .setDesignValue(5000.0)
+    .setMaxValue(5000.0)
+    .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+    .setValueSupplier(() -> compressor.getPower("kW"));
 CapacityConstraintAdapter adapted =
-    new CapacityConstraintAdapter("K-100/surge_margin", eqConstraint);
-
-// Now usable as ProcessConstraint
-double margin = adapted.margin(process);  // 1.0 - utilization
+    new CapacityConstraintAdapter("K-100/power", eqConstraint);
+double margin = adapted.margin(process);
 boolean ok = adapted.isSatisfied(process);
-ConstraintSeverityLevel level = adapted.getSeverityLevel();  // CRITICAL
+ConstraintSeverityLevel level = adapted.getSeverityLevel();
 ```
 
 ### Margin Calculation
@@ -207,19 +239,21 @@ import neqsim.process.util.optimizer.ProductionOptimizer.*;
 // Less-than constraint: value <= limit
 OptimizationConstraint powerLimit = OptimizationConstraint.lessThan(
     "MaxPower",
-    process -> getTotalPower(process),
+    proc -> ((Compressor) proc.getUnit("compressor")).getPower("kW"),
     5000.0,
     ConstraintSeverity.HARD,
-    100.0  // penalty weight
+    100.0,  // penalty weight
+    "Installed driver limit, kW"
 );
 
 // Greater-than constraint: value >= limit
 OptimizationConstraint minExport = OptimizationConstraint.greaterThan(
     "MinExport",
-    process -> getGasExport(process),
-    10.0e6,
+    proc -> ((Stream) proc.getUnit("feed")).getFlowRate("kg/hr"),
+    1000.0,
     ConstraintSeverity.SOFT,
-    50.0
+    50.0,
+    "Minimum mass throughput, kg/hr"
 );
 
 // These are ProcessConstraint — can be used anywhere
@@ -248,7 +282,7 @@ import neqsim.process.util.optimizer.ProcessSimulationEvaluator;
 ProcessSimulationEvaluator evaluator = new ProcessSimulationEvaluator(process);
 
 // Add decision variables
-evaluator.addParameter("feedRate", feed, "flowRate",
+evaluator.addParameter("feed", "flowRate",
     1000.0, 20000.0, "kg/hr");
 
 // Auto-discover all equipment capacity constraints
@@ -302,7 +336,7 @@ calc.addEquipmentCapacityConstraints(process);
 calc.addConstraint(powerLimit);
 calc.addConstraint(minExport);
 
-System.out.println("Total constraints: " + calc.getConstraintCount());
+logger.info("Total constraints: " + calc.getConstraintCount());
 ```
 
 ### Feasibility Check
@@ -327,7 +361,7 @@ double[] margins = calc.evaluateMargins(process);
 The `penalize()` method applies adaptive penalty scaling:
 
 ```java
-double rawObjective = computeObjective(process);
+double rawObjective = compressor.getPower("kW");
 double penalized = calc.penalize(rawObjective, process);
 // If feasible: penalized == rawObjective
 // If violated: penalized += scale * (hard: linear penalty, soft: quadratic penalty)
@@ -341,12 +375,12 @@ List<ConstraintPenaltyCalculator.ConstraintEvaluation> report =
     calc.evaluate(process);
 
 for (ConstraintPenaltyCalculator.ConstraintEvaluation eval : report) {
-    System.out.printf("%-30s severity=%-8s margin=%+.4f satisfied=%b penalty=%.1f%n",
+    logger.info(String.format("%-30s severity=%-8s margin=%+.4f satisfied=%b penalty=%.1f%n",
         eval.getName(),
         eval.getSeverity(),
         eval.getMargin(),
         eval.isSatisfied(),
-        eval.getPenalty());
+        eval.getPenalty()));
 }
 ```
 
@@ -368,22 +402,19 @@ Constraints can be converted bidirectionally between the internal and external o
 
 ```java
 ProductionOptimizer.OptimizationConstraint internal =
-    OptimizationConstraint.lessThan("MaxPower", evaluator, 5000.0,
-        ConstraintSeverity.HARD, 100.0);
-
-// Convert to ConstraintDefinition for ProcessSimulationEvaluator
-ProcessSimulationEvaluator.ConstraintDefinition external =
-    internal.toConstraintDefinition();
+    OptimizationConstraint.lessThan("MaxPower",
+        proc -> ((Compressor) proc.getUnit("compressor")).getPower("kW"),
+        5000.0, ConstraintSeverity.HARD, 100.0, "Installed driver limit, kW");
+ProcessSimulationEvaluator.ConstraintDefinition external = internal.toConstraintDefinition();
 ```
 
 ### External to Internal
 
 ```java
-ProcessSimulationEvaluator.ConstraintDefinition external = ...;
-
-// Convert to OptimizationConstraint for ProductionOptimizer
-ProductionOptimizer.OptimizationConstraint internal =
-    external.toOptimizationConstraint();
+// Continue from Internal to External (an upper bound converts to one constraint).
+ProductionOptimizer.OptimizationConstraint roundTrip = external.toOptimizationConstraint();
+// Use the plural conversion to retain BOTH bounds for RANGE and EQUALITY.
+List<ProductionOptimizer.OptimizationConstraint> allBounds = external.toOptimizationConstraints();
 ```
 
 ### Severity Mapping in Conversions
@@ -391,7 +422,7 @@ ProductionOptimizer.OptimizationConstraint internal =
 When converting between layers, severity is mapped via `ConstraintSeverityLevel`:
 
 - `CRITICAL` and `HARD` remain as `HARD` in the optimizer layer (which has only 2 levels)
-- `SOFT` and `ADVISORY` remain as `SOFT` in the optimizer layer
+- `SOFT` and `ADVISORY` map to `SOFT` in the optimizer layer; keep advisory penalty weight zero to preserve reporting-only behavior
 - Equipment severity maps 1:1 with the unified 4-level enum
 
 ---
@@ -409,7 +440,7 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
     .defaultUtilizationLimit(0.95);
 
 // Equipment constraints are automatically discovered and enforced
-OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
+ProductionOptimizer.OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 ```
 
 ### Example 2: Standalone Constraint Checking
@@ -425,7 +456,7 @@ boolean feasible = calc.isFeasible(process);
 if (!feasible) {
     for (ConstraintPenaltyCalculator.ConstraintEvaluation e : calc.evaluate(process)) {
         if (!e.isSatisfied()) {
-            System.out.println("VIOLATED: " + e.getName()
+            logger.info("VIOLATED: " + e.getName()
                 + " (margin=" + e.getMargin() + ")");
         }
     }
@@ -435,20 +466,15 @@ if (!feasible) {
 ### Example 3: External NLP Solver Integration
 
 ```java
-// Set up for SciPy or IPOPT
 ProcessSimulationEvaluator evaluator = new ProcessSimulationEvaluator(process);
-evaluator.addParameter("feedRate", feed, "flowRate", 1000.0, 20000.0, "kg/hr");
+evaluator.addParameter("feed", "flowRate", 1000.0, 20000.0, "kg/hr");
 evaluator.addObjective("throughput",
-    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
-    proc -> proc.getMeasuredValue("feed", "flowRate", "kg/hr"));
+    proc -> ((Stream) proc.getUnit("feed")).getFlowRate("kg/hr"),
+    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 evaluator.addEquipmentCapacityConstraints();
-
-// The external solver calls evaluate(x) and reads margins
 for (double rate = 1000; rate <= 20000; rate += 1000) {
-    ProcessSimulationEvaluator.EvaluationResult result =
-        evaluator.evaluate(new double[]{rate});
-    System.out.printf("Rate=%.0f feasible=%b%n",
-        rate, result.isFeasible());
+    ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {rate});
+    logger.info(String.format("Rate=%.0f feasible=%b%n", rate, result.isFeasible()));
 }
 ```
 
@@ -463,8 +489,8 @@ calc.addEquipmentCapacityConstraints(process);
 // Custom internal optimizer constraint
 calc.addConstraint(
     OptimizationConstraint.lessThan("MaxPower",
-        proc -> getTotalPower(proc),
-        5000.0, ConstraintSeverity.HARD, 100.0));
+        proc -> ((Compressor) proc.getUnit("compressor")).getPower("kW"),
+        5000.0, ConstraintSeverity.HARD, 100.0, "Installed driver limit, kW"));
 
 // All constraints are treated uniformly
 double[] margins = calc.evaluateMargins(process);

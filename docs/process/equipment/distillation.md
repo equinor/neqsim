@@ -212,6 +212,101 @@ condenser or reboiler are validation errors and fail during preflight.
 condenser ratio control is active. This makes retained/restarted models auditable before nearby-point
 warm solves.
 
+Direct terminal specification residuals are evaluated from the published streams: condenser
+liquid reflux divided by distillate flow (L/D), or reboiler vapor return divided by bottoms
+flow (V/B), minus the target. Duty residuals are the published duty minus the target in W.
+An unavailable ratio reports `NaN` and prevents acceptance. Direct controls participate in
+specification acceptance even though they do not need the outer temperature-specification loop.
+Product reconciliation can change a terminal ratio; the MESH solver first attempts an isolated
+simultaneous correction. If Newton is rejected and the ratio remains unsatisfied, a fresh isolated
+candidate uses sequential tray sweeps from the retained state. These sweeps update terminal ratio
+flashes and connected material flows together. Copied candidates preserve the current phase outlet
+inventories and initialization identity. Recovery checks connected tray component balances before
+publication, tries an isolated simultaneous correction from that state, and can further refine the
+component closure if product reconciliation still changes the ratio. An initial checkpoint after
+at most twenty sequential sweeps allows an earlier simultaneous correction; this intermediate
+state is only a seed and cannot be adopted without passing the same physical gates. If that
+correction fails, recovery continues with the full sequential convergence target. A provisional refinement
+checks physical qualification before attempting the tightest component target. Pumparound returns
+and draws are included on the inner control-volume basis while the outer tear is open; their
+inventories cancel when the tear converges. Ratio-constrained Newton
+recovery permits up to twenty fugacity sweeps per tray, stopping at the existing inner tolerance.
+For pumparound-only MESH tears, subsequent iterations retain the tray state and connect newly created
+returns to the receiving tray while preserving both its mixed fluid and cached phase outlets.
+Newton recovery reconstructs phase flows before withdrawals rather
+than rescaling the post-withdrawal outlets as a new feed. After the accepted return update, public
+products, terminal duties and residuals are reconciled on the closed external-feed basis.
+Sequential recovery must satisfy all physical convergence gates. A candidate that restores every
+active gate can be accepted even if its trace-component MESH infinity norm increases within its
+configured limit; otherwise the existing residual-improvement guard applies. Rejected candidates
+leave the original column unchanged. Recovery retains the user's convergence settings and each
+candidate's iteration limit. It does not guarantee
+convergence of every crude-fractionation or sensitivity case; an unsolved column remains invalid
+for product evaluation.
+
+The simultaneous solver enforces partial-condenser `L - R D = 0` and reboiler
+`V - B L = 0` instead of a fixed terminal duty equation. A terminal temperature supplied with an
+active ratio is an initialization seed; the solved duty follows from the material-stream enthalpy
+balance. Both full residual evaluation and finite-difference Jacobian evaluation use the same
+boundary equations.
+
+Standalone condenser and reboiler runs also calculate duty as the sum of published material
+outlet enthalpy rates minus the material inlet enthalpy rates. This includes reflux, distillate,
+bottoms and any separate liquid product or side draw. Duties are in W, positive for heat added
+to the fluid and negative for heat removed. Flowing products receive caloric initialization
+before the balance is evaluated; zero-flow phase templates contribute zero energy. This avoids
+using stale residual enthalpy from the internal mixed fluid when a ratio reaches zero.
+At zero reflux, the total condenser sends the entire condensed flow to distillate. The reflux
+outlet retains a reference composition and carries exactly zero flow, enthalpy rate and entropy rate.
+
+Naphtali-Sandholm solves each tray's implicit vapor-composition K-value equation for up to
+30 forced-root fugacity sweeps, retaining the maximum log-K residual tolerance of $10^{-8}$.
+The update uses vapor fugacity composition derivatives and a bounded Newton correction;
+singular, nonfinite or oversized corrections retain the fixed-point direction. Nearby states
+reuse the prior local derivatives as a predictor. The outer finite-difference Jacobian freezes
+those derivative states together with its residual base, so perturbed columns cannot advance
+one another's K-value estimate. Every prediction still receives a new EOS evaluation and the
+same convergence check. Cold, retained and terminal-recovery evaluations use the same bound.
+
+Sum-Rates checkpoints retain the K-values, phase flows, enthalpies and evaluated vapor-derivative
+states with their temperatures and component inventories. Rejecting an initialization trial or
+returning to the best Sum-Rates state restores that complete seed before recalculating its
+thermodynamic properties. This prevents a rejected trial from changing the thermodynamic branch
+used by the subsequent Newton solve, including on Java 8. Existing convergence gates remain active.
+
+Liquid fugacity-only evaluations use `init(1)`. Vapor evaluations that supply composition and
+temperature derivatives use `init(3)`, and separate enthalpy evaluations retain `init(2)`.
+Exhausted inner iterations remain visible in the existing K-value telemetry. Published phase
+outlets retain the solver's forced EOS root across later caloric initialization. Columns without
+side draws retain the independent total vapor flow and its normalized composition, matching the
+vapor enthalpy basis; side-draw inventories retain the solver's component-flow arrays. The convergence repair retains all material, energy and equilibrium acceptance
+gates; it does not guarantee convergence of every column.
+
+Accelerated
+full-tray sweeps transfer liquid across every interface from condenser to reboiler,
+including the rectifying section above a middle feed, and vapor across every interface
+from reboiler to condenser.
+
+Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
+sequential ratio correction preserves the current tray state instead of replacing it with a
+bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.
+
+Water-bearing tray flashes use the shared TP-flash stability, reciprocal-candidate and
+phase-initialization paths. Distillation does not bypass those thermodynamic checks.
+Inactive phase-search templates defer transport-property initialization until first access, so
+water-rich recovery does not calculate unused viscosity and conductivity on every tray PH trial.
+The finalized column still initializes physical properties for its active outlet phases.
+
+Product normal-boiling-point distributions retain strictly increasing, representable cumulative
+mole fractions. A positive trace too small to advance the cumulative fraction does not create a
+duplicate support point; it still contributes to the mole-weighted mean. This handles highly
+separated products without inventing a probability increment or rejecting a valid column result.
+
+Terminal ratio flashes use the bracketed vapor-fraction temperature search. A vapor-only
+condenser inlet can therefore cool into the two-phase region, and a liquid-only reboiler
+inlet can heat into it. Terminal outlet caches are invalidated on every run so changes in
+feed inventory are reflected in both returned phase streams.
+
 `setReboilerVaporBoilupRatio(ratio)` configures the direct reboiler mode.
 `setReboilerBoilupRatio(ratio)` also records the target as the bottom `REFLUX_RATIO`
 specification. Terminal ratios supplied through either the column API or the condenser/reboiler
@@ -251,7 +346,7 @@ top reflux-ratio specification.
 
 | Solver type | Strategy | Typical use |
 |-------------|----------|-------------|
-| `DIRECT_SUBSTITUTION` | Classic tray-by-tray substitution. | Default for simple, well-posed columns. |
+| `DIRECT_SUBSTITUTION` | Classic tray-by-tray substitution, with Anderson mixing of the tray outlet states on cold solves. | Default for simple, well-posed columns; fastest choice for short reboiled columns. |
 | `DAMPED_SUBSTITUTION` | Sequential substitution with an initial fixed relaxation factor. | Stiffer cases where direct substitution overshoots. |
 | `INSIDE_OUT` | Inside-out style flow correction with K-value tracking and polishing. | General deethanizer/depropanizer and multi-feed work. |
 | `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polishing. | Larger hydrocarbon fractionators where matrix setup cost is justified. |
@@ -261,6 +356,105 @@ top reflux-ratio specification.
 | `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start, with early return to coordinated fallback after repeated non-descent steps. | Residual-driven hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
 | `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first; other configurations retain the relaxed damped base and guarded fallback ladder. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
+
+### Choosing a solver
+
+Measured on seven SRK light-hydrocarbon columns (deethanizers with 5, 10 and 20 trays, a
+depropanizer and a debutanizer with condenser and reflux specification, a 7-tray demethanizer and a
+15-tray condensate stabiliser). Every solver ran the nominal case and 21 cases with perturbed feed
+temperature, pressure, reboiler temperature and composition. Times are single-threaded on a shared
+2-core machine and are only comparable with each other.
+
+| Solver | Nominal cases converged (of 7) | Failures in 21 perturbed runs | Time for the 21 runs |
+|--------|--------------------------------|-------------------------------|----------------------|
+| `NEWTON` | 7 | 0 | 59 s |
+| `MATRIX_INSIDE_OUT` | 7 | 0 | 66 s |
+| `INSIDE_OUT` | 7 | 0 | 134 s |
+| `MESH_RESIDUAL` | 7 | 2 | 121 s |
+| `NAPHTALI_SANDHOLM` | 6 | 1 | not comparable (the run was not timed alone) |
+| `DIRECT_SUBSTITUTION` | 6 | 2 | 43 s |
+| `DAMPED_SUBSTITUTION` | 6 | 2 | 42 s |
+| `WEGSTEIN` | 6 | 2 | 48 s |
+| `SUM_RATES` | 6 | 2 | 25 s |
+| `AUTO` | 6 | 2 | 49 s |
+
+Recommended set-up for scripted and agent-driven work:
+
+```java
+column.setSolverType(DistillationColumn.SolverType.NEWTON);
+column.run();
+if (!column.solved()) {
+  column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+  column.run();
+}
+if (!column.solved()) {
+  throw new IllegalStateException(column.getConvergenceDiagnostics());
+}
+DistillationColumn.SolveStatus status = column.getLastSolveStatus();
+DistillationColumn.SolverType used = column.getLastSolverTypeUsed();
+```
+
+- `NEWTON` is the fastest solver that converged every nominal and perturbed case.
+  `MATRIX_INSIDE_OUT` is equivalent within the noise of the measurement.
+- `NEWTON`, like the other sequential-family solvers, can finish as `RECONCILED_PRODUCTS`. On the
+  5-tray deethanizer its products then closed the feed to 0.014 %. Rerun with `MESH_RESIDUAL` when
+  the status is not `RIGOROUS_CONVERGED` and the result feeds a material balance.
+- `MESH_RESIDUAL` never returned a non-rigorous status: it either passes its residual gates or
+  fails. That makes it the verification solver. It was also the fastest solver on the two columns
+  with a condenser and a reflux specification (0.03 s and 0.14 s).
+- The sequential solvers are the fastest choice for reboiled columns of ten trays or fewer
+  (0.2 s and 0.7 s on the 5- and 10-tray deethanizers), and two to three times slower than
+  `NEWTON` on the 20-tray column. None of them converged the nominal stabiliser.
+- `NAPHTALI_SANDHOLM` was two to three times slower than `NEWTON` on columns of ten trays or more.
+- `AUTO` failed the nominal stabiliser after 14 s, where `NEWTON` converged in 2.4 s.
+- Product rates from different solver families agree to about 0.1-0.3 % at default tolerances,
+  not better. Sequential substitution stops on the size of the sweep step, which is smaller than
+  the distance to the solution by the factor $\lambda / (1 - \lambda)$ for a sweep contraction
+  ratio $\lambda$ (about 0.99 on the deethanizers).
+
+The measurements do not cover CPA or other associating fluids, absorbers without a reboiler, side
+draws or pumparounds.
+
+### Anderson mixing in the sequential solvers
+
+`DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION` and the `WEGSTEIN` fallback mix the tray outlet states
+of the latest sweeps (Anderson acceleration, depth 5). A mixing phase starts once the damped sweeps
+contract and the sweep temperature step is within 20 times the temperature tolerance. Inside a
+phase the sweeps are undamped and start from a state in which every inter-tray inlet equals the
+neighbouring outlet. A phase whose residual grows threefold or stops improving is rejected: the best
+state is restored, damped substitution resumes, and the rejected sweeps are not charged to the
+iteration limit. A rollback restores tray inlets and outlets only, so convergence is never accepted
+on the sweep that triggered it; the next sweep evaluates the restored state first.
+
+Mixing cut the 5-tray deethanizer from 122 to 31 sweeps and the 10-tray one from 212 to 60. It does
+not help the 20-tray column, whose sweeps spend most of the solve moving the composition front one
+tray at a time.
+
+It runs only on cold solves and is skipped for warm restarts, columns with side-draw, pumparound or
+hydraulic outer loops, adjusted specifications, Murphree efficiency below one, and a user-set
+iteration cap.
+
+```java
+column.setAndersonAccelerationEnabled(false); // plain damped substitution
+int mixedSteps = column.getLastAndersonAccelerationCount();
+int rejectedPhases = column.getLastAndersonRejectionCount();
+```
+
+A nonzero `getLastAndersonRejectionCount()` means mixing cost sweeps without helping that solve.
+Report it together with the solver and status when a column result is unexpectedly slow.
+
+### Tray enthalpy flash
+
+Each equilibrium tray is a PH flash. On narrow-boiling tray mixtures almost all of $dH/dT$ is
+latent heat, so a temperature Newton step based on the fixed-composition heat capacity overshoots.
+`SimpleTray` opts in to a bracketed PH flash. It switches to an Illinois regula-falsi step when
+the Newton step leaves the bracket, and checks the enthalpy residual before accepting a solution.
+When the reactive flash delegates to ordinary vapor-liquid equilibrium in a system with no
+independent reactions, it uses the same tray flash settings.
+Columns with nonideal Murphree stages use the standard PH iteration for the connected tray
+sweeps, including when a stage-level efficiency overrides the column default.
+Before this safeguard, a 6-tray C4/C5/C6 debutanizer took
+20-110 s and failed with four solver types; it now converges in 0.1-0.5 s with all of them.
 
 The `NEWTON` backtracking search evaluates bounded step lengths down to 0.125. It retains the
 trial with the lowest finite temperature residual, even if no trial is a descent step, and then
@@ -274,7 +468,12 @@ The `NEWTON` finite-difference sweeps and final `WEGSTEIN` synchronization alway
 relaxation. They therefore install one owned clone of each already-flashed internal outlet directly
 as the target tray inlet, without previous-stream arrays or a second cache clone. The owned
 snapshot still follows the established relaxation and reflash path, preserving downstream
-tear-state thermodynamic semantics. Audit the work with
+tear-state thermodynamic semantics. For a ratio-controlled total condenser, reconciled distillate and reflux use the same liquid
+composition, and reflux flow remains the specified ratio times distillate flow. Tray material and
+energy residuals are evaluated after this split is synchronized. In MESH material diagnostics, inactive side draws and
+pumparound draws contribute zero without constructing phase streams. This also permits diagnostic
+tray implementations that expose outlet streams without a mixed stream. Active draws remain part
+of the component balance. Audit the work with
 `getLastAcceleratedFullTraySweepCount()` and
 `getLastAcceleratedInternalStreamTransferCount()`. The counters describe attempted accelerator
 work, survive accepted `AUTO` candidate adoption, and can remain nonzero if a coordinated fallback
@@ -292,6 +491,13 @@ concrete solver that completed the run. Inspect `getLastAutoSolverSummary()` or
 iteration counts, solve times, and fallback notes. For product-specification cases, also inspect
 `getLastSpecificationHomotopyStepCount()` to confirm whether staged continuation was used.
 
+When the relaxed base already satisfies every active convergence gate, `AUTO`
+accepts that qualified result for any column size and specification context.
+The trace explicitly identifies subsequent candidate probes as skipped. An
+unqualified or fallback-only base retains the full candidate ladder. Product
+specification homotopy still completes its configured stages and checks the
+final target; this work reduction changes no physical acceptance tolerance.
+
 Exact unchanged-input reuse is conditional on both an identical problem fingerprint and the same
 active convergence-gate configuration that was recorded after the accepted public solve. Changing
 an enforced mass, energy, MESH, product-draw, specification, or other tolerance disqualifies the
@@ -299,6 +505,10 @@ zero-iteration cache hit. Tolerances for disabled energy and MESH gates, and out
 when no tear variable is configured, do not participate in the cache key. The next invocation
 executes the solver path after an active-gate change and either meets the new contract or reports
 non-convergence explicitly.
+Changes to tray heat input or a connected energy-stream duty also invalidate exact reuse.
+A compatible previous tray state remains available to initialize the updated solve.
+For MESH recovery, the reuse fingerprint is recorded after the final qualified correction so
+the next unchanged call retains the adopted products and tray network.
 
 ## Side Draws
 
@@ -330,7 +540,12 @@ substitution is not a robust choice for this fully coupled configuration. The me
 `isLastColumnTearConverged()` and
 `getLastColumnTearResidual()` report that convergence, and exact sequential-state reuse stays
 disabled while the nonlocal return is active. A changed external feed therefore re-solves both the
-terminal products and pumparound state on the same component basis.
+terminal products and pumparound state on the same component basis. Simultaneous MESH polishing
+maps heterogeneous and reordered feed components by name and combines phase enthalpy rates before
+forming the mean feed enthalpy. Each inner solve freezes the current pumparound return and includes
+its withdrawal separately from external side products; the outer tear still converges the recycle.
+Candidate copying preserves the frozen return and does not count copied recycle streams as new
+external feeds.
 
 ```java
 column.setGasSideDrawFraction(6, 0.05);
@@ -421,6 +636,15 @@ as an external feed or product.
 
 ## Hydraulics and Pressure-Drop Coupling
 
+After solving a column, `DistillationColumnMechanicalDesign.calcDesign()` initializes the
+bottom-tray outlet fluid properties before reading densities for preliminary tray sizing.
+Column-product fallback streams are initialized in the same way. Callers do not need to
+initialize these outlet properties manually or run the design twice. This also applies to
+`AbsorptionColumn` and `StrippingColumn`, which share the mechanical-design class.
+The preliminary `getWeirLoading()` is in m³/h per metre of weir, and
+`getTrayPressureDrop()` is in mbar per tray, including the liquid-head contribution.
+These remain screening correlations; initializing properties does not establish column convergence.
+
 `calcColumnInternals()` evaluates tray or packing hydraulics for the latest column state.
 
 ```java
@@ -466,10 +690,20 @@ stages to actual trays for cost ranking.
 `ShortcutDistillationColumn` provides Fenske-Underwood-Gilliland estimates. A rigorous column can
 use those estimates directly as a starting design.
 
+Use a finite reflux multiplier greater than one. The shortcut rejects invalid input with
+`IllegalArgumentException` and rejects non-representable Gilliland stages or feed-tray numbering
+with `IllegalStateException`. This includes operating reflux at or below its calculated minimum
+and values so close to minimum that the correlation rounds to its infinite-stage limit or
+exceeds the integer tray range. A failed run clears `isSolved()` and its product/duty/stage
+outputs, including after a previous successful run. Increase reflux and rerun before using the
+design; a shortcut estimate does not establish rigorous-column or hydraulic feasibility.
+`DistillationColumn.initializeFromShortcut(...)` catches these failures and returns an
+infeasible initialization result without changing the rigorous column's trays or feeds.
+
 ```java
 DistillationColumn.ShortcutInitializationResult init = column.initializeFromShortcut(feedStream,
     "ethane", "propane", 0.98, 0.98, 1.3);
-if (init.isFeasible()) {
+if (init.isInitialized()) {
   column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
   column.run();
 }
@@ -527,8 +761,30 @@ StreamInterface treatedGas = absorber.getGasOutStream();
 String report = absorber.toJson();
 ```
 
+Explicit packing names must resolve in `PackingSpecificationLibrary`; unknown names raise
+`IllegalArgumentException` instead of selecting an unrelated default. Built-in packing aliases
+are preserved, CSV additions include the material, and unqualified placeholder rows are excluded.
+See [packing data and migration guidance](absorbers.md#packing-data).
+
+
 The rate-based model exposes segment profiles, component-transfer totals, pressure-drop and flood
 fraction diagnostics, film/heat-transfer model choices, and equation-oriented residual diagnostics.
+
+The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
+An invalid thermodynamic trial also aborts with `IllegalStateException`, retaining
+the original cause, the actual failed iteration, and an infinite convergence
+residual. It does not publish trial outlets or replace the last accepted segment
+profile. Early thermodynamic failure is distinct from reaching the iteration cap;
+neither result establishes a converged simultaneous segment model.
+
+`ColumnSolver.EQUATION_ORIENTED` throws `IllegalStateException` when the final full-transfer
+residual is non-finite or exceeds `getColumnResidualTolerance()`. The failed run clears the solved
+flag and retains residual diagnostics, but does not replace the outlet streams. Any outlets from a
+previous successful run are stale after this exception and must not be consumed as current results.
+The optional equation-oriented solver is not yet qualified for the CO2/water and TEG benchmark
+cases tracked in issues #4093 and #4094. The separate simultaneous segment solver's enthalpy
+conservation regression remains unresolved in #4094.
 
 ## Diagnostics and Results
 
@@ -585,9 +841,52 @@ solvers.
    stream.
 2. Initialize with `ShortcutDistillationColumn` or `initializeFromShortcut` when light and heavy
    keys are known.
-3. Run `INSIDE_OUT` or `AUTO` first; use `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` for residual audit.
+3. Run `NEWTON` first and fall back to `MESH_RESIDUAL` (see "Choosing a solver"); use
+   `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` for residual audit.
 4. Add product purity or component recovery specs.
 5. Rate internals and enable hydraulic pressure-drop coupling only after a stable base case exists.
+
+### Vacuum MEG regeneration
+
+A salt-free SRK–CPA regression uses 6,000 kg/h of 75 wt% MEG and water at 80 °C and 0.8 bara.
+The partial condenser controls the molar reflux ratio at 0.45. The reboiler controls duty.
+Use `setSeedTemperature` for initial tray temperatures so they do not become terminal
+specifications. Specifying both terminal temperatures can make the overhead unable to remove
+the water entering the column.
+
+[`MegVacuumRegenerationTest`](../../../src/test/java/neqsim/process/equipment/distillation/MegVacuumRegenerationTest.java)
+checks a feed tray between a reboiler and partial condenser at 1.30 MW, a nearby 1.32 MW
+point from both retained and cold states, and a three-tray case with 0.46 kg/h residual
+methane at 1.25 MW. The direct solver must report `RIGOROUS_CONVERGED`, satisfy the active
+material, energy, MESH and specification gates, and reach internal-flow stationarity.
+Audit energy across each adiabatic tray as well as the whole column. In this case the
+bracketed tray PH flash ([#4981](https://github.com/equinor/neqsim/pull/4981)) resolves the
+interior tray energy residual observed on 3.29.0.
+
+#### Water–MEG equilibrium and vapor carryover
+
+At fixed measured temperature and liquid composition,
+[`MegWaterVacuumVleAssessmentTest`](../../../src/test/java/neqsim/thermodynamicoperations/flashops/saturationops/MegWaterVacuumVleAssessmentTest.java)
+evaluates the default SRK–CPA model with mixing rule 10 against selected binary data from
+[Lancia, Musmarra and Pepe (1996), tables 1, 4 and 7](https://doi.org/10.1252/jcej.29.449).
+The source reports water mole fractions in both phases. MEG vapor concentration is the
+complement of the measured vapor water mole fraction. Pressure and composition errors
+are evaluated separately at the computed bubble point.
+
+| Temperature (°C) | Measured bubble pressure (kPa) | CPA bubble pressure (kPa) | Measured vapor MEG (mol%) | CPA vapor MEG (mol%) |
+| ---: | ---: | ---: | ---: | ---: |
+| 98 | 65.92 | 64.64 | 0.8 | 0.92 |
+| 98 | 81.07 | 77.12 | 0.3 | 0.41 |
+| 110 | 71.44 | 78.76 | 2.2 | 2.11 |
+| 110 | 79.71 | 85.50 | 1.1 | 1.73 |
+| 122 | 70.43 | 83.01 | 5.9 | 4.89 |
+| 122 | 83.72 | 98.61 | 4.1 | 3.62 |
+
+The largest pressure deviation is 17.9%. At 110 °C and 79.71 kPa measured pressure, the
+calculated vapor MEG is about 57% higher on a relative basis. The test envelopes preserve
+a reproducible comparison for model development. Use measured vapor composition and
+holdout pressures when qualifying a parameter change. The staged solver cases are
+synthetic, and the literature comparison covers salt-free binary equilibrium.
 
 ### Absorber or Stripper
 
@@ -618,7 +917,7 @@ or bubble-point boundary from opposite sides. Material phase fractions above `1e
 
 | Symptom | Recommended checks |
 |---------|--------------------|
-| No convergence | Verify tray numbering, feed condition, endpoint temperatures, pressure profile, and component list. Start with `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, or `AUTO`, then inspect `getConvergenceDiagnostics()`. |
+| No convergence | Verify tray numbering, feed condition, endpoint temperatures, pressure profile, and component list. Start with `NEWTON`, then `MESH_RESIDUAL` (see "Choosing a solver"), then inspect `getConvergenceDiagnostics()`. |
 | Oscillation | Reduce aggressive condenser/reboiler specs, set a lower relaxation factor, or use `DAMPED_SUBSTITUTION`. |
 | Specification does not close | Check `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()`, feasible product split, and whether the required condenser/reboiler exists. For sharp purity, recovery, or product-flow targets, use `setSpecificationHomotopySteps(steps)` or `AUTO`. |
 | Side-draw spec reports non-converged | The target may exceed available tray traffic or feed component inventory. Inspect `getSideDrawStream(...)`, side-draw fraction, and `getLastColumnTearResidual()`. |

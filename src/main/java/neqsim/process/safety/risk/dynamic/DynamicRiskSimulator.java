@@ -1,6 +1,5 @@
 package neqsim.process.safety.risk.dynamic;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +59,7 @@ import neqsim.process.util.optimizer.ProductionImpactAnalyzer;
  * @see OperationalRiskSimulator
  * @see ProductionProfile
  */
-public class DynamicRiskSimulator extends OperationalRiskSimulator implements Serializable {
+public class DynamicRiskSimulator extends OperationalRiskSimulator {
 
   private static final long serialVersionUID = 1000L;
 

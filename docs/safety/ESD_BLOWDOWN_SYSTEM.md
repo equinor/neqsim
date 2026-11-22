@@ -14,6 +14,54 @@ This implementation adds a complete Emergency Shutdown (ESD) blowdown system to 
 3. **Orifice** - ISO 5167 pressure-driven flow restriction for controlled depressurization
 4. **Flare Integration** - Safe disposal of blowdown gas
 
+## ESD sequence lifecycle and restart
+
+`ESDLogic.deactivate()` pauses the sequence. Calling `activate()` from `PAUSED` resumes
+the same step, elapsed time and unfinished delay; it does not replay completed actions.
+Calling `reset()` or starting a new completed/failed cycle re-arms built-in one-shot
+actions through `LogicAction.reset()`. Conditional and parallel actions re-arm their
+children as well as their own selection/execution bookkeeping. Custom stateful actions
+must implement that hook; its default is a no-op for stateless actions.
+
+Action and sequence reset change bookkeeping only. They do not energize, reopen or
+reset any target valve, clear a physical fault, or establish a restart permissive.
+In particular, `ESDValve.reset()` is a separate equipment operation which can reopen
+the valve. A configured safety function still needs its demand-clear and restart
+checks. Action delays must be finite and nonnegative, and operations must be non-null.
+`execute()` rejects negative/nonfinite intervals before advancing state; zero permits
+an instantaneous demand evaluation.
+
+Serialization now retains the ESD action graph. Serialize the process and its bound
+logic in one graph when their references must remain shared after restore. Built-in
+actions support serialization, but every custom action/condition and captured payload
+must also support it; Java rejects an unsupported graph at write time. Older streams
+discarded the transient action list and cannot recover that definition: restoration
+rejects them with `InvalidObjectException` and requires reconstruction from controlled
+configuration. A fresh logic factory on an isolated process copy remains the primary
+scenario path. This is a software restart contract, not permission to restart a plant.
+
+The rearm, pause/resume, nested actions, equipment-state preservation and serialization
+cases are exercised by `ESDLogicLifecycleTest`.
+
+Native actions expose their actual equipment references through
+`LogicAction.getTargetEquipment()`. Conditional/parallel sequences include all possible
+configured branch targets; `ESDLogic` deduplicates them by object reference, not by tag.
+Opaque legacy actions expose no references and default to incomplete identity coverage.
+`ESDLogic.getTargetEquipmentCoverageIssue()` reports that condition even when a partial
+target list exists. A declared `getTargetName()` string is never resolved heuristically
+to physical equipment. P&ID handoff must require complete target identity and exact
+membership of the configured process copy before accepting the binding. This identifies
+configured targets; a separate scenario must demonstrate their required response.
+
+`ESDLogic.getTripActionConfiguration()` supplies an ordered action tree with step
+delays and explicit support status for P&ID configuration fingerprints. Its bounded
+closure policy accepts exact native `TripValveAction` operations on native `ESDValve`
+targets and nonempty native parallel groups. Opening operations, overriding subclasses,
+opaque actions, empty groups and cycles are unsupported for that policy. This keeps
+a trip-to-open substitution or a changed delay from retaining closure evidence merely
+because the logic and valve tags match. Unsupported actions can retain their existing
+runtime APIs; they need separate reviewed semantics before strict P&ID safety binding.
+
 ## Components Created
 
 ### 1. BlowdownValve Class

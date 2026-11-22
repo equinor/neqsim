@@ -1,6 +1,10 @@
 package neqsim.pvtsimulation.regression;
 
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.component.ComponentEos;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -125,6 +129,12 @@ public enum RegressionParameter {
 
   /**
    * Volume shift multiplier for C7+ pseudo-components.
+   *
+   * <p>
+   * Multiplies the effective Peneloux volume shift of every plus and TBP fraction, whether it comes from the default
+   * Rackett-based correlation, a dimensionless shift constant or an explicitly set shift (for example E300 SSHIFT). The
+   * fluid must use volume correction ({@code useVolumeCorrection(true)}) for the shift to affect densities.
+   * </p>
    */
   VOLUME_SHIFT_C7PLUS(0.8, 1.2, 1.0) {
     @Override
@@ -133,8 +143,7 @@ public enum RegressionParameter {
         if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
             || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
           for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-            double currentShift = fluid.getPhase(p).getComponent(i).getVolumeCorrectionConst();
-            fluid.getPhase(p).getComponent(i).setVolumeCorrectionConst(currentShift * value);
+            scaleVolumeShift(fluid.getPhase(p).getComponent(i), value);
           }
         }
       }
@@ -336,7 +345,7 @@ public enum RegressionParameter {
    * @return array [lowerBound, upperBound, initialGuess]
    */
   public double[] getDefaultBounds() {
-    return new double[] { lowerBound, upperBound, initialGuess };
+    return new double[] {lowerBound, upperBound, initialGuess};
   }
 
   /**
@@ -348,7 +357,36 @@ public enum RegressionParameter {
   public abstract void applyToFluid(SystemInterface fluid, double value);
 
   /**
-   * Applies one CSP viscosity correction factor to every initialized phase.
+   * Multiplies the effective Peneloux volume shift of one component.
+   *
+   * <p>
+   * When a dimensionless shift constant is set it is scaled directly. Otherwise the effective shift (Rackett
+   * correlation or explicit value) is converted to the dimensionless form c / b, so that the shift keeps following
+   * later changes to Tc or Pc, and scaled. If the component's EoS does not honour the constant, the scaled shift is
+   * stored as an explicit value.
+   * </p>
+   *
+   * @param component component to modify
+   * @param factor multiplier for the volume shift
+   */
+  static void scaleVolumeShift(ComponentInterface component, double factor) {
+    double target = component.getVolumeCorrection() * factor;
+    double shiftConst = component.getVolumeCorrectionConst();
+    if (Math.abs(shiftConst) > 1.0e-10) {
+      component.setVolumeCorrectionConst(shiftConst * factor);
+    } else if (component instanceof ComponentEos) {
+      double b = ((ComponentEos) component).calcb();
+      if (b > 0.0 && Math.abs(target) > 0.0) {
+        component.setVolumeCorrectionConst(target / b);
+      }
+    }
+    if (Math.abs(component.getVolumeCorrection() - target) > 1.0e-9 * Math.max(1.0, Math.abs(target))) {
+      component.setVolumeCorrection(target);
+    }
+  }
+
+  /**
+   * Applies one CSP viscosity correction factor to each stored fluid phase, including inactive slots.
    *
    * @param fluid thermodynamic system to modify
    * @param index correction factor index, from 0 to 3
@@ -356,11 +394,24 @@ public enum RegressionParameter {
    */
   private static void applyCspViscosityCorrectionFactor(SystemInterface fluid, int index, double value) {
     for (int phaseIndex = 0; phaseIndex < fluid.getMaxNumberOfPhases(); phaseIndex++) {
-      PhysicalProperties physicalProperties = fluid.getPhase(phaseIndex).getPhysicalProperties();
-      if (!physicalProperties.isPFCTViscosityModel()) {
-        physicalProperties.setViscosityModel("PFCT");
+      // Mapped phases can repeat after phase removal. Initialization restores the storage mapping,
+      // so configure each raw slot before that inactive phase can become active again.
+      PhaseInterface phase = fluid.getPhases()[phaseIndex];
+      PhaseType originalType = phase.getType();
+      try {
+        // Each storage slot also owns separate gas, oil and aqueous transport models. Configure all
+        // three without a flash, and restore its thermodynamic type even if configuration fails.
+        for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.OIL, PhaseType.AQUEOUS}) {
+          phase.setType(type);
+          PhysicalProperties physicalProperties = phase.getPhysicalProperties();
+          if (!physicalProperties.isPFCTViscosityModel()) {
+            physicalProperties.setViscosityModel("PFCT");
+          }
+          physicalProperties.setCspViscosityCorrectionFactor(index, value);
+        }
+      } finally {
+        phase.setType(originalType);
       }
-      physicalProperties.setCspViscosityCorrectionFactor(index, value);
     }
   }
 }

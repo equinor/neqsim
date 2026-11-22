@@ -73,7 +73,7 @@ public class HeaterTest {
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
 
     Heater heater1 = new Heater("heater 1", inletStream);
-    heater1.setOutTemperature(310.0);
+    heater1.setOutletTemperature(310.0);
     processOps.add(inletStream);
     processOps.add(heater1);
     processOps.run();
@@ -127,6 +127,29 @@ public class HeaterTest {
     heater.run(UUID.randomUUID());
     assertEquals(0, fluid.getLevelThreeCalls(), "Nearby operating points must retain minimal initialization");
     assertEquals(325.0, heater.getOutletStream().getTemperature("K"), 1.0e-10);
+  }
+
+  /** Setter precedence must not leave an inactive outlet-temperature specification visible. */
+  @Test
+  void testSpecificationReportingFollowsActiveSetter() {
+    Stream inlet = new Stream("spec inlet", testSystem.clone());
+    Heater heater = new Heater("spec heater", inlet);
+
+    heater.setOutletTemperature(380.0);
+    assertTrue(heater.hasOutletTemperatureSpecification());
+    assertFalse(heater.hasDutySpecification());
+    assertEquals(380.0, heater.getSpecifiedOutletTemperature(), 0.0);
+
+    heater.setDuty(5000.0);
+    assertFalse(heater.hasOutletTemperatureSpecification());
+    assertTrue(heater.hasDutySpecification());
+    assertEquals(0.0, heater.getSpecifiedOutletTemperature(), 0.0,
+        "Inactive temperature specifications must not be reported as active values");
+
+    heater.setOutletTemperature(390.0);
+    assertTrue(heater.hasOutletTemperatureSpecification());
+    assertFalse(heater.hasDutySpecification());
+    assertEquals(390.0, heater.getSpecifiedOutletTemperature(), 0.0);
   }
 
   /**

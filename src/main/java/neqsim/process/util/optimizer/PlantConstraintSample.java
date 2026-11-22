@@ -94,11 +94,15 @@ public final class PlantConstraintSample implements Serializable {
     if (!installedMetadataMatches(definition, evidence)) {
       resolvedStatus = SampleStatus.METADATA_MISMATCH;
     }
+    String provenance = evidence.getApplicableLimitSourceReference();
+    if (provenance.isEmpty()) {
+      provenance = evidence.getDataSource();
+    }
     return builder(definition.getQualifiedId(), calculationId).status(resolvedStatus)
         .values(evidence.getCurrentValue(), evidence.getApplicableLimit())
         .normalized(evidence.getNormalizedUtilization(), evidence.getNormalizedUtilization() - 1.0)
         .physical(evidence.getPhysicalMargin(), evidence.getRequiredRelief()).unit(definition.getUnit())
-        .basis(definition.getBasis()).provenance(evidence.getDataSource())
+        .basis(definition.getBasis()).provenance(provenance)
         .diagnostic(resolvedStatus == SampleStatus.AVAILABLE ? "" : evidence.getEvidenceStatus().name()).build();
   }
 

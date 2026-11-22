@@ -1,6 +1,7 @@
 package neqsim.process.safety.overpressure;
 
 import java.io.Serializable;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * Evaluates whether a peak (relieving) pressure is acceptable against the ASME VIII Div 1 / TR3001 section 2 maximum
@@ -71,11 +72,13 @@ public final class OverpressureAcceptanceChecker implements Serializable {
   public AcceptanceResult check(double peakPressureBara, ProtectedItem item, ReliefCause cause,
       boolean multipleDevices) {
     double factor = accumulationFactor(cause, multipleDevices);
-    double allowable = item.getMaximumAllowableWorkingPressureBara() * factor;
+    double mawp = item.getMaximumAllowableWorkingPressureBara();
+    double allowable = mawp + (mawp - ThermodynamicConstantsInterface.referencePressure) * (factor - 1.0);
     double margin = allowable - peakPressureBara;
-    boolean accepted = peakPressureBara <= allowable;
-    String basis = String.format("%.0f%% of MAWP (%.2f bara x %.2f) for %s%s", factor * 100.0,
-        item.getMaximumAllowableWorkingPressureBara(), factor, cause.getLabel(),
+    boolean accepted = Double.isFinite(peakPressureBara) && peakPressureBara > 0.0 && Double.isFinite(allowable)
+        && mawp > ThermodynamicConstantsInterface.referencePressure && peakPressureBara <= Math.nextUp(allowable);
+    String basis = String.format("%.0f%% of gauge MAWP (%.2f barg x %.2f, standard atmosphere) for %s%s",
+        factor * 100.0, mawp - ThermodynamicConstantsInterface.referencePressure, factor, cause.getLabel(),
         cause == ReliefCause.FIRE ? "" : (multipleDevices ? ", multiple devices" : ", single device"));
     return new AcceptanceResult(peakPressureBara, allowable, factor, accepted, margin, basis);
   }

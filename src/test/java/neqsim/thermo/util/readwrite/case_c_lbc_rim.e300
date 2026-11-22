@@ -1,0 +1,145 @@
+-- Case C rim oil, 7-component PR78 fluid with LBC viscosity (VCRIT, no VCRITVIS)
+-- E300 reference at 336.0 bara, 119.1 C: density 635.4 kg/m3, viscosity 0.2748 cP
+-- Units
+METRIC
+-- Number of components
+NCOMPS
+7 /
+-- Equation of state
+EOS
+PR /
+PRCORR
+-- Reservoir temperature (C)
+RTEMP
+   119.10 /
+-- Standard Conditions (C and bara)
+STCOND
+   15.00000    1.01325  /
+-- Component names
+CNAMES
+N2C1
+C2C3
+C4C6
+C7C12
+C13C21
+C22C35
+C36P /
+-- Tc (K)
+TCRIT
+   188.936
+   333.393
+   454.895
+   607.955
+   750.292
+   865.104
+   980.585 /
+-- Pc (Bar)
+PCRIT
+   45.6870
+   49.3075
+   35.2007
+   27.3730
+   17.3817
+   11.7102
+    8.0813 /
+-- Acentric factors
+ACF
+   0.01166
+   0.13891
+   0.22286
+   0.35039
+   0.62483
+   0.95635
+   1.38481 /
+-- OmegaA
+OMEGAA
+   0.4572355
+   0.4572355
+   0.4572355
+   0.4572355
+   0.4572355
+   0.4572355
+   0.4572355 /
+-- OmegaB
+OMEGAB
+   0.0777961
+   0.0777961
+   0.0777961
+   0.0777961
+   0.0777961
+   0.0777961
+   0.0777961 /
+-- Molecular weights
+MW
+   16.2179
+   36.7253
+   66.9675
+  118.9105
+  211.7803
+  337.0038
+  545.0786 /
+-- Normal boiling point (K)
+TBOIL
+   110.691
+   204.843
+   296.200
+   419.034
+   564.800
+   696.959
+   834.763 /
+-- Critical volume (m3/kmol)
+VCRIT
+   0.09839
+   0.16253
+   0.29487
+   0.49704
+   0.87502
+   1.41340
+   2.321 /
+-- Critical Z-factor
+ZCRIT
+   0.28613
+   0.28910
+   0.27442
+   0.26915
+   0.24380
+   0.23010
+   0.23005 /
+-- Volume shift
+SSHIFT
+  -0.150256
+  -0.060365
+  -0.042050
+   0.050644
+   0.169776
+   0.250649
+   0.287769 /
+-- Parachors
+PARACHOR
+    70.700
+   124.394
+   213.098
+   328.961
+   553.563
+   856.870
+  1343.189 /
+-- Rim oil composition
+ZI
+   0.4846419
+   0.1726748
+   0.0775476
+   0.1195464
+   0.0740802
+   0.0424159
+   0.0290931 /
+-- Binary interaction coefficients
+BIC
+  0.0120
+  0.0015  0.0128
+  0.0392  0.0127  0.0000
+  0.0704  0.0127  0.0000  0.0000
+  0.0984  0.0127  0.0000  0.0000  0.0000
+  0.1237  0.0127  0.0000  0.0000  0.0000  0.0000 /
+-- LBC coefficients
+LBCCOEF
+  0.1023000  0.0233640  0.0585330  -0.0362068  0.0074659 /

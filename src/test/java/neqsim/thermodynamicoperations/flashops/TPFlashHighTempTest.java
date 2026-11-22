@@ -20,7 +20,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TPFlashHighTempTest {
   private static final double REFERENCE_TEMPERATURE_C = 268.0;
   private static final double REFERENCE_PRESSURE_BARA = 88.0;
-  private static final double REFERENCE_SRK_GAS_BETA = 0.00698;
+  // Re-based from 0.00698 when the nC16, nC17 and nC19 critical properties were corrected (Equinor UMR-PRU review).
+  private static final double REFERENCE_SRK_GAS_BETA = 0.00848;
   private static final double REFERENCE_SRK_GAS_BETA_TOLERANCE = 0.001;
 
   /** Qualifies the SRK ordinary and explicit-multiphase paths. */
@@ -57,7 +58,8 @@ class TPFlashHighTempTest {
     assertEquivalentState(ordinary, reference, 1.0e-8, modelLabel + " ordinary versus multiphase");
     assertEquivalentState(reference, poorGuess, 1.0e-8, modelLabel + " poor beta initialization");
 
-    for (double temperatureC : new double[] { 267.0, 269.0 }) {
+    // The SRK bubble point at 88 bara is 269.05 C; 269.0 C now holds only an incipient gas phase.
+    for (double temperatureC : new double[] {267.0, 268.5}) {
       SystemInterface nearbyOrdinary = flash(pengRobinson, temperatureC, false, false);
       SystemInterface nearbyMultiphase = flash(pengRobinson, temperatureC, true, false);
       assertClosedEquilibrium(nearbyOrdinary, modelLabel + " ordinary at " + temperatureC + " C");
@@ -67,10 +69,10 @@ class TPFlashHighTempTest {
     }
 
     SystemInterface reused = reference.clone();
-    reused.setTemperature(269.0, "C");
+    reused.setTemperature(268.5, "C");
     new ThermodynamicOperations(reused).TPflash();
     reused.initProperties();
-    assertEquivalentState(flash(pengRobinson, 269.0, true, false), reused, 1.0e-8, modelLabel + " changed state");
+    assertEquivalentState(flash(pengRobinson, 268.5, true, false), reused, 1.0e-8, modelLabel + " changed state");
 
     reused.setTemperature(REFERENCE_TEMPERATURE_C, "C");
     new ThermodynamicOperations(reused).TPflash();
@@ -141,8 +143,8 @@ class TPFlashHighTempTest {
     system.addComponent("nC19", 1.0);
     system.setMixingRule("classic");
     system.setMolarComposition(
-        new double[] { 1.63e-3, 3.23e-3, 0.0, 3.0e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1,
-            1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1.0e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4 });
+        new double[] {1.63e-3, 3.23e-3, 0.0, 3.0e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1,
+            1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1.0e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4});
     return system;
   }
 

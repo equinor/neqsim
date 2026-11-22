@@ -47,6 +47,10 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
     } catch (Exception ex) {
       throw new RuntimeException("bubble point failed for " + componentName, ex);
     }
+    fluid.init(1);
+    assertTrue(fluid.getPhase(0).getZ() > fluid.getPhase(1).getZ(), "distinct vapor and liquid roots");
+    assertEquals(fluid.getPhase(0).getComponent(0).getFugacityCoefficient(),
+        fluid.getPhase(1).getComponent(0).getFugacityCoefficient(), 1.0e-6, "saturation fugacity equality");
     return fluid.getPressure();
   }
 
@@ -59,9 +63,9 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
   @Test
   void testPureWaterVaporPressure() {
     // Reference saturation pressures (steam tables), bara.
-    double[] temperatures = new double[] { 298.15, 323.15, 373.15 };
-    double[] referencePbar = new double[] { 0.03169, 0.12349, 1.01325 };
-    double[] guesses = new double[] { 0.03, 0.12, 1.0 };
+    double[] temperatures = new double[] {298.15, 323.15, 373.15};
+    double[] referencePbar = new double[] {0.03169, 0.12349, 1.01325};
+    double[] guesses = new double[] {0.03, 0.12, 1.0};
 
     double previous = 0.0;
     for (int i = 0; i < temperatures.length; i++) {

@@ -22,7 +22,10 @@ optimization, sparse linear algebra, and analytical validation benchmarks.
 
 ## Generalized whole-network optimization
 
-Register finite-bounded variables, objective terms, and typed constraints. The
+Register finite-bounded variables, objective terms, and typed constraints. This fragment
+requires an existing `LoopedPipeNetwork network` containing source `field-a`, compressor
+edge `export compressor`, route edge `north route`, and delivery node `delivery`.
+The complete gas and oil notebooks linked below define networks with these equipment types. The
 optimizer evaluates hydraulics and point quality on the same candidate and
 restores all decision state after every evaluation.
 
@@ -85,6 +88,7 @@ Internal network values are discoverable through `ProcessAutomation`:
 allocation network.node.delivery.pressure
 allocation network.source.field-a.rate
 allocation network.sink.delivery.nomination
+allocation network.sink.delivery.pressure
 allocation network.edge.export.flowRate
 allocation network.edge.export.availability
 allocation network.choke.well-a.opening
@@ -94,8 +98,10 @@ allocation network.pump.oil booster.speed
 ```
 
 Address get/set performs unit conversion and rejects non-writable calculated
-values. This lets generic automation and agentic optimization inspect network
-internals without bypassing the bounded network API.
+values. Sink pressure is exposed as a writable absolute-pressure input only when
+the named node is both a sink and a fixed-pressure boundary; a solved junction or
+free-pressure sink remains read-only. This lets generic automation and agentic
+optimization inspect network internals without bypassing the bounded network API.
 
 ## Legacy choke optimization
 
@@ -107,6 +113,19 @@ optimization from Apache Commons Math:
 
 ### Java Example
 
+Use these statements inside a method with `neqsim.process.equipment.network.*` imports,
+a Log4j2 `Logger logger`, and the gas template below. The Python example is independently
+runnable and constructs the same network.
+
+```java
+neqsim.thermo.system.SystemSrkEos gas =
+    new neqsim.thermo.system.SystemSrkEos(298.15, 50.0);
+gas.addComponent("methane", 0.85);
+gas.addComponent("ethane", 0.10);
+gas.addComponent("propane", 0.05);
+gas.setMixingRule("classic");
+```
+
 ```java
 LoopedPipeNetwork network = new LoopedPipeNetwork("MyNetwork");
 network.setFluidTemplate(gas);
@@ -114,14 +133,18 @@ network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
 network.setMaxIterations(200);
 network.setTolerance(100.0);
 
-// Build network with wells, chokes, and export
+// Build network with two independently controlled chokes (BOBYQA needs >= 2 variables).
 network.addSourceNode("res1", 200.0, 0.0);
 network.addJunctionNode("wh1");
+network.addSourceNode("res2", 180.0, 0.0);
+network.addJunctionNode("wh2");
 network.addJunctionNode("manifold");
 network.addFixedPressureSinkNode("export", 50.0);
 
 network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
 network.addChoke("wh1", "manifold", "choke1", 50.0, 80.0);
+network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
+network.addChoke("wh2", "manifold", "choke2", 45.0, 75.0);
 network.addPipe("manifold", "export", "export_pipe", 20000.0, 0.3, 0.00005);
 
 // Create and configure optimizer
@@ -132,8 +155,8 @@ optimizer.setMaxEvaluations(300);
 
 // Run optimization
 NetworkOptimizer.OptimizationResult result = optimizer.optimize();
-System.out.println("Production: " + result.totalProductionKgHr + " kg/hr");
-System.out.println("Converged: " + result.converged);
+logger.info("Production: " + result.totalProductionKgHr + " kg/hr");
+logger.info("Converged: " + result.converged);
 ```
 
 ### Legacy objective types
@@ -212,7 +235,7 @@ List<NetworkValidationBenchmarks.BenchmarkResult> results =
     NetworkValidationBenchmarks.runAllBenchmarks();
 
 for (NetworkValidationBenchmarks.BenchmarkResult r : results) {
-    System.out.println(r.getSummary());
+    logger.info(r.getSummary());
 }
 ```
 
@@ -223,7 +246,7 @@ List<NetworkValidationBenchmarks.BenchmarkResult> results =
     LoopedPipeNetwork.runValidationBenchmarks();
 
 for (NetworkValidationBenchmarks.BenchmarkResult r : results) {
-    System.out.println(r.getSummary());
+    logger.info(r.getSummary());
 }
 ```
 
@@ -251,7 +274,18 @@ network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON)
 network.setMaxIterations(200)
 network.setTolerance(100.0)
 
-# Build network...
+# Two independently controlled chokes give BOBYQA two decision variables.
+network.addSourceNode("res1", 200.0, 0.0)
+network.addSourceNode("res2", 180.0, 0.0)
+network.addJunctionNode("wh1")
+network.addJunctionNode("wh2")
+network.addJunctionNode("manifold")
+network.addFixedPressureSinkNode("export", 50.0)
+network.addWellIPR("res1", "wh1", "ipr1", 5e-6, False)
+network.addWellIPR("res2", "wh2", "ipr2", 4e-6, False)
+network.addChoke("wh1", "manifold", "choke1", 50.0, 80.0)
+network.addChoke("wh2", "manifold", "choke2", 45.0, 75.0)
+network.addPipe("manifold", "export", "export_pipe", 20000.0, 0.3, 0.00005)
 network.run()
 
 # Optimize
@@ -259,6 +293,8 @@ optimizer = network.createOptimizer()
 optimizer.setAlgorithm(NetworkOptimizer.Algorithm.BOBYQA)
 optimizer.setMaxEvaluations(300)
 result = optimizer.optimize()
+if not result.converged:
+    raise RuntimeError("Network optimization did not converge")
 print(f"Production: {result.totalProductionKgHr:.0f} kg/hr")
 ```
 

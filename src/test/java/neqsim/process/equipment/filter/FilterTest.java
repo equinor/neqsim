@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -17,6 +19,21 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class FilterTest {
+
+  /** Verifies pressure drops use only the unit scale, including gauge-unit aliases. */
+  @ParameterizedTest
+  @CsvSource({"bar, 1.0", "bara, 1.0", "barg, 1.0", "Pa, 0.00001", "kPa, 0.01", "MPa, 10.0", "psi, 0.0689475729317831",
+      "psia, 0.0689475729317831", "psig, 0.0689475729317831", "atm, 1.01325"})
+  void testDifferentialPressureUnitScales(String unit, double barPerUnit) {
+    Filter filter = new Filter("pressure scale");
+    filter.setDeltaP(2.0, unit);
+    assertEquals(2.0 * barPerUnit, filter.getDeltaP(), 1.0e-12);
+    assertEquals(filter.getDeltaP(), filter.getCleanDeltaP(), 1.0e-12);
+    filter.setDeltaP(0.0, unit);
+    assertEquals(0.0, filter.getDeltaP(), 0.0);
+    filter.setDeltaP(-2.0, unit);
+    assertEquals(0.0, filter.getDeltaP(), 0.0);
+  }
 
   /**
    * Creates a methane stream for filter tests.
@@ -109,8 +126,8 @@ public class FilterTest {
   @Test
   public void testBetaRatioCurveCalculatesParticleCapture() {
     Stream feed = createFeedStream();
-    FilterPerformanceCurve curve = new FilterPerformanceCurve(new double[] { 5.0, 10.0, 20.0 },
-        new double[] { 2.0, 100.0, 1000.0 });
+    FilterPerformanceCurve curve = new FilterPerformanceCurve(new double[] {5.0, 10.0, 20.0},
+        new double[] {2.0, 100.0, 1000.0});
     curve.setTestStandard("ISO 16889:2022");
 
     Filter filter = new Filter("beta rated filter", feed);
@@ -150,8 +167,8 @@ public class FilterTest {
   public void testTabulatedPressureDropCurve() {
     Stream feed = createFeedStream();
     double flow = feed.getFlowRate("m3/hr");
-    FilterPressureDropCurve curve = new FilterPressureDropCurve(new double[] { 0.5 * flow, 1.5 * flow },
-        new double[] { 0.10, 0.50 });
+    FilterPressureDropCurve curve = new FilterPressureDropCurve(new double[] {0.5 * flow, 1.5 * flow},
+        new double[] {0.10, 0.50});
     curve.setTestStandard("ISO 3968:2017");
 
     Filter filter = new Filter("tested cartridge", feed);
@@ -210,8 +227,8 @@ public class FilterTest {
 
     assertEquals(0.5, filter.getDeltaP(), 1.0e-12);
     assertThrows(IllegalArgumentException.class,
-        () -> new FilterPerformanceCurve(new double[] { 10.0, 5.0 }, new double[] { 100.0, 200.0 }));
+        () -> new FilterPerformanceCurve(new double[] {10.0, 5.0}, new double[] {100.0, 200.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> new FilterPressureDropCurve(new double[] { 1.0 }, new double[] { -0.1 }));
+        () -> new FilterPressureDropCurve(new double[] {1.0}, new double[] {-0.1}));
   }
 }

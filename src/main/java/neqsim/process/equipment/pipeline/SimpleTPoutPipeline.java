@@ -18,7 +18,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <pre>{@code
  * SimpleTPoutPipeline pipe = new SimpleTPoutPipeline("simple_pipe", inletStream);
- * pipe.setOutTemperature(300.0); // 300 K
+ * pipe.setOutletTemperature(300.0); // 300 K
  * pipe.setOutPressure(50.0); // 50 bara
  * pipe.run();
  * }</pre>

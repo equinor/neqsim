@@ -15,7 +15,6 @@ import java.util.Random;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.alarm.AlarmEvent;
 import neqsim.process.alarm.AlarmState;
-import neqsim.process.measurementdevice.online.OnlineSignal;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
@@ -37,8 +36,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   private double minimumValue = 0.0;
 
   private boolean logging = false;
-  private OnlineSignal onlineSignal = null;
-  private boolean isOnlineSignal = false;
   private double onlineMeasurementValue = 0.0;
   private String onlineMeasurementValueUnit = "";
 
@@ -77,39 +74,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   public MeasurementDeviceBaseClass(String name, String unit) {
     super(name);
     setUnit(unit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public OnlineSignal getOnlineSignal() {
-    return onlineSignal;
-  }
-
-  /**
-   * Setter for the field <code>onlineSignal</code>.
-   *
-   * @param onlineSignal the onlineSignal to set
-   */
-  public void setOnlineSignal(OnlineSignal onlineSignal) {
-    this.onlineSignal = onlineSignal;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean isOnlineSignal() {
-    return isOnlineSignal;
-  }
-
-  /**
-   * Setter for the field <code>isOnlineSignal</code>.
-   *
-   * @param isOnlineSignal the isOnlineSignal to set
-   * @param plantName a {@link java.lang.String} object
-   * @param transmitterame a {@link java.lang.String} object
-   */
-  public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
-    this.isOnlineSignal = isOnlineSignal;
-    onlineSignal = new OnlineSignal(plantName, transmitterame);
   }
 
   /** {@inheritDoc} */
@@ -249,7 +213,27 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * @return value after noise, fault injection and delay are applied
    */
   protected double applySignalModifiers(double rawValue) {
-    double faultedValue = applyFault(rawValue);
+    return applySignalModifiers(rawValue, 1.0);
+  }
+
+  /**
+   * Applies configured noise, delay, filtering and sensor fault for one declared physical sample.
+   *
+   * <p>
+   * The filter uses the exact sample interval. A linear-drift parameter is interpreted as engineering units per second
+   * on this path. The legacy one-argument method retains its historical one-second-per-read convention.
+   * </p>
+   *
+   * @param rawValue unmodified measurement value
+   * @param dt finite positive physical sample interval in seconds
+   * @return value after fault, noise, filter and sample-delay processing
+   * @throws IllegalArgumentException if {@code dt} is not finite and positive
+   */
+  protected double applySignalModifiers(double rawValue, double dt) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Measurement sample interval must be finite and positive: " + dt);
+    }
+    double faultedValue = applyFault(rawValue, dt);
     Random r = random;
     if (r == null) {
       r = new Random();
@@ -257,13 +241,12 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     }
     double noisyValue = faultedValue + r.nextGaussian() * noiseStdDev;
 
-    // First-order exponential filter: y(k) = alpha * x(k) + (1-alpha) * y(k-1)
+    // Exact zero-order-hold discretization of a first-order measurement lag.
     if (firstOrderTimeConstant > 0.0) {
       if (Double.isNaN(filteredPreviousValue)) {
         filteredPreviousValue = noisyValue;
       }
-      // Use a default dt of 1.0 second for per-sample filtering
-      double alpha = 1.0 - Math.exp(-1.0 / firstOrderTimeConstant);
+      double alpha = 1.0 - Math.exp(-dt / firstOrderTimeConstant);
       noisyValue = alpha * noisyValue + (1.0 - alpha) * filteredPreviousValue;
       filteredPreviousValue = noisyValue;
     }
@@ -394,10 +377,11 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   }
 
   /**
-   * Setter for the field <code>onlineMeasurementValue</code>.
+   * Sets the externally acquired historian sample used by {@link #doConditionAnalysis()}. Historian connectivity,
+   * timestamps and sample quality are handled by the application integration layer.
    *
-   * @param value a double
-   * @param unit a {@link java.lang.String} object
+   * @param value measured value from the plant historian
+   * @param unit engineering unit of {@code value}
    */
   public void setOnlineMeasurementValue(double value, String unit) {
     onlineMeasurementValue = value;
@@ -427,14 +411,15 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * {@link SensorFaultType}.
    *
    * @param rawValue true process measurement before fault injection
+   * @param dt finite positive physical sample interval in seconds
    * @return measurement value after fault transformation
    */
-  private double applyFault(double rawValue) {
+  private double applyFault(double rawValue, double dt) {
     switch (faultType) {
     case STUCK_AT_VALUE:
       return faultParameter;
     case LINEAR_DRIFT:
-      faultAccumulator += faultParameter;
+      faultAccumulator += faultParameter * dt;
       return rawValue + faultAccumulator;
     case BIAS:
       return rawValue + faultParameter;
@@ -462,7 +447,8 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * according to the specified fault type and parameter.
    *
    * @param type the type of sensor fault to inject
-   * @param parameter fault-specific parameter (e.g. stuck value, drift rate, bias)
+   * @param parameter fault-specific parameter; linear drift is engineering units per second for physical-step sampling
+   * and retains the legacy per-read increment for direct reads
    */
   public void setFault(SensorFaultType type, double parameter) {
     this.faultType = type != null ? type : SensorFaultType.NONE;
@@ -560,9 +546,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * @return {@code null} for snapshot-ready local measurements, otherwise a blocking diagnostic
    */
   protected String getMeasurementTransientStateCoverageIssue() {
-    if (onlineSignal != null || isOnlineSignal) {
-      return "online measurement binding may perform external I/O and has no rejected-step commit/defer contract";
-    }
     return null;
   }
 
@@ -578,11 +561,10 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
       random = currentRandom;
     }
     return new MeasurementDeviceTransientState(getName(), getTagNumber(), unit, maximumValue, minimumValue, logging,
-        onlineSignal, isOnlineSignal, onlineMeasurementValue, onlineMeasurementValueUnit,
-        new ArrayList<Double>(delayBuffer), delaySteps, noiseStdDev, serializeRandom(currentRandom),
-        firstOrderTimeConstant, filteredPreviousValue, conditionAnalysis, conditionAnalysisMessage,
-        conditionAnalysisMaxDeviation, faultType, faultParameter, faultAccumulator, alarmConfig, alarmState.copy(), tag,
-        tagRole, fieldValue, fieldValueSet);
+        onlineMeasurementValue, onlineMeasurementValueUnit, new ArrayList<Double>(delayBuffer), delaySteps, noiseStdDev,
+        serializeRandom(currentRandom), firstOrderTimeConstant, filteredPreviousValue, conditionAnalysis,
+        conditionAnalysisMessage, conditionAnalysisMaxDeviation, faultType, faultParameter, faultAccumulator,
+        alarmConfig, alarmState.copy(), tag, tagRole, fieldValue, fieldValueSet);
   }
 
   /**
@@ -600,8 +582,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     maximumValue = snapshot.maximumValue;
     minimumValue = snapshot.minimumValue;
     logging = snapshot.logging;
-    onlineSignal = snapshot.onlineSignal;
-    isOnlineSignal = snapshot.onlineSignalEnabled;
     onlineMeasurementValue = snapshot.onlineMeasurementValue;
     onlineMeasurementValueUnit = snapshot.onlineMeasurementValueUnit;
     delayBuffer.clear();
@@ -669,8 +649,6 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     private final double maximumValue;
     private final double minimumValue;
     private final boolean logging;
-    private final OnlineSignal onlineSignal;
-    private final boolean onlineSignalEnabled;
     private final double onlineMeasurementValue;
     private final String onlineMeasurementValueUnit;
     private final List<Double> delayBuffer;
@@ -693,20 +671,18 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     private final boolean fieldValueSet;
 
     private MeasurementDeviceTransientState(String name, String tagNumber, String unit, double maximumValue,
-        double minimumValue, boolean logging, OnlineSignal onlineSignal, boolean onlineSignalEnabled,
-        double onlineMeasurementValue, String onlineMeasurementValueUnit, List<Double> delayBuffer, int delaySteps,
-        double noiseStdDev, byte[] randomState, double firstOrderTimeConstant, double filteredPreviousValue,
-        boolean conditionAnalysis, String conditionAnalysisMessage, double conditionAnalysisMaxDeviation,
-        SensorFaultType faultType, double faultParameter, double faultAccumulator, AlarmConfig alarmConfig,
-        AlarmState alarmState, String tag, InstrumentTagRole tagRole, double fieldValue, boolean fieldValueSet) {
+        double minimumValue, boolean logging, double onlineMeasurementValue, String onlineMeasurementValueUnit,
+        List<Double> delayBuffer, int delaySteps, double noiseStdDev, byte[] randomState, double firstOrderTimeConstant,
+        double filteredPreviousValue, boolean conditionAnalysis, String conditionAnalysisMessage,
+        double conditionAnalysisMaxDeviation, SensorFaultType faultType, double faultParameter, double faultAccumulator,
+        AlarmConfig alarmConfig, AlarmState alarmState, String tag, InstrumentTagRole tagRole, double fieldValue,
+        boolean fieldValueSet) {
       this.name = name;
       this.tagNumber = tagNumber;
       this.unit = unit;
       this.maximumValue = maximumValue;
       this.minimumValue = minimumValue;
       this.logging = logging;
-      this.onlineSignal = onlineSignal;
-      this.onlineSignalEnabled = onlineSignalEnabled;
       this.onlineMeasurementValue = onlineMeasurementValue;
       this.onlineMeasurementValueUnit = onlineMeasurementValueUnit;
       this.delayBuffer = delayBuffer;

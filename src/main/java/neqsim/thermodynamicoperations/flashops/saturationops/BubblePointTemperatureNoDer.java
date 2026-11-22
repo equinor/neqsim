@@ -26,12 +26,28 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     super(system);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a non-SAFT pure component is at or above its critical pressure
+   */
   @Override
   public void run() {
+    run(true);
+  }
+
+  /**
+   * Solve, with one bounded restart if a mixture collapses to the trivial K=1 root.
+   *
+   * @param allowRestart whether to retry from a Wilson bubble-temperature estimate
+   */
+  private void run(boolean allowRestart) {
+    setSuperCritical(false);
     if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getPressure() >= system.getPhase(0).getComponent(0).getPC()) {
-      // throw new IllegalStateException("System is supercritical");
+        && system.getPressure() >= system.getPhase(0).getComponent(0).getPC()
+        && (system.getModelName() == null || !system.getModelName().contains("SAFT"))) {
+      throw new IllegalStateException(
+          "No pure-component saturation temperature exists at or above the critical pressure");
     }
 
     int iterations = 0;
@@ -141,7 +157,13 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       }
     }
     if (isSuperCritical()) {
-      // throw new IllegalStateException("System is supercritical");
+      if (allowRestart && ktot < 1e-3 && system.getNumberOfComponents() > 1 && !system.isChemicalSystem()) {
+        double guess = WilsonSaturationEstimate.temperature(system, true);
+        if (Double.isFinite(guess) && guess > 0.0) {
+          system.setTemperature(guess);
+          run(false);
+        }
+      }
     }
   }
 

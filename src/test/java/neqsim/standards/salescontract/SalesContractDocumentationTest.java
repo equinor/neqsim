@@ -1,15 +1,42 @@
 package neqsim.standards.salescontract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import neqsim.NeqSimTest;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-/** Executes the database-backed example in the gas sales-contract guide. */
+/** Executes and protects the database-backed example in the gas sales-contract guide. */
 class SalesContractDocumentationTest extends NeqSimTest {
+  private static final String EXAMPLE_MARKER = "<!-- sales-contract-example: brazil-screen -->";
+  private static final Pattern JAVA_FENCE = Pattern
+      .compile("(?s)<!-- sales-contract-example: brazil-screen -->\\s*" + "```java\\s*\\r?\\n([\\s\\S]*?)\\r?\\n```");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+
+  @TempDir
+  Path temporaryDirectory;
+
+  /** Validate the current bundled fixture and its 12-column result-table contract. */
   @Test
   void testBrazilContractExampleAndResultTableContract() {
     SystemInterface gas = new SystemGERGwaterEos(268.15, 20.0);
@@ -55,6 +82,71 @@ class SalesContractDocumentationTest extends NeqSimTest {
     assertTrue(rowsWithinLimits > 0);
   }
 
+  /** Extract, compile, and execute the literal complete Java program published in the guide. */
+  @Test
+  void literalSalesContractQuickStartCompilesAndRuns() throws Exception {
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    Path guidePath = repositoryRoot.resolve("docs/standards/sales_contracts.md");
+    String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
+
+    assertEquals(1, countOccurrences(guide, EXAMPLE_MARKER));
+    Matcher fence = JAVA_FENCE.matcher(guide);
+    assertTrue(fence.find(), "The marked gas sales-contract Java fence is missing");
+    String exampleSource = fence.group(1);
+    assertFalse(fence.find(), "The marked gas sales-contract Java fence must be unique");
+    assertFalse(exampleSource.contains("System.out"));
+    assertFalse(exampleSource.contains("System.err"));
+
+    Matcher className = PUBLIC_CLASS.matcher(exampleSource);
+    assertTrue(className.find(), "The guide example must declare a complete public class");
+    assertEquals("GasSalesContractQuickStart", className.group(1));
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "Documentation examples require a JDK compiler");
+    Path javaSource = temporaryDirectory.resolve("GasSalesContractQuickStart.java");
+    Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
+    compile(compiler, javaSource);
+
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
+      loader.setDefaultAssertionStatus(true);
+      Class<?> example = Class.forName("GasSalesContractQuickStart", true, loader);
+      assertTrue(example.desiredAssertionStatus());
+      try {
+        example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+      } catch (InvocationTargetException exception) {
+        throw new AssertionError("GasSalesContractQuickStart failed", exception.getCause());
+      }
+    }
+  }
+
+  /**
+   * Compile the extracted Markdown program with Java 8 syntax and the test classpath.
+   *
+   * @param compiler current JDK compiler
+   * @param source extracted Java source
+   * @throws Exception if source preparation or compilation fails
+   */
+  private void compile(JavaCompiler compiler, Path source) throws Exception {
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath", classPath,
+        "-d", temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful), "docs/standards/sales_contracts.md: " + diagnostics.getDiagnostics());
+    }
+  }
+
+  /**
+   * Parse one numeric cell from the contract result table.
+   *
+   * @param value string value
+   * @param rowIndex zero-based row index
+   * @param columnIndex zero-based column index
+   * @return parsed double
+   */
   private static double parseDoubleOrFail(String value, int rowIndex, int columnIndex) {
     try {
       return Double.parseDouble(value);
@@ -62,5 +154,22 @@ class SalesContractDocumentationTest extends NeqSimTest {
       throw new AssertionError("Expected a numeric contract result at row " + rowIndex + ", column " + columnIndex,
           exception);
     }
+  }
+
+  /**
+   * Count exact non-overlapping occurrences of a marker.
+   *
+   * @param text text to search
+   * @param token marker token
+   * @return occurrence count
+   */
+  private static int countOccurrences(String text, String token) {
+    int count = 0;
+    int offset = 0;
+    while ((offset = text.indexOf(token, offset)) >= 0) {
+      count++;
+      offset += token.length();
+    }
+    return count;
   }
 }

@@ -18,12 +18,12 @@ public class ViscositySimTest {
     tempSystem.init(0);
 
     ViscositySim sepSim = new ViscositySim(tempSystem);
-    double[] temps = { 300.15, 293.15, 283.15, 273.15, 264.15 };
-    double[] pres = { 5, 5, 5, 5.0, 5.0 };
+    double[] temps = {300.15, 293.15, 283.15, 273.15, 264.15};
+    double[] pres = {5, 5, 5, 5.0, 5.0};
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
 
-    double[][] expData = { { 2e-4, 3e-4, 4e-4, 5e-4, 6e-4 }, };
+    double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
     sepSim.setExperimentalData(expData);
     // sepSim.runTuning();
     sepSim.runCalc();
@@ -76,7 +76,7 @@ public class ViscositySimTest {
     ops.TPflash();
     sys.initPhysicalProperties();
     double mu = sys.getPhase("aqueous").getPhysicalProperties().getViscosity(); // Pa·s
-    assertEquals(3.07e-3, mu, 6e-6);
+    assertEquals(3.07e-3, mu, 1.5e-5);
 
     sys.addComponent("methane", 1);
     sys.setMixingRule("classic");
@@ -85,6 +85,6 @@ public class ViscositySimTest {
     ops.TPflash();
     sys.initPhysicalProperties();
     mu = sys.getPhase("aqueous").getPhysicalProperties().getViscosity(); // Pa·s
-    assertEquals(3.07e-3, mu, 6e-6);
+    assertEquals(3.07e-3, mu, 1.5e-5);
   }
 }

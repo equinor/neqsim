@@ -4,3 +4,17 @@ description: "Guides for contributing to and extending NeqSim, including adding 
 ---
 
 {% include_relative README.md %}
+
+- [Code health and agentic maintenance](CODE_HEALTH.md)
+
+- [Agent and MCP engineering capability coverage](ENGINEERING_CAPABILITY_COVERAGE.md)
+- [Discover functionality for agentic work](AGENT_CAPABILITY_DISCOVERY.md)
+- [Physical plant layout studies and CAD delivery](PLANT_LAYOUT_STUDY.md)
+- [JAMA to EJML migration and dependency retirement](jama-ejml-migration.md)
+- [NeqSim 3.30.0 release and migration notes](release-notes-3.30.0.md)
+- [NeqSim 3.29.0 release and migration notes](release-notes-3.29.0.md)
+- [NeqSim 3.28.0 release and migration notes](release-notes-3.28.0.md)
+- [NeqSim 3.27.0 release and migration notes](release-notes-3.27.0.md)
+- [NeqSim 3.26.0 release and migration notes](release-notes-3.26.0.md)
+
+- [Process utilities design report](UTILITIES_DESIGN_REPORT.md)

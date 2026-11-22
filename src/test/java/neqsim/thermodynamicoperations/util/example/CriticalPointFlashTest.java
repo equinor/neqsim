@@ -40,6 +40,9 @@ public class CriticalPointFlashTest {
 
     assertTrue(testSystem.getPressure("bara") > 0.0,
         "System pressure should remain physically valid after cricondenbar calculation");
+    assertTrue(Double.isFinite(testSystem.getTemperature()) && testSystem.getTemperature() > 0.0,
+        "A converged zero residual must not produce a 0/0 temperature update");
+    assertTrue(Double.isFinite(testSystem.getPressure("bara")), "Cricondenbar pressure must remain finite");
   }
 
   @Test

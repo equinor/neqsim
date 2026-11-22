@@ -114,7 +114,7 @@ public final class DexpiXmlSvgRenderer {
         double width = attribute(max, "X", 0.0);
         double height = attribute(max, "Y", 0.0);
         if (width > 0.0 && height > 0.0) {
-          return new double[] { width, height };
+          return new double[] {width, height};
         }
       }
     }
@@ -128,7 +128,7 @@ public final class DexpiXmlSvgRenderer {
         maxY = Math.max(maxY, attribute(coordinate, "Y", 0.0));
       }
     }
-    return new double[] { Math.max(297.0, maxX + 10.0), Math.max(210.0, maxY + 10.0) };
+    return new double[] {Math.max(297.0, maxX + 10.0), Math.max(210.0, maxY + 10.0)};
   }
 
   private static String drawingName(Document document) {
@@ -281,7 +281,7 @@ public final class DexpiXmlSvgRenderer {
   private static void appendLocalCircle(Element circle, Element styleSource, StringBuilder svg) {
     double[] location = location(circle);
     if (location == null) {
-      location = new double[] { 0.0, 0.0 };
+      location = new double[] {0.0, 0.0};
     }
     boolean filled = "Solid".equalsIgnoreCase(circle.getAttribute("Filled"));
     String circleStyle = style(styleSource);
@@ -299,7 +299,7 @@ public final class DexpiXmlSvgRenderer {
   private static void appendLocalArc(Element curve, Element circle, StringBuilder svg) {
     double[] center = location(circle);
     if (center == null) {
-      center = new double[] { 0.0, 0.0 };
+      center = new double[] {0.0, 0.0};
     }
     double radius = attribute(circle, "Radius", 0.0);
     double start = Math.toRadians(attribute(curve, "StartAngle", 0.0));
@@ -319,7 +319,7 @@ public final class DexpiXmlSvgRenderer {
   private static void appendGlobalArc(Element curve, Element circle, double sheetHeight, StringBuilder svg) {
     double[] center = location(circle);
     if (center == null) {
-      center = new double[] { 0.0, 0.0 };
+      center = new double[] {0.0, 0.0};
     }
     double radius = attribute(circle, "Radius", 0.0);
     double start = Math.toRadians(attribute(curve, "StartAngle", 0.0));
@@ -405,19 +405,19 @@ public final class DexpiXmlSvgRenderer {
   private static double[] directLocation(Element parent) {
     Element position = firstDirectChild(parent, "Position");
     Element location = position == null ? null : firstDirectChild(position, "Location");
-    return location == null ? null : new double[] { attribute(location, "X", 0.0), attribute(location, "Y", 0.0) };
+    return location == null ? null : new double[] {attribute(location, "X", 0.0), attribute(location, "Y", 0.0)};
   }
 
   private static double[] location(Element parent) {
     Element position = firstDescendant(parent, "Position");
     Element location = position == null ? null : firstDescendant(position, "Location");
-    return location == null ? null : new double[] { attribute(location, "X", 0.0), attribute(location, "Y", 0.0) };
+    return location == null ? null : new double[] {attribute(location, "X", 0.0), attribute(location, "Y", 0.0)};
   }
 
   private static double[] directScale(Element parent) {
     Element scale = firstDirectChild(parent, "Scale");
-    return scale == null ? new double[] { 1.0, 1.0 }
-        : new double[] { attribute(scale, "X", 1.0), attribute(scale, "Y", 1.0) };
+    return scale == null ? new double[] {1.0, 1.0}
+        : new double[] {attribute(scale, "X", 1.0), attribute(scale, "Y", 1.0)};
   }
 
   private static Element firstDirectChild(Element parent, String name) {

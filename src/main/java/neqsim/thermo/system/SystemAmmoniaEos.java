@@ -51,7 +51,11 @@ public class SystemAmmoniaEos extends SystemEos {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemAmmoniaEos clone() {
     SystemAmmoniaEos cloned = null;
@@ -59,6 +63,7 @@ public class SystemAmmoniaEos extends SystemEos {
       cloned = (SystemAmmoniaEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemAmmoniaEos", ex);
     }
     return cloned;
   }

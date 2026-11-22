@@ -1,0 +1,84 @@
+name: "[AI] Engineering Capability Coverage"
+
+on:
+  pull_request:
+    paths:
+      - 'src/main/java/**'
+      - 'src/test/java/**'
+      - 'src/main/resources/neqsim/mcp/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
+      - 'devtools/*engineering*coverage*'
+      - 'devtools/engineering_capabilities.json'
+      - '.github/workflows/ai-engineering-capability-coverage.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'src/main/java/**'
+      - 'src/test/java/**'
+      - 'src/main/resources/neqsim/mcp/**'
+      - '.github/skills/**'
+      - '.github/agents/**'
+      - 'devtools/*engineering*coverage*'
+      - 'devtools/engineering_capabilities.json'
+      - '.github/workflows/ai-engineering-capability-coverage.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - run: uv sync --project devtools --locked --group test
+      - name: Rebuild and validate engineering inventory
+        run: uv run --project devtools --locked devtools/build_engineering_coverage.py
+      - name: Verify engineering coverage contracts
+        run: >-
+          uv run --project devtools --locked --group test python -m pytest
+          devtools/test_engineering_coverage.py
+          devtools/test_engineering_coverage_workflow.py -q
+      - name: Retain validated engineering inventory
+        uses: actions/upload-artifact@v7
+        with:
+          name: engineering-capability-inventory
+          path: src/main/resources/neqsim/mcp/engineering-coverage.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Commit and push regenerated inventory
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.actor != 'dependabot[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.pull_request.head.ref != github.event.repository.default_branch
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          inventory_path=src/main/resources/neqsim/mcp/engineering-coverage.json
+          git add -- "$inventory_path"
+          if git diff --cached --quiet; then
+            echo "Engineering inventory is already current."
+            exit 0
+          fi
+
+          git fetch --no-tags origin "refs/heads/$TARGET_BRANCH"
+          if [ "$(git rev-parse FETCH_HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "Source branch has advanced; leaving regeneration to its newer workflow run."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: regenerate engineering coverage inventory"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"

@@ -42,6 +42,26 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void setMoleFractions(double[] x);
 
   /**
+   * Return an element of the isothermal, isobaric thermodynamic factor in independent mole-fraction coordinates.
+   * Increasing the column mole fraction displaces the reference species at constant total moles. The component
+   * fugacity-coefficient mole-number derivatives must be initialized at the current phase state (system init level 3).
+   *
+   * @param row independent species whose chemical potential drives transport
+   * @param column independent species whose mole fraction is varied
+   * @param reference dependent species whose mole fraction compensates the variation
+   * @return dimensionless reduced thermodynamic factor
+   * @throws IllegalArgumentException if either independent index is the reference index
+   */
+  default double getReducedThermodynamicFactor(int row, int column, int reference) {
+    if (row == reference || column == reference) {
+      throw new IllegalArgumentException("Independent thermodynamic-factor indices must differ from the reference");
+    }
+    ComponentInterface species = getComponent(row);
+    return (row == column ? 1.0 : 0.0)
+        + species.getx() * getNumberOfMolesInPhase() * (species.getdfugdn(column) - species.getdfugdn(reference));
+  }
+
+  /**
    * getPhaseFraction. Alias for getBeta()
    *
    * @return Beta value
@@ -1911,11 +1931,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    * <ul>
    * <li>The phase type is ASPHALTENE or LIQUID_ASPHALTENE, or</li>
-   * <li>The total mole fraction of asphaltene components exceeds 0.5</li>
+   * <li>Asphaltene components make up more than half of the phase <b>mass</b>.</li>
    * </ul>
    *
    * <p>
-   * Asphaltene components are identified by name containing "asphaltene" (case-insensitive).
+   * Asphaltene components are identified by
+   * {@link neqsim.thermo.characterization.AsphalteneComponents#isAsphaltene(String)} (name containing "asphalten" or
+   * starting with "asph_"). A mass basis is used because asphaltene pseudo-components are much heavier than the other
+   * oil components, so an asphaltene-rich liquid can be mostly asphaltene by mass but under half by moles.
    * </p>
    *
    * @return true if the phase is asphaltene-rich
@@ -1926,17 +1949,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
       return true;
     }
 
-    // Check for asphaltene components by name
-    double asphalteneFraction = 0.0;
-    for (int i = 0; i < getNumberOfComponents(); i++) {
-      ComponentInterface comp = getComponent(i);
-      String compName = comp.getComponentName();
-      if (compName != null && compName.toLowerCase().contains("asphaltene")) {
-        asphalteneFraction += comp.getx();
-      }
-    }
-
-    return asphalteneFraction > 0.5;
+    return neqsim.thermo.characterization.AsphalteneComponents.isAsphalteneRichByMass(this);
   }
 
   /**

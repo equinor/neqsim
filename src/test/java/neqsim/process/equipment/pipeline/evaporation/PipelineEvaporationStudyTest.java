@@ -17,6 +17,22 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Tests for the conservative axial pipeline evaporation model. */
 public class PipelineEvaporationStudyTest {
+  /** Checks mol/(m2 s) times J/mol yields W/m2 and preserves evaporation/condensation signs. */
+  @Test
+  void fallbackLatentHeatUsesMolarSIUnits() {
+    SystemSrkEos fluid = new SystemSrkEos(353.3, 1);
+    fluid.addComponent("benzene", 1);
+    double positive = PipelineEvaporationStudy.calculateFallbackEnthalpyFlux(fluid.getPhase(0), new double[] {0.002},
+        353.3);
+    // Independently evaluated shipped benzene coefficients give 39147.9734826 J/mol.
+    // This checks units only; these coefficients overpredict the NIST physical value.
+    assertEquals(78.29594696523956, positive, 1e-8);
+    assertEquals(-positive,
+        PipelineEvaporationStudy.calculateFallbackEnthalpyFlux(fluid.getPhase(0), new double[] {-0.002}, 353.3), 0);
+    assertEquals(0, PipelineEvaporationStudy.calculateFallbackEnthalpyFlux(fluid.getPhase(0), new double[] {0}, 353.3),
+        0);
+  }
+
   @Test
   void testDropletAreaPerLengthUsesSauterMeanDiameter() {
     double area = PipelineEvaporationStudy.dropletAreaPerLength(2.0e-5, 0.5, 200.0e-6);
@@ -164,7 +180,8 @@ public class PipelineEvaporationStudyTest {
   void testGasBubbleCaseReachesMassBasedDissolutionCriterion() {
     SystemInterface inlet = createGasBubbleInOilSystem();
     PipelineEvaporationConfig config = oneStepDissolutionConfig();
-    config.setPipeLength(0.10);
+    // Corrected film factors give finite-rate dissolution over metres, not centimetres.
+    config.setPipeLength(5.0);
     config.setMinimumStepLength(1.0e-8);
     config.setMaximumStepLength(0.01);
     config.setMaximumDonorFractionPerStep(0.20);
@@ -175,12 +192,20 @@ public class PipelineEvaporationStudyTest {
     PipelineDissolutionResult result = new PipelineDissolutionStudy(inlet, config).run();
     EvaporationProfilePoint outlet = result.getProfile().get(result.getProfile().size() - 1);
 
-    assertTrue(result.isCompleteDissolution());
+    assertTrue(result.isCompleteDissolution(),
+        "Remaining fraction=" + outlet.getRemainingTrackedPhaseFraction() + "; " + result.getWarnings());
     assertTrue(result.getCompleteDissolutionDistance() > 0.0);
     assertTrue(result.getCompleteDissolutionDistance() < config.getPipeLength());
     assertTrue(outlet.getRemainingTrackedPhaseFraction() <= config.getCompletionFraction());
     assertTrue(result.getMaximumComponentMolarBalanceError() < 1.0e-10);
     assertTrue(result.getRelativeEnergyBalanceError() < 1.0e-5);
+    config.setMaximumStepLength(0.005);
+    PipelineDissolutionResult refined = new PipelineDissolutionStudy(inlet, config).run();
+    assertTrue(refined.isCompleteDissolution(), "The refined axial mesh must also reach the mass criterion");
+    assertEquals(result.getCompleteDissolutionDistance(), refined.getCompleteDissolutionDistance(),
+        0.05 * refined.getCompleteDissolutionDistance(), "Completion distance must be stable to axial refinement");
+    assertTrue(refined.getMaximumComponentMolarBalanceError() < 1.0e-10);
+    assertTrue(refined.getRelativeEnergyBalanceError() < 1.0e-5);
   }
 
   @Test

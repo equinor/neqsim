@@ -37,8 +37,7 @@ final class HydrogenProductionUtils {
   private static final double SYNGAS_GIBBS_TOLERANCE = 1.0e-5;
 
   /** Common syngas species required by the equilibrium and reporting models. */
-  private static final String[] SYNGAS_COMPONENTS = { "methane", "water", "oxygen", "hydrogen", "CO", "CO2",
-      "nitrogen" };
+  private static final String[] SYNGAS_COMPONENTS = {"methane", "water", "oxygen", "hydrogen", "CO", "CO2", "nitrogen"};
 
   /**
    * Private constructor for utility class.

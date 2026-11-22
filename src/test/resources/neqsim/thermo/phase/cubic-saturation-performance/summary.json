@@ -1,0 +1,16 @@
+{
+  "helper": {
+    "candidate_over_baseline_process_median_ratios": [
+      0.6232207149680312,
+      0.5907630218365943,
+      0.6890110293344258
+    ]
+  },
+  "full": {
+    "candidate_over_baseline_process_median_ratios": [
+      0.8373701789561858,
+      0.8651136603096579,
+      0.7555849850898712
+    ]
+  }
+}

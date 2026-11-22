@@ -40,7 +40,7 @@ The mechanical design module provides sizing and design calculations for centrif
 
 ### 1. Number of Stages
 
-The number of compression stages is determined by the total polytropic head and the maximum allowable head per stage:
+The initial number of compression stages is determined by the total polytropic head and the maximum allowable head per stage:
 
 ```
 numberOfStages = ceil(totalPolytropicHead / maxHeadPerStage)
@@ -52,6 +52,12 @@ The actual head per stage is then:
 ```
 headPerStage = totalPolytropicHead / numberOfStages
 ```
+
+Impeller sizing tries this stage count and then additional equal-head stages up to
+`getMaxStagesPerCasing()` (default 10). It selects the first count satisfying all the
+preliminary impeller limits below while keeping the specified shaft speed and total
+head unchanged. If none is feasible, it retains the initial head-based candidate for
+diagnostics and reports infeasibility.
 
 ### 2. Impeller Sizing
 
@@ -81,6 +87,40 @@ The design verifies the flow coefficient is within acceptable range (0.01-0.15):
 ```
 flowCoefficient = volumeFlow [m³/s] / (D² × U)
 ```
+
+Here `D` is the diameter in metres, `U` is tip speed in m/s, and volume flow is actual
+inlet flow, not standard flow. Every candidate satisfies both identities:
+
+$$U=\frac{\pi D N}{60}$$
+$$H_{\mathrm{stage}}=\frac{0.50 U^2}{1000}\quad[\mathrm{kJ/kg}]$$
+
+`N` is the specified shaft speed in rpm. The diameter must be 100–1500 mm, tip speed
+must be at most 350 m/s, head per stage at most 30 kJ/kg, and inlet flow coefficient
+0.01–0.15. These are the model's preliminary screening limits, not a vendor map or
+universal API 617 acceptance criteria. The work coefficient remains fixed at 0.50.
+Increasing the stage count reduces diameter and tip speed and increases the inlet
+flow coefficient. The calculation never resizes or clamps diameter independently
+of shaft speed and required head.
+
+Check `isImpellerSizingFeasible()` and `getImpellerSizingIssues()` after `calcDesign()`.
+An infeasible candidate can have dimensions outside the screening bounds; do not use
+those dimensions as a qualified CAD or equipment design. Invalid or nonpositive speed,
+inlet flow or head produces unavailable impeller quantities (`NaN` in Java, `null`
+in JSON), not a default diameter. Changes to sizing inputs or manual stage/diameter
+overrides invalidate qualification; rerun the process and `calcDesign()`.
+
+Each `calcDesign()` attempt clears the previous calculated geometry, shaft and rotor
+results, driver sizing, weights and module dimensions before recalculating them.
+If the compressor is uninitialized or sizing inputs are invalid, these dependent
+results remain unavailable (`NaN` in Java, `null` in JSON), the stage count is zero,
+and the casing calculator is absent. A reused JSON response also drops the previous
+casing calculation. Restore valid inputs and rerun to obtain a new complete design.
+
+`validateDesign()` includes impeller sizing issues, and `CompressorDesignFeasibilityReport`
+classifies them as `IMPELLER_SIZING` blockers. Passing this screen only checks equal-head
+staging and the inlet-stage flow coefficient; downstream-stage aerodynamics, diffuser
+geometry, surge/choke maps, shaft clearances and full mechanical qualification require
+separate checks.
 
 ### 3. Shaft Diameter
 
@@ -319,102 +359,87 @@ The mechanical design integrates with `CompressorMechanicalLosses` for:
 
 When `setDesign()` is called, the mechanical losses model is automatically initialized with the calculated shaft diameter.
 
-## Usage Example
+## Executable Casing-Design Example
 
-### Basic Mechanical Design
+The standalone calculator is useful when a process simulation has already supplied the
+design basis. The following complete Java 8 program configures a high-pressure, sour-service
+barrel case and checks the calculated pressure containment, hydro-test, flange, barrel
+geometry, and NACE screening results before reporting them.
 
+<!-- compressor-mechanical-design-example: sour-service-barrel -->
 ```java
-// Create and run compressor
-SystemInterface gas = new SystemSrkEos(300.0, 10.0);
-gas.addComponent("methane", 1.0);
-gas.setMixingRule(2);
+import neqsim.process.mechanicaldesign.compressor.CompressorCasingDesignCalculator;
+import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-Stream inlet = new Stream("inlet", gas);
-inlet.setFlowRate(10000.0, "kg/hr");
+/** Runs a bounded sour-service barrel-casing screening calculation. */
+public final class CompressorCasingDesignExample {
+  private static final Logger logger =
+      LogManager.getLogger(CompressorCasingDesignExample.class);
 
-Compressor comp = new Compressor("export compressor", inlet);
-comp.setOutletPressure(40.0);
-comp.setPolytropicEfficiency(0.76);
-comp.setSpeed(8000);
+  /** Prevents construction of this utility example. */
+  private CompressorCasingDesignExample() {}
 
-ProcessSystem ps = new ProcessSystem();
-ps.add(inlet);
-ps.add(comp);
-ps.run();
+  /**
+   * Calculates a preliminary casing design and fails closed on invalid results.
+   *
+   * @param args command-line arguments; not used
+   */
+  public static void main(String[] args) {
+    CompressorCasingDesignCalculator calculator =
+        new CompressorCasingDesignCalculator();
+    calculator.setDesignPressureBara(200.0);
+    calculator.setDesignTemperatureC(250.0);
+    calculator.setCasingInnerDiameterMm(400.0);
+    calculator.setCasingLengthMm(1200.0);
+    calculator.setMaterialGrade("Inconel-718");
+    calculator.setCorrosionAllowanceMm(1.5);
+    calculator.setJointEfficiency(0.85);
+    calculator.setCasingType(CompressorMechanicalDesign.CasingType.BARREL);
+    calculator.setSourService(true);
+    calculator.setH2sPartialPressureKPa(5.0);
+    calculator.calculate();
 
-// Calculate mechanical design
-comp.getMechanicalDesign().calcDesign();
+    double wallThicknessMm = calculator.getSelectedWallThicknessMm();
+    double mawpBarg = calculator.getMawpBarg();
+    double hydroTestBarg = calculator.getHydroTestPressureBarg();
+    double barrelOuterDiameterMm = calculator.getBarrelOuterODMm();
+    double endCoverThicknessMm = calculator.getBarrelEndCoverThicknessMm();
 
-// Access design results
-int stages = comp.getMechanicalDesign().getNumberOfStages();
-double impellerD = comp.getMechanicalDesign().getImpellerDiameter(); // mm
-double driverPower = comp.getMechanicalDesign().getDriverPower(); // kW
-double totalWeight = comp.getMechanicalDesign().getWeightTotal(); // kg
+    if (!Double.isFinite(wallThicknessMm) || wallThicknessMm < 12.7) {
+      throw new IllegalStateException("Invalid casing wall thickness");
+    }
+    if (!Double.isFinite(mawpBarg) || mawpBarg < 200.0) {
+      throw new IllegalStateException("MAWP is below the design pressure");
+    }
+    if (!Double.isFinite(hydroTestBarg) || !calculator.isHydroTestAcceptable()) {
+      throw new IllegalStateException("Hydrostatic test calculation is not acceptable");
+    }
+    if (!calculator.isFlangeRatingAdequate()) {
+      throw new IllegalStateException("Selected flange class is not pressure-rated");
+    }
+    if (!Double.isFinite(barrelOuterDiameterMm) || barrelOuterDiameterMm <= 400.0
+        || !Double.isFinite(endCoverThicknessMm) || endCoverThicknessMm < 25.0
+        || calculator.getBarrelEndCoverBoltCount() < 12) {
+      throw new IllegalStateException("Invalid barrel casing geometry");
+    }
+    if (!"COMPLIANT".equals(calculator.getNaceComplianceStatus())) {
+      throw new IllegalStateException("Material is not qualified by the NACE screen");
+    }
 
-// Apply design (initializes mechanical losses)
-comp.getMechanicalDesign().setDesign();
-
-// Get seal gas consumption
-double sealGas = comp.getSealGasConsumption(); // Nm³/hr
+    logger.info(
+        "wallThicknessMm={}, mawpBarg={}, hydroTestBarg={}, flangeClass={}, naceStatus={}",
+        wallThicknessMm, mawpBarg, hydroTestBarg, calculator.getFlangeClass(),
+        calculator.getNaceComplianceStatus());
+  }
+}
 ```
 
-### Casing Design with Material Selection and NACE
-
-```java
-// Configure casing-specific options before calcDesign()
-CompressorMechanicalDesign design = comp.getMechanicalDesign();
-design.setCasingMaterialGrade("SA-516-70");        // or "SA-182-F316L" for sour
-design.setCasingCorrosionAllowanceMm(1.5);
-design.setNaceCompliance(true);                    // enable NACE sour-service check
-design.setH2sPartialPressureKPa(3.0);             // for NACE assessment
-design.calcDesign();
-
-// Access casing calculator
-CompressorCasingDesignCalculator casingCalc = design.getCasingDesignCalculator();
-
-double wallThk    = casingCalc.getSelectedWallThicknessMm();   // mm
-double mawp       = casingCalc.getMawpBarg();                  // barg
-double hydroTest  = casingCalc.getHydroTestPressureBarg();     // barg
-int    flangeClass = casingCalc.getFlangeClass();               // e.g. 300, 600
-String naceStatus = casingCalc.getNaceComplianceStatus();       // COMPLIANT / NON_COMPLIANT
-
-// Get automatic material recommendation
-String recommended = casingCalc.recommendMaterial();
-
-// Full JSON report including all casing analysis
-String json = design.toJson();
-```
-
-### Standalone Casing Calculator
-
-The `CompressorCasingDesignCalculator` can also be used independently of a process simulation:
-
-```java
-CompressorCasingDesignCalculator calc = new CompressorCasingDesignCalculator();
-calc.setDesignPressureBara(150.0);
-calc.setDesignTemperatureC(180.0);
-calc.setCasingInnerDiameterMm(500.0);
-calc.setCasingLengthMm(1800.0);
-calc.setMaterialGrade("SA-266-Gr4");
-calc.setCorrosionAllowanceMm(1.5);
-calc.setJointEfficiency(0.85);
-calc.setCasingType(CompressorMechanicalDesign.CasingType.BARREL);
-calc.setSourService(true);
-calc.setH2sPartialPressureKPa(5.0);
-
-calc.calculate();
-
-// Results
-System.out.println("Wall thickness: " + calc.getSelectedWallThicknessMm() + " mm");
-System.out.println("MAWP: " + calc.getMawpBarg() + " barg");
-System.out.println("Hydro test: " + calc.getHydroTestPressureBarg() + " barg");
-System.out.println("Flange class: " + calc.getFlangeClass());
-System.out.println("NACE status: " + calc.getNaceComplianceStatus());
-System.out.println("Barrel OD: " + calc.getBarrelOuterODMm() + " mm");
-
-// Full JSON with all sections
-String jsonReport = calc.toJson();
-```
+This is a preliminary screening calculation. It does not replace a certified pressure-vessel
+design, the licensed standards, vendor mechanical design, material qualification, fracture or
+fatigue assessment, nozzle-load qualification, or project-specific design review. Treat the
+hard-coded conditions as example inputs, not a reusable design basis.
 
 ## Design Output Parameters
 
@@ -426,6 +451,10 @@ String jsonReport = calc.toJson();
 | Head per stage | `getHeadPerStage()` | kJ/kg |
 | Impeller diameter | `getImpellerDiameter()` | mm |
 | Tip speed | `getTipSpeed()` | m/s |
+| Shaft speed used for impeller sizing | `getImpellerSizingSpeedRPM()` | rpm |
+| Inlet flow coefficient | `getFlowCoefficient()` | - |
+| Preliminary impeller sizing passes | `isImpellerSizingFeasible()` | boolean |
+| Sizing limit / freshness diagnostics | `getImpellerSizingIssues()` | List of strings |
 | Shaft diameter | `getShaftDiameter()` | mm |
 | Bearing span | `getBearingSpan()` | mm |
 | Design pressure | `getDesignPressure()` | bara |
@@ -487,7 +516,16 @@ Access via `comp.getMechanicalDesign().getCasingDesignCalculator()`:
 
 ## JSON Output Structure
 
-The `toJson()` method returns a comprehensive JSON report including all design sections. The casing design is nested under the `casingDesign` key:
+The `toJson()` method returns a comprehensive JSON report including all design sections.
+It includes `impellerSizingFeasible`, `impellerSizingIssues`, `impellerSizingSpeedRPM`
+and `flowCoefficient`; `headPerStage` and `totalHead` are in kJ/kg.
+The casing design is nested under the `casingDesign` key:
+
+For CAD handoff, `toDesignDataJson()` also includes `impellerSizingFeasible` and
+`impellerSizingIssues`. Its `designBasis` contains unit-labelled `impellerSizingSpeed`
+(rpm), `impellerTipSpeed` (m/s), `inletFlowCoefficient` (dimensionless), `headPerStage`
+(J/kg), and `numberOfStages`. Its impeller diameter is in metres. Shell
+`geometryConsistency` is a separate check and does not qualify the impeller.
 
 ```json
 {

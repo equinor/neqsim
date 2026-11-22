@@ -1,5 +1,8 @@
 package examples;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
@@ -39,41 +42,44 @@ import neqsim.thermo.system.SystemSrkEos;
  * </ul>
  */
 public class MultiphaseModelPressureDropComparison {
+  private static final Logger logger =
+      LogManager.getLogger(MultiphaseModelPressureDropComparison.class);
+
 
   public static void main(String[] args) {
-    System.out.println("================================================================");
-    System.out.println("  Multiphase Model Pressure Drop Comparison");
-    System.out.println("  1 km horizontal pipeline, 300 mm diameter");
-    System.out.println("================================================================\n");
+    logger.info("================================================================");
+    logger.info("  Multiphase Model Pressure Drop Comparison");
+    logger.info("  1 km horizontal pipeline, 300 mm diameter");
+    logger.info("================================================================\n");
 
     // Test Case 0: Pure Gas (single phase)
-    System.out.println("============================================================");
-    System.out.println("  TEST CASE 0: Single-Phase Flow (Pure Gas)");
-    System.out.println("============================================================\n");
+    logger.info("============================================================");
+    logger.info("  TEST CASE 0: Single-Phase Flow (Pure Gas)");
+    logger.info("============================================================\n");
     runPureGasComparison();
 
     // Test Case 1: Two-phase (Gas + Oil)
-    System.out.println("\n============================================================");
-    System.out.println("  TEST CASE 1: Two-Phase Flow (Gas + Oil)");
-    System.out.println("============================================================\n");
+    logger.info("\n============================================================");
+    logger.info("  TEST CASE 1: Two-Phase Flow (Gas + Oil)");
+    logger.info("============================================================\n");
     runTwoPhaseComparison();
 
     // Test Case 2: Three-phase (Gas + Oil + Water)
-    System.out.println("\n============================================================");
-    System.out.println("  TEST CASE 2: Three-Phase Flow (Gas + Oil + Water)");
-    System.out.println("============================================================\n");
+    logger.info("\n============================================================");
+    logger.info("  TEST CASE 2: Three-Phase Flow (Gas + Oil + Water)");
+    logger.info("============================================================\n");
     runThreePhaseComparison();
 
     // Flow regime summary
-    System.out.println("\n============================================================");
-    System.out.println("  FLOW REGIME DETECTION METHODS");
-    System.out.println("============================================================");
+    logger.info("\n============================================================");
+    logger.info("  FLOW REGIME DETECTION METHODS");
+    logger.info("============================================================");
     printFlowRegimeSummary();
 
     // Model summary
-    System.out.println("\n============================================================");
-    System.out.println("  MODEL COMPARISON SUMMARY");
-    System.out.println("============================================================");
+    logger.info("\n============================================================");
+    logger.info("  MODEL COMPARISON SUMMARY");
+    logger.info("============================================================");
     printModelSummary();
   }
 
@@ -91,20 +97,20 @@ public class MultiphaseModelPressureDropComparison {
     // Flow rates to test
     double[] flowRates = {5.0, 10.0, 20.0, 40.0, 60.0, 80.0, 100.0}; // kg/s
 
-    System.out.println("Configuration:");
-    System.out.printf("  Length:      %.0f m%n", length);
-    System.out.printf("  Diameter:    %.0f mm%n", diameter * 1000);
-    System.out.printf("  Roughness:   %.1f um%n", roughness * 1e6);
-    System.out.printf("  Inlet P:     %.0f bara%n", inletPressure);
-    System.out.printf("  Temperature: %.0f C%n", temperature);
-    System.out.println("  Fluid:       Natural gas (C1-C3)");
-    System.out.println();
+    logger.info("Configuration:");
+    logger.info("{}", String.format("  Length:      %.0f m", length));
+    logger.info("{}", String.format("  Diameter:    %.0f mm", diameter * 1000));
+    logger.info("{}", String.format("  Roughness:   %.1f um", roughness * 1e6));
+    logger.info("{}", String.format("  Inlet P:     %.0f bara", inletPressure));
+    logger.info("{}", String.format("  Temperature: %.0f C", temperature));
+    logger.info("  Fluid:       Natural gas (C1-C3)");
+    logger.info("");
 
     // Print header
-    System.out.printf("%-12s %12s %12s %12s %12s%n", "Flow Rate", "Beggs-Brill", "Drift-Flux",
-        "Two-Fluid", "Max Diff");
-    System.out.printf("%-12s %12s %12s %12s %12s%n", "(kg/s)", "(bar)", "(bar)", "(bar)", "(%)");
-    System.out.println("------------------------------------------------------------");
+    logger.info("{}", String.format("%-12s %12s %12s %12s %12s", "Flow Rate", "Beggs-Brill", "Drift-Flux",
+        "Two-Fluid", "Max Diff"));
+    logger.info("{}", String.format("%-12s %12s %12s %12s %12s", "(kg/s)", "(bar)", "(bar)", "(bar)", "(%)"));
+    logger.info("------------------------------------------------------------");
 
     for (double flowRate : flowRates) {
       // Create pure gas fluid
@@ -123,8 +129,8 @@ public class MultiphaseModelPressureDropComparison {
       double avgDp = (dpBB + dpDF + dpTF) / 3.0;
       double maxDiff = avgDp > 0 ? 100.0 * (maxDp - minDp) / avgDp : 0;
 
-      System.out.printf("%-12.1f %12.3f %12.3f %12.3f %12.1f%n", flowRate, dpBB, dpDF, dpTF,
-          maxDiff);
+      logger.info("{}", String.format("%-12.1f %12.3f %12.3f %12.3f %12.1f", flowRate, dpBB, dpDF, dpTF,
+          maxDiff));
     }
   }
 
@@ -142,19 +148,19 @@ public class MultiphaseModelPressureDropComparison {
     // Flow rates to test
     double[] flowRates = {5.0, 10.0, 20.0, 40.0, 60.0, 80.0, 100.0}; // kg/s
 
-    System.out.println("Configuration:");
-    System.out.printf("  Length:      %.0f m%n", length);
-    System.out.printf("  Diameter:    %.0f mm%n", diameter * 1000);
-    System.out.printf("  Roughness:   %.1f μm%n", roughness * 1e6);
-    System.out.printf("  Inlet P:     %.0f bara%n", inletPressure);
-    System.out.printf("  Temperature: %.0f °C%n", temperature);
-    System.out.println();
+    logger.info("Configuration:");
+    logger.info("{}", String.format("  Length:      %.0f m", length));
+    logger.info("{}", String.format("  Diameter:    %.0f mm", diameter * 1000));
+    logger.info("{}", String.format("  Roughness:   %.1f μm", roughness * 1e6));
+    logger.info("{}", String.format("  Inlet P:     %.0f bara", inletPressure));
+    logger.info("{}", String.format("  Temperature: %.0f °C", temperature));
+    logger.info("");
 
     // Print header
-    System.out.printf("%-12s %12s %12s %12s %12s%n", "Flow Rate", "Beggs-Brill", "Drift-Flux",
-        "Two-Fluid", "Max Diff");
-    System.out.printf("%-12s %12s %12s %12s %12s%n", "(kg/s)", "(bar)", "(bar)", "(bar)", "(%)");
-    System.out.println("------------------------------------------------------------");
+    logger.info("{}", String.format("%-12s %12s %12s %12s %12s", "Flow Rate", "Beggs-Brill", "Drift-Flux",
+        "Two-Fluid", "Max Diff"));
+    logger.info("{}", String.format("%-12s %12s %12s %12s %12s", "(kg/s)", "(bar)", "(bar)", "(bar)", "(%)"));
+    logger.info("------------------------------------------------------------");
 
     for (double flowRate : flowRates) {
       // Create two-phase fluid (gas + oil)
@@ -173,8 +179,8 @@ public class MultiphaseModelPressureDropComparison {
       double avgDp = (dpBB + dpDF + dpTF) / 3.0;
       double maxDiff = avgDp > 0 ? 100.0 * (maxDp - minDp) / avgDp : 0;
 
-      System.out.printf("%-12.1f %12.3f %12.3f %12.3f %12.1f%n", flowRate, dpBB, dpDF, dpTF,
-          maxDiff);
+      logger.info("{}", String.format("%-12.1f %12.3f %12.3f %12.3f %12.1f", flowRate, dpBB, dpDF, dpTF,
+          maxDiff));
     }
   }
 
@@ -192,20 +198,20 @@ public class MultiphaseModelPressureDropComparison {
     // Flow rates to test
     double[] flowRates = {5.0, 10.0, 20.0, 40.0, 60.0, 80.0, 100.0}; // kg/s
 
-    System.out.println("Configuration:");
-    System.out.printf("  Length:      %.0f m%n", length);
-    System.out.printf("  Diameter:    %.0f mm%n", diameter * 1000);
-    System.out.printf("  Roughness:   %.1f μm%n", roughness * 1e6);
-    System.out.printf("  Inlet P:     %.0f bara%n", inletPressure);
-    System.out.printf("  Temperature: %.0f °C%n", temperature);
-    System.out.printf("  Water cut:   ~30%%%n");
-    System.out.println();
+    logger.info("Configuration:");
+    logger.info("{}", String.format("  Length:      %.0f m", length));
+    logger.info("{}", String.format("  Diameter:    %.0f mm", diameter * 1000));
+    logger.info("{}", String.format("  Roughness:   %.1f μm", roughness * 1e6));
+    logger.info("{}", String.format("  Inlet P:     %.0f bara", inletPressure));
+    logger.info("{}", String.format("  Temperature: %.0f °C", temperature));
+    logger.info("{}", String.format("  Water cut:   ~30%%"));
+    logger.info("");
 
     // Print header
-    System.out.printf("%-12s %12s %12s %12s %12s%n", "Flow Rate", "Beggs-Brill", "Drift-Flux",
-        "Two-Fluid", "Max Diff");
-    System.out.printf("%-12s %12s %12s %12s %12s%n", "(kg/s)", "(bar)", "(bar)", "(bar)", "(%)");
-    System.out.println("------------------------------------------------------------");
+    logger.info("{}", String.format("%-12s %12s %12s %12s %12s", "Flow Rate", "Beggs-Brill", "Drift-Flux",
+        "Two-Fluid", "Max Diff"));
+    logger.info("{}", String.format("%-12s %12s %12s %12s %12s", "(kg/s)", "(bar)", "(bar)", "(bar)", "(%)"));
+    logger.info("------------------------------------------------------------");
 
     for (double flowRate : flowRates) {
       // Create three-phase fluid (gas + oil + water)
@@ -224,8 +230,8 @@ public class MultiphaseModelPressureDropComparison {
       double avgDp = (dpBB + dpDF + dpTF) / 3.0;
       double maxDiff = avgDp > 0 ? 100.0 * (maxDp - minDp) / avgDp : 0;
 
-      System.out.printf("%-12.1f %12.3f %12.3f %12.3f %12.1f%n", flowRate, dpBB, dpDF, dpTF,
-          maxDiff);
+      logger.info("{}", String.format("%-12.1f %12.3f %12.3f %12.3f %12.1f", flowRate, dpBB, dpDF, dpTF,
+          maxDiff));
     }
   }
 
@@ -303,7 +309,7 @@ public class MultiphaseModelPressureDropComparison {
 
       return pipe.getPressureDrop(); // Returns bar
     } catch (Exception e) {
-      System.err.println("Beggs-Brill failed: " + e.getMessage());
+      logger.error("Beggs-Brill failed: {}", e.getMessage(), e);
       return Double.NaN;
     }
   }
@@ -334,7 +340,7 @@ public class MultiphaseModelPressureDropComparison {
       }
       return Double.NaN;
     } catch (Exception e) {
-      System.err.println("Drift-Flux failed: " + e.getMessage());
+      logger.error("Drift-Flux failed: {}", e.getMessage(), e);
       return Double.NaN;
     }
   }
@@ -364,7 +370,7 @@ public class MultiphaseModelPressureDropComparison {
       }
       return Double.NaN;
     } catch (Exception e) {
-      System.err.println("Two-Fluid failed: " + e.getMessage());
+      logger.error("Two-Fluid failed: {}", e.getMessage(), e);
       return Double.NaN;
     }
   }
@@ -373,95 +379,94 @@ public class MultiphaseModelPressureDropComparison {
    * Print flow regime detection summary.
    */
   private static void printFlowRegimeSummary() {
-    System.out.println();
-    System.out.println("Flow Regime Detection by Model:");
-    System.out.println();
+    logger.info("");
+    logger.info("Flow Regime Detection by Model:");
+    logger.info("");
 
-    System.out.println("BEGGS & BRILL (Empirical):");
-    System.out.println("  Method: Froude number (Fr) vs Input liquid volume fraction (lambda)");
-    System.out.println("  Transition boundaries: L1, L2, L3, L4 functions of lambda");
-    System.out.println("  Regimes:");
-    System.out.println("    - SEGREGATED:    lambda<0.01 & Fr<L1, or lambda>=0.01 & Fr<L2");
-    System.out.println("    - INTERMITTENT:  Slug/plug flow between segregated and distributed");
-    System.out.println("    - DISTRIBUTED:   High Fr - dispersed bubble or mist");
-    System.out.println("    - TRANSITION:    L2 < Fr < L3 - blend of segregated/intermittent");
-    System.out.println("    - SINGLE_PHASE:  Pure gas or pure liquid");
-    System.out.println();
+    logger.info("BEGGS & BRILL (Empirical):");
+    logger.info("  Method: Froude number (Fr) vs Input liquid volume fraction (lambda)");
+    logger.info("  Transition boundaries: L1, L2, L3, L4 functions of lambda");
+    logger.info("  Regimes:");
+    logger.info("    - SEGREGATED:    lambda<0.01 & Fr<L1, or lambda>=0.01 & Fr<L2");
+    logger.info("    - INTERMITTENT:  Slug/plug flow between segregated and distributed");
+    logger.info("    - DISTRIBUTED:   High Fr - dispersed bubble or mist");
+    logger.info("    - TRANSITION:    L2 < Fr < L3 - blend of segregated/intermittent");
+    logger.info("    - SINGLE_PHASE:  Pure gas or pure liquid");
+    logger.info("");
 
-    System.out.println("DRIFT-FLUX / TWO-FLUID (Mechanistic):");
-    System.out.println("  Method: Taitel-Dukler (1976) + Barnea (1987) unified model");
-    System.out
-        .println("  Uses: Kelvin-Helmholtz stability, bubble rise velocity, critical velocities");
-    System.out.println("  Regimes (horizontal/near-horizontal):");
-    System.out.println("    - STRATIFIED_SMOOTH: Low gas velocity, stable interface");
-    System.out.println("    - STRATIFIED_WAVY:   Higher gas velocity, wavy interface");
-    System.out.println("    - SLUG:              K-H unstable, liquid bridges pipe");
-    System.out.println("    - ANNULAR:           Very high gas velocity, liquid film on wall");
-    System.out.println("    - DISPERSED_BUBBLE:  High liquid velocity, bubbles in liquid");
-    System.out.println("  Regimes (inclined - Barnea model):");
-    System.out.println("    - BUBBLE:            Low gas, upward flow");
-    System.out.println("    - SLUG:              Intermittent gas pockets");
-    System.out.println("    - CHURN:             Chaotic, high gas upward");
-    System.out.println("    - ANNULAR:           Gas core, liquid film");
-    System.out.println();
+    logger.info("DRIFT-FLUX / TWO-FLUID (Mechanistic):");
+    logger.info("  Method: Taitel-Dukler (1976) + Barnea (1987) unified model");
+    logger.info("  Uses: Kelvin-Helmholtz stability, bubble rise velocity, critical velocities");
+    logger.info("  Regimes (horizontal/near-horizontal):");
+    logger.info("    - STRATIFIED_SMOOTH: Low gas velocity, stable interface");
+    logger.info("    - STRATIFIED_WAVY:   Higher gas velocity, wavy interface");
+    logger.info("    - SLUG:              K-H unstable, liquid bridges pipe");
+    logger.info("    - ANNULAR:           Very high gas velocity, liquid film on wall");
+    logger.info("    - DISPERSED_BUBBLE:  High liquid velocity, bubbles in liquid");
+    logger.info("  Regimes (inclined - Barnea model):");
+    logger.info("    - BUBBLE:            Low gas, upward flow");
+    logger.info("    - SLUG:              Intermittent gas pockets");
+    logger.info("    - CHURN:             Chaotic, high gas upward");
+    logger.info("    - ANNULAR:           Gas core, liquid film");
+    logger.info("");
 
-    System.out.println("Key Dimensionless Parameters:");
-    System.out.println("  - Martinelli parameter (X): Liquid/gas pressure gradient ratio");
-    System.out.println("  - Froude number (Fr): Inertia vs gravity");
-    System.out.println("  - Kelvin-Helmholtz number (K): Interface stability criterion");
-    System.out.println("  - Weber number (We): Inertia vs surface tension");
-    System.out.println();
+    logger.info("Key Dimensionless Parameters:");
+    logger.info("  - Martinelli parameter (X): Liquid/gas pressure gradient ratio");
+    logger.info("  - Froude number (Fr): Inertia vs gravity");
+    logger.info("  - Kelvin-Helmholtz number (K): Interface stability criterion");
+    logger.info("  - Weber number (We): Inertia vs surface tension");
+    logger.info("");
 
-    System.out.println("Impact on Pressure Drop:");
-    System.out.println("  - STRATIFIED: Lower friction, gravity-dominated at inclination");
-    System.out.println("  - SLUG/INTERMITTENT: Higher friction, liquid holdup fluctuations");
-    System.out.println("  - ANNULAR: High interfacial friction, thin liquid film");
-    System.out.println("  - SINGLE_PHASE: Standard Darcy-Weisbach friction");
+    logger.info("Impact on Pressure Drop:");
+    logger.info("  - STRATIFIED: Lower friction, gravity-dominated at inclination");
+    logger.info("  - SLUG/INTERMITTENT: Higher friction, liquid holdup fluctuations");
+    logger.info("  - ANNULAR: High interfacial friction, thin liquid film");
+    logger.info("  - SINGLE_PHASE: Standard Darcy-Weisbach friction");
   }
 
   /**
    * Print model comparison summary.
    */
   private static void printModelSummary() {
-    System.out.println();
-    System.out.println("Model Characteristics:");
-    System.out.println();
-    System.out.printf("%-20s %-15s %-20s %-25s%n", "Model", "Type", "Equations", "Best For");
-    System.out.println(
+    logger.info("");
+    logger.info("Model Characteristics:");
+    logger.info("");
+    logger.info("{}", String.format("%-20s %-15s %-20s %-25s", "Model", "Type", "Equations", "Best For"));
+    logger.info(
         "--------------------------------------------------------------------------------");
-    System.out.printf("%-20s %-15s %-20s %-25s%n", "Beggs & Brill", "Empirical", "Correlation",
-        "Quick estimates, validation");
-    System.out.printf("%-20s %-15s %-20s %-25s%n", "Drift-Flux", "Mechanistic", "4-equation",
-        "Gas-liquid, transients");
-    System.out.printf("%-20s %-15s %-20s %-25s%n", "Two-Fluid", "Mechanistic", "7-equation",
-        "Three-phase, oil-water slip");
-    System.out.println();
+    logger.info("{}", String.format("%-20s %-15s %-20s %-25s", "Beggs & Brill", "Empirical", "Correlation",
+        "Quick estimates, validation"));
+    logger.info("{}", String.format("%-20s %-15s %-20s %-25s", "Drift-Flux", "Mechanistic", "4-equation",
+        "Gas-liquid, transients"));
+    logger.info("{}", String.format("%-20s %-15s %-20s %-25s", "Two-Fluid", "Mechanistic", "7-equation",
+        "Three-phase, oil-water slip"));
+    logger.info("");
 
-    System.out.println("Expected Behavior:");
-    System.out.println();
-    System.out.println("  - Single-phase gas: All models should converge closely");
-    System.out.println("    (friction factor from Colebrook-White or similar)");
-    System.out.println();
-    System.out.println("  - At low flow rates: Models show larger relative differences");
-    System.out.println("    (friction terms smaller relative to numerical/model differences)");
-    System.out.println();
-    System.out.println("  - At high flow rates: Models tend to converge");
-    System.out.println("    (friction-dominated, less sensitive to holdup differences)");
-    System.out.println();
-    System.out.println("  - Three-phase flow: Two-Fluid may differ more from others");
-    System.out.println("    (accounts for oil-water stratification and separate slip)");
-    System.out.println();
-    System.out.println("  - Beggs & Brill: Empirical, validated for certain conditions");
-    System.out.println("    (may over/underpredict outside validation range)");
-    System.out.println();
+    logger.info("Expected Behavior:");
+    logger.info("");
+    logger.info("  - Single-phase gas: All models should converge closely");
+    logger.info("    (friction factor from Colebrook-White or similar)");
+    logger.info("");
+    logger.info("  - At low flow rates: Models show larger relative differences");
+    logger.info("    (friction terms smaller relative to numerical/model differences)");
+    logger.info("");
+    logger.info("  - At high flow rates: Models tend to converge");
+    logger.info("    (friction-dominated, less sensitive to holdup differences)");
+    logger.info("");
+    logger.info("  - Three-phase flow: Two-Fluid may differ more from others");
+    logger.info("    (accounts for oil-water stratification and separate slip)");
+    logger.info("");
+    logger.info("  - Beggs & Brill: Empirical, validated for certain conditions");
+    logger.info("    (may over/underpredict outside validation range)");
+    logger.info("");
 
-    System.out.println("Recommendations:");
-    System.out.println();
-    System.out.println("  1. Use Beggs & Brill for quick screening and historical comparison");
-    System.out.println("  2. Use Drift-Flux for gas-liquid systems and transient analysis");
-    System.out.println("  3. Use Two-Fluid for three-phase systems or detailed phase behavior");
-    System.out.println("  4. When models disagree significantly, investigate flow regime");
-    System.out.println("  5. For critical applications, validate against field data");
-    System.out.println("  6. For single-phase gas, all models are equivalent (use simplest)");
+    logger.info("Recommendations:");
+    logger.info("");
+    logger.info("  1. Use Beggs & Brill for quick screening and historical comparison");
+    logger.info("  2. Use Drift-Flux for gas-liquid systems and transient analysis");
+    logger.info("  3. Use Two-Fluid for three-phase systems or detailed phase behavior");
+    logger.info("  4. When models disagree significantly, investigate flow regime");
+    logger.info("  5. For critical applications, validate against field data");
+    logger.info("  6. For single-phase gas, all models are equivalent (use simplest)");
   }
 }

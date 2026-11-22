@@ -1,0 +1,431 @@
+"""Command line for living tasks, dispatched as ``neqsim task-<command>``.
+
+    neqsim task-living <task> [--brief FILE]
+    neqsim task-cycle <task> [--mode monitor|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO] [--standard-first]
+    neqsim task-solve <task> [--until goal|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed]
+    neqsim task-resume <task> [--max-rounds N] [--no-agent]
+    neqsim task-update <task> [--no-agent] [--dry-run]
+    neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--repeat]
+    neqsim task-backtest <task> --tune [--name RUN] [--holdout-from ISO] [--false-alarm-weight 0.5] [--delay-weight 0.25]
+    neqsim task-schedule <task> [--daily HH:MM] [--install | --remove | --show]
+    neqsim task-loop <task> --every-minutes 10 --for-hours 3 [--mode monitor|solve] [--hook file.py:func] [--no-agent]
+    neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]
+    neqsim task-ledger <task> [list | show ID | set ID STATUS --by NAME [--note TEXT] | merge OTHER]
+    neqsim task-note <task> [TEXT] [--by NAME] [--expires DATE] [effect options] | --list | --resolve ID
+    neqsim task-status [task-or-task-root]
+    neqsim task-report <task> [--formal | --final --reviewer NAME [--note TEXT] [--pdf]]
+    neqsim task-daily <task> [--template [DATE]] [--validate]
+    neqsim task-drift <task> [--reset [SIGNAL ...]]
+    neqsim task-hypotheses <task> [--template] [--validate] [--tests N]
+    neqsim task-reference-case [parent-folder]
+
+A <task> that is not an existing folder is looked up in the task root used for new tasks
+(``neqsim --show-task-root``), so ``neqsim task-cycle 2026-09-24_my_task`` works from any
+folder. Without a folder, ``task-status`` and ``task-reference-case`` use that task root.
+"""
+
+import argparse
+import json
+import os
+import sys
+
+COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest", "schedule", "loop", "promote", "ledger",
+            "status", "report", "reference-case", "note", "daily", "drift", "hypotheses")
+
+
+def _print(data):
+    print(json.dumps(data, indent=2, sort_keys=True, default=str))
+
+
+def task_root():
+    """Return the task root for new tasks: --task-root, NEQSIM_TASK_ROOT, saved default, task_solve/."""
+    try:
+        from new_task import resolve_task_root
+    except ImportError:  # runner used outside devtools
+        return os.path.abspath(os.environ.get("NEQSIM_TASK_ROOT") or os.getcwd())
+    return resolve_task_root()
+
+
+def _task(path):
+    candidate = os.path.abspath(path)
+    if not os.path.isdir(candidate) and not os.path.isabs(os.path.expanduser(path)):
+        in_root = os.path.join(task_root(), path)
+        if os.path.isdir(in_root):
+            candidate = in_root
+    if not os.path.isdir(candidate):
+        raise SystemExit("ERROR: task folder not found: {} (also looked in the task root {})".format(
+            os.path.abspath(path), task_root()))
+    return candidate
+
+
+def _parse_time(text):
+    if not text:
+        return None
+    from .watermarks import parse_time
+    return parse_time(text)
+
+
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    parser = argparse.ArgumentParser(prog="neqsim task-<command>", description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("living", help="make an existing task living (never overwrites)")
+    p.add_argument("task")
+    p.add_argument("--brief", help="Word or Markdown task brief")
+    p.add_argument("--template", choices=["production"],
+                   help="production: optimisation loop with gates, hard constraints and a proposal guard")
+
+    p = sub.add_parser("cycle", help="run one cycle")
+    p.add_argument("task")
+    p.add_argument("--mode", default="monitor", choices=["monitor", "solve"])
+    p.add_argument("--stages", help="comma-separated subset of stages")
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--no-agent", action="store_true")
+    p.add_argument("--now", help="override the cycle clock (ISO time)")
+    p.add_argument("--standard-first", action="store_true",
+                   help="verify/generate the initial Standard-task report basis before the cycle")
+
+    p = sub.add_parser("solve", help="solve until the goal is met or improvement is marginal")
+    p.add_argument("task")
+    p.add_argument("--until", default="goal", choices=["goal", "converged"])
+    p.add_argument("--max-rounds", type=int)
+    p.add_argument("--no-agent", action="store_true")
+    p.add_argument("--allow-unconfirmed", action="store_true")
+    p.add_argument("--reset", action="store_true", help="start a fresh iteration history")
+
+    p = sub.add_parser("resume", help="resume interrupted work from persisted task state")
+    p.add_argument("task")
+    p.add_argument("--max-rounds", type=int)
+    p.add_argument("--no-agent", action="store_true")
+
+    p = sub.add_parser("update", help="detect evidence changes and rerun only affected stages")
+    p.add_argument("task")
+    p.add_argument("--no-agent", action="store_true")
+    p.add_argument("--dry-run", action="store_true")
+
+    p = sub.add_parser("backtest", help="replay archived data with a simulated clock")
+    p.add_argument("task")
+    p.add_argument("--start")
+    p.add_argument("--end")
+    p.add_argument("--step-hours", type=float, default=24.0)
+    p.add_argument("--name", default="backtest")
+    p.add_argument("--repeat", action="store_true", help="rerun and report reproducibility")
+    p.add_argument("--tune", action="store_true",
+                   help="replay the finished run's KPI series to choose drift settings against backtest.expected")
+    p.add_argument("--false-alarm-weight", type=float, default=0.5)
+    p.add_argument("--delay-weight", type=float, default=0.25)
+    p.add_argument("--holdout-from", help="tune on expected events before this date, validate on the rest")
+
+    p = sub.add_parser("schedule", help="schedule monitor cycles")
+    p.add_argument("task")
+    timing = p.add_mutually_exclusive_group()
+    timing.add_argument("--daily", default=None,
+                   help="fixed time HH:MM (default 05:00 unless --every-hours is used)")
+    timing.add_argument("--every-hours", type=int, choices=(1, 2, 3, 4, 6, 8, 12, 24), default=None,
+                        help="whole-hour interval dividing 24, anchored at midnight")
+    p.add_argument("--weekly", default=None, metavar="DAY",
+                   help="run once a week on DAY (MON..SUN) at the --daily time (default 05:00)")
+    group = p.add_mutually_exclusive_group()
+    group.add_argument("--install", action="store_true")
+    group.add_argument("--remove", action="store_true")
+    group.add_argument("--show", action="store_true")
+
+    p = sub.add_parser("loop", help="run cycles at a fixed cadence in one process (warm model, sub-hour periods)")
+    p.add_argument("task")
+    p.add_argument("--every-minutes", type=float, required=True)
+    p.add_argument("--for-hours", type=float, required=True)
+    p.add_argument("--mode", default="monitor", choices=["monitor", "solve"])
+    p.add_argument("--no-agent", action="store_true")
+    p.add_argument("--max-cycles", type=int)
+    p.add_argument("--hook", help="task-relative module.py:function called before each cycle (emulator, test harness)")
+
+    p = sub.add_parser("promote", help="promote a complete cycle to the baseline")
+    p.add_argument("task")
+    p.add_argument("cycle")
+    p.add_argument("--reviewer", required=True)
+    p.add_argument("--note", default="")
+
+    p = sub.add_parser("ledger", help="list or update the improvement ledger")
+    p.add_argument("task")
+    p.add_argument("action", nargs="?", default="list", choices=["list", "show", "set", "merge"])
+    p.add_argument("args", nargs="*")
+    p.add_argument("--by", default="")
+    p.add_argument("--note", default="")
+
+    p = sub.add_parser("status", help="status of one living task or every living task in a folder")
+    p.add_argument("path", nargs="?", help="task or folder (default: the task root)")
+
+    p = sub.add_parser("report", help="rebuild Living Report or generate a reviewed final report")
+    p.add_argument("task")
+    report_mode = p.add_mutually_exclusive_group()
+    report_mode.add_argument("--formal", action="store_true",
+                             help="also regenerate the ordinary current-best Word/HTML report")
+    report_mode.add_argument("--final", action="store_true",
+                             help="generate an immutable reviewed Final Report revision")
+    p.add_argument("--reviewer", help="named reviewer approving the Final Report source baseline")
+    p.add_argument("--note", default="", help="finalization note stored in the report manifest")
+    p.add_argument("--pdf", action="store_true", help="also request PDF for --final")
+
+    p = sub.add_parser("note", help="add, list or resolve engineer comments and restrictions (user_input.yaml)")
+    p.add_argument("task")
+    p.add_argument("text", nargs="?", default="", help="comment text")
+    p.add_argument("--by", default="")
+    p.add_argument("--expires", help="YYYY-MM-DD")
+    p.add_argument("--list", action="store_true", help="list the entries")
+    p.add_argument("--resolve", metavar="ID", help="mark an entry resolved")
+    p.add_argument("--lever", help="lever name for --lo/--hi")
+    p.add_argument("--lo", type=float)
+    p.add_argument("--hi", type=float)
+    p.add_argument("--freeze", metavar="LEVER", help="keep this lever at its current value")
+    p.add_argument("--constraint", metavar="NAME", help="set or add a goal constraint")
+    p.add_argument("--kpi")
+    p.add_argument("--op", choices=["<=", ">=", "<", ">"])
+    p.add_argument("--limit", type=float)
+    p.add_argument("--margin", type=float)
+    p.add_argument("--setting", action="append", metavar="KEY=VALUE", help="set a plan value, e.g. production.rvp_bias_bara=0.05")
+
+    p = sub.add_parser("daily", help="build the daily engineering update (Word, newest day first)")
+    p.add_argument("task")
+    p.add_argument("--template", nargs="?", const="today", metavar="DATE",
+                   help="print an empty daily entry (YYYY-MM-DD, default today) instead of building")
+    p.add_argument("--validate", action="store_true", help="check the daily entries and exit non-zero on problems")
+
+    p = sub.add_parser("drift", help="show drift alarms, or restart the charts after a known intervention")
+    p.add_argument("task")
+    p.add_argument("--reset", nargs="*", metavar="SIGNAL", help="restart these signals (none given: all alarming ones)")
+
+    p = sub.add_parser("hypotheses", help="Bayesian update of candidate causes and ranking of the next test")
+    p.add_argument("task")
+    p.add_argument("--template", action="store_true", help="print an example continuous/hypotheses.yaml")
+    p.add_argument("--validate", action="store_true", help="check the file and exit non-zero on problems")
+    p.add_argument("--tests", type=int, default=3, help="number of ranked tests to print")
+
+    p = sub.add_parser("reference-case", help="create the public reference task")
+    p.add_argument("parent", nargs="?", help="parent folder (default: the task root)")
+
+    args = parser.parse_args(argv)
+    if getattr(args, "task", None):
+        args.task = _task(args.task)
+
+    if args.command == "living":
+        from .living import make_living
+        _print(make_living(_task(args.task), brief=args.brief, template=args.template))
+    elif args.command == "cycle":
+        from .cycle import run_cycle
+        from .living import note_reopen
+        stages = args.stages.split(",") if args.stages else None
+        manifest = run_cycle(_task(args.task), mode=args.mode, now=_parse_time(args.now),
+                             stages=stages, dry_run=args.dry_run, no_agent=args.no_agent,
+                             standard_first=args.standard_first)
+        if not args.dry_run:
+            note_reopen(args.task, manifest)
+        print(open(os.path.join(args.task, "continuous", "cycles", manifest["cycle_id"], "digest.md"),
+                   encoding="utf-8").read() if os.path.exists(os.path.join(
+                       args.task, "continuous", "cycles", manifest["cycle_id"], "digest.md")) else "")
+        print("cycle {}: {}{}".format(manifest["cycle_id"], manifest["status"],
+                                      " (degraded)" if manifest.get("degraded") else ""))
+    elif args.command == "solve":
+        from .solve import solve
+        state = solve(_task(args.task), until=args.until, max_rounds=args.max_rounds,
+                      no_agent=args.no_agent, allow_unconfirmed=args.allow_unconfirmed, reset=args.reset)
+        _print({k: state[k] for k in ("state", "reason", "rounds", "details", "paused_branches")})
+    elif args.command == "resume":
+        from .living import resume
+        _print(resume(_task(args.task), no_agent=args.no_agent, max_rounds=args.max_rounds))
+    elif args.command == "update":
+        from .cycle import run_cycle
+        from .evidence import analyze, initialize, selected_stages
+        from .living import note_reopen
+        from .plan import load_plan
+        plan = load_plan(args.task)
+        impact = analyze(args.task, plan)
+        public_impact = {key: value for key, value in impact.items() if key != "inventory"}
+        if impact["status"] == "initialized":
+            initialize(args.task, plan)
+            _print(dict(public_impact, message="evidence baseline initialized; no rerun required"))
+        elif not impact["changes"]:
+            _print(dict(public_impact, message="no evidence changes; no rerun required"))
+        else:
+            selected = selected_stages(plan, impact)
+            manifest = run_cycle(args.task, mode="monitor", stages=selected,
+                                 dry_run=args.dry_run, no_agent=args.no_agent,
+                                 evidence_analysis=impact)
+            if not args.dry_run:
+                note_reopen(args.task, manifest)
+            _print(dict(public_impact, selected_stages=selected,
+                        cycle={key: manifest.get(key) for key in
+                               ("cycle_id", "status", "degraded", "selective_rerun")},
+                        accepted=not args.dry_run and not manifest.get("degraded")))
+    elif args.command == "backtest" and args.tune:
+        from .backtest import tune_drift
+        out = tune_drift(_task(args.task), run_name=args.name, false_alarm_weight=args.false_alarm_weight,
+                         delay_weight=args.delay_weight, holdout_from=args.holdout_from)
+        _print({k: out[k] for k in ("candidates_evaluated", "current", "best", "recommended_drift_settings",
+                                    "validated", "note")})
+    elif args.command == "backtest":
+        if not args.start or not args.end:
+            parser.error("task-backtest needs --start and --end (or --tune on a finished run)")
+        from .backtest import run_backtest
+        report = run_backtest(_task(args.task), _parse_time(args.start), _parse_time(args.end),
+                              step_hours=args.step_hours, run_name=args.name,
+                              check_reproducibility=args.repeat)
+        summary = {k: report[k] for k in ("cycles", "detected", "missed", "false_alarms_per_month",
+                                          "expected", "reproducibility") if k in report}
+        _print(summary)
+    elif args.command == "loop":
+        from .loop import run_loop
+        _print(run_loop(_task(args.task), args.every_minutes, args.for_hours, mode=args.mode,
+                        no_agent=args.no_agent, hook=args.hook, max_cycles=args.max_cycles))
+    elif args.command == "schedule":
+        from . import schedule
+        spec = schedule.build(_task(args.task), daily=args.daily,
+                              every_hours=args.every_hours, weekly=args.weekly)
+        if args.install:
+            _print(dict(schedule.install(spec), command=spec["command"]))
+        elif args.remove:
+            _print(schedule.remove(args.task))
+        elif args.show:
+            _print(schedule.show(args.task))
+        else:
+            _print(spec)
+    elif args.command == "promote":
+        from .living import promote
+        _print(promote(_task(args.task), args.cycle, args.reviewer, args.note))
+        print("Living report updated: {}".format(os.path.join(args.task, "continuous", "LIVING_REPORT.md")))
+        print("Regenerate the formal report with: neqsim report \"{}\" "
+              "(or set report.formal: on_promote in cycle_plan.yaml)".format(args.task))
+    elif args.command == "ledger":
+        from .ledger import Ledger
+        from .living_report import update
+        book = Ledger(os.path.join(_task(args.task), "continuous", "ledger", "events.jsonl"))
+        if args.action == "list":
+            for key, item in sorted(book.current().items()):
+                print("{}  {:<13} {:<13} {}".format(key, item.get("status"), item.get("category"),
+                                                   item.get("title")))
+        elif args.action == "show":
+            _print(book.current().get(args.args[0]) if args.args else {})
+        elif args.action == "set":
+            if len(args.args) != 2 or not args.by:
+                raise SystemExit("usage: task-ledger <task> set ID STATUS --by NAME")
+            _print(book.set_status(args.args[0], args.args[1], args.by, args.note))
+            update(args.task, event="ledger")
+        elif args.action == "merge":
+            print("{} new events merged".format(book.merge(args.args[0])))
+            update(args.task, event="ledger")
+    elif args.command == "status":
+        from .living import status
+        from .plan import is_living
+        path = _task(args.path) if args.path else task_root()
+        if is_living(path):
+            _print(status(path))
+        else:
+            names = sorted(os.listdir(path)) if os.path.isdir(path) else []
+            rows = [status(os.path.join(path, n)) for n in names
+                    if os.path.isdir(os.path.join(path, n)) and is_living(os.path.join(path, n))]
+            _print(rows)
+    elif args.command == "report":
+        if args.final:
+            if not args.reviewer:
+                raise SystemExit("usage: task-report <task> --final --reviewer NAME [--note TEXT] [--pdf]")
+            from .final_report import finalize
+            _print(finalize(args.task, reviewer=args.reviewer, note=args.note, pdf=args.pdf))
+        else:
+            if args.reviewer or args.note or args.pdf:
+                raise SystemExit("--reviewer, --note and --pdf require --final")
+            from .living_report import regenerate_formal, update
+            path = update(_task(args.task), event="manual")
+            print(path or "ERROR: living report not written (is the task living?)")
+            if args.formal:
+                code = regenerate_formal(args.task)
+                print("formal report {}".format("written" if code == 0 else "FAILED (exit {})".format(code)))
+    elif args.command == "hypotheses":
+        from . import hypotheses
+        if args.template:
+            print(hypotheses.template())
+        else:
+            spec = hypotheses.load(args.task)
+            if spec is None:
+                raise SystemExit("ERROR: no continuous/hypotheses.yaml (start from --template)")
+            problems = hypotheses.validate(spec)
+            if problems:
+                _print({"problems": problems})
+                raise SystemExit(1)
+            if args.validate:
+                print("hypotheses file valid")
+            else:
+                result, _ = hypotheses.run(args.task)
+                print(hypotheses.summary(result, tests=args.tests))
+    elif args.command == "drift":
+        from .drift import DriftMonitor
+        path = os.path.join(args.task, "continuous", "drift_state.json")
+        monitor = DriftMonitor.load(path)
+        if args.reset is not None:
+            names = args.reset or [n for n, v in monitor.state.items() if v.get("alarm")]
+            for name in names:
+                monitor.reset(name)
+            monitor.save(path)
+            _print({"reset": names})
+        else:
+            _print({n: {"alarm": v.get("alarm"), "streak": v.get("streak"), "alarms_total": v.get("alarms")}
+                    for n, v in sorted(monitor.state.items())})
+    elif args.command == "daily":
+        from . import daily_report
+        if args.template:
+            from datetime import date
+            _print(daily_report.template(date.today().isoformat() if args.template == "today" else args.template))
+        elif args.validate:
+            found = {d: daily_report.validate_entry(e) for d, e in daily_report.load_entries(args.task).items()}
+            _print({d: p for d, p in found.items() if p} or "all daily entries valid")
+            if any(found.values()):
+                raise SystemExit(1)
+        else:
+            path = daily_report.build(args.task)
+            print(path or "ERROR: daily report not written (python-docx missing, or no cycles and no daily entries)")
+    elif args.command == "note":
+        from . import user_input
+        from .living_report import update
+        if args.list:
+            for e in user_input.load(args.task):
+                print("{:<8} {:<9} {}".format(e.get("id"), e.get("status", "active"), user_input.describe(e)))
+        elif args.resolve:
+            _print(user_input.resolve(args.task, args.resolve, args.by))
+            update(args.task, event="note")
+        else:
+            effects = []
+            if args.lever:
+                fx = {"kind": "lever_bound", "lever": args.lever}
+                for key in ("lo", "hi"):
+                    if getattr(args, key) is not None:
+                        fx[key] = getattr(args, key)
+                effects.append(fx)
+            if args.freeze:
+                effects.append({"kind": "lever_freeze", "lever": args.freeze})
+            if args.constraint:
+                fx = {"kind": "constraint", "name": args.constraint}
+                for key in ("kpi", "op", "limit", "margin"):
+                    if getattr(args, key) is not None:
+                        fx[key] = getattr(args, key)
+                effects.append(fx)
+            for item in args.setting or []:
+                key, _, raw = item.partition("=")
+                try:
+                    value = json.loads(raw)
+                except ValueError:
+                    value = raw
+                effects.append({"kind": "setting", "key": key.strip(), "value": value})
+            if not args.text and not effects:
+                raise SystemExit("usage: task-note <task> \"text\" [--lever NAME --lo X --hi Y | --freeze NAME | --constraint NAME --kpi K --limit X] [--setting K=V]")
+            _print(user_input.add(args.task, args.text, by=args.by, effects=effects, expires=args.expires))
+            update(args.task, event="note")
+    elif args.command == "reference-case":
+        from .reference_case import create_reference_task
+        parent = os.path.abspath(args.parent) if args.parent else task_root()
+        os.makedirs(parent, exist_ok=True)
+        print(create_reference_task(parent))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

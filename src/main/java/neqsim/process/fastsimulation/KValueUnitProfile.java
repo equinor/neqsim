@@ -1,5 +1,7 @@
 package neqsim.process.fastsimulation;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,7 +105,7 @@ public class KValueUnitProfile implements Serializable {
     this.inletStreams = new ArrayList<StreamInterface>(inletStreams);
     this.outletStreams = new ArrayList<StreamInterface>(outletStreams);
     this.componentNames = componentNames.clone();
-    this.fallbackSplitFactors = copyMatrix(fallbackSplitFactors);
+    this.fallbackSplitFactors = copyMatrixArray(fallbackSplitFactors);
     this.vaporLiquidKValues = vaporLiquidKValues == null ? null : vaporLiquidKValues.clone();
     this.waterLiquidKValues = waterLiquidKValues == null ? null : waterLiquidKValues.clone();
     this.gasOutletIndex = gasOutletIndex;
@@ -380,7 +382,7 @@ public class KValueUnitProfile implements Serializable {
       double waterResidual = residualAndJacobian[1];
       double residualNorm = Math.max(Math.abs(gasResidual), Math.abs(waterResidual));
       if (residualNorm < 1.0e-12) {
-        return new double[] { vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction };
+        return new double[] {vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction};
       }
 
       double jgg = residualAndJacobian[2];
@@ -421,7 +423,7 @@ public class KValueUnitProfile implements Serializable {
         total);
     if (residualAndJacobian != null
         && Math.max(Math.abs(residualAndJacobian[0]), Math.abs(residualAndJacobian[1])) < 1.0e-8) {
-      return new double[] { vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction };
+      return new double[] {vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction};
     }
     return null;
   }
@@ -460,7 +462,7 @@ public class KValueUnitProfile implements Serializable {
       jwg -= z * waterDelta * gasDelta / denominatorSquared;
       jww -= z * waterDelta * waterDelta / denominatorSquared;
     }
-    return new double[] { gasResidual, waterResidual, jgg, jgw, jwg, jww };
+    return new double[] {gasResidual, waterResidual, jgg, jgw, jwg, jww};
   }
 
   /**
@@ -576,17 +578,4 @@ public class KValueUnitProfile implements Serializable {
     return total;
   }
 
-  /**
-   * Copies a matrix defensively.
-   *
-   * @param matrix source matrix
-   * @return copied matrix
-   */
-  private static double[][] copyMatrix(double[][] matrix) {
-    double[][] copy = new double[matrix.length][];
-    for (int i = 0; i < matrix.length; i++) {
-      copy[i] = matrix[i].clone();
-    }
-    return copy;
-  }
 }

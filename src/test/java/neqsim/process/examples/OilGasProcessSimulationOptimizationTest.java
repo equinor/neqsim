@@ -24,7 +24,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>Andreasen, A. Applied Process Simulation-Driven Oil and Gas Separation Plant Optimization Using Surrogate
  * Modeling and Evolutionary Algorithms. ChemEngineering 2020, 4, 11.</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

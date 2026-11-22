@@ -110,7 +110,11 @@ public class PhaseSrkCPABroydenImplicit extends PhaseSrkCPAs {
     thermoPropertyModelName = "SRK-CPA-EoS-BroydenImplicit";
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkCPABroydenImplicit clone() {
     PhaseSrkCPABroydenImplicit clonedPhase = null;
@@ -118,6 +122,7 @@ public class PhaseSrkCPABroydenImplicit extends PhaseSrkCPAs {
       clonedPhase = (PhaseSrkCPABroydenImplicit) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkCPABroydenImplicit", ex);
     }
     return clonedPhase;
   }

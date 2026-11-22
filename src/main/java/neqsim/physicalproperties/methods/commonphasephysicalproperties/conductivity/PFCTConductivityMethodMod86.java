@@ -43,8 +43,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    * JPCRD 18(2), 583-638. lambda0 = sum(GVcoef[k] * T^((k-3)/3)) in mW/(m*K). Valid 91 K to 700 K with improved
    * high-temperature behavior over the original Hanley (1977) coefficients.
    */
-  double[] GVcoef = { -2.147621e5, 2.190461e5, -8.618097e4, 1.496099e4, -4.730660e2, -2.331178e2, 3.778439e1, -2.320481,
-      5.311764e-2 };
+  double[] GVcoef = {-2.147621e5, 2.190461e5, -8.618097e4, 1.496099e4, -4.730660e2, -2.331178e2, 3.778439e1, -2.320481,
+      5.311764e-2};
 
   /**
    * High-temperature correction threshold [K]. When T0 exceeds this value, a correction factor is applied to compensate
@@ -70,12 +70,12 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    * Dense-fluid thermal conductivity coefficients for methane above freezing. From Younglove-Ely (1987) / Friend et al.
    * (1989).
    */
-  double[] condRefJ = { -7.04036339907, 12.319512908, -8.8525979933e2, 72.835897919, 0.74421462902, -2.9706914540,
-      2.2209758501e3 };
+  double[] condRefJ = {-7.04036339907, 12.319512908, -8.8525979933e2, 72.835897919, 0.74421462902, -2.9706914540,
+      2.2209758501e3};
   /**
    * Dense-fluid thermal conductivity coefficients for methane near freezing.
    */
-  double[] condRefK = { -8.55109, 12.5539, -1020.85, 238.394, 1.31563, -72.5759, 1411.6 };
+  double[] condRefK = {-8.55109, 12.5539, -1020.85, 238.394, 1.31563, -72.5759, 1411.6};
   double PCmix = 0.0;
   double TCmix = 0.0;
   double Mmix = 0.0;
@@ -276,11 +276,11 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    * @return a double
    */
   public double getRefComponentViscosity(double temp, double pres) {
-    double[] GVcoef = { -2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3, -9.627993e1,
-        4.274152, -8.141531e-2 };
+    double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3, -9.627993e1, 4.274152,
+        -8.141531e-2};
     double visRefE = 1.0;
-    double[] viscRefJ = { -1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2, 4.2903609488e-2,
-        1.4529023444e2, 6.1276818706e3 };
+    double[] viscRefJ = {-1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2, 4.2903609488e-2,
+        1.4529023444e2, 6.1276818706e3};
     // double viscRefK[] = {-9.74602, 18.0834, -4126.66, 44.6055, 0.9676544, 81.8134, 15649.9};
 
     double molDens = ThermodynamicConstantsInterface.atm / ThermodynamicConstantsInterface.R / temp / 1.0e3;

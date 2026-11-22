@@ -23,6 +23,23 @@ The main use case is to support and challenge projects or producing assets using
 | Erosion-corrosion, MIC, galvanic corrosion, fatigue/FIV | Screening rules in `MaterialsReviewEngine` |
 | Remaining life | Wall-thickness and corrosion-rate screening in `IntegrityLifeAssessment` |
 
+### Reusing a hydrogen material assessment
+
+`HydrogenMaterialAssessment.setFluid(...)` replaces the extracted pressure, temperature,
+hydrogen composition and H2/H2S pressure inputs with the current flashed fluid. Missing H2
+or H2S components clear the previous exposure. When the gas phase disappears, H2 keeps the
+legacy bulk-mole-fraction times absolute-pressure fallback; H2S gas partial pressure becomes
+zero. Neither quantity is a component fugacity or a dissolved-hydrogen activity calculation.
+The exported `h2MoleFractionGas` field retains its legacy name even when it contains the
+bulk fallback for a fluid without a gas phase.
+
+Material grade, strength, hardness, wall thickness, PWHT, free-water and chloride inputs,
+maximum operating temperature, cyclic-service and design-life settings remain under caller
+control. In particular, free water is not inferred from the replacement fluid. Fluid replacement
+invalidates the previous evaluation; call `evaluate()` before reading risk getters. Map and
+JSON export evaluate invalidated inputs automatically so reported risks match the current
+fluid. This remains categorical material screening, with no crack-growth or toughness model.
+
 ## Core Classes
 
 | Class | Purpose |

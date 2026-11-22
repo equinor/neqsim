@@ -235,7 +235,7 @@ public class JsonSerializationTest {
     inlet.run();
 
     Splitter splitter = new Splitter("test splitter", inlet, 2);
-    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
     splitter.run();
 
     String json = splitter.toJson();
@@ -584,7 +584,7 @@ public class JsonSerializationTest {
 
     // Splitter for gas distribution
     Splitter gasSplitter = new Splitter("gas splitter", hpSeparator.getGasOutStream(), 2);
-    gasSplitter.setSplitFactors(new double[] { 0.7, 0.3 });
+    gasSplitter.setSplitFactors(new double[] {0.7, 0.3});
 
     // Add all equipment to process
     process.add(feed);

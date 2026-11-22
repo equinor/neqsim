@@ -202,7 +202,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr");
     evaluator.addObjective("outletPressure", process -> process.getUnit("gasOut").getFluid().getPressure("bara"));
 
-    double[] x = { 15000.0 };
+    double[] x = {15000.0};
     ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(x);
 
     assertNotNull(result);
@@ -220,14 +220,14 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addConstraintLowerBound("minFlow",
         process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
 
-    double[] x = { 15000.0 };
+    double[] x = {15000.0};
     ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(x);
 
     assertTrue(result.isFeasible());
     assertTrue(result.getConstraintMargins()[0] > 0); // 15000 > 5000
 
     // Test constraint violation
-    double[] xLow = { 3000.0 };
+    double[] xLow = {3000.0};
     ProcessSimulationEvaluator.EvaluationResult resultLow = evaluator.evaluate(xLow);
     assertFalse(resultLow.isFeasible());
     assertTrue(resultLow.getConstraintMargins()[0] < 0); // 3000 < 5000
@@ -237,11 +237,11 @@ class ProcessSimulationEvaluatorTest {
   void testEvaluationResult() {
     ProcessSimulationEvaluator.EvaluationResult result = new ProcessSimulationEvaluator.EvaluationResult();
 
-    result.setParameters(new double[] { 100.0, 200.0 });
-    result.setObjectives(new double[] { 50.0 });
-    result.setObjectivesRaw(new double[] { 50.0 });
-    result.setConstraintValues(new double[] { 25.0 });
-    result.setConstraintMargins(new double[] { 5.0 });
+    result.setParameters(new double[] {100.0, 200.0});
+    result.setObjectives(new double[] {50.0});
+    result.setObjectivesRaw(new double[] {50.0});
+    result.setConstraintValues(new double[] {25.0});
+    result.setConstraintMargins(new double[] {5.0});
     result.setFeasible(true);
     result.setSimulationConverged(true);
     result.setPenaltySum(0.0);
@@ -259,7 +259,7 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testPenalizedObjective() {
     ProcessSimulationEvaluator.EvaluationResult result = new ProcessSimulationEvaluator.EvaluationResult();
-    result.setObjectives(new double[] { 100.0 });
+    result.setObjectives(new double[] {100.0});
     result.setPenaltySum(50.0);
 
     assertEquals(150.0, result.getPenalizedObjective(), 0.01);
@@ -268,9 +268,9 @@ class ProcessSimulationEvaluatorTest {
   @Test
   void testWeightedObjective() {
     ProcessSimulationEvaluator.EvaluationResult result = new ProcessSimulationEvaluator.EvaluationResult();
-    result.setObjectives(new double[] { 10.0, 20.0, 30.0 });
+    result.setObjectives(new double[] {10.0, 20.0, 30.0});
 
-    double[] weights = { 1.0, 2.0, 0.5 };
+    double[] weights = {1.0, 2.0, 0.5};
     double weighted = result.getWeightedObjective(weights);
     assertEquals(10.0 * 1.0 + 20.0 * 2.0 + 30.0 * 0.5, weighted, 0.01);
   }
@@ -282,7 +282,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addConstraintLowerBound("minFlow",
         process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 5000.0);
 
-    double[] x = { 20000.0 };
+    double[] x = {20000.0};
 
     // Test evaluateObjective
     double obj = evaluator.evaluateObjective(x);
@@ -353,7 +353,7 @@ class ProcessSimulationEvaluatorTest {
 
   @Test
   void convertsOneSidedConstraintsWithoutLoss() {
-    final double[] metric = { 5.0 };
+    final double[] metric = {5.0};
     ProcessSimulationEvaluator.ConstraintDefinition lower = new ProcessSimulationEvaluator.ConstraintDefinition(
         "minimum", p -> metric[0], 2.0);
     lower.setHard(false);
@@ -391,7 +391,7 @@ class ProcessSimulationEvaluatorTest {
 
   @Test
   void convertsRangeConstraintWithoutDroppingEitherBound() {
-    final double[] metric = { 1.0 };
+    final double[] metric = {1.0};
     ProcessSimulationEvaluator.ConstraintDefinition range = new ProcessSimulationEvaluator.ConstraintDefinition(
         "operatingEnvelope", p -> metric[0], 2.0, 8.0);
     range.setHard(false);
@@ -435,7 +435,7 @@ class ProcessSimulationEvaluatorTest {
 
   @Test
   void convertsEqualityConstraintToToleranceBand() {
-    final double[] metric = { 4.0 };
+    final double[] metric = {4.0};
     ProcessSimulationEvaluator.ConstraintDefinition equality = new ProcessSimulationEvaluator.ConstraintDefinition();
     equality.setName("qualityTarget");
     equality.setEvaluator(p -> metric[0]);
@@ -480,10 +480,10 @@ class ProcessSimulationEvaluatorTest {
 
     assertEquals(0, evaluator.getEvaluationCount());
 
-    evaluator.evaluate(new double[] { 10000.0 });
+    evaluator.evaluate(new double[] {10000.0});
     assertEquals(1, evaluator.getEvaluationCount());
 
-    evaluator.evaluate(new double[] { 20000.0 });
+    evaluator.evaluate(new double[] {20000.0});
     assertEquals(2, evaluator.getEvaluationCount());
 
     evaluator.resetEvaluationCount();
@@ -507,7 +507,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr");
     evaluator.addObjective("flow", process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"));
 
-    double[] x = { 20000.0 };
+    double[] x = {20000.0};
     double[] gradient = evaluator.estimateGradient(x);
 
     assertEquals(1, gradient.length);
@@ -523,7 +523,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addConstraintUpperBound("maxFlow",
         process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 40000.0);
 
-    double[] x = { 20000.0 };
+    double[] x = {20000.0};
     double[][] jacobian = evaluator.estimateConstraintJacobian(x);
 
     assertEquals(2, jacobian.length);
@@ -572,7 +572,7 @@ class ProcessSimulationEvaluatorTest {
 
     evaluator.addObjective("flow", process -> process.getUnit("feed").getFluid().getTotalNumberOfMoles());
 
-    double[] x = { 25000.0 };
+    double[] x = {25000.0};
     ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(x);
 
     assertTrue(result.isSimulationConverged());
@@ -585,7 +585,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addParameter("feed", "pressure", 30.0, 80.0, "bara");
 
     assertThrows(IllegalArgumentException.class, () -> {
-      evaluator.evaluate(new double[] { 10000.0 }); // Should be length 2
+      evaluator.evaluate(new double[] {10000.0}); // Should be length 2
     });
   }
 
@@ -616,7 +616,7 @@ class ProcessSimulationEvaluatorTest {
     evaluator.addObjective("flow", process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"),
         ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 
-    double[] x = { 20000.0 };
+    double[] x = {20000.0};
     ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(x);
 
     // For MAXIMIZE, the returned objective should be negated

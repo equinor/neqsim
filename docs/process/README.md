@@ -50,7 +50,8 @@ This documentation is organized into the following sections:
 | [neqsim-studio.md](neqsim-studio) | **NeqSim Studio (Python)** — newcomer-friendly process builder: natural language, templates, guided wizard, edit-by-chat, recipe gallery |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
 | [energy_streams.md](energy_streams) | **Energy streams** — typed heat, shaft-work, and electrical ports, unit-aware duties, graph ordering, and energy-driven equipment |
-| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
+| [json_process_models_and_systems.md](json_process_models_and_systems) | **Process JSON builder input** — schema, validation, stream wiring, ports, supported equipment, and ProcessModel areas |
+| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON model export** — portable ProcessSystem and ProcessModel JSON from live models, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [model-change-events.md](model-change-events) | **Governed model revisions** — versioned change events, idempotent publication, fingerprints, and durable replay |
 | [model-impact-analysis.md](model-impact-analysis) | **Cross-model impact analysis** — configurable propagation rules, recalculation order, cycle detection, and reapproval work |
@@ -58,8 +59,9 @@ This documentation is organized into the following sections:
 | [controllers.md](controllers) | Process controllers and logic |
 | [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
 | [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models and water-hammer screening handoffs |
-| [water_hammer_implementation.md](../wiki/water_hammer_implementation) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
+| [water_hammer_implementation.md](../wiki/water_hammer_implementation) | **Safety Shutdown water-hammer screening** — conservative cell acoustics, tabulated actual travel and Kv/US-Cv; pump/disc coupling remains unqualified |
 | [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
+| [process_replay.md](process_replay) | **Process replay of plant time series** — tag-bound inputs/outputs, convergence-gated steps, residual bias/RMS, baseline standardisation, CUSUM change points, CSV/JSON export |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 | [production-allocation.md](production-allocation) | **Production allocation** — back-allocate metered production to wells/sources via a linear recovery-factor proxy network (handles recycle/reflux) |
 | [k-value-fast-simulation.md](k-value-fast-simulation) | **Cached K-value fast simulation** — run one rigorous base-case process, freeze separator K-values and fallback splits, then execute fast source-rate scenarios without repeated EOS flashes |
@@ -117,6 +119,13 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [electrical-design.md](electrical-design) | **Electrical design framework — motor sizing, VFD, cable, transformer, switchgear, hazardous area, equipment-specific designs, plant-wide load analysis** |
 
+**Key Features:**
+
+- Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
+- `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
+- IEC standards: 60034 (motors), 60502 (cables), 60076 (transformers), 61439 (switchgear)
+- `ProcessSystem.getSystemElectricalDesign()` for one-call plant electrical summary
+
 ### Dynamic Simulation
 
 | Document | Description |
@@ -139,10 +148,11 @@ This documentation is organized into the following sections:
 | [instrument-design.md](instrument-design) | **Instrument design framework — ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
 
 **Key Features:**
-- Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
-- `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
-- IEC standards: 60034 (motors), 60502 (cables), 60076 (transformers), 61439 (switchgear)
-- `ProcessSystem.getSystemElectricalDesign()` for one-call plant electrical summary
+
+- Equipment-specific instrument lists for separators, compressors, heat exchangers, pipelines and valves
+- `SystemInstrumentDesign` for plant-wide I/O aggregation, DCS/SIS cabinet sizing and cost estimates
+- `ProcessSystem.getSystemInstrumentDesign()` returns a calculated instrument-design summary
+- Cabinet counts are preliminary sizing assumptions, not functional-safety certification; see the guide's sizing limits
 
 ### Mechanical Design Documentation
 
@@ -196,6 +206,7 @@ This documentation is organized into the following sections:
 | **Choke Collapse Analysis** | [choke-collapse.md](choke-collapse) | ChokeCollapseAnalyzer — critical pressure ratio, flashing, cavitation |
 | **Inadvertent Valve Operation** | [inadvertent-valve-operation.md](inadvertent-valve-operation) | InadvertentValveOperationAnalyzer — API 521 §4.4.13 / NORSOK P-002 IVO screening |
 | **Well Chokes** | [well_choke_implementation.md](well_choke_implementation) | Sachdeva, Gilbert choke models, ThrottlingValve integration |
+| **Choke Valve Practice** | [choke_valve_practice.md](choke_valve_practice) | Cv to orifice conversion, operating-range and clean-up screening, Cv condition monitoring |
 | Distillation | [distillation.md](equipment/distillation) | DistillationColumn, SimpleTray |
 | Absorbers | [absorbers.md](equipment/absorbers) | SimpleAbsorber, SimpleTEGAbsorber |
 | Ejectors | [ejectors.md](equipment/ejectors) | Ejector |
@@ -204,6 +215,7 @@ This documentation is organized into the following sections:
 | Electrolyzers | [electrolyzers.md](equipment/electrolyzers) | Electrolyzer, CO2Electrolyzer |
 | Filters | [filters.md](equipment/filters) | Particle, coalescing, strainer, and media filters with dynamic loading and mechanical design |
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
+| Mercury Distribution Studies | [mercury-distribution-study.md](mercury-distribution-study) | Mercury in every stream and product, free liquid or solid mercury, accumulation in separators, E300 fluid conversion to UMR-PRU-MC |
 | **Sulfur Recovery** | [sulfur_recovery.md](sulfur_recovery) | Integrated Claus furnace, WHB, converters, sulfur condensers, TGTU recycle, incineration, and KPIs |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
@@ -212,6 +224,7 @@ This documentation is organized into the following sections:
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
 | **LNG Liquefaction** | [lng_liquefaction.md](lng_liquefaction) | LNGProcessBuilder, LNGProcessModel, LNGProcessBenchmark, LNGHeatExchanger |
 | **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | SMR/ATR/POX route templates, ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer |
+| **Solid Hydride Storage Screening** | [hydride_storage_screening.md](hydride_storage_screening) | Crystallographic H2 capacity and pressure-dependent desorption screening using NeqSim gas fugacity |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Gas Network Operations | [gas_network_operations.md](gas_network_operations) | Conservative mixing, coupled hydraulics, quality, optimization, and linepack |
 | Oil Network Operations | [oil_network_operations.md](oil_network_operations) | Pumps, assays, tanks, parcels, blends, and cargo scheduling |
@@ -258,6 +271,7 @@ The following complete Java 8 program builds and runs a valve-and-separator flow
 the normal entry point; with the default settings it delegates to the topology-aware optimized
 dispatcher and falls back conservatively when parallel execution is not suitable.
 
+<!-- process-overview-example: valve-separator -->
 ```java
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -474,3 +488,7 @@ See [Future Infrastructure Overview](future-infrastructure) for complete documen
 - [Safety Systems](../safety/SAFETY_SIMULATION_ROADMAP) - Safety simulation
 - [Alarm System](../safety/alarm_system_guide) - Process alarms
 - [Future Infrastructure](future-infrastructure) - Digital twin, AI integration, sustainability
+
+The [Safety Shutdown forward pump coastdown](../wiki/water_hammer_implementation#safety-shutdown-forward-pump-coastdown)
+example couples a bounded `PumpChart` characteristic and prescribed actual speed
+to `WaterHammerPipe`. Complete pump trip and check-valve slam remain unqualified.

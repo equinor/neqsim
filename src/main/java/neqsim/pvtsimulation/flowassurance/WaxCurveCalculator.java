@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -13,8 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * This class calculates the wax weight fraction as a function of temperature at a given pressure, using NeqSim's
- * thermodynamic wax models. The resulting curve is post-processed to enforce physical monotonicity (wax fraction must
- * increase with decreasing temperature).
+ * thermodynamic wax models. The resulting curve is post-processed to enforce physical monotonicity as an optional
+ * presentation convention. Raw results and missing points remain available; smoothing is not thermodynamic validation,
+ * especially near condensate phase transitions.
  * </p>
  *
  * <p>
@@ -75,6 +77,9 @@ public class WaxCurveCalculator {
   /** Raw wax weight fractions (before monotonicity enforcement). */
   private double[] rawWaxFractions;
 
+  /** Per-point failure messages, null for successful points. */
+  private String[] failureMessages;
+
   /** Monotonicity-enforced wax weight fractions. */
   private double[] waxFractions;
 
@@ -99,15 +104,19 @@ public class WaxCurveCalculator {
    * @param fluid the thermodynamic system (must have wax-forming components)
    */
   public WaxCurveCalculator(SystemInterface fluid) {
+    if (fluid == null) {
+      throw new IllegalArgumentException("A fluid is required");
+    }
     this.fluid = fluid;
   }
 
   /**
    * Sets the pressure for wax calculations.
    *
-   * @param pressureBara pressure in bara
+   * @param pressureBara finite positive absolute pressure in bara
    */
   public void setPressure(double pressureBara) {
+    validatePressure(pressureBara);
     this.pressureBara = pressureBara;
   }
 
@@ -116,9 +125,15 @@ public class WaxCurveCalculator {
    *
    * @param startC lower temperature [C]
    * @param endC upper temperature [C]
-   * @param stepC temperature step [C]
+   * @param stepC positive finite temperature step [C], clamped to at least 0.1 C
    */
   public void setTemperatureRange(double startC, double endC, double stepC) {
+    validateTemperature(startC);
+    validateTemperature(endC);
+    if (endC <= startC || !Double.isFinite(stepC) || stepC <= 0.0
+        || Math.ceil((endC - startC) / Math.max(0.1, stepC)) > 10000) {
+      throw new IllegalArgumentException("Require start < end, positive finite step and at most 10001 points");
+    }
     this.tempStartC = startC;
     this.tempEndC = endC;
     this.tempStepC = Math.abs(stepC);
@@ -151,6 +166,8 @@ public class WaxCurveCalculator {
     temperaturesC = new double[nPoints];
     rawWaxFractions = new double[nPoints];
     waxFractions = new double[nPoints];
+    failureMessages = new String[nPoints];
+    monotonicityCorrections = 0;
 
     successCount = 0;
     failCount = 0;
@@ -164,39 +181,12 @@ public class WaxCurveCalculator {
       temperaturesC[i] = tempC;
 
       try {
-        SystemInterface tempFluid = fluid.clone();
-        tempFluid.setTemperature(tempC + 273.15);
-        tempFluid.setPressure(pressureBara);
-        tempFluid.setMultiPhaseCheck(true);
-
-        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-        ops.TPflash();
-        tempFluid.initPhysicalProperties();
-
-        // Check for wax phase
-        double waxFraction = 0.0;
-        for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
-          String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
-          if ("wax".equalsIgnoreCase(phaseType)) {
-            // Wax weight fraction of total system
-            double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
-            double waxMW = tempFluid.getPhase(p).getMolarMass();
-            double totalMass = 0.0;
-            for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
-              totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
-            }
-            if (totalMass > 0) {
-              waxFraction = (waxMoles * waxMW) / totalMass;
-            }
-            break;
-          }
-        }
-
-        rawWaxFractions[i] = waxFraction;
+        rawWaxFractions[i] = evaluateWaxFraction(tempC, pressureBara);
         successCount++;
       } catch (Exception e) {
         logger.debug("Wax flash failed at T={}C, P={}bara: {}", tempC, pressureBara, e.getMessage());
-        rawWaxFractions[i] = i > 0 ? rawWaxFractions[i - 1] : 0.0;
+        rawWaxFractions[i] = Double.NaN;
+        failureMessages[i] = "T=" + tempC + " C, P=" + pressureBara + " bara: " + e.getMessage();
         failCount++;
       }
     }
@@ -207,26 +197,110 @@ public class WaxCurveCalculator {
       enforceMonotonicity(waxFractions);
     }
 
-    // Determine WAT (first temperature where wax fraction > 0, scanning from high to low T)
+    // Use only adjacent successful raw samples, never smoothed or failed values.
     watC = Double.NaN;
     for (int i = 0; i < nPoints; i++) {
-      if (waxFractions[i] > 1e-8) {
-        // Interpolate WAT between this point and the previous
-        if (i > 0 && waxFractions[i - 1] <= 1e-8) {
-          double t1 = temperaturesC[i - 1];
-          double t2 = temperaturesC[i];
-          double f1 = waxFractions[i - 1];
-          double f2 = waxFractions[i];
-          if (f2 > f1) {
-            watC = t1 + (t2 - t1) * (1e-8 - f1) / (f2 - f1);
-          } else {
-            watC = t2;
-          }
-        } else {
-          watC = temperaturesC[i];
-        }
+      if (!Double.isFinite(rawWaxFractions[i])) {
+        // A failed warm point can hide an earlier onset: no reliable curve WAT.
         break;
       }
+      if (rawWaxFractions[i] > 1e-8) {
+        if (i > 0 && rawWaxFractions[i - 1] <= 1e-8) {
+          double f1 = rawWaxFractions[i - 1];
+          double f2 = rawWaxFractions[i];
+          watC = temperaturesC[i - 1] + (temperaturesC[i] - temperaturesC[i - 1]) * (1e-8 - f1) / (f2 - f1);
+        }
+        // Wax at the warm boundary means onset is not bracketed by this grid.
+        break;
+      }
+    }
+  }
+
+  /**
+   * Evaluates one independent wax flash and checks finite, conserved phase inventories.
+   *
+   * @param temperatureC temperature in Celsius
+   * @param pressure pressure in bara
+   * @return wax mass divided by total feed mass
+   */
+  double evaluateWaxFraction(double temperatureC, double pressure) {
+    SystemInterface trial = fluid.clone();
+    if (!trial.isMultiphaseWaxCheck()) {
+      throw new IllegalStateException("Configure a wax phase and setMultiphaseWaxCheck(true) before calculation");
+    }
+    if (trial.getPhases().length <= 5 || trial.getPhases()[5] == null
+        || trial.getPhases()[5].getType() != PhaseType.WAX) {
+      throw new IllegalStateException("Configure addSolidComplexPhase(\"wax\") before calculation");
+    }
+    trial.setTemperature(temperatureC + 273.15);
+    trial.setPressure(pressure);
+    trial.setMultiPhaseCheck(true);
+    trial.init(0);
+    double totalMoles = trial.getTotalNumberOfMoles();
+    if (!Double.isFinite(totalMoles) || totalMoles <= 0.0) {
+      throw new IllegalStateException("Wax flash requires positive finite feed moles");
+    }
+    double[] feed = new double[trial.getNumberOfComponents()];
+    for (int i = 0; i < feed.length; i++) {
+      feed[i] = trial.getPhase(0).getComponent(i).getNumberOfmoles();
+    }
+    new ThermodynamicOperations(trial).TPflash();
+    double totalMass = 0.0;
+    double waxMass = 0.0;
+    double[] recovered = new double[feed.length];
+    for (int p = 0; p < trial.getNumberOfPhases(); p++) {
+      double phaseMoles = trial.getPhase(p).getNumberOfMolesInPhase();
+      double mass = phaseMoles * trial.getPhase(p).getMolarMass();
+      if (!Double.isFinite(mass) || mass < 0.0) {
+        throw new IllegalStateException("Invalid phase mass");
+      }
+      totalMass += mass;
+      if ("wax".equalsIgnoreCase(trial.getPhase(p).getPhaseTypeName())) {
+        waxMass += mass;
+      }
+      double sum = 0.0;
+      for (int i = 0; i < feed.length; i++) {
+        double fraction = trial.getPhase(p).getComponent(i).getx();
+        if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
+          throw new IllegalStateException("Invalid phase composition");
+        }
+        sum += fraction;
+        recovered[i] += phaseMoles * fraction;
+      }
+      if (Math.abs(sum - 1.0) > 1e-6) {
+        throw new IllegalStateException("Unnormalized phase composition");
+      }
+    }
+    for (int i = 0; i < feed.length; i++) {
+      if (!Double.isFinite(feed[i]) || Math.abs(recovered[i] - feed[i]) / totalMoles > 1e-6) {
+        throw new IllegalStateException("Component balance failed for component " + i);
+      }
+    }
+    if (!Double.isFinite(totalMass) || totalMass <= 0.0) {
+      throw new IllegalStateException("Invalid total phase mass");
+    }
+    return waxMass / totalMass;
+  }
+
+  /**
+   * Checks an absolute pressure.
+   *
+   * @param pressure pressure in bara
+   */
+  private static void validatePressure(double pressure) {
+    if (!Double.isFinite(pressure) || pressure <= 0.0) {
+      throw new IllegalArgumentException("Pressure must be finite and positive in bara");
+    }
+  }
+
+  /**
+   * Checks an absolute temperature supplied in Celsius.
+   *
+   * @param temperature temperature in Celsius
+   */
+  private static void validateTemperature(double temperature) {
+    if (!Double.isFinite(temperature) || temperature <= -273.15) {
+      throw new IllegalArgumentException("Temperature must be finite and above absolute zero");
     }
   }
 
@@ -245,6 +319,11 @@ public class WaxCurveCalculator {
     double maxSoFar = 0.0;
 
     for (int i = 0; i < fractions.length; i++) {
+      if (!Double.isFinite(fractions[i])) {
+        // Never smooth across a missing point.
+        maxSoFar = 0.0;
+        continue;
+      }
       if (fractions[i] < maxSoFar) {
         fractions[i] = maxSoFar;
         monotonicityCorrections++;
@@ -285,36 +364,19 @@ public class WaxCurveCalculator {
    * @return map of pressure to wax weight fraction
    */
   public Map<Double, Double> calculateAtMultiplePressures(double[] pressuresBara, double temperatureC) {
+    validateTemperature(temperatureC);
+    if (pressuresBara == null) {
+      throw new IllegalArgumentException("Pressures are required");
+    }
+    for (double pressure : pressuresBara) {
+      validatePressure(pressure);
+    }
     Map<Double, Double> results = new LinkedHashMap<Double, Double>();
-
     for (double pressure : pressuresBara) {
       try {
-        SystemInterface tempFluid = fluid.clone();
-        tempFluid.setTemperature(temperatureC + 273.15);
-        tempFluid.setPressure(pressure);
-        tempFluid.setMultiPhaseCheck(true);
-
-        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-        ops.TPflash();
-
-        double waxFraction = 0.0;
-        for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
-          String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
-          if ("wax".equalsIgnoreCase(phaseType)) {
-            double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
-            double waxMW = tempFluid.getPhase(p).getMolarMass();
-            double totalMass = 0.0;
-            for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
-              totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
-            }
-            if (totalMass > 0) {
-              waxFraction = (waxMoles * waxMW) / totalMass;
-            }
-            break;
-          }
-        }
-        results.put(pressure, waxFraction);
+        results.put(pressure, evaluateWaxFraction(temperatureC, pressure));
       } catch (Exception e) {
+        logger.debug("Wax flash failed at T={}C, P={}bara: {}", temperatureC, pressure, e.getMessage());
         results.put(pressure, Double.NaN);
       }
     }
@@ -420,6 +482,15 @@ public class WaxCurveCalculator {
   }
 
   /**
+   * Gets per-point flash failures; successful points have null entries.
+   *
+   * @return a defensive copy of failure messages, or null before calculation
+   */
+  public String[] getFailureMessages() {
+    return failureMessages == null ? null : Arrays.copyOf(failureMessages, failureMessages.length);
+  }
+
+  /**
    * Gets the monotonicity-enforced wax weight fractions.
    *
    * @return enforced wax fraction array
@@ -431,7 +502,7 @@ public class WaxCurveCalculator {
   /**
    * Gets the calculated Wax Appearance Temperature.
    *
-   * @return WAT in Celsius, or NaN if not determined
+   * @return interpolated grid onset in Celsius, or NaN if failed warm trials or the grid prevent bracketing
    */
   public double getWaxAppearanceTemperatureC() {
     return watC;

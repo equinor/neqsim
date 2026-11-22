@@ -27,10 +27,13 @@ guides under [water cooler and reboiler](water_cooler_reboiler),
 ## Runnable two-stream quick start
 
 The following complete Java program creates independent hot and cold inlet streams, sets a UA in
-W/K, solves the exchanger, and checks the energy-transfer direction. `getDuty()` is reported in W;
-use `Math.abs(...)` when the engineering question is the transferred-duty magnitude because the
-sign follows the internally selected calculation side.
+W/K, solves the exchanger, and checks the energy-transfer direction, effectiveness, and minimum
+approach without writing to standard output. `getDuty()` is reported in W; use `Math.abs(...)`
+when the engineering question is the transferred-duty magnitude because the sign follows the
+internally selected calculation side. The documentation regression compiles and executes this
+exact marked program with Java 8 source and target compatibility.
 
+<!-- heat-exchanger-example: two-stream-quick-start -->
 ```java
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.Stream;
@@ -67,13 +70,16 @@ public final class HeatExchangerGuideExample {
     double effectiveness = exchanger.getThermalEffectiveness();
     double minimumApproachK = exchanger.getApproachTemperature();
 
-    if (!(hotOutletC < 100.0 && coldOutletC > 20.0 && dutyKW > 0.0)) {
+    if (!(hotOutletC < 100.0
+        && coldOutletC > 20.0
+        && dutyKW > 0.0
+        && Double.isFinite(effectiveness)
+        && effectiveness > 0.0
+        && effectiveness <= 1.0
+        && Double.isFinite(minimumApproachK)
+        && minimumApproachK > 0.0)) {
       throw new IllegalStateException("Unexpected heat-exchanger result");
     }
-
-    System.out.printf(
-        "hot out %.2f C, cold out %.2f C, duty %.2f kW, effectiveness %.3f, approach %.2f K%n",
-        hotOutletC, coldOutletC, dutyKW, effectiveness, minimumApproachK);
   }
 }
 ```
@@ -85,8 +91,9 @@ side 0, so use `getOutStream(int)` or `getOutletStreams()` when both sides matte
 ## Single-stream heater and cooler specifications
 
 Use `setOutletTemperature(value, unit)` for a unit-bearing heater or cooler temperature
-specification. The legacy `setOutTemperature(double)` accepts kelvin only and is deprecated;
-there is no `setOutTemperature(double, String)` overload on `Heater` or `Cooler`.
+specification. The legacy `setOutTemperature(double)` accepts kelvin only and is deprecated.
+The inherited deprecated `setOutTemperature(double, String)` delegates to the preferred
+unit-bearing method.
 
 Other supported modes are:
 
@@ -97,6 +104,61 @@ Other supported modes are:
 
 The most recently selected temperature, duty, or energy-stream mode controls the calculation.
 After `run()`, read `getDuty()` in W or `getDuty(unit)` in a supported power unit such as `"kW"`.
+
+### Cooler control policy and utility loss
+
+`Cooler.configureDynamicTemperatureControl(...)` configures the native dynamic NTU model,
+actuator lag and thermal lag. Enable transient dispatch with `setCalculateSteadyState(false)`.
+An attached controller requests the embedded cooling-utility opening; it does not create a
+utility stream or an external valve in the material topology.
+
+`getDynamicTemperatureControlConfiguration()` returns the complete versioned policy;
+`applyDynamicTemperatureControlConfiguration(Map)` validates it atomically before applying it.
+The policy carries design flow, NTU, cooling-medium temperature, design opening, both time
+constants and utility availability. Applying it preserves actual opening, outlet temperature,
+flow and calculation identifiers. Dispatch mode remains a separate equipment setting and must
+be checked when crediting dynamic control.
+
+`setCoolingUtilityAvailabilityFraction(value)` accepts a finite fraction from zero to one.
+It scales the native heat-transfer NTU while the controller and actuator continue responding.
+At zero availability the dynamic model removes no heat; it does not impose an outlet
+temperature. `setDynamicCoolingUtilityAvailable(boolean)` provides the corresponding binary
+fault input. Existing serialized coolers retain full utility availability. These inputs model
+available heat-transfer capacity; they do not qualify a cooling-water hydraulic network.
+
+### Repeated steady-state execution
+
+For `Heater` and the inherited steady-state `Cooler` calculation, optimized execution tracks
+local specification selection, temperature difference and temperature/pressure units as well as
+the existing inlet and numeric setpoint checks. Changing 300 K to 300 C, or 40 bara to 40 barg,
+requires recalculation even though the stored numeric value is unchanged. Repeating an unchanged
+local specification can retain the accepted result.
+
+Connected energy specifications (including `EnergyBus`) and the `"out stream"` specification are
+conservatively recalculated: their mutable external inputs are not represented by the cached
+result duty. Disconnecting an accepted energy specification also invalidates acceptance.
+The local acceptance metadata is transient, so a deserialized or deep-copied unit must complete
+a calculation before it can be considered clean. A failed calculation does not accept new inputs.
+
+This is an input-invalidation correction, not a general fluid-state cache or a performance
+qualification. It does not alter flash equations, unit conversion, duty signs, low-flow threshold
+ownership, ProcessModel convergence, or transient cooler physics. In particular, it does not
+authorize suppressing ProcessModel's automatic-threshold reset/reapply behavior.
+
+## Recuperators and cold-separator feedback
+
+A gas–gas exchanger whose cold inlet comes from a downstream chiller and separator forms a
+feedback loop even though there is no material recycle to the feed. `ProcessSystem` detects
+this cyclic material-stream topology when no explicit `Recycle` unit is present and iterates complete
+sequential passes until outlet temperatures, pressures, enthalpies, and component flows stabilize.
+The optimized, parallel, dataflow, hybrid, and sequential entry points use this convergence path.
+
+This prevents a downstream cooler or separator retaining a construction-time feed flow after
+its inlet has been updated. Check total and component balances across each unit and across the
+whole flowsheet. Condensation changes phase flow rates, but cannot change the total mass or
+component flows across a cooler. An implicit loop that fails to converge within 100 passes throws
+an exception; use an explicit `Recycle` when configurable tolerances or acceleration are needed.
+Single-step execution intentionally returns a partial iteration.
 
 ## Two-stream exchanger specifications
 
@@ -119,11 +181,29 @@ API does not expose `getLMTD()` or `getNTU()`. `getSizingReport()` includes the 
 `getThermalEffectiveness()` returns the solved effectiveness. The array-valued `getEffectiveness()`
 and `getNtu()` methods belong to `FoulingScreeningResult`, not to `HeatExchanger` itself.
 
+### Estimating UA from measured temperatures
+
+Four terminal temperatures determine the LMTD, but do not determine UA without the transferred
+duty. Obtain duty from a known flow rate and the inlet-to-outlet specific enthalpy change on one
+side; check agreement with the other side. For ideal counter-current flow, effective UA in W/K is
+$UA=|Q|/\Delta T_{\mathrm{lm}}$ with $Q$ in W. For a shell-and-tube arrangement requiring an
+LMTD correction factor $F$, use $UA=|Q|/(F\Delta T_{\mathrm{lm}})$.
+
+Both terminal temperature differences must be positive. When they are equal, their common value
+is the LMTD; avoid evaluating the logarithmic expression as zero divided by zero. For condensing
+or evaporating mixtures, use enthalpy changes rather than a constant heat-capacity approximation,
+and check the internal temperature profile for a pinch. This terminal-temperature estimate is an
+effective UA; it does not separately determine U and area. In UA mode, `getUAvalue()` returns the
+specified UA rather than a fit to independently measured temperatures.
+
 ### Fixed outlet temperature
 
 To pin one exchanger side, first call `setOutStreamSpecificationNumber(0)` or
 `setOutStreamSpecificationNumber(1)`, then call `setOutTemperature(value, unit)`. The selected
 side is flashed to that temperature at its inlet pressure and the other side is energy-balanced.
+The pinned outlet's enthalpy and entropy are initialized after its TP flash, before its enthalpy
+change is used to solve the opposite outlet. Published caloric properties therefore describe
+the new outlet state, including on repeated runs with a changed temperature pin.
 This unit-bearing overload exists on `HeatExchanger`; do not confuse it with the heater API.
 
 ### Results and checks
@@ -192,3 +272,10 @@ to its inlet during `run()`; it does not perform a full column-equilibrium reboi
 - [Two-phase heat transfer](../mechanical_design/two_phase_heat_transfer)
 - [Heat-exchanger mechanical design](../../wiki/heat_exchanger_mechanical_design)
 - [Process package](../)
+
+## Reference water and seawater utilities
+
+Use the [reference cooling-water guide](reference_cooling_water) for IAPWS-IF97
+fresh-water and fixed-salinity seawater streams, `WaterCooler` utility demand,
+`CoolingWaterSystem` supply flow and property-validity limits. The utility-side
+model does not replace the process-side EOS or transport package.

@@ -1,0 +1,126 @@
+    1: """Check every native endpoint and finite-scenario output against the frozen reference."""
+    1: import argparse
+    1: from decimal import Decimal as D, localcontext
+    1: import importlib.util
+    1: import json
+    1: import math
+    1: from pathlib import Path
+       
+    1: HERE = Path(__file__).resolve().parent
+    1: SPEC = importlib.util.spec_from_file_location('independent_posterior_reference', HERE / 'reference.py')
+    1: REFERENCE = importlib.util.module_from_spec(SPEC)
+    1: SPEC.loader.exec_module(REFERENCE)
+       
+       
+    1: def audit(native_path, reference_path=HERE / 'reference.json'):
+           """Return complete failures/maxima; never rely on Python assertions or native summaries."""
+   56:     expected = json.loads(reference_path.read_text())
+   56:     native = json.loads(native_path.read_text())
+   56:     failures, maxima = [], {}
+   56:     endpoints = 0
+       
+   56:     def fail(message):
+   63:         failures.append(message)
+       
+   56:     def check(label, actual, target, tolerance):
+767542:         if target is None:
+12956:             if actual is not None:
+>>>>>>                 fail(label + ': expected undefined/null')
+12956:             return
+754586:         if type(actual) not in (int, float) or not math.isfinite(actual):
+   27:             fail(label + ': expected finite number')
+   27:             return
+754559:         error = abs(actual - target)
+754559:         maxima[label.split('/')[0]] = max(maxima.get(label.split('/')[0], 0.), error)
+754559:         if error > tolerance:
+   15:             fail(f'{label}: error {error} exceeds {tolerance}')
+       
+   56:     def vector(label, actual, target, tolerances):
+12071:         if not isinstance(actual, list) or len(actual) != len(target):
+>>>>>>             fail(label + ': wrong vector shape')
+>>>>>>             return
+148848:         for j, (a, b) in enumerate(zip(actual, target)):
+136777:             check(f'{label}/{j}', a, b, tolerances[j] if isinstance(tolerances, list) else tolerances)
+       
+   56:     if not isinstance(native, list) or len(native) != len(expected['cases']):
+    1:         return {'failures': ['wrong case count/type'], 'endpoints': 0, 'maxima': {}}
+  605:     for index, (case, source) in enumerate(zip(native, expected['cases'])):
+  550:         name = source['name']
+  550:         if not isinstance(case, dict) or case.get('name') != name:
+    1:             fail(f'case {index}: identity/order mismatch')
+    1:             continue
+  549:         rows = case.get('rows')
+  549:         if not isinstance(rows, list) or len(rows) != len(source['rows']):
+>>>>>>             fail(name + ': wrong trajectory count')
+>>>>>>             continue
+  549:         valid = True
+18580:         for i, (trajectory, target, candidate) in enumerate(zip(rows, source['rows'], source['candidates'])):
+18031:             if target is None:
+   55:                 if trajectory is not None:
+>>>>>>                     fail(f'{name}/{i}: infeasible inventory accepted')
+   55:                 continue
+17976:             if not isinstance(trajectory, list) or len(trajectory) != 5:
+    1:                 fail(f'{name}/{i}: wrong endpoint count')
+    1:                 valid = False
+    1:                 continue
+107850:             for t, (row, ref) in enumerate(zip(trajectory, target)):
+629119:                 if not isinstance(row, list) or len(row) != 5 or any(type(x) not in (int, float) or not math.isfinite(x) for x in row):
+    1:                     fail(f'{name}/{i}/{t}: endpoint must have five finite numbers')
+    1:                     valid = False
+    1:                     continue
+629118:                 for column, (field, tolerance) in enumerate(zip(
+89874:                         ['timeSeconds', 'pressureBara', 'waterM3', 'aquiferPressureBara', 'inventoryMol'],
+89874:                         [1e-8, 2e-5, 2e-4, 2e-5, 1e-6])):
+449370:                     check(field + '/' + name + '/' + str(i) + '/' + str(t), row[column], ref[column], tolerance)
+89874:                 endpoints += 1
+89874:                 volume = candidate['volume']
+89874:                 if row[1] <= 0 or not 0 <= row[2] < volume or row[3] <= 0 or row[4] <= 0:
+>>>>>>                     fail(f'{name}/{i}/{t}: physical state bound')
+>>>>>>                     continue
+179748:                 with localcontext() as context:
+89874:                     context.prec = 60
+89874:                     p = float(REFERENCE.pressure((D(str(volume)) - D(str(row[2]))) / D(str(row[4])), candidate['eos']))
+89874:                 check('eosClosure', row[1], p, 2e-5)
+89874:                 check('storageClosure', row[3], 200 - row[2] / candidate['capacity'], 2e-5)
+  549:         target = source['expected']
+  549:         if target['cdfMargin'] <= 1e-5:
+>>>>>>             fail(name + ': reference CDF crossing is too close for support-value comparison')
+ 3843:         for field, tolerance in [('prior', 2e-6), ('weights', 2e-6), ('chiSquare', 1e-3),
+  549:                                  ('means', [1e-3, 1e-12, 1e-12, 1e-8, 1e-9]), ('shifts', 2e-5)]:
+ 2745:             vector(field, case.get(field), target[field], tolerance)
+ 2196:         for field, tolerance in [('effectiveCount', 2e-4), ('logEvidence', 2e-5), ('rejectedMass', 2e-6)]:
+ 1647:             check(field, case.get(field), target[field], tolerance)
+  549:         if case.get('best') != target['best']:
+>>>>>>             fail(name + ': best likelihood index mismatch')
+ 2745:         for field, tolerance in [('correlations', 2e-5), ('parameterQuantiles', [1e-3, 1e-12, 1e-12, 1e-8, 1e-9]),
+  549:                                  ('pressureQuantiles', 2e-5)]:
+ 1647:             actual = case.get(field)
+ 1647:             if not isinstance(actual, list) or len(actual) != len(target[field]):
+    1:                 fail(name + '/' + field + ': wrong matrix shape')
+    1:                 continue
+ 9876:             for i, (a, b) in enumerate(zip(actual, target[field])):
+ 8230:                 vector(field + '/' + str(i), a, b, tolerance)
+18580:         holdout = [((r[3][1] - source['observations'][2]) / source['sigma']) ** 2 if r else None for r in source['rows']]
+  549:         vector('holdoutChiSquare', case.get('holdoutChiSquare'), holdout, 1e-3)
+  549:         rejected = case.get('rejected')
+19129:         if not isinstance(rejected, list) or len(rejected) != sum(r is None for r in source['rows']):
+    1:             fail(name + ': wrong rejection diagnostics')
+ 1647:         for field in ['seconds', 'quantileSeconds']:
+ 1098:             seconds = case.get(field)
+ 1098:             if type(seconds) not in (int, float) or not math.isfinite(seconds) or seconds < 0.:
+   16:                 fail(name + ': ' + field + ' must be finite and nonnegative')
+  549:         if valid:
+                   # Reconstruct likelihood from retained native predictions as a separate integrity check.
+  547:             calculated = REFERENCE.summarize(source['candidates'], rows, source['observations'], source['sigma'])
+  547:             vector('recomputedWeights', case.get('weights'), calculated['weights'], 2e-12)
+   55:     return {'failures': failures, 'endpoints': endpoints, 'cases': len(expected['cases']), 'maxima': maxima}
+       
+       
+    1: if __name__ == '__main__':
+>>>>>>     parser = argparse.ArgumentParser(description=__doc__)
+>>>>>>     parser.add_argument('native', type=Path)
+>>>>>>     parser.add_argument('--reference', type=Path, default=HERE / 'reference.json')
+>>>>>>     args = parser.parse_args()
+>>>>>>     result = audit(args.native, args.reference)
+>>>>>>     print(json.dumps(result, indent=2))
+>>>>>>     raise SystemExit(bool(result['failures']))

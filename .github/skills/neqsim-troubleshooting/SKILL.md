@@ -1,12 +1,29 @@
 ---
 name: neqsim-troubleshooting
-description: "Troubleshooting playbook for common NeqSim failures. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
-last_verified: "2026-07-04"
+description: "Troubleshoot oil and gas process operating problems and NeqSim simulation failures. Route measured plant disturbances to the root-cause agent. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
+last_verified: "2026-11-21"
 ---
 
 # NeqSim Troubleshooting Playbook
 
-Ranked recovery strategies for common failure modes. Try steps in order — stop when the issue is resolved.
+## Start from the reported symptom
+
+For oil and gas process troubleshooting, first establish whether the observation
+comes from an instrument, a simulation, or both. Preserve timestamps, units,
+operating mode and the last stable period. Route a measured disturbance to
+`@root-cause` with the [equipment RCA workflow](../neqsim-root-cause-analysis/SKILL.md).
+Choose evidence that can distinguish competing causes.
+
+| Observation | Evidence to acquire first | What it can distinguish |
+| --- | --- | --- |
+| Separator filling or export flow shortfall | Meter directions, all products and boundary crossings, total mass inventories and their uncertainty | Normal accumulation, an unmetered outflow and a flowmeter bias. Use the joint inventory balance. |
+| Compressor flow and recycle valve cycling | Synchronized suction and discharge pressure, flow, speed, recycle command and actual position, plus the applicable map | Recycle-loop interaction, a propagated feed disturbance and a local compressor upset. Check event order and control mode. |
+| Heat exchanger outlet temperature rising | Hot and cold flows, all four terminal temperatures, pressure drops, bypass position and utility inlet conditions | Changing load or utility temperature, bypass mixing and loss of heat-transfer performance. |
+| Downstream liquid carryover | Independent level or inventory, inlet loading, demister differential pressure and downstream liquid evidence | Upstream liquid surges, separator loading and faulty level indication. |
+
+For a numerical failure, reproduce the case from the recorded feed and equipment
+settings and use the solver-specific sections below. If a model reproduces a
+plant symptom, record which independent measurement could test its proposed cause.
 
 ## Flash Non-Convergence
 
@@ -21,6 +38,36 @@ Ranked recovery strategies for common failure modes. Try steps in order — stop
 | 5 | Slightly perturb T or P (1 K or 0.1 bar) and re-flash | Exact phase boundary conditions can trap the solver |
 | 6 | For mixtures with water + hydrocarbons, use CPA: `SystemSrkCPAstatoil` with mixing rule `10` | SRK/PR cannot model hydrogen bonding — water phase behavior is wrong |
 | 7 | Check component names against `src/main/resources/data/COMP.csv` | Misspelled component names silently fail or load wrong parameters |
+
+### A reused flash gives a different answer from a fresh one
+
+**Symptom:** a fresh `new TPflash(clone).run()` finds the expected phases, but the same state flashed by a long-lived
+operation (the inner TP flash of a VU, PH or PS flash, a dynamic vessel) loses a phase. Its Gibbs energy is *higher*,
+and the outer flash cycles or needs fallbacks (`OptimizedVUflash.wasEquilibriumRecoveryUsed()` /
+`wasEquilibriumPolishUsed()` true on ordinary steps).
+
+**Check:** compare `getGibbsEnergy()` of the reused result with a fresh flash of a clone. A higher value from the reused
+instance means state leaked between runs. Bisect the instance fields by resetting them to a fresh instance's values
+before each run. The 2026-11-16 case was the second-order `SysNewtonRhapsonTPflash` cached on the `TPflash`.
+`setSystem` keeps `u = beta*y` (it carries the accepted step within a run), so the first Newton step of a later run
+reapplied the previous flash's split. An outer flash that needs history-independent inner results calls
+`Flash.discardSecondOrderSolver()` before each inner run, as `OptimizedVUflash` does. Do not discard it inside
+`TPflash.run()` itself: `TVFlashTest.testTVflash` (UMR-PRU) only reaches its lower-Gibbs split through the carried
+state, because a fresh TP flash misses that split.
+
+### A flash merges gas and oil at one isolated condition
+
+**Symptom:** a gas/oil/water flash returns one hydrocarbon phase with a density between gas and oil (327 kg/m3 where
+gas is 134 and oil 536), while the same fluid 1e-6 bar or 0.01 K away gives three phases.
+
+**Check:** the 2026-11-21 case (issue 5199) was an unaccepted Newton step in `SysNewtonRhapsonTPflash` that moved the
+phase fraction from 0.80 to -0.55. The next call read it as a converged collapsed phase. A step longer than the
+feasible interval (a component moved by more than its feed amount, or the phase fraction by more than one) is now
+discarded and `TPflash` takes a successive substitution step instead (`wasLastStepDiscarded()`). Shorter unaccepted
+steps that cross the phase-fraction limit are still taken, because the endpoint recoveries rely on that collapse.
+For a new case, log the phase fraction, the phase types and the deviation per iteration of the two-phase loop in
+`TPflash.run()` and look for a deviation that jumps to about 1 and then to below 1e-10 with the phase fraction at
+its limit.
 
 ## NaN / Zero Enthalpy After Clone + Re-Flash
 
@@ -82,6 +129,10 @@ compressor power or a non-finite separator duty downstream.
 | 4 | Use `fluid.hasPhaseType("gas")` before accessing gas-phase properties | Phase existence varies with conditions |
 | 5 | For viscosity at very low pressures (<1 bara), check if the correlation is valid | Some viscosity models have limited pressure range |
 | 6 | For mixtures with unusual components (mercury, H2S at trace levels), check if physical property parameters exist in the database | Missing Lennard-Jones or critical parameters give zero |
+
+### Feed rebuilt from `getz()` / `getMolarMass()` is silently wrong
+
+`getPhase(0).getComponent(i).getz()` and `getMolarMass()` return 0 on a freshly built system until `init(0)` (or a flash) has run. Rebuilding a wellstream from them (mass flow / molar mass, `z * n`, `setMolarComposition`) then gives a divide-by-zero or, worse, a feed whose only non-zero entry is the water you added by hand: the pipe runs, converges and shows a plausible hydrostatic head, but velocities are 3-5x too low and friction is an order of magnitude small. Call `fluid.init(0)` before reading `z` or `M`, assert `sum(z) == 1`, and add a feed check: stream mass flow equals the target and `v = m/(rho A)` matches the pipe-model velocity. A Colebrook-White check on a single-phase liquid line against `PipeBeggsAndBrills` catches it in one run.
 
 ## Wrong JT / Isenthalpic Expansion Temperature
 
@@ -184,7 +235,7 @@ margins, cooldown times and arrival temperatures all look pessimistic and insens
 
 | Step | Action | Why It Helps |
 |------|--------|-------------|
-| 1 | Try different solver: `column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT)` | Inside-out solver is more robust than standard for many columns |
+| 1 | Try a different solver: `NEWTON` first, then `MESH_RESIDUAL` (`column.setSolverType(DistillationColumn.SolverType.NEWTON)`) | `NEWTON`, `MATRIX_INSIDE_OUT` and `INSIDE_OUT` had no failures in the 2026-11 solver benchmark; sequential substitution and `AUTO` did. See `neqsim-distillation-design`, "Default set-up for agent work" |
 | 2 | Reduce number of stages and increase back | Start simple, validate, then refine |
 | 3 | Check feed stage location — feed too high or low destabilizes | Rule of thumb: feed at ~40-60% of total stages from top |
 | 4 | Adjust reflux ratio — start with a high ratio (>2x minimum) and reduce | High reflux is easier to converge |
@@ -332,6 +383,34 @@ List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
 > `HeatExchanger` always overrode both. Apply the same override when adding new
 > multi-port equipment.
 
+### "Converged: YES" while a unit holds NaN
+
+`runUntilConverged()` can return `true` for a plant whose equipment carries
+`NaN` results. The boundary gate compares stream values; a unit whose internal
+solve produced `NaN` can still present a self-consistent (nonsense) outlet, so
+the gate is satisfied. An older build that reports `converged=false` may hold
+the **better** numbers.
+
+Therefore, when comparing two NeqSim versions or bisecting a regression, never
+classify a run by the convergence flag. Classify on physical finiteness of the
+units you care about:
+
+```python
+bad = (not math.isfinite(eta) or not math.isfinite(power)
+       or outlet_temperature_K < 100.0)   # absolute floor, not a tolerance
+```
+
+`TurboExpanderCompressor` is a worked example of how one `NaN` survives:
+`Math.max(x, 1e-6)` **returns NaN when x is NaN**, and `NaN` fails every
+comparison, so `if (N > N_max)` / `if (N < N_min)` speed clamps in the
+Newton speed-matching loop never fire. The `NaN` then reaches efficiency,
+power, speed and the outlet flash. Guard with `Double.isNaN(...)` explicitly —
+`Math.max`/`Math.min` clamps and `>`/`<` bound checks are not guards.
+
+> Also check the right object: a standalone `Expander` built only for reporting
+> is not the unit the flowsheet solves. Read the coupled unit actually added to
+> the `ProcessSystem`.
+
 ## Process Equipment Errors
 
 ### Compressor: Negative or Unreasonable Power
@@ -386,6 +465,84 @@ List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
 | `ClassCastException` in equipment | Wrong stream type connection | Verify equipment constructors take `StreamInterface` |
 | `java.sql.SQLException` | Component not in database | Check spelling, verify against COMP.csv |
 | `StackOverflowError` in recycle | Infinite loop in process topology | Check for circular references without a Recycle unit |
+| `IllegalAccessError` / `NoSuchMethodError` between two NeqSim classes in the **same** package | Two `neqsim-*.jar` versions on one classpath | See "Stale or Duplicate Runtime JAR" below |
+| `Java package 'neqsim.x.y' has no attribute 'Z'` for a class that exists in `src/` | Installed JAR is older than the repo source | See "Stale or Duplicate Runtime JAR" below |
+
+## No JVM Found (JPype Cannot Start Java)
+
+**Symptom:** `JVMNotFoundException`, "No JVM shared library file (jvm.dll) found",
+or `import neqsim` failing before any calculation runs.
+
+This is a *discovery* failure, not a missing installation. On managed corporate
+machines Java is routinely installed with no `java` on PATH and no `JAVA_HOME`,
+and it lands in places a naive scan of `C:\Program Files\Java` misses: the user
+profile, `LOCALAPPDATA\Programs`, the Windows registry, a JetBrains `jbr`, or
+the JRE shipped inside the VS Code Java extension
+(`~/.vscode/extensions/redhat.java-*/jre/*`).
+
+Recovery, in order:
+
+1. **Was this even a code task?** A single flash/property/sizing question needs
+   no local JVM at all — use the curated `mcp_neqsim_*` tool (see
+   `neqsim-api-patterns` § "MCP server vs. Python/Java API").
+2. **Find the installed Java** instead of hunting by hand:
+   ```powershell
+   uv run --project devtools --locked devtools/java_locator.py     # source checkout: usable Javas, best first
+   neqsim doctor                       # plugin / pip install: names the found Java
+   ```
+3. **Make it usable for this process** — no admin, no persisted env change:
+   ```python
+   import neqsim_dev_setup, sys, pathlib
+   sys.path.insert(0, str(pathlib.Path(neqsim_dev_setup.__file__).parent))
+   from java_locator import ensure_java_home
+   ensure_java_home()                  # sets JAVA_HOME + PATH in-process
+   import neqsim
+   ```
+   The `sys.path` line is needed because an editable devtools install resolves
+   modules through a map frozen at install time. `neqsim_dev_setup.neqsim_init(...)`
+   already does all of this, so notebooks and NeqSim Runner jobs are covered.
+4. **Persist it** for Maven and future terminals (user scope, no admin):
+   ```powershell
+   [Environment]::SetEnvironmentVariable('JAVA_HOME','<home from step 2>','User')
+   ```
+5. **Only if the locator finds nothing**, install Java — a portable Temurin JDK
+   unpacked into the user profile needs no admin rights. `neqsim doctor` prints
+   this remedy with the exact commands.
+
+A JRE is enough to *run* NeqSim through JPype; `mvnw` compilation needs a full
+JDK (`bin/javac`). The locator ranks JDKs above JREs for this reason.
+
+## Stale or Duplicate Runtime JAR
+
+The Python package adds its `lib/*` folder to the classpath as a flat glob, so a
+JAR left behind by an earlier install is loaded **alongside** the current one.
+Classes then resolve across two versions of the same package.
+
+**Symptom:** an access or linkage error between two classes that are provably in
+the same package and legal in source, e.g.
+`IllegalAccessError: class ...ProcessModelOperatingActionSetEvaluator tried to
+access private method ...HydraulicConstraintBinding.<init>(...)`.
+
+Do **not** go looking for a Java access-modifier bug. Check the JAR count first:
+
+```powershell
+Get-ChildItem <venv>\Lib\site-packages\neqsim\lib\*.jar
+python -c "import importlib.metadata as m; print(m.version('neqsim'))"
+```
+
+Keep only the JAR matching the installed package version. `python
+devtools/neqsim_doctor.py` reports this as "Single NeqSim JAR on runtime
+classpath".
+
+**Related symptom — version skew, not a missing class:** `has no attribute 'X'`
+for a class that exists under `src/main/java/` means the released JAR predates
+`<revision>` in `pom.xml`. Point the run at workspace classes instead:
+`NEQSIM_TEST_CLASSPATH=target/classes` plus dependencies, or use the
+`devtools/neqsim_dev_setup.py` bootstrap.
+
+Replacing a JAR under a **live** JVM (notebook kernel) is a third variant: the
+copy succeeds but any class not already loaded fails to resolve. Restart the
+kernel; a JVM cannot reload a JAR in-process.
 
 ## Phase Envelope Branch Labels Swapped
 

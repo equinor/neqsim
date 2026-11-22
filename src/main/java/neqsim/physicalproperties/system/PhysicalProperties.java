@@ -38,6 +38,7 @@ import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.Hi
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.TynCalusDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.WilkeChangDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.LetsouStielViscosity;
 import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
@@ -70,7 +71,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   public double density = 0;
   public double viscosity = 0;
   public double conductivity = 0;
-  private double[] waxViscosityParameter = { 37.82, 83.96, 8.559e6 };
+  private double[] waxViscosityParameter = {37.82, 83.96, 8.559e6};
 
   /**
    * Constructor for PhysicalProperties.
@@ -112,6 +113,9 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     if (mixingRule != null) {
       properties.mixingRule = mixingRule.clone();
     }
+    // Method clones initially retain their source family. Rebind every method now,
+    // including those that a later partial property initialization does not visit.
+    properties.setPhases();
     return properties;
   }
 
@@ -209,10 +213,15 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   /**
    * setViscosityModel.
    *
-   * @param model a {@link java.lang.String} object
+   * @param model model name; Letsou-Stiel requires an initialized pure liquid with 0.76 &lt;= T/Tc &lt;= 0.98
+   * @throws IllegalArgumentException if Letsou-Stiel is selected for an unsupported state
    */
   public void setViscosityModel(String model) {
-    if ("polynom".equals(model)) {
+    if ("Letsou-Stiel".equals(model)) {
+      LetsouStielViscosity candidate = new LetsouStielViscosity(this);
+      candidate.calcViscosity();
+      viscosityCalc = candidate;
+    } else if ("polynom".equals(model)) {
       viscosityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity(this);
     } else if ("friction theory".equals(model)) {
       viscosityCalc = new FrictionTheoryViscosityMethod(this);
@@ -650,11 +659,13 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
-   * getFickDiffusionCoefficient.
+   * Get the model-specific pair Fick diffusivity. Liquid models using Vignes pair mixing apply the reduced
+   * thermodynamic factor for exchanging i with j at fixed other mole fractions. Initialize composition derivatives
+   * (system init level 3) and physical properties at the current phase state before calling.
    *
-   * @param i a int
-   * @param j a int
-   * @return a double
+   * @param i transported species
+   * @param j displaced species
+   * @return pair coefficient in m2/s
    */
   public double getFickDiffusionCoefficient(int i, int j) {
     return diffusivityCalc.getFickBinaryDiffusionCoefficient(i, j);

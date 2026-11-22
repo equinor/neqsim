@@ -3,12 +3,13 @@ package neqsim.thermodynamicoperations.flashops;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * TPmultiflashWAX class.
+ * Multiphase TP flash with wax-phase stability analysis and phase-fraction iteration.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,6 +19,7 @@ public class TPmultiflashWAX extends TPflash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPmultiflashWAX.class);
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -28,32 +30,45 @@ public class TPmultiflashWAX extends TPflash {
   boolean doStabilityAnalysis = true;
 
   /**
-   * Constructor for TPmultiflashWAX.
+   * Creates a multiphase TP flash for the supplied thermodynamic system.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system thermodynamic system to flash
    */
   public TPmultiflashWAX(SystemInterface system) {
     super(system);
   }
 
   /**
-   * Constructor for TPmultiflashWAX.
+   * Creates a multiphase TP flash with an explicit solid-phase check setting.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param checkForSolids Set true to do solid phase check and calculations
+   * @param system thermodynamic system to flash
+   * @param checkForSolids {@code true} to enable solid-phase checks
    */
   public TPmultiflashWAX(SystemInterface system, boolean checkForSolids) {
     super(system, checkForSolids);
   }
 
   /**
-   * calcMultiPhaseBeta.
+   * Multiphase beta-calculation hook.
+   *
+   * <p>
+   * This implementation is intentionally empty; phase fractions are updated by {@link #solveBeta(boolean)}.
+   * </p>
    */
   public void calcMultiPhaseBeta() {
   }
 
   /**
-   * setXY.
+   * Recalculates component mole fractions in each active phase from the current phase fugacity coefficients and phase
+   * fractions.
+   *
+   * <p>
+   * Here {@code x} is the component mole fraction stored by each phase; the method does not maintain a separate vapor
+   * {@code y} array. Neutral components with a non-trace overall fraction are distributed using their overall
+   * composition and phase fugacity coefficients using {@code x[k][i] = z[i] / (E[i] * phi[k][i])}. Ions are kept at
+   * trace fractions outside aqueous phases and are assigned from their phase mole inventories in aqueous phases. Each
+   * phase composition is normalized after the update.
+   * </p>
    */
   public void setXY() {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -71,16 +86,18 @@ public class TPmultiflashWAX extends TPflash {
           system.getPhase(k).getComponent(i).setx(
               system.getPhase(k).getComponent(i).getNumberOfmoles() / system.getPhase(k).getNumberOfMolesInPhase());
         }
-        if (system.hasPhaseType("wax")) {
-          system.getPhaseOfType("wax").getComponent(i).setx(0);
-        }
       }
       system.getPhase(k).normalize();
     }
   }
 
   /**
-   * calcE.
+   * Calculates the component distribution denominator used by {@link #setXY()} and {@link #calcQ()}.
+   *
+   * <p>
+   * For component {@code i}, {@code E[i]} is the sum over active phases of the phase fraction divided by that phase's
+   * fugacity coefficient.
+   * </p>
    */
   public void calcE() {
     E = new double[system.getPhase(0).getNumberOfComponents()];
@@ -93,9 +110,14 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * calcQ.
+   * Evaluates the phase-fraction objective and refreshes its gradient and approximate Hessian.
    *
-   * @return a double
+   * <p>
+   * The objective is the sum of phase fractions minus the overall-composition-weighted logarithm of {@code E[i]}. The
+   * gradient and Hessian are stored in {@code dQdbeta} and {@code Qmatrix} for {@link #solveBeta(boolean)}.
+   * </p>
+   *
+   * @return current phase-fraction objective value
    */
   public double calcQ() {
     Q = 0;
@@ -139,17 +161,23 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * solveBeta.
+   * Iteratively updates phase fractions by a damped Newton step on the phase-fraction objective.
    *
-   * @param updateFugacities a boolean
+   * <p>
+   * Each update is bounded away from zero and one. When requested, phase thermodynamic properties are reinitialized
+   * after the phase compositions are updated.
+   * </p>
+   *
+   * @param updateFugacities {@code true} to reinitialize thermodynamic properties during iteration
    */
   public void solveBeta(boolean updateFugacities) {
     double[] oldBeta = new double[system.getNumberOfPhases()];
     // double newBeta[] = new double[system.getNumberOfPhases()];
 
-    Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
+    double[] ans = new double[system.getNumberOfPhases() - 1];
 
     int iter = 1;
+    double maxRelativeChange;
     do {
       iter++;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -158,39 +186,69 @@ public class TPmultiflashWAX extends TPflash {
 
       calcQ();
 
-      Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
-      Matrix dQM = new Matrix(dQdbeta, 1);
-      Matrix dQdBM = new Matrix(Qmatrix);
       try {
-        ans = dQdBM.solve(dQM.transpose());
+        ans = ALGEBRA.solve(Qmatrix, dQdbeta);
       } catch (Exception ex) {
+        logger.debug("Wax-fraction solve failed; retaining the previous step", ex);
       }
-      betaMatrix.minusEquals(ans.times(iter / (iter + 2.0)));
+      double[] betaMatrix = ALGEBRA.subtract(oldBeta, ALGEBRA.scale(ans, iter / (iter + 2.0)));
       // ans.print(10,2);
       // betaMatrix.print(10,2);
 
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        system.setBeta(k, betaMatrix.get(k, 0));
-        if (betaMatrix.get(k, 0) < 0) {
+        system.setBeta(k, betaMatrix[k]);
+        if (betaMatrix[k] < 0) {
           system.setBeta(k, 1.0e-9);
         }
-        if (betaMatrix.get(k, 0) > 1) {
+        if (betaMatrix[k] > 1) {
           system.setBeta(k, 1.0 - 1e-9);
         }
       }
 
-      if (updateFugacities) {
-        // system.init(1);
-      }
       calcE();
       setXY();
       if (updateFugacities) {
         system.init(1);
       }
-    } while ((ans.norm2() > 1e-6 && iter < 20) || iter < 3);
+      maxRelativeChange = maxRelativeBetaChange(oldBeta);
+    } while ((maxRelativeChange > 1e-6 && iter < 20) || iter < 3);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Returns the largest relative change of any phase fraction from the given previous values.
+   *
+   * <p>
+   * Convergence of the phase-fraction iteration is judged on this relative change. An absolute step norm is not a valid
+   * test: a phase re-entering from a trace fraction (for example the gas phase after the liquid has frozen out as wax)
+   * only grows geometrically under the Newton step, so its absolute change stays tiny while it is still far from its
+   * solution (#5210). A phase pinned at its lower bound has zero change and does not delay convergence.
+   * </p>
+   *
+   * @param previousBeta phase fractions before the latest update, one per active phase
+   * @return the maximum of |beta_new - beta_old| / max(beta_new, beta_old) over the active phases
+   */
+  private double maxRelativeBetaChange(double[] previousBeta) {
+    double maxChange = 0.0;
+    for (int k = 0; k < system.getNumberOfPhases() && k < previousBeta.length; k++) {
+      double current = system.getBeta(k);
+      double scale = Math.max(Math.abs(current), Math.abs(previousBeta[k]));
+      if (scale > 0.0) {
+        maxChange = Math.max(maxChange, Math.abs(current - previousBeta[k]) / scale);
+      }
+    }
+    return maxChange;
+  }
+
+  /**
+   * Tests eligible components for an unstable wax phase and adds a wax phase when one is found.
+   *
+   * <p>
+   * Each candidate is evaluated on a cloned system. Components with negligible overall composition and ions are not
+   * used as wax-forming stability trials. A candidate is accepted when its tangent-plane distance is below the
+   * instability threshold; its composition and a seed phase fraction are then copied to the system. If no candidate is
+   * unstable, the existing phase fractions are normalized.
+   * </p>
+   */
   @Override
   public void stabilityAnalysis() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
@@ -378,7 +436,16 @@ public class TPmultiflashWAX extends TPflash {
     logger.info("tm1: " + tm[0] + "  tm2: " + tm[1]);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Runs wax stability analysis, solves any resulting multiphase split, and finalizes the active phases.
+   *
+   * <p>
+   * When stability analysis adds a phase, phase fractions and compositions are iterated unless the system is chemical.
+   * Chemical equilibrium is then solved for each active phase in chemical systems. Phases with negligible fractions, or
+   * adjacent phases with effectively equal densities, are removed and the flash is repeated. The remaining phases are
+   * ordered by density.
+   * </p>
+   */
   @Override
   public void run() {
     // logger.info("Starting multiphase-flash....");
@@ -393,18 +460,17 @@ public class TPmultiflashWAX extends TPflash {
     // system.display();
     int iterations = 0;
     if (multiPhaseTest && !system.isChemicalSystem()) {
-      double oldBeta = 1.0;
       double diff = 1.0;
-      // double oldDiff = 1.0e10;
 
       do {
         iterations++;
-        oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
-        // system.init(1);
+        double[] previousBeta = new double[system.getNumberOfPhases()];
+        for (int k = 0; k < previousBeta.length; k++) {
+          previousBeta[k] = system.getBeta(k);
+        }
         this.solveBeta(true);
-        // oldDiff = diff;
-        diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) / oldBeta);
-        // logger.info("diff multiphase " + diff);
+        // Every phase must have settled, not only the most recently added one (#5210).
+        diff = maxRelativeBetaChange(previousBeta);
       } while (diff > 1e-5 && iterations < 50);
       // this.solveBeta(true);
       if (iterations >= 49) {

@@ -20,8 +20,8 @@
  * references</li>
  * <li><b>Reviewed designations</b> - Opt-in equipment tags and stream numbers retain project review evidence without
  * replacing canonical source labels</li>
- * <li><b>Manual layout evidence</b> - Opt-in stable sheet assignments, pinned positions, and protected routes retain
- * project review evidence without changing process topology</li>
+ * <li><b>Manual layout evidence</b> - Opt-in stable sheet assignments, pinned positions, protected routes, and
+ * non-connectivity overview indexes retain project review evidence without changing process topology</li>
  * <li><b>Native controlled output</b> - Deterministic vector SVG sheets and multi-page PDF consume the same controlled
  * document model without requiring Graphviz</li>
  * <li><b>Assessed delivery</b> - One fail-closed facade publishes controlled JSON, DEXPI Process exchange, native

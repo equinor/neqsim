@@ -114,7 +114,7 @@ public class CricondenBarThermFlashTest {
     assertTrue(envelopeP > 50.0, "Envelope cricondenbar should be > 50 bar, got: " + envelopeP);
 
     // Now refine with direct cricondenbar flash
-    double[] cricoInput = new double[] { envelopeT, envelopeP, 0.0 };
+    double[] cricoInput = new double[] {envelopeT, envelopeP, 0.0};
     ops.calcCricoP(cricoInput, cricondenbarX, cricondenbarY);
 
     // The refined result should be close to the envelope estimate (within 5%)
@@ -158,7 +158,7 @@ public class CricondenBarThermFlashTest {
     assertTrue(envelopeT > 200.0, "Envelope cricondentherm T should be > 200 K, got: " + envelopeT);
 
     // Now refine with direct cricondentherm flash
-    double[] cricoInput = new double[] { envelopeT, envelopeP, 0.0 };
+    double[] cricoInput = new double[] {envelopeT, envelopeP, 0.0};
     ops.calcCricoT(cricoInput, cricondenthermX, cricondenthermY);
 
     double refinedT = cricoInput[0];

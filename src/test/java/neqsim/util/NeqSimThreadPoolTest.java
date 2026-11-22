@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,13 +57,15 @@ class NeqSimThreadPoolTest {
   @Test
   void testExecuteRunnable() throws Exception {
     AtomicBoolean executed = new AtomicBoolean(false);
+    CountDownLatch completed = new CountDownLatch(1);
 
     NeqSimThreadPool.execute(() -> {
       executed.set(true);
+      completed.countDown();
     });
 
-    // Give it some time to execute
-    Thread.sleep(20);
+    // Wait for completion rather than depending on the runner scheduling within 20 ms.
+    assertTrue(completed.await(5, TimeUnit.SECONDS), "Submitted runnable did not complete");
     assertTrue(executed.get());
   }
 

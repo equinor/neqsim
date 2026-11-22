@@ -274,13 +274,13 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
       return;
     }
 
-    CommonOps_DDRM.solve(A, b, x);
-    for (i = 1; i < this.ncomp - 1; i++) {
+    if (!CommonOps_DDRM.solve(A, b, x)) {
+      throw new IllegalStateException("Failed to solve gradient-theory density system");
+    }
+    for (i = 0; i < this.ncomp - 1; i++) {
       double xi;
       xi = x.get(i, 0);
-      if (Double.isNaN(xi)) {
-        throw new RuntimeException("Update is NaN");
-      }
+      GTSurfaceTensionUtils.requireFinite(xi, "Newton update");
     }
     s = 0.8;
     norm = 1e16;
@@ -325,7 +325,12 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
           A.set(i, j, jac[idx1][idx2]);
         }
       }
-      CommonOps_DDRM.solve(A, b, x);
+      if (!CommonOps_DDRM.solve(A, b, x)) {
+        throw new IllegalStateException("Failed to solve gradient-theory density system");
+      }
+      for (i = 0; i < this.ncomp - 1; i++) {
+        GTSurfaceTensionUtils.requireFinite(x.get(i, 0), "Newton update");
+      }
       normf = NormOps_DDRM.normP2(b);
     }
     if (iter >= this.maxit) {

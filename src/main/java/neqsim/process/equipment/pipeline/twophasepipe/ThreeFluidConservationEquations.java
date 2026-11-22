@@ -1,9 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 
 /**
  * Conservation equations for three-fluid (gas-oil-water) pipe flow model.
@@ -38,15 +35,6 @@ public class ThreeFluidConservationEquations implements Serializable {
 
   /** Gravitational acceleration (m/s²). */
   private static final double G = 9.81;
-
-  /** Geometry calculator for stratified flow. */
-  private GeometryCalculator geometryCalc;
-
-  /** Wall friction calculator. */
-  private WallFriction wallFriction;
-
-  /** Interfacial friction calculator. */
-  private InterfacialFriction interfacialFriction;
 
   /** Surface temperature for heat transfer (K). */
   private double surfaceTemperature = 288.15;
@@ -98,15 +86,15 @@ public class ThreeFluidConservationEquations implements Serializable {
 
     /** Oil-water interfacial shear stress (Pa). */
     public double oilWaterInterfacialShear;
+
+    /** Gas-water interfacial shear stress (Pa), when no oil layer is present. */
+    public double gasWaterInterfacialShear;
   }
 
   /**
    * Default constructor.
    */
   public ThreeFluidConservationEquations() {
-    this.geometryCalc = new GeometryCalculator();
-    this.wallFriction = new WallFriction();
-    this.interfacialFriction = new InterfacialFriction();
   }
 
   /**
@@ -148,16 +136,19 @@ public class ThreeFluidConservationEquations implements Serializable {
     section.updateThreeLayerGeometry();
 
     // Get geometry values
-    double sWallG = Math.PI * diameter - section.getOilWettedPerimeter() - section.getWaterWettedPerimeter();
+    double sWallG = alphaG > 0.0
+        ? Math.max(0.0, Math.PI * diameter - section.getOilWettedPerimeter() - section.getWaterWettedPerimeter())
+        : 0.0;
     double sWallO = section.getOilWettedPerimeter();
     double sWallW = section.getWaterWettedPerimeter();
     double sIntGO = section.getGasOilInterfacialWidth();
     double sIntOW = section.getOilWaterInterfacialWidth();
+    double sIntGW = section.getGasWaterInterfacialWidth();
 
     // Calculate wall friction for each phase
-    double reG = rhoG * Math.abs(uG) * diameter / muG;
-    double reO = rhoO * Math.abs(uO) * diameter / muO;
-    double reW = rhoW * Math.abs(uW) * diameter / muW;
+    double reG = alphaG > 0.0 ? rhoG * Math.abs(uG) * diameter / muG : 0.0;
+    double reO = alphaO > 0.0 ? rhoO * Math.abs(uO) * diameter / muO : 0.0;
+    double reW = alphaW > 0.0 ? rhoW * Math.abs(uW) * diameter / muW : 0.0;
 
     double fG = calculateFrictionFactor(reG, roughness, diameter);
     double fO = calculateFrictionFactor(reO, roughness, diameter);
@@ -180,6 +171,13 @@ public class ThreeFluidConservationEquations implements Serializable {
         section.getOilWaterSurfaceTension());
     rhs.oilWaterInterfacialShear = 0.5 * fiOW * rhoO * relVelOW * Math.abs(relVelOW);
 
+    double relVelGW = uG - uW;
+    double fiGW = sIntGW > 0.0
+        ? calculateInterfacialFrictionFactor(alphaG, alphaW, rhoG, rhoW, relVelGW, diameter,
+            section.getGasWaterSurfaceTension())
+        : 0.0;
+    rhs.gasWaterInterfacialShear = 0.5 * fiGW * rhoG * relVelGW * Math.abs(relVelGW);
+
     // ===== Mass conservation equations (no sources in basic model) =====
     // Mass flux contributions come from numerical scheme, these are source terms only
     rhs.gasMass = section.getOilEvaporationRate() + section.getWaterEvaporationRate();
@@ -194,7 +192,7 @@ public class ThreeFluidConservationEquations implements Serializable {
     rhs.gasMomentum = -areaG * dPdx // Pressure
         - rhs.gasWallShear * sWallG // Wall friction
         - rhs.gasOilInterfacialShear * sIntGO // Interfacial (gas side loses)
-        - rhoG * G * sinTheta * areaG; // Gravity
+        - rhs.gasWaterInterfacialShear * sIntGW - rhoG * G * sinTheta * areaG; // Gravity
 
     // Oil momentum: pressure, wall friction, interfacial (gas and water), gravity
     double areaO = alphaO * area;
@@ -209,7 +207,15 @@ public class ThreeFluidConservationEquations implements Serializable {
     rhs.waterMomentum = -areaW * dPdx // Pressure
         - rhs.waterWallShear * sWallW // Wall friction
         + rhs.oilWaterInterfacialShear * sIntOW // Interfacial (water gains from oil)
-        - rhoW * G * sinTheta * areaW; // Gravity
+        + rhs.gasWaterInterfacialShear * sIntGW - rhoW * G * sinTheta * areaW; // Gravity
+
+    // Transferred mass carries its donor phase momentum, with equal and opposite exchange.
+    double oilTransferMomentum = section.getOilEvaporationRate() * (section.getOilEvaporationRate() >= 0.0 ? uO : uG);
+    double waterTransferMomentum = section.getWaterEvaporationRate()
+        * (section.getWaterEvaporationRate() >= 0.0 ? uW : uG);
+    rhs.gasMomentum += oilTransferMomentum + waterTransferMomentum;
+    rhs.oilMomentum -= oilTransferMomentum;
+    rhs.waterMomentum -= waterTransferMomentum;
 
     // ===== Energy equation (mixture) =====
     // Heat transfer to surroundings: Q = h * π * D * (T_surface - T_fluid)
@@ -220,6 +226,8 @@ public class ThreeFluidConservationEquations implements Serializable {
     } else {
       rhs.energy = 0.0;
     }
+    // Conservative energy excludes gravitational potential, so include gravity work.
+    rhs.energy -= G * sinTheta * (rhoG * areaG * uG + rhoO * areaO * uO + rhoW * areaW * uW);
 
     return rhs;
   }
@@ -233,7 +241,7 @@ public class ThreeFluidConservationEquations implements Serializable {
    * @return Fanning friction factor
    */
   private double calculateFrictionFactor(double re, double roughness, double diameter) {
-    if (re < 10) {
+    if (re <= 0.0) {
       return 0.0;
     }
 
@@ -244,10 +252,10 @@ public class ThreeFluidConservationEquations implements Serializable {
 
     // Turbulent: Haaland approximation
     double relRoughness = roughness / diameter;
-    double term1 = relRoughness / 3.7;
+    double term1 = Math.pow(relRoughness / 3.7, 1.11);
     double term2 = 6.9 / re;
 
-    double f = 0.25 / Math.pow(Math.log10(term1 + term2), 2);
+    double f = 1.0 / Math.pow(-1.8 * Math.log10(term1 + term2), 2);
     return f / 4.0; // Convert Darcy to Fanning
   }
 
@@ -269,7 +277,7 @@ public class ThreeFluidConservationEquations implements Serializable {
    */
   private double calculateInterfacialFrictionFactor(double alpha1, double alpha2, double rho1, double rho2,
       double relVel, double diameter, double surfaceTension) {
-    if (alpha1 < 1e-6 || alpha2 < 1e-6) {
+    if (alpha1 <= 0.0 || alpha2 <= 0.0) {
       return 0.0;
     }
 
@@ -294,11 +302,7 @@ public class ThreeFluidConservationEquations implements Serializable {
    * @return State vector [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
   public double[] getStateVector(ThreeFluidSection section) {
-    return new double[] { section.getGasMassPerLength(), section.getOilMassPerLength(), section.getWaterMassPerLength(),
-        section.getGasMomentumPerLength(), section.getOilMomentumPerLength(), section.getWaterMomentumPerLength(),
-        section.getGasEnthalpy() * section.getGasMassPerLength()
-            + section.getOilEnthalpy() * section.getOilMassPerLength()
-            + section.getWaterEnthalpy() * section.getWaterMassPerLength() };
+    return section.getStateVector();
   }
 
   /**
@@ -308,13 +312,10 @@ public class ThreeFluidConservationEquations implements Serializable {
    * @param state State vector [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
   public void setStateVector(ThreeFluidSection section, double[] state) {
-    section.setGasMassPerLength(state[0]);
-    section.setOilMassPerLength(state[1]);
-    section.setWaterMassPerLength(state[2]);
-    section.setGasMomentumPerLength(state[3]);
-    section.setOilMomentumPerLength(state[4]);
-    section.setWaterMomentumPerLength(state[5]);
-    // Energy would update enthalpies
+    if (state == null || state.length != 7) {
+      throw new IllegalArgumentException("Three-fluid state must contain seven conservative variables");
+    }
+    section.setStateVector(state);
   }
 
   /**

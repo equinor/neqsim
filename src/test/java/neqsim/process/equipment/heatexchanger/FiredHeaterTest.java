@@ -26,7 +26,7 @@ public class FiredHeaterTest {
     feed.setFlowRate(10000.0, "kg/hr");
 
     FiredHeater heater = new FiredHeater("Crude Heater", feed);
-    heater.setOutTemperature(273.15 + 150.0);
+    heater.setOutletTemperature(273.15 + 150.0);
     heater.setThermalEfficiency(0.85);
     heater.setFuelLHV(48.0e6);
     heater.setFuelCO2Factor(2.75);
@@ -68,7 +68,7 @@ public class FiredHeaterTest {
     feed.setFlowRate(5000.0, "kg/hr");
 
     FiredHeater heater = new FiredHeater("Test Heater", feed);
-    heater.setOutTemperature(273.15 + 100.0);
+    heater.setOutletTemperature(273.15 + 100.0);
     heater.setThermalEfficiency(0.90);
 
     ProcessSystem process = new ProcessSystem();
@@ -99,7 +99,7 @@ public class FiredHeaterTest {
 
     FiredHeater heater = new FiredHeater("Heater");
     heater.setInletStream(feed);
-    heater.setOutTemperature(273.15 + 200.0);
+    heater.setOutletTemperature(273.15 + 200.0);
     heater.setNoxFactor(0.08);
 
     ProcessSystem process = new ProcessSystem();
@@ -121,7 +121,7 @@ public class FiredHeaterTest {
     feed.setFlowRate(5000.0, "kg/hr");
 
     FiredHeater heater = new FiredHeater("JSON Heater", feed);
-    heater.setOutTemperature(273.15 + 80.0);
+    heater.setOutletTemperature(273.15 + 80.0);
     heater.setThermalEfficiency(0.88);
 
     ProcessSystem process = new ProcessSystem();

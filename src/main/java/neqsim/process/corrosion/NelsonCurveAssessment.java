@@ -124,8 +124,8 @@ public class NelsonCurveAssessment implements Serializable {
    * carbon steel curve for C-0.5Mo unless extensive qualification testing is performed.
    * </p>
    */
-  private static final double[][] CARBON_STEEL_CURVE = { { 0, 500 }, { 50, 480 }, { 100, 450 }, { 200, 420 },
-      { 500, 400 }, { 1000, 380 }, { 1500, 370 }, { 2000, 360 }, { 3000, 350 }, { 5000, 340 }, { 10000, 330 } };
+  private static final double[][] CARBON_STEEL_CURVE = {{0, 500}, {50, 480}, {100, 450}, {200, 420}, {500, 400},
+      {1000, 380}, {1500, 370}, {2000, 360}, {3000, 350}, {5000, 340}, {10000, 330}};
 
   /**
    * C-0.5Mo steel Nelson curve data points.
@@ -135,8 +135,8 @@ public class NelsonCurveAssessment implements Serializable {
    * use the carbon steel curve for C-0.5Mo equipment.
    * </p>
    */
-  private static final double[][] C_0_5MO_CURVE = { { 0, 600 }, { 50, 580 }, { 100, 550 }, { 200, 530 }, { 500, 510 },
-      { 1000, 500 }, { 1500, 490 }, { 2000, 480 }, { 3000, 470 }, { 5000, 460 }, { 10000, 450 } };
+  private static final double[][] C_0_5MO_CURVE = {{0, 600}, {50, 580}, {100, 550}, {200, 530}, {500, 510}, {1000, 500},
+      {1500, 490}, {2000, 480}, {3000, 470}, {5000, 460}, {10000, 450}};
 
   /**
    * 1Cr-0.5Mo steel Nelson curve data points.
@@ -145,8 +145,8 @@ public class NelsonCurveAssessment implements Serializable {
    * Reference: API 941 Figure 1. Applicable to F12, P12, and equivalent grades.
    * </p>
    */
-  private static final double[][] CR1_0_5MO_CURVE = { { 0, 800 }, { 50, 780 }, { 100, 750 }, { 200, 720 }, { 500, 700 },
-      { 1000, 680 }, { 1500, 670 }, { 2000, 660 }, { 3000, 650 }, { 5000, 640 }, { 10000, 630 } };
+  private static final double[][] CR1_0_5MO_CURVE = {{0, 800}, {50, 780}, {100, 750}, {200, 720}, {500, 700},
+      {1000, 680}, {1500, 670}, {2000, 660}, {3000, 650}, {5000, 640}, {10000, 630}};
 
   /**
    * 1.25Cr-0.5Mo steel Nelson curve data points.
@@ -155,8 +155,8 @@ public class NelsonCurveAssessment implements Serializable {
    * Reference: API 941 Figure 1. Applicable to F11, P11, and equivalent grades.
    * </p>
    */
-  private static final double[][] CR1_25_0_5MO_CURVE = { { 0, 850 }, { 50, 830 }, { 100, 800 }, { 200, 780 },
-      { 500, 760 }, { 1000, 740 }, { 1500, 730 }, { 2000, 725 }, { 3000, 715 }, { 5000, 700 }, { 10000, 690 } };
+  private static final double[][] CR1_25_0_5MO_CURVE = {{0, 850}, {50, 830}, {100, 800}, {200, 780}, {500, 760},
+      {1000, 740}, {1500, 730}, {2000, 725}, {3000, 715}, {5000, 700}, {10000, 690}};
 
   /**
    * 2.25Cr-1Mo steel Nelson curve data points.
@@ -166,8 +166,8 @@ public class NelsonCurveAssessment implements Serializable {
    * hydrogen service.
    * </p>
    */
-  private static final double[][] CR2_25_1MO_CURVE = { { 0, 1000 }, { 50, 980 }, { 100, 950 }, { 200, 920 },
-      { 500, 900 }, { 1000, 880 }, { 1500, 870 }, { 2000, 860 }, { 3000, 850 }, { 5000, 840 }, { 10000, 830 } };
+  private static final double[][] CR2_25_1MO_CURVE = {{0, 1000}, {50, 980}, {100, 950}, {200, 920}, {500, 900},
+      {1000, 880}, {1500, 870}, {2000, 860}, {3000, 850}, {5000, 840}, {10000, 830}};
 
   /**
    * Austenitic stainless steel Nelson curve data points.
@@ -178,8 +178,8 @@ public class NelsonCurveAssessment implements Serializable {
    * in practice.
    * </p>
    */
-  private static final double[][] AUSTENITIC_SS_CURVE = { { 0, 1200 }, { 50, 1180 }, { 100, 1150 }, { 200, 1120 },
-      { 500, 1100 }, { 1000, 1080 }, { 1500, 1070 }, { 2000, 1060 }, { 3000, 1050 }, { 5000, 1040 }, { 10000, 1030 } };
+  private static final double[][] AUSTENITIC_SS_CURVE = {{0, 1200}, {50, 1180}, {100, 1150}, {200, 1120}, {500, 1100},
+      {1000, 1080}, {1500, 1070}, {2000, 1060}, {3000, 1050}, {5000, 1040}, {10000, 1030}};
 
   // ─── Supported material types ───────────────────────────
 
@@ -425,9 +425,9 @@ public class NelsonCurveAssessment implements Serializable {
    * @return recommended material name, or empty if none found
    */
   private String findMinimumUpgrade(double tempF, double pressurePsia) {
-    double[][][] curves = { C_0_5MO_CURVE, CR1_0_5MO_CURVE, CR1_25_0_5MO_CURVE, CR2_25_1MO_CURVE, AUSTENITIC_SS_CURVE };
-    String[] names = { "C-0.5Mo (use with caution per API 941)", "1Cr-0.5Mo", "1.25Cr-0.5Mo", "2.25Cr-1Mo",
-        "Austenitic stainless steel (304/316)" };
+    double[][][] curves = {C_0_5MO_CURVE, CR1_0_5MO_CURVE, CR1_25_0_5MO_CURVE, CR2_25_1MO_CURVE, AUSTENITIC_SS_CURVE};
+    String[] names = {"C-0.5Mo (use with caution per API 941)", "1Cr-0.5Mo", "1.25Cr-0.5Mo", "2.25Cr-1Mo",
+        "Austenitic stainless steel (304/316)"};
 
     for (int i = 0; i < curves.length; i++) {
       double maxT = interpolateMaxTemp(curves[i], pressurePsia);

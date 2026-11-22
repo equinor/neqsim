@@ -4,13 +4,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Properties;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -50,15 +48,6 @@ public final class StatePersistenceRunner {
 
   /** Environment variable allowing storage directories outside the NeqSim state root. */
   private static final String ALLOW_EXTERNAL_DIR_ENV = "NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR";
-
-  /** System property override for the NeqSim version written to saved state metadata. */
-  private static final String VERSION_PROPERTY = "neqsim.version";
-
-  /** Maven metadata resource packaged with released NeqSim artifacts. */
-  private static final String MAVEN_PROPERTIES_RESOURCE = "META-INF/maven/com.equinor.neqsim/neqsim/pom.properties";
-
-  /** Fallback version used from an unpackaged development classpath. */
-  private static final String DEVELOPMENT_VERSION = "development";
 
   /** Default directory for saved simulations. */
   private static volatile String storageDir = DEFAULT_ROOT_DIR + File.separator + "saved_simulations";
@@ -655,34 +644,7 @@ public final class StatePersistenceRunner {
    * @return the configured, packaged, Maven, or development version identifier
    */
   static String getNeqSimVersion() {
-    String configured = System.getProperty(VERSION_PROPERTY);
-    if (configured != null && !configured.trim().isEmpty()) {
-      return configured.trim();
-    }
-
-    Package packageInfo = StatePersistenceRunner.class.getPackage();
-    if (packageInfo != null) {
-      String implementationVersion = packageInfo.getImplementationVersion();
-      if (implementationVersion != null && !implementationVersion.trim().isEmpty()) {
-        return implementationVersion.trim();
-      }
-    }
-
-    Properties properties = new Properties();
-    ClassLoader classLoader = StatePersistenceRunner.class.getClassLoader();
-    try (InputStream stream = classLoader.getResourceAsStream(MAVEN_PROPERTIES_RESOURCE)) {
-      if (stream != null) {
-        properties.load(stream);
-        String version = properties.getProperty("version");
-        if (version != null && !version.trim().isEmpty()) {
-          return version.trim();
-        }
-      }
-    } catch (IOException e) {
-      // Fall through to the development marker when packaged metadata cannot be read.
-    }
-
-    return DEVELOPMENT_VERSION;
+    return neqsim.util.NeqSimVersion.get();
   }
 
   /**

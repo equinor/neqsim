@@ -1,0 +1,56 @@
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import neqsim.thermo.component.ComponentEosInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseEos;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkEos;
+
+/**
+ * Extracts rounded cubic coefficients without invoking the gradient solver.
+ *
+ * @author NeqSim contributors
+ * @version 1.0
+ */
+public class ExtractGradientInputs {
+  /**
+   * Writes the coefficient CSV used to assemble inputs.json.
+   *
+   * @param args output path followed by an optional second argument to select PR
+   * @throws Exception if the output file cannot be written
+   */
+  public static void main(String[] args) throws Exception {
+    SystemInterface fluid = args.length > 1 ? new SystemPrEos(360.0, 250.0) : new SystemSrkEos(360.0, 250.0);
+    String[] names = {"nitrogen", "CO2", "methane", "ethane", "propane"};
+    double[] amounts = {1.0, 2.0, 85.0, 7.0, 5.0};
+    for (int index = 0; index < names.length; index++) {
+      fluid.addComponent(names[index], amounts[index]);
+    }
+    fluid.createDatabase(true);
+    fluid.setMixingRule(2);
+    fluid.init(0);
+    fluid.init(3);
+    StringBuilder output = new StringBuilder();
+    EosMixingRulesInterface mixingRule = ((PhaseEos) fluid.getPhase(0)).getMixingRule();
+    for (int index = 0; index < names.length; index++) {
+      ComponentEosInterface component = (ComponentEosInterface) fluid.getPhase(0).getComponent(index);
+      output.append("b,").append(index).append(',').append(component.getb()).append('\n');
+      output.append("mass,").append(index).append(',').append(component.getMolarMass()).append('\n');
+      for (int other = 0; other < names.length; other++) {
+        output.append("k,").append(index).append(',').append(other).append(',')
+            .append(mixingRule.getBinaryInteractionParameter(index, other)).append('\n');
+      }
+    }
+    for (int step = 0; step <= 20; step++) {
+      fluid.setTemperature(360.0 + step * 1.5);
+      fluid.init(3);
+      for (int index = 0; index < names.length; index++) {
+        ComponentEosInterface component = (ComponentEosInterface) fluid.getPhase(0).getComponent(index);
+        output.append("a,").append(step).append(',').append(index).append(',').append(component.getaT()).append('\n');
+      }
+    }
+    Files.write(Paths.get(args[0]), output.toString().getBytes(StandardCharsets.UTF_8));
+  }
+}

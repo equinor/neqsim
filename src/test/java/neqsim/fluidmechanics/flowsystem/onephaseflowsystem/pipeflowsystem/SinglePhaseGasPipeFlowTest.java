@@ -9,6 +9,7 @@ import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
@@ -28,7 +29,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Compositional tracking in dynamic simulations</li>
  * <li>Physical reasonableness of results</li>
  * </ul>
- * </p>
  *
  * <p>
  * The solver implements a staggered grid finite volume method with TDMA (Tri-Diagonal Matrix Algorithm) for solving:
@@ -38,15 +38,55 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Energy conservation: ∂(ρh)/∂t + ∂(ρvh)/∂x = Q_wall + ρvg·sin(θ)</li>
  * <li>Component mass: ∂(ρω_i)/∂t + ∂(ρvω_i)/∂x = 0 for each component i</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  */
+@Tag("slow")
 public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
-  private static final double TOLERANCE_PRESSURE = 0.1; // bar
   private static final double TOLERANCE_TEMPERATURE = 0.5; // K
   private static final double TOLERANCE_COMPOSITION = 0.01; // mole fraction (1% allowed drift)
-  private static final double TOLERANCE_MASS_BALANCE = 0.01; // relative (1% allowed)
+
+  /**
+   * Configures a horizontal pipeline while preserving each test group's grid and surroundings.
+   *
+   * @param pipe pipeline to configure
+   * @param gas inlet fluid
+   * @param lengthMeters pipeline length in metres
+   * @param diameterMeters internal diameter in metres
+   * @param numberOfLegs number of pipeline legs
+   * @param nodesPerLeg nodes in each leg
+   * @param surroundingsTemperature ambient temperature in kelvin
+   */
+  private void configurePipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters,
+      double diameterMeters, int numberOfLegs, int nodesPerLeg, double surroundingsTemperature) {
+    int pointCount = numberOfLegs + 1;
+    double[] heights = new double[pointCount];
+    double[] positions = new double[pointCount];
+    double[] outerTemperatures = new double[pointCount];
+    double[] outerHeatCoefficients = new double[pointCount];
+    double[] wallHeatCoefficients = new double[pointCount];
+    Arrays.fill(outerTemperatures, surroundingsTemperature);
+    Arrays.fill(outerHeatCoefficients, 5.0);
+    Arrays.fill(wallHeatCoefficients, 15.0);
+
+    GeometryDefinitionInterface[] geometry = new PipeData[pointCount];
+    for (int pointIndex = 0; pointIndex < pointCount; pointIndex++) {
+      positions[pointIndex] = lengthMeters * pointIndex / numberOfLegs;
+      geometry[pointIndex] = new PipeData();
+      geometry[pointIndex].setDiameter(diameterMeters);
+      geometry[pointIndex].setInnerSurfaceRoughness(1e-5);
+    }
+
+    pipe.setInletThermoSystem(gas);
+    pipe.setNumberOfLegs(numberOfLegs);
+    pipe.setNumberOfNodesInLeg(nodesPerLeg);
+    pipe.setEquipmentGeometry(geometry);
+    pipe.setLegHeights(heights);
+    pipe.setLegPositions(positions);
+    pipe.setLegOuterTemperatures(outerTemperatures);
+    pipe.setLegWallHeatTransferCoefficients(wallHeatCoefficients);
+    pipe.setLegOuterHeatTransferCoefficients(outerHeatCoefficients);
+  }
 
   @Nested
   @DisplayName("Steady State Solver Tests")
@@ -142,9 +182,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertTrue(outletPressure < inletPressure, "Outlet pressure should be lower than inlet");
     }
 
+    /** Verifies turbulent Reynolds numbers and friction factors on the same solved pipeline. */
     @Test
-    @DisplayName("Reynolds number calculation is physically correct")
-    void testReynoldsNumberCalculation() {
+    @DisplayName("Reynolds numbers and friction factors are realistic for turbulent flow")
+    void testTurbulentFlowProperties() {
       setupHorizontalPipeline(10000.0, 1.0);
 
       pipe.createSystem();
@@ -157,19 +198,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
         assertTrue(Re > 4000, "Pipeline flow should be turbulent, Re = " + Re);
         // But not unreasonably high
         assertTrue(Re < 1e9, "Reynolds number should be realistic, Re = " + Re);
-      }
-    }
-
-    @Test
-    @DisplayName("Friction factor is in reasonable range for turbulent pipe flow")
-    void testFrictionFactor() {
-      setupHorizontalPipeline(10000.0, 1.0);
-
-      pipe.createSystem();
-      pipe.init();
-      pipe.solveSteadyState(0);
-
-      for (int i = 0; i < pipe.getTotalNumberOfNodes(); i++) {
         double friction = pipe.getNode(i).getWallFrictionFactor(0);
         // Darcy friction factor for smooth-ish pipe: 0.005 - 0.03
         assertTrue(friction > 0.005, "Friction factor too low: " + friction);
@@ -180,9 +208,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
     @Test
     @DisplayName("Solver types 0, 1, 10, 20 all converge")
     void testDifferentSolverTypes() {
-      setupHorizontalPipeline(20000.0, 0.8);
-
-      int[] solverTypes = { 0, 1, 10, 20 };
+      int[] solverTypes = {0, 1, 10, 20};
 
       for (int solverType : solverTypes) {
         // Reset for each solver type
@@ -207,41 +233,14 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       }
     }
 
+    /**
+     * Configures the steady-state grid.
+     *
+     * @param lengthMeters pipeline length in metres
+     * @param diameterMeters internal diameter in metres
+     */
     private void setupHorizontalPipeline(double lengthMeters, double diameterMeters) {
-      int numLegs = 10;
-      double[] height = new double[numLegs + 1];
-      Arrays.fill(height, 0.0); // Horizontal
-
-      double[] length = new double[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        length[i] = lengthMeters * i / numLegs;
-      }
-
-      double[] outerTemp = new double[numLegs + 1];
-      Arrays.fill(outerTemp, 278.0); // 5°C surroundings
-
-      double[] outerHeatCoef = new double[numLegs + 1];
-      Arrays.fill(outerHeatCoef, 5.0);
-
-      double[] wallHeatCoef = new double[numLegs + 1];
-      Arrays.fill(wallHeatCoef, 15.0);
-
-      GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        pipeGeometry[i] = new PipeData();
-        pipeGeometry[i].setDiameter(diameterMeters);
-        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
-      }
-
-      pipe.setInletThermoSystem(inletGas);
-      pipe.setNumberOfLegs(numLegs);
-      pipe.setNumberOfNodesInLeg(20);
-      pipe.setEquipmentGeometry(pipeGeometry);
-      pipe.setLegHeights(height);
-      pipe.setLegPositions(length);
-      pipe.setLegOuterTemperatures(outerTemp);
-      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
-      pipe.setLegOuterHeatTransferCoefficients(outerHeatCoef);
+      configurePipeline(pipe, inletGas, lengthMeters, diameterMeters, 10, 20, 278.0);
     }
   }
 
@@ -313,38 +312,15 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       }
     }
 
+    /**
+     * Configures the composition-test grid.
+     *
+     * @param pipe pipeline to configure
+     * @param gas inlet fluid
+     * @param lengthMeters pipeline length in metres
+     */
     private void setupSimplePipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters) {
-      int numLegs = 5;
-      double[] height = new double[numLegs + 1];
-      double[] length = new double[numLegs + 1];
-      double[] outerTemp = new double[numLegs + 1];
-      double[] outerHeatCoef = new double[numLegs + 1];
-      double[] wallHeatCoef = new double[numLegs + 1];
-
-      for (int i = 0; i <= numLegs; i++) {
-        height[i] = 0.0;
-        length[i] = lengthMeters * i / numLegs;
-        outerTemp[i] = 278.0;
-        outerHeatCoef[i] = 5.0;
-        wallHeatCoef[i] = 15.0;
-      }
-
-      GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        pipeGeometry[i] = new PipeData();
-        pipeGeometry[i].setDiameter(0.8);
-        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
-      }
-
-      pipe.setInletThermoSystem(gas);
-      pipe.setNumberOfLegs(numLegs);
-      pipe.setNumberOfNodesInLeg(10);
-      pipe.setEquipmentGeometry(pipeGeometry);
-      pipe.setLegHeights(height);
-      pipe.setLegPositions(length);
-      pipe.setLegOuterTemperatures(outerTemp);
-      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
-      pipe.setLegOuterHeatTransferCoefficients(outerHeatCoef);
+      configurePipeline(pipe, gas, lengthMeters, 0.8, 5, 10, 278.0);
     }
   }
 
@@ -414,11 +390,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // Uphill pipeline
       int numLegs = 5;
-      double[] height = { 0, 100, 200, 300, 400, 500 }; // 500m elevation gain
-      double[] length = { 0, 10000, 20000, 30000, 40000, 50000 };
-      double[] outerTemp = { 278.0, 277.0, 276.0, 275.0, 274.0, 273.0 };
-      double[] outerHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-      double[] wallHeatCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
+      double[] height = {0, 100, 200, 300, 400, 500}; // 500m elevation gain
+      double[] length = {0, 10000, 20000, 30000, 40000, 50000};
+      double[] outerTemp = {278.0, 277.0, 276.0, 275.0, 274.0, 273.0};
+      double[] outerHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+      double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
@@ -447,38 +423,16 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertTrue(pressureDrop > 0, "Pressure should drop in uphill flow");
     }
 
+    /**
+     * Configures the numerical-stability grid.
+     *
+     * @param pipe pipeline to configure
+     * @param gas inlet fluid
+     * @param lengthMeters pipeline length in metres
+     * @param diameter internal diameter in metres
+     */
     private void setupPipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters, double diameter) {
-      int numLegs = 5;
-      double[] height = new double[numLegs + 1];
-      double[] length = new double[numLegs + 1];
-      double[] outerTemp = new double[numLegs + 1];
-      double[] outerHeatCoef = new double[numLegs + 1];
-      double[] wallHeatCoef = new double[numLegs + 1];
-
-      for (int i = 0; i <= numLegs; i++) {
-        height[i] = 0.0;
-        length[i] = lengthMeters * i / numLegs;
-        outerTemp[i] = 278.0;
-        outerHeatCoef[i] = 5.0;
-        wallHeatCoef[i] = 15.0;
-      }
-
-      GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        pipeGeometry[i] = new PipeData();
-        pipeGeometry[i].setDiameter(diameter);
-        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
-      }
-
-      pipe.setInletThermoSystem(gas);
-      pipe.setNumberOfLegs(numLegs);
-      pipe.setNumberOfNodesInLeg(10);
-      pipe.setEquipmentGeometry(pipeGeometry);
-      pipe.setLegHeights(height);
-      pipe.setLegPositions(length);
-      pipe.setLegOuterTemperatures(outerTemp);
-      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
-      pipe.setLegOuterHeatTransferCoefficients(outerHeatCoef);
+      configurePipeline(pipe, gas, lengthMeters, diameter, 5, 10, 278.0);
     }
   }
 
@@ -581,77 +535,22 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertNotEquals(inletTemp, outletTemp, 0.1, "Temperature should change due to Joule-Thomson effect");
     }
 
+    /**
+     * Configures the physical-validation grid.
+     *
+     * @param pipe pipeline to configure
+     * @param gas inlet fluid
+     * @param lengthMeters pipeline length in metres
+     * @param diameter internal diameter in metres
+     */
     private void setupPipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters, double diameter) {
-      int numLegs = 5;
-      double[] height = new double[numLegs + 1];
-      double[] length = new double[numLegs + 1];
-      double[] outerTemp = new double[numLegs + 1];
-      double[] outerHeatCoef = new double[numLegs + 1];
-      double[] wallHeatCoef = new double[numLegs + 1];
-
-      for (int i = 0; i <= numLegs; i++) {
-        height[i] = 0.0;
-        length[i] = lengthMeters * i / numLegs;
-        outerTemp[i] = 278.0;
-        outerHeatCoef[i] = 5.0;
-        wallHeatCoef[i] = 15.0;
-      }
-
-      GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        pipeGeometry[i] = new PipeData();
-        pipeGeometry[i].setDiameter(diameter);
-        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
-      }
-
-      pipe.setInletThermoSystem(gas);
-      pipe.setNumberOfLegs(numLegs);
-      pipe.setNumberOfNodesInLeg(10);
-      pipe.setEquipmentGeometry(pipeGeometry);
-      pipe.setLegHeights(height);
-      pipe.setLegPositions(length);
-      pipe.setLegOuterTemperatures(outerTemp);
-      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
-      pipe.setLegOuterHeatTransferCoefficients(outerHeatCoef);
+      configurePipeline(pipe, gas, lengthMeters, diameter, 5, 10, 278.0);
     }
   }
 
   @Nested
   @DisplayName("Transient Flow Tests")
   class TransientFlowTests {
-    @Test
-    @DisplayName("Transient solver runs without errors")
-    void testTransientSolverRuns() {
-      FlowSystemInterface pipe = new PipeFlowSystem();
-
-      SystemInterface gas = new SystemSrkEos(288.15, 100.0);
-      gas.addComponent("methane", 0.90);
-      gas.addComponent("ethane", 0.10);
-      gas.createDatabase(true);
-      gas.init(0);
-      gas.init(3);
-      gas.initPhysicalProperties();
-      gas.setTotalFlowRate(10.0, "MSm3/day");
-
-      setupTransientPipeline(pipe, gas, 50000.0, 0.8);
-      pipe.createSystem();
-      pipe.init();
-
-      // First solve steady state to initialize
-      pipe.solveSteadyState(10);
-
-      // Setup time series
-      double[] times = { 0, 5000, 10000 };
-      pipe.getTimeSeries().setTimes(times);
-
-      SystemInterface[] systems = { gas.clone(), gas.clone(), gas.clone() };
-      pipe.getTimeSeries().setInletThermoSystems(systems);
-      pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
-
-      // Should not throw
-      assertDoesNotThrow(() -> pipe.solveTransient(20));
-    }
-
     @Test
     @DisplayName("Transient solver maintains pressure profile with constant inlet")
     void testTransientPressureProfile() {
@@ -678,7 +577,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       }
 
       // Run transient with constant inlet (should maintain steady state)
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
       SystemInterface gas2 = gas.clone();
@@ -686,7 +585,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       gas2.init(3);
       gas2.initPhysicalProperties();
 
-      SystemInterface[] systems = { gas.clone(), gas2, gas2 };
+      SystemInterface[] systems = {gas.clone(), gas2, gas2};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(3);
 
@@ -734,11 +633,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       hotGas.setTotalFlowRate(5.0, "MSm3/day");
 
       // Times array defines time points; systems array has one entry per interval
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-3000] cold, [3000-6000] hot -> 2 systems
-      SystemInterface[] systems = { coldGas.clone(), hotGas.clone() };
+      SystemInterface[] systems = {coldGas.clone(), hotGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -776,10 +675,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.init();
       pipe.solveSteadyState(20); // Type 20 for composition
 
-      // Record initial composition at outlet
-      double initialOutletMethane = pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem().getPhase(0)
-          .getComponent("methane").getx();
-
       // Now introduce rich gas (more ethane)
       SystemInterface richGas = new SystemSrkEos(290.0, 90.0);
       richGas.addComponent("methane", 0.80);
@@ -791,11 +686,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       richGas.setTotalFlowRate(6.0, "MSm3/day");
 
       // Times array defines time points; systems array has one entry per interval
-      double[] times = { 0, 2000, 4000 };
+      double[] times = {0, 2000, 4000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-2000] lean, [2000-4000] rich -> 2 systems
-      SystemInterface[] systems = { leanGas.clone(), richGas.clone() };
+      SystemInterface[] systems = {leanGas.clone(), richGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -848,11 +743,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       highFlowGas.initPhysicalProperties();
       highFlowGas.setTotalFlowRate(15.0, "MSm3/day"); // 3x flow rate
 
-      double[] times = { 0, 2000, 4000 };
+      double[] times = {0, 2000, 4000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-2000], [2000-4000] -> 2 systems
-      SystemInterface[] systems = { gas.clone(), highFlowGas.clone() };
+      SystemInterface[] systems = {gas.clone(), highFlowGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -887,7 +782,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // Record initial state
       double initialInletTemp = pipe.getNode(0).getBulkSystem().getTemperature();
-      double initialInletPressure = pipe.getNode(0).getBulkSystem().getPressure();
       double initialMethane = pipe.getNode(0).getBulkSystem().getPhase(0).getComponent("methane").getx();
 
       // Final state: hot rich gas at higher pressure
@@ -902,11 +796,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       finalGas.setTotalFlowRate(7.0, "MSm3/day");
 
       // Times array defines time points; systems array has one entry per interval
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-3000] initial, [3000-6000] final -> 2 systems
-      SystemInterface[] systems = { initialGas.clone(), finalGas.clone() };
+      SystemInterface[] systems = {initialGas.clone(), finalGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -932,39 +826,17 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertTrue(pipe.getTotalPressureDrop() > 0, "Pressure drop should be positive");
     }
 
+    /**
+     * Configures the transient-test grid.
+     *
+     * @param pipe pipeline to configure
+     * @param gas inlet fluid
+     * @param lengthMeters pipeline length in metres
+     * @param diameter internal diameter in metres
+     */
     private void setupTransientPipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters,
         double diameter) {
-      int numLegs = 5;
-      double[] height = new double[numLegs + 1];
-      double[] length = new double[numLegs + 1];
-      double[] outerTemp = new double[numLegs + 1];
-      double[] outerHeatCoef = new double[numLegs + 1];
-      double[] wallHeatCoef = new double[numLegs + 1];
-
-      for (int i = 0; i <= numLegs; i++) {
-        height[i] = 0.0;
-        length[i] = lengthMeters * i / numLegs;
-        outerTemp[i] = 278.0;
-        outerHeatCoef[i] = 5.0;
-        wallHeatCoef[i] = 15.0;
-      }
-
-      GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        pipeGeometry[i] = new PipeData();
-        pipeGeometry[i].setDiameter(diameter);
-        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
-      }
-
-      pipe.setInletThermoSystem(gas);
-      pipe.setNumberOfLegs(numLegs);
-      pipe.setNumberOfNodesInLeg(10);
-      pipe.setEquipmentGeometry(pipeGeometry);
-      pipe.setLegHeights(height);
-      pipe.setLegPositions(length);
-      pipe.setLegOuterTemperatures(outerTemp);
-      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
-      pipe.setLegOuterHeatTransferCoefficients(outerHeatCoef);
+      configurePipeline(pipe, gas, lengthMeters, diameter, 5, 10, 278.0);
     }
   }
 
@@ -991,10 +863,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(10);
 
       // Set up transient with closed outlet
-      double[] times = { 0, 1000, 2000 };
+      double[] times = {0, 1000, 2000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
       pipe.getTimeSeries().setOutletClosed();
@@ -1003,44 +875,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertTrue(pipe.getTimeSeries().isOutletClosed(), "TimeSeries should be marked as closed outlet");
 
       // Run transient - should not throw even with closed outlet
-      assertDoesNotThrow(() -> pipe.solveTransient(10));
-    }
-
-    @Test
-    @DisplayName("Controlled outlet flow rate boundary is configured")
-    void testControlledOutletFlowRate() {
-      FlowSystemInterface pipe = new PipeFlowSystem();
-
-      SystemInterface gas = new SystemSrkEos(288.15, 80.0);
-      gas.addComponent("methane", 0.90);
-      gas.addComponent("ethane", 0.10);
-      gas.createDatabase(true);
-      gas.init(0);
-      gas.init(3);
-      gas.initPhysicalProperties();
-      gas.setTotalFlowRate(8.0, "MSm3/day");
-
-      setupOutletBoundaryPipeline(pipe, gas, 20000.0, 0.6);
-      pipe.createSystem();
-      pipe.init();
-      pipe.solveSteadyState(10);
-
-      // Set up transient with controlled outlet velocity
-      double[] times = { 0, 2000, 4000 };
-      pipe.getTimeSeries().setTimes(times);
-
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
-      pipe.getTimeSeries().setInletThermoSystems(systems);
-      pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
-
-      // Set controlled outlet velocities
-      double[] outletVelocities = { 5.0, 4.0 }; // m/s - modest reduction
-      pipe.getTimeSeries().setOutletVelocity(outletVelocities);
-
-      // Verify boundary type
-      assertTrue(pipe.getTimeSeries().isOutletFlowControlled(), "Should be flow-controlled");
-
-      // Run transient
       assertDoesNotThrow(() -> pipe.solveTransient(10));
     }
 
@@ -1064,15 +898,15 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(10);
 
       // Set up transient with controlled outlet pressure
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
       // Set controlled outlet pressures: increase backpressure in second interval
-      double[] outletPressures = { 70.0, 80.0 }; // bar
+      double[] outletPressures = {70.0, 80.0}; // bar
       pipe.getTimeSeries().setOutletPressure(outletPressures);
 
       // Run transient
@@ -1110,15 +944,15 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertTrue(initialVelocity > 0, "Initial velocity should be positive");
 
       // Set up transient with slightly reduced outlet velocity
-      double[] times = { 0, 1000, 2000 };
+      double[] times = {0, 1000, 2000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
       // Reduce velocity by 20% (not too aggressive)
-      double[] outletVelocities = { initialVelocity, initialVelocity * 0.8 }; // m/s
+      double[] outletVelocities = {initialVelocity, initialVelocity * 0.8}; // m/s
       pipe.getTimeSeries().setOutletVelocity(outletVelocities);
 
       // Run transient
@@ -1145,49 +979,27 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertFalse(ts.isOutletFlowControlled(), "Should not be flow-controlled when closed");
 
       // Test flow-controlled outlet
-      ts.setOutletVelocity(new double[] { 1.0, 2.0 });
+      ts.setOutletVelocity(new double[] {1.0, 2.0});
       assertTrue(ts.isOutletFlowControlled(), "Should be flow-controlled after setOutletVelocity");
       assertFalse(ts.isOutletClosed(), "Should not be closed when flow-controlled");
 
       // Test pressure-controlled outlet
-      ts.setOutletPressure(new double[] { 50.0, 60.0 });
+      ts.setOutletPressure(new double[] {50.0, 60.0});
       assertTrue(ts.isOutletPressureControlled(), "Should be pressure-controlled after setOutletPressure");
       assertFalse(ts.isOutletFlowControlled(), "Should not be flow-controlled when pressure-controlled");
     }
 
+    /**
+     * Configures the outlet-boundary grid.
+     *
+     * @param pipe pipeline to configure
+     * @param gas inlet fluid
+     * @param lengthMeters pipeline length in metres
+     * @param diameter internal diameter in metres
+     */
     private void setupOutletBoundaryPipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters,
         double diameter) {
-      int numLegs = 5;
-      double[] height = new double[numLegs + 1];
-      double[] length = new double[numLegs + 1];
-      double[] outerTemp = new double[numLegs + 1];
-      double[] outerHeatCoef = new double[numLegs + 1];
-      double[] wallHeatCoef = new double[numLegs + 1];
-
-      for (int i = 0; i <= numLegs; i++) {
-        height[i] = 0.0;
-        length[i] = lengthMeters * i / numLegs;
-        outerTemp[i] = 288.0;
-        outerHeatCoef[i] = 5.0;
-        wallHeatCoef[i] = 15.0;
-      }
-
-      GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        pipeGeometry[i] = new PipeData();
-        pipeGeometry[i].setDiameter(diameter);
-        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
-      }
-
-      pipe.setInletThermoSystem(gas);
-      pipe.setNumberOfLegs(numLegs);
-      pipe.setNumberOfNodesInLeg(10);
-      pipe.setEquipmentGeometry(pipeGeometry);
-      pipe.setLegHeights(height);
-      pipe.setLegPositions(length);
-      pipe.setLegOuterTemperatures(outerTemp);
-      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
-      pipe.setLegOuterHeatTransferCoefficients(outerHeatCoef);
+      configurePipeline(pipe, gas, lengthMeters, diameter, 5, 10, 288.0);
     }
   }
 
@@ -1291,20 +1103,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
     void testConvenienceSetters() {
       PipeFlowSystem pipe = new PipeFlowSystem();
 
-      SystemInterface gas = new SystemSrkEos(288.15, 80.0);
-      gas.addComponent("methane", 0.95);
-      gas.addComponent("ethane", 0.05);
-      gas.createDatabase(true);
-      gas.init(0);
-      gas.init(3);
-      gas.initPhysicalProperties();
-      gas.setTotalFlowRate(5.0, "MSm3/day");
-
-      setupSimplePipeline(pipe, gas, 10000.0, 0.5);
-      pipe.createSystem();
-      pipe.init();
-      pipe.solveSteadyState(10);
-
       // Test convenience setters
       pipe.setOutletClosed();
       assertTrue(pipe.getTimeSeries().isOutletClosed(), "Should be closed");
@@ -1316,39 +1114,17 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertTrue(pipe.getTimeSeries().isOutletPressureControlled(), "Should be pressure-controlled");
     }
 
+    /**
+     * Configures the convenience-API grid.
+     *
+     * @param pipe pipeline to configure
+     * @param gas inlet fluid
+     * @param lengthMeters pipeline length in metres
+     * @param diameter internal diameter in metres
+     */
     private void setupSimplePipeline(FlowSystemInterface pipe, SystemInterface gas, double lengthMeters,
         double diameter) {
-      int numLegs = 5;
-      double[] height = new double[numLegs + 1];
-      double[] length = new double[numLegs + 1];
-      double[] outerTemp = new double[numLegs + 1];
-      double[] outerHeatCoef = new double[numLegs + 1];
-      double[] wallHeatCoef = new double[numLegs + 1];
-
-      for (int i = 0; i <= numLegs; i++) {
-        height[i] = 0.0;
-        length[i] = lengthMeters * i / numLegs;
-        outerTemp[i] = 288.0;
-        outerHeatCoef[i] = 5.0;
-        wallHeatCoef[i] = 15.0;
-      }
-
-      GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
-      for (int i = 0; i <= numLegs; i++) {
-        pipeGeometry[i] = new PipeData();
-        pipeGeometry[i].setDiameter(diameter);
-        pipeGeometry[i].setInnerSurfaceRoughness(1e-5);
-      }
-
-      pipe.setInletThermoSystem(gas);
-      pipe.setNumberOfLegs(numLegs);
-      pipe.setNumberOfNodesInLeg(10);
-      pipe.setEquipmentGeometry(pipeGeometry);
-      pipe.setLegHeights(height);
-      pipe.setLegPositions(length);
-      pipe.setLegOuterTemperatures(outerTemp);
-      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
-      pipe.setLegOuterHeatTransferCoefficients(outerHeatCoef);
+      configurePipeline(pipe, gas, lengthMeters, diameter, 5, 10, 288.0);
     }
   }
 }

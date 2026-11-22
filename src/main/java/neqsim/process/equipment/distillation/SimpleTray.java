@@ -9,6 +9,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.unit.TemperatureUnit;
 
 /**
  * SimpleTray class.
@@ -19,6 +20,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements TrayInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Relative enthalpy residual at which a tray enthalpy flash stops without a confirming evaluation. */
+  private static final double TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE = 1.0e-10;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SimpleTray.class);
 
@@ -33,6 +37,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * of standard VLE flash. Set via {@link DistillationColumn#setReactive(boolean)}.
    */
   private boolean useReactiveFlash = false;
+
+  /** Whether the column uses the standard PH iteration for its nonideal tray corrections. */
+  private volatile boolean useStandardEnthalpyFlash;
 
   /**
    * When {@code true}, only thermodynamic properties (init level 2: enthalpy, K-values, densities needed for the
@@ -67,6 +74,30 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public SimpleTray(String name) {
     super(name);
+  }
+
+  /**
+   * Set the tray outlet temperature with unit conversion.
+   *
+   * @param outTemperature outlet temperature
+   * @param unit temperature unit, for example {@code "K"}, {@code "C"}, {@code "F"}, or {@code "R"}
+   * @throws IllegalArgumentException if the temperature unit is unsupported
+   */
+  public void setOutletTemperature(double outTemperature, String unit) {
+    setOutletTemperature(new TemperatureUnit(outTemperature, unit).getValue("K"));
+  }
+
+  /**
+   * Set the tray outlet temperature with unit conversion.
+   *
+   * @param outTemperature outlet temperature
+   * @param unit temperature unit, for example {@code "K"}, {@code "C"}, {@code "F"}, or {@code "R"}
+   * @throws IllegalArgumentException if the temperature unit is unsupported
+   * @deprecated use {@link #setOutletTemperature(double, String)} instead
+   */
+  @Deprecated
+  public void setOutTemperature(double outTemperature, String unit) {
+    setOutletTemperature(outTemperature, unit);
   }
 
   /**
@@ -105,33 +136,79 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * calcMixStreamEnthalpy0.
+   * Sum material inlet enthalpy rates, excluding heat input and energy-stream duty.
    *
-   * @return a double
+   * <p>
+   * Absent-phase templates carry no energy. Use the same zero-flow handling as published outlets so initializing an
+   * empty phase cannot contaminate a terminal duty. Invalid flowing states remain non-finite.
+   * </p>
+   *
+   * @return material inlet enthalpy rate in W
    */
   public double calcMixStreamEnthalpy0() {
     double enthalpy = 0;
 
     for (int k = 0; k < streams.size(); k++) {
-      // init(2) is sufficient: getEnthalpy() reads only residual thermodynamic
-      // properties, not the composition derivatives that init(3) additionally computes.
-      // This removes redundant derivative work from the per-tray enthalpy summation.
-      streams.get(k).getThermoSystem().init(2);
-      enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-      // System.out.println("total enthalpy k : " + ( ((Stream)
-      // streams.get(k)).getThermoSystem()).getEnthalpy());
+      enthalpy += getMaterialStreamEnthalpy(streams.get(k));
     }
-    // System.out.println("total enthalpy of streams: " + enthalpy);
     return enthalpy;
+  }
+
+  /**
+   * Sum the enthalpy rates of the published material outlets, including side and pumparound draws.
+   *
+   * <p>
+   * A simultaneous solver can publish phase flows independently of the mixed-stream flash. Energy balances must use
+   * those same phase streams. Non-finite flowing states remain non-finite so residual gates cannot hide them.
+   * </p>
+   *
+   * @return total material outlet enthalpy rate in W
+   */
+  double getMaterialOutletEnthalpy() {
+    double enthalpy = getMaterialStreamEnthalpy(getGasOutStream()) + getMaterialStreamEnthalpy(getLiquidOutStream());
+    if (gasSideDrawFraction > 0.0) {
+      enthalpy += getMaterialStreamEnthalpy(getGasSideDrawStream());
+    }
+    if (liquidSideDrawFraction > 0.0) {
+      enthalpy += getMaterialStreamEnthalpy(getLiquidSideDrawStream());
+    }
+    if (liquidPumparoundDrawFraction > 0.0) {
+      enthalpy += getMaterialStreamEnthalpy(getLiquidPumparoundDrawStream());
+    }
+    return enthalpy;
+  }
+
+  /**
+   * Read a material stream's energy contribution without counting zero-flow phase templates.
+   *
+   * @param stream material stream
+   * @return enthalpy rate in W, or a non-finite value for an invalid flowing state
+   */
+  static double getMaterialStreamEnthalpy(StreamInterface stream) {
+    double flow = stream.getFlowRate("kg/hr");
+    if (!Double.isFinite(flow)) {
+      return Double.NaN;
+    }
+    if (Math.abs(flow) <= 1.0e-12) {
+      return 0.0;
+    }
+    stream.getThermoSystem().init(2);
+    return stream.getThermoSystem().getEnthalpy();
+  }
+
+  /**
+   * Return the heat input used to form the tray PH flash specification.
+   *
+   * @return heat input in W, including any connected energy specification
+   */
+  double getSpecifiedHeatInput() {
+    return isSetEnergyStream() ? heatInput - energyStream.getDuty() : heatInput;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcMixStreamEnthalpy() {
-    double enthalpy = heatInput;
-    if (isSetEnergyStream()) {
-      enthalpy -= energyStream.getDuty();
-    }
+    double enthalpy = getSpecifiedHeatInput();
 
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
@@ -181,6 +258,15 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     return useReactiveFlash;
   }
 
+  /**
+   * Selects the standard PH iteration for a column with nonideal Murphree stages.
+   *
+   * @param useStandard true to use the standard PH iteration
+   */
+  void setUseStandardEnthalpyFlash(boolean useStandard) {
+    useStandardEnthalpyFlash = useStandard;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -218,7 +304,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
       if (!isSetOutTemperature()) {
-        // mixedStream.getThermoSystem().setTemperature(guessTemperature());
+        // Start the enthalpy flash from the tray's latest temperature instead of the
+        // temperature inherited from the template inlet stream. The PH solution does not depend
+        // on the starting point, but the previous tray state is far closer to it than an inlet
+        // from a neighbouring stage, which removes several inner TP flashes per tray evaluation.
+        if (!Double.isNaN(temperature) && !Double.isInfinite(temperature) && temperature > 0.0) {
+          mixedStream.getThermoSystem().setTemperature(temperature);
+        }
       } else {
         mixedStream.setTemperature(getOutTemperature(), "K");
       }
@@ -236,10 +328,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       initTrayProperties();
     } else {
       try {
+        double enthalpyTolerance = useStandardEnthalpyFlash ? 0.0 : TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE;
         if (useReactiveFlash) {
-          testOps.reactivePHflash(enthalpy, 0);
+          testOps.reactivePHflash(enthalpy, 0, enthalpyTolerance);
         } else {
-          testOps.PHflash(enthalpy, 0);
+          // The column repeats this flash every sweep, so one residual two orders of magnitude
+          // below the nominal tolerance is accepted without a confirming equilibrium flash.
+          testOps.PHflash(enthalpy, 0, enthalpyTolerance);
         }
         initTrayProperties();
       } catch (Exception ex) {
@@ -372,6 +467,15 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   void setCachedLiquidSideDrawStream(StreamInterface stream) {
     this.cachedLiquidSideDrawStream = stream;
+  }
+
+  /**
+   * Set a pumparound draw materialized from a simultaneous solver state.
+   *
+   * @param stream accepted liquid draw stream
+   */
+  void setCachedLiquidPumparoundDrawStream(StreamInterface stream) {
+    this.cachedLiquidPumparoundDrawStream = stream;
   }
 
   /**

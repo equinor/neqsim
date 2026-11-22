@@ -1,6 +1,6 @@
 ---
 title: Mass Transfer API Documentation
-description: This document provides comprehensive API documentation for NeqSim's enhanced mass transfer model for two-phase pipe flow, including detailed method descriptions, parameters, examples, and literature r...
+description: "API reference for NeqSim two-phase pipe-flow mass-transfer models, configuration, correlations, parameters, examples, and literature sources."
 ---
 
 This document provides comprehensive API documentation for NeqSim's enhanced mass transfer model for two-phase pipe flow, including detailed method descriptions, parameters, examples, and literature references.
@@ -25,6 +25,27 @@ The mass transfer model provides tools for simulating interphase mass transfer i
 - **Dissolution**: Gas components dissolving into liquid phase
 - **Complete phase transitions**: Handling total evaporation or dissolution
 - **Three-phase systems**: Gas-oil-water configurations
+
+### Local coupled gas/oil film option
+
+The existing `FluidBoundaryInterface` exposes:
+
+| Method | Default / contract |
+|---|---|
+| `setCoupledMassHeatTransferEnabled(boolean)` | `false`; opt-in simultaneous residual-based mass/heat solution in `KrishnaStandartFilmModel` |
+| `isCoupledMassHeatTransferEnabled()` | Reports the selected local numerical route |
+
+Set both mass and heat calculation enabled before using the option. Other boundary
+implementations reject enabling an unsupported route. The coupled route currently
+requires nonreactive hydrocarbon gas/oil, strictly positive interface fractions and
+positive finite transport. It restores its published local interface state on failed
+convergence; it does not mutate a bulk inventory or integrate a pipeline timestep.
+The legacy/default route remains unchanged except that invalid binary transport and
+nonfinite resistance inversion now reject instead of creating unit conductance.
+
+See [interphase numerical method and limits](InterphaseHeatMassTransfer#residual-based-gasoil-option).
+`CoupledGasOilFilmTest` executes the API and its numerical acceptance checks. This is
+not a new `MassTransferConfig` setting and does not enable transient pool evaporation.
 
 ### Architecture
 
@@ -676,46 +697,43 @@ public String validateMassTransferAgainstLiterature()
 
 ### Example 1: Water Evaporation into Dry Nitrogen
 
-Simulating evaporation of water into flowing nitrogen gas.
+The following complete **preparation example** initializes the equilibrium
+nitrogen/water feed and selects evaporation controls. It does not calculate
+an evaporation distance or rate. Flashing a combined nitrogen/water feed puts
+the phases at equilibrium; the resulting gas is not a separate dry-gas boundary.
+A rate study must specify non-equilibrium inlet phases and connect the
+configuration to its solver. See [Pipeline Liquid Evaporation](PipelineLiquidEvaporation)
+for a complete finite-rate calculation and its assumptions.
 
+<!-- pipeline-doc-test: evaporation-preparation -->
 ```java
-import neqsim.thermo.system.SystemInterface;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.processimulation.processequipment.stream.Stream;
-import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.*;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.MassTransferConfig;
 
-// Create fluid system
-SystemInterface fluid = new SystemSrkEos(293.15, 1.01325);  // 20°C, 1 atm
+Logger logger = LogManager.getLogger("EvaporationPreparationExample");
+SystemSrkEos fluid = new SystemSrkEos(293.15, 1.01325); // 20 C, 1 atm
 fluid.addComponent("nitrogen", 0.95);
 fluid.addComponent("water", 0.05);
 fluid.setMixingRule("classic");
 fluid.setMultiPhaseCheck(true);
-
-// Create inlet stream
-Stream inlet = new Stream("inlet", fluid);
+Stream inlet = new Stream("Nitrogen and Water Feed", fluid);
 inlet.setFlowRate(100.0, "kg/hr");
 inlet.run();
 
-// Configure mass transfer for evaporation
 MassTransferConfig config = MassTransferConfig.forEvaporation();
 config.setEnableDiagnostics(true);
-config.setMaxPhaseDepletionPerNode(0.99);  // Allow near-complete evaporation
-
-// Create pipe with mass transfer
-// ... (pipe setup code)
-
-// After simulation
-System.out.println("Gas phase dissolved: " + solver.isGasPhaseCompletelyDissolved());
-System.out.println("Liquid phase evaporated: " + solver.isLiquidPhaseCompletelyEvaporated());
-
-double[] summary = solver.getMassTransferSummary();
-System.out.printf("Total dissolved: %.4f mol%n", summary[0]);
-System.out.printf("Total evaporated: %.4f mol%n", summary[1]);
-System.out.printf("Net transfer: %.4f mol%n", summary[2]);
-
-// Validate against literature
-System.out.println(solver.validateMassTransferAgainstLiterature());
+config.setMaxPhaseDepletionPerNode(0.99);
+logger.info("Equilibrium inlet phases: {}", inlet.getFluid().getNumberOfPhases());
+logger.info("Evaporation controls: {}", config);
 ```
+
+SRK/classic is used here to demonstrate setup. Select an appropriate water
+thermodynamic model and validate equilibrium and transfer properties for the
+intended application. The configuration object alone is not evidence that a
+phase-disappearance simulation converged or conserved mass.
 
 ### Example 2: CO₂ Dissolution into MEA Solution
 

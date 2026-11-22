@@ -335,7 +335,7 @@ class ModelRegistryTest {
         + " \"version\": \"1.0.0\", \"processJson\": " + JsonParser.parseString(PROCESS_JSON) + "}");
     JsonObject root = JsonParser.parseString(response).getAsJsonObject();
 
-    String[] documented = { "status", "modelId", "name", "version", "revision", "tenant", "useCount", "usage" };
+    String[] documented = {"status", "modelId", "name", "version", "revision", "tenant", "useCount", "usage"};
     for (String field : documented) {
       assertTrue(root.has(field), "Documented field '" + field + "' missing from register response: " + response);
     }
@@ -347,7 +347,7 @@ class ModelRegistryTest {
         .parseString(
             ModelRegistry.run("{\"action\": \"inspect\", \"modelId\": \"" + root.get("modelId").getAsString() + "\"}"))
         .getAsJsonObject();
-    for (String field : new String[] { "equipment", "areas", "equipmentCount" }) {
+    for (String field : new String[] {"equipment", "areas", "equipmentCount"}) {
       assertTrue(inspected.has(field), "Documented inspect field '" + field + "' missing: " + inspected);
     }
   }

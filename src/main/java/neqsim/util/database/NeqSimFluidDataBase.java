@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,21 +11,19 @@ import org.apache.logging.log4j.Logger;
  * NeqSimFluidDataBase class.
  *
  * @author esol
- * @version The database is used for storing fluid info and recreating a fluid it uses the database neqsimfluiddatabase
- * for storing fluid information
+ * @version The database is used for storing fluid info and recreating a fluid it uses the database FluidDatabase for
+ * storing fluid information
  */
-public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimFluidDataBase extends NeqSimDatabaseBase {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
 
   static boolean started = false;
-  protected transient Connection databaseConnection;
   /** Constant <code>useOnlineBase=false</code>. */
   public static boolean useOnlineBase = false;
   static int numb = 0;
-  transient Statement statement = null;
 
   /**
    * Constructor for NeqSimFluidDataBase.
@@ -41,12 +38,23 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
           Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
         }
       }
-      databaseConnection = this.openConnection("FluidDatabase");
-      statement = databaseConnection.createStatement();
+      initializeDatabaseConnection();
     } catch (Exception ex) {
       logger.error("error in FluidDatabase ", ex);
       logger.error("The database must be rgistered on the local DBMS to work.");
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Logger getLogger() {
+    return logger;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Connection openConnection() throws SQLException, ClassNotFoundException {
+    return openConnection("FluidDatabase");
   }
 
   /**
@@ -75,57 +83,36 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
   }
 
   /**
-   * getConnection.
+   * Executes SQL using this wrapper's managed connection. Legacy failures are logged without propagation.
    *
-   * @return a Connection object
-   */
-  public Connection getConnection() {
-    return databaseConnection;
-  }
-
-  /**
-   * getResultSet.
-   *
-   * @param database a {@link java.lang.String} object
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
-   */
-  public ResultSet getResultSet(String database, String sqlString) {
-    try {
-      ResultSet result = statement.executeQuery(sqlString);
-      return result;
-    } catch (Exception ex) {
-      logger.error("error in FluidDatabase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
-    }
-    return null;
-  }
-
-  /**
-   * getResultSet.
-   *
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
-   */
-  public ResultSet getResultSet(String sqlString) {
-    return this.getResultSet("FluidDatabase", sqlString);
-  }
-
-  /**
-   * execute.
-   *
-   * @param sqlString a {@link java.lang.String} object
+   * @param sqlString SQL statement
    */
   public void execute(String sqlString) {
     try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection("FluidDatabase");
-        statement = databaseConnection.createStatement();
-      }
-      statement.execute(sqlString);
-    } catch (Exception ex) {
-      logger.error("error in FluidDatabase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
+      executeSql(sqlString);
+    } catch (RuntimeException ex) {
+      // Preserve the legacy fluid database's log-and-return contract.
     }
+  }
+
+  /**
+   * Queries the current connection using the legacy two-argument API.
+   *
+   * @param database legacy database label; does not switch the active connection
+   * @param sqlString SQL query
+   * @return result set, or null after a logged SQL failure
+   */
+  public ResultSet getResultSet(String database, String sqlString) {
+    try {
+      return super.getResultSet(sqlString);
+    } catch (RuntimeException ex) {
+      return null;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ResultSet getResultSet(String sqlString) {
+    return getResultSet("FluidDatabase", sqlString);
   }
 }

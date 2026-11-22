@@ -57,7 +57,7 @@ class StaticMixerTest {
     gasFluid.setMultiPhaseCheck(true);
 
     neqsim.thermo.system.SystemInterface megFluid = gasFluid.clone();
-    megFluid.setMolarComposition(new double[] { 0.0, 0.1099744114900417, 0.8900255885099583 });
+    megFluid.setMolarComposition(new double[] {0.0, 0.1099744114900417, 0.8900255885099583});
 
     Stream gasStream = new Stream("gas", gasFluid);
     gasStream.setFlowRate(168958.0, "Sm3/hr");

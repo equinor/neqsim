@@ -201,6 +201,12 @@ double level = separator.getLiquidLevel();
 5. **Dynamic mode switch** — calls `unit.setCalculateSteadyState(false)` on all
    equipment and sets `process.setTimeStep(dt)`.
 
+For controller qualification that depends on sensor scan timing, explicitly enable physical-step sampling on a concrete
+`PressureTransmitter`, `TemperatureTransmitter` or `VolumeFlowTransmitter`. Registration alone does not enable it.
+Sampling is additive and disabled by default; one held value is then shared by the controller, history and alarms for the
+same physical-step UUID. Declare filter, delay, fault, unit/phase and scan assumptions, and do not treat simulated sensor
+behavior as vendor or safeguarding evidence.
+
 ## Related Documentation
 
 - [Process Controllers and Logic](controllers.md) — Adjusters, recycles, PID controllers

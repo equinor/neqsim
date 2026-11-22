@@ -50,9 +50,6 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
   private transient PolynomialFunction npshFunc = null;
   private boolean npshCurveAvailable = false;
 
-  /** Cached BEP flow (lazy). */
-  private double cachedBEPFlow = -1.0;
-
   /** {@inheritDoc} */
   @Override
   public double getHead(double flow, double speed) {
@@ -77,21 +74,40 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
     this.usePumpChart = usePumpChart;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The reference diagnostic uses the first supplied speed curve.
+   * </p>
+   */
   @Override
   public double getBestEfficiencyFlowRate() {
-    if (cachedBEPFlow > 0) {
-      return cachedBEPFlow;
-    }
-    // Scan across the flow range of the underlying compressor chart to find peak efficiency.
-    // The parent chart stores speed curves; we evaluate at the first available speed.
-    double bestFlow = 0.0;
-    double bestEff = -1.0;
     double[] speeds = getSpeeds();
     if (speeds == null || speeds.length == 0) {
       return 0.0;
     }
-    double testSpeed = speeds[0];
+    return getBestEfficiencyFlowRate(speeds[0]);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Sample the existing absolute-flow efficiency surface at the requested speed. Unlike reduced curves, this map does
+   * not scale efficiency flow by speed. The bounded 51-point scan over the global tabulated flow range is approximate
+   * and may extrapolate narrower individual curves. Recompute rather than cache: the inherited API exposes mutable
+   * curve data. This diagnostic neither qualifies a speed/flow operating envelope nor changes interpolation.
+   * </p>
+   */
+  @Override
+  public double getBestEfficiencyFlowRate(double speed) {
+    double[] speeds = getSpeeds();
+    if (speeds == null || speeds.length == 0 || !Double.isFinite(speed) || speed <= 0.0) {
+      return 0.0;
+    }
+    double bestFlow = 0.0;
+    double bestEff = -1.0;
     double minFlow = getMinimumFlow();
     double maxFlow = getMaximumFlow();
     if (maxFlow <= minFlow || maxFlow <= 0) {
@@ -100,24 +116,13 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
     int nPoints = 50;
     for (int i = 0; i <= nPoints; i++) {
       double f = minFlow + (maxFlow - minFlow) * i / nPoints;
-      double eff = getEfficiency(f, testSpeed);
+      double eff = getEfficiency(f, speed);
       if (eff > bestEff) {
         bestEff = eff;
         bestFlow = f;
       }
     }
-    cachedBEPFlow = bestFlow;
     return bestFlow;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getBestEfficiencyFlowRate(double speed) {
-    double[] speeds = getSpeeds();
-    if (speeds == null || speeds.length == 0 || speeds[0] <= 0.0 || speed <= 0.0) {
-      return 0.0;
-    }
-    return getBestEfficiencyFlowRate() * speed / speeds[0];
   }
 
   /** {@inheritDoc} */
@@ -166,7 +171,7 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
     if (eff < 30.0) {
       return "LOW_EFFICIENCY";
     }
-    double bepFlow = getBestEfficiencyFlowRate();
+    double bepFlow = getBestEfficiencyFlowRate(speed);
     if (bepFlow > 0 && Math.abs(flow - bepFlow) / bepFlow < 0.2) {
       return "OPTIMAL";
     }

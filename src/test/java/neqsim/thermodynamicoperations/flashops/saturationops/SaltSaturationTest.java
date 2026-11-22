@@ -105,21 +105,15 @@ class SaltSaturationTest {
   }
 
   /**
-   * Verifies that salt saturation calculations complete for supported chloride salts.
+   * Verifies that salt saturation calculations complete for monovalent chloride salts.
    */
   @Test
-  void calcSaltSaturationDoesNotCrashForSupportedChlorideSalt() throws Exception {
+  void calcSaltSaturationDoesNotCrashForMonovalentChlorideSalts() throws Exception {
     ThermodynamicOperations naclOperations = new ThermodynamicOperations(createWaterSystem());
     naclOperations.calcSaltSaturation("NaCl");
 
     ThermodynamicOperations kclOperations = new ThermodynamicOperations(createWaterSystem());
     kclOperations.calcSaltSaturation("KCl");
-
-    ThermodynamicOperations cacl2Operations = new ThermodynamicOperations(createWaterSystem());
-    cacl2Operations.calcSaltSaturation("CaCl2");
-
-    ThermodynamicOperations mgcl2Operations = new ThermodynamicOperations(createWaterSystem());
-    mgcl2Operations.calcSaltSaturation("MgCl2");
   }
 
   /**
@@ -145,12 +139,13 @@ class SaltSaturationTest {
    * @throws Exception if the thermodynamic operation fails
    */
   @Test
+  @Tag("slow")
   void calcSaltSaturationIsAccurateAcrossAqueousAndHydrocarbonPhaseSystems() throws Exception {
     assertSaltSaturatesToUnitScalePotential("CaCO3", createCalciumCarbonateCo2GasAqueousSystem(),
         Arrays.asList("gas", "aqueous"));
     assertSaltSaturatesToUnitScalePotential("CaCO3", createHighPressureCalciumCarbonateCo2GasAqueousSystem(),
         Arrays.asList("gas", "aqueous"));
-    assertSaltSaturatesToUnitScalePotential("FeCO3", createWaterSystem(), Arrays.asList());
+    assertSaltSaturatesToUnitScalePotential("FeCO3", createWaterSystem(), Arrays.asList("aqueous"));
 
     assertSaltSaturatesToUnitScalePotential("CaCl2", createWaterSystem(), Arrays.asList("aqueous"));
     assertSaltSaturatesToUnitScalePotential("CaCl2", createGasAqueousSystem(), Arrays.asList("gas", "aqueous"));
@@ -161,6 +156,20 @@ class SaltSaturationTest {
     assertSaltSaturatesToUnitScalePotential("MgCl2", createGasAqueousSystem(), Arrays.asList("gas", "aqueous"));
     assertSaltSaturatesToUnitScalePotential("MgCl2", createGasOilAqueousSystem(),
         Arrays.asList("gas", "oil", "aqueous"));
+  }
+
+  /**
+   * Verifies iron carbonate saturation is independent of the molar basis of the pure-water feed.
+   *
+   * @throws Exception if the thermodynamic operation fails
+   */
+  @Test
+  void calcIronCarbonateSaturationIsIndependentOfFeedScale() throws Exception {
+    for (double waterMoles : new double[] {0.01, 0.1, 1.0, 10.0, 100.0}) {
+      SystemInterface system = createWaterSystem();
+      system.addComponent("water", waterMoles - 1.0);
+      assertSaltSaturatesToUnitScalePotential("FeCO3", system, Arrays.asList("aqueous"));
+    }
   }
 
   /**
@@ -276,7 +285,18 @@ class SaltSaturationTest {
   private void assertSaltSaturatesToUnitScalePotential(String saltName, SystemInterface system,
       List<String> expectedPhaseTypes) throws Exception {
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
-    operations.calcSaltSaturation(saltName);
+    SaltSaturationResult result = operations.calcSaltSaturationWithDiagnostics(saltName);
+    assertTrue(result.getInitialSaturationRatio() < 1.0, "The addition test must start undersaturated");
+    assertTrue(result.isConverged(),
+        saltName + " salt saturation did not meet its convergence criterion: initial SR="
+            + result.getInitialSaturationRatio() + ", final SR=" + result.getFinalSaturationRatio() + ", residual="
+            + result.getAbsoluteSaturationRatioResidual() + ", bracket iterations=" + result.getBracketIterations()
+            + ", solve iterations=" + result.getSolveIterations() + ", iteration limit reached="
+            + result.isIterationLimitReached());
+    double reactionResidual = system.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual();
+    assertTrue(reactionResidual <= 2.0e-6,
+        saltName + " saturated state is not at chemical equilibrium: reaction residual=" + reactionResidual
+            + ", water moles=" + system.getComponent("water").getNumberOfmoles());
     operations.TPflash();
     system.initProperties();
 
@@ -287,7 +307,10 @@ class SaltSaturationTest {
     operations.checkScalePotential(getAqueousOrWaterPhaseNumber(system));
     double saturationRatio = getSaltSaturationRatio(operations.getResultTable(), saltName);
     assertEquals(1.0, saturationRatio, SATURATION_RATIO_TOLERANCE,
-        saltName + " saturation ratio should be unity after calcSaltSaturation");
+        saltName + " saturation ratio should be unity after calcSaltSaturation, water moles="
+            + system.getComponent("water").getNumberOfmoles() + ", reaction residual before reflash=" + reactionResidual
+            + ", reaction residual after reflash="
+            + system.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual());
   }
 
   /**

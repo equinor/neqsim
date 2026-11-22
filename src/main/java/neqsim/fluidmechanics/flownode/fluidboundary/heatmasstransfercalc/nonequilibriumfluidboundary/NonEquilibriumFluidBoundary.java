@@ -2,12 +2,20 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
+import org.ejml.dense.row.decomposition.lu.LUDecompositionAlt_DDRM;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
  * Abstract NonEquilibriumFluidBoundary class.
+ *
+ * <p>
+ * Newton working matrices use EJML storage. Subclasses using these protected fields must use {@link DMatrixRMaj};
+ * serialized instances containing the former Jama working matrices are not compatible with this representation.
+ * Coefficient data use primitive arrays; deprecated exported EJML views retain their live behavior.
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,17 +23,17 @@ import neqsim.thermo.system.SystemInterface;
 public abstract class NonEquilibriumFluidBoundary
     extends neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundary {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NonEquilibriumFluidBoundary.class);
 
   protected int neq = 0;
-  protected Matrix dx;
-  protected Matrix Jac;
-  protected Matrix fvec;
-  protected Matrix uMassTrans;
-  protected Matrix uMassTransold;
-  protected Matrix Xgij;
+  protected DMatrixRMaj dx;
+  protected DMatrixRMaj Jac;
+  protected DMatrixRMaj fvec;
+  protected DMatrixRMaj uMassTrans;
+  protected DMatrixRMaj uMassTransold;
+  protected DMatrixRMaj Xgij;
 
   public double[][] molFractionDifference;
 
@@ -37,16 +45,13 @@ public abstract class NonEquilibriumFluidBoundary
   public NonEquilibriumFluidBoundary(SystemInterface system) {
     super(system);
     neq = 3 * bulkSystem.getPhases()[0].getNumberOfComponents();
-    Jac = new Matrix(neq, neq);
-    fvec = new Matrix(neq, 1);
-    massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
+    Jac = new DMatrixRMaj(neq, neq);
+    fvec = new DMatrixRMaj(neq, 1);
+    int independentComponents = getBulkSystem().getPhases()[0].getNumberOfComponents() - 1;
+    setMassTransferCoefficientArray(0, new double[independentComponents][independentComponents]);
+    setMassTransferCoefficientArray(1, new double[independentComponents][independentComponents]);
+    totalMassTransferCoefficientMatrix[0] = new double[independentComponents][independentComponents];
+    totalMassTransferCoefficientMatrix[1] = new double[independentComponents][independentComponents];
     molFractionDifference = new double[2][getBulkSystem().getPhases()[0].getNumberOfComponents() - 1];
     // interphaseSystem = bulkSystem.clone();
     // interphaseOps = new ThermodynamicOperations(interphaseSystem);
@@ -62,16 +67,13 @@ public abstract class NonEquilibriumFluidBoundary
   public NonEquilibriumFluidBoundary(FlowNodeInterface flowNode) {
     super(flowNode);
     neq = 3 * bulkSystem.getPhases()[0].getNumberOfComponents();
-    Jac = new Matrix(neq, neq);
-    fvec = new Matrix(neq, 1);
-    massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
+    Jac = new DMatrixRMaj(neq, neq);
+    fvec = new DMatrixRMaj(neq, 1);
+    int independentComponents = getBulkSystem().getPhases()[0].getNumberOfComponents() - 1;
+    setMassTransferCoefficientArray(0, new double[independentComponents][independentComponents]);
+    setMassTransferCoefficientArray(1, new double[independentComponents][independentComponents]);
+    totalMassTransferCoefficientMatrix[0] = new double[independentComponents][independentComponents];
+    totalMassTransferCoefficientMatrix[1] = new double[independentComponents][independentComponents];
     // interphaseSystem = bulkSystem.clone();
     molFractionDifference = new double[2][getBulkSystem().getPhases()[0].getNumberOfComponents() - 1];
     // interphaseOps = new ThermodynamicOperations(interphaseSystem);
@@ -79,7 +81,11 @@ public abstract class NonEquilibriumFluidBoundary
     // // interphaseOps.displayResult();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public NonEquilibriumFluidBoundary clone() {
     NonEquilibriumFluidBoundary clonedSystem = null;
@@ -88,6 +94,7 @@ public abstract class NonEquilibriumFluidBoundary
       clonedSystem = (NonEquilibriumFluidBoundary) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of NonEquilibriumFluidBoundary", ex);
     }
 
     return clonedSystem;
@@ -113,21 +120,19 @@ public abstract class NonEquilibriumFluidBoundary
 
     for (int i = bulkSystem.getPhases()[0].getNumberOfComponents() + 1; i < (2
         * bulkSystem.getPhases()[0].getNumberOfComponents()); i++) {
-      fvec.set(i, 0,
-          (totalMassTransferCoefficientMatrix[1].get(
-              i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1),
-              i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1))
-              * (bulkSystem.getPhases()[0].getComponents()[i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+      fvec.set(i, 0, (totalMassTransferCoefficientMatrix[1][i
+          - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)][i
+              - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+          * (bulkSystem.getPhases()[0].getComponents()[i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+              .getx()
+              - interphaseSystem.getPhases()[0].getComponents()[i
+                  - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx())
+          + (totalMassTransferCoefficientMatrix[0][i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)][i
+              - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+              * (bulkSystem.getPhases()[1].getComponents()[i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
                   .getx()
-                  - interphaseSystem.getPhases()[0].getComponents()[i
-                      - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx())
-              + (totalMassTransferCoefficientMatrix[0].get(
-                  i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1),
-                  i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1))
-                  * (bulkSystem.getPhases()[1].getComponents()[i
-                      - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx()
-                      - interphaseSystem.getPhases()[1].getComponents()[i
-                          - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx()))));
+                  - interphaseSystem.getPhases()[1].getComponents()[i
+                      - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx()))));
     }
   }
 
@@ -150,43 +155,31 @@ public abstract class NonEquilibriumFluidBoundary
     fvec.set(bulkSystem.getPhases()[0].getNumberOfComponents(), 0, 1.0 - sumx);
     fvec.set(bulkSystem.getPhases()[0].getNumberOfComponents() + 1, 0, 1.0 - sumy);
 
-    Matrix dx = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-    Matrix dy = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-    Matrix x = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-    Matrix y = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-
-    for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents() - 1; i++) {
-      dy.set(0, i,
-          (bulkSystem.getPhases()[0].getComponent(i).getx() - interphaseSystem.getPhases()[0].getComponent(i).getx()));
-      dx.set(0, i,
-          (bulkSystem.getPhases()[1].getComponent(i).getx() - interphaseSystem.getPhases()[1].getComponent(i).getx()));
-      y.set(0, i, (bulkSystem.getPhases()[0].getComponent(i).getx()));
-      x.set(0, i, (bulkSystem.getPhases()[1].getComponent(i).getx()));
+    int componentCount = bulkSystem.getPhases()[0].getNumberOfComponents();
+    double densityX = bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[1].getMolarMass();
+    double densityY = bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[0].getMolarMass();
+    for (int componentIndex = 0; componentIndex < componentCount - 1; componentIndex++) {
+      double fluxX = 0.0;
+      double fluxY = 0.0;
+      double x = bulkSystem.getPhases()[1].getComponent(componentIndex).getx();
+      double y = bulkSystem.getPhases()[0].getComponent(componentIndex).getx();
+      for (int differenceIndex = 0; differenceIndex < componentCount - 1; differenceIndex++) {
+        double dx = bulkSystem.getPhases()[1].getComponent(differenceIndex).getx()
+            - interphaseSystem.getPhases()[1].getComponent(differenceIndex).getx();
+        double dy = bulkSystem.getPhases()[0].getComponent(differenceIndex).getx()
+            - interphaseSystem.getPhases()[0].getComponent(differenceIndex).getx();
+        fluxX += totalMassTransferCoefficientMatrix[1][componentIndex][differenceIndex] * dx;
+        fluxY += totalMassTransferCoefficientMatrix[0][componentIndex][differenceIndex] * dy;
+      }
+      fluxX *= densityX;
+      fluxY *= densityY;
+      double errX = nFlux.get(componentIndex, 0) + fluxX - x * totalFlux;
+      double errY = nFlux.get(componentIndex, 0) - fluxY - y * totalFlux;
+      fvec.set(componentCount + 2 + componentIndex, 0, errX);
+      fvec.set(2 * componentCount + 1 + componentIndex, 0, errY);
     }
-
-    Matrix fluxX = totalMassTransferCoefficientMatrix[1].times(dx.transpose()).times(
-        bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[1].getMolarMass());
-    Matrix fluxY = totalMassTransferCoefficientMatrix[0].times(dy.transpose()).times(
-        bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[0].getMolarMass());
-
-    Matrix errX = nFlux.getMatrix(0, bulkSystem.getPhases()[1].getNumberOfComponents() - 2, 0, 0).plus(fluxX)
-        .minus(x.transpose().times(totalFlux));
-    Matrix errY = nFlux.getMatrix(0, bulkSystem.getPhases()[0].getNumberOfComponents() - 2, 0, 0).minus(fluxY)
-        .minus(y.transpose().times(totalFlux));
-
-    for (int i = bulkSystem.getPhases()[0].getNumberOfComponents()
-        + 2; i < (2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 1); i++) {
-      fvec.set(i, 0, errX.get((i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 2)), 0));
-      fvec.set((i + (bulkSystem.getPhases()[0].getNumberOfComponents() - 1)), 0,
-          errY.get((i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 2)), 0));
-    }
-
-    /*
-     * System.out.println("fvec"); fvec.print(30,30); errX.print(10,10); errY.print(10,10);
-     */
-    // fluxX.print(10,10);
-    // fluxY.print(10,10);
-    // Matrix fluxY = totalMassTransferCoefficientMatrix[1]
   }
 
   /**
@@ -195,7 +188,7 @@ public abstract class NonEquilibriumFluidBoundary
   public void setJacMassTrans() {
     double dij = 0;
     double tempJ = 0;
-    Jac.timesEquals(0.0);
+    CommonOps_DDRM.scale(0.0, Jac);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents() - 1; i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
@@ -236,8 +229,8 @@ public abstract class NonEquilibriumFluidBoundary
         * bulkSystem.getPhases()[0].getNumberOfComponents() - 1; i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         dij = i == (j + bulkSystem.getPhases()[0].getNumberOfComponents()) ? 1.0 : 0.0;
-        tempJ = -dij * (totalMassTransferCoefficientMatrix[1].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(),
-            i - bulkSystem.getPhases()[0].getNumberOfComponents()));
+        tempJ = -dij * totalMassTransferCoefficientMatrix[1][i - bulkSystem.getPhases()[0].getNumberOfComponents()][i
+            - bulkSystem.getPhases()[0].getNumberOfComponents()];
         Jac.set(i + 1, j, tempJ);
       }
     }
@@ -247,8 +240,8 @@ public abstract class NonEquilibriumFluidBoundary
       for (int j = bulkSystem.getPhases()[0].getNumberOfComponents(); j < 2
           * bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         dij = i == j ? 1.0 : 0.0;
-        tempJ = -dij * (totalMassTransferCoefficientMatrix[0].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(),
-            i - bulkSystem.getPhases()[0].getNumberOfComponents()));
+        tempJ = -dij * totalMassTransferCoefficientMatrix[0][i - bulkSystem.getPhases()[0].getNumberOfComponents()][i
+            - bulkSystem.getPhases()[0].getNumberOfComponents()];
         Jac.set(i + 1, j, tempJ);
       }
     }
@@ -260,7 +253,7 @@ public abstract class NonEquilibriumFluidBoundary
   public void setJacMassTrans2() {
     double dij = 0;
     double tempJ = 0;
-    Jac.timesEquals(0.0);
+    CommonOps_DDRM.scale(0.0, Jac);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
@@ -304,7 +297,7 @@ public abstract class NonEquilibriumFluidBoundary
         // interphaseSystem.getPhases()[0].getComponents()[i-bulkSystem.getPhases()[0].getNumberOfComponents()].getx());
         if (j != bulkSystem.getPhases()[0].getNumberOfComponents() - 1) {
           Jac.set(i + 2, j + bulkSystem.getPhases()[0].getNumberOfComponents(),
-              -totalMassTransferCoefficientMatrix[1].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(), j)
+              -totalMassTransferCoefficientMatrix[1][i - bulkSystem.getPhases()[0].getNumberOfComponents()][j]
                   * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                   / bulkSystem.getPhases()[1].getMolarMass()); // tempJ);
         }
@@ -326,8 +319,8 @@ public abstract class NonEquilibriumFluidBoundary
         if (j != 2 * bulkSystem.getPhases()[0].getNumberOfComponents() - 1) {
           Jac.set(i + 1 + bulkSystem.getPhases()[0].getNumberOfComponents(),
               j - bulkSystem.getPhases()[0].getNumberOfComponents(),
-              totalMassTransferCoefficientMatrix[0].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(),
-                  j - bulkSystem.getPhases()[0].getNumberOfComponents())
+              totalMassTransferCoefficientMatrix[0][i - bulkSystem.getPhases()[0].getNumberOfComponents()][j
+                  - bulkSystem.getPhases()[0].getNumberOfComponents()]
                   * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
                   / bulkSystem.getPhases()[0].getMolarMass()); // tempJ);
         }
@@ -526,7 +519,7 @@ public abstract class NonEquilibriumFluidBoundary
 
       // Check for singular or ill-conditioned Jacobian
       try {
-        dx = Jac.solve(fvec);
+        dx = solveMassTransferStep();
       } catch (RuntimeException e) {
         // Matrix solve failed - likely singular matrix
         logger.debug("Jacobian solve failed in mass transfer calculation: {}", e.getMessage());
@@ -538,16 +531,20 @@ public abstract class NonEquilibriumFluidBoundary
         continue;
       }
 
-      if (dx != null && !Double.valueOf(dx.norm2()).isNaN()) {
+      if (dx != null && !Double.valueOf(massTransferColumnNorm(dx)).isNaN()) {
         nanCount = 0; // Reset counter on successful solve
-        double uMassTransNorm = uMassTrans.norm2();
+        double uMassTransNorm = massTransferColumnNorm(uMassTrans);
         if (uMassTransNorm > 1e-20) {
-          uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
-          err = Math.abs(dx.norm2() / uMassTransNorm);
+          DMatrixRMaj dampedStep = dx.copy();
+          CommonOps_DDRM.scale(iter / (iter + factor), dampedStep);
+          CommonOps_DDRM.subtractEquals(uMassTrans, dampedStep);
+          err = Math.abs(massTransferColumnNorm(dx) / uMassTransNorm);
         } else {
           // Avoid division by zero
-          uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
-          err = Math.abs(dx.norm2());
+          DMatrixRMaj dampedStep = dx.copy();
+          CommonOps_DDRM.scale(iter / (iter + factor), dampedStep);
+          CommonOps_DDRM.subtractEquals(uMassTrans, dampedStep);
+          err = Math.abs(massTransferColumnNorm(dx));
         }
         updateMassTrans();
         calcFluxes();
@@ -568,6 +565,276 @@ public abstract class NonEquilibriumFluidBoundary
     calcFluxes();
   }
 
+  /**
+   * Solves the existing nonreactive film equations and interface heat balance together.
+   *
+   * <p>
+   * The segregated temperature/flux fixed point can amplify roundoff even from an equilibrium state. This Newton update
+   * includes temperature, checks every residual before taking a step, and accepts only finite positive-composition
+   * states with decreasing residual. No flux is overwritten to enforce equilibrium. Bulk inventories are never changed
+   * here.
+   *
+   * @throws IllegalStateException if transport, thermodynamics or convergence is invalid
+   */
+  protected final void solveCoupledMassHeatTransfer() {
+    SystemInterface savedInterface = interphaseSystem.clone();
+    DMatrixRMaj savedFlux = nFlux.copy();
+    double savedTotalFlux = totalFlux;
+    double[] savedHeatFlux = interphaseHeatFlux.clone();
+    try {
+      initInterphaseSystem();
+      setuMassTrans();
+      double[] state = new double[neq + 1];
+      System.arraycopy(uMassTrans.getData(), 0, state, 0, neq);
+      state[neq] = interphaseSystem.getTemperature();
+      double[] residual = evaluateCoupledFilm(state);
+      for (int iteration = 0; iteration < 50; iteration++) {
+        double norm = coupledFilmResidualNorm(residual);
+        if (norm <= 1.0) {
+          return;
+        }
+        DMatrixRMaj jacobian = new DMatrixRMaj(neq + 1, neq + 1);
+        for (int column = 0; column <= neq; column++) {
+          double step = coupledFilmDifferenceStep(state, column);
+          double[] plus = state.clone();
+          double[] minus = state.clone();
+          plus[column] += step;
+          minus[column] -= step;
+          double[] plusResidual = evaluateCoupledFilm(plus);
+          double[] minusResidual = evaluateCoupledFilm(minus);
+          for (int row = 0; row <= neq; row++) {
+            jacobian.set(row, column, (plusResidual[row] - minusResidual[row]) / (2.0 * step));
+          }
+        }
+        DMatrixRMaj rightHandSide = new DMatrixRMaj(neq + 1, 1, true, residual.clone());
+        for (int row = 0; row <= neq; row++) {
+          double scale = 0.0;
+          for (int column = 0; column <= neq; column++) {
+            scale = Math.max(scale, Math.abs(jacobian.get(row, column)));
+          }
+          if (!(scale > 0.0) || !Double.isFinite(scale)) {
+            throw new IllegalStateException("Invalid coupled film Jacobian row " + row);
+          }
+          for (int column = 0; column <= neq; column++) {
+            jacobian.set(row, column, jacobian.get(row, column) / scale);
+          }
+          rightHandSide.set(row, 0, rightHandSide.get(row, 0) / scale);
+        }
+        DMatrixRMaj update = new DMatrixRMaj(neq + 1, 1);
+        if (!CommonOps_DDRM.solve(jacobian, rightHandSide, update)) {
+          throw new IllegalStateException("Singular coupled film Jacobian");
+        }
+        boolean accepted = false;
+        for (double fraction = 1.0; fraction >= 1.0e-8; fraction *= 0.5) {
+          double[] candidate = state.clone();
+          for (int column = 0; column <= neq; column++) {
+            candidate[column] -= fraction * update.get(column, 0);
+          }
+          if (!isCoupledFilmStateAdmissible(candidate)) {
+            continue;
+          }
+          double[] candidateResidual;
+          try {
+            candidateResidual = evaluateCoupledFilm(candidate);
+          } catch (RuntimeException invalidCandidate) {
+            continue;
+          }
+          if (coupledFilmResidualNorm(candidateResidual) < norm) {
+            state = candidate;
+            residual = candidateResidual;
+            accepted = true;
+            break;
+          }
+        }
+        if (!accepted) {
+          throw new IllegalStateException("Coupled film line search failed; scaled residual=" + norm);
+        }
+      }
+      throw new IllegalStateException(
+          "Coupled film did not converge; scaled residual=" + coupledFilmResidualNorm(residual));
+    } catch (RuntimeException failure) {
+      interphaseSystem = savedInterface;
+      nFlux = savedFlux;
+      totalFlux = savedTotalFlux;
+      interphaseHeatFlux = savedHeatFlux;
+      throw failure;
+    }
+  }
+
+  /**
+   * Selects a centered-difference interval, keeping both composition probes positive.
+   *
+   * @param state interface compositions, component molar fluxes and temperature
+   * @param column variable to perturb
+   * @return finite-difference interval in that variable's units
+   */
+  protected double coupledFilmDifferenceStep(double[] state, int column) {
+    if (column == neq) {
+      return 1.0e-4;
+    }
+    if (column < 2 * bulkSystem.getNumberOfComponents()) {
+      return Math.min(Math.max(Math.abs(state[column]) * 1.0e-5, 1.0e-9), state[column] * 0.25);
+    }
+    return Math.max(Math.abs(state[column]) * 1.0e-5, 1.0e-8);
+  }
+
+  /**
+   * Tests the domain before thermodynamic recovery; no composition or temperature is clipped.
+   *
+   * @param state candidate interface state
+   * @return true for finite fluxes, strictly positive fractions below one and positive temperature
+   */
+  private boolean isCoupledFilmStateAdmissible(double[] state) {
+    for (double value : state) {
+      if (!Double.isFinite(value)) {
+        return false;
+      }
+    }
+    for (int component = 0; component < 2 * bulkSystem.getNumberOfComponents(); component++) {
+      if (!(state[component] > 0.0 && state[component] < 1.0)) {
+        return false;
+      }
+    }
+    return state[neq] > 0.0;
+  }
+
+  /**
+   * Evaluates the actual corrected film residuals and one interface energy balance.
+   *
+   * @param state interface mole fractions, molar fluxes in mol/(m2 s), temperature in K
+   * @return fugacity, normalization, film-flux and heat residuals (last entry in W/m2)
+   * @throws IllegalStateException if the candidate has invalid thermodynamics or transport
+   */
+  private double[] evaluateCoupledFilm(double[] state) {
+    if (!isCoupledFilmStateAdmissible(state)) {
+      throw new IllegalStateException("Inadmissible coupled film state");
+    }
+    for (int variable = 0; variable < neq; variable++) {
+      uMassTrans.set(variable, 0, state[variable]);
+    }
+    updateMassTrans();
+    calcFluxes();
+    interphaseSystem.setTemperature(state[neq]);
+    init();
+    setfvecMassTrans2();
+    double[] residual = new double[neq + 1];
+    System.arraycopy(fvec.getData(), 0, residual, 0, neq);
+    double transferredEnthalpy = 0.0;
+    for (int component = 0; component < bulkSystem.getNumberOfComponents(); component++) {
+      double gasTemperature = bulkSystem.getPhase(0).getTemperature();
+      double liquidTemperature = bulkSystem.getPhase(1).getTemperature();
+      double gasEnthalpy = bulkSystem.getPhase(0).getComponent(component).getHID(gasTemperature)
+          + bulkSystem.getPhase(0).getComponent(component).getHresTP(gasTemperature);
+      double liquidEnthalpy = bulkSystem.getPhase(1).getComponent(component).getHID(liquidTemperature)
+          + bulkSystem.getPhase(1).getComponent(component).getHresTP(liquidTemperature);
+      transferredEnthalpy += nFlux.get(component, 0) * (gasEnthalpy - liquidEnthalpy);
+    }
+    for (int phase = 0; phase < 2; phase++) {
+      double conductance = heatTransferCoefficient[phase] * heatTransferCorrection[phase];
+      if (!(conductance > 0.0) || !Double.isFinite(conductance)) {
+        throw new IllegalStateException("Invalid interfacial heat conductance for phase " + phase);
+      }
+      interphaseHeatFlux[phase] = -conductance * (bulkSystem.getPhase(phase).getTemperature() - state[neq]);
+    }
+    residual[neq] = interphaseHeatFlux[0] + interphaseHeatFlux[1] - transferredEnthalpy;
+    if (!Double.isFinite(coupledFilmResidualNorm(residual))) {
+      throw new IllegalStateException("Nonfinite coupled film residual");
+    }
+    return residual;
+  }
+
+  /**
+   * Scales every equation by its absolute convergence requirement rather than flux changes.
+   *
+   * @param residual complete coupled residual vector
+   * @return maximum normalized residual, or positive infinity for a nonfinite entry
+   */
+  private double coupledFilmResidualNorm(double[] residual) {
+    int components = bulkSystem.getNumberOfComponents();
+    double norm = 0.0;
+    for (int row = 0; row < residual.length; row++) {
+      if (!Double.isFinite(residual[row])) {
+        return Double.POSITIVE_INFINITY;
+      }
+      double tolerance = row < components ? 1.0e-10 : row < components + 2 ? 1.0e-12 : row < neq ? 1.0e-10 : 1.0e-6;
+      norm = Math.max(norm, Math.abs(residual[row]) / tolerance);
+    }
+    return norm;
+  }
+
+  /**
+   * Solves the Newton system with EJML factors and the established column-update substitution order.
+   *
+   * @return Newton step, including non-finite entries for the existing recovery branch to inspect
+   * @throws RuntimeException if factorization fails or the system has an exactly zero pivot
+   */
+  private DMatrixRMaj solveMassTransferStep() {
+    double[][] coefficients = new double[neq][neq];
+    for (int row = 0; row < neq; row++) {
+      for (int column = 0; column < neq; column++) {
+        coefficients[row][column] = Jac.get(row, column);
+      }
+    }
+    return new DMatrixRMaj(neq, 1, true, solveFilmLinearSystem(coefficients, fvec.getData()));
+  }
+
+  /**
+   * Solves a film Jacobian using EJML LU while preserving column-ordered triangular updates.
+   *
+   * <p>
+   * Film Jacobians can be extremely ill-conditioned. Row-ordered substitution can change their Newton trajectory; this
+   * implementation retains the previous arithmetic order without retaining a Jama dependency. Non-finite results remain
+   * available to the existing caller recovery logic, and only exactly zero pivots are rejected.
+   *
+   * @param coefficients square coefficient data
+   * @param rightHandSide right-hand-side vector
+   * @return independent solution vector
+   * @throws RuntimeException if factorization fails or a pivot is exactly zero
+   */
+  protected static double[] solveFilmLinearSystem(double[][] coefficients, double[] rightHandSide) {
+    int dimension = coefficients.length;
+    LUDecompositionAlt_DDRM decomposition = new LUDecompositionAlt_DDRM();
+    if (!decomposition.decompose(new DMatrixRMaj(coefficients))) {
+      throw new IllegalStateException("Film Jacobian LU factorization failed");
+    }
+    DMatrixRMaj factors = decomposition.getLU();
+    int[] permutation = decomposition.getPivot();
+    double[] solution = new double[dimension];
+    for (int row = 0; row < dimension; row++) {
+      if (factors.get(row, row) == 0.0) {
+        throw new IllegalStateException("Film Jacobian is singular");
+      }
+      solution[row] = rightHandSide[permutation[row]];
+    }
+    for (int diagonal = 0; diagonal < dimension; diagonal++) {
+      for (int row = diagonal + 1; row < dimension; row++) {
+        solution[row] -= solution[diagonal] * factors.get(row, diagonal);
+      }
+    }
+    for (int diagonal = dimension - 1; diagonal >= 0; diagonal--) {
+      solution[diagonal] /= factors.get(diagonal, diagonal);
+      for (int row = 0; row < diagonal; row++) {
+        solution[row] -= solution[diagonal] * factors.get(row, diagonal);
+      }
+    }
+    return solution;
+  }
+
+  /**
+   * Measures a solution column without treating an all-NaN vector as a zero update.
+   *
+   * @param column Newton residual or state column
+   * @return Euclidean norm, or NaN if any entry is NaN
+   */
+  private static double massTransferColumnNorm(DMatrixRMaj column) {
+    for (int row = 0; row < column.getNumRows(); row++) {
+      if (Double.isNaN(column.get(row, 0))) {
+        return Double.NaN;
+      }
+    }
+    return NormOps_DDRM.normP2(column);
+  }
+
   /** {@inheritDoc} */
   @Override
   public double[] calcFluxes() {
@@ -579,7 +846,7 @@ public abstract class NonEquilibriumFluidBoundary
 
     totalFlux = sum; // tot.get(0,0);
     // System.out.println("total flux " + totalFlux);
-    return nFlux.transpose().getArray()[0];
+    return nFlux.getData().clone();
   }
 
   /** {@inheritDoc} */

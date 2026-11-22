@@ -552,6 +552,9 @@ public final class DynamicCapabilityReport implements Serializable {
 
     for (ProcessElementInterface element : process.getAllElements()) {
       boolean added = addEntry(areaName, containerPath, element, target, seenElements);
+      if (element instanceof ControllerDeviceInterface) {
+        addEntry(areaName, containerPath, ((ControllerDeviceInterface) element).getTransmitter(), target, seenElements);
+      }
       if (added && element instanceof ModuleInterface) {
         ModuleInterface module = (ModuleInterface) element;
         String nestedPath = appendContainerPath(containerPath, element);
@@ -567,6 +570,9 @@ public final class DynamicCapabilityReport implements Serializable {
       }
       for (ControllerDeviceInterface controller : controllers) {
         addEntry(areaName, containerPath, controller, target, seenElements);
+        if (controller != null) {
+          addEntry(areaName, containerPath, controller.getTransmitter(), target, seenElements);
+        }
       }
     }
   }

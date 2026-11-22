@@ -2,6 +2,11 @@
 
 This directory contains Jupyter notebooks, Java examples, and case studies demonstrating NeqSim capabilities.
 
+Start with the [maintained examples catalog](../docs/examples/index.md) for guided
+entry points and stored notebook execution status. The links below are navigation,
+not a claim that every example has been executed against the current checkout.
+Read each example's setup, assumptions, validation evidence, and limitations before reuse.
+
 ## Quick Start (5 minutes)
 
 ### Jupyter Notebooks
@@ -20,13 +25,20 @@ See [neqsim/](neqsim/) for standalone Java code you can copy into your projects.
 
 ### Process Simulation
 Complete flowsheets and unit operations:
+- [Oil stabilization and recompression commissioning](stabilization-commissioning/README.md)
 - Gas compression trains
 - TEG dehydration systems
 - Gas-Oil Separation Plants (GOSP)
 - Heat exchanger networks
 - Distillation columns
 
-**Browse**: [notebooks/](notebooks/) - Look for files with `process`, `separator`, `compressor`, `teg`, `gosp`
+**Start here**: [Process tutorials](../docs/tutorials/index.md), including
+[TEG dehydration](../docs/tutorials/teg_dehydration_tutorial.md) and
+[gas-oil separation](../docs/tutorials/gosp_tutorial.md).
+
+For formation-water commingling, see the [produced-water compatibility
+study](produced-water-compatibility/README.md) with a three-phase process model,
+PHREEQC mineral scale calculations, case data, CLI and local MCP tools.
 
 ### Thermodynamics & Properties
 Fluid phase behavior and physical properties:
@@ -36,7 +48,8 @@ Fluid phase behavior and physical properties:
 - Dew point calculations
 - Density, viscosity, thermal conductivity
 
-**Browse**: [notebooks/](notebooks/) - Look for files with `flash`, `hydrate`, `phase`, `property`
+**Start here**: [Reading fluid properties](../docs/examples/ReadingFluidProperties.md)
+and the [thermodynamics cookbook](../docs/cookbook/thermodynamics-recipes.md).
 
 ### PVT Analysis
 Laboratory test simulations:
@@ -46,7 +59,9 @@ Laboratory test simulations:
 - Separator tests
 - Swelling tests
 
-**Browse**: [notebooks/](notebooks/) - Look for files with `pvt`, `cme`, `cvd`, `dl`
+**Start here**: [PVT laboratory-test guide](../docs/pvtsimulation/pvt_lab_tests.md)
+and [PVT simulation and tuning](../docs/examples/PVT_Simulation_and_Tuning.md).
+These maintained guides are under `docs/`, not this directory's notebook collection.
 
 ### Field Development & Subsea
 Production systems and economics:
@@ -56,7 +71,10 @@ Production systems and economics:
 - Economic analysis (NPV, CAPEX, OPEX)
 - SURF cost estimation
 
-**Browse**: [notebooks/](notebooks/) - Look for files with `subsea`, `well`, `pipeline`, `npv`, `field`
+**Start here**: [Field-development guide](../docs/fielddevelopment/README.md)
+and [well/SURF network integration](../docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md).
+For the complete ten-well optimization-to-living-report source acceptance, use the
+[engineer-runnable JPype workflow](../docs/process/optimization/OPTIMIZATION_OVERVIEW.md#mixed-continuousdiscrete-operating-point-search).
 
 ### Standards & Gas Quality
 Industry standard calculations:
@@ -65,7 +83,9 @@ Industry standard calculations:
 - Dew point standards
 - Sales gas contracts
 
-**Browse**: [notebooks/](notebooks/) - Look for files with `iso`, `standard`, `quality`, `dew`
+**Start here**: [Standards and gas quality](../docs/standards/README.md), including
+the [ISO 6976 worked example](../docs/standards/iso6976_calorific_values.md).
+The ISO 5167 metering notebook covers a different standard; it is not a calorific-value example.
 
 ### Safety & Depressurization
 Process safety calculations:
@@ -74,7 +94,8 @@ Process safety calculations:
 - Fire case modeling
 - Source term generation
 
-**Browse**: [notebooks/](notebooks/) - Look for files with `safety`, `depressur`, `blowdown`, `psv`
+**Start here**: [Safety documentation](../docs/safety/index.md).
+Follow the linked method-specific guides for applicability, validation, and engineering-review boundaries.
 
 ## Case Studies
 
@@ -112,8 +133,12 @@ Have a useful example? Share it with the community:
 
 - **Documentation**: [docs/](../docs/) - Full reference manual
 - **Tests**: [src/test/](../src/test/) - Unit test examples
-- **Task Solving**: [task_solve/](../task_solve/) - AI-assisted workflow for new problems
-- **API Reference**: [JavaDoc](https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html)
+- **Task Solving**: [Engineering-task workflow](../docs/tutorials/solve-engineering-task.md) - Setup, analysis, validation, and reporting
+- **Java/API Setup**: [Java getting-started guide](../docs/java-getting-started.md) - Build and run against the selected NeqSim version
+- **API Source**: [Current checkout's Java packages](../src/main/java/neqsim/) - Signatures and Javadoc comments matching this repository revision
+
+`task_solve/` is the default local output directory for engineering tasks, not a
+tracked examples catalog. The workflow guide explains how to configure its location.
 
 ## Getting Help
 

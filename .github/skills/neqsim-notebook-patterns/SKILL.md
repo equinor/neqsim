@@ -199,7 +199,7 @@ them before running the checker:
 
 ```powershell
 Remove-Item -Recurse -Force task_solve\<slug>\runner_output -ErrorAction SilentlyContinue
-python devtools/consistency_checker.py task_solve/<slug>/
+uv run --project devtools --locked devtools/consistency_checker.py task_solve/<slug>/
 ```
 
 The consistency checker is now **sweep-aware** (it ignores deliberately-varied
@@ -499,7 +499,7 @@ The validator checks:
 - **Benchmark validation**: object/array of entries identifying what was compared, a reference, and a comparison; `status` (if present) must be PASS/FAIL/WARN/INFO
 
 The same rules run in CI without the JVM via
-`python devtools/validate_task_results.py task_solve/<slug>`. See
+`uv run --project devtools --locked devtools/validate_task_results.py task_solve/<slug>`. See
 [`neqsim-professional-reporting`](../neqsim-professional-reporting/SKILL.md) for
 the full `results.json` master schema and reporting rules.
 

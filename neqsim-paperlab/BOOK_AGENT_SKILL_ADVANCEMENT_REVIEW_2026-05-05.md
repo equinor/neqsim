@@ -43,18 +43,18 @@ New agents added:
 
 New skills added:
 
-- `paperlab_curriculum_prerequisite_graph`
-- `paperlab_learning_objective_matrix`
-- `paperlab_equation_dimensional_audit`
-- `paperlab_neqsim_api_claim_verification`
-- `paperlab_notebook_regression_baselines`
-- `paperlab_exercise_difficulty_ramp`
-- `paperlab_standards_clause_traceability`
-- `paperlab_case_thread_continuity`
-- `paperlab_figure_accessibility_style`
-- `paperlab_interactive_html_labs`
-- `paperlab_chapter_health_dashboard`
-- `paperlab_book_release_orchestration`
+- `paperlab-curriculum-prerequisite-graph`
+- `paperlab-learning-objective-matrix`
+- `paperlab-equation-dimensional-audit`
+- `paperlab-neqsim-api-claim-verification`
+- `paperlab-notebook-regression-baselines`
+- `paperlab-exercise-difficulty-ramp`
+- `paperlab-standards-clause-traceability`
+- `paperlab-case-thread-continuity`
+- `paperlab-figure-accessibility-style`
+- `paperlab-interactive-html-labs`
+- `paperlab-chapter-health-dashboard`
+- `paperlab-book-release-orchestration`
 
 This pass defines responsibilities, required context, output artifacts, schemas,
 pass criteria, and guardrails. The next implementation layer should add CLI
@@ -131,20 +131,20 @@ These are not release blockers, but they are the next frontier:
 
 The most relevant current skills are:
 
-- `book_creation`: project structure, book.yaml, figures, builds, and rendering.
-- `neqsim_in_writing`: claim-to-test linkage, units, notebooks, and NeqSim-backed writing.
-- `paperlab_student_readability`: student learning quality.
-- `paperlab_chapter_flow_editor`: chapter transitions, case continuity, and narrative arc.
-- `paperlab_scientific_traceability_audit`: claim, figure, equation, citation, unit, and notebook traceability.
-- `paperlab_book_typesetting_release`: release-quality HTML/PDF/DOCX/ODF rendering.
-- `paperlab_book_knowledge_graph`: graph of chapters, figures, notebooks, standards, and skills.
-- `paperlab_exam_alignment`: learning and assessment alignment.
-- `paperlab_field_development_timeline`: field-development timeline framing.
-- `paperlab_source_pdf_to_html`: source-material ingestion.
-- `technical_figure_understanding`: figure reading and technical interpretation.
+- `book-creation`: project structure, book.yaml, figures, builds, and rendering.
+- `neqsim-in-writing`: claim-to-test linkage, units, notebooks, and NeqSim-backed writing.
+- `paperlab-student-readability`: student learning quality.
+- `paperlab-chapter-flow-editor`: chapter transitions, case continuity, and narrative arc.
+- `paperlab-scientific-traceability-audit`: claim, figure, equation, citation, unit, and notebook traceability.
+- `paperlab-book-typesetting-release`: release-quality HTML/PDF/DOCX/ODF rendering.
+- `paperlab-book-knowledge-graph`: graph of chapters, figures, notebooks, standards, and skills.
+- `paperlab-exam-alignment`: learning and assessment alignment.
+- `paperlab-field-development-timeline`: field-development timeline framing.
+- `paperlab-source-pdf-to-html`: source-material ingestion.
+- `technical-figure-understanding`: figure reading and technical interpretation.
 - `figure_discussion` / `figure-discussion`: observation, mechanism, implication, recommendation structure.
-- `generate_publication_figures`: consistent technical figures.
-- `neqsim_standard_requirement_extraction`: standards requirement extraction.
+- `generate-publication-figures`: consistent technical figures.
+- `neqsim-standard-requirement-extraction`: standards requirement extraction.
 
 ## Main Capability Gaps
 
@@ -396,51 +396,51 @@ Why it matters: PaperLab already has the pieces; this agent would make the relea
 
 ## Recommended New Skills
 
-### 1. `paperlab_curriculum_prerequisite_graph`
+### 1. `paperlab-curriculum-prerequisite-graph`
 
 Defines how to extract concepts, prerequisites, and chapter dependencies. Used by `curriculum-architect`.
 
-### 2. `paperlab_learning_objective_matrix`
+### 2. `paperlab-learning-objective-matrix`
 
 Defines the schema for mapping learning objectives to sections, figures, notebooks, examples, exercises, and assessments. Used by `learning-objective-verifier`.
 
-### 3. `paperlab_equation_dimensional_audit`
+### 3. `paperlab-equation-dimensional-audit`
 
 Defines equation extraction, unit checking, symbol collision detection, and nomenclature synchronization. Used by `equation-consistency-auditor`.
 
-### 4. `paperlab_neqsim_api_claim_verification`
+### 4. `paperlab-neqsim-api-claim-verification`
 
 Defines how to verify book API snippets against Java source, tests, notebooks, and deprecation information. Used by `neqsim-api-verifier`.
 
-### 5. `paperlab_notebook_regression_baselines`
+### 5. `paperlab-notebook-regression-baselines`
 
 Defines notebook output baselines, tolerances, figure staleness rules, and pass/stale/broken classifications. Used by `notebook-regression-monitor`.
 
-### 6. `paperlab_exercise_difficulty_ramp`
+### 6. `paperlab-exercise-difficulty-ramp`
 
 Defines exercise types, difficulty scoring, Bloom-level classification, and cross-chapter integration exercise patterns. Used by `exercise-progression-builder`.
 
-### 7. `paperlab_standards_clause_traceability`
+### 7. `paperlab-standards-clause-traceability`
 
 Defines how to map standards statements to standard, revision, clause, paraphrase, and evidence strength. Used by `standards-traceability-curator`.
 
-### 8. `paperlab_case_thread_continuity`
+### 8. `paperlab-case-thread-continuity`
 
 Defines case registries, assumption drift checks, and cross-chapter case continuity rules. Used by `case-thread-continuity-editor`.
 
-### 9. `paperlab_figure_accessibility_style`
+### 9. `paperlab-figure-accessibility-style`
 
 Defines figure readability and accessibility checks: axis labels, units, color contrast, legend placement, font size, and print safety. Used by `figure-accessibility-and-style-reviewer`.
 
-### 10. `paperlab_interactive_html_labs`
+### 10. `paperlab-interactive-html-labs`
 
 Defines how static notebooks become interactive labs in HTML with safe inputs and static fallbacks. Used by `interactive-lab-designer`.
 
-### 11. `paperlab_chapter_health_dashboard`
+### 11. `paperlab-chapter-health-dashboard`
 
 Defines composite scoring from audit outputs and chapter release classifications. Used by `chapter-readiness-scorer`.
 
-### 12. `paperlab_book_release_orchestration`
+### 12. `paperlab-book-release-orchestration`
 
 Defines the order of audits, blocking criteria, output formats, and final release report. Used by `book-release-orchestrator`.
 
@@ -469,7 +469,7 @@ Agents:
 - new `equation-consistency-auditor`,
 - new `neqsim-api-verifier`,
 - new `standards-traceability-curator`,
-- existing `paperlab_scientific_traceability_audit` skill.
+- existing `paperlab-scientific-traceability-audit` skill.
 
 Outputs:
 
@@ -547,33 +547,33 @@ Outputs:
 
 ### P0: Immediate High-Impact Additions
 
-1. `learning-objective-verifier` + `paperlab_learning_objective_matrix`.
-2. `neqsim-api-verifier` + `paperlab_neqsim_api_claim_verification`.
-3. `notebook-regression-monitor` + `paperlab_notebook_regression_baselines`.
+1. `learning-objective-verifier` + `paperlab-learning-objective-matrix`.
+2. `neqsim-api-verifier` + `paperlab-neqsim-api-claim-verification`.
+3. `notebook-regression-monitor` + `paperlab-notebook-regression-baselines`.
 
 These would catch the most damaging issues: promised-but-unsupported learning outcomes, broken API examples, and stale computational figures.
 
 ### P1: Technical Excellence
 
-4. `equation-consistency-auditor` + `paperlab_equation_dimensional_audit`.
-5. `standards-traceability-curator` + `paperlab_standards_clause_traceability`.
-6. `figure-accessibility-and-style-reviewer` + `paperlab_figure_accessibility_style`.
+4. `equation-consistency-auditor` + `paperlab-equation-dimensional-audit`.
+5. `standards-traceability-curator` + `paperlab-standards-clause-traceability`.
+6. `figure-accessibility-and-style-reviewer` + `paperlab-figure-accessibility-style`.
 
 These would move books from good course material toward professional engineering reference quality.
 
 ### P2: Advanced Student Experience
 
-7. `exercise-progression-builder` + `paperlab_exercise_difficulty_ramp`.
-8. `interactive-lab-designer` + `paperlab_interactive_html_labs`.
-9. `case-thread-continuity-editor` + `paperlab_case_thread_continuity`.
+7. `exercise-progression-builder` + `paperlab-exercise-difficulty-ramp`.
+8. `interactive-lab-designer` + `paperlab-interactive-html-labs`.
+9. `case-thread-continuity-editor` + `paperlab-case-thread-continuity`.
 
 These would make the books much more useful for students and instructors.
 
 ### P3: Whole-System Orchestration
 
-10. `curriculum-architect` + `paperlab_curriculum_prerequisite_graph`.
-11. `chapter-readiness-scorer` + `paperlab_chapter_health_dashboard`.
-12. `book-release-orchestrator` + `paperlab_book_release_orchestration`.
+10. `curriculum-architect` + `paperlab-curriculum-prerequisite-graph`.
+11. `chapter-readiness-scorer` + `paperlab-chapter-health-dashboard`.
+12. `book-release-orchestrator` + `paperlab-book-release-orchestration`.
 
 These would make PaperLab scalable across many books.
 

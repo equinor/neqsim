@@ -6,7 +6,9 @@
 
 package neqsim.statistics.experimentalsamplecreation.samplecreator.wettedwallcolumnsamplecreator;
 
-import Jama.Matrix;
+import java.util.Arrays;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.dataanalysis.datasmoothing.DataSmoother;
 import neqsim.statistics.experimentalequipmentdata.ExperimentalEquipmentData;
 import neqsim.statistics.experimentalequipmentdata.wettedwallcolumndata.WettedWallColumnData;
@@ -25,6 +27,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
+  private static final Logger logger = LogManager.getLogger(WettedWallColumnSampleCreator.class);
+
   WettedWallDataReader reader;
   double[] time;
   double[] pressure;
@@ -100,8 +104,7 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
    * smoothData.
    */
   public void smoothData() {
-    Matrix data = new Matrix(pressure, 1);
-    data.print(10, 2);
+    logger.info("Pressure samples: {}", Arrays.toString(pressure));
 
     DataSmoother smoother = new DataSmoother(pressure, 10, 10, 0, 2);
     smoother.runSmoothing();
@@ -131,10 +134,9 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
     smoother.runSmoothing();
     smoothedInletLiquidFlowRate = smoother.getSmoothedNumbers();
 
-    data = new Matrix(smoothedPressure, 1);
-    data.print(10, 2);
+    logger.info("Smoothed pressure samples: {}", Arrays.toString(smoothedPressure));
 
-    System.out.println("data-smoothing finished!");
+    logger.info("data-smoothing finished!");
   }
 
   /**

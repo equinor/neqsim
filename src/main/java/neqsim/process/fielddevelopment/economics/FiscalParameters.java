@@ -168,6 +168,12 @@ public final class FiscalParameters implements Serializable {
   /** Interest rate on carried-forward losses (0-1). */
   private final double lossCarryForwardInterest;
 
+  /**
+   * Whether a negative tax base is refunded in the same year as negative tax (cash-flow tax, e.g. the Norwegian
+   * petroleum tax after 2022) instead of being carried forward.
+   */
+  private final boolean lossRefund;
+
   /** Whether losses can be carried back. */
   private final boolean lossCarryBack;
 
@@ -233,6 +239,7 @@ public final class FiscalParameters implements Serializable {
     this.lossCarryForward = builder.lossCarryForward;
     this.lossCarryForwardYears = builder.lossCarryForwardYears;
     this.lossCarryForwardInterest = builder.lossCarryForwardInterest;
+    this.lossRefund = builder.lossRefund;
     this.lossCarryBack = builder.lossCarryBack;
     this.lossCarryBackYears = builder.lossCarryBackYears;
     this.ringFenced = builder.ringFenced;
@@ -399,6 +406,35 @@ public final class FiscalParameters implements Serializable {
     return lossCarryForwardInterest;
   }
 
+  /**
+   * Whether a negative tax base is refunded as negative tax in the same year.
+   *
+   * @return true if losses are refunded immediately (cash-flow tax), false otherwise
+   */
+  public boolean isLossRefund() {
+    return lossRefund;
+  }
+
+  /**
+   * Creates the Norwegian petroleum cash-flow tax regime in force from 2022: 22 % corporate tax plus a 56 % special tax
+   * on the same net cash-flow base (78 % marginal rate in total), immediate expensing of investments, no uplift and
+   * immediate refund of negative tax bases.
+   *
+   * <p>
+   * Because both taxes share one base, the after-tax cash flow equals 22 % of the pre-tax cash flow. CashFlowEngine
+   * discounts at year end, so choose the discounting convention appropriate for the study.
+   * </p>
+   *
+   * @return fiscal parameters for the Norwegian cash-flow tax regime
+   */
+  public static FiscalParameters norwegianCashFlowTax2022() {
+    return builder("NO-CF").countryName("Norway (cash-flow tax, 2022)")
+        .description("Norwegian petroleum cash-flow tax from 2022: 78 % on net cash flow, immediate expensing")
+        .validFromYear(2022).fiscalSystemType(FiscalSystemType.CONCESSIONARY).corporateTaxRate(0.22)
+        .resourceTaxRate(0.56).depreciation(DepreciationMethod.IMMEDIATE, 1).uplift(0.0, 0).lossRefund(true)
+        .ringFenced(RingFenceLevel.COMPANY).decommissioning(true, false).build();
+  }
+
   public boolean isLossCarryBack() {
     return lossCarryBack;
   }
@@ -462,6 +498,7 @@ public final class FiscalParameters implements Serializable {
     private boolean lossCarryForward = true;
     private int lossCarryForwardYears = 0; // 0 = unlimited
     private double lossCarryForwardInterest = 0.0;
+    private boolean lossRefund = false;
     private boolean lossCarryBack = false;
     private int lossCarryBackYears = 0;
     private boolean ringFenced = false;
@@ -568,6 +605,17 @@ public final class FiscalParameters implements Serializable {
       this.lossCarryForward = true;
       this.lossCarryForwardYears = years;
       this.lossCarryForwardInterest = interestRate;
+      return this;
+    }
+
+    /**
+     * Sets whether a negative tax base is refunded immediately as negative tax (cash-flow tax).
+     *
+     * @param refund true to refund losses in the year they occur
+     * @return this builder
+     */
+    public Builder lossRefund(boolean refund) {
+      this.lossRefund = refund;
       return this;
     }
 

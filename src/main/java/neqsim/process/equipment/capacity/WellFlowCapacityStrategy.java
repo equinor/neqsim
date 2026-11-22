@@ -11,13 +11,16 @@ import neqsim.process.equipment.reservoir.WellFlow;
  * Capacity strategy for well flow equipment.
  *
  * <p>
- * This strategy evaluates well flow capacity based on constraints including:
+ * This strategy contributes the well production index utilization constraint.
  * </p>
- * <ul>
- * <li>Well production index utilization</li>
- * <li>Flow rate vs AOF (absolute open flow)</li>
- * <li>Drawdown pressure vs maximum allowable</li>
- * </ul>
+ *
+ * <p>
+ * The subsurface deliverability limits (drawdown and minimum flowing bottom-hole pressure) are owned by the
+ * {@link WellFlow} equipment itself, not by this strategy: set them with
+ * {@link WellFlow#setMaxDrawdown(double, String)} and {@link WellFlow#setMinBottomHolePressure(double, String)} and
+ * enable them with {@link WellFlow#useWellConstraints()}. The well then publishes its own {@code "well drawdown"} and
+ * {@code "min BHP"} capacity constraints.
+ * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -27,11 +30,15 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
   /** Default maximum well production index in Sm3/d/bar. */
   public static final double DEFAULT_MAX_PI = 100.0;
 
-  /** Default maximum drawdown pressure in bar. */
+  /**
+   * Default maximum drawdown pressure in bar.
+   *
+   * @deprecated the drawdown limit belongs to the well; use {@link WellFlow#setMaxDrawdown(double, String)}.
+   */
+  @Deprecated
   public static final double DEFAULT_MAX_DRAWDOWN_BAR = 200.0;
 
   private double maxPI = DEFAULT_MAX_PI;
-  private double maxDrawdownBar = DEFAULT_MAX_DRAWDOWN_BAR;
 
   /**
    * Default constructor.
@@ -40,14 +47,25 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
   }
 
   /**
-   * Constructor with custom constraints.
+   * Constructor with a custom production-index limit.
    *
-   * @param maxPI maximum well production index
-   * @param maxDrawdownBar maximum drawdown pressure in bar
+   * @param maxPI maximum well production index in Sm3/d/bar
+   * @param maxDrawdownBar ignored; the drawdown limit is owned by the well, so set it with
+   * {@link WellFlow#setMaxDrawdown(double, String)} instead. Supplying it here has no effect and never had.
+   * @deprecated use {@link #WellFlowCapacityStrategy(double)} and set the drawdown limit on the {@link WellFlow}.
    */
+  @Deprecated
   public WellFlowCapacityStrategy(double maxPI, double maxDrawdownBar) {
     this.maxPI = maxPI;
-    this.maxDrawdownBar = maxDrawdownBar;
+  }
+
+  /**
+   * Constructor with a custom production-index limit.
+   *
+   * @param maxPI maximum well production index in Sm3/d/bar
+   */
+  public WellFlowCapacityStrategy(double maxPI) {
+    this.maxPI = maxPI;
   }
 
   /** {@inheritDoc} */

@@ -1,0 +1,22 @@
+{
+  "source_parent_sha": "3dbfef974a2e8d50ce59f44030b2c5dad0f7ad4b",
+  "geometry_blob": "e62e0a03a8eeb92d9cbad04b109142501a0903a4",
+  "matrix_rows": 162,
+  "diameters_m": [
+    0.001,
+    0.01,
+    0.2,
+    1.0148,
+    3.0,
+    10.0
+  ],
+  "minimum_positive_holdup": 1e-30,
+  "decimal_digits": 80,
+  "series_terms": [
+    120,
+    180
+  ],
+  "relative_gate": "5e-13",
+  "maximum_relative_error": "1.2031190512623130611836483636188622454162818364704202253033026360372271319847768E-14",
+  "maximum_unit_series_refinement": "1.84754402291975552893616591544552914897E-42"
+}

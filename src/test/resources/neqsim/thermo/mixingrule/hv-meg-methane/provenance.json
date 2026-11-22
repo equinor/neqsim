@@ -1,0 +1,73 @@
+{
+  "status": "Staged declared-input diagnostic; no activation or original-author reconstruction",
+  "measurement_doi": "10.1016/j.fluid.2006.11.001",
+  "measurement_representation": "Six liquid dataset1 rows retained in campaign receipt6713997329. Source original table images/author uncertainty unresolved; compiler U95 retained. Gas dataset2 identity quarantined; no measured gas MEG or overall feed.",
+  "independent_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6713997329",
+  "archive_sha256": "32e6d6dddb02ac779e112638312fd5d3e143f9c2321fc0431cb7a604214f44d3",
+  "EOS": "SRK only; not PR transferable",
+  "tuple_MEG_first": {
+    "D12_K": 181,
+    "DT12": 0,
+    "D21_K": 2274,
+    "DT21": 0,
+    "alpha": 0.07
+  },
+  "convention": "Infinite-pressure covolume-weighted modified NRTL, linear covolume; tau12=D12/T+DT12, D12=(g12-g22)/R; tau21=D21/T+DT21, D21=(g21-g11)/R; MEG=1 and methane=2. D in K, DT and alpha dimensionless.",
+  "MEG_pure": {
+    "TC_K": 720,
+    "PC_bara": 82,
+    "omega": 0.5347,
+    "Mathias_Copeman": [
+      1.1121,
+      0.9679,
+      -1.42
+    ],
+    "fit_Tr": [
+      0.4,
+      0.9
+    ]
+  },
+  "methane_pure": {
+    "TC_K": 190.56,
+    "PC_bara": 45.99,
+    "omega": 0.0115,
+    "alpha": "ordinary Soave; declared library reference inputs, original author inputs unresolved"
+  },
+  "scope": "Liquid methane comparison and numerical/native independent parity only; predicted gas MEG is not reverse-solubility validation.273.25/283.29K below MEG alpha fit range. No physical accuracy tolerance, hydrate, ice/brine or extrapolation qualification.",
+  "independent_solver": {
+    "file": "binary_solver.py",
+    "sha256": "27c4bc04179503414dd27774f4c5ad9fc72fc98e70c9a5d39b6ecd323d95c7dc",
+    "lineage": "Byte-identical binary_solver.py from the verified r48 receipt archive",
+    "replay": "reproduce_reference.py --output /path/to/report.json",
+    "method": "60-digit extensive-attraction mole differences at1e-10/5e-11mol; independent cubic roots and two-log-fugacity Newton solve; finite final root/log arithmetic"
+  },
+  "assessed_coordinates_only": {
+    "T_K": [
+      273.25,
+      283.29,
+      298.25,
+      298.33,
+      323.35,
+      323.45
+    ],
+    "P_bara": [
+      99.8,
+      50,
+      100.2,
+      50.2,
+      50.2,
+      100.8
+    ],
+    "liquid_methane_x": [
+      0.0116,
+      0.00595,
+      0.01149,
+      0.00595,
+      0.00606,
+      0.01146
+    ],
+    "source_parameter_fit_range": null,
+    "parameter_covariance_or_uncertainty": null,
+    "meaning": "Six discrete observations, not a fitted or continuously qualified T/P/composition range"
+  }
+}

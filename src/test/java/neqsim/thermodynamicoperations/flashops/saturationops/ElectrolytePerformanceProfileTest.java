@@ -17,7 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * @author ESOL
  */
-@Tag("slow")
+@Tag("benchmark")
 public class ElectrolytePerformanceProfileTest {
   private static final Logger logger = LogManager.getLogger(ElectrolytePerformanceProfileTest.class);
 

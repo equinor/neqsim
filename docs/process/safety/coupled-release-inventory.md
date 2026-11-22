@@ -1,0 +1,627 @@
+---
+title: Coupled release and inventory depletion
+description: Rigid equilibrium and retained-phase inventories coupled to selected release physics, explicit heat and interphase boundaries, native process dynamics, conservative balances, and supplier-neutral source frames.
+---
+
+# Coupled release and inventory depletion
+
+`ReleaseInventory` is an opt-in process unit for one rigid, well-mixed equilibrium
+inventory and one short opening. Unlike a hypothetical source sample, its native
+`runTransient` removes mass and energy. The changed temperature, pressure and composition
+then determine the next release calculation. It works within both `ProcessSystem` and
+`ProcessModel`; neither container nor the existing separator/blowdown APIs are changed.
+
+The original constructor remains a single-gas compatibility API. An overload ending in an
+explicit `PhaseType` selects `GAS`, `OIL`, `LIQUID` or `AQUEOUS` withdrawal. The selected
+equilibrium phase supplies the upstream state and withdrawn composition; the entire remaining
+inventory is then reflashed. This is a boundary condition, not a level/geometry model: no
+entrainment, slip, interfacial transfer rate or automatic fallback phase is inferred.
+
+An additional opt-in `ReleaseInventoryPhaseGeometry` overload adds a cylindrical-vessel
+geometry gate to the explicit phase selection. It calculates the live liquid level and
+gas/liquid interface area from phase volumes, verifies that the selected phase occupies the
+declared opening elevation, and rejects an opening inside a caller-declared interface exclusion
+band. The band makes unresolved waves and entrainment machine-readable and fail-closed; it is not
+a carry-over correlation.
+
+An overload accepting `List<PhaseType>` and `phaseExhaustionMassFraction` adds a caller-declared
+ordered transition plan. The first phase must initially be present above the threshold. A transient
+step advances only to the next named phase when the active phase inventory mass fraction reaches
+the explicit threshold. It never selects a phase from density, position or phase count. If the
+immediately next planned phase is not usable, the complete call fails atomically.
+
+The constructor clones the supplied EOS system and scales its amount to the specified
+volume at its initial temperature and pressure. The supplied mole count defines composition,
+not vessel size or kg/s. Returned fluids and accounting snapshots are independent copies.
+
+The dynamic-capability audit classifies the unit as `DYNAMIC_LUMPED` because it owns
+component masses and internal energy. This state-ownership category persists when the
+opening is closed or steady-state mode is requested. It does not certify runtime readiness:
+activation remains `UNVERIFIED` and source-frame evidence remains `UNQUALIFIED`.
+
+## Balance equations and numerical method
+
+For component inventory $m_i$ in kg, selected-phase component mass fraction $w_{i,s}$,
+internal energy $U$ in J, fixed volume $V$ in m3, and release rate $\dot m$ in kg/s:
+
+$$\frac{dm_i}{dt}=-w_{i,s}\dot m,\qquad
+\frac{dU}{dt}=\dot Q_{ext}-h_{0,s}\dot m,\qquad V=\mathrm{constant}$$
+
+$h_{0,s}$ is the selected phase's EOS upstream stagnation enthalpy in J/kg. The discharge removes enthalpy,
+including flow work; subtracting only specific internal energy would predict the wrong
+cooling. Enthalpy and internal energy can be negative under the selected EOS reference.
+Their signed balance is retained. The default `ReleaseInventoryHeatTransfer.adiabatic()` boundary
+sets $\dot Q_{ext}=0$. Opt-in `constantPower(...)` and `linearConductance(...)` boundaries add a
+caller-declared signed heat rate in W, positive into the inventory. The linear form uses
+$\dot Q_{ext}=UA(T_{environment}-T_{inventory})$ with explicit W/K and K inputs. Both require
+provenance and are evaluated from the immutable beginning-of-substep state. They do not predict
+fire heat flux, wall thermal inertia, radiation, interfacial heat/latent transfer or phase-transfer
+rates. No boundary work, inflow, kinetic inventory energy or potential-energy change is included.
+
+Each explicit Euler substep removes selected-phase composition, integrates
+$\dot Q_{ext}-h_{0,s}\dot m$,
+then calls NeqSim's volume/internal-energy flash with explicit `m3` and `J` units.
+It verifies component, volume and energy closure to relative $10^{-7}$, including cumulative
+closure $U+H_{released}-Q_{ext}=U_0$ against the original inventory. The substep is limited by `maxSubstepS`, remaining
+duration, and 1% of current selected-phase mass. This bound prevents overdraw; it is **not** an
+accuracy estimate. Refine `maxSubstepS` and the external output timestep for each study.
+A call needing more than 10,000 substeps fails without committing this unit's state.
+An isolated inventory can continue integrating an active heat boundary while its opening is
+closed. The cumulative signed heat is exposed by `Balance.getHeatTransferEnergyJ()` and by
+deterministic source-frame provenance together with the boundary type and provenance string.
+
+For an ordered plan, the phase-exhaustion threshold is a model input, not a numerical tolerance.
+It represents the minimum phase inventory for which the selected homogeneous withdrawal boundary
+is considered applicable. The transition preserves all residual material in the reflashed vessel;
+it changes only which explicitly named equilibrium phase supplies subsequent outflow composition
+and enthalpy. Threshold sensitivity therefore belongs in each study's validation matrix.
+
+The general VU flash's stopping tolerance is looser than the cumulative accounting target.
+Each substep therefore permits up to 32 solves/refinements of the same VU equations until
+volume and energy residuals are at most $10^{-11}$ relative to their respective scales.
+After the first general VU solve, a nearby single-phase state can use a coupled Newton
+correction including both volume/energy cross derivatives. A bounded line search reflashes
+each trial with the configured EOS and mixing rule; it accepts only an unchanged phase
+and a smaller scaled residual. Multiphase states, invalid Jacobians and rejected trials
+retain the general VU refinement path. This prevents dense-liquid stagnation caused by
+repeated diagonal updates without changing the inventory closure target or general VU solver.
+Failure to meet the target produces `INVENTORY_VU_REFINEMENT_FAILED`. The total number of
+VU solves/refinements is available through `getLastVolumeEnergySolves()` and frame provenance;
+it does not count the TP trials internal to each refinement.
+
+`ReleaseInventoryTest.linearHeatBoundaryRefinesAndWritesExecutableBenchmark` executes the
+lumped-conductance boundary at 1.0, 0.5, 0.25 and 0.125 s maximum substeps. It checks monotone
+successive refinement, temperature bounds and the signed energy ledger, and writes
+`target/source-term-benchmarks/release-inventory-heat-boundary.csv`. This is a numerical boundary
+and conservation benchmark, not independent fire, wall or blowdown validation.
+
+## Retained-phase finite-rate inventory
+
+The dynamic capability resolver classifies `NonEquilibriumReleaseInventory` as `DYNAMIC_LUMPED`
+for both `ProcessSystem` and `ProcessModel`, including when its release opening is closed.
+This describes stored-state ownership; runtime activation remains `UNVERIFIED` and source-frame
+evidence remains `UNQUALIFIED` under the [dynamic capability contract](../dynamic-capability-contract).
+
+`NonEquilibriumReleaseInventory` is a separate opt-in model for exactly one gas and one oil,
+generic-liquid or aqueous phase. It does not call a TP or VU equilibrium flash after a component
+transfer. Instead, it retains gas and liquid component masses separately and evaluates forced
+homogeneous EOS phases. Existing constructors retain the common-pressure/common-temperature
+boundary. A coupled Newton solve enforces
+
+$$V_g(P,T,\mathbf{m}_g)+V_l(P,T,\mathbf{m}_l)=V_{vessel}$$
+
+and
+
+$$U_g(P,T,\mathbf{m}_g)+U_l(P,T,\mathbf{m}_l)=U_{target}$$
+
+after every candidate substep. The state is committed only after per-component, total-mass,
+volume and energy residuals close. The selected withdrawal phase supplies the source composition
+and stagnation enthalpy. The other phase remains in the inventory rather than being re-partitioned
+by an equilibrium flash.
+
+`ReleaseInventoryInterphaseTransfer` requires component coefficients in m/s, a donor-fraction
+bound and a non-empty provenance string. For live interface area $A$ in m2, gas molar
+concentration $c_g$ in mol/m3, component molar mass $M_i$ in kg/mol and explicit timestep
+$\Delta t$ in s, signed liquid-to-gas transfer is
+
+$$\Delta m_i=k_i A c_g M_i\left(x_i\frac{\phi_i^l}{\phi_i^g}-y_i\right)\Delta t$$
+
+Each component is bounded independently to the configured fraction of its donor inventory.
+Positive values evaporate and negative values condense. The phase-enthalpy difference associated
+with the transfer is retained as `Balance.getInterphaseLatentEnergyJ()` and deterministic frame
+provenance. It is an internal diagnostic, not an energy source: the total-energy solve already
+retains the complete thermodynamic effect and the global balance remains
+$U+H_{released}-Q_{external}=U_0$.
+
+An additional constructor ending in `ReleaseInventoryInterphaseHeatTransfer` activates separate
+phase energies and temperatures while retaining one mechanical pressure. For target gas and liquid
+energies, the nonlinear solve enforces
+
+$$V_g(P,T_g,\mathbf{m}_g)+V_l(P,T_l,\mathbf{m}_l)=V_{vessel},\qquad
+U_g(P,T_g,\mathbf{m}_g)=U_{g,target},\qquad
+U_l(P,T_l,\mathbf{m}_l)=U_{l,target}$$
+
+`linearConductance(UA, provenance)` applies
+$\dot Q_{g\leftarrow l}=UA(T_l-T_g)$, with equal and opposite phase-energy updates. Component
+transfer carries the donor phase's beginning-of-substep bulk enthalpy. Release removes the selected
+phase enthalpy, and the existing external heat boundary is allocated explicitly to that selected
+phase. The immutable balance exposes both phase energies and temperatures plus cumulative signed
+interfacial heat entering the gas. The common-temperature constructors and their source-frame basis
+remain unchanged.
+
+Both thermal forms use prescribed coefficients and one live cylindrical interface. They fail closed
+on phase disappearance, an opening inside the exclusion band, an unsupported phase assemblage,
+invalid fugacity/property data or a non-converged state solve. They do not predict mass- or
+heat-transfer coefficients, nucleation delay, wall inertia, entrainment, droplets, population
+balance, pipe waves or solids. Their current evidence level is `UNQUALIFIED`.
+
+The executable construction and both process-container paths are covered by
+`NonEquilibriumReleaseInventoryTest`:
+
+```java
+Map<String, Double> coefficientsMS = new TreeMap<String, Double>();
+coefficientsMS.put("methane", 2.0e-3);
+coefficientsMS.put("n-butane", 2.0e-3);
+ReleaseInventoryInterphaseTransfer film = new ReleaseInventoryInterphaseTransfer(
+    coefficientsMS, 0.25, "synthetic-screening-input:v1");
+ReleaseInventoryPhaseGeometry vesselGeometry = new ReleaseInventoryPhaseGeometry(
+    ReleaseInventoryPhaseGeometry.Orientation.VERTICAL,
+    vesselDiameterM, vesselLengthM, gasOpeningElevationM, interfaceExclusionHalfBandM);
+NonEquilibriumReleaseInventory finiteRate = new NonEquilibriumReleaseInventory(
+    "finite-rate-inventory", flashedFluid, vesselVolumeM3,
+    openingDiameterM, 0.70, receiverPressurePa,
+    selectedReleaseModel, maximumSubstepS, PhaseType.GAS,
+    vesselGeometry, film);
+process.add(finiteRate);
+session.addInventorySource("opening", "finite-rate-inventory");
+SourceTermFrame frame = session.runSteadyState().get(0);
+frame = session.step(0.10).get(0);
+NonEquilibriumReleaseInventory.Balance balance = finiteRate.getBalance();
+```
+
+To activate independent phase energies, add explicit external and interfacial heat closures:
+
+```java
+ReleaseInventoryHeatTransfer external = ReleaseInventoryHeatTransfer.constantPower(
+    200.0, "assessed-heater-duty:v1"); // W into selected withdrawal phase
+ReleaseInventoryInterphaseHeatTransfer interfaceHeat =
+    ReleaseInventoryInterphaseHeatTransfer.linearConductance(
+        15.0, "assessed-interface-UA:v1"); // W/K
+NonEquilibriumReleaseInventory separateEnergy = new NonEquilibriumReleaseInventory(
+    "separate-energy-inventory", flashedFluid, vesselVolumeM3,
+    openingDiameterM, 0.70, receiverPressurePa, 0.0, 0.0,
+    selectedReleaseModel, maximumSubstepS, PhaseType.GAS,
+    vesselGeometry, film, external, interfaceHeat);
+```
+
+`NonEquilibriumReleaseInventoryTest` exercises combined component/energy conservation, heat-flow
+direction, exact phase-energy summation, four-level timestep refinement, deterministic frames and
+both native process containers. These are numerical and conservation tests, not independent
+qualification of a conductance or applicability envelope.
+
+`getThermoSystem()` returns a defensive clone of the selected withdrawal phase because a single
+`SystemInterface` cannot represent two retained compositions without reflashing them. Whole-
+inventory consumers must use `getGasPhase()`, `getLiquidPhase()` and `getBalance()`.
+
+The general VU solver refreshes caloric derivatives on its final TP state before
+returning, so inventory checks use current enthalpy and internal energy. Its update
+equations and stopping policy remain unchanged. Caloric-state consistency alone
+does not establish the stricter inventory closure; the same $10^{-11}$ gates and
+32-solve bound remain mandatory.
+
+The release model is explicitly selected. Its upstream pressure, temperature and enthalpy
+must match the selected phase and its upstream/exit composition must match that phase's withdrawal.
+Exit static enthalpy plus specific kinetic energy must equal upstream stagnation enthalpy.
+Legacy `SCREENING_ONLY` or unresolved-station results are rejected. No alternate release
+model, property default or flash recovery is substituted.
+
+## Executable process example
+
+The corresponding construction, registration, stepping, balance access and isolation calls
+are exercised by `ReleaseInventoryTest.documentationExampleAndPhysicalIsolationWorkForBothContainers`.
+Use imports from `neqsim.process.safety.release`, `neqsim.process.processmodel`,
+`neqsim.thermo.system` and `java.util.List`.
+
+```java
+SystemInterface gas = new SystemSrkEos(300.0, 2.0); // K and bara
+gas.addComponent("nitrogen", 1.0);
+gas.setMixingRule("classic");
+ReleaseInventory vessel = new ReleaseInventory("inventory", gas,
+    1.0, 0.01, 0.7, 10000.0, new IdealGasReleaseModel(), 0.1);
+ProcessSystem process = new ProcessSystem();
+process.add(vessel);
+SourceTermSession session = new SourceTermSession("inventory-study", process);
+session.addInventorySource("opening", "inventory");
+List<SourceTermFrame> initial = session.runSteadyState(); // no depletion
+List<SourceTermFrame> next = session.step(0.5);
+ReleaseInventory.Balance accounting = vessel.getBalance();
+double emittedMassKg = accounting.getReleasedMassKg();
+double outgoingEnthalpyJ = accounting.getReleasedEnergyJ();
+vessel.setReleaseEnabled(false); // physically close this opening
+List<SourceTermFrame> isolated = session.step(0.5);
+```
+
+For an equilibrium gas-over-liquid inventory, select the gas boundary explicitly:
+
+```java
+ReleaseInventory phaseSelected = new ReleaseInventory("two-phase", flashedFluid,
+    1.0, 0.01, 0.62, 101325.0, new HomogeneousEquilibriumReleaseModel(), 0.02,
+    PhaseType.GAS);
+```
+
+Use the actual equilibrated phase type when selecting a hydrocarbon liquid (`OIL` or
+`LIQUID`). Construction rejects an absent or unsupported phase. If re-equilibration removes
+the selected phase during a transient call, the call fails atomically with
+`INVENTORY_SELECTED_PHASE_ABSENT`; callers must split the regime or select another assessed model.
+
+For an assessed gas-to-liquid transition, declare both phases and the inventory mass-fraction
+boundary explicitly:
+
+```java
+List<PhaseType> withdrawalPlan = Arrays.asList(PhaseType.GAS, liquidType);
+ReleaseInventory staged = new ReleaseInventory("staged", flashedFluid,
+    1.0, 0.01, 0.62, 101325.0, new HomogeneousEquilibriumReleaseModel(), 0.02,
+    withdrawalPlan, 1.0e-4);
+```
+
+This does not model a vessel level, interface geometry, entrainment or interfacial transfer rate.
+Use a threshold justified for the modeled inventory and verify sensitivity around it.
+
+### Geometry-gated phase withdrawal
+
+For a vertical or horizontal cylindrical vessel, supply internal diameter, cylinder length,
+opening-centre elevation from the vessel bottom, and an assessed interface exclusion half-band.
+The cylinder capacity must match `volumeM3`:
+
+```java
+ReleaseInventoryPhaseGeometry geometry = new ReleaseInventoryPhaseGeometry(
+    ReleaseInventoryPhaseGeometry.Orientation.VERTICAL,
+    0.50, 2.0, 1.70, 0.05); // m, m, m, m
+ReleaseInventory geometryGated = new ReleaseInventory("geometry-gated", flashedFluid,
+    Math.PI * 0.50 * 0.50 / 4.0 * 2.0,
+    0.01, 0.62, 101325.0, new HomogeneousEquilibriumReleaseModel(), 0.02,
+    PhaseType.GAS, geometry);
+```
+
+Vertical level is liquid volume divided by cylinder cross-sectional area. Horizontal level is
+the bounded inverse of the circular-segment area, and interface area is chord length times vessel
+length. The implementation supports one gas phase above at most one oil, generic-liquid or
+aqueous phase. Multiple material liquid phases, an opening in the exclusion band, a mismatch
+between opening phase and selected phase, or loss of phase-volume closure fail the complete
+inventory call without committing state.
+
+Frames retain `inventoryLiquidLevelM`, `inventoryInterfacialAreaM2`, opening and cylinder geometry,
+and `inventoryGeometryStatus=OPENING_PHASE_CONFIRMED_ENTRAINMENT_BAND_CLEAR`. This status means
+only that the opening is outside the declared unresolved band. It does not qualify an entrainment
+rate, interface wave model, droplet population, slip, or finite-rate heat/mass transfer.
+
+For an area-based model, add `process` under `"gas-area"`, construct the session from that
+`ProcessModel`, and use `session.addInventorySource("opening", "gas-area", "inventory")`.
+Keep dynamic mode enabled; this unit is constructed with `setCalculateSteadyState(false)`.
+A steady run checks the present state without resetting the inventory or accounting.
+Repeated native evaluations with the same transient UUID do not withdraw twice; a different
+duration with that same UUID is rejected.
+
+`getBalance()` provides immutable initial, remaining and released component masses in kg,
+initial/current internal energy and released enthalpy in J, fixed volume, simulation time
+and the last substep count. These integrated quantities are the balance evidence. A frame's
+rate is the **instantaneous** rate at its simulation time, not a timestep average. Do not
+apply the frame rate as an additional withdrawal from this unit.
+
+## Frame and failure semantics
+
+`addInventorySource` binds the inventory's own geometry and release model. It rejects a
+second physical-source registration for the same unit. Existing `addSource` remains a
+hypothetical sample and does not enable inventory coupling.
+
+The finite-pipe `ReleaseInventory` constructor adds flow-path length and specified Darcy friction
+before the model argument. That geometry is retained as inventory pressure and composition evolve
+and is exported by `addInventorySource`. It enables quasi-steady coupling to the ideal-gas and
+single-equilibrium-phase real-gas Fanno models; it does not add transient pipe-wave storage to the lumped inventory. Schema v1 accepts the
+paired optional `flowPathLength` and `darcyFrictionFactor` source fields.
+
+## Transient single-gas pipe line packing
+
+`IdealGasPipeDecompression` is a separate process unit for finite-speed wave propagation and
+line-pack discharge. It solves the one-dimensional conservative mass, momentum and total-energy
+equations on a caller-selected finite-volume grid. The upstream end is closed; the downstream end
+is connected to a constant absolute receiver pressure. A local Lax--Friedrichs numerical flux and
+CFL-limited substeps advance the state, while specified Darcy friction changes momentum without
+removing adiabatic total energy.
+
+```java
+IdealGasPipeDecompression pipe = new IdealGasPipeDecompression(
+    "ruptured-line", gas, 100.0, 0.20, 1.0, 101325.0, 0.012, 80, 0.45);
+process.add(pipe);
+
+SourceTermSession session = new SourceTermSession("linepack-case", process);
+session.addInventorySource("rupture", "ruptured-line");
+SourceTermFrame frame = session.step(0.05).get(0);
+```
+
+The committed frame rate is the exact downstream mass flux used by the conservative update. Frame
+provenance includes pipe length/diameter, cell count, CFL, friction factor, integrator identity,
+last substep count, remaining clock, and cumulative discharged mass and total energy. Both
+`ProcessSystem` and `ProcessModel` paths use the same coupled-source registration; no second
+hypothetical withdrawal is calculated.
+
+The model requires one nonreacting equilibrium gas phase, freezes composition and calorically
+perfect properties at the initial state, and remains `UNQUALIFIED`. It excludes real-gas property
+evolution, heat transfer, pipe elasticity, an upstream vessel, two-sided rupture, phase change,
+slip, entrainment and solid-bearing flow. Refine the grid and compare retained pressure/rate
+histories before using a result even inside this applicability boundary.
+
+`RealGasPipeDecompression` uses the same geometry, process-container registration and conservative
+accounting, but recovers each cell through a NeqSim volume/internal-energy flash. Pressure,
+temperature and acoustic speed therefore evolve with the selected EOS. It fails the whole caller
+step atomically if any cell or the receiver boundary ceases to be one equilibrium gas phase.
+
+An additive constructor couples the first pipe cell to a finite rigid, adiabatic, perfectly mixed
+upstream gas vessel:
+
+```java
+RealGasPipeDecompression vesselAndPipe = new RealGasPipeDecompression(
+    "vessel-fed-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, 12, 0.30);
+// Darcy friction, upstream-vessel volume (m3), cells and CFL are the final four inputs.
+```
+
+The vessel starts at the same EOS state and composition as the pipe. Each accepted CFL substep
+uses the same local Lax--Friedrichs face flux at the vessel/pipe interface, subtracts that mass and
+total energy from the vessel, and adds it to the pipe. The closure inventory is therefore vessel
+plus pipe plus downstream discharge. Reverse vessel/pipe exchange is retained rather than clipped.
+The complete caller step is atomic, and frames from both process containers carry vessel volume,
+mass, internal energy, pressure, temperature, boundary identity and the combined inventory volume.
+The legacy constructor retains the closed upstream end and its existing provenance.
+
+An additional overload applies a distributed pipe-wall sensitivity boundary while retaining the
+same conservative vessel, pipe and discharge transaction:
+
+```java
+RealGasPipeDecompression heatedVesselAndPipe = new RealGasPipeDecompression(
+    "heated-vessel-fed-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, 25.0, 285.0, 12, 0.30);
+// Final inputs: Darcy friction, vessel volume (m3), U (W/(m2 K)),
+// fixed external temperature (K), cells and CFL.
+```
+
+For cell $i$ with external wall area $A_{w,i}$, the signed heat rate into the gas is
+$\dot Q_i=U A_{w,i}(T_{ext}-T_i)$. Each accepted substep adds
+$\dot Q_i\Delta t$ to that cell's conservative total energy and to the cumulative heat ledger.
+The exact integrated balance is
+
+$$E_0+Q_{wall}=E_{vessel}+E_{pipe}+E_{released}$$
+
+where the upstream vessel remains adiabatic. A thermal step limiter bounds the explicit cell
+temperature change in addition to the acoustic CFL and vessel-donor limits. Frames expose the
+adiabatic or `CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE` boundary, $U$, external temperature, pipe
+external area, cumulative heat in J and instantaneous heat rate in W. Pass zero for both thermal
+inputs to recover the adiabatic constructor exactly; incomplete or nonphysical pairs are rejected.
+
+For finite wall thermal inertia, use the typed boundary instead of the massless constant-$U$
+overload:
+
+```java
+RealGasPipeDecompression.WallThermalBoundary wall =
+    RealGasPipeDecompression.WallThermalBoundary.capacitive(
+        80.0, 35.0, 45000.0, 330.0, 360.0);
+RealGasPipeDecompression wallCoupled = new RealGasPipeDecompression(
+    "wall-coupled-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, wall, 12, 0.30);
+// Gas-wall U_i and wall-environment U_o: W/(m2 K)
+// Wall areal heat capacity: J/(m2 K); temperatures: K.
+```
+
+Each cell retains one wall temperature. With wall heat capacity $C_{w,A}$ per external area,
+
+$$\dot Q_{g,i}=U_iA_{w,i}(T_{w,i}-T_{g,i})$$
+
+$$\dot Q_{e,i}=U_oA_{w,i}(T_{ext}-T_{w,i}),\qquad
+C_{w,A}A_{w,i}\frac{dT_{w,i}}{dt}=\dot Q_{e,i}-\dot Q_{g,i}$$
+
+The gas receives $\dot Q_g$ and the wall receives the opposite internal transfer plus
+$\dot Q_e$. The atomic integrated closure becomes
+
+$$E_{g,0}+E_{w,0}+Q_{environment}
+=E_{vessel}+E_{pipe\ gas}+E_{wall}+E_{released}$$
+
+Frames retain the two coefficients, wall areal heat capacity, initial/mean wall temperature,
+stored wall energy, environment heat and gas--wall heat separately. Explicit thermal stability
+limits supplement the acoustic CFL and vessel-donor limits. The original adiabatic and massless
+constant-$U$ constructors are unchanged.
+
+When cylindrical geometry and wall properties are known, the material adapter derives the
+outer-area basis and heat capacity while retaining the same conservative wall state:
+
+```java
+RealGasPipeDecompression.WallThermalBoundary materialWall =
+    RealGasPipeDecompression.WallThermalBoundary.cylindricalLumpedWall(
+        0.15, 0.01, 7850.0, 500.0, 45.0,
+        80.0, 35.0, 330.0, 360.0);
+RealGasPipeDecompression materialWallCoupled = new RealGasPipeDecompression(
+    "material-wall-coupled-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, materialWall, 12, 0.30);
+// Di, thickness: m; density: kg/m3; cp: J/(kg K); conductivity: W/(m K)
+// Inner/outer film coefficients: W/(m2 K); temperatures: K.
+```
+
+For inner diameter $D_i$, thickness $t$ and outer diameter $D_o=D_i+2t$, the adapter
+converts the inner-area film coefficient and annular wall capacity to the outer-area basis:
+
+$$U_{i,o}=h_i\frac{D_i}{D_o}$$
+
+$$C_{w,A_o}=\rho_wc_{p,w}\frac{D_o^2-D_i^2}{4D_o}$$
+
+The pipe constructor requires the adapter's $D_i$ to match its flow diameter. A fail-closed
+lumped-capacitance guard uses the long-cylinder material-volume-to-total-surface characteristic
+length $L_c=(D_o-D_i)/4$ and requires
+
+$$Bi=\frac{\max(h_i,h_o)L_c}{k_w}<0.1$$
+
+Geometry, material inputs, effective coefficients, $L_c$ and $Bi$ are retained in frame
+provenance. The guard only establishes applicability of one uniform radial wall temperature; it
+does not solve radial conduction or validate the supplied material/film properties.
+
+When a uniform radial wall temperature is not acceptable, select the explicit two-node material
+boundary with the same SI inputs:
+
+```java
+RealGasPipeDecompression.WallThermalBoundary radialWall =
+    RealGasPipeDecompression.WallThermalBoundary.cylindricalTwoNodeWall(
+        0.15, 0.01, 7850.0, 500.0, 45.0,
+        80.0, 35.0, 330.0, 360.0);
+RealGasPipeDecompression radialWallCoupled = new RealGasPipeDecompression(
+    "radial-wall-coupled-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, radialWall, 12, 0.30);
+```
+
+With inner and outer radii $r_i$ and $r_o$, the control-volume split radius is chosen so the two
+annular nodes have equal material volume:
+
+$$r_s=\sqrt{\frac{r_i^2+r_o^2}{2}}$$
+
+The two node-centroid radii are
+
+$$r_1=\sqrt{\frac{r_i^2+r_s^2}{2}},\qquad r_2=\sqrt{\frac{r_s^2+r_o^2}{2}}$$
+
+and the exact cylindrical conductance between those centroids, on the outer-area basis, is
+
+$$U_{12,o}=\frac{k_w}{r_o\ln(r_2/r_1)}$$
+
+The inner and outer areal capacities are derived from their annular volumes. Each axial cell
+retains $T_1$ and $T_2$ and advances the conservative balances
+
+$$\begin{aligned}C_{1,A_o}A_o\frac{dT_1}{dt}&=U_{12,o}A_o(T_2-T_1)-U_{i,o}A_o(T_1-T_g)\\C_{2,A_o}A_o\frac{dT_2}{dt}&=h_oA_o(T_e-T_2)-U_{12,o}A_o(T_2-T_1)\end{aligned}$$
+
+The internal conduction term cancels exactly from total wall energy. Separate explicit stability
+limits protect the gas, inner node and outer node. Frames retain both node capacities, centroid and
+split radii, radial conductance, node temperatures, total wall energy and environment/gas heat
+transactions. This is a two-node finite-volume screening model, not a converged radial mesh or an
+independent wall-temperature qualification.
+
+This adds finite upstream storage, pressure feedback and optional distributed constant-$U$ wall
+heat exchange or a finite-capacitance wall. The cylindrical adapters derive capacity and area
+conversion from caller-supplied geometry/material properties; the two-node option additionally
+resolves one conservative radial temperature gradient. Neither predicts film coefficients,
+material properties, external temperature, fire/ambient/soil/seawater heat transfer, higher-order
+radial conduction, vessel nozzle loss, internal vessel waves, phase separation, wall elasticity, a
+second rupture end, non-equilibrium multiphase transport, solids, or qualification. The vessel and
+every pipe cell must remain one equilibrium gas phase; otherwise the whole caller step fails closed.
+
+Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
+Explicit phase-selected frames carry
+`releaseBasis=COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY` and
+`inventoryWithdrawalPhase`. Both carry the integrator
+identity, inventory volume/time, cumulative released mass/enthalpy, and
+`rateTimeBasis=INSTANTANEOUS_AT_FRAME_TIME` in provenance. Evidence stays `UNQUALIFIED`.
+Process, equipment, calculation UUID and session sequence semantics are retained.
+The configured maximum substep and last substep count are also recorded in provenance.
+Ordered-plan frames instead carry
+`releaseBasis=COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY`, the complete ordered plan,
+the exhaustion threshold, active phase, last-call transition count and cumulative transition
+count. All remain string-valued provenance in schema v1; SI source quantities are unchanged.
+
+`vessel.setReleaseEnabled(false)` stops physical withdrawal and yields an
+`INVENTORY_OPENING_CLOSED` disabled frame after the next successful process call.
+It invalidates the prior equipment calculation identity. In contrast,
+`session.setEnabled(sourceId, false)` disables export only; process physics continue.
+Opening/closure changes occur at step boundaries; split steps at known event times.
+
+| Condition | Behavior |
+|---|---|
+| Receiving pressure at or above initial inventory pressure | Valid zero flow; no reverse flow modeled. |
+| Substep would reduce pressure below receiving pressure | Bounded event location lands on receiving pressure; provenance records the physical release duration. |
+| Selected phase is absent initially | Construction rejects the configuration. |
+| Selected phase disappears after re-equilibration | `INVENTORY_SELECTED_PHASE_ABSENT`; the unit call commits no state. |
+| Active planned phase reaches its explicit exhaustion threshold | Advances only to the immediately next usable caller-declared phase and records the transition. |
+| Immediately next planned phase is absent or exhausted | `INVENTORY_WITHDRAWAL_PHASE_PLAN_EXHAUSTED`; the unit call commits no state. |
+| Reactions, forced phases, solids or hydrates | `INVENTORY_REGIME_UNSUPPORTED`; no fallback physics is invented. |
+| Invalid model, mismatched upstream state/composition, or screening result | Fail closed without committing inventory. |
+| Volume, component or energy closure failure | Fail closed, with the corresponding closure diagnostic. |
+| Native process step failure | Session emits `INVALID` without numeric source payload and becomes faulted. |
+
+Updates are transactional **within this unit**: failure preserves its pre-call fluid,
+accounting, clock and UUID. Other process units and the process clock may already have
+advanced. Follow the [session recovery guidance](live-source-term-sessions#failure-and-freshness-semantics);
+a steady rerun is not a rollback of the surrounding process. Caller-owned custom release
+models must be deterministic and must not mutate themselves or the process during evaluation.
+
+## Validation and applicability
+
+`ReleaseInventoryCpaIsolationTest` exercises ordinary SRK-CPA methane/water inventories
+(90/10 mol%, mixing rule 10, 60 bara, 298.15 and 308.15 K, 0.02 m3) after the phase-workspace
+clone repairs. A test-only prescribed 0.001 kg/s flux isolates inventory bookkeeping from
+physical discharge-rate prediction. Gas and aqueous withdrawal must retain named-component,
+internal-energy/outgoing-enthalpy and fixed-volume closure. The checks compare caller state,
+phase compositions and fugacity derivatives before and after successful withdrawal, an exported
+copy's reflash, and rejection after a completed VU substep. A retry must reproduce a fresh control.
+
+Native sessions exercise both process containers and emit four additional schema fixtures.
+The retained `target/source-term-benchmarks/cpa-inventory-refinement.csv` records three substep
+sizes (0.4, 0.2 and 0.1 s) over 2 s for both withdrawal phases at both temperatures.
+This is numerical/conservation evidence for persistent gas/aqueous phases, not experimental
+CPA or release-rate qualification. It does not resolve the remove/add physical-slot lifecycle
+tracked in [#4310](https://github.com/equinor/neqsim/issues/4310), prove phase disappearance or
+reappearance, or implement finite-rate inventory heat/mass transfer. Those boundaries remain
+required before broader inventory claims in [#3860](https://github.com/equinor/neqsim/issues/3860).
+
+`ReleaseInventoryTest` checks multicomponent gas depletion, phase-selected gas-over-liquid and
+liquid withdrawal using the homogeneous-equilibrium release model. A controlled deterministic
+release model isolates explicit gas-to-liquid exhaustion transition, conservation and timestep/
+threshold refinement from release-model solver noise. The suite also checks component/energy/volume closure, cooling and decreasing release rate, input
+immutability, cloning, zero flow, isolation/reopening, invalid steps, pressure-boundary
+rollback, injected mid-step failure, and both process containers. Actual frames, including
+disabled and failed cases, are validated against the bundled JSON Schema.
+
+Phase-selected source frames are schema-validated from both process containers. A three-level
+substep refinement checks convergent pressure for gas withdrawal from a methane/n-butane
+two-phase inventory, while released component mass verifies selection of the gas composition.
+For 0.04, 0.02 and 0.01 s maximum substeps over 0.2 s, the final pressures are
+998944.206, 998944.262 and 998944.290 Pa; the fine/coarse pressure-difference ratio is 0.500.
+CI retains the component withdrawals and energy residuals in
+`target/source-term-benchmarks/inventory-phase-selected-convergence.csv`.
+The capability regression checks both process containers and preserves the distinction
+between audited state ownership and unverified runtime activation. The focused safety workflow
+also runs `DynamicCapabilityBuiltInInventoryTest` to catch missing built-in registrations.
+
+For an independent temporal reference, the constant-gamma ideal-gas choked, rigid adiabatic
+solution follows by combining the balance equations with $U=mc_vT$ and the choked discharge
+relation. With $a=\dot m_0/m_0$ in 1/s:
+
+$$\frac{m(t)}{m_0}=\left[1+\frac{\gamma-1}{2}at\right]^{-2/(\gamma-1)}$$
+
+$$\frac{T(t)}{T_0}=\left(\frac{m(t)}{m_0}\right)^{\gamma-1},\qquad \frac{p(t)}{p_0}=\left(\frac{m(t)}{m_0}\right)^\gamma$$
+
+The test uses nitrogen at 300 K, initially 2.0 and 2.2 bara, 1 m3, a 0.01 m opening,
+$C_d=0.7$, receiving pressure 0.1 bara and 10 s duration. It compares three substep
+limits (0.2, 0.1 and 0.05 s) to the closed-form mass, pressure and temperature and checks
+first-order refinement. The reference uses the initial NeqSim molar mass/gamma; its temporal
+solution is independent, while the implemented inventory retains the real EOS and variable
+properties. The test tolerance is 0.3% of initial values and is not an experimental accuracy
+claim. CI retains `target/source-term-benchmarks/inventory-convergence.csv`.
+
+The local 0.05 s results at 10 s are:
+
+| Initial pressure (Pa) | Remaining mass (kg) | Pressure (Pa) | Closed-form pressure (Pa) | Absolute energy residual (J) |
+|---|---|---|---|---|
+| 200000 | 2.00989363 | 171096.452 | 171105.421 | 0.000224 |
+| 220000 | 2.21087835 | 188197.626 | 188206.827 | 0.000243 |
+
+The fine/coarse pressure-difference ratio is approximately 0.499 in both cases. These results
+separate numerical refinement from the small real-EOS/constant-gamma reference difference.
+
+The transition benchmark spans thresholds 0.026175--0.026185 and maximum substeps 0.15--0.0375 s.
+All nine cases conserve 0.0003 kg release, commit exactly one transition and retain component,
+energy and volume closure. The finest nearby-threshold pressure spread is below 0.032%; successive
+step refinement is non-increasing within the asserted numerical tolerance.
+
+This increment covers equilibrium, phase-selected withdrawal, explicit ordered phase-exhaustion
+transitions, and opt-in live cylindrical phase geometry with a fail-closed entrainment/interface
+band. The opt-in external energy boundary covers only caller-imposed constant power or lumped
+conductance. Predictive entrainment and slip, finite-rate interfacial heat/latent/component transfer,
+qualified fire/wall heat-transfer physics, real-gas transient decompression, non-equilibrium transfer, solid-bearing
+flow physics and experimental qualification remain separate work in
+[#3860](https://github.com/equinor/neqsim/issues/3860).
+The numerical limit of the selected release model still applies. No facility qualification
+or independent safety/domain review is implied.
+\n### Receiving-pressure event provenance\n\n`inventoryPressureEquilibrationEvent` records whether the last successful transient call landed on the no-flow boundary. `inventoryReleaseDurationS` is the physical discharge duration within that caller timestep. Event trials use the same EOS, component removal and enthalpy balance as ordinary substeps; failed event location commits no state.\n

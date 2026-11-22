@@ -26,6 +26,61 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
         .qualifyCalciumSulfatePhaseBoundary();
 
     assertEquals(60.445190, qualification.getPredictedPureWaterTransitionCelsius(), 1.0e-6);
+    assertEquals(60.445190, qualification.getPredictedPureWaterTransitionAtEvaluatedPressureCelsius(), 1.0e-6);
+    assertEquals(-52.4, qualification.getAnhydriteLumpedReactionVolumeCm3PerMol(), 0.0);
+    assertEquals(-33.0, qualification.getGypsumLumpedReactionVolumeCm3PerMol(), 0.0);
+    assertEquals(45.992142858753, qualification.getAnhydriteCrystallographicMolarVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(74.454135072184, qualification.getGypsumCrystallographicMolarVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(18.068636448540, qualification.getLiquidWaterReferenceMolarVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(7.675280683650, qualification.getCrystallographicTransitionReactionVolumeCm3PerMol(), 1.0e-12);
+    assertEquals(19.4, qualification.getCompsaltTransitionReactionVolumeCm3PerMol(), 0.0);
+    assertEquals(11.724719316350, qualification.getTransitionReactionVolumeDifferenceCm3PerMol(), 1.0e-12);
+    assertEquals(2.527594859342, qualification.getTransitionReactionVolumeRatio(), 1.0e-12);
+    assertEquals("10.1154/1.3659285", qualification.getAnhydriteCrystallographyDoi());
+    assertEquals("10.1154/1.1725254", qualification.getGypsumCrystallographyDoi());
+    assertEquals("10.1063/1.3043575", qualification.getWaterDensityReferenceDoi());
+    assertEquals(298.15, CalciumSulfatePhaseBoundaryQualification.WATER_DENSITY_REFERENCE_TEMPERATURE_K, 0.0);
+    assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.WATER_DENSITY_REFERENCE_PRESSURE_BARA, 0.0);
+    assertEquals(0.0, qualification.getAnhydriteLogKspPressureCorrection(), 0.0);
+    assertEquals(0.0, qualification.getGypsumLogKspPressureCorrection(), 0.0);
+    assertFalse(qualification.isAqueousSpeciesVolumeResolved());
+    assertTrue(qualification.hasIndependentAqueousPressureEvidence());
+    assertTrue(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureEvidenceRowAudited());
+    assertFalse(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureDensityModelQualified());
+    assertFalse(CalciumSulfatePhaseBoundaryQualification.isAqueousPressureResponseQualified());
+    assertFalse(qualification.isAqueousLimitingVolumeEvidenceResolved());
+    assertEquals("10.1021/je2013704", qualification.getAqueousPressureEvidenceDoi());
+    assertEquals("https://www.nist.gov/open/license", qualification.getAqueousPressureEvidenceLicenseUri());
+    assertEquals("10.1021/je00061a022", qualification.getAqueousLimitingVolumeLineageDoi());
+    assertEquals("NIST Open Access to Data",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_LICENSE);
+    assertEquals(197, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_POINT_COUNT);
+    assertEquals(1.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_MOLALITY, 0.0);
+    assertEquals(6.0, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_MOLALITY, 0.0);
+    assertEquals(283.15, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_TEMPERATURE_K, 0.0);
+    assertEquals(472.96, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_TEMPERATURE_K, 0.0);
+    assertEquals(10.5, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_PRESSURE_BARA, 0.0);
+    assertEquals(681.2, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_PRESSURE_BARA, 0.0);
+    assertEquals("6422c24b3e928dafd436193584708c87e3691cf909eb90e78670a01e2b57a2cb",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_JSON_SHA256);
+    assertEquals("f2f4adf5388f04628dd47fc8de57a8b6c79895ab7d8ee356091453fec3acfffd",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_XML_SHA256);
+    assertEquals("5853670eb7fa320e33d7a547105f7663720c857bd416e0c20e1862b9c8cd7a37",
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_ROW_SHA256);
+    assertEquals(0.0003,
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MINIMUM_RELATIVE_UNCERTAINTY, 0.0);
+    assertEquals(0.0005,
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_EVIDENCE_MAXIMUM_RELATIVE_UNCERTAINTY, 0.0);
+    assertEquals(25, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_GROUP_COUNT);
+    assertEquals(172, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_COMPARISON_COUNT);
+    assertEquals(0.00596124964150643, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MARE, 0.0);
+    assertEquals(0.0073152811349379634, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_RMSRE, 0.0);
+    assertEquals(0.021286678807350468, CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MAXARE, 0.0);
+    assertEquals(48.01423407881762,
+        CalciumSulfatePhaseBoundaryQualification.AQUEOUS_PRESSURE_RESPONSE_MAXIMUM_UNCERTAINTY_RATIO, 0.0);
+    assertFalse(qualification.isHighPressureQualified());
+    assertEquals("10.2475/ajs.261.1.61", qualification.getHighPressureLineageDoi());
+    assertEquals(1.01325, CalciumSulfatePhaseBoundaryQualification.COMPSALT_PRESSURE_CORRECTION_REFERENCE_BARA, 0.0);
     assertEquals(0.7736299, qualification.getRequiredWaterActivityAt25Celsius(), 1.0e-7);
     assertEquals(0.8437837, qualification.getRequiredWaterActivityAt40Celsius(), 1.0e-7);
     assertFalse(qualification.isPureWaterEnvelopePass());
@@ -49,6 +104,8 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     CalciumSulfatePhaseBoundaryQualification repeated = new ThermodynamicOperations(new SystemSrkEos(313.15, 1.01325))
         .qualifyCalciumSulfatePhaseBoundary();
     assertEquals(first.formatDiagnostic(), repeated.formatDiagnostic());
+    assertTrue(first.formatDiagnostic().contains("crystallographicTransitionV_cm3_per_mol=7.675280683649"));
+    assertTrue(first.formatDiagnostic().contains("compsaltTransitionV_cm3_per_mol=19.4"));
     assertFalse(first.getLimitations().isEmpty());
     assertThrows(UnsupportedOperationException.class, () -> first.getLimitations().add("unexpected"));
 
@@ -74,6 +131,14 @@ class CalciumSulfatePhaseBoundaryQualificationTest extends neqsim.NeqSimTest {
     CalciumSulfatePhaseBoundaryQualification highPressure = new ThermodynamicOperations(new SystemSrkEos(313.15, 500.0))
         .qualifyCalciumSulfatePhaseBoundary();
     assertFalse(highPressure.isReferencePressureEnvelopePass());
+    assertTrue(highPressure.hasIndependentAqueousPressureEvidence());
+    assertFalse(highPressure.isAqueousLimitingVolumeEvidenceResolved());
     assertFalse(highPressure.isPublicationReady());
+    assertEquals(75.92, highPressure.getPredictedPureWaterTransitionAtEvaluatedPressureCelsius(), 0.01);
+    assertEquals(52.4 * (500.0 - 1.01325) / (83.1446 * 313.15), highPressure.getAnhydriteLogKspPressureCorrection(),
+        1.0e-12);
+    assertEquals(33.0 * (500.0 - 1.01325) / (83.1446 * 313.15), highPressure.getGypsumLogKspPressureCorrection(),
+        1.0e-12);
+    assertTrue(highPressure.formatDiagnostic().contains("highPressureQualified=false"));
   }
 }

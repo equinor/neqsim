@@ -44,8 +44,11 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             r'^---\ntitle: "[^"]+"\ndescription: "[^"]+"\n---\n',
         )
         self.assertNotRegex(self.doc, r"(?m)^# ")
-        self.assertEqual(2, self.doc.count("```"))
-        self.assertEqual(1, self.doc.count("```java"))
+        self.assertEqual(
+            ["```java", "```"],
+            re.findall(r"(?m)^```[^\n]*$", self.doc),
+            "The guide must expose one complete maintained Java program",
+        )
 
         for target in re.findall(r"\[[^\]]+\]\(([^)#]+\.md)(?:#[^)]+)?\)", self.doc):
             resolved = (DOC.parent / target).resolve()
@@ -66,6 +69,8 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "this.thermoSystem.setPressure(",
             "this.thermoOps.TVfractionFlash(0.8)",
             "RVP_ASTM_D6377 = 0.834 * VPCR4",
+            'RVP_ASTM_D6377_ADD_WATER_SATURATED("RVP_ASTM_D6377_add_water_saturated")',
+            "public static double getWaterSaturationPressure(double temperatureK)",
             "public boolean isOnSpec()",
         )
         for pattern in source_patterns:
@@ -77,6 +82,10 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "setMethodRVP(RvpMethod.RVP_ASTM_D6377)",
             "getRvpResult(RvpMethod.VPCR4)",
             "getRvpResult(RvpMethod.VPCR4_NO_WATER)",
+            "getRvpResult(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED)",
+            "Standard_ASTM_D6377.getWaterSaturationPressure(310.95)",
+            "sourceStream.getRVP(",
+            "manualWaterSaturatedBara",
             'getValue("TVP", "bara")',
             'getValue("RVP", "kPa")',
             "The standard does not force SRK",
@@ -94,6 +103,7 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "Typical RVP Limit",
             "System.out",
             "System.err",
+            "auditedDryOil",
             "import neqsim.standards.oilquality.*",
         )
         for pattern in rejected:
@@ -111,10 +121,17 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "vaporPressure.getRvpResult()",
             "vaporPressure.getRvpResult(RvpMethod.VPCR4)",
             "vaporPressure.getRvpResult(RvpMethod.VPCR4_NO_WATER)",
+            "RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED",
+            "Standard_ASTM_D6377.getWaterSaturationPressure(310.95)",
+            "sourceStream.getRVP(",
             'vaporPressure.getValue("TVP", "bara")',
             'vaporPressure.getValue("RVP", "kPa")',
             "selected.toJson()",
             "vaporPressure.getMethodRVP()",
+            "JAVA_FENCE",
+            "ToolProvider.getSystemJavaCompiler()",
+            '"-source", "8", "-target", "8"',
+            "setDefaultAssertionStatus(true)",
         )
         for call in calls:
             self.assertIn(call, self.java_test)

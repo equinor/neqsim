@@ -14,12 +14,12 @@ import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 class ConservativeSpeciesTransportTest {
   @Test
   void closesEveryComponentWithoutNormalizationOrClipping() {
-    String[] names = { "methane", "nitrogen", "carbon dioxide" };
-    double[][] oldMassFraction = { { 0.80, 0.75 }, { 0.15, 0.20 }, { 0.05, 0.05 } };
-    double[] inletMassFraction = { 0.70, 0.20, 0.10 };
-    double[] oldCellMassKg = { 100.0, 100.0 };
-    double[] newCellMassKg = { 105.0, 100.0 };
-    double[] faceMassFlowKgPerSecond = { 1.0, 0.5, 0.5 };
+    String[] names = {"methane", "nitrogen", "carbon dioxide"};
+    double[][] oldMassFraction = {{0.80, 0.75}, {0.15, 0.20}, {0.05, 0.05}};
+    double[] inletMassFraction = {0.70, 0.20, 0.10};
+    double[] oldCellMassKg = {100.0, 100.0};
+    double[] newCellMassKg = {105.0, 100.0};
+    double[] faceMassFlowKgPerSecond = {1.0, 0.5, 0.5};
 
     OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(names, oldMassFraction,
         inletMassFraction, oldCellMassKg, newCellMassKg, faceMassFlowKgPerSecond, 10.0);
@@ -38,17 +38,17 @@ class ConservativeSpeciesTransportTest {
 
   @Test
   void reproducesImplicitUpwindStepRecurrence() {
-    String[] names = { "carrier", "tracer" };
-    double[][] oldMassFraction = { { 1.0, 1.0, 1.0, 1.0 }, { 0.0, 0.0, 0.0, 0.0 } };
-    double[] inletMassFraction = { 0.0, 1.0 };
-    double[] cellMassKg = { 10.0, 10.0, 10.0, 10.0 };
-    double[] faceMassFlowKgPerSecond = { 1.0, 1.0, 1.0, 1.0, 1.0 };
+    String[] names = {"carrier", "tracer"};
+    double[][] oldMassFraction = {{1.0, 1.0, 1.0, 1.0}, {0.0, 0.0, 0.0, 0.0}};
+    double[] inletMassFraction = {0.0, 1.0};
+    double[] cellMassKg = {10.0, 10.0, 10.0, 10.0};
+    double[] faceMassFlowKgPerSecond = {1.0, 1.0, 1.0, 1.0, 1.0};
 
     OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(names, oldMassFraction,
         inletMassFraction, cellMassKg, cellMassKg, faceMassFlowKgPerSecond, 5.0);
 
     assertTrue(report.isConverged(), report.getMessage());
-    double[] expectedTracer = { 1.0 / 3.0, 1.0 / 9.0, 1.0 / 27.0, 1.0 / 81.0 };
+    double[] expectedTracer = {1.0 / 3.0, 1.0 / 9.0, 1.0 / 27.0, 1.0 / 81.0};
     assertArrayEquals(expectedTracer, report.getMassFractionProfile()[1], 1.0e-15);
     assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-14);
     assertEquals(SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, report.getTransportDiagnostics().getScheme());
@@ -58,17 +58,17 @@ class ConservativeSpeciesTransportTest {
 
   @Test
   void tvdSchemeClosesVariableMassStepWithoutNewExtrema() {
-    String[] names = { "methane", "nitrogen", "carbon dioxide" };
-    double[][] oldMassFraction = { { 0.90, 0.85, 0.80 }, { 0.08, 0.11, 0.15 }, { 0.02, 0.04, 0.05 } };
-    double[] inletMassFraction = { 0.84, 0.10, 0.06 };
-    double[] oldCellMassKg = { 10.0, 12.0, 8.0 };
-    double[] faceMassFlowKgPerSecond = { 1.1, 1.0, 0.9, 0.8 };
+    String[] names = {"methane", "nitrogen", "carbon dioxide"};
+    double[][] oldMassFraction = {{0.90, 0.85, 0.80}, {0.08, 0.11, 0.15}, {0.02, 0.04, 0.05}};
+    double[] inletMassFraction = {0.84, 0.10, 0.06};
+    double[] oldCellMassKg = {10.0, 12.0, 8.0};
+    double[] faceMassFlowKgPerSecond = {1.1, 1.0, 0.9, 0.8};
     double timeStepSeconds = 1.0;
-    double[] newCellMassKg = { 10.1, 12.1, 8.1 };
+    double[] newCellMassKg = {10.1, 12.1, 8.1};
 
     OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(names, oldMassFraction,
         inletMassFraction, oldCellMassKg, newCellMassKg, faceMassFlowKgPerSecond, timeStepSeconds,
-        SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, new double[] { 100.0, 120.0, 80.0 });
+        SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, new double[] {100.0, 120.0, 80.0});
 
     assertTrue(report.isConverged(), report.getMessage());
     assertTrue(report.getMinimumMassFraction() >= -ConservativeSpeciesTransport.MASS_FRACTION_TOLERANCE,
@@ -111,8 +111,8 @@ class ConservativeSpeciesTransportTest {
     double[] cellMasses = filled(cells, 1.0);
     double[] faceFlows = filled(cells + 1, 0.1);
 
-    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] { "carrier", "tracer" },
-        initialProfile, new double[] { 0.0, 1.0 }, cellMasses, cellMasses, faceFlows, 1.0,
+    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+        initialProfile, new double[] {0.0, 1.0}, cellMasses, cellMasses, faceFlows, 1.0,
         SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, filled(cells, 1.0), new ConstantAxialDispersion(0.2));
 
     assertTrue(report.isConverged(), report.getMessage());
@@ -145,16 +145,16 @@ class ConservativeSpeciesTransportTest {
   @Test
   void physicalFaceConductanceUsesHalfCellSeriesResistanceOnNonuniformGrid() {
     double[][] initialProfile = uniformProfile(2, 0.0);
-    double[] cellMasses = { 2.0, 8.0 };
-    double[] faceFlows = { 0.1, 0.1, 0.1 };
-    double[] cellLengths = { 1.0, 2.0 };
+    double[] cellMasses = {2.0, 8.0};
+    double[] faceFlows = {0.1, 0.1, 0.1};
+    double[] cellLengths = {1.0, 2.0};
 
-    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] { "carrier", "tracer" },
-        initialProfile, new double[] { 0.0, 1.0 }, cellMasses, cellMasses, faceFlows, 1.0,
+    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+        initialProfile, new double[] {0.0, 1.0}, cellMasses, cellMasses, faceFlows, 1.0,
         SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, cellLengths, new ConstantAxialDispersion(0.5));
 
     assertTrue(report.isConverged(), report.getMessage());
-    assertArrayEquals(new double[] { 1.5, 0.125 }, report.getTransportDiagnostics().getCellPhysicalDispersionNumbers(),
+    assertArrayEquals(new double[] {1.5, 0.125}, report.getTransportDiagnostics().getCellPhysicalDispersionNumbers(),
         1.0e-15);
     assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-13, report.getMessage());
   }
@@ -166,8 +166,8 @@ class ConservativeSpeciesTransportTest {
     double[] cellMasses = filled(cells, 10.0);
     double[] faceFlows = filled(cells + 1, 1.0);
 
-    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] { "carrier", "tracer" },
-        initialProfile, new double[] { 0.0, 1.0 }, cellMasses, cellMasses, faceFlows, 10.0,
+    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+        initialProfile, new double[] {0.0, 1.0}, cellMasses, cellMasses, faceFlows, 10.0,
         SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, filled(cells, 100.0));
 
     assertTrue(report.isConverged(), report.getMessage());
@@ -185,8 +185,8 @@ class ConservativeSpeciesTransportTest {
     double[] cellMasses = filled(cells, 1.0);
     double[] faceFlows = filled(cells + 1, 0.1);
 
-    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] { "carrier", "tracer" },
-        initialProfile, new double[] { 0.0, 1.0 }, cellMasses, cellMasses, faceFlows, 1.0,
+    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+        initialProfile, new double[] {0.0, 1.0}, cellMasses, cellMasses, faceFlows, 1.0,
         SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, filled(cells, 1.0), new ConstantAxialDispersion(1.0));
 
     assertTrue(report.isConverged(), report.getMessage());
@@ -283,9 +283,8 @@ class ConservativeSpeciesTransportTest {
     double[] faceFlow = constantArray(cells + 1, massFlowKgPerSecond);
 
     for (int step = 1; step <= steps; step++) {
-      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
-          new String[] { "carrier", "tracer" }, profile, new double[] { 0.0, 1.0 }, cellMass, cellMass, faceFlow,
-          timeStepSeconds);
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+          profile, new double[] {0.0, 1.0}, cellMass, cellMass, faceFlow, timeStepSeconds);
       assertTrue(report.isConverged(), report.getMessage());
       assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-13, report.getMessage());
       assertEquals(0.0, report.getMaximumMassFractionSumError(), 0.0);
@@ -310,9 +309,8 @@ class ConservativeSpeciesTransportTest {
     double responseFirstMoment = 0.0;
 
     for (int step = 0; step < 500; step++) {
-      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
-          new String[] { "carrier", "tracer" }, profile, new double[] { 0.0, 1.0 }, cellMass, cellMass, faceFlow,
-          timeStepSeconds);
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+          profile, new double[] {0.0, 1.0}, cellMass, cellMass, faceFlow, timeStepSeconds);
       assertTrue(report.isConverged(), report.getMessage());
       assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-13, report.getMessage());
       assertEquals(0.0, report.getMaximumMassFractionSumError(), 0.0);
@@ -343,7 +341,7 @@ class ConservativeSpeciesTransportTest {
   }
 
   private static double[][] uniformInitialProfile(int cells) {
-    double[][] profile = new double[][] { new double[cells], new double[cells] };
+    double[][] profile = new double[][] {new double[cells], new double[cells]};
     Arrays.fill(profile[0], 1.0);
     return profile;
   }
@@ -375,23 +373,23 @@ class ConservativeSpeciesTransportTest {
   @Test
   void rejectsInvalidClosureAndReversedFlowWithoutRepairingInputs() {
     assertFalse(OnePhaseSpeciesConservationReport.ConservationReason.COUPLING_NOT_CONVERGED.isConverged());
-    String[] names = { "carrier", "tracer" };
-    double[][] invalidOld = { { 0.8 }, { 0.3 } };
+    String[] names = {"carrier", "tracer"};
+    double[][] invalidOld = {{0.8}, {0.3}};
     OnePhaseSpeciesConservationReport invalid = ConservativeSpeciesTransport.solve(names, invalidOld,
-        new double[] { 0.8, 0.2 }, new double[] { 10.0 }, new double[] { 10.0 }, new double[] { 1.0, 1.0 }, 1.0);
+        new double[] {0.8, 0.2}, new double[] {10.0}, new double[] {10.0}, new double[] {1.0, 1.0}, 1.0);
 
     assertEquals(OnePhaseSpeciesConservationReport.ConservationReason.INVALID_STATE, invalid.getReason());
     assertFalse(invalid.isConverged());
     assertTrue(invalid.getMessage().contains("sum to one without normalization"));
 
-    double[][] validOld = { { 0.8 }, { 0.2 } };
+    double[][] validOld = {{0.8}, {0.2}};
     OnePhaseSpeciesConservationReport reversed = ConservativeSpeciesTransport.solve(names, validOld,
-        new double[] { 0.8, 0.2 }, new double[] { 10.0 }, new double[] { 10.0 }, new double[] { 1.0, -1.0 }, 1.0);
+        new double[] {0.8, 0.2}, new double[] {10.0}, new double[] {10.0}, new double[] {1.0, -1.0}, 1.0);
     assertEquals(OnePhaseSpeciesConservationReport.ConservationReason.UNSUPPORTED_FLOW, reversed.getReason());
     assertTrue(reversed.getMessage().contains("zero and reversed flow"));
 
     OnePhaseSpeciesConservationReport missingLength = ConservativeSpeciesTransport.solve(names, validOld,
-        new double[] { 0.8, 0.2 }, new double[] { 10.0 }, new double[] { 10.0 }, new double[] { 1.0, 1.0 }, 1.0,
+        new double[] {0.8, 0.2}, new double[] {10.0}, new double[] {10.0}, new double[] {1.0, 1.0}, 1.0,
         SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, null, new ConstantAxialDispersion(1.0));
     assertEquals(OnePhaseSpeciesConservationReport.ConservationReason.INVALID_STATE, missingLength.getReason());
     assertTrue(missingLength.getMessage().contains("requires one positive length"));
@@ -399,9 +397,9 @@ class ConservativeSpeciesTransportTest {
 
   @Test
   void reportDefensivelyCopiesProfiles() {
-    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] { "carrier", "tracer" },
-        new double[][] { { 0.8 }, { 0.2 } }, new double[] { 0.8, 0.2 }, new double[] { 10.0 }, new double[] { 10.0 },
-        new double[] { 1.0, 1.0 }, 1.0);
+    OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+        new double[][] {{0.8}, {0.2}}, new double[] {0.8, 0.2}, new double[] {10.0}, new double[] {10.0},
+        new double[] {1.0, 1.0}, 1.0);
     double[][] first = report.getMassFractionProfile();
     first[0][0] = -1.0;
     assertEquals(0.8, report.getMassFractionProfile()[0][0], 1.0e-15);
@@ -427,9 +425,8 @@ class ConservativeSpeciesTransportTest {
 
     for (int step = 1; step <= totalSteps; step++) {
       double tracerInlet = step <= pulseSteps ? 1.0 : 0.0;
-      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
-          new String[] { "carrier", "tracer" }, profile, new double[] { 1.0 - tracerInlet, tracerInlet }, cellMasses,
-          cellMasses, faceFlows, timeStepSeconds);
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+          profile, new double[] {1.0 - tracerInlet, tracerInlet}, cellMasses, cellMasses, faceFlows, timeStepSeconds);
 
       assertTrue(report.isConverged(), report.getMessage());
       assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-12, report.getMessage());
@@ -467,9 +464,8 @@ class ConservativeSpeciesTransportTest {
     double absoluteErrorSeconds = 0.0;
     for (int step = 1; step <= totalSteps; step++) {
       double tracerInlet = step <= pulseSteps ? 1.0 : 0.0;
-      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
-          new String[] { "carrier", "tracer" }, profile, new double[] { 1.0 - tracerInlet, tracerInlet }, cellMasses,
-          cellMasses, faceFlows, timeStepSeconds);
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+          profile, new double[] {1.0 - tracerInlet, tracerInlet}, cellMasses, cellMasses, faceFlows, timeStepSeconds);
       assertTrue(report.isConverged(), report.getMessage());
       profile = report.getMassFractionProfile();
       double lagTimeSeconds = (step - 1) * timeStepSeconds;
@@ -533,9 +529,9 @@ class ConservativeSpeciesTransportTest {
 
     for (int step = 1; step <= totalSteps; step++) {
       double tracerInlet = step <= pulseSteps ? 1.0 : 0.0;
-      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
-          new String[] { "carrier", "tracer" }, profile, new double[] { 1.0 - tracerInlet, tracerInlet }, cellMasses,
-          cellMasses, faceFlows, timeStepSeconds, scheme, cellLengths);
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+          profile, new double[] {1.0 - tracerInlet, tracerInlet}, cellMasses, cellMasses, faceFlows, timeStepSeconds,
+          scheme, cellLengths);
       assertTrue(report.isConverged(), "scheme=" + scheme + ", step=" + step + ": " + report.getMessage());
       profile = report.getMassFractionProfile();
       double outlet = profile[1][cells - 1];
@@ -618,8 +614,8 @@ class ConservativeSpeciesTransportTest {
       double cellMassKg, double massFlowKgPerSecond, double timeStepSeconds, int steps, double velocityMPerSecond,
       double dispersionM2PerSecond, double pulseCenterM, double pulseHalfWidthM, double pulseAmplitude) {
     int cells = initialProfile[0].length;
-    double[][] profile = new double[][] { Arrays.copyOf(initialProfile[0], cells),
-        Arrays.copyOf(initialProfile[1], cells) };
+    double[][] profile = new double[][] {Arrays.copyOf(initialProfile[0], cells),
+        Arrays.copyOf(initialProfile[1], cells)};
     double[] cellMasses = filled(cells, cellMassKg);
     double[] faceFlows = filled(cells + 1, massFlowKgPerSecond);
     double[] cellLengths = filled(cells, cellLengthM);
@@ -633,9 +629,9 @@ class ConservativeSpeciesTransportTest {
     int maximumSubsteps = 0;
 
     for (int step = 0; step < steps; step++) {
-      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
-          new String[] { "carrier", "tracer" }, profile, new double[] { 1.0, 0.0 }, cellMasses, cellMasses, faceFlows,
-          timeStepSeconds, SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, cellLengths, model);
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(new String[] {"carrier", "tracer"},
+          profile, new double[] {1.0, 0.0}, cellMasses, cellMasses, faceFlows, timeStepSeconds,
+          SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, cellLengths, model);
       assertTrue(report.isConverged(), "physical-dispersion step=" + step + ": " + report.getMessage());
       profile = report.getMassFractionProfile();
       cumulativeInletTracerKg += report.getInletBoundaryMassKg()[1];

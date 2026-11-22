@@ -1,0 +1,98 @@
+{
+  "timestamp_UTC": "2026-11-08T17:03:22.544547+00:00",
+  "production_build_base": "bb5c7d45071d5537adce23e2217da28c49776d85",
+  "bounded_contract": "Staged declared-input SRK-HV MEG/methane diagnostic: native consistency, independent numeric parity, source/pure/physical-error preservation and matched binary model cost. No production Java, POM, database or public-profile change.",
+  "main_POM_JDK17": {
+    "tests": 136,
+    "suites": 16,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "Java8_POM_release8_on_JDK17": {
+    "tests": 136,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 16,
+    "new_fixture_class_major": 52,
+    "actual_Java8_runtime": false
+  },
+  "native_new_fixture": {
+    "tests": 4,
+    "binary_flashes": 84,
+    "independent_fixed_composition_T_states": 192,
+    "five_component_forced_states": 4,
+    "native_checks": "All five ThermodynamicModelTest booleans at1e-8 and checkNumerically at1e-6 on serialized detached unit basis; source invariance and original-amount dimensionless Hessian symmetry at1e-10; equilibrium1e-10/1e-12/1e-8."
+  },
+  "raw_amount_checker_limitations": [
+    "273.25K/99.8bara at1e-6mol: gas trace refined numerical stencil62.89311579016955/62.89593135131714 versus analytic62.893844017293304 per mol.",
+    "323.45K/100.8bara at1e-6mol: liquid Hessian57814.30331963301/57814.30331966281 per mol, absolute difference2.98e-8 and relative5.2e-13. Original-amount dimensionless symmetry and homogeneity plus unit-basis unmodified native checker pass. Raw micro-mole checker is not claimed passing."
+  ],
+  "physical_assessment": [
+    {
+      "MEG_MC": true,
+      "liquid_methane_AARD_percent": 4.896146860419864,
+      "inside_compiler_U95": 5,
+      "physical_acceptance": false,
+      "points_below_MEG_MC_source_fit": 2
+    },
+    {
+      "MEG_MC": false,
+      "liquid_methane_AARD_percent": 4.921689867603451,
+      "inside_compiler_U95": 5,
+      "physical_acceptance": false,
+      "points_below_MEG_MC_source_fit": 2
+    }
+  ],
+  "source_health": {
+    "status": "passed",
+    "new_finding_groups": 0,
+    "selected_source_findings": 1028
+  },
+  "static_health": {
+    "status": "passed",
+    "new_finding_groups": 0,
+    "analyzers": {
+      "pmd": "7.17.0",
+      "spotbugs": "4.10.5"
+    },
+    "runtime": {
+      "java_version": "17.0.21",
+      "vm_version": "17.0.21+9"
+    },
+    "PMD_selected_findings": 9,
+    "SpotBugs_selected_findings": 11051,
+    "reviewed_base_baseline_SHA256": "b10eb4264bf05db950e10432f2959c5af340d3bcf590623494a61900dc4ca573"
+  },
+  "documentation": {
+    "impact": "Mixing-rule guide, source/range catalogue, executable fixture/protocol/Javadocs and raw numerical/physical/cost records updated in same increment. No public API/default changes.",
+    "doc_tests_passed": 4,
+    "documentation_search_markdown_pages": 842,
+    "documentation_search_HTML_pages": 1,
+    "private_new_Java_Javadoc": "passed with pinned full JDK"
+  },
+  "publication_gates": {
+    "Maven_bootstrap": "Loaded work-with-neqsim scripts/prepare_maven.py exports evaluated before Maven/Spotless.",
+    "formatting": "Direct Spotless apply stable/check, documentation search and both all-files hook stages pass, including final repeat after adding this evidence record.",
+    "generated_engineering_coverage": "Regenerated, byte-identical to base",
+    "independent_replay": "12 endpoints at two mole-difference steps, normal and optimized Python, identical results. Both CLI plans/order and invalid MEG profile rejection pass.",
+    "runtime_corrections": "Default PATH lacked jfr and expected full JDK javadoc path; explicit pinned full JDK tools succeeded. These resolved tool-path failures did not change repository source/build policy."
+  },
+  "commands": [
+    "./mvnw -B -ntp -Dtest=HuronVidal*Test,ComponentGENRTLmodifiedHVDerivativeTest,ThermodynamicModelTest*Test test",
+    "./mvnw -B -ntp -f pomJava8.xml -Dmaven.compiler.release=8 -Dtest=HuronVidal*Test,ComponentGENRTLmodifiedHVDerivativeTest,ThermodynamicModelTest*Test clean test",
+    "run_huron_vidal_co2_benchmark.py --mixture meg-methane --profiles 0 1 --forks 4 (init1/init3/flash,48JVMs)",
+    "uv run --project devtools --locked devtools/code_health.py --baseline <exact-base-baseline>",
+    "./mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd; prepare_code_health_input.py; ./mvnw -B -ntp -Pcode-health spotbugs:spotbugs; code_health.py --tools pmd,spotbugs",
+    "Direct run_spotless.py apply/check; check_documentation_search.py; pre-commit run --all-files --hook-stage pre-commit/pre-push",
+    "reproduce_reference.py --output <report> (normal and -O); unittest docs/test_mixing_rules_documentation.py",
+    "Pinned javadoc -private -Xdoclint:all on both new Java files"
+  ],
+  "remaining_gates": [
+    "Hosted exact-head Java8/21, broader CI, mergeability and reviews after draft publication; no readiness classification.",
+    "Original-author methane pure inputs, original journal table/header/uncertainty, measured reverse gas-MEG partition and source-fit domain remain unresolved; no profile activation.",
+    "PR2016 original pure profile, Folas water MC, Hemmingsen2011/Epelle2020 original numeric tables and bidirectional inhibitor/hydrate/ice/brine qualification remain campaign dependencies.",
+    "Seven earlier runtime optimization candidates remain held. No production-code speedup/nonregression or binary-to-large-mixture extrapolation claimed."
+  ]
+}

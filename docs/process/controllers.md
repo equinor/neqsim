@@ -1,494 +1,588 @@
 ---
 title: Process Controllers and Logic
-description: Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
+description: Runnable examples of adjusters, recycles, setters, calculators, PID controllers, and dynamic control blocks in NeqSim.
 ---
 
 # Process Controllers and Logic
 
-Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
+Use steady-state utilities to satisfy process specifications and dynamic controllers to update
+actuators from measured signals. These have different execution and connection requirements.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Named Controller Map](#named-controller-map)
 - [Adjusters](#adjusters)
 - [Recycles](#recycles)
+- [Automatic recycle insertion](#automatic-recycle-insertion)
 - [Setters](#setters)
 - [Calculators](#calculators)
 - [PID Controllers](#pid-controllers)
 - [Native Dynamic Control Blocks](#native-dynamic-control-blocks)
+- [Sampled MPC for a platform inlet choke](#sampled-mpc-for-a-platform-inlet-choke)
 - [Process Logic](#process-logic)
-
----
 
 ## Overview
 
-**Location:** `neqsim.process.equipment.util`, `neqsim.process.controllerdevice`, `neqsim.process.logic`
+| Class | Package | Purpose |
+| --- | --- | --- |
+| `Adjuster` | `neqsim.process.equipment.util` | Iterate a manipulated variable toward a target |
+| `Recycle` | `neqsim.process.equipment.util` | Update a tear stream until a recycle converges |
+| `Setter` | `neqsim.process.equipment.util` | Apply supported constant pressure or temperature specifications |
+| `Calculator` | `neqsim.process.equipment.util` | Execute a Java calculation callback |
+| `ControllerDeviceBaseClass` | `neqsim.process.controllerdevice` | PID control using a measurement device |
+| `TransferFunctionBlock`, `LogicBlock` | `neqsim.process.controllerdevice` | Signal dynamics and Boolean decisions |
 
-**Classes:**
-- `Adjuster` - Adjust variable to meet specification
-- `Recycle` - Handle recycle streams
-- `Setter` - Set variable values
-- `Calculator` - Custom calculations
-- `PIDController` - PID control
-- `ProcessLogicController` - Conditional logic
-
----
+Each Java block below is a complete Java 8 program. Save it using its public class name and run
+with NeqSim and its dependencies on the classpath. Enable assertions with `java -ea` to check the
+stated results. `ControllersAndWellsDocumentationTest` compiles and executes these exact blocks.
 
 ## Named Controller Map
 
-Equipment now supports **multiple named controllers** through a tag-based map, alongside the legacy single-controller API.
+Equipment supports tagged controller registration through `addController(tag, controller)`,
+`getController(tag)`, and `getControllers()`. `setController(controller)` selects the legacy
+primary controller and also registers it under its name. The first `addController` call also
+selects a primary controller when none exists.
 
-### Attaching Multiple Controllers
+The map records associations; it does not implement arbitration between two outputs that both
+request the same valve position. `ThrottlingValve` executes its primary controller. Use an
+explicit control structure when several measurements must determine one actuator command.
 
-```java
-// Attach a level controller and a pressure controller to the same valve
-valve.addController("LC-100", levelController);
-valve.addController("PC-200", pressureController);
-```
-
-### Retrieving by Tag
-
-```java
-ControllerDeviceInterface lc = valve.getController("LC-100");
-ControllerDeviceInterface pc = valve.getController("PC-200");
-
-// Get all controllers on this equipment
-Collection<ControllerDeviceInterface> all = valve.getControllers();
-```
-
-### Backward Compatibility
-
-The legacy `setController()` method still works. When called, it also registers the controller in the named map using the controller's name as the key:
-
-```java
-// Old code — unchanged behavior
-valve.setController(myController);
-
-// Controller is also available via the named map
-valve.getController(myController.getName()); // returns myController
-```
-
-### System-Level Controller Registration
-
-Controllers can also be registered on the `ProcessSystem` itself. During transient simulation, `runTransient()` automatically scans and executes all system-level controllers after the equipment loop:
-
-```java
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(separator);
-process.add(valve);
-
-// Register controller at system level
-process.add(levelController);
-
-// During runTransient(), the controller is executed automatically
-process.runTransient(1.0, calcId);
-```
-
-This is in addition to controllers embedded on individual equipment, which continue to work as before.
-
-## Native Dynamic Control Blocks
-
-`TransferFunctionBlock` supplies first-order lag, lead-lag, dead-time, and second-order signal dynamics.
-`LogicBlock` evaluates threshold, fixed, or chained Boolean inputs. Register either block as a system-level
-controller so it is evaluated in the controller phase of each transient step.
-
-```java
-TransferFunctionBlock pressureLag = new TransferFunctionBlock(
-    "PT-filter", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
-pressureLag.setTransmitter(pressureTransmitter);
-pressureLag.setLagTime(5.0);
-pressureLag.setDeadTime(2.0);
-process.add(pressureLag);
-
-LogicBlock tripVote = new LogicBlock("PAHH", LogicBlock.Operator.AND);
-tripVote.addInput(pressureTransmitter, 120.0, LogicBlock.Comparator.GREATER_EQUAL);
-process.add(tripVote);
-```
-
-Both concrete block classes participate in `ProcessSystem` and multi-area `ProcessModel` transient-step
-transactions. A rejected step restores their dynamic states, delay buffer, output, calculation identity,
-configuration, and original transmitter/input bindings. Replaying the same physical-step identifier after rollback
-therefore produces the same deterministic control-block continuation. Repeated evaluation with an already accepted
-physical-step identifier is ignored; use one UUID per physical timestep and reuse it only for refinements inside that
-step. `TransferFunctionBlock.reset()` also clears the remembered step identifier so a deterministic run can restart
-from the block's initial state.
-
-Subclass instances fail transaction coverage until the subclass supplies a snapshot for its own mutable state. The
-transaction contract is an in-memory rollback mechanism: it does not validate tuning, prove safety integrity, or defer
-external side effects produced by callbacks.
-
----
+Registering a controller with `ProcessSystem.add(controller)` makes it available to the
+system-level transient scan. Equipment-owned controllers that already executed for the step's
+UUID are not integrated a second time. System-level registration alone does not connect the
+controller response to an actuator. The [PID example](#pid-controllers) demonstrates both the
+actuator connection and registration.
 
 ## Adjusters
 
-Adjusters modify one variable to achieve a target specification.
-
-### Basic Usage
+An adjuster is a steady-state specification solver. Register it after the equipment whose
+result it measures. For a direct temperature specification, a heater's `setOutTemperature`
+is sufficient. To solve for the required duty, use explicit getter, setter, and measurement
+callbacks:
 
 ```java
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Adjust heater duty to achieve target outlet temperature
-Adjuster tempControl = new Adjuster("TC-100");
-tempControl.setAdjustedVariable(heater, "outTemperature");
-tempControl.setTargetVariable(stream, "temperature", 80.0, "C");
-process.add(tempControl);
+public class HeaterDutyAdjusterExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater heater = new Heater("heater", feed);
+    heater.setDuty(10000.0); // W
+
+    Adjuster adjuster = new Adjuster("outlet temperature specification");
+    adjuster.setAdjustedEquipment(heater);
+    adjuster.setTargetEquipment(heater);
+    adjuster.setAdjustedValueGetter(() -> heater.getDuty());
+    adjuster.setAdjustedValueSetter(value -> heater.setDuty(value));
+    adjuster.setTargetValueCalculator(() -> heater.getOutletStream().getTemperature("C"));
+    adjuster.setTargetValue(80.0); // C, matching the measurement callback
+    adjuster.setMinAdjustedValue(0.0); // W, matching the manipulated variable
+    adjuster.setMaxAdjustedValue(100000.0);
+    adjuster.setTolerance(1.0e-5); // C
+
+    ProcessSystem process = new ProcessSystem("heater specification");
+    process.add(feed);
+    process.add(heater);
+    process.add(adjuster);
+    process.run();
+
+    // Check the physical target too: an adjuster can stop at a bound.
+    assert adjuster.solved();
+    assert Math.abs(heater.getOutletStream().getTemperature("C") - 80.0) < 1.0e-4;
+    assert heater.getDuty() > 0.0 && heater.getDuty() < 100000.0;
+    assert Math.abs(heater.getOutletStream().getFlowRate("kg/hr") - 1000.0) < 1.0e-6;
+  }
+}
 ```
 
-### Adjustable Variables
-
-| Equipment     | Variable           | Description        |
-| ------------- | ------------------ | ------------------ |
-| Heater/Cooler | `"duty"`           | Heat duty          |
-| Heater/Cooler | `"outTemperature"` | Outlet temperature |
-| Compressor    | `"outletPressure"` | Discharge pressure |
-| Valve         | `"outletPressure"` | Outlet pressure    |
-| Splitter      | `"splitFactor"`    | Split ratio        |
-| Stream        | `"flowRate"`       | Flow rate          |
-
-### Target Variables
-
-| Equipment | Variable         | Description             |
-| --------- | ---------------- | ----------------------- |
-| Stream    | `"temperature"`  | Temperature             |
-| Stream    | `"pressure"`     | Pressure                |
-| Stream    | `"flowRate"`     | Flow rate               |
-| Stream    | `"moleFraction"` | Component mole fraction |
-| Separator | `"liquidLevel"`  | Liquid level            |
-
-### Example: Dew Point Control
-
-```java
-// Adjust cooler to achieve hydrocarbon dew point
-Adjuster dewPointControl = new Adjuster("Dew Point Controller");
-dewPointControl.setAdjustedVariable(cooler, "outTemperature");
-dewPointControl.setTargetPhaseCondition(stream, "dewpoint", 50.0, "bara");
-process.add(dewPointControl);
-```
-
-### Solver Settings
-
-```java
-adjuster.setMaximumIterations(50);
-adjuster.setTolerance(1e-6);
-adjuster.setMinimumValue(-1e6);  // Duty lower bound
-adjuster.setMaximumValue(1e6);   // Duty upper bound
-```
-
----
+The string-based API supports selected stream properties; it is not general property reflection.
+For example, adjusted `"flow"` needs an explicit flow unit. A target `"temperature"` does not
+select a built-in temperature measurement in the current `Adjuster`, so the callback above is
+essential. Use callbacks for heater duty, component fractions, and other custom quantities.
+See [Adjusters](equipment/util/adjusters.md) for the supported property contract.
 
 ## Recycles
 
-Handle recycle streams in process flowsheets.
-
-### Basic Usage
-
-```java
-import neqsim.process.equipment.util.Recycle;
-
-// Define recycle
-Recycle recycle = new Recycle("Solvent Recycle");
-recycle.addStream(recycleStream);
-recycle.setOutletStream(inletMixer);
-recycle.setTolerance(1e-6);
-process.add(recycle);
-```
-
-### Recycle Placement
+Connect the recycle outlet to a **stream** that already feeds the upstream mixer. A mixer itself
+is not a valid argument to `Recycle.setOutletStream`. This example recycles 25% of the mixed
+flow and exports 75%. At convergence, export equals the fresh feed and recycle is one third of
+that fresh feed.
 
 ```java
-ProcessSystem process = new ProcessSystem();
-
-// Feed
-process.add(feed);
-
-// Mixer (combines feed and recycle)
-Mixer mixer = new Mixer("M-100");
-mixer.addStream(feed);
-process.add(mixer);
-
-// Process equipment
-process.add(reactor);
-process.add(separator);
-
-// Splitter for recycle
-Splitter splitter = new Splitter("Splitter", separator.getLiquidOutStream());
-splitter.setSplitFactors(new double[]{0.9, 0.1});  // 10% recycle
-process.add(splitter);
-
-// Recycle stream
-Recycle recycle = new Recycle("Recycle");
-recycle.addStream(splitter.getSplitStream(1));
-recycle.setOutletStream(mixer);
-process.add(recycle);
-
-// Connect mixer to recycle
-mixer.addStream(recycle.getOutletStream());
-
-process.run();
-```
-
-### Convergence Settings
-
-```java
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.AccelerationMethod;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 
-recycle.setTolerance(1e-6);
-recycle.setMaximumIterations(100);
+public class MaterialRecycleExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("fresh feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Stream tear = new Stream("recycle guess", fluid.clone());
+    tear.setFlowRate(100.0, "kg/hr");
 
-// Acceleration methods (default is DIRECT_SUBSTITUTION)
-recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
+    Mixer mixer = new Mixer("mixer");
+    mixer.addStream(feed);
+    mixer.addStream(tear);
+    Splitter splitter = new Splitter("product and recycle", mixer.getOutletStream());
+    splitter.setSplitFactors(new double[] {0.75, 0.25});
+    Recycle recycle = new Recycle("recycle");
+    recycle.addStream(splitter.getSplitStream(1));
+    recycle.setOutletStream(tear);
+    recycle.setTolerance(1.0e-8);
+    recycle.setMaxIterations(100);
+    recycle.setAccelerationMethod(AccelerationMethod.DIRECT_SUBSTITUTION);
+
+    ProcessSystem process = new ProcessSystem("material recycle");
+    process.add(feed);
+    process.add(tear);
+    process.add(mixer);
+    process.add(splitter);
+    process.add(recycle);
+    process.run();
+
+    assert recycle.solved();
+    assert Math.abs(splitter.getSplitStream(0).getFlowRate("kg/hr") - 1000.0) < 1.0e-3;
+    assert Math.abs(tear.getFlowRate("kg/hr") - 1000.0 / 3.0) < 1.0e-3;
+    assert Math.abs(tear.getPressure("bara") - 20.0) < 1.0e-6;
+  }
+}
 ```
 
-### Choosing an Acceleration Method
+`DIRECT_SUBSTITUTION` is the default acceleration method. `WEGSTEIN` and `BROYDEN` are opt-in
+alternatives; their benefit depends on the coupled variables and flowsheet. Current Wegstein
+acceleration operates on composition, so it does not accelerate the pure-methane flow balance
+above. Its default q bounds are -5 to 0, with a two-iteration warm-up. Both `ProcessSystem`
+and `ProcessModel` also provide `setRecycleAccelerationMethod` to update all their recycle units.
+See [Recycle Acceleration](../simulation/recycle_acceleration_guide.md) for tuning and diagnostics.
 
-| Method | When to use | Typical speedup | Risk |
-|---|---|---|---|
-| `DIRECT_SUBSTITUTION` *(default)* | Short loops (≤ 5 iterations), well-damped systems, debugging | baseline | none |
-| `WEGSTEIN` | Single-variable recycle loops, slowly converging composition loops | 2–3× fewer outer iterations | bounded; may under-relax when slope ≈ 1 |
-| `BROYDEN` | Tightly coupled multi-recycle systems, absorber/regenerator trains | 3–5× on hard cases | higher memory, needs stable first 2–3 iterations |
+## Automatic recycle insertion
 
-**Default behaviour.** Recycles use `DIRECT_SUBSTITUTION` out of the box — acceleration is opt-in. For existing models validated against a specific convergence trace, leave the default.
+A loop wired straight back into an upstream mixer - no `Recycle` unit anywhere in it - is an
+**implicit tear**. It still converges, because the surrounding sweep keeps re-evaluating it, but it
+has no tolerance, no acceleration and no convergence report of its own. In a `ProcessModel` that is
+worse: a stream produced by an area that runs *after* its consumer can only be closed by the outer
+Gauss-Seidel pass, which has no relaxation setting, so the plant residual sits on a floor no
+tolerance setting can reach.
 
-**What Wegstein accelerates.** The current implementation accelerates **composition only**. Temperature, pressure, and flow are handled by the normal mixing/flash logic. For recycles where T or P is the slowly-converging variable, Wegstein provides little benefit.
+`makeRecycles()` finds those loops and closes them:
 
-**Safety bounds.** Wegstein's q-factor is clamped to `[-5, 0]` and applied only after a 2-iteration warm-up (`wegsteinDelayIterations`). This prevents oscillation but means Wegstein has no effect on loops that converge in ≤ 2 iterations.
+| Method | Scope |
+| --- | --- |
+| `ProcessSystem.makeRecycles()` | Strongly connected components of one flowsheet |
+| `ProcessModel.makeRecycles()` | Cross-area feedback streams, then every area |
+| `makeRecycles(double tolerance)` | Same, with an explicit relative tear tolerance (default `1e-2`) |
+| `setAutoRecycles(boolean)` | Do it automatically on `run()` / `runUntilConverged(...)` |
 
-### Applying to a Whole Flowsheet
+For each loop the inlet with the smallest **recycle ratio** - tear flow divided by the total flow
+into the consuming unit - is swapped for a tear stream seeded from the current loop fluid, and a
+`Recycle` is registered to close it. That ratio governs how fast a direct-substitution tear
+contracts, so tearing a small side stream into a large mixer converges in a few passes where
+tearing the main line would make the loop iterate on its own throughput. One edge is torn per
+round and the loop structure is recomputed afterwards, so nested cycles get the tears they need
+and no more - every extra tear is another sub-iteration at run time.
 
-Instead of setting acceleration per `Recycle`, use the bulk setters:
+Each generated recycle starts on direct substitution with `setAdaptiveAcceleration(true)`, so it
+upgrades itself to Wegstein only once its flow error stops contracting, and gets an absolute flow
+tolerance at 1e-6 of the largest flow in its area, so a tear on a near-zero leg converges on its
+absolute change instead of a relative error it can never meet.
+
+Only inlets that can be rewired are torn - `Mixer` and `Manifold` expose
+`replaceStream(int, StreamInterface)`. A loop that closes on any other equipment type is logged and
+left untouched rather than silently mis-wired; route it through a mixer to make it tearable.
 
 ```java
-// All Recycle units in a single ProcessSystem
-int updated = process.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+import java.util.List;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 
-// All Recycle units across all areas of a ProcessModel
-int total = plant.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+public class AutomaticRecycleExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(273.15 + 30.0, 50.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    Mixer mixer = new Mixer("inlet mixer");
+    mixer.addStream(feed);
+    Separator separator = new Separator("separator", mixer.getOutletStream());
+    Splitter splitter = new Splitter("gas splitter", separator.getGasOutStream());
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
+
+    ProcessSystem process = new ProcessSystem("automatic recycle");
+    process.add(feed);
+    process.add(mixer);
+    process.add(separator);
+    process.add(splitter);
+    process.run();
+
+    // Close the loop implicitly: the recycle branch goes straight back to the mixer.
+    mixer.addStream(splitter.getSplitStream(1));
+
+    List<Recycle> created = process.makeRecycles();
+    assert created.size() == 1;
+    assert created.get(0).isAdaptiveAcceleration();
+    assert created.get(0).getAbsoluteFlowTolerance() > 0.0;
+    // The mixer now reads the generated tear stream, not the splitter outlet.
+    assert mixer.getInletStreams().get(1) == created.get(0).getOutletStream();
+
+    process.run();
+    assert process.solved();
+    double products = splitter.getSplitStream(0).getFlowRate("kg/hr")
+        + separator.getLiquidOutStream().getFlowRate("kg/hr");
+    assert Math.abs(products - 1000.0) < 1.0;
+
+    // Idempotent: the loop is closed, so nothing more is inserted.
+    assert process.makeRecycles().isEmpty();
+  }
+}
 ```
 
-Both methods return the count of `Recycle` units updated. Safe to call before or after `run()`; takes effect on the next iteration.
+`makeRecycles()` seeds itself: if the flowsheet has streams without a fluid it runs once first, so
+the call order is not the caller's problem. To drop the explicit call entirely, enable auto mode -
+the first run then seeds and closes every implicit loop, and later runs use the generated tears:
 
----
+```python
+plant.setAutoRecycles(True)
+plant.runUntilConverged(30)
+```
+
+Auto mode is **off by default**, because inserting a tear changes how an existing flowsheet
+iterates and would silently move results in models that rely on the implicit-loop pass.
 
 ## Setters
 
-Set variable values directly.
-
-### Basic Usage
+`Setter` applies supported constant specifications with `addTargetEquipment` and `addParameter`.
+It does not flash the target after changing its inputs: run the target afterward. Assign flow
+directly with `Stream.setFlowRate`. Define feed composition on the thermodynamic system, in
+component insertion order when using `setMolarComposition`.
 
 ```java
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Setter;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Set flow rate
-Setter flowSetter = new Setter("Flow Setter", stream);
-flowSetter.setVariable("flowRate", 1000.0, "kg/hr");
-process.add(flowSetter);
+public class ConstantSpecificationExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("CO2", 0.10);
+    fluid.setMixingRule("classic");
+    fluid.setMolarComposition(new double[] {0.98, 0.02});
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    Setter setter = new Setter("feed specifications");
+    setter.addTargetEquipment(feed);
+    setter.addParameter("temperature", "C", 40.0);
+    setter.addParameter("pressure", "bara", 30.0);
+    setter.run();
+    feed.run();
+
+    assert Math.abs(feed.getTemperature("C") - 40.0) < 1.0e-8;
+    assert Math.abs(feed.getPressure("bara") - 30.0) < 1.0e-8;
+    assert Math.abs(feed.getFlowRate("kg/hr") - 1000.0) < 1.0e-6;
+    assert Math.abs(feed.getFluid().getComponent("CO2").getz() - 0.02) < 1.0e-10;
+  }
+}
 ```
 
-### Mole Fraction Setter
-
-```java
-import neqsim.process.equipment.util.MoleFractionSetter;
-
-// Set component mole fraction
-MoleFractionSetter compSetter = new MoleFractionSetter("CO2 Setter", stream);
-compSetter.setMoleFraction("CO2", 0.02);
-process.add(compSetter);
-```
-
----
+Composition specification changes the input definition. To model physical injection or removal,
+include the corresponding material streams and equipment in the flowsheet. The available
+`MoleFractionControllerUtil` modifies component inventory and is described in
+[Calculators and Setters](equipment/util/calculators.md); there is no `MoleFractionSetter` class.
 
 ## Calculators
 
-Perform custom calculations.
-
-### Basic Usage
+Use `Calculator.setCalculationMethod` with a Java callback. Register whole equipment objects
+as inputs and output; `setExpression` and property-name overloads are not part of this API.
+Here a separate auxiliary-feed specification is set to 10% of a main-feed mass rate.
 
 ```java
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Calculator;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 
-Calculator calc = new Calculator("Energy Balance");
-calc.addInputVariable(stream1);
-calc.addInputVariable(stream2);
-calc.setOutputVariable(heater, "duty");
+public class FlowSpecificationCalculatorExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream mainFeed = new Stream("main feed", fluid);
+    mainFeed.setFlowRate(1000.0, "kg/hr");
+    Stream auxiliaryFeed = new Stream("auxiliary feed", fluid.clone());
+    auxiliaryFeed.setFlowRate(1.0, "kg/hr");
 
-// Custom calculation (override in subclass or use expression)
-calc.setExpression("stream1.enthalpy - stream2.enthalpy");
-process.add(calc);
+    Calculator calculator = new Calculator("auxiliary feed specification");
+    calculator.addInputVariable(mainFeed);
+    calculator.setOutputVariable(auxiliaryFeed);
+    calculator.setCalculationMethod((inputs, output) -> {
+      Stream source = (Stream) inputs.get(0);
+      Stream target = (Stream) output;
+      target.setFlowRate(0.10 * source.getFlowRate("kg/hr"), "kg/hr");
+      target.run();
+    });
+
+    ProcessSystem process = new ProcessSystem("calculated feed specification");
+    process.add(mainFeed);
+    process.add(calculator);
+    process.run();
+
+    assert Math.abs(auxiliaryFeed.getFlowRate("kg/hr") - 100.0) < 1.0e-6;
+    assert Math.abs(mainFeed.getFlowRate("kg/hr") - 1000.0) < 1.0e-6;
+    assert Math.abs(auxiliaryFeed.getTemperature("C") - 25.0) < 1.0e-6;
+  }
+}
 ```
 
----
+This callback establishes the rate of an independent source; splitting one feed into products
+requires a `Splitter`. Registered calculator inputs and outputs also describe graph dependencies.
+Validate callback results explicitly, because callback exceptions are logged by `Calculator`.
 
 ## PID Controllers
 
-For dynamic simulation with feedback control.
+Use `ControllerDeviceBaseClass` with a transmitter. `setControllerParameters(Kp, Ti, Td)` takes
+gain, integral time in seconds, and derivative time in seconds. `Ti` is not an integral gain.
+With an explicit engineering unit, the controller uses measurement minus set point as its error;
+`setReverseActing(true)` reverses the output response. Select the action from the actual process
+and actuator response.
 
-### Basic Usage
-
-```java
-import neqsim.process.controllerdevice.PIDController;
-
-PIDController levelControl = new PIDController("LC-100");
-levelControl.setMeasuredVariable(separator, "liquidLevel");
-levelControl.setControlledVariable(valve, "opening");
-levelControl.setSetPoint(0.5);  // 50% level
-
-// Tuning parameters
-levelControl.setKp(2.0);    // Proportional gain
-levelControl.setKi(0.1);    // Integral gain (1/s)
-levelControl.setKd(0.0);    // Derivative gain (s)
-
-process.add(levelControl);
-```
-
-### Tuning
+The example initializes a valve at 50% opening, then performs one dynamic step with pressure
+above set point. The controller opens the valve to 51%. The imposed feed pressure stays fixed:
+this verifies wiring and action, while pressure regulation requires upstream inventory dynamics.
 
 ```java
-// Action
-levelControl.setReverseAction(true);  // Increase output decreases PV
+import java.util.UUID;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Output limits
-levelControl.setOutputMin(0.0);
-levelControl.setOutputMax(100.0);
+public class PressureControllerWiringExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 25.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    ThrottlingValve valve = new ThrottlingValve("pressure valve", feed);
+    valve.setOutletPressure(10.0, "bara");
+    valve.setPercentValveOpening(50.0);
 
-// Anti-windup
-levelControl.setAntiWindup(true);
-```
+    PressureTransmitter transmitter = new PressureTransmitter("PT-100", feed);
+    transmitter.setUnit("bara");
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("PC-100");
+    controller.setTransmitter(transmitter);
+    controller.setControllerSetPoint(20.0, "bara");
+    controller.setControllerParameters(2.0, 10.0, 0.0);
+    controller.setReverseActing(false);
+    controller.setOutputLimits(0.0, 100.0);
+    valve.setController(controller);
 
-### Dynamic Execution
+    ProcessSystem process = new ProcessSystem("pressure controller wiring");
+    process.add(feed);
+    process.add(valve);
+    process.add(controller);
+    process.run(); // Initialize outlet state and valve sizing before the dynamic step.
+    valve.setCalculateSteadyState(false);
+    process.runTransient(1.0, UUID.randomUUID());
 
-```java
-// Run transient with controllers
-for (double t = 0; t < 3600; t += 1.0) {
-    process.runTransient();
-
-    double pv = levelControl.getProcessVariable();
-    double sp = levelControl.getSetPoint();
-    double out = levelControl.getOutput();
-
-    System.out.printf("%.1f, %.3f, %.3f, %.1f%n", t, pv, sp, out);
+    assert valve.getController("PC-100") == controller;
+    assert valve.getControllers().contains(controller);
+    assert Math.abs(controller.getMeasuredValue("bara") - 25.0) < 1.0e-8;
+    assert Math.abs(controller.getResponse() - 51.0) < 1.0e-8;
+    assert Math.abs(valve.getPercentValveOpening() - 51.0) < 1.0e-8;
+    assert valve.getOutletStream().getFlowRate("kg/hr") > 0.0;
+  }
 }
 ```
 
----
+For time series, call `process.runTransient(dt, UUID.randomUUID())` once per physical step,
+with `dt` in seconds. Read the measured value, `getControllerSetPoint`, and `getResponse` for
+results. Reuse a UUID only for repeated evaluations of the same physical step.
+
+When an opt-in sampled transmitter uses its default unit, percent-domain PID scaling is calculated from the held value
+already selected for that scan. The controller does not read the mutable instrument chain a second time. For a sampled
+vessel-level loop, the scan order is scheduled events and field inputs, instrument sample, equipment and equipment-owned
+controller, standalone controllers not already executed, then history and alarm evaluation. The held level is therefore
+the start-of-step value and the updated vessel inventory appears on the next scan.
+
+The public synthetic separator-level regression uses a 2.2 m diameter by 7.0 m separator at 55 bara, a 20 to 28 kg/s
+wet-gas feed step, one-second scans, a direct-acting PID (`Kp = 0.8`, `Ti = 120 s`) and a liquid valve with a 4 s travel
+time constant. It is a numerical qualification fixture, not proposed plant tuning.
+
+| 30 s result | Observed | Test limit |
+| --- | ---: | ---: |
+| Peak total level fraction | 0.51223755 | 0.513 |
+| Peak liquid-valve opening | 51.08374% | 51.1% |
+| Held-sample peak absolute error | 0.01193237 | 0.012 |
+| Level IAE | 0.18775940 fraction-s | 0.19 fraction-s |
+| Controller-output travel | 1.08374023 percentage points | 1.09 percentage points |
+| Maximum component inventory residual per step | 3.64e-12 mol | 1e-8 mol |
+
+The fixture also requires exact rejected-step replay, exact next-step serialization/restart agreement, bit-for-bit
+repeatability between independent chains, physical bounds, and one shared held sample across the controller event log
+and process history. It does not establish vendor sizing, alarm/trip margins, SIL, independence, voting, or project
+acceptance.
+
+The corresponding pressure-inventory fixture uses the same public wet-gas basis and separator geometry. The separator
+gas inventory is the pressure capacitance: a fixed-volume/internal-energy flash advances pressure from the discrete
+component and energy balances. A sampled `PressureTransmitter` drives an engineering-unit PID (`Kp = 6.0`,
+`Ti = 30 s`) attached to a `PressureControlValve` with a 4 s travel time constant and a fixed 45 bara downstream
+boundary. A 20 to 28 kg/s feed step is run for 70 one-second scans. This is a public numerical reference case, not
+proposed plant tuning or a general pressure-flow network qualification.
+
+| 70 s result | Observed | Test limit |
+| --- | ---: | ---: |
+| Peak separator pressure | 56.67285 bara | 56.68 bara |
+| Final separator pressure | 55.71307 bara | 55.72 bara |
+| Peak gas-PCV opening | 71.36980% | 71.38% |
+| Held-sample peak absolute error | 1.67285 bar | 1.68 bar |
+| Pressure IAE | 84.53193 bar-s | 84.6 bar-s |
+| Controller-output travel | 21.36980 percentage points | 21.38 percentage points |
+| Default 2% settling-band time | 53 s | 53 s |
+| Maximum component inventory residual per step | 7.28e-12 mol | 1e-8 mol |
+| Maximum relative energy residual | 3.70e-6 | 5e-6 |
+| Maximum relative fixed-volume residual | 5.07e-7 | 1e-6 |
+
+The qualification also requires a shared start-of-step pressure across the controller event and process history, exact
+rollback/replay, exact serialization/restart, deterministic independent repeat, and 1.0/0.5 s refinement. At 10 s,
+the refined pressure differs by less than 0.05 bar and PCV opening by less than 0.35 percentage point. The fixed
+downstream pressure remains an algebraic boundary; this fixture does not establish a simultaneous plant-wide
+pressure-flow solve, compressor response, linepack, relief/depressuring sizing, alarm/trip margins or safety credit.
+
+## Native Dynamic Control Blocks
+
+`TransferFunctionBlock` supplies first-order lag, lead-lag, dead-time, and second-order signal
+dynamics. `LogicBlock` evaluates threshold, fixed, or chained Boolean inputs. Both read a
+transmitter's configured measurement unit, so set that unit explicitly.
+
+```java
+import java.util.UUID;
+import neqsim.process.controllerdevice.LogicBlock;
+import neqsim.process.controllerdevice.TransferFunctionBlock;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class DynamicControlBlocksExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("measured stream", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    PressureTransmitter transmitter = new PressureTransmitter("PT-100", feed);
+    transmitter.setUnit("bara");
+
+    TransferFunctionBlock lag = new TransferFunctionBlock(
+        "pressure filter", TransferFunctionBlock.Type.FIRST_ORDER_LAG);
+    lag.setTransmitter(transmitter);
+    lag.setLagTime(5.0); // s
+    LogicBlock highPressure = new LogicBlock("high pressure", LogicBlock.Operator.AND);
+    highPressure.addInput(transmitter, 30.0, LogicBlock.Comparator.GREATER_EQUAL);
+
+    ProcessSystem process = new ProcessSystem("signal dynamics");
+    process.add(feed);
+    process.add(lag);
+    process.add(highPressure);
+    process.run();
+    process.runTransient(1.0, UUID.randomUUID());
+    assert Math.abs(lag.getOutput() - 20.0) < 1.0e-8;
+    assert !highPressure.getOutputBoolean();
+
+    feed.setPressure(32.0, "bara");
+    process.runTransient(1.0, UUID.randomUUID());
+    // Backward-Euler first-order lag: 20 + (32 - 20) * 1 / (5 + 1) = 22 bara.
+    assert Math.abs(lag.getOutput() - 22.0) < 1.0e-8;
+    assert highPressure.getOutputBoolean();
+  }
+}
+```
+
+Both concrete block classes participate in `ProcessSystem` and multi-area `ProcessModel`
+transient-step transactions. A rejected step restores dynamic state, delay buffers, output,
+calculation identity, configuration, and original transmitter/input bindings. Replaying that
+physical-step identifier after rollback reproduces the control-block continuation. Repeated
+evaluation with an already accepted identifier is ignored. `TransferFunctionBlock.reset()` also
+clears the remembered identifier so a run can restart from its initial state.
+
+Subclasses must supply snapshots for their own mutable state to obtain transaction coverage.
+The transaction mechanism does not validate tuning or safety integrity, or defer external
+side effects from callbacks.
+
+## Sampled MPC for a platform inlet choke
+
+For a platform production study, connect the well and riser to the platform
+choke and then to the three-phase inlet separator. A separator liquid-load
+controller can trim the choke using the liquid rate after the choke flash.
+Keep pressure, total liquid height and interface level on their independent
+gas, oil and water outlet loops. Couple the choke pressure drop back to the
+riser boundary and verify that the accepted mass flow crosses the choke.
+
+Identify the local gain with a paired transient: hold the well input and the
+separator PI tuning fixed, perturb the choke opening, and compare post-flash
+liquid flow with a fixed-opening reference. A scalar `ModelPredictiveController`
+uses a first-order approximation and optimizes one held future command over
+the horizon. Run it at a fixed controller scan, with one measurement and the
+actual applied opening per scan. Hold its bounded output across the smaller
+plant integration steps. The `getPredictedTrajectory(N, dt)` diagnostic returns
+finite-time samples at `dt, 2*dt, ..., N*dt` under a held input.
+
+Use matched fixed-opening, PI and MPC replays with separate disturbances from
+identification. Report after-choke liquid peaks, vessel excursions, opening and
+move limits, and mass closure. Repeat at a finer plant timestep without
+retuning the controller or changing its scan, and at a finer pipe mesh.
+Brief numerical peaks can reverse a controller ranking even with a closed
+mass balance. Retain the unfiltered traces, control tuning and limitations.
 
 ## Process Logic
 
-Conditional logic for process decisions.
-
-### Basic Usage
-
-```java
-import neqsim.process.logic.ProcessLogicController;
-
-ProcessLogicController logic = new ProcessLogicController("Emergency Logic");
-
-// Define condition
-logic.setCondition(pressure, ">", 100.0, "bara");
-
-// Define action
-logic.setAction(shutoffValve, "close");
-
-process.add(logic);
-```
-
-### Complex Conditions
-
-```java
-// AND condition
-logic.addCondition(pressure, ">", 100.0, "bara", "AND");
-logic.addCondition(temperature, ">", 150.0, "C", "AND");
-
-// OR condition
-logic.addCondition(level, "<", 0.1, "ratio", "OR");
-logic.addCondition(level, ">", 0.9, "ratio", "OR");
-```
+A `LogicBlock` produces a Boolean signal; it does not automatically shut a valve. Connect the
+signal to an explicit action or sequence. The implemented `neqsim.process.logic` subpackages
+contain `StartupLogic`, `ShutdownLogic`, conditions, and actions for these workflows. See
+[Advanced Process Logic](../simulation/advanced_process_logic.md) for sequence integration.
 
 ### Alarm Integration
 
-```java
-import neqsim.process.alarm.ProcessAlarmManager;
-
-ProcessAlarmManager alarms = process.getAlarmManager();
-
-// High pressure alarm
-alarms.addAlarm(separator, "pressure", 95.0, "high", "bara");
-alarms.addAlarm(separator, "pressure", 100.0, "highHigh", "bara");
-
-// Low level alarm
-alarms.addAlarm(separator, "liquidLevel", 0.2, "low", "ratio");
-```
-
----
-
-## Example: Complete Control System
-
-```java
-ProcessSystem process = new ProcessSystem();
-
-// Feed stream
-Stream feed = new Stream("Feed", feedFluid);
-feed.setFlowRate(1000.0, "kg/hr");
-process.add(feed);
-
-// Heater with temperature control
-Heater heater = new Heater("E-100", feed);
-process.add(heater);
-
-Adjuster tempControl = new Adjuster("TC-100");
-tempControl.setAdjustedVariable(heater, "duty");
-tempControl.setTargetVariable(heater.getOutletStream(), "temperature", 80.0, "C");
-process.add(tempControl);
-
-// Separator with level control
-Separator separator = new Separator("V-100", heater.getOutletStream());
-process.add(separator);
-
-ThrottlingValve liquidValve = new ThrottlingValve("LV-100", separator.getLiquidOutStream());
-liquidValve.setOutletPressure(5.0, "bara");
-process.add(liquidValve);
-
-// Level controller (for dynamic)
-PIDController levelControl = new PIDController("LC-100");
-levelControl.setMeasuredVariable(separator, "liquidLevel");
-levelControl.setControlledVariable(liquidValve, "opening");
-levelControl.setSetPoint(0.5);
-levelControl.setKp(5.0);
-levelControl.setKi(0.5);
-process.add(levelControl);
-
-// Pressure control
-ThrottlingValve gasValve = new ThrottlingValve("PV-100", separator.getGasOutStream());
-process.add(gasValve);
-
-Adjuster pressControl = new Adjuster("PC-100");
-pressControl.setAdjustedVariable(gasValve, "outletPressure");
-pressControl.setTargetVariable(separator, "pressure", 20.0, "bara");
-process.add(pressControl);
-
-// Run steady state
-process.run();
-
-// Run dynamic
-for (double t = 0; t < 3600; t += 1.0) {
-    // Disturbance at t=600
-    if (Math.abs(t - 600) < 0.5) {
-        feed.setFlowRate(1200.0, "kg/hr");
-    }
-
-    process.runTransient();
-}
-```
-
----
+Configure limits on a measurement device using `AlarmConfig`, then register that measurement
+with `ProcessAlarmManager`. Alarm values and thresholds must use the same engineering unit.
+There is no equipment/property overload of `addAlarm` as previously shown on this page.
+See the [Alarm System Guide](../safety/alarm_system_guide.md) for configuration, evaluation,
+acknowledgment, and history.
 
 ## Related Documentation
 
-- [ProcessSystem](processmodel/process_system) - Process system with named controllers and connections
-- [Dynamic Simulation Guide](../simulation/dynamic_simulation_guide) - Transient simulation with controller scan
-- [Dynamic Simulation Helper](dynamic-simulation) - Auto-instrument a process for dynamic simulation
-- [Process Package](index.md) - Package overview
-- [Equipment](equipment/) - Process equipment
-- [Alarm System](../safety/alarm_system_guide) - Alarms
-- [Process Logic Framework](../simulation/process_logic_framework) - Advanced logic
+- [ProcessSystem](processmodel/process_system.md) - Named controllers and process execution
+- [Dynamic Simulation Guide](../simulation/dynamic_simulation_guide.md) - Equipment dynamics and controller scans
+- [Dynamic Simulation Helper](dynamic-simulation.md) - Instrumentation for dynamic simulation
+- [Adjusters](equipment/util/adjusters.md) - Supported property names and callbacks
+- [Recycles](equipment/util/recycles.md) - Tear streams and convergence
+- [Calculators and Setters](equipment/util/calculators.md) - Calculation callbacks and specifications

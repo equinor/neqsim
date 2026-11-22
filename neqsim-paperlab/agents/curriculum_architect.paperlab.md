@@ -16,9 +16,9 @@ You design the learning path of a PaperLab book.
 
 ## Loaded Skills
 
-- `paperlab_curriculum_prerequisite_graph`
-- `paperlab_student_readability`
-- `paperlab_book_knowledge_graph`
+- `paperlab-curriculum-prerequisite-graph`
+- `paperlab-student-readability`
+- `paperlab-book-knowledge-graph`
 
 ## Required Context
 

@@ -792,7 +792,7 @@ public class OilGasProcessSimulationOptimization {
     // Gas splitter for fuel gas takeoff
     Splitter gasSplitter = new Splitter("splitter", dewPointScrubber2.getGasOutStream());
     gasSplitter.setSplitNumber(2);
-    gasSplitter.setFlowRates(new double[] { -1, 2966.0 }, "kg/hr");
+    gasSplitter.setFlowRates(new double[] {-1, 2966.0}, "kg/hr");
 
     // Fuel gas stream
     gasSplitter.getSplitStream(1).setName("fuel gas");
@@ -973,7 +973,7 @@ public class OilGasProcessSimulationOptimization {
 
       // 20-HA-01
       Heater heater20HA01 = (Heater) oilProcess.getUnit("20-HA-01");
-      heater20HA01.setOutTemperature(params.getTsep1() + 273.15);
+      heater20HA01.setOutletTemperature(params.getTsep1() + 273.15);
       heater20HA01.setOutPressure(params.getPsep1() + 1.01325);
 
       // VLV-100
@@ -982,7 +982,7 @@ public class OilGasProcessSimulationOptimization {
 
       // 20-HA-02
       Heater heater20HA02 = (Heater) oilProcess.getUnit("20-HA-02");
-      heater20HA02.setOutTemperature(params.getTsep2() + 273.15);
+      heater20HA02.setOutletTemperature(params.getTsep2() + 273.15);
       heater20HA02.setOutPressure(params.getPsep2() + 1.01325);
 
       // VLV-102
@@ -991,12 +991,12 @@ public class OilGasProcessSimulationOptimization {
 
       // 20-HA-03
       Heater heater20HA03 = (Heater) oilProcess.getUnit("20-HA-03");
-      heater20HA03.setOutTemperature(params.getTsep3() + 273.15);
+      heater20HA03.setOutletTemperature(params.getTsep3() + 273.15);
       heater20HA03.setOutPressure(params.getPsep3() + 1.01325);
 
       // 23-HA-03
       Cooler cooler23HA03 = (Cooler) oilProcess.getUnit("23-HA-03");
-      cooler23HA03.setOutTemperature(params.getTscrub1() + 273.15);
+      cooler23HA03.setOutletTemperature(params.getTscrub1() + 273.15);
       cooler23HA03.setOutPressure(params.getPsep3() - params.getdP_23_HA_03() + 1.01325);
 
       // 23-PA-01
@@ -1009,7 +1009,7 @@ public class OilGasProcessSimulationOptimization {
 
       // 23-HA-02
       Cooler cooler23HA02 = (Cooler) oilProcess.getUnit("23-HA-02");
-      cooler23HA02.setOutTemperature(params.getTscrub2() + 273.15);
+      cooler23HA02.setOutletTemperature(params.getTscrub2() + 273.15);
       cooler23HA02.setOutPressure(params.getPsep2() - params.getdP_23_HA_02() + 1.01325);
 
       // 23-KA-02
@@ -1018,7 +1018,7 @@ public class OilGasProcessSimulationOptimization {
 
       // 23-HA-01
       Cooler cooler23HA01 = (Cooler) oilProcess.getUnit("23-HA-01");
-      cooler23HA01.setOutTemperature(params.getTscrub3() + 273.15);
+      cooler23HA01.setOutletTemperature(params.getTscrub3() + 273.15);
       cooler23HA01.setOutPressure(params.getPsep1() - params.getdP_23_HA_01() + 1.01325);
 
       // 23-KA-01
@@ -1027,12 +1027,12 @@ public class OilGasProcessSimulationOptimization {
 
       // 24-HA-01
       Cooler cooler24HA01 = (Cooler) oilProcess.getUnit("24-HA-01");
-      cooler24HA01.setOutTemperature(params.getTscrub4() + 273.15);
+      cooler24HA01.setOutletTemperature(params.getTscrub4() + 273.15);
       cooler24HA01.setOutPressure(params.getPcomp1() - params.getdP_24_HA_01() + 1.01325);
 
       // 25-HA-02
       Cooler cooler25HA02 = (Cooler) oilProcess.getUnit("25-HA-02");
-      cooler25HA02.setOutTemperature(params.getTrefrig() + 273.15);
+      cooler25HA02.setOutletTemperature(params.getTrefrig() + 273.15);
       cooler25HA02.setOutPressure(params.getPcomp1() - params.getdP_25_HA_01() - params.getdP_25_HA_02() + 1.01325);
 
       // 27-KA-01
@@ -1041,12 +1041,12 @@ public class OilGasProcessSimulationOptimization {
 
       // 27-HA-01
       Cooler cooler27HA01 = (Cooler) oilProcess.getUnit("27-HA-01");
-      cooler27HA01.setOutTemperature(params.getT_gas_export() + 273.15);
+      cooler27HA01.setOutletTemperature(params.getT_gas_export() + 273.15);
       cooler27HA01.setOutPressure(params.getP_gas_export() - params.getdP_27_HA_01() + 1.01325);
 
       // 21-HA-01
       Cooler cooler21HA01 = (Cooler) oilProcess.getUnit("21-HA-01");
-      cooler21HA01.setOutTemperature(params.getT_oil_export() + 273.15);
+      cooler21HA01.setOutletTemperature(params.getT_oil_export() + 273.15);
       cooler21HA01.setOutPressure(params.getPsep3() - params.getdP_21_HA_01() + 1.01325);
 
       // 21-PA-01
@@ -1288,10 +1288,10 @@ public class OilGasProcessSimulationOptimization {
     double bestPower = Double.MAX_VALUE;
 
     // Define parameter ranges for optimization
-    double[] feedRateRange = { 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0 }; // kgmole/hr
-    double[] tsep1Range = { 65.0, 67.5, 70.0, 72.5, 75.0 };
-    double[] tsep2Range = { 65.0, 66.0, 67.0, 68.0, 69.0, 70.0 };
-    double[] psep1Range = { 30.0, 31.0, 32.0, 33.0, 34.0, 35.0 };
+    double[] feedRateRange = {5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0}; // kgmole/hr
+    double[] tsep1Range = {65.0, 67.5, 70.0, 72.5, 75.0};
+    double[] tsep2Range = {65.0, 66.0, 67.0, 68.0, 69.0, 70.0};
+    double[] psep1Range = {30.0, 31.0, 32.0, 33.0, 34.0, 35.0};
 
     int iterations = 0;
     int successfulIterations = 0;
@@ -1393,8 +1393,8 @@ public class OilGasProcessSimulationOptimization {
     double bestGasExportRate = 0.0;
 
     // Define parameter ranges - focus on feed rate, use fixed operating conditions
-    double[] feedRateRange = { 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 13000.0, 14000.0,
-        15000.0 };
+    double[] feedRateRange = {5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 13000.0, 14000.0,
+        15000.0};
 
     int successfulIterations = 0;
     int consecutiveFailures = 0;

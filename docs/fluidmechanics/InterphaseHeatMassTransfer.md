@@ -1,11 +1,19 @@
 ---
 title: Interphase Multicomponent Mass and Heat Transfer in Two-Phase Pipe Flow
-description: This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. Th...
+description: "Theory and numerical methods for non-equilibrium interphase mass and heat transfer in two-phase gas-liquid pipe flow."
 ---
 
 ## Overview
 
-This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. The approach is based on **non-equilibrium thermodynamics** where the gas and liquid phases are not assumed to be in thermodynamic equilibrium at the interface.
+The corrected film factors change finite-rate dissolution distances. In the
+synthetic methane-bubble/oil regression, the 1% remaining injected-gas mass
+criterion is reached after approximately 3.82 m; a 0.10 m segment retains about
+94.2% of the tracked gas mass. The completion test therefore uses a 5 m domain
+and checks axial-step refinement, component conservation and energy closure.
+These are numerical regression results, not experimental validation of the
+mass-transfer correlations.
+
+This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. The approach is based on **non-equilibrium thermodynamics** where the bulk phases may be out of equilibrium while the interface satisfies fugacity equilibrium.
 
 **Related Documentation:**
 - [MassTransferAPI.md](MassTransferAPI) - API reference for mass transfer methods
@@ -101,7 +109,14 @@ $$B_{ij} = -x_i \left(\frac{1}{D_{ij}} - \frac{1}{D_{i,n}}\right), \quad i \neq 
 
 $$\Gamma_{ij} = \delta_{ij} + x_i \frac{\partial \ln \gamma_i}{\partial x_j}$$
 
-Where $\gamma_i$ is the activity coefficient and $\delta_{ij}$ is the Kronecker delta.
+Here $\delta_{ij}$ is the Kronecker delta. In the film model the last species $r$ is dependent.
+At fixed temperature, pressure and total phase moles $n$, increasing $x_j$ displaces $x_r$.
+For EOS fugacity coefficients $\phi_i$ this gives
+
+$$\Gamma_{ij}=\delta_{ij}+x_i n\left(\frac{\partial\ln\phi_i}{\partial n_j}-\frac{\partial\ln\phi_i}{\partial n_r}\right).$$
+
+The film refreshes the bulk-phase fugacity derivatives when the thermodynamic correction is enabled.
+Its pair transport inputs remain the kinetic Maxwell–Stefan diffusivities.
 
 ### 2.3 Film Theory
 
@@ -124,20 +139,44 @@ The Krishna-Standart model extends the Maxwell-Stefan equations to film theory f
 
 $$(\mathbf{N}) = c_t [\mathbf{k}](\mathbf{x}^{int} - \mathbf{x}^{bulk}) + x_t^{avg} N_t$$
 
-Where $[\mathbf{k}]$ is the matrix of mass transfer coefficients:
+The implementation uses column-vector composition differences. Let $K=R^{-1}$
+be the inverse film resistance matrix formed from the binary transfer coefficients,
+$\Gamma$ the thermodynamic factor, and $\Xi$ the finite-flux correction. Its
+composition is
 
-$$[\mathbf{k}] = [\mathbf{B}]^{-1} [\mathbf{\Xi}]$$
+$$k_{\mathrm{total}}=\Xi K\Gamma.$$
 
-**Bootstrap Matrix [Ξ]:**
+The zero-flux Maxwell–Stefan relation $R J=c_t\Gamma\Delta x$ gives
+$J=c_t K\Gamma\Delta x$. Thus $\Gamma$ acts on the composition driving force
+before the inverse resistance. The finite-flux correction is applied on the left,
+consistent with the existing finite-flux-only branch. Each disabled correction is
+an identity matrix. A zero **total** flux does not disable either correction:
+individual component fluxes can remain nonzero during counterdiffusion.
 
-The bootstrap matrix $[\mathbf{\Xi}]$ accounts for the effect of finite mass transfer rates (high flux correction):
+For the matrix of dimensionless component fluxes $\Phi$, the eigenvalue function is
 
-$$[\mathbf{\Xi}] = \mathbf{\Phi} [\exp(\mathbf{\Phi}) - \mathbf{I}]^{-1}$$
+$$f(z)=\frac{z\exp(z)}{\exp(z)-1},\qquad f(0)=1.$$
 
-Where:
-$$\mathbf{\Phi} = [\mathbf{B}_0]^{-1} N_t / c_t$$
+The implementation uses the analytic continuation $1+z/2+z^2/12$ near zero and
+`expm1` away from zero. When every component flux vanishes, $\Xi=I$. For equal
+binary transfer coefficients, equimolar counterdiffusion also gives $\Phi=0$:
+its diagonal contains the sum of the *other* component fluxes plus the reference
+component term, rather than repeated copies of one component's flux.
 
-At low fluxes: $[\mathbf{\Xi}] \rightarrow \mathbf{I}$ (identity matrix)
+**Compatibility and validation:** older code used $K\Gamma$ for thermodynamic
+correction alone but $\Xi\Gamma K$ when both corrections were enabled, and skipped
+all corrections at zero net flux. Those branches disagreed even with $\Xi=I$.
+Corrected matrices now use one order and own their storage; repeated reactive
+row enhancement cannot overwrite or compound the unenhanced matrix. Results can
+change when corrections are enabled or reactive coefficients are recalculated.
+
+These conventions are tested using noncommuting matrices, zero-flux limits,
+equal-diffusivity counterdiffusion, repeated enhancement and existing multicomponent
+transfer tests. They do not establish experimental accuracy at high flux and strong
+nonideality. Solbraa (2002), equation 4.62, prints a different product order;
+agreement with that printed expression alone is not a validation criterion. The
+finite-flux/nonideality approximation requires domain review against the flux
+variables used by the solver.
 
 ### 2.5 Mass Transfer Coefficients
 
@@ -358,6 +397,54 @@ Update: $\mathbf{X}^{new} = \mathbf{X}^{old} - [\mathbf{J}]^{-1} \mathbf{F}$
 
 Where $[\mathbf{J}]$ is the Jacobian matrix.
 
+### Residual-based gas/oil option
+
+`FluidBoundaryInterface.setCoupledMassHeatTransferEnabled(true)` selects a simultaneous
+Newton solution in `KrishnaStandartFilmModel`. It is **off by default** and separate from
+`MassTransferConfig` and the transient `TwoFluidPipe` source. Enable both mass and heat
+calculation before solving. The current supported numerical range is nonreactive,
+strictly positive-composition hydrocarbon gas/oil with positive finite binary transport
+and heat conductances. Aqueous/reactive systems, exactly pure phase compositions,
+phase disappearance and strong disequilibrium are not qualified by this option.
+
+The unknowns are both complete interface composition vectors, every component molar
+flux and interface temperature: $3n+1$ variables. The existing fugacity, normalization
+and two-film equations are augmented by one interface heat balance:
+
+$$q_g+q_o=\sum_i N_i(\bar h_{g,i}-\bar h_{o,i}).$$
+
+Here $N_i$ is positive from gas to oil in mol/(m² s), $q_k$ is the existing heat-flux
+sign convention in W/m², and the EOS partial molar enthalpies use each bulk phase's
+own temperature. This local balance is not an additional total-energy source in a
+pipeline. No transient pipeline integration is enabled by the option.
+
+Every equation is checked before taking a Newton step: maximum absolute log-fugacity
+residual 1e-10, composition-sum residual 1e-12, film-flux residual 1e-10 mol/(m² s),
+and heat residual 1e-6 W/m². A centered finite-difference Jacobian includes coefficient
+and heat coupling; row scaling and a residual-decreasing line search enforce finite,
+positive states. Iteration exhaustion, invalid transport and failed line search throw;
+they do not return an apparently converged flux. On failure the coupled route restores
+its published interface temperature, composition, flux and heat state. Bulk inventories
+are not advanced by this local routine. Fluxes are never zeroed after solving.
+
+The historical segregated route uses relative changes and mandatory iterations; on the
+six-component SRK equilibrium fixture these iterations can create a small spurious
+flux and amplify it through temperature coupling. That route remains the compatibility
+default, not evidence of full residual convergence. Use the explicit option only within
+its tested numerical range, and independently audit its results.
+
+`CoupledGasOilFilmTest` checks binary and public six-component equilibrium, signed
+1% heptane perturbations, 276.15–278.15 K, 45–55 bara, unequal bulk temperatures,
+repeated solves and halved Jacobian intervals. These are equation/analytical-limit
+checks, not measured transfer rates or a calibrated evaporation time.
+
+For **all routes**, a nonfinite resistance inverse now rejects instead of substituting
+an identity coefficient matrix. The stratified liquid correlation gives zero transport
+at zero liquid Reynolds number; this condition also rejects explicitly. Replacing it
+with 1 m/s conductance was not a physical stagnant-pool model. Stationary pool diffusion,
+film depth, interfacial area, heat supply, countercurrent transport and phase appearance
+still require independent closure qualification before predicting seabed pool depletion.
+
 ### 5.3 Numerical Stability
 
 **Under-relaxation:** To improve convergence stability:
@@ -562,6 +649,22 @@ public class HeatMassTransferExample {
 ```
 
 ---
+
+### 8.6 Reactive enhancement selection
+
+`ReactiveKrishnaStandartFilmModel` supports algebraic enhancement, selected by
+`setEnhancementType(1)` and used by default. It estimates CO2 enhancement in the
+liquid phase using the configured reaction kinetics; other components and the gas
+phase receive unit enhancement.
+
+Numerical reactive enhancement is **not implemented**. Previously, any type other
+than `1` selected an unfinished class whose zero-initialized enhancement vector
+silently suppressed mass transfer. Such selections now throw
+`UnsupportedOperationException` immediately and retain the previously selected
+model. Direct construction of `EnhancementFactorNumeric` also throws. Existing
+callers requesting type `0`, `2`, or another value must explicitly choose the
+algebraic model if its assumptions suit their application. This correction does
+not supply or validate a numerical reaction-diffusion solver.
 
 ## 9. Validation and Benchmarks
 

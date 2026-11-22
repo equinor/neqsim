@@ -467,6 +467,10 @@ process.run();
 
 ### Thermodynamic Updates
 
+Each periodic cell flash initializes thermodynamic and physical properties at the cell pressure
+and temperature before the solver reads phase density, viscosity, enthalpy, and sound speed.
+These properties feed the pressure update and the CFL timestep calculation.
+
 - Flash calculations are expensive
 - `setThermodynamicUpdateInterval(20)` reduces frequency
 - For isothermal flow, use `setUpdateThermodynamics(false)`

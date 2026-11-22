@@ -194,18 +194,17 @@ public final class DataCatalogRunner {
       result.addProperty("status", "success");
       // Provide static fallback if DB query fails
       JsonArray standards = new JsonArray();
-      String[][] stdData = { { "ASME-VIII-Div1", "Pressure Vessels", "Separator,Vessel,Column" },
-          { "ASME-B31.3", "Process Piping", "Pipeline,Pipe" },
-          { "API-617", "Axial and Centrifugal Compressors", "Compressor" },
-          { "API-650", "Welded Tanks for Oil Storage", "Tank,StorageTank" },
-          { "DNV-ST-F101", "Submarine Pipeline Systems", "Pipeline,SubseaPipeline" },
-          { "DNV-OS-F101", "Submarine Pipeline Systems (legacy)", "Pipeline" },
-          { "NORSOK-L-001", "Piping and Valves", "Pipeline,Valve" }, { "NORSOK-P-001", "Process Design", "All" },
-          { "ISO-6976", "Natural Gas - Calorific Value", "Gas" },
-          { "TEMA", "Heat Exchangers", "HeatExchanger,Cooler,Heater" },
-          { "API-RP-14E", "Pipeline Velocity Limits", "Pipeline" },
-          { "API-5CT", "Casing and Tubing", "Well,SubseaWell" },
-          { "NORSOK-D-010", "Well Integrity", "Well,SubseaWell" } };
+      String[][] stdData = {{"ASME-VIII-Div1", "Pressure Vessels", "Separator,Vessel,Column"},
+          {"ASME-B31.3", "Process Piping", "Pipeline,Pipe"},
+          {"API-617", "Axial and Centrifugal Compressors", "Compressor"},
+          {"API-650", "Welded Tanks for Oil Storage", "Tank,StorageTank"},
+          {"DNV-ST-F101", "Submarine Pipeline Systems", "Pipeline,SubseaPipeline"},
+          {"DNV-OS-F101", "Submarine Pipeline Systems (legacy)", "Pipeline"},
+          {"NORSOK-L-001", "Piping and Valves", "Pipeline,Valve"}, {"NORSOK-P-001", "Process Design", "All"},
+          {"ISO-6976", "Natural Gas - Calorific Value", "Gas"},
+          {"TEMA", "Heat Exchangers", "HeatExchanger,Cooler,Heater"},
+          {"API-RP-14E", "Pipeline Velocity Limits", "Pipeline"}, {"API-5CT", "Casing and Tubing", "Well,SubseaWell"},
+          {"NORSOK-D-010", "Well Integrity", "Well,SubseaWell"}};
       for (String[] s : stdData) {
         JsonObject std = new JsonObject();
         std.addProperty("code", s[0]);

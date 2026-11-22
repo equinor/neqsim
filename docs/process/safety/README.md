@@ -21,6 +21,7 @@ acceptance criteria, and accountable review.
 | Produce structured transient evidence | `EmergencyShutdownTestRunner`, `DynamicSafetyScenarioRunner`, and `ClosedLoopSafetyFunction` | Define monitored tags, criteria, calculation identity, and result retention explicitly |
 | Screen relief load and area | `ReliefValveSizing` and the scenario definitions on `SafetyValve` | Static sizing is separate from the valve's dynamic opening and reseating behavior |
 | Hand off consequence inputs | Release, dispersion, open-drain, flare, and CFD source-term utilities | Layout, weather, leak frequency, escalation, and QRA conclusions remain external qualification tasks |
+| Couple a trapped inventory release to depletion | [ReleaseInventory](coupled-release-inventory) and `SourceTermSession.addInventorySource` | Rigid, adiabatic equilibrium inventory; explicit gas/oil/liquid/aqueous phase selection, component/energy closure and timestep refinement; optional cylindrical level/interface gate rejects an unresolved entrainment band rather than predicting carry-over |
 
 ## Units and state ownership
 
@@ -49,6 +50,7 @@ This example configures pressure-protection devices and executes a fail-close/fa
 sequence. It demonstrates API behavior; it does not size a relief device or validate a safety
 function.
 
+<!-- process-safety-overview-example: esd-sequence -->
 ```java
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -134,9 +136,9 @@ public final class ProcessSafetyOverviewQuickStart {
 ```
 
 The regression test
-`src/test/java/neqsim/process/safety/ProcessSafetyOverviewDocumentationTest.java` executes this
-sequence and protects the documented constructors, units, state transitions, and completion
-criteria.
+`src/test/java/neqsim/process/safety/ProcessSafetyOverviewDocumentationTest.java` extracts,
+compiles, and executes this exact marked source. It protects the documented constructors, units,
+state transitions, and completion criteria without maintaining a separate copy.
 
 ## Transient execution contract
 
@@ -189,6 +191,7 @@ basis and trace each acceptance criterion to the applicable controlled source.
 - [Closed-loop SIF verification](closed-loop-sif-verification)
 - [SIF reliability and degraded modes](sif-reliability-and-degraded-modes)
 - [HAZOP/LOPA to draft SRS handoff](hazop-lopa-srs-handoff)
+- [Safety studies on a generated P&ID](pid-safety-studies)
 - [Integrated facility safety response](integrated-facility-safety-response)
 - [Safety change revalidation and benchmarks](safety-change-revalidation-and-benchmarks)
 - [Release and dispersion scenarios](release-dispersion-scenarios)

@@ -32,10 +32,10 @@ public final class DifferentialPressureFlowCalculator {
     DEFAULT_DISCHARGE_COEFFICIENTS = Collections.unmodifiableMap(coefficients);
   }
 
-  private static final String[] DEFAULT_COMPONENTS = { "H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5",
-      "C6" };
+  private static final String[] DEFAULT_COMPONENTS = {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5",
+      "C6"};
 
-  private static final double[] DEFAULT_FRACTIONS = { 0, 0, 0, 80, 10, 10, 0, 0, 0, 0, 0 };
+  private static final double[] DEFAULT_FRACTIONS = {0, 0, 0, 80, 10, 10, 0, 0, 0, 0, 0};
 
   private DifferentialPressureFlowCalculator() {
     // Utility class
@@ -121,7 +121,7 @@ public final class DifferentialPressureFlowCalculator {
     }
 
     double[] validatedFlowData = flowData != null ? Arrays.copyOf(flowData, flowData.length)
-        : new double[] { 300.0, 200.0, 0.9 };
+        : new double[] {300.0, 200.0, 0.9};
 
     List<String> componentList = components != null && !components.isEmpty() ? components
         : Arrays.asList(DEFAULT_COMPONENTS.clone());

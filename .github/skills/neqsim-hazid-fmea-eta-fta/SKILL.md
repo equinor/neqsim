@@ -1,7 +1,7 @@
 ---
 name: neqsim-hazid-fmea-eta-fta
 version: "1.1.0"
-description: "Structured hazard-identification workflows — HAZOP worksheets with the seven IEC 61882 guidewords, deviation→calculation auto-population that maps each guideword/parameter deviation to the NeqSim calculator that quantifies its consequence (overpressure, vacuum collapse, deadhead, surge, backflow/water-hammer, low-temperature/MDMT, fire case, runaway reaction), FMEA failure-mode tables with RPN/criticality scoring, event-tree analysis (ETA) for outcome frequency, fault-tree analysis (FTA) with β-factor common-cause modelling and minimal cut sets, and escalation-graph (domino) screening. USE WHEN: a task requires systematic hazard identification, qualitative-to-quantitative scenario development, mapping HAZOP/HAZID deviations to quantitative process-safety calculations, top-event decomposition, or escalation/domino analysis between adjacent equipment. Anchors on neqsim.process.safety.hazid, neqsim.process.safety.risk.eta, neqsim.process.safety.risk.fta, neqsim.process.safety.escalation."
+description: "Structured hazard identification - IEC 61882 HAZOP worksheets with deviation-to-NeqSim-calculator mapping, FMEA with RPN scoring, event trees, fault trees with beta-factor common cause and minimal cut sets, escalation (domino) screening. USE WHEN: a task needs systematic hazard identification, quantified HAZOP/HAZID deviations, top-event decomposition or domino analysis. Anchors on neqsim.process.safety.hazid, .risk.eta, .risk.fta and .escalation."
 last_verified: "2026-06-24"
 requires:
   java_packages:

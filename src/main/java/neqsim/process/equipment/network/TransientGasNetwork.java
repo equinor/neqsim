@@ -1,5 +1,7 @@
 package neqsim.process.equipment.network;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -1330,7 +1332,7 @@ public final class TransientGasNetwork implements Serializable {
         HydraulicEdgeState hydraulicState, double timeStepSeconds, double elapsedTimeSeconds, String[] componentNames,
         double tolerance) {
       double[] oldCellMassesKg = Arrays.copyOf(cellMassesKg, cellMassesKg.length);
-      double[][] oldProfile = copy(massFractionProfile);
+      double[][] oldProfile = copyMatrixArray(massFractionProfile);
       double[] stepInitialInventoryKg = componentInventory();
       double[] newCellMassesKg = Arrays.copyOf(hydraulicState.targetCellMassesKg,
           hydraulicState.targetCellMassesKg.length);
@@ -1424,13 +1426,6 @@ public final class TransientGasNetwork implements Serializable {
           maximumSumError, converged, message);
     }
 
-    private static double[][] copy(double[][] values) {
-      double[][] result = new double[values.length][];
-      for (int index = 0; index < values.length; index++) {
-        result[index] = Arrays.copyOf(values[index], values[index].length);
-      }
-      return result;
-    }
   }
 
   private static final class HydraulicProperties {

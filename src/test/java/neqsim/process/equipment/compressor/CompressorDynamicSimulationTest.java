@@ -329,7 +329,7 @@ public class CompressorDynamicSimulationTest {
   @Test
   public void testEventListenerRegistration() {
     // Create a simple test listener that tracks calls
-    final int[] callCount = { 0 };
+    final int[] callCount = {0};
     CompressorEventListener listener = new CompressorEventListener() {
       @Override
       public void onSurgeApproach(Compressor compressor, double surgeMargin, boolean isCritical) {

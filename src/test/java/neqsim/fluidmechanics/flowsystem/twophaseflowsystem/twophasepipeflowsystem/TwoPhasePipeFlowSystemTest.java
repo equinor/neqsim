@@ -1,14 +1,23 @@
 package neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.NormOps_DDRM;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
+import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -26,6 +35,71 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ASMF
  */
 public class TwoPhasePipeFlowSystemTest {
+  /**
+   * Verifies independent phase/component columns and both legacy norm definitions on the existing stratified pipe.
+   */
+  @Test
+  void phaseAndComponentColumnsPreserveEjmlStorageSemantics() {
+    testCreateSystemWithStratifiedFlow();
+    pipe.init();
+    MatrixStorageProbe solver = new MatrixStorageProbe(pipe);
+    solver.initMatrix();
+    List<DMatrixRMaj> vectors = solver.solutionColumns();
+    for (int vectorIndex = 0; vectorIndex < vectors.size(); vectorIndex++) {
+      DMatrixRMaj vector = vectors.get(vectorIndex);
+      assertEquals(pipe.getTotalNumberOfNodes(), vector.getNumRows());
+      assertEquals(1, vector.getNumCols());
+      SimpleMatrix ejml = new SimpleMatrix(vector);
+      assertEquals(NormOps_DDRM.normP1(ejml.getDDRM()), NormOps_DDRM.normP1(vector), 0.0);
+      assertEquals(ejml.normF(), NormOps_DDRM.normP2(vector), Math.max(1.0, ejml.normF()) * 1.0e-14);
+      DMatrixRMaj copy = vector.copy();
+      copy.zero();
+      assertArrayEquals(ejml.transpose().getDDRM().getData().clone(), vector.getData(), 0.0);
+      assertNotSame(copy.getData(), vector.getData());
+      for (int previous = 0; previous < vectorIndex; previous++) {
+        assertNotSame(vectors.get(previous).getData(), vector.getData());
+      }
+    }
+  }
+
+  /**
+   * Exposes real phase and component solution columns for migration-contract checks.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  private static final class MatrixStorageProbe extends TwoPhaseFixedStaggeredGridSolver {
+    private static final long serialVersionUID = 1000;
+
+    /**
+     * Creates a solver for the existing initialized pipe fixture.
+     *
+     * @param pipe initialized pipe
+     */
+    private MatrixStorageProbe(FlowSystemInterface pipe) {
+      super(pipe, pipe.getSystemLength(), pipe.getTotalNumberOfNodes(), false);
+    }
+
+    /**
+     * Returns independently allocated phase and component solution columns.
+     *
+     * @return internal solution columns
+     */
+    private List<DMatrixRMaj> solutionColumns() {
+      List<DMatrixRMaj> vectors = new ArrayList<DMatrixRMaj>();
+      vectors.add(sol2Matrix);
+      for (int phase = 0; phase < 2; phase++) {
+        vectors.add(solMatrix[phase]);
+        vectors.add(sol3Matrix[phase]);
+        vectors.add(solPhaseConsMatrix[phase]);
+        for (DMatrixRMaj component : solMolFracMatrix[phase]) {
+          vectors.add(component);
+        }
+      }
+      return vectors;
+    }
+  }
+
   private static final Logger logger = LogManager.getLogger(TwoPhasePipeFlowSystemTest.class);
   private FlowSystemInterface pipe;
   private SystemInterface testSystem;
@@ -53,11 +127,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(3);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0, 3.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0, 3.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -66,7 +140,7 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
 
     GeometryDefinitionInterface[] pipeGeometry = new PipeData[4];
-    double[] pipeDiameter = { 0.025, 0.025, 0.025, 0.025 };
+    double[] pipeDiameter = {0.025, 0.025, 0.025, 0.025};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGeometry[i] = new PipeData(pipeDiameter[i]);
     }
@@ -85,11 +159,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(3);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0, 3.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0, 3.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -98,7 +172,7 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
 
     GeometryDefinitionInterface[] pipeGeometry = new PipeData[4];
-    double[] pipeDiameter = { 0.025, 0.025, 0.025, 0.025 };
+    double[] pipeDiameter = {0.025, 0.025, 0.025, 0.025};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGeometry[i] = new PipeData(pipeDiameter[i]);
     }
@@ -116,12 +190,12 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0 };
-    double[] roughness = { 1.0e-5, 1.0e-5, 1.0e-5 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0};
+    double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -150,11 +224,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 295.0, 295.0, 295.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {295.0, 295.0, 295.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -191,11 +265,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(3);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 2.0, 4.0, 6.0 };
-    double[] outerTemperature = { 295.0, 295.0, 295.0, 295.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 2.0, 4.0, 6.0};
+    double[] outerTemperature = {295.0, 295.0, 295.0, 295.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -235,11 +309,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(3);
     pipe.setNumberOfNodesInLeg(10);
 
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 5.0, 10.0, 15.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0 }; // Cold surroundings
-    double[] outHeatCoef = { 50.0, 50.0, 50.0, 50.0 }; // Higher heat transfer
-    double[] wallHeatCoef = { 100.0, 100.0, 100.0, 100.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 5.0, 10.0, 15.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0}; // Cold surroundings
+    double[] outHeatCoef = {50.0, 50.0, 50.0, 50.0}; // Higher heat transfer
+    double[] wallHeatCoef = {100.0, 100.0, 100.0, 100.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -272,11 +346,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 295.0, 295.0, 295.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {295.0, 295.0, 295.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -307,11 +381,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 295.0, 295.0, 295.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {295.0, 295.0, 295.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -486,11 +560,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 295.0, 295.0, 295.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {295.0, 295.0, 295.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -517,7 +591,6 @@ public class TwoPhasePipeFlowSystemTest {
    * <li>The velocity profiles are computed for both phases</li>
    * <li>The results are physically reasonable (non-negative pressures, etc.)</li>
    * </ul>
-   * </p>
    *
    * <p>
    * <b>Key setup steps for realistic pressure drop:</b>
@@ -526,7 +599,6 @@ public class TwoPhasePipeFlowSystemTest {
    * <li>Flash the system to establish two-phase equilibrium</li>
    * <li>Set velocities on each node after init()</li>
    * </ol>
-   * </p>
    *
    * <p>
    * For comparison with empirical correlations like Beggs-Brill, see the process equipment tests:
@@ -534,7 +606,6 @@ public class TwoPhasePipeFlowSystemTest {
    * <li>TwoFluidVsBeggsBrillComparisonTest - compares TwoFluidPipe with Beggs-Brill</li>
    * <li>TwoPhasePressureDropValidationTest - validates against experimental data</li>
    * </ul>
-   * </p>
    */
   @Disabled("Long-running comparison test")
   @Test
@@ -559,11 +630,11 @@ public class TwoPhasePipeFlowSystemTest {
     pipeWithTransfer.setNumberOfLegs(3);
     pipeWithTransfer.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 50.0, 100.0, 150.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0 }; // Cold surroundings
-    double[] outHeatCoef = { 10.0, 10.0, 10.0, 10.0 };
-    double[] wallHeatCoef = { 50.0, 50.0, 50.0, 50.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 50.0, 100.0, 150.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0}; // Cold surroundings
+    double[] outHeatCoef = {10.0, 10.0, 10.0, 10.0};
+    double[] wallHeatCoef = {50.0, 50.0, 50.0, 50.0};
 
     pipeWithTransfer.setLegHeights(height);
     pipeWithTransfer.setLegPositions(length);
@@ -639,6 +710,7 @@ public class TwoPhasePipeFlowSystemTest {
    */
   // @Disabled("Long-running comparison test")
   @Test
+  @Tag("slow")
   void testCompareWithBeggsAndBrills() {
     // Create identical fluid for both simulations
     double temperature = 293.15; // 20C
@@ -786,6 +858,7 @@ public class TwoPhasePipeFlowSystemTest {
    */
   // @Disabled("Long-running comparison test")
   @Test
+  @Tag("slow")
   void testCompareWithTwoFluidPipe() {
     // Use same conditions as the Beggs-Brill comparison
     double temperature = 293.15; // 20C
@@ -952,6 +1025,7 @@ public class TwoPhasePipeFlowSystemTest {
    */
   // @Disabled("Long-running comparison test")
   @Test
+  @Tag("slow")
   void testCompareWithTransientPipe() {
     // Use same conditions as other comparisons
     double temperature = 293.15; // 20C
@@ -1711,7 +1785,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     double[] pressures = twoPhaseFlowSystem.getPressureProfile();
     int totalNodes = twoPhaseFlowSystem.getTotalNumberOfNodes();
-    int[] nodesToCheck = { 0, totalNodes / 2, totalNodes - 1 };
+    int[] nodesToCheck = {0, totalNodes / 2, totalNodes - 1};
 
     for (int nodeIdx : nodesToCheck) {
       FlowNodeInterface node = twoPhaseFlowSystem.getNode(nodeIdx);

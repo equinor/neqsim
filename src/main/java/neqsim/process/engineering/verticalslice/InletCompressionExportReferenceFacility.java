@@ -127,7 +127,7 @@ public final class InletCompressionExportReferenceFacility {
     Cooler cooler = new Cooler(COOLER, compressor.getOutletStream());
     cooler.setOutTemperature(35.0, "C");
     Splitter dischargeSplitter = new Splitter("DISCHARGE-SPLITTER", cooler.getOutletStream(), 2);
-    dischargeSplitter.setSplitFactors(new double[] { 0.95, 0.05 });
+    dischargeSplitter.setSplitFactors(new double[] {0.95, 0.05});
 
     ESDValve dischargeEsd = new ESDValve(DISCHARGE_ESD, dischargeSplitter.getSplitStream(0));
     dischargeEsd.setCv(1200.0);
@@ -193,16 +193,16 @@ public final class InletCompressionExportReferenceFacility {
   }
 
   private static void configureCompressorMap(Compressor compressor) {
-    double[] conditions = new double[] { 19.0, 300.0, 50.0, 0.90 };
-    double[] speeds = new double[] { 9000.0, 11000.0 };
-    double[][] flows = new double[][] { { 20.0, 120.0, 320.0 }, { 28.0, 160.0, 420.0 } };
-    double[][] heads = new double[][] { { 78.0, 68.0, 52.0 }, { 115.0, 98.0, 74.0 } };
-    double[][] efficiencies = new double[][] { { 70.0, 79.0, 73.0 }, { 71.0, 80.0, 74.0 } };
+    double[] conditions = new double[] {19.0, 300.0, 50.0, 0.90};
+    double[] speeds = new double[] {9000.0, 11000.0};
+    double[][] flows = new double[][] {{20.0, 120.0, 320.0}, {28.0, 160.0, 420.0}};
+    double[][] heads = new double[][] {{78.0, 68.0, 52.0}, {115.0, 98.0, 74.0}};
+    double[][] efficiencies = new double[][] {{70.0, 79.0, 73.0}, {71.0, 80.0, 74.0}};
     compressor.getCompressorChart().setCurves(conditions, speeds, flows, heads, efficiencies);
     compressor.getCompressorChart()
-        .setSurgeCurve(new SafeSplineSurgeCurve(new double[] { 16.0, 25.0, 38.0 }, new double[] { 115.0, 95.0, 70.0 }));
+        .setSurgeCurve(new SafeSplineSurgeCurve(new double[] {16.0, 25.0, 38.0}, new double[] {115.0, 95.0, 70.0}));
     compressor.getCompressorChart().setStoneWallCurve(
-        new SafeSplineStoneWallCurve(new double[] { 350.0, 400.0, 450.0 }, new double[] { 115.0, 95.0, 70.0 }));
+        new SafeSplineStoneWallCurve(new double[] {350.0, 400.0, 450.0}, new double[] {115.0, 95.0, 70.0}));
     compressor.getCompressorChart().setHeadUnit("kJ/kg");
     compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.getAntiSurge().setActive(true);
@@ -306,15 +306,17 @@ public final class InletCompressionExportReferenceFacility {
   private static void addReliefAndFlare(EngineeringProject project, ProcessSystem process) {
     SystemInterface fluid = ((Separator) process.getUnit(SEPARATOR)).getGasOutStream().getFluid().clone();
     ReliefScenario blockedOutlet = new BlockedOutletRelief().setName("Blocked export outlet")
-        .setInflowRateKgPerHr(10000.0).setReliefPressureBara(90.0).setReliefTemperatureC(45.0).setFluid(fluid)
-        .calculate();
+        .setInflowRateKgPerHr(10000.0)
+        .setReliefPressureBara(ReliefValveSizing.relievingPressurePa(90.0e5, 0.10) / 1.0e5).setReliefTemperatureC(45.0)
+        .setFluid(fluid).calculate();
     OverpressureProtectionStudy reliefStudy = new OverpressureProtectionStudy(
         new ProtectedItem(COOLER, 90.0).setReliefSetPressureBara(90.0).setBackPressureBara(1.5))
         .addScenario(blockedOutlet);
     DynamicBlowdownFlareStudyDataSource.BlowdownSource source = DynamicBlowdownFlareStudyDataSource.BlowdownSource
         .builder(COOLER, fluid).equipmentTag(COOLER).vesselVolumeM3(5.0).orificeDiameterM(0.025)
         .dischargeCoefficient(0.72).backPressureBara(1.5).stopPressureBara(1.5).api521FireCase(20.0, true, true)
-        .psvBasis(90.0, 0.21, false, false).build();
+        .psvBasis(90.0, 0.10, false, false)
+        .psvContingency(blockedOutlet, 1.5, "Reference facility blocked export outlet").build();
     DynamicBlowdownFlareStudyDataSource dynamic = DynamicBlowdownFlareStudyDataSource.builder("reference-flare-study")
         .addSource(source).flareHeader(0.50, 1.5, 288.15, 0.020, 1.30).maxAllowableHeaderMach(0.50)
         .flareGeometry(0.60, 40.0, 0.20).flareDesignCapacity(1.0e9, 100.0, 50000.0).sourceDiagramsReviewed(true)
@@ -324,7 +326,7 @@ public final class InletCompressionExportReferenceFacility {
         .build();
     project.addOverpressureStudy(reliefStudy).addBlowdownFlareStudy(dynamic)
         .addCoupledReliefBlowdownFlareStudy(CoupledReliefBlowdownFlareInput.builder("reference-coupled-safety")
-            .addReliefStudy(reliefStudy, "FIRE-ZONE-A").dynamicStudy(dynamic).scenarioSelectionReviewed(true)
+            .addReliefStudy(reliefStudy, "FIRE-ZONE-A", fluid).dynamicStudy(dynamic).scenarioSelectionReviewed(true)
             .addEvidenceReference(RELIEF_EVIDENCE).addEvidenceReference(HAZOP_EVIDENCE).build());
   }
 

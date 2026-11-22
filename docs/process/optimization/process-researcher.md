@@ -82,7 +82,12 @@ and with extracted process descriptions from documents or AI agents.
 This example screens a gas-product candidate from a hydrocarbon feed and lets the
 researcher choose between two feed-flow levels.
 
+Java output uses Log4j2. Declare this field inside your example class:
+`private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger("OptimizationExample");`.
+
 ```java
+import neqsim.process.research.*;
+
 ProcessResearchSpec spec = ProcessResearchSpec.builder()
     .setName("gas product from hydrocarbon feed")
     .setFluidModel("SRK")
@@ -102,13 +107,19 @@ ProcessResearchSpec spec = ProcessResearchSpec.builder()
 
 ProcessResearchResult result = new ProcessResearcher().research(spec);
 ProcessCandidate best = result.getBestCandidate();
+if (best == null || !best.isFeasible()) {
+    throw new IllegalStateException("No feasible synthesized process; inspect candidate errors");
+}
 
-System.out.println(best.getName());
-System.out.println(best.getScore());
-System.out.println(best.getJsonDefinition());
+logger.info(best.getName());
+logger.info(best.getScore());
+logger.info(best.getJsonDefinition());
 ```
 
-The example is covered by `ProcessResearcherTest` so the documented API is kept
+Run the Java blocks as method bodies with `neqsim.process.research.*` imported;
+put imports above the class and each example in its own scope. Later specification
+blocks construct alternative inputs; call `new ProcessResearcher().research(spec)`
+to evaluate them. The example is covered by `ProcessResearcherTest` so the documented API is kept
 compilable.
 
 ## Graph-Based Synthesis

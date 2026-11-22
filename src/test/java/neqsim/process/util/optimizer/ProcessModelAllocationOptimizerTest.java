@@ -127,7 +127,7 @@ class ProcessModelAllocationOptimizerTest {
   private ProcessModelAllocationOptimizer createOptimizer(AllocationFixture fixture) {
     return new ProcessModelAllocationOptimizer("producer-allocation", "Producer allocation",
         "synthetic installed-capacity allocation basis", fixture.evaluator, 1000.0, "kg/hr")
-        .setInitialAllocation(new double[] { 500.0, 500.0 }).setObjectiveIndex(0).setInitialStepFraction(0.10)
+        .setInitialAllocation(new double[] {500.0, 500.0}).setObjectiveIndex(0).setInitialStepFraction(0.10)
         .setRelativeStepTolerance(1.0e-3)
         .setObjectiveImprovementTolerance(1.0e-9,
             "synthetic objective is deterministic to substantially better than one nano-unit")
@@ -151,9 +151,9 @@ class ProcessModelAllocationOptimizerTest {
     assertEquals("allocation value proxy", result.getObjective().getName());
     assertEquals(ObjectiveDefinition.Direction.MAXIMIZE, result.getObjective().getDirection());
     assertEquals("value-unit/hr", result.getObjective().getUnit());
-    assertArrayEquals(new double[] { 700.0, 300.0 }, result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] {700.0, 300.0}, result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
     assertEquals(1700.0, result.getBestFeasibleCandidate().getRawObjective(), 1.0e-8);
-    assertArrayEquals(new double[] { 800.0, 200.0 }, result.getBestSampledObjectiveCandidate().getCandidateValues(),
+    assertArrayEquals(new double[] {800.0, 200.0}, result.getBestSampledObjectiveCandidate().getCandidateValues(),
         1.0e-10);
     assertFalse(result.getBestSampledObjectiveCandidate().getEvaluation().isFeasible());
     assertEquals(100.0, result.getSampledObjectiveOpportunityGap(), 1.0e-8);
@@ -202,7 +202,7 @@ class ProcessModelAllocationOptimizerTest {
     assertFalse(result.isConverged());
     assertTrue(result.isModelRecovered());
     assertEquals(2, result.getEvaluationCount());
-    assertArrayEquals(new double[] { 600.0, 400.0 }, result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] {600.0, 400.0}, result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
   }
 
   /** Verifies immutable Java serialization and frozen objective identity for JPype consumers. */
@@ -234,10 +234,10 @@ class ProcessModelAllocationOptimizerTest {
     assertEquals("synthetic installed-capacity allocation basis", restored.getProvenance());
     double[] allocation = restored.getBestFeasibleCandidate().getCandidateValues();
     allocation[0] = -1.0;
-    assertArrayEquals(new double[] { 700.0, 300.0 }, restored.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] {700.0, 300.0}, restored.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
     double[] lowerBounds = restored.getLowerBounds();
     lowerBounds[0] = -1.0;
-    assertArrayEquals(new double[] { 200.0, 200.0 }, restored.getLowerBounds(), 0.0);
+    assertArrayEquals(new double[] {200.0, 200.0}, restored.getLowerBounds(), 0.0);
     assertNotSame(restored.getCandidates(), restored.getCandidates());
     assertNotSame(restored.getDiagnostics(), restored.getDiagnostics());
     assertNotSame(restored.getRankedHydraulicConstraintsAtBestFeasible(),
@@ -281,8 +281,8 @@ class ProcessModelAllocationOptimizerTest {
     BottleneckReliefOpportunity leading = result.getOpportunities().get(0);
     assertEquals(100.0, leading.getObjectiveGain(), 1.0e-8);
     assertEquals("value-unit/hr", leading.getObjective().getUnit());
-    assertArrayEquals(new double[] { 800.0, 200.0 }, leading.getCandidateValues(), 1.0e-10);
-    assertArrayEquals(new double[] { 100.0, -100.0 }, leading.getActionDeltasFromBestFeasible(), 1.0e-10);
+    assertArrayEquals(new double[] {800.0, 200.0}, leading.getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] {100.0, -100.0}, leading.getActionDeltasFromBestFeasible(), 1.0e-10);
     assertEquals(EvidenceClass.ISOLATED, leading.getEvidenceClass());
     assertEquals(1, leading.getConstraintRelief().size(), "soft constraint must not be reported");
     assertEquals("producer A installed rate",
@@ -317,7 +317,7 @@ class ProcessModelAllocationOptimizerTest {
     input.close();
     double[] candidateValues = restored.getOpportunities().get(0).getCandidateValues();
     candidateValues[0] = -1.0;
-    assertArrayEquals(new double[] { 800.0, 200.0 }, restored.getOpportunities().get(0).getCandidateValues(), 0.0);
+    assertArrayEquals(new double[] {800.0, 200.0}, restored.getOpportunities().get(0).getCandidateValues(), 0.0);
     assertNotSame(restored.getOpportunities(), restored.getOpportunities());
     assertThrows(UnsupportedOperationException.class, () -> restored.getOpportunities().clear());
     assertThrows(UnsupportedOperationException.class,
@@ -375,7 +375,7 @@ class ProcessModelAllocationOptimizerTest {
     assertThrows(IllegalArgumentException.class, () -> new ProcessModelAllocationOptimizer("allocation", "Allocation",
         "basis", fixture.evaluator, 1000.0, "Sm3/day"));
     ProcessModelAllocationOptimizer optimizer = createOptimizer(fixture);
-    assertThrows(IllegalArgumentException.class, () -> optimizer.setInitialAllocation(new double[] { 700.0, 400.0 }));
+    assertThrows(IllegalArgumentException.class, () -> optimizer.setInitialAllocation(new double[] {700.0, 400.0}));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setObjectiveIndex(1));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setMaximumEvaluations(0));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setInitialStepFraction(0.0));

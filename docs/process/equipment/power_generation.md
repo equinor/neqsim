@@ -3,6 +3,11 @@ title: Power Generation Equipment
 description: "Documentation for power generation equipment in NeqSim: gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels."
 ---
 
+See [Integrated compression and power supply](integrated_compression_power.md)
+for `CompressorPowerTrain`: common-shaft demand matched to direct turbine,
+external motor/VFD or turbine-generator-motor supply, with conversion losses,
+explicit shortfalls and supplied part-load heat-rate tables.
+
 Documentation for power generation equipment in NeqSim, including gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels.
 
 ## Table of Contents
@@ -45,6 +50,14 @@ The power generation package provides equipment models for converting chemical a
 ## Gas Turbine
 
 The `GasTurbine` class models a simple cycle gas turbine with integrated air compression, combustion, and expansion.
+
+The thermal-efficiency and power-demand modes use ISO 6976:1995 molar LCV
+at the legacy 15.55 °C combustion reference. Energy rate is molar LCV
+(J/mol) times fuel molar flow (mol/s); inverse mode sizes that molar flow.
+This corrects the former pairing of a 0 °C calorific volume with 15 °C
+standard-volume flow. The detailed Brayton-cycle enthalpy calculation retains
+its 0 °C combustion reference. `GasTurbineUnit` already uses mass-basis
+ISO 6976:1995 LCV at 15.55 °C and is unchanged.
 
 ### Class Hierarchy
 
@@ -110,14 +123,25 @@ System.out.println("Heat output: " + turbine.getHeat() / 1e6 + " MW");
 System.out.println("Ideal air/fuel ratio: " + turbine.calcIdealAirFuelRatio());
 ```
 
-> The internal air-side combustion balances stoichiometric oxygen against the
-> `excessAirFactor` (default 2.5) and burns each hydrocarbon only up to the
-> available oxygen, so the post-combustion flash stays physical. `getPower()`
-> returns the net shaft power (expander work minus the internal air-compressor
-> work); `getHeat()` returns the exhaust heat a HRSG could recover. This is a
-> simplified low-pressure-ratio model — keep `combustionpressure` modest (a few
-> bara) so the expander recovery exceeds the cold air-compression work and the
-> net shaft power stays positive.
+> The detailed cycle sizes combustion air using the stoichiometric oxygen demand
+> and `excessAirFactor` (default 2.5). It obtains the fuel lower heating value from
+> ISO 6976 on a molar basis (kJ/mol), using the 0 C combustion reference to match
+> the EOS sensible-enthalpy reference, then multiplies by mol/s and 1000 to obtain W.
+> This avoids mixing volumetric calorific values with molar flows or inconsistent
+> standard-volume references. Combustion changes the product composition before
+> solving its enthalpy; a heat-capacity temperature estimate initializes that
+> solve, and an unconverged combustion energy balance raises an exception.
+>
+> `getPower()` is positive net shaft output: recovered expander work minus air
+> compressor work. `getHeat()` estimates positive heat recoverable by cooling the
+> exhaust to 288.15 K. `getOutletStream()` contains the hot combustion exhaust
+> leaving the expander so a downstream HRSG can recover that energy. The detailed
+> cycle balances inlet sensible enthalpy plus fuel heat against shaft output and
+> hot exhaust enthalpy; do not add recoverable heat again to that balance.
+> It is a simplified complete-combustion
+> model without dissociation, combustor pressure loss or blade cooling.
+> The optional specified-efficiency and power-demand modes retain their separate
+> fuel-sizing convention and are not detailed-cycle performance predictions.
 
 ---
 
@@ -820,6 +844,15 @@ System.out.println(gt.isAutoSized());  // true
 ### Querying Capacity
 
 After running and setting rated capacity (manually or via auto-size), query the operating margin:
+
+The registry's `PowerGenerationCapacityStrategy` reports power and heat-duty capacities in
+**kW**. Its constraint design values and `evaluateMaxCapacity(equipment)` use the same equipment
+rating: `getRatedPower("kW")` for either turbine, `getDesignHeatDuty("kW")` for an HRSG, and
+`getRatedTotalPower("kW")` for a combined cycle. A positive equipment rating takes precedence
+over the strategy's configured fallback (50,000 kW by default). Changing the equipment rating
+is reflected by subsequent calls to both strategy APIs. `evaluateMaxCapacity` reports the
+design rating; overload margins remain separate constraint limits. For example, a 25 MW turbine
+reports 25,000 kW through this strategy, while the equipment's `getCapacityMax()` returns watts.
 
 ```java
 // Current operating duty vs maximum

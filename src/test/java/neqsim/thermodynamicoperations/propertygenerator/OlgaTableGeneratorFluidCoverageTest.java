@@ -44,9 +44,9 @@ public class OlgaTableGeneratorFluidCoverageTest {
   private static final int TEMPERATURE_STEPS = 4;
 
   /** Density columns of the two-phase table, which OLGA rejects when any entry is zero. */
-  private static final String[] TWO_PHASE_DENSITY_COLUMNS = { "ROG", "ROHL" };
+  private static final String[] TWO_PHASE_DENSITY_COLUMNS = {"ROG", "ROHL"};
   /** Density columns of the three-phase table. */
-  private static final String[] THREE_PHASE_DENSITY_COLUMNS = { "ROG", "ROHL", "ROWT" };
+  private static final String[] THREE_PHASE_DENSITY_COLUMNS = {"ROG", "ROHL", "ROWT"};
 
   /**
    * Build a single-phase dry gas.

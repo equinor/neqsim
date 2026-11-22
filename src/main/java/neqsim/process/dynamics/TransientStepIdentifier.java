@@ -75,6 +75,27 @@ public final class TransientStepIdentifier {
     return nameUuid("evaluation", physicalStepIdentifier.toString(), evaluationIndex);
   }
 
+  /**
+   * Creates a physical child identifier for one adaptive integration trial.
+   *
+   * <p>
+   * Unlike diagnostic evaluation identifiers, these identifiers authorize distinct physical advances. Trial state is
+   * restored before switching from the full step to the half-step path. The caller's parent identifier remains the
+   * accepted interval's provenance.
+   * </p>
+   *
+   * @param parentIdentifier caller-owned accepted-interval identity
+   * @param attemptIndex zero-based bounded retry index
+   * @param substepIndex zero for the full trial, one and two for consecutive accepted half steps
+   * @return deterministic physical child identifier
+   */
+  public static UUID deterministicAdaptivePhysicalStep(UUID parentIdentifier, int attemptIndex, int substepIndex) {
+    if (parentIdentifier == null || attemptIndex < 0 || substepIndex < 0 || substepIndex > 2) {
+      throw new IllegalArgumentException("Adaptive child requires a parent, nonnegative attempt and substep 0..2");
+    }
+    return nameUuid("adaptive-physical", parentIdentifier.toString() + ":" + attemptIndex, substepIndex);
+  }
+
   private static UUID nameUuid(String kind, String scope, long index) {
     String value = NAMESPACE + ":" + kind.length() + ":" + kind + ":" + scope.length() + ":" + scope + ":" + index;
     return UUID.nameUUIDFromBytes(value.getBytes(StandardCharsets.UTF_8));

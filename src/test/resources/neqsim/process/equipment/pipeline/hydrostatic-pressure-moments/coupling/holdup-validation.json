@@ -1,0 +1,249 @@
+{
+  "date": "2026-11-01",
+  "base_sha": "0ed75c2f10d9030ec8d9270c51e4ade28f5603f8",
+  "source_parent_sha": "3dbfef974a2e8d50ce59f44030b2c5dad0f7ad4b",
+  "pr": 4791,
+  "source_blobs": {
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidConservationEquations.java": "704966f147522007f13c535ae1d65a8492e0c759",
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java": "e62e0a03a8eeb92d9cbad04b109142501a0903a4",
+    "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/StratifiedPressureMomentCouplingTest.java": "f7c559f05bfb95f25f0320e607cbe12136db8546",
+    "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/closure/StratifiedPressureMomentsTest.java": "4ada950d5fb84ee8b6ce3211ecb79d3b26c33594"
+  },
+  "environment": {
+    "java": "OpenJDK 17.0.20",
+    "java_api_compile": "Changed two production/two JUnit sources and all standalone probes compiled explicitly --release 8; generated class major52. Main Maven POM uses release17; pomJava8.xml hosted runtime qualification remains required.",
+    "python": "3.12.14",
+    "actual_local_java8_runtime": false,
+    "maven_bootstrap": "work-with-neqsim scripts/prepare_maven.py before Maven/Spotless; private cache/proxy, no repository configuration change"
+  },
+  "acceptance": {
+    "nonzero_area_and_moment_relative": "5e-13",
+    "trace_force_asymptotic_relative": "3e-8",
+    "signed_work_absolute_W": "1e-7",
+    "closed_domain_force_absolute_N": "1e-8",
+    "face_volume_closure_bound_unchanged": "1e-10",
+    "default_off_restoration": "bitwise",
+    "inventory_clipping_or_seed": false,
+    "eos_jacobian_guard_change": false
+  },
+  "geometry_reference": {
+    "source_parent_sha": "3dbfef974a2e8d50ce59f44030b2c5dad0f7ad4b",
+    "geometry_blob": "e62e0a03a8eeb92d9cbad04b109142501a0903a4",
+    "matrix_rows": 162,
+    "diameters_m": [
+      0.001,
+      0.01,
+      0.2,
+      1.0148,
+      3.0,
+      10.0
+    ],
+    "minimum_positive_holdup": 1e-30,
+    "decimal_digits": 80,
+    "series_terms": [
+      120,
+      180
+    ],
+    "relative_gate": "5e-13",
+    "maximum_relative_error": "1.2031190512623130611836483636188622454162818364704202253033026360372271319847768E-14",
+    "maximum_unit_series_refinement": "1.84754402291975552893616591544552914897E-42"
+  },
+  "focused": {
+    "command": "./mvnw -q -Dtest=StratifiedPressureMomentCouplingTest,StratifiedPressureMomentsTest test",
+    "exit_code": 0,
+    "tests": 16,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "proportionate": {
+    "classes": 24,
+    "tests": 150,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "selection": [
+      "StratifiedPressureMomentCouplingTest",
+      "StratifiedPressureMomentsTest",
+      "GeometryCalculatorTest",
+      "HydrostaticCellGeometryTest",
+      "HydrostaticPressureReconstructionTest",
+      "ClosedWallPressureCompatibilityTest",
+      "MultiphaseHydrostaticForceQualificationTest",
+      "TwoFluidThermalFaceFluxTest",
+      "TwoFluidPressureInterpolationTest",
+      "TwoFluidTotalEnergyContractTest",
+      "TwoFluidVariableAreaPressureRegressionTest",
+      "ConservativeInterfacialDragTest",
+      "TwoFluidPhaseAppearanceAdvectionTest",
+      "TwoFluidMixtureDragPartitionTest",
+      "ConservativeEnergyTransportTest",
+      "TwoFluidPipeInletBoundaryStateTest",
+      "TwoFluidOutletBoundaryTest",
+      "TwoFluidInletPressureBoundaryTest",
+      "TwoFluidComponentOutletTest",
+      "HydrocarbonComponentRelaxationTest",
+      "TwoFluidComponentTraceInventoryTest",
+      "TwoFluidComponentConservationReportTest",
+      "TwoFluidConservativeEnergyReportTest",
+      "TwoFluidPipeConservativeEnergyTest"
+    ],
+    "command_pattern": "./mvnw -q -Dtest=<comma-separated selection> test",
+    "exit_code": 0
+  },
+  "master_ramp": {
+    "command_equivalent": "./mvnw -q -DexcludedTestGroups= -Dtest=TwoFluidRichGasDragQualificationTest#originalTerrainCompletesPressureRampWithConservedComponentTargets test",
+    "result": {
+      "source_sha": "0ed75c2f10d9030ec8d9270c51e4ade28f5603f8",
+      "meshes": [
+        12,
+        24
+      ],
+      "intervals_s": [
+        0.25,
+        0.125
+      ],
+      "requested_time_s": 120,
+      "completed": true,
+      "elapsed_wall_s": 57.48652032
+    },
+    "execution": "Unmodified master source blobs compiled --release 8 into a precedence classpath; unchanged original test invoked reflectively. All other production sources match master. No equations or decisions instrumented.",
+    "source_blobs": {
+      "TwoFluidPipe.java": "037af5c763eb23e0df58d69d6e99a6217f783b99",
+      "TwoFluidConservationEquations.java": "4463adb5d202212ee0e83448efb3c7bda34f2a71",
+      "GeometryCalculator.java": "550330da7ad6226d80819ade11d88d9a0a70a564"
+    }
+  },
+  "enabled_ramp": {
+    "command": "python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/qualify_ramp.py",
+    "exit_code": 1,
+    "status": "FAIL / INCOMPLETE; no full-cycle or pool result",
+    "last_accepted_s": [
+      0.25,
+      0.25
+    ],
+    "requested_rejected_s": [
+      0.5,
+      0.375
+    ],
+    "cells": [
+      12,
+      24
+    ],
+    "diagnostic_volume_sums": [
+      1.0000000001001803,
+      1.000000000132666
+    ],
+    "diagnostic_method": "Exception-message-only classpath override; no equation/decision change",
+    "rollback_scope": "Elapsed time and all seven primary conservative variables exactly restored; wall/component/cache fields not independently audited by this probe",
+    "next_dependency": "Consistent face geometry and existing pressure-stage ownership, retaining endpoint admissibility and full-interval rollback. No tolerance increase."
+  },
+  "ramp_assumptions": {
+    "composition": "SRK/classic CH4 .916, C2 .050, C3 .020, nC4 .007, nC5 .003, nC7 .004",
+    "pipe": "5 km, ID1.0148 m, original sinusoidal face terrain, initial277.15 K/150 bara",
+    "boundary": "Closed inlet; prescribed outlet150 to10 bara in120 s; not a physical valve/receiver model",
+    "thermal": "Adiabatic coefficient0; nominal seabed277.15 K, no heat supplied",
+    "transfer": "Approximate tau30 s relaxation; not a predictive hydrocarbon rate",
+    "scope": "Historical regression only; no settling/inlet refill/hold or low-point pooling/depletion qualification"
+  },
+  "depth_matrix": {
+    "rows": 222,
+    "outputs": "inputs/native/audit CSV byte-identical to prior record; summary metadata now distinguishes reference head and current source blob",
+    "auditor_guard_tests": {
+      "normal": {
+        "tests": 2,
+        "exit_code": 0
+      },
+      "optimized_python": {
+        "tests": 2,
+        "exit_code": 0
+      },
+      "controlled_corruptions_per_mode": 88,
+      "end_to_end_mutations_per_mode": 3
+    }
+  },
+  "javadoc": {
+    "command": "./mvnw -q -DjavadocExecutable=<environment-only installed-JDK module adapter> javadoc:javadoc",
+    "exit_code": 0,
+    "adapter": "Calls installed jdk.javadoc/jdk.javadoc.internal.tool.Main, forwarding JVM arguments; no checked-in configuration change"
+  },
+  "publication_gates": [
+    {
+      "command": "python3 devtools/run_spotless.py apply",
+      "exit_code": 0,
+      "elapsed_wall_s": 2.027
+    },
+    {
+      "command": "python3 devtools/run_spotless.py apply",
+      "exit_code": 0,
+      "elapsed_wall_s": 2.315
+    },
+    {
+      "command": "python3 devtools/run_spotless.py check",
+      "exit_code": 0,
+      "elapsed_wall_s": 2.543
+    },
+    {
+      "command": "python3 devtools/build_engineering_coverage.py",
+      "exit_code": 0,
+      "elapsed_wall_s": 1.639
+    },
+    {
+      "command": "python3 devtools/check_documentation_search.py",
+      "exit_code": 0,
+      "elapsed_wall_s": 1.806
+    },
+    {
+      "command": "/workspace/scratch/4329be392f30/gate-env/bin/pre-commit run --all-files --hook-stage pre-commit",
+      "exit_code": 0,
+      "elapsed_wall_s": 3.587
+    },
+    {
+      "command": "/workspace/scratch/4329be392f30/gate-env/bin/pre-commit run --all-files --hook-stage pre-push",
+      "exit_code": 0,
+      "elapsed_wall_s": 4.891
+    }
+  ],
+  "visual_inspection": {
+    "artifact": "holdup-area-error.png",
+    "renderer": "Matplotlib Agg; static PNG viewed",
+    "result": "PASS; full title, logarithmic axes, units, legend, reference gate and both series readable; no clipping/overlap",
+    "scope": "One area-accuracy figure; no pipeline/pool/evaporation visual claim"
+  },
+  "documentation_impact": [
+    "API Javadocs",
+    "model guide",
+    "evidence matrix",
+    "wiki",
+    "dynamic and flow-assurance routes",
+    "source-regenerated engineering inventory",
+    "executable coupling record"
+  ],
+  "notebook": false,
+  "full_repository_test_run_claimed": false,
+  "status": "Draft / transient integration blocked / exact-head CI and independent domain review pending",
+  "geometry_reference_optimized_replay": {
+    "command": "python3 -O <coupling>/qualify_holdup.py",
+    "exit_code": 0,
+    "all_three_retained_outputs_byte_identical": true
+  },
+  "candidate_default_off_ramp": {
+    "command": "./mvnw -q -DexcludedTestGroups= -Dtest=TwoFluidRichGasDragQualificationTest#originalTerrainCompletesPressureRampWithConservedComponentTargets test",
+    "exit_code": 0,
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "junit_elapsed_s": 55.056,
+    "physical_time_s": 120,
+    "cells": [
+      12,
+      24
+    ],
+    "moment_switch_enabled": false
+  },
+  "changed_java8_compile": {
+    "command": "java --module jdk.compiler/com.sun.tools.javac.Main --release 8 -cp <focused test classpath> -d <isolated directory> <2 changed production + 2 JUnit sources>",
+    "exit_code": 0,
+    "all_generated_classes_major_version": 52
+  }
+}

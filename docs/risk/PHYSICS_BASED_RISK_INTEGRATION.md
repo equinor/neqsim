@@ -115,51 +115,71 @@ Where:
 
 ## Example: Complete Physics-Based Risk Assessment
 
+<!-- physics-risk-quick-start: complete -->
 ```java
-// Build process
-SystemInterface gas = new SystemSrkEos(273.15 + 40, 80.0);
-gas.addComponent("methane", 0.85);
-gas.addComponent("ethane", 0.10);
-gas.addComponent("propane", 0.05);
-gas.setMixingRule("classic");
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.risk.realtime.PhysicsBasedRiskMonitor;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-Stream feed = new Stream("Feed", gas);
-feed.setFlowRate(10000, "kg/hr");
+public final class PhysicsBasedRiskIntegrationExample {
+    private PhysicsBasedRiskIntegrationExample() {
+    }
 
-ThrottlingValve valve = new ThrottlingValve("Inlet Valve", feed);
-valve.setOutletPressure(40.0, "bara");
+    public static void main(String[] args) {
+        SystemInterface gas = new SystemSrkEos(273.15 + 40, 80.0);
+        gas.addComponent("methane", 0.85);
+        gas.addComponent("ethane", 0.10);
+        gas.addComponent("propane", 0.05);
+        gas.setMixingRule("classic");
 
-Separator separator = new Separator("HP Separator", valve.getOutletStream());
+        Stream feed = new Stream("Feed", gas);
+        feed.setFlowRate(10000, "kg/hr");
 
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(valve);
-process.add(separator);
-process.run();
+        ThrottlingValve valve = new ThrottlingValve("Inlet Valve", feed);
+        valve.setOutletPressure(40.0, "bara");
 
-// Create physics-based risk monitor
-PhysicsBasedRiskMonitor riskMonitor = new PhysicsBasedRiskMonitor(process);
+        Separator separator = new Separator("HP Separator", valve.getOutletStream());
 
-// Set design envelopes
-riskMonitor.setDesignTemperatureRange("HP Separator", 273.15, 373.15);
-riskMonitor.setDesignPressureRange("HP Separator", 1.0, 100.0);
-riskMonitor.setBaseFailureRate("HP Separator", 0.0001);
+        ProcessSystem process = new ProcessSystem();
+        process.add(feed);
+        process.add(valve);
+        process.add(separator);
+        process.run();
 
-// Get assessment
-PhysicsBasedRiskAssessment assessment = riskMonitor.assess();
+        PhysicsBasedRiskMonitor riskMonitor = new PhysicsBasedRiskMonitor(process);
+        riskMonitor.setDesignTemperatureRange("HP Separator", 273.15, 373.15);
+        riskMonitor.setDesignPressureRange("HP Separator", 1.0, 100.0);
+        riskMonitor.setBaseFailureRate("HP Separator", 0.0001);
 
-// Output physics-based results
-System.out.println("=== Physics-Based Risk Assessment ===");
-System.out.println("Overall Risk Score: " + assessment.getOverallRiskScore());
-System.out.println("System Capacity Margin: " + assessment.getSystemCapacityMargin());
-System.out.println("Bottleneck: " + assessment.getBottleneckEquipment());
-System.out.println("\nEquipment Health:");
-for (Map.Entry<String, Double> e : assessment.getEquipmentHealthIndices().entrySet()) {
-    System.out.println("  " + e.getKey() + ": " + String.format("%.2f", e.getValue()));
-}
-System.out.println("\nEquipment Risk Scores:");
-for (Map.Entry<String, Double> e : assessment.getEquipmentRiskScores().entrySet()) {
-    System.out.println("  " + e.getKey() + ": " + String.format("%.3f", e.getValue()));
+        PhysicsBasedRiskMonitor.PhysicsBasedRiskAssessment assessment = riskMonitor.assess();
+        double overallRiskScore = assessment.getOverallRiskScore();
+        if (!Double.isFinite(overallRiskScore)
+                || overallRiskScore < 0.0
+                || overallRiskScore > 10.0) {
+            throw new IllegalStateException("Overall risk score must be finite and between 0 and 10");
+        }
+
+        double capacityMargin = assessment.getSystemCapacityMargin();
+        if (!Double.isFinite(capacityMargin) || capacityMargin > 1.0) {
+            throw new IllegalStateException("Capacity margin must be finite and no greater than 1");
+        }
+
+        if (assessment.getEquipmentHealthIndices().isEmpty()
+                || assessment.getEquipmentHealthIndices().values().stream()
+                        .anyMatch(value -> !Double.isFinite(value))) {
+            throw new IllegalStateException("Equipment health indices must be present and finite");
+        }
+
+        if (assessment.getEquipmentRiskScores().isEmpty()
+                || assessment.getEquipmentRiskScores().values().stream()
+                        .anyMatch(value -> !Double.isFinite(value))) {
+            throw new IllegalStateException("Equipment risk scores must be present and finite");
+        }
+    }
 }
 ```
 

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="841mm" height="594mm" viewBox="0 0 841 594" data-sheet-id="PID-20-001-PID-001">
+  <title>Inlet separation - PID-20-001-PID-001</title>
+  <g font-family="Arial,Helvetica,sans-serif" fill="none">
+    <rect x="20" y="10" width="811" height="574" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="border"/>
+    <text x="25" y="25" font-size="5" dominant-baseline="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:0">Inlet separation</text>
+    <text x="25" y="38" font-size="4" dominant-baseline="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:1">20-VG-001 - Process and instrumentation</text>
+    <text x="25" y="55" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:2">ISO 15519 / ISO 10628 basis | A1 | solid: material / sensing | dashed: control | NOT TO SCALE</text>
+    <text x="490" y="55" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:3">PREL. = preliminary size   |   HOLD = project input required</text>
+    <rect x="20" y="535" width="811" height="49" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="title-block"/>
+    <text x="25" y="546" font-size="3.5" dominant-baseline="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:4">DRAWING: PID-20-001-PID  /  SHEET: 001  /  REV: A</text>
+    <text x="25" y="558" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:5">TITLE: 20-VG-001 - Process and instrumentation</text>
+    <text x="25" y="570" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:6">PREPARED: NeqSim native generator  |  CHECKED: HOLD  |  APPROVED: HOLD  |  ISSUE: ENGINEERING REVIEW</text>
+    <text x="490" y="546" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:7">PROJECT: PID-20-001</text>
+    <text x="490" y="558" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:8">SOURCE: 627f566287721ae7</text>
+    <text x="625" y="558" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:9">DATE: 2026-11-03T08:00:00+01:00</text>
+    <text x="490" y="570" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:10">SYMBOL REVIEW / ISO CONFORMANCE: HOLD</text>
+    <g data-tag="20-VG-001" data-symbol-family="HORIZONTAL_VESSEL">
+    <polygon points="340,250 344.693,250.3693 349.2705,251.4683 353.6197,253.2698 357.6336,255.7295 361.2132,258.7868 364.2705,262.3664 366.7302,266.3803 368.5317,270.7295 369.6307,275.307 370,280 369.6307,284.693 368.5317,289.2705 366.7302,293.6197 364.2705,297.6336 361.2132,301.2132 357.6336,304.2705 353.6197,306.7302 349.2705,308.5317 344.693,309.6307 340,310 300,310 295.307,309.6307 290.7295,308.5317 286.3803,306.7302 282.3664,304.2705 278.7868,301.2132 275.7295,297.6336 273.2698,293.6197 271.4683,289.2705 270.3693,284.693 270,280 270.3693,275.307 271.4683,270.7295 273.2698,266.3803 275.7295,262.3664 278.7868,258.7868 282.3664,255.7295 286.3803,253.2698 290.7295,251.4683 295.307,250.3693 300,250" stroke="#111111" fill="#ffffff" stroke-width="0.5" data-semantic-id="20-VG-001"/>
+    </g>
+    <text x="320" y="280" font-size="3.5" dominant-baseline="middle" text-anchor="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:11">20-VG-001</text>
+    <text x="225" y="330" font-size="3.5" dominant-baseline="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:12">Separator</text>
+    <g data-tag="in:20-FEED-001" data-symbol-family="TERMINAL">
+    <polyline points="25,272.5 91,272.5 95,280 91,287.5 25,287.5 25,272.5" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="in:20-FEED-001"/>
+    </g>
+    <text x="60" y="280" font-size="2.7" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:13">20-FEED-001</text>
+    <g data-stream="20-FEED-001">
+    <polyline points="95,280 270,280" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="20-FEED-001"/>
+    </g>
+    <polygon points="270,280 267.2,281.1 267.2,278.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="20-FEED-001:arrow"/>
+    <text x="190" y="292" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:14">20-FEED-001 / DN 80 / CLASS:HOLD</text>
+    <g data-tag="20-PCV-001" data-symbol-family="CONTROL_VALVE">
+    <polyline points="492,135 508,145 508,135 492,145 492,135" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="20-PCV-001"/>
+    <polyline points="500,140 500,127" stroke="#111111" fill="none" stroke-width="0.3" data-semantic-id="20-PCV-001"/>
+    </g>
+    <text x="500" y="153" font-size="3.5" dominant-baseline="middle" text-anchor="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:15">20-PCV-001</text>
+    <text x="500" y="161" font-size="2.5" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:16">FA:HOLD</text>
+    <g data-stream="20-G-002">
+    <polyline points="320,250 320,140 492,140" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="20-G-002"/>
+    </g>
+    <polygon points="492,140 489.2,141.1 489.2,138.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="20-G-002:arrow"/>
+    <g data-tag="out:20-G-002" data-symbol-family="TERMINAL">
+    <polyline points="755,132.5 821,132.5 825,140 821,147.5 755,147.5 755,132.5" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="out:20-G-002"/>
+    </g>
+    <text x="790" y="140" font-size="2.7" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:17">BL 20-G-004</text>
+    <g data-stream="20-G-004">
+    <polyline points="508,140 755,140" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="20-G-004"/>
+    </g>
+    <polygon points="755,140 752.2,141.1 752.2,138.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="20-G-004:arrow"/>
+    <text x="640" y="170" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:18">20-G-004 / NPS 3 1/2 PREL. / HC-A</text>
+    <text x="420" y="116" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:19">20-G-002 / NPS 3 1/2 PREL. / HC-A</text>
+    <g data-tag="20-LCV-001" data-symbol-family="CONTROL_VALVE">
+    <polyline points="492,450 508,460 508,450 492,460 492,450" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="20-LCV-001"/>
+    <polyline points="500,455 500,442" stroke="#111111" fill="none" stroke-width="0.3" data-semantic-id="20-LCV-001"/>
+    </g>
+    <text x="500" y="468" font-size="3.5" dominant-baseline="middle" text-anchor="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:20">20-LCV-001</text>
+    <text x="500" y="476" font-size="2.5" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:21">FA:HOLD</text>
+    <g data-stream="20-L-003">
+    <polyline points="320,310 320,455 492,455" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="20-L-003"/>
+    </g>
+    <polygon points="492,455 489.2,456.1 489.2,453.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="20-L-003:arrow"/>
+    <g data-tag="out:20-L-003" data-symbol-family="TERMINAL">
+    <polyline points="755,447.5 821,447.5 825,455 821,462.5 755,462.5 755,447.5" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="out:20-L-003"/>
+    </g>
+    <text x="790" y="455" font-size="2.7" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:22">BL 20-L-003</text>
+    <g data-stream="20-L-003">
+    <polyline points="508,455 755,455" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="20-L-003"/>
+    </g>
+    <polygon points="755,455 752.2,456.1 752.2,453.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="20-L-003:arrow"/>
+    <text x="640" y="485" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:23">20-L-003 / NPS 1 1/2 PREL. / HC-A</text>
+    <g data-tag="20-PT-001" data-symbol-family="FIELD_INSTRUMENT">
+    <polygon points="529,200 528.923,201.1747 528.6933,202.3294 528.3149,203.4442 527.7942,204.5 527.1402,205.4789 526.364,206.364 525.4789,207.1402 524.5,207.7942 523.4442,208.3149 522.3294,208.6933 521.1747,208.923 520,209 518.8253,208.923 517.6706,208.6933 516.5558,208.3149 515.5,207.7942 514.5211,207.1402 513.636,206.364 512.8598,205.4789 512.2058,204.5 511.6851,203.4442 511.3067,202.3294 511.077,201.1747 511,200 511.077,198.8253 511.3067,197.6706 511.6851,196.5558 512.2058,195.5 512.8598,194.5211 513.636,193.636 514.5211,192.8598 515.5,192.2058 516.5558,191.6851 517.6706,191.3067 518.8253,191.077 520,191 521.1747,191.077 522.3294,191.3067 523.4442,191.6851 524.5,192.2058 525.4789,192.8598 526.364,193.636 527.1402,194.5211 527.7942,195.5 528.3149,196.5558 528.6933,197.6706 528.923,198.8253 529,200" stroke="#111111" fill="#ffffff" stroke-width="0.35" data-semantic-id="20-PT-001"/>
+    </g>
+    <text x="520" y="197" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:24">PT</text>
+    <text x="520" y="203.5" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:25">001</text>
+    <polygon points="425.8,140 425.7391,140.3061 425.5657,140.5657 425.3061,140.7391 425,140.8 424.6939,140.7391 424.4343,140.5657 424.2609,140.3061 424.2,140 424.2609,139.6939 424.4343,139.4343 424.6939,139.2609 425,139.2 425.3061,139.2609 425.5657,139.4343 425.7391,139.6939 425.8,140" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="20-PT-001:tap"/>
+    <g data-stream="sense:20-PT-001">
+    <polyline points="425,140 425,200 511,200" stroke="#111111" fill="none" stroke-width="0.25" data-semantic-id="sense:20-PT-001"/>
+    </g>
+    <g data-tag="20-PIC-001" data-symbol-family="CONTROL_FUNCTION">
+    <polygon points="649,200 648.923,201.1747 648.6933,202.3294 648.3149,203.4442 647.7942,204.5 647.1402,205.4789 646.364,206.364 645.4789,207.1402 644.5,207.7942 643.4442,208.3149 642.3294,208.6933 641.1747,208.923 640,209 638.8253,208.923 637.6706,208.6933 636.5558,208.3149 635.5,207.7942 634.5211,207.1402 633.636,206.364 632.8598,205.4789 632.2058,204.5 631.6851,203.4442 631.3067,202.3294 631.077,201.1747 631,200 631.077,198.8253 631.3067,197.6706 631.6851,196.5558 632.2058,195.5 632.8598,194.5211 633.636,193.636 634.5211,192.8598 635.5,192.2058 636.5558,191.6851 637.6706,191.3067 638.8253,191.077 640,191 641.1747,191.077 642.3294,191.3067 643.4442,191.6851 644.5,192.2058 645.4789,192.8598 646.364,193.636 647.1402,194.5211 647.7942,195.5 648.3149,196.5558 648.6933,197.6706 648.923,198.8253 649,200" stroke="#111111" fill="#ffffff" stroke-width="0.35" data-semantic-id="20-PIC-001"/>
+    <polyline points="631,200 649,200" stroke="#111111" fill="none" stroke-width="0.25" data-semantic-id="20-PIC-001"/>
+    </g>
+    <text x="640" y="197" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:26">PIC</text>
+    <text x="640" y="203.5" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:27">001</text>
+    <g data-stream="signal:20-PT-001:20-PIC-001">
+    <polyline points="529,200 631,200" stroke="#111111" fill="none" stroke-width="0.25" stroke-dasharray="3 2" data-semantic-id="signal:20-PT-001:20-PIC-001"/>
+    </g>
+    <polygon points="631,200 628.2,201.1 628.2,198.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="signal:20-PT-001:20-PIC-001:arrow"/>
+    <g data-tag="20-TT-001" data-symbol-family="FIELD_INSTRUMENT">
+    <polygon points="529,236 528.923,237.1747 528.6933,238.3294 528.3149,239.4442 527.7942,240.5 527.1402,241.4789 526.364,242.364 525.4789,243.1402 524.5,243.7942 523.4442,244.3149 522.3294,244.6933 521.1747,244.923 520,245 518.8253,244.923 517.6706,244.6933 516.5558,244.3149 515.5,243.7942 514.5211,243.1402 513.636,242.364 512.8598,241.4789 512.2058,240.5 511.6851,239.4442 511.3067,238.3294 511.077,237.1747 511,236 511.077,234.8253 511.3067,233.6706 511.6851,232.5558 512.2058,231.5 512.8598,230.5211 513.636,229.636 514.5211,228.8598 515.5,228.2058 516.5558,227.6851 517.6706,227.3067 518.8253,227.077 520,227 521.1747,227.077 522.3294,227.3067 523.4442,227.6851 524.5,228.2058 525.4789,228.8598 526.364,229.636 527.1402,230.5211 527.7942,231.5 528.3149,232.5558 528.6933,233.6706 528.923,234.8253 529,236" stroke="#111111" fill="#ffffff" stroke-width="0.35" data-semantic-id="20-TT-001"/>
+    </g>
+    <text x="520" y="233" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:28">TT</text>
+    <text x="520" y="239.5" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:29">001</text>
+    <polygon points="416.8,140 416.7391,140.3061 416.5657,140.5657 416.3061,140.7391 416,140.8 415.6939,140.7391 415.4343,140.5657 415.2609,140.3061 415.2,140 415.2609,139.6939 415.4343,139.4343 415.6939,139.2609 416,139.2 416.3061,139.2609 416.5657,139.4343 416.7391,139.6939 416.8,140" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="20-TT-001:tap"/>
+    <g data-stream="sense:20-TT-001">
+    <polyline points="416,140 416,236 511,236" stroke="#111111" fill="none" stroke-width="0.25" data-semantic-id="sense:20-TT-001"/>
+    </g>
+    <g data-tag="20-LT-001" data-symbol-family="FIELD_INSTRUMENT">
+    <polygon points="529,272 528.923,273.1747 528.6933,274.3294 528.3149,275.4442 527.7942,276.5 527.1402,277.4789 526.364,278.364 525.4789,279.1402 524.5,279.7942 523.4442,280.3149 522.3294,280.6933 521.1747,280.923 520,281 518.8253,280.923 517.6706,280.6933 516.5558,280.3149 515.5,279.7942 514.5211,279.1402 513.636,278.364 512.8598,277.4789 512.2058,276.5 511.6851,275.4442 511.3067,274.3294 511.077,273.1747 511,272 511.077,270.8253 511.3067,269.6706 511.6851,268.5558 512.2058,267.5 512.8598,266.5211 513.636,265.636 514.5211,264.8598 515.5,264.2058 516.5558,263.6851 517.6706,263.3067 518.8253,263.077 520,263 521.1747,263.077 522.3294,263.3067 523.4442,263.6851 524.5,264.2058 525.4789,264.8598 526.364,265.636 527.1402,266.5211 527.7942,267.5 528.3149,268.5558 528.6933,269.6706 528.923,270.8253 529,272" stroke="#111111" fill="#ffffff" stroke-width="0.35" data-semantic-id="20-LT-001"/>
+    </g>
+    <text x="520" y="269" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:30">LT</text>
+    <text x="520" y="275.5" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:31">001</text>
+    <g data-stream="sense:20-LT-001">
+    <polyline points="370,280 404,280 404,272 511,272" stroke="#111111" fill="none" stroke-width="0.25" data-semantic-id="sense:20-LT-001"/>
+    </g>
+    <g data-tag="20-LIC-001" data-symbol-family="CONTROL_FUNCTION">
+    <polygon points="649,272 648.923,273.1747 648.6933,274.3294 648.3149,275.4442 647.7942,276.5 647.1402,277.4789 646.364,278.364 645.4789,279.1402 644.5,279.7942 643.4442,280.3149 642.3294,280.6933 641.1747,280.923 640,281 638.8253,280.923 637.6706,280.6933 636.5558,280.3149 635.5,279.7942 634.5211,279.1402 633.636,278.364 632.8598,277.4789 632.2058,276.5 631.6851,275.4442 631.3067,274.3294 631.077,273.1747 631,272 631.077,270.8253 631.3067,269.6706 631.6851,268.5558 632.2058,267.5 632.8598,266.5211 633.636,265.636 634.5211,264.8598 635.5,264.2058 636.5558,263.6851 637.6706,263.3067 638.8253,263.077 640,263 641.1747,263.077 642.3294,263.3067 643.4442,263.6851 644.5,264.2058 645.4789,264.8598 646.364,265.636 647.1402,266.5211 647.7942,267.5 648.3149,268.5558 648.6933,269.6706 648.923,270.8253 649,272" stroke="#111111" fill="#ffffff" stroke-width="0.35" data-semantic-id="20-LIC-001"/>
+    <polyline points="631,272 649,272" stroke="#111111" fill="none" stroke-width="0.25" data-semantic-id="20-LIC-001"/>
+    </g>
+    <text x="640" y="269" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:32">LIC</text>
+    <text x="640" y="275.5" font-size="3" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:33">001</text>
+    <g data-stream="signal:20-LT-001:20-LIC-001">
+    <polyline points="529,272 631,272" stroke="#111111" fill="none" stroke-width="0.25" stroke-dasharray="3 2" data-semantic-id="signal:20-LT-001:20-LIC-001"/>
+    </g>
+    <polygon points="631,272 628.2,273.1 628.2,270.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="signal:20-LT-001:20-LIC-001:arrow"/>
+    <g data-tag="signal-to:20-PCV-001" data-symbol-family="TERMINAL">
+    <polyline points="483.8,81.5 512.2,81.5 516.2,89 512.2,96.5 483.8,96.5 483.8,81.5" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="signal-to:20-PCV-001"/>
+    </g>
+    <text x="500" y="89" font-size="2.7" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:34">SG-002/PID-001</text>
+    <g data-stream="signal-to:20-PCV-001">
+    <polyline points="500,96.5 500,127" stroke="#111111" fill="none" stroke-width="0.25" stroke-dasharray="3 2" data-semantic-id="signal-to:20-PCV-001"/>
+    </g>
+    <polygon points="500,127 498.9,124.2 501.1,124.2" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="signal-to:20-PCV-001:arrow"/>
+    <g data-tag="signal-to:20-LCV-001" data-symbol-family="TERMINAL">
+    <polyline points="483.8,396.5 512.2,396.5 516.2,404 512.2,411.5 483.8,411.5 483.8,396.5" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="signal-to:20-LCV-001"/>
+    </g>
+    <text x="500" y="404" font-size="2.7" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:35">SG-004/PID-001</text>
+    <g data-stream="signal-to:20-LCV-001">
+    <polyline points="500,411.5 500,442" stroke="#111111" fill="none" stroke-width="0.25" stroke-dasharray="3 2" data-semantic-id="signal-to:20-LCV-001"/>
+    </g>
+    <polygon points="500,442 498.9,439.2 501.1,439.2" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="signal-to:20-LCV-001:arrow"/>
+    <g data-tag="signal-from:20-PIC-001" data-symbol-family="TERMINAL">
+    <polyline points="661,192.5 689.4,192.5 693.4,200 689.4,207.5 661,207.5 661,192.5" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="signal-from:20-PIC-001"/>
+    </g>
+    <text x="677.2" y="200" font-size="2.7" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:36">SG-002/PID-001</text>
+    <g data-stream="signal-from:20-PIC-001">
+    <polyline points="649,200 661,200" stroke="#111111" fill="none" stroke-width="0.25" stroke-dasharray="3 2" data-semantic-id="signal-from:20-PIC-001"/>
+    </g>
+    <polygon points="661,200 658.2,201.1 658.2,198.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="signal-from:20-PIC-001:arrow"/>
+    <g data-tag="signal-from:20-LIC-001" data-symbol-family="TERMINAL">
+    <polyline points="661,264.5 689.4,264.5 693.4,272 689.4,279.5 661,279.5 661,264.5" stroke="#111111" fill="none" stroke-width="0.5" data-semantic-id="signal-from:20-LIC-001"/>
+    </g>
+    <text x="677.2" y="272" font-size="2.7" dominant-baseline="middle" text-anchor="middle" stroke="none" fill="#111111" data-semantic-id="text:37">SG-004/PID-001</text>
+    <g data-stream="signal-from:20-LIC-001">
+    <polyline points="649,272 661,272" stroke="#111111" fill="none" stroke-width="0.25" stroke-dasharray="3 2" data-semantic-id="signal-from:20-LIC-001"/>
+    </g>
+    <polygon points="661,272 658.2,273.1 658.2,270.9" stroke="#111111" fill="#111111" stroke-width="0.2" data-semantic-id="signal-from:20-LIC-001:arrow"/>
+    <rect x="486" y="16" width="337" height="28" stroke="#111111" fill="none" stroke-width="0.25" data-semantic-id="equipment-data"/>
+    <text x="490" y="24" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:38">EQUIPMENT DATA   /   20-VG-001</text>
+    <text x="490" y="38" font-size="4" dominant-baseline="middle" font-weight="bold" stroke="none" fill="#111111" data-semantic-id="text:39">PREL.  ID 1098 mm  /  T/T 5491 mm</text>
+    <text x="25" y="490" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:40">P&amp;ID design status: proposed devices remain REVIEW REQUIRED; FA:HOLD means failure action is not assigned.</text>
+    <text x="25" y="499" font-size="3" dominant-baseline="middle" stroke="none" fill="#111111" data-semantic-id="text:41">Auxiliary lines, signal IDs and source tags are coordinated with the physical projection and the detailed registers.</text>
+  </g>
+</svg>

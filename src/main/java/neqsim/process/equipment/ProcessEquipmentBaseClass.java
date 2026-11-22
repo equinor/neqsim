@@ -58,7 +58,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass implements ProcessEquipmentInterface {
+public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
+    implements ProcessEquipmentInterface, neqsim.util.serialization.LegacyLoadRepairable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -77,7 +78,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   public String[][] report = new String[0][0];
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
-  private boolean isSetEnergyStream = false;
+  private volatile boolean isSetEnergyStream = false;
   private final Map<String, EnergyPort> energyPorts = new LinkedHashMap<String, EnergyPort>();
   private final Set<String> externallyConnectedEnergyPorts = new LinkedHashSet<String>();
   protected boolean isSolved = true;
@@ -353,6 +354,25 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   @Override
   public Map<String, EnergyPort> getEnergyPorts() {
     return Collections.unmodifiableMap(energyPorts);
+  }
+
+  /**
+   * Re-registers the energy ports that the constructor of this class creates, after a legacy .neqsim load left this
+   * equipment without them. Ports are registered on this equipment, so the first one is connected to its own energy
+   * stream exactly as the constructor would have done.
+   *
+   * @param template a freshly constructed instance of the same class
+   */
+  @Override
+  public void repairAfterLegacyLoad(Object template) {
+    if (!(template instanceof ProcessEquipmentBaseClass) || energyPorts == null) {
+      return;
+    }
+    for (EnergyPort port : ((ProcessEquipmentBaseClass) template).energyPorts.values()) {
+      if (!energyPorts.containsKey(port.getName())) {
+        registerEnergyPort(port.getName(), port.getEnergyType(), port.getDirection(), port.getMode());
+      }
+    }
   }
 
   /**
@@ -1318,10 +1338,45 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    * @return {@code null} when the reusable base snapshot is complete, otherwise a deterministic blocking diagnostic
    */
   protected final String getBaseTransientStateCoverageIssue() {
-    if (controller != null || flowValveController != null || hasController || !controllerMap.isEmpty()) {
+    return getBaseTransientStateCoverageIssue(false);
+  }
+
+  /**
+   * Audits reusable base-equipment state while optionally allowing attached controllers to be captured as independent
+   * process elements.
+   *
+   * <p>
+   * A concrete participant may opt in only when its owning process transaction enumerates attached controllers
+   * independently, as {@code ProcessSystem} does. The equipment snapshot never captures or replaces controller objects.
+   * </p>
+   *
+   * @param attachedControllersCoveredSeparately true when the owning transaction independently requires complete
+   * controller participants
+   * @return {@code null} when the reusable base snapshot is complete, otherwise a deterministic blocking diagnostic
+   */
+  protected final String getBaseTransientStateCoverageIssue(boolean attachedControllersCoveredSeparately) {
+    return getBaseTransientStateCoverageIssue(attachedControllersCoveredSeparately, false);
+  }
+
+  /**
+   * Audits base state with explicitly composed internal calculated energy results.
+   *
+   * @param attachedControllersCoveredSeparately true when controllers participate independently
+   * @param internalResultPortsCovered true when the concrete participant snapshots its internal result ports
+   * @return uncovered state diagnostic, or null when the snapshot is complete
+   */
+  protected final String getBaseTransientStateCoverageIssue(boolean attachedControllersCoveredSeparately,
+      boolean internalResultPortsCovered) {
+    if (!attachedControllersCoveredSeparately
+        && (controller != null || flowValveController != null || hasController || !controllerMap.isEmpty())) {
       return "attached controller state must participate independently";
     }
-    if (isSetEnergyStream || !energyPorts.isEmpty() || !externallyConnectedEnergyPorts.isEmpty()) {
+    if (attachedControllersCoveredSeparately
+        && (!isTransientControllerEnumerated(controller) || !isTransientControllerEnumerated(flowValveController))) {
+      return "attached controller is missing from independent process enumeration";
+    }
+    if (isSetEnergyStream || (!internalResultPortsCovered && !energyPorts.isEmpty())
+        || !externallyConnectedEnergyPorts.isEmpty()) {
       return "connected energy-stream and energy-port state is not covered by the equipment snapshot";
     }
     if (failureMode != null || isFailed) {
@@ -1334,6 +1389,24 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
       return "runtime capacity-constraint state is not covered by the reusable base snapshot";
     }
     return null;
+  }
+
+  /**
+   * Checks whether an attached controller is included by identity in the owning process enumeration.
+   *
+   * @param attachedController controller to check, or {@code null} when absent
+   * @return true when absent or independently enumerated
+   */
+  private boolean isTransientControllerEnumerated(ControllerDeviceInterface attachedController) {
+    if (attachedController == null) {
+      return true;
+    }
+    for (ControllerDeviceInterface enumeratedController : getControllers()) {
+      if (enumeratedController == attachedController) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -1462,6 +1535,40 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
       this.referenceDesignationReference = referenceDesignationReference;
       this.referenceDesignationState = referenceDesignationState;
     }
+  }
+
+  /**
+   * Checks the complete heat-boundary condition independently of other snapshot diagnostics.
+   *
+   * @param portName required internally owned calculated result port
+   * @return true when exactly this port uses the original internal energy stream
+   */
+  protected final boolean hasOnlyInternalCalculatedEnergyPort(String portName) {
+    EnergyPort port = energyPorts.get(portName);
+    return !isSetEnergyStream && externallyConnectedEnergyPorts.isEmpty() && energyPorts.size() == 1 && port != null
+        && port.getEnergyStream() == energyStream && port.getMode() == EnergyPortMode.CALCULATED;
+  }
+
+  /**
+   * Restores a previously audited internally owned result connection before restoring its numerical values.
+   *
+   * @param portName original internal port name
+   * @param originalPort original live port reference
+   * @param originalStream original internally owned energy stream
+   */
+  protected final void restoreInternalCalculatedEnergyPort(String portName, EnergyPort originalPort,
+      EnergyStream originalStream) {
+    for (EnergyPort port : energyPorts.values()) {
+      if (port != originalPort) {
+        port.disconnect();
+      }
+    }
+    energyPorts.clear();
+    energyPorts.put(portName, originalPort);
+    externallyConnectedEnergyPorts.clear();
+    isSetEnergyStream = false;
+    energyStream = originalStream;
+    originalPort.connect(originalStream);
   }
 
 }

@@ -93,6 +93,14 @@ The immutable, serializable result reports:
 - maximum reactive element-balance residual; and
 - maximum absolute natural-log reaction residual.
 
+Both endpoints must also lie inside the reference-state domain of the selected
+model. For Pitzer, liquid-water vapor pressure is unavailable above water's critical
+temperature; a trial at such a temperature cannot establish the endpoint topology.
+An unsupported or unconverged endpoint propagates `IllegalStateException`, while
+two valid endpoints with the same target-phase classification produce
+`IllegalArgumentException` (bounds do not bracket). Either failure preserves the
+supplied feed because trial calculations use clones.
+
 The operation fails closed if the endpoints do not have different target-phase classifications, the
 bracket does not converge, or the retained state exceeds these direct gates:
 

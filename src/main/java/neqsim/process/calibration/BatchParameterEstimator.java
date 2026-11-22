@@ -428,7 +428,7 @@ public class BatchParameterEstimator implements Serializable {
         }
 
         // Create dependent values array: [dataPointIndex, measurementIndex]
-        double[] dependentValues = new double[] { dpIdx, measIdx };
+        double[] dependentValues = new double[] {dpIdx, measIdx};
 
         // Create sample value with experimental value, std dev, and dependent values
         SampleValue sample = new SampleValue(expValue, meas.getStandardDeviation(), dependentValues);
@@ -547,18 +547,7 @@ public class BatchParameterEstimator implements Serializable {
    * @return the covariance matrix
    */
   private double[][] getCoVarianceMatrix() {
-    try {
-      java.lang.reflect.Field field = optimizer.getClass().getSuperclass().getDeclaredField("coVarianceMatrix");
-      field.setAccessible(true);
-      Object matrix = field.get(optimizer);
-      if (matrix != null) {
-        java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
-        return (double[][]) method.invoke(matrix);
-      }
-    } catch (Exception e) {
-      // Ignore
-    }
-    return null;
+    return optimizer.getCoVarianceMatrix();
   }
 
   /**
@@ -567,20 +556,8 @@ public class BatchParameterEstimator implements Serializable {
    * @return the correlation matrix
    */
   private double[][] getCorrelationMatrix() {
-    try {
-      optimizer.calcCorrelationMatrix();
-      java.lang.reflect.Field field = optimizer.getClass().getSuperclass()
-          .getDeclaredField("parameterCorrelationMatrix");
-      field.setAccessible(true);
-      Object matrix = field.get(optimizer);
-      if (matrix != null) {
-        java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
-        return (double[][]) method.invoke(matrix);
-      }
-    } catch (Exception e) {
-      // Ignore
-    }
-    return null;
+    optimizer.calcCorrelationMatrix();
+    return optimizer.getParameterCorrelationMatrix();
   }
 
   /**
@@ -621,7 +598,7 @@ public class BatchParameterEstimator implements Serializable {
     double bias = sumDev / n;
     double rSquared = sumSqTot > 0 ? 1.0 - sumSqRes / sumSqTot : Double.NaN;
 
-    return new double[] { mad, bias, rSquared };
+    return new double[] {mad, bias, rSquared};
   }
 
   // ==================== Results Access ====================

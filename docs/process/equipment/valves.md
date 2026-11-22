@@ -113,6 +113,11 @@ effects with the appropriate equipment or network formulation.
 
 ## Cv, Kv, and valve opening
 
+When running a valve directly with a fresh flowing inlet stream, the valve runs the
+inlet specification before evaluating its phase and sizing properties. Direct and
+flowsheet runs therefore use the same equilibrium inlet for a given sizing method,
+opening and pressure-drop ratio factor.
+
 `Cv` uses the US convention and `Kv` the SI convention. NeqSim stores the
 coefficient internally as Kv and converts with $C_v = 1.156K_v$.
 
@@ -130,7 +135,37 @@ Setting an outlet pressure and calling `run()` performs a specified-pressure
 letdown. To solve outlet pressure from the inlet flow, coefficient, and opening,
 set the Cv/Kv and call `setIsCalcOutPressure(true)` before running the valve.
 The result depends on the selected gas/liquid sizing behavior and valid inlet
-physical properties.
+physical properties. The legacy `default` sizing strategy leaves choked-flow
+capacity limiting disabled, which keeps the forward flow and reverse pressure
+calculations continuous and mutually invertible. The named `IEC 60534`,
+`IEC 60534 full`, and `prod choke` strategies enable the limit by default. Set
+the intended behavior explicitly after selecting the sizing strategy when the
+service and configured $x_T$ require it:
+
+```java
+valve.setAllowChoked(true);
+```
+
+When capacity limiting is enabled and the requested flow reaches the choked
+limit, downstream pressure is no longer uniquely determined by flow and Kv
+alone.
+
+Initialize the inlet at the design conditions (for example, `inlet.run()`)
+before calling `autoSize(safetyFactor, designOpeningPercent)`. Sizing preserves
+the inlet flow, phase split, density, compressibility factor and heat-capacity
+ratio. In particular, it must not reset an already flashed rich-gas inlet while
+restoring an unchanged flow rate. A Cv copied with `setCv(sizedValve.getCv())`
+then reproduces the same forward flow when the initialized inlet, opening,
+sizing method, gas/liquid selection and correction settings are the same.
+
+`calculateOutletPressure(adjustedKv)` and `getOutletPressure()` return **bara**.
+Internally calculated absolute pressures are converted to the configured unit
+before applying them, including when the original setpoint used `barg` or
+`kPa`. This applies to both steady-state and transient calculations and avoids
+adding atmospheric pressure twice. Use `getOutletStream().getPressure(unit)`
+to read the resulting stream pressure in another unit. The one-argument
+`setOutletPressure(value)` continues to use the previously configured unit;
+use the two-argument setter when supplying a value in a different unit.
 
 ## Valve characteristic and mechanical design
 
@@ -182,7 +217,10 @@ The available multiphase methods and their input assumptions are documented in
 ## Dynamic valve travel
 
 `ThrottlingValve` supports linear travel or a first-order lag. The current and
-requested openings are separate during a transient.
+requested openings are separate during a transient. With physical-step UUID
+idempotency enabled, a zero-duration hydraulic evaluation does not consume the
+one actuator advance of a later positive interval. Repeating the same UUID after
+that positive interval does not move the actuator again.
 
 ```java
 import java.util.UUID;
@@ -202,6 +240,41 @@ double targetOpening = valve.getTargetPercentValveOpening();
 
 For an on/off emergency function with a prescribed stroke time, use `ESDValve`.
 For blowdown activation logic, use `BlowdownValve`.
+
+## Passive check-valve dispatch
+
+`CheckValve` uses the same ideal non-return gate for `run()`, `run(UUID)` and
+`runTransient(dt, UUID)`. Declare the actual downstream pressure boundary before
+execution. The valve opens only for a positive forward differential pressure at
+or above `getCrackingPressure()`. That threshold is a pressure **difference in
+bar**; port pressures are absolute and are read in bara, independently of setter
+units. A previous zero-flow outlet does not replace the downstream pressure with
+an estimated default.
+
+An ideally seated valve publishes exact zero outlet flow and retains its native
+Cv. In pressure-driven transient mode it also publishes zero upstream withdrawal;
+a later forward pressure difference can recover from a valid zero-demand stream
+using retained intensive state and the native Cv/choking calculation. Steady
+prescribed inlet flow is not an invented valve inventory: if a valve closes, the
+surrounding steady network must reconcile that boundary or report no steady
+solution. The check valve is kept active so that it can reopen.
+
+This is an instantaneous passive threshold model. It rejects external controllers
+and configured actuator-travel models rather than silently overriding them.
+Disc dynamics, slam, leakage and reverse rotation are outside its scope. The
+cracking threshold does not add a manufacturer pressure-loss curve. The owned
+snapshot restores passive state and native valve state while retaining stream
+identities; upstream inventory remains owned by its source unit.
+
+For algebraic network root trials, `calculateMolarFlow()` applies the same passive
+gate and delegates to the shared native Cv calculation without a TP or PH flash.
+A detached normalized intensive workspace supports valid zero/tiny/positive seed
+throughputs while leaving connected port state untouched. The query does not publish actual withdrawal,
+advance time or provide physical-step execution credit. Run the valve normally
+after convergence to obtain actual flow and enthalpy evidence.
+
+`CheckValveDispatchTest` covers actual ProcessSystem/UUID dispatch, pressure units,
+zero-flow recovery, snapshot restoration and finite/nonnegative input validation.
 
 ## Physical and numerical checks
 

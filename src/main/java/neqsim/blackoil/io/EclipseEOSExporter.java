@@ -414,6 +414,18 @@ public final class EclipseEOSExporter {
           saturatedPressures.add(p);
         }
       }
+      double pMax = java.util.Collections.max(pressurePoints);
+      double oilCompressibility = 1.0e-4;
+      double oilViscosibility = 0.0;
+      if (pMax > bubblePoint) {
+        double span = pMax - bubblePoint;
+        double boRatio = undersaturatedRatio(pvt.Bo(pMax), pvt.Bo(bubblePoint));
+        double muRatio = undersaturatedRatio(pvt.mu_o(pMax), pvt.mu_o(bubblePoint));
+        if (boRatio < 1.0) {
+          oilCompressibility = -Math.log(boRatio) / span;
+        }
+        oilViscosibility = Math.max(0.0, Math.log(muRatio) / span);
+      }
 
       for (int i = 0; i < saturatedPressures.size(); i++) {
         double pSat = saturatedPressures.get(i);
@@ -424,11 +436,15 @@ public final class EclipseEOSExporter {
         // Write Rs header line with first data point (at bubble point for this Rs)
         bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f  %.6f\n", rs, pSat * pFactor, bo, muO));
 
-        // Add undersaturated data points (P > pSat at constant Rs)
+        // Add undersaturated data points (P > pSat at constant Rs). Below the bubble point the table
+        // only holds saturated properties, so each record uses the oil compressibility and viscosibility
+        // fitted over the undersaturated range above the bubble point. Using pvt.Bo(p) directly would
+        // give saturated values at a higher Rs.
         for (Double pUndersat : pressurePoints) {
           if (pUndersat > pSat) {
-            double boUndersat = pvt.Bo(pUndersat);
-            double muOUndersat = pvt.mu_o(pUndersat) * viscFactor;
+            double dp = pUndersat - pSat;
+            double boUndersat = bo * Math.exp(-oilCompressibility * dp);
+            double muOUndersat = muO * Math.exp(oilViscosibility * dp);
             bw.write(
                 String.format(Locale.US, "       %.4f  %.6f  %.6f\n", pUndersat * pFactor, boUndersat, muOUndersat));
           }
@@ -486,6 +502,20 @@ public final class EclipseEOSExporter {
     }
 
     bw.flush();
+  }
+
+  /**
+   * Ratio of an undersaturated property to its value at the bubble point, with a neutral fallback.
+   *
+   * @param value property at the shifted undersaturated pressure
+   * @param atBubblePoint property at the bubble point
+   * @return value / atBubblePoint, or 1.0 when either is not finite and positive
+   */
+  private static double undersaturatedRatio(double value, double atBubblePoint) {
+    if (!finitePositive(value) || !finitePositive(atBubblePoint)) {
+      return 1.0;
+    }
+    return value / atBubblePoint;
   }
 
   /**

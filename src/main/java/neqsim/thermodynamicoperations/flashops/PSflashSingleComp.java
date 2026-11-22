@@ -30,6 +30,8 @@ public class PSflashSingleComp extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    PSFlash.validateInput(system, Sspec);
+    double specifiedPressure = system.getPressure();
     neqsim.thermodynamicoperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
         system);
     double initTemp = system.getTemperature();
@@ -44,13 +46,19 @@ public class PSflashSingleComp extends Flash {
         }
       } catch (Exception ex) {
         system.setTemperature(initTemp);
-        logger.error(ex.getMessage(), ex);
+        // A failed saturation calculation cannot supply trustworthy latent-entropy endpoints.
+        bubOps.PSflash2(Sspec);
+        return;
       }
     } else {
       bubOps.PSflash2(Sspec);
       return;
     }
 
+    // Saturation iterations can leave pure-phase compositions slightly off unity.
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      system.getPhase(phase).getComponent(0).setx(1.0);
+    }
     system.init(3);
     double gasEntropy = system.getPhase(0).getEntropy() / system.getPhase(0).getNumberOfMolesInPhase()
         * system.getTotalNumberOfMoles();
@@ -65,6 +73,7 @@ public class PSflashSingleComp extends Flash {
     double beta = (Sspec - liqEntropy) / (gasEntropy - liqEntropy);
     system.setBeta(beta);
     system.init(3);
+    PSFlash.validateResult(system, Sspec, specifiedPressure);
   }
 
   /** {@inheritDoc} */

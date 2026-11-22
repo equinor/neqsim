@@ -1,0 +1,275 @@
+package neqsim.process.engineering;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import neqsim.process.engineering.deliverables.EngineeringApprovalLedger;
+import neqsim.process.engineering.model.EngineeringGraph;
+import neqsim.process.engineering.model.EngineeringGraphDiff;
+import neqsim.process.engineering.model.EngineeringGraphBuilder;
+import neqsim.process.engineering.model.EngineeringIds;
+import neqsim.process.engineering.model.EngineeringNode;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.logic.LogicState;
+import neqsim.process.logic.ProcessLogic;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.scenario.DynamicSafetyScenario;
+import neqsim.process.safety.scenario.DynamicSafetyScenarioResult;
+import neqsim.process.safety.scenario.DynamicScenarioCriterion;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import org.junit.jupiter.api.Test;
+
+/** Qualifies scenario traceability and revision-controlled execution evidence. */
+class EngineeringDynamicScenarioEvidenceGraphTest {
+  private static final String PROJECT_ID = "dynamic-evidence-project";
+  private static final String SCENARIO_ID = "SIF-HP-101";
+  private static final String REQUIREMENT_ID = "REQ-HP-101";
+  private static final String EVIDENCE_ID = "SRS-HP-101";
+
+  @Test
+  void validatesRequirementAndTagReferencesAgainstCanonicalProjectIdentities() {
+    EngineeringProject project = project("A", 50.0);
+    EngineeringValidationReport report = project.validate();
+
+    assertFalse(report.hasErrors());
+    assertFalse(hasCode(report, "ENG-DYNAMIC-003"));
+    assertFalse(hasCode(report, "ENG-DYNAMIC-004"));
+    assertFalse(hasCode(report, "ENG-DYNAMIC-005"));
+    assertFalse(hasCode(report, "ENG-DYNAMIC-006"));
+
+    EngineeringProject invalid = new EngineeringProject(PROJECT_ID, "Invalid traceability", process(),
+        new EngineeringDesignBasis());
+    invalid.addDynamicSafetyScenario(scenario("UNKNOWN-REQ", "UNKNOWN-TAG"));
+    invalid.addDynamicSafetyScenario(scenario("UNKNOWN-REQ", "UNKNOWN-TAG"));
+
+    EngineeringValidationReport invalidReport = invalid.validate();
+    assertTrue(invalidReport.hasErrors());
+    assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-002"));
+    assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-003"));
+    assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-004"));
+    assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-005"));
+  }
+
+  @Test
+  void resultChangeInvalidatesOnlyTheAffectedScenarioResultApproval() {
+    EngineeringProject revisionA = project("A", 50.0);
+    addApprovals(revisionA);
+    EngineeringSimulationResult resultA = EngineeringSimulationRunner.run(revisionA, null);
+    EngineeringGraph graphA = EngineeringGraphBuilder.fromProject(revisionA);
+
+    String scenarioNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO, SCENARIO_ID);
+    String resultNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO_RESULT, SCENARIO_ID);
+    assertNotNull(revisionA.getLatestEngineeringSimulationResult());
+    assertNotNull(graphA.getNode(scenarioNodeId));
+    assertNotNull(graphA.getNode(resultNodeId));
+    DynamicSafetyScenarioResult scenarioResultA = resultA.getDynamicScenarioResults().get(0);
+    assertTrue(scenarioResultA.isPassed());
+    assertEquals(6.0, lastCriterionValue(scenarioResultA, "safe-pressure"), 1.0e-9);
+    assertEquals(1.0,
+        scenarioResultA.getCriterionResults().get("safe-pressure").getFirstSatisfiedSeconds().doubleValue(), 1.0e-9);
+
+    EngineeringProject revisionB = project("B", 40.0);
+    addApprovals(revisionB);
+    EngineeringSimulationResult resultB = EngineeringSimulationRunner.run(revisionB, null);
+    DynamicSafetyScenarioResult scenarioResultB = resultB.getDynamicScenarioResults().get(0);
+    assertTrue(scenarioResultB.isPassed());
+    assertEquals(5.0, lastCriterionValue(scenarioResultB, "safe-pressure"), 1.0e-9);
+    assertEquals(1.0,
+        scenarioResultB.getCriterionResults().get("safe-pressure").getFirstSatisfiedSeconds().doubleValue(), 1.0e-9);
+    EngineeringGraph graphB = EngineeringGraphBuilder.fromProject(revisionB);
+    EngineeringGraphDiff diff = graphA.compareTo(graphB);
+
+    assertFalse(diff.getModifiedNodeIds().contains(scenarioNodeId));
+    assertTrue(diff.getModifiedNodeIds().contains(resultNodeId));
+
+    Map<String, Object> ledger = EngineeringApprovalLedger.build(revisionB, graphB, diff);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> summary = (Map<String, Object>) ledger.get("summary");
+    assertEquals(Integer.valueOf(1), summary.get("approvedCount"));
+    assertEquals(Integer.valueOf(1), summary.get("revalidationRequiredCount"));
+  }
+
+  @Test
+  void definitionChangePropagatesRevalidationToGeneratedResult() {
+    EngineeringProject revisionA = project("A", 50.0, 2.0);
+    addApprovals(revisionA);
+    EngineeringSimulationRunner.run(revisionA, null);
+    EngineeringGraph graphA = EngineeringGraphBuilder.fromProject(revisionA);
+
+    EngineeringProject revisionB = project("B", 50.0, 3.0);
+    addApprovals(revisionB);
+    EngineeringSimulationRunner.run(revisionB, null);
+    EngineeringGraph graphB = EngineeringGraphBuilder.fromProject(revisionB);
+    EngineeringGraphDiff diff = graphA.compareTo(graphB);
+
+    String scenarioNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO, SCENARIO_ID);
+    String resultNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO_RESULT, SCENARIO_ID);
+    assertTrue(diff.getModifiedNodeIds().contains(scenarioNodeId));
+    assertTrue(diff.getImpactedNodeIds().contains(resultNodeId));
+
+    Map<String, Object> ledger = EngineeringApprovalLedger.build(revisionB, graphB, diff);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> summary = (Map<String, Object>) ledger.get("summary");
+    assertEquals(Integer.valueOf(2), summary.get("revalidationRequiredCount"));
+  }
+
+  private static EngineeringProject project(String revision, double initialPressureBara) {
+    return project(revision, initialPressureBara, 2.0);
+  }
+
+  private static EngineeringProject project(String revision, double initialPressureBara, double durationSeconds) {
+    EngineeringProject project = new EngineeringProject(PROJECT_ID, "Dynamic evidence", process(initialPressureBara),
+        new EngineeringDesignBasis()).setRevision(revision);
+    project.addRequirement(new EngineeringRequirement(REQUIREMENT_ID, "FEED", EngineeringRequirement.Type.TRIP,
+        "Isolate high pressure", "Protect the downstream pressure envelope"));
+    project.addEvidenceRecord(
+        new EngineeringEvidenceRecord(EVIDENCE_ID, "SRS", "A").setTitle("High-pressure shutdown requirement")
+            .setSourceOrganization("Synthetic qualification").linkRequirement(REQUIREMENT_ID).linkEquipment("FEED"));
+    project.addDynamicSafetyScenario(scenario(REQUIREMENT_ID, "FEED", durationSeconds));
+    return project;
+  }
+
+  private static void addApprovals(EngineeringProject project) {
+    String scenarioNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO, SCENARIO_ID);
+    String resultNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO_RESULT, SCENARIO_ID);
+    project.addApprovalRecord(new EngineeringApprovalRecord("APR-SCENARIO", scenarioNodeId, "PROCESS_SAFETY",
+        EngineeringApprovalRecord.Status.APPROVED, "Synthetic reviewer", "TEST-REVIEW-A", "2026-10-31"));
+    project.addApprovalRecord(new EngineeringApprovalRecord("APR-RESULT", resultNodeId, "PROCESS_SAFETY",
+        EngineeringApprovalRecord.Status.APPROVED, "Synthetic reviewer", "TEST-REVIEW-A", "2026-10-31"));
+  }
+
+  private static DynamicSafetyScenario scenario(String requirementId, String equipmentTag) {
+    return scenario(requirementId, equipmentTag, 2.0);
+  }
+
+  private static DynamicSafetyScenario scenario(String requirementId, String equipmentTag, double durationSeconds) {
+    return DynamicSafetyScenario.builder(SCENARIO_ID, "High-pressure isolation").durationSeconds(durationSeconds)
+        .timeStepSeconds(1.0).triggerTimeSeconds(0.0).eventExactTiming(true)
+        .initiatingEvent("feed-pressure-step-v1", new DynamicSafetyScenario.ProcessManipulator() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public void apply(ProcessSystem process) {
+            Stream feed = (Stream) process.getUnit("FEED");
+            feed.setPressure(feed.getPressure("bara") + 10.0, "bara");
+          }
+        }).addLogic("pressure-trip-v1", new DynamicSafetyScenario.LogicFactory() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public ProcessLogic create(ProcessSystem process) {
+            return new PressureTripLogic((Stream) process.getUnit("FEED"));
+          }
+        }).addCriterion(DynamicScenarioCriterion.builder("safe-pressure", "Safe pressure", "bara",
+            "feed-pressure-bara-v1", new DynamicScenarioCriterion.Extractor() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public double extract(ProcessSystem process) {
+                return ((Stream) process.getUnit("FEED")).getPressure("bara");
+              }
+            }).acceptanceRange(null, Double.valueOf(10.0)).deadlineSeconds(1.0).build())
+        .addEvidenceReference(EVIDENCE_ID + "@A").addRequirementId(requirementId).addEquipmentTag(equipmentTag).build();
+  }
+
+  private static ProcessSystem process() {
+    return process(50.0);
+  }
+
+  private static ProcessSystem process(double pressureBara) {
+    SystemInterface fluid = new SystemSrkEos(300.0, pressureBara);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("FEED", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.run();
+    return process;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static double lastCriterionValue(DynamicSafetyScenarioResult result, String criterionId) {
+    Map<String, Object> criteria = (Map<String, Object>) result.toMap().get("criteria");
+    Map<String, Object> criterion = (Map<String, Object>) criteria.get(criterionId);
+    List<Double> values = (List<Double>) criterion.get("values");
+    return values.get(values.size() - 1).doubleValue();
+  }
+
+  private static boolean hasCode(EngineeringValidationReport report, String code) {
+    for (EngineeringValidationReport.Finding finding : report.getFindings()) {
+      if (code.equals(finding.getCode())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static final class PressureTripLogic implements ProcessLogic {
+    private static final long serialVersionUID = 1000L;
+    private final Stream stream;
+    private LogicState state = LogicState.IDLE;
+
+    private PressureTripLogic(Stream stream) {
+      this.stream = stream;
+    }
+
+    @Override
+    public String getName() {
+      return "Pressure trip";
+    }
+
+    @Override
+    public LogicState getState() {
+      return state;
+    }
+
+    @Override
+    public void activate() {
+      state = LogicState.RUNNING;
+    }
+
+    @Override
+    public void deactivate() {
+      state = LogicState.PAUSED;
+    }
+
+    @Override
+    public boolean reset() {
+      state = LogicState.IDLE;
+      return true;
+    }
+
+    @Override
+    public void execute(double timeStep) {
+      stream.setPressure(stream.getPressure("bara") * 0.1, "bara");
+      state = LogicState.COMPLETED;
+    }
+
+    @Override
+    public boolean isActive() {
+      return state == LogicState.RUNNING;
+    }
+
+    @Override
+    public boolean isComplete() {
+      return state == LogicState.COMPLETED;
+    }
+
+    @Override
+    public List<ProcessEquipmentInterface> getTargetEquipment() {
+      return new ArrayList<ProcessEquipmentInterface>();
+    }
+
+    @Override
+    public String getStatusDescription() {
+      return state.name();
+    }
+  }
+}

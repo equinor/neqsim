@@ -1,0 +1,99 @@
+{
+  "scope": "Archive bulky qualification outputs; production Java, Java tests, numerical references, tolerances and common time-vector bytes unchanged",
+  "parent_commit": "bbb1429b23d8b6210a1e3bb5c7e55a92f8b0b88e",
+  "archive": {
+    "original_files": 121,
+    "original_bytes": 13998625,
+    "removed_files": 88,
+    "removed_bytes": 12565370,
+    "archive": {
+      "filename": "NeqSim_PR4924_validation_archive.zip",
+      "bytes": 10662623,
+      "sha256": "00f5e3557ef4eb6e288ecd5ea283c1e4b017479a0686ac45b01aba671a59e54e"
+    }
+  },
+  "archive_restoration": {
+    "verified_original_files": 121,
+    "hash": "SHA256 and byte length for every file",
+    "tampered_archive_rejected_before_writes": true
+  },
+  "historical_audits": {
+    "test_qualification.py": {
+      "exit": 0,
+      "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 7.836s\n\nOK\n"
+    },
+    "optimization64/test_audit.py": {
+      "exit": 0,
+      "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 12.010s\n\nOK\n"
+    },
+    "initialization65/test_audit.py": {
+      "exit": 0,
+      "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 1.118s\n\nOK\n"
+    },
+    "scaling66/test_audit.py": {
+      "exit": 0,
+      "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 1.685s\n\nOK\n"
+    }
+  },
+  "local_checks": [
+    {
+      "command": "./mvnw -B -ntp -Dtest=RadialInfiniteInfluenceTest,RadialInfiniteInitializationTest,CarterTracyScalingTest,VanEverdingenHurstAquiferTest test",
+      "exit": 0,
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "note": "Repeated after clearing target/test-classes radial resources with all 88 archived source files absent"
+    },
+    {
+      "command": "python3 devtools/run_spotless.py check",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/check_documentation_search.py",
+      "exit": 0,
+      "markdown_pages": 840,
+      "html_pages": 1
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "exit": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/build_engineering_coverage.py",
+      "exit": 0,
+      "generated_inventory_changed": false
+    },
+    {
+      "command": "python3 devtools/code_health.py --output ../code-health-cleanup-source.json",
+      "exit": 0,
+      "new_finding_groups": 0
+    }
+  ],
+  "runtime_review": {
+    "new_runtime_benchmark_run": false,
+    "current_retained_ct_1000_interval_median_ms": [
+      7.626813,
+      8.643525
+    ],
+    "dated_unmodified_master_control_median_ms": [
+      0.129362,
+      0.148891
+    ],
+    "immediate_parent_ratio": 1.0515768131846073,
+    "frozen_parent_ceiling": 1.2,
+    "end_to_end_matching_cost_accepted": false,
+    "decision": "Retain accurate model, keep draft, profile complete MBAL/history-matching before cost acceptance; no fallback to inaccurate formulas"
+  },
+  "hosted_checks": {
+    "last_verified_head": "bbb1429b23d8b6210a1e3bb5c7e55a92f8b0b88e",
+    "success": 34,
+    "skipped": 1,
+    "cleanup_head": "PENDING CI"
+  },
+  "static_analysis": "No Java source/test or Maven changes in cleanup; PMD and SpotBugs were not rerun locally for this resource/documentation-only change",
+  "history_policy": "Fast-forward cleanup preserves original PR commits; use squash merge to keep archived/intermediate blobs out of master ancestry. Existing PR Git objects are not erased."
+}

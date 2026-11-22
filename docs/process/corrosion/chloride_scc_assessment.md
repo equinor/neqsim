@@ -20,6 +20,11 @@ Evaluates whether an alloy is susceptible to chloride-induced stress corrosion c
 | 22Cr duplex | Good resistance | Max ~120–200°C depending on Cl |
 | 25Cr super duplex | Very good resistance | Max ~150–250°C depending on Cl |
 | Nickel alloy (625/C-276) | Excellent resistance | Max 300–350°C |
+| Carbon and low-alloy steel (names containing carbon, CS, C-Mn, low alloy, A106, A333, API 5L, X42-X80; not 13Cr/22Cr/25Cr) | Not susceptible | Chloride SCC is an austenitic/duplex mechanism; the result is "Not susceptible" with NaN limits. Use CO2/H2S corrosion and sour-service screening instead |
+
+Before 2026-11-22, carbon steel fell through to the 316L envelope and was reported as at risk, and
+"316" alone matched no 316 envelope because the check was reversed. `ChlorideSCCAssessment.isCarbonOrLowAlloySteel(String)`
+exposes the classification.
 
 ## Risk Classification
 

@@ -130,7 +130,7 @@ The skill should contain:
 
 ### 2. Copilot Agent: `extract process to neqsim json`
 
-**Location:** `.github/agents/extract.process.agent.md`
+**Location:** `.github/agents/extract-process.agent.md`
 
 An agent that:
 
@@ -282,7 +282,7 @@ Minimum viable skill that can:
 ### Must Have (Phase 1)
 
 - [ ] Skill file at `.github/skills/neqsim-process-extraction/SKILL.md` with complete extraction rules
-- [ ] Agent file at `.github/agents/extract.process.agent.md`
+- [ ] Agent file at `.github/agents/extract-process.agent.md`
 - [ ] Equipment type mapping with 40+ natural language synonyms
 - [ ] Outlet port mapping for all supported equipment types
 - [ ] Unit conversion rules (at least: barg↔bara, °C↔K, common flow rate units)
@@ -314,7 +314,7 @@ Minimum viable skill that can:
 - **Evaluation notebook:** `examples/notebooks/json_process_builder_evaluation.ipynb` *(planned)* — prototypes the translation layer and validates the architecture
 - **JSON builder:** `ProcessSystem.fromJson()` in [ProcessSystem.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/processmodel/ProcessSystem.java)
 - **Equipment factory:** [EquipmentFactory.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/EquipmentFactory.java)
-- **Existing agents:** `solve.process.agent.md`, `router.agent.md` — could use this skill
+- **Existing agents:** `solve-process.agent.md`, `router.agent.md` — could use this skill
 - **ProcessPilot-NeqSimInterface** (Equinor) — production wrapper with Pydantic models and tag-based lookup
 
 ---
@@ -366,7 +366,7 @@ Minimum viable skill that can:
 ### Already Delivered (Phase 1)
 
 - [x] **Skill file:** `.github/skills/neqsim-process-extraction/SKILL.md` — complete with 14 sections covering the full extraction workflow
-- [x] **Agent file:** `.github/agents/extract.process.agent.md` — 7-step workflow, error recovery, limitations
+- [x] **Agent file:** `.github/agents/extract-process.agent.md` — 7-step workflow, error recovery, limitations
 - [x] **Equipment type mapping:** 60+ natural language synonyms → NeqSim types (covers all `EquipmentEnum` values)
 - [x] **Outlet port mapping:** All equipment types with their available outlet ports
 - [x] **Unit conversion rules:** Temperature (°C/°F/K/R), pressure (barg/bara/psi/kPa/MPa/atm), flow rate units

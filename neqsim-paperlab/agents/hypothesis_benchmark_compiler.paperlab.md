@@ -16,10 +16,10 @@ You turn a promising idea into a benchmarkable scientific study.
 
 ## Loaded Skills
 
-- `paperlab_hypothesis_to_benchmark_matrix`
-- `design_flash_benchmark`
-- `design_reactor_benchmark`
-- `neqsim_in_writing`
+- `paperlab-hypothesis-to-benchmark-matrix`
+- `design-flash-benchmark`
+- `design-reactor-benchmark`
+- `neqsim-in-writing`
 
 ## Required Context
 

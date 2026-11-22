@@ -1,6 +1,7 @@
 package neqsim.thermo.component;
 
 import java.util.Locale;
+import neqsim.thermo.WaterReferenceConstants;
 
 /**
  * IAPWS G7-04 Henry-law correlation for common gases at infinite dilution in liquid H2O.
@@ -21,12 +22,12 @@ public final class IapwsHenryLaw {
   /** Water molar mass in kg/mol for converting mole-fraction to molality standard state. */
   public static final double WATER_MOLAR_MASS_KG_PER_MOL = 0.01801528;
 
-  private static final double WATER_CRITICAL_TEMPERATURE = 647.096;
-  private static final double WATER_CRITICAL_PRESSURE_MPA = 22.064;
+  private static final double WATER_CRITICAL_TEMPERATURE = WaterReferenceConstants.CRITICAL_TEMPERATURE_K;
+  private static final double WATER_CRITICAL_PRESSURE_MPA = WaterReferenceConstants.CRITICAL_PRESSURE_PA / 1.0e6;
   private static final double CORRELATION_MINIMUM_TEMPERATURE = 273.15;
-  private static final double[] VAPOR_PRESSURE_A = { -7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
-      1.80122502 };
-  private static final double[] VAPOR_PRESSURE_B = { 1.0, 1.5, 3.0, 3.5, 4.0, 7.5 };
+  private static final double[] VAPOR_PRESSURE_A = {-7.85951783, 1.84408259, -11.7866497, 22.6807411, -15.9618719,
+      1.80122502};
+  private static final double[] VAPOR_PRESSURE_B = {1.0, 1.5, 3.0, 3.5, 4.0, 7.5};
 
   private static final GasData HE = new GasData("He", -3.52839, 7.12983, 4.47770, 273.21, 553.18, 0.0341);
   private static final GasData NE = new GasData("Ne", -3.18301, 5.31448, 5.43774, 273.20, 543.36, 0.0577);

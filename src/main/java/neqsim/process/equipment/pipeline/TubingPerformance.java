@@ -34,6 +34,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li><b>HASAN_KABIR</b> - Full energy balance</li>
  * </ul>
  *
+ * <h2>Deviated wells and VFP tables</h2>
+ *
+ * <p>
+ * {@link #setSurvey(double[], double[], double[])} integrates a deviated well section by section; the inlet-pressure
+ * solver {@link #calculateInletPressureForOutlet(SystemInterface, double, double)} gives the bottomhole pressure for a
+ * wellhead pressure and underlies {@code neqsim.process.fielddevelopment.reservoir.TubingVlpProvider} and
+ * {@code VfpTableBuilder}. For gas wells use {@link CorrelationType#GRAY}; Beggs-Brill over-predicts lean-gas tubing
+ * pressure drop. For BEGGS_BRILL and GRAY, gas and liquid properties are read by phase type (all liquids combined), so
+ * a trace of water or condensate does not change the correlation regime; the other correlations still address phases by
+ * index.
+ * </p>
+ *
  * <h2>Example Usage</h2>
  *
  * <pre>{@code
@@ -84,6 +96,9 @@ public class TubingPerformance extends Pipeline {
     HASAN_KABIR
   }
 
+  /** Upper limit of the inlet pressure search in {@link #calculateInletPressureForOutlet}. */
+  private static final double MAX_INLET_PRESSURE_BARA = 1500.0;
+
   // Tubing geometry
   private double diameter = 0.1; // m
   private double length = 3000.0; // m
@@ -108,6 +123,14 @@ public class TubingPerformance extends Pipeline {
 
   // Number of segments for numerical integration
   private int numberOfSegments = 50;
+
+  // Optional deviated well survey, stations ordered from wellhead to bottom
+  private double[] surveyMd;
+  private double[] surveyTvd;
+  private double[] surveyId;
+
+  /** Ensures the lean-gas Beggs-Brill warning is logged once per instance. */
+  private transient boolean leanGasWarningLogged = false;
 
   /**
    * Constructor for TubingPerformance.
@@ -134,29 +157,239 @@ public class TubingPerformance extends Pipeline {
     SystemInterface system = getInletStream().getThermoSystem().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
+    double[] outlet = evaluateOutlet(system, ops);
+
+    system.setPressure(outlet[0], "bara");
+    system.setTemperature(outlet[1], "C");
+    ops.TPflash();
+
+    getOutletStream().setThermoSystem(system);
+    getOutletStream().run();
+  }
+
+  /**
+   * Calculates outlet pressure and temperature of the tubing for a working fluid, using either the single-section
+   * geometry or the survey set with {@link #setSurvey(double[], double[], double[])}.
+   *
+   * @param system working fluid at inlet (bottomhole) conditions with flow rate set
+   * @param ops thermodynamic operations of the working fluid
+   * @return array {outlet pressure in bara, outlet temperature in C}
+   */
+  private double[] evaluateOutlet(SystemInterface system, ThermodynamicOperations ops) {
     double inletPressure = system.getPressure("bara");
     double inletTemp = system.getTemperature("C");
 
-    // Calculate pressure drop along tubing using selected correlation
-    double dP = calculatePressureDrop(system, ops);
+    double dP = hasSurvey() ? calculateSurveyPressureDrop(system) : calculatePressureDrop(system, ops);
     pressureDrop = dP;
 
-    // Calculate outlet temperature
     double outletTemp = calculateOutletTemperature(inletTemp);
 
-    // Set outlet conditions
     double outletPressure = inletPressure - dP;
     if (outletPressure < 1.0) {
       outletPressure = 1.0;
       logger.warn("Outlet pressure limited to 1 bara (calculated: {})", inletPressure - dP);
     }
+    return new double[] {outletPressure, outletTemp};
+  }
 
-    system.setPressure(outletPressure, "bara");
-    system.setTemperature(outletTemp, "C");
-    ops.TPflash();
+  /**
+   * Calculates the outlet (wellhead) pressure for a fluid entering at the bottom of the tubing without touching the
+   * inlet or outlet streams.
+   *
+   * @param inletSystem fluid at bottomhole pressure and temperature with its flow rate set; it is cloned, not modified
+   * @return outlet pressure in bara (limited to 1 bara from below)
+   */
+  public double calculateOutletPressure(SystemInterface inletSystem) {
+    SystemInterface system = inletSystem.clone();
+    return evaluateOutlet(system, new ThermodynamicOperations(system))[0];
+  }
 
-    getOutletStream().setThermoSystem(system);
-    getOutletStream().run();
+  /**
+   * Solves the inlet (bottomhole) pressure that gives a requested outlet (wellhead) pressure for a fluid and flow rate.
+   *
+   * <p>
+   * The outlet pressure is monotonic in the inlet pressure, so the iteration uses the nearly unit slope as first step
+   * and a clamped secant update afterwards. The inlet and outlet streams are not modified.
+   * </p>
+   *
+   * @param inletSystem fluid with composition, flow rate and bottomhole temperature set; it is cloned, not modified
+   * @param targetOutletBara required outlet pressure in bara (above 1 bara)
+   * @param toleranceBar absolute pressure tolerance in bar
+   * @return inlet pressure in bara, or NaN when the solution is not bracketed or does not converge
+   */
+  public double calculateInletPressureForOutlet(SystemInterface inletSystem, double targetOutletBara,
+      double toleranceBar) {
+    double p0 = Math.max(targetOutletBara + 20.0, targetOutletBara * 1.2);
+    SystemInterface work = inletSystem.clone();
+    double f0 = Double.NaN;
+    double pPrev = Double.NaN;
+    double fPrev = Double.NaN;
+    double p = p0;
+    for (int iter = 0; iter < 40; iter++) {
+      if (p > MAX_INLET_PRESSURE_BARA) {
+        logger.warn(
+            "No inlet pressure below {} bara delivers {} bara at the tubing outlet (choked or too small tubing)",
+            MAX_INLET_PRESSURE_BARA, targetOutletBara);
+        return Double.NaN;
+      }
+      work.setPressure(p, "bara");
+      double outlet;
+      try {
+        outlet = calculateOutletPressure(work);
+      } catch (RuntimeException ex) {
+        logger.warn("Tubing flash failed at inlet pressure {} bara: {}", p, ex.toString());
+        return Double.NaN;
+      }
+      if (Double.isNaN(outlet)) {
+        return Double.NaN;
+      }
+      double f = outlet - targetOutletBara;
+      if (Math.abs(f) < toleranceBar) {
+        return p;
+      }
+      double pNext;
+      if (outlet <= 1.0 + 1.0e-9) {
+        pNext = p * 1.5;
+      } else {
+        double slope = 1.0;
+        if (!Double.isNaN(pPrev) && Math.abs(p - pPrev) > 1.0e-9) {
+          slope = Math.min(5.0, Math.max(0.2, (f - fPrev) / (p - pPrev)));
+        }
+        pNext = Math.max(1.0, p - f / slope);
+      }
+      pPrev = p;
+      fPrev = f;
+      f0 = f;
+      p = pNext;
+    }
+    logger.warn("Inlet pressure solve did not converge for outlet {} bara (last residual {} bar)", targetOutletBara,
+        f0);
+    return Double.NaN;
+  }
+
+  /**
+   * Sets a deviated well survey so that the tubing is integrated section by section with its own inclination and
+   * diameter.
+   *
+   * <p>
+   * Stations are ordered from the wellhead (first) to the bottom of the tubing (last). Interval {@code i} lies between
+   * station {@code i} and {@code i + 1} and has inner diameter {@code innerDiameter[i]}. The inclination of an interval
+   * follows from its true vertical depth change over its measured length. Pressure is integrated from the inlet stream
+   * (bottomhole) up to the wellhead. In survey mode the {@code LINEAR_GRADIENT} temperature model interpolates linearly
+   * over true vertical depth between {@link #setBottomholeTemperature(double)} and
+   * {@link #setSurfaceTemperature(double)}; {@code ISOTHERMAL} is also supported. {@link #setLength(double)},
+   * {@link #setDiameter(double)} and {@link #setInclination(double)} are ignored while a survey is set.
+   * </p>
+   *
+   * @param md measured depths of the stations in m, strictly increasing from the wellhead
+   * @param tvd true vertical depths of the stations in m (same length as {@code md})
+   * @param innerDiameter inner diameter in m of each interval ({@code md.length - 1} values)
+   * @throws IllegalArgumentException if the arrays are inconsistent, not increasing or contain non-positive diameters
+   */
+  public void setSurvey(double[] md, double[] tvd, double[] innerDiameter) {
+    if (md == null || tvd == null || innerDiameter == null || md.length < 2 || tvd.length != md.length
+        || innerDiameter.length != md.length - 1) {
+      throw new IllegalArgumentException(
+          "Survey needs md and tvd of equal length (>= 2) and one diameter per interval");
+    }
+    for (int i = 0; i < md.length; i++) {
+      if (Double.isNaN(md[i]) || Double.isNaN(tvd[i]) || (i > 0 && md[i] <= md[i - 1])) {
+        throw new IllegalArgumentException("Measured depths must be finite and strictly increasing");
+      }
+      if (i > 0 && (Double.isNaN(innerDiameter[i - 1]) || innerDiameter[i - 1] <= 0.0)) {
+        throw new IllegalArgumentException("Inner diameters must be positive");
+      }
+    }
+    this.surveyMd = md.clone();
+    this.surveyTvd = tvd.clone();
+    this.surveyId = innerDiameter.clone();
+    this.length = md[md.length - 1] - md[0];
+  }
+
+  /**
+   * Sets a deviated well survey with one inner diameter for the whole tubing.
+   *
+   * @param md measured depths of the stations in m, strictly increasing from the wellhead
+   * @param tvd true vertical depths of the stations in m
+   * @param innerDiameter constant inner diameter in m
+   * @throws IllegalArgumentException if the survey is inconsistent
+   * @see #setSurvey(double[], double[], double[])
+   */
+  public void setSurvey(double[] md, double[] tvd, double innerDiameter) {
+    double[] ids = new double[Math.max(md == null ? 0 : md.length - 1, 0)];
+    java.util.Arrays.fill(ids, innerDiameter);
+    setSurvey(md, tvd, ids);
+  }
+
+  /** Removes a survey so that the single-section geometry is used again. */
+  public void clearSurvey() {
+    surveyMd = null;
+    surveyTvd = null;
+    surveyId = null;
+  }
+
+  /**
+   * Checks whether a deviated well survey is set.
+   *
+   * @return true if the tubing is integrated through a survey
+   */
+  public boolean hasSurvey() {
+    return surveyMd != null;
+  }
+
+  /**
+   * Integrates the pressure drop from the bottom station to the wellhead through the survey sections.
+   *
+   * @param system working fluid at bottomhole conditions; its pressure and temperature are updated along the way
+   * @return total pressure drop in bar
+   */
+  private double calculateSurveyPressureDrop(SystemInterface system) {
+    double savedDiameter = diameter;
+    double savedLength = length;
+    double savedInclination = inclination;
+    int savedSegments = numberOfSegments;
+    double savedBottomhole = bottomholeTemperature;
+    double savedSurface = surfaceTemperature;
+    int n = surveyMd.length;
+    double totalMd = surveyMd[n - 1] - surveyMd[0];
+    double totalTvd = surveyTvd[n - 1] - surveyTvd[0];
+    double startPressure = system.getPressure("bara");
+    double pressure = startPressure;
+    try {
+      for (int i = n - 2; i >= 0; i--) {
+        double dMd = surveyMd[i + 1] - surveyMd[i];
+        double dTvd = surveyTvd[i + 1] - surveyTvd[i];
+        diameter = surveyId[i];
+        length = dMd;
+        inclination = Math.toDegrees(Math.asin(Math.max(-1.0, Math.min(1.0, dTvd / dMd))));
+        numberOfSegments = Math.max(1, (int) Math.round(savedSegments * dMd / totalMd));
+        double fracBottom = totalTvd == 0.0 ? 1.0 : (surveyTvd[i + 1] - surveyTvd[0]) / totalTvd;
+        double fracTop = totalTvd == 0.0 ? 0.0 : (surveyTvd[i] - surveyTvd[0]) / totalTvd;
+        double tBottom = savedSurface + (savedBottomhole - savedSurface) * fracBottom;
+        double tTop = savedSurface + (savedBottomhole - savedSurface) * fracTop;
+        bottomholeTemperature = tBottom;
+        surfaceTemperature = tTop;
+        system.setPressure(pressure, "bara");
+        if (temperatureModel == TemperatureModel.LINEAR_GRADIENT) {
+          system.setTemperature(tBottom, "C");
+        }
+        ThermodynamicOperations ops = new ThermodynamicOperations(system);
+        double dP = calculatePressureDrop(system, ops);
+        pressure = Math.max(1.0, pressure - dP);
+        if (temperatureModel == TemperatureModel.LINEAR_GRADIENT) {
+          system.setTemperature(tTop, "C");
+        }
+      }
+    } finally {
+      diameter = savedDiameter;
+      length = savedLength;
+      inclination = savedInclination;
+      numberOfSegments = savedSegments;
+      bottomholeTemperature = savedBottomhole;
+      surfaceTemperature = savedSurface;
+    }
+    system.setPressure(startPressure, "bara");
+    return startPressure - pressure;
   }
 
   /**
@@ -201,21 +434,29 @@ public class TubingPerformance extends Pipeline {
       // Flash at current conditions
       ops = new ThermodynamicOperations(workingSystem);
       ops.TPflash();
+      workingSystem.initProperties();
 
       // Get properties
-      double rhoL = workingSystem.getPhase(1).getDensity("kg/m3");
-      double rhoG = workingSystem.getPhase(0).getDensity("kg/m3");
-      double muL = workingSystem.getPhase(1).getViscosity("kg/msec") * 1000; // cP
-      double muG = workingSystem.getPhase(0).getViscosity("kg/msec") * 1000; // cP
-      double sigma = workingSystem.getInterphaseProperties().getSurfaceTension(0, 1) * 1000; // mN/m
+      PhaseState state = readPhaseState(workingSystem);
+      double rhoL = state.rhoL;
+      double rhoG = state.rhoG;
+      double muL = state.muL * 1000; // cP
+      double muG = state.muG * 1000; // cP
+      double sigma = state.sigmaMilliNewton; // mN/m
 
       // Superficial velocities
       double area = Math.PI * diameter * diameter / 4.0;
-      double qL = workingSystem.getPhase(1).getFlowRate("m3/sec");
-      double qG = workingSystem.getPhase(0).getFlowRate("m3/sec");
+      double qL = state.qL;
+      double qG = state.qG;
       double vsL = qL / area;
       double vsG = qG / area;
       double vm = vsL + vsG;
+
+      if (!leanGasWarningLogged && inclination > 30.0 && vm > 0.0 && vsG / vm > 0.97) {
+        leanGasWarningLogged = true;
+        logger.warn("Beggs-Brill with gas volume fraction {} in tubing inclined {} deg tends to over-predict the "
+            + "pressure drop of lean gas wells; consider CorrelationType.GRAY", vsG / vm, inclination);
+      }
 
       // Input liquid fraction
       double lambdaL = vsL / (vsL + vsG + 1e-10);
@@ -345,6 +586,7 @@ public class TubingPerformance extends Pipeline {
       ops = new ThermodynamicOperations(workingSystem);
       try {
         ops.TPflash();
+        workingSystem.initProperties();
       } catch (Exception e) {
         // If flash fails, use properties from previous segment
         logger.warn("TPflash failed in segment " + i + ", using previous properties");
@@ -451,13 +693,15 @@ public class TubingPerformance extends Pipeline {
     for (int i = 0; i < numberOfSegments; i++) {
       ops = new ThermodynamicOperations(workingSystem);
       ops.TPflash();
+      workingSystem.initProperties();
 
-      double rhoL = workingSystem.getPhase(1).getDensity("kg/m3");
-      double rhoG = workingSystem.getPhase(0).getDensity("kg/m3");
+      PhaseState state = readPhaseState(workingSystem);
+      double rhoL = state.rhoL;
+      double rhoG = state.rhoG;
 
       double area = Math.PI * diameter * diameter / 4.0;
-      double qL = workingSystem.getPhase(1).getFlowRate("m3/sec");
-      double qG = workingSystem.getPhase(0).getFlowRate("m3/sec");
+      double qL = state.qL;
+      double qG = state.qG;
       double vsL = qL / area;
       double vsG = qG / area;
       double vm = vsL + vsG;
@@ -474,7 +718,7 @@ public class TubingPerformance extends Pipeline {
       double rhoM = holdup * rhoL + (1 - holdup) * rhoG;
 
       double rhoNs = rhoL * lambdaL + rhoG * (1 - lambdaL);
-      double muG = workingSystem.getPhase(0).getViscosity("kg/msec") * 1000;
+      double muG = state.muG * 1000;
       double Re = rhoNs * vm * diameter / (muG * 0.001 + 1e-10);
       double f = calculateFrictionFactor(Re, roughness, diameter);
 
@@ -492,6 +736,58 @@ public class TubingPerformance extends Pipeline {
     }
 
     return totalDp;
+  }
+
+  /** Gas and combined liquid properties of a flashed fluid, independent of phase ordering. */
+  private static final class PhaseState {
+    private double rhoG = 50.0;
+    private double rhoL = 800.0;
+    private double muG = 2.0e-5;
+    private double muL = 1.0e-3;
+    private double qG = 0.0;
+    private double qL = 0.0;
+    private double sigmaMilliNewton = 30.0;
+  }
+
+  /**
+   * Reads gas and liquid properties by phase type. A single-phase fluid is treated as gas without slip; all liquid
+   * phases (oil and aqueous) are combined with volume-weighted density and viscosity. This avoids the discontinuity
+   * that index-based access gives between dry gas and gas with a trace of liquid.
+   *
+   * @param flashed fluid after TPflash and initProperties
+   * @return gas and combined liquid properties in SI units (surface tension in mN/m)
+   */
+  private PhaseState readPhaseState(SystemInterface flashed) {
+    PhaseState st = new PhaseState();
+    int n = flashed.getNumberOfPhases();
+    double liquidRhoVolume = 0.0;
+    double liquidMuVolume = 0.0;
+    for (int i = 0; i < n; i++) {
+      double q = flashed.getPhase(i).getFlowRate("m3/sec");
+      double rho = flashed.getPhase(i).getDensity("kg/m3");
+      double mu = flashed.getPhase(i).getViscosity("kg/msec");
+      boolean gas = n == 1 || flashed.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.GAS;
+      if (gas) {
+        st.qG += q;
+        st.rhoG = rho;
+        st.muG = mu;
+      } else {
+        st.qL += q;
+        liquidRhoVolume += rho * q;
+        liquidMuVolume += mu * q;
+      }
+    }
+    if (st.qL > 0.0) {
+      st.rhoL = liquidRhoVolume / st.qL;
+      st.muL = liquidMuVolume / st.qL;
+    }
+    if (n >= 2) {
+      double sigma = flashed.getInterphaseProperties().getSurfaceTension(0, 1) * 1000.0;
+      if (!Double.isNaN(sigma) && sigma > 0.0) {
+        st.sigmaMilliNewton = sigma;
+      }
+    }
+    return st;
   }
 
   /**
@@ -512,6 +808,7 @@ public class TubingPerformance extends Pipeline {
     for (int i = 0; i < numberOfSegments; i++) {
       ops = new ThermodynamicOperations(workingSystem);
       ops.TPflash();
+      workingSystem.initProperties();
 
       double rhoL = workingSystem.getPhase(1).getDensity("kg/m3");
       double rhoG = workingSystem.getPhase(0).getDensity("kg/m3");
@@ -585,6 +882,7 @@ public class TubingPerformance extends Pipeline {
     for (int i = 0; i < numberOfSegments; i++) {
       ops = new ThermodynamicOperations(workingSystem);
       ops.TPflash();
+      workingSystem.initProperties();
 
       double rhoL = workingSystem.getPhase(1).getDensity("kg/m3");
       double rhoG = workingSystem.getPhase(0).getDensity("kg/m3");
@@ -755,56 +1053,28 @@ public class TubingPerformance extends Pipeline {
   }
 
   /**
-   * Generate VLP curve (required BHP vs flow rate).
+   * Generate VLP curve (required BHP vs flow rate) for the wellhead pressure set with
+   * {@link #setWellheadPressure(double)}, using the single-section geometry or the survey.
    *
    * @param flowRates array of flow rates to calculate (MSm³/day for gas)
-   * @return 2D array: [0] = flow rates, [1] = required BHP
+   * @return 2D array: [0] = flow rates, [1] = required BHP in bara; NaN where no bottomhole pressure below 1500 bara
+   * delivers the wellhead pressure (choked or too small tubing)
    */
   public double[][] generateVLPCurve(double[] flowRates) {
     double[][] result = new double[2][flowRates.length];
-    StreamInterface originalStream = getInletStream();
+    SystemInterface baseSystem = getInletStream().getThermoSystem().clone();
 
     for (int i = 0; i < flowRates.length; i++) {
       result[0][i] = flowRates[i];
 
-      // Clone stream and set flow rate
-      SystemInterface system = originalStream.getThermoSystem().clone();
-      system.setPressure(wellheadPressure + 200, "bara"); // Start with high BHP estimate
+      SystemInterface system = baseSystem.clone();
+      system.setPressure(wellheadPressure + 50.0, "bara");
+      neqsim.process.equipment.stream.Stream tempStream = new neqsim.process.equipment.stream.Stream("temp", system);
+      tempStream.setFlowRate(flowRates[i], "MSm3/day");
+      tempStream.run();
 
-      // Iterate to find BHP that gives wellhead pressure
-      double bhp = wellheadPressure + 50; // Initial guess
-      double tolerance = 0.5; // bar
-
-      for (int iter = 0; iter < 20; iter++) {
-        system.setPressure(bhp, "bara");
-
-        // Create temporary stream
-        neqsim.process.equipment.stream.Stream tempStream = new neqsim.process.equipment.stream.Stream("temp", system);
-        tempStream.setFlowRate(flowRates[i], "MSm3/day");
-        tempStream.run();
-
-        setInletStream(tempStream);
-        run();
-
-        double calculatedWHP = getOutletStream().getPressure("bara");
-        double error = calculatedWHP - wellheadPressure;
-
-        if (Math.abs(error) < tolerance) {
-          break;
-        }
-
-        // Adjust BHP
-        bhp += error * 0.5;
-        if (bhp < wellheadPressure + 1) {
-          bhp = wellheadPressure + 1;
-        }
-      }
-
-      result[1][i] = bhp;
+      result[1][i] = calculateInletPressureForOutlet(tempStream.getThermoSystem(), wellheadPressure, 0.1);
     }
-
-    // Restore original stream
-    setInletStream(originalStream);
 
     return result;
   }

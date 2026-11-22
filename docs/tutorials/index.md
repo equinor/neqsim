@@ -41,6 +41,23 @@ Complete walkthroughs for common applications:
 | **[Flow Assurance Overview](../pvtsimulation/flow_assurance_overview.md)** | Hydrates, wax, asphaltenes screening | Intermediate |
 | **[UniSim/HYSYS to NeqSim Conversion](../process/unisim-to-neqsim-conversion.md)** | Convert UniSim `.usc` models to NeqSim | Intermediate |
 
+## CO2 Impurity Kinetics Tutorials
+
+These committed notebooks contain stored executed outputs, but they are experimental screening
+models with illustrative, uncalibrated reaction parameters and fallback correlations. Their stored
+status is not a current-`master` rerun or engineering qualification.
+
+| Tutorial | Scope | Sources |
+|----------|-------|---------|
+| **100-hour CSTR experiment** | Three-phase CSTR setup, geometry, residence time, tabular results, and visualization | [Notebook](https://github.com/equinor/neqsim/blob/master/docs/tutorials/CO2_CSTR_Experiment_Tutorial.ipynb) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/tutorials/CO2_CSTR_Experiment_Tutorial.ipynb) |
+| **Interactive kinetics and thermodynamics guide** | SRK-backed impurity screening, explicit fallback boundary, dynamic cases, and sensitivities | [Notebook](https://github.com/equinor/neqsim/blob/master/docs/tutorials/CO2_Impurity_Kinetics_Tutorial.ipynb) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/tutorials/CO2_Impurity_Kinetics_Tutorial.ipynb) |
+
+Both notebooks use the shared [CO2 kinetics support module](neqsim_co2_kinetics.py).
+Reproducible experiment drivers are available for the
+[960-hour master run](run_master_long_experiment_960h.py),
+[10 ppm stepwise run](run_stepwise_10ppm_every100h.py), and
+[20 bara, -24 °C user case](run_user_20bar_minus24C_experiment.py).
+
 ## Video Tutorials
 
 Coming soon! For now, see the [NeqSim Colab notebooks](https://github.com/EvenSol/NeqSim-Colab) for interactive examples.
