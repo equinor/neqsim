@@ -2,6 +2,8 @@ package neqsim.process.equipment.pipeline.twophasepipe.closure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,6 +57,102 @@ class SlugUnitModelTest {
     double gasAngle = 2.0 * Math.PI - SlugUnitModel.centralAngle(Math.nextDown(1.0));
     double gasLimit = Math.cbrt(12.0 * Math.PI * (1.0 - Math.nextDown(1.0)));
     assertEquals(gasLimit, gasAngle, gasLimit * 3.0e-10);
+  }
+
+  /**
+   * Checks the angle against 40-digit roots of angle - sin(angle) = 2 pi holdup.
+   *
+   * <p>
+   * The thin-film values lie where the direct difference angle - sin(angle) loses digits to cancellation. A residual
+   * evaluated that way left the root search wandering at up to 50 units in the last place; the series form settles to
+   * within four.
+   * </p>
+   */
+  @Test
+  void circularSegmentAngleMatchesHighPrecisionRoots() {
+    double[][] references = {{5.2587064741372456e-5, 0.12565631134653333192}, {1.0e-3, 0.33593920376409018853},
+        {0.0331, 1.098498894070072114}, {0.25, 2.3098814600100572609}, {0.4999, 3.1412784943218504027}};
+    for (double[] reference : references) {
+      double angle = SlugUnitModel.centralAngle(reference[0]);
+      assertEquals(reference[1], angle, 5.0 * Math.ulp(reference[1]), "holdup " + reference[0]);
+    }
+  }
+
+  /**
+   * A repeated request is answered with the same unit, and editing the returned state does not change the next answer.
+   */
+  @Test
+  void repeatedSolveReturnsEqualIndependentResults() {
+    SlugUnitModel model = new SlugUnitModel();
+    SlugUnitModel.Result first = solveReferenceUnit(model, 0.0);
+    assertTrue(first.valid);
+    double filmHoldup = first.filmHoldup;
+    double frictionGradient = first.frictionGradient;
+    first.valid = false;
+    first.filmHoldup = -1.0;
+    first.frictionGradient = Double.NaN;
+
+    SlugUnitModel.Result second = solveReferenceUnit(model, 0.0);
+    assertNotSame(first, second);
+    assertTrue(second.valid);
+    assertEquals(filmHoldup, second.filmHoldup);
+    assertEquals(frictionGradient, second.frictionGradient);
+    assertUnitsEqual(solveReferenceUnit(new SlugUnitModel(), 0.0), second);
+  }
+
+  /**
+   * A request that differs in one argument or one model switch is solved again, not answered from the previous unit.
+   */
+  @Test
+  void changedArgumentOrSwitchIsSolvedAgain() {
+    double inclination = Math.toRadians(2.0);
+    SlugUnitModel model = new SlugUnitModel();
+    solveReferenceUnit(model, 0.0);
+
+    SlugUnitModel.Result inclined = solveReferenceUnit(model, inclination);
+    assertUnitsEqual(solveReferenceUnit(new SlugUnitModel(), inclination), inclined);
+
+    model.setHighFroudeSlipReductionEnabled(false);
+    SlugUnitModel.Result plainSlip = solveReferenceUnit(model, inclination);
+    SlugUnitModel reference = new SlugUnitModel();
+    reference.setHighFroudeSlipReductionEnabled(false);
+    assertUnitsEqual(solveReferenceUnit(reference, inclination), plainSlip);
+    assertNotEquals(inclined.translationalVelocity, plainSlip.translationalVelocity);
+  }
+
+  /**
+   * Solves one fixed gas-liquid slug unit at the given inclination.
+   *
+   * @param model slug-unit model to ask
+   * @param inclination pipe inclination, radians
+   * @return slug-unit state
+   */
+  private static SlugUnitModel.Result solveReferenceUnit(SlugUnitModel model, double inclination) {
+    return model.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS, inclination);
+  }
+
+  /**
+   * Asserts that two unit states are the same bit for bit.
+   *
+   * @param expected reference state
+   * @param actual state under test
+   */
+  private static void assertUnitsEqual(SlugUnitModel.Result expected, SlugUnitModel.Result actual) {
+    assertEquals(expected.valid, actual.valid);
+    assertEquals(expected.stratified, actual.stratified);
+    assertEquals(expected.slugHoldup, actual.slugHoldup);
+    assertEquals(expected.filmHoldup, actual.filmHoldup);
+    assertEquals(expected.slugFraction, actual.slugFraction);
+    assertEquals(expected.unitHoldup, actual.unitHoldup);
+    assertEquals(expected.translationalVelocity, actual.translationalVelocity);
+    assertEquals(expected.slugLiquidVelocity, actual.slugLiquidVelocity);
+    assertEquals(expected.filmLiquidVelocity, actual.filmLiquidVelocity);
+    assertEquals(expected.filmGasVelocity, actual.filmGasVelocity);
+    assertEquals(expected.slugLength, actual.slugLength);
+    assertEquals(expected.frictionGradient, actual.frictionGradient);
+    assertEquals(expected.wallFrictionGradient, actual.wallFrictionGradient);
+    assertEquals(expected.accelerationGradient, actual.accelerationGradient);
+    assertEquals(expected.gravityGradient, actual.gravityGradient);
   }
 
   /**
