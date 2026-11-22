@@ -1172,4 +1172,5 @@ System.out.println("Driver power: " + compResponse.getDriverPower() + " kW");
 
 - [Process Equipment](README.md)
 - [Pipeline Mechanical Design](pipeline_mechanical_design)
+- [Pipe stress analysis (ASME B31.3) with PipeStressModel](mechanical_design/pipe_stress_model.md)
 - [Design Standards](../standards/)

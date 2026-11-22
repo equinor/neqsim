@@ -1,7 +1,7 @@
 ---
 name: neqsim-standards-lookup
 description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), ISO 18453 / GERG-water water dew point, risk assessment, or safety analysis. Provides equipment-to-standards mapping, calculation setup rules, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
-last_verified: "2026-08-02"
+last_verified: "2026-11-22"
 ---
 
 # NeqSim Standards Lookup
@@ -311,6 +311,7 @@ STS0131, TR1965, TR2237, or NORSOK P-002:
 | Gas scrubber conformance | `neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet.create("TR1965")` | Checks TR1965 K-factor, gas/liquid margins, entrainment, and scrubber layout metadata configured on `GasScrubberMechanicalDesign`. |
 | Blowdown fire acceptance | `neqsim.process.safety.depressurization.STS0131AcceptanceCriteria` | Evaluates `DepressurizationResult` against time-to-escape/time-to-rupture pressure, inventory, and escalated fire-rate limits. |
 | Piping/line sizing | `neqsim.process.mechanicaldesign.pipeline.NorsokP002LineSizingValidator` | Screens `PipeLineInterface` velocity, pressure gradient, and erosional velocity using NORSOK P-002 style limits. |
+| Process pipe stress (ASME B31.3) | `neqsim.process.mechanicaldesign.piping.PipeStressModel` | 3D beam FE model nozzle to nozzle: B31.3 304.1.2 pressure design, 320 sustained, 319 expansion (liberal S_A) and occasional (1.33 S_h) checks, support lift-off and friction, bend/tee SIFs, nozzle loads against supplied allowables. See `docs/process/mechanical_design/pipe_stress_model.md`. |
 | Leak detection sensitivity | `neqsim.process.safety.leakdetection.MassBalanceLeakDetector` | Estimates minimum detectable leak rate from flow, pressure, temperature, and linepack uncertainty. |
 | Performance standards | `neqsim.process.safety.barrier.TR2237Templates` | Creates starter barrier registers with TR2237-style performance standards and NORSOK S-001 topic mappings. |
 | Standards review | `neqsim.process.safety.compliance.StandardsDesignReview` | Converts supported calculated checks from a `ProcessSystem` into `StandardsComplianceReport`. |
