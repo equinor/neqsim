@@ -1,0 +1,52 @@
+name: zz-probe
+on:
+  push:
+    branches: ['tmp/ci-probe-5203']
+permissions:
+  contents: read
+jobs:
+  spotless:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Apply
+        run: |
+          for attempt in 1 2 3; do
+            if ./mvnw -B -ntp spotless:apply -q; then break; fi
+            rm -rf ~/.m2/repository/dev/equo/p2-data; sleep 20
+          done
+          echo "=====SPOTLESS-DIFF-BEGIN====="
+          git diff
+          echo "=====SPOTLESS-DIFF-END====="
+  codehealth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MAVEN_OPTS: -Xmx1024m
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17.0.21+9"
+          cache: maven
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+      - run: ./mvnw -B -ntp -q -Pcode-health -DskipTests clean compile pmd:pmd
+      - run: uv run --project devtools --locked devtools/prepare_code_health_input.py
+      - run: ./mvnw -B -ntp -q -f devtools/spotbugs-neqsim-rules/pom.xml install
+      - run: ./mvnw -B -ntp -q -Pcode-health spotbugs:spotbugs
+      - name: Gate
+        run: |
+          echo "=====HEALTH-BEGIN====="
+          uv run --project devtools --locked devtools/code_health.py --tools pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml --baseline .config/code-health-baseline.json --rules-baseline .config/neqsim-rules-baseline.json --output target/code-health-static.json || true
+          echo "=====HEALTH-JSON====="
+          python3 -c "import json;d=json.load(open('target/code-health-static.json'));print(json.dumps({k:(v if not isinstance(v,list) or len(v)<60 else v[:60]) for k,v in d.items() if k!='findings'},indent=1)[:20000])"
+          echo "=====HEALTH-END====="
