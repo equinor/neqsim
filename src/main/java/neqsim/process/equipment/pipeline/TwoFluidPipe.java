@@ -858,6 +858,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Update thermodynamics every N steps. */
   private int thermodynamicUpdateInterval = 10;
 
+  /** Advance gas and oil density at frozen composition between property updates when phases exchange no mass. */
+  private volatile boolean frozenCompositionDensityUpdate = true;
+
   // ============ Steady-State Solver Configuration ============
 
   /**
@@ -6961,6 +6964,7 @@ public class TwoFluidPipe extends Pipeline {
     useOLGAFlowRegimeMap = candidate.useOLGAFlowRegimeMap;
     flowRegimeHysteresis = candidate.flowRegimeHysteresis;
     thermodynamicUpdateInterval = candidate.thermodynamicUpdateInterval;
+    frozenCompositionDensityUpdate = candidate.frozenCompositionDensityUpdate;
     ssUnderRelaxation = candidate.ssUnderRelaxation;
     ssFlashInterval = candidate.ssFlashInterval;
     ssMaxWallClockTime = candidate.ssMaxWallClockTime;
@@ -8234,7 +8238,7 @@ public class TwoFluidPipe extends Pipeline {
 
         // Update phase properties
         if (flash.hasPhaseType("gas")) {
-          sec.setGasDensity(flash.getPhase("gas").getDensity("kg/m3"));
+          sec.setGasDensity(gasDensityForUpdate(sec, flash.getPhase("gas")));
           sec.setGasViscosity(flash.getPhase("gas").getViscosity("kg/msec"));
           sec.setGasSoundSpeed(flash.getPhase("gas").getSoundSpeed());
           sec.setGasEnthalpy(flash.getPhase("gas").getEnthalpy("J/kg"));
@@ -8248,7 +8252,7 @@ public class TwoFluidPipe extends Pipeline {
 
         if (hasOil && hasWater) {
           // Three-phase: combine oil and water as effective liquid
-          double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
+          double rhoOil = oilDensityForUpdate(sec, flash.getPhase("oil"));
           double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
           double muOil = flash.getPhase("oil").getViscosity("kg/msec");
           double muWater = flash.getPhase("aqueous").getViscosity("kg/msec");
@@ -8278,7 +8282,7 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidEnthalpy(calculateLiquidSpecificEnthalpy(flash, sec.getWaterCut()));
 
         } else if (hasOil) {
-          double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
+          double rhoOil = oilDensityForUpdate(sec, flash.getPhase("oil"));
           sec.setLiquidDensity(rhoOil);
           sec.setOilDensity(rhoOil);
           sec.setOilViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
@@ -8310,6 +8314,128 @@ public class TwoFluidPipe extends Pipeline {
         logger.warn("Flash calculation failed for section at position {}", sec.getPosition());
       }
     }
+  }
+
+  /**
+   * Returns the oil density a property update gives a cell.
+   *
+   * <p>
+   * The flash is made on the feed composition at the cell pressure and temperature. Its oil is the equilibrium oil at
+   * that pressure, which holds more dissolved gas as pressure rises, so the equilibrium oil density falls with pressure
+   * (about -0.55 kg/m3 per bar for a volatile oil between 150 and 250 bara). When the transient moves no mass between
+   * gas and oil, resetting the cell to that density swells the oil without adding the gas that would swell it, and a
+   * cell that is mostly liquid then expands as its pressure rises. See
+   * {@link #frozenCompositionDensity(neqsim.thermo.phase.PhaseInterface, double, double, double, double, double[])} for
+   * the update used instead.
+   * </p>
+   *
+   * @param sec cell being updated; its oil density reference is refreshed
+   * @param oil oil phase of the equilibrium flash at the cell pressure and temperature
+   * @return oil density in kg/m3
+   */
+  private double oilDensityForUpdate(TwoFluidSection sec, neqsim.thermo.phase.PhaseInterface oil) {
+    if (!isFrozenCompositionDensityActive()) {
+      return oil.getDensity("kg/m3");
+    }
+    double[] reference = sec.getOilMassPerLength() > 0.0 ? sec.getOilDensityReference() : null;
+    double[] update = frozenCompositionDensity(oil, sec.getOilDensity(), sec.getLiquidSoundSpeed(), sec.getPressure(),
+        sec.getTemperature(), reference);
+    sec.setOilDensityReference(java.util.Arrays.copyOfRange(update, 1, update.length));
+    return update[0];
+  }
+
+  /**
+   * Returns the gas density a property update gives a cell.
+   *
+   * <p>
+   * The equilibrium gas of the feed takes up heavier components as pressure rises, so its density rises faster with
+   * pressure than a gas of fixed composition does. See
+   * {@link #frozenCompositionDensity(neqsim.thermo.phase.PhaseInterface, double, double, double, double, double[])} for
+   * the update used instead.
+   * </p>
+   *
+   * @param sec cell being updated; its gas density reference is refreshed
+   * @param gas gas phase of the equilibrium flash at the cell pressure and temperature
+   * @return gas density in kg/m3
+   */
+  private double gasDensityForUpdate(TwoFluidSection sec, neqsim.thermo.phase.PhaseInterface gas) {
+    if (!isFrozenCompositionDensityActive()) {
+      return gas.getDensity("kg/m3");
+    }
+    double[] reference = sec.getGasMassPerLength() > 0.0 ? sec.getGasDensityReference() : null;
+    double[] update = frozenCompositionDensity(gas, sec.getGasDensity(), sec.getGasSoundSpeed(), sec.getPressure(),
+        sec.getTemperature(), reference);
+    sec.setGasDensityReference(java.util.Arrays.copyOfRange(update, 1, update.length));
+    return update[0];
+  }
+
+  /**
+   * Advance a phase density from its last property update at frozen composition.
+   *
+   * <p>
+   * The target follows the phase's own isothermal compressibility and thermal expansivity from the stored state to the
+   * cell state, {@code rhoTarget = rhoRef * exp(kappa * dP - beta * dT)} with the two coefficients averaged over the
+   * interval. Without a stored state the target is the equilibrium density.
+   * </p>
+   *
+   * <p>
+   * The coupled pressure solve advances density with the phase sound speed, {@code dRho = dP / c2}. A property update
+   * that moves the cell density by {@code dRho} therefore moves the cell pressure by about {@code -c2 * dRho} in the
+   * next solve. Setting the density straight to a target multiplies a pressure offset from the consistent state by
+   * {@code 1 - r}, where {@code r = c2 * dRhoTarget/dP}. For a volatile-oil feed at 80 C the equilibrium-flash gas has
+   * {@code r} of 1.5 at 100 bara, 2.0 at 180 bara and 2.6 at 260 bara, so above about 180 bara the pressure of a packed
+   * line alternated between updates with growing amplitude; the equilibrium-flash oil has {@code r} of -3 to -4.5, so a
+   * liquid-rich cell diverged without alternating. At frozen composition {@code r = rho * c2 * kappa}, the ratio of
+   * isothermal to isentropic compressibility, is 1.5 to 1.7 for that gas and 1.25 for the oil. The density step is
+   * divided by {@code r} when {@code r} exceeds one, which lands the next solve on the pressure that the frozen
+   * composition gives for the cell's mass and volume.
+   * </p>
+   *
+   * @param phase phase of the equilibrium flash at the cell pressure and temperature
+   * @param currentDensity phase density the transient holds in the cell in kg/m3
+   * @param soundSpeed phase sound speed the coupled pressure solve used since the last update in m/s
+   * @param pressure cell pressure in Pa
+   * @param temperature cell temperature in K
+   * @param reference state stored by the last update, or null when the cell has none
+   * @return the phase density to give the cell in kg/m3, followed by the state to store for the next update: target
+   * density in kg/m3, pressure in Pa, temperature in K, isothermal compressibility in 1/Pa and thermal expansivity in
+   * 1/K
+   */
+  private double[] frozenCompositionDensity(neqsim.thermo.phase.PhaseInterface phase, double currentDensity,
+      double soundSpeed, double pressure, double temperature, double[] reference) {
+    double kappa = phase.getIsothermalCompressibility() / 1.0e5; // 1/bar to 1/Pa
+    double beta = phase.getIsobaricThermalExpansivity();
+    double target = phase.getDensity("kg/m3");
+    boolean derivativesUsable = kappa > 0.0 && Double.isFinite(kappa) && Double.isFinite(beta);
+    if (derivativesUsable && reference != null && reference[0] > 0.0) {
+      boolean referenceDerivatives = reference[3] > 0.0;
+      double meanKappa = referenceDerivatives ? 0.5 * (kappa + reference[3]) : kappa;
+      double meanBeta = referenceDerivatives ? 0.5 * (beta + reference[4]) : beta;
+      double exponent = meanKappa * (pressure - reference[1]) - meanBeta * (temperature - reference[2]);
+      if (Double.isFinite(exponent) && Math.abs(exponent) < 0.5) {
+        target = reference[0] * Math.exp(exponent);
+      }
+    }
+    double density = target;
+    if (derivativesUsable && reference != null && currentDensity > 0.0 && soundSpeed > 0.0) {
+      double ratio = currentDensity * soundSpeed * soundSpeed * kappa;
+      if (ratio > 1.0 && Double.isFinite(ratio)) {
+        density = currentDensity + (target - currentDensity) / ratio;
+      }
+    }
+    return new double[] {density, target, pressure, temperature, derivativesUsable ? kappa : 0.0,
+        derivativesUsable ? beta : 0.0};
+  }
+
+  /**
+   * Tells whether property updates advance gas and oil density at frozen composition.
+   *
+   * @return true when the option is selected, pressure comes from the coupled solve and no model moves mass between gas
+   * and oil
+   */
+  private boolean isFrozenCompositionDensityActive() {
+    return frozenCompositionDensityUpdate && coupledPressureMomentumEnabled && !includeMassTransfer
+        && !componentTransportEnabled && nonEquilibriumFilmTransfer == null;
   }
 
   /**
@@ -10261,7 +10387,8 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * The static choke pressure drop is added to absolute outlet pressure. It represents one operating point only;
    * dynamic choke response is outside this quasi-steady diagnostic. Three-phase systems and non-stratified feeders
-   * return a not-applicable status.
+   * return a not-applicable status; use {@link #evaluateSevereSluggingSystem(int, double, double, boolean)} to screen a
+   * gas-oil-water system with oil and water as one liquid.
    * </p>
    *
    * <p>
@@ -10276,6 +10403,28 @@ public class TwoFluidPipe extends Pipeline {
    */
   public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(int riserBaseSection,
       double gasCapVoidFraction, double staticChokePressureDropPa) {
+    return evaluateSevereSluggingSystem(riserBaseSection, gasCapVoidFraction, staticChokePressureDropPa, false);
+  }
+
+  /**
+   * Evaluate severe-slugging stability, optionally with oil and water as one liquid.
+   *
+   * <p>
+   * With {@code treatLiquidsAsMixture} a gas-oil-water system is evaluated with the in-situ oil-water mixture density
+   * of the riser column, and the result reports {@code isLiquidMixtureBasis()}. The Taitel condition has no three-phase
+   * validation, and the mixture basis does not describe water that separates and collects at the riser base. Evaluation
+   * clears the previous system-classification profile and marks the selected riser-base section only when the result is
+   * applicable and unstable.
+   * </p>
+   *
+   * @param riserBaseSection index of the first continuously rising section
+   * @param gasCapVoidFraction void fraction alpha-prime in the penetrating gas cap
+   * @param staticChokePressureDropPa fixed choke pressure drop in Pa
+   * @param treatLiquidsAsMixture true to evaluate a gas-oil-water system with oil and water as one liquid
+   * @return explicit system-level stability result
+   */
+  public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(int riserBaseSection,
+      double gasCapVoidFraction, double staticChokePressureDropPa, boolean treatLiquidsAsMixture) {
     if (sections == null || sections.length != numberOfSections) {
       throw new IllegalStateException("Run the pipe before evaluating flowline-riser stability");
     }
@@ -10284,7 +10433,7 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     SevereSluggingSystemDiagnostic.Input input = SevereSluggingSystemDiagnostic.fromSections(sections, riserBaseSection,
-        gasCapVoidFraction, staticChokePressureDropPa);
+        gasCapVoidFraction, staticChokePressureDropPa, treatLiquidsAsMixture);
     SevereSluggingSystemDiagnostic.Result result = SevereSluggingSystemDiagnostic.evaluate(input);
 
     clearSevereSluggingSystemClassification();
@@ -12391,6 +12540,36 @@ public class TwoFluidPipe extends Pipeline {
   /** @return interfacial pressure coefficient delta */
   public double getInterfacialPressureCoefficient() {
     return equations != null ? equations.getInterfacialPressureCoefficient() : 0.0;
+  }
+
+  /**
+   * Select how a property update sets gas and oil density when the transient moves no mass between the phases.
+   *
+   * <p>
+   * With {@code true} (default) each density follows the phase's own isothermal compressibility and thermal expansivity
+   * from one update to the next, and the step is scaled to the sound speed the coupled pressure solve uses. With
+   * {@code false} every update resets the densities to those of the equilibrium flash of the feed at the cell pressure.
+   * The equilibrium oil density falls as pressure rises, which gives a liquid-rich cell a negative compressibility, and
+   * for a volatile-oil feed above about 180 bara the equilibrium gas density rises more than twice as fast as the solve
+   * assumes, which makes the pressure of a packed line alternate between updates. The option acts only with
+   * {@link #setEnableCoupledPressureMomentum(boolean)} and without mass transfer, component transport or
+   * non-equilibrium film transfer; those routes keep the equilibrium densities.
+   * </p>
+   *
+   * @param enabled true to advance gas and oil density at frozen composition, false to reset them to the equilibrium
+   * values
+   */
+  public void setFrozenCompositionDensityUpdate(boolean enabled) {
+    this.frozenCompositionDensityUpdate = enabled;
+  }
+
+  /**
+   * Tells whether the frozen-composition density update is selected.
+   *
+   * @return true when selected
+   */
+  public boolean isFrozenCompositionDensityUpdate() {
+    return frozenCompositionDensityUpdate;
   }
 
   /**

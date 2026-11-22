@@ -426,8 +426,11 @@ Use `evaluateSevereSluggingSystem(riserBaseSection)` after solving the pipe. The
 applicability, stable/unstable status, critical top pressure, pressure margin, stability ratio,
 and gas-expansion head. A flowline-to-riser diameter change is permitted, while the continuously
 rising riser itself must have constant area. The diagnostic rejects non-stratified, single-phase,
-three-phase, variable-area-riser, and invalid flowline–riser topologies. This screen does not
-predict dynamic slug cycles and is not a claim of equivalence to a commercial simulator.
+three-phase, variable-area-riser, and invalid flowline–riser topologies. A gas–oil–water system
+can be screened with oil and water as one liquid through
+`evaluateSevereSluggingSystem(riserBaseSection, gasCapVoidFraction, staticChokePressureDropPa, true)`;
+the result then reports `isLiquidMixtureBasis()` and has no three-phase validation. This screen does
+not predict dynamic slug cycles and is not a claim of equivalence to a commercial simulator.
 
 
 ---

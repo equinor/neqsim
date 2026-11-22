@@ -297,6 +297,16 @@ vessel.setTwoPhaseHeatTransfer(true);
 vessel.setInitialLiquidLevel(0.5);
 ```
 
+**Vapour-only venting.** With gas and liquid present, the blowdown valve vents vapour (default,
+`setVapourOnlyDischarge(true)`). The orifice rate uses the Z, molar mass and Cp/Cv of the gas phase, only gas-phase
+moles leave the vessel, and the energy balance removes the gas-phase specific enthalpy. Before this option the orifice
+used mixture properties and removed every phase in proportion. For a 3.2 m x 12 m separator at 40 bara with a 45 %
+level and a 40 mm orifice, that gave 22.8 kg/s instead of 7.6 kg/s and drained the level from 0.45 to 0.38 in 5 min.
+The vent (outlet stream) temperature is now an isenthalpic expansion of the vented fluid's total enthalpy; it was
+computed from a molar enthalpy and came out 30 K warmer than the vessel instead of colder. Call
+`setVapourOnlyDischarge(false)` to discharge the bulk mixture, for example a bottom drain
+(`VesselDepressurizationMultiLiquidTest`, measured 2026-11-21).
+
 The liquid-side film coefficient uses mass-weighted properties of all liquid phases (oil and water together).
 Each `CALCULATED`/`TRANSIENT_WALL` step refreshes the transport properties (viscosity, thermal conductivity) of the
 current state before the correlations are evaluated, and any missing or non-positive property falls back to a

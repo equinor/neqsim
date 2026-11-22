@@ -752,6 +752,16 @@ for (double qgMSm3d : gasRates) {
 > analytical `SevereSluggingBenchmarkHarnessTest` screen and the public Tengesdal
 > evidence until the dynamic qualification gates below pass.
 >
+> **Screening a gas-oil-water riser.** `evaluateSevereSluggingSystem(riserBase)` returns
+> `NOT_VALIDATED_THREE_PHASE` when a section holds both oil and water. Call
+> `evaluateSevereSluggingSystem(riserBase, 0.89, 0.0, true)` to evaluate the Taitel condition with the
+> in-situ oil-water mixture density of the riser column, and report `isLiquidMixtureBasis()` with the
+> result: it has no three-phase validation and does not cover water collecting at the riser base. The
+> stratified-feeder check still applies, so run it at the turndown rates. Measured 2026-11-22 on a
+> 15 km, 12-inch flowline with a 430 m riser at 73 bara: slug-flow feeder at 300 and 150 t/h (not
+> applicable); stratified feeder and unstable at 75 and 30 t/h (critical top pressure 494 and
+> 800 bara).
+>
 > **The synthetic three-phase riser handoff is a narrower qualified lane.** With phase transfer
 > disabled, its steady gas/oil/water mass-flow profiles are flat, dispersed oil-water drag uses
 > Hinze droplet area, and the unchanged-boundary 60 s replay keeps accepted phase outlet transfer

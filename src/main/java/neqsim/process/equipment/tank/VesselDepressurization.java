@@ -78,6 +78,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /** Liquid film coefficient used when the liquid correlation cannot be evaluated [W/(m2*K)]. */
   private static final double LIQUID_HTC_FALLBACK = 100.0;
 
+  /** Vent the gas phase only when gas and liquid are both present (blowdown valve on top of the vessel). */
+  private volatile boolean vapourOnlyDischarge = true;
+
   /** True once {@link #run(UUID)} has scaled the inventory to the vessel volume. */
   private volatile boolean inventoryInitialized = false;
 
@@ -834,6 +837,50 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    */
   public void setDischargeCoefficient(double cd) {
     this.dischargeCoefficient = cd;
+  }
+
+  /**
+   * Selects whether a discharge with gas and liquid present vents the gas phase only.
+   *
+   * <p>
+   * A blowdown valve sits on top of the vessel, so with a liquid level it vents vapour. When enabled (default), the
+   * orifice flow uses the Z, molar mass and Cp/Cv of the gas phase, only gas-phase moles leave the vessel, and the
+   * energy balance removes the gas-phase specific enthalpy. Before this option existed the orifice used mixture
+   * properties and removed every phase in proportion, which for a separator at 40 bara with 45 % level gave about three
+   * times the real vapour rate and drained the liquid through the blowdown valve. Set false to discharge the bulk
+   * (homogeneous) mixture, for example for a bottom drain.
+   * </p>
+   *
+   * @param enabled true to vent the gas phase only (default), false to discharge the bulk mixture
+   */
+  public void setVapourOnlyDischarge(boolean enabled) {
+    this.vapourOnlyDischarge = enabled;
+  }
+
+  /**
+   * Returns whether a two-phase discharge vents the gas phase only.
+   *
+   * @return true if only the gas phase is vented when gas and liquid are present
+   */
+  public boolean isVapourOnlyDischarge() {
+    return vapourOnlyDischarge;
+  }
+
+  /**
+   * Returns the index of the phase that is vented, or -1 when the bulk mixture is discharged.
+   *
+   * @return gas-phase index for a vapour-only discharge with liquid present, else -1
+   */
+  private int ventedGasPhaseIndex() {
+    if (!vapourOnlyDischarge || flowDirection != FlowDirection.DISCHARGE || thermoSystem.getNumberOfPhases() < 2) {
+      return -1;
+    }
+    for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
+      if (thermoSystem.getPhase(j).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+        return j;
+      }
+    }
+    return -1;
   }
 
   /**
@@ -1660,6 +1707,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double Z = thermoSystem.getZ();
     double MW = thermoSystem.getMolarMass(); // kg/mol
     double gamma = thermoSystem.getGamma(); // Cp/Cv
+    int ventPhase = ventedGasPhaseIndex();
+    if (ventPhase >= 0) {
+      neqsim.thermo.phase.PhaseInterface gas = thermoSystem.getPhase(ventPhase);
+      Z = gas.getZ();
+      MW = gas.getMolarMass();
+      gamma = gas.getGamma();
+    }
 
     // No flow if pressure difference is negligible
     if (Math.abs(P1 - P2) < 1.0) {
@@ -2360,31 +2414,48 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     // Calculate mass flow
     double massFlowRate = calculateMassFlowRate();
     double deltaMass = massFlowRate * dt;
+    int ventPhase = ventedGasPhaseIndex();
+    double ventMass = initialMass;
+    double ventSpecificEnthalpy = initialH / initialMass;
+    if (ventPhase >= 0) {
+      neqsim.thermo.phase.PhaseInterface gas = thermoSystem.getPhase(ventPhase);
+      ventMass = gas.getNumberOfMolesInPhase() * gas.getMolarMass();
+      ventSpecificEnthalpy = gas.getEnthalpy() / ventMass;
+    }
 
-    // Don't remove more mass than available
-    if (deltaMass > initialMass * 0.99) {
-      deltaMass = initialMass * 0.99;
+    // Don't remove more mass than the vented inventory holds
+    if (deltaMass > ventMass * 0.99) {
+      deltaMass = ventMass * 0.99;
       massFlowRate = deltaMass / dt;
     }
 
-    // Update mass (adjust moles proportionally for all components in all phases)
     double newMass = initialMass - deltaMass;
-    double moleFactor = newMass / initialMass;
-
-    // Scale moles for each component consistently across all phases.
-    // Use overall component moles (not phase-specific) to set total moles correctly,
-    // then scale phase-specific moles proportionally.
-    for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
-      // Get total moles for this component (independent of phase distribution)
-      double totalCompMoles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
-      double scaledTotal = totalCompMoles * moleFactor;
-      for (int j = 0; j < thermoSystem.getMaxNumberOfPhases(); j++) {
-        thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledTotal);
-        double phaseMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
-        thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(phaseMoles * moleFactor);
+    if (ventPhase >= 0) {
+      // Vapour-only discharge: remove the vented moles from the gas phase only
+      double fraction = deltaMass / ventMass;
+      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+        double gasMoles = thermoSystem.getPhase(ventPhase).getComponent(i).getNumberOfMolesInPhase();
+        thermoSystem.addComponent(i, -fraction * gasMoles, ventPhase);
       }
+    } else {
+      // Bulk discharge: adjust moles proportionally for all components in all phases
+      double moleFactor = newMass / initialMass;
+
+      // Scale moles for each component consistently across all phases.
+      // Use overall component moles (not phase-specific) to set total moles correctly,
+      // then scale phase-specific moles proportionally.
+      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+        // Get total moles for this component (independent of phase distribution)
+        double totalCompMoles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
+        double scaledTotal = totalCompMoles * moleFactor;
+        for (int j = 0; j < thermoSystem.getMaxNumberOfPhases(); j++) {
+          thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledTotal);
+          double phaseMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
+          thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(phaseMoles * moleFactor);
+        }
+      }
+      thermoSystem.setTotalNumberOfMoles(thermoSystem.getTotalNumberOfMoles() * moleFactor);
     }
-    thermoSystem.setTotalNumberOfMoles(thermoSystem.getTotalNumberOfMoles() * moleFactor);
 
     // Reinitialize with new moles before flash
     thermoSystem.init(0);
@@ -2432,8 +2503,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
           // IDLE: no mass flow, only heat exchange
           hOut = 0.0;
         } else if (flowDirection == FlowDirection.DISCHARGE) {
-          // Gas leaving carries its own specific enthalpy
-          hOut = initialH / initialMass;
+          // Fluid leaving carries its own specific enthalpy (gas phase only for a vapour-only discharge)
+          hOut = ventSpecificEnthalpy;
         } else {
           // FILLING: incoming gas enthalpy at inlet temperature and vessel pressure
           hOut = calculateInletSpecificEnthalpy();
@@ -2631,12 +2702,18 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Updates the outlet stream with current conditions.
    */
   private void updateOutletStream() {
-    SystemInterface outSystem = thermoSystem.clone();
+    // The vented fluid is the gas phase for a vapour-only discharge, otherwise the bulk inventory. Its total
+    // enthalpy is kept through the orifice (isenthalpic expansion to the back pressure).
+    thermoSystem.init(2);
+    int ventPhase = ventedGasPhaseIndex();
+    SystemInterface outSystem = ventPhase >= 0 ? thermoSystem.phaseToSystem(ventPhase) : thermoSystem.clone();
+    double ventEnthalpy = ventPhase >= 0 ? thermoSystem.getPhase(ventPhase).getEnthalpy() : thermoSystem.getEnthalpy();
+    outSystem.setMultiPhaseCheck(thermoSystem.doMultiPhaseCheck());
     outSystem.setPressure(backPressure / 1e5);
     ThermodynamicOperations ops = new ThermodynamicOperations(outSystem);
     try {
-      // Isenthalpic expansion through orifice
-      ops.PHflash(thermoSystem.getEnthalpy() / thermoSystem.getTotalNumberOfMoles(), 0);
+      // Isenthalpic expansion through orifice (total enthalpy of the vented fluid, J)
+      ops.PHflash(ventEnthalpy, 0);
     } catch (Exception e) {
       logger.warn("Outlet flash failed: " + e.getMessage());
     }
