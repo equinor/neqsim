@@ -31,10 +31,10 @@ import java.io.Serializable;
  * <p>
  * Gas-oil-water systems are rejected by default because the published comparison is for one liquid. The condition
  * depends on the liquid only through the hydrostatic head of the riser column, {@code phi rho_L g}, so a caller can
- * choose to treat oil and water as one liquid with their in-situ mixture density ({@link
- * Input.Builder#treatLiquidsAsMixture(boolean)}). That result is flagged by {@link Result#isLiquidMixtureBasis()}: it
- * has no three-phase validation, and it does not describe water that separates and collects at the riser base, where
- * the column is heavier than the mixture.
+ * choose to treat oil and water as one liquid with their in-situ mixture density
+ * ({@link Input.Builder#treatLiquidsAsMixture(boolean)}). That result is flagged by
+ * {@link Result#isLiquidMixtureBasis()}: it has no three-phase validation, and it does not describe water that
+ * separates and collects at the riser base, where the column is heavier than the mixture.
  * </p>
  *
  * @see <a href="https://doi.org/10.1016/0301-9322(86)90026-1">Taitel (1986)</a>

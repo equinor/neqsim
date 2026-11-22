@@ -1086,8 +1086,8 @@ public class TwoFluidSection extends PipeSection {
   /**
    * Store the gas state of a frozen-composition property update.
    *
-   * @param reference density in kg/m3, pressure in Pa, temperature in K, isothermal compressibility in 1/Pa and
-   * thermal expansivity in 1/K; null clears the stored state
+   * @param reference density in kg/m3, pressure in Pa, temperature in K, isothermal compressibility in 1/Pa and thermal
+   * expansivity in 1/K; null clears the stored state
    */
   public void setGasDensityReference(double[] reference) {
     this.gasDensityReference = reference == null ? null : reference.clone();
@@ -1106,8 +1106,8 @@ public class TwoFluidSection extends PipeSection {
   /**
    * Store the oil state of a frozen-composition property update.
    *
-   * @param reference density in kg/m3, pressure in Pa, temperature in K, isothermal compressibility in 1/Pa and
-   * thermal expansivity in 1/K; null clears the stored state
+   * @param reference density in kg/m3, pressure in Pa, temperature in K, isothermal compressibility in 1/Pa and thermal
+   * expansivity in 1/K; null clears the stored state
    */
   public void setOilDensityReference(double[] reference) {
     this.oilDensityReference = reference == null ? null : reference.clone();
