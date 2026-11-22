@@ -12,3 +12,6 @@ Every Claude session that changes NeqSim code also updates, in the same branch a
 page, the owning skill in `.github/skills/` and any agent in `.github/agents/` that describe the
 changed behaviour — without being asked. The rule and its checklist are in the
 "Continuous improvement" section of `AGENTS.md`.
+
+Every PR branch MUST start from the latest `equinor/neqsim` `master`, not a fork's
+`master`. See "PR branches from forks" in `AGENTS.md`.

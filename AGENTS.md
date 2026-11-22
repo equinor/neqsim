@@ -88,6 +88,11 @@ Use `@code-health` for measured debt triage, `@refactor` for bounded source chan
 and `@code-review` for independent code review. Commands and baseline policy live in
 [docs/development/CODE_HEALTH.md](docs/development/CODE_HEALTH.md).
 
+**PR branches from forks:** start every PR branch from the latest `equinor/neqsim` `master`
+(`git fetch https://github.com/equinor/neqsim master && git checkout -b <branch> FETCH_HEAD`),
+never from a fork's `master` (forks do not sync and may carry fork-only commits). Before opening
+the PR, `git log FETCH_HEAD..HEAD` must list only your own commits.
+
 ## Running calculations
 
 - **MCP first:** for a single flash/PVT/process/standards/sizing calculation use a curated
