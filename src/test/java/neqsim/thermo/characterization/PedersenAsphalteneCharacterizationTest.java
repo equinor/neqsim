@@ -734,4 +734,51 @@ public class PedersenAsphalteneCharacterizationTest {
       prevTc = Tc;
     }
   }
+
+  @Test
+  @DisplayName("Onset search does not report the start pressure when the fluid is already split")
+  void testOnsetSearchRejectsSplitAtStart() {
+    SystemInterface oil = new SystemSrkEos(373.15, 400.0);
+    oil.getCharacterization().setTBPModel("PedersenSRK");
+    oil.addComponent("methane", 0.35);
+    oil.addComponent("ethane", 0.08);
+    oil.addComponent("propane", 0.05);
+    oil.addComponent("n-butane", 0.03);
+    oil.addComponent("n-hexane", 0.03);
+    oil.addTBPfraction("C7", 0.12, 0.096, 0.738);
+    oil.addTBPfraction("C10", 0.10, 0.14, 0.79);
+    oil.addTBPfraction("C20", 0.12, 0.28, 0.86);
+    oil.addTBPfraction("C40", 0.10, 0.56, 0.93);
+    PedersenAsphalteneCharacterization pedersen = new PedersenAsphalteneCharacterization();
+    pedersen.setAsphalteneMW(1200.0);
+    pedersen.setAsphalteneDensity(1.15);
+    pedersen.addAsphalteneToSystem(oil, 0.01);
+    oil.setMixingRule("classic");
+    oil.init(0);
+    pedersen.applyAsphalteneKij(oil, 0.08);
+    boolean multiPhase = oil.doMultiPhaseCheck();
+    assertThrows(IllegalStateException.class, () -> pedersen.calculateOnsetPressure(oil, 500.0, 20.0));
+    assertEquals(multiPhase, oil.doMultiPhaseCheck());
+  }
+
+  @Test
+  @DisplayName("Water does not count as an asphaltene onset")
+  void testOnsetSearchIgnoresAqueousPhase() {
+    SystemInterface oil = new SystemSrkEos(373.15, 400.0);
+    oil.getCharacterization().setTBPModel("PedersenSRK");
+    oil.addComponent("methane", 0.35);
+    oil.addComponent("n-hexane", 0.10);
+    oil.addTBPfraction("C10", 0.30, 0.14, 0.79);
+    oil.addTBPfraction("C20", 0.20, 0.28, 0.86);
+    oil.addComponent("water", 0.30);
+    PedersenAsphalteneCharacterization pedersen = new PedersenAsphalteneCharacterization();
+    pedersen.setAsphalteneMW(1200.0);
+    pedersen.setAsphalteneDensity(1.15);
+    pedersen.setOmegaMultiplier(0.5);
+    pedersen.addAsphalteneToSystem(oil, 0.002);
+    oil.setMixingRule("classic");
+    oil.init(0);
+    pedersen.applyAsphalteneKij(oil, 0.0);
+    assertTrue(Double.isNaN(pedersen.calculateOnsetPressure(oil, 500.0, 20.0)));
+  }
 }

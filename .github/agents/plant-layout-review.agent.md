@@ -13,6 +13,10 @@ Read the source specification, dataset, input fingerprint, checks, artifact mani
 Load the geometry and delivery skills. Independently recompute critical distances, transformed bounds, fixed coordinates,
 deck assignments, corridor obstruction and mass arithmetic from the saved coordinates, rather than trusting the solver
 status. Exercise the deliberate-failure fixtures in `devtools/test_layout_study.py`.
+Where connection shortening ran, confirm that no required check differs from the scan result, that fixed equipment kept
+its coordinates and that the report calls the result a local optimum. Where route estimates ran, confirm they stay out
+of `physical_routes`, that no estimate enters equipment, an obstacle or a reserved corridor, and that unrouted
+connections are listed rather than dropped.
 
 Loaded skills: `neqsim-plant-layout-geometry`, `neqsim-plant-layout-delivery`, `neqsim-standards-lookup`,
 `neqsim-professional-reporting`.

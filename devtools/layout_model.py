@@ -180,6 +180,8 @@ def normalize_study(study):
     for connection in result["connections"]:
         if connection.get("from_tag") not in tags or connection.get("to_tag") not in tags:
             raise ValueError("Connection %s references unknown equipment" % connection["id"])
+        if "weight" in connection:
+            connection["weight"] = _number(connection["weight"], "connection.weight", positive=True)
     from layout_inventory import normalize_inventory_fields
     normalize_inventory_fields(
         result,
@@ -230,6 +232,40 @@ def normalize_study(study):
         if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= maximum:
             raise ValueError("options.%s must be an integer in 1..%d" % (field, maximum))
         options[field] = value
+    # Optional search extensions are validated only when supplied, so a study that does
+    # not use them keeps its fingerprint.
+    if "optimize" in options:
+        optimize = options["optimize"]
+        if not isinstance(optimize, dict) or not set(optimize) <= {"enabled", "max_passes", "max_evaluations"}:
+            raise ValueError("options.optimize supports enabled, max_passes and max_evaluations")
+        if not isinstance(optimize.setdefault("enabled", True), bool):
+            raise ValueError("options.optimize.enabled must be Boolean")
+        for field, maximum in (("max_passes", 1000), ("max_evaluations", 100000000)):
+            if field in optimize and (isinstance(optimize[field], bool) or not isinstance(optimize[field], int)
+                                      or not 1 <= optimize[field] <= maximum):
+                raise ValueError("options.optimize.%s must be an integer in 1..%d" % (field, maximum))
+    if "routing" in options:
+        routing = options["routing"]
+        allowed = {"enabled", "grid_m", "clearance_m", "bend_penalty_m", "deck_penetration_penalty_m",
+                   "avoid_envelopes", "corridor_overhead_clearance_m", "headroom_m", "max_cells"}
+        if not isinstance(routing, dict) or not set(routing) <= allowed:
+            raise ValueError("options.routing supports only: %s" % ", ".join(sorted(allowed)))
+        for field in ("enabled", "avoid_envelopes"):
+            if not isinstance(routing.setdefault(field, True), bool):
+                raise ValueError("options.routing.%s must be Boolean" % field)
+        if "grid_m" in routing:
+            routing["grid_m"] = _number(routing["grid_m"], "options.routing.grid_m", positive=True)
+        for field in ("clearance_m", "bend_penalty_m", "deck_penetration_penalty_m", "headroom_m"):
+            if field in routing:
+                routing[field] = _number(routing[field], "options.routing." + field, nonnegative=True)
+        if routing.get("corridor_overhead_clearance_m") is not None:
+            routing["corridor_overhead_clearance_m"] = _number(
+                routing["corridor_overhead_clearance_m"], "options.routing.corridor_overhead_clearance_m",
+                positive=True)
+        if "max_cells" in routing and (isinstance(routing["max_cells"], bool)
+                                       or not isinstance(routing["max_cells"], int)
+                                       or not 1000 <= routing["max_cells"] <= 5000000):
+            raise ValueError("options.routing.max_cells must be an integer in 1000..5000000")
     options.setdefault("backend", "deterministic")
     if options["backend"] not in {"deterministic", "auto", "ortools"}:
         raise ValueError("Unsupported placement backend")

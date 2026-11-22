@@ -136,6 +136,24 @@ def _plan_sheet(study, alternative, deck, number, total):
         sheet.items.append({"kind": "equipment", "tag": eq["tag"], "deck": deck["id"],
                             "bounds_m": bounds, "paper_bounds_mm": [xx, yy, xx + ww, yy + hh],
                             "placement": placement})
+    # Software route estimates: the horizontal runs at this level, drawn over the equipment.
+    estimate = alternative.get("route_estimates")
+    routed_here = 0
+    if estimate:
+        levels = sorted(d["elevation_m"] for d in study["decks"])
+        above = [level for level in levels if level > deck["elevation_m"] + 1.0e-9]
+        ceiling = above[0] if above else float("inf")
+        for route in estimate.get("routes", []):
+            points = route.get("points_m") or []
+            for first, second in zip(points[:-1], points[1:]):
+                mid = (first[2] + second[2]) / 2.0
+                if not deck["elevation_m"] - 1.0e-9 <= mid < ceiling:
+                    continue
+                if abs(first[0] - second[0]) < 1.0e-9 and abs(first[1] - second[1]) < 1.0e-9:
+                    continue  # a vertical run has no length in plan
+                sheet.add(patterned([transform(first[0], first[1]), transform(second[0], second[1])],
+                                    (1.6, 1.0), color="#1f5fa8", sw=0.45))
+                routed_here += 1
     for exit_ in study.get("exits", []):
         if exit_["deck"] != deck["id"]:
             continue
@@ -167,13 +185,16 @@ def _plan_sheet(study, alternative, deck, number, total):
         "Checks  %d pass / %d fail / %d open" % (counts["PASS"], counts["FAIL"], counts["NOT_EVALUATED"]),
         "E / N coordinates in project metres",
         "ROT is degrees about local vertical",
-        "Detailed piping routing not included",
+        ("Route estimate total  %.1f m" % estimate["total_length_m"]) if estimate
+        else "Detailed piping routing not included",
     ]):
         sheet.text(tx, sy + j * 5, text, size=2.5, bold=(j == 0))
     sheet.legend = [("line", "#243648", "solid", "Physical equipment envelope"),
                     ("line", "#b77a27", "dash", "Reserved maintenance or operation envelope"),
                     ("line", "#197344", "solid", "Green area: reserved escape corridor"),
                     ("text", "E: project exit location"),
+                    *([("line", "#1f5fa8", "dash", "Software pipe-route estimate, not a physical route")]
+                      if estimate else []),
                     ("text", "Number labels refer to coordinate schedule")]
     sheet.notes = [
         "Dimensions and coordinates are metres. The plotted A3 scale is valid at 100 percent print size.",
@@ -182,6 +203,9 @@ def _plan_sheet(study, alternative, deck, number, total):
         "Project frame: +X east, +Y north/grid, +Z up. Datum: %s." % study.get("coordinate_system", {}).get("elevation_datum", "project"),
         "Dataset alternative: %s. Equipment placement is independent of PFD/P&ID sheet coordinates." % alternative["id"],
     ]
+    if estimate:
+        sheet.notes.append("Blue dashed lines are software route estimates between equipment faces: no nozzles, rack, "
+                           "line size, supports or stress check. Routes may share space.")
     return sheet
 
 

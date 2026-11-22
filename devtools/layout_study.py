@@ -26,8 +26,9 @@ from layout_examples import demo_study
 TOOLKIT_VERSION = "plant-layout-screening.v1"
 DATASET_SCHEMA = "plant_layout_dataset.v1"
 STAGES = ("all", "place", "check", "drawings", "report")
-IMPLEMENTATION_MODULES = ("layout_study", "layout_model", "layout_engine", "layout_examples",
-                          "layout_process", "layout_inventory", "layout_drawings", "layout_report", "layout_cad")
+IMPLEMENTATION_MODULES = ("layout_study", "layout_model", "layout_engine", "layout_optimizer", "layout_routing",
+                          "layout_examples", "layout_process", "layout_inventory", "layout_drawings",
+                          "layout_report", "layout_cad")
 
 
 def _json_write(path, value):
@@ -171,9 +172,31 @@ def _write_csvs(dataset, out_dir):
                              "source_reference": source["reference"],
                              "source_revision": source["revision"],
                              "evidence_status": source["evidence_status"]})
-    return {"coordinates": str(coordinates), "checks": str(checks),
-            "physical_inventory": str(inventory_json), "physical_routes": str(routes),
-            "isolation_sections": str(sections)}
+    tables = {"coordinates": str(coordinates), "checks": str(checks),
+              "physical_inventory": str(inventory_json), "physical_routes": str(routes),
+              "isolation_sections": str(sections)}
+    if any("route_estimates" in alternative for alternative in dataset["alternatives"]):
+        # Software route estimates are published apart from the physical-route evidence table.
+        estimates = directory / "route_estimates.csv"
+        estimate_fields = ["alternative", "connection_id", "from_tag", "to_tag", "status", "length_m",
+                           "bends", "deck_penetrations", "evidence_class", "points_m"]
+        with estimates.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=estimate_fields)
+            writer.writeheader()
+            for alternative in dataset["alternatives"]:
+                estimate = alternative.get("route_estimates", {})
+                for route in estimate.get("routes", []):
+                    writer.writerow({"alternative": alternative["id"], "connection_id": route["connection_id"],
+                                     "from_tag": route["from_tag"], "to_tag": route["to_tag"],
+                                     "status": route["status"],
+                                     "length_m": "" if route["length_m"] is None else route["length_m"],
+                                     "bends": "" if route["bends"] is None else route["bends"],
+                                     "deck_penetrations": ("" if route["deck_penetrations"] is None
+                                                           else route["deck_penetrations"]),
+                                     "evidence_class": estimate.get("evidence_class", ""),
+                                     "points_m": json.dumps(route["points_m"])})
+        tables["route_estimates"] = str(estimates)
+    return tables
 
 
 def _manifest_paths(value):
@@ -318,6 +341,9 @@ def run_study(study, out_dir, stage="all", **options):
 
     ``process_data`` optionally enriches the study through the explicit process
     adapter. ``no_cad=True`` skips optional CAD exports and is recorded visibly.
+    ``optimize=True`` shortens the connections of each feasible candidate and
+    ``routing=True`` adds orthogonal route estimates, as if the study had set
+    ``options.optimize.enabled`` / ``options.routing.enabled``.
     ``task`` optionally receives a results.json summary. The function returns
     honest status; the CLI's ``--strict`` converts incompleteness to exit code 1.
     """
@@ -328,6 +354,16 @@ def run_study(study, out_dir, stage="all", **options):
     if options.get("process_data") is not None:
         from layout_process import import_process
         raw = import_process(options["process_data"], raw)
+    for switch in ("optimize", "routing"):
+        if options.get(switch):
+            # A command-line switch turns the extension on; settings in the study are kept.
+            raw = deepcopy(raw)
+            if not isinstance(raw.setdefault("options", {}), dict):
+                raise ValueError("options must be an object")
+            section = raw["options"].setdefault(switch, {})
+            if not isinstance(section, dict):
+                raise ValueError("options.%s must be an object" % switch)
+            section["enabled"] = True
     spec = normalize_study(raw)
     fingerprint = study_fingerprint(spec)
     tool_fingerprint, modules = _tool_fingerprint()
@@ -449,6 +485,10 @@ def build_parser():
     parser.add_argument("--task", help="task directory receiving the study summary")
     parser.add_argument("--process-data", help="explicit process_data JSON input to enrich the study through the adapter")
     parser.add_argument("--no-cad", action="store_true", help="skip optional STEP/GLB/DXF adapters visibly")
+    parser.add_argument("--optimize", action="store_true",
+                        help="shorten the connections of each feasible candidate (local search, not proven optimal)")
+    parser.add_argument("--route", action="store_true",
+                        help="add orthogonal pipe-route estimates around equipment, obstacles and corridors")
     parser.add_argument("--strict", action="store_true", help="exit 1 for any INCOMPLETE/INFEASIBLE alternative")
     parser.add_argument("--quiet", action="store_true", help="print only the final machine-readable summary")
     return parser
@@ -468,7 +508,8 @@ def main(argv=None):
             raise ValueError("give exactly one study source or --demo onshore|offshore")
         source = demo_study(args.demo) if args.demo else args.source
         out = args.out or str(Path(args.task or ".") / "deliverables" / "plant_layout" if args.task else Path("plant_layout"))
-        summary = run_study(source, out, args.stage, no_cad=args.no_cad, task=args.task, process_data=args.process_data)
+        summary = run_study(source, out, args.stage, no_cad=args.no_cad, task=args.task, process_data=args.process_data,
+                            optimize=args.optimize, routing=args.route)
         if args.quiet:
             print(json.dumps(summary, sort_keys=True, allow_nan=False))
         else:
