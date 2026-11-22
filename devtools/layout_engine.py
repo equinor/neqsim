@@ -3,6 +3,9 @@
 The deterministic backend finds feasible candidates on a declared grid. It does
 not prove optimality or global infeasibility, and its pipe-length metric is a
 connection-distance proxy rather than a routed or stress-qualified piping model.
+``options.optimize`` shortens the connections of each feasible candidate with
+``layout_optimizer`` and ``options.routing`` adds orthogonal route estimates from
+``layout_routing``; both are off unless the study asks for them.
 """
 
 from __future__ import annotations
@@ -13,6 +16,8 @@ import time
 
 from layout_model import (TOLERANCE_M, box_distance, boxes_intersect, equipment_bounds,
                           normalize_study, rule_applies, source_is_verified, study_fingerprint)
+from layout_optimizer import connection_weight, optimization_settings, optimize_placements
+from layout_routing import estimate_routes, routing_settings
 
 
 MODEL_SOURCE = {"kind": "software_model", "reference": "plant_layout_study.v1 orthogonal screening geometry"}
@@ -363,8 +368,13 @@ def _metrics(study, placements, decks):
         centres[tag] = [(bounds[i] + bounds[i + 3]) / 2 for i in range(3)]
     proxy = sum(sum(abs(centres[c["from_tag"]][i] - centres[c["to_tag"]][i]) for i in range(3))
                 for c in study["connections"] if c["from_tag"] in centres and c["to_tag"] in centres)
+    weighted = sum(connection_weight(c) * sum(abs(centres[c["from_tag"]][i] - centres[c["to_tag"]][i])
+                                              for i in range(3))
+                   for c in study["connections"] if c["from_tag"] in centres and c["to_tag"] in centres)
     known_mass = sum(equipment[tag].get("mass_kg") or 0 for tag in by_tag)
-    return {"connection_manhattan_proxy_m": round(proxy, 6), "piping_proxy_m": round(proxy, 6),
+    weighted_metric = ({"weighted_connection_proxy_m": round(weighted, 6)}
+                       if any("weight" in c for c in study["connections"]) else {})
+    return {"connection_manhattan_proxy_m": round(proxy, 6), "piping_proxy_m": round(proxy, 6), **weighted_metric,
             "occupied_area_m2": round(sum(equipment[t]["size_m"][0] * equipment[t]["size_m"][1] for t in by_tag), 6),
             "total_mass_kg": known_mass, "mass_complete": all(equipment[t].get("mass_kg") is not None for t in by_tag),
             "placed_equipment": len(by_tag), "required_equipment": len(equipment)}
@@ -423,6 +433,13 @@ def generate_layouts(study):
         complete = search(0)
         selected = placed if complete else best
         placements = [selected[tag] for tag in sorted(selected)]
+        optimization = None
+        if complete and optimization_settings(study)["enabled"]:
+            # Improve the feasible candidate with the same hard constraints the search applied.
+            placements, optimization = optimize_placements(
+                study, placements,
+                lambda item: _candidates(study, item, decks, 0),
+                lambda item, candidate, others: _candidate_valid(study, item, candidate, others, equipment, decks))
         fingerprint = study_fingerprint({"study": study_fingerprint(study), "placements": placements})
         if fingerprint in seen:
             continue
@@ -434,6 +451,15 @@ def generate_layouts(study):
                                   "candidates_evaluated": counter, "elapsed_s": round(time.perf_counter() - start, 6),
                                   "optimality_proven": False, "infeasibility_proven": False},
                        "fingerprint": fingerprint}
+        if optimization is not None:
+            alternative["label"] += ", connections shortened"
+            alternative["solver"]["optimization"] = optimization
+        if routing_settings(study)["enabled"]:
+            estimate = estimate_routes(study, alternative)
+            alternative["route_estimates"] = estimate
+            alternative["metrics"]["routed_length_estimate_m"] = estimate["total_length_m"]
+            alternative["metrics"]["routed_connections"] = estimate["routed"]
+            alternative["metrics"]["unrouted_connections"] = len(estimate["unrouted"])
         alternative["checks"] = check_layout(study, alternative)
         alternative["status"] = ("INFEASIBLE" if any(c["required"] and c["status"] == "FAIL" for c in alternative["checks"])
                                  else "INCOMPLETE" if any(c["required"] and c["status"] == "NOT_EVALUATED" for c in alternative["checks"])

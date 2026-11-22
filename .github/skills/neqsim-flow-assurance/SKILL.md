@@ -330,10 +330,15 @@ double wat_C = oil.getTemperature() - 273.15;
 import neqsim.pvtsimulation.simulation.WaxFractionSim;
 
 WaxFractionSim waxSim = new WaxFractionSim(oil);
-waxSim.setTemperatures(new double[]{333.15, 313.15, 293.15, 273.15});
-waxSim.run();
-double[] waxFractions = waxSim.getWaxFraction();
+waxSim.setTemperaturesAndPressures(new double[] {333.15, 313.15, 293.15, 273.15},
+    new double[] {5.0, 5.0, 5.0, 5.0}); // K, bara
+waxSim.runCalc(); // run() only prepares the operations object
+double[] waxFractions = waxSim.getWaxFraction(); // wax mass / feed mass
 ```
+
+The fluid needs `addSolidComplexPhase("wax")`, `setMultiphaseWaxCheck(true)` and
+`getWaxModel().addTBPWax()`; for named n-paraffin feeds see the `neqsim-wax-calculations` skill
+("Named n-paraffin feeds").
 
 ## 3. Asphaltene Stability
 
@@ -357,6 +362,33 @@ aspFluid.initProperties();
 // Check if asphaltene phase is stable
 // Compare upper/lower asphaltene onset pressures vs operating P
 ```
+
+### Calibrated onset envelope, blends and gas injection (`AsphalteneSolidModel`)
+
+With a measured onset, use the calibrated solid model (Nghiem and Coombe). It anchors the solid
+asphaltene fugacity at the measured onset and uses size-asymmetry k_ij (large for C1/N2/CO2, about 0 for
+heavy fractions), so one host calibration predicts blends and gas injection:
+
+```java
+AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil); // one component named *asphalten*, SRK/PR, classic
+model.calibrate(363.15, 250.0);        // measured upper onset (K, bara)
+model.calibrateLowerOnset(80.0);       // optional: lower onset below the bubble point
+AsphalteneSolidModel.OnsetResult env = model.onsetPressures(363.15, 500.0, 20.0, 5.0);
+double blendOnset = model.onsetPressures(blendFluid, 363.15, 600.0, 20.0, 5.0).getUpperOnsetPressure();
+double fraction = model.precipitatedFraction(hostOil, 363.15, 200.0);
+```
+
+Gotchas:
+
+- Do not tune k_ij against the database solid reference to hit a measured onset: it needs negative
+  asphaltene-methane values and then predicts that condensate stabilises the oil (wrong sign). Calibrate
+  the solid reference instead (measured 2026-11-22, see `docs/pvtsimulation/flowassurance/asphaltene_modeling.md` section 9).
+- Pedersen correlations give omega = 2.5 at 1000 g/mol, which the EoS splits into its own liquid; check
+  `isAsphalteneLiquidSplitDetected()` and use omega 1.2-1.5 for the solid model.
+- `PedersenAsphalteneCharacterization.calculateOnsetPressure` and `AsphalteneOnsetFunction` now raise
+  `IllegalStateException` when the fluid is already unstable at the start pressure (they used to return the
+  start pressure or NaN). `BINARY_INTERACTION` fitting now applies the fitted value (before 2026-11-22 it
+  had no effect); `ASSOCIATION_PARAMETERS`/`COMBINED` need a CPA system.
 
 ## 4. Pipeline Hydraulics
 
@@ -594,6 +626,24 @@ for (double qgMSm3d : gasRates) {
 > against the report's unchanged tolerance. Pressure-floor and wall-clock
 > termination are non-converged. Repeat mesh sensitivity for the actual
 > geometry; no fixed cell length is universally qualified.
+
+> **`TwoFluidPipe` run time (measured 2026-11-22, revision a2399c6 before and after
+> the closure-reuse change; 5.4 km 8-inch three-phase flowline and riser at 60 and
+> 120 cells, 20 km 16-inch gas-condensate line at 100 cells; OpenJDK 21, one
+> thread).** Steady `run()` takes 1.23 s at 60 cells and 4.14 s at 120 cells
+> (was 1.60 and 5.60 s); 60 s of transient on the 60-cell line takes 13.6 s
+> (was 24.2 s), with identical profiles. Equilibrium flashes are now the largest
+> remaining cost (`TPflash` is 48% of that transient case and 69% of the gas-condensate
+> steady solve), so run time scales with cells x flash cadence x fluid complexity. Budget
+> studies on that basis: screen sensitivities with `PipeBeggsAndBrills`
+> (0.04 s per 100 increments on the same feed) and keep `TwoFluidPipe` for the
+> cases that need section-resolved holdup, inventory or transients. The cadence
+> setters are `setSteadyStateFlashInterval(int)` (default 3) and
+> `setThermodynamicUpdateInterval(int)` (default 10); on that transient an interval
+> of 20 saved 27% of the transient time and moved the inlet pressure by 0.14 bar
+> after 60 s, so a longer interval is a model change to check per case. Details and
+> the two benchmark entry points:
+> [TwoFluidPipe model, run time](../../../docs/process/TWOFLUIDPIPE_MODEL.md#run-time-and-where-it-goes).
 
 > **MCP `runPipeline` solver and response handoff.** Omit `solver` (or use
 > `beggsBrill`) for the established correlation path. Use `solver: "twoFluid"`
@@ -1096,7 +1146,14 @@ bridge.run();                       // clones + flashes; does not mutate `fluid`
 double rate = bridge.getModel().getCorrectedCorrosionRate();  // mm/yr
 double pH   = bridge.getInSituPH();          // rigorous aqueous pH (getpH())
 double sr   = bridge.getFeCO3SaturationRatio();  // IAP/Ksp, or -1 if no Fe++/CO3--
+boolean suspect = bridge.isElectrolytePhaseSuspect(); // true -> correlation pH was used
 ```
+
+Gotcha (2026-11-22): the electrolyte CPA pH of CO2-saturated water is about 0.9 units high
+(4.84 vs about 3.9 at 25 C, 1 bar CO2), which gives non-conservative rates. The bridge falls back to
+the correlation pH when the aqueous phase is suspect (water < 0.7 mol frac) or pH is outside 2.5-10;
+check `isElectrolytePhaseSuspect()` and compare with the correlation pH. `ChlorideSCCAssessment`
+reports carbon and low-alloy steels as "Not susceptible" (they used to fall through to 316L).
 
 **FeCO3 film feedback (closes the corrosion↔scaling loop):** when the aqueous phase
 is supersaturated in siderite (SR>1), a protective film suppresses corrosion even
@@ -1667,7 +1724,7 @@ model is enough and is cheap enough for Monte Carlo.
 |--------|-----------|---------------|------------|
 | Hydrate | `hydrateFormationTemperature()` | CPA EOS + hydrate check | MEG, methanol, insulation, DEH |
 | Wax | `calcWAT()`, `WaxFractionSim` | Wax characterization | Pigging, inhibitor, insulation |
-| Asphaltene | de Boer screening | CPA flash at multiple P | Inhibitor, avoid P drop |
+| Asphaltene | de Boer screening | `AsphalteneSolidModel` calibrated to a measured onset; CPA flash at multiple P | Inhibitor, avoid P drop |
 | Corrosion (CO2) | CO2 partial pressure | Standard flash | CRA, inhibitor, pH stabilization |
 | Slugging | Beggs & Brill flow regime | `PipeBeggsAndBrills` | Slug catcher, topside choking |
 | Scale | Ion activity product | Electrolyte-CPA | Scale inhibitor, pH control |

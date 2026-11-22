@@ -565,11 +565,103 @@ pedersen.applyAsphalteneKij(cubicFluid, 0.08);
 double onset = pedersen.calculateOnsetPressure(cubicFluid, 500.0, 50.0);
 ```
 
+`calculateOnsetPressure` reports an onset only when an asphaltene-rich liquid (more than 50 mol %
+asphaltene) appears, with the multiphase check enabled during the search. If the fluid is already split at
+the start pressure it raises `IllegalStateException`; a failed flash also raises. Before 2026-11-22 it
+counted any second liquid (including water) and returned the start pressure for an already-split fluid.
+The liquid-liquid route is very sensitive: in a test oil (MW 1200, density 1.15) the asphaltene was either
+split at every pressure or never split as `kijAdjustment` and `omegaMultiplier` were varied. For a
+calibrated onset envelope, use the solid model in section 9.
+
 ### 8. Combined Approach
 
 Use De Boer for initial screening, then CPA, Flory-Huggins, or Pedersen for
 detailed analysis of flagged cases. The `AsphalteneMultiMethodBenchmark` provides
 all methods in a single API. See [Method Comparison](asphaltene_method_comparison).
+
+### 9. Calibrated Solid Model (AsphalteneSolidModel)
+
+`AsphalteneSolidModel` (package `neqsim.pvtsimulation.flowassurance`) is the Nghiem and Coombe (1997)
+solid model on a cubic equation of state. Precipitated asphaltene is a pure solid whose fugacity depends
+only on temperature and pressure. It is anchored at a measured onset of the reference oil:
+
+$$\ln f_s(T,P) = \ln f_L(T^*,P^*) + \frac{v_s (P-P^*)}{RT} - \frac{h_s}{R}\left(\frac{1}{T}-\frac{1}{T^*}\right)$$
+
+$f_L$ is the asphaltene fugacity in the equilibrated fluid (gas and liquid, no solid). Asphaltene
+precipitates where $f_L > f_s$. Because $f_s$ does not depend on the fluid, one calibration on the host oil
+predicts:
+
+- the onset of the same oil at other pressures (upper onset and, below the bubble point, lower onset);
+- the onset of the same asphaltene in blends (condensate commingling, gas injection, lift gas);
+- the fraction of the asphaltene that precipitates.
+
+The interaction parameters between the asphaltene and the other components follow a size-asymmetry
+correlation of Chueh-Prausnitz form on the co-volume ($b \propto T_c/P_c$):
+
+$$k_{ij} = 1 - \left[\frac{2 (b_i b_j)^{1/6}}{b_i^{1/3} + b_j^{1/3}}\right]^e$$
+
+For an asphaltene with $T_c$ = 1015 K and $P_c$ = 15.7 bar and $e$ = 1 this gives 0.096 for methane,
+0.025 for n-hexane and about 0 for a C40 fraction.
+
+```java
+import neqsim.pvtsimulation.flowassurance.AsphalteneSolidModel;
+
+// Host oil with an asphaltene pseudo-component (any component whose name contains "asphalten")
+SystemInterface host = new SystemSrkEos(363.15, 300.0);
+host.addComponent("methane", 30.0);
+host.addComponent("ethane", 7.0);
+host.addComponent("propane", 5.0);
+host.addComponent("n-butane", 3.0);
+host.addComponent("n-hexane", 3.0);
+host.addTBPfraction("C10", 15.0, 0.14, 0.79);
+host.addTBPfraction("C20", 15.0, 0.28, 0.86);
+host.addTBPfraction("C40", 12.0, 0.56, 0.93);
+host.addTBPfraction("Asphaltene", 0.3, 1.0, 1.15, 1015.0, 15.7, 1.5); // M kg/mol, g/cm3, Tc K, Pc bar, omega
+host.setMixingRule("classic");
+
+AsphalteneSolidModel model = new AsphalteneSolidModel(host);
+model.calibrate(363.15, 250.0);          // measured onset: 250 bara at 90 C
+model.calibrateLowerOnset(80.0);         // optional: measured lower onset, fits the solid volume
+
+AsphalteneSolidModel.OnsetResult envelope = model.onsetPressures(363.15, 500.0, 20.0, 5.0);
+double upper = envelope.getUpperOnsetPressure();   // 250 bara
+double lower = envelope.getLowerOnsetPressure();   // 80 bara
+
+// Same asphaltene in a blend: build the blend fluid with the same asphaltene component name
+double blendOnset = model.onsetPressures(blend, 363.15, 600.0, 20.0, 5.0).getUpperOnsetPressure();
+double precipitated = model.precipitatedFraction(host, 363.15, 200.0); // fraction of the asphaltene
+```
+
+Further calibration:
+
+| Data | Method | Fits |
+|------|--------|------|
+| One onset (T*, P*) | `calibrate(T, P)` | solid reference fugacity; $v_s$ = M / density |
+| Lower onset at T* | `calibrateLowerOnset(P)` | solid molar volume $v_s$ |
+| Onset at a second temperature | `calibrateTemperature(T, P)` | effective solid enthalpy $h_s$ |
+| Onset of a blend or gas-injected oil | `fitKijExponent(fluid, T, P, Pmax, Pmin)` | exponent $e$ |
+
+Measurement behind the recommendation (2026-11-22, NeqSim 3.29.0 classes with this change, synthetic
+live oil above, 90 C, host onset calibrated to 250 bara, condensate of 72 % methane): the calibrated model
+gives 258 and 282 bara for 10 and 30 mol % condensate with $e$ = 1 (253 and 262 bara with all
+asphaltene interaction parameters zero). Light diluents raise the onset, as titration and field data show.
+Matching the same onset by fitting the interaction parameters against the database solid reference instead
+needs negative asphaltene-methane values (about -0.05 to -0.08), and in the 3.29.0 commingling tests of the
+community skill `neqsim-fluid-commingling-compatibility` that route predicted that condensate lowers the
+onset. Use the calibrated solid model for blends, gas injection and envelopes.
+
+Requirements and checks:
+
+- One asphaltene component, cubic equation of state with the classic mixing rule set, water-free fluid.
+- `isAsphalteneLiquidSplitDetected()` returns true if the equation of state splits the asphaltene into its
+  own liquid. The characterization is then too immiscible for the solid model: lower the asphaltene
+  acentric factor (1.2-1.5 works for M = 1000 g/mol) or the exponent. The Pedersen correlation gives
+  $\omega$ = 2.5 at 1000 g/mol, which splits.
+- `OnsetResult.isUnstableAtMaximumPressure()` is true when the fluid already precipitates at the top of
+  the range.
+
+Reference: Nghiem, L.X., Coombe, D.A. (1997). Modeling asphaltene precipitation during primary depletion.
+SPE Journal 2(2), 170-176.
 
 ## Best Practices
 
@@ -578,14 +670,15 @@ all methods in a single API. See [Method Comparison](asphaltene_method_compariso
 1. **Early Screening**: Use De Boer on all fluids
 2. **Focused Analysis**: Apply CPA to flagged samples
 3. **Lab Validation**: Confirm predictions with HPM/AOP tests
-4. **Parameter Tuning**: Use `AsphalteneOnsetFitting` to match measured onset data
+4. **Parameter Tuning**: Calibrate `AsphalteneSolidModel` to measured onset data (section 9); it then
+   predicts blends and gas injection. `AsphalteneOnsetFitting` fits CPA association parameters.
 5. **Monitoring Strategy**: Plan for real-time detection
 
 ### For Process Design
 
 1. **Operating Envelope**: Generate precipitation PT curves
-2. **Injection Studies**: Model CO₂/gas injection effects
-3. **Blending Optimization**: Predict compatibility issues
+2. **Injection Studies**: Model CO₂/gas injection effects with a calibrated `AsphalteneSolidModel`
+3. **Blending Optimization**: Predict compatibility issues (onset of each blend with the host calibration)
 4. **Inhibitor Screening**: Evaluate chemical effectiveness
 
 ### Recommended Workflow

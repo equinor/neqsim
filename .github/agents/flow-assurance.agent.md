@@ -111,7 +111,15 @@ Use `WaxCharacterise` from `neqsim.thermo.characterization`:
 // de Boer screening
 DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(fluid);
 // AsphalteneStabilityAnalyzer for detailed analysis
+
+// With a measured onset: calibrated solid model for the onset envelope, blends and gas injection
+AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil);
+model.calibrate(363.15, 250.0);
+double blendOnset = model.onsetPressures(blend, 363.15, 600.0, 20.0, 5.0).getUpperOnsetPressure();
 ```
+For commingling or gas injection, calibrate `AsphalteneSolidModel` on the host and evaluate each blend; do
+not tune interaction parameters against the database solid reference (wrong blend trend). See the
+`neqsim-flow-assurance` skill, section 3.
 
 ## Pipeline Hydraulics
 ```java
@@ -221,7 +229,9 @@ O501), artificial lift, water handling, and GHG emissions. See
 ### Rigorous corrosion + scale coupling
 For an EOS-consistent CO2 corrosion rate from a brine composition, use
 `NorsokM506ElectrolyteBridge` (rigorous in-situ pH + FeCO3 film feedback into
-the legacy de Waard-Milliams screening model). For a per-segment corrosion+scale profile
+the legacy de Waard-Milliams screening model; check `isElectrolytePhaseSuspect()` —
+the electrolyte CPA pH of CO2 water runs high, so compare with the correlation pH).
+Chloride SCC does not apply to carbon steel: `ChlorideSCCAssessment` returns "Not susceptible". For a per-segment corrosion+scale profile
 along a line use `PipeSegmentIntegrity` (`fromPipe(PipeBeggsAndBrills)`). For
 scale: `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (induction time,
 growth regime), `BrineMixingScaleEvaluator` (seawater/formation-water

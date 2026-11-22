@@ -78,19 +78,15 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         maxPres = getThermoSystem().getPressure();
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
-    /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
-     */
-    saturationVolume = getThermoSystem().getVolume();
-    saturationPressure = getThermoSystem().getPressure();
-    Zsaturation = getThermoSystem().getZ();
-    saturationConditionFound = true;
-
+    // Finish on the single-phase side of the bracket: the last midpoint can lie just below the
+    // saturation pressure and hold a trace incipient phase as phase 0 (#5209).
+    getThermoSystem().setPressure(maxPres);
+    thermoOps.TPflash();
     getThermoSystem().initPhysicalProperties();
-    saturationVolume = getThermoSystem().getPhase(0).getMass()
-        / getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    // Whole-cell volume over every phase present, in the same unit runCalc() uses (m3 * 1e5).
+    saturationVolume = correctedVolume(getThermoSystem());
     saturationPressure = getThermoSystem().getPressure();
-    Zsaturation = getThermoSystem().getZ();
+    Zsaturation = getThermoSystem().getZvolcorr();
     saturationConditionFound = true;
   }
 

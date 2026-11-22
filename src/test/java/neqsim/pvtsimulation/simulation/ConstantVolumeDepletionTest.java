@@ -161,4 +161,57 @@ public class ConstantVolumeDepletionTest {
 
     assertEquals(oildens, oilFluid.getDensity("kg/m3"), 0.1);
   }
+
+  /**
+   * The gas-density QC must use the gas molar mass of each depletion step, not phase 0 of the final cell state (#5209,
+   * reported by Patrick Mockridge).
+   */
+  @Test
+  void testGasDensityQcUsesStepGasMolarMass() {
+    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(leanCondensate());
+    cvd.setTemperature(80.0, "C");
+    double[] pressures = {120.0, 100.0, 80.0, 60.0, 40.0, 20.0};
+    cvd.setPressures(pressures);
+    cvd.runCalc();
+    assertTrue(cvd.getSaturationPressure() > pressures[0], "first step lies below the dew point");
+
+    // The first step is the original fluid flashed at that pressure; removing gas keeps the gas composition.
+    SystemInterface firstStep = leanCondensate();
+    firstStep.setTemperature(80.0, "C");
+    firstStep.setPressure(pressures[0]);
+    new ThermodynamicOperations(firstStep).TPflash();
+    firstStep.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    assertTrue(firstStep.hasPhaseType("gas") && firstStep.hasPhaseType("oil"));
+    double expected = firstStep.getPhase("gas").getDensity("kg/m3");
+
+    double[] qc = cvd.calculateGasDensityQC();
+    assertEquals(expected, qc[0], expected * 1e-3);
+    for (int i = 1; i < pressures.length; i++) {
+      assertTrue(qc[i] > 0.0 && qc[i] < qc[i - 1], "gas density falls with pressure at step " + i);
+    }
+  }
+
+  /**
+   * Builds the lean condensate used by the CVD QC regression test.
+   *
+   * @return a new SRK fluid with the classic mixing rule and multiphase check
+   */
+  private static SystemInterface leanCondensate() {
+    SystemInterface condensate = new SystemSrkEos(353.15, 200.0);
+    condensate.addComponent("nitrogen", 0.010);
+    condensate.addComponent("CO2", 0.020);
+    condensate.addComponent("methane", 0.760);
+    condensate.addComponent("ethane", 0.080);
+    condensate.addComponent("propane", 0.050);
+    condensate.addComponent("i-butane", 0.015);
+    condensate.addComponent("n-butane", 0.020);
+    condensate.addComponent("i-pentane", 0.010);
+    condensate.addComponent("n-pentane", 0.010);
+    condensate.addComponent("n-hexane", 0.010);
+    condensate.addComponent("n-heptane", 0.008);
+    condensate.addComponent("n-octane", 0.007);
+    condensate.setMixingRule("classic");
+    condensate.setMultiPhaseCheck(true);
+    return condensate;
+  }
 }

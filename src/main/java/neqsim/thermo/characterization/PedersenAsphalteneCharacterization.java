@@ -497,66 +497,66 @@ public class PedersenAsphalteneCharacterization {
    * Calculates the asphaltene onset pressure at the given temperature.
    *
    * <p>
-   * Uses the Pedersen approach of searching for liquid-liquid phase split conditions. The onset pressure is where a
-   * second liquid phase (asphaltene-rich) becomes stable.
+   * Uses the Pedersen approach of searching for liquid-liquid phase split conditions. The onset pressure is where an
+   * asphaltene-rich liquid phase (more than 50 mol % asphaltene) becomes stable. The multiphase check is enabled during
+   * the search (and restored afterwards) so the split is found in the presence of a gas phase. An aqueous phase or a
+   * second hydrocarbon liquid that is not asphaltene-rich is not an onset.
    * </p>
    *
    * @param system the thermodynamic system with asphaltene component
-   * @param startPressure starting pressure for search (bar)
+   * @param startPressure starting pressure for search (bar); the fluid must be stable here
    * @param endPressure ending pressure for search (bar)
    * @return onset pressure in bar, or NaN if not found
+   * @throws IllegalStateException if the fluid already has an asphaltene-rich phase at the start pressure or a flash
+   * fails
    */
   public double calculateOnsetPressure(SystemInterface system, double startPressure, double endPressure) {
-    ThermodynamicOperations ops = new ThermodynamicOperations(system);
-
-    double pressureStep = (startPressure - endPressure) / 50.0;
-    double currentPressure = startPressure;
-    boolean wasOnePhase = true;
-
-    // Search for liquid-liquid split
-    while (currentPressure > endPressure) {
-      system.setPressure(currentPressure);
-      try {
-        ops.TPflash();
-
-        // Check for two liquid phases (not just gas-liquid)
-        int liquidPhases = countLiquidPhases(system);
-
-        if (liquidPhases >= 2 && wasOnePhase) {
-          // Found onset - refine with bisection
-          // Cap upper bound at startPressure to prevent reporting onset above P_res
-          double upperBound = Math.min(currentPressure + pressureStep, startPressure);
-          return refineOnsetPressure(system, ops, upperBound, currentPressure);
-        }
-
-        wasOnePhase = (liquidPhases <= 1);
-      } catch (Exception e) {
-        logger.debug("Flash failed at P={} bar: {}", currentPressure, e.getMessage());
-      }
-
-      currentPressure -= pressureStep;
+    if (!(startPressure > endPressure) || !(endPressure > 0.0)) {
+      throw new IllegalArgumentException("Start pressure must exceed a positive end pressure");
     }
-
-    logger.info("No asphaltene onset found in pressure range {} to {} bar", startPressure, endPressure);
-    return Double.NaN;
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    boolean multiPhase = system.doMultiPhaseCheck();
+    system.setMultiPhaseCheck(true);
+    try {
+      double pressureStep = (startPressure - endPressure) / 50.0;
+      double previousPressure = startPressure;
+      if (hasAsphalteneLiquid(system, ops, startPressure)) {
+        throw new IllegalStateException("An asphaltene-rich liquid is already present at the start pressure "
+            + startPressure + " bar; choose a higher start pressure to bracket the onset");
+      }
+      while (previousPressure > endPressure + 1e-9) {
+        double currentPressure = Math.max(endPressure, previousPressure - pressureStep);
+        if (hasAsphalteneLiquid(system, ops, currentPressure)) {
+          return refineOnsetPressure(system, ops, previousPressure, currentPressure);
+        }
+        previousPressure = currentPressure;
+      }
+      logger.info("No asphaltene onset found in pressure range {} to {} bar", startPressure, endPressure);
+      return Double.NaN;
+    } finally {
+      system.setMultiPhaseCheck(multiPhase);
+    }
   }
 
   /**
-   * Counts the number of liquid phases in the system.
+   * Flash at a pressure and report whether an asphaltene-rich liquid phase exists.
    *
    * @param system the thermodynamic system
-   * @return number of liquid phases
+   * @param ops operations on the system
+   * @param pressure pressure in bar
+   * @return true if an asphaltene-rich (more than 50 mol % asphaltene) non-solid phase exists
    */
-  private int countLiquidPhases(SystemInterface system) {
-    int liquidPhases = 0;
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      String phaseType = system.getPhase(i).getPhaseTypeName();
-      if (phaseType.contains("oil") || phaseType.contains("liquid") || phaseType.contains("aqueous")
-          || phaseType.contains("Asphaltene")) {
-        liquidPhases++;
-      }
+  private boolean hasAsphalteneLiquid(SystemInterface system, ThermodynamicOperations ops, double pressure) {
+    system.setPressure(pressure);
+    try {
+      ops.TPflash();
+    } catch (RuntimeException ex) {
+      throw new IllegalStateException("Flash failed at " + pressure + " bar during asphaltene onset search", ex);
     }
-    return liquidPhases;
+    if (system.getNumberOfPhases() < 2) {
+      return false;
+    }
+    return markAsphalteneRichLiquidPhases(system);
   }
 
   /**
@@ -658,30 +658,14 @@ public class PedersenAsphalteneCharacterization {
   private double refineOnsetPressure(SystemInterface system, ThermodynamicOperations ops, double upperP,
       double lowerP) {
     double tolerance = 0.1; // bar
-    int maxIterations = 20;
-
-    for (int i = 0; i < maxIterations; i++) {
-      if (upperP - lowerP < tolerance) {
-        break;
-      }
-
+    for (int i = 0; i < 60 && upperP - lowerP > tolerance; i++) {
       double midP = (upperP + lowerP) / 2.0;
-      system.setPressure(midP);
-
-      try {
-        ops.TPflash();
-        int liquidPhases = countLiquidPhases(system);
-
-        if (liquidPhases >= 2) {
-          lowerP = midP;
-        } else {
-          upperP = midP;
-        }
-      } catch (Exception e) {
+      if (hasAsphalteneLiquid(system, ops, midP)) {
+        lowerP = midP;
+      } else {
         upperP = midP;
       }
     }
-
     return (upperP + lowerP) / 2.0;
   }
 

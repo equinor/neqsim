@@ -898,6 +898,13 @@ public abstract class SystemThermo implements SystemInterface {
         phaseArray[5].getComponent(i).setIsPlusFraction(true);
       } else {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
+        // A named component reads database fusion data; keep any wax-model properties already assigned to
+        // the fluid phases (for example by getWaxModel().addTBPWax()) so the call order does not matter.
+        ComponentInterface fluidComponent = getPhase(0).getComponent(i);
+        ComponentInterface solidComponent = phaseArray[5].getComponent(i);
+        solidComponent.setWaxFormer(fluidComponent.isWaxFormer());
+        solidComponent.setTriplePointTemperature(fluidComponent.getTriplePointTemperature());
+        solidComponent.setHeatOfFusion(fluidComponent.getHeatOfFusion());
       }
     }
     ((PhaseSolid) phaseArray[5]).setSolidRefFluidPhase(phaseArray[0]);

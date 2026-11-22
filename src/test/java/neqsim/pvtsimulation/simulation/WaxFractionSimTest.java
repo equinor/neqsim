@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
  * Regression checks for characterized wax curves and inventory-based mass fractions.
@@ -103,5 +104,93 @@ public class WaxFractionSimTest {
     assertEquals(1.0, totalFraction, 1e-7);
     double[] curve = simulation.getWaxFraction();
     assertEquals(curve[curve.length - 1], fluid.getPhaseFraction("wax", "mass"), 1e-12);
+  }
+
+  /**
+   * A feed whose wax formers are named n-paraffins, set up with {@code addTBPWax()} as documented, must give a
+   * mass-conserving wax fraction (#5210, reported by Patrick Mockridge). Named wax formers get the Pedersen melting
+   * temperature and heat of fusion, and the wax flash must converge every phase fraction when the liquid freezes out.
+   */
+  @Test
+  void testNamedWaxFormerFeed() {
+    WaxFractionSim wax = new WaxFractionSim(methaneEicosane(true));
+    wax.setTemperaturesAndPressures(new double[] {280.0, 270.0, 260.0}, new double[] {5.0, 5.0, 5.0});
+    wax.runCalc();
+    assertWaxMassBalance(wax);
+
+    SystemInterface fluid = wax.getThermoSystem();
+    double eicosaneMass = 0.7 * fluid.getPhase(0).getComponent("nC20").getMolarMass();
+    double feedMass = eicosaneMass + 0.3 * fluid.getPhase(0).getComponent("methane").getMolarMass();
+    for (double fraction : wax.getWaxFraction()) {
+      // Far below the nC20 melting point practically all of it is wax and methane is gas.
+      assertEquals(eicosaneMass / feedMass, fraction, 1e-3);
+    }
+    assertTrue(fluid.hasPhaseType("gas"));
+    assertEquals(0.3, fluid.getBeta(fluid.getPhaseNumberOfPhase("gas")), 1e-4);
+
+    double meltingTemperature = fluid.getPhase(0).getComponent("nC20").getTriplePointTemperature();
+    assertTrue(meltingTemperature > 305.0 && meltingTemperature < 315.0,
+        "Pedersen melting temperature of nC20: " + meltingTemperature);
+    assertEquals(meltingTemperature, fluid.getPhases()[5].getComponent("nC20").getTriplePointTemperature(), 1e-12);
+  }
+
+  /**
+   * The named-wax-former properties do not depend on whether the wax phase is added before or after
+   * {@code addTBPWax()}, and no wax forms above the melting temperature (#5210).
+   */
+  @Test
+  void testNamedWaxFormerIsIndependentOfSetupOrder() {
+    double[] temperatures = {330.0, 300.0, 280.0};
+    double[] pressures = {5.0, 5.0, 5.0};
+    WaxFractionSim waxPhaseFirst = new WaxFractionSim(methaneEicosane(true));
+    waxPhaseFirst.setTemperaturesAndPressures(temperatures, pressures);
+    waxPhaseFirst.runCalc();
+    WaxFractionSim waxModelFirst = new WaxFractionSim(methaneEicosane(false));
+    waxModelFirst.setTemperaturesAndPressures(temperatures, pressures);
+    waxModelFirst.runCalc();
+
+    assertArrayEquals(waxPhaseFirst.getWaxFraction(), waxModelFirst.getWaxFraction(), 1e-9);
+    assertEquals(0.0, waxPhaseFirst.getWaxFraction()[0], 1e-12);
+    assertTrue(waxPhaseFirst.getWaxFraction()[1] > 0.9);
+  }
+
+  /**
+   * Named wax formers without database fusion data keep following the Pedersen tuning multipliers when
+   * {@code addTBPWax()} is called again, while a named wax former with measured data keeps its database values (#5210).
+   */
+  @Test
+  void testNamedWaxFormerFollowsTuningAndKeepsMeasuredData() {
+    SystemInterface fluid = methaneEicosane(true);
+    fluid.addComponent("nC16", 0.1);
+    double measuredNc16 = fluid.getPhase(0).getComponent("nC16").getTriplePointTemperature();
+    fluid.getWaxModel().addTBPWax();
+    double correlated = fluid.getPhase(0).getComponent("nC20").getTriplePointTemperature();
+    fluid.getWaxModel().setParameterWaxTriplePointTemperature(0, 1.01);
+    fluid.getWaxModel().addTBPWax();
+    assertEquals(1.01 * correlated, fluid.getPhase(0).getComponent("nC20").getTriplePointTemperature(), 1e-9);
+    assertEquals(measuredNc16, fluid.getPhase(0).getComponent("nC16").getTriplePointTemperature(), 0.0);
+  }
+
+  /**
+   * Builds the methane/n-eicosane wax feed of issue #5210.
+   *
+   * @param waxPhaseFirst true to add the wax phase before calling {@code addTBPWax()} (the order in the issue)
+   * @return a new SRK fluid prepared for wax calculations
+   */
+  private static SystemInterface methaneEicosane(boolean waxPhaseFirst) {
+    SystemInterface fluid = new SystemSrkEos(300.0, 5.0);
+    fluid.addComponent("methane", 0.3);
+    fluid.addComponent("nC20", 0.7);
+    fluid.setMixingRule(2);
+    if (!waxPhaseFirst) {
+      fluid.getWaxModel().addTBPWax();
+    }
+    fluid.addSolidComplexPhase("wax");
+    fluid.setMultiphaseWaxCheck(true);
+    fluid.setMultiPhaseCheck(true);
+    if (waxPhaseFirst) {
+      fluid.getWaxModel().addTBPWax();
+    }
+    return fluid;
   }
 }

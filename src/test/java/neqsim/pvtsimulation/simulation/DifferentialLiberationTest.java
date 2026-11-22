@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Internal PVT regression and conservation checks for a characterized oil.
@@ -92,5 +93,47 @@ public class DifferentialLiberationTest {
           * fluid.getPhase(0).getComponent(component).getMolarMass();
     }
     return mass;
+  }
+
+  /**
+   * The saturation volume must be the volume of the saturated cell, not of a trace incipient phase left at the last
+   * bisection midpoint (#5209, reported by Patrick Mockridge). Before the fix the saturation volume was 7.0e-10 m3 and
+   * the relative volume at 5 bara was about 2.4e5.
+   */
+  @Test
+  void testTracePhaseAtSaturationDoesNotDefineSaturationVolume() {
+    DifferentialLiberation dle = new DifferentialLiberation(methaneDecane());
+    dle.setTemperature(350.0);
+    double[] pressures = {300, 250, 200, 150, 100, 50, 20, 5};
+    dle.setPressures(pressures);
+    dle.runCalc();
+
+    SystemInterface saturated = methaneDecane();
+    saturated.setTemperature(350.0);
+    saturated.setPressure(dle.getSaturationPressure());
+    new ThermodynamicOperations(saturated).TPflash();
+    assertEquals(1, saturated.getNumberOfPhases(), "saturation state is single phase");
+    saturated.initPhysicalProperties();
+    assertEquals(saturated.getCorrectedVolume(), dle.saturationVolume, saturated.getCorrectedVolume() * 1e-6);
+    assertTrue(dle.saturationVolume > 5e-5 && dle.saturationVolume < 5e-4, "saturation volume of order 1e-4 m3");
+    for (int i = 0; i < pressures.length; i++) {
+      double relativeVolume = dle.getRelativeVolume()[i];
+      assertTrue(Double.isFinite(relativeVolume) && relativeVolume > 0.5 && relativeVolume < 5.0,
+          "relative volume of order one at " + pressures[i] + " bara: " + relativeVolume);
+    }
+    assertEquals(1.0, dle.getRelativeVolume()[0], 0.01);
+  }
+
+  /**
+   * Builds the methane/n-decane binary of issue #5209.
+   *
+   * @return a new SRK fluid with mixing rule 2
+   */
+  private static SystemInterface methaneDecane() {
+    SystemInterface fluid = new SystemSrkEos(350.0, 300.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("nC10", 0.30);
+    fluid.setMixingRule(2);
+    return fluid;
   }
 }

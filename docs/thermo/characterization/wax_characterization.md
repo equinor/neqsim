@@ -373,6 +373,55 @@ are prerequisites. For TBP/plus fractions, first perform wax characterization as
 above. Named components already marked as wax formers in the component database
 (for example `nc14`, `nc20` and `nc24`) can be used directly without `addTBPWax()`.
 
+#### Named n-paraffins and `addTBPWax()`
+
+Calling `getWaxModel().addTBPWax()` on a fluid whose wax formers are named n-paraffins is
+supported, before or after `addSolidComplexPhase("wax")`. Named wax formers are not split
+(they are n-paraffins as a whole). They keep the melting temperature and heat of fusion from
+the component database where it has measured values (n-hexane, n-heptane, nC11 to nC14,
+nC16). For nC15 and nC17 to nC24 the database holds only the placeholder default of
+273.0 K and 6000 J/mol; for those, `addTBPWax()` of the default Pedersen model assigns its
+correlations
+
+$$T_f = f_T\left(374.5 + 0.02617\,M - \frac{20172}{M}\right), \qquad
+\Delta H_f = f_H\,\frac{0.1426}{0.238845}\,M\,T_f$$
+
+with $M$ in g/mol, $T_f$ in K and $\Delta H_f$ in J/mol, where $f_T$ and $f_H$ are the tuning
+multipliers (parameters 4 and 3 below). For nC20 this gives $T_f \approx 310.5$ K. Calling
+`addTBPWax()` again re-applies the correlations with the current multipliers. Without
+`addTBPWax()` the placeholder values are used unchanged, which is the state the #4309 and
+#4324 regressions below describe.
+
+<!-- wax-characterization-example: named-paraffin -->
+```java
+SystemInterface fluid = new SystemSrkEos(300.0, 5.0);
+fluid.addComponent("methane", 0.3);
+fluid.addComponent("nC20", 0.7);
+fluid.setMixingRule(2);
+fluid.addSolidComplexPhase("wax");
+fluid.setMultiphaseWaxCheck(true);
+fluid.setMultiPhaseCheck(true);
+fluid.getWaxModel().addTBPWax();
+
+WaxFractionSim wax = new WaxFractionSim(fluid);
+wax.setTemperaturesAndPressures(new double[] {280.0, 270.0, 260.0}, new double[] {5.0, 5.0, 5.0});
+wax.runCalc();
+double[] waxMassFraction = wax.getWaxFraction(); // about 0.976 at each point
+```
+
+Below the nC20 melting point practically all nC20 is wax and the methane is gas, so the wax
+mass fraction is $0.7 M_{\mathrm{nC20}} / (0.7 M_{\mathrm{nC20}} + 0.3 M_{\mathrm{CH_4}}) \approx 0.976$.
+Before [issue #5210](https://github.com/equinor/neqsim/issues/5210) this feed either threw
+`Invalid reference-liquid fugacity coefficient for nC20` or returned a wax fraction above one.
+Two defects were involved: the named nC20 kept the 273 K placeholder, and the wax phase-fraction
+solver (`TPmultiflashWAX`) declared convergence on the absolute Newton step and on the last phase
+only. When the liquid freezes out completely, the gas phase re-enters from a trace fraction and
+grows only geometrically, so the solver stopped with a gas fraction near 4e-7 instead of 0.3 and
+the phase mass fractions summed to 1.39. The solver now requires every phase fraction to settle
+to a relative change below 1e-6. Regression evidence: `WaxFractionSimTest`
+(`testNamedWaxFormerFeed`, `testNamedWaxFormerIsIndependentOfSetupOrder`,
+`testNamedWaxFormerFollowsTuningAndKeepsMeasuredData`).
+
 For a present wax phase, `getPhaseFraction("wax", "mass")` returns the wax mass
 divided by the **total feed mass**, using phase mole fraction and molar masses:
 

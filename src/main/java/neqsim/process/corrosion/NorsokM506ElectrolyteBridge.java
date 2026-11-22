@@ -136,6 +136,21 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
   /** Whether the pH fed to the corrosion model came from the electrolyte model (true) or the correlation. */
   private boolean pHFromElectrolyteModel = false;
 
+  /** True when the electrolyte flash gave an implausible aqueous phase and the pH correlation was used. */
+  private boolean electrolytePhaseSuspect = false;
+
+  /** Lowest water mole fraction accepted for a credible aqueous (brine) phase. */
+  private static final double MIN_AQUEOUS_WATER_FRACTION = 0.7;
+
+  /** Water mole fraction above which a non-aqueous liquid is taken to hold free water. */
+  private static final double FREE_WATER_IN_OTHER_PHASE = 0.3;
+
+  /** Plausible in-situ pH window for produced and condensed waters. */
+  private static final double MIN_PLAUSIBLE_PH = 2.5;
+
+  /** Plausible in-situ pH window for produced and condensed waters. */
+  private static final double MAX_PLAUSIBLE_PH = 10.0;
+
   // --- Result ---
 
   /** The configured and calculated corrosion model. */
@@ -227,11 +242,27 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
     h2sMoleFraction = extractGasMoleFraction(work, "H2S");
 
     freeWaterPresent = work.hasPhaseType(PhaseType.AQUEOUS);
-    if (freeWaterPresent) {
-      inSituPH = work.getPhase(PhaseType.AQUEOUS).getpH();
+    electrolytePhaseSuspect = false;
+    if (!freeWaterPresent && waterRichNonAqueousPhase(work)) {
+      // The electrolyte flash can return the water in a phase typed as oil; water is still present.
+      freeWaterPresent = true;
+      electrolytePhaseSuspect = true;
+    }
+    if (freeWaterPresent && !electrolytePhaseSuspect) {
+      PhaseInterface aqueous = work.getPhase(PhaseType.AQUEOUS);
+      double waterFraction = aqueous.hasComponent("water") ? aqueous.getComponent("water").getx() : 0.0;
+      inSituPH = aqueous.getpH();
+      if (waterFraction < MIN_AQUEOUS_WATER_FRACTION
+          || !(inSituPH >= MIN_PLAUSIBLE_PH && inSituPH <= MAX_PLAUSIBLE_PH)) {
+        electrolytePhaseSuspect = true;
+      }
+    }
+    if (freeWaterPresent && !electrolytePhaseSuspect) {
       bicarbonateMgL = extractBicarbonateMgL(work);
       feCO3SaturationRatio = computeFeCO3SaturationRatio(work);
     } else {
+      // No free water, or an implausible aqueous phase: do not use its pH or speciation; the
+      // correlation pH is used below.
       inSituPH = Double.NaN;
       bicarbonateMgL = 0.0;
       feCO3SaturationRatio = -1.0;
@@ -274,6 +305,25 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
    * @param componentName the component name to look up (for example "CO2")
    * @return the mole fraction in the non-aqueous phase, or 0.0 if absent
    */
+  /**
+   * Checks for a liquid phase that is not typed aqueous but holds a large water fraction.
+   *
+   * @param system flashed system
+   * @return true if such a phase exists
+   */
+  private boolean waterRichNonAqueousPhase(SystemInterface system) {
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      PhaseInterface phase = system.getPhase(i);
+      if (phase.getType() == PhaseType.GAS || !phase.hasComponent("water")) {
+        continue;
+      }
+      if (phase.getComponent("water").getx() > FREE_WATER_IN_OTHER_PHASE) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private double extractGasMoleFraction(SystemInterface system, String componentName) {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
@@ -449,6 +499,16 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
   }
 
   /**
+   * Indicates that the electrolyte flash returned an implausible aqueous phase (water fraction below 0.7, water held in
+   * a phase typed as oil, or a pH outside 2.5 to 10) so its pH and speciation were not used.
+   *
+   * @return true if the correlation pH replaced an implausible electrolyte result
+   */
+  public boolean isElectrolytePhaseSuspect() {
+    return electrolytePhaseSuspect;
+  }
+
+  /**
    * Serialises the extracted state and the corrosion result to a JSON string.
    *
    * @return a pretty-printed JSON representation of the bridge result
@@ -458,6 +518,7 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
     map.put("hasBeenRun", hasBeenRun);
     map.put("freeWaterPresent", freeWaterPresent);
     map.put("pHFromElectrolyteModel", pHFromElectrolyteModel);
+    map.put("electrolytePhaseSuspect", electrolytePhaseSuspect);
     map.put("temperatureC", temperatureC);
     map.put("totalPressureBara", totalPressureBara);
     map.put("co2MoleFraction", co2MoleFraction);

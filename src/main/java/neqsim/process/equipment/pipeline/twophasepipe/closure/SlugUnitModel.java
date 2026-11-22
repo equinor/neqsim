@@ -73,6 +73,12 @@ public final class SlugUnitModel implements Serializable {
   private boolean highFroudeSlipReductionEnabled = true;
 
   /**
+   * Last solved unit. The holdup closure asks for the same unit for more than one regime share of a cell; the repeat
+   * request returns a copy of this solution when every argument and both model switches are bitwise unchanged.
+   */
+  private transient ExactArgumentMemo<Result> lastSolution;
+
+  /**
    * Enable or disable the high-Froude reduction of the unit gas-liquid velocity ratio.
    *
    * @param enabled true to scale the translational and bubble velocities towards no-slip as the mixture Froude number
@@ -209,6 +215,31 @@ public final class SlugUnitModel implements Serializable {
     public double totalGradient() {
       return frictionGradient + gravityGradient;
     }
+
+    /**
+     * Copy this state so a caller cannot change a remembered solution.
+     *
+     * @return independent copy with the same field values
+     */
+    Result copy() {
+      Result copy = new Result();
+      copy.valid = valid;
+      copy.stratified = stratified;
+      copy.slugHoldup = slugHoldup;
+      copy.filmHoldup = filmHoldup;
+      copy.slugFraction = slugFraction;
+      copy.unitHoldup = unitHoldup;
+      copy.translationalVelocity = translationalVelocity;
+      copy.slugLiquidVelocity = slugLiquidVelocity;
+      copy.filmLiquidVelocity = filmLiquidVelocity;
+      copy.filmGasVelocity = filmGasVelocity;
+      copy.slugLength = slugLength;
+      copy.frictionGradient = frictionGradient;
+      copy.wallFrictionGradient = wallFrictionGradient;
+      copy.accelerationGradient = accelerationGradient;
+      copy.gravityGradient = gravityGradient;
+      return copy;
+    }
   }
 
   /**
@@ -227,6 +258,35 @@ public final class SlugUnitModel implements Serializable {
    * @return slug-unit state; {@link Result#valid} is false when no unit exists
    */
   public Result solve(double vsG, double vsL, double rhoG, double rhoL, double muG, double muL, double sigma,
+      double diameter, double roughness, double inclination) {
+    double slipSwitch = highFroudeSlipReductionEnabled ? 1.0 : 0.0;
+    ExactArgumentMemo<Result> memo = lastSolution;
+    if (memo != null && memo.matches(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, roughness, inclination,
+        frontMixingLossWeight, slipSwitch)) {
+      return memo.getValue().copy();
+    }
+    Result solved = solveUnit(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, roughness, inclination);
+    lastSolution = new ExactArgumentMemo<Result>(solved.copy(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
+        roughness, inclination, frontMixingLossWeight, slipSwitch);
+    return solved;
+  }
+
+  /**
+   * Solve the slug unit without consulting the remembered solution.
+   *
+   * @param vsG superficial gas velocity, m/s, positive
+   * @param vsL superficial liquid velocity, m/s, positive
+   * @param rhoG gas density, kg/m3
+   * @param rhoL liquid density, kg/m3
+   * @param muG gas viscosity, Pa.s
+   * @param muL liquid viscosity, Pa.s
+   * @param sigma surface tension, N/m
+   * @param diameter pipe inner diameter, m
+   * @param roughness absolute wall roughness, m
+   * @param inclination pipe inclination, radians, positive upward
+   * @return slug-unit state; {@link Result#valid} is false when no unit exists
+   */
+  private Result solveUnit(double vsG, double vsL, double rhoG, double rhoL, double muG, double muL, double sigma,
       double diameter, double roughness, double inclination) {
     Result result = new Result();
     if (!(vsG > 0.0) || !(vsL > 0.0) || !(rhoL > rhoG) || !(rhoG > 0.0) || !(diameter > 0.0) || !(muL > 0.0)
@@ -263,10 +323,12 @@ public final class SlugUnitModel implements Serializable {
     result.translationalVelocity = translational;
     result.slugLiquidVelocity = slugLiquidVelocity;
 
+    // Everything the film balance needs that does not change with the trial film holdup.
+    FilmInvariants film0 = new FilmInvariants(diameter, roughness, inclination, sinTheta);
+
     double low = MINIMUM_FILM_HOLDUP;
     double high = slugHoldup * (1.0 - 1.0e-9);
-    double residualLow = filmResidual(low, result, bubbleVelocity, rhoG, rhoL, muG, muL, diameter, roughness,
-        inclination);
+    double residualLow = filmResidual(low, result, bubbleVelocity, rhoG, rhoL, muG, muL, film0);
     if (!Double.isFinite(residualLow)) {
       return result;
     }
@@ -277,8 +339,7 @@ public final class SlugUnitModel implements Serializable {
     double previous = low;
     for (int point = 1; point <= FILM_ROOT_SCAN_POINTS; point++) {
       double trial = point == FILM_ROOT_SCAN_POINTS ? high : previous * ratio;
-      double value = filmResidual(trial, result, bubbleVelocity, rhoG, rhoL, muG, muL, diameter, roughness,
-          inclination);
+      double value = filmResidual(trial, result, bubbleVelocity, rhoG, rhoL, muG, muL, film0);
       if (!Double.isFinite(value)) {
         return result;
       }
@@ -296,8 +357,7 @@ public final class SlugUnitModel implements Serializable {
     }
     for (int iteration = 0; iteration < 100 && high - low > 1.0e-12; iteration++) {
       double middle = 0.5 * (low + high);
-      double value = filmResidual(middle, result, bubbleVelocity, rhoG, rhoL, muG, muL, diameter, roughness,
-          inclination);
+      double value = filmResidual(middle, result, bubbleVelocity, rhoG, rhoL, muG, muL, film0);
       if (!Double.isFinite(value)) {
         return result;
       }
@@ -330,22 +390,22 @@ public final class SlugUnitModel implements Serializable {
         + (VERTICAL_SLUG_LENGTH_DIAMETERS - HORIZONTAL_SLUG_LENGTH_DIAMETERS) * steepness * steepness;
     result.slugLength = slugLengthDiameters * diameter;
 
-    double area = Math.PI * diameter * diameter / 4.0;
+    double area = film0.area;
     double slugDensity = slugHoldup * rhoL + (1.0 - slugHoldup) * rhoG;
     double slugViscosity = slugHoldup * muL + (1.0 - slugHoldup) * muG;
-    double slugFriction = darcyFriction(slugDensity * vm * diameter / slugViscosity, roughness / diameter);
+    double slugFriction = darcyFriction(slugDensity * vm * diameter / slugViscosity, film0.roughnessTerm);
     double slugWallGradient = slugFriction * slugDensity * vm * Math.abs(vm) / (2.0 * diameter);
 
-    FilmGeometry film = filmGeometry(filmHoldup, diameter, inclination);
+    FilmGeometry film = filmGeometry(filmHoldup, film0);
     double filmWallForce = 0.0;
     if (film.liquidPerimeter > 0.0) {
       double fL = darcyFriction(rhoL * Math.abs(filmLiquidVelocity) * film.liquidHydraulicDiameter / muL,
-          roughness / diameter);
+          film0.roughnessTerm);
       filmWallForce += fL * rhoL * filmLiquidVelocity * Math.abs(filmLiquidVelocity) / 8.0 * film.liquidPerimeter;
     }
     if (film.gasPerimeter > 0.0) {
       double fG = darcyFriction(rhoG * Math.abs(filmGasVelocity) * film.gasHydraulicDiameter / muG,
-          roughness / diameter);
+          film0.roughnessTerm);
       filmWallForce += fG * rhoG * filmGasVelocity * Math.abs(filmGasVelocity) / 8.0 * film.gasPerimeter;
     }
     result.wallFrictionGradient = slugFraction * slugWallGradient + (1.0 - slugFraction) * filmWallForce / area;
@@ -404,23 +464,21 @@ public final class SlugUnitModel implements Serializable {
    * @param rhoL liquid density, kg/m3
    * @param muG gas viscosity, Pa.s
    * @param muL liquid viscosity, Pa.s
-   * @param diameter pipe diameter, m
-   * @param roughness wall roughness, m
-   * @param inclination inclination, radians
+   * @param invariants pipe geometry, roughness and inclination terms shared by every trial holdup
    * @return momentum residual, Pa/m
    */
   private double filmResidual(double filmHoldup, Result unit, double bubbleVelocity, double rhoG, double rhoL,
-      double muG, double muL, double diameter, double roughness, double inclination) {
+      double muG, double muL, FilmInvariants invariants) {
     double vt = unit.translationalVelocity;
     double vLF = vt - (vt - unit.slugLiquidVelocity) * unit.slugHoldup / filmHoldup;
     double vGF = vt - (vt - bubbleVelocity) * (1.0 - unit.slugHoldup) / (1.0 - filmHoldup);
-    FilmGeometry film = filmGeometry(filmHoldup, diameter, inclination);
-    double area = Math.PI * diameter * diameter / 4.0;
+    FilmGeometry film = filmGeometry(filmHoldup, invariants);
+    double area = invariants.area;
     double liquidArea = filmHoldup * area;
     double gasArea = (1.0 - filmHoldup) * area;
 
-    double fL = darcyFriction(rhoL * Math.abs(vLF) * film.liquidHydraulicDiameter / muL, roughness / diameter);
-    double fG = darcyFriction(rhoG * Math.abs(vGF) * film.gasHydraulicDiameter / muG, roughness / diameter);
+    double fL = darcyFriction(rhoL * Math.abs(vLF) * film.liquidHydraulicDiameter / muL, invariants.roughnessTerm);
+    double fG = darcyFriction(rhoG * Math.abs(vGF) * film.gasHydraulicDiameter / muG, invariants.roughnessTerm);
     // The film behind a slug is not a developed wave field; Taitel and Barnea (1990) use a constant interfacial
     // Fanning factor of 0.014 (Darcy 0.056) there instead of a wave-enhancement correlation.
     double fI = Math.max(fG, FILM_INTERFACIAL_DARCY_FRICTION);
@@ -430,9 +488,9 @@ public final class SlugUnitModel implements Serializable {
     double interfaceShear = fI * rhoG * relative * Math.abs(relative) / 8.0;
 
     double gasRequirement = (gasShear * film.gasPerimeter + interfaceShear * film.interfaceWidth) / gasArea
-        + rhoG * GRAVITY * Math.sin(inclination);
+        + rhoG * GRAVITY * invariants.sinTheta;
     double liquidRequirement = (liquidShear * film.liquidPerimeter - interfaceShear * film.interfaceWidth) / liquidArea
-        + rhoL * GRAVITY * Math.sin(inclination);
+        + rhoL * GRAVITY * invariants.sinTheta;
     return gasRequirement - liquidRequirement;
   }
 
@@ -446,15 +504,54 @@ public final class SlugUnitModel implements Serializable {
   }
 
   /**
+   * Terms of the film balance that are the same for every trial film holdup of one unit.
+   *
+   * <p>
+   * The film root search evaluates the balance some tens of times per unit. The Haaland roughness power, the
+   * inclination sine and the stratified-to-annular geometry weight depend on the pipe alone, so they are evaluated once
+   * here with the same expressions the balance used before.
+   * </p>
+   */
+  private static final class FilmInvariants {
+    /** Pipe inner diameter, m. */
+    final double diameter;
+    /** Pipe cross-section, m2. */
+    final double area;
+    /** Sine of the inclination. */
+    final double sinTheta;
+    /** Roughness term of the Haaland equation, (roughness / diameter / 3.7)^1.11. */
+    final double roughnessTerm;
+    /** Share of annular film geometry, 0 for a bottom layer and 1 for a full annulus. */
+    final double annularWeight;
+
+    /**
+     * Evaluate the invariant terms.
+     *
+     * @param diameter pipe inner diameter, m
+     * @param roughness absolute wall roughness, m
+     * @param inclination pipe inclination, radians
+     * @param sinTheta sine of the inclination
+     */
+    FilmInvariants(double diameter, double roughness, double inclination, double sinTheta) {
+      this.diameter = diameter;
+      this.area = Math.PI * diameter * diameter / 4.0;
+      this.sinTheta = sinTheta;
+      this.roughnessTerm = haalandRoughnessTerm(roughness / diameter);
+      double weight = (inclination - STRATIFIED_GEOMETRY_LIMIT) / (ANNULAR_GEOMETRY_LIMIT - STRATIFIED_GEOMETRY_LIMIT);
+      this.annularWeight = Math.max(0.0, Math.min(1.0, weight));
+    }
+  }
+
+  /**
    * Film-zone geometry, blending a bottom layer (near-horizontal) into an annular film (steep upward flow).
    *
    * @param filmHoldup film holdup
-   * @param diameter pipe diameter, m
-   * @param inclination inclination, radians
+   * @param invariants pipe geometry and inclination terms
    * @return film geometry
    */
-  private static FilmGeometry filmGeometry(double filmHoldup, double diameter, double inclination) {
-    double area = Math.PI * diameter * diameter / 4.0;
+  private static FilmGeometry filmGeometry(double filmHoldup, FilmInvariants invariants) {
+    double diameter = invariants.diameter;
+    double area = invariants.area;
     double beta = centralAngle(filmHoldup);
     double layerLiquidPerimeter = diameter * beta / 2.0;
     double layerGasPerimeter = diameter * (Math.PI - beta / 2.0);
@@ -464,8 +561,7 @@ public final class SlugUnitModel implements Serializable {
     double annularLiquidPerimeter = Math.PI * diameter;
     double annularInterface = Math.PI * coreDiameter;
 
-    double weight = (inclination - STRATIFIED_GEOMETRY_LIMIT) / (ANNULAR_GEOMETRY_LIMIT - STRATIFIED_GEOMETRY_LIMIT);
-    weight = Math.max(0.0, Math.min(1.0, weight));
+    double weight = invariants.annularWeight;
 
     FilmGeometry g = new FilmGeometry();
     g.liquidPerimeter = (1.0 - weight) * layerLiquidPerimeter + weight * annularLiquidPerimeter;
@@ -478,6 +574,15 @@ public final class SlugUnitModel implements Serializable {
 
   /**
    * Central angle of a circular segment with the given area fraction.
+   *
+   * <p>
+   * Solves angle - sin(angle) = 2 pi holdup on the smaller segment, where the left side is convex. The start is the
+   * reverted power series of that equation in the cube root of 12 pi holdup, which is already within rounding of the
+   * root for a thin segment and within 0.6 per cent at a half-full bore. Halley steps then converge cubically; a step
+   * that leaves the bracket falls back to Newton and then to bisection. With the cancellation-free residual of {@code
+   * segmentAreaNumerator} the iteration reaches its stop in at most three evaluations and returns the root to within
+   * four units in the last place.
+   * </p>
    *
    * @param holdup segment area divided by bore area
    * @return central angle, radians
@@ -498,23 +603,40 @@ public final class SlugUnitModel implements Serializable {
       return Math.cbrt(12.0 * Math.PI) * Math.cbrt(smallerHoldup);
     }
     double target = 2.0 * Math.PI * smallerHoldup;
+    // angle - sin(angle) is at most angle^3 / 6, so the cubic limit bounds the root from below.
     double low = Math.cbrt(6.0 * target);
     double high = Math.PI;
-    double angle = Math.min(high, 1.2 * low);
+    double lowSquared = low * low;
+    double correction = 1.0 / 25200.0 + lowSquared * (43.0 / 17248000.0);
+    correction = 1.0 / 1400.0 + lowSquared * correction;
+    correction = 1.0 / 60.0 + lowSquared * correction;
+    double angle = Math.min(high, low * (1.0 + lowSquared * correction));
+    double previousStepSize = Double.POSITIVE_INFINITY;
     for (int iteration = 0; iteration < 60; iteration++) {
       double residual = segmentAreaNumerator(angle) - target;
       double sineHalfAngle = Math.sin(0.5 * angle);
-      double step = residual / (2.0 * sineHalfAngle * sineHalfAngle);
-      if (Math.abs(step) <= 4.0 * Math.ulp(angle)) {
+      double slope = 2.0 * sineHalfAngle * sineHalfAngle;
+      double step = residual / slope;
+      double stepSize = Math.abs(step);
+      // The Newton step measures the distance to the root. Stop when it is at rounding level, or when it has stopped
+      // shrinking there, which means the residual itself has reached its rounding noise.
+      if (stepSize <= 4.0 * Math.ulp(angle) || stepSize >= previousStepSize && stepSize <= 1.0e-12 * angle) {
         break;
       }
+      previousStepSize = stepSize;
       if (residual < 0.0) {
         low = angle;
       } else {
         high = angle;
       }
-      double next = angle - step;
-      angle = next > low && next < high ? next : 0.5 * (low + high);
+      // The curvature of angle - sin(angle) is sin(angle) = 2 sin(angle/2) cos(angle/2), with a non-negative cosine on
+      // the smaller segment.
+      double curvature = 2.0 * sineHalfAngle * Math.sqrt(Math.max(0.0, 1.0 - sineHalfAngle * sineHalfAngle));
+      double next = angle - residual / (slope - 0.5 * step * curvature);
+      if (!(next > low && next <= high)) {
+        next = angle - step;
+      }
+      angle = next > low && next <= high ? next : 0.5 * (low + high);
     }
     return complement ? 2.0 * Math.PI - angle : angle;
   }
@@ -522,15 +644,31 @@ public final class SlugUnitModel implements Serializable {
   /**
    * Evaluates the circular-segment area numerator without small-angle cancellation.
    *
+   * <p>
+   * Below one radian the difference {@code angle - sin(angle)} loses up to two digits to cancellation, enough to keep
+   * the root search of {@link #centralAngle(double)} from settling. The Taylor series is used there instead; its
+   * truncation error is below 1e-18 relative at one radian. Above one radian the direct difference is accurate to a few
+   * units in the last place.
+   * </p>
+   *
    * @param angle central angle of the smaller segment, radians
    * @return angle minus sine of angle
    */
   private static double segmentAreaNumerator(double angle) {
-    if (angle >= 0.125) {
+    if (angle >= 1.0) {
       return angle - Math.sin(angle);
     }
     double angleSquared = angle * angle;
-    double series = 1.0 / 6.0 + angleSquared * (-1.0 / 120.0 + angleSquared * (1.0 / 5040.0 - angleSquared / 362880.0));
+    // Horner evaluation of 1/3! - x^2/5! + x^4/7! - ... - x^18/21!, highest term first.
+    double series = 1.0 / 121645100408832000.0 - angleSquared / 51090942171709440000.0;
+    series = -1.0 / 355687428096000.0 + angleSquared * series;
+    series = 1.0 / 1307674368000.0 + angleSquared * series;
+    series = -1.0 / 6227020800.0 + angleSquared * series;
+    series = 1.0 / 39916800.0 + angleSquared * series;
+    series = -1.0 / 362880.0 + angleSquared * series;
+    series = 1.0 / 5040.0 + angleSquared * series;
+    series = -1.0 / 120.0 + angleSquared * series;
+    series = 1.0 / 6.0 + angleSquared * series;
     return angle * (angleSquared * series);
   }
 
@@ -538,17 +676,17 @@ public final class SlugUnitModel implements Serializable {
    * Darcy friction factor: laminar below Re 2300, Haaland above 4000, linear blend between.
    *
    * @param reynolds Reynolds number
-   * @param relativeRoughness roughness divided by diameter
+   * @param roughnessTerm Haaland roughness term from {@link #haalandRoughnessTerm(double)}
    * @return Darcy friction factor
    */
-  private static double darcyFriction(double reynolds, double relativeRoughness) {
+  private static double darcyFriction(double reynolds, double roughnessTerm) {
     if (!(reynolds > 0.0)) {
       return 0.0;
     }
     if (reynolds < 2300.0) {
       return 64.0 / reynolds;
     }
-    double turbulent = haaland(Math.max(4000.0, reynolds), relativeRoughness);
+    double turbulent = haaland(Math.max(4000.0, reynolds), roughnessTerm);
     if (reynolds < 4000.0) {
       double laminar = 64.0 / 2300.0;
       return laminar + (turbulent - laminar) * (reynolds - 2300.0) / 1700.0;
@@ -560,11 +698,21 @@ public final class SlugUnitModel implements Serializable {
    * Haaland explicit friction factor.
    *
    * @param reynolds Reynolds number, at least 4000
-   * @param relativeRoughness roughness divided by diameter
+   * @param roughnessTerm Haaland roughness term from {@link #haalandRoughnessTerm(double)}
    * @return Darcy friction factor
    */
-  private static double haaland(double reynolds, double relativeRoughness) {
-    double term = -1.8 * Math.log10(6.9 / reynolds + Math.pow(relativeRoughness / 3.7, 1.11));
+  private static double haaland(double reynolds, double roughnessTerm) {
+    double term = -1.8 * Math.log10(6.9 / reynolds + roughnessTerm);
     return 1.0 / (term * term);
+  }
+
+  /**
+   * Roughness term of the Haaland equation.
+   *
+   * @param relativeRoughness roughness divided by diameter
+   * @return (relativeRoughness / 3.7)^1.11
+   */
+  private static double haalandRoughnessTerm(double relativeRoughness) {
+    return Math.pow(relativeRoughness / 3.7, 1.11);
   }
 }

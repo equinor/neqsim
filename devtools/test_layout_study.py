@@ -29,6 +29,8 @@ import layout_engine  # noqa: E402
 import layout_examples  # noqa: E402
 import layout_inventory  # noqa: E402
 import layout_model  # noqa: E402
+import layout_optimizer  # noqa: E402
+import layout_routing  # noqa: E402
 import layout_process  # noqa: E402
 import layout_study  # noqa: E402
 
@@ -433,6 +435,255 @@ class LayoutSolverTests(unittest.TestCase):
         alternatives = layout_engine.generate_layouts(layout_model.normalize_study(study))
         self.assertTrue(alternatives)
         self.assertTrue(all(a["status"] == "INFEASIBLE" for a in alternatives))
+
+
+def spread_fixture():
+    """Three connected packages on a plot large enough for a scan to leave them apart."""
+    study = fixture()
+    study["decks"] = [{"id": "D1", "width_m": 30, "depth_m": 20, "elevation_m": 0, "height_limit_m": 10}]
+    study["corridors"], study["exits"] = [], []
+    base = study["equipment"][0]
+    study["equipment"] = [dict(copy.deepcopy(base), tag=tag) for tag in ("A", "B", "C")]
+    study["equipment"][0]["fixed"] = {"deck": "D1", "x_m": 24, "y_m": 14, "rotation_deg": 0}
+    study["connections"] = [{"id": "L1", "from_tag": "A", "to_tag": "B"},
+                            {"id": "L2", "from_tag": "B", "to_tag": "C"}]
+    study["options"]["alternatives"] = 1
+    return study
+
+
+def route_alternative(positions):
+    """A manually placed alternative for the route estimator."""
+    return {"id": "MANUAL", "placements": positions}
+
+
+class LayoutOptimizationTests(unittest.TestCase):
+    def test_extensions_are_off_by_default_and_leave_the_study_fingerprint_alone(self):
+        study = layout_model.normalize_study(fixture())
+        self.assertNotIn("optimize", study["options"])
+        self.assertNotIn("routing", study["options"])
+        alternative = layout_engine.generate_layouts(fixture())[0]
+        self.assertNotIn("optimization", alternative["solver"])
+        self.assertNotIn("route_estimates", alternative)
+        self.assertNotIn("routed_length_estimate_m", alternative["metrics"])
+
+    def test_shortening_moves_free_equipment_next_to_the_fixed_item_and_keeps_every_check(self):
+        scan = layout_engine.generate_layouts(spread_fixture())[0]
+        study = spread_fixture()
+        study["options"]["optimize"] = {"enabled": True}
+        improved = layout_engine.generate_layouts(study)[0]
+        record = improved["solver"]["optimization"]
+        self.assertEqual(scan["metrics"]["piping_proxy_m"], record["objective_initial_m"])
+        self.assertEqual(improved["metrics"]["piping_proxy_m"], record["objective_final_m"])
+        # Three 2 m boxes in a touching chain: two centre distances of exactly 2 m.
+        self.assertAlmostEqual(record["objective_final_m"], 4.0)
+        self.assertLess(record["objective_final_m"], record["objective_initial_m"])
+        self.assertEqual((record["status"], record["stopped_by"]), ("IMPROVED", "LOCAL_OPTIMUM"))
+        self.assertFalse(record["optimality_proven"])
+        self.assertAlmostEqual(record["lower_bound_m"], 4.0)
+        fixed = next(p for p in improved["placements"] if p["tag"] == "A")
+        self.assertEqual((fixed["x_m"], fixed["y_m"]), (24, 14))
+        self.assertFalse([c for c in improved["checks"] if c["required"] and c["status"] == "FAIL"])
+        self.assertEqual(improved["status"], scan["status"])
+
+    def test_shortening_is_reproducible_and_never_lengthens_a_demo_alternative(self):
+        for name in ("onshore", "offshore"):
+            study = layout_examples.demo_study(name)
+            study.setdefault("options", {})["optimize"] = {"enabled": True}
+            first = layout_engine.generate_layouts(study)
+            second = layout_engine.generate_layouts(study)
+            self.assertEqual([a["placements"] for a in first], [a["placements"] for a in second])
+            self.assertEqual([a["fingerprint"] for a in first], [a["fingerprint"] for a in second])
+            for alternative in first:
+                record = alternative["solver"]["optimization"]
+                self.assertLessEqual(record["objective_final_m"], record["objective_initial_m"])
+                self.assertLessEqual(record["lower_bound_m"], record["objective_final_m"] + 1e-9)
+                self.assertFalse([c for c in alternative["checks"]
+                                  if c["required"] and c["status"] == "FAIL"], name)
+
+    def test_verified_separation_rule_limits_how_close_shortening_may_bring_equipment(self):
+        study = spread_fixture()
+        study["rules"] = [{"id": "SEP", "kind": "minimum_separation", "from_tag": "A", "to_tag": "B",
+                           "minimum_m": 5.0, "required": True, "source": project_source()}]
+        study["options"]["optimize"] = {"enabled": True}
+        improved = layout_engine.generate_layouts(study)[0]
+        normalized = layout_model.normalize_study(study)
+        deck = normalized["decks"][0]
+        equipment = {e["tag"]: e for e in normalized["equipment"]}
+        bounds = {p["tag"]: layout_model.equipment_bounds(equipment[p["tag"]], p, deck)
+                  for p in improved["placements"]}
+        self.assertGreaterEqual(layout_model.box_distance(bounds["A"], bounds["B"]), 5.0 - 1e-9)
+        # 5 m clear between 2 m boxes puts the centres 7 m apart; C still touches B.
+        self.assertAlmostEqual(improved["solver"]["optimization"]["objective_final_m"], 9.0)
+        self.assertFalse([c for c in improved["checks"] if c["required"] and c["status"] == "FAIL"])
+
+    def test_connection_weight_steers_which_item_gets_the_short_connection(self):
+        study = spread_fixture()
+        study["equipment"][1]["fixed"] = {"deck": "D1", "x_m": 2, "y_m": 2, "rotation_deg": 0}
+        study["connections"] = [{"id": "L1", "from_tag": "A", "to_tag": "C"},
+                                {"id": "L2", "from_tag": "B", "to_tag": "C", "weight": 10.0}]
+        study["options"]["optimize"] = {"enabled": True}
+        improved = layout_engine.generate_layouts(study)[0]
+        moved = next(p for p in improved["placements"] if p["tag"] == "C")
+        self.assertLess(abs(moved["x_m"] - 2) + abs(moved["y_m"] - 2), 3.0)  # beside B, far from A
+        self.assertIn("weighted_connection_proxy_m", improved["metrics"])
+        bad = spread_fixture()
+        bad["connections"][0]["weight"] = 0
+        with self.assertRaises(ValueError):
+            layout_model.normalize_study(bad)
+
+    def test_search_budget_is_reported_instead_of_claiming_a_local_optimum(self):
+        study = spread_fixture()
+        study["options"]["optimize"] = {"enabled": True, "max_evaluations": 1}
+        record = layout_engine.generate_layouts(study)[0]["solver"]["optimization"]
+        self.assertEqual(record["stopped_by"], "SEARCH_LIMIT")
+        self.assertFalse(record["local_optimum"])
+
+    def test_documented_option_block_is_accepted_and_runs(self):
+        guide = (DEVTOOLS.parent / "docs" / "development" / "PLANT_LAYOUT_STUDY.md").read_text(encoding="utf-8")
+        section = guide[guide.index("## Connection shortening and route estimates"):]
+        block = section[section.index("```json") + 7:]
+        documented = json.loads(block[:block.index("```")])
+        study = spread_fixture()
+        study["options"].update(documented["options"])
+        alternative = layout_engine.generate_layouts(study)[0]
+        self.assertEqual(alternative["solver"]["optimization"]["settings"],
+                         {"max_passes": 20, "max_evaluations": 200000})
+        self.assertEqual(alternative["route_estimates"]["status"], "COMPLETE")
+
+    def test_invalid_extension_options_are_rejected(self):
+        for options in ({"optimize": {"enabled": "yes"}}, {"optimize": {"max_passes": 0}},
+                        {"optimize": {"speed": "fast"}}, {"routing": {"grid_m": 0}},
+                        {"routing": {"max_cells": 10}}, {"routing": {"clearance_m": -1}},
+                        {"routing": {"corridor_overhead_clearance_m": 0}}, {"routing": []}):
+            study = fixture()
+            study["options"].update(options)
+            with self.assertRaises(ValueError, msg=str(options)):
+                layout_model.normalize_study(study)
+
+
+class LayoutRouteEstimateTests(unittest.TestCase):
+    def routed(self, study, positions, **routing):
+        study["options"]["routing"] = dict({"enabled": True}, **routing)
+        return layout_routing.estimate_routes(layout_model.normalize_study(study), route_alternative(positions))
+
+    def test_clear_straight_run_is_the_exact_face_to_face_distance(self):
+        study = fixture()
+        study["corridors"], study["exits"] = [], []
+        estimate = self.routed(study, [placement("A", 2, 6), placement("B", 12, 6)])
+        route = estimate["routes"][0]
+        self.assertEqual((estimate["status"], route["status"]), ("COMPLETE", "ROUTED"))
+        self.assertAlmostEqual(route["length_m"], 8.0)  # faces at x = 4 and x = 12
+        self.assertEqual((route["bends"], route["deck_penetrations"]), (0, 0))
+        self.assertEqual(estimate["evidence_class"], "SCREENING_ESTIMATE")
+
+    def test_route_goes_round_an_obstacle_and_never_enters_it(self):
+        study = fixture()
+        study["corridors"], study["exits"] = [], []
+        study["obstacles"] = [{"id": "WALL", "deck": "D1", "bounds_m": [7, 0, 0, 9, 14, 10]}]
+        estimate = self.routed(study, [placement("A", 2, 6), placement("B", 12, 6)])
+        route = estimate["routes"][0]
+        self.assertEqual(route["status"], "ROUTED")
+        self.assertGreater(route["length_m"], 8.0 + 2 * 6.0)  # out past y = 14 and back
+        for first, second in zip(route["points_m"][:-1], route["points_m"][1:]):
+            self.assertEqual(sum(abs(first[i] - second[i]) > 1e-9 for i in range(3)), 1)  # axis-parallel
+            crosses_wall = (min(first[0], second[0]) < 9 and max(first[0], second[0]) > 7
+                            and min(first[1], second[1]) < 14)
+            self.assertFalse(crosses_wall, (first, second))
+
+    def test_reserved_corridor_is_closed_to_routes_unless_an_overhead_clearance_is_stated(self):
+        study = fixture()
+        study["exits"] = []
+        study["corridors"] = [{"id": "E1", "deck": "D1", "bounds_m": [8, 0, 10, 20], "kind": "escape",
+                               "source": "Synthetic test corridor"}]
+        positions = [placement("A", 2, 6), placement("B", 14, 6)]
+        blocked = self.routed(copy.deepcopy(study), positions)
+        self.assertEqual(blocked["routes"][0]["status"], "NO_ROUTE_FOUND")
+        self.assertEqual((blocked["status"], blocked["unrouted"]), ("NONE", ["L1"]))
+        over = self.routed(copy.deepcopy(study), positions, corridor_overhead_clearance_m=3.0)
+        route = over["routes"][0]
+        self.assertEqual(route["status"], "ROUTED")
+        self.assertGreaterEqual(max(point[2] for point in route["points_m"]), 3.0)
+
+    def test_route_between_decks_counts_the_deck_penetration(self):
+        study = fixture()
+        study["corridors"], study["exits"] = [], []
+        study["decks"].append({"id": "D2", "width_m": 20, "depth_m": 20, "elevation_m": 10, "height_limit_m": 8})
+        study["equipment"][1]["allowed_decks"] = ["D2"]
+        estimate = self.routed(study, [placement("A", 6, 6), placement("B", 6, 6, deck="D2")])
+        route = estimate["routes"][0]
+        self.assertEqual((route["status"], route["deck_penetrations"]), ("ROUTED", 1))
+        self.assertAlmostEqual(route["length_m"], 8.0)  # top of A at 2 m to underside of B at 10 m
+
+    def test_own_maintenance_envelope_does_not_seal_equipment_in_but_others_are_avoided(self):
+        study = fixture()
+        study["corridors"], study["exits"] = [], []
+        study["equipment"][0]["envelopes"] = [{"kind": "maintenance", "bounds_m": [2, 0, 0, 4, 2, 2]}]
+        estimate = self.routed(study, [placement("A", 2, 6), placement("B", 12, 6)])
+        self.assertEqual(estimate["routes"][0]["status"], "ROUTED")
+        third = copy.deepcopy(study["equipment"][1])
+        third.update(tag="C", envelopes=[{"kind": "maintenance", "bounds_m": [-1, -6, 0, 3, 8, 9]}])
+        study["equipment"].append(third)
+        estimate = self.routed(study, [placement("A", 2, 6), placement("B", 12, 6), placement("C", 7, 6)])
+        self.assertEqual(estimate["routes"][0]["status"], "ROUTED")
+        self.assertGreater(estimate["routes"][0]["length_m"], 8.0)
+
+    def test_unplaced_equipment_is_reported_not_routed(self):
+        study = fixture()
+        estimate = self.routed(study, [placement("A", 2, 6)])
+        self.assertEqual(estimate["routes"][0]["status"], "NOT_PLACED")
+        self.assertEqual(estimate["total_length_m"], 0.0)
+
+    def test_coarse_grid_is_used_and_recorded_when_the_cell_budget_is_small(self):
+        study = fixture()
+        study["corridors"], study["exits"] = [], []
+        estimate = self.routed(study, [placement("A", 2, 6), placement("B", 12, 6)], max_cells=1000)
+        self.assertGreater(estimate["grid_m"], 1.0)
+        self.assertEqual(estimate["routes"][0]["status"], "ROUTED")
+
+    def test_study_run_publishes_estimates_apart_from_physical_route_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            summary = layout_study.run_study(spread_fixture(), directory, stage="place",
+                                             optimize=True, routing=True)
+            dataset = json.loads(Path(summary["dataset"]).read_text(encoding="utf-8"))
+            alternative = dataset["alternatives"][0]
+            self.assertEqual(alternative["route_estimates"]["status"], "COMPLETE")
+            self.assertEqual(alternative["metrics"]["routed_connections"], 2)
+            self.assertIn("optimization", alternative["solver"])
+            self.assertEqual(dataset["study"]["options"]["optimize"]["enabled"], True)
+            # Software estimates never become physical inventory evidence.
+            self.assertEqual(dataset["physical_inventory"]["routes"], [])
+            with open(summary["tables"]["route_estimates"], newline="", encoding="utf-8") as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertEqual([row["connection_id"] for row in rows], ["L1", "L2"])
+            self.assertTrue(all(row["evidence_class"] == "SCREENING_ESTIMATE" for row in rows))
+            with open(summary["tables"]["physical_routes"], newline="", encoding="utf-8") as stream:
+                self.assertEqual(list(csv.DictReader(stream)), [])
+            # A retained dataset is accepted again by a later stage with the same switches.
+            again = layout_study.run_study(spread_fixture(), directory, stage="check",
+                                           optimize=True, routing=True)
+            self.assertEqual(again["alternatives"][0]["metrics"], summary["alternatives"][0]["metrics"])
+            with self.assertRaises(ValueError):
+                layout_study.run_study(spread_fixture(), directory, stage="check")
+
+    def test_report_and_plan_show_shortening_and_route_estimates(self):
+        import layout_drawings
+        import layout_report
+
+        study = spread_fixture()
+        study["options"]["optimize"] = {"enabled": True}
+        study["options"]["routing"] = {"enabled": True}
+        normalized = layout_model.normalize_study(study)
+        alternatives = layout_engine.generate_layouts(study)
+        headers, rows, notes = layout_report._search_extensions(alternatives)
+        self.assertEqual(rows[0][0], "ALT-01")
+        self.assertIn("Route estimate m", headers)
+        self.assertTrue(any("not physical-route evidence" in note for note in notes))
+        self.assertIsNone(layout_report._search_extensions(layout_engine.generate_layouts(spread_fixture())))
+        html_text = layout_report._html_report(normalized, alternatives, None, None)
+        self.assertIn("Connection shortening and route estimates", html_text)
+        sheet = layout_drawings._plan_sheet(normalized, alternatives[0], normalized["decks"][0], 1, 1)
+        self.assertTrue(any("route estimate" in entry[-1].lower() for entry in sheet.legend))
+        self.assertTrue(any("software route estimates" in note for note in sheet.notes))
 
 
 class LayoutProcessTests(unittest.TestCase):
