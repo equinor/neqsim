@@ -3315,19 +3315,81 @@ and water. These are numerical robustness checks. Experimental slug frequency an
 thermal phase change and high-Mach shocks require separate qualification. The default AUSM+
 route can still reach its velocity limiter after a long shut-in.
 
+### Run time and where it goes
+
+A `TwoFluidPipe` run spends its time in two places: the nonlinear closure solves of every cell
+(equilibrium stratified level, stratified holdup, slug-unit film balance) and the equilibrium
+flashes that refresh phase properties. The closure solves are organised so that no cell solves
+the same balance twice from the same state:
+
+- **Pressure march.** With explicit cell-face terrain the march integrates between cell centres
+  with the gradients of both neighbours. The gradient reads holdups, velocities, properties and
+  regime weights but never the cell pressure, and the march writes pressures only, so each
+  cell's gradient is evaluated once per march and held for its second use. The same holds for
+  the steady pressure-momentum residual.
+- **Repeated closure requests.** Flow-regime classification and its transition weights need the
+  same equilibrium level; the holdup closure needs the same stratified and slug-unit solutions
+  for the slug, stratified and annular shares of a blended cell. `FlowRegimeDetector`,
+  `SlugUnitModel` and the stratified holdup root keep their last solution and return it when
+  every argument has the same bit pattern as before (`ExactArgumentMemo`). There is no
+  tolerance: a reused value is the value the solver would have returned.
+- **Slug-film balance.** The Haaland roughness power, the inclination sine and the
+  stratified-to-annular geometry weight are evaluated once per unit instead of once per trial
+  film holdup.
+- **Circular-segment inversion.** `SlugUnitModel.centralAngle` starts from the reverted series of
+  $\beta - \sin\beta = 2\pi\alpha$ and takes Halley steps inside a bracket. Below one radian
+  the residual uses the Taylor series of $\beta - \sin\beta$; the direct difference loses up to
+  two digits there, which left the previous Newton search unable to reach its stop (9 evaluations
+  on average, 60 in the worst case, up to 54 units in the last place from the root). The
+  iteration now needs at most 3 evaluations and returns the root within 4 units in the last
+  place. The circular-segment geometry and the steady convergence tolerances are unchanged.
+
+Measured 2026-11-22 on revision a2399c6 against the same revision with these four changes,
+OpenJDK 21, one thread, median of repeated runs on new pipes after warm-up. All profile sums of
+pressure, liquid holdup, temperature and phase velocities agree to the 13 digits printed in
+every case, and the steady iteration counts are the same.
+
+| Case | Before (s) | After (s) | Change |
+|------|-----------:|----------:|-------:|
+| Three-phase flowline and riser, 5.4 km, 8 in, 60 cells, steady `run()` | 1.60 | 1.23 | -23% |
+| Same line, 120 cells, steady `run()` | 5.60 | 4.14 | -26% |
+| Same line, 60 cells, `run()` then 60 x `runTransient(1.0, id)` | 24.2 | 13.6 | -44% |
+| Gas-condensate line, 20 km, 16 in, 100 cells, undulating, steady `run()` | 4.00 | 3.73 | -7% |
+| Same line, `run()` then 60 x `runTransient(2.0, id)` | 11.7 | 8.9 | -24% |
+
+The transient intervals alone went from 22.5 to 11.9 s on the three-phase line and from 7.9 to
+5.8 s on the gas-condensate line.
+
+What remains is mostly thermodynamics. `TPflash` alone is now 48% of the three-phase transient
+case, 57% of the three-phase steady solve and 69% of the gas-condensate steady solve, where the
+equilibrium heat capacity and Joule-Thomson coefficient take three flashes per cell on the flash
+cadence; cloning the reference fluid and initialising its properties for each flash add 10 to 15
+points. That cost is set by the fluid model, the number of cells and how often properties are
+refreshed: `setSteadyStateFlashInterval(int)` for `run()` (default 3 iterations) and
+`setThermodynamicUpdateInterval(int)` for `runTransient` (default 10 substeps). On the
+three-phase transient above, an interval of 20 took the 60 intervals from 12.6 to 9.2 s and moved
+the inlet pressure after 60 s from 69.28 to 69.14 bara and the mean liquid holdup from 0.3801 to
+0.3798; an interval of 40 took 7.9 s and gave 68.95 bara. A longer interval changes the result,
+so compare it with the default on the case at hand before using it. `PipeBeggsAndBrills` is in
+the same position: 88% of a run on the three-phase feed is its one flash per increment.
+
+When changing closure code, keep these properties: a pressure march may hold gradients only
+while nothing but pressures is written, and a remembered closure result must depend on its
+arguments alone (or carry every model switch it reads in its arguments, as `SlugUnitModel`
+does).
+
+Two test-classpath entry points reproduce the measurements. Launch each in a separate JVM with
+its logger at INFO and check that the reported results do not move when only run time is being
+worked on.
+
+- `neqsim.process.equipment.pipeline.TwoFluidPipeThreePhaseFlowlineBenchmark` runs two warm-up
+  and five timed fresh-pipe steady solves at 60 and 120 cells with the same flashed feed, and
+  reports arrival pressure, phase holdups, phase flows and steady residuals.
+- `neqsim.process.equipment.pipeline.TwoFluidPipeTransientFlowlineBenchmark` solves the 60-cell
+  line and times 60 one-second transient intervals, one warm-up and three timed samples, and
+  reports the pressure, liquid-holdup and gas-velocity profile sums.
+
 ### Steady-State Solver Tuning
-
-The circular-segment inversion in the slug-film closure solves for the smaller
-phase segment with a safeguarded Newton step and a small-angle series. The
-underlying circular-segment geometry and steady convergence tolerances are
-unchanged.
-
-The synthetic three-phase flowline benchmark is the
-`neqsim.process.equipment.pipeline.TwoFluidPipeThreePhaseFlowlineBenchmark`
-test-classpath entry point. It runs two warm-up and five timed fresh-pipe solves
-at 60 and 120 cells with the same flashed feed. Launch it in a separate JVM with
-the benchmark logger at INFO. Compare the median and individual times with the
-reported arrival pressure, phase holdups, phase flows and steady residuals.
 
 The initial steady-state solve iterates between the hydraulic pressure/holdup sweep and thermodynamic flashes
 until convergence. Four parameters control this:

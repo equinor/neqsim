@@ -27,6 +27,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.ExactArgumentMemo;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
@@ -397,6 +398,24 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Stateless slug-unit evaluator. */
   private SlugUnitModel slugUnitModel = new SlugUnitModel();
+
+  /**
+   * Last solved stratified holdup. One cell needs the same stratified balance for its slug, stratified and annular
+   * regime shares; repeat requests reuse the solution when every argument is bitwise unchanged.
+   */
+  private transient ExactArgumentMemo<Double> stratifiedHoldupMemo;
+
+  /**
+   * Cells whose pressure gradient is held during one pressure march, or null outside a march. A march only writes cell
+   * pressures, which the gradient does not read, so the gradient of a cell is the same each time the march asks.
+   */
+  private transient TwoFluidSection[] marchGradientSections;
+
+  /** Pressure gradients of {@link #marchGradientSections}, Pa/m. */
+  private transient double[] marchGradientValues;
+
+  /** Slot of {@link #marchGradientSections} that the next evaluated gradient replaces. */
+  private transient int marchGradientNextSlot;
 
   /** Time integrator. */
   private TimeIntegrator timeIntegrator;
@@ -2217,8 +2236,13 @@ public class TwoFluidPipe extends Pipeline {
   /** Calculate the accumulated discrete momentum residual of the returned pressure profile. */
   private double calculateSteadyPressureMomentumResidual() {
     double pressureResidualSum = 0.0;
-    for (int i = 1; i < numberOfSections; i++) {
-      pressureResidualSum += Math.abs(marchPressure(sections[i - 1], sections[i]) - sections[i].getPressure());
+    beginPressureMarch();
+    try {
+      for (int i = 1; i < numberOfSections; i++) {
+        pressureResidualSum += Math.abs(marchPressure(sections[i - 1], sections[i]) - sections[i].getPressure());
+      }
+    } finally {
+      endPressureMarch();
     }
     double totalDrop = sections[0].getPressure() - sections[numberOfSections - 1].getPressure();
     return pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3);
@@ -4123,6 +4147,37 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double calculateStratifiedHoldupOLGA(double vsG, double vsL, double rhoG, double rhoL, double muG, double muL,
       double sigma, double D, double theta) {
+    ExactArgumentMemo<Double> memo = stratifiedHoldupMemo;
+    if (memo != null && memo.matches(vsG, vsL, rhoG, rhoL, muG, muL, sigma, D, theta)) {
+      return memo.getValue().doubleValue();
+    }
+    double holdup = solveStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, D, theta);
+    stratifiedHoldupMemo = new ExactArgumentMemo<Double>(Double.valueOf(holdup), vsG, vsL, rhoG, rhoL, muG, muL, sigma,
+        D, theta);
+    return holdup;
+  }
+
+  /**
+   * Solve the stratified momentum balance for the liquid holdup.
+   *
+   * <p>
+   * The result depends on the arguments alone. {@link #calculateStratifiedHoldupOLGA} relies on that to reuse the
+   * previous solution when one cell asks for the same balance for several regime shares.
+   * </p>
+   *
+   * @param vsG gas superficial velocity [m/s]
+   * @param vsL liquid superficial velocity [m/s]
+   * @param rhoG gas density [kg/m3]
+   * @param rhoL liquid density [kg/m3]
+   * @param muG gas viscosity [Pa.s]
+   * @param muL liquid viscosity [Pa.s]
+   * @param sigma surface tension [N/m]
+   * @param D pipe diameter [m]
+   * @param theta pipe inclination [radians]
+   * @return liquid holdup [-]
+   */
+  private double solveStratifiedHoldupOLGA(double vsG, double vsL, double rhoG, double rhoL, double muG, double muL,
+      double sigma, double D, double theta) {
     double vMix = vsG + vsL;
     double lambdaL = vsL / vMix;
     if (lambdaL <= 0.0) {
@@ -4230,10 +4285,11 @@ public class TwoFluidPipe extends Pipeline {
     double relativeVelocity = gasVelocity - liquidVelocity;
     double interfacialShear = interfacialFriction * rhoG * relativeVelocity * Math.abs(relativeVelocity) / 2.0;
 
+    double sinTheta = Math.sin(theta);
     double gasPressureGradient = gasWallShear * gasPerimeter / regularizedGasArea
-        + interfacialShear * interfaceWidth / regularizedGasArea + rhoG * 9.81 * Math.sin(theta);
+        + interfacialShear * interfaceWidth / regularizedGasArea + rhoG * 9.81 * sinTheta;
     double liquidPressureGradient = liquidWallShear * liquidPerimeter / regularizedLiquidArea
-        - interfacialShear * interfaceWidth / regularizedLiquidArea + rhoL * 9.81 * Math.sin(theta);
+        - interfacialShear * interfaceWidth / regularizedLiquidArea + rhoL * 9.81 * sinTheta;
     return gasPressureGradient - liquidPressureGradient;
   }
 
@@ -4920,10 +4976,62 @@ public class TwoFluidPipe extends Pipeline {
    * AdiabaticPipe and PipeBeggsAndBrills.
    * </p>
    *
+   * <p>
+   * During a pressure march the two most recently evaluated cells are held, see {@link #beginPressureMarch()}. A march
+   * integrates between cell centres with the gradients of both neighbours, so without the hold every interior cell is
+   * evaluated twice from an unchanged state.
+   * </p>
+   *
    * @param sec Current pipe section
    * @return Pressure gradient estimate (Pa/m)
    */
   private double estimatePressureGradient(TwoFluidSection sec) {
+    TwoFluidSection[] held = marchGradientSections;
+    if (held == null) {
+      return calculatePressureGradient(sec);
+    }
+    for (int slot = 0; slot < held.length; slot++) {
+      if (held[slot] == sec) {
+        return marchGradientValues[slot];
+      }
+    }
+    double gradient = calculatePressureGradient(sec);
+    held[marchGradientNextSlot] = sec;
+    marchGradientValues[marchGradientNextSlot] = gradient;
+    marchGradientNextSlot = (marchGradientNextSlot + 1) % held.length;
+    return gradient;
+  }
+
+  /**
+   * Start holding pressure gradients for a march that changes cell pressures only.
+   *
+   * <p>
+   * The friction, slug-unit and gravity terms of {@link #calculatePressureGradient(TwoFluidSection)} read holdups,
+   * velocities, densities, viscosities, regime weights and inclination, never the cell pressure. A march that writes
+   * nothing but pressures therefore gets the same gradient for a cell each time it asks, and the held value is that
+   * gradient bit for bit. Always pair with {@link #endPressureMarch()} in a finally block; do not open a march around
+   * code that updates holdup, velocity, properties or flow regime.
+   * </p>
+   */
+  private void beginPressureMarch() {
+    marchGradientSections = new TwoFluidSection[2];
+    marchGradientValues = new double[2];
+    marchGradientNextSlot = 0;
+  }
+
+  /** Stop holding pressure gradients; later requests evaluate the current cell state again. */
+  private void endPressureMarch() {
+    marchGradientSections = null;
+    marchGradientValues = null;
+  }
+
+  /**
+   * Evaluate the friction and gravity pressure gradient of one cell from its current state.
+   *
+   * @param sec pipe section
+   * @return pressure gradient (Pa/m)
+   */
+  private double calculatePressureGradient(TwoFluidSection sec) {
     if (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec)) {
       return sharedSlugForceBalance.pressureGradient(sec);
     }
@@ -8528,7 +8636,18 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null || numberOfSections < 2) {
       return;
     }
+    beginPressureMarch();
+    try {
+      marchPressureProfile();
+    } finally {
+      endPressureMarch();
+    }
+  }
 
+  /**
+   * March the pressure profile from the boundary that sets it; writes cell pressures only.
+   */
+  private void marchPressureProfile() {
     // Handle different boundary condition combinations
     boolean outletClosed = (outletBCType == BoundaryCondition.CLOSED);
     boolean inletClosed = (inletBCType == BoundaryCondition.CLOSED);
