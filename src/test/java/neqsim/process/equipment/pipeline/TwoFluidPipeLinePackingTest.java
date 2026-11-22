@@ -111,7 +111,7 @@ public class TwoFluidPipeLinePackingTest {
     UUID id = UUID.randomUUID();
     double lowestCellPressure = Double.POSITIVE_INFINITY;
     double largestRiseAlongFlow = 0.0;
-    for (int step = 0; step < 60; step++) {
+    for (int step = 0; step < 120; step++) {
       pipe.runTransient(5.0, id);
       double[] pressure = pipe.getPressureProfile();
       for (int cell = 0; cell < pressure.length; cell++) {

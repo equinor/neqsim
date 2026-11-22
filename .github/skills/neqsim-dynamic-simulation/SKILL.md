@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-20"
+last_verified: "2026-11-22"
 ---
 
 # Dynamic Simulation Guidance
@@ -781,6 +781,24 @@ oil-water force on such a flip and keeps only the combined liquid force. Measure
 through 150 s (about 1.0 kg/s on 60 cells, 0.85 kg/s on 120) while the riser gains about 400-520 kg
 of liquid as gas slows. Regression: `TwoFluidPipeThreePhaseChokeStepTest`
 (equinor/neqsim#5046).
+
+On the coupled route without mass transfer, component transport or non-equilibrium film transfer,
+property updates advance gas and oil density at frozen composition
+(`setFrozenCompositionDensityUpdate`, default true). Do not switch it off for a pack-up, shut-in or
+HIPPS study: the equilibrium reset swells the oil at fixed mass and makes gas-bearing cells alternate
+above about 180 bara. Measured 2026-11-22 on a closed 400 m line fed 50 kg/s for 20 s from 170 bara:
+229 bara by frozen-composition compression of the pipe inventory, 234 bara with the default, 334 bara
+with the reset (`TwoFluidPipeFrozenCompositionDensityTest`). The default describes phases that
+exchange no mass; when gas dissolving into oil matters over the pack-up time, enable mass transfer
+or component transport and say which was used.
+
+In a rising cell the regime detector requires a void fraction below 0.52 for bubble flow
+(`FlowRegimeNearDryRiserTest`). A near-dry closed riser top can still change regime when its gas
+velocity changes sign. Measured 2026-11-22 on a 15.6 km tie-back packing to 232 barg with the default
+flux: 23 riser-top steps above 1 bar in 3000 s, 13 bar at most (131 bar before the frozen-composition
+update); `setMaterialWaveRusanovEnabled(true)` gave steps up to 83 bar there. Read the pack-up rate
+and inlet pressure from such a run, and do not read riser-top film velocities at the recovery limit,
+or the pressure steps with them, as a pressure peak.
 
 For a liquid-rich pressure outlet that physically permits phase fallback, the coupled path requires
 all four options. Keep the nonlinear controls explicit in reproducible studies:

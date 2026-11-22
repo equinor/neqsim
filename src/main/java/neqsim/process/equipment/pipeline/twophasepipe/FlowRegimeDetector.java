@@ -88,6 +88,11 @@ public class FlowRegimeDetector implements Serializable {
   private static final double ANNULAR_BRIDGING_HOLDUP = 0.24;
 
   /**
+   * Void fraction above which bubbles touch and a liquid-continuous bubble flow cannot exist (Taitel et al., 1980).
+   */
+  private static final double BUBBLE_PACKING_VOID_FRACTION = 0.52;
+
+  /**
    * Whether the horizontal annular transition uses the equilibrium liquid level.
    *
    * @return true when Taitel-Dukler transition B is used
@@ -680,7 +685,9 @@ public class FlowRegimeDetector implements Serializable {
       double bubbleTransportVelocity = U_SG + U_SL + U_bubble;
       // Countercurrent flow can make the inferred bubble transport zero or negative. A negative void fraction
       // does not satisfy the bubble criterion: accepting it would switch closure across the transport pole.
-      if (U_SG >= 0.0 && bubbleTransportVelocity > 0.0) {
+      // The void fraction inferred from the superficial velocities says nothing about a cell whose gas is nearly
+      // stagnant. Bubbles need a continuous liquid, so the cell's own void fraction must also allow them.
+      if (U_SG >= 0.0 && bubbleTransportVelocity > 0.0 && 1.0 - liquidHoldup < BUBBLE_PACKING_VOID_FRACTION) {
         double alpha_G = U_SG / bubbleTransportVelocity;
         if (alpha_G < alpha_G_crit) {
           return FlowRegime.BUBBLE;
