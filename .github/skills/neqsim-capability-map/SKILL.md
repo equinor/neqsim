@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-11-19"
+last_verified: "2026-11-22"
 ---
 
 # NeqSim Capability Map
@@ -94,7 +94,7 @@ and campaign #3153 completion gates.
 | `SystemIdealGas` | Ideal gas law | Teaching / reference |
 | `SystemBnsEos` | BNS EOS with optional helium and fitted LBC viscosity | [Specialized gas properties](../../../docs/thermo/fluid_creation_guide.md#53-other-reference-equations) |
 | `SystemUMRPRUEos` | UMRPRU group contribution | Predictive mixing rules |
-| `SystemUMRPRUMCEos` | UMR-PRU with Mathias-Copeman alpha | Mercury and water group parameters of the mercury calculator (libhg 2.0.3); `MercuryPhaseEquilibrium` adds a separate liquid or solid mercury phase; `MercuryFluidConverter` converts an E300 fluid to it and `MercuryProcessAnalyzer` tracks mercury and free mercury through a process (`@mercury-distribution`). Not for mercury with glycols. [Mercury thermodynamics](../../../docs/thermo/mercury_thermodynamics.md), [mercury distribution studies](../../../docs/process/mercury-distribution-study.md) |
+| `SystemUMRPRUMCEos` | UMR-PRU with Mathias-Copeman alpha | Equinor UMR-PRU group and Mathias-Copeman parameters, including H2 and single MEG/TEG groups ([parameter set](../../../docs/thermo/component_database_guide.md#umr-pru-mc-parameter-set-equinor)). Mercury and water group parameters of the mercury calculator (libhg 2.0.3); `MercuryPhaseEquilibrium` adds a separate liquid or solid mercury phase; `MercuryFluidConverter` converts an E300 fluid to it and `MercuryProcessAnalyzer` tracks mercury and free mercury through a process (`@mercury-distribution`). Not for mercury with glycols. [Mercury thermodynamics](../../../docs/thermo/mercury_thermodynamics.md), [mercury distribution studies](../../../docs/process/mercury-distribution-study.md) |
 | `SystemNRTL` | Activity coefficient (NRTL) | Liquid-liquid equilibrium |
 | `SystemUNIFAC` | Activity coefficient (UNIFAC) | Group contribution |
 | `SystemSoreideWhitson` | Soreide-Whitson for oil/water | HC-water mutual solubility |

@@ -66,9 +66,23 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         component.setComponentName(name);
       }
       component.setAttractiveTerm(source.getAttractiveTermNumber());
+      if (!pseudoComponent && !cpaInteractionParameters && isMcAttractiveTerm(source.getAttractiveTermNumber())) {
+        component.applyGroupAssignmentOverride("unifaccompumrprumc");
+      }
       componentArray[i] = component;
     }
     this.setMixingRule(EosMixingRuleType.CLASSIC);
+  }
+
+  /**
+   * Returns whether an attractive term belongs to the Mathias-Copeman UMR-PRU variants that read the {@code _umrmc}
+   * group-interaction tables and the {@code UNIFACcompUMRPRUMC} group-assignment overrides.
+   *
+   * @param attractiveTermNumber attractive term number of the EOS component
+   * @return true for attractive terms 13 and 19
+   */
+  private static boolean isMcAttractiveTerm(int attractiveTermNumber) {
+    return attractiveTermNumber == 13 || attractiveTermNumber == 19;
   }
 
   /**

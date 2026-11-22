@@ -572,6 +572,7 @@ public class NeqSimDataBase extends NeqSimDatabaseBase {
 
       updateTable("UNIFACcomp");
       updateTable("UNIFACcompUMRPRU");
+      updateTable("UNIFACcompUMRPRUMC");
       updateTable("UNIFACGroupParam");
       updateTable("UNIFACInterParam");
 

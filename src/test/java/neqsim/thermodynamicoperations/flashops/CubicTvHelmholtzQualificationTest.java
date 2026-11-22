@@ -133,7 +133,7 @@ class CubicTvHelmholtzQualificationTest {
     fluid.init(3);
     assertEquals(2, fluid.getNumberOfPhases());
     assertEquals(0.998, fluid.getVolume("m3"), 1.0e-10);
-    assertEquals(19.138156156431233, fluid.getPressure(), 1.0e-8);
+    assertEquals(19.137473174060446, fluid.getPressure(), 1.0e-8);
     double ideal = 0.0;
     for (int i = 0; i < FEED.length; i++) {
       double supplied = initialInventory[i] + 50.0 * additionInventory[i];
@@ -145,7 +145,7 @@ class CubicTvHelmholtzQualificationTest {
       assertEquals(supplied, recovered, 1.0e-10);
       ideal += fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getHID(fluid.getTemperature());
     }
-    assertEquals(-534369.1023002401, fluid.getEnthalpy() - ideal, 1.0);
+    assertEquals(-543836.8980098111, fluid.getEnthalpy() - ideal, 1.0);
   }
 
   /**

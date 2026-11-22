@@ -71,11 +71,12 @@ class NamedWaxColdStartTest extends neqsim.NeqSimTest {
       for (double start : new double[] {320.0, 270.0, 265.0}) {
         SystemInterface initial = start == 320.0 ? original : flash(original, start, initialize);
         double previousWax = Double.POSITIVE_INFINITY;
-        for (double temperature : new double[] {260.0, 265.0, 270.0, 275.0}) {
+        for (double temperature : new double[] {260.0, 265.0, 268.0, 275.0}) {
           SystemInterface result = flash(initial, temperature, initialize);
           assertTrue(result.hasPhaseType("gas"), "Missing gas at " + temperature + " K");
           assertTrue(result.hasPhaseType("oil"), "Missing oil at " + temperature + " K");
-          assertEquals(temperature <= 270.0, result.hasPhaseType("wax"), "Wax topology at " + temperature + " K");
+          // Wax onset is 270.2 K at 1 bar and 269.4 K at 5 bar with the corrected nC20/nC24 critical properties.
+          assertEquals(temperature <= 268.0, result.hasPhaseType("wax"), "Wax topology at " + temperature + " K");
           double wax = waxFraction(result);
           assertTrue(wax <= previousWax, "Wax must decrease on warming this feed");
           previousWax = wax;
@@ -104,7 +105,7 @@ class NamedWaxColdStartTest extends neqsim.NeqSimTest {
       SystemInterface result = original.clone();
       new ThermodynamicOperations(result).calcWAT();
       double wat = result.getTemperature();
-      assertTrue(wat > 270.0 && wat < 275.0, "Unexpected model onset: " + wat);
+      assertTrue(wat > 268.0 && wat < 272.0, "Unexpected model onset: " + wat);
       if (Double.isFinite(reference)) {
         assertEquals(reference, wat, 1e-4);
       }

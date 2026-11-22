@@ -669,7 +669,8 @@ The COMP table works with several related tables:
 |-------|---------|-------------|
 | `INTER` | Binary interaction parameters (kij) | comp1, comp2, kij, model |
 | `UNIFACcomp` | UNIFAC group assignments (original UNIFAC) | `Name`, `sub1`…`sub138` |
-| `UNIFACcompUMRPRU` | UNIFAC group assignments (UMR-PRU) | `Name`, `sub1`…`sub138` |
+| `UNIFACcompUMRPRU` | UNIFAC group assignments (UMR-PRU) | `Name`, `sub1`…`sub140` |
+| `UNIFACcompUMRPRUMC` | Group-assignment overrides for UMR-PRU-MC only | `Name`, `sub1`…`sub140` |
 | `UNIFACGroupParam` | UNIFAC subgroup parameters | `Secondary`, `Main`, `VolumeR`, `SurfAreaQ` |
 | `UNIFACInterParam*` | UNIFAC group interaction parameters | MainGroup, n1…n70 |
 | `MBWR32param` | MBWR equation parameters | comp, coefficients |
@@ -729,8 +730,10 @@ They carry the **same R and Q** as CH2 / CH / C and sit in their own main groups
 66–68 so that ring-specific interaction parameters can be regressed. Because R
 and Q are identical, the combinatorial term is unaffected; only the residual
 term changes. All cross terms between main group 1 and main groups 66–68 are
-zero in the A, B and C matrices, and the rows are otherwise equal, so the two
-choices differ **only** against water, CO2, CH4, N2, H2S, C2H6, Hg and TEG.
+zero in the A, B and C matrices. In the `_UMRMC` tables main groups 66, 67 and 68
+carry identical rows and columns (the Equinor UMR-PRU parameter set), so a ring
+CH or C interacts with CO2, N2, CH4, C2H6, H2S, H2, MEG, methanol and TEG exactly
+like a ring CH2.
 
 **In `UNIFACcompUMRPRU.csv` every ring carbon uses the cyclic groups.** This
 matches the DDBST *modified UNIFAC (Dortmund)* assignment set, which uses its
@@ -791,6 +794,43 @@ Note that a UMR-PRU or PSRK component does **not** need a row in
 `UNIFACcomp.csv`. `PhaseGEUnifac` skips building the classic components when it
 is constructing a subclass, which would otherwise discard them immediately while
 forcing every UMR-PRU component to be duplicated into the classic table.
+
+### UMR-PRU-MC parameter set (Equinor)
+
+`SystemUMRPRUMCEos` and `SystemUMRPRUMCEosNew` use the Equinor UMR-PRU parameter
+set (TDI Gas Processing Technology compound and UNIFAC parameter workbooks,
+checked November 2026):
+
+- **Group interactions.** The `UNIFACInterParam{A,B,C}_UMRMC` tables hold the
+  Equinor A, B and C values for CO2, N2, CH4, C2H6, the paraffinic, aromatic and
+  cyclic groups, H2O, H2S, Hg, MEG, methanol, H2 and TEG. The interaction function
+  is $\Psi_{nm} = \exp\left[-\left(A_{nm} + B_{nm}(T-298.15) + C_{nm}(T-298.15)^2\right)/T\right]$.
+  Two pairs keep the previous NeqSim values because the workbook values were not
+  physically reasonable in screening: H2–H2S had a non-physical temperature
+  dependence and the flash failed at 340 K, and H2–methanol rose to 10 times the
+  SRK-CPA hydrogen solubility below 260 K. UMR-CPA reads its own `_UMRCPA` tables
+  and is unchanged.
+- **MEG and TEG are single molecular groups** (subgroups 139 and 140) in
+  UMR-PRU-MC. The override table `UNIFACcompUMRPRUMC.csv` holds these assignments
+  and `PhaseGEUnifacUMRPRU` applies it only for attractive terms 13 and 19 and not
+  for UMR-CPA. `UNIFACcompUMRPRU.csv` still builds them from CH2, OH and CH2O, and
+  UMR-CPA uses that decomposition.
+- **Mathias-Copeman parameters** (`MCPR1`–`MCPR3` in `COMP.csv`) are taken from
+  the workbook when PR with the NeqSim Tc and Pc reproduces the normal boiling
+  point within 3.5 K. Workbook values that failed this check were not used:
+  isopropylcyclopentane, isopropylcyclohexane, MDEA, nC29 and nC34. Components
+  without an Equinor value have `MCPR1` = 0 and use the generalised PR alpha
+  $m(\omega)$. Earlier, 130 hydrocarbons carried copies of the water parameters.
+  24 of them now use Equinor values and 106 use the generalised alpha.
+
+The same `MCPR` columns are read by `SystemPrMathiasCopeman` and by UMR-CPA for
+non-associating components.
+
+Tc, Pc and acentric factor were changed only where the NeqSim value broke the
+homologous-series or isomer trend that the workbook follows: nC16, nC17,
+nC19–nC25, nC30, nC39, 3- and 4-ethyltoluene, n-butylcyclohexane,
+trans-1,2-dimethylcyclohexane (ω) and isopropylcyclohexane (ω). The workbook rows
+for nC27 and nC29 are themselves out of trend and were not used.
 
 ---
 
