@@ -177,6 +177,7 @@ public class TPmultiflashWAX extends TPflash {
     double[] ans = new double[system.getNumberOfPhases() - 1];
 
     int iter = 1;
+    double maxRelativeChange;
     do {
       iter++;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -204,15 +205,38 @@ public class TPmultiflashWAX extends TPflash {
         }
       }
 
-      if (updateFugacities) {
-        // system.init(1);
-      }
       calcE();
       setXY();
       if (updateFugacities) {
         system.init(1);
       }
-    } while ((ALGEBRA.euclideanNorm(ans) > 1e-6 && iter < 20) || iter < 3);
+      maxRelativeChange = maxRelativeBetaChange(oldBeta);
+    } while ((maxRelativeChange > 1e-6 && iter < 20) || iter < 3);
+  }
+
+  /**
+   * Returns the largest relative change of any phase fraction from the given previous values.
+   *
+   * <p>
+   * Convergence of the phase-fraction iteration is judged on this relative change. An absolute step norm is not a valid
+   * test: a phase re-entering from a trace fraction (for example the gas phase after the liquid has frozen out as wax)
+   * only grows geometrically under the Newton step, so its absolute change stays tiny while it is still far from its
+   * solution (#5210). A phase pinned at its lower bound has zero change and does not delay convergence.
+   * </p>
+   *
+   * @param previousBeta phase fractions before the latest update, one per active phase
+   * @return the maximum of |beta_new - beta_old| / max(beta_new, beta_old) over the active phases
+   */
+  private double maxRelativeBetaChange(double[] previousBeta) {
+    double maxChange = 0.0;
+    for (int k = 0; k < system.getNumberOfPhases() && k < previousBeta.length; k++) {
+      double current = system.getBeta(k);
+      double scale = Math.max(Math.abs(current), Math.abs(previousBeta[k]));
+      if (scale > 0.0) {
+        maxChange = Math.max(maxChange, Math.abs(current - previousBeta[k]) / scale);
+      }
+    }
+    return maxChange;
   }
 
   /**
@@ -436,18 +460,17 @@ public class TPmultiflashWAX extends TPflash {
     // system.display();
     int iterations = 0;
     if (multiPhaseTest && !system.isChemicalSystem()) {
-      double oldBeta = 1.0;
       double diff = 1.0;
-      // double oldDiff = 1.0e10;
 
       do {
         iterations++;
-        oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
-        // system.init(1);
+        double[] previousBeta = new double[system.getNumberOfPhases()];
+        for (int k = 0; k < previousBeta.length; k++) {
+          previousBeta[k] = system.getBeta(k);
+        }
         this.solveBeta(true);
-        // oldDiff = diff;
-        diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) / oldBeta);
-        // logger.info("diff multiphase " + diff);
+        // Every phase must have settled, not only the most recently added one (#5210).
+        diff = maxRelativeBetaChange(previousBeta);
       } while (diff > 1e-5 && iterations < 50);
       // this.solveBeta(true);
       if (iterations >= 49) {

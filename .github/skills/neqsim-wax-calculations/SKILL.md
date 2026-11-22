@@ -2,7 +2,7 @@
 name: neqsim-wax-calculations
 version: "0.1.0"
 description: "Use when: performing NeqSim wax calculations, wax appearance temperature (WAT), wax fraction versus temperature curves, wax precipitation, waxy-oil viscosity, wax model tuning, or wax inhibitor screening for flow assurance studies. Covers the verified Java and Python API setup for wax-forming oils with TBP and plus fractions."
-last_verified: "2026-07-06"
+last_verified: "2026-11-22"
 requires:
   python_packages: []
   java_packages: []
@@ -62,6 +62,19 @@ Notes:
 - Call `characterisePlusFraction()` before `getWaxModel().addTBPWax()`.
 - Call `setWaxModelType("Won")`, `setWaxModelType("Wilson")`, or `setWaxModelType("Coutinho")` before `addSolidComplexPhase("wax")` if the default Pedersen model is not intended.
 - Keep the heavy-end basis traceable. Wax predictions are very sensitive to molar mass, density, and n-paraffin distribution.
+
+### Named n-paraffin feeds
+
+Fluids whose wax formers are named database n-paraffins (`nC14`, `nC20`, `nC24`, ...) need no
+TBP characterization, and `getWaxModel().addTBPWax()` may be called before or after
+`addSolidComplexPhase("wax")`. Named wax formers are not split. They keep measured database
+fusion data (n-hexane, n-heptane, nC11-nC14, nC16); nC15 and nC17-nC24 only have the database
+placeholder (273.0 K, 6000 J/mol), and `addTBPWax()` replaces it with the Pedersen correlations
+(nC20 melts at about 310.5 K). **Call `addTBPWax()` for named nC15/nC17-nC24 feeds** — without it
+the 273 K placeholder puts the WAT near 270 K instead of near the n-paraffin melting point.
+Re-calling it after changing `setParameterWaxTriplePointTemperature`/`setParameterWaxHeatOfFusion`
+re-applies the tuning. Verified on methane/nC20 = 0.3/0.7 mol, SRK, 5 bara, 260-330 K
+(`WaxFractionSimTest`, 2026-11-22; equinor/neqsim#5210).
 
 ## Wax Appearance Temperature
 
@@ -207,6 +220,7 @@ wax_weight_fractions = list(wax.getWaxWeightFractions())
 | WAT calculation fails | Search range or initial fluid state is poor | Use `WaxCurveCalculator` over a broad temperature range and inspect failed flashes |
 | `calcWAT()` throws `molarVolumeAnalytical - compressibility factor is NaN`, or `WaxCurveCalculator` returns `NaN` WAT | Synthetic/hand-built heavy end with no n-paraffin distribution — the wax model has nothing physical to solve against | Do **not** substitute a guessed WAT. Report it as a lab-data gap and require a measured WAT/DSC or a real PVTsim/E300 characterization |
 | Wax fraction decreases or gas/wax disappears when cooling | Possible phase-selection or convergence artifact | Inspect unsmoothed independent TP trials, phase identities, conserved inventories and component fugacities; material balance or monotonicity smoothing alone cannot validate stability. See the #4324 cold-start regression in the [wax guide](../../../docs/thermo/characterization/wax_characterization.md). |
+| `IllegalStateException: Invalid reference-liquid fugacity coefficient for nC20`, or a wax mass fraction above 1 / phase mass fractions not summing to 1, on a named-paraffin feed | NeqSim before the #5210 fix: placeholder nC20 fusion data and a wax beta solver that stopped before a re-entering gas phase converged | Update NeqSim; call `getWaxModel().addTBPWax()` for the named feed and check `getPhaseFraction(...,"mass")` sums to 1 |
 | Python notebook sees old API | Installed neqsim package is stale | Use the devtools setup cell with workspace classes or rebuild/package the JAR |
 
 ## Reporting Requirements

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.io.TempDir;
 class WaxCharacterizationDocumentationTest {
   private static final Path GUIDE = Paths.get("docs", "thermo", "characterization", "wax_characterization.md");
   private static final String MARKER = "<!-- wax-characterization-example: complete-screen -->";
+  private static final String NAMED_PARAFFIN_MARKER = "<!-- wax-characterization-example: named-paraffin -->";
   private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
@@ -58,6 +59,37 @@ class WaxCharacterizationDocumentationTest {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = loader.loadClass("WaxCharacterizationScreeningExample");
       example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+    }
+  }
+
+  /**
+   * Compiles and runs the literal named n-paraffin snippet of the guide (#5210) and checks the wax mass fraction it
+   * reports.
+   *
+   * @throws Exception if the guide cannot be read or the snippet cannot be compiled or run
+   */
+  @Test
+  void namedParaffinSnippetCompilesAndRuns() throws Exception {
+    String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
+    int markerIndex = markdown.indexOf(NAMED_PARAFFIN_MARKER);
+    assertTrue(markerIndex >= 0, "Named n-paraffin example marker is missing");
+    assertEquals(markerIndex, markdown.lastIndexOf(NAMED_PARAFFIN_MARKER), "Named n-paraffin marker must be unique");
+    Matcher fenceMatcher = JAVA_FENCE.matcher(markdown.substring(markerIndex + NAMED_PARAFFIN_MARKER.length()));
+    assertTrue(fenceMatcher.find(), "Named n-paraffin Java fence is missing");
+    String snippet = fenceMatcher.group(1).trim();
+    assertTrue(snippet.contains("fluid.getWaxModel().addTBPWax();"));
+    assertTrue(snippet.contains("double[] waxMassFraction = wax.getWaxFraction();"));
+
+    String source = "import neqsim.pvtsimulation.simulation.WaxFractionSim;\n"
+        + "import neqsim.thermo.system.SystemInterface;\n" + "import neqsim.thermo.system.SystemSrkEos;\n"
+        + "public final class NamedParaffinWaxExample {\n" + "  public static double[] run() {\n" + snippet + "\n"
+        + "    return waxMassFraction;\n" + "  }\n" + "}\n";
+    try (URLClassLoader loader = compile("NamedParaffinWaxExample", source)) {
+      double[] waxMassFraction = (double[]) loader.loadClass("NamedParaffinWaxExample").getMethod("run").invoke(null);
+      assertEquals(3, waxMassFraction.length);
+      for (double fraction : waxMassFraction) {
+        assertEquals(0.976, fraction, 5e-4);
+      }
     }
   }
 

@@ -201,6 +201,27 @@ isothermal: use `setTemperature` for its common temperature; the temperature arr
 is used by `runTuning`. Regression evidence:
 [`ConstantVolumeDepletionTest`](../../src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java).
 
+`calculateGasDensityQC()` evaluates $\rho_g = P M_g / (Z R T)$ with the gas molar mass recorded at
+each depletion step and the test temperature converted to kelvin from the unit passed to
+`setTemperature`. Before equinor/neqsim#5209 it used phase 0 of the final cell state for every
+step and the raw temperature value, so a temperature set in °C gave densities several times
+too high.
+
+### Saturation state in CCE and DL
+
+`ConstantMassExpansion` and `DifferentialLiberation` locate the saturation pressure by
+bisection and then evaluate the saturated cell at the single-phase side of the final bracket.
+The saturation volume is the volume of the whole cell (`getCorrectedVolume()`, summed over all
+phases), never the volume of one phase picked by index. Near the phase boundary the last
+bisection midpoint can hold a trace incipient phase (vapour fraction about 1e-8) stored as
+phase 0; reading that phase gave a saturation volume of 7e-10 m³ and relative volumes of
+order 1e5 before equinor/neqsim#5209. The CCE saturation compressibility is likewise that of
+the single-phase saturated fluid. DL reads the oil phase by type and liberates the gas phase
+by type. The same rule holds at any temperature, including states where the bracket midpoint
+is genuinely two-phase. Regression evidence: `DifferentialLiberationTest`
+(`testTracePhaseAtSaturationDoesNotDefineSaturationVolume`) and `ConstantMassExpansionTest`
+(`testSaturationStateIsSinglePhase`).
+
 ### Volume conventions (volume shift, gas gravity, standard volumes)
 
 When the fluid uses Peneloux volume correction (`useVolumeCorrection(true)`, the default for
@@ -248,6 +269,15 @@ the stock-tank results from `getStockTankOilDensity()` (kg/m³, volume-corrected
 standard conditions). For named stages, reservoir-condition handling,
 stock-tank results, and cumulative GOR, prefer `MultiStageSeparatorTest`; see the
 [PVT simulation overview](README.md).
+
+Each `MultiStageSeparatorTest` stage row (`getOilDensity()`, `getOilMW()`,
+`getOilViscosity()`) describes the liquid flashed at that stage's pressure and temperature:
+the properties are read from the flashed, initialised stage phase before it is carried to the
+next stage. Before equinor/neqsim#5208 the oil density was read from the carried copy before
+its physical properties were re-initialised, so every row reported the previous stage's oil
+density (the first row reported the reservoir oil). Regression evidence:
+`MultiStageSeparatorTestTest.testStageOilPropertiesMatchIndependentFlash`, which compares
+each row with an independent sequential flash.
 
 ### Swelling tests
 

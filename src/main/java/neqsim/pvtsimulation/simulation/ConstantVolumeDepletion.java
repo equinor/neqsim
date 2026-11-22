@@ -45,6 +45,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   private double[] liquidRelativeVolume = null;
   private double[] Zmix;
   private double[] Zgas = null;
+  /** Gas-phase molar mass at each depletion step in kg/mol; NaN where no gas phase was present. */
+  private double[] gasMolarMass = null;
   private double[] cummulativeMolePercDepleted = null;
   private double[] materialBalanceRelativeError = null;
   private double initialMoles = Double.NaN;
@@ -814,6 +816,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     liquidVolumeRelativeToVsat = new double[pressures.length];
     liquidVolume = new double[pressures.length];
     Zgas = new double[pressures.length];
+    gasMolarMass = new double[pressures.length];
+    Arrays.fill(gasMolarMass, Double.NaN);
     Zmix = new double[pressures.length];
     liquidRelativeVolume = new double[pressures.length];
     cummulativeMolePercDepleted = new double[pressures.length];
@@ -857,6 +861,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
       if (getThermoSystem().hasPhaseType("gas")) {
         Zgas[i] = getThermoSystem().getPhase("gas").getZvolcorr();
+        gasMolarMass[i] = getThermoSystem().getPhase("gas").getMolarMass();
       }
       if (getThermoSystem().hasPhaseType("oil")) {
         liquidVolume[i] = getThermoSystem().getPhase("oil").getCorrectedVolume();
@@ -1165,7 +1170,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * @return array of calculated gas densities in kg/m³
    */
   public double[] calculateGasDensityQC() {
-    if (pressures == null || Zgas == null) {
+    if (pressures == null || Zgas == null || gasMolarMass == null) {
       return null;
     }
 
@@ -1173,11 +1178,14 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     double R = 8.314; // J/(mol·K)
 
     for (int i = 0; i < pressures.length; i++) {
-      if (Zgas[i] > 0 && getThermoSystem().getPhase(0) != null) {
+      // Use the gas molar mass recorded at this step, not phase 0 of the final cell state (#5209).
+      if (Zgas[i] > 0 && Double.isFinite(gasMolarMass[i])) {
         double P = pressures[i] * 1e5; // bar to Pa
-        double T = !Double.isNaN(temperature) ? temperature : getThermoSystem().getTemperature();
-        double Mg = getThermoSystem().getPhase(0).getMolarMass(); // kg/mol
-        gasDensity[i] = (P * Mg) / (Zgas[i] * R * T);
+        // The test temperature is stored in the unit it was set in; the gas law needs kelvin.
+        double T = !Double.isNaN(temperature)
+            ? neqsim.util.unit.TemperatureUnit.convert(temperature, temperatureUnit, "K")
+            : getThermoSystem().getTemperature();
+        gasDensity[i] = (P * gasMolarMass[i]) / (Zgas[i] * R * T);
       }
     }
 
@@ -1213,7 +1221,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       getThermoSystem().setPressure(pressures[i]);
       try {
         thermoOps.TPflash();
-        if (getThermoSystem().getNumberOfPhases() > 1) {
+        if (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().hasPhaseType("oil")) {
+          // Densities come from physical properties, which must describe this flash, not an earlier state.
+          getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
           oilDensity[i] = getThermoSystem().getPhase("oil").getDensity("kg/m3");
         }
       } catch (Exception ex) {

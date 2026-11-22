@@ -9,6 +9,24 @@
 
 ---
 
+## 2026-11-22 — Stage oil properties, CCE/DL saturation state, named-paraffin wax (#5208, #5209, #5210)
+
+Reported by Patrick Mockridge.
+
+- Fixed (#5208): `MultiStageSeparatorTest` stage rows (`getOilDensity()`, `getOilMW()`, `getOilViscosity()`) now describe
+  the oil flashed at that stage; the density was the previous stage's (first row: reservoir oil). Migration: hard-coded
+  stage-density references shift; stock-tank results are unchanged.
+- Fixed (#5209): `DifferentialLiberation` and `ConstantMassExpansion` evaluate the saturated cell at the single-phase
+  side of the bisection bracket and take Vsat as the whole-cell corrected volume. A trace phase 0 near Psat no longer sets
+  Vsat (was 7e-10 m3, relative volumes about 2e5). DL reads oil and liberates gas by phase type.
+  `ConstantVolumeDepletion.calculateGasDensityQC()` uses each step's gas molar mass and the temperature in K;
+  `calculateOilDensityQC()` initialises densities after each flash.
+- Fixed (#5210): `TPmultiflashWAX` converges every phase fraction (relative change below 1e-6), so a gas phase
+  re-entering after the liquid freezes out is no longer stopped at about 4e-7. `getWaxModel().addTBPWax()` gives named
+  wax formers with only the database placeholder (273.0 K / 6000 J/mol: nC15, nC17-nC24) the Pedersen melting
+  temperature and heat of fusion, before or after `addSolidComplexPhase("wax")`; measured database data are kept.
+- Updated: `docs/pvtsimulation/pvt_lab_tests.md`, `docs/thermo/characterization/wax_characterization.md`,
+  `neqsim-wax-calculations` and `neqsim-flow-assurance` skills, `pvt-simulation` agent.
 ## 2026-11-22 — Chloride SCC for carbon steel; electrolyte pH bridge guard
 
 - Fixed: `ChlorideSCCAssessment` reported carbon and low-alloy steels (carbon steel, X65, API 5L ...) as at chloride SCC
