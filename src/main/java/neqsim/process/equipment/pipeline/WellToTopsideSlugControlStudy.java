@@ -356,6 +356,8 @@ public final class WellToTopsideSlugControlStudy {
     pipe.setOutletPressure(RISER_OUTLET_PRESSURE_BARA, "bara");
     pipe.setAllowOutletPhaseBackflow(false);
     pipe.setEnableCoupledPressureMomentum(true);
+    // The study's qualified evidence was produced with equilibrium phase densities.
+    pipe.setFrozenCompositionDensityUpdate(false);
     pipe.setEnableInterfacialPressure(true);
     pipe.setTimeIntegrationMethod(TimeIntegrator.Method.EULER);
     pipe.setEnableAdaptiveTimestepping(true);

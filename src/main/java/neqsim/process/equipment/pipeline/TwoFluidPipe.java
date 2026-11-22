@@ -859,7 +859,7 @@ public class TwoFluidPipe extends Pipeline {
   private int thermodynamicUpdateInterval = 10;
 
   /** Advance gas and oil density at frozen composition between property updates when phases exchange no mass. */
-  private boolean frozenCompositionDensityUpdate = true;
+  private volatile boolean frozenCompositionDensityUpdate = true;
 
   // ============ Steady-State Solver Configuration ============
 
@@ -2217,8 +2217,10 @@ public class TwoFluidPipe extends Pipeline {
   /** Calculate the accumulated discrete momentum residual of the returned pressure profile. */
   private double calculateSteadyPressureMomentumResidual() {
     double pressureResidualSum = 0.0;
+    // The sweep reads the profile without changing any cell, so each cell's gradient serves both of its neighbours.
+    MarchGradients held = new MarchGradients();
     for (int i = 1; i < numberOfSections; i++) {
-      pressureResidualSum += Math.abs(marchPressure(sections[i - 1], sections[i]) - sections[i].getPressure());
+      pressureResidualSum += Math.abs(marchPressure(sections[i - 1], sections[i], held) - sections[i].getPressure());
     }
     double totalDrop = sections[0].getPressure() - sections[numberOfSections - 1].getPressure();
     return pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3);
@@ -3691,6 +3693,9 @@ public class TwoFluidPipe extends Pipeline {
       double unitShare = 0.0;
       double unitPart = 0.0;
       double otherPart = 0.0;
+      // The stratified balance does not depend on the regime share, so one solve serves every share of this cell.
+      boolean stratifiedSolved = false;
+      double stratified = Double.NaN;
       for (Map.Entry<FlowRegime, Double> entry : blend.entrySet()) {
         double weight = entry.getValue();
         if (weight == 0.0) {
@@ -3700,8 +3705,10 @@ public class TwoFluidPipe extends Pipeline {
           SlugUnitModel.Result unit = slugUnitModel.solve(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, roughness,
               inclination);
           if (unit.valid || unit.stratified) {
-            double stratified = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
-                inclination);
+            if (!stratifiedSolved) {
+              stratified = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
+              stratifiedSolved = true;
+            }
             double bridging = unit.valid ? slugBridgingWeight(stratified, inclination) : 0.0;
             unitShare += weight * bridging;
             unitPart += weight * bridging * unit.unitHoldup;
@@ -3709,8 +3716,16 @@ public class TwoFluidPipe extends Pipeline {
             continue;
           }
         }
-        otherPart += weight
-            * holdupForRegime(entry.getKey(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
+        if (usesStratifiedHoldup(entry.getKey())) {
+          if (!stratifiedSolved) {
+            stratified = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
+            stratifiedSolved = true;
+          }
+          otherPart += weight * stratified;
+        } else {
+          otherPart += weight
+              * holdupForRegime(entry.getKey(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
+        }
       }
 
       // Apply minimum slip constraint. The bound is a statement that the slip ratio cannot fall
@@ -3875,6 +3890,22 @@ public class TwoFluidPipe extends Pipeline {
       return 1.0;
     }
     return (inclination - lower) / (upper - lower);
+  }
+
+  /**
+   * Check whether {@link #holdupForRegime} answers a regime with the stratified balance alone.
+   *
+   * <p>
+   * Keep this in step with the branches of {@code holdupForRegime}: annular, slug, churn and both bubble regimes have
+   * their own closure there, and every other regime returns the stratified holdup.
+   * </p>
+   *
+   * @param regime flow regime of one share of a cell
+   * @return true when the regime's holdup is the stratified holdup
+   */
+  private static boolean usesStratifiedHoldup(FlowRegime regime) {
+    return regime != FlowRegime.ANNULAR && regime != FlowRegime.SLUG && regime != FlowRegime.CHURN
+        && regime != FlowRegime.DISPERSED_BUBBLE && regime != FlowRegime.BUBBLE;
   }
 
   /**
@@ -4230,10 +4261,11 @@ public class TwoFluidPipe extends Pipeline {
     double relativeVelocity = gasVelocity - liquidVelocity;
     double interfacialShear = interfacialFriction * rhoG * relativeVelocity * Math.abs(relativeVelocity) / 2.0;
 
+    double sinTheta = Math.sin(theta);
     double gasPressureGradient = gasWallShear * gasPerimeter / regularizedGasArea
-        + interfacialShear * interfaceWidth / regularizedGasArea + rhoG * 9.81 * Math.sin(theta);
+        + interfacialShear * interfaceWidth / regularizedGasArea + rhoG * 9.81 * sinTheta;
     double liquidPressureGradient = liquidWallShear * liquidPerimeter / regularizedLiquidArea
-        - interfacialShear * interfaceWidth / regularizedLiquidArea + rhoL * 9.81 * Math.sin(theta);
+        - interfacialShear * interfaceWidth / regularizedLiquidArea + rhoL * 9.81 * sinTheta;
     return gasPressureGradient - liquidPressureGradient;
   }
 
@@ -4842,10 +4874,22 @@ public class TwoFluidPipe extends Pipeline {
    * @return downstream midpoint pressure in Pa, subject to the existing pressure floor
    */
   private double marchPressure(TwoFluidSection previous, TwoFluidSection current) {
+    return marchPressure(previous, current, null);
+  }
+
+  /**
+   * Integrate between cell centers, taking gradients already evaluated in the same march from {@code held}.
+   *
+   * @param previous upstream cell
+   * @param current downstream cell
+   * @param held gradients of the cells this march has just evaluated, or null to evaluate both cells
+   * @return downstream midpoint pressure in Pa, subject to the existing pressure floor
+   */
+  private double marchPressure(TwoFluidSection previous, TwoFluidSection current, MarchGradients held) {
     if (cellFaceElevationProfile == null) {
       return marchPressure(previous);
     }
-    double pressureDrop = pressureDropBetweenCenters(previous, current);
+    double pressureDrop = pressureDropBetweenCenters(previous, current, held);
     return Math.max(MIN_SECTION_PRESSURE_PA, previous.getPressure() - pressureDrop);
   }
 
@@ -4854,12 +4898,81 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param upstream upstream section
    * @param downstream downstream section
+   * @param held gradients of the cells this march has just evaluated, or null to evaluate both cells
    * @return signed pressure loss in Pa
    */
-  private double pressureDropBetweenCenters(TwoFluidSection upstream, TwoFluidSection downstream) {
-    double upstreamDrop = upstream.getLength() * estimatePressureGradient(upstream);
+  private double pressureDropBetweenCenters(TwoFluidSection upstream, TwoFluidSection downstream, MarchGradients held) {
+    double upstreamDrop = upstream.getLength() * estimatePressureGradient(upstream, held);
     return cellFaceElevationProfile == null ? upstreamDrop
-        : 0.5 * (upstreamDrop + downstream.getLength() * estimatePressureGradient(downstream));
+        : 0.5 * (upstreamDrop + downstream.getLength() * estimatePressureGradient(downstream, held));
+  }
+
+  /**
+   * Pressure gradients of the two cells a pressure march evaluated last.
+   *
+   * <p>
+   * With explicit cell-face terrain a march integrates between cell centres with the gradients of both neighbours, so
+   * every interior cell is needed twice. {@link #estimatePressureGradient(TwoFluidSection)} reads holdups, velocities,
+   * densities, viscosities, regime weights and inclination, never the cell pressure. A march that writes nothing but
+   * cell pressures therefore gets the same gradient for a cell each time it asks, and the held value is that gradient
+   * bit for bit. One instance belongs to one march: create it where the march starts and do not keep it across code
+   * that updates holdup, velocity, properties or flow regime.
+   * </p>
+   */
+  private static final class MarchGradients {
+    /** Cells whose gradients are held. */
+    private final TwoFluidSection[] cells = new TwoFluidSection[2];
+    /** Gradients of {@link #cells}, Pa/m. */
+    private final double[] gradients = new double[2];
+    /** Slot the next evaluated gradient replaces. */
+    private int nextSlot;
+
+    /**
+     * Find a held cell.
+     *
+     * @param cell cell to look for
+     * @return slot of the cell, or -1 when its gradient is not held
+     */
+    private int slotOf(TwoFluidSection cell) {
+      for (int slot = 0; slot < cells.length; slot++) {
+        if (cells[slot] == cell) {
+          return slot;
+        }
+      }
+      return -1;
+    }
+
+    /**
+     * Hold the gradient of a cell in place of the older of the two held ones.
+     *
+     * @param cell evaluated cell
+     * @param gradient its pressure gradient, Pa/m
+     */
+    private void hold(TwoFluidSection cell, double gradient) {
+      cells[nextSlot] = cell;
+      gradients[nextSlot] = gradient;
+      nextSlot = (nextSlot + 1) % cells.length;
+    }
+  }
+
+  /**
+   * Pressure gradient of a cell during a pressure march.
+   *
+   * @param sec pipe section
+   * @param held gradients of the cells this march has just evaluated, or null to always evaluate
+   * @return pressure gradient (Pa/m)
+   */
+  private double estimatePressureGradient(TwoFluidSection sec, MarchGradients held) {
+    if (held == null) {
+      return estimatePressureGradient(sec);
+    }
+    int slot = held.slotOf(sec);
+    if (slot >= 0) {
+      return held.gradients[slot];
+    }
+    double gradient = estimatePressureGradient(sec);
+    held.hold(sec, gradient);
+    return gradient;
   }
 
   /** Extrapolate the last midpoint to its physical boundary only for explicit face terrain. */
@@ -4886,12 +4999,22 @@ public class TwoFluidPipe extends Pipeline {
    * @return pressure in Pa to impose on the last cell of the transient solution
    */
   private double transientOutletCellPressure() {
+    return transientOutletCellPressure(null);
+  }
+
+  /**
+   * Cell-centre pressure for the constant outlet pressure, sharing the last cell's gradient with a pressure march.
+   *
+   * @param held gradients of the cells the march has just evaluated, or null to evaluate the last cell
+   * @return pressure in Pa to impose on the last cell of the transient solution
+   */
+  private double transientOutletCellPressure(MarchGradients held) {
     if (!isTransientMode || cellFaceElevationProfile == null || outletBCType != BoundaryCondition.CONSTANT_PRESSURE
         || sections == null || numberOfSections < 1 || sections[numberOfSections - 1] == null) {
       return outletPressure;
     }
     TwoFluidSection last = sections[numberOfSections - 1];
-    double cellPressure = outletPressure + 0.5 * last.getLength() * estimatePressureGradient(last);
+    double cellPressure = outletPressure + 0.5 * last.getLength() * estimatePressureGradient(last, held);
     return Double.isFinite(cellPressure) ? Math.max(MIN_SECTION_PRESSURE_PA, cellPressure) : outletPressure;
   }
 
@@ -8528,6 +8651,8 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null || numberOfSections < 2) {
       return;
     }
+    // The marches below write cell pressures only, so each cell's gradient serves both of its neighbours.
+    MarchGradients held = new MarchGradients();
 
     // Handle different boundary condition combinations
     boolean outletClosed = (outletBCType == BoundaryCondition.CLOSED);
@@ -8551,21 +8676,21 @@ public class TwoFluidPipe extends Pipeline {
       for (int i = numberOfSections - 2; i >= 0; i--) {
         TwoFluidSection sec = sections[i];
         TwoFluidSection downstream = sections[i + 1];
-        double P_new = downstream.getPressure() + pressureDropBetweenCenters(sec, downstream);
+        double P_new = downstream.getPressure() + pressureDropBetweenCenters(sec, downstream, held);
         P_new = Math.max(1e5, P_new);
         sec.setPressure(P_new);
       }
     } else {
       // OUTLET OPEN (constant pressure): Standard backward march
       // Start from outlet with known pressure (Dirichlet BC)
-      sections[numberOfSections - 1].setPressure(transientOutletCellPressure());
+      sections[numberOfSections - 1].setPressure(transientOutletCellPressure(held));
 
       // March backward from outlet to inlet
       for (int i = numberOfSections - 2; i >= 0; i--) {
         TwoFluidSection sec = sections[i];
         TwoFluidSection downstream = sections[i + 1];
 
-        double P_new = downstream.getPressure() + pressureDropBetweenCenters(sec, downstream);
+        double P_new = downstream.getPressure() + pressureDropBetweenCenters(sec, downstream, held);
 
         // Ensure physically reasonable bound
         P_new = Math.max(1e5, P_new); // Minimum 1 bar
