@@ -1541,7 +1541,7 @@ public class PipeStressModel implements Serializable {
   public static class Results implements Serializable {
     private static final long serialVersionUID = 1000L;
     private String name;
-    private final String standard = "ASME B31.3 para. 304.1.2, 319 and 320 (liberal Eq. 1b)";
+    private final String standard;
     private boolean converged;
     private int iterations;
     private double lineWeightNPerM;
@@ -1563,6 +1563,13 @@ public class PipeStressModel implements Serializable {
     private final Map<String, double[]> displacementsOpeM = new LinkedHashMap<String, double[]>();
     private final Map<String, double[]> displacementsSusM = new LinkedHashMap<String, double[]>();
     private final List<String> limitations = new ArrayList<String>();
+
+    /**
+     * Creates an empty result set for the ASME B31.3 basis.
+     */
+    Results() {
+      standard = "ASME B31.3 para. 304.1.2, 319 and 320 (liberal Eq. 1b)";
+    }
 
     /** Summarise ratios and states. */
     void finish() {
