@@ -330,10 +330,15 @@ double wat_C = oil.getTemperature() - 273.15;
 import neqsim.pvtsimulation.simulation.WaxFractionSim;
 
 WaxFractionSim waxSim = new WaxFractionSim(oil);
-waxSim.setTemperatures(new double[]{333.15, 313.15, 293.15, 273.15});
-waxSim.run();
-double[] waxFractions = waxSim.getWaxFraction();
+waxSim.setTemperaturesAndPressures(new double[] {333.15, 313.15, 293.15, 273.15},
+    new double[] {5.0, 5.0, 5.0, 5.0}); // K, bara
+waxSim.runCalc(); // run() only prepares the operations object
+double[] waxFractions = waxSim.getWaxFraction(); // wax mass / feed mass
 ```
+
+The fluid needs `addSolidComplexPhase("wax")`, `setMultiphaseWaxCheck(true)` and
+`getWaxModel().addTBPWax()`; for named n-paraffin feeds see the `neqsim-wax-calculations` skill
+("Named n-paraffin feeds").
 
 ## 3. Asphaltene Stability
 

@@ -10,7 +10,7 @@ required_skills:
 - neqsim-professional-reporting
 - neqsim-pvt-fluid-study-report
 argument-hint: Describe the PVT experiment — e.g., "CME test at 100°C with pressures from 400 to 50 bara", "CVD for reservoir fluid with C7+ characterization", or "fit EOS to match experimental saturation pressure of 250 bara".
-last_verified: "2026-11-21"
+last_verified: "2026-11-22"
 ---
 Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-eos-regression, neqsim-input-validation, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-pvt-fluid-study-report
 
@@ -145,6 +145,17 @@ correction. Gas gravity is M_gas / 28.96546 g/mol. DL Rs and gas standard volume
 288.15 K and 1.01325 bara with liquid dropout counted as equivalent gas (Pedersen Eq. 3.7);
 call `DifferentialLiberation.setUseIdealGasStandardVolume(false)` only when the lab report uses
 real-gas Z. Results from NeqSim 3.29.0 and earlier differ (#5195). Details: `docs/pvtsimulation/pvt_lab_tests.md`.
+
+## Saturation state and per-stage properties
+- CCE and DL take the saturation volume as the whole-cell corrected volume of the single-phase
+  saturated fluid at the top of the bisection bracket. Never compute Vsat, or any property, from
+  `getPhase(0)` of a near-saturation state: it can be a trace incipient phase (#5209). Read phases
+  by type (`getPhase("oil")`, `getPhase(PhaseType.GAS)`).
+- `MultiStageSeparatorTest` stage rows report the liquid flashed at that stage (#5208). In your
+  own staged loops read properties from the flashed, `initPhysicalProperties()`-initialised phase
+  before `phaseToSystem(...)`; a carried copy holds stale physical properties.
+- `ConstantVolumeDepletion.calculateGasDensityQC()` uses each step's gas molar mass and converts the
+  test temperature to K (#5209). Results from NeqSim 3.29.0 and earlier differ for all three items.
 
 ## EOS Parameter Fitting for PVT Matching
 When PVT simulation results don't match experimental data, tune EOS parameters:

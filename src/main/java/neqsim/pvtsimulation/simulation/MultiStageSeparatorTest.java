@@ -330,27 +330,21 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
         result.gasZFactor = currentFluid.getPhase("gas").getZ();
 
         // Continue with liquid phase - check for oil first, then any non-gas phase
+        // Read the liquid properties from the phase flashed and initialised at this stage, then
+        // carry that phase on. A phaseToSystem() copy holds physical properties inherited from an
+        // earlier initialisation, so it must not be read before it is re-initialised (#5208).
         if (currentFluid.hasPhaseType("oil")) {
+          recordLiquidProperties(result, currentFluid.getPhase("oil"));
           currentFluid = currentFluid.phaseToSystem("oil");
           ops = new ThermodynamicOperations(currentFluid);
-          result.oilDensity = currentFluid.getDensity("kg/m3");
-          result.oilMW = currentFluid.getMolarMass() * 1000;
-          // Calculate oil viscosity (convert from Pa.s to cP by multiplying by 1000)
-          currentFluid.initPhysicalProperties();
-          result.oilViscosity = currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
         } else if (currentFluid.getNumberOfPhases() > 1) {
           // For gas condensates: liquid may not be labeled as "oil"
           // Get the non-gas phase (liquid/condensate)
           for (int phaseNum = 0; phaseNum < currentFluid.getNumberOfPhases(); phaseNum++) {
             if (currentFluid.getPhase(phaseNum).getType() != neqsim.thermo.phase.PhaseType.GAS) {
+              recordLiquidProperties(result, currentFluid.getPhase(phaseNum));
               currentFluid = currentFluid.phaseToSystem(phaseNum);
               ops = new ThermodynamicOperations(currentFluid);
-              result.oilDensity = currentFluid.getDensity("kg/m3");
-              result.oilMW = currentFluid.getMolarMass() * 1000;
-              // Calculate oil viscosity (convert from Pa.s to cP by
-              // multiplying by 1000)
-              currentFluid.initPhysicalProperties();
-              result.oilViscosity = currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
               break;
             }
           }
@@ -375,11 +369,8 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
       } else {
         // Single phase liquid
         result.gasRate = 0.0;
-        result.oilDensity = currentFluid.getDensity("kg/m3");
-        result.oilMW = currentFluid.getMolarMass() * 1000;
-        // Calculate oil viscosity (convert from Pa.s to cP by multiplying by 1000)
-        currentFluid.initPhysicalProperties();
-        result.oilViscosity = currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
+        // Physical properties were initialised right after the stage flash above.
+        recordLiquidProperties(result, currentFluid.getPhase(0));
       }
 
       // For last stage (stock tank), calculate stock tank oil volume and properties
@@ -484,6 +475,26 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
    */
   public double getStockTankAPIGravity() {
     return stockTankAPIGravity;
+  }
+
+  /**
+   * Stores the density, molar mass and viscosity of a liquid stage phase in a stage result.
+   *
+   * <p>
+   * The phase must belong to the fluid that was just flashed at the stage conditions and must have
+   * had its physical properties initialised after that flash, so that the published values are the
+   * properties of this stage and not those inherited from an earlier stage.
+   * </p>
+   *
+   * @param result the stage result to fill
+   * @param liquidPhase the flashed and initialised liquid phase at stage conditions
+   */
+  private static void recordLiquidProperties(SeparatorStageResult result,
+      neqsim.thermo.phase.PhaseInterface liquidPhase) {
+    result.oilDensity = liquidPhase.getDensity("kg/m3");
+    result.oilMW = liquidPhase.getMolarMass() * 1000.0;
+    // Convert viscosity from Pa.s to cP.
+    result.oilViscosity = liquidPhase.getPhysicalProperties().getViscosity() * 1000.0;
   }
 
   /**
