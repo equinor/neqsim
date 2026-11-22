@@ -4,22 +4,122 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-dev-setup"
-version = "0.1.0"
-description = "JVM bootstrap helpers for NeqSim Jupyter development notebooks"
-requires-python = ">=3.8"
-dependencies = ["jpype1", "pyyaml>=5.1"]
+version = "0.3.0"
+description = "NeqSim task-solving toolkit: JVM bootstrap, task folders, runner, validators, report generator"
+requires-python = ">=3.11"
+# `neqsim` supplies the packaged JAR that neqsim_dev_setup falls back to when
+# no source checkout is present (agent-plugin installs).
+dependencies = [
+    "jpype1>=1.7.1",
+    "pyyaml>=6.0.3",
+    "neqsim>=3.29.0",
+    "python-docx>=1.2.0",
+    "matplotlib>=3.10.9",
+    # Report generators (process, flow assurance, SURF, PVT, layout) render drawings to
+    # PDF/PNG and fail closed without them, so they are not optional.
+    "pymupdf>=1.28.2",
+    "reportlab>=5.1.0",
+    "openpyxl>=3.1.5",
+    "pillow>=13.0.0",
+]
+
+[dependency-groups]
+test = [
+    "pytest>=9.2.0",
+    "scikit-learn>=1.7.2",
+    "trimesh>=5.2.1",
+    "jsonschema==4.26.0",
+]
+install-smoke = ["pip>=26.3"]
+optimization-docs = [
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
+    "pandas>=2.3.3",
+    "matplotlib>=3.10.9",
+    "nlopt>=2.11.0",
+]
+optimization-notebooks = [
+    { include-group = "optimization-docs" },
+    "nbformat>=5.11.1",
+    "nbclient>=0.11.0",
+    "nbconvert>=7.17.2",
+    "ipykernel>=7.3.0",
+]
 
 [project.optional-dependencies]
-pdf = ["pymupdf>=1.22.0"]
+combustion = ["cantera==3.2.0"]
+pdf = ["pymupdf>=1.28.2", "reportlab>=5.1.0"]
 ocr = [
-    "pymupdf>=1.22.0",
-    "ocrmypdf>=15.0.0",
-    "pytesseract>=0.3.10",
-    "pdf2image>=1.16.0",
+    "pymupdf>=1.28.2",
+    "ocrmypdf>=16.13.0",
+    "pytesseract>=0.3.13",
+    "pdf2image>=1.17.0",
 ]
 
 [project.scripts]
 neqsim = "neqsim_cli:main"
 
 [tool.setuptools]
-py-modules = ["neqsim_dev_setup", "neqsim_cli", "install_skill", "install_agent"]
+# Flat modules keep the repo layout (devtools/*.py) identical to the installed
+# layout (site-packages/*.py), so SCRIPT_DIR-relative lookups such as
+# new_task -> task_template/ work in both.
+py-modules = [
+    "neqsim_dev_setup", "neqsim_cli", "quiet_subprocess", "docker_runtime", "install_skill", "install_agent",
+    "new_task", "task_roots", "task_corpus", "generate_work_record", "report_design", "discipline_report_manifest",
+    "validate_task_results", "consistency_checker", "generate_sources_md",
+    "pdf_to_figures", "skill_search", "agent_search", "agent_frontmatter", "bm25",
+    "discovery_registry", "discipline_report_manifest",
+    "ensure_on_path", "paperlab_install", "new_skill", "neqsim_doctor", "onboard",
+    "neqsim_try", "neqsim_contribute", "java_locator",
+    "process_study_report", "psr_extract", "psr_handoff", "psr_balances", "psr_basis", "psr_diagrams", "psr_report", "psr_validate", "psr_demo",
+    "process_report", "psr_draft", "psr_connectivity", "psr_wiring", "file_neqsim_issue",
+    "unisim_reader", "unisim_writer", "unisim_neqsim_bridge", "unisim_batch_check",
+    "unisim_run_generated", "unisim_probe_ops", "unisim_probe_column", "pdf_ocr",
+    "fa_units", "fa_geometry", "fa_thermal", "fa_methods", "fa_solver", "fa_benchmarks", "fa_study", "fa_draw",
+    "fa_sheets_net", "fa_sheets_results", "fa_diagrams", "fa_handoff", "fa_report", "fa_validate", "flow_assurance_report",
+    "pvt_data", "pvt_measurement_bounds", "pvt_dle_mass", "pvt_separator_mass", "reservoir_history_intake", "pvt_study", "pvt_report",
+    "surf_spec", "surf_model", "surf_run", "surf_design", "surf_quantities", "surf_dataset", "surf_draw", "surf_sheets_a", "surf_sheets_b", "surf_diagrams",
+    "surf_report", "surf_validate", "surf_study",
+    "layout_model", "layout_engine", "layout_optimizer", "layout_routing", "layout_process", "layout_inventory",
+    "layout_examples", "layout_study",
+    "layout_drawings", "layout_cad", "layout_report",
+    "pfd_layout_check", "pfd_layout_svg", "pfd_diagram", "pid_quality_review", "dexpi_conformance_check",
+    "process_overview", "ppo_graph", "ppo_layout", "ppo_render", "ppo_validate", "ppo_examples",
+]
+packages = [
+    "neqsim_runner",
+    "neqsim_runner.bootstrap",
+    "neqsim_continuous",
+    "pvt_proxy",
+    "task_template",
+    "task_template.step1_scope_and_research",
+    "task_template.step2_analysis",
+    "task_template.step3_report",
+    "psr_templates",
+    "fa_templates",
+    "fa_examples",
+    "fa_examples.offshore_tieback",
+    "fa_examples.single_flowline",
+    "pvt_examples",
+    "surf_templates",
+    "surf_examples",
+    "surf_examples.four_well_tieback",
+    "layout_templates",
+    "layout_example_specs",
+]
+
+[tool.setuptools.package-data]
+task_template = ["*", "*/*", "*/*/*", "*/*/*/*"]
+psr_templates = ["*.yaml"]
+fa_templates = ["*.yaml", "*.md"]
+surf_templates = ["*.yaml", "*.md"]
+"surf_examples.four_well_tieback" = ["*.yaml"]
+"fa_examples.offshore_tieback" = ["*.yaml"]
+"fa_examples.single_flowline" = ["*.yaml"]
+pvt_examples = ["*.yaml", "*.json"]
+pvt_proxy = ["examples/*.yaml"]
+layout_templates = ["*.json"]
+layout_example_specs = ["*.yaml"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*", "*.pyc"]

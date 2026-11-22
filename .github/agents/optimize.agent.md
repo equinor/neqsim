@@ -1,10 +1,19 @@
 ---
-name: optimize neqsim process
-description: "Sets up and solves process flowsheet optimization and DoE problems using NeqSim's built-in optimizers — ProcessOptimizationEngine for throughput, ProductionOptimizer for custom objectives, SQPoptimizer for constrained NLP, MultiObjectiveOptimizer for Pareto, BatchStudy for parameter sweeps, MonteCarloSimulator for uncertainty, and ProcessSimulationEvaluator as a bridge to SciPy / Pyomo / BoTorch. Picks the right algorithm by problem characteristics. Distinct from @field.development (production optimization at field level)."
+name: optimize
+description: "Sets up and solves flowsheet optimization and DoE with NeqSim's built-in optimizers - ProcessOptimizationEngine, ProductionOptimizer, SQPoptimizer, MultiObjectiveOptimizer (Pareto), BatchStudy sweeps, MonteCarloSimulator and ProcessSimulationEvaluator for SciPy/Pyomo/BoTorch - choosing the algorithm by problem type. Distinct from @field-development (field-level production optimization)."
+required_skills:
+- neqsim-optimization-and-doe
+- neqsim-agentic-process-optimization
+- neqsim-api-patterns
+- neqsim-heat-integration
+- neqsim-java8-rules
+- neqsim-notebook-patterns
+- neqsim-professional-reporting
+- neqsim-process-synthesis-research
+- neqsim-capacity-and-utilization-analysis
 argument-hint: "Describe what to optimize — e.g., 'minimize compressor power subject to surge margin >= 10%', 'maximize throughput between 50 and 10 bara given equipment constraints', 'Pareto trade-off of yield vs energy for amine capture', 'sensitivity sweep over feed composition and inlet pressure', or 'tray count and feed location that minimize reboiler duty'."
 ---
-
-Loaded skills: neqsim-optimization-and-doe, neqsim-agentic-process-optimization, neqsim-api-patterns, neqsim-heat-integration, neqsim-java8-rules, neqsim-notebook-patterns, neqsim-professional-reporting
+Loaded skills: neqsim-optimization-and-doe, neqsim-agentic-process-optimization, neqsim-api-patterns, neqsim-heat-integration, neqsim-java8-rules, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-process-synthesis-research, neqsim-capacity-and-utilization-analysis
 
 ## Skills to Load
 
@@ -82,6 +91,6 @@ ALWAYS read these skills before proceeding:
 
 ## Multi-Agent Composition
 
-- Upstream: `@process.model` (build the flowsheet) → `@optimize` (optimize it)
-- Downstream: `@optimize` → `@solve.task` (wrap into formal report) or `@engineering.deliverables` (turn optimum into PFD/datasheets)
-- Pareto-trade-off output: hand to `@field.development` for fiscal interpretation
+- Upstream: `@process-model` (build the flowsheet) → `@optimize` (optimize it)
+- Downstream: `@optimize` → `@solve-task` (wrap into formal report) or `@engineering-deliverables` (turn optimum into PFD/datasheets)
+- Pareto-trade-off output: hand to `@field-development` for fiscal interpretation

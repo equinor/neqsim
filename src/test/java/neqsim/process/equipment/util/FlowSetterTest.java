@@ -123,8 +123,8 @@ public class FlowSetterTest {
     stream_1.setTemperature(50.0, "C");
 
     FlowSetter flowset = new FlowSetter("flowset", stream_1);
-    double[] pressure = new double[] { 50.0, 10.0, 1.01325 };
-    double[] temperature = new double[] { 15.0, 15.0, 15.0 };
+    double[] pressure = new double[] {50.0, 10.0, 1.01325};
+    double[] temperature = new double[] {15.0, 15.0, 15.0};
     flowset.setSeparationPT(pressure, "bara", temperature, "C");
     flowset.setGasFlowRate(gasFlow, "MSm3/day");
     flowset.setOilFlowRate(oilFlow, "m3/hr");

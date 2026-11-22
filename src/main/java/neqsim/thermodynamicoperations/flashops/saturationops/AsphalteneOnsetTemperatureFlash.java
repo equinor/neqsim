@@ -86,71 +86,57 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     this.maxTemperature = maxTemperature;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Search a precipitation or dissolution transition in the requested temperature direction.
+   *
+   * @throws IllegalArgumentException if characterization or search settings are invalid
+   * @throws IllegalStateException if a flash fails or the search budget is exhausted
+   */
   @Override
   public void run() {
-    // Enable solid phase checking for asphaltene
-    system.setSolidPhaseCheck("asphaltene");
-
-    double currentTemp = startTemperature;
-    double previousTemp = startTemperature;
-    boolean wasStable = true;
-    int iteration = 0;
-
+    onsetFound = false;
+    onsetTemperature = Double.NaN;
+    AsphalteneOnsetFlashSupport.requirePositive(temperatureStep, "Temperature step");
+    AsphalteneOnsetFlashSupport.requirePositive(minTemperature, "Minimum temperature");
+    AsphalteneOnsetFlashSupport.requirePositive(maxTemperature, "Maximum temperature");
+    AsphalteneOnsetFlashSupport.requirePositive(startTemperature, "Starting temperature");
+    if (startTemperature < minTemperature || startTemperature > maxTemperature) {
+      throw new IllegalArgumentException("Starting temperature must lie inside the temperature range");
+    }
+    AsphalteneOnsetFlashSupport.prepare(system);
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
-
-    // Determine search direction based on initial stability
-    system.setTemperature(startTemperature);
-    try {
-      ops.TPflash();
-      wasStable = !checkForAsphaltenePrecipitation();
-    } catch (Exception e) {
-      logger.error("Initial flash failed: {}", e.getMessage());
-      return;
-    }
-
-    // Phase 1: Coarse search
-    double direction = searchDecreasing ? -1.0 : 1.0;
+    double previousTemp = startTemperature;
+    system.setTemperature(previousTemp);
+    AsphalteneOnsetFlashSupport.flash(system, ops);
+    boolean previouslyPrecipitated = AsphalteneOnsetFlashSupport.hasPrecipitate(system);
     double limitTemp = searchDecreasing ? minTemperature : maxTemperature;
-
-    while ((searchDecreasing ? currentTemp > limitTemp : currentTemp < limitTemp) && iteration < MAX_ITERATIONS) {
-      iteration++;
+    double direction = searchDecreasing ? -1.0 : 1.0;
+    for (int iteration = 0; previousTemp != limitTemp; iteration++) {
+      if (iteration >= MAX_ITERATIONS) {
+        throw new IllegalStateException("Asphaltene temperature search exhausted before reaching the range limit");
+      }
+      double trial = previousTemp + direction * temperatureStep;
+      double currentTemp = searchDecreasing ? Math.max(limitTemp, trial) : Math.min(limitTemp, trial);
+      if (currentTemp == previousTemp) {
+        throw new IllegalArgumentException("Temperature step is too small to advance the search");
+      }
       system.setTemperature(currentTemp);
-
-      try {
-        ops.TPflash();
-      } catch (Exception e) {
-        logger.error("Flash failed at T = {} K: {}", currentTemp, e.getMessage());
-        currentTemp += direction * temperatureStep;
-        continue;
-      }
-
-      boolean hasAsphaltenePhase = checkForAsphaltenePrecipitation();
-
-      if (hasAsphaltenePhase && wasStable) {
-        // Transition from stable to unstable
+      AsphalteneOnsetFlashSupport.flash(system, ops);
+      boolean precipitated = AsphalteneOnsetFlashSupport.hasPrecipitate(system);
+      if (precipitated != previouslyPrecipitated) {
+        double stableTemp = precipitated ? previousTemp : currentTemp;
+        double unstableTemp = precipitated ? currentTemp : previousTemp;
+        double result = refineTemperature(stableTemp, unstableTemp, ops);
+        system.setTemperature(result);
+        AsphalteneOnsetFlashSupport.flash(system, ops);
+        onsetTemperature = result;
         onsetFound = true;
-        onsetTemperature = refineTemperature(previousTemp, currentTemp, ops);
-        break;
-      } else if (!hasAsphaltenePhase && !wasStable) {
-        // Transition from unstable to stable (reverse direction case)
-        onsetFound = true;
-        onsetTemperature = refineTemperature(currentTemp, previousTemp, ops);
-        break;
+        return;
       }
-
-      wasStable = !hasAsphaltenePhase;
+      previouslyPrecipitated = precipitated;
       previousTemp = currentTemp;
-      currentTemp += direction * temperatureStep;
     }
-
-    if (!onsetFound) {
-      logger.info("No asphaltene onset found in temperature range {} to {} K", startTemperature, limitTemp);
-      onsetTemperature = Double.NaN;
-    } else {
-      logger.info("Asphaltene onset temperature: {} K ({} C) at P = {} bara", onsetTemperature,
-          onsetTemperature - 273.15, system.getPressure());
-    }
+    logger.info("No asphaltene onset found in temperature range {} to {} K", startTemperature, limitTemp);
   }
 
   /**
@@ -172,63 +158,19 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
       mid = (stable + unstable) / 2.0;
       system.setTemperature(mid);
 
-      try {
-        ops.TPflash();
-      } catch (Exception e) {
-        logger.debug("Flash failed during refinement at T = {}", mid);
-        // Assume unstable if flash fails
-        unstable = mid;
-        continue;
-      }
+      AsphalteneOnsetFlashSupport.flash(system, ops);
 
-      if (checkForAsphaltenePrecipitation()) {
+      if (AsphalteneOnsetFlashSupport.hasPrecipitate(system)) {
         unstable = mid;
       } else {
         stable = mid;
       }
     }
 
+    if (Math.abs(stable - unstable) > TEMPERATURE_TOLERANCE) {
+      throw new IllegalStateException("Asphaltene temperature bracket did not converge");
+    }
     return (stable + unstable) / 2.0;
-  }
-
-  /**
-   * Checks if asphaltene precipitation has occurred.
-   *
-   * @return true if solid asphaltene phase exists
-   */
-  private boolean checkForAsphaltenePrecipitation() {
-    // Check for asphaltene phase (PhaseType.ASPHALTENE)
-    if (system.hasPhaseType("asphaltene")) {
-      try {
-        if (system.getPhaseOfType("asphaltene").getNumberOfMolesInPhase() > 1e-10) {
-          return true;
-        }
-      } catch (Exception e) {
-        // Phase type check failed
-      }
-    }
-
-    // Also check for generic solid phase that may contain asphaltene
-    if (system.hasPhaseType("solid")) {
-      // Verify it contains asphaltene component
-      try {
-        neqsim.thermo.phase.PhaseInterface solidPhase = system.getPhaseOfType("solid");
-        if (solidPhase.getNumberOfMolesInPhase() > 1e-10) {
-          // Check if solid phase contains asphaltene component
-          for (int i = 0; i < solidPhase.getNumberOfComponents(); i++) {
-            String name = solidPhase.getComponent(i).getComponentName().toLowerCase();
-            if ((name.contains("asphaltene") || name.contains("asphalten"))
-                && solidPhase.getComponent(i).getNumberOfMolesInPhase() > 1e-10) {
-              return true;
-            }
-          }
-        }
-      } catch (Exception e) {
-        // Phase type check failed
-      }
-    }
-
-    return false;
   }
 
   /**
@@ -284,6 +226,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
    * @param step temperature step in K
    */
   public void setTemperatureStep(double step) {
+    AsphalteneOnsetFlashSupport.requirePositive(step, "Temperature step");
     this.temperatureStep = step;
   }
 

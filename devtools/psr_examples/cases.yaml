@@ -1,0 +1,16 @@
+cases:
+  - id: A
+    label: Base case
+    role: design
+    description: Feed of 60000 kg/h wet gas at 45 C, export at 120 bara
+    data_source: Synthetic example inputs
+  - id: B
+    label: High rate, warm feed
+    role: scenario
+    description: Feed raised to 75000 kg/h at 55 C, export lowered to 110 bara
+    data_source: Synthetic example inputs
+    parameters:
+      feed_temperature_c: 55.0
+    set:
+      "separation::feed.flowRate": [75000, kg/hr]
+      "compression::export compressor.outletPressure": [110, bara]

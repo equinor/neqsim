@@ -38,20 +38,20 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
     // Sources: Wiebe & Gaddy (1940), Bamberger et al. (2000), Duan & Sun (2003)
     double[][] refData = {
         // T(C), P(bar), x_CO2_experimental
-        { 25.0, 25.0, 0.0133 }, // Wiebe & Gaddy
-        { 25.0, 50.0, 0.0196 }, // Wiebe & Gaddy
-        { 25.0, 100.0, 0.0234 }, // Wiebe & Gaddy
-        { 25.0, 200.0, 0.0262 }, // Wiebe & Gaddy
-        { 40.0, 50.0, 0.0145 }, // Bamberger et al.
-        { 40.0, 100.0, 0.0195 }, // Bamberger et al.
-        { 50.0, 50.0, 0.0123 }, // Bamberger et al.
-        { 50.0, 100.0, 0.0178 }, // Bamberger et al.
-        { 60.0, 50.0, 0.0110 }, // Bamberger et al.
-        { 60.0, 100.0, 0.0170 }, // Bamberger et al.
-        { 80.0, 100.0, 0.0155 }, // Duan & Sun model
-        { 80.0, 200.0, 0.0230 }, // Duan & Sun model
-        { 100.0, 100.0, 0.0145 }, // Duan & Sun model
-        { 100.0, 200.0, 0.0230 }, // Duan & Sun model
+        {25.0, 25.0, 0.0133}, // Wiebe & Gaddy
+        {25.0, 50.0, 0.0196}, // Wiebe & Gaddy
+        {25.0, 100.0, 0.0234}, // Wiebe & Gaddy
+        {25.0, 200.0, 0.0262}, // Wiebe & Gaddy
+        {40.0, 50.0, 0.0145}, // Bamberger et al.
+        {40.0, 100.0, 0.0195}, // Bamberger et al.
+        {50.0, 50.0, 0.0123}, // Bamberger et al.
+        {50.0, 100.0, 0.0178}, // Bamberger et al.
+        {60.0, 50.0, 0.0110}, // Bamberger et al.
+        {60.0, 100.0, 0.0170}, // Bamberger et al.
+        {80.0, 100.0, 0.0155}, // Duan & Sun model
+        {80.0, 200.0, 0.0230}, // Duan & Sun model
+        {100.0, 100.0, 0.0145}, // Duan & Sun model
+        {100.0, 200.0, 0.0230}, // Duan & Sun model
     };
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-12s %-10s%n", "T(C)", "P(bar)",
@@ -107,10 +107,10 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
     logger.info("=== Water in CO2-rich Phase ===");
     double[][] waterRefData = {
         // T(C), P(bar), y_H2O_experimental
-        { 25.0, 100.0, 0.0027 }, // King et al.
-        { 50.0, 100.0, 0.0058 }, // King et al.
-        { 80.0, 100.0, 0.0156 }, // estimated
-        { 100.0, 100.0, 0.0310 }, // estimated
+        {25.0, 100.0, 0.0027}, // King et al.
+        {50.0, 100.0, 0.0058}, // King et al.
+        {80.0, 100.0, 0.0156}, // estimated
+        {100.0, 100.0, 0.0310}, // estimated
     };
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-12s%n", "T(C)", "P(bar)", "y_H2O_exp",

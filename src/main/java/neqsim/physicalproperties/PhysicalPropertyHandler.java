@@ -2,6 +2,7 @@ package neqsim.physicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.BnsLbcViscosityMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.physicalproperties.system.commonphasephysicalproperties.DefaultPhysicalProperties;
@@ -13,6 +14,7 @@ import neqsim.physicalproperties.system.liquidphysicalproperties.LiquidPhysicalP
 import neqsim.physicalproperties.system.liquidphysicalproperties.SaltWaterPhysicalProperties;
 import neqsim.physicalproperties.system.liquidphysicalproperties.WaterPhysicalProperties;
 import neqsim.physicalproperties.system.solidphysicalproperties.SolidPhysicalProperties;
+import neqsim.thermo.phase.PhaseBNS;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -88,6 +90,10 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       setPhysicalProperties(phase, PhysicalPropertyModel.DEFAULT);
       break;
     }
+    if (phase instanceof PhaseBNS && ppm != PhysicalPropertyModel.BASIC) {
+      gasPhysicalProperties.viscosityCalc = new BnsLbcViscosityMethod(gasPhysicalProperties);
+      oilPhysicalProperties.viscosityCalc = new BnsLbcViscosityMethod(oilPhysicalProperties);
+    }
     solidPhysicalProperties = new SolidPhysicalProperties(phase);
     mixingRule = new neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRule();
     mixingRule.initMixingRules(phase);
@@ -123,7 +129,36 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Bind every configured property family to its owning phase without rebuilding selected models or parameters.
+   *
+   * <p>
+   * Inactive families also need rebinding after a clone. Otherwise a later phase-role change can retain successive
+   * source phases through their calculation methods and grow the serialized object graph on every clone.
+   * </p>
+   *
+   * @param phase phase owning all of this handler's property families
+   */
+  public void setPhase(PhaseInterface phase) {
+    if (gasPhysicalProperties != null) {
+      gasPhysicalProperties.setPhase(phase);
+    }
+    if (oilPhysicalProperties != null) {
+      oilPhysicalProperties.setPhase(phase);
+    }
+    if (aqueousPhysicalProperties != null) {
+      aqueousPhysicalProperties.setPhase(phase);
+    }
+    if (solidPhysicalProperties != null) {
+      solidPhysicalProperties.setPhase(phase);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhysicalPropertyHandler clone() {
     PhysicalPropertyHandler clonedHandler = null;
@@ -151,6 +186,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
+      throw new IllegalStateException("Unable to complete clone of PhysicalPropertyHandler", ex);
     }
     return clonedHandler;
   }

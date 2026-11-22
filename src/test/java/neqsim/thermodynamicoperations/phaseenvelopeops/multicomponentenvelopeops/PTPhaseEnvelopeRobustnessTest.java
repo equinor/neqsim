@@ -3,7 +3,9 @@ package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeop
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
@@ -234,22 +236,17 @@ public class PTPhaseEnvelopeRobustnessTest {
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.calcPTphaseEnvelope();
-
-    double[] cricondenbar = ops.get("cricondenbar");
-    double[] cricondentherm = ops.get("cricondentherm");
+    assertPressureLimitedEnvelope(ops);
     double[] dewT = ops.get("dewT");
 
     assertNotNull(dewT, "CH4/nC10 should have dew curve");
     assertTrue(dewT.length >= 3, "Dew curve should have enough points");
 
     // nC10 Tc=617.7 K: cricondentherm should be very high
-    double cctT = cricondentherm[0];
-    assertTrue(cctT > 200.0, "CH4/nC10 cricondentherm should be well above Tc_CH4, got " + cctT);
-
-    // Wide asymmetric envelopes have very high cricondenbar
-    double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 50.0, "CH4/nC10 cricondenbar should be high for asymmetric system, got " + ccbP);
+    double maximumTracedTemperature = Arrays.stream(dewT).filter(Double::isFinite).max().getAsDouble();
+    assertTrue(maximumTracedTemperature > 200.0, "CH4/nC10 trace should extend well above Tc_CH4");
+    assertTrue(Arrays.stream(ops.get("dewP")).filter(Double::isFinite).max().getAsDouble() > 900.0,
+        "The dew trace reaches the pressure bound without closing");
   }
 
   /**
@@ -680,7 +677,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    double[] betas = { 0.1, 0.5, 0.9 };
+    double[] betas = {0.1, 0.5, 0.9};
     ops.calcPTphaseEnvelopeWithQualityLines(betas);
 
     double[] cricondenbar = ops.get("cricondenbar");
@@ -905,11 +902,37 @@ public class PTPhaseEnvelopeRobustnessTest {
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    assertDoesNotThrow(() -> ops.calcPTphaseEnvelope());
+    assertPressureLimitedEnvelope(ops);
 
     double[] dewT = ops.get("dewT");
     assertNotNull(dewT, "H2-containing gas should have dew curve");
     assertTrue(dewT.length >= 1, "H2-containing gas should have at least some dew points, got " + dewT.length);
+    PTPhaseEnvelopeMichelsen envelope = (PTPhaseEnvelopeMichelsen) ops.getOperation();
+    assertEquals(1, envelope.getNumberOfCriticalPoints(),
+        "Diverged K-values after the crossing must not repeatedly trigger false critical points");
+  }
+
+  /** Check the explicit failure contract while retaining finite, converged diagnostic segments. */
+  private void assertPressureLimitedEnvelope(ThermodynamicOperations ops) {
+    IllegalStateException failure = assertThrows(IllegalStateException.class, ops::calcPTphaseEnvelope);
+    assertTrue(failure.getMessage().contains("limit"));
+    assertTrue(!((PTPhaseEnvelopeMichelsen) ops.getOperation()).isEnvelopeClosed());
+    assertTrue(Arrays.stream(ops.get("cricondenbar")).allMatch(Double::isNaN));
+    assertTrue(Arrays.stream(ops.get("cricondentherm")).allMatch(Double::isNaN));
+    for (String branch : new String[] {"dew", "bub"}) {
+      double[] temperatures = ops.get(branch + "T");
+      double[] pressures = ops.get(branch + "P");
+      assertEquals(temperatures.length, pressures.length);
+      assertTrue(Arrays.stream(temperatures).filter(Double::isFinite).count() > 3);
+      for (int i = 0; i < temperatures.length; i++) {
+        if (Double.isNaN(temperatures[i])) {
+          assertTrue(Double.isNaN(pressures[i]));
+        } else {
+          assertTrue(Double.isFinite(temperatures[i]) && temperatures[i] > 0.0);
+          assertTrue(Double.isFinite(pressures[i]) && pressures[i] > 0.0 && pressures[i] <= 1000.0);
+        }
+      }
+    }
   }
 
   /**
@@ -1103,8 +1126,9 @@ public class PTPhaseEnvelopeRobustnessTest {
 
   /**
    * Highly asymmetric: methane/n-hexane/nC10 (80/10/10). The large size difference between CH4 and nC10 creates a very
-   * wide envelope. Tests that the algorithm traces through the complex region without falsely detecting multiple CPs
-   * for a system that should have one.
+   * wide boundary that continues into liquid-liquid equilibrium below its critical crossing. The low-temperature branch
+   * reaches the configured pressure bound, so retained segments must not be reported as a complete VLE loop. The
+   * independent SRK onset reference is qualified by {@link AsymmetricSrkLiquidLiquidEnvelopeTest}.
    */
   @Test
   void testAsymmetricTernary_CH4_nC6_nC10() {
@@ -1115,27 +1139,24 @@ public class PTPhaseEnvelopeRobustnessTest {
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.calcPTphaseEnvelope();
+    assertPressureLimitedEnvelope(ops);
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) ops.getOperation();
     int numCPs = env.getNumberOfCriticalPoints();
 
-    // Highly asymmetric but still single VP region with SRK classic mixing
-    assertTrue(numCPs >= 1, "Should detect at least 1 CP, got " + numCPs);
+    assertEquals(1, numCPs, "The liquid-liquid continuation must not create spurious critical crossings");
 
     double[] dewT = ops.get("dewT");
-    double[] cricondenbar = ops.get("cricondenbar");
-    double[] cricondentherm = ops.get("cricondentherm");
 
     assertNotNull(dewT, "Should have dew curve");
 
-    // Very wide envelope: cricondentherm should be high due to nC10
-    double cctT = cricondentherm[0];
-    assertTrue(cctT > 300.0, "Asymmetric ternary cricondentherm should be >300 K, got " + cctT);
-
-    // High cricondenbar for this very asymmetric system
-    double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 80.0, "Asymmetric ternary cricondenbar should be >80 bar, got " + ccbP);
+    assertTrue(Arrays.stream(dewT).filter(Double::isFinite).max().getAsDouble() > 500.0,
+        "The retained high-temperature segment must still extend past 500 K");
+    assertTrue(Arrays.stream(ops.get("bubP")).filter(Double::isFinite).max().getAsDouble() > 990.0,
+        "The low-temperature liquid-liquid branch must reach the configured pressure bound");
+    double[] criticalPoint = ops.get("criticalPoint1");
+    assertTrue(criticalPoint[0] > 430.0 && criticalPoint[0] < 440.0);
+    assertTrue(criticalPoint[1] > 265.0 && criticalPoint[1] < 280.0);
   }
 
   /**

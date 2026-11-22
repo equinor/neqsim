@@ -40,11 +40,11 @@ Graphviz, external DEXPI viewers, commercial CAE tools, or accountable drawing r
   -Djacoco.skip=true \
   test
 
-python devtools/validate_engineering_diagram_performance.py \
+uv run --project devtools --locked devtools/validate_engineering_diagram_performance.py \
   --report target/engineering-diagram-performance.json \
   --budget devtools/baselines/engineering_diagram_performance.json
 
-python -m unittest devtools.test_validate_engineering_diagram_performance
+uv run --project devtools --locked --group test python -m unittest devtools.test_validate_engineering_diagram_performance
 ```
 
 The benchmark writes `target/engineering-diagram-performance.json`. Its fixed boundary fields are

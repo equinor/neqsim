@@ -68,7 +68,8 @@ public class SeparatorFireExposureTest {
     FireExposureResult result = separator.evaluateFireExposure(config);
 
     double initialTemperature = separator.getThermoSystem().getTemperature();
-    double timeStepSeconds = 5.0;
+    // Keep the fire-heating trial inside the separator's validated transient V/U closure range.
+    double timeStepSeconds = 0.5;
 
     separator.setCalculateSteadyState(false);
     separator.setDuty(result.totalFireHeat());

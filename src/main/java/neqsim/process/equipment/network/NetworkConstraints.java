@@ -74,6 +74,43 @@ public final class NetworkConstraints {
   }
 
   /**
+   * Require a thermally coupled edge to meet a minimum solved outlet temperature.
+   *
+   * <p>
+   * The constraint fails closed when the network is unconverged, thermal coupling is disabled, the edge is stagnant, or
+   * no finite outlet temperature is available. Temperature differences in Celsius and kelvin are identical, so the
+   * residual is reported in K.
+   * </p>
+   *
+   * @param edgeName canonical edge name
+   * @param minimumTemperatureC minimum outlet temperature in degrees Celsius
+   * @param hard hard/soft
+   * @return constraint
+   */
+  public static NetworkConstraint edgeMinimumOutletTemperature(final String edgeName, final double minimumTemperatureC,
+      boolean hard) {
+    if (edgeName == null || edgeName.trim().isEmpty() || !edgeName.equals(edgeName.trim())) {
+      throw new IllegalArgumentException("Thermal-constraint edge name must be non-empty and trimmed");
+    }
+    if (!Double.isFinite(minimumTemperatureC) || minimumTemperatureC <= -273.15) {
+      throw new IllegalArgumentException("Minimum outlet temperature must be finite and above absolute zero");
+    }
+    return custom("edge." + edgeName + ".minimumOutletTemperature", hard, 10.0, "K", new ResidualEvaluator() {
+      private static final long serialVersionUID = 1000L;
+
+      @Override
+      public double evaluate(LoopedPipeNetwork network) {
+        LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(edgeName);
+        if (!network.isConverged() || !network.isThermalHydraulicsEnabled() || Math.abs(pipe.getFlowRate()) <= 1.0e-10
+            || !Double.isFinite(pipe.getOutletTemperature())) {
+          return 1.0e6;
+        }
+        return Math.max(0.0, minimumTemperatureC + 273.15 - pipe.getOutletTemperature());
+      }
+    });
+  }
+
+  /**
    * Require solver convergence.
    *
    * @return hard convergence constraint

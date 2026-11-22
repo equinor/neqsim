@@ -1,0 +1,14 @@
+{
+  "candidateCases": 1872,
+  "candidateCheckedEndpoints": 37914,
+  "candidateFailures": 0,
+  "unrepresentableCases": 168,
+  "maximumErrorOverCaseVolumeScale": 1.3891667483189976e-15,
+  "parentFailedCases": 675,
+  "analyticHistories": 24,
+  "maximumFinestAnalyticRelativeError": 0.0002533498845298521,
+  "boundedArithmeticCases": 12,
+  "boundedArithmeticFailures": 0,
+  "transitionFailures": 0,
+  "fullComparisonPayloadSha256": "e1dea30fd258eab80054bb00f50a04b05ce2cc498c1b9ee754b393ffc00bcc38"
+}

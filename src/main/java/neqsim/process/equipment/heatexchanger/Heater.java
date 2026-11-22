@@ -9,6 +9,7 @@ package neqsim.process.equipment.heatexchanger;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,6 +85,25 @@ public class Heater extends TwoPortEquipment
   protected double lastDuty = 0.0;
   protected double lastPressureDrop = 0.0;
   protected double[] lastComposition = null;
+
+  /** Whether the local specification snapshot belongs to a completed run in this instance. */
+  private transient boolean acceptedSpecificationValid;
+  /** Accepted temperature-difference specification. */
+  private transient double acceptedDeltaTemperature;
+  /** Accepted temperature-specification selection. */
+  private transient boolean acceptedSetTemperature;
+  /** Accepted pressure-specification selection. */
+  private transient boolean acceptedSetOutPressure;
+  /** Accepted duty-specification selection. */
+  private transient boolean acceptedSetEnergyInput;
+  /** Whether the accepted run used an external energy specification. */
+  private transient boolean acceptedExternalEnergy;
+  /** Accepted temperature unit, including its use in the temperature-difference path. */
+  private transient String acceptedTemperatureUnit;
+  /** Accepted pressure unit. */
+  private transient String acceptedPressureUnit;
+  /** Accepted specification selector. */
+  private transient String acceptedSpecification;
 
   protected transient HeatExchangerMechanicalDesign mechanicalDesign;
   HeatExchangerElectricalDesign electricalDesign;
@@ -354,6 +374,34 @@ public class Heater extends TwoPortEquipment
     this.temperatureOut = temperature;
   }
 
+  /**
+   * Returns the specified outlet temperature, in the unit it was specified in.
+   *
+   * @return specified outlet temperature, or zero when no outlet temperature has been specified
+   * @see #getSpecifiedOutletTemperatureUnit()
+   */
+  public double getSpecifiedOutletTemperature() {
+    return setTemperature ? temperatureOut : 0.0;
+  }
+
+  /**
+   * Checks whether an explicit outlet-temperature specification is currently active.
+   *
+   * @return true when {@link #run(UUID)} will honor the outlet-temperature specification
+   */
+  public boolean hasOutletTemperatureSpecification() {
+    return setTemperature;
+  }
+
+  /**
+   * Returns the unit of the specified outlet temperature.
+   *
+   * @return temperature unit, for example "K" or "C"
+   */
+  public String getSpecifiedOutletTemperatureUnit() {
+    return temperatureUnit;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setOutTP(double temperature, double pressure) {
@@ -369,6 +417,16 @@ public class Heater extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    // External streams/buses and outlet specifications can mutate without a local setter.
+    // Keep them conservative instead of treating a cached result duty as an input version.
+    if (!acceptedSpecificationValid || isSetEnergyStream() || "out stream".equals(getSpecification())
+        || acceptedExternalEnergy != isSetEnergyStream() || acceptedDeltaTemperature != dT
+        || acceptedSetTemperature != setTemperature || acceptedSetOutPressure != setOutPressure
+        || acceptedSetEnergyInput != setEnergyInput || !Objects.equals(acceptedTemperatureUnit, temperatureUnit)
+        || !Objects.equals(acceptedPressureUnit, pressureUnit)
+        || !Objects.equals(acceptedSpecification, getSpecification())) {
+      return true;
+    }
     if (inStream == null || inStream.getFluid() == null || lastComposition == null) {
       return true;
     }
@@ -397,9 +455,23 @@ public class Heater extends TwoPortEquipment
     return false;
   }
 
+  /** Records local specification inputs only after a successful calculation or low-flow bypass. */
+  private void acceptSpecification() {
+    acceptedDeltaTemperature = dT;
+    acceptedSetTemperature = setTemperature;
+    acceptedSetOutPressure = setOutPressure;
+    acceptedSetEnergyInput = setEnergyInput;
+    acceptedExternalEnergy = isSetEnergyStream();
+    acceptedTemperatureUnit = temperatureUnit;
+    acceptedPressureUnit = pressureUnit;
+    acceptedSpecification = getSpecification();
+    acceptedSpecificationValid = true;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    acceptedSpecificationValid = false;
     system = inStream.getThermoSystem().clone();
     isActive(true);
 
@@ -415,6 +487,7 @@ public class Heater extends TwoPortEquipment
       lastPressureDrop = pressureDrop;
       lastComposition = inStream.getFluid().getMolarComposition().clone();
       setCalculationIdentifier(id);
+      acceptSpecification();
       return;
     }
     // Use init(2) instead of init(3) - only need enthalpy (from init level 2), not composition
@@ -468,6 +541,7 @@ public class Heater extends TwoPortEquipment
     lastPressureDrop = pressureDrop;
     lastComposition = inStream.getFluid().getMolarComposition().clone();
     setCalculationIdentifier(id);
+    acceptSpecification();
   }
 
   /** {@inheritDoc} */
@@ -547,6 +621,15 @@ public class Heater extends TwoPortEquipment
     this.energyInput = energyInput;
     setTemperature = false;
     setEnergyInput = true;
+  }
+
+  /**
+   * Checks whether an explicit duty specification is currently active.
+   *
+   * @return true when {@link #run(UUID)} will honor the specified duty
+   */
+  public boolean hasDutySpecification() {
+    return setEnergyInput;
   }
 
   /**
@@ -1110,4 +1193,169 @@ public class Heater extends TwoPortEquipment
   public void clearCapacityConstraints() {
     capacityConstraints.clear();
   }
+
+  /**
+   * Audits inherited mutable configuration before a derived thermal participant captures state.
+   *
+   * @return unsupported inherited state, or null when covered
+   */
+  protected final String getHeaterTransientStateCoverageIssue() {
+    if (!capacityConstraints.isEmpty() || utilitySpecification == null
+        || utilitySpecification.getClass() != UtilityStreamSpecification.class) {
+      return "Thermal snapshots require standard utility specification and no inherited capacity constraints";
+    }
+    return null;
+  }
+
+  /**
+   * Captures inherited heater specifications and cached calculations.
+   *
+   * @return detached inherited state
+   */
+  protected final HeaterSpecificationState captureHeaterSpecificationState() {
+    return new HeaterSpecificationState(this);
+  }
+
+  /**
+   * Restores inherited specifications on this equipment without replacing its data references.
+   *
+   * @param state original inherited specification
+   */
+  protected final void restoreHeaterSpecificationState(HeaterSpecificationState state) {
+    state.restore(this);
+  }
+
+  /**
+   * Detached specification and cache state used by the thermal transaction boundary.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  protected static final class HeaterSpecificationState implements java.io.Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final boolean setTemperature;
+    private final boolean setOutPressure;
+    private final boolean setEnergyInput;
+    private final boolean acceptedSpecificationValid;
+    private final boolean acceptedSetTemperature;
+    private final boolean acceptedSetOutPressure;
+    private final boolean acceptedSetEnergyInput;
+    private final boolean acceptedExternalEnergy;
+    private final boolean autoSized;
+    private final double temperatureOut;
+    private final double dT;
+    private final double pressureOut;
+    private final double energyInput;
+    private final double pressureDrop;
+    private final double coolingMediumTemperature;
+    private final double maxOutletTemperatureLimit;
+    private final double minOutletTemperatureLimit;
+    private final double lastTemperature;
+    private final double lastPressure;
+    private final double lastFlowRate;
+    private final double lastOutPressure;
+    private final double lastOutTemperature;
+    private final double lastDuty;
+    private final double lastPressureDrop;
+    private final double acceptedDeltaTemperature;
+    private final String temperatureUnit;
+    private final String pressureUnit;
+    private final String temperatureLimitUnit;
+    private final String acceptedTemperatureUnit;
+    private final String acceptedPressureUnit;
+    private final String acceptedSpecification;
+    private final double[] lastComposition;
+    private final UtilityStreamSpecification utility;
+    private final double[] utilityValues;
+
+    /**
+     * Captures the current specification without replacing referenced data.
+     *
+     * @param source actual equipment instance
+     */
+    private HeaterSpecificationState(Heater source) {
+      setTemperature = source.setTemperature;
+      setOutPressure = source.setOutPressure;
+      setEnergyInput = source.setEnergyInput;
+      acceptedSpecificationValid = source.acceptedSpecificationValid;
+      acceptedSetTemperature = source.acceptedSetTemperature;
+      acceptedSetOutPressure = source.acceptedSetOutPressure;
+      acceptedSetEnergyInput = source.acceptedSetEnergyInput;
+      acceptedExternalEnergy = source.acceptedExternalEnergy;
+      autoSized = source.autoSized;
+      temperatureOut = source.temperatureOut;
+      dT = source.dT;
+      pressureOut = source.pressureOut;
+      energyInput = source.energyInput;
+      pressureDrop = source.pressureDrop;
+      coolingMediumTemperature = source.coolingMediumTemperature;
+      maxOutletTemperatureLimit = source.maxOutletTemperatureLimit;
+      minOutletTemperatureLimit = source.minOutletTemperatureLimit;
+      lastTemperature = source.lastTemperature;
+      lastPressure = source.lastPressure;
+      lastFlowRate = source.lastFlowRate;
+      lastOutPressure = source.lastOutPressure;
+      lastOutTemperature = source.lastOutTemperature;
+      lastDuty = source.lastDuty;
+      lastPressureDrop = source.lastPressureDrop;
+      acceptedDeltaTemperature = source.acceptedDeltaTemperature;
+      temperatureUnit = source.temperatureUnit;
+      pressureUnit = source.pressureUnit;
+      temperatureLimitUnit = source.temperatureLimitUnit;
+      acceptedTemperatureUnit = source.acceptedTemperatureUnit;
+      acceptedPressureUnit = source.acceptedPressureUnit;
+      acceptedSpecification = source.acceptedSpecification;
+      lastComposition = source.lastComposition == null ? null : source.lastComposition.clone();
+      utility = source.utilitySpecification;
+      utilityValues = new double[] {utility.getSupplyTemperature(), utility.getReturnTemperature(),
+          utility.getApproachTemperature(), utility.getHeatCapacityRate(), utility.getOverallHeatTransferCoefficient()};
+    }
+
+    /**
+     * Restores specification and cache values on the same live equipment.
+     *
+     * @param target original equipment instance
+     */
+    private void restore(Heater target) {
+      target.setTemperature = setTemperature;
+      target.setOutPressure = setOutPressure;
+      target.setEnergyInput = setEnergyInput;
+      target.acceptedSpecificationValid = acceptedSpecificationValid;
+      target.acceptedSetTemperature = acceptedSetTemperature;
+      target.acceptedSetOutPressure = acceptedSetOutPressure;
+      target.acceptedSetEnergyInput = acceptedSetEnergyInput;
+      target.acceptedExternalEnergy = acceptedExternalEnergy;
+      target.autoSized = autoSized;
+      target.temperatureOut = temperatureOut;
+      target.dT = dT;
+      target.pressureOut = pressureOut;
+      target.energyInput = energyInput;
+      target.pressureDrop = pressureDrop;
+      target.coolingMediumTemperature = coolingMediumTemperature;
+      target.maxOutletTemperatureLimit = maxOutletTemperatureLimit;
+      target.minOutletTemperatureLimit = minOutletTemperatureLimit;
+      target.lastTemperature = lastTemperature;
+      target.lastPressure = lastPressure;
+      target.lastFlowRate = lastFlowRate;
+      target.lastOutPressure = lastOutPressure;
+      target.lastOutTemperature = lastOutTemperature;
+      target.lastDuty = lastDuty;
+      target.lastPressureDrop = lastPressureDrop;
+      target.acceptedDeltaTemperature = acceptedDeltaTemperature;
+      target.temperatureUnit = temperatureUnit;
+      target.pressureUnit = pressureUnit;
+      target.temperatureLimitUnit = temperatureLimitUnit;
+      target.acceptedTemperatureUnit = acceptedTemperatureUnit;
+      target.acceptedPressureUnit = acceptedPressureUnit;
+      target.acceptedSpecification = acceptedSpecification;
+      target.lastComposition = lastComposition == null ? null : lastComposition.clone();
+      target.utilitySpecification = utility;
+      utility.setSupplyTemperature(utilityValues[0]);
+      utility.setReturnTemperature(utilityValues[1]);
+      utility.setApproachTemperature(utilityValues[2]);
+      utility.setHeatCapacityRate(utilityValues[3]);
+      utility.setOverallHeatTransferCoefficient(utilityValues[4]);
+    }
+  }
+
 }

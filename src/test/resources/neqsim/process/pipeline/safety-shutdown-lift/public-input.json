@@ -1,0 +1,37 @@
+{
+  "studyName": "Safety Shutdown inlet isolation with ideal translating check valve",
+  "model": "SRK",
+  "temperature_C": 25.0,
+  "pressure_bara": 100.0,
+  "components": {
+    "water": 1.0
+  },
+  "flowRate": {
+    "value": 2.3023156367704973,
+    "unit": "kg/sec"
+  },
+  "pipe": {
+    "length_m": 100.0,
+    "diameter_m": 0.05,
+    "roughness_m": 1.0E-5,
+    "numberOfNodes": 51,
+    "waveSpeed_m_s": 1000.0
+  },
+  "valveBackPressure_bara": 98.72334844532102,
+  "upstreamBoundary": "CLOSED_END",
+  "timeStep_s": 1.0E-4,
+  "simulationTime_s": 0.5,
+  "eventSchedule": [],
+  "liftCheckValve": {
+    "mass_kg": 0.2,
+    "damping_N_s_m": 2.0,
+    "stiffness_N_m": 2000.0,
+    "preload_N": 0.0,
+    "pressureArea_m2": 0.0001,
+    "dischargeCoefficient": 0.65,
+    "orificeWidth_m": 0.05,
+    "maximumLift_m": 0.01,
+    "initialLift_m": 0.005,
+    "provenance": "Public synthetic ideal translating valve"
+  }
+}

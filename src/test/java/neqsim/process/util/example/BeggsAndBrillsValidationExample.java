@@ -383,7 +383,7 @@ public class BeggsAndBrillsValidationExample {
         temperature);
 
     // Test multiple GOR (Gas-Oil Ratio) conditions
-    double[] gasFlowRates = { 100, 500, 2000, 5000, 10000 }; // kg/hr gas
+    double[] gasFlowRates = {100, 500, 2000, 5000, 10000}; // kg/hr gas
     double liquidFlowRate = 10000; // kg/hr liquid (constant)
 
     logger.info("Two-Phase Flow Results:");

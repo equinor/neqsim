@@ -1,0 +1,30 @@
+Run66 frozen before implementation and candidate comparisons,8November2026.
+Sole draftPR4924 parent1263495ad5715f52588981dc71cd60e76b75c2fa,
+master97c03ecf50d16a6dab7bd812364f49d5f4c5c444,
+verified parent tree19ef3584b2f9aacbbd26b73ffb1b81854070140c.
+Engineering question: remove absolute-denominator freezing and avoid avoidable
+intermediate scaling overflow/underflow in the existing Carter-Tracy recurrence.
+Same physical model, pressure protocol, kernel, units and zero-cumulative clamp.
+Normalize by positive P: e=t*D/P, r=tPrevious/t, denominator=1-r*e.
+Equivalent affine recurrence Wnew=(1-e)/den*Wprevious+(dt/P)/den*U*deltaP.
+No replacement finite-annulus response, EOS/history/prior fit or public operation.
+Input domain: finite strictly increasing nonnegative times, finite signed total
+boundary pressure drops, finite nonnegative U, existing radius conventions.
+Explicit empty/invalid-domain/unrepresentable-transition rejection rather than
+invented output or silent freeze; bounded-radius physics remains unqualified.
+Freeze numerical controls: first-step analytic identity and small-time asymptote
+scaled relative tolerance1e-12; high-precision Decimal recurrence algebra on
+native P/D at least60digits, relative2e-12 plus2e-14of case natural volume scale.
+Keep original independent MP/CT limiting-ODE criteria and exact full kernel
+output bits unchanged. For original42complete CT histories retain differences
+within1e-12absolute+1e-12relative and preserve their independent ODE gates.
+Separate arithmetic consistency from independently computed spectrum/physics.
+Positive pressure histories, zero support, pressure/C scale factors, variable
+pressure/recovery, nearby/adjacent and MIN/MAX times, signed clipping controls,
+invalid-input controls and explicit unrepresentable output controls.
+Actual Java8 compilation/replay, focused and surrounding tests, current pinned
+source/PMD/SpotBugs, Javadoc/formatting/docs/hooks/inventory and measured runtime.
+Performance: same Java8 ABBA3warmups/7samples; ordinary1000interval CT warm
+median <=1.20times parent; retain scalar/cold controls without speedup claim.
+Full local/publication commands, all outputs and failures retained. No relaxed
+criteria, extrapolation, measured lab/field or full issue acceptance claimed.

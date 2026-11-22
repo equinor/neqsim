@@ -184,7 +184,7 @@ public class TubeInsertModel implements Serializable {
   public double[] applyEnhancement(double plainHTC, double plainPressureDrop, double Re, double Pr) {
     double hRatio = getHeatTransferEnhancementRatio(Re, Pr);
     double fRatio = getPressureDropPenaltyRatio(Re);
-    return new double[] { plainHTC * hRatio, plainPressureDrop * fRatio };
+    return new double[] {plainHTC * hRatio, plainPressureDrop * fRatio};
   }
 
   // ============================================================================

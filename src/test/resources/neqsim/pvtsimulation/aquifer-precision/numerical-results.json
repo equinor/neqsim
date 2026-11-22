@@ -1,0 +1,16 @@
+{
+  "baseline": {
+    "comparisons": 11552,
+    "failedComparisons": 16,
+    "maxPressureErrorBara": 9.094947017729282e-13,
+    "maxWaterErrorM3": 2.980232238769531e-07,
+    "maxFractionOfTolerance": 1.0809830760149657
+  },
+  "candidate": {
+    "comparisons": 11552,
+    "failedComparisons": 0,
+    "maxPressureErrorBara": 9.094947017729282e-13,
+    "maxWaterErrorM3": 2.980232238769531e-07,
+    "maxFractionOfTolerance": 0.4725025337084289
+  }
+}

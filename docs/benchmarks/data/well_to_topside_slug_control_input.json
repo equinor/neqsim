@@ -1,0 +1,7 @@
+{
+  "analysis": "wellToTopsideSlugControl",
+  "durationSeconds": 90,
+  "timeStepSeconds": 0.25,
+  "sampleIntervalSeconds": 1,
+  "meshRefinement": 1
+}

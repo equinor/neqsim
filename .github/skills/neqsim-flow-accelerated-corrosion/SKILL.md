@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-accelerated-corrosion
 version: "1.0.0"
-description: "Flow-accelerated corrosion (FAC) and high-temperature pH in closed heating- and cooling-medium loops — magnetite film stability, mass-transfer-controlled wall thinning at bends and welds, wall shear stress, in-situ pH at operating temperature versus laboratory pH, alkaline margin above neutrality, and Cr-Mo material upgrade screening. USE WHEN: a task involves localised wall thinning or leaks at bends, elbows or circumferential welds in carbon-steel tubing; a closed glycol/water or water heating-medium, cooling-medium, boiler-feedwater or condensate loop; a WHRU, steam generator or economiser tube bundle; pH control of an amine-buffered loop; or any question of the form 'is the fluid alkaline enough at operating temperature?'. Anchors on neqsim.process.corrosion."
+description: "Flow-accelerated corrosion and high-temperature pH in closed heating/cooling-medium loops - magnetite stability, wall thinning at bends and welds, wall shear, in-situ vs lab pH, Cr-Mo upgrade screening. USE WHEN: localised thinning or leaks at bends, elbows or welds in carbon-steel tubing; a glycol/water, boiler-feedwater or condensate loop; a WHRU or economiser bundle; amine pH control; or 'is the fluid alkaline enough at temperature?'. Anchors on neqsim.process.corrosion."
 last_verified: "2026-08-07"
 requires:
   java_packages: [neqsim.process.corrosion, neqsim.process.chemistry.rca]

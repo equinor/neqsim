@@ -1,0 +1,14 @@
+cases:
+  - id: A
+    label: Base case
+    role: design
+    description: Well fluid 90000 kg/h, heater outlet 85 C
+    data_source: Synthetic example inputs
+  - id: B
+    label: Low rate, cooler heater
+    role: scenario
+    description: Well fluid 60000 kg/h, heater outlet 70 C
+    data_source: Synthetic example inputs
+    set:
+      "well fluid.flowRate": [60000, kg/hr]
+      "oil heater.outletTemperature": [70, C]

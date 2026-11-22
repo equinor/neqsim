@@ -32,9 +32,15 @@ This folder contains documentation for:
 | Document | Description |
 |----------|-------------|
 | [TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE) | Complete workflow for solving tasks with AI while developing the physics engine, including `study_config.yaml`, intake pauses, document inputs, and deep multi-notebook studies |
+| [UTILITIES_DESIGN_REPORT.md](UTILITIES_DESIGN_REPORT) | Agent workflow reusing the process report for utility consumers, simultaneous loads, supply/distribution, drawings, standards and acceptance |
+| [PROCESS_STUDY_REPORT.md](PROCESS_STUDY_REPORT) | Process-study report in one step (`neqsim process-report`): stream tables for every case, balances, BFD/PFD, standards register and validation from a Python, JSON, `.neqsim` or extracted-data model; draft basis, cases.yaml, outputs, agent and troubleshooting |
+| [PROCESS_OVERVIEW.md](PROCESS_OVERVIEW) | One-sheet A3 process flow diagram and 16:9 presentation version (`neqsim process-overview`): structured process graph with traceable reductions, hierarchical layout and routing, ISO 5457/7200/10628-2 conventions, embedded fonts, detail sheets and validation record |
+| [FLOW_ASSURANCE_STUDY_REPORT.md](FLOW_ASSURANCE_STUDY_REPORT) | Flow-assurance study report and A3 pipeline drawings in one step (`neqsim flow-assurance-report`): hydrate margin, cooldown, hydraulics, threat matrix, mitigation comparison, hand-offs and validation; supported and unsupported analyses |
+| [SURF_DESIGN_STUDY.md](SURF_DESIGN_STUDY) | SURF design study in one step (`neqsim surf-study`): generated and solved NeqSim field network, concept comparison, 15 A3 drawings, MTO/cost, 20-chapter report and fail-closed validation; maturity and hand-offs |
+| [CONTINUOUS_TASK_SOLVING.md](CONTINUOUS_TASK_SOLVING) | Living tasks: keep a solved task improving with monitor cycles and solve loops — setup, backtesting, scheduling, headless agents, ledger and baseline promotion |
 | [Solve an Engineering Task](../tutorials/solve-engineering-task) | Hands-on tutorial: from blank screen to validated report |
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
-| [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
+| `TASK_LOG.md` (local only; ignored by Git) | Persistent memory — searchable log of all solved tasks |
 | [LESSONS_LEARNED.md](LESSONS_LEARNED) | Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas) |
 | [image_tools_agents_skills.md](image_tools_agents_skills) | Inventory of image-related tools, agents, and skills for P&IDs, drawings, scanned PDFs, maps, and screenshots |
 | [AGENT_SKILL_MAP.md](AGENT_SKILL_MAP) | Auto-generated map of which skills each NeqSim agent loads at invocation time |
@@ -66,6 +72,7 @@ These guides explain how to add new functionality to NeqSim:
 | [Extending Process Equipment](extending_process_equipment) | Add custom separators, reactors, and other unit operations |
 | [Extending Physical Properties](extending_physical_properties) | Add custom viscosity, conductivity, and diffusivity models |
 | [Extending Thermodynamic Models](extending_thermodynamic_models) | Add custom equations of state and activity models |
+| [Numerical Model Specifications](model_spec_harness) | Sourced numerical cases, explicit absence contracts and fast CI coverage |
 | [Python Extension Patterns](python_extension_patterns) | Use NeqSim from Python, create wrappers, implement interfaces |
 
 ### Extension Quick Reference
@@ -112,6 +119,7 @@ fluid = jneqsim.thermo.system.SystemSrkEos(300.0, 50.0)
 | Document | Description |
 |----------|-------------|
 | [Performance Tuning Guide](performance_tuning) | Speed up simulations — warm-start K-values, flowsheet routing, stability short-circuit, and when to enable each optimization |
+| [Large Steady-State Benchmark](steady_state_performance_benchmark) | Paired JVM measurements, bottleneck attribution, and numerical checks for large process models |
 | [TR/NORSOK Integration Recommendations](TR_NORSOK_integration_recommendations) | Synthesis of Equinor TR and NORSOK standard review with concrete recommendations for skills, agents, Java code, and data access |
 | [AI Extraction Skill Proposal](GITHUB_ISSUE_json_extraction_skill) | Feature proposal: extract process data from unstructured documents (text, PFDs, data sheets) into NeqSim JSON |
 
@@ -136,4 +144,3 @@ For deeper understanding of NeqSim's architecture:
 - [NeqSim Python Package](https://github.com/equinor/neqsim-python)
 - [Main Documentation](../)
 - [Reference Manual](../REFERENCE_MANUAL_INDEX)
-

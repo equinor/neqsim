@@ -1,0 +1,920 @@
+[
+  {
+    "temperatureK": 275.0,
+    "ternary": false,
+    "names": [
+      "methane",
+      "n-butane"
+    ],
+    "nativeInventories": [
+      [
+        0.95,
+        0.05
+      ],
+      [
+        0.5087534089723648,
+        0.028063076391624468
+      ],
+      [
+        0.22989315118940862,
+        0.012681013925333893
+      ],
+      [
+        0.0718205158860161,
+        0.003961653304429514
+      ],
+      [
+        0.014012272308639509,
+        0.0007729235053419653
+      ]
+    ],
+    "meshes": [
+      {
+        "parcelCapMol": 0.01,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.95,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5087534089723672,
+              0.028063076391626973
+            ],
+            "relativeVolume": 1.0000000000000038,
+            "parcels": 47,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.22989315118940823,
+              0.01268101392533494
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 30,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.0718205158860159,
+              0.003961653304429839
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 17,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.014012272308639474,
+              0.0007729235053420292
+            ],
+            "relativeVolume": 0.9999999999999997,
+            "parcels": 7,
+            "oilPresent": false
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.005,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.95,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5087534089723655,
+              0.028063076391626245
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 93,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.22989315118940887,
+              0.01268101392533471
+            ],
+            "relativeVolume": 0.9999999999999993,
+            "parcels": 59,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07182051588601665,
+              0.0039616533044298016
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 34,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.014012272308640113,
+              0.0007729235053420494
+            ],
+            "relativeVolume": 0.9999999999999964,
+            "parcels": 13,
+            "oilPresent": false
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.0025,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.95,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.508753408972362,
+              0.0280630763916274
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 186,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.22989315118940418,
+              0.01268101392533503
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 118,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07182051588601261,
+              0.003961653304429756
+            ],
+            "relativeVolume": 1.0000000000000016,
+            "parcels": 67,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.014012272308636565,
+              0.0007729235053418876
+            ],
+            "relativeVolume": 1.000000000000014,
+            "parcels": 25,
+            "oilPresent": false
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.00125,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.95,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.508753408972366,
+              0.028063076391622768
+            ],
+            "relativeVolume": 0.9999999999999866,
+            "parcels": 371,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.2298931511894157,
+              0.012681013925333518
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 236,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07182051588602271,
+              0.003961653304429629
+            ],
+            "relativeVolume": 0.9999999999999993,
+            "parcels": 134,
+            "oilPresent": false
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.014012272308645265,
+              0.0007729235053422339
+            ],
+            "relativeVolume": 0.9999999999999727,
+            "parcels": 49,
+            "oilPresent": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "temperatureK": 300.0,
+    "ternary": true,
+    "names": [
+      "methane",
+      "n-butane",
+      "n-heptane"
+    ],
+    "nativeInventories": [
+      [
+        0.9,
+        0.05,
+        0.05
+      ],
+      [
+        0.5084050378710204,
+        0.03860365350653983,
+        0.0486903708463509
+      ],
+      [
+        0.23940416276578114,
+        0.02881507386021219,
+        0.047784410650302964
+      ],
+      [
+        0.07450364016908628,
+        0.017981297108415784,
+        0.0466132585994691
+      ],
+      [
+        0.01304609949807064,
+        0.007657770152461384,
+        0.0443257636610199
+      ]
+    ],
+    "meshes": [
+      {
+        "parcelCapMol": 0.01,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5084050378709788,
+              0.03860365350653712,
+              0.04869037084635048
+            ],
+            "relativeVolume": 1.0000000000000004,
+            "parcels": 41,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.23940416276572504,
+              0.028815073860204696,
+              0.047784410650301916
+            ],
+            "relativeVolume": 0.9999999999999996,
+            "parcels": 28,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07450364016907132,
+              0.01798129710841087,
+              0.04661325859946786
+            ],
+            "relativeVolume": 1.0000000000000042,
+            "parcels": 18,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.013046099498071792,
+              0.00765777015245727,
+              0.0443257636610174
+            ],
+            "relativeVolume": 1.0000000000000069,
+            "parcels": 8,
+            "oilPresent": true
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.005,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5084050378709791,
+              0.03860365350653704,
+              0.04869037084635046
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 81,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.23940416276572493,
+              0.028815073860204467,
+              0.04778441065030188
+            ],
+            "relativeVolume": 0.9999999999999996,
+            "parcels": 56,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.0745036401690713,
+              0.01798129710841089,
+              0.046613258599467876
+            ],
+            "relativeVolume": 1.0000000000000004,
+            "parcels": 36,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.013046099498071846,
+              0.007657770152457544,
+              0.044325763661017474
+            ],
+            "relativeVolume": 1.0000000000000078,
+            "parcels": 15,
+            "oilPresent": true
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.0025,
+        "failure": "java.lang.IllegalStateException: Precision at pressure=10.0 inventory=[0.1065743133509231, 0.02008830385442146, 0.04684103007088043] phase0=GAS phases=2 cause=java.lang.IllegalStateException: Fixed-cell precision refinement failed residual=3.3889557826682903E-13 beforeGibbs=188.93323532116983 afterGibbs=188.93323534811145 GibbsAllowance=1.8893323532116983E-8 closureBefore=[-2.239516731783464E-12, 3.8578515382248213E-13, 1.860761544847378E-12] closureAfter=[-6.942363350859182E-15, 2.7391283685673784E-15, 1.1206313654810174E-14]"
+      },
+      {
+        "parcelCapMol": 0.00125,
+        "failure": "java.lang.IllegalStateException: Precision at pressure=10.0 inventory=[0.1077394874686004, 0.02016485446850729, 0.04684930533912084] phase0=GAS phases=2 cause=java.lang.IllegalStateException: Fixed-cell precision refinement failed residual=4.3165471197426086E-13 beforeGibbs=195.08971579420336 afterGibbs=195.08971582857305 GibbsAllowance=1.9508971579420336E-8 closureBefore=[-2.8599236694126784E-12, 4.915200191302205E-13, 2.3722621089738993E-12] closureAfter=[-1.191191242866374E-14, 2.9004576518332215E-15, 1.289246487345963E-14]"
+      }
+    ]
+  },
+  {
+    "temperatureK": 325.0,
+    "ternary": true,
+    "names": [
+      "methane",
+      "n-butane",
+      "n-heptane"
+    ],
+    "nativeInventories": [
+      [
+        0.9,
+        0.05,
+        0.05
+      ],
+      [
+        0.5165803340716897,
+        0.035012324628256555,
+        0.046644686466795086
+      ],
+      [
+        0.24610254635335738,
+        0.02231098481603762,
+        0.04383189514133825
+      ],
+      [
+        0.07709985630932539,
+        0.010535906147514833,
+        0.03978547681664248
+      ],
+      [
+        0.01338317567551192,
+        0.0028491690464801196,
+        0.03176027905998615
+      ]
+    ],
+    "meshes": [
+      {
+        "parcelCapMol": 0.01,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5165803340716574,
+              0.035012324628255036,
+              0.04664468646679482
+            ],
+            "relativeVolume": 1.0000000000000009,
+            "parcels": 41,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.2461025463533335,
+              0.022310984816036376,
+              0.04383189514133839
+            ],
+            "relativeVolume": 1.000000000000001,
+            "parcels": 29,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07709985630930226,
+              0.010535906147511126,
+              0.03978547681664037
+            ],
+            "relativeVolume": 0.9999999999998529,
+            "parcels": 19,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.01338317567551369,
+              0.0028491690464808313,
+              0.031760279059993235
+            ],
+            "relativeVolume": 1.0000000000005467,
+            "parcels": 8,
+            "oilPresent": true
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.005,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5165803340716593,
+              0.035012324628254994,
+              0.04664468646679481
+            ],
+            "relativeVolume": 1.0000000000000013,
+            "parcels": 81,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.24610254635333556,
+              0.022310984816036293,
+              0.04383189514133831
+            ],
+            "relativeVolume": 1.0000000000000004,
+            "parcels": 58,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07709985630930401,
+              0.010535906147511112,
+              0.039785476816640276
+            ],
+            "relativeVolume": 0.999999999999853,
+            "parcels": 37,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.01338317567551325,
+              0.002849169046480739,
+              0.0317602790599935
+            ],
+            "relativeVolume": 1.0000000000004545,
+            "parcels": 16,
+            "oilPresent": true
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.0025,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5165803340716578,
+              0.03501232462825492,
+              0.04664468646679477
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 161,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.24610254635333234,
+              0.022310984816036203,
+              0.04383189514133828
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 115,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07709985630930176,
+              0.010535906147511015,
+              0.039785476816640235
+            ],
+            "relativeVolume": 0.9999999999998526,
+            "parcels": 74,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.013383175675509356,
+              0.002849169046480287,
+              0.03176027905999318
+            ],
+            "relativeVolume": 1.000000000000243,
+            "parcels": 32,
+            "oilPresent": true
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.00125,
+        "failure": "java.lang.IllegalStateException: Precision at pressure=10.0 inventory=[0.07808208975944088, 0.010604342195146058, 0.03980899435609955] phase0=GAS phases=2 cause=java.lang.IllegalStateException: Fixed-cell precision refinement failed residual=4.2366110619695974E-13 beforeGibbs=210.61723806185586 afterGibbs=210.61723808296955 GibbsAllowance=2.1061723806185585E-8 closureBefore=[-1.91288174536397E-12, 1.207046615436802E-13, 1.8201620766156168E-12] closureAfter=[7.310992089504253E-15, 2.9021923753091983E-15, 1.7770507287906412E-14]"
+      }
+    ]
+  },
+  {
+    "temperatureK": 350.0,
+    "ternary": true,
+    "names": [
+      "methane",
+      "n-butane",
+      "n-heptane"
+    ],
+    "nativeInventories": [
+      [
+        0.9,
+        0.05,
+        0.05
+      ],
+      [
+        0.5217921307840911,
+        0.03222939231703491,
+        0.04240387631372425
+      ],
+      [
+        0.25031497893778965,
+        0.0178325050737205,
+        0.035210469018252886
+      ],
+      [
+        0.07807343036610351,
+        0.006457558333468581,
+        0.02408714319306647
+      ],
+      [
+        0.012630433346516798,
+        0.0010446801137039578,
+        0.0038967297220248373
+      ]
+    ],
+    "meshes": [
+      {
+        "parcelCapMol": 0.01,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5217921307840508,
+              0.03222939231703027,
+              0.042403876313719155
+            ],
+            "relativeVolume": 1.0000000000000007,
+            "parcels": 41,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.25031497893777965,
+              0.017832505073718377,
+              0.03521046901824883
+            ],
+            "relativeVolume": 1.0000000000000029,
+            "parcels": 30,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07807343036609324,
+              0.006457558333466959,
+              0.02408714319306099
+            ],
+            "relativeVolume": 1.0000000000000024,
+            "parcels": 20,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.012630433346516983,
+              0.0010446801137038474,
+              0.003896729722024517
+            ],
+            "relativeVolume": 1.000000000000001,
+            "parcels": 10,
+            "oilPresent": false
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.005,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5217921307840522,
+              0.032229392317030266,
+              0.04240387631371905
+            ],
+            "relativeVolume": 1.0000000000000004,
+            "parcels": 81,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.25031497893778093,
+              0.01783250507371841,
+              0.03521046901824874
+            ],
+            "relativeVolume": 1.000000000000003,
+            "parcels": 59,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07807343036609446,
+              0.006457558333466999,
+              0.02408714319306074
+            ],
+            "relativeVolume": 1.0000000000000024,
+            "parcels": 39,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.012630433346518217,
+              0.0010446801137039402,
+              0.003896729722024798
+            ],
+            "relativeVolume": 0.9999999999999954,
+            "parcels": 19,
+            "oilPresent": false
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.0025,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5217921307840494,
+              0.03222939231703004,
+              0.042403876313718884
+            ],
+            "relativeVolume": 1.0000000000000007,
+            "parcels": 162,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.2503149789377786,
+              0.01783250507371827,
+              0.03521046901824868
+            ],
+            "relativeVolume": 1.0000000000000004,
+            "parcels": 118,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07807343036609306,
+              0.0064575583334668995,
+              0.024087143193060715
+            ],
+            "relativeVolume": 1.000000000000001,
+            "parcels": 78,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.012630433346517037,
+              0.0010446801137038457,
+              0.003896729722024499
+            ],
+            "relativeVolume": 1.000000000000001,
+            "parcels": 37,
+            "oilPresent": false
+          }
+        ]
+      },
+      {
+        "parcelCapMol": 0.00125,
+        "rows": [
+          {
+            "pressureBara": 100.0,
+            "retainedMoles": [
+              0.9,
+              0.05,
+              0.05
+            ],
+            "relativeVolume": 1.0,
+            "parcels": 0,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 60.0,
+            "retainedMoles": [
+              0.5217921307840387,
+              0.03222939231702977,
+              0.04240387631371883
+            ],
+            "relativeVolume": 1.0000000000000002,
+            "parcels": 323,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 30.0,
+            "retainedMoles": [
+              0.2503149789377691,
+              0.017832505073717878,
+              0.03521046901824862
+            ],
+            "relativeVolume": 1.0000000000000013,
+            "parcels": 235,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 10.0,
+            "retainedMoles": [
+              0.07807343036608397,
+              0.006457558333466402,
+              0.024087143193060653
+            ],
+            "relativeVolume": 0.9999999999999998,
+            "parcels": 156,
+            "oilPresent": true
+          },
+          {
+            "pressureBara": 2.0,
+            "retainedMoles": [
+              0.012630433346507897,
+              0.00104468011370313,
+              0.003896729722022122
+            ],
+            "relativeVolume": 1.0000000000000424,
+            "parcels": 73,
+            "oilPresent": false
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -294,6 +294,19 @@ metrics.calculate();
 // getEnergyReturnOnInvestment(), getRenewableEnergyFraction()
 ```
 
+## Mineral-water-gas reaction equilibrium (reservoir H2S from FeS)
+
+For heterogeneous reactions between pure solids, liquid water and gases — for example
+FeS(troilite) + H2O(l) + CO2(g) = FeCO3(siderite) + H2S(g) — use
+`neqsim.thermo.util.mineral.SolidGasReactionEquilibrium`, not `GibbsReactor`, which has no
+pure-solid mineral phases. It gives `getLog10K(T)` from phase-specific JANAF/USGS data,
+condensed-phase pressure corrections (IAPWS-IF97 for water) and `solveGasExchange(fluid, "H2S",
+"CO2", ExchangeMode.FIXED_REACTANT)`, which sets H2S from EOS fugacities. Supply brine water
+activity with `setActivity("water", aw)`, report `getLog10KUncertainty` (siderite alone gives
+about ±1 log unit), and read the warnings (extrapolation below 298 K, metastable 1-bar water
+above 373 K). Troilite only; mackinawite data are not available. Guide:
+`docs/thermo/solid_gas_reaction_equilibrium.md`.
+
 ## Uncontrolled and self-sustaining reactions
 
 Two distinct escalation questions sit outside the reactor classes above, and the

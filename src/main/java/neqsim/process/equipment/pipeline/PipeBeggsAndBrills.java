@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.heattransfer.BarePipeSurfaceTemperature;
 import neqsim.process.util.monitor.PipeBeggsBrillsResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -276,7 +277,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * pipe.setFlowConvergenceTolerance(1e-4);
  * pipe.run();
  *
- * System.out.println("Calculated flow: " + pipe.getOutletStream().getFlowRate("kg/hr") + " kg/hr");
+ * FlowSolveReport report = pipe.getFlowSolveReport();
+ * // run() throws IllegalStateException on failure; inspect report before using a rated capacity.
+ * double acceptedFlowKgPerHour = report.getCandidateFlowKgPerHour();
  * }</pre>
  *
  * <h2>Transient Simulation</h2>
@@ -392,7 +395,17 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     /** Calculate outlet pressure from inlet conditions and flow rate (default). */
     CALCULATE_OUTLET_PRESSURE,
     /** Calculate flow rate from inlet and specified outlet pressure. */
-    CALCULATE_FLOW_RATE
+    CALCULATE_FLOW_RATE,
+    /**
+     * Calculate the inlet pressure required to deliver a specified outlet pressure at the given flow rate.
+     *
+     * <p>
+     * This is the tie-back question: a host imposes an arrival pressure and the reservoir has to supply whatever inlet
+     * pressure that demands. The forward model marches from a fixed inlet, so the inlet is bisected until the computed
+     * outlet matches {@link #setOutletPressure(double, String)}.
+     * </p>
+     */
+    CALCULATE_INLET_PRESSURE
   }
 
   /**
@@ -447,8 +460,59 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // Calculation mode and specified outlet pressure
   private CalculationMode calculationMode = CalculationMode.CALCULATE_OUTLET_PRESSURE;
   private double specifiedOutletPressure = Double.NaN;
+
+  /** Inlet pressure found by {@link CalculationMode#CALCULATE_INLET_PRESSURE}, in bara. */
+  private double solvedInletPressure = Double.NaN;
   private String specifiedOutletPressureUnit = "bara";
   private int maxFlowIterations = 50;
+  private FlowSolveReport flowSolveReport;
+
+  /**
+   * Returns the last flow solve evidence, or null before a solve or after a forward run.
+   *
+   * @return immutable report; inspect isConverged before using a capacity
+   */
+  public FlowSolveReport getFlowSolveReport() {
+    return flowSolveReport;
+  }
+
+  /**
+   * Hydraulic-domain failure used to bound the flow solve. Retains the public invalid-output cause so process candidate
+   * evaluators can recognize an infeasible pressure in forward mode.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static class HydraulicDomainException extends IllegalStateException {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Creates a pressure-domain failure.
+     *
+     * @param pressure rejected pressure in bara
+     */
+    HydraulicDomainException(double pressure) {
+      super("Non-positive pipeline pressure: " + pressure + " bara",
+          new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills", "run: calcOutletPressure",
+              "pressure out", pressure < 0 ? "- Outlet pressure is negative" + pressure : "- Outlet pressure is zero"));
+    }
+  }
+
+  /**
+   * Non-finite forward output must never be used as a bracket.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static class NonFinitePressureException extends IllegalStateException {
+    private static final long serialVersionUID = 1L;
+
+    /** Creates a non-finite output failure. */
+    NonFinitePressureException() {
+      super("Non-finite pipeline outlet pressure");
+    }
+  }
+
   private double flowConvergenceTolerance = 1e-4;
 
   // Unit for maximum flow
@@ -529,6 +593,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // Angle of the pipe [degrees]
   private double angle = Double.NaN;
 
+  /** Ensures the lean-gas holdup warning is logged once per pipe instance. */
+  private transient boolean leanGasWarningLogged = false;
   // Density of the liquid in the mixture in case of water and oil phases present
   // together
   private double mixtureLiquidDensity;
@@ -586,6 +652,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
   private static final double MIN_TRANSIT_VELOCITY = 1.0e-3;
   private static final double MIN_DENSITY = 1.0e-6;
+
+  /** Upper no-slip liquid volume fraction for the smooth dry-gas friction extension. */
+  private static final double TRACE_LIQUID_VOLUME_FRACTION = 1.0e-6;
 
   /** Flag indicating if pipeline has been auto-sized. */
   private boolean autoSized = false;
@@ -691,31 +760,72 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Setter for the field <code>pipeSpecification</code>.
+   * Select a populated pipe-size/specification cell from {@code PIPEDATA.csv}.
    *
-   * @param nominalDiameter a double in inch
-   * @param pipeSec a {@link java.lang.String} object
+   * <p>
+   * Blank cells mean that the specification is unavailable for that nominal size. Invalid or unavailable selections
+   * leave all previously configured geometry unchanged.
+   * </p>
+   *
+   * @param nominalDiameter nominal pipe size in inches
+   * @param pipeSec specification column name, for example {@code LD201}
+   * @throws IllegalArgumentException if the size/specification is invalid or unavailable
+   * @throws IllegalStateException if the database cannot be read or contains invalid dimensions
    */
   @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
-    this.pipeSpecification = pipeSec;
-    this.nominalDiameter = nominalDiameter;
-    this.PipeSpecSet = true;
-
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
-      try {
-        if (dataSet.next()) {
-          this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
-          this.insideDiameter = (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
+    if (!Double.isFinite(nominalDiameter) || nominalDiameter <= 0.0) {
+      throw new IllegalArgumentException("Nominal pipe diameter must be finite and positive: " + nominalDiameter);
+    }
+    if (pipeSec == null || pipeSec.trim().isEmpty()) {
+      throw new IllegalArgumentException("Pipe specification must be provided for nominal diameter " + nominalDiameter);
+    }
+    String selectedSpecification = pipeSec.trim();
+    String selection = selectedSpecification + " at nominal diameter " + nominalDiameter + " inch";
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database
+            .getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'")) {
+      java.sql.ResultSetMetaData metadata = dataSet.getMetaData();
+      boolean knownSpecification = false;
+      for (int column = 1; column <= metadata.getColumnCount(); column++) {
+        String columnName = metadata.getColumnLabel(column);
+        if (!"ID".equalsIgnoreCase(columnName) && !"Size".equalsIgnoreCase(columnName)
+            && !"OD".equalsIgnoreCase(columnName) && selectedSpecification.equalsIgnoreCase(columnName)) {
+          selectedSpecification = columnName;
+          knownSpecification = true;
+          break;
         }
-      } catch (NumberFormatException e) {
-        logger.error(e.getMessage());
-      } catch (SQLException e) {
-        logger.error(e.getMessage());
       }
+      if (!knownSpecification) {
+        throw new IllegalArgumentException("Unknown pipe specification " + selection);
+      }
+      if (!dataSet.next()) {
+        throw new IllegalArgumentException("No pipe data for " + selection);
+      }
+      String wallValue = dataSet.getString(selectedSpecification);
+      if (wallValue == null || wallValue.trim().isEmpty()) {
+        throw new IllegalArgumentException("Pipe specification is not available: " + selection);
+      }
+      double selectedWall = Double.parseDouble(wallValue.trim()) / 1000.0;
+      double selectedOD = dataSet.getDouble("OD") / 1000.0;
+      if (dataSet.wasNull() || !Double.isFinite(selectedWall) || !Double.isFinite(selectedOD) || selectedWall <= 0.0
+          || selectedOD <= 2.0 * selectedWall) {
+        throw new IllegalStateException("Invalid pipe dimensions for " + selection);
+      }
+      this.pipeSpecification = selectedSpecification;
+      this.nominalDiameter = nominalDiameter;
+      this.pipeThickness = selectedWall;
+      this.insideDiameter = selectedOD - 2.0 * selectedWall;
+      this.PipeSpecSet = true;
+    } catch (NumberFormatException e) {
+      throw new IllegalStateException("Invalid pipe dimensions for " + selection, e);
     } catch (SQLException e) {
-      logger.error(e.getMessage());
+      throw new IllegalStateException("Cannot load pipe specification " + selection, e);
+    } catch (RuntimeException e) {
+      if (e instanceof IllegalArgumentException || e instanceof IllegalStateException) {
+        throw e;
+      }
+      throw new IllegalStateException("Cannot load pipe specification " + selection, e);
     }
   }
 
@@ -759,6 +869,28 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    */
   public double getThickness() {
     return this.pipeThickness;
+  }
+
+  /**
+   * Calculates the local external steel temperature of this bare, horizontal pipe in air. Geometry and steel
+   * conductivity come from this equipment; the local bulk-fluid temperature and fluid-side film coefficient must be
+   * supplied for the location being assessed. This independent screening calculation does not change the pipeline's
+   * heat-transfer mode or simulate the axial temperature profile.
+   *
+   * @param localFluidTemperatureK local bulk-fluid temperature in K
+   * @param ambientTemperatureK air and radiative-surroundings temperature in K
+   * @param innerFilmWPerM2K local fluid-side film coefficient in W/(m2 K)
+   * @param windSpeedMPerS perpendicular wind speed in m/s
+   * @param emissivity exposed steel emissivity in [0, 1]
+   * @return the local thermal balance and outer steel temperature in K
+   */
+  public BarePipeSurfaceTemperature.Result calculateBarePipeSurfaceTemperature(double localFluidTemperatureK,
+      double ambientTemperatureK, double innerFilmWPerM2K, double windSpeedMPerS, double emissivity) {
+    if (insulationThickness != 0.0) {
+      throw new IllegalStateException("Bare-pipe calculation requires zero insulation thickness");
+    }
+    return BarePipeSurfaceTemperature.calculate(localFluidTemperatureK, ambientTemperatureK, insideDiameter,
+        pipeThickness, pipeWallThermalConductivity, innerFilmWPerM2K, windSpeedMPerS, emissivity);
   }
 
   /**
@@ -1031,7 +1163,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the maximum number of iterations for flow rate calculation when outlet pressure is specified.
+   * Sets the positive bisection budget. Exhaustion throws IllegalStateException and reports ITERATION_LIMIT; a
+   * candidate is never accepted solely because this budget expires.
    *
    * @param maxIterations the maximum number of iterations
    */
@@ -1040,7 +1173,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the convergence tolerance for flow rate calculation when outlet pressure is specified.
+   * Sets the finite relative pressure tolerance between zero and one. Final replay must satisfy the absolute
+   * outlet-pressure residual divided by target pressure, using bara.
    *
    * @param tolerance the relative convergence tolerance (default 1e-4)
    */
@@ -1333,6 +1467,14 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       // in mixture-density and pressure-drop calculations.
       El = Math.max(inputVolumeFractionLiquid, Math.min(1.0, El));
 
+      if (!leanGasWarningLogged && inputVolumeFractionLiquid < 0.03 && Math.abs(angle) > Math.toRadians(30.0)) {
+        leanGasWarningLogged = true;
+        logger.warn(
+            "Pipe {}: Beggs-Brill with gas volume fraction {} in a {} deg inclined leg can over-predict the "
+                + "hydrostatic pressure drop of lean gas (liquid hold-up {}); verify against a gas-well correlation "
+                + "such as Gray (TubingPerformance.CorrelationType.GRAY) or measured data",
+            getName(), 1.0 - inputVolumeFractionLiquid, Math.toDegrees(angle), El);
+      }
       if (system.getNumberOfPhases() == 3) {
         mixtureDensity = mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       } else {
@@ -1450,13 +1592,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double muNoSlip = 0;
 
     if (regime != FlowRegime.SINGLE_PHASE) {
-      double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
-      if (1 < y && y < 1.2) {
-        S = Math.log(2.2 * y - 1.2);
-      } else {
-        S = Math.log(y) / (-0.0523 + 3.182 * Math.log(y) - 0.8725 * Math.pow(Math.log(y), 2.0)
-            + 0.01853 * Math.pow(Math.log(y), 4));
-      }
+      S = frictionSlipExponent(inputVolumeFractionLiquid, El);
       if (system.getNumberOfPhases() == 3) {
         rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
@@ -1517,6 +1653,40 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
+   * Evaluates the Beggs-Brill friction exponent with a continuous dry-gas limit.
+   *
+   * <p>
+   * The empirical exponent can remain of order one for liquid volume fractions near the flash phase-removal limit.
+   * Switching directly to zero when that phase disappears produces a finite pressure jump. Below one part per million
+   * liquid by flowing volume, a cubic smoothstep joins the exponent to zero with zero slope at both ends. At and above
+   * that fraction the original correlation is unchanged. This is a numerical extension at phase appearance, not an
+   * independently validated trace-liquid friction correlation; liquid holdup is unchanged.
+   * </p>
+   *
+   * @param liquidFraction no-slip liquid volume fraction
+   * @param liquidHoldup in-situ liquid volume fraction
+   * @return exponent of the two-phase friction multiplier
+   */
+  static double frictionSlipExponent(double liquidFraction, double liquidHoldup) {
+    if (liquidFraction <= 0.0 || liquidHoldup <= 0.0) {
+      return 0.0;
+    }
+    double y = liquidFraction / (liquidHoldup * liquidHoldup);
+    double exponent;
+    if (1 < y && y < 1.2) {
+      exponent = Math.log(2.2 * y - 1.2);
+    } else {
+      double logY = Math.log(y);
+      exponent = logY / (-0.0523 + 3.182 * logY - 0.8725 * logY * logY + 0.01853 * Math.pow(logY, 4));
+    }
+    if (liquidFraction < TRACE_LIQUID_VOLUME_FRACTION) {
+      double fraction = liquidFraction / TRACE_LIQUID_VOLUME_FRACTION;
+      exponent *= fraction * fraction * (3.0 - 2.0 * fraction);
+    }
+    return exponent;
+  }
+
+  /**
    * calcPressureDrop.
    *
    * @return a double
@@ -1536,6 +1706,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
+      runWithSpecifiedOutletPressure(id);
+      return;
+    }
+    flowSolveReport = null;
     // Input validation
     if (insideDiameter <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
@@ -1546,14 +1721,125 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
           "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
     }
 
-    if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
-      runWithSpecifiedOutletPressure(id);
+    if (calculationMode == CalculationMode.CALCULATE_INLET_PRESSURE) {
+      runWithSpecifiedArrivalPressure(id);
     } else {
       if (applyLowFlowBypass(id)) {
         return;
       }
       runWithSpecifiedFlowRate(id);
     }
+    isSolved = true;
+  }
+
+  /**
+   * Solves for the inlet pressure that delivers the specified outlet pressure at the current flow.
+   *
+   * <p>
+   * Brackets the inlet pressure on both sides of the target arrival pressure, allowing a downhill line's hydrostatic
+   * head to require a lower inlet pressure. The upper bound grows until the line delivers at or above the target. A
+   * trial that throws - typically because the pressure ran negative part way along - is treated as "inlet too low".
+   * </p>
+   *
+   * @param id calculation identifier
+   */
+  private void runWithSpecifiedArrivalPressure(UUID id) {
+    solvedInletPressure = Double.NaN;
+    if (Double.isNaN(specifiedOutletPressure)) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+          "specifiedOutletPressure", "must be set when using CALCULATE_INLET_PRESSURE mode"));
+    }
+    double targetPressure = specifiedOutletPressure;
+    if (!"bara".equals(specifiedOutletPressureUnit)) {
+      SystemInterface tempSystem = inStream.getThermoSystem().clone();
+      tempSystem.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
+      targetPressure = tempSystem.getPressure("bara");
+    }
+    if (!Double.isFinite(targetPressure) || targetPressure <= 0.0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+          "specifiedOutletPressure", "must be finite and positive"));
+    }
+
+    double originalInletPressure = inStream.getThermoSystem().getPressure("bara");
+    double low = targetPressure;
+    double high = Math.max(originalInletPressure, targetPressure * 1.5);
+
+    // Gravity can raise the outlet pressure above the inlet. In that case the
+    // arrival pressure is not a valid lower bracket for the required inlet.
+    double arrivalAtLow = tryArrivalPressure(low, id);
+    int lowerBoundIter = 0;
+    while (Double.isFinite(arrivalAtLow) && arrivalAtLow > targetPressure && lowerBoundIter < 30) {
+      low *= 0.5;
+      arrivalAtLow = tryArrivalPressure(low, id);
+      lowerBoundIter++;
+    }
+    if (Double.isFinite(arrivalAtLow) && arrivalAtLow > targetPressure) {
+      restoreInletPressure(originalInletPressure, id);
+      throw new IllegalStateException("Cannot bracket a positive inlet pressure for pipeline " + getName());
+    }
+
+    double arrivalAtHigh = tryArrivalPressure(high, id);
+    int boundIter = 0;
+    while ((Double.isNaN(arrivalAtHigh) || arrivalAtHigh < targetPressure) && boundIter < 30) {
+      high *= 1.5;
+      arrivalAtHigh = tryArrivalPressure(high, id);
+      boundIter++;
+    }
+    if (Double.isNaN(arrivalAtHigh) || arrivalAtHigh < targetPressure) {
+      restoreInletPressure(originalInletPressure, id);
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+          "specifiedOutletPressure", "cannot be reached - the line will not deliver " + targetPressure
+              + " bara at this flow rate even at " + high + " bara inlet"));
+    }
+
+    double mid = high;
+    for (int iter = 0; iter < maxFlowIterations; iter++) {
+      mid = 0.5 * (low + high);
+      double arrival = tryArrivalPressure(mid, id);
+      if (!Double.isNaN(arrival) && Math.abs(arrival - targetPressure) < flowConvergenceTolerance * targetPressure) {
+        solvedInletPressure = mid;
+        return;
+      }
+      if (Double.isNaN(arrival) || arrival < targetPressure) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    restoreInletPressure(originalInletPressure, id);
+    throw new IllegalStateException("Inlet-pressure solve did not converge for pipeline " + getName() + " after "
+        + maxFlowIterations + " iterations");
+  }
+
+  /**
+   * Runs the forward model at a trial inlet pressure and returns the resulting arrival pressure.
+   *
+   * @param inletPressureBara trial inlet pressure in bara
+   * @param id calculation identifier
+   * @return arrival pressure in bara, or NaN when the trial failed
+   */
+  private double tryArrivalPressure(double inletPressureBara, UUID id) {
+    try {
+      inStream.getThermoSystem().setPressure(inletPressureBara, "bara");
+      inStream.run(id);
+      runWithSpecifiedFlowRate(id);
+      double arrivalPressure = outStream.getPressure("bara");
+      return Double.isFinite(arrivalPressure) && arrivalPressure > 0.0 ? arrivalPressure : Double.NaN;
+    } catch (RuntimeException ex) {
+      logger.debug("Inlet-pressure trial at {} bara failed: {}", inletPressureBara, ex.getMessage());
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Restores the inlet stream to its original pressure after a failed solve.
+   *
+   * @param pressureBara pressure to restore, in bara
+   * @param id calculation identifier
+   */
+  private void restoreInletPressure(double pressureBara, UUID id) {
+    inStream.getThermoSystem().setPressure(pressureBara, "bara");
+    inStream.run(id);
   }
 
   /**
@@ -1674,15 +1960,17 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       pressureOut = inletPressure - pressureDrop;
       pressureProfile.add(pressureOut);
 
-      if (pressureOut < 0) {
-        throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
-            "run: calcOutletPressure", "pressure out", "- Outlet pressure is negative" + pressureOut));
+      if (!Double.isFinite(pressureOut)) {
+        throw new NonFinitePressureException();
+      }
+      if (pressureOut <= 0) {
+        throw new HydraulicDomainException(pressureOut);
       }
 
       system.setPressure(pressureOut);
       if (!runIsothermal) {
         double inletTempBeforeHeat = system.getTemperature();
-        double analyticalDeltaT = calcTemperatureDifference(system);
+        double analyticalDeltaT = calcTemperatureDifference(system) - 9.80665 * elevation / system.getCp("J/kgK");
         if (directElectricalHeatingPowerPerMeter != 0.0) {
           // DEH lifts the increment above the wall-heat-transfer band checked below
           double mCp = system.getFlowRate("kg/sec") * system.getCp("J/kgK");
@@ -1694,15 +1982,22 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
         // Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
         // or to other unphysical values) on some JVM/locale combinations, e.g. for
         // pure-water increments at borderline turbulent Re. If the enthalpy round-trip
-        // produced a temperature outside the physically allowed analytical band
-        // [Tin, Tin + dT_analytical], fall back to the analytical solution and re-init.
+        // has not closed enthalpy and lies outside the analytical temperature estimate,
+        // fall back to that estimate and re-init. A valid PH endpoint may leave the band.
         double Tafter = system.getTemperature();
         double Tanalytical = inletTempBeforeHeat + analyticalDeltaT;
         double bandLow = Math.min(inletTempBeforeHeat, Tanalytical) - 1.0;
         double bandHigh = Math.max(inletTempBeforeHeat, Tanalytical) + 1.0;
-        if (Tafter < 100.0 || Tafter > 2000.0 || Tafter < bandLow || Tafter > bandHigh) {
+        double calculatedEnthalpy = system.getEnthalpy();
+        boolean enthalpyClosed = Double.isFinite(calculatedEnthalpy)
+            && Math.abs(calculatedEnthalpy - enthalpyInlet) <= 1e-8 * Math.max(1.0, Math.abs(enthalpyInlet));
+        // A converged PH endpoint may lie outside a constant-Cp temperature estimate,
+        // especially when elevation and phase change both contribute.
+        if (!Double.isFinite(Tafter) || Tafter < 100.0 || Tafter > 2000.0
+            || !enthalpyClosed && (Tafter < bandLow || Tafter > bandHigh)) {
           system.setTemperature(Tanalytical);
           testOps.TPflash();
+          system.init(2);
           enthalpyInlet = system.getEnthalpy();
         }
         temperatureProfile.add(system.getTemperature());
@@ -1722,137 +2017,181 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Run pipeline calculation with specified outlet pressure (calculate flow rate). Uses bisection method to find the
-   * flow rate that achieves the target outlet pressure.
+   * Returns the inlet pressure found by the inlet-pressure solver.
    *
-   * @param id calculation identifier
+   * @return solved inlet pressure in bara, or NaN when {@link CalculationMode#CALCULATE_INLET_PRESSURE} has not
+   * completed successfully on the latest attempt
    */
-  private void runWithSpecifiedOutletPressure(UUID id) {
-    if (Double.isNaN(specifiedOutletPressure)) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "must be set when using CALCULATE_FLOW_RATE mode"));
-    }
-
-    // Convert specified outlet pressure to bara
-    double targetPressure = specifiedOutletPressure;
-    if (!specifiedOutletPressureUnit.equals("bara")) {
-      // Create a temporary system to convert pressure units
-      SystemInterface tempSystem = inStream.getThermoSystem().clone();
-      tempSystem.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
-      targetPressure = tempSystem.getPressure("bara");
-    }
-
-    double inletPressureBara = inStream.getThermoSystem().getPressure("bara");
-    if (targetPressure >= inletPressureBara) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "must be less than inlet pressure (" + inletPressureBara + " bara)"));
-    }
-    if (targetPressure <= 0) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "must be positive"));
-    }
-
-    // Save original flow rate
-    String flowUnit = "kg/hr";
-    double originalFlowRate = inStream.getFlowRate(flowUnit);
-
-    // Use bisection method to find flow rate
-    // Start with a wide range
-    double flowLow = 1.0; // Minimum 1 kg/hr
-    double flowHigh = originalFlowRate * 100.0; // Up to 100x original
-
-    // First, find a valid low flow rate (where outlet pressure > target)
-    double pressureAtLowFlow = tryCalculatePressure(flowLow, flowUnit, id);
-    if (pressureAtLowFlow < targetPressure) {
-      // Even at minimum flow, can't achieve target pressure
-      inStream.setFlowRate(originalFlowRate, flowUnit);
-      inStream.run();
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "cannot be achieved - pressure drop too high even at minimum flow"));
-    }
-
-    // Find a valid high flow rate (where outlet pressure < target)
-    // Start from a reasonable multiple and increase if needed
-    flowHigh = originalFlowRate * 2.0;
-    double pressureAtHighFlow = tryCalculatePressure(flowHigh, flowUnit, id);
-
-    // If pressure is still too high, increase flow rate
-    int boundSearchIter = 0;
-    while (pressureAtHighFlow > targetPressure && boundSearchIter < 20) {
-      flowHigh *= 2.0;
-      pressureAtHighFlow = tryCalculatePressure(flowHigh, flowUnit, id);
-      boundSearchIter++;
-    }
-
-    // If we couldn't find a high bound with positive pressure that gives low enough
-    // outlet pressure
-    // it means we need very high flow (or it's infeasible)
-    if (pressureAtHighFlow > targetPressure) {
-      inStream.setFlowRate(originalFlowRate, flowUnit);
-      inStream.run();
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "cannot be achieved - requires extremely high flow rate"));
-    }
-
-    // Bisection iteration
-    double flowMid = 0;
-    double pressureMid = 0;
-    int iterCount = 0;
-
-    while (iterCount < maxFlowIterations) {
-      flowMid = (flowLow + flowHigh) / 2.0;
-      pressureMid = tryCalculatePressure(flowMid, flowUnit, id);
-
-      double relativeError = Math.abs(pressureMid - targetPressure) / targetPressure;
-
-      if (relativeError < flowConvergenceTolerance) {
-        // Converged
-        break;
-      }
-
-      if (pressureMid > targetPressure) {
-        // Need more pressure drop, increase flow
-        flowLow = flowMid;
-      } else {
-        // Need less pressure drop, decrease flow
-        flowHigh = flowMid;
-      }
-
-      // Check if bounds have converged
-      if (Math.abs(flowHigh - flowLow) / flowMid < flowConvergenceTolerance) {
-        break;
-      }
-
-      iterCount++;
-    }
-
-    // Final run with converged flow rate - already done in tryCalculatePressure
-    // Just ensure the state is set correctly
-    inStream.setFlowRate(flowMid, flowUnit);
-    inStream.run();
-    runWithSpecifiedFlowRate(id);
+  public double getSolvedInletPressure() {
+    return solvedInletPressure;
   }
 
   /**
-   * Helper method to calculate outlet pressure for a given flow rate, handling exceptions when pressure goes negative
-   * (indicating flow rate is too high).
+   * Solves flow by pressure residual, replaying the accepted candidate. Failures restore the inlet and outlet fluids
+   * and invalidate the calculation identifier; profile data from a failed run must not be consumed. Only non-positive
+   * hydraulic pressure is a valid excessive-flow bound.
    *
-   * @param flowRate the flow rate to test
-   * @param flowUnit the unit for flow rate
    * @param id calculation identifier
-   * @return the outlet pressure, or a very low value if calculation fails (pressure went negative)
+   * @throws IllegalStateException on invalid inputs or a failed solve; see getFlowSolveReport()
    */
-  private double tryCalculatePressure(double flowRate, String flowUnit, UUID id) {
-    inStream.setFlowRate(flowRate, flowUnit);
-    inStream.run();
+  private void runWithSpecifiedOutletPressure(UUID id) {
+    flowSolveReport = null;
+    isSolved = false;
+    SystemInterface systemBaseline = system;
+    double pressureBaseline = pressureOut;
+    double dropBaseline = totalPressureDrop;
+    SystemInterface inletBaseline = inStream == null ? null : inStream.getThermoSystem();
+    SystemInterface outletBaseline = outStream == null ? null : outStream.getThermoSystem();
+    UUID inletId = inStream == null ? null : inStream.getCalculationIdentifier();
+    UUID outletId = outStream == null ? null : outStream.getCalculationIdentifier();
+    double target = Double.NaN;
+    double tolerance = Double.NaN;
+    double low = Double.NaN;
+    double high = Double.NaN;
+    double candidate = Double.NaN;
+    double pressure = Double.NaN;
+    int iterations = 0;
+    int bracketIterations = 0;
+    FlowSolveReport.TerminationReason reason = FlowSolveReport.TerminationReason.INVALID_INPUT;
     try {
-      runWithSpecifiedFlowRate(id);
-      return getOutletPressure();
-    } catch (RuntimeException e) {
-      // If calculation fails (e.g., negative pressure), return very low pressure
-      // This helps the bisection algorithm know this flow rate is too high
-      return -1e6; // Return a very negative value to indicate "too high flow"
+      if (inletBaseline == null || !Double.isFinite(insideDiameter) || insideDiameter <= 0
+          || !Double.isFinite(totalLength) || totalLength <= 0 || numberOfIncrements <= 0
+          || !Double.isFinite(pipeWallRoughness) || pipeWallRoughness < 0 || !Double.isFinite(specifiedOutletPressure)
+          || maxFlowIterations <= 0 || !Double.isFinite(flowConvergenceTolerance) || flowConvergenceTolerance <= 0
+          || flowConvergenceTolerance >= 1) {
+        throw new IllegalArgumentException("Invalid geometry, target pressure, iteration budget or tolerance");
+      }
+      SystemInterface conversion = inletBaseline.clone();
+      conversion.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
+      target = conversion.getPressure("bara");
+      double inlet = inletBaseline.getPressure("bara");
+      double originalFlow = inletBaseline.getFlowRate("kg/hr");
+      if (!Double.isFinite(target) || target <= 0 || !Double.isFinite(inlet) || target >= inlet
+          || !Double.isFinite(originalFlow) || originalFlow <= 0) {
+        throw new IllegalArgumentException("Require finite positive flow and 0 < target < inlet pressure");
+      }
+      tolerance = target * flowConvergenceTolerance;
+      low = Math.min(1.0, originalFlow);
+      high = Math.max(2.0 * originalFlow, 2.0 * low);
+      if (!Double.isFinite(high) || high <= low || !Double.isFinite(tolerance) || tolerance <= 0) {
+        throw new IllegalArgumentException("Invalid flow bounds or pressure tolerance");
+      }
+      // Trials must not mutate a shared inlet fluid, including on a successful solve.
+      inStream.setThermoSystem(inletBaseline.clone());
+      reason = FlowSolveReport.TerminationReason.INNER_FAILURE;
+      candidate = low;
+      pressure = checkedFlowPressure(low, id);
+      if (pressure < target - tolerance) {
+        reason = FlowSolveReport.TerminationReason.BRACKET_LIMIT;
+        throw new IllegalStateException("Target cannot be bracketed above the minimum flow");
+      }
+      if (Math.abs(pressure - target) > tolerance) {
+        candidate = high;
+        pressure = checkedFlowPressure(high, id);
+        while (pressure > target + tolerance && bracketIterations < 20) {
+          high *= 2.0;
+          if (!Double.isFinite(high)) {
+            reason = FlowSolveReport.TerminationReason.INVALID_INPUT;
+            throw new IllegalArgumentException("Flow bracket overflow");
+          }
+          bracketIterations++;
+          candidate = high;
+          pressure = checkedFlowPressure(high, id);
+        }
+        if (pressure > target + tolerance) {
+          reason = FlowSolveReport.TerminationReason.BRACKET_LIMIT;
+          throw new IllegalStateException("Target not bracketed after 20 expansions");
+        }
+      }
+      while (Math.abs(pressure - target) > tolerance && iterations < maxFlowIterations) {
+        candidate = low + (high - low) / 2.0;
+        iterations++;
+        pressure = checkedFlowPressure(candidate, id);
+        if (Math.abs(pressure - target) <= tolerance) {
+          break;
+        }
+        if (candidate == low || candidate == high) {
+          reason = FlowSolveReport.TerminationReason.BRACKET_LIMIT;
+          throw new IllegalStateException("Flow bracket stalled before pressure convergence");
+        }
+        if (pressure > target) {
+          low = candidate;
+        } else {
+          high = candidate;
+        }
+      }
+      if (Math.abs(pressure - target) > tolerance) {
+        reason = FlowSolveReport.TerminationReason.ITERATION_LIMIT;
+        throw new IllegalStateException("Flow iteration budget exhausted");
+      }
+      // Replay through the forward solver: only the replay residual qualifies the published state.
+      pressure = checkedFlowPressure(candidate, id);
+      if (!Double.isFinite(pressure) || Math.abs(pressure - target) > tolerance) {
+        reason = FlowSolveReport.TerminationReason.REPLAY_FAILURE;
+        throw new IllegalStateException("Final replay failed pressure acceptance");
+      }
+      isSolved = true;
+      flowSolveReport = new FlowSolveReport(FlowSolveReport.TerminationReason.CONVERGED, iterations, bracketIterations,
+          low, high, candidate, pressure - target, tolerance);
+    } catch (RuntimeException failure) {
+      if (reason == FlowSolveReport.TerminationReason.INNER_FAILURE) {
+        pressure = Double.NaN;
+      }
+      if (failure instanceof NonFinitePressureException) {
+        reason = FlowSolveReport.TerminationReason.NON_FINITE_OUTPUT;
+        pressure = Double.NaN;
+      }
+      flowSolveReport = new FlowSolveReport(reason, iterations, bracketIterations, low, high, candidate,
+          pressure - target, tolerance);
+      if (inStream != null && inletBaseline != null) {
+        inStream.setThermoSystem(inletBaseline);
+        inStream.setCalculationIdentifier(inletId);
+      }
+      if (outStream != null && outletBaseline != null) {
+        outStream.setThermoSystem(outletBaseline);
+        outStream.setCalculationIdentifier(outletId);
+      }
+      system = systemBaseline;
+      pressureOut = pressureBaseline;
+      totalPressureDrop = dropBaseline;
+      isSolved = false;
+      setCalculationIdentifier(null);
+      throw new IllegalStateException("Flow solve failed: " + reason + " for " + getName(), failure);
     }
+  }
+
+  /**
+   * Checks alternate trial implementations as well as the standard forward solver.
+   *
+   * @param flowRate trial mass rate in kg/hr
+   * @param id calculation identifier
+   * @return checked trial pressure
+   */
+  private double checkedFlowPressure(double flowRate, UUID id) {
+    try {
+      double pressure = evaluateFlowPressure(flowRate, id);
+      if (!Double.isFinite(pressure)) {
+        throw new NonFinitePressureException();
+      }
+      return pressure;
+    } catch (HydraulicDomainException failure) {
+      return Double.NEGATIVE_INFINITY;
+    }
+  }
+
+  /**
+   * Evaluates a forward trial in kg/hr. Property and numerical failures propagate to the report.
+   *
+   * @param flowRate trial mass rate in kg/hr
+   * @param id calculation identifier
+   * @return outlet pressure in bara
+   * @throws RuntimeException for hydraulic, property or numerical failures
+   */
+  protected double evaluateFlowPressure(double flowRate, UUID id) {
+    inStream.setFlowRate(flowRate, "kg/hr");
+    inStream.run();
+    runWithSpecifiedFlowRate(id);
+    return getOutletPressure();
   }
 
   /**
@@ -2262,6 +2601,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <p>
    * This method calculates the enthalpy change due to:
    * <ul>
+   * <li>Gravitational potential energy, with static enthalpy decreasing as elevation increases</li>
    * <li>Wall heat transfer (LMTD method) - when not adiabatic</li>
    * <li>Joule-Thomson effect - cooling/heating due to pressure change (calculated from thermodynamics)</li>
    * <li>Friction heating - viscous dissipation</li>
@@ -2281,6 +2621,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public double calcHeatBalance(double enthalpy, SystemInterface system, ThermodynamicOperations testOps) {
     double Cp = system.getCp("J/kgK");
     double massFlowRate = system.getFlowRate("kg/sec");
+
+    // Elevation converts static enthalpy into gravitational potential energy.
+    enthalpy -= massFlowRate * 9.80665 * elevation;
 
     // 1. Wall heat transfer (LMTD-based calculation)
     if (!runAdiabatic) {
@@ -2833,6 +3176,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     outletSystem.setTemperature(outletTemperature);
     outletSystem.setTotalFlowRate(outletMassFlow, "kg/sec");
     outletSystem.setMolarComposition(inletSystem.getMolarComposition());
+    // Composition assignment resets phase information. Restore equilibrium at the
+    // transported outlet state before publishing phase flows and properties.
+    new ThermodynamicOperations(outletSystem).TPflash();
     outletSystem.initProperties();
 
     system = outletSystem;
@@ -3397,23 +3743,79 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </pre>
    *
    * <p>
-   * where C is typically 100-150 for continuous service.
+   * where rho_mix is the no-slip (homogeneous) mixture density of the same increment that {@link #getMixtureVelocity()}
+   * refers to. Using the same no-slip basis for the velocity and the density keeps the ratio
+   * {@link #getMixtureVelocity()} / {@link #getErosionalVelocity()} consistent with a single-flash calculation of the
+   * stream.
+   * </p>
    *
-   * @param cFactor erosional C-factor (typically 100-150)
+   * <p>
+   * The C-factor is used with SI units (rho in kg/m3, velocity in m/s). An API RP 14E C-factor of 100 in US customary
+   * units (ft/s, lb/ft3) corresponds to about 122 here, and 150 to about 183.
+   * </p>
+   *
+   * @param cFactor erosional C-factor on the SI basis (default 100 is 18 percent more conservative than API RP 14E C =
+   * 100)
    * @return erosional velocity in m/s
    */
   public double getErosionalVelocity(double cFactor) {
-    if (mixtureDensity <= 0 || Double.isNaN(mixtureDensity)) {
-      // Use inlet stream density if mixture density not yet calculated
-      if (getInletStream() != null && getInletStream().getFluid() != null) {
-        double density = getInletStream().getFluid().getDensity("kg/m3");
-        return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
+    double density = getNoSlipMixtureDensity();
+    return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
+  }
+
+  /**
+   * Get the no-slip (homogeneous) mixture density of the last calculated increment.
+   *
+   * <p>
+   * The density is taken from the mixture density profile, which stores the no-slip density used for the friction
+   * calculation. Before the pipe has been run the inlet fluid density is used.
+   * </p>
+   *
+   * @return no-slip mixture density in kg/m3, or 0 when it is not available
+   */
+  public double getNoSlipMixtureDensity() {
+    if (mixtureDensityProfile != null && !mixtureDensityProfile.isEmpty()) {
+      double density = mixtureDensityProfile.get(mixtureDensityProfile.size() - 1);
+      if (density > 0 && !Double.isNaN(density)) {
+        return density;
       }
-      return 0.0;
     }
-    // mixtureDensity is stored in lb/ft³ internally, convert to kg/m³
-    double densityKgM3 = mixtureDensity * 16.0185; // lb/ft³ to kg/m³
-    return densityKgM3 > 0 ? cFactor / Math.sqrt(densityKgM3) : 0.0;
+    if (getInletStream() != null && getInletStream().getFluid() != null) {
+      double density = getInletStream().getFluid().getDensity("kg/m3");
+      return density > 0 && !Double.isNaN(density) ? density : 0.0;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Maximum ratio of mixture velocity to API RP 14E erosional velocity along the pipe.
+   *
+   * <p>
+   * For every increment the superficial mixture velocity is divided by C / sqrt(rho) with the no-slip mixture density
+   * of the same increment. The maximum is returned, so a value above 1 means that the erosional limit is exceeded
+   * somewhere along the line.
+   * </p>
+   *
+   * @param cFactor erosional C-factor (same unit basis as {@link #getErosionalVelocity(double)})
+   * @return maximum velocity ratio along the pipe, or NaN when no profile is available
+   */
+  public double getMaxErosionalVelocityRatio(double cFactor) {
+    if (mixtureDensityProfile == null || mixtureSuperficialVelocityProfile == null) {
+      return Double.NaN;
+    }
+    int n = Math.min(mixtureDensityProfile.size(), mixtureSuperficialVelocityProfile.size());
+    double max = Double.NaN;
+    for (int i = 0; i < n; i++) {
+      double rho = mixtureDensityProfile.get(i);
+      double velocity = mixtureSuperficialVelocityProfile.get(i);
+      if (rho > 0 && cFactor > 0 && !Double.isNaN(velocity)) {
+        double ratio = velocity * Math.sqrt(rho) / cFactor;
+        if (Double.isNaN(max) || ratio > max) {
+          max = ratio;
+        }
+      }
+    }
+    return max;
   }
 
   /**
@@ -4144,8 +4546,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private double selectStandardPipeSize(double calculatedDiameterInches) {
     // Standard NPS sizes (nominal pipe size in inches) - using inside diameter
     // approximations
-    double[] standardSizes = { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0,
-        20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
+    double[] standardSizes = {0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0,
+        20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
 
     // Find the next size up that meets the requirement
     for (double size : standardSizes) {

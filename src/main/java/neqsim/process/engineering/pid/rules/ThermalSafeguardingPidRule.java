@@ -8,6 +8,8 @@ import neqsim.process.engineering.pid.PidElement;
 import neqsim.process.engineering.pid.PidElementType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 
 /** Proposes independent high-temperature and low-flow protection for thermal equipment. */
 public final class ThermalSafeguardingPidRule implements PidDesignRule {
@@ -41,14 +43,22 @@ public final class ThermalSafeguardingPidRule implements PidDesignRule {
             "Remove heat input before downstream or equipment temperature limits are exceeded")
         .attribute("setPoint", "SRS_INPUT_REQUIRED");
     tt.connect(tshh.getId());
+    boolean utilityFlow = equipment instanceof Cooler || equipment instanceof HeatExchanger;
     PidElement ft = PidRuleSupport
-        .onInlet(
-            PidRuleSupport.element(context, equipment, "FT", "LOW-FLOW-SENSOR", PidElementType.MEASUREMENT, RULE_ID,
-                "Independent process flow transmitter", "Detect loss of process flow through thermal equipment"),
-            equipment)
+        .element(context, equipment, "FT", "LOW-FLOW-SENSOR", PidElementType.MEASUREMENT, RULE_ID,
+            utilityFlow ? "Independent utility flow transmitter" : "Independent process flow transmitter",
+            utilityFlow ? "Detect loss of the explicitly designed thermal utility supply"
+                : "Detect loss of process flow through thermal equipment")
         .attribute("system", "SIS").attribute("measuredVariable", "FLOW");
+    if (utilityFlow) {
+      ft.attribute("sensingLocation", "UTILITY_SUPPLY").attribute("utilityConnection", "PROJECT_INPUT_REQUIRED");
+    } else {
+      PidRuleSupport.onInlet(ft, equipment);
+    }
     PidElement fsll = PidRuleSupport.element(context, equipment, "FSLL", "LOW-FLOW-TRIP", PidElementType.TRIP, RULE_ID,
-        "Low-low process flow trip", "Remove heat input when process flow is insufficient")
+        utilityFlow ? "Low-low utility flow trip" : "Low-low process flow trip",
+        utilityFlow ? "Initiate the project-defined safe-state response on loss of thermal utility supply"
+            : "Remove heat input when process flow is insufficient")
         .attribute("setPoint", "SRS_INPUT_REQUIRED");
     ft.connect(fsll.getId());
     PidElement utilitySdv = PidRuleSupport

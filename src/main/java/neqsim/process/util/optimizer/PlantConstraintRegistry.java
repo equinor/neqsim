@@ -81,13 +81,15 @@ public final class PlantConstraintRegistry implements Serializable {
         .limitDirection(constraint.isMinimumConstraint() ? PlantConstraintDefinition.LimitDirection.MINIMUM
             : PlantConstraintDefinition.LimitDirection.MAXIMUM)
         .category(category).severity(constraint.getSeverity()).unit(constraint.getUnit()).basis(basis)
-        .provenance(constraint.getDataSource()).owner(owner).reference(reference)
-        .description(constraint.getDescription()).enabled(constraint.isEnabled());
-    if (constraint.hasConfidence()) {
-      builder.confidence(constraint.getConfidence());
+        .provenance(constraint.hasOperatingLimit() ? constraint.getApplicableLimitSourceReference()
+            : constraint.getDataSource())
+        .owner(owner).reference(reference).description(constraint.getDescription()).enabled(constraint.isEnabled());
+    if (constraint.hasApplicableLimitConfidence()) {
+      builder.confidence(constraint.getApplicableLimitConfidence());
     }
-    if (constraint.hasValidityRange()) {
-      builder.validityRange(constraint.getValidityMinimum(), constraint.getValidityMaximum());
+    if (constraint.hasApplicableLimitValidityRange()) {
+      builder.validityRange(constraint.getApplicableLimitValidityMinimum(),
+          constraint.getApplicableLimitValidityMaximum());
     }
     PlantConstraintDefinition definition = builder.build();
     register(definition);

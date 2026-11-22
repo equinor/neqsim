@@ -9,6 +9,7 @@ import neqsim.process.engineering.pid.PidElement;
 import neqsim.process.engineering.pid.PidElementType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
+import neqsim.process.safety.overpressure.OverpressureStudyResult;
 import neqsim.process.safety.overpressure.ReliefScenario;
 
 /** Proposes relief devices only when a governed requirement or overpressure study exists. */
@@ -54,11 +55,17 @@ public final class PressureReliefPidRule implements PidDesignRule {
         .attribute("disposalDestination", "FLARE_OR_SAFE_LOCATION_REVIEW_REQUIRED");
     PidRuleSupport.trace(psv, context, equipment, "RELIEF", "ISOLATION-BLOWDOWN");
     if (study != null) {
-      ReliefScenario governing = study.governingScenario();
+      OverpressureStudyResult sizing = study.evaluate();
+      ReliefScenario governing = sizing.getGoverningScenario();
+      ReliefScenario load = sizing.getMaximumLoadScenario();
+      psv.attribute("maximumLoadScenario", load == null ? "UNDETERMINED" : load.getName());
+      if (governing != null) {
+        psv.attribute("requiredAreaIn2", Double.valueOf(sizing.getRequiredAreaIn2()));
+      }
       psv.attribute("mawpBara", Double.valueOf(study.getItem().getMaximumAllowableWorkingPressureBara()))
           .attribute("setPressureBara", Double.valueOf(study.getItem().getReliefSetPressureBara()))
           .attribute("scenarioCount", Integer.valueOf(study.getScenarios().size()))
-          .attribute("governingScenario", governing == null ? "NO_CREDIBLE_SCENARIO" : governing.getName())
+          .attribute("governingScenario", governing == null ? "UNDETERMINED" : governing.getName())
           .attribute("governingCause", governing == null ? "NOT_DEFINED" : governing.getCause().name())
           .attribute("sizingStatus",
               governing == null ? "SCENARIO_REVIEW_REQUIRED" : "CALCULATION_AND_VENDOR_REVIEW_REQUIRED");

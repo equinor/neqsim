@@ -506,14 +506,14 @@ public class EclipseBlackOilImporter {
   private static double[] interpBgMu(PVTGCurve curve, double p) {
     List<PVTGCurve.Row> rows = curve.rows;
     if (rows.isEmpty()) {
-      return new double[] { 0.005, 1e-5 };
+      return new double[] {0.005, 1e-5};
     }
     rows.sort(Comparator.comparingDouble(r -> r.P));
     if (p <= rows.get(0).P) {
-      return new double[] { rows.get(0).Bg, rows.get(0).mu };
+      return new double[] {rows.get(0).Bg, rows.get(0).mu};
     }
     if (p >= rows.get(rows.size() - 1).P) {
-      return new double[] { rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu };
+      return new double[] {rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu};
     }
     for (int i = 0; i < rows.size() - 1; i++) {
       PVTGCurve.Row a = rows.get(i);
@@ -522,19 +522,19 @@ public class EclipseBlackOilImporter {
         double t = (p - a.P) / (b.P - a.P);
         double Bg = a.Bg * (1.0 - t) + b.Bg * t;
         double mu = a.mu * (1.0 - t) + b.mu * t;
-        return new double[] { Bg, mu };
+        return new double[] {Bg, mu};
       }
     }
-    return new double[] { rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu };
+    return new double[] {rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu};
   }
 
   private static double[] interpBwMu(List<PVTWRow> rows, double p) {
     rows.sort(Comparator.comparingDouble(r -> r.P));
     if (p <= rows.get(0).P) {
-      return new double[] { rows.get(0).Bw, rows.get(0).mu };
+      return new double[] {rows.get(0).Bw, rows.get(0).mu};
     }
     if (p >= rows.get(rows.size() - 1).P) {
-      return new double[] { rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu };
+      return new double[] {rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu};
     }
     for (int i = 0; i < rows.size() - 1; i++) {
       PVTWRow a = rows.get(i);
@@ -543,9 +543,9 @@ public class EclipseBlackOilImporter {
         double t = (p - a.P) / (b.P - a.P);
         double Bw = a.Bw * (1.0 - t) + b.Bw * t;
         double mu = a.mu * (1.0 - t) + b.mu * t;
-        return new double[] { Bw, mu };
+        return new double[] {Bw, mu};
       }
     }
-    return new double[] { rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu };
+    return new double[] {rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu};
   }
 }

@@ -6,7 +6,6 @@
 
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
 
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -102,11 +101,11 @@ public interface FluidBoundaryInterface extends Cloneable {
   public double[] calcFluxes();
 
   /**
-   * getMassTransferCoefficientMatrix.
+   * Returns an independent snapshot of the uncorrected mass-transfer coefficients.
    *
-   * @return an array of {@link Jama.Matrix} objects
+   * @return coefficient values indexed by phase, row and column; uninitialized phases remain null
    */
-  public Matrix[] getMassTransferCoefficientMatrix();
+  public double[][][] getMassTransferCoefficientArray();
 
   /**
    * getBinaryMassTransferCoefficient.
@@ -138,6 +137,27 @@ public interface FluidBoundaryInterface extends Cloneable {
    * @param heatTransferCalc a boolean
    */
   public void setHeatTransferCalc(boolean heatTransferCalc);
+
+  /**
+   * Enables simultaneous residual-based mass/heat solution where implemented. Disabled by default.
+   *
+   * @param enabled true to require the coupled numerical route
+   * @throws UnsupportedOperationException if this boundary does not implement that route
+   */
+  default void setCoupledMassHeatTransferEnabled(boolean enabled) {
+    if (enabled) {
+      throw new UnsupportedOperationException("Coupled mass/heat solution is not implemented by this boundary");
+    }
+  }
+
+  /**
+   * Reports whether simultaneous residual-based mass/heat solution is selected.
+   *
+   * @return true if the coupled numerical route is enabled
+   */
+  default boolean isCoupledMassHeatTransferEnabled() {
+    return false;
+  }
 
   /**
    * setMassTransferCalc.

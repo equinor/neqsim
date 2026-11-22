@@ -10,8 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression coverage for constrained ionic GAS+AQUEOUS TP-flash finalization. */
 class TPflashIonicGasAqueousConsistencyTest {
-  private static final String[] COMPONENTS = { "methane", "water", "Na+", "Cl-" };
-  private static final double[] AMOUNTS = { 0.1, 1.0, 0.001, 0.001 };
+  private static final String[] COMPONENTS = {"methane", "water", "Na+", "Cl-"};
+  private static final double[] AMOUNTS = {0.1, 1.0, 0.001, 0.001};
 
   @Test
   void ordinaryAndMultiphaseEndpointsAreBalancedAndEquivalent() {
@@ -53,6 +53,70 @@ class TPflashIonicGasAqueousConsistencyTest {
     assertEquivalentEndpoint(freshOrdinary, ordinary);
     assertEquivalentEndpoint(freshMultiphase, multiphase);
     assertEquivalentEndpoint(ordinary, multiphase);
+  }
+
+  /**
+   * Reject singular association updates without losing the concentrated brine inventory.
+   */
+  @Test
+  void concentratedColdKclBrineRemainsConservativeAtNearbyPressures() {
+    for (double pressure : new double[] {35.70, 35.75, 35.80}) {
+      SystemInterface system = new SystemElectrolyteCPAstatoil(273.15, pressure);
+      double[] amounts = {10.0, 1.0 / 0.01801528, 2.36154, 2.36154};
+      String[] names = {"CO2", "water", "K+", "Cl-"};
+      for (int component = 0; component < names.length; component++) {
+        system.addComponent(names[component], amounts[component]);
+      }
+      system.setMixingRule(10);
+      system.setMultiPhaseCheck(true);
+      for (int flash = 0; flash < 2; flash++) {
+        new ThermodynamicOperations(system).TPflash();
+        system.init(3);
+        assertValidIonicGasAqueousEndpoint(system);
+        for (int component = 0; component < names.length; component++) {
+          double reconstructedMoles = 0.0;
+          for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+            reconstructedMoles += system.getPhase(phase).getComponent(names[component]).getNumberOfMolesInPhase();
+          }
+          assertEquals(amounts[component], reconstructedMoles, 1.0e-9,
+              names[component] + " inventory at " + pressure + " bara after flash " + flash);
+        }
+        for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+          neqsim.thermo.component.ComponentCPAInterface water = (neqsim.thermo.component.ComponentCPAInterface) system
+              .getPhase(phase).getComponent("water");
+          for (double siteFraction : water.getXsite()) {
+            assertTrue(Double.isFinite(siteFraction) && siteFraction > 0.0 && siteFraction <= 1.0);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Preserves molecular equilibrium when the preliminary stability analysis sees an interior KCl brine split.
+   */
+  @Test
+  void concentratedHotKclBrineUsesDefaultStabilityCheck() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(373.15, 281.38);
+    double saltMoles = (15.0 / 85.0) / 0.0745513;
+    system.addComponent("CO2", 10.0);
+    system.addComponent("water", 1.0 / 0.01801528);
+    system.addComponent("K+", saltMoles);
+    system.addComponent("Cl-", saltMoles);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+
+    operations.TPflash();
+    assertTrue(system.checkStability());
+    assertValidIonicGasAqueousEndpoint(system);
+    assertEquals(0.0151460384633, system.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx(), 1.0e-10);
+
+    SystemInterface reference = system.clone();
+    operations.TPflash();
+    assertTrue(system.checkStability());
+    assertValidIonicGasAqueousEndpoint(system);
+    assertEquivalentEndpoint(reference, system);
   }
 
   private SystemInterface createAndFlash(double temperature, double pressure, boolean multiphaseCheck,
@@ -121,7 +185,7 @@ class TPflashIonicGasAqueousConsistencyTest {
 
   private void assertEquivalentEndpoint(SystemInterface expected, SystemInterface actual) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
-    for (String phaseType : new String[] { "gas", "aqueous" }) {
+    for (String phaseType : new String[] {"gas", "aqueous"}) {
       int expectedPhase = expected.getPhaseNumberOfPhase(phaseType);
       int actualPhase = actual.getPhaseNumberOfPhase(phaseType);
       assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), 1.0e-10);

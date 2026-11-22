@@ -102,6 +102,10 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
+    // Electrolyte interactions require the complete configured species set, including at init(0).
+    if (isMixingRuleDefined()) {
+      mixSelect.requireCurrentComponentCount(this);
+    }
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType == 0) {
       electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);

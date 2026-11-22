@@ -105,9 +105,9 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultCreation() {
-    String[] names = { "param1", "param2" };
-    double[] estimates = { 10.0, 20.0 };
-    double[] uncertainties = { 0.5, 1.0 };
+    String[] names = {"param1", "param2"};
+    double[] estimates = {10.0, 20.0};
+    double[] uncertainties = {0.5, 1.0};
     double chiSquare = 5.0;
     int iterations = 25;
     int dataPoints = 50;
@@ -129,9 +129,9 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultConfidenceIntervals() {
-    String[] names = { "param1" };
-    double[] estimates = { 10.0 };
-    double[] uncertainties = { 1.0 }; // std dev = 1.0
+    String[] names = {"param1"};
+    double[] estimates = {10.0};
+    double[] uncertainties = {1.0}; // std dev = 1.0
 
     BatchResult result = new BatchResult(names, estimates, uncertainties, 1.0, 10, 20, true);
 
@@ -145,9 +145,9 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultToMap() {
-    String[] names = { "param1", "param2" };
-    double[] estimates = { 10.0, 20.0 };
-    double[] uncertainties = { 0.5, 1.0 };
+    String[] names = {"param1", "param2"};
+    double[] estimates = {10.0, 20.0};
+    double[] uncertainties = {0.5, 1.0};
 
     BatchResult result = new BatchResult(names, estimates, uncertainties, 1.0, 10, 20, true);
 
@@ -160,9 +160,9 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultToCalibrationResult() {
-    String[] names = { "param1" };
-    double[] estimates = { 10.0 };
-    double[] uncertainties = { 0.5 };
+    String[] names = {"param1"};
+    double[] estimates = {10.0};
+    double[] uncertainties = {0.5};
 
     BatchResult result = new BatchResult(names, estimates, uncertainties, 1.0, 10, 20, true);
 

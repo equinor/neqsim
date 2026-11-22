@@ -121,6 +121,39 @@ Understanding topology enables:
 
 ---
 
+## Portfolio risk analysis
+
+The advanced framework's P5 capability uses
+[PortfolioRiskAnalyzer](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety/risk/portfolio/PortfolioRiskAnalyzer.java)
+to aggregate asset availability losses and shared common-cause scenarios. Use it
+for production-loss screening, not as a safety acceptance or financial valuation
+model.
+
+The input basis is maximum asset production in **boe/day**, an availability
+fraction from zero to one, scenario frequency in **events/year**, duration in
+**days**, and a fractional production impact for each affected asset. The
+simulation period is in years, with a **365-day year**. Common-cause event counts
+are sampled from a Poisson distribution; their losses are added to the baseline
+availability losses.
+
+[PortfolioRiskResult](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety/risk/portfolio/PortfolioRiskResult.java)
+reports production rates in boe/day and accumulated losses in boe over the
+simulation period. Its P10/P50/P90/P99 values are ascending **loss percentiles**:
+a higher percentile means a larger loss, not a higher production forecast.
+The value-at-risk accessor is a production-loss quantity, **not monetary** VaR.
+
+The additive model does not reconcile overlapping outages or cap their combined
+loss at the available production. Reported portfolio availability is based on
+individual asset availability and does not deduct common-cause losses. Shared
+scenarios are not a general asset-correlation matrix. Validate the input basis,
+avoid double counting, and obtain independent engineering review before using
+these screening results for decisions. The
+[portfolio regression tests](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/safety/risk/portfolio/PortfolioRiskTest.java)
+show the implemented API and software checks; they are not independent field
+qualification.
+
+---
+
 ## Typical Workflow
 
 ```

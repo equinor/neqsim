@@ -124,28 +124,13 @@ Valid for: $3000 < Re < 5 \times 10^6$, $0.5 < Pr < 2000$
 
 ### Implementation
 
-```java
-// In InterphaseTransportCoefficientBaseClass
-public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, 
-                                               FlowNodeInterface node) {
-    double Re = node.getReynoldsNumber(phase);
-    double Nu;
-    
-    if (Re < 2300) {
-        Nu = 3.66;  // Laminar
-    } else if (Re < 10000) {
-        // Transition - Gnielinski
-        double f = calcWallFrictionFactor(phase, node);
-        Nu = (f/8) * (Re - 1000) * prandtlNumber 
-             / (1 + 12.7 * Math.sqrt(f/8) * (Math.pow(prandtlNumber, 2.0/3.0) - 1));
-    } else {
-        // Turbulent - Dittus-Boelter
-        Nu = 0.023 * Math.pow(Re, 0.8) * Math.pow(prandtlNumber, 0.4);
-    }
-    
-    return Nu * thermalConductivity / hydraulicDiameter;
-}
-```
+The equations above describe common correlations, not a literal implementation
+of `InterphaseTransportCoefficientBaseClass`: that base class returns zero for
+its heat-transfer methods. The single-phase `InterphasePipeFlow` implementation
+uses Nu = 3.66 below |Re| = 2000 and a friction-factor/Chilton-Colburn expression
+above that threshold. Other classes, including `PipeBeggsAndBrills`, have their
+own coefficient calculations. Select and inspect the actual model rather than
+assuming all models use the same transition rule.
 
 ---
 
@@ -224,21 +209,31 @@ Where $z$ is the burial depth.
 
 ### Usage in NeqSim
 
+The low-level geometry class is `PipeData`. This complete example calculates
+wall and outer-environment resistance, **excluding the inner fluid film**.
+The returned coefficient is referenced to the inner pipe area. It does not run
+a flow solver or determine an outlet temperature.
+
+<!-- pipeline-doc-test: wall-geometry -->
 ```java
-// Set overall heat transfer coefficient directly
-pipe.setOverallHeatTransferCoefficient(10.0);  // W/(m²·K)
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 
-// Or specify components
-pipe.setInnerHeatTransferCoefficient(1000.0);   // W/(m²·K)
-pipe.setWallThickness(0.01);                     // m
-pipe.setWallConductivity(50.0);                  // W/(m·K)
-pipe.setInsulationThickness(0.05);               // m
-pipe.setInsulationConductivity(0.04);            // W/(m·K)
-pipe.setOuterHeatTransferCoefficient(10.0);     // W/(m²·K)
-
-// Set ambient conditions
-flowSystem.setSurroundingTemperature(288.15);    // K
+Logger logger = LogManager.getLogger("PipeWallExample");
+PipeData pipe = new PipeData(0.30, 4.6e-5); // Inner diameter, roughness in m
+pipe.setCarbonSteelWall(0.01); // 10 mm steel
+pipe.addMineralWoolInsulation(0.05); // 50 mm insulation
+pipe.setAirEnvironment(288.15, 2.0); // K, wind velocity m/s
+double wallAndOuterCoefficient = pipe.calcOverallHeatTransferCoefficient();
+logger.info("Wall plus outer coefficient: {} W/(m2 K)", wallAndOuterCoefficient);
 ```
+
+For `PipeBeggsAndBrills`, an effective U-value is set with
+`setHeatTransferCoefficient(double)`. To include computed inner convection,
+wall conduction, insulation, and outer convection, select `DETAILED_U` with
+the class-specific setters described in the
+[pipeline guide](../process/equipment/pipeline_simulation#heat-transfer).
 
 ---
 
@@ -317,23 +312,12 @@ $$\phi = \frac{\sum_j N_j c_{p,j}}{h}$$
 
 ### Implementation
 
-```java
-// In FluidBoundary
-public double[] calcInterphaseHeatFlux() {
-    // Sensible heat
-    double Q_sensible = heatTransferCoefficient[0] * heatTransferCorrection[0] 
-                        * (T_bulk - T_interface);
-    
-    // Latent heat
-    double Q_latent = 0;
-    for (int j = 0; j < nComponents; j++) {
-        Q_latent += nFlux.get(j, 0) * deltaHvap[j];
-    }
-    
-    interphaseHeatFlux[0] = Q_sensible + Q_latent;
-    return interphaseHeatFlux;
-}
-```
+`FluidBoundaryInterface` exposes `setHeatTransferCalc(boolean)`, `solve()`,
+and `getInterphaseHeatFlux(int phase)`. Heat flux is read one phase at a time;
+there is no no-argument array getter. The film model couples interphase heat
+and mass transfer internally. The worked node example below starts at phase
+equilibrium and therefore checks a near-zero driving-force baseline; it is
+not an evaporation or condensation-rate experiment.
 
 ---
 
@@ -356,16 +340,12 @@ InterphaseTransportCoefficientBaseClass
 
 ### Key Methods
 
-```java
-// InterphaseTransportCoefficientInterface
-double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node);
-double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node);
-
-// FluidBoundary
-void setHeatTransferCalc(boolean calc);
-double[] getInterphaseHeatFlux();
-double getHeatTransferCoefficient(int phase);
-```
+| Object | Public method | Result / input |
+|---|---|---|
+| `InterphaseTransportCoefficientInterface` | `calcWallHeatTransferCoefficient(int, double, FlowNodeInterface)` | Wall coefficient for a phase and Prandtl number |
+| `InterphaseTransportCoefficientInterface` | `calcInterphaseHeatTransferCoefficient(int, double, FlowNodeInterface)` | Interphase coefficient |
+| `FluidBoundaryInterface` | `setHeatTransferCalc(boolean)` | Enable/disable interphase heat calculation |
+| `FluidBoundaryInterface` | `getInterphaseHeatFlux(int)` | Heat flux for the specified phase, W/m² |
 
 ---
 
@@ -373,108 +353,131 @@ double getHeatTransferCoefficient(int phase);
 
 ### Basic Heat Transfer in Pipe Flow
 
+This self-contained example uses a process-level `PipeBeggsAndBrills` model
+with single-phase gas. It specifies an effective U-value and ambient boundary;
+SRK with the classic mixing rule supplies thermodynamic properties. As with
+the pipeline guide, put imports at class scope and statements in a method.
+
+<!-- pipeline-doc-test: gas-cooling -->
 ```java
-import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.OnePhasePipeFlowSystem;
-import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeGeometry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create hot gas
-SystemSrkEos gas = new SystemSrkEos(373.15, 50.0);  // 100°C, 50 bar
+Logger logger = LogManager.getLogger("GasCoolingExample");
+SystemSrkEos gas = new SystemSrkEos(373.15, 50.0); // 100 C, 50 bara
 gas.addComponent("methane", 0.95);
 gas.addComponent("ethane", 0.05);
 gas.setMixingRule("classic");
+Stream inlet = new Stream("Hot Gas", gas);
+inlet.setFlowRate(10000.0, "kg/hr");
+inlet.run();
 
-// Pipe geometry
-PipeGeometry pipe = new PipeGeometry("Pipeline");
-pipe.setDiameter(0.3, "m");
-pipe.setLength(10000.0, "m");
+PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("Cooling Pipeline", inlet);
+pipeline.setDiameter(0.30); // m
+pipeline.setLength(10000.0); // m
+pipeline.setNumberOfIncrements(20);
+pipeline.setConstantSurfaceTemperature(10.0, "C");
+pipeline.setHeatTransferCoefficient(5.0); // W/(m2 K), SPECIFIED_U mode
+pipeline.run();
 
-// Heat transfer setup
-pipe.setOverallHeatTransferCoefficient(5.0);  // W/(m²·K)
-
-// Flow system
-OnePhasePipeFlowSystem flow = new OnePhasePipeFlowSystem();
-flow.setInletFluid(gas);
-flow.setGeometry(pipe);
-flow.setSurroundingTemperature(283.15);  // 10°C ambient
-flow.setCalculateHeatTransfer(true);
-flow.setNumberOfNodes(100);
-
-flow.init();
-flow.solveTransient(1);
-
-// Temperature profile
-for (int i = 0; i < flow.getNumberOfNodes(); i++) {
-    double x = flow.getNode(i).getPosition();
-    double T = flow.getNode(i).getTemperature() - 273.15;  // °C
-    System.out.println("x = " + x + " m, T = " + T + " °C");
+double[] temperatureK = pipeline.getTemperatureProfile();
+for (int i = 0; i < temperatureK.length; i++) {
+    logger.info("x={} m; T={} C", pipeline.getLengthProfile().get(i),
+        temperatureK[i] - 273.15);
 }
+logger.info("Outlet pressure: {} bara", pipeline.getOutletPressure("bara"));
 ```
+
+Expect cooling from 100 °C toward the 10 °C surroundings and a positive
+pressure drop. The chosen U-value is an example input, not a prediction of a
+particular insulation system.
 
 ### Two-Phase with Interphase Heat Transfer
 
+This complete flow-node example starts with an equilibrium methane/decane
+mixture. Both phases initially have the same temperature, so the calculated
+interphase heat flux should be close to zero. A finite transfer-rate study
+requires non-equilibrium phase compositions or temperatures and a validated
+spatial/time integration.
+
+<!-- pipeline-doc-test: interphase-equilibrium -->
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
+import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create two-phase system
-SystemSrkEos fluid = new SystemSrkEos(280.0, 30.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("n-pentane", 0.10);
-fluid.addComponent("n-decane", 0.05);
+Logger logger = LogManager.getLogger("InterphaseHeatExample");
+SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);
+fluid.addComponent("methane", 0.8);
+fluid.addComponent("n-decane", 0.2);
 fluid.setMixingRule("classic");
+fluid.setTotalFlowRate(1.0, "kg/sec");
+new ThermodynamicOperations(fluid).TPflash();
+fluid.initProperties();
 
-// Initialize with phase split
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-
-// Create flow node
-PipeData pipe = new PipeData(0.2);  // 0.2 m diameter
-StratifiedFlowNode node = new StratifiedFlowNode(fluid, pipe);
+PipeData geometry = new PipeData(0.1);
+StratifiedFlowNode node = new StratifiedFlowNode(fluid, geometry);
+node.initFlowCalc();
 node.init();
-
-// Enable heat transfer calculations
 node.getFluidBoundary().setHeatTransferCalc(true);
 node.getFluidBoundary().setMassTransferCalc(true);
-
-// Solve
+node.getFluidBoundary().useThermodynamicCorrections(true, 0);
+node.getFluidBoundary().useThermodynamicCorrections(true, 1);
+node.getFluidBoundary().useFiniteFluxCorrection(true, 0);
+node.getFluidBoundary().useFiniteFluxCorrection(true, 1);
 node.getFluidBoundary().solve();
-
-// Get interphase heat flux
-double[] Q = node.getFluidBoundary().getInterphaseHeatFlux();
-System.out.println("Gas-side heat flux: " + Q[0] + " W/m²");
-System.out.println("Liquid-side heat flux: " + Q[1] + " W/m²");
+double gasHeatFlux = node.getFluidBoundary().getInterphaseHeatFlux(0);
+double liquidHeatFlux = node.getFluidBoundary().getInterphaseHeatFlux(1);
+logger.info("Gas-side: {} W/m2; liquid-side: {} W/m2", gasHeatFlux, liquidHeatFlux);
 ```
 
 ### Condensation in Pipeline
 
+The following equilibrium example checks whether cooling produces a liquid
+phase. Thermodynamic phase fraction and hydrodynamic holdup are different
+quantities: use outlet fluid phase volumes for equilibrium partitioning, and
+the pipeline's holdup profile for in-situ liquid inventory. This model does
+not estimate finite-rate nucleation or condensation kinetics.
+
+<!-- pipeline-doc-test: condensation -->
 ```java
-// Hot gas entering cold pipeline
-SystemSrkEos gas = new SystemSrkEos(320.0, 80.0);  // Hot, high pressure
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+Logger logger = LogManager.getLogger("CondensationExample");
+SystemSrkEos gas = new SystemSrkEos(320.0, 80.0);
 gas.addComponent("methane", 0.80);
 gas.addComponent("ethane", 0.10);
 gas.addComponent("propane", 0.05);
 gas.addComponent("n-butane", 0.03);
 gas.addComponent("n-pentane", 0.02);
 gas.setMixingRule("classic");
+Stream inlet = new Stream("Warm Gas", gas);
+inlet.setFlowRate(5000.0, "kg/hr");
+inlet.run();
 
-// Cold seabed pipeline
-TwoPhasePipeFlowSystem flow = new TwoPhasePipeFlowSystem();
-flow.setInletFluid(gas);
-flow.setGeometry(seabedPipe);
-flow.setSurroundingTemperature(277.15);  // 4°C seabed
-flow.setCalculateHeatTransfer(true);
+PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("Cold Flowline", inlet);
+pipeline.setLength(5000.0);
+pipeline.setDiameter(0.20);
+pipeline.setNumberOfIncrements(20);
+pipeline.setConstantSurfaceTemperature(4.0, "C");
+pipeline.setHeatTransferCoefficient(25.0);
+pipeline.run();
 
-flow.init();
-flow.solveTransient(1);
-
-// Check for liquid formation
-for (int i = 0; i < flow.getNumberOfNodes(); i++) {
-    double liquidHoldup = flow.getNode(i).getPhaseFraction(1);
-    if (liquidHoldup > 0.01) {
-        System.out.println("Condensation at x = " + flow.getNode(i).getPosition() + " m");
-        break;
-    }
-}
+logger.info("Inlet phases: {}; outlet phases: {}", inlet.getFluid().getNumberOfPhases(),
+    pipeline.getOutletStream().getFluid().getNumberOfPhases());
+double[] holdup = pipeline.getLiquidHoldupProfile();
+logger.info("Outlet: {} C; liquid holdup: {}", pipeline.getOutletTemperature("C"),
+    holdup[holdup.length - 1]);
 ```
 
 ---

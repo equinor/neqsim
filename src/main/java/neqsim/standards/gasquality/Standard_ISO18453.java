@@ -27,7 +27,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * The standard is applicable to gas compositions within the normal range of natural gas (typically methane content
- * 40-100 mol%, pressure up to 300 bar, temperature -50 to +100 C).
+ * 40-100 mol%). The validated range is -15 to +5 C at 5 to 100 bara. The extended range is -50 to +40 C at 1 to 300
+ * bara, with unknown correlation uncertainty. Below 273.16 K the model uses vapour pressure over ice, rather than
+ * supercooled liquid water. Failed calculations are logged and return NaN.
  * </p>
  *
  * @author ESOL
@@ -112,12 +114,13 @@ public class Standard_ISO18453 extends neqsim.standards.Standard {
     this.internalThermoSystem.setTemperature(initTemperature);
     this.internalThermoSystem.setPressure(getReferencePressure());
 
+    dewPointTemperature = Double.NaN;
     try {
       this.internalThermoOps.waterDewPointTemperatureFlash();
+      dewPointTemperature = this.internalThermoSystem.getTemperature() - 273.15;
     } catch (Exception ex) {
-      logger.error("Water dew point calculation failed: " + ex.getMessage(), ex);
+      logger.error("Water dew point calculation failed", ex);
     }
-    dewPointTemperature = this.internalThermoSystem.getTemperature() - 273.15;
   }
 
   /** {@inheritDoc} */

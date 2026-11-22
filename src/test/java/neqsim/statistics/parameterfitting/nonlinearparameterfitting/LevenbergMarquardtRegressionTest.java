@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
 import neqsim.statistics.parameterfitting.NumericalDerivative;
 import neqsim.statistics.parameterfitting.SampleSet;
 import neqsim.statistics.parameterfitting.SampleValue;
@@ -25,7 +24,7 @@ class LevenbergMarquardtRegressionTest {
   @Test
   void numericalDerivativeUsesRichardsonExtrapolation() {
     CubicParameterFunction function = new CubicParameterFunction(2.0);
-    SampleValue sample = createSample(0.0, 1.0, new double[] { 3.0 }, function);
+    SampleValue sample = createSample(0.0, 1.0, new double[] {3.0}, function);
 
     LevenbergMarquardt optimizer = new LevenbergMarquardt();
     optimizer.setSampleSet(new SampleSet(listOf(sample)));
@@ -45,7 +44,7 @@ class LevenbergMarquardtRegressionTest {
     List<SampleValue> samples = new ArrayList<SampleValue>();
     for (int i = -3; i <= 3; i++) {
       double x = i;
-      samples.add(createSample(2.5 * x - 1.2, 0.1, new double[] { x }, function));
+      samples.add(createSample(2.5 * x - 1.2, 0.1, new double[] {x}, function));
     }
 
     LevenbergMarquardt optimizer = new LevenbergMarquardt();
@@ -55,8 +54,8 @@ class LevenbergMarquardtRegressionTest {
 
     LevenbergMarquardtResult result = optimizer.getResult();
     double[] parameterStandardErrors = result.getParameterStandardErrors();
-    Matrix covariance = result.getCovarianceMatrix();
-    Matrix correlation = result.getCorrelationMatrix();
+    double[][] covariance = result.getCovarianceMatrixArray();
+    double[][] correlation = result.getCorrelationMatrixArray();
 
     assertTrue(result.isConverged(), result.getConvergenceReason().name());
     assertEquals(2.5, function.getFittingParams(0), 1.0e-6);
@@ -67,8 +66,8 @@ class LevenbergMarquardtRegressionTest {
     assertTrue(result.getGradientNorm() < 1.0e-2);
     assertNotNull(covariance);
     assertNotNull(correlation);
-    assertEquals(2, covariance.getRowDimension());
-    assertEquals(2, correlation.getRowDimension());
+    assertEquals(2, covariance.length);
+    assertEquals(2, correlation.length);
     assertNotNull(parameterStandardErrors);
     assertEquals(2, parameterStandardErrors.length);
     assertTrue(parameterStandardErrors[0] > 0.0);
@@ -82,9 +81,9 @@ class LevenbergMarquardtRegressionTest {
   void legacyParameterFittingCallingPatternStillWorks() {
     LinearParameterFunction function = new LinearParameterFunction(0.2, 0.0);
     List<SampleValue> samples = new ArrayList<SampleValue>();
-    samples.add(createSample(1.0, 0.1, new double[] { 1.0 }, function));
-    samples.add(createSample(3.0, 0.1, new double[] { 2.0 }, function));
-    samples.add(createSample(5.0, 0.1, new double[] { 3.0 }, function));
+    samples.add(createSample(1.0, 0.1, new double[] {1.0}, function));
+    samples.add(createSample(3.0, 0.1, new double[] {2.0}, function));
+    samples.add(createSample(5.0, 0.1, new double[] {3.0}, function));
 
     LevenbergMarquardt optim = new LevenbergMarquardt();
     SampleSet sampleSet = new SampleSet(new ArrayList<SampleValue>(samples));
@@ -106,8 +105,8 @@ class LevenbergMarquardtRegressionTest {
   void absoluteDeviationBetaUsesCurrentSampleResidualSign() {
     ConstantParameterFunction function = new ConstantParameterFunction(0.0);
     List<SampleValue> samples = new ArrayList<SampleValue>();
-    samples.add(createSample(2.0, 1.0, new double[] { 0.0 }, function));
-    samples.add(createSample(-1.0, 1.0, new double[] { 1.0 }, function));
+    samples.add(createSample(2.0, 1.0, new double[] {0.0}, function));
+    samples.add(createSample(-1.0, 1.0, new double[] {1.0}, function));
 
     LevenbergMarquardtAbsDev optimizer = new LevenbergMarquardtAbsDev();
     optimizer.setSampleSet(new SampleSet(new ArrayList<SampleValue>(samples)));
@@ -159,7 +158,7 @@ class LevenbergMarquardtRegressionTest {
      * @param initialParameter initial value of the fitted parameter
      */
     CubicParameterFunction(double initialParameter) {
-      params = new double[] { initialParameter };
+      params = new double[] {initialParameter};
     }
 
     /** {@inheritDoc} */
@@ -189,7 +188,7 @@ class LevenbergMarquardtRegressionTest {
      * @param initialIntercept initial intercept value
      */
     LinearParameterFunction(double initialSlope, double initialIntercept) {
-      params = new double[] { initialSlope, initialIntercept };
+      params = new double[] {initialSlope, initialIntercept};
     }
 
     /** {@inheritDoc} */
@@ -218,7 +217,7 @@ class LevenbergMarquardtRegressionTest {
      * @param initialParameter initial constant value
      */
     ConstantParameterFunction(double initialParameter) {
-      params = new double[] { initialParameter };
+      params = new double[] {initialParameter};
     }
 
     /** {@inheritDoc} */

@@ -21,9 +21,8 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
   void traceWaterDissociationQuotientUnderflows() {
     SystemInterface fluid = createTraceWaterSystem(1.0e-200);
 
-    ChemicalReaction reaction = new ChemicalReaction("trace water dissociation",
-        new String[] { "H3O+", "OH-", "water" }, new double[] { 1.0, 1.0, -2.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 },
-        0.0, 0.0, 298.15);
+    ChemicalReaction reaction = new ChemicalReaction("trace water dissociation", new String[] {"H3O+", "OH-", "water"},
+        new double[] {1.0, 1.0, -2.0}, new double[] {0.0, 0.0, 0.0, 0.0}, 0.0, 0.0, 298.15);
 
     assertEquals(0.0, reaction.calcK(fluid, 0),
         "The legacy product-space quotient demonstrates the current-master underflow");
@@ -67,8 +66,8 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
   @Test
   void traceMineralSaturationRetainsFiniteLogarithmicDiagnostic() {
     SystemInterface fluid = createTraceWaterSystem(1.0e-200);
-    ChemicalReaction reaction = new ChemicalReaction("trace mineral probe", new String[] { "H3O+", "OH-" },
-        new double[] { -1.0, -1.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 }, 0.0, 0.0, 298.15);
+    ChemicalReaction reaction = new ChemicalReaction("trace mineral probe", new String[] {"H3O+", "OH-"},
+        new double[] {-1.0, -1.0}, new double[] {0.0, 0.0, 0.0, 0.0}, 0.0, 0.0, 298.15);
 
     assertEquals(0.0, reaction.getSaturationRatio(fluid, 0));
     double logSaturationRatio = reaction.calcLogSaturationRatio(fluid, 0);
@@ -184,8 +183,8 @@ class ChemicalReactionUnderflowDiagnosticTest extends neqsim.NeqSimTest {
         + Math.log(chlorideConcentration * chlorideGamma);
     double concentrationOnlyLog = Math.log(sodiumConcentration) + Math.log(chlorideConcentration);
 
-    ChemicalReaction reaction = new ChemicalReaction("NaCl mineral probe", new String[] { "Na+", "Cl-" },
-        new double[] { -1.0, -1.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 }, 0.0, 0.0, 298.15);
+    ChemicalReaction reaction = new ChemicalReaction("NaCl mineral probe", new String[] {"Na+", "Cl-"},
+        new double[] {-1.0, -1.0}, new double[] {0.0, 0.0, 0.0, 0.0}, 0.0, 0.0, 298.15);
 
     assertEquals(expectedBasis, fluid.getChemicalReactionConcentrationBasis());
     assertNotEquals(concentrationOnlyLog, expectedLogSaturationRatio, 1.0e-6,

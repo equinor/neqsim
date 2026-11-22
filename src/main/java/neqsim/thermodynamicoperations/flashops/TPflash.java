@@ -63,8 +63,20 @@ public class TPflash extends Flash {
   private static final double METASTABLE_GAS_VOLUME_OVER_B_LIMIT = 4.0;
   /** Maximum beta for replacing an invalid incipient sour-gas phase with a balanced endpoint. */
   private static final double INVALID_INCIPIENT_PHASE_FRACTION_LIMIT = 0.01;
+  /** Largest beta correction eligible for roundoff-only aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT = 1.0e-10;
+  /** Smallest material residual that justifies aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_REPAIR_THRESHOLD = 1.0e-14;
+  /** Material closure required after roundoff-only aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_MATERIAL_TOLERANCE = 1.0e-13;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
+  /** Material-balance target for an already-present trace-water aqueous split undergoing repair. */
+  private static final double TRACE_WATER_REPAIR_MATERIAL_TOLERANCE = 1.0e-10;
+  /** Normalization target applied only to a repaired trace-water endpoint. */
+  private static final double TRACE_WATER_REPAIR_NORMALIZATION_TOLERANCE = 1.0e-12;
+  /** Maximum complete beta solves in a trace-water repair; each solve has its own bounded iteration loop. */
+  private static final int MAX_TRACE_WATER_REPAIR_SOLVES = 20;
   /** Largest incipient secondary-phase fraction eligible for trace-water phase-selection retry. */
   private static final double TRACE_WATER_PHASE_SELECTION_BETA_LIMIT = 1.0e-4;
   /** Largest secondary-phase fraction eligible for the trace-water aqueous-stability trial. */
@@ -90,10 +102,28 @@ public class TPflash extends Flash {
   private static final double WATER_PHASE_COLLAPSE_VOLATILE_K_LOWER_LIMIT = 10.0;
   /** Maximum accepted component material-balance residual for water-rich endpoint refinement. */
   private static final double WATER_RICH_MATERIAL_BALANCE_TOLERANCE = 1.0e-8;
+  /** Maximum absolute composition or phase-fraction closure error for a characterized fluid. */
+  private static final double CHARACTERIZED_FLUID_INVENTORY_TOLERANCE = 1.0e-8;
+  /** Maximum component-balance error accepted after a dry cubic-EOS single-phase collapse. */
+  private static final double COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
+  /** Maximum component-balance error accepted after neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE = 1.0e-10;
+  /** Minimum component-balance error that activates neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD = 1.0e-8;
+  /** Maximum beta correction accepted by final neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_MAXIMUM_CORRECTION = 5.0e-2;
+  /** Maximum normalization error accepted during neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE = 1.0e-12;
+  /** Minimum phase-composition separation used to recover a unique two-phase fraction. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_SEPARATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted phase-composition normalization residual for an aqueous trial seed. */
   private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
+  /** Component closure required before retaining a tiny aqueous seed over a stable homogeneous state. */
+  private static final double AQUEOUS_SEED_MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
+  /** Target log-fugacity residual for polishing a qualified neutral two-phase endpoint. */
+  private static final double NEUTRAL_TWO_PHASE_POLISH_FUGACITY_TOLERANCE = 1.0e-12;
   /** Maximum absolute Z or composition change for recognizing an unchanged stable one-phase state. */
   private static final double UNCHANGED_SINGLE_PHASE_STATE_TOLERANCE = 1.0e-11;
   /** Maximum final SSI updates retained for legacy neutral endpoint repair. */
@@ -115,7 +145,7 @@ public class TPflash extends Flash {
   /** Minimum feed fraction of the least volatile component for large-volatility refinement. */
   private static final double LARGE_VOLATILITY_LEAST_VOLATILE_FEED_FRACTION = 1.0e-2;
   /** Cubic phase roots evaluated by the post-convergence root checks. */
-  private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
+  private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = {PhaseType.GAS, PhaseType.LIQUID};
   /** Iteration limit for damped direct gamma-phi flashes near a phase-fraction boundary. */
   private static final int DIRECT_GAMMA_PHI_MAXIMUM_ITERATIONS = 500;
   /**
@@ -164,6 +194,14 @@ public class TPflash extends Flash {
   private PhaseType referenceSinglePhaseType = null;
   /** True after the bounded water-bearing ordinary-flash retry has been attempted in this run. */
   private boolean waterBearingRescueAttempted = false;
+  /** True after this run detected a non-conservative, already-present trace-water aqueous split. */
+  private boolean traceWaterAqueousRepairAttempted = false;
+  /** True only when this run removed a negligible phase during final cleanup. */
+  private boolean phaseRemovedDuringFlash = false;
+  /** Allows an iterative outer flash to retain a qualified conserved homogeneous trial state. */
+  private boolean conservativeHomogeneousRecoveryAllowed = false;
+  /** Retains overall component inventories during trace-phase cleanup in a closed-volume outer flash. */
+  private boolean preserveFeedInventoryOnPhaseRemoval = false;
   /** Cold initial state retained only for a screened asymmetric endpoint retry. */
   private transient SystemInterface multiphaseEndpointRescueSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
@@ -263,6 +301,37 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Allows a bounded outer flash trial to retain the better conserved homogeneous root when both split-recovery solvers
+   * reject their candidates.
+   *
+   * <p>
+   * Ordinary user-facing TP flashes keep this disabled. A PS temperature iteration may enable it because a rejected
+   * intermediate temperature must remain conservative before the outer entropy solver can move to another trial. The
+   * retained state still passes the ordinary normalization, component-balance, neutrality and Gibbs gates.
+   * </p>
+   *
+   * @param allowed {@code true} only for a bounded iterative outer-flash trial
+   */
+  void setConservativeHomogeneousRecoveryAllowed(boolean allowed) {
+    conservativeHomogeneousRecoveryAllowed = allowed;
+  }
+
+  /**
+   * Keeps overall component inventories unchanged when final cleanup removes a negligible phase.
+   *
+   * <p>
+   * A closed-volume outer flash can repeat phase cleanup hundreds of times while varying pressure. Discarding the trace
+   * phase's component amounts on every trial would change the conserved inventory. Ordinary TP flashes retain their
+   * existing cleanup behavior unless their outer operation explicitly enables this option.
+   * </p>
+   *
+   * @param preserve whether phase removal must retain the overall component inventories
+   */
+  void setPreserveFeedInventoryOnPhaseRemoval(boolean preserve) {
+    preserveFeedInventoryOnPhaseRemoval = preserve;
+  }
+
+  /**
    * Resolve the opt-in direct gamma-phi strategy once when the flash operation is created.
    *
    * @param flashSystem thermodynamic system owned by the operation
@@ -293,9 +362,12 @@ public class TPflash extends Flash {
         comp1.setK(comp0.getK());
       } else {
         Kold = comp0.getK();
-        double Knew = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        // Use the same numerical range as the ionic endpoint refinement. A zero or
+        // infinite ratio destroys the next composition iterate when setx preserves zero.
+        double Knew = Math.max(1.0e-50,
+            Math.min(1.0e50, comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff));
         comp0.setK(Knew);
-        if (Double.isNaN(Knew)) {
+        if (!Double.isFinite(Knew) || Knew <= 0.0) {
           comp0.setK(Kold);
           system.init(1);
           Knew = comp0.getK();
@@ -608,9 +680,28 @@ public class TPflash extends Flash {
    * <li>presdiff</li>
    * <li>Component K properties for all phases if required</li>
    * </ul>
+   *
+   * @throws IllegalStateException if a neutral multiphase fluid with invalid petroleum-fraction properties has invalid
+   * phase inventories, or a trace-water aqueous repair leaves an unqualified final endpoint
    */
   @Override
   public void run() {
+    if (system instanceof neqsim.thermo.system.SystemWaterIF97) {
+      if (system.getNumberOfComponents() != 1
+          || !"water".equals(system.getPhase(0).getComponent(0).getComponentName())) {
+        throw new IllegalArgumentException("Reference-water systems require a single nominal water component");
+      }
+      if (system instanceof neqsim.thermo.system.SystemSeawater) {
+        neqsim.thermo.util.steam.SeawaterProperties.validate(system.getTemperature(), system.getPressure(),
+            ((neqsim.thermo.system.SystemSeawater) system).getSalinity());
+      }
+      system.setNumberOfPhases(1);
+      system.setBeta(0, 1.0);
+      system.init(2);
+      return;
+    }
+    traceWaterAqueousRepairAttempted = false;
+    validateCharacterizedFluidParameters();
     if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
       system.setNumberOfPhases(1);
       return;
@@ -630,7 +721,16 @@ public class TPflash extends Flash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
     }
     try {
-      runInternal();
+      if (!flashStableWaterIonBrine()) {
+        runInternal();
+        if (phaseRemovedDuringFlash) {
+          recoverNonconservativeHydrocarbonCollapse();
+        }
+      }
+      repairInvalidMultiphaseHydrocarbonEndpoint();
+      synchronizeEquilibratedAqueousPhaseAmounts();
+      validateTraceWaterAqueousRepair();
+      validateCharacterizedFluidPhaseInventories();
     } finally {
       multiphaseEndpointRescueSeed = null;
       if (disableWarmStart) {
@@ -640,11 +740,320 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Rejects petroleum fractions whose acentric factor implies saturation pressure above critical pressure.
+   *
+   * @throws IllegalStateException if a present TBP or plus fraction has a non-finite acentric factor or one at or below
+   * minus one
+   */
+  private void validateCharacterizedFluidParameters() {
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getComponent(componentIndex);
+      if ((component.isIsTBPfraction() || component.isIsPlusFraction()) && component.getNumberOfmoles() > 0.0) {
+        double acentricFactor = component.getAcentricFactor();
+        if (!Double.isFinite(acentricFactor) || acentricFactor <= -1.0) {
+          throw new IllegalStateException("TPflash cannot evaluate petroleum fraction " + component.getComponentName()
+              + ": acentric factor must be finite and greater than -1, got " + acentricFactor);
+        }
+      }
+    }
+  }
+
+  /**
+   * Solves a water-and-ion brine on its aqueous root when solvent vapor stability is satisfied.
+   *
+   * <p>
+   * Ions cannot enter a vapor phase. For a feed whose only neutral component is water, a gas phase is therefore
+   * excluded when aqueous water fugacity is below that of the pure-water vapor root. This avoids singular gas trials
+   * during reactive salt searches without accepting a metastable liquid above its boiling boundary. Any positive
+   * neutral solute, including a trace amount, retains the general multiphase algorithm. Caller phase options are
+   * preserved; reaction helpers are rebound after accepting the cloned aqueous state.
+   * </p>
+   *
+   * @return true when a stable aqueous endpoint was accepted
+   */
+  boolean flashStableWaterIonBrine() {
+    if (!(system instanceof neqsim.thermo.system.SystemElectrolyteCPAstatoil) || !system.hasIons()
+        || !system.isChemicalSystem() || system.isForcePhaseTypes() || solidCheck || system.doSolidPhaseCheck()
+        || system.getHydrateCheck() || system.isMultiphaseWaxCheck()) {
+      return false;
+    }
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getComponent(componentIndex);
+      if (!"water".equals(component.getComponentName()) && !component.isIsIon() && component.getIonicCharge() == 0.0
+          && component.getNumberOfmoles() > 0.0) {
+        return false;
+      }
+    }
+    try {
+      SystemInterface aqueousCandidate = system.clone();
+      aqueousCandidate.setForceSinglePhase(PhaseType.AQUEOUS);
+      aqueousCandidate.setBeta(0, 1.0);
+      aqueousCandidate.init(1);
+      aqueousCandidate.chemicalReactionInit();
+      if (!aqueousCandidate.getChemicalReactionOperations().solveChemEq(0, 0)
+          || !aqueousCandidate.getChemicalReactionOperations().solveChemEq(0, 1)) {
+        return false;
+      }
+      aqueousCandidate.init(1);
+      PhaseInterface aqueous = aqueousCandidate.getPhase(0);
+      int waterIndex = aqueous.getComponent("water").getComponentNumber();
+      SystemInterface vaporCandidate = aqueousCandidate.clone();
+      vaporCandidate.isChemicalSystem(false);
+      vaporCandidate.setEmptyFluid();
+      vaporCandidate.addComponent(waterIndex, aqueousCandidate.getTotalNumberOfMoles());
+      vaporCandidate.setForceSinglePhase(PhaseType.GAS);
+      vaporCandidate.init(1);
+      PhaseInterface vapor = vaporCandidate.getPhase(0);
+      double aqueousWaterFugacity = aqueous.getFugacity(waterIndex);
+      double vaporWaterFugacity = vapor.getFugacity(waterIndex);
+      if (!(aqueousWaterFugacity > 0.0) || !Double.isFinite(aqueousWaterFugacity) || !(vaporWaterFugacity > 0.0)
+          || !Double.isFinite(vaporWaterFugacity) || aqueousWaterFugacity > vaporWaterFugacity) {
+        return false;
+      }
+      system.setTotalNumberOfMoles(aqueousCandidate.getTotalNumberOfMoles());
+      copyFlashStateFrom(aqueousCandidate);
+      system.chemicalReactionInit();
+      return true;
+    } catch (RuntimeException ex) {
+      logger.debug("Aqueous brine endpoint trial failed: {}", ex.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Requalifies a dry cubic-EOS single-phase endpoint that lost component inventory during phase removal.
+   *
+   * <p>
+   * An endpoint-clamped two-phase iteration can remove its vanishing phase while leaving the remaining composition
+   * different from the feed. Merely replacing that composition with the feed can hide a genuine instability. A cold
+   * multiphase stability flash on a clone instead determines the topology. The candidate must close component balance
+   * within {@code 1e-10}, satisfy the existing normalization and fugacity gates, and have no higher Gibbs energy than
+   * the better homogeneous root evaluated at the conserved feed. A two-phase candidate must strictly lower that Gibbs
+   * energy. For an explicitly enabled outer-flash trial, if both split solvers reject their candidates, the
+   * already-evaluated better homogeneous root may be retained only after the same conservation and normalization
+   * checks. Ordinary TP flashes keep that fallback disabled. The live state is copied only after qualification; an
+   * unsuccessful recovery is reported rather than returning a nonconservative fluid.
+   * </p>
+   *
+   * <p>
+   * Only an invalid, unconstrained, ordinary SRK/PR hydrocarbon/inert single-phase endpoint with a normalized,
+   * nonnegative overall feed starts this recovery. Balanced endpoints, explicit multiphase checks, chemical, aqueous,
+   * solid, wax and specialized models retain their established paths. The caller uses a per-run phase-removal flag so
+   * results without final phase removal perform no component screening, cloning or extra EOS initialization. The
+   * existing thread-local guard prevents reciprocal recovery cycles.
+   * </p>
+   *
+   * @throws IllegalStateException if the invalid endpoint cannot be replaced by a qualified conserved state
+   */
+  private void recoverNonconservativeHydrocarbonCollapse() {
+    if (system.getNumberOfPhases() != 1 || !isOrdinaryDryHydrocarbonRecoveryAllowed()) {
+      return;
+    }
+    double materialResidual = maximumComponentMaterialBalanceResidual(system);
+    if (materialResidual <= COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE) {
+      return;
+    }
+
+    SystemInterface candidate = system.clone();
+    MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
+    try {
+      candidate.setNumberOfPhases(1);
+      candidate.setBeta(0, 1.0);
+      for (int componentIndex = 0; componentIndex < candidate.getPhase(0).getNumberOfComponents(); componentIndex++) {
+        candidate.getPhase(0).getComponent(componentIndex)
+            .setx(candidate.getPhase(0).getComponent(componentIndex).getz());
+      }
+      candidate.getPhase(0).normalize();
+      double homogeneousGibbs = Double.POSITIVE_INFINITY;
+      PhaseType homogeneousRoot = null;
+      for (PhaseType root : CUBIC_ROOT_PHASE_TYPES) {
+        candidate.setPhaseType(0, root);
+        candidate.init(1, 0);
+        double rootGibbs = candidate.getGibbsEnergy();
+        if (Double.isFinite(rootGibbs) && rootGibbs < homogeneousGibbs) {
+          homogeneousGibbs = rootGibbs;
+          homogeneousRoot = root;
+        }
+      }
+
+      candidate.setMultiPhaseCheck(true);
+      candidate.setEnhancedMultiPhaseCheck(false);
+      // Start with the conserved homogeneous state: no duplicate ordinary flash is needed
+      // when the multiphase stability/beta solver already finds the qualified split.
+      try {
+        candidate.setPhaseType(0, PhaseType.GAS);
+        candidate.init(1, 0);
+        new TPmultiflash(candidate, false).run();
+        candidate.orderByDensity();
+        candidate.init(1);
+        if (acceptConservativeHydrocarbonRecovery(candidate, homogeneousGibbs)) {
+          return;
+        }
+      } catch (Exception ex) {
+        logger.debug("Direct hydrocarbon endpoint stability recovery failed: {}", ex.getMessage());
+      }
+
+      candidate = system.clone();
+      resetNeutralCandidateToFeed(candidate);
+      candidate.setMultiPhaseCheck(true);
+      candidate.setEnhancedMultiPhaseCheck(false);
+      TPflash recoveryFlash = new TPflash(candidate, false);
+      recoveryFlash.run();
+      candidate.init(1);
+      if (acceptConservativeHydrocarbonRecovery(candidate, homogeneousGibbs)) {
+        return;
+      }
+
+      if (conservativeHomogeneousRecoveryAllowed && homogeneousRoot != null) {
+        candidate = system.clone();
+        candidate.setNumberOfPhases(1);
+        candidate.setBeta(0, 1.0);
+        candidate.setPhaseType(0, homogeneousRoot);
+        for (int componentIndex = 0; componentIndex < candidate.getPhase(0).getNumberOfComponents(); componentIndex++) {
+          candidate.getPhase(0).getComponent(componentIndex)
+              .setx(candidate.getPhase(0).getComponent(componentIndex).getz());
+        }
+        candidate.getPhase(0).normalize();
+        candidate.init(1, 0);
+        if (acceptConservativeHydrocarbonRecovery(candidate, homogeneousGibbs)) {
+          return;
+        }
+      }
+    } catch (Exception ex) {
+      throw new IllegalStateException("TPflash could not recover a conservative hydrocarbon endpoint; component "
+          + "balance residual=" + materialResidual, ex);
+    } finally {
+      MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
+    }
+    throw new IllegalStateException(
+        "TPflash rejected a nonconservative hydrocarbon endpoint; component balance " + "residual=" + materialResidual);
+  }
+
+  /**
+   * Screens the bounded dry SRK/PR path during negligible-phase cleanup, requiring a normalized nonnegative feed.
+   *
+   * @return true when neutral unconstrained hydrocarbon endpoint recovery is permitted
+   */
+  private boolean isOrdinaryDryHydrocarbonRecoveryAllowed() {
+    if (system.doMultiPhaseCheck() || system.isForcePhaseTypes() || system.getMaxNumberOfPhases() < 2
+        || system.isChemicalSystem() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+        || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()
+        || !("SRK-EOS".equals(system.getModelName()) || "PR-EOS".equals(system.getModelName()))) {
+      return false;
+    }
+    double feedSum = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (!Double.isFinite(feedFraction) || feedFraction < 0.0 || feedFraction > 1.0) {
+        return false;
+      }
+      feedSum += feedFraction;
+      if (feedFraction > 1.0e-50 && (!component.isHydrocarbon() && !component.isInert()
+          || component.getIonicCharge() != 0 || component.isIsIon())) {
+        return false;
+      }
+    }
+    return Math.abs(feedSum - 1.0) <= COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE;
+  }
+
+  /**
+   * Applies the same conserved-feed acceptance gates to direct and cold-flash recovery candidates.
+   *
+   * @param candidate proposed recovered endpoint
+   * @param homogeneousGibbs Gibbs energy in J of the better homogeneous root at the conserved feed
+   * @return true after copying a qualified endpoint to the live system
+   */
+  private boolean acceptConservativeHydrocarbonRecovery(SystemInterface candidate, double homogeneousGibbs) {
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(homogeneousGibbs) * 1.0e-8);
+    boolean acceptableGibbs = Double.isFinite(homogeneousGibbs) && Double.isFinite(candidate.getGibbsEnergy())
+        && (candidate.getNumberOfPhases() == 1 ? candidate.getGibbsEnergy() <= homogeneousGibbs + gibbsTolerance
+            : isLowerGibbsMultiphaseCandidate(candidate, homogeneousGibbs));
+    if (!isNeutralFluidCandidate(candidate) || !isBalancedEquilibriumCandidate(candidate)
+        || maximumComponentMaterialBalanceResidual(candidate) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE
+        || !acceptableGibbs) {
+      return false;
+    }
+    copyConvergedNeutralFlashState(candidate);
+    recordStabilityOutcome("recovered nonconservative hydrocarbon endpoint by conserved-feed requalification");
+    return true;
+  }
+
+  /**
+   * Rejects invalid material inventories left by a failed petroleum-fraction multiphase flash.
+   *
+   * <p>
+   * Normalizing each phase composition cannot repair a stalled beta solve: the resulting normalized phases may
+   * represent a different feed. Validate the final state after all bounded refinements, before process equipment can
+   * extract its phases. This guard is limited to neutral fluids with an active TBP or plus fraction whose stored
+   * critical properties are non-finite, non-positive, or have a critical temperature at or below the normal boiling
+   * point. Reactive, ionic, solid, wax, specialized EOS-GE, and valid characterized fluids retain their existing
+   * acceptance paths. This material-balance check does not replace equilibrium or stability tests.
+   * </p>
+   *
+   * @throws IllegalStateException if phase fractions, phase compositions, or component balances are invalid
+   */
+  private void validateCharacterizedFluidPhaseInventories() {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() < 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || directGammaPhiModel != null
+        || hybridEosGeFlashModel != null) {
+      return;
+    }
+    boolean hasInvalidPetroleumFraction = false;
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if (component.getz() <= 0.0 || (!component.isIsTBPfraction() && !component.isIsPlusFraction())) {
+        continue;
+      }
+      double criticalTemperature = component.getTC();
+      double criticalPressure = component.getPC();
+      double normalBoilingPoint = component.getNormalBoilingPoint();
+      double acentricFactor = component.getAcentricFactor();
+      if (!Double.isFinite(criticalTemperature) || criticalTemperature <= 0.0 || !Double.isFinite(criticalPressure)
+          || criticalPressure <= 0.0 || !Double.isFinite(acentricFactor) || (Double.isFinite(normalBoilingPoint)
+              && normalBoilingPoint > 0.0 && criticalTemperature <= normalBoilingPoint)) {
+        hasInvalidPetroleumFraction = true;
+        break;
+      }
+    }
+    if (!hasInvalidPetroleumFraction) {
+      return;
+    }
+    double betaSum = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      double beta = system.getBeta(phaseIndex);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        throw new IllegalStateException("TPflash returned an invalid phase fraction for phase " + phaseIndex);
+      }
+      betaSum += beta;
+      double compositionSum = 0.0;
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        double composition = phase.getComponent(componentIndex).getx();
+        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
+          throw new IllegalStateException("TPflash returned an invalid composition for phase " + phaseIndex);
+        }
+        compositionSum += composition;
+      }
+      if (Math.abs(compositionSum - 1.0) > CHARACTERIZED_FLUID_INVENTORY_TOLERANCE) {
+        throw new IllegalStateException("TPflash returned an unnormalized composition for phase " + phaseIndex);
+      }
+    }
+    double materialResidual = maximumComponentMaterialBalanceResidual(system);
+    if (Math.abs(betaSum - 1.0) > CHARACTERIZED_FLUID_INVENTORY_TOLERANCE
+        || materialResidual > CHARACTERIZED_FLUID_INVENTORY_TOLERANCE) {
+      throw new IllegalStateException("TPflash failed to conserve the feed: component mole-fraction residual="
+          + materialResidual + ", phase-fraction sum=" + betaSum);
+    }
+  }
+
+  /**
    * Internal flash body; the public {@link #run()} wraps this with a warm-start guard for systems carrying a stale
    * 3-phase state.
    */
   private void runInternal() {
     resetStabilityDiagnostics();
+    phaseRemovedDuringFlash = false;
     waterBearingRescueAttempted = false;
     HybridEosGeFlashModel hybridModel = getHybridEosGeFlashModel();
     if (hybridModel != null) {
@@ -871,7 +1280,7 @@ public class TPflash extends Flash {
         rescueSinglePhaseWaterBearingEndpoint();
         rescueSinglePhaseMultiphaseEndpointLegacy();
         rescueSinglePhaseMultiphaseEndpoint();
-        rejectUnnormalizedAqueousEndpointAfterStableSinglePhase();
+        rejectInvalidAqueousSeedAfterStableSinglePhase();
 
         // TPmultiflash owns the coupled phase/reaction solve for multiphase chemical systems.
         // Solve chemistry here only when no multiphase calculation was requested.
@@ -904,7 +1313,8 @@ public class TPflash extends Flash {
             stableSinglePhaseComposition);
         rescueSinglePhaseMultiphaseEndpoint();
         normalizeQualifiedNeutralSinglePhaseEndpoint();
-        polishNearCriticalNeutralTwoPhaseEndpoint();
+        polishQualifiedNeutralTwoPhaseEndpoint();
+        rescueWaterRichMissingAqueousPhase();
         return;
       }
     }
@@ -995,6 +1405,9 @@ public class TPflash extends Flash {
           }
           try {
             deviation = secondOrderSolver.solve();
+            if (secondOrderSolver.wasLastStepDiscarded()) {
+              sucsSubs();
+            }
           } catch (Exception ex) {
             sucsSubs();
           }
@@ -1098,7 +1511,15 @@ public class TPflash extends Flash {
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
-        system.removePhase(i);
+        phaseRemovedDuringFlash = true;
+        if (preserveFeedInventoryOnPhaseRemoval || (system.getNumberOfPhases() == 2
+            && isOrdinaryDryHydrocarbonRecoveryAllowed()
+            && maximumComponentMaterialBalanceResidual(system) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE)) {
+          // Closed-volume trials retain their inventory; invalid ordinary endpoints retain it for recovery.
+          system.removePhaseKeepTotalComposition(i);
+        } else {
+          system.removePhase(i);
+        }
         i--; // indices shift after removal — re-check the (new) phase at i
       }
     }
@@ -1132,8 +1553,9 @@ public class TPflash extends Flash {
     restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterRichInput);
     restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterRichInput);
     normalizeQualifiedNeutralSinglePhaseEndpoint();
-    polishNearCriticalNeutralTwoPhaseEndpoint();
+    polishQualifiedNeutralTwoPhaseEndpoint();
     refineIonicGasAqueousEndpoint();
+    rescueWaterRichMissingAqueousPhase();
 
     // TPmultiflash already finalized coupled chemistry on a multiphase configuration. For an
     // ordinary single-topology calculation, solve chemistry after all phase reordering here.
@@ -1175,7 +1597,7 @@ public class TPflash extends Flash {
     int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
     int componentCount = system.getPhase(0).getNumberOfComponents();
     double[] equilibriumRatios = new double[componentCount];
-    double[] originalBeta = { system.getBeta(0), system.getBeta(1) };
+    double[] originalBeta = {system.getBeta(0), system.getBeta(1)};
     double[][] originalComposition = new double[2][componentCount];
     for (int phase = 0; phase < 2; phase++) {
       for (int component = 0; component < componentCount; component++) {
@@ -1183,6 +1605,10 @@ public class TPflash extends Flash {
       }
     }
     double originalGibbsEnergy = system.getGibbsEnergy();
+    // Gibbs energies can only rank states with the same conserved inventory. A
+    // non-conservative reference must not veto a converged, balanced refinement.
+    double originalMaterialResidual = maximumComponentMaterialBalanceResidual(system);
+    boolean originalInventoryValid = Double.isFinite(originalMaterialResidual) && originalMaterialResidual <= 1.0e-10;
     boolean converged = false;
     boolean failed = false;
 
@@ -1263,7 +1689,8 @@ public class TPflash extends Flash {
     double refinedGibbsEnergy = system.getGibbsEnergy();
     double gibbsTolerance = Math.max(1.0e-8, Math.abs(originalGibbsEnergy) * 1.0e-12);
     if (failed || !converged || !isValidIonicGasAqueousEndpoint(gasPhase, aqueousPhase)
-        || !Double.isFinite(refinedGibbsEnergy) || refinedGibbsEnergy > originalGibbsEnergy + gibbsTolerance) {
+        || !Double.isFinite(refinedGibbsEnergy)
+        || (originalInventoryValid && refinedGibbsEnergy > originalGibbsEnergy + gibbsTolerance)) {
       for (int phase = 0; phase < 2; phase++) {
         system.setBeta(phase, originalBeta[phase]);
         for (int component = 0; component < componentCount; component++) {
@@ -1291,7 +1718,7 @@ public class TPflash extends Flash {
     if (!Double.isFinite(betaSum) || Math.abs(betaSum - 1.0) > 1.0e-12) {
       return false;
     }
-    for (int phase : new int[] { gasPhase, aqueousPhase }) {
+    for (int phase : new int[] {gasPhase, aqueousPhase}) {
       double compositionSum = 0.0;
       for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
@@ -1710,6 +2137,8 @@ public class TPflash extends Flash {
       return;
     }
 
+    traceWaterAqueousRepairAttempted |= hasAqueousPhase && materialBalanceInvalid
+        && waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
     double referenceGibbsEnergy = system.getGibbsEnergy();
     boolean invalidOrdinaryTwoPhaseSeed = !system.doMultiPhaseCheck() && !hasAqueousPhase
         && system.getNumberOfPhases() == 2 && !isBalancedEquilibriumCandidate(system);
@@ -1751,7 +2180,7 @@ public class TPflash extends Flash {
       if (candidateConverged && restoresCollapsedAqueousPhase && candidate.getNumberOfPhases() == 2
           && isBalancedEquilibriumCandidate(candidate) && shouldAcceptWaterRichCandidate(candidate,
               referenceGibbsEnergy, materialBalanceInvalid, incipientCpaAqueousTrial)) {
-        if (gasAqueousMultiphaseEndpoint) {
+        if (ordinaryFallback) {
           runAcceptedOrdinaryWaterRichFallback(candidate);
         } else {
           copyFlashStateFrom(candidate);
@@ -1835,14 +2264,27 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Screens a trace-water gas/oil endpoint for a missed lower-Gibbs aqueous split.
+   * Screens trace-water endpoints for an invalid existing aqueous split or a missed aqueous phase.
    *
    * @param waterFeedFraction overall water mole fraction
-   * @return true when the endpoint is already invalid, its CPA water fugacity is near pure-water saturation, or its
-   * phase fraction and water enrichment justify an aqueous stability trial
+   * @return true when an unconstrained existing aqueous split is non-conservative, a gas/oil endpoint is invalid, its
+   * CPA water fugacity is near pure-water saturation, or its phase fraction and water enrichment justify an aqueous
+   * stability trial. Multiphase-enabled cubic-EOS oil also qualifies when its water fugacity indicates supersaturation.
    */
   private boolean shouldRefineTraceWaterAqueousEndpoint(double waterFeedFraction) {
+    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
+      if (system.isForcePhaseTypes() || !system.allowPhaseShift() || system.doSolidPhaseCheck()) {
+        return false;
+      }
+      double materialResidual = maximumComponentMaterialBalanceResidual(system);
+      return !Double.isFinite(materialResidual) || materialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
+    }
     if (isInvalidTraceWaterGasOilEndpoint()) {
+      return true;
+    }
+    if (system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1 && system.hasPhaseType(PhaseType.OIL)
+        && ("SRK-EOS".equals(system.getModelName()) || "PR-EOS".equals(system.getModelName()))
+        && isCpaWaterNearSaturation(CPA_WATER_SUPERSATURATION_SCREEN_LIMIT)) {
       return true;
     }
     if (!system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1) {
@@ -1876,7 +2318,7 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Compares water fugacity in the current CPA phase with pure-water vapor pressure.
+   * Compares water fugacity in the current phase with pure-water vapor pressure.
    *
    * <p>
    * This is a performance screen, not a stability criterion. The subsequent tangent-plane-distance calculation and
@@ -1902,21 +2344,26 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Runs the existing tangent-plane trial and reconverges the reduced active phase set.
+   * Repairs an existing non-conservative aqueous split, or runs a tangent-plane trial for a missing phase.
    *
    * <p>
-   * The first multiphase beta solve identifies a disappearing phase. Removing only a phase at the solver's numerical
-   * phase-fraction floor and rebuilding the beta workspace turns the trial into a well-conditioned two-phase solve. If
-   * the solver returns two duplicate phases instead, exactly one duplicate pair may be merged before the active set is
-   * rebuilt. The caller performs the final thermodynamic acceptance checks.
+   * An existing two-phase aqueous split is repaired without changing its active set. Otherwise the first multiphase
+   * beta solve after the stability trial identifies a disappearing phase. Removing only a phase at the solver's
+   * numerical phase-fraction floor and rebuilding the beta workspace turns the trial into a well-conditioned two-phase
+   * solve. If the solver returns two duplicate phases instead, exactly one duplicate pair may be merged before the
+   * active set is rebuilt. The caller performs the final thermodynamic acceptance checks.
    * </p>
    *
-   * @param candidate cloned gas/oil endpoint
-   * @return true when exactly one disappearing or duplicate phase was removed and the two remaining phases converged
+   * @param candidate cloned trace-water endpoint
+   * @return true when the existing split was repaired, or the phase-appearance trial produced a converged active set
    */
   private boolean refineTraceWaterAqueousCandidateActiveSet(SystemInterface candidate) {
     int initialPhaseCount = candidate.getNumberOfPhases();
     TPmultiflash operation = new TPmultiflash(candidate, false);
+    if (initialPhaseCount == 2 && candidate.hasPhaseType(PhaseType.AQUEOUS)
+        && maximumComponentMaterialBalanceResidual(candidate) > WATER_RICH_MATERIAL_BALANCE_TOLERANCE) {
+      return repairExistingTraceWaterAqueousSplit(candidate, operation);
+    }
     operation.stabilityAnalysis();
     if (candidate.getNumberOfPhases() <= initialPhaseCount) {
       return false;
@@ -1968,6 +2415,109 @@ public class TPflash extends Flash {
     double activeSetResidual = operation.solveBeta();
     candidate.init(1);
     return Double.isFinite(activeSetResidual) && activeSetResidual < 1.0e-10;
+  }
+
+  /**
+   * Reconverges an invalid existing aqueous split from an interior phase-fraction seed.
+   *
+   * <p>
+   * The seed is not an accepted result. Every beta solve updates compositions and fugacities and already performs
+   * initialization. Reinitializing here would duplicate EOS work. The bounded retries must satisfy the stricter local
+   * material-balance and normalization targets as well as the existing equilibrium/distinct-phase checks. A failed
+   * solve never modifies the live system; final public-return validation makes unrecovered failures observable.
+   * </p>
+   *
+   * @param candidate detached two-phase candidate
+   * @param operation multiphase operation bound to the candidate
+   * @return true only when the repaired active set satisfies the local acceptance contract
+   */
+  private boolean repairExistingTraceWaterAqueousSplit(SystemInterface candidate, TPmultiflash operation) {
+    candidate.setBeta(0, 0.5);
+    candidate.setBeta(1, 0.5);
+    candidate.init(1);
+    operation.setDoubleArrays();
+    double previousResidual = Double.POSITIVE_INFINITY;
+    int stalledSolves = 0;
+    for (int iteration = 0; iteration < MAX_TRACE_WATER_REPAIR_SOLVES; iteration++) {
+      double correction = operation.solveBeta();
+      if (!Double.isFinite(correction)) {
+        break;
+      }
+      if (isBalancedEquilibriumCandidate(candidate) && isQualifiedTraceWaterRepair(candidate)) {
+        logger.debug("Repaired trace-water aqueous split after {} beta solves", iteration + 1);
+        return true;
+      }
+      double residual = Math.max(maximumComponentMaterialBalanceResidual(candidate),
+          maximumLogFugacityResidual(candidate.getPhase(0), candidate.getPhase(1)));
+      if (!Double.isFinite(residual)) {
+        break;
+      }
+      stalledSolves = residual >= previousResidual * (1.0 - 1.0e-6) ? stalledSolves + 1 : 0;
+      if (stalledSolves >= 2) {
+        break;
+      }
+      previousResidual = residual;
+    }
+    logger.debug("Trace-water aqueous repair exhausted; component residual={}",
+        maximumComponentMaterialBalanceResidual(candidate));
+    return false;
+  }
+
+  /**
+   * Checks the finite, normalized and conservative final state of a trace-water repair.
+   *
+   * <p>
+   * Subsequent phase-selection steps may retain one, two or three phases. All active phases must pass; this check does
+   * not force a two-phase topology and is not a global stability certificate. It adds no EOS initialization or clone.
+   * </p>
+   *
+   * @param candidate repaired endpoint to inspect
+   * @return true when every active phase satisfies normalization, material balance and fugacity equality
+   */
+  private boolean isQualifiedTraceWaterRepair(SystemInterface candidate) {
+    double materialResidual = maximumComponentMaterialBalanceResidual(candidate);
+    if (!Double.isFinite(materialResidual) || materialResidual > TRACE_WATER_REPAIR_MATERIAL_TOLERANCE
+        || candidate.getNumberOfPhases() < 1 || !Double.isFinite(candidate.getGibbsEnergy())) {
+      return false;
+    }
+    double betaSum = 0.0;
+    for (int phaseIndex = 0; phaseIndex < candidate.getNumberOfPhases(); phaseIndex++) {
+      double beta = candidate.getBeta(phaseIndex);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        return false;
+      }
+      betaSum += beta;
+      double compositionSum = 0.0;
+      PhaseInterface phase = candidate.getPhase(phaseIndex);
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        double fraction = phase.getComponent(componentIndex).getx();
+        if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
+          return false;
+        }
+        compositionSum += fraction;
+      }
+      if (Math.abs(compositionSum - 1.0) > TRACE_WATER_REPAIR_NORMALIZATION_TOLERANCE) {
+        return false;
+      }
+      if (phaseIndex > 0
+          && maximumLogFugacityResidual(candidate.getPhase(0), phase) >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+        return false;
+      }
+    }
+    return Math.abs(betaSum - 1.0) <= TRACE_WATER_REPAIR_NORMALIZATION_TOLERANCE;
+  }
+
+  /**
+   * Rejects an unrecovered trace-water state after all ordinary endpoint refinements have finished.
+   *
+   * @throws IllegalStateException if this run attempted repair but the final state remains invalid
+   */
+  private void validateTraceWaterAqueousRepair() {
+    if (traceWaterAqueousRepairAttempted && !isQualifiedTraceWaterRepair(system)) {
+      throw new IllegalStateException(
+          "TPflash trace-water aqueous repair did not converge at T=" + system.getTemperature() + " K, P="
+              + system.getPressure() + " bara; component residual=" + maximumComponentMaterialBalanceResidual(system));
+    }
   }
 
   /**
@@ -2639,38 +3189,47 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Applies the tight final beta polish after all ordinary endpoint post-processing.
+   * Applies the tight final beta polish after endpoint post-processing.
    *
    * <p>
    * Phase cleanup performed after an accepted reciprocal flash can reopen a small near-critical fugacity residual. This
-   * last bounded update is restricted to the qualified rich-gas family and restores the complete pre-polish state
-   * unless material balance, the selected active set, Gibbs energy, and a {@code 1e-10} log-fugacity target all pass.
+   * last bounded update is restricted to the qualified rich-gas and sour-gas families and restores the complete
+   * pre-polish state unless material balance, the selected active set, Gibbs energy, and the family-specific
+   * log-fugacity target all pass. Sour-gas endpoints use the campaign's tighter deterministic polishing target after
+   * phase-slot lifecycle operations so ordinary and multiphase paths no longer retain seed-dependent fractions.
    * </p>
    */
-  private void polishNearCriticalNeutralTwoPhaseEndpoint() {
-    if (system.doMultiPhaseCheck() || !isNearCriticalRichGasRefinementCase() || system.getNumberOfPhases() != 2) {
+  private void polishQualifiedNeutralTwoPhaseEndpoint() {
+    boolean sourGasCase = isSourGasConsistencyRefinementCase();
+    boolean nearCriticalRichGasCase = isNearCriticalRichGasRefinementCase();
+    if ((!sourGasCase && (system.doMultiPhaseCheck() || !nearCriticalRichGasCase)) || system.getNumberOfPhases() != 2) {
       return;
     }
     system.init(1);
+    double polishTolerance = sourGasCase ? NEUTRAL_TWO_PHASE_POLISH_FUGACITY_TOLERANCE
+        : NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE;
+    int maximumRefinements = sourGasCase ? MAX_FINAL_BETA_REFINEMENT_ITERATIONS
+        : MAX_NEAR_CRITICAL_BETA_REFINEMENT_ITERATIONS;
     double initialResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
-    if (!Double.isFinite(initialResidual) || initialResidual < NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE
-        || initialResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+    if (!Double.isFinite(initialResidual) || initialResidual < polishTolerance
+        || initialResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE
+        || maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE) {
       return;
     }
     BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
     try {
       TPmultiflash endpointSolver = new TPmultiflash(system, false);
       endpointSolver.setDoubleArrays();
-      for (int refinement = 0; refinement < MAX_NEAR_CRITICAL_BETA_REFINEMENT_ITERATIONS
-          && maximumLogFugacityResidual(system.getPhase(0),
-              system.getPhase(1)) >= NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE; refinement++) {
+      for (int refinement = 0; refinement < maximumRefinements
+          && maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= polishTolerance; refinement++) {
         endpointSolver.solveBeta();
       }
       system.orderByDensity();
       system.init(1);
       double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
       if (!isBalancedEquilibriumCandidate(system)
-          || maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE
+          || maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= polishTolerance
+          || maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE
           || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
           || system.getGibbsEnergy() > referenceState.gibbsEnergy + gibbsTolerance) {
         restoreTwoPhaseIterationState(referenceState);
@@ -3206,7 +3765,7 @@ public class TPflash extends Flash {
    * @return true when phase fractions, compositions, material balance, and equilibrium residuals are finite and satisfy
    * the strict two-phase endpoint tolerances
    */
-  private boolean isBalancedEquilibriumCandidate(SystemInterface candidate) {
+  static boolean isBalancedEquilibriumCandidate(SystemInterface candidate) {
     if (candidate.getNumberOfPhases() < 1 || candidate.getNumberOfPhases() > 2) {
       return false;
     }
@@ -3499,7 +4058,7 @@ public class TPflash extends Flash {
    * @return maximum absolute difference between feed and phase-recombined composition, or positive infinity for a
    * non-finite feed or phase state
    */
-  private double maximumComponentMaterialBalanceResidual(SystemInterface candidate) {
+  private static double maximumComponentMaterialBalanceResidual(SystemInterface candidate) {
     double maximumResidual = 0.0;
     for (int componentIndex = 0; componentIndex < candidate.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double feedComposition = candidate.getPhase(0).getComponent(componentIndex).getz();
@@ -3524,12 +4083,380 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Evaluates Gibbs energy on a conservative clone for a neutral two-phase endpoint.
+   *
+   * <p>
+   * The live endpoint is deliberately not mutated before later root and equilibrium refinements. Stale phase amounts
+   * are synchronized on the clone when necessary, then every fixed-composition cubic-root pair is screened for strict
+   * fugacity equality. Balanced endpoints skip root trials only when their live fugacity coefficients already satisfy
+   * equilibrium. The returned value is used only to adjudicate the existing homogeneous-reference Gibbs comparison; the
+   * live numerical path remains unchanged until the final root and amount refinements.
+   * </p>
+   *
+   * @return conservative two-phase Gibbs energy, or {@link Double#NaN} when no repair is needed or the candidate fails
+   * strict acceptance
+   */
+  private double conservativeNeutralTwoPhaseGibbsEnergy() {
+    if (!isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
+      return Double.NaN;
+    }
+    double[] repairedBetas = maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD
+        ? fixedCompositionTwoPhaseFractions(system)
+        : null;
+    boolean requiresAmountRepair = isBoundedNeutralTwoPhaseAmountCorrection(system, repairedBetas);
+    if (!requiresAmountRepair
+        && maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return Double.NaN;
+    }
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    SystemInterface candidate = system.clone();
+    try {
+      if (requiresAmountRepair) {
+        candidate.setBeta(0, repairedBetas[0]);
+        candidate.setBeta(1, repairedBetas[1]);
+      }
+      candidate.init(1);
+      if (candidate.getPhase(0).getType() != system.getPhase(0).getType()
+          || candidate.getPhase(1).getType() != system.getPhase(1).getType()
+          || maximumComponentMaterialBalanceResidual(candidate) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE) {
+        return Double.NaN;
+      }
+      return minimumQualifiedFixedCompositionRootGibbsEnergy(candidate);
+    } catch (Exception ex) {
+      logger.debug("Conservative neutral two-phase Gibbs candidate failed: {}", ex.getMessage());
+      return Double.NaN;
+    } finally {
+      system.setBeta(0, originalFirstBeta);
+      system.setBeta(1, originalSecondBeta);
+    }
+  }
+
+  /**
+   * Finds the lowest-Gibbs strictly equilibrated cubic-root pair without changing the candidate.
+   *
+   * <p>
+   * Each trial retains the accepted compositions, fractions, and active phase set. Requiring component fugacity
+   * equality prevents a low single-phase root from influencing the homogeneous-reference comparison unless the pair is
+   * also a valid two-phase equilibrium state. Successfully initialized roots are reused only within this comparison;
+   * failed trials remain retryable and no root state is retained between flashes.
+   * </p>
+   *
+   * @param candidate conservative two-phase amount candidate
+   * @return minimum qualified pair Gibbs energy, or {@link Double#NaN} when no pair qualifies
+   */
+  private double minimumQualifiedFixedCompositionRootGibbsEnergy(SystemInterface candidate) {
+    double minimumGibbs = Double.NaN;
+    PhaseInterface[][] phaseRoots = new PhaseInterface[2][CUBIC_ROOT_PHASE_TYPES.length];
+    for (int firstRootIndex = 0; firstRootIndex < CUBIC_ROOT_PHASE_TYPES.length; firstRootIndex++) {
+      PhaseType firstRoot = CUBIC_ROOT_PHASE_TYPES[firstRootIndex];
+      for (int secondRootIndex = 0; secondRootIndex < CUBIC_ROOT_PHASE_TYPES.length; secondRootIndex++) {
+        PhaseType secondRoot = CUBIC_ROOT_PHASE_TYPES[secondRootIndex];
+        try {
+          if (phaseRoots[0][firstRootIndex] == null) {
+            phaseRoots[0][firstRootIndex] = initializedFixedCompositionPhaseRoot(candidate, 0, firstRoot);
+          }
+          if (phaseRoots[1][secondRootIndex] == null) {
+            phaseRoots[1][secondRootIndex] = initializedFixedCompositionPhaseRoot(candidate, 1, secondRoot);
+          }
+          PhaseInterface firstPhase = phaseRoots[0][firstRootIndex];
+          PhaseInterface secondPhase = phaseRoots[1][secondRootIndex];
+          if (maximumLogFugacityResidual(firstPhase, secondPhase) >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+            continue;
+          }
+          double pairGibbs = firstPhase.getGibbsEnergy() + secondPhase.getGibbsEnergy();
+          if (Double.isFinite(pairGibbs) && (!Double.isFinite(minimumGibbs) || pairGibbs < minimumGibbs)) {
+            minimumGibbs = pairGibbs;
+          }
+        } catch (Exception ex) {
+          logger.debug("Conservative two-phase root comparison failed for roots {}/{}: {}", firstRoot, secondRoot,
+              ex.getMessage());
+        }
+      }
+    }
+    return minimumGibbs;
+  }
+
+  /**
+   * Initializes one independent fixed-composition root for a local two-phase comparison.
+   *
+   * @param candidate conservative two-phase amount candidate
+   * @param phaseIndex active phase index to clone
+   * @param root cubic root to evaluate
+   * @return initialized phase clone with refreshed fugacity coefficients
+   */
+  private PhaseInterface initializedFixedCompositionPhaseRoot(SystemInterface candidate, int phaseIndex,
+      PhaseType root) {
+    PhaseInterface phase = candidate.getPhase(phaseIndex).clone();
+    phase.init(candidate.getTotalNumberOfMoles(), phase.getNumberOfComponents(), 1, root,
+        candidate.getBeta(phaseIndex));
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      phase.getComponent(componentIndex).fugcoef(phase);
+    }
+    return phase;
+  }
+
+  /**
+   * Synchronizes final neutral two-phase amounts with the original feed after all root and equilibrium refinements.
+   *
+   * <p>
+   * A clone is qualified first. The live endpoint is changed only when its current component balance exceeds
+   * {@value #NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD}, the phase compositions define one unique lever-rule fraction
+   * for every feed component, the beta correction is bounded, and the corrected clone retains topology, composition
+   * normalization, material closure, fugacity equality, and finite Gibbs energy. Failure leaves the live endpoint
+   * unchanged.
+   * </p>
+   */
+  private void synchronizeEquilibratedNeutralPhaseAmounts() {
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    double[] candidateBetas = qualifiedNeutralTwoPhaseAmounts();
+    if (candidateBetas == null) {
+      return;
+    }
+    try {
+      system.setBeta(0, candidateBetas[0]);
+      system.setBeta(1, candidateBetas[1]);
+      system.init(1);
+      if (!isQualifiedNeutralTwoPhaseAmountState(system)) {
+        system.setBeta(0, originalFirstBeta);
+        system.setBeta(1, originalSecondBeta);
+        system.init(1);
+      }
+    } catch (Exception ex) {
+      try {
+        system.setBeta(0, originalFirstBeta);
+        system.setBeta(1, originalSecondBeta);
+        system.init(1);
+      } catch (Exception rollbackException) {
+        logger.debug("Neutral two-phase amount rollback failed: {}", rollbackException.getMessage());
+      }
+      logger.debug("Neutral two-phase amount synchronization failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Removes roundoff in the phase amounts of an already-equilibrated water-rich split.
+   *
+   * <p>
+   * Ordinary and multiphase beta iterations can retain differences near machine precision even when their compositions
+   * agree. Those differences multiply liquid caloric properties and can leave avoidable extensive-property
+   * discrepancies. Recover the unique lever-rule fractions without another equilibrium solve, changing neither phase
+   * composition nor the active set. Only neutral, substantial-water endpoints with roundoff-sized corrections qualify;
+   * dry and trace-water endpoints retain their existing paths.
+   * </p>
+   */
+  private void synchronizeEquilibratedAqueousPhaseAmounts() {
+    if (system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS) || system.isChemicalSystem()
+        || system.hasIons() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()) {
+      return;
+    }
+    double waterFeedFraction = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      if ("water".equalsIgnoreCase(system.getComponent(componentIndex).getComponentName())) {
+        waterFeedFraction = system.getComponent(componentIndex).getz();
+        break;
+      }
+    }
+    if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      return;
+    }
+    double originalResidual = maximumComponentMaterialBalanceResidual(system);
+    if (originalResidual <= AQUEOUS_AMOUNT_ROUNDOFF_REPAIR_THRESHOLD
+        || originalResidual > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT || !isBalancedEquilibriumCandidate(system)) {
+      return;
+    }
+    double[] correctedBetas = fixedCompositionTwoPhaseFractions(system);
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    if (correctedBetas == null
+        || Math.abs(correctedBetas[0] - originalFirstBeta) > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT
+        || Math.abs(correctedBetas[1] - originalSecondBeta) > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT) {
+      return;
+    }
+    PhaseType firstType = system.getPhase(0).getType();
+    PhaseType secondType = system.getPhase(1).getType();
+    try {
+      system.setBeta(0, correctedBetas[0]);
+      system.setBeta(1, correctedBetas[1]);
+      system.init(1);
+      double correctedResidual = maximumComponentMaterialBalanceResidual(system);
+      if (isBalancedEquilibriumCandidate(system) && Double.isFinite(system.getGibbsEnergy())
+          && correctedResidual <= Math.min(originalResidual, AQUEOUS_AMOUNT_ROUNDOFF_MATERIAL_TOLERANCE)
+          && system.getPhase(0).getType() == firstType && system.getPhase(1).getType() == secondType) {
+        return;
+      }
+    } catch (Exception ex) {
+      logger.debug("Aqueous roundoff amount synchronization failed: {}", ex.getMessage());
+    }
+    system.setBeta(0, originalFirstBeta);
+    system.setBeta(1, originalSecondBeta);
+    system.init(1);
+  }
+
+  /**
+   * Builds a strictly qualified fixed-composition amount candidate without mutating the live system.
+   *
+   * @return corrected phase fractions, or {@code null} when the endpoint is ineligible, already balanced, or fails
+   * acceptance
+   */
+  private double[] qualifiedNeutralTwoPhaseAmounts() {
+    if (!isNeutralTwoPhaseAmountSynchronizationEligible(system)
+        || maximumComponentMaterialBalanceResidual(system) <= NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD) {
+      return null;
+    }
+    double[] betas = fixedCompositionTwoPhaseFractions(system);
+    if (betas == null || !isBoundedNeutralTwoPhaseAmountCorrection(system, betas)) {
+      return null;
+    }
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    SystemInterface candidate = system.clone();
+    try {
+      candidate.setBeta(0, betas[0]);
+      candidate.setBeta(1, betas[1]);
+      candidate.init(1);
+      if (!isQualifiedNeutralTwoPhaseAmountState(candidate)
+          || candidate.getPhase(0).getType() != system.getPhase(0).getType()
+          || candidate.getPhase(1).getType() != system.getPhase(1).getType()) {
+        return null;
+      }
+      return new double[] {betas[0], betas[1]};
+    } catch (Exception ex) {
+      logger.debug("Neutral two-phase amount candidate failed: {}", ex.getMessage());
+      return null;
+    } finally {
+      system.setBeta(0, originalFirstBeta);
+      system.setBeta(1, originalSecondBeta);
+    }
+  }
+
+  /**
+   * Checks whether fixed-composition amount synchronization is safe for the endpoint family.
+   *
+   * @param candidate endpoint to inspect
+   * @return {@code true} for a neutral dry fluid with exactly two active phases
+   */
+  private boolean isNeutralTwoPhaseAmountSynchronizationEligible(SystemInterface candidate) {
+    return candidate.getNumberOfPhases() == 2 && !candidate.hasPhaseType(PhaseType.AQUEOUS)
+        && !candidate.isChemicalSystem() && !candidate.hasIons() && !solidCheck && !candidate.doSolidPhaseCheck()
+        && !candidate.isMultiphaseWaxCheck();
+  }
+
+  /**
+   * Checks whether the fixed-composition phase-fraction correction is sufficiently small.
+   *
+   * <p>
+   * A large difference means the endpoint is still in an internal mapped-phase representation and must be left to its
+   * established finalization path. A bounded difference distinguishes a stale final amount from a different active
+   * phase mapping.
+   * </p>
+   *
+   * @param candidate endpoint to inspect
+   * @param correctedBetas lever-rule phase fractions
+   * @return {@code true} when the proposed correction is within the final synchronization bound
+   */
+  private boolean isBoundedNeutralTwoPhaseAmountCorrection(SystemInterface candidate, double[] correctedBetas) {
+    return correctedBetas != null && correctedBetas.length == 2
+        && Math.abs(candidate.getBeta(0) - correctedBetas[0]) <= NEUTRAL_TWO_PHASE_AMOUNT_MAXIMUM_CORRECTION
+        && Math.abs(candidate.getBeta(1) - correctedBetas[1]) <= NEUTRAL_TWO_PHASE_AMOUNT_MAXIMUM_CORRECTION;
+  }
+
+  /**
+   * Recovers the unique two-phase fractions from the fixed phase compositions and original feed.
+   *
+   * @param candidate endpoint whose phase compositions are retained
+   * @return two phase fractions, or {@code null} when no unique strictly conservative split exists
+   */
+  private double[] fixedCompositionTwoPhaseFractions(SystemInterface candidate) {
+    int componentCount = candidate.getPhase(0).getNumberOfComponents();
+    double feedTotal = 0.0;
+    double firstCompositionTotal = 0.0;
+    double secondCompositionTotal = 0.0;
+    int pivotComponent = -1;
+    double maximumSeparation = 0.0;
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double feedComposition = candidate.getPhase(0).getComponent(componentIndex).getz();
+      double firstComposition = candidate.getPhase(0).getComponent(componentIndex).getx();
+      double secondComposition = candidate.getPhase(1).getComponent(componentIndex).getx();
+      if (!Double.isFinite(feedComposition) || !Double.isFinite(firstComposition)
+          || !Double.isFinite(secondComposition)) {
+        return null;
+      }
+      feedTotal += feedComposition;
+      firstCompositionTotal += firstComposition;
+      secondCompositionTotal += secondComposition;
+      double separation = Math.abs(firstComposition - secondComposition);
+      if (separation > maximumSeparation) {
+        maximumSeparation = separation;
+        pivotComponent = componentIndex;
+      }
+    }
+    if (Math.abs(feedTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || Math.abs(firstCompositionTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || Math.abs(secondCompositionTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || maximumSeparation <= NEUTRAL_TWO_PHASE_AMOUNT_SEPARATION_TOLERANCE || pivotComponent < 0) {
+      return null;
+    }
+    double firstPivot = candidate.getPhase(0).getComponent(pivotComponent).getx();
+    double secondPivot = candidate.getPhase(1).getComponent(pivotComponent).getx();
+    double firstBeta = (candidate.getPhase(0).getComponent(pivotComponent).getz() - secondPivot)
+        / (firstPivot - secondPivot);
+    double secondBeta = 1.0 - firstBeta;
+    if (!Double.isFinite(firstBeta) || !Double.isFinite(secondBeta) || firstBeta <= phaseFractionMinimumLimit
+        || secondBeta <= phaseFractionMinimumLimit || firstBeta >= 1.0 || secondBeta >= 1.0) {
+      return null;
+    }
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double recoveredFeed = firstBeta * candidate.getPhase(0).getComponent(componentIndex).getx()
+          + secondBeta * candidate.getPhase(1).getComponent(componentIndex).getx();
+      if (Math.abs(candidate.getPhase(0).getComponent(componentIndex).getz()
+          - recoveredFeed) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE) {
+        return null;
+      }
+    }
+    return new double[] {firstBeta, secondBeta};
+  }
+
+  /**
+   * Checks strict conservation and equilibrium gates after a fixed-composition amount correction.
+   *
+   * @param candidate corrected endpoint
+   * @return {@code true} when every numerical acceptance gate passes
+   */
+  private boolean isQualifiedNeutralTwoPhaseAmountState(SystemInterface candidate) {
+    if (!isNeutralTwoPhaseAmountSynchronizationEligible(candidate) || !Double.isFinite(candidate.getGibbsEnergy())
+        || Math
+            .abs(candidate.getBeta(0) + candidate.getBeta(1) - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || maximumComponentMaterialBalanceResidual(candidate) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE
+        || maximumLogFugacityResidual(candidate.getPhase(0),
+            candidate.getPhase(1)) >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return false;
+    }
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      double compositionTotal = 0.0;
+      for (int componentIndex = 0; componentIndex < candidate.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double composition = candidate.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
+          return false;
+        }
+        compositionTotal += composition;
+      }
+      if (Math.abs(compositionTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Checks whether candidate phases have meaningfully different compositions.
    *
    * @param candidate candidate system to inspect
    * @return true when all phase pairs have distinct active-component compositions
    */
-  private boolean hasDistinctPhaseCompositions(SystemInterface candidate) {
+  private static boolean hasDistinctPhaseCompositions(SystemInterface candidate) {
     for (int firstPhase = 0; firstPhase < candidate.getNumberOfPhases(); firstPhase++) {
       for (int secondPhase = firstPhase + 1; secondPhase < candidate.getNumberOfPhases(); secondPhase++) {
         double l1Difference = 0.0;
@@ -3806,8 +4733,51 @@ public class TPflash extends Flash {
    * </p>
    */
   private void rescueLowerGibbsHydrocarbonPhaseRoots() {
-    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
-        || solidCheck || system.isMultiphaseWaxCheck() || system.hasPhaseType(PhaseType.AQUEOUS)) {
+    rescueLowerGibbsHydrocarbonPhaseRoots(false);
+  }
+
+  /**
+   * Performs the lower-Gibbs hydrocarbon-root check at the final public multiphase boundary.
+   *
+   * <p>
+   * Running this check only after every internal multiphase rescue avoids changing the numerical path of the flash. The
+   * existing fixed-composition acceptance still requires a lower Gibbs energy and strict fugacity equality before any
+   * phase object is replaced.
+   * </p>
+   */
+  private void rescueFinalMultiphaseHydrocarbonRoot() {
+    if (system.doMultiPhaseCheck()) {
+      rescueLowerGibbsHydrocarbonPhaseRoots(true);
+    }
+  }
+
+  /**
+   * Repairs a final multiphase hydrocarbon endpoint with independently guarded root and amount transactions.
+   *
+   * <p>
+   * The lower-Gibbs root check retains fixed compositions and amounts. The subsequent lever-rule synchronization is
+   * independently accepted only for a bounded correction with strict final conservation and equilibrium. This preserves
+   * large mapped-phase changes for their established finalization path. Material closure alone does not establish
+   * correct cubic roots, so root qualification remains independent of amount synchronization.
+   * </p>
+   */
+  private void repairInvalidMultiphaseHydrocarbonEndpoint() {
+    if (!system.doMultiPhaseCheck() || !isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
+      return;
+    }
+    rescueFinalMultiphaseHydrocarbonRoot();
+    synchronizeEquilibratedNeutralPhaseAmounts();
+  }
+
+  /**
+   * Implements the lower-Gibbs hydrocarbon-root check.
+   *
+   * @param allowMultiphaseEndpoint whether the final public multiphase boundary is eligible
+   */
+  private void rescueLowerGibbsHydrocarbonPhaseRoots(boolean allowMultiphaseEndpoint) {
+    if ((!allowMultiphaseEndpoint && system.doMultiPhaseCheck()) || system.getNumberOfPhases() != 2
+        || system.isChemicalSystem() || system.hasIons() || solidCheck || system.isMultiphaseWaxCheck()
+        || system.hasPhaseType(PhaseType.AQUEOUS)) {
       return;
     }
 
@@ -3991,7 +4961,8 @@ public class TPflash extends Flash {
    * only a single subtraction beyond the {@code getGibbsEnergy()} call (no extra {@code init} is performed —
    * {@code init(1)} from the preceding {@code orderByDensity} is sufficient). A threshold of
    * {@link #SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J} joules avoids triggering on numerical noise. Skipped for
-   * chemical / electrolyte systems.
+   * chemical / electrolyte systems and solid/wax calculations: their phase-specific fugacity reference models are not
+   * represented by this homogeneous fluid Gibbs comparison.
    * </p>
    *
    * <p>
@@ -4006,8 +4977,9 @@ public class TPflash extends Flash {
     // results (the dominant case after the removePhase cleanup just above the call site) bail
     // on the first term without touching any property method.
     final int numPhases = system.getNumberOfPhases();
-    if (numPhases < 2 || !system.doMultiPhaseCheck() || referenceSinglePhaseType == null
-        || Double.isNaN(referenceSinglePhaseGibbs) || system.getPhase(0).getNumberOfComponents() <= 1) {
+    if (numPhases < 2 || !system.doMultiPhaseCheck() || solidCheck || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null || Double.isNaN(referenceSinglePhaseGibbs)
+        || system.getPhase(0).getNumberOfComponents() <= 1) {
       return;
     }
     // Smallest beta — fast path for the 2-phase case (overwhelmingly common); generic loop
@@ -4037,7 +5009,8 @@ public class TPflash extends Flash {
     // Compare current multiphase Gibbs to the cached single-phase reference at the feed.
     // Negated > guards against NaN naturally. init(1) (from the preceding orderByDensity) is
     // sufficient — getGibbsEnergy() is used after init(1) throughout runInternal().
-    final double currentGibbs = system.getGibbsEnergy();
+    final double correctedGibbs = conservativeNeutralTwoPhaseGibbsEnergy();
+    final double currentGibbs = Double.isFinite(correctedGibbs) ? correctedGibbs : system.getGibbsEnergy();
     if (!(currentGibbs - referenceSinglePhaseGibbs > SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J)) {
       return;
     }
@@ -4061,12 +5034,14 @@ public class TPflash extends Flash {
    * fluid into two identical copies is physically meaningless (it is a single phase), so this guard removes the
    * artifact and keeps the reported phase boundary consistent with the phase-envelope saturation solver. Only the
    * two-phase case is handled; genuine two-phase splits have compositionally distinct phases (even when the incipient
-   * phase fraction is tiny) and are left untouched. Skipped for chemical / electrolyte systems.
+   * phase fraction is tiny) and are left untouched. Skipped for chemical / electrolyte systems and solid/wax
+   * calculations, where matching compositions do not make a solid and a fluid the same phase.
    * </p>
    */
   private void collapseTrivialMultiphaseSplit() {
-    if (system.getNumberOfPhases() != 2 || !system.doMultiPhaseCheck() || referenceSinglePhaseType == null
-        || system.isChemicalSystem() || system.hasIons()) {
+    if (system.getNumberOfPhases() != 2 || !system.doMultiPhaseCheck() || solidCheck || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null || system.isChemicalSystem()
+        || system.hasIons()) {
       return;
     }
     neqsim.thermo.phase.PhaseInterface phaseA = system.getPhase(0);
@@ -4094,21 +5069,22 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Rejects an unnormalized aqueous trial phase created while checking an already stable single-phase state.
+   * Rejects an unnormalized or nonconservative aqueous seed over an already stable single-phase state.
    *
    * <p>
    * The multiphase stability path can seed an aqueous trial phase at a small positive phase fraction. If the beta
    * solver does not move that seed, its composition can remain unnormalized and survive the generic minimum-beta
-   * cleanup. Such a structurally invalid trial must not replace the accepted homogeneous state.
+   * cleanup. A normalized seed can likewise remain at its initial tiny fraction without satisfying component balance.
+   * Such an unequilibrated trial must not replace the accepted homogeneous state.
    * </p>
    *
    * <p>
-   * This guard deliberately does not impose a universal material-balance or fugacity-residual threshold. Some
-   * specialized fluid and solid-phase models use model-specific convergence and refinement paths, so normalized
-   * endpoints remain available to those paths. Chemical, ionic, solid, wax, and non-aqueous endpoints are excluded.
+   * The material-balance check is limited to aqueous fractions no larger than the initial seed in {@link TPmultiflash}.
+   * Larger normalized endpoints remain available to model-specific refinement paths. Chemical, ionic, solid, wax, and
+   * non-aqueous endpoints are excluded.
    * </p>
    */
-  private void rejectUnnormalizedAqueousEndpointAfterStableSinglePhase() {
+  private void rejectInvalidAqueousSeedAfterStableSinglePhase() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
         || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null
         || !system.hasPhaseType(PhaseType.AQUEOUS)) {
@@ -4138,6 +5114,12 @@ public class TPflash extends Flash {
         collapseToReferenceSinglePhase();
         return;
       }
+    }
+    double initialSeedFraction = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
+    double aqueousFraction = system.getBeta(system.getPhaseNumberOfPhase("aqueous"));
+    if (aqueousFraction <= initialSeedFraction
+        && maximumComponentMaterialBalanceResidual(system) > AQUEOUS_SEED_MATERIAL_BALANCE_TOLERANCE) {
+      collapseToReferenceSinglePhase();
     }
   }
 
@@ -4251,5 +5233,35 @@ public class TPflash extends Flash {
       return false;
     }
     return true;
+  }
+
+  /** Rechecks water-rich ionic and wet hydrocarbon endpoints for a missing material phase. */
+  private void rescueWaterRichMissingAqueousPhase() {
+    if (system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1
+        && IonicAqueousPhaseEquilibrium.isApplicable(system)) {
+      double referenceGibbs = system.getGibbsEnergy();
+      double gibbsTolerance = Math.max(1.0e-7, Math.abs(referenceGibbs) * 1.0e-12);
+      // A phase with explicit ions but no aqueous phase is not a physically comparable Gibbs
+      // reference. The independent search still compares every accepted split with the conserved
+      // homogeneous aqueous feed before returning it.
+      boolean referenceComparable = system.hasPhaseType(PhaseType.AQUEOUS);
+      try {
+        SystemInterface candidate = system.clone();
+        new IonicAqueousPhaseEquilibrium(candidate).run();
+        candidate.init(1);
+        if (candidate.hasPhaseType(PhaseType.AQUEOUS) && Double.isFinite(candidate.getGibbsEnergy())
+            && (!referenceComparable || candidate.getGibbsEnergy() < referenceGibbs - gibbsTolerance)) {
+          copyFlashStateFrom(candidate);
+          return;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Ionic aqueous dual-root rescue failed: {}", ex.getMessage());
+      }
+    }
+    if (system.doMultiPhaseCheck() && system.hasPhaseType(PhaseType.OIL)
+        && (system.getNumberOfPhases() == 1 || (system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)))
+        && system.hasComponent("water") && system.getComponent("water").getz() > 1.0e-6) {
+      new TPmultiflash(system, false).rescueMetastableOilMissingAqueous();
+    }
   }
 }

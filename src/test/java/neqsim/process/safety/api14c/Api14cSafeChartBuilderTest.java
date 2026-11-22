@@ -86,6 +86,9 @@ class Api14cSafeChartBuilderTest {
     p.add(sep);
     p.run();
 
+    Api14cSafeChartBuilder none = new Api14cSafeChartBuilder()
+        .declarePresent("HP separator", java.util.Collections.<Api14cDeviceType>emptySet()).build(p);
+    assertTrue(none.getItems().get(0).getPresent().isEmpty());
     Api14cSafeChartBuilder b = new Api14cSafeChartBuilder()
         .declarePresent("HP separator", EnumSet.of(Api14cDeviceType.PSH, Api14cDeviceType.PSV)).build(p);
     assertFalse(b.isComplete());
@@ -108,7 +111,9 @@ class Api14cSafeChartBuilderTest {
     Api14cSafeChartBuilder b = new Api14cSafeChartBuilder().buildAssumingComplete(p);
     String md = b.toMarkdown();
     assertTrue(md.contains("HP separator"));
+    assertTrue(md.contains("ASSUMED_TEMPLATE"));
     String json = b.toJson();
     assertTrue(json.contains("HP separator"));
+    assertTrue(json.contains("ASSUMED_TEMPLATE"));
   }
 }

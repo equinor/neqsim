@@ -10,6 +10,12 @@ keywords: "Beggs and Brill, multiphase, pipeline, pressure drop, liquid holdup, 
 
 The `PipeBeggsAndBrills` class implements the Beggs and Brill (1973) empirical correlations for pressure drop and liquid holdup prediction in multiphase pipeline flow. It supports single-phase (gas or liquid) and multiphase (gas-liquid, gas-oil-water) flow in horizontal, inclined, and vertical pipes.
 
+The default PFCT viscosity models retain independent methane reference states
+when inlet fluids are cloned for parallel branches. Each branch still requires
+its own stream and fluid state. The regression suite compares concurrent pipe
+outlet pressure and liquid holdup with sequential calculations; it does not
+qualify concurrent editing of a stream or its mixing parameters.
+
 ## Reference
 
 > Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes", Journal of Petroleum Technology, May 1973, pp. 607-617. **SPE-4007-PA**
@@ -53,6 +59,52 @@ pipe.setFlowConvergenceTolerance(1e-4);
 ```
 
 ---
+
+### Flow-solve convergence contract
+
+In `CALCULATE_FLOW_RATE` mode, `run()` returns normally only when a final forward replay
+satisfies `abs(outletPressure - targetPressure) <= targetPressure * flowConvergenceTolerance`,
+with pressures converted to bara. The default relative tolerance remains `1e-4` and the
+bisection budget remains 50. A narrow flow bracket alone is not convergence.
+
+`getFlowSolveReport()` returns immutable evidence: `isConverged()`, termination reason,
+bisection count, bracket expansion count, lower/upper flow bounds and attempted rate (kg/hr),
+signed pressure residual and absolute tolerance (bar). The attempted rate is **not a rated
+capacity on failure**. `report.toJson()` exposes the same diagnostics; unavailable numerical
+fields are omitted. Equipment `toJson()` includes the report as `flowSolveReport`.
+
+| Termination reason | Meaning |
+| --- | --- |
+| `CONVERGED` | Final forward replay meets the pressure tolerance |
+| `ITERATION_LIMIT` | Bisection exhausted the configured budget |
+| `BRACKET_LIMIT` | No bracket after 20 upper-bound doublings, minimum-flow infeasibility, or floating-point bracket stagnation |
+| `INNER_FAILURE` | Unclassified inner property/numerical exception; original cause is preserved |
+| `NON_FINITE_OUTPUT` | A forward calculation returned a non-finite pressure |
+| `INVALID_INPUT` | Invalid geometry, bounds, pressure, initial rate, tolerance, or iteration budget |
+| `REPLAY_FAILURE` | Final replay no longer meets the pressure tolerance |
+
+Failure throws `IllegalStateException`, restores the original inlet and outlet fluids and their
+calculation identifiers, clears the pipe calculation identifier, and makes `solved()` false. Profile data from a failed
+run must not be consumed. Only a specifically identified non-positive hydraulic pressure is
+used as an excessive-flow bound; arbitrary runtime exceptions never tighten the bracket.
+
+Forward pressure calculations also throw on non-positive hydraulic pressure and retain the
+public `InvalidOutputException` in the cause chain. Process candidate evaluators can use this
+cause to reject the infeasible operating point while direct `run()` continues to throw.
+
+Existing setters and successful flow-mode behavior remain supported. The initial rate must be
+finite and positive, the target must be positive and below the inlet pressure, and the relative
+tolerance must be finite and between zero and one. The lower search bound is the smaller of
+1 kg/hr and the initial rate. Forward pressure mode clears the last flow report. A report is
+evidence of the last attempted solve; changing settings does not perform a new solve.
+
+For the methane/n-decane reproducer in issue #4258, use `setMaxFlowIterations(1)` to exercise
+the failure contract, catch the exception and inspect `getFlowSolveReport()`, then restore the
+normal budget and rerun before using the capacity. The executable Java example/regression is
+`PipeBeggsAndBrillsFlowSolveTest`; the Python/JSON example is
+[`validate_beggs_brill_flow_solve_jpype.py`](../../devtools/validate_beggs_brill_flow_solve_jpype.py).
+Run that script with `--classpath-file` pointing to a Maven dependency classpath file after
+compiling the workspace classes.
 
 ## Flow Regime Determination
 
@@ -174,6 +226,23 @@ For 1 < y < 1.2:  S = ln(2.2y - 1.2)
 Otherwise:       S = ln(y) / [-0.0523 + 3.18ln(y) - 0.872ln²(y) + 0.01853ln⁴(y)]
 ```
 
+For a no-slip liquid volume fraction below $10^{-6}$ (one part per million by
+flowing volume), the friction exponent is multiplied by $x^2(3-2x)$, where
+$x = \lambda_L/10^{-6}$. This joins the two-phase friction multiplier smoothly
+to one at the dry-gas limit and leaves the published exponent unchanged at and
+above $10^{-6}$. The blending weight has zero slope at both ends. The liquid phase,
+Beggs–Brill holdup and hydrostatic density remain in the calculation.
+
+This numerical extension prevents round-off-scale phase appearance at a gas
+dew point from causing a finite pressure jump, as reported in
+[issue #4654](https://github.com/equinor/neqsim/issues/4654). It is not an
+independently validated friction correlation for trace condensate. Pressure
+continuity is regression-tested with the reported separator gas in both default
+adiabatic and isothermal modes, using 1, 5 and 20 increments. This continuity
+check does not establish grid convergence or experimental pressure-drop accuracy.
+The associated multiphase-flash fix also solves aqueous trial phases added after
+the initial beta loop, so an unsolved trial fraction cannot enter the hydraulics.
+
 ---
 
 ## Heat Transfer Models
@@ -254,7 +323,26 @@ Calculate:
 
 ## Energy Equation Components
 
-The energy balance can include three optional components:
+Non-isothermal segments include gravitational potential energy: the static-enthalpy
+change contains `-g * delta_z` per unit mass, with `g = 9.80665 m/s²` and positive
+`delta_z` upward. An adiabatic, unheated segment therefore conserves `h + g*z`
+within the model's existing neglect of kinetic-energy change. Isothermal mode
+continues to impose temperature through an implicit external heat boundary.
+
+The analytical temperature fallback includes gravitational cooling/heating. A
+finite PH-flash endpoint that closes the requested enthalpy is retained even when
+phase change places its temperature outside a constant-Cp estimate. Tests cover
+upward, downward and horizontal water lines, direct electrical heat, and a flashing
+well at 1, 20 and 40 increments. The 2 km upward well loses 19,613.3 J/kg of enthalpy.
+Horizontal gas expansion can also produce valid PH cooling outside that estimate:
+zero elevation does not imply constant temperature. `PipelineTest` checks specific
+enthalpy and mass conservation together with expansion cooling and outlet pressure.
+
+PH flashing already includes the thermodynamic temperature response to pressure.
+The legacy optional JT and friction-heating additions below remain separate options;
+the gravity-balance regression uses their default disabled settings.
+
+The energy balance can also include three optional components:
 
 ### 1. Wall Heat Transfer
 

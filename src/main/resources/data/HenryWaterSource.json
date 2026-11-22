@@ -1,0 +1,816 @@
+{
+  "doi": "10.5194/acp-23-10901-2023",
+  "license": "CC BY 4.0",
+  "convention": "Hsbp = molality / partial pressure; mol kg^-1 atm^-1",
+  "reference_temperature_K": 298.15,
+  "rows": [
+    {
+      "name": "methane",
+      "cas": "74-82-8",
+      "Hsbp_mol_kg_atm": 0.0014,
+      "B_K": 1600.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "ethane",
+      "cas": "74-84-0",
+      "Hsbp_mol_kg_atm": 0.0019,
+      "B_K": 2400.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "propane",
+      "cas": "74-98-6",
+      "Hsbp_mol_kg_atm": 0.0015,
+      "B_K": 2700.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "CO2",
+      "cas": "124-38-9",
+      "Hsbp_mol_kg_atm": 0.035,
+      "B_K": 2300.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "methanol",
+      "cas": "67-56-1",
+      "Hsbp_mol_kg_atm": 200.0,
+      "B_K": 5500.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "oxygen",
+      "cas": "7782-44-7",
+      "Hsbp_mol_kg_atm": 0.0013,
+      "B_K": 1500.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "nitrogen",
+      "cas": "7727-37-9",
+      "Hsbp_mol_kg_atm": 0.00065,
+      "B_K": 1300.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "n-butane",
+      "cas": "106-97-8",
+      "Hsbp_mol_kg_atm": 0.0012,
+      "B_K": 3100.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "n-pentane",
+      "cas": "109-66-0",
+      "Hsbp_mol_kg_atm": 0.00073,
+      "B_K": 3900.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "source_species": "pentane",
+      "source_formula": "C5H12",
+      "source_inchikey": "OFBQJSOFQDEBGM-UHFFFAOYSA-N",
+      "identity_match_basis": "Exact CAS and InChIKey; NeqSim nC5 is the formula-equivalent abbreviation for C5H12.",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Brockbank (2013), Aqueous Henry's law constants, infinite dilution activity coefficients, and water solubility",
+      "original_reference_access": "https://scholarsarchive.byu.edu/etd/3691/",
+      "original_reference_rights": "The thesis record links the BYU institutional copyright policy and gives no permissive reuse license; only numerical facts from the CC BY 4.0 Sander compilation are reproduced.",
+      "uncertainty": "No numerical uncertainty is encoded in the Sander machine row; three type-L temperature rows span 7.3e-4 to 8.8e-4 mol kg^-1 atm^-1 and 3400 to 3900 K.",
+      "selection_rationale": "Use the first, highest-ranked Sander type-L row; it is the only Brockbank recommended row with both value and local slope.",
+      "temperature_scope": "local van-t-Hoff approximation about 298.15 K; no experimental validity interval is claimed"
+    },
+    {
+      "name": "n-hexane",
+      "cas": "110-54-3",
+      "Hsbp_mol_kg_atm": 0.00058,
+      "B_K": 4400.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "benzene",
+      "cas": "71-43-2",
+      "Hsbp_mol_kg_atm": 0.18,
+      "B_K": 3800.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "toluene",
+      "cas": "108-88-3",
+      "Hsbp_mol_kg_atm": 0.16,
+      "B_K": 4100.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "n-heptane",
+      "cas": "142-82-5",
+      "Hsbp_mol_kg_atm": 0.00045,
+      "B_K": 4500.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "n-octane",
+      "cas": "111-65-9",
+      "Hsbp_mol_kg_atm": 0.00035,
+      "B_K": 5300.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "n-nonane",
+      "cas": "111-84-2",
+      "Hsbp_mol_kg_atm": 0.00024,
+      "B_K": 6600.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "hydrogen",
+      "cas": "1333-74-0",
+      "Hsbp_mol_kg_atm": 0.00079,
+      "B_K": 530.0,
+      "reference": "2105",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "argon",
+      "cas": "7440-37-1",
+      "Hsbp_mol_kg_atm": 0.0014,
+      "B_K": 1700.0,
+      "reference": "2828",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "i-butane",
+      "cas": "75-28-5",
+      "Hsbp_mol_kg_atm": 0.00092,
+      "B_K": 2700.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "c-propane",
+      "cas": "75-19-4",
+      "Hsbp_mol_kg_atm": 0.012,
+      "B_K": 2800.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "22-dim-C3",
+      "cas": "463-82-1",
+      "Hsbp_mol_kg_atm": 0.00061,
+      "B_K": 3000.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "22-dim-C4",
+      "cas": "75-83-2",
+      "Hsbp_mol_kg_atm": 0.00057,
+      "B_K": 3500.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "23-dim-C4",
+      "cas": "79-29-8",
+      "Hsbp_mol_kg_atm": 0.00082,
+      "B_K": 4400.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "2-m-C5",
+      "cas": "107-83-5",
+      "Hsbp_mol_kg_atm": 0.00065,
+      "B_K": 4500.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "c-C5",
+      "cas": "287-92-3",
+      "Hsbp_mol_kg_atm": 0.0059,
+      "B_K": 3500.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "c-hexane",
+      "cas": "110-82-7",
+      "Hsbp_mol_kg_atm": 0.0052,
+      "B_K": 3900.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "M-cy-C5",
+      "cas": "96-37-7",
+      "Hsbp_mol_kg_atm": 0.0028,
+      "B_K": 5500.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "33-DM-C5",
+      "cas": "562-49-2",
+      "Hsbp_mol_kg_atm": 0.00057,
+      "B_K": 3000.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "22-DM-C6",
+      "cas": "590-73-8",
+      "Hsbp_mol_kg_atm": 0.00025,
+      "B_K": 4600.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "25-DM-C6",
+      "cas": "592-13-2",
+      "Hsbp_mol_kg_atm": 0.00031,
+      "B_K": 4000.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "ethylbenzene",
+      "cas": "100-41-4",
+      "Hsbp_mol_kg_atm": 0.14,
+      "B_K": 4500.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "m-Xylene",
+      "cas": "108-38-3",
+      "Hsbp_mol_kg_atm": 0.14,
+      "B_K": 4100.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "p-Xylene",
+      "cas": "106-42-3",
+      "Hsbp_mol_kg_atm": 0.15,
+      "B_K": 5000.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "o-Xylene",
+      "cas": "95-47-6",
+      "Hsbp_mol_kg_atm": 0.21,
+      "B_K": 4600.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "ethylcyclohexane",
+      "cas": "1678-91-7",
+      "Hsbp_mol_kg_atm": 0.0021,
+      "B_K": 4100.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "i-pentane",
+      "cas": "78-78-4",
+      "Hsbp_mol_kg_atm": 0.00079,
+      "B_K": 3000.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "source_species": "2-methylbutane (isopentane)",
+      "source_formula": "C5H12",
+      "source_inchikey": "QWTDNUCVQCZILF-UHFFFAOYSA-N",
+      "identity_match_basis": "Exact CAS and InChIKey; NeqSim iC5 is the formula-equivalent abbreviation for C5H12.",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Plyasunov and Shock (2000), Thermodynamic functions of hydration of hydrocarbons at 298.15 K and 0.1 MPa",
+      "original_reference_access": "https://doi.org/10.1016/S0016-7037(99)00330-0",
+      "original_reference_rights": "The original article is publisher-copyrighted; only numerical facts from the CC BY 4.0 Sander compilation are reproduced.",
+      "uncertainty": "No numerical uncertainty is encoded in the Sander machine row; the other type-L reference value is 7.4e-4 mol kg^-1 atm^-1 and has no slope.",
+      "selection_rationale": "Use the only Sander type-L row that provides both a value and local temperature slope.",
+      "temperature_scope": "local van-t-Hoff approximation about 298.15 K and 0.1 MPa; no finite extrapolation interval is claimed"
+    },
+    {
+      "name": "H2S",
+      "cas": "7783-06-4",
+      "Hsbp_mol_kg_atm": 0.1,
+      "B_K": 2100.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "neon",
+      "cas": "7440-01-9",
+      "Hsbp_mol_kg_atm": 0.00046,
+      "B_K": 430.0,
+      "reference": "2105",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "acetone",
+      "cas": "67-64-1",
+      "Hsbp_mol_kg_atm": 28.0,
+      "B_K": 5500.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "ethanol",
+      "cas": "64-17-5",
+      "Hsbp_mol_kg_atm": 190.0,
+      "B_K": 6400.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "helium",
+      "cas": "7440-59-7",
+      "Hsbp_mol_kg_atm": 0.00039,
+      "B_K": 15.0,
+      "reference": "2105",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "c-C7",
+      "cas": "291-64-5",
+      "Hsbp_mol_kg_atm": 0.01,
+      "B_K": 3100.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "c-C8",
+      "cas": "292-64-8",
+      "Hsbp_mol_kg_atm": 0.0074,
+      "B_K": 4800.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "CO",
+      "cas": "630-08-0",
+      "Hsbp_mol_kg_atm": 0.00098,
+      "B_K": 1300.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "propylbenzene",
+      "cas": "103-65-1",
+      "Hsbp_mol_kg_atm": 0.091,
+      "B_K": 3800.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "SF6",
+      "cas": "2551-62-4",
+      "Hsbp_mol_kg_atm": 0.00024,
+      "B_K": 3100.0,
+      "reference": "2828",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "R12",
+      "cas": "75-71-8",
+      "Hsbp_mol_kg_atm": 0.0031,
+      "B_K": 3500.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "R134a",
+      "cas": "811-97-2",
+      "Hsbp_mol_kg_atm": 0.016,
+      "B_K": 2700.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "COS",
+      "cas": "463-58-1",
+      "Hsbp_mol_kg_atm": 0.02,
+      "B_K": 3500.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "M-cy-C6",
+      "cas": "108-87-2",
+      "Hsbp_mol_kg_atm": 0.0026,
+      "B_K": 4500.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "cis-12-DM-cy-C6",
+      "cas": "2207-01-4",
+      "Hsbp_mol_kg_atm": 0.0027,
+      "B_K": 4600.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "1.2.3-TM-Benzene",
+      "cas": "526-73-8",
+      "Hsbp_mol_kg_atm": 0.24,
+      "B_K": 4600.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "nC5-Benzene",
+      "cas": "538-68-1",
+      "Hsbp_mol_kg_atm": 0.061,
+      "B_K": 6000.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "nC6-Benzene",
+      "cas": "1077-16-3",
+      "Hsbp_mol_kg_atm": 0.041,
+      "B_K": 6500.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "1-propanol",
+      "cas": "71-23-8",
+      "Hsbp_mol_kg_atm": 140.0,
+      "B_K": 6900.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "i-propanol",
+      "cas": "67-63-0",
+      "Hsbp_mol_kg_atm": 120.0,
+      "B_K": 7100.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "naphthalene",
+      "cas": "91-20-3",
+      "Hsbp_mol_kg_atm": 2.1,
+      "B_K": 4400.0,
+      "reference": "3681",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "trans-12-DM-cy-C6",
+      "cas": "6876-23-9",
+      "Hsbp_mol_kg_atm": 0.0016,
+      "B_K": 4000.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "ethylene",
+      "cas": "74-85-1",
+      "Hsbp_mol_kg_atm": 0.006,
+      "B_K": 2200.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "propene",
+      "cas": "115-07-1",
+      "Hsbp_mol_kg_atm": 0.0057,
+      "B_K": 2600.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "iso-butene",
+      "cas": "115-11-7",
+      "Hsbp_mol_kg_atm": 0.0058,
+      "B_K": 3000.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "NO",
+      "cas": "10102-43-9",
+      "Hsbp_mol_kg_atm": 0.002,
+      "B_K": 1600.0,
+      "reference": "2828",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "N2O",
+      "cas": "10024-97-2",
+      "Hsbp_mol_kg_atm": 0.024,
+      "B_K": 2600.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "CS2",
+      "cas": "75-15-0",
+      "Hsbp_mol_kg_atm": 0.062,
+      "B_K": 4300.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "C2H4",
+      "cas": "74-85-1",
+      "Hsbp_mol_kg_atm": 0.006,
+      "B_K": 2200.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "1,2,4-trimethylbenzene",
+      "cas": "95-63-6",
+      "Hsbp_mol_kg_atm": 0.16,
+      "B_K": 4700.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "1-butene",
+      "cas": "106-98-9",
+      "Hsbp_mol_kg_atm": 0.0043,
+      "B_K": 3000.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "1-hexene",
+      "cas": "592-41-6",
+      "Hsbp_mol_kg_atm": 0.0023,
+      "B_K": 3900.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "1-methylnaphthalene",
+      "cas": "90-12-0",
+      "Hsbp_mol_kg_atm": 2.1,
+      "B_K": 5800.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "2,2,5-trimethylhexane",
+      "cas": "3522-94-9",
+      "Hsbp_mol_kg_atm": 0.00019,
+      "B_K": 6200.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "2-methyl-2-butene",
+      "cas": "513-35-9",
+      "Hsbp_mol_kg_atm": 0.0058,
+      "B_K": 3500.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "2-methylnaphthalene",
+      "cas": "91-57-6",
+      "Hsbp_mol_kg_atm": 2.1,
+      "B_K": 5100.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "biphenyl",
+      "cas": "92-52-4",
+      "Hsbp_mol_kg_atm": 3.6,
+      "B_K": 7000.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "butylbenzene",
+      "cas": "104-51-8",
+      "Hsbp_mol_kg_atm": 0.072,
+      "B_K": 5100.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "cumene",
+      "cas": "98-82-8",
+      "Hsbp_mol_kg_atm": 0.092,
+      "B_K": 4800.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "cyclohexene",
+      "cas": "110-83-8",
+      "Hsbp_mol_kg_atm": 0.03,
+      "B_K": 3600.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "cyclopentene",
+      "cas": "142-29-0",
+      "Hsbp_mol_kg_atm": 0.02,
+      "B_K": 3300.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "isoprene",
+      "cas": "78-79-5",
+      "Hsbp_mol_kg_atm": 0.013,
+      "B_K": 2700.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "mesitylene",
+      "cas": "108-67-8",
+      "Hsbp_mol_kg_atm": 0.12,
+      "B_K": 4400.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "mercury",
+      "cas": "7439-97-6",
+      "Hsbp_mol_kg_atm": 0.13,
+      "B_K": 2600.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "source_species": "mercury",
+      "source_formula": "Hg",
+      "source_inchikey": "QSHDDOUJBYECFT-UHFFFAOYSA-N",
+      "identity_match_basis": "Exact CAS, elemental formula, neutral charge and InChIKey match.",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Burkholder et al. (2019), Chemical Kinetics and Photochemical Data for Use in Atmospheric Studies, Evaluation No. 19, JPL Publication 19-5",
+      "original_reference_access": "https://jpldataeval.jpl.nasa.gov/",
+      "original_reference_rights": "The JPL evaluation is publicly accessible; only numerical facts from the CC BY 4.0 Sander compilation are reproduced.",
+      "uncertainty": "No numerical uncertainty is encoded in the Sander machine row. The first independent type-M row, Andersson et al. (2008), reports the same 0.13 mol kg^-1 atm^-1 value and 2600 K local slope at compilation precision; Sanemasa (1975) reports 0.13 and 2500 K.",
+      "selection_rationale": "Use the first, highest-ranked Sander type-L row; agreement with the first independent measured row validates both the reference value and local slope at published precision.",
+      "temperature_scope": "local van-t-Hoff approximation about 298.15 K; no finite experimental validity interval is claimed"
+    },
+    {
+      "name": "methanolPVTsim",
+      "alias_of": "methanol",
+      "identity_basis": "exact CAS, molecular formula and InChIKey match in COMP.csv",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Burkholder et al. (2019), JPL Publication 19-5; Sander ref 3500",
+      "license_basis": "Sander v5.0.0 compilation CC BY 4.0; no JPL text reproduced",
+      "uncertainty": "not reported numerically in the machine-readable row; published precision retained",
+      "cas": "67-56-1",
+      "Hsbp_mol_kg_atm": 200.0,
+      "B_K": 5500.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "propanePVTsim",
+      "alias_of": "propane",
+      "identity_basis": "exact CAS, molecular formula and InChIKey match in COMP.csv",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Burkholder et al. (2019), JPL Publication 19-5; Sander ref 3500",
+      "license_basis": "Sander v5.0.0 compilation CC BY 4.0; no JPL text reproduced",
+      "uncertainty": "not reported numerically in the machine-readable row; published precision retained",
+      "cas": "74-98-6",
+      "Hsbp_mol_kg_atm": 0.0015,
+      "B_K": 2700.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "ethanolPVTsim",
+      "alias_of": "ethanol",
+      "identity_basis": "exact CAS, molecular formula and InChIKey match in COMP.csv",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Burkholder et al. (2019), JPL Publication 19-5; Sander ref 3500",
+      "license_basis": "Sander v5.0.0 compilation CC BY 4.0; no JPL text reproduced",
+      "uncertainty": "not reported numerically in the machine-readable row; published precision retained",
+      "cas": "64-17-5",
+      "Hsbp_mol_kg_atm": 190.0,
+      "B_K": 6400.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "nbutanePVTsim",
+      "alias_of": "n-butane",
+      "identity_basis": "exact CAS, molecular formula and InChIKey match in COMP.csv",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Burkholder et al. (2019), JPL Publication 19-5; Sander ref 3500",
+      "license_basis": "Sander v5.0.0 compilation CC BY 4.0; no JPL text reproduced",
+      "uncertainty": "not reported numerically in the machine-readable row; published precision retained",
+      "cas": "106-97-8",
+      "Hsbp_mol_kg_atm": 0.0012,
+      "B_K": 3100.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    }
+  ]
+}

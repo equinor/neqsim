@@ -290,17 +290,24 @@ tree.setDesignTemperature(175.0);
 SubseaTreeMechanicalDesign design = tree.getMechanicalDesign();
 
 // Configure design parameters
-design.setMaterialGrade("F22");
-design.setDesignLife(25);  // years
-design.setServiceType("Sour");
+design.setMaterialGrade("F22");  // Class 3 screening assumption; F22-Class1 is also available
 
 // Calculate design
 design.calcDesign();
 
 // Get JSON report
 String report = design.toJson();
-System.out.println(report);
+// Inspect or persist report with the application logger.
 ```
+
+The body screening calculation reads `MaterialProperties_Subsea.csv`. Its default `F22`
+means ASTM A182 F22 **Class 3**, with 310 MPa yield and 515 MPa tensile strength;
+`F22-Class1` uses 205/415 MPa. The class must match the purchased forging. Higher API
+strength-qualified forgings are not inferred from the generic F22 name. These two
+classes are distinguished in [ASTM A182/A182M-20, Table 3](https://itforging.com/wp-content/uploads/2023/07/ASTM-A182-2020.pdf).
+At 1034 bar design pressure and 7 in bore, the unchanged screening equation gives
+44.26 mm wall before the 25.4 mm minimum is applied. This simplified pressure screen
+is not a complete API 17D qualification, temperature derating, fatigue, or sour-service assessment.
 
 ---
 

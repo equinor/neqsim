@@ -1,8 +1,8 @@
 ---
 name: neqsim-process-safety
 version: "1.5.0"
-description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, integrated facility safety response, safety change revalidation, independent benchmarks, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, integrated ESD/compressor-trip/blowdown/relief/flare evidence, safety-study revalidation after change, independent method benchmarks, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
-last_verified: "2026-07-18"
+description: "Process safety methodology - barriers, PSFs/SCEs, HAZOP, LOPA, SIL per IEC 61511, integrated safety response, change revalidation, bow-tie, risk matrix, TR3001 overpressure studies, trapped-liquid rupture. USE WHEN: a task needs barrier registers, hazard identification, LOPA, SIF SIL assignment, ESD/blowdown/relief/flare evidence, safety revalidation, overpressure governing cases, PFP demand or risk evaluation. Anchors on neqsim.process.safety.barrier, .risk, .overpressure, .rupture."
+last_verified: "2026-11-22"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
@@ -38,6 +38,22 @@ demand factors/cases, externally rated capacities, consistent gas reference cond
 pressure/vacuum limits, and evidence attestations. Do not relabel `FireProtectionDesign`, generic
 PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 
+## Subsea tie-back pressure protection
+
+For a well-to-platform case, use the [executable pressure-protection study](../../../examples/production-decision/tieback-protection.md).
+Record each zone's pressure datum and allowable transient pressure, valve feedback, actual boundary transfers and refinement sensitivity.
+Carry the numerical and drawing HOLD into the study. Evaluate channel independence and reliability with project data.
+
+A `TwoFluidPipe` blocked-outlet or HIPPS run must enable `setEnableCoupledPressureMomentum(true)` and
+`setEnableInterfacialPressure(true)`. Without them the pressure behind a `CLOSED` boundary stays flat while mass
+accumulates, and the study silently shows no overpressure (`TwoFluidPipeLinePackingTest`; `runTransient` now warns).
+Check the fortified-zone volume between the HIPPS and the first closable downstream valve: in a 12-inch, 300 t/h,
+SITHP 275 bara tie-back (measured 2026-11-21), a valve closing 40 m downstream drove the line to SITHP before 12 s
+HIPPS valves seated, while a full 15.6 km line took about 32 min to reach the 180 barg trip (remeasured 2026-11-22
+with the frozen-composition property update, which is the default; with `setFrozenCompositionDensityUpdate(false)` the
+same run shows 90-130 bar steps at the closed riser top that are not pressure peaks; with the default, steps of up to
+13 bar remain there, so take the trip time from the inlet pressure).
+
 ## Method 0b — Trapped-Liquid Fire Rupture Screening
 
 Load `neqsim-trapped-liquid-fire-rupture` when a safety study concerns a
@@ -47,7 +63,7 @@ line lists, material certificates, and fire documents.
 
 Recommended sequence:
 
-1. Retrieve the evidence package with `neqsim-stid-retriever`: P&ID/STID,
+1. Retrieve the evidence package with the enterprise skill `enterprise-stid-document-retrieval` (or supplied documents): P&ID/STID,
    line list, piping spec, material certificate, flange/bolt/gasket data,
    fire-zone/PFP documents, relief basis, and design basis.
 2. Extract a structured segment list with `neqsim-technical-document-reading`:
@@ -155,6 +171,20 @@ Three heuristics that repeatedly decide the outcome:
 
 Carryover margin scales as `1/(1-level)`, so report the utilisation as a level
 sensitivity — it converts "verify the HH trip" into a numeric trip setpoint.
+
+### Method 1c — Run the studies on every safeguard of a generated P&ID
+
+When a P&ID was synthesized from the process (`PidDesignSynthesizer`), run
+`PidSafetyStudies.run(pid, process, PidSafetyStudies.Policy.screening())` after
+`PidStandardConnectionProposals.complete(...)`. It applies the Method 1b calculations to
+every proposed PSV (blocked outlet, fire, gas blow-by through upstream liquid valves),
+sizes each BDV by dynamic blowdown to the API 521 target, sums the flare load, places
+trip set points between operating and relief limits, sets NOG 070 SIL targets and screens
+PFDavg. Results land on the P&ID elements, the drawings, DEXPI and the HAZOP preparation
+(`quantifiedSafeguardEvidence`). The blowdown minimum temperature is the fluid
+temperature without wall heat capacity: treat `BLOWDOWN_LOW_TEMPERATURE` as a prompt
+for the wall/tail-pipe check above. Report every finding; reliability data are screening
+values (`docs/process/safety/pid-safety-studies.md`).
 
 ## Method 2 — LOPA Worksheet
 
@@ -331,6 +361,11 @@ PSV/concurrency results, transient blowdown/flare results, and controlled proces
 or hydrate margin. Supply the actual `DynamicSafetyScenarioResult` and
 `CoupledReliefBlowdownFlareResult`; the facility study embeds their maps and must not duplicate their
 physics.
+For HIPPS or PSD response on a `TwoFluidPipe` tie-back, compare zone allowables against the
+substep pressure envelope (`TwoFluidPipe.getLastIntervalPeakPressureProfile`), not end-of-step
+samples, and set the pipe CFL to 0.25 for riser-base fallback. The measurement and refinement
+recipe are in the `neqsim-dynamic-simulation` skill and
+`examples/production-decision/tieback-protection.md`.
 
 Capture compressor response with `CompressorTripResponse.capture(...)`. `AntiSurge.shouldTrip()` is
 the demand signal; separately record whether the trip was observed, its response time, allowable
@@ -561,6 +596,7 @@ disposal.getGoverningContributor();
 ## Related Skills
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
+- [`neqsim-firewater-deluge-design`](../neqsim-firewater-deluge-design/SKILL.md) — sizing and adjudicating the active fire-protection barrier (deluge coverage, nozzle net, monitors, active-vs-passive substitution rules)
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
 - [`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md) — spontaneous ignition of combustible liquid absorbed into porous insulation (lagging fires); use for any fire with no identified ignition source
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization & blowdown

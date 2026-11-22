@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.flowassurance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,20 @@ public class AsphalteneStabilityAnalyzerTest {
     testFluid.addComponent("n-octane", 0.15);
     testFluid.addComponent("nC10", 0.20);
     testFluid.setMixingRule("classic");
+  }
+
+  /**
+   * Create the same fixed numerical fixture used by the independently bracketed onset-search regressions.
+   *
+   * @return synthetic SRK model with explicit asphaltene inventory
+   */
+  private SystemInterface characterizedFluid() {
+    SystemInterface input = new neqsim.thermo.system.SystemSrkEos(450.0, 500.0);
+    input.addComponent("methane", 0.30);
+    input.addComponent("n-heptane", 0.65);
+    input.addComponent("asphaltene", 0.05);
+    input.setMixingRule("classic");
+    return input;
   }
 
   @Test
@@ -125,26 +140,26 @@ public class AsphalteneStabilityAnalyzerTest {
     assertTrue(assessment.contains("CII"));
     assertTrue(assessment.contains("R/A"));
     assertTrue(assessment.contains("Recommendations"));
+    assertTrue(assessment.contains("Onset pressure: Unavailable"));
+    assertTrue(assessment.contains("characterized asphaltene"));
   }
 
   @Test
   void testOnsetPressureCalculation() {
-    AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(testFluid);
+    AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(characterizedFluid());
 
-    double onsetP = analyzer.calculateOnsetPressure(373.0);
+    double onsetP = analyzer.calculateOnsetPressure(450.0);
 
-    // Result should be either NaN (not found) or a valid pressure
-    assertTrue(Double.isNaN(onsetP) || onsetP > 0);
+    assertTrue(Double.isFinite(onsetP) && onsetP > 200.0 && onsetP < 500.0);
   }
 
   @Test
   void testOnsetTemperatureCalculation() {
-    AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(testFluid);
+    AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(characterizedFluid());
 
-    double onsetT = analyzer.calculateOnsetTemperature(100.0);
+    double onsetT = analyzer.calculateOnsetTemperature(500.0);
 
-    // Result should be either NaN (not found) or a valid temperature
-    assertTrue(Double.isNaN(onsetT) || onsetT > 0);
+    assertTrue(Double.isFinite(onsetT) && onsetT > 440.0 && onsetT < 450.0);
   }
 
   @Test
@@ -161,19 +176,22 @@ public class AsphalteneStabilityAnalyzerTest {
 
     // The analyzer should now use the new system
     // Test by running a calculation
-    double onsetP = analyzer.calculateOnsetPressure(400.0);
-    assertTrue(Double.isNaN(onsetP) || onsetP > 0);
+    assertThrows(IllegalArgumentException.class, () -> analyzer.calculateOnsetPressure(400.0));
+    assertThrows(IllegalArgumentException.class, () -> analyzer.calculateOnsetTemperature(150.0));
   }
 
   @Test
   void testGeneratePrecipitationEnvelope() {
-    AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(testFluid);
+    AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(characterizedFluid());
 
-    double[][] envelope = analyzer.generatePrecipitationEnvelope(300.0, 400.0, 5);
+    double[][] envelope = analyzer.generatePrecipitationEnvelope(449.0, 451.0, 5);
 
     assertNotNull(envelope);
     assertEquals(3, envelope.length); // 3 arrays: temps, upper onset, lower onset
     assertEquals(5, envelope[0].length); // 5 points
+    for (double onset : envelope[1]) {
+      assertTrue(Double.isFinite(onset) && onset > 1.0 && onset < 500.0);
+    }
   }
 
   @Test

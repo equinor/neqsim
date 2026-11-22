@@ -10,9 +10,9 @@ import neqsim.thermo.system.SystemPitzer;
 /** Validates Pitzer reaction constants against public USGS/PHREEQC expressions. */
 class PitzerReactionDataValidationTest {
   private static final double MAX_LOG10_ERROR = 6.0e-4;
-  private static final double[] VALIDATION_TEMPERATURES_C = new double[] { 5.0, 15.0, 25.0, 35.0, 45.0, 55.0, 65.0,
-      75.0, 85.0 };
-  private static final double[] H2S_PRIMARY_VALIDATION_TEMPERATURES_C = new double[] { 5.0, 25.0, 45.0 };
+  private static final double[] VALIDATION_TEMPERATURES_C = new double[] {5.0, 15.0, 25.0, 35.0, 45.0, 55.0, 65.0, 75.0,
+      85.0};
+  private static final double[] H2S_PRIMARY_VALIDATION_TEMPERATURES_C = new double[] {5.0, 25.0, 45.0};
 
   @Test
   void carbonateConstantsMatchHeldOutPublicReferenceTemperatures() {

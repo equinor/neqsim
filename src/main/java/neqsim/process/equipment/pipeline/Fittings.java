@@ -1,11 +1,16 @@
 package neqsim.process.equipment.pipeline;
 
 import java.io.Serializable;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
  * Collection of pipe fittings for equivalent length pressure drop calculations.
@@ -56,10 +61,20 @@ import org.apache.logging.log4j.Logger;
  * K = f × (L/D)
  * </pre>
  * <p>
- * where f is the Darcy friction factor. For turbulent flow with f ≈ 0.02, K ≈ 0.02 × (L/D).
+ * where f is the Darcy friction factor used by the pipe model. For turbulent flow with f ≈ 0.02, K ≈ 0.02 × (L/D). This
+ * flow-dependent equivalent K is distinct from a Crane resistance correlation using a fully turbulent reference factor
+ * f_T.
  * </p>
  *
- * <h2>Standard L/D Values (from Crane TP-410)</h2>
+ * <h2>NeqSim Default L/D Values</h2>
+ * <p>
+ * These are equivalent-length defaults, not a verified transcription of a Crane TP-410 table. The catalogue includes
+ * fixed approximations for entrances, exits, reducers, expanders and butterfly valves. The entrance, exit and
+ * area-change values imply reference K values only at a Darcy friction factor of 0.02; geometry-specific losses and
+ * manufacturer valve data should be supplied explicitly when required. Radius alone does not specify a fitting's
+ * connection type or bore. The bundled database agrees with these defaults for radius-qualified elbows but retains
+ * separate bore- and opening-specific handbook valve entries.
+ * </p>
  * <table>
  * <caption>Common fitting L/D values</caption>
  * <tr>
@@ -141,7 +156,7 @@ public class Fittings implements Serializable {
   /** List of fittings in this collection. */
   ArrayList<Fitting> fittingList = new ArrayList<Fitting>();
 
-  /** Standard L/D values for common fittings (from Crane TP-410). */
+  /** NeqSim default equivalent-length ratios, including engineering approximations. */
   private static final Map<String, Double> STANDARD_LD_VALUES = new HashMap<String, Double>();
 
   static {
@@ -169,13 +184,13 @@ public class Fittings implements Serializable {
     STANDARD_LD_VALUES.put("valve_check_swing", 100.0);
     STANDARD_LD_VALUES.put("valve_check_lift", 600.0);
 
-    // Reducers and expanders
+    // Fixed L/D approximations: reference K / 0.02, not geometry-specific Crane rows.
     STANDARD_LD_VALUES.put("reducer_sudden", 30.0);
     STANDARD_LD_VALUES.put("expander_sudden", 50.0);
     STANDARD_LD_VALUES.put("reducer_gradual", 10.0);
     STANDARD_LD_VALUES.put("expander_gradual", 20.0);
 
-    // Pipe entrance/exit
+    // Fixed L/D approximations: reference K / 0.02.
     STANDARD_LD_VALUES.put("entrance_sharp", 25.0);
     STANDARD_LD_VALUES.put("entrance_rounded", 10.0);
     STANDARD_LD_VALUES.put("exit", 50.0);
@@ -206,11 +221,13 @@ public class Fittings implements Serializable {
    * Add a fitting by name, loading L/D from database.
    *
    * <p>
-   * The fitting name must exist in the 'fittings' database table. If not found, falls back to standard values or logs
-   * an error.
+   * The exact fitting name must exist in the process-design 'fittings' table, or be a case-insensitive built-in
+   * identifier. A failed lookup never adds a fitting with an assumed loss.
    * </p>
    *
    * @param name fitting name as stored in database
+   * @throws IllegalArgumentException if the name is null, blank or unknown
+   * @throws IllegalStateException if the database lookup fails
    */
   public void add(String name) {
     fittingList.add(new Fitting(name));
@@ -220,7 +237,7 @@ public class Fittings implements Serializable {
    * Add a standard fitting type with predefined L/D value.
    *
    * <p>
-   * Uses built-in L/D values from Crane TP-410. Available types:
+   * Uses NeqSim's built-in equivalent-length defaults and approximations. Available types:
    * </p>
    * <ul>
    * <li>elbow_90_standard, elbow_90_long_radius, elbow_90_mitre</li>
@@ -236,7 +253,7 @@ public class Fittings implements Serializable {
    * @return true if fitting was added, false if type not recognized
    */
   public boolean addStandard(String type) {
-    Double ldValue = STANDARD_LD_VALUES.get(type.toLowerCase());
+    Double ldValue = STANDARD_LD_VALUES.get(type.toLowerCase(Locale.ROOT));
     if (ldValue != null) {
       fittingList.add(new Fitting(type, ldValue));
       return true;
@@ -270,7 +287,7 @@ public class Fittings implements Serializable {
    * @return true if all fittings were added, false if type not recognized
    */
   public boolean addStandardMultiple(String type, int count) {
-    Double ldValue = STANDARD_LD_VALUES.get(type.toLowerCase());
+    Double ldValue = STANDARD_LD_VALUES.get(type.toLowerCase(Locale.ROOT));
     if (ldValue != null) {
       for (int i = 0; i < count; i++) {
         fittingList.add(new Fitting(type + "_" + (i + 1), ldValue));
@@ -380,6 +397,9 @@ public class Fittings implements Serializable {
    * Each fitting has a name and an L/D ratio that defines its equivalent length contribution to pressure drop
    * calculations.
    * </p>
+   *
+   * @author Even Solbraa
+   * @version 2.0
    */
   public class Fitting implements Serializable {
     /** Serialization version UID. */
@@ -391,8 +411,8 @@ public class Fittings implements Serializable {
     /** Equivalent length ratio (L/D). */
     private double LtoD = 1.0;
 
-    /** Optional K-factor (resistance coefficient). */
-    private double kFactor = 0.0;
+    /** Legacy optional K-factor metadata; not used by equivalent-length pressure-loss calculations. */
+    private double kFactor = Double.NaN;
 
     /**
      * Constructor with explicit L/D ratio.
@@ -409,39 +429,43 @@ public class Fittings implements Serializable {
      * Constructor that loads L/D from database.
      *
      * <p>
-     * Attempts to load the fitting data from the 'fittings' database table. If not found, attempts to match against
-     * standard fitting types.
+     * Built-in identifiers are resolved without database access. Other names are matched exactly in the process-design
+     * 'fittings' table. No default loss is assumed for a missing name or failed database lookup.
      * </p>
      *
      * @param name fitting name as stored in database
+     * @throws IllegalArgumentException if the name is null, blank or unknown
+     * @throws IllegalStateException if the database lookup fails
      */
     public Fitting(String name) {
+      if (name == null || name.trim().isEmpty()) {
+        throw new IllegalArgumentException("A fitting name or built-in identifier is required");
+      }
       this.fittingName = name;
-
-      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-          java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"))) {
-        if (dataSet.next()) {
-          LtoD = Double.parseDouble(dataSet.getString("LtoD"));
-          logger.debug("Loaded fitting '{}' with L/D = {}", name, LtoD);
-        } else {
-          // Try standard values as fallback
-          Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
-          if (stdValue != null) {
-            LtoD = stdValue;
-            logger.debug("Using standard L/D value for '{}': {}", name, LtoD);
-          } else {
-            logger.warn("Fitting '{}' not found in database or standard values. Using L/D = 1.0", name);
-            LtoD = 1.0;
+      Double standardValue = STANDARD_LD_VALUES.get(name.toLowerCase(Locale.ROOT));
+      if (standardValue != null) {
+        LtoD = standardValue;
+        return;
+      }
+      try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
+          PreparedStatement statement = database.getConnection()
+              .prepareStatement("SELECT LtoD FROM fittings WHERE name = ?")) {
+        statement.setString(1, name);
+        try (ResultSet dataSet = statement.executeQuery()) {
+          if (dataSet.next()) {
+            LtoD = Double.parseDouble(dataSet.getString("LtoD"));
+            if (!Double.isFinite(LtoD) || LtoD < 0.0) {
+              throw new IllegalStateException("Invalid L/D in fitting database for '" + name + "'");
+            }
+            logger.debug("Loaded fitting '{}' with L/D = {}", name, LtoD);
+            return;
           }
         }
-      } catch (Exception ex) {
-        logger.error("Error loading fitting '{}': {}", name, ex.getMessage());
-        // Try standard values as fallback
-        Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
-        if (stdValue != null) {
-          LtoD = stdValue;
-        }
+      } catch (SQLException | RuntimeException ex) {
+        throw new IllegalStateException("Cannot load fitting '" + name + "' from the process-design database", ex);
       }
+      throw new IllegalArgumentException(
+          "Unknown fitting '" + name + "'. Use an exact database name, a built-in identifier, or add(name, LdivD).");
     }
 
     /**
@@ -481,25 +505,49 @@ public class Fittings implements Serializable {
     }
 
     /**
-     * Get the K-factor (resistance coefficient).
+     * Get the legacy, explicitly assigned K-factor metadata.
      *
      * <p>
-     * The K-factor relates to L/D by: K = f × (L/D) where f is the friction factor.
+     * This value is not calculated from L/D and is not used by pipe pressure-loss calculations.
      * </p>
      *
-     * @return K-factor (dimensionless)
+     * @return assigned metadata (dimensionless), or NaN if unset
+     * @deprecated use {@link #getKFactor(double)} with an explicit Darcy friction factor
      */
+    @Deprecated
     public double getKFactor() {
       return kFactor;
     }
 
     /**
-     * Set the K-factor (resistance coefficient).
+     * Set legacy K-factor metadata without changing L/D or pipe pressure loss.
      *
      * @param kFactor new K-factor
+     * @deprecated supply the required L/D to {@link #setLtoD(double)} for pressure-loss calculations
      */
+    @Deprecated
     public void setKFactor(double kFactor) {
       this.kFactor = kFactor;
+    }
+
+    /**
+     * Calculate the equivalent resistance coefficient at a specified Darcy friction factor.
+     *
+     * <p>
+     * Returns K = f_D × (L/D) using the current equivalent-length ratio. Supply the Darcy factor used by the pipe
+     * calculation, not the Fanning factor. A fully turbulent reference f_T may be supplied when that is the intended
+     * basis, but this method does not determine f_T. Legacy K-factor metadata is ignored.
+     * </p>
+     *
+     * @param darcyFrictionFactor finite, positive Darcy friction factor (dimensionless)
+     * @return equivalent K-factor (dimensionless)
+     * @throws IllegalArgumentException if the friction factor is non-finite or not positive
+     */
+    public double getKFactor(double darcyFrictionFactor) {
+      if (!Double.isFinite(darcyFrictionFactor) || darcyFrictionFactor <= 0.0) {
+        throw new IllegalArgumentException("Darcy friction factor must be finite and positive");
+      }
+      return darcyFrictionFactor * LtoD;
     }
 
     /**

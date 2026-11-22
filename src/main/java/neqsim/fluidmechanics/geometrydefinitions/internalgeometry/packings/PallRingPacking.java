@@ -17,7 +17,7 @@ public class PallRingPacking extends Packing {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Constructor for PallRingPacking.
+   * Create a metal 50 mm Pall ring using the qualified geometry table row.
    */
   public PallRingPacking() {
     super("PallRingPacking");

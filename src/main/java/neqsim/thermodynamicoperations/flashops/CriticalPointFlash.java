@@ -174,7 +174,6 @@ public class CriticalPointFlash extends Flash {
     system.setTemperature(Tc0);
     system.getPhase(0).setTotalVolume(Vc0 * system.getTotalNumberOfMoles());
     system.init(3);
-    system.init(3);
     // system.display();
 
     for (int k = 0; k < 13; k++) {

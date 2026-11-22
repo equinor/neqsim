@@ -13,9 +13,10 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Diagnostic that bypasses the {@link ColumnSolverFactory} fallback wrapper and calls each accelerator's inner solve
  * method directly on the 5-tray deethanizer benchmark, then dumps the pre-fallback convergence state. Used to
- * investigate why accelerators silently fall back to damped substitution on small heavy-rich columns.
+ * investigate why accelerators silently fall back to damped substitution on small heavy-rich columns. This opt-in
+ * benchmark records failures for investigation; it is not a convergence acceptance test.
  */
-@Tag("slow")
+@Tag("benchmark")
 public class DistillationAcceleratorDiagnosticTest {
   private static final Logger logger = LogManager.getLogger(DistillationAcceleratorDiagnosticTest.class);
 
@@ -54,7 +55,7 @@ public class DistillationAcceleratorDiagnosticTest {
 
     DistillationColumn column = new DistillationColumn("deethanizer_" + solverType.name(), 5, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(50);
@@ -69,11 +70,11 @@ public class DistillationAcceleratorDiagnosticTest {
    */
   @Test
   public void dumpAcceleratorPreFallbackState() {
-    DistillationColumn.SolverType[] accelerators = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+    DistillationColumn.SolverType[] accelerators = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
         DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
         DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
-        DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.NAPHTALI_SANDHOLM };
+        DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
 
     logger.info("=== Accelerator pre-fallback diagnostic (5-tray deethanizer) ===");
     for (DistillationColumn.SolverType type : accelerators) {

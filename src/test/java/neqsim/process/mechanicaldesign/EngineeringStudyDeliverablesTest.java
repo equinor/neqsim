@@ -53,13 +53,13 @@ class EngineeringStudyDeliverablesTest {
     comp.setOutletPressure(120.0);
 
     Cooler cooler = new Cooler("After Cooler", comp.getOutletStream());
-    cooler.setOutTemperature(273.15 + 40.0);
+    cooler.setOutletTemperature(273.15 + 40.0);
 
     ThrottlingValve valve = new ThrottlingValve("JT Valve", cooler.getOutletStream());
     valve.setOutletPressure(30.0);
 
     Heater heater = new Heater("Reboiler", hpSep.getLiquidOutStream());
-    heater.setOutTemperature(273.15 + 100.0);
+    heater.setOutletTemperature(273.15 + 100.0);
 
     process = new ProcessSystem();
     process.add(feed);

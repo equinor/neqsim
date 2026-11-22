@@ -26,7 +26,11 @@ public abstract class BaseFunction implements FunctionInterface {
   public BaseFunction() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public BaseFunction clone() {
     BaseFunction clonedClass = null;
@@ -34,6 +38,7 @@ public abstract class BaseFunction implements FunctionInterface {
       clonedClass = (BaseFunction) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of BaseFunction", ex);
     }
     // if(system!=null) clonedClass.system = system.clone();
     clonedClass.params = params.clone();

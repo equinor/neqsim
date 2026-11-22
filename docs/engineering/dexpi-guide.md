@@ -1,7 +1,7 @@
 ---
 title: "DEXPI Engineering Guide"
 description: "Practical guide to selecting, generating, validating, qualifying, and governing DEXPI exchanges, including SIS and HIPPS semantics."
-keywords: "DEXPI, DEXPI 2.0, Proteus, P&ID, PFD, BFD, pyDEXPI, SIS, HIPPS, safety function, engineering graph, conformance, round trip"
+keywords: "DEXPI, DEXPI 2.0.1, DEXPI 2.0, professional P&ID, simulation bindings, dynamic tests, Proteus, PFD, BFD, pyDEXPI, SIS, HIPPS, safety function, engineering graph, conformance, round trip"
 ---
 
 This guide helps you choose the correct NeqSim DEXPI workflow. DEXPI is an engineering information-exchange format:
@@ -13,14 +13,47 @@ simulation, an approved P&ID, or a construction release.
 | Need | NeqSim entry point | Detailed documentation |
 | --- | --- | --- |
 | Import an existing Proteus-compatible P&ID and build a process scaffold | `DexpiXmlReader`, `DexpiSimulationBuilder` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md) |
+| Read native DEXPI 2.0.1 instrument identities as metadata | `DexpiXmlReader.readInstruments(...)` | [DEXPI instrument intake limits](../integration/dexpi-reader.md#structured-supported-subset-diagnostics) |
 | Export a quick Proteus-compatible P&ID | `DexpiXmlWriter.write(...)` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md#exporting-to-dexpi-xml) |
 | Render through pyDEXPI | `DexpiXmlWriter.writeForPyDexpi(...)` or `DexpiDiagramBridge.exportForPyDexpi(...)` | [pyDEXPI-friendly export](../integration/dexpi-reader.md#pydexpi-friendly-export-namespace-omitted) |
+| Export a native DEXPI 2.0.1 P&ID Plant model | `Dexpi201XmlWriter.writeAndAssess(...)` with controlled metadata | [Native DEXPI conformance](../integration/dexpi-20-conformance.md) |
+| Prepare a professional P&ID review package and executable tag handoff | `ProfessionalPidPackageExporter`, `PidSimulationBindings`, `PidSimulationSession` | [Governed P&ID design synthesis](../pid-design-synthesis.md#professional-pid-and-simulation-handoff) |
 | Export a native DEXPI 2.0 P&ID Plant model | `Dexpi20XmlWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md) |
 | Export a native DEXPI 2.0 PFD/BFD Process model | `Dexpi20ProcessModelWriter.writeAndAssess(...)` or opt-in `writeAndAssessTopology(..., operatingCaseId)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md#process-model-export) |
+| Export a native DEXPI 2.0.1 Process model | `Dexpi201ProcessModelWriter.writeAndAssess(...)`; prefer it over 2.0.0 (which has no export provenance); single-stream `Recycle` units are closed by stream identity, `Calculator` and `Adjuster` are rejected | [Physics-bridge evaluation](../integration/dexpi-physics-bridge-evaluation.md) |
+| Rebuild a runnable simulation from a Proteus P&ID, including recycles | `DexpiSimulationBuilder.build()` and `getDiagnostics()` | [Build diagnostics and round-trip fidelity](../integration/dexpi-reader.md#build-diagnostics-and-round-trip-fidelity) |
 | Generate a governed engineering package with DEXPI, registers, cases, and evidence | `EngineeringDeliverableCompiler` | [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md) |
 | Generate a review-required P&ID proposal | `PidDesignSynthesizer`, `PidEngineeringPackageExporter` | [Governed P&ID design synthesis](../pid-design-synthesis.md) |
 
 ## Understand the exchange profiles
+
+For equipment dimensions, preliminary nominal line selection and controlled pipe sizes on
+the drawing and native exchange, see [P&ID sizing](../pid-design-synthesis.md#show-equipment-and-line-sizes-on-a-professional-pid).
+
+### Native DEXPI 2.0.1 and professional P&ID requests
+
+Select `Dexpi201XmlWriter` explicitly for the 2.0.1 Plant model. Supply controlled
+`Dexpi20PlantExportMetadata` and retain the assessment of the exact exported
+bytes. The metadata class name is shared with the compatibility API; it does
+not determine the output model version. Use the official 2.0.1 reference models
+and semantic checks as well as XSD validation: the XML schema alone cannot
+distinguish all model changes.
+
+For engineering content, use `DexpiEngineeringExporter.exportDexpi201(...)` or
+the coordinated `ProfessionalPidPackageExporter`. Keep legacy 2.0.0 and Proteus
+files labelled by their actual profiles. Neither a namespace change nor a
+successful legacy assessment qualifies an export as 2.0.1.
+
+Users can request: **"Prepare a professional P&ID with DEXPI 2.0.1 from this
+NeqSim model, including instrumentation, safeguards and a simulation handoff.
+Then run steady-state and dynamic valve tests on the bound process model."**
+Use `@engineering-deliverables` with `neqsim-pid-process-operations` for that
+workflow. The [P&ID handoff guide](../pid-design-synthesis.md#professional-pid-and-simulation-handoff)
+defines the package, binding, test and review boundaries. The default professional
+path now emits native ISO-basis A1 drawings with a separate content/standards
+report and source-connected proposal materialization. Inspect
+`pid-drawing-content-report.json` and `plant.dexpi.xml.pid-projection.json`;
+a schema PASS or a layout PASS alone is not ISO qualification.
 
 ### Proteus-compatible exchange
 
@@ -105,6 +138,7 @@ Save the following complete Java 8 program as `Dexpi20ExportExample.java`. It bu
 exports the Plant and Process profiles separately, checks both reports, and writes each report beside the exact XML
 it assessed:
 
+<!-- dexpi-example: native-2.0-export -->
 ```java
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -144,7 +178,8 @@ public final class Dexpi20ExportExample {
     process.add(compressor);
     process.run();
 
-    Path outputDirectory = new File("dexpi-output").toPath();
+    Path outputDirectory =
+        new File(args.length == 0 ? "dexpi-output" : args[0]).toPath();
     Files.createDirectories(outputDirectory);
     Path plantXml = outputDirectory.resolve("plant.dexpi.xml");
     Path processXml = outputDirectory.resolve("process.dexpi.xml");
@@ -169,6 +204,9 @@ public final class Dexpi20ExportExample {
   }
 }
 ```
+
+Pass an optional output-directory path as the first command-line argument; without one, the program writes to
+`dexpi-output` in the current directory.
 
 The explicit `Files.write(...)` calls create the JSON sidecars; `writeAndAssess(...)` returns a report but does not
 write that report to disk. Each report pins the official schema fingerprint, imported model versions, supported
@@ -211,6 +249,14 @@ nozzles, tags, and topology, but the resulting scaffold still needs:
 - recycle and convergence configuration;
 - controller tuning, actuator dynamics, and initial conditions; and
 - evidence for operating, design, and accidental cases.
+
+A Proteus file written by `DexpiXmlWriter` carries operating outlet conditions and nozzle port roles, so
+`DexpiSimulationBuilder` rebuilds the same flowsheet (separator outlets, in-line valves, mixer inlets, splitter
+branches, outlet specifications, and recycle loops). With the same fluid template and feed, it reproduces the source
+results. For third-party P&IDs, the builder still connects the flowsheet and lists each missing specification in
+`getDiagnostics()`. Native DEXPI 2.x files are rejected with an explicit error; they cannot yet be built into a
+simulation. See [DEXPI physics-bridge evaluation](../integration/dexpi-physics-bridge-evaluation.md) for measured
+fidelity and the roadmap.
 
 Treat OCR, PDF extraction, STID metadata, and manually normalized drawing content as evidence sources. Do not silently
 promote unreviewed drawing interpretation into approved line routing, interlocks, setpoints, or safeguard credit.
@@ -255,6 +301,7 @@ classification, target-system loading, or final information acceptance.
 
 - [DEXPI import, export, and visualization](../integration/dexpi-reader.md)
 - [DEXPI and P&ID current-master audit](../integration/dexpi-pid-current-master-audit.md)
+- [DEXPI physics-bridge evaluation](../integration/dexpi-physics-bridge-evaluation.md)
 - [DEXPI engineering-diagram reference cases](../integration/dexpi-reference-cases.md)
 - [Engineering diagram document and sheet model](../integration/engineering-diagram-document-model.md)
 - [DEXPI 2.0 native exchange and conformance](../integration/dexpi-20-conformance.md)

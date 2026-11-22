@@ -1,6 +1,6 @@
 ---
 title: Multi-Objective Optimization for Process Systems
-description: The `neqsim.process.util.optimizer` package provides a comprehensive **multi-objective optimization** framework for finding Pareto-optimal solutions when optimizing competing objectives in process sim...
+description: "Find Pareto trade-offs between throughput, power, energy use, and product recovery with executable Java and Python examples."
 ---
 
 # Multi-Objective Optimization for Process Systems
@@ -119,14 +119,14 @@ The **Pareto front** (or Pareto frontier) is the set of all non-dominated soluti
 ```
         Power (kW)
            ▲
-       500 │                    
+       500 │
        400 │          ★ C      (Not on front - dominated by B)
        300 │    ● A ──● B      (Pareto front)
-       200 │  ●─────────●      
-       100 │●                  
+       200 │  ●─────────●
+       100 │●
            └─────────────────► Throughput (kg/hr)
              5k   10k   15k   20k
-             
+
 ● = Pareto-optimal solutions
 ★ = Dominated solution (not on front)
 ```
@@ -138,10 +138,10 @@ The **knee point** is the solution on the Pareto front that represents the "best
 ```
         Power (kW)
            ▲
-       400 │         
+       400 │
        300 │    ●────●        Utopia line
        200 │  ●──★───●        ★ = Knee point (maximum distance)
-       100 │●────────●        
+       100 │●────────●
            └─────────────────► Throughput (kg/hr)
 ```
 
@@ -202,6 +202,12 @@ The `StandardObjective` enum provides pre-built objectives for common optimizati
 
 ### Using Standard Objectives
 
+These Java method bodies reuse the process, feed, imports, and configuration
+from Example 1. Run method alternatives in separate scopes.
+
+Java output uses Log4j2. Declare this field inside your example class:
+`private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger("OptimizationExample");`.
+
 ```java
 // Use directly
 List<ObjectiveFunction> objectives = Arrays.asList(
@@ -251,7 +257,7 @@ where $\sum w_i = 1$ and $w_i \geq 0$
 MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
 ParetoFront front = moo.optimizeWeightedSum(
     process,           // ProcessSystem
-    feedStream,        // Stream to manipulate
+    feed,        // Stream to manipulate
     objectives,        // List<ObjectiveFunction>
     config,            // OptimizationConfig
     10                 // Number of weight combinations
@@ -281,9 +287,12 @@ subject to: $f_i(\vec{x}) \leq \epsilon_i$ for $i = 2, \ldots, k$
 
 ```java
 MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
+ObjectiveFunction primaryObjective = StandardObjective.MAXIMIZE_THROUGHPUT;
+List<ObjectiveFunction> constrainedObjectives =
+    Collections.singletonList(StandardObjective.MINIMIZE_POWER);
 ParetoFront front = moo.optimizeEpsilonConstraint(
     process,              // ProcessSystem
-    feedStream,           // Stream to manipulate  
+    feed,           // Stream to manipulate
     primaryObjective,     // ObjectiveFunction to optimize
     constrainedObjectives,// List<ObjectiveFunction> to constrain
     config,               // OptimizationConfig
@@ -311,7 +320,7 @@ Directly evaluates the process at fixed decision variable values to generate the
 MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
 ParetoFront front = moo.sampleParetoFront(
     process,        // ProcessSystem
-    feedStream,     // Stream to manipulate
+    feed,     // Stream to manipulate
     objectives,     // List<ObjectiveFunction>
     config,         // OptimizationConfig (defines flow range)
     10              // Number of sample points
@@ -336,6 +345,7 @@ import neqsim.process.util.optimizer.*;
 import neqsim.thermo.system.SystemSrkEos;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Collections;
 
 // Step 1: Create the process
 SystemSrkEos fluid = new SystemSrkEos(298.15, 30.0);
@@ -357,21 +367,24 @@ process.add(feed);
 
 // Separator
 Separator separator = new Separator("HP Separator", feed);
-separator.initMechanicalDesign();
-separator.getMechanicalDesign().setMaxDesignGassVolumeFlow(50000.0);
+separator.setInternalDiameter(2.0); // m, illustrative installed geometry
+separator.setSeparatorLength(6.0); // m
+separator.setDesignGasLoadFactor(0.11); // m/s
+separator.enableConstraints("gasLoadFactor");
 process.add(separator);
 
 // Compressor with capacity limit
 Compressor compressor = new Compressor("Gas Compressor", separator.getGasOutStream());
 compressor.setOutletPressure(50.0, "bara");
 compressor.setIsentropicEfficiency(0.75);
-compressor.getMechanicalDesign().setMaxDesignPower(500_000.0); // 500 kW in Watts
+compressor.getMechanicalDesign().setMaxDesignPower(500.0); // 500 kW
 process.add(compressor);
 
 // Cooler
 Cooler cooler = new Cooler("After Cooler", compressor.getOutletStream());
 cooler.setOutTemperature(40.0, "C");
 process.add(cooler);
+process.run(); // Establish the initialized base state before optimizer snapshots
 
 // Step 2: Define objectives
 List<ObjectiveFunction> objectives = Arrays.asList(
@@ -380,7 +393,7 @@ List<ObjectiveFunction> objectives = Arrays.asList(
 );
 
 // Step 3: Configure optimization
-ProductionOptimizer.OptimizationConfig config = 
+ProductionOptimizer.OptimizationConfig config =
     new ProductionOptimizer.OptimizationConfig(1000.0, 20000.0)  // Flow range: 1000-20000 kg/hr
         .rateUnit("kg/hr")
         .tolerance(50.0)
@@ -391,32 +404,35 @@ ProductionOptimizer.OptimizationConfig config =
 MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer()
     .onProgress((iteration, total, solution) -> {
         if (solution != null) {
-            System.out.printf("Sample %d/%d: Flow=%.0f kg/hr, Power=%.1f kW%n",
-                iteration, total, solution.getRawValue(0), solution.getRawValue(1));
+            logger.info(String.format("Sample %d/%d: Flow=%.0f kg/hr, Power=%.1f kW%n",
+                iteration, total, solution.getRawValue(0), solution.getRawValue(1)));
         }
     });
 
 ParetoFront front = moo.sampleParetoFront(process, feed, objectives, config, 10);
 
 // Step 5: Analyze results
-System.out.println("\n=== Pareto Front Results ===");
-System.out.println("Number of solutions: " + front.size());
+logger.info("\n=== Pareto Front Results ===");
+logger.info("Number of solutions: " + front.size());
 
 // Print all solutions
 for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
-    System.out.printf("  Throughput: %.0f kg/hr, Power: %.1f kW%n",
-        sol.getRawValue(0), sol.getRawValue(1));
+    logger.info(String.format("  Throughput: %.0f kg/hr, Power: %.1f kW%n",
+        sol.getRawValue(0), sol.getRawValue(1)));
 }
 
 // Find knee point (best trade-off)
 ParetoSolution knee = front.findKneePoint();
-System.out.printf("\nKnee Point (Best Trade-off):%n");
-System.out.printf("  Throughput: %.0f kg/hr%n", knee.getRawValue(0));
-System.out.printf("  Power: %.1f kW%n", knee.getRawValue(1));
+if (knee == null) {
+    throw new IllegalStateException("No feasible Pareto points; inspect configured limits");
+}
+logger.info(String.format("\nKnee Point (Best Trade-off):%n"));
+logger.info(String.format("  Throughput: %.0f kg/hr%n", knee.getRawValue(0)));
+logger.info(String.format("  Power: %.1f kW%n", knee.getRawValue(1)));
 
 // Export to JSON for visualization
 String json = front.toJson();
-System.out.println("\nJSON Export:\n" + json);
+logger.info("\nJSON Export:\n" + json);
 ```
 
 **Expected Output:**
@@ -516,8 +532,8 @@ ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 1
 
 // Print results with 3 objectives
 for (ParetoSolution sol : front) {
-    System.out.printf("Flow: %.0f kg/hr, Power: %.1f kW, Specific: %.1f kg/kWh%n",
-        sol.getRawValue(0), sol.getRawValue(1), sol.getRawValue(2));
+    logger.info(String.format("Flow: %.0f kg/hr, Power: %.1f kW, Specific: %.1f kg/kWh%n",
+        sol.getRawValue(0), sol.getRawValue(1), sol.getRawValue(2)));
 }
 ```
 
@@ -538,21 +554,21 @@ MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer()
             } else {
                 infeasibleCount[0]++;
             }
-            System.out.printf("  [%d/%d] Flow=%.0f kg/hr, Power=%.1f kW, Feasible=%s%n",
+            logger.info(String.format("  [%d/%d] Flow=%.0f kg/hr, Power=%.1f kW, Feasible=%s%n",
                 iteration, total,
                 solution.getRawValue(0),
                 solution.getRawValue(1),
-                solution.isFeasible());
+                solution.isFeasible()));
         } else {
-            System.out.printf("  [%d/%d] FAILED - Process did not converge%n",
-                iteration, total);
+            logger.info(String.format("  [%d/%d] FAILED - Process did not converge%n",
+                iteration, total));
         }
     });
 
 ParetoFront front = moo.sampleParetoFront(process, feed, objectives, config, 20);
 
-System.out.printf("%nSummary: %d feasible, %d infeasible solutions%n",
-    feasibleCount[0], infeasibleCount[0]);
+logger.info(String.format("%nSummary: %d feasible, %d infeasible solutions%n",
+    feasibleCount[0], infeasibleCount[0]));
 ```
 
 ---
@@ -640,9 +656,12 @@ OptimizationConfig config = new OptimizationConfig(
 ### 3. Use Equipment Capacity Limits
 
 ```java
-// Set mechanical design limits (in Watts for power)
-compressor.getMechanicalDesign().setMaxDesignPower(500_000.0);  // 500 kW
-separator.getMechanicalDesign().setMaxDesignGassVolumeFlow(50000.0);  // Sm3/hr
+// Mechanical design maximum power is in kW
+compressor.getMechanicalDesign().setMaxDesignPower(500.0);  // 500 kW
+separator.setInternalDiameter(2.0);  // m
+separator.setSeparatorLength(6.0);  // m
+separator.setDesignGasLoadFactor(0.11);  // m/s
+separator.enableConstraints("gasLoadFactor");
 ```
 
 ### 4. Handle Units Correctly
@@ -651,13 +670,12 @@ separator.getMechanicalDesign().setMaxDesignGassVolumeFlow(50000.0);  // Sm3/hr
 // Power methods:
 // - getPower() returns WATTS
 // - getPower("kW") returns kilowatts
-// - setMaxDesignPower() expects WATTS
+// - setMaxDesignPower() expects kW
 
 // Correct:
-compressor.getMechanicalDesign().setMaxDesignPower(500_000.0);  // 500 kW
+compressor.getMechanicalDesign().setMaxDesignPower(500.0);  // 500 kW
 
-// Incorrect:
-compressor.getMechanicalDesign().setMaxDesignPower(500.0);  // Only 0.5 kW!
+// Passing 500000.0 would set a 500 MW design limit, not 500 kW.
 ```
 
 ### 5. Interpret the Knee Point
@@ -669,19 +687,25 @@ The knee point represents the best trade-off, but consider:
 
 ```java
 ParetoSolution knee = front.findKneePoint();
+if (knee == null) {
+    throw new IllegalStateException("No feasible Pareto points; inspect configured limits");
+}
 ParetoSolution maxThroughput = front.findMaximum(0);
 ParetoSolution minPower = front.findMinimum(1);
 
-System.out.println("Decision options:");
-System.out.println("  Max throughput: " + maxThroughput.getRawValue(0) + " kg/hr");
-System.out.println("  Min power: " + minPower.getRawValue(1) + " kW");
-System.out.println("  Best trade-off: " + knee.getRawValue(0) + " kg/hr at " 
+logger.info("Decision options:");
+logger.info("  Max throughput: " + maxThroughput.getRawValue(0) + " kg/hr");
+logger.info("  Min power: " + minPower.getRawValue(1) + " kW");
+logger.info("  Best trade-off: " + knee.getRawValue(0) + " kg/hr at "
     + knee.getRawValue(1) + " kW");
 ```
 
 ---
 
 ## Python Usage (via JPype)
+
+Run the blocks in order with `neqsim`, `jpype1`, `numpy`, `pandas`, `matplotlib`,
+and (for the final optional example) `scipy` installed.
 
 All multi-objective optimization features are accessible from Python using neqsim-python.
 
@@ -732,6 +756,10 @@ feed.setPressure(30.0, "bara")
 process.add(feed)
 
 separator = Separator("HP Separator", feed)
+separator.setInternalDiameter(2.0)
+separator.setSeparatorLength(6.0)
+separator.setDesignGasLoadFactor(0.11)
+separator.enableConstraints("gasLoadFactor")
 process.add(separator)
 
 compressor = Compressor("Gas Compressor", separator.getGasOutStream())
@@ -804,7 +832,8 @@ power_constraint = OptimizationConstraint.lessThan(
 )
 
 # Pass constraints to optimization
-from java.util import Collections
+moo = MultiObjectiveOptimizer()
+Collections = jpype.JClass("java.util.Collections")
 front = moo.optimizeWeightedSum(
     process, feed, objectives, config_strict, 10,
     Collections.singletonList(power_constraint)
@@ -871,6 +900,8 @@ for sol in front.getSolutionsSortedBy(0, True):  # index=0 is throughput
 
 # Find knee point (best trade-off)
 knee = front.findKneePoint()
+if knee is None:
+    raise RuntimeError("No feasible Pareto points; inspect configured limits")
 print(f"\nKnee Point (Best Trade-off):")
 print(f"  Throughput: {knee.getRawValue(0):.0f} kg/hr")
 print(f"  Power: {knee.getRawValue(1):.1f} kW")
@@ -906,14 +937,14 @@ class SpecificProductionObjective:
             if hasattr(unit, 'getFlowRate'):
                 throughput = unit.getFlowRate("kg/hr")
                 break
-        
+
         # Get total power
         power = 0.0
         for unit in proc.getUnitOperations():
             class_name = unit.getClass().getSimpleName()
             if class_name == "Compressor" or class_name == "Pump":
                 power += unit.getPower("kW")
-        
+
         return throughput / power if power > 1.0 else throughput
 
 # Create ObjectiveFunction from Python callable
@@ -945,7 +976,7 @@ class ProgressMonitor:
     def __init__(self):
         self.feasible = 0
         self.infeasible = 0
-    
+
     @JOverride
     def onProgress(self, iteration, total, solution):
         if solution is not None:
@@ -976,7 +1007,7 @@ import json
 
 # Export to JSON and parse
 json_str = front.toJson()
-data = json.loads(json_str)
+data = json.loads(str(json_str))
 
 # Build DataFrame from Pareto solutions
 results = []
@@ -1012,6 +1043,8 @@ powers = [sol.getRawValue(1) for sol in front.getSolutions()]
 
 # Get knee point
 knee = front.findKneePoint()
+if knee is None:
+    raise RuntimeError("No feasible Pareto points; inspect configured limits")
 knee_throughput = knee.getRawValue(0)
 knee_power = knee.getRawValue(1)
 
@@ -1023,7 +1056,7 @@ ax.scatter(throughputs, powers, s=100, c='blue', label='Pareto Solutions', zorde
 
 # Connect points to show front
 sorted_idx = np.argsort(throughputs)
-ax.plot(np.array(throughputs)[sorted_idx], np.array(powers)[sorted_idx], 
+ax.plot(np.array(throughputs)[sorted_idx], np.array(powers)[sorted_idx],
         'b--', alpha=0.5, zorder=1)
 
 # Highlight knee point
@@ -1037,11 +1070,11 @@ ax.legend(loc='upper left')
 ax.grid(True, alpha=0.3)
 
 # Add annotations
-ax.annotate('High throughput,\nhigh power', 
+ax.annotate('High throughput,\nhigh power',
             xy=(max(throughputs), max(powers)),
             xytext=(max(throughputs)*0.9, max(powers)*1.1),
             fontsize=9, alpha=0.7)
-ax.annotate('Low throughput,\nlow power', 
+ax.annotate('Low throughput,\nlow power',
             xy=(min(throughputs), min(powers)),
             xytext=(min(throughputs)*0.8, min(powers)*0.7),
             fontsize=9, alpha=0.7)
@@ -1062,38 +1095,41 @@ import numpy as np
 def evaluate_both_objectives(x):
     """Evaluate both objectives at flow rate x[0]"""
     flow_rate = x[0]
-    
+
     # Clone process and set flow
     proc_copy = process.copy()
     feed_copy = proc_copy.getUnit("Feed")
     feed_copy.setFlowRate(flow_rate, "kg/hr")
     proc_copy.run()
-    
+
     # Get objectives
     throughput = flow_rate
     power = proc_copy.getUnit("Gas Compressor").getPower("kW")
-    
+
     return throughput, power
 
 # Generate Pareto front using SciPy differential evolution
 # with weighted sum scalarization
 def weighted_objective(x, w1, w2):
     throughput, power = evaluate_both_objectives(x)
-    # Minimize: -w1*throughput + w2*power (negate throughput to maximize)
-    return -w1 * throughput + w2 * power
+    # Dimensionless weights: scale kg/hr and kW before combining objectives.
+    return -w1 * throughput / 20000.0 + w2 * power / 500.0
 
 pareto_scipy = []
 for w in np.linspace(0.1, 0.9, 9):
     result = differential_evolution(
-        weighted_objective, 
+        weighted_objective,
         bounds=[(1000, 20000)],
         args=(w, 1-w),
-        seed=42
+        seed=42,
+        popsize=5,
+        maxiter=20,
+        polish=False
     )
     throughput, power = evaluate_both_objectives(result.x)
     pareto_scipy.append({'throughput': throughput, 'power': power, 'weight': w})
 
-print("SciPy Pareto front:")
+print("SciPy weighted-sum candidates (inspect dominance and feasibility):")
 for p in pareto_scipy:
     print(f"  w={p['weight']:.1f}: {p['throughput']:.0f} kg/hr, {p['power']:.1f} kW")
 ```

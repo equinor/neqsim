@@ -1,392 +1,145 @@
 ---
-title: Late-Life Operations Support in NeqSim
-description: This document describes how NeqSim supports analysis of late-life field operations, a key topic in TPG4230 and critical for maximizing economic recovery from mature fields.
+title: Late-Life Field Screening
+description: Executable production-decline and economics screening with explicit units, assumptions, and engineering limits.
 ---
 
-This document describes how NeqSim supports analysis of late-life field operations, a key topic in TPG4230 and critical for maximizing economic recovery from mature fields.
+Late-life decisions combine reservoir decline, well deliverability, facility limits, operating
+cost, integrity, emissions, and abandonment obligations. NeqSim can support parts of that
+workflow, but a decline curve and cash-flow calculation are only a screening layer. They do
+not determine a safe operating limit or an abandonment date.
 
----
+## Screening basis
 
-## Overview
+The executable example below uses current
+`ProductionProfileGenerator` and `CashFlowEngine` APIs. Its synthetic gas case assumes:
 
-Late-life operations present unique challenges:
+| Input | Value and unit |
+|---|---:|
+| Initial plateau rate | 8.0 million Sm³/d |
+| Ramp / plateau | 1 / 4 years |
+| Exponential decline | 12% per year |
+| Forecast | 2028–2047 |
+| Total CAPEX | 1,384.5 MUSD |
+| Fixed OPEX proxy | 4% of CAPEX per year |
+| Gas price / tariff | 0.30 / 0.02 USD/Sm³ |
+| Discount rate | 8% |
+| Fiscal selector | `NO` |
 
-| Challenge | Description | NeqSim Support |
-|-----------|-------------|----------------|
-| **High water cut** | 80-98% water production | Three-phase separator modeling |
-| **Increasing GOR** | Gas cap expansion, solution gas | Phase behavior changes |
-| **Low rates** | Equipment turndown limits | Off-design simulation |
-| **Declining pressure** | Artificial lift requirements | Well performance |
-| **Infrastructure aging** | Debottlenecking needs | Capacity analysis |
-| **Economic marginal** | Operating cost vs revenue | Economic cut-off |
+`generateFullProfile(...)` receives a daily rate in this example but returns annual
+production volumes. Pass each returned value once to `addAnnualProduction(...)`; multiplying
+by days per year again would overstate revenue. NeqSim treats Sm³ numerically here and does
+not convert or verify the chosen standard condition. Record the project standard condition
+with the input data.
 
----
+## Executable late-life screen
 
-## 1. High Water Cut Operations
-
-### 1.1 Separator Performance at High Water Cut
-
-```java
-import neqsim.process.equipment.separator.ThreePhaseSeparator;
-import neqsim.process.fielddevelopment.evaluation.SeparatorSizingCalculator;
-
-// Analyze separator at 90% water cut
-SystemInterface fluid = new SystemSrkEos(333.15, 30.0);
-fluid.addComponent("methane", 0.05);
-fluid.addComponent("nC10", 0.05);  // 5% oil
-fluid.addComponent("water", 0.90); // 90% water
-fluid.setMixingRule("classic");
-
-Stream wellStream = new Stream("well", fluid);
-wellStream.setFlowRate(50000.0, "kg/hr");
-wellStream.run();
-
-ThreePhaseSeparator separator = new ThreePhaseSeparator("HP-Sep", wellStream);
-separator.run();
-
-// Check residence time adequacy
-SeparatorSizingCalculator calc = new SeparatorSizingCalculator();
-double oilDensity = separator.getOilOutStream().getFluid().getDensity("kg/m3");
-double requiredRetention = calc.getAPI12JRetentionTime(oilDensity);
-
-double waterVolume = separator.getWaterOutStream().getFlowRate("m3/hr");
-double oilVolume = separator.getOilOutStream().getFlowRate("m3/hr");
-
-System.out.println("Water cut: " + waterVolume / (waterVolume + oilVolume) * 100 + "%");
-System.out.println("Required retention time: " + requiredRetention + " s");
-```
-
-### 1.2 Water Treatment Capacity
-
-At high water cuts, produced water treatment becomes a bottleneck:
+Compile and run this complete Java 8 program with assertions enabled, for example
+`java -ea LateLifeScreeningExample`.
 
 ```java
-import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain;
-import neqsim.process.fielddevelopment.evaluation.BottleneckAnalyzer;
-
-// Late-life water production
-ProducedWaterTreatmentTrain pwt = new ProducedWaterTreatmentTrain("PWTT");
-pwt.setInletOilConcentration(800.0);  // mg/L (lower due to better separator)
-pwt.setWaterFlowRate(1200.0);         // m³/hr (high volume)
-pwt.run();
-
-// Check if water treatment is bottleneck
-BottleneckAnalyzer analyzer = new BottleneckAnalyzer("Late-Life Analysis");
-analyzer.addEquipment("Water-Treatment", EquipmentType.WATER_TREATMENT,
-    1200.0, 1500.0);  // 80% utilization
-
-if (analyzer.getPrimaryBottleneck().getEquipmentName().equals("Water-Treatment")) {
-    System.out.println("Water treatment is primary bottleneck");
-    System.out.println("Consider: Additional hydrocyclones, IGF upgrade");
-}
-```
-
----
-
-## 2. Increasing GOR Impact
-
-### 2.1 Compression Capacity Analysis
-
-```java
-// GOR evolution over field life
-double[] yearlyGOR = {150, 180, 220, 280, 350, 450, 600, 800};
-
-for (int year = 0; year < yearlyGOR.length; year++) {
-    double oilRate = 5000.0 * Math.pow(0.88, year);  // Declining oil
-    double gasRate = oilRate * yearlyGOR[year];       // Increasing gas
-    
-    // Check compression capacity
-    double compressionPower = estimateCompressionPower(gasRate);
-    double designCapacity = 25.0;  // MW
-    double utilization = compressionPower / designCapacity;
-    
-    System.out.printf("Year %d: GOR=%.0f, Gas=%.0f Sm3/d, Comp=%.1f MW (%.0f%%)%n",
-        2025 + year, yearlyGOR[year], gasRate, compressionPower, utilization * 100);
-    
-    if (utilization > 0.95) {
-        System.out.println("  ⚠️ Compression constraint reached");
-    }
-}
-```
-
-### 2.2 Phase Envelope Shifts
-
-Track how the phase envelope changes with depletion:
-
-```java
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-// Initial composition
-SystemInterface initial = createReservoirFluid(GOR_initial);
-ThermodynamicOperations opsInitial = new ThermodynamicOperations(initial);
-opsInitial.calcPTphaseEnvelope();
-double initialCricondenbar = opsInitial.get("cricondenbarP");
-
-// Late-life composition (higher GOR = more gas)
-SystemInterface latLife = createReservoirFluid(GOR_lateLife);
-ThermodynamicOperations opsLate = new ThermodynamicOperations(latLife);
-opsLate.calcPTphaseEnvelope();
-double lateCricondenbar = opsLate.get("cricondenbarP");
-
-System.out.println("Initial cricondenbar: " + initialCricondenbar + " bara");
-System.out.println("Late-life cricondenbar: " + lateCricondenbar + " bara");
-System.out.println("Phase envelope has shifted - check dewpoint constraints");
-```
-
----
-
-## 3. Low-Rate Operations
-
-### 3.1 Equipment Turndown Analysis
-
-```java
-import neqsim.process.fielddevelopment.evaluation.ScenarioAnalyzer;
-
-ScenarioAnalyzer analyzer = new ScenarioAnalyzer(processSystem);
-
-// Analyze different production rates
-double[] rateScenarios = {10000, 7500, 5000, 3000, 1500};
-
-for (double rate : rateScenarios) {
-    analyzer.addScenario("Rate " + rate, 
-        new ScenarioParameters()
-            .setOilRate(rate)
-            .setGOR(400.0)
-            .setWaterCut(0.85));
-}
-
-List<ScenarioResult> results = analyzer.runAll();
-
-System.out.println("=== TURNDOWN ANALYSIS ===");
-for (ScenarioResult r : results) {
-    System.out.printf("%s: Power=%.2f MW, Converged=%s%n",
-        r.getName(), r.getPowerMW(), r.isConverged());
-        
-    if (!r.isConverged()) {
-        System.out.println("  ⚠️ Process unstable at this rate - minimum turndown reached");
-    }
-}
-```
-
-### 3.2 Separator Turndown
-
-Low liquid rates affect separation efficiency:
-
-```java
-// Check separator liquid level and retention time
-double designLiquidRate = 500.0;   // m³/hr design
-double actualLiquidRate = 50.0;    // m³/hr late-life (10% of design)
-
-double separatorVolume = 100.0;    // m³ (liquid section)
-double actualRetention = separatorVolume / actualLiquidRate * 3600; // seconds
-double requiredRetention = 120.0;  // seconds for medium crude
-
-if (actualRetention > requiredRetention * 5) {
-    System.out.println("Excessive retention time: " + actualRetention + " s");
-    System.out.println("Risk: Gas carry-under, emulsion stabilization");
-    System.out.println("Consider: Internals modification, level control upgrade");
-}
-```
-
----
-
-## 4. Artificial Lift Requirements
-
-### 4.1 Well Performance Decline
-
-```java
-import neqsim.process.equipment.reservoir.WellFlow;
-
-// Analyze well deliverability decline
-double reservoirPressure = 150.0;  // bara (depleted from 300 bar initial)
-double wellheadPressure = 30.0;    // bara
-
-WellFlow well = new WellFlow(reservoirStream);
-well.setProductivityIndex(5.0);  // Sm3/d/bar
-
-// Calculate natural flow rate
-double naturalRate = well.calculateFlowRate(reservoirPressure, wellheadPressure);
-
-if (naturalRate < economicLimit) {
-    System.out.println("Natural flow below economic limit: " + naturalRate + " Sm3/d");
-    System.out.println("Artificial lift required");
-    
-    // Estimate ESP/gas lift benefit
-    double liftedRate = naturalRate * 1.5;  // Typical 30-50% increase
-    System.out.println("Potential with artificial lift: " + liftedRate + " Sm3/d");
-}
-```
-
----
-
-## 5. Economic Cut-Off Analysis
-
-### 5.1 Break-Even Rate Calculation
-
-```java
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
+import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
+import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
+import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.DeclineType;
 
-// Fixed operating costs
-double fixedOpex = 50.0;  // MUSD/year (regardless of rate)
-double variableOpex = 5.0;  // USD/bbl
+public final class LateLifeScreeningExample {
+  private static final Logger logger =
+      LogManager.getLogger(LateLifeScreeningExample.class);
+  private static final double DAYS_PER_YEAR = 365.25;
 
-// Revenue vs cost at different rates
-double oilPrice = 70.0;  // USD/bbl
+  private LateLifeScreeningExample() {}
 
-System.out.println("=== ECONOMIC CUT-OFF ANALYSIS ===");
-System.out.println("Rate (bbl/d)\tRevenue\t\tOPEX\t\tNet");
+  private static Map<Integer, Double> createProfile(double plateauRateSm3PerDay) {
+    return new ProductionProfileGenerator()
+        .generateFullProfile(
+            plateauRateSm3PerDay,
+            1,
+            4,
+            0.12,
+            DeclineType.EXPONENTIAL,
+            2028,
+            20);
+  }
 
-for (double rate = 10000; rate >= 500; rate -= 500) {
-    double annualProduction = rate * 365;
-    double revenue = annualProduction * oilPrice / 1e6;  // MUSD
-    double opex = fixedOpex + (annualProduction * variableOpex / 1e6);
-    double net = revenue - opex;
-    
-    System.out.printf("%.0f\t\t%.1f\t\t%.1f\t\t%.1f%n", rate, revenue, opex, net);
-    
-    if (net < 0) {
-        System.out.printf("Economic cut-off between %.0f and %.0f bbl/d%n",
-            rate + 500, rate);
-        break;
+  private static CashFlowEngine createCashFlow(
+      Map<Integer, Double> annualProfile,
+      double totalCapexMusd,
+      double gasPriceUsdPerSm3) {
+    CashFlowEngine engine = new CashFlowEngine("NO");
+    engine.setCapex(0.77 * totalCapexMusd, 2026);
+    engine.addCapex(0.23 * totalCapexMusd, 2027);
+    engine.setOpexPercentOfCapex(0.04);
+    engine.setGasPrice(gasPriceUsdPerSm3);
+    engine.setGasTariff(0.02);
+    for (Map.Entry<Integer, Double> entry : annualProfile.entrySet()) {
+      engine.addAnnualProduction(entry.getKey(), 0.0, entry.getValue(), 0.0);
     }
+    return engine;
+  }
+
+  public static void main(String[] args) {
+    Map<Integer, Double> baseProfile = createProfile(8.0e6);
+    double firstRateSm3PerDay = baseProfile.get(2028) / DAYS_PER_YEAR;
+    double finalRateSm3PerDay = baseProfile.get(2047) / DAYS_PER_YEAR;
+
+    CashFlowEngine baseEngine = createCashFlow(baseProfile, 1384.5, 0.30);
+    CashFlowResult base = baseEngine.calculate(0.08);
+    CashFlowResult lowerRate =
+        createCashFlow(createProfile(6.0e6), 1384.5, 0.30).calculate(0.08);
+    CashFlowResult higherCapex =
+        createCashFlow(baseProfile, 1700.0, 0.30).calculate(0.08);
+    double breakEvenGasPriceUsdPerSm3 =
+        baseEngine.calculateBreakevenGasPrice(0.08);
+
+    assert baseProfile.size() == 20;
+    assert Math.abs(firstRateSm3PerDay - 8.0e6) < 1.0e-6;
+    assert finalRateSm3PerDay > 0.0;
+    assert finalRateSm3PerDay < firstRateSm3PerDay;
+    assert Double.isFinite(base.getNpv());
+    assert Double.isFinite(base.getIrr());
+    assert base.getTotalCapex() > 0.0;
+    assert breakEvenGasPriceUsdPerSm3 > 0.0;
+    assert breakEvenGasPriceUsdPerSm3 < 2.0;
+    assert lowerRate.getNpv() < base.getNpv();
+    assert higherCapex.getNpv() < base.getNpv();
+
+    logger.info(
+        "First/final rate={}/{} Sm3/d, NPV={} MUSD, break-even={} USD/Sm3",
+        firstRateSm3PerDay,
+        finalRateSm3PerDay,
+        base.getNpv(),
+        breakEvenGasPriceUsdPerSm3);
+  }
 }
 ```
 
-### 5.2 Tail Production Economics
+The assertions protect unit conversion and expected trends; they do not validate the
+synthetic commercial assumptions.
 
-```java
-// Include abandonment timing in economics
-double abandonmentCost = 200.0;  // MUSD
+## Interpreting a late-life study
 
-CashFlowEngine engine = new CashFlowEngine("NO");
-engine.setOpexPerUnit(variableOpexPerBbl);
-engine.setFixedOpex(fixedOpexMUSD);
-engine.setAbandonmentCost(abandonmentCost);
+Use the calculation as one transparent layer in a larger annual or monthly workflow:
 
-// Compare: Produce another 3 years vs abandon now
-engine.setForecastYears(3);
-CashFlowResult continue3Years = engine.calculate(0.08);
+1. Replace the synthetic decline with a qualified reservoir, well, and network forecast.
+2. Apply well, separator, compression, water-treatment, export, power, emissions, and
+   integrity limits before booking saleable production.
+3. Model downtime, maintenance, tariffs, variable and fixed OPEX, taxes, abandonment
+   security, and decommissioning timing with traceable project inputs.
+4. Test nearby rates, prices, costs, uptime, and abandonment dates. Add probability labels
+   only when distributions, correlations, sampling, and percentile conventions are documented.
+5. Require reservoir, production-technology, process, integrity, environmental, fiscal,
+   commercial, and decommissioning review before a decision.
 
-engine.setForecastYears(0);
-CashFlowResult abandonNow = engine.calculate(0.08);
+The example does not simulate water cut, GOR evolution, artificial lift, equipment turndown,
+host capacity, process convergence, material degradation, emissions compliance, or
+decommissioning execution. A positive NPV is not permission to operate, and a negative NPV
+is not by itself an abandonment recommendation.
 
-System.out.println("NPV if continue 3 years: " + continue3Years.getNpv());
-System.out.println("NPV if abandon now: " + abandonNow.getNpv());
+## Related documentation
 
-if (continue3Years.getNpv() > abandonNow.getNpv()) {
-    System.out.println("Recommendation: Continue production");
-} else {
-    System.out.println("Recommendation: Initiate abandonment");
-}
-```
-
----
-
-## 6. Debottlenecking Opportunities
-
-### 6.1 Identify Late-Life Bottlenecks
-
-```java
-import neqsim.process.fielddevelopment.evaluation.BottleneckAnalyzer;
-
-BottleneckAnalyzer analyzer = new BottleneckAnalyzer("Mature Field");
-
-// Equipment at late-life conditions
-analyzer.addEquipment("HP-Separator-Gas", EquipmentType.SEPARATOR, 
-    2.8, 3.0);  // 93% - gas limited at high GOR
-
-analyzer.addEquipment("Water-Injection-Pump", EquipmentType.PUMP,
-    12000, 15000);  // 80% - increased water injection
-
-analyzer.addEquipment("Produced-Water-Treatment", EquipmentType.WATER_TREATMENT,
-    1400, 1500);  // 93% - high water cut
-
-analyzer.addEquipment("Export-Compressor", EquipmentType.COMPRESSOR,
-    32, 35);  // 91% - increased gas volume
-
-// Find primary constraint
-BottleneckResult primary = analyzer.getPrimaryBottleneck();
-System.out.println("Primary late-life bottleneck: " + primary.getEquipmentName());
-
-// Evaluate debottleneck options
-List<DebottleneckOption> options = analyzer.evaluateDebottleneckOptions();
-for (DebottleneckOption opt : options) {
-    System.out.printf("Option: %s, Cost: %.0f MUSD, Benefit: +%.0f bbl/d%n",
-        opt.getDescription(), opt.getCostMUSD(), opt.getRateBenefit());
-}
-```
-
----
-
-## 7. Decommissioning Timing
-
-### 7.1 Optimal Abandonment Timing
-
-```java
-import neqsim.process.fielddevelopment.evaluation.DecommissioningEstimator;
-import neqsim.process.fielddevelopment.economics.CashFlowEngine;
-
-DecommissioningEstimator decom = new DecommissioningEstimator("Platform");
-double decomCost = decom.getTotalCostMUSD();
-
-// NPV of different abandonment timing scenarios
-int[] abandonYears = {2027, 2028, 2029, 2030, 2031};
-double[] npvs = new double[abandonYears.length];
-
-for (int i = 0; i < abandonYears.length; i++) {
-    CashFlowEngine engine = createCashFlowToYear(abandonYears[i]);
-    
-    // Add discounted abandonment cost
-    int yearsToAbandon = abandonYears[i] - 2025;
-    double pvDecomCost = decomCost / Math.pow(1.08, yearsToAbandon);
-    
-    npvs[i] = engine.calculate(0.08).getNpv() - pvDecomCost;
-    
-    System.out.printf("Abandon in %d: NPV = %.0f MUSD%n", abandonYears[i], npvs[i]);
-}
-
-// Find optimal
-int optimalYear = abandonYears[0];
-double maxNpv = npvs[0];
-for (int i = 1; i < npvs.length; i++) {
-    if (npvs[i] > maxNpv) {
-        maxNpv = npvs[i];
-        optimalYear = abandonYears[i];
-    }
-}
-
-System.out.println("\nOptimal abandonment year: " + optimalYear);
-```
-
----
-
-## 8. Key Performance Indicators for Late-Life
-
-| KPI | Early Life | Late Life | Action Trigger |
-|-----|-----------|-----------|----------------|
-| Water cut | <30% | >80% | Water treatment upgrade |
-| GOR | <200 | >500 | Compression upgrade |
-| Uptime | >95% | <90% | Maintenance review |
-| OPEX/bbl | <10 USD | >25 USD | Cost reduction |
-| Power consumption | Design | +50% | Energy efficiency |
-| CO₂ intensity | <10 kg/boe | >25 kg/boe | Emissions reduction |
-
----
-
-## 9. NeqSim Classes for Late-Life Analysis
-
-| Class | Purpose | Key Methods |
-|-------|---------|-------------|
-| `ScenarioAnalyzer` | Compare operating scenarios | `runAll()`, `generateReport()` |
-| `BottleneckAnalyzer` | Identify constraints | `getPrimaryBottleneck()` |
-| `ProducedWaterTreatmentTrain` | Water handling capacity | `isDischargeCompliant()` |
-| `DecommissioningEstimator` | Abandonment cost | `getTotalCostMUSD()` |
-| `ProductionProfile` | Decline forecasting | `forecast()` |
-| `CashFlowEngine` | Economic analysis | `calculate()`, `getBreakevenOilPrice()` |
-
----
-
-## See Also
-
-- [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) - Full API reference
-- [NeqSim Examples](../examples/index) - Code examples
+- [Field-development documentation](README.md)
+- [Integrated field lifecycle simulation](FIELD_LIFECYCLE_SIMULATION.md)
+- [Transparent field-development screening notebook](../examples/FieldDevelopmentWorkflow.md)

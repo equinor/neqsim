@@ -47,8 +47,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * OnePhasePipeLine pipe = new OnePhasePipeLine("GasPipe", inletStream);
  * pipe.setNumberOfLegs(1);
  * pipe.setNumberOfNodesInLeg(100);
- * pipe.setPipeDiameters(new double[] { 0.3, 0.3 });
- * pipe.setLegPositions(new double[] { 0.0, 5000.0 });
+ * pipe.setPipeDiameters(new double[] {0.3, 0.3});
+ * pipe.setLegPositions(new double[] {0.0, 5000.0});
  *
  * pipe.setConservativeCompositionalTracking(true);
  * pipe.setStoreSpeciesConservationHistory(true);
@@ -59,8 +59,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * // Run a three-interval event with changing inlet composition
  * UUID id = UUID.randomUUID();
- * pipe.runConservativeTransient(new double[] { 0.0, 30.0, 60.0, 90.0 },
- *     new SystemInterface[] { pulseGas, pulseGas, baselineGas }, 1, id);
+ * pipe.runConservativeTransient(new double[] {0.0, 30.0, 60.0, 90.0},
+ *     new SystemInterface[] {pulseGas, pulseGas, baselineGas}, 1, id);
  * String pythonReadyHistory = pipe.getSpeciesConservationHistory().toJson();
  * }</pre>
  *
@@ -502,7 +502,7 @@ public class OnePhasePipeLine extends Pipeline {
             "Conservative internal timestep must be finite and positive: " + internalTimeStep);
       }
       int steps = (int) Math.ceil(dt / internalTimeStep);
-      runConservativeTransient(new double[] { 0.0, dt }, new SystemInterface[] { inStream.getThermoSystem().clone() },
+      runConservativeTransient(new double[] {0.0, dt}, new SystemInterface[] {inStream.getThermoSystem().clone()},
           steps, id);
       return;
     }
@@ -525,8 +525,8 @@ public class OnePhasePipeLine extends Pipeline {
       double stepDt = Math.min(internalTimeStep, timeRemaining);
 
       // Set up time series for single step
-      double[] times = { simulationTime, simulationTime + stepDt };
-      SystemInterface[] systems = { inStream.getThermoSystem().clone(), inStream.getThermoSystem().clone() };
+      double[] times = {simulationTime, simulationTime + stepDt};
+      SystemInterface[] systems = {inStream.getThermoSystem().clone(), inStream.getThermoSystem().clone()};
 
       pipe.getTimeSeries().setTimes(times);
       pipe.getTimeSeries().setInletThermoSystems(systems);

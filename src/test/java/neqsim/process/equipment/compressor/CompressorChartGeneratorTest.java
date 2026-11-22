@@ -124,8 +124,8 @@ public class CompressorChartGeneratorTest {
     compressor.setCompressorChart(chart);
     compressor.getCompressorChart().setUseCompressorChart(true);
 
-    double[] surgeFlow = { 5000.0, 6000.0, 7000.0 };
-    double[] surgeHead = { 90.0, 100.0, 110.0 };
+    double[] surgeFlow = {5000.0, 6000.0, 7000.0};
+    double[] surgeHead = {90.0, 100.0, 110.0};
     compressor.getCompressorChart().getSurgeCurve().setCurve(null, surgeFlow, surgeHead);
 
     String json = compressor.getCompressorChartAsJson();
@@ -366,7 +366,7 @@ public class CompressorChartGeneratorTest {
     compressor.setCompressorChartType("interpolate and extrapolate");
     compressor.run();
 
-    double[] speeds = { 8000, 9000, 10000, 11000, 12000 };
+    double[] speeds = {8000, 9000, 10000, 11000, 12000};
     compressor.generateCompressorChart("normal curves", speeds);
 
     CompressorChartInterface chart = compressor.getCompressorChart();

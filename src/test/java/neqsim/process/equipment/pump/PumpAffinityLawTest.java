@@ -39,10 +39,10 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
     pump = new Pump("TestPump", feedStream);
 
     // Set up pump curve at reference speed
-    double[] speed = new double[] { 1000.0 };
-    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 } };
-    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0 } };
-    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0 } };
+    double[] speed = new double[] {1000.0};
+    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0}};
+    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0}};
+    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0}};
 
     pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
     pump.getPumpChart().setHeadUnit("meter");

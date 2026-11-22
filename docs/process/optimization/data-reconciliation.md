@@ -10,6 +10,20 @@ The `neqsim.process.util.reconciliation` package provides:
 1. A **weighted least squares (WLS) data reconciliation engine** that adjusts plant measurements so that mass (and optionally energy) balance constraints are exactly satisfied.
 2. A **steady-state detector (SSD)** based on the R-statistic method that monitors process variables and determines when the plant has reached steady state — a prerequisite for meaningful reconciliation.
 
+## Running the Examples
+
+Python blocks labeled complete examples run independently with `neqsim` installed.
+The live demonstration uses 35 synthetic scans and terminates. Helper-function
+blocks in the four-stage pipeline must be run in order before calling the helpers.
+They do not contact a historian or update plant controls.
+
+Java snippets use `neqsim.process.util.reconciliation.*`, `java.util.*`,
+`neqsim.thermo.system.*`, `neqsim.process.equipment.stream.Stream`,
+`neqsim.process.equipment.separator.Separator`, and
+`neqsim.process.processmodel.ProcessSystem`. Put imports above the class and
+statements inside `main(String[] args)`. Run alternatives in separate scopes.
+The named and coefficient-array constraints are alternative definitions.
+
 ## Contents
 
 - [Steady-State Detection](#steady-state-detection)
@@ -96,6 +110,9 @@ The default threshold is **R &ge; 0.5**. Optional supplementary tests:
 
 #### Step 1 — Create the detector
 
+Java output uses Log4j2. Declare this field inside your example class:
+`private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger("OptimizationExample");`.
+
 ```java
 // Window of 30 samples, R-threshold 0.5
 SteadyStateDetector detector = new SteadyStateDetector(30);
@@ -106,10 +123,9 @@ detector.setRThreshold(0.5);
 
 ```java
 // By name (uses default window size)
-detector.addVariable("FI-1001");
 detector.addVariable("TI-2001");
 
-// Or with explicit window and uncertainty
+// Flow variable with explicit window and uncertainty
 SteadyStateVariable v = new SteadyStateVariable("FI-1001", 30);
 v.setUnit("kg/hr");
 v.setUncertainty(20.0); // needed if bridging to reconciliation
@@ -119,17 +135,17 @@ detector.addVariable(v);
 #### Step 3 — Feed data (streaming loop)
 
 ```java
-// In your scan loop (e.g., every 10 seconds):
-detector.updateVariable("FI-1001", readTag("FI-1001"));
-detector.updateVariable("TI-2001", readTag("TI-2001"));
+// Synthetic scan; replace these values with your historian readings:
+detector.updateVariable("FI-1001", 1000.0);
+detector.updateVariable("TI-2001", 25.0);
 ```
 
 Or update all at once:
 
 ```java
 Map<String, Double> snapshot = new LinkedHashMap<String, Double>();
-snapshot.put("FI-1001", readTag("FI-1001"));
-snapshot.put("TI-2001", readTag("TI-2001"));
+snapshot.put("FI-1001", 1000.0);
+snapshot.put("TI-2001", 25.0);
 detector.updateAll(snapshot);
 ```
 
@@ -139,9 +155,9 @@ detector.updateAll(snapshot);
 SteadyStateResult result = detector.evaluate();
 
 if (result.isAtSteadyState()) {
-    System.out.println("Plant is at steady state — safe to reconcile");
+    logger.info("Plant is at steady state — eligible for reconciliation checks");
 } else {
-    System.out.println("Transient variables: " + result.getTransientVariables());
+    logger.info("Transient variables: " + result.getTransientVariables());
 }
 ```
 
@@ -156,12 +172,12 @@ SteadyStateResult result = detector.updateAndEvaluate(snapshot);
 ```java
 // Per-variable diagnostics
 for (SteadyStateVariable v : result.getVariables()) {
-    System.out.printf("%-12s  R=%.3f  mean=%.1f  steady=%s%n",
-        v.getName(), v.getRStatistic(), v.getMean(), v.isAtSteadyState());
+    logger.info(String.format("%-12s  R=%.3f  mean=%.1f  steady=%s%n",
+        v.getName(), v.getRStatistic(), v.getMean(), v.isAtSteadyState()));
 }
 
 // Reports
-System.out.println(result.toReport()); // formatted table
+logger.info(result.toReport()); // formatted table
 String json = result.toJson();          // machine-readable
 ```
 
@@ -189,14 +205,15 @@ liquid.setUnit("kg/hr").setUncertainty(10.0);
 ssd.addVariable(liquid);
 
 // Simulate 30 readings at steady state
+java.util.Random noise = new java.util.Random(42);
 for (int i = 0; i < 30; i++) {
-    ssd.updateVariable("feed_flow", 1000.0 + (Math.random() - 0.5) * 2);
-    ssd.updateVariable("gas_flow", 605.0 + (Math.random() - 0.5) * 2);
-    ssd.updateVariable("liquid_flow", 398.0 + (Math.random() - 0.5) * 2);
+    ssd.updateVariable("feed_flow", 1000.0 + (noise.nextDouble() - 0.5) * 2);
+    ssd.updateVariable("gas_flow", 605.0 + (noise.nextDouble() - 0.5) * 2);
+    ssd.updateVariable("liquid_flow", 398.0 + (noise.nextDouble() - 0.5) * 2);
 }
 
 SteadyStateResult ssResult = ssd.evaluate();
-System.out.println(ssResult.toReport());
+logger.info(ssResult.toReport());
 
 if (ssResult.isAtSteadyState()) {
     // Bridge directly to reconciliation
@@ -205,7 +222,7 @@ if (ssResult.isAtSteadyState()) {
         new String[]{"feed_flow"},
         new String[]{"gas_flow", "liquid_flow"});
     ReconciliationResult recResult = engine.reconcile();
-    System.out.println(recResult.toReport());
+    logger.info(recResult.toReport());
 }
 ```
 
@@ -232,6 +249,7 @@ ssd.addVariable(gas)
 
 # Push 30 constant-ish readings
 import random
+random.seed(42)
 for i in range(30):
     ssd.updateVariable("feed_flow", 1000.0 + random.uniform(-1, 1))
     ssd.updateVariable("gas_flow", 600.0 + random.uniform(-1, 1))
@@ -241,7 +259,8 @@ print(result.toReport())
 
 if result.isAtSteadyState():
     engine = ssd.createReconciliationEngine()
-    # ... add constraints and reconcile
+    # This detector monitors feed and gas only; a liquid meter is needed for a
+    # separator mass balance. The complete four-flow example below adds all outlets.
 ```
 
 ### SSD API Reference
@@ -317,15 +336,13 @@ The `createReconciliationEngine()` method creates a `DataReconciliationEngine` p
 The bridge uses each variable's **window mean** as the measurement value and the configured uncertainty as sigma. Transient variables and variables without uncertainty are excluded.
 
 ```java
-// Typical workflow
-SteadyStateDetector ssd = new SteadyStateDetector(30);
-// ... add variables, push data, evaluate() ...
-
+// Continue from SSD Java Example: the detector already has all three meters.
 if (ssd.evaluate().isAtSteadyState()) {
     DataReconciliationEngine engine = ssd.createReconciliationEngine();
-    // Variables are already populated with mean values and uncertainties
-    engine.addMassBalanceConstraint("node1", inlets, outlets);
+    engine.addMassBalanceConstraint("node1", new String[] {"feed_flow"},
+        new String[] {"gas_flow", "liquid_flow"});
     ReconciliationResult result = engine.reconcile();
+    logger.info(result.toReport());
 }
 ```
 
@@ -498,16 +515,18 @@ The coefficient array has one entry per variable, in the order they were added. 
 **Option B — Named mass balance (recommended):**
 
 ```java
-engine.addVariable(feed);
-engine.addVariable(gas);
-engine.addVariable(liq);
+DataReconciliationEngine namedEngine = new DataReconciliationEngine();
+namedEngine.addVariable(feed);
+namedEngine.addVariable(gas);
+namedEngine.addVariable(liq);
 
-engine.addMassBalanceConstraint("Separator balance",
+namedEngine.addMassBalanceConstraint("Separator balance",
     new String[]{"feed_flow"},                    // inlet names
     new String[]{"gas_flow", "liq_flow"});        // outlet names
 ```
 
-This is equivalent to `{1.0, -1.0, -1.0}` but self-documenting and less error-prone for large networks.
+Use either Option A (`engine`) or Option B (`namedEngine`); do not add the same
+variables or balance twice. Option B is equivalent to `{1.0, -1.0, -1.0}` but self-documenting and less error-prone for large networks.
 
 ### Step 4 — Run Reconciliation
 
@@ -515,10 +534,10 @@ This is equivalent to `{1.0, -1.0, -1.0}` but self-documenting and less error-pr
 ReconciliationResult result = engine.reconcile();
 
 if (result.isConverged()) {
-    System.out.println("Reconciliation successful");
-    System.out.println("Objective (weighted SSQ): " + result.getObjectiveValue());
+    logger.info("Reconciliation successful");
+    logger.info("Objective (weighted SSQ): " + result.getObjectiveValue());
 } else {
-    System.out.println("Failed: " + result.getErrorMessage());
+    logger.info("Failed: " + result.getErrorMessage());
 }
 ```
 
@@ -528,12 +547,12 @@ After reconciliation, each variable holds its adjusted value:
 
 ```java
 for (ReconciliationVariable v : result.getVariables()) {
-    System.out.printf("%-15s  meas=%.1f  rec=%.1f  adj=%.2f %s%n",
+    logger.info(String.format("%-15s  meas=%.1f  rec=%.1f  adj=%.2f %s%n",
         v.getName(),
         v.getMeasuredValue(),
         v.getReconciledValue(),
         v.getAdjustment(),
-        v.getUnit());
+        v.getUnit()));
 }
 ```
 
@@ -551,14 +570,14 @@ The engine computes a **normalized residual** for each variable. If $|r_i| > \te
 ```java
 for (ReconciliationVariable v : result.getVariables()) {
     if (v.isGrossError()) {
-        System.out.println("GROSS ERROR: " + v.getName()
+        logger.info("GROSS ERROR: " + v.getName()
             + " |r|=" + Math.abs(v.getNormalizedResidual()));
     }
 }
 
 // Or check the global test
 if (!result.isGlobalTestPassed()) {
-    System.out.println("WARNING: Global chi-square test failed — possible gross errors");
+    logger.info("WARNING: Global chi-square test failed — possible gross errors");
 }
 ```
 
@@ -573,19 +592,23 @@ In many online optimization workflows, you compare the **reconciled plant values
 After running a NeqSim `ProcessSystem` simulation, set its predicted values on each variable:
 
 ```java
-// 1. Run the process simulation
-ProcessSystem process = ... ; // your process model
+// Build the model explicitly; metadata alone does not create measurement devices.
+SystemSrkEos fluid = new SystemSrkEos(298.15, 60.0);
+fluid.addComponent("methane", 0.70);
+fluid.addComponent("n-decane", 0.30);
+fluid.setMixingRule("classic");
+Stream modelFeed = new Stream("Feed", fluid);
+modelFeed.setFlowRate(1000.0, "kg/hr");
+Separator modelSeparator = new Separator("HP Sep", modelFeed);
+ProcessSystem process = new ProcessSystem();
+process.add(modelFeed);
+process.add(modelSeparator);
 process.run();
-
-// 2. Read simulation outputs
-double modelFeedFlow  = process.getMeasurementDevice("feed_FT").getMeasuredValue();
-double modelGasFlow   = process.getMeasurementDevice("gas_FT").getMeasuredValue();
-double modelLiqFlow   = process.getMeasurementDevice("liq_FT").getMeasuredValue();
-
-// 3. Set model values on the reconciliation variables
-engine.getVariable("feed_flow").setModelValue(modelFeedFlow);
-engine.getVariable("gas_flow").setModelValue(modelGasFlow);
-engine.getVariable("liq_flow").setModelValue(modelLiqFlow);
+engine.getVariable("feed_flow").setModelValue(modelFeed.getFlowRate("kg/hr"));
+engine.getVariable("gas_flow").setModelValue(
+    modelSeparator.getGasOutStream().getFlowRate("kg/hr"));
+engine.getVariable("liq_flow").setModelValue(
+    modelSeparator.getLiquidOutStream().getFlowRate("kg/hr"));
 ```
 
 ### Reading Model vs Reconciled Comparison
@@ -594,15 +617,15 @@ engine.getVariable("liq_flow").setModelValue(modelLiqFlow);
 for (ReconciliationVariable v : result.getVariables()) {
     if (v.hasModelValue()) {
         double modelDelta = v.getReconciledValue() - v.getModelValue();
-        System.out.printf("%-15s  reconciled=%.1f  model=%.1f  delta=%.2f%n",
-            v.getName(), v.getReconciledValue(), v.getModelValue(), modelDelta);
+        logger.info(String.format("%-15s  reconciled=%.1f  model=%.1f  delta=%.2f%n",
+            v.getName(), v.getReconciledValue(), v.getModelValue(), modelDelta));
     }
 }
 ```
 
 ### Using Reconciled Values to Tune the Process Model
 
-After reconciliation gives you validated, balanced measurements, use those values to update the simulation model parameters:
+After reconciliation gives you balanced measurements that have passed the configured quality tests, use those values to update the simulation model parameters:
 
 ```java
 // After reconciliation:
@@ -621,7 +644,7 @@ double modelLiqOut = ((Separator) process.getUnit("HP Sep")).getLiquidOutStream(
     .getFlowRate("kg/hr");
 double reconciledLiq = engine.getVariable("liq_flow").getReconciledValue();
 double modelError = reconciledLiq - modelLiqOut;
-// If modelError is large, the separator model parameters need adjustment
+// A large gap may indicate fluid-assay, metering, phase-model, or boundary errors; diagnose before tuning
 ```
 
 ### Full Reconciliation-then-Calibration Workflow
@@ -651,6 +674,8 @@ For a complete loop that reconciles measurements and then tunes model parameters
 import neqsim.process.util.reconciliation.*;
 
 public class SeparatorReconciliation {
+    private static final org.apache.logging.log4j.Logger logger =
+        org.apache.logging.log4j.LogManager.getLogger(SeparatorReconciliation.class);
     public static void main(String[] args) {
         // Create engine
         DataReconciliationEngine engine = new DataReconciliationEngine();
@@ -676,7 +701,7 @@ public class SeparatorReconciliation {
         ReconciliationResult result = engine.reconcile();
 
         // Print text report
-        System.out.println(result.toReport());
+        logger.info(result.toReport());
 
         // Access individual reconciled values
         double recFeed = engine.getVariable("feed").getReconciledValue();
@@ -684,20 +709,20 @@ public class SeparatorReconciliation {
         double recOil  = engine.getVariable("oil").getReconciledValue();
         double recWater = engine.getVariable("water").getReconciledValue();
 
-        System.out.printf("Balance check: %.2f - %.2f - %.2f - %.2f = %.6f%n",
+        logger.info(String.format("Balance check: %.2f - %.2f - %.2f - %.2f = %.6f%n",
             recFeed, recGas, recOil, recWater,
-            recFeed - recGas - recOil - recWater);
+            recFeed - recGas - recOil - recWater));
 
         // Check for gross errors
         if (result.hasGrossErrors()) {
-            System.out.println("*** Gross errors detected in: ");
+            logger.info("*** Gross errors detected in: ");
             for (ReconciliationVariable ge : result.getGrossErrors()) {
-                System.out.println("  " + ge.getName());
+                logger.info("  " + ge.getName());
             }
         }
 
         // Machine-readable output
-        System.out.println(result.toJson());
+        logger.info(result.toJson());
     }
 }
 ```
@@ -732,7 +757,7 @@ print(result.toReport())
 
 # Read reconciled values
 for v in result.getVariables():
-    print(f"{v.getName():15s}  meas={v.getMeasuredValue():10.1f}  "
+    print(f"{str(v.getName()):15s}  meas={v.getMeasuredValue():10.1f}  "
           f"rec={v.getReconciledValue():10.1f}  "
           f"adj={v.getAdjustment():+8.2f}  "
           f"|r|={abs(v.getNormalizedResidual()):6.3f}  "
@@ -765,7 +790,7 @@ def get_plant_measurements():
     }
 
 # Periodic reconciliation loop
-while True:
+for scan in range(3):
     measurements = get_plant_measurements()
 
     engine = DataReconciliationEngine()
@@ -784,7 +809,7 @@ while True:
     else:
         print(f"FAILED: {result.getErrorMessage()}")
 
-    time.sleep(60)  # run every 60 seconds
+    # In a scheduled service, call one iteration per historian scan.
 ```
 
 ---
@@ -918,8 +943,8 @@ engine.addMassBalanceConstraint("Pump",
 ReconciliationResult result = engine.reconcile();
 
 // Degrees of freedom = 3 (three constraints, 5 variables → 2 DoF)
-System.out.println("DoF: " + result.getDegreesOfFreedom());
-System.out.println(result.toReport());
+logger.info("DoF: " + result.getDegreesOfFreedom());
+logger.info(result.toReport());
 ```
 
 **Important:** The system must be **over-determined** (more variables than constraints) for reconciliation to work. If $n \leq m$, the system is exactly determined or under-determined and the engine returns an error.
@@ -939,7 +964,7 @@ ReconciliationResult result = engine.reconcileWithGrossErrorElimination(2);
 
 // Check which sensors were flagged
 for (ReconciliationVariable ge : result.getGrossErrors()) {
-    System.out.println("Faulty sensor: " + ge.getName()
+    logger.info("Faulty sensor: " + ge.getName()
         + " (normalized residual: " + ge.getNormalizedResidual() + ")");
 }
 ```
@@ -1007,8 +1032,8 @@ vLiq.setModelValue(modelLiq);
 for (ReconciliationVariable v : result.getVariables()) {
     if (v.hasModelValue()) {
         double gap = v.getReconciledValue() - v.getModelValue();
-        System.out.printf("%s: reconciled=%.1f, model=%.1f, gap=%.1f%n",
-            v.getName(), v.getReconciledValue(), v.getModelValue(), gap);
+        logger.info(String.format("%s: reconciled=%.1f, model=%.1f, gap=%.1f%n",
+            v.getName(), v.getReconciledValue(), v.getModelValue(), gap));
     }
 }
 
@@ -1132,7 +1157,7 @@ def create_ssd():
 def check_steady_state(ssd, plant_tags):
     """Push new readings and evaluate.
     Returns (is_steady, result_object)."""
-    java_map = jneqsim.java.util.LinkedHashMap()
+    java_map = __import__("jpype").JClass("java.util.LinkedHashMap")()
     for tag, value in plant_tags.items():
         java_map.put(tag, float(value))
     result = ssd.updateAndEvaluate(java_map)
@@ -1163,11 +1188,9 @@ def reconcile_measurements(ssd):
         print(f"Reconciliation failed: {result.getErrorMessage()}")
         return None
 
-    if result.hasGrossErrors():
-        for ge in result.getGrossErrors():
-            print(f"WARNING: gross error on {ge.getName()} "
-                  f"(|r|={abs(ge.getNormalizedResidual()):.2f})")
-
+    if not result.isGlobalTestPassed() or result.hasGrossErrors():
+        print("Measurement quality gate failed; hold the previous model")
+        return None
     return result
 ```
 
@@ -1194,7 +1217,7 @@ def build_model():
     fluid.addComponent("methane", 0.70)
     fluid.addComponent("ethane", 0.10)
     fluid.addComponent("propane", 0.05)
-    fluid.addComponent("nC10", 0.10)
+    fluid.addComponent("n-decane", 0.10)
     fluid.addComponent("water", 0.05)
     fluid.setMixingRule("classic")
     fluid.setMultiPhaseCheck(True)
@@ -1214,12 +1237,12 @@ def build_model():
 # Per-cycle update
 def update_model(process, feed, sep, rec_result):
     """Push reconciled values into the simulation and re-run."""
-    engine = rec_result  # the ReconciliationResult
+    rec_vars = {str(v.getName()): v for v in rec_result.getVariables()}
 
     # Get reconciled flows
-    rec_feed  = rec_result.getVariable("FI-1001").getReconciledValue()
-    rec_temp  = rec_result.getVariable("TI-1001").getReconciledValue()
-    rec_press = rec_result.getVariable("PI-1001").getReconciledValue()
+    rec_feed  = rec_vars["FI-1001"].getReconciledValue()
+    rec_temp  = rec_vars["TI-1001"].getReconciledValue()
+    rec_press = rec_vars["PI-1001"].getReconciledValue()
 
     # Update simulation inputs
     feed.setFlowRate(float(rec_feed), "kg/hr")
@@ -1247,27 +1270,44 @@ def update_model(process, feed, sep, rec_result):
 from scipy.optimize import minimize
 
 def tune_model(process, feed, sep, rec_result):
-    """Tune model parameters (e.g., fluid composition) to match
-    reconciled outflows. Uses SciPy on the Python side,
-    NeqSim ProcessSystem on the Java side."""
+    """Fit two composition fractions under mole-fraction and mass-flow constraints.
 
-    rec_gas = rec_result.getVariable("FI-2001").getReconciledValue()
-    rec_oil = rec_result.getVariable("FI-3001").getReconciledValue()
+    This is a synthetic identifiability example, not proof of a unique fluid assay.
+    The component order is methane, ethane, propane, n-decane, water.
+    """
+    rec_vars = {str(v.getName()): v for v in rec_result.getVariables()}
+    original_fluid = feed.getFluid().clone()
+    original_mass = feed.getFlowRate("kg/hr")
+    rec_mass = rec_vars["FI-1001"].getReconciledValue()
+    gas_variable = rec_vars["FI-2001"]
+    oil_variable = rec_vars["FI-3001"]
 
     def objective(params):
-        # params = [methane_frac, nC10_frac]
-        fluid = feed.getFluid()
-        fluid.setMolarComposition([params[0], 0.10, 0.05, params[1],
-                                   1.0 - params[0] - 0.10 - 0.05 - params[1]])
+        water_fraction = 0.85 - params[0] - params[1]
+        if water_fraction < 0.0:
+            return 1.0e20
+        feed.getFluid().setMolarComposition(
+            [params[0], 0.10, 0.05, params[1], water_fraction])
+        # Changing molar composition changes molar mass; restore the measured mass rate.
+        feed.setFlowRate(float(rec_mass), "kg/hr")
         process.run()
-        pred_gas = sep.getGasOutStream().getFlowRate("kg/hr")
-        pred_oil = sep.getOilOutStream().getFlowRate("kg/hr")
-        return ((pred_gas - rec_gas)**2 / rec_gas**2
-              + (pred_oil - rec_oil)**2 / rec_oil**2)
+        gas_error = (sep.getGasOutStream().getFlowRate("kg/hr")
+                     - gas_variable.getReconciledValue()) / gas_variable.getUncertainty()
+        oil_error = (sep.getOilOutStream().getFlowRate("kg/hr")
+                     - oil_variable.getReconciledValue()) / oil_variable.getUncertainty()
+        return gas_error**2 + oil_error**2
 
-    result = minimize(objective, x0=[0.70, 0.10],
-                      bounds=[(0.5, 0.9), (0.05, 0.20)],
-                      method="Nelder-Mead")
+    result = minimize(
+        objective, x0=[0.70, 0.10], method="SLSQP",
+        bounds=[(0.50, 0.80), (0.05, 0.20)],
+        constraints=[{"type": "ineq", "fun": lambda x: 0.85 - x[0] - x[1]}],
+        options={"maxiter": 30, "ftol": 1.0e-7})
+    if result.success:
+        objective(result.x)  # Restore the accepted optimum after numerical probes.
+    else:
+        feed.setThermoSystem(original_fluid)
+        feed.setFlowRate(original_mass, "kg/hr")
+        process.run()
     return result
 ```
 
@@ -1279,8 +1319,8 @@ This is the recommended end-to-end pattern for a live NeqSim model:
 """
 Live NeqSim digital twin — complete four-stage pipeline.
 
-Run this as a long-running Python process (e.g., systemd service, Docker
-container, or Azure Function on a timer trigger).
+This finite demonstration processes 35 synthetic scans with no delay.
+For a service, replace the data reader and schedule one scan at a time.
 """
 import time
 import json
@@ -1299,7 +1339,8 @@ Stream = jneqsim.process.equipment.stream.Stream
 Separator = jneqsim.process.equipment.separator.ThreePhaseSeparator
 
 log = logging.getLogger("live_model")
-SCAN_INTERVAL = 60  # seconds
+SCAN_INTERVAL = 0  # No delay for the finite demonstration; service interval is site-specific
+logging.basicConfig(level=logging.INFO)
 
 # --------- 1. TAG CONFIGURATION ---------
 TAG_CONFIG = OrderedDict([
@@ -1326,7 +1367,7 @@ fluid = SystemSrkEos(273.15 + 80.0, 65.0)
 fluid.addComponent("methane", 0.70)
 fluid.addComponent("ethane", 0.10)
 fluid.addComponent("propane", 0.05)
-fluid.addComponent("nC10", 0.10)
+fluid.addComponent("n-decane", 0.10)
 fluid.addComponent("water", 0.05)
 fluid.setMixingRule("classic")
 fluid.setMultiPhaseCheck(True)
@@ -1347,20 +1388,29 @@ log.info("Live model initialized")
 
 # --------- 3. MAIN LOOP ---------
 
+synthetic_tags = {
+    "FI-1001": feed.getFlowRate("kg/hr") * 1.005,
+    "FI-2001": sep.getGasOutStream().getFlowRate("kg/hr") * 1.003,
+    "FI-3001": sep.getOilOutStream().getFlowRate("kg/hr") * 0.997,
+    "FI-4001": sep.getWaterOutStream().getFlowRate("kg/hr") * 1.006,
+    "TI-1001": feed.getTemperature("C"),
+    "PI-1001": feed.getPressure("bara"),
+}
+
 def read_plant_tags():
-    """Replace with your OPC-UA / PI / historian reader."""
-    # Placeholder — in production, query your data source here
-    return {tag: 0.0 for tag in TAG_CONFIG}
+    """Synthetic readings derived once from the initial model, with meter offsets."""
+    return dict(synthetic_tags)
 
 last_good_result = None
+successful_updates = 0
 
-while True:
+for scan in range(35):
     try:
         # Stage 1: Collect
         tags = read_plant_tags()
 
         # Stage 2: SSD gate
-        java_map = jneqsim.java.util.LinkedHashMap()
+        java_map = __import__("jpype").JClass("java.util.LinkedHashMap")()
         for tag, value in tags.items():
             java_map.put(tag, float(value))
         ss_result = ssd.updateAndEvaluate(java_map)
@@ -1368,7 +1418,7 @@ while True:
         if not ss_result.isAtSteadyState():
             transient_names = [v.getName()
                                for v in ss_result.getTransientVariables()]
-            log.info("Transient — skipping (%s)", ", ".join(transient_names))
+            log.info("Transient — skipping (%s)", ", ".join(str(name) for name in transient_names))
             time.sleep(SCAN_INTERVAL)
             continue
 
@@ -1393,33 +1443,54 @@ while True:
                             ge.getName(),
                             abs(ge.getNormalizedResidual()))
 
-        # Stage 4: Update model
-        feed.setFlowRate(
-            float(rec_result.getVariable("FI-1001").getReconciledValue()),
+        if not rec_result.isGlobalTestPassed() or rec_result.hasGrossErrors():
+            log.warning("Measurement quality gate failed; holding the previous model")
+            continue
+
+        rec_vars = {str(v.getName()): v for v in rec_result.getVariables()}
+
+        # Stage 4: Solve a copy; publish it only after conservation checks.
+        candidate = process.copy()
+        candidate_feed = candidate.getUnit("Feed")
+        candidate_sep = candidate.getUnit("HP Sep")
+        candidate_feed.setFlowRate(
+            float(rec_vars["FI-1001"].getReconciledValue()),
             "kg/hr")
-        feed.setTemperature(
-            float(rec_result.getVariable("TI-1001").getReconciledValue()),
+        candidate_feed.setTemperature(
+            float(rec_vars["TI-1001"].getReconciledValue()),
             "C")
-        feed.setPressure(
-            float(rec_result.getVariable("PI-1001").getReconciledValue()),
+        candidate_feed.setPressure(
+            float(rec_vars["PI-1001"].getReconciledValue()),
             "bara")
-        process.run()
+        candidate.run()
+        candidate_out = sum(stream.getFlowRate("kg/hr") for stream in [
+            candidate_sep.getGasOutStream(), candidate_sep.getOilOutStream(),
+            candidate_sep.getWaterOutStream()])
+        candidate_in = candidate_feed.getFlowRate("kg/hr")
+        import math
+        if not math.isfinite(candidate_out) or abs(candidate_in - candidate_out) > 1e-6 * max(1.0, candidate_in):
+            raise RuntimeError("Candidate model mass balance failed")
+        process, feed, sep = candidate, candidate_feed, candidate_sep
 
         # Compare model vs reconciled
         model_gas = sep.getGasOutStream().getFlowRate("kg/hr")
-        rec_gas = rec_result.getVariable("FI-2001").getReconciledValue()
-        gap_pct = abs(model_gas - rec_gas) / rec_gas * 100
+        rec_gas = rec_vars["FI-2001"].getReconciledValue()
+        gap_pct = abs(model_gas - rec_gas) / max(abs(rec_gas), 1.0e-9) * 100
 
         log.info("OK  feed=%.0f  gas=%.0f (model=%.0f, gap=%.1f%%)",
-                 rec_result.getVariable("FI-1001").getReconciledValue(),
+                 rec_vars["FI-1001"].getReconciledValue(),
                  rec_gas, model_gas, gap_pct)
 
         last_good_result = rec_result
+        successful_updates += 1
 
     except Exception as e:
         log.exception("Scan cycle error: %s", e)
 
     time.sleep(SCAN_INTERVAL)
+
+assert successful_updates > 0, "The synthetic example must pass the steady-state gate"
+print(f"Completed {successful_updates} validated model updates")
 ```
 
 ### Design Guidelines for Live Models
@@ -1480,31 +1551,35 @@ NeqSim provides several layers that can be combined. Choose based on your needs:
 
 ```python
 def run_cycle(ssd, process, feed, sep, tags):
-    """A single scan cycle with proper fallback logic."""
+    """Return a candidate model only after all data and simulation gates pass.
 
-    # Gate 1: SSD
-    ss_result = push_and_evaluate(ssd, tags)
-    if not ss_result.isAtSteadyState():
+    Reuses check_steady_state, reconcile_measurements, and update_model above.
+    The caller replaces its active process only for status == "ok".
+    """
+    is_steady, ss_result = check_steady_state(ssd, tags)
+    if not is_steady:
         return {"status": "transient", "action": "hold_previous_model"}
-
-    # Gate 2: Reconciliation
-    rec_result = reconcile(ssd)
-    if rec_result is None or not rec_result.isConverged():
+    rec_result = reconcile_measurements(ssd)
+    if rec_result is None or not rec_result.isGlobalTestPassed() or rec_result.hasGrossErrors():
         return {"status": "recon_failed", "action": "hold_previous_model"}
 
-    if not rec_result.isGlobalTestPassed():
-        # Measurements are inconsistent — could be a bad sensor
-        rec_result = engine.reconcileWithGrossErrorElimination(2)
-        if rec_result.hasGrossErrors():
-            log.warning("Eliminated gross errors, proceeding with caution")
-
-    # Gate 3: Model convergence
+    # Never modify the active model before a successful candidate simulation.
+    candidate = process.copy()
+    candidate_feed = candidate.getUnit("Feed")
+    candidate_sep = candidate.getUnit("HP Sep")
     try:
-        update_and_run(process, feed, rec_result)
+        outputs = update_model(candidate, candidate_feed, candidate_sep, rec_result)
+        import math
+        if not all(math.isfinite(value) for value in outputs.values()):
+            raise ValueError("Non-finite model output")
+        mass_out = sum(outputs.values())
+        mass_in = candidate_feed.getFlowRate("kg/hr")
+        if abs(mass_out - mass_in) > 1.0e-6 * max(1.0, abs(mass_in)):
+            raise ValueError("Model mass balance did not close")
     except Exception:
         return {"status": "model_failed", "action": "hold_previous_model"}
-
-    return {"status": "ok", "result": rec_result}
+    return {"status": "ok", "result": rec_result, "process": candidate,
+            "feed": candidate_feed, "separator": candidate_sep, "outputs": outputs}
 ```
 
 **The golden rule**: If any stage fails, **hold the previous good model state**. Never push a diverged or unconverged model to downstream consumers (dashboards, optimizers, MPC). Log the failure, alert if it persists for N consecutive cycles, and re-try next scan.

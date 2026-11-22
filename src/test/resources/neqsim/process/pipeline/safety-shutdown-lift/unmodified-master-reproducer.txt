@@ -1,0 +1,34 @@
+import java.nio.file.*;
+import java.util.UUID;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
+public class SafetyShutdownBaseline {
+  public static void main(String[] args) throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 100.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("public synthetic water", fluid);
+    feed.run();
+    double rho = feed.getThermoSystem().getDensity("kg/m3");
+    double q = 0.65 * 0.05 * 0.005 * Math.sqrt(2.0 * 1e5 / rho);
+    feed.setFlowRate(rho * q, "kg/sec");
+    feed.run();
+    WaterHammerPipe pipe = new WaterHammerPipe("Safety Shutdown inlet isolation baseline", feed);
+    pipe.setLength(100.0); pipe.setDiameter(0.05); pipe.setNumberOfNodes(51);
+    pipe.setWaveSpeed(1000.0); pipe.setPipeWallRoughness(1e-5);
+    pipe.run(UUID.randomUUID());
+    double receiver = pipe.getPressureProfile()[50]/1e5 - 1.0;
+    pipe.setValveBackPressure(receiver); pipe.run(UUID.randomUUID());
+    pipe.setUpstreamBoundary("CLOSED_END");
+    String message = "NO_REJECTION";
+    try { for(int i=0;i<5000;i++) pipe.runTransient(1e-4,UUID.randomUUID()); }
+    catch(IllegalStateException e) { message = e.getMessage(); }
+    com.google.gson.JsonObject out=new com.google.gson.JsonObject();
+    out.addProperty("base", "a01d663990a8f43de366a8c02f1ea6280b61c143");
+    out.addProperty("density_kg_m3",rho);out.addProperty("initialFlow_m3_s",q);
+    out.addProperty("receiver_bara",receiver);out.addProperty("acceptedTime_s",pipe.getCurrentTime());
+    out.addProperty("message",message);out.addProperty("volumeResidual_m3",pipe.getAcousticVolumeResidual());
+    Files.write(Paths.get("ss-baseline-rejection.json"),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(out).getBytes("UTF-8"));
+  }
+}

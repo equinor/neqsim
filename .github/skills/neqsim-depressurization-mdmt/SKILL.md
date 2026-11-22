@@ -1,8 +1,8 @@
 ---
 name: neqsim-depressurization-mdmt
 version: "1.0.0"
-description: "Emergency depressurization (blowdown) per API 521 §5.20 and minimum design metal temperature (MDMT) assessment per ASME UCS-66 / API 579 / EN 13445 — VU-flash transient inventory model, time-to-target-pressure, low-temperature embrittlement screening, and integration with PSV/flare loads. USE WHEN: a task requires sizing a blowdown valve, generating a P-vs-time curve for a vessel under fire / depressurization, checking MDMT against blowdown end-temperature, providing source terms for relief and flare networks, or distinguishing blowdown from trapped-liquid fire rupture screening. Anchors on neqsim.process.safety.depressurization.DepressurizationSimulator and neqsim.process.safety.mdmt.MDMTCalculator."
-last_verified: "2026-04-26"
+description: "Emergency depressurization (blowdown) per API 521 and MDMT assessment per ASME UCS-66 / API 579 / EN 13445 with a VU-flash transient model. USE WHEN: sizing a blowdown valve, producing a P-vs-time curve under fire or depressurization, checking MDMT against blowdown end-temperature, supplying relief/flare source terms, or separating blowdown from trapped-liquid rupture. Anchors on DepressurizationSimulator and MDMTCalculator."
+last_verified: "2026-11-21"
 requires:
   java_packages:
     - neqsim.process.safety.depressurization
@@ -154,6 +154,91 @@ double mdotPeak = sim.peakMassFlow();
 This is the standard handoff between the depressurization model and the flare
 network sizing skill (`neqsim-relief-flare-network`).
 
+## Method 4b — Separators with Live Liquid: Vapour-Only Withdrawal (MANDATORY CHECK)
+
+A blowdown valve is mounted on **top** of the vessel, so a separator, scrubber or knock-out
+drum holding live liquid discharges **vapour** while the liquid flashes and feeds more vapour
+into the release. Discharging the bulk composition instead drains heavy liquid through the
+orifice: it understates the flare load and overstates the cooling, and the mass balance still
+closes, so nothing fails.
+
+`DepressurizationSimulator` handles this from NeqSim 3.20 onward:
+
+```java
+import neqsim.process.safety.depressurization.DepressurizationSimulator.WithdrawalMode;
+
+DepressurizationSimulator sim = new DepressurizationSimulator(fluid, V, dOrifice, Cd, pBack);
+sim.setWithdrawalMode(WithdrawalMode.AUTO);   // default
+DepressurizationResult res = sim.run();
+boolean twoPhase = res.vapourWithdrawalUsed;  // true when a step discharged vapour
+```
+
+- **AUTO** (default) discharges vapour whenever the inventory is multiphase and is identical
+  to BULK for a single-phase inventory, so a dry-gas segment is unaffected.
+- **VAPOUR** forces it; **BULK** restores the legacy behaviour for comparison.
+- On a real first-stage separator the flash gas from the oil holdup can be a third of the
+  total flare load. Operator flare reports often quote `vapour fraction = 1.00` for such a
+  segment, which means the liquid contribution is not in the approved basis either — say so
+  rather than silently matching their number.
+- `run()` removes moles from the **fluid you passed in** (no clone). Record the component
+  moles before `run()`; start minus end is the per-component composition sent to flare,
+  which is what flare CO2 needs: $m_{CO_2} = 44.01\,(\eta \sum_i n_{C,i} N_i + N_{CO_2})$
+  with $\eta \approx 0.98$ combustion efficiency. Clone first if you need the start state later.
+- A pip-installed `neqsim` older than 3.20 has no `setWithdrawalMode` (AttributeError);
+  load the workspace classes through `devtools/neqsim_dev_setup.py` instead.
+
+### Cross-check the transient against a decomposed inventory
+
+For a deliverable, back the transient with a path-independent inventory calculation:
+flare load = (gas-space inventory − gas remaining at the flare back pressure) + (vapour
+formed when the liquid holdup is flashed to the back pressure). Each term is a single TP
+flash of a stream that exists in the process documentation, so every number is traceable.
+Expect the transient to give slightly more, because continuous stripping of light ends drives
+further vaporisation.
+
+### If you write your own withdrawal loop, three traps
+
+```java
+// TRAP 1 — phase identification. Below roughly 20 bara NeqSim may label the OIL phase
+// GAS for a rich hydrocarbon mixture. Selecting the vapour with getPhase(i).getType() then
+// strips LIQUID out of the vessel, and the mass balance still closes, so nothing throws.
+// Use the helper, which selects by lowest density and returns -1 when no phase is vapour:
+int iVap = DepressurizationSimulator.vapourPhaseIndex(fluid);
+
+// TRAP 2 — assert the removed stream is actually vapour. A hydrocarbon blowdown stream
+// should stay well under ~45 g/mol. Check it EVERY step; this is what catches trap 1.
+// TRAP 3 — component moles. phase.getComponent(n).getNumberOfMolesInPhase() is not
+// reliably phase-local. Use the phase total against the phase mole fraction:
+double dnTotal = fraction * fluid.getPhase(iVap).getNumberOfMolesInPhase();
+double dnComponent = dnTotal * fluid.getPhase(iVap).getComponent(name).getx();
+```
+
+Remove at most about a quarter of the vapour phase per step. Emptying most of the vapour
+space in one step makes the constant-volume flash swing, because the liquid flashes back to
+refill it.
+
+Pseudo-component naming: `addTBPfraction("C6gas", ...)` is stored as `C6gas_PC`. Never put
+`+` in a TBP name, and resolve the internal name from `getComponentNames()` by prefix before
+calling `addComponent(name, -moles)`.
+
+### Report both CO2 numbers
+
+For an emissions answer, separate the CO2 **already in the gas** (typically 1–3 mol%, so a
+few hundred kg) from the CO2 **produced by burning the release** (roughly 2.7 kg CO2 per kg
+hydrocarbon, so tonnes). The combustion term is two orders of magnitude larger and is the
+one that goes into emission reporting. State the assumed flare combustion efficiency, and
+give the CO2-equivalent of the unburned methane for the failed-ignition case
+(GWP-100 = 28, IPCC AR5) — that is typically ~5x the climate effect of a successful flaring.
+
+### Time is rarely the binding constraint — temperature is
+
+API 521 §5.20 (half pressure in 15 min) is usually met with a large margin on a correctly
+sized BDV. What actually governs is auto-refrigeration against the vessel MDMT and the
+downstream pipe class design temperature. Always report the minimum temperature next to
+both limits, and recommend throttling a **planned** depressurisation through the pressure
+control valve down to a moderate pressure before opening the BDV, so the fast cold
+excursion is reserved for genuine emergency depressurisation.
+
 ## Method 5 — Coupled Multi-Vessel Blowdown to a Shared Header (API 521 §7)
 
 When several vessels blow down simultaneously into one flare/disposal header, the
@@ -188,6 +273,10 @@ For agentic engineering studies that start from STID/P&ID drawings, line lists,
 equipment lists, and TR2000 pipe/valve/material evidence, use the governed data
 source and runner instead of stitching transient notebooks together by hand.
 
+The example assumes `fireReliefScenario` is a reviewed vapour `ReliefScenario` with the
+external-fire demand and properties evaluated at the declared relieving conditions. Omit
+`psvContingency` for a blowdown-only study. BDV discharge is reported separately.
+
 Key classes:
 
 - `LineEquipmentListEvidence` — reviewed line-list and equipment-list rows used
@@ -200,7 +289,7 @@ Key classes:
   `ReliefValveSizing`, and estimates peak/cumulative flare heat, emissions,
   radiation distance, and capacity utilization.
 - `DynamicBlowdownFlareStudyHandoff` — versioned JSON package containing
-  `dynamic_blowdown_flare_result.v1` and `dynamic_blowdown_flare_load_handoff.v1`.
+  `dynamic_blowdown_flare_result.v2` and `dynamic_blowdown_flare_load_handoff.v2`.
 
 ```java
 LineEquipmentListEvidence lineEq = LineEquipmentListEvidence.builder("line-eq-001")
@@ -219,6 +308,7 @@ DynamicBlowdownFlareStudyDataSource.BlowdownSource source =
         .backPressureBara(1.5)
         .api521FireCase(120.0, true, true)
         .psvBasis(85.0, 0.21, false, false)
+        .psvContingency(fireReliefScenario, 1.5, "V-100 external-fire relief calculation")
         .build();
 
 DynamicBlowdownFlareStudyDataSource data = DynamicBlowdownFlareStudyDataSource.builder("BD-FLARE-001")
@@ -300,6 +390,9 @@ import neqsim.process.safety.depressurization.DynamicPsvSizingStudy;
 DynamicPsvSizingStudy.SizingComparison cmp =
     new DynamicPsvSizingStudy(gas, 1.0, 150000.0, 11.0e5, 0.21, 1.0e5)
         .setBlowdownFraction(0.1).setDischargeCoefficient(0.975).run();
+if (cmp.status != DynamicPsvSizingStudy.SizingStatus.FEASIBLE) {
+  throw new IllegalStateException(cmp.status + ": " + cmp.terminationReason);
+}
 double oversizing = cmp.oversizingRatio; // > 1 => steady-state conservative
 
 // Fast filling of a Type IV hydrogen cylinder — liner temperature limits (§4.2)
@@ -353,6 +446,37 @@ charging overpressure with relief-demand flag).
 - **Stress ratio = 1** — using 1.0 for stress ratio gives the most conservative
   MDMT. Operating-pressure stress ratio (0.30–0.40) usually relaxes MDMT by
   10–30 °C.
+- **`VesselDepressurization` with gas/oil/water** (fixed 2026-11-21, `VesselDepressurizationMultiLiquidTest`):
+  `runSimulation` now calls `run()` itself when it has not been called (before, the inventory was the
+  feed's flow-rate moles and the pressure collapsed to about 0 bara in step 1). An initial liquid level
+  is now shared between oil and water instead of filled once per liquid phase (before, 40 bara jumped
+  to 87 bara in step 1). `CALCULATED`/`TRANSIENT_WALL` steps refresh transport properties, so the
+  liquid film coefficient no longer throws "Heat capacity, viscosity, and thermal conductivity must be
+  positive". With SRK-CPA and three phases each VU step is still slow (about 10 s per step on a
+  2-core runner, measured 2026-11-21); use SRK for screening sweeps or `NonEquilibriumBlowdownModel`
+  for the gas/liquid temperature split.
+- **`VesselDepressurization` vents vapour only when liquid is present** (since 2026-11-21,
+  `setVapourOnlyDischarge`, default true). Earlier versions used mixture Z/MW/gamma at the orifice and
+  removed all phases in proportion: about 3x the vapour rate, liquid drained through the BDV, and a vent
+  temperature from a molar enthalpy (30 K too warm). Re-run older two-phase blowdown results.
+- **Equilibrium blowdown with liquid present under-predicts gas cooling** — a single-temperature VU
+  model pins the gas to the liquid temperature. For MDMT also run a dry-vessel (gas-only) case from
+  the PSV set pressure or use `NonEquilibriumBlowdownModel`; in a 105 m³ separator study the
+  equilibrium wet case bottomed at +50 °C while the dry case reached −41 °C.
+- **`NonEquilibriumBlowdownModel` applies a fire by default.** For a cold (MDMT) blowdown call
+  `setFireEnabled(false)`. Since 2026-11-21 the vapour balance includes flow-work cooling; before that a
+  no-fire run kept the gas at its initial temperature, so older NEM MDMT results are not conservative.
+  The liquid zone now also flashes isenthalpically at each new pressure (`setFlashBoilOffEnabled`). For a
+  105 m³ separator (40 bara, 40 mm RO, no fire) NEM gave 3.2 barg after 15 min (equilibrium VU model 3.4 barg)
+  and a minimum gas temperature of 21 °C, between the equilibrium wet (+50 °C) and dry (−41 °C) cases.
+
+## Time-resolved flare loads
+
+Read `flareLoad.profile` in the dynamic handoff for the simultaneous source
+mixture flashed at the configured header pressure. The component flows and
+enthalpies are available for both tip gas and material retained in knockout.
+Use the separate heat, mass, molar and CO₂ peak times for the respective checks.
+`BlowdownFlareLoadTest` exercises conservation and changing source mixtures.
 
 ## Verification Tests
 
@@ -364,6 +488,7 @@ charging overpressure with relief-demand flag).
 ## See Also
 
 - `neqsim-relief-flare-network` — PSV sizing, flare radiation, header back-pressure
+- `neqsim-firewater-deluge-design` — blowdown is the primary barrier for a pressurised inventory; compare the blowdown time against the time exposed steel survives before deciding how much fire water is worth adding
 - `neqsim-trapped-liquid-fire-rupture` — blocked-in liquid thermal expansion, PFP demand, and rupture source-term handoff
 - `neqsim-dynamic-simulation` — continuous-process transients with controllers
 - `neqsim-consequence-analysis` — what happens after the released gas ignites

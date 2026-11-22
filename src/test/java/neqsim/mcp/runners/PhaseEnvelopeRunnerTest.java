@@ -3,6 +3,7 @@ package neqsim.mcp.runners;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -33,6 +34,28 @@ class PhaseEnvelopeRunnerTest {
     assertTrue(obj.has("provenance"), "Response should include provenance metadata");
     assertTrue(obj.getAsJsonObject("provenance").has("benchmarkTrustLevel"));
     assertTrue(obj.has("model"));
+
+    // Regression: getPoints(0) is {dewT, dewP, bubT, bubP}; reading it as {P, T} gave T ~ 1 K.
+    boolean sawDew = false;
+    boolean sawBubble = false;
+    for (JsonElement el : obj.getAsJsonArray("envelope")) {
+      JsonObject pt = el.getAsJsonObject();
+      double tC = pt.get("temperature_C").getAsDouble();
+      double p = pt.get("pressure_bara").getAsDouble();
+      assertTrue(tC > -180.0 && tC < 100.0, "Unphysical envelope temperature " + tC + " C");
+      assertTrue(p > 0.0 && p < 500.0, "Unphysical envelope pressure " + p + " bara");
+      String branch = pt.get("branch").getAsString();
+      sawDew |= "dew".equals(branch);
+      sawBubble |= "bubble".equals(branch);
+    }
+    assertTrue(sawDew && sawBubble, "Envelope should contain both dew and bubble branches");
+
+    JsonObject crit = obj.getAsJsonObject("criticalPoints");
+    assertTrue(crit.has("cricondenbar") && crit.has("cricondentherm"));
+    double ccbT = crit.getAsJsonObject("cricondenbar").get("temperature_C").getAsDouble();
+    double cctT = crit.getAsJsonObject("cricondentherm").get("temperature_C").getAsDouble();
+    assertTrue(ccbT > -120.0 && ccbT < 60.0, "Cricondenbar T unphysical: " + ccbT);
+    assertTrue(cctT >= ccbT - 1.0, "Cricondentherm T should not be below cricondenbar T");
   }
 
   @Test

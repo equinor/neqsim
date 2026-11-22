@@ -65,7 +65,9 @@ public interface InterphasePropertiesInterface extends Cloneable {
    *
    * @param i First phase number.
    * @param j Second phase number.
-   * @return Surface tension in default unit.
+   * @return finite, nonnegative surface tension in N/m, or zero for a single-phase system
+   * @throws IllegalArgumentException if a multiphase fluid is given identical or inactive phase indices
+   * @throws IllegalStateException if the state or calculated result is invalid
    */
   public double getSurfaceTension(int i, int j);
 

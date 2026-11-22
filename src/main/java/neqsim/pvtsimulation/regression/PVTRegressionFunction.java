@@ -1,7 +1,9 @@
 package neqsim.pvtsimulation.regression;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import org.apache.commons.lang3.SerializationUtils;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
 import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
 import neqsim.pvtsimulation.simulation.DifferentialLiberation;
@@ -23,6 +25,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   private SystemInterface baseFluid;
   private List<RegressionParameterConfig> parameterConfigs;
   private EnumMap<ExperimentType, Double> experimentWeights;
+  private List<DepletionExperiment> depletionExperiments = new ArrayList<>();
 
   /**
    * Create a PVT regression function.
@@ -33,8 +36,8 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   public PVTRegressionFunction(SystemInterface baseFluid, List<RegressionParameterConfig> parameterConfigs,
       EnumMap<ExperimentType, Double> experimentWeights) {
-    this.baseFluid = baseFluid;
-    this.parameterConfigs = parameterConfigs;
+    this.baseFluid = SerializationUtils.clone(baseFluid);
+    this.parameterConfigs = new ArrayList<>(parameterConfigs);
     this.experimentWeights = experimentWeights;
     this.params = new double[parameterConfigs.size()];
   }
@@ -52,8 +55,11 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   /** {@inheritDoc} */
   @Override
   public PVTRegressionFunction clone() {
-    PVTRegressionFunction cloned = new PVTRegressionFunction(baseFluid.clone(), parameterConfigs,
-        new EnumMap<>(experimentWeights));
+    PVTRegressionFunction cloned = (PVTRegressionFunction) super.clone();
+    cloned.parameterConfigs = new ArrayList<>(parameterConfigs);
+    cloned.experimentWeights = new EnumMap<>(experimentWeights);
+    // Protocols own immutable model snapshots and synchronized caches; observation clones share their results.
+    cloned.depletionExperiments = new ArrayList<>(depletionExperiments);
     if (this.params != null) {
       cloned.params = new double[this.params.length];
       System.arraycopy(this.params, 0, cloned.params, 0, this.params.length);
@@ -69,6 +75,27 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   }
 
   /**
+   * Register one complete isothermal CVD or DLE experiment before cloning its observation functions.
+   *
+   * <p>
+   * Each registration has its own model snapshot and ordered schedule. DLE retains its common final residual oil
+   * reference at 288.15 K and 1.01325 bara. Successful full-experiment results are shared across cloned observations
+   * for the same exact fitting-parameter vector, with at most eight cached vectors per experiment.
+   * </p>
+   *
+   * @param type CVD or DLE
+   * @param pressures complete ordered pressure schedule in bara
+   * @param temperature isothermal experiment temperature in K
+   * @return experiment index for dependentValues[4], with the original row index in dependentValues[5]
+   * @throws IllegalArgumentException if the protocol is malformed
+   */
+  public int registerDepletionExperiment(ExperimentType type, double[] pressures, double temperature) {
+    DepletionExperiment experiment = new DepletionExperiment(type, pressures, temperature, baseFluid, parameterConfigs);
+    depletionExperiments.add(experiment);
+    return depletionExperiments.size() - 1;
+  }
+
+  /**
    * Calculate the value for a given experimental data point.
    *
    * <p>
@@ -78,16 +105,36 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    * <li>[1] = temperature (K)</li>
    * <li>[2] = experiment type ordinal</li>
    * <li>[3] = property index (0=primary, 1=secondary, etc.)</li>
-   * <li>[4] = additional info (e.g., reservoir temperature for separator tests)</li>
+   * <li>[4] = registered depletion experiment index, or reservoir temperature for separator tests</li>
+   * <li>[5] = original depletion row index</li>
    * </ul>
+   * Four-entry CVD/DLE arrays explicitly describe independent single-pressure experiments for compatibility; use a
+   * registered six-entry observation for a full depletion history. Five-entry depletion observations are invalid.
    *
    * @param dependentValues array of dependent values for this data point
-   * @return calculated value
+   * @return calculated value for a supported regression target
+   * @throws IllegalArgumentException if the array is incomplete or the experiment ordinal is not a valid integer
+   * @throws UnsupportedOperationException if the experiment protocol is not implemented for regression
    */
   @Override
   public double calcValue(double[] dependentValues) {
+    ExperimentType experimentType = validateExperimentType(dependentValues);
+    if ((experimentType == ExperimentType.CVD || experimentType == ExperimentType.DLE) && dependentValues.length != 4) {
+      if (dependentValues.length != 6) {
+        throw new IllegalArgumentException("Depletion observations require four singleton or six protocol entries");
+      }
+      int experiment = exactIndex(dependentValues[4], "experiment");
+      int row = exactIndex(dependentValues[5], "row");
+      int property = exactIndex(dependentValues[3], "property");
+      if (experiment >= depletionExperiments.size()) {
+        throw new IllegalArgumentException("Unknown depletion experiment index: " + experiment);
+      }
+      return depletionExperiments.get(experiment).value(experimentType, dependentValues[0], dependentValues[1], row,
+          property, params);
+    }
+
     // Apply current parameters to a cloned fluid
-    SystemInterface tunedFluid = baseFluid.clone();
+    SystemInterface tunedFluid = SerializationUtils.clone(baseFluid);
     for (int i = 0; i < parameterConfigs.size(); i++) {
       RegressionParameter param = parameterConfigs.get(i).getParameter();
       param.applyToFluid(tunedFluid, params[i]);
@@ -98,10 +145,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     // Parse dependent values
     double pressure = dependentValues[0];
     double temperature = dependentValues[1];
-    int experimentTypeOrdinal = (int) dependentValues[2];
     int propertyIndex = (int) dependentValues[3];
-
-    ExperimentType experimentType = ExperimentType.values()[experimentTypeOrdinal];
 
     // Calculate appropriate property based on experiment type
     switch (experimentType) {
@@ -117,7 +161,54 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     case VISCOSITY:
       return calculateViscosityValue(tunedFluid, pressure, temperature, propertyIndex);
     default:
-      return 0.0;
+      throw new IllegalStateException("No calculation dispatch for supported PVT regression target " + experimentType);
+    }
+  }
+
+  /**
+   * Decode a nonnegative integer identity without truncation.
+   *
+   * @param value public observation value
+   * @param name identity name for diagnostics
+   * @return exact integer index
+   * @throws IllegalArgumentException if the value is not an integer index
+   */
+  private static int exactIndex(double value, String name) {
+    if (!Double.isFinite(value) || value < 0.0 || value != Math.rint(value) || value > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Invalid depletion " + name + " index: " + value);
+    }
+    return (int) value;
+  }
+
+  /**
+   * Validates the target before cloning fluids, applying fitting parameters or starting calculations.
+   *
+   * @param dependentValues public dependent-variable array
+   * @return implemented regression experiment type
+   * @throws IllegalArgumentException if the array or ordinal is malformed
+   * @throws UnsupportedOperationException if the target has no implemented regression protocol
+   */
+  private ExperimentType validateExperimentType(double[] dependentValues) {
+    if (dependentValues == null || dependentValues.length < 4) {
+      throw new IllegalArgumentException(
+          "PVT regression requires pressure, temperature, experiment ordinal and property index");
+    }
+    double ordinal = dependentValues[2];
+    ExperimentType[] types = ExperimentType.values();
+    if (!Double.isFinite(ordinal) || ordinal != Math.rint(ordinal) || ordinal < 0.0 || ordinal >= types.length) {
+      throw new IllegalArgumentException("Invalid PVT regression experiment ordinal: " + ordinal);
+    }
+    ExperimentType type = types[(int) ordinal];
+    switch (type) {
+    case CCE:
+    case CVD:
+    case DLE:
+    case SEPARATOR:
+    case VISCOSITY:
+      return type;
+    default:
+      throw new UnsupportedOperationException("PVT regression target " + type
+          + " is not implemented; supported targets are CCE, CVD, DLE, SEPARATOR and VISCOSITY");
     }
   }
 
@@ -126,7 +217,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   private double calculateCCEValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     ConstantMassExpansion cme = new ConstantMassExpansion(fluid);
-    cme.setPressures(new double[] { pressure });
+    cme.setPressures(new double[] {pressure});
     cme.setTemperature(temperature, "K");
     cme.runCalc();
 
@@ -147,7 +238,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   private double calculateCVDValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(fluid);
-    cvd.setPressures(new double[] { pressure });
+    cvd.setPressures(new double[] {pressure});
     cvd.setTemperature(temperature, "K");
     cvd.runCalc();
 
@@ -174,7 +265,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   private double calculateDLEValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     DifferentialLiberation dle = new DifferentialLiberation(fluid);
-    dle.setPressures(new double[] { pressure });
+    dle.setPressures(new double[] {pressure});
     dle.setTemperature(temperature, "K");
     dle.runCalc();
 

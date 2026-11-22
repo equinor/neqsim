@@ -18,6 +18,11 @@ evaporation and gas for dissolution. Hydrodynamic holdup or void fraction is nev
 continuous liquid reaches thermodynamic saturation before the injected gas meets the criterion, the result is
 incomplete and reports the full profile to the pipe outlet; the solver does not force phase removal.
 
+For elapsed-time drying of residual liquid after pigging, see the experimental
+[TwoFluidPipe film-transfer route](../process/TwoFluidPipeFilmDrying.md). It initializes liquid
+inventory independently and couples finite-rate transfer to gas and liquid momentum. The axial
+`WALL_FILM` option above does not represent that initial-value problem.
+
 ## Model formulation
 
 At each accepted axial position the model creates a local NeqSim droplet, bubble, or annular flow node and solves the
@@ -249,3 +254,15 @@ Recommended project validation is:
   [hdl:11250/231326](https://hdl.handle.net/11250/231326).
 - OpenFOAM Foundation, `LiquidEvaporationBoil` source documentation,
   [cpp.openfoam.org](https://cpp.openfoam.org/v4/LiquidEvaporationBoil_8C_source.html).
+
+## Fallback latent-heat units and qualification
+
+The fallback interphase heat-flux path consumes component saturation latent heat in
+J/mol directly. Multiplication by signed component flux in mol/(m2 s) gives W/m2;
+no additional factor of 1000 is applied. Missing or out-of-domain component
+correlations are omitted by this fallback. This approximation is not independently
+qualified coupled enthalpy transport. The shipped latent-heat coefficient sets also
+require per-fluid validation; see the
+[property-method audit](../physical_properties/method_alignment_audit.md#coefficient-based-saturation-latent-heat)
+for the known benzene parameter discrepancy and the distinction between an equation
+unit check and an experimental thermal/evaporation benchmark.

@@ -37,7 +37,7 @@ public class process2 {
     Stream stream_1 = new Stream("Stream1", testSystem);
 
     Heater heater = new Heater("heater", stream_1);
-    heater.setOutTemperature(310.0);
+    heater.setOutletTemperature(310.0);
 
     MixerInterface mixer = new StaticMixer("Mixer 1");
     mixer.addStream(heater.getOutletStream());

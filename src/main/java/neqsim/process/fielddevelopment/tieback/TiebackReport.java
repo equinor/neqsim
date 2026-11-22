@@ -236,10 +236,10 @@ public class TiebackReport implements Serializable {
     }
 
     if (min == Double.MAX_VALUE) {
-      return new double[] { 0, 0 };
+      return new double[] {0, 0};
     }
 
-    return new double[] { min, max };
+    return new double[] {min, max};
   }
 
   /**
@@ -264,10 +264,10 @@ public class TiebackReport implements Serializable {
     }
 
     if (min == Double.MAX_VALUE) {
-      return new double[] { 0, 0 };
+      return new double[] {0, 0};
     }
 
-    return new double[] { min, max };
+    return new double[] {min, max};
   }
 
   /**

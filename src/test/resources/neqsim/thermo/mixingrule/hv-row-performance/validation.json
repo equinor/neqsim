@@ -1,0 +1,89 @@
+{
+  "baseline_head": "f1982968aac7dd2bf02340fe13a97635462e624f",
+  "production_evaluator_git_blob": "ccda7017ce553a6c76ea6412e70c38053ef285b6",
+  "production_evaluator_class_sha256": "0a5cb86a7b0439c120c5fbda9067c993df78f02f491ec873329893c85354e3ad",
+  "native": {
+    "runtime": "OpenJDK17.0.20+8",
+    "tests": 144,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "jacoco_analyzed_classes": 6381,
+    "command": "mvn -o -B -ntp -Dmaven.repo.local=<private-cache> '-Dtest=HuronVidal*Test,ComponentGENRTLmodifiedHV*Test,CubicPureSaturationTest' test",
+    "exit": 0
+  },
+  "api8": {
+    "command": "java --add-modules jdk.compiler com.sun.tools.javac.Main --release 8 -g -cp <classes:test-dependencies> -d <private-output> <evaluator-or-test-source>",
+    "class_major": 52,
+    "exit": 0,
+    "native_runtime8": "Not executed locally; hosted CI required"
+  },
+  "probes": {
+    "records": 280,
+    "numeric_values": 4200,
+    "comparison": "Every CSV field, metadata, pure request count and hexadecimal numeric representation exactly equal baseline",
+    "exit": 0
+  },
+  "python": {
+    "new_guards": 7,
+    "new_guards_optimized": 7,
+    "adjacent_available": 73,
+    "adjacent_subtests": 30,
+    "deselected": 1,
+    "full_attempt": "73 passed; one existing profile-archive test failed because the connector did not return prior profiles.zip",
+    "unavailable_blob": "ca53685295b06945b7b9244f216697c194fb70db",
+    "preservation": "Prior blob retained on remote base tree, no deletion/replacement, test and CI invocation unchanged"
+  },
+  "gates": {
+    "spotless_apply": "Passed stable after clearing stale local format/build outputs",
+    "spotless_check": "Passed",
+    "documentation_search": "Passed:828 Markdown/1 HTML",
+    "pre_commit": "Passed --all-files --hook-stage pre-commit",
+    "pre_push": "Passed --all-files --hook-stage pre-push",
+    "engineering_coverage": "Regenerated and --check passed; no generated-file diff",
+    "javadoc": "Changed Java test, private, -Xdoclint:all: exit0"
+  },
+  "superseded": "Earlier supposed-baseline validation still used held selector source/class after stale local restore/build state. It is excluded as baseline acceptance. Owned outputs were cleared, baseline rewritten with current timestamp, source verified after each formatting gate, all3633 main and2776 test sources rebuilt, and evaluator source/class both independently matched baseline before these final receipts",
+  "logs": {
+    "validation-adjacent-python-available.log": "11c57375e8d15680ce89120ba1469b354fff0b8f43a499d8528f97c9bc148fb1",
+    "validation-adjacent-python-tests-final.log": "85cd6e71e354766560fa3f8eb1529a24e2e0cdc9767f7516c952fff7bfef8ed7",
+    "validation-docs-search.log": "ea5bcda4f5845907b5a62178873361ee555f903dd42f296c934bce5d2002cd99",
+    "validation-final-api8-probes.log": "f2c91339e5c59883d50d66d6e396a8438e5a26f4e67d17319c02a1a3dfd97612",
+    "validation-final-javadoc-strict.log": "2c71c417472d9f736c6fbc2bdb935d2bc0f8b5c12d1a06b79948824ca3f3799a",
+    "validation-final-native-tests.log": "4bca264746e0039ed9146a9772feab14a3e43b7ab1e99b298771d08ed32036c6",
+    "validation-new-python-tests-optimized.log": "10d36e099fb3d88a0e4538caf3d170ce920547a265115fac049cfc85c2d8e38a",
+    "validation-new-python-tests.log": "eb8275c85953fab23606c794589b358e465a606f5582ef953dcf2727e20353aa",
+    "validation-pre-commit.log": "68e29fed5ad1d61ddead254fe6880a0e8153a92af2f4d1cdc779dd081523d8f6",
+    "validation-pre-push.log": "84113b2fa93d8c167a621ce71882c4c96344f3ead8643bf94b27c32e9dd25f9c",
+    "validation-spotless-check.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "log_archive": {
+    "path": "validation.zip",
+    "bytes": 7162,
+    "sha256": "b3a7db8b231e93cfa6c3ff58dc5de21b9b7c36a6925d452ff52a145c0d4406f8"
+  },
+  "publication_parent": "5d0edbdf6f9e75a89f8f7337b4769d8cb24b2694",
+  "reconciliation": {
+    "native_tests": 144,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "jacoco_analyzed_classes": 6381,
+    "adjacent_python_tests": 77,
+    "adjacent_subtests": 66,
+    "unavailable_prior_profile_archive_tests": 1,
+    "generated_coverage_git_blob": "faf53fdccc617a22dd935a663ee981925f612f07",
+    "preserved_peer_head": "4800:22aa495d99e361c7c9764a56ba64086108904d8f",
+    "log_archive": {
+      "path": "reconciliation.zip",
+      "bytes": 2786,
+      "sha256": "10f5a6831d319a81afaf035456df72ba8a0c7704e6bfa92ae3b1f0e7f3f9cedc"
+    },
+    "logs": {
+      "reconciled-native-tests.log": "86d836cffce1c3f7bc8c31c969f8f64f74a6637ac4f62a271f53b3810b57b3ca",
+      "reconciled-python-adjacent.log": "c2ab317cd48b501bf2af7bcb4d57533410b0ebd3667688f04099d60f9d2c2aeb",
+      "reconciled-coverage.log": "e58619f69baa8e7c6f1ff3afc481458b6374f503039c5c924b9a85bd74bfefed"
+    },
+    "boundary": "57 intervening master files inspected; no HV, thermodynamic-operations or pure-data/pom change. Timing remains on f198 and is not relabelled as current-head timing"
+  }
+}

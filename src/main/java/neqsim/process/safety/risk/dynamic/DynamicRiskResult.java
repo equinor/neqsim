@@ -1,6 +1,5 @@
 package neqsim.process.safety.risk.dynamic;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +21,7 @@ import neqsim.process.safety.risk.OperationalRiskResult;
  * @author NeqSim Development Team
  * @version 1.0
  */
-public class DynamicRiskResult extends OperationalRiskResult implements Serializable {
+public class DynamicRiskResult extends OperationalRiskResult {
 
   private static final long serialVersionUID = 1000L;
 

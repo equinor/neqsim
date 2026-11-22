@@ -277,6 +277,7 @@ public class SafetyEnvelopeCalculator {
 
         ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
         ops.TPflash();
+        tempFluid.init(2);
 
         // Calculate minimum temperature during isentropic expansion to atmospheric
         double gamma = tempFluid.getGamma();
@@ -314,10 +315,10 @@ public class SafetyEnvelopeCalculator {
    * @return array of all calculated envelopes
    */
   public SafetyEnvelope[] calculateAllEnvelopes(double minPressure, double maxPressure, int numPoints) {
-    return new SafetyEnvelope[] { calculateHydrateEnvelope(minPressure, maxPressure, numPoints),
+    return new SafetyEnvelope[] {calculateHydrateEnvelope(minPressure, maxPressure, numPoints),
         calculateWaxEnvelope(minPressure, maxPressure, numPoints),
         calculateCO2FreezingEnvelope(minPressure, maxPressure, numPoints),
-        calculateMDMTEnvelope(minPressure, maxPressure, 300.0, numPoints), calculatePhaseEnvelope(numPoints) };
+        calculateMDMTEnvelope(minPressure, maxPressure, 300.0, numPoints), calculatePhaseEnvelope(numPoints)};
   }
 
   /**

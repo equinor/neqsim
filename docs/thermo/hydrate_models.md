@@ -6,6 +6,10 @@ keywords: "hydrate, gas hydrate, hydrate formation, hydrate curve, hydrate inhib
 
 This document describes the gas hydrate thermodynamic models implemented in NeqSim for predicting hydrate formation, stability, and phase equilibrium.
 
+For electrolyte water activities, see [Pitzer hydrate equilibrium for brines](pitzer_hydrate_equilibrium.md).
+`SystemPitzer` uses `ComponentHydratePitzer` for a consistent aqueous water reference and supports
+onset temperature, pressure and curves. Its hydrate amount, ice and subzero calculations are not supported.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -40,6 +44,10 @@ Gas hydrates (clathrate hydrates) are ice-like crystalline compounds formed when
 
 NeqSim supports two common hydrate crystal structures:
 
+Structure H experimental data and preliminary system-correlation fits are
+available for [parameter qualification](./structure_h_parameter_qualification.md).
+They do not enable sH equilibrium or supply qualified sH component parameters.
+
 ### Structure I (sI)
 
 | Property | Small Cavity (5¹²) | Large Cavity (5¹²6²) |
@@ -68,11 +76,17 @@ NeqSim supports two common hydrate crystal structures:
 
 ### Structure Selection
 
-The algorithm automatically selects the most stable structure based on Gibbs energy minimization. For mixed gases, the structure depends on composition:
+The default hydrate component model compares the water fugacity of sI and sII at the current fluid guest fugacities.
+`TPHydrateFlash` updates this selection as guests are withdrawn and the fluid is reflashed. It retains one hydrate
+structure; this is not a global Gibbs minimization over simultaneous sI, sII, sH, ice and other solids. The selected
+hydrate composition includes both cavity populations and their empty-site fractions. See
+[Hydrate flash operations](../thermodynamicoperations/hydrate_flash_operations.md) for equations, diagnostics and limits.
+
+For mixed gases, the structure depends on composition:
 
 ```java
 // Get the stable hydrate structure (1 = sI, 2 = sII)
-int structure = fluid.getPhase(PhaseType.HYDRATE).getComponent("methane").getHydrateStructure();
+int structure = ((PhaseHydrate) fluid.getPhase(PhaseType.HYDRATE)).getStableHydrateStructure();
 ```
 
 ---
@@ -113,6 +127,31 @@ where $w(r)$ is the spherically averaged Kihara cell potential.
 
 ## Available Hydrate Models
 
+### Which model a fluid system uses
+
+`setHydrateCheck(true)` creates the hydrate phase with `new PhaseHydrate(system)`, which selects the cavity model
+from the **class family** of the fluid system (`PhaseHydrate.hydrateModelFor`). `PhaseHydrate.getHydrateModel()`
+reports the choice.
+
+| Fluid system | Hydrate model | Component class |
+|---|---|---|
+| `SystemSrkCPA` and all subclasses: `SystemSrkCPAs`, `SystemSrkCPAstatoil`, `...FullyImplicit`, `...Reduced`, `...FullyImplicitReduced`, `...BroydenImplicit`, `...AndersonMixing`, `...AndersonReduced`, `SystemElectrolyteCPAMM` | CPA | `ComponentHydrateGF` |
+| `SystemElectrolyteCPAstatoil`, `SystemElectrolyteCPA`, `SystemElectrolyteCPAAdvanced` | CPA | `ComponentHydrateGF` |
+| `SystemPitzer` | Pitzer | `ComponentHydratePitzer` |
+| `SystemPrCPA`, `SystemUMRCPAEoS`, SRK, PR and all other systems | PVTsim | `ComponentHydratePVTsim` |
+
+The CPA cavity parameters were regressed with SRK-CPA, so PR-CPA and UMR-CPA keep the PVTsim parameters.
+
+Before November 2026 the choice used an exact model-name match, so the CPA solver variants and
+`SystemElectrolyteCPAAdvanced` fell back to the PVTsim parameters. Measured on 21 Nov 2026 at 100 bara: methane +
+water gave 12.76 °C with `SystemSrkCPAstatoil` but 12.99 °C with `SystemSrkCPAstatoilFullyImplicit`/`Reduced`;
+gas + oil + 5 wt% NaCl gave 17.12 °C (e-CPA) versus 17.56 °C (e-CPA-Advanced). All variants now give the
+`SystemSrkCPAstatoil` result, so changing the CPA association solver for speed no longer changes the hydrate
+temperature. `PhaseHydrateModelSelectionTest` guards this.
+
+The hydrate temperature and pressure operations add the hydrate phase themselves when `setHydrateCheck(true)` has
+not been called; calling it explicitly remains the documented pattern.
+
 ### CPA Hydrate Model (Statoil/Equinor)
 
 **Class:** `ComponentHydrateGF`, `ComponentHydrateStatoil`
@@ -148,6 +187,12 @@ The multiphase flash solves the molecular gas-oil-aqueous split on a normalized 
 conserved ion inventory to the aqueous phase. This keeps ions out of gas and oil while satisfying the component balance
 $z_i = \sum_p \beta_p x_{i,p}$. Salt and organic inhibitor effects enter the hydrate calculation through the water
 fugacity of the converged aqueous phase.
+
+CPA initialization excludes association sites only for components whose overall mole fraction
+is at or below the numerical trace cutoff of $10^{-20}$. It uses the current component and total
+mole counts before resetting phase compositions. A component depleted in a previous phase split
+must retain its sites when its overall concentration is material; otherwise solvent reference
+fugacities, activities, and the resulting salt inhibition can be corrupted.
 
 For a reactive fluid, call `chemicalReactionInit()` before creating the database and selecting the mixing rule. Phase
 and chemical equilibrium are then iterated together. Reactions may change the species inventory—for example, dissolved
@@ -355,24 +400,55 @@ double requiredMEGwt = fluid.getPhase("aqueous").getComponent("MEG").getwtfrac()
 
 ### Basic Hydrate Check
 
+The program below is complete Java 8 source. It calculates the hydrate formation temperature at
+100 bara and fails closed if the operation returns a non-finite or physically implausible result.
+The `main` method propagates `IsNaNException` if the hydrate calculation cannot return a result.
+
+<!-- hydrate-models-example: java-quickstart -->
 ```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.exception.IsNaNException;
 
-// Create fluid at potential hydrate conditions
-SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.08);
-fluid.addComponent("propane", 0.04);
-fluid.addComponent("water", 0.03);
-fluid.setMixingRule(10);
-fluid.setHydrateCheck(true);  // Enable hydrate phase
+/**
+ * Calculates the hydrate formation temperature for a wet gas at 100 bara.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
+public final class HydrateFormationQuickStart {
+  /** Prevents instantiation of this example utility. */
+  private HydrateFormationQuickStart() {}
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+  /**
+   * Runs the hydrate calculation and rejects an invalid result.
+   *
+   * @param args command-line arguments (unused)
+   * @throws IsNaNException if the hydrate calculation cannot return a result
+   */
+  public static void main(String[] args) throws IsNaNException {
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("water", 0.03);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+    fluid.setHydrateCheck(true);
 
-// Calculate hydrate formation temperature
-ops.hydrateFormationTemperature();
-System.out.println("Hydrate formation T: " + fluid.getTemperature("C") + " °C");
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.hydrateFormationTemperature();
+
+    double hydrateTemperatureC = fluid.getTemperature("C");
+    if (!Double.isFinite(hydrateTemperatureC)
+        || hydrateTemperatureC <= -30.0
+        || hydrateTemperatureC >= 25.0) {
+      throw new IllegalStateException(
+          "Unexpected hydrate formation temperature: " + hydrateTemperatureC + " C");
+    }
+  }
+}
 ```
 
 ### Hydrate Equilibrium Curve
@@ -441,20 +517,18 @@ The model correctly predicts additive water activity behavior:
 
 The actual combined ln(a_w) of -0.884 is slightly more negative than the expected -0.843, indicating the model predicts **slightly stronger than additive** inhibition, which is physically reasonable.
 
-### Gas-Ion Interaction Parameters (Salting-Out Effect)
+### Gas-Ion Interaction Parameters
 
-The electrolyte CPA model includes fitted gas-ion interaction parameters (Wij) to correctly predict the salting-out effect of dissolved gases:
+Electrolyte CPA contains legacy gas-ion short-range coefficients whose generic
+source basis has not been independently reconstructed. They must not be read as
+measured Setschenow coefficients or as blanket hydrate qualification.
 
-| Gas | k_s (L/mol) | W_cation | W_anion |
-|-----|-------------|----------|---------|
-| CO₂ | 0.10 | 1.05e-4 | 1.05e-4 |
-| CH₄ | 0.12 | 1.10e-4 | 1.10e-4 |
-| C₂H₆ | 0.13 | 1.13e-4 | 1.13e-4 |
-| C₃H₈ | 0.14 | 1.15e-4 | 1.15e-4 |
-| C₄ | 0.15 | 1.20e-4 | 1.20e-4 |
-| C₅+ | 0.16 | 1.25e-4 | 1.25e-4 |
-| N₂ | 0.10-0.12 | 1.05e-4 | 1.05e-4 |
-| H₂S | 0.06-0.08 | 1.10e-4 | 1.10e-4 |
+The `SystemElectrolyteCPAstatoil` CO2/K+ default has a narrower, reproducible
+source basis: the Onda et al. (1970) KCl correlation at 298.15 K. Dholabhai K10
+and K15 hydrate points remain independent diagnostics, and no
+hydrate-temperature offset is applied. See
+[CO2–KCl interaction provenance](./co2_kcl_interaction_provenance.md) for the
+coefficient allocation, holdouts, and limitations.
 
 ### Organic Inhibitor-Ion Parameters
 

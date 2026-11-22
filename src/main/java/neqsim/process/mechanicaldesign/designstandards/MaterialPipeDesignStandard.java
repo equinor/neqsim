@@ -30,7 +30,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
    */
   public MaterialPipeDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
-    readMaterialDesignStandard("Carbon Steel Pipe", "A25");
+    readMaterialDesignStandard("API5L", "A25");
   }
 
   /**
@@ -49,6 +49,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
    */
   public void setDesignFactor(double designFactor) {
     this.designFactor = designFactor;
+    this.designFactorExplicitlySet = true;
   }
 
   /**
@@ -67,6 +68,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
    */
   public void setEfactor(double Efactor) {
     this.Efactor = Efactor;
+    this.efactorExplicitlySet = true;
   }
 
   /**
@@ -93,6 +95,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
    * @return the minimumYeildStrength
    */
   public double getMinimumYeildStrength() {
+    if (!(minimumYeildStrength > 0.0)) {
+      throw new IllegalStateException("No pipe material strength loaded for " + specificationNumber + " / " + grade);
+    }
     return minimumYeildStrength;
   }
 
@@ -105,42 +110,64 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     this.minimumYeildStrength = minimumYeildStrength;
   }
 
+  /**
+   * Indicates whether the material-standard design factor was explicitly overridden.
+   *
+   * @return true for an explicit setter value
+   */
+  public boolean isDesignFactorExplicitlySet() {
+    return designFactorExplicitlySet;
+  }
+
+  /**
+   * Indicates whether the material-standard joint factor was explicitly overridden.
+   *
+   * @return true for an explicit setter value
+   */
+  public boolean isEfactorExplicitlySet() {
+    return efactorExplicitlySet;
+  }
+
   String grade = "";
   String specName = "";
   String specificationNumber = "";
-  private double minimumYeildStrength = 35000 * 0.00689475729;
+  private double minimumYeildStrength = Double.NaN;
   private double designFactor = 0.8;
+  private boolean designFactorExplicitlySet;
   private double Efactor = 1.0;
+  private boolean efactorExplicitlySet;
   private double temperatureDeratingFactor = 1.0;
 
   /**
-   * readMaterialDesignStandard.
+   * Loads a pipe yield strength by specification number and grade; misses invalidate the prior value.
    *
    * @param specNo a {@link java.lang.String} object
    * @param grade a {@link java.lang.String} object
+   * @throws IllegalArgumentException if the selection is empty or has no material row
+   * @throws IllegalStateException if the database cannot supply a valid strength
    */
   public void readMaterialDesignStandard(String specNo, String grade) {
-    this.grade = grade;
-    specificationNumber = specNo;
-
+    minimumYeildStrength = Double.NaN;
+    if (specNo == null || specNo.trim().isEmpty() || grade == null || grade.trim().isEmpty()) {
+      throw new IllegalArgumentException("Pipe specification and grade must not be empty");
+    }
+    this.grade = neqsim.process.mechanicaldesign.pipeline.Api5LGrade.normalize(grade);
+    specificationNumber = specNo.trim();
+    String query = "SELECT * FROM materialpipeproperties WHERE UPPER(specificationNumber)=UPPER('"
+        + specificationNumber.replace("'", "''") + "') AND UPPER(grade)='" + this.grade.replace("'", "''") + "'";
     try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      try (java.sql.ResultSet dataSet = database
-          .getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='" + specificationNumber
-              + "' AND grade='" + grade + "'"))) {
-        while (dataSet.next()) {
-          minimumYeildStrength = (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
-          // design factor table has to be developed
-          // Efactor table has to be implemented
-          // temperatureDeratingFactor has to be implemented
-        }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet(query)) {
+      if (!dataSet.next()) {
+        throw new IllegalArgumentException("No pipe material data for " + specificationNumber + " / " + this.grade);
       }
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      logger.error(e.getMessage());
+      double strength = dataSet.getDouble("minimumYeildStrength") * 0.00689475729;
+      if (!(strength > 0.0) || !Double.isFinite(strength)) {
+        throw new IllegalStateException("Invalid pipe yield strength for " + specificationNumber + " / " + this.grade);
+      }
+      minimumYeildStrength = strength;
+    } catch (java.sql.SQLException ex) {
+      throw new IllegalStateException("Unable to load pipe material " + specificationNumber + " / " + this.grade, ex);
     }
   }
 }

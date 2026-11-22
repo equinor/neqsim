@@ -1,0 +1,589 @@
+schema_version: plant_layout_study.v1
+project:
+  id: SYN-OFFSHORE-001
+  title: Synthetic three-deck offshore processing module
+  revision: A
+  maturity: SCREENING
+  facility_type: offshore_fixed
+  jurisdiction: synthetic
+coordinate_system:
+  length_unit: m
+  mass_unit: kg
+  origin:
+  - 0
+  - 0
+  - 0
+  north_deg: 0
+  elevation_datum: project datum
+decks:
+- id: LOWER
+  width_m: 36
+  depth_m: 24
+  elevation_m: 0
+  height_limit_m: 7
+  mass_limit_kg: 150000
+- id: MAIN
+  width_m: 36
+  depth_m: 24
+  elevation_m: 8
+  height_limit_m: 7
+  mass_limit_kg: 200000
+- id: UPPER
+  width_m: 36
+  depth_m: 24
+  elevation_m: 16
+  height_limit_m: 8
+  mass_limit_kg: 120000
+equipment:
+- tag: V-101
+  kind: separator
+  size_m:
+  - 6
+  - 3
+  - 4
+  mass_kg: 22000
+  allowed_decks:
+  - LOWER
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 6
+    - 0
+    - 0
+    - 7.5
+    - 3
+    - 4
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 6
+    - 0
+    - 2.2
+- tag: V-102
+  kind: separator
+  size_m:
+  - 5
+  - 3
+  - 4
+  mass_kg: 18000
+  allowed_decks:
+  - LOWER
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 5
+    - 0
+    - 0
+    - 6.5
+    - 3
+    - 4
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 5
+    - 0
+    - 2.2
+- tag: P-101
+  kind: pump
+  size_m:
+  - 3
+  - 2
+  - 2
+  mass_kg: 3500
+  allowed_decks:
+  - LOWER
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 3
+    - 0
+    - 0
+    - 4.5
+    - 2
+    - 2
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 3
+    - 0
+    - 2.2
+- tag: K-101
+  kind: compressor
+  size_m:
+  - 6
+  - 4
+  - 4
+  mass_kg: 28000
+  allowed_decks:
+  - MAIN
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 6
+    - 0
+    - 0
+    - 7.5
+    - 4
+    - 4
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 6
+    - 0
+    - 2.2
+- tag: E-101
+  kind: heat_exchanger
+  size_m:
+  - 5
+  - 3
+  - 3
+  mass_kg: 12000
+  allowed_decks:
+  - MAIN
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 5
+    - 0
+    - 0
+    - 6.5
+    - 3
+    - 3
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 5
+    - 0
+    - 2.2
+- tag: V-103
+  kind: scrubber
+  size_m:
+  - 4
+  - 3
+  - 5
+  mass_kg: 10000
+  allowed_decks:
+  - MAIN
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 4
+    - 0
+    - 0
+    - 5.5
+    - 3
+    - 5
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 4
+    - 0
+    - 2.2
+- tag: P-102
+  kind: pump
+  size_m:
+  - 3
+  - 2
+  - 2
+  mass_kg: 3500
+  allowed_decks:
+  - UPPER
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 3
+    - 0
+    - 0
+    - 4.5
+    - 2
+    - 2
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 3
+    - 0
+    - 2.2
+- tag: U-101
+  kind: utility_package
+  size_m:
+  - 5
+  - 3
+  - 3
+  mass_kg: 8000
+  allowed_decks:
+  - UPPER
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 5
+    - 0
+    - 0
+    - 6.5
+    - 3
+    - 3
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 5
+    - 0
+    - 2.2
+- tag: U-102
+  kind: electrical_package
+  size_m:
+  - 4
+  - 3
+  - 3
+  mass_kg: 6000
+  allowed_decks:
+  - UPPER
+  rotations_deg:
+  - 0
+  - 90
+  dimension_source:
+    kind: synthetic_assumption
+    reference: 'SYNTHETIC-BASIS-001: assumed installed package dimensions, not vendor
+      data'
+  envelopes:
+  - kind: maintenance
+    bounds_m:
+    - 4
+    - 0
+    - 0
+    - 5.5
+    - 3
+    - 3
+  - kind: operation
+    bounds_m:
+    - 0
+    - -1
+    - 0
+    - 4
+    - 0
+    - 2.2
+connections:
+- id: LINE-001
+  from_tag: V-101
+  to_tag: V-102
+  service: liquid
+- id: LINE-002
+  from_tag: V-102
+  to_tag: P-101
+  service: oil
+- id: LINE-003
+  from_tag: V-101
+  to_tag: K-101
+  service: gas
+- id: LINE-004
+  from_tag: K-101
+  to_tag: E-101
+  service: gas
+- id: LINE-005
+  from_tag: E-101
+  to_tag: V-103
+  service: gas
+- id: LINE-006
+  from_tag: V-101
+  to_tag: P-102
+  service: water
+- id: LINE-007
+  from_tag: U-101
+  to_tag: K-101
+  service: utility
+- id: LINE-008
+  from_tag: U-102
+  to_tag: K-101
+  service: power_interface
+corridors:
+- id: LOWER-ESC-1
+  deck: LOWER
+  bounds_m:
+  - 0
+  - 0
+  - 36
+  - 2
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: LOWER-ESC-2
+  deck: LOWER
+  bounds_m:
+  - 0
+  - 22
+  - 36
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: LOWER-ESC-3
+  deck: LOWER
+  bounds_m:
+  - 0
+  - 0
+  - 2
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: LOWER-ESC-4
+  deck: LOWER
+  bounds_m:
+  - 34
+  - 0
+  - 36
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: MAIN-ESC-1
+  deck: MAIN
+  bounds_m:
+  - 0
+  - 0
+  - 36
+  - 2
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: MAIN-ESC-2
+  deck: MAIN
+  bounds_m:
+  - 0
+  - 22
+  - 36
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: MAIN-ESC-3
+  deck: MAIN
+  bounds_m:
+  - 0
+  - 0
+  - 2
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: MAIN-ESC-4
+  deck: MAIN
+  bounds_m:
+  - 34
+  - 0
+  - 36
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: UPPER-ESC-1
+  deck: UPPER
+  bounds_m:
+  - 0
+  - 0
+  - 36
+  - 2
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: UPPER-ESC-2
+  deck: UPPER
+  bounds_m:
+  - 0
+  - 22
+  - 36
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: UPPER-ESC-3
+  deck: UPPER
+  bounds_m:
+  - 0
+  - 0
+  - 2
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+- id: UPPER-ESC-4
+  deck: UPPER
+  bounds_m:
+  - 34
+  - 0
+  - 36
+  - 24
+  kind: escape
+  source: SYNTHETIC-BASIS-001
+exits:
+- id: LOWER-EXIT-W
+  deck: LOWER
+  x_m: 1
+  y_m: 1
+- id: LOWER-EXIT-E
+  deck: LOWER
+  x_m: 35
+  y_m: 1
+- id: MAIN-EXIT-W
+  deck: MAIN
+  x_m: 1
+  y_m: 1
+- id: MAIN-EXIT-E
+  deck: MAIN
+  x_m: 35
+  y_m: 1
+- id: UPPER-EXIT-W
+  deck: UPPER
+  x_m: 1
+  y_m: 1
+- id: UPPER-EXIT-E
+  deck: UPPER
+  x_m: 35
+  y_m: 1
+obstacles: []
+rules:
+- id: SYN-SEPARATION-001
+  kind: minimum_separation
+  required: true
+  from_tag: V-101
+  to_tag: K-101
+  minimum_m: 1.0
+  source:
+    kind: project_requirement
+    reference: 'SYNTHETIC-BASIS-001: training-only geometric criterion; not a recommended
+      safe distance'
+    access_status: verified_full_text
+- id: HAZARD-ASSESSMENT
+  kind: required_evidence
+  required: true
+  description: Qualified fire/explosion/toxic exposure and hazardous-area studies
+  source:
+    kind: project_requirement
+    reference: 'SYNTHETIC-BASIS-001: safety design remains outside this synthetic
+      example'
+    access_status: verified_full_text
+- id: ESCAPE-INDEPENDENCE
+  kind: required_evidence
+  required: true
+  description: Independent safe evacuation under governing common hazard scenarios
+  source:
+    kind: project_requirement
+    reference: 'SYNTHETIC-BASIS-001: corridor connectivity is not evacuation qualification'
+    access_status: verified_full_text
+- id: VENDOR-PACKAGE-CONFIRMATION
+  kind: required_evidence
+  required: true
+  description: Verified installed dimensions, auxiliaries, maintenance and lifting
+    envelopes
+  source:
+    kind: project_requirement
+    reference: 'SYNTHETIC-BASIS-001: all dimensions are synthetic assumptions'
+    access_status: verified_full_text
+- id: STRUCTURAL-MARINE-VERIFICATION
+  kind: required_evidence
+  required: true
+  description: Deck strength, dry/operating/test and construction/maintenance loads,
+    CoG and marine interfaces
+  source:
+    kind: project_requirement
+    reference: 'SYNTHETIC-BASIS-001: assumed mass limits do not establish structural
+      adequacy'
+    access_status: verified_full_text
+standards:
+- document: NORSOK S-001
+  edition: 2020+AC:2021
+  access_status: metadata_only
+  reference: https://standard.no/en/sectors/petroleum/norsok-standards/s-safety-she/
+- document: NORSOK S-002
+  edition: 2025+AC:2026
+  access_status: metadata_only
+  reference: https://standard.no/en/sectors/petroleum/norsok-standards/s-safety-she/
+- document: NORSOK L-002
+  edition: '2016'
+  access_status: metadata_only
+  reference: https://standard.no/en/sectors/petroleum/norsok-standards/l-piping--layout/
+- document: IEC 60079-10-1
+  edition: '2020'
+  access_status: metadata_only
+  reference: https://webstore.iec.ch/en/publication/63327
+assumptions:
+- SYNTHETIC-BASIS-001 is an educational input basis, not a project design basis or
+  standard.
+- All package dimensions, envelopes, operating masses, deck limits and two-metre corridor
+  widths are synthetic assumptions.
+- Orthogonal rectangular packages and level rectangular decks are the supported screening
+  geometry.
+- Connection distances are geometric proxies; no detailed piping, hydraulic, stress
+  or cable design has been performed.
+- Catalogue editions are candidate metadata; adoption and full-text clause applicability
+  require project review.
+data_gaps:
+- Vendor dimensions, nozzles, auxiliaries and operation/inspection/replacement/lifting
+  requirements are not verified.
+- No qualified hazardous-area, fire, explosion, toxic dispersion or evacuation exposure/capacity
+  evidence.
+- No terrain/flood/drainage, structural, construction or marine qualification.
+options:
+  alternatives: 3
+  grid_m: 1.0
+  max_candidates: 100000
+  backend: deterministic

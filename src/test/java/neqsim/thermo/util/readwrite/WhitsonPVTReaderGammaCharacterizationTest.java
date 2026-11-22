@@ -122,7 +122,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     }
 
     // Read the fluid with composition using static read method
-    double[] composition = { 0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075 };
+    double[] composition = {0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075};
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
 
     assertNotNull(fluid, "Fluid should be created");
@@ -174,7 +174,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     }
 
     // Read the fluid
-    double[] composition = { 0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075 };
+    double[] composition = {0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075};
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
 
     assertNotNull(fluid, "Fluid should be created");
@@ -246,7 +246,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
       writer.write(createFileWithPlusFraction());
     }
 
-    double[] composition = { 0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075 };
+    double[] composition = {0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075};
 
     // Create fluid with Pedersen characterization
     SystemInterface fluidPedersen = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);

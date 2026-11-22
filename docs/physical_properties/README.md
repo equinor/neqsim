@@ -15,6 +15,7 @@ models, and interfacial-property calculations.
 - [Diffusivity Models](diffusivity_models) - Binary and multicomponent diffusion coefficients
 - [Interfacial Properties](interfacial_properties) - Surface tension and related calculations
 - [Density Models](density_models) - Liquid density correlations
+- [Property Method Alignment Audit](method_alignment_audit) - Handbook editions, verified repairs, coverage and qualification gaps
 
 ## Calculation workflow
 
@@ -27,7 +28,11 @@ Use the physical-property API in this order:
 5. Read properties from a named phase.
 
 The following complete example calculates gas density, dynamic viscosity, kinematic viscosity,
-and thermal conductivity. Temperature is in kelvin and pressure is absolute in bara.
+and thermal conductivity. Temperature is in kelvin and pressure is absolute in bara. The
+documentation regression suite compiles and executes all three exact marked Java programs on this
+page with Java 8 source/target compatibility.
+
+<!-- physical-properties-example: overview -->
 
 ```java
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
@@ -81,6 +86,11 @@ physical-property model.
 | `CO2WATER` | CO₂-water systems |
 | `BASIC` | Minimal property calculations |
 
+The aqueous phases of `GLYCOL`, `AMINE` and `CO2WATER` use Filippov conductivity with
+the enabled pressure option. Its [documented pressure factor](thermal_conductivity_models#filippov-liquid-mixing-and-pressure-factor)
+is the CHEMPAK Missenard-derived expression; mixture/parameter accuracy remains unqualified.
+The general `DEFAULT`/PFCT paths are unaffected by that correction.
+
 Select the model set before initializing the properties. For example, call
 `fluid.setPhysicalPropertyModel(PhysicalPropertyModel.GLYCOL)` and then
 `fluid.initPhysicalProperties()`.
@@ -95,6 +105,8 @@ map to `MASS_DENSITY`, `DYNAMIC_VISCOSITY`, and `THERMAL_CONDUCTIVITY`, respecti
 
 Individual models are selected on a phase's `PhysicalProperties` object. Model keys are
 case-sensitive. Reinitialize each changed phase after selecting a model.
+
+<!-- physical-properties-example: phase-specific -->
 
 ```java
 import neqsim.thermo.system.SystemInterface;
@@ -178,6 +190,8 @@ range, and reinitialize the affected phase after changing them.
 
 Create a `ThermodynamicOperations` instance for the fluid that is actually being flashed. This is
 especially important when cloning a base fluid:
+
+<!-- physical-properties-example: temperature-sweep -->
 
 ```java
 import neqsim.thermo.system.SystemInterface;

@@ -1,6 +1,6 @@
 ---
 name: neqsim-platform-modeling
-description: "Production platform process modeling patterns for NeqSim. USE WHEN: building full topside process models for oil & gas platforms (FPSO, fixed, semi-sub) from design documents, P&IDs, or operational data. Covers fluid creation with TBP fractions, multi-stage separation with recycles, recompression trains with compressor curves and anti-surge, export/injection compression, oil stabilization, scrubber liquid recovery, iteration strategies, and structured result extraction. Derived from 15+ production NCS platform models."
+description: "Production platform topside modeling patterns for NeqSim (FPSO, fixed, semi-sub). USE WHEN: building full topside models from design documents, P&IDs or operating data - TBP-fraction fluids, multi-stage separation with recycles, recompression with compressor curves and anti-surge, export/injection compression, oil stabilization, scrubber liquid recovery, iteration strategies and result extraction. Derived from 15+ NCS platform models."
 last_verified: "2026-07-04"
 ---
 
@@ -527,6 +527,56 @@ Typical NCS platform has 4-6 recycle loops:
 | Anti-surge R3 | R3 compressor outlet | R3 compressor suction | Surge protection |
 | Anti-surge export | Export compressor outlet | Export compressor suction | Surge protection |
 
+### 4.4 Anti-surge minimum flow without a Recycle loop (Troll B)
+
+A `Recycle` + Wegstein loop per compressor oscillated (flow error stuck at 5-9 %, mass balance
+unchanged for many passes) when the net flow was a few percent of the minimum flow (LP stages).
+The spill gas has the suction composition and state, so it does not need iteration. Build it
+inside a `Calculator` callback and remove it after the compressor:
+
+```python
+# suction (TP setter) -> Calculator -> spill Stream -> Mixer(suction, spill) -> Compressor -> Splitter
+spill = Stream(f"{tag} spill gas", suction.getOutStream().getFluid().clone())
+splitter = Splitter(f"{tag} recycle splitter", compressor.getOutletStream()); splitter.setSplitNumber(2)
+
+def set_spill(inputs, output):                       # Calculator: input = suction outlet, output = spill
+    net = inputs[0].getFlowRate("kg/hr")
+    q = max(q_min - net, 1e-3)
+    fluid = inputs[0].getFluid().clone(); fluid.setTotalFlowRate(q, "kg/hr")
+    output.setThermoSystem(fluid)                    # rebuild each pass; do NOT use Stream(name, stream)
+    splitter.setFlowRates([q, -1], "kg/hr")          # spill leaves, forward flow = net
+```
+
+Add the units in the order `suction, Calculator, spill stream, mixer, compressor, splitter`.
+`Stream(name, otherStream)` did not track later changes of the source stream in a process run
+(wrong flows); set the thermo system in the callback. The spill is returned uncooled (no
+Joule-Thomson effect) and is not a product, so the mass balance is unaffected. Report the
+spill flow as the anti-surge recycle in the utilisation register.
+
+When a plant has remaining `Recycle` units (condensate returns), a plain mass-balance stagnation
+check stops the run too early: also require `recycle.solved()` for every loop. A
+`ComponentSplitter` dehydrator with split factor 0 for water blew up the downstream scrubber
+liquid (3e9 kg/h); keep a few tenths of a percent of the water in the dry gas.
+
+Measured compressor inlet flows that are flat across windows with very different gas rates
+(Troll B stages 3-5: about 200 t/h per stage in all windows) mean the machines sit on their
+minimum-flow line; take the minimum flow from a calibration window and test it on hold-out windows.
+
+### 4.5 Allocation oil is not additive with the EOS stock-tank basis
+
+Per-well std flash of the rebuilt well stream gave 0-12 % more stock-tank oil than the allocated
+oil, and wells with near-zero allocated oil received 5-13 Sm3/d from the gas-cap condensate yield.
+The main cause is the basis: allocated oil and gas are stabilised oil and released gas of the
+plant's own separation train (multi-stage), while a single flash to 15 C / 1.01325 bara puts more
+intermediates in the gas and less oil in the tank (about 10 % lower GOR on the train for a volatile
+oil). Recombine on the same path: flash the characterised fluid stage by stage (oil of each stage
+feeds the next, gas of all stages summed, stock tank last) to get the oil and gas compositions,
+recombine the allocated volumes with them, and check closure on the same path. Take the stages from
+the allocation reference process when available, otherwise from measured separator pressures and
+temperatures, and record which. Fit the EOS to the laboratory test on its own separator conditions,
+never to the plant GOR. If a residual remains, fit one global factor on the allocated oil on one
+window only, keep other windows hold-out and state it as an assumption, not a physical constant.
+
 ---
 
 ## 5. Recompression Train Pattern
@@ -1049,8 +1099,7 @@ SYNC_REQUEST_TIMEOUT_MS = 120_000  # ms timeout for blocking run
 When building a new platform model from design documents:
 
 - [ ] **Identify separation stages**: HP, MP, LP pressures and temperatures
-- [ ] **Identify compression trains**: recompression (LP→HP), export, injection, booster
-- [ ] **Map out all recycle loops**: scrubber liquids, export liquids, anti-surge valves
+- [ ] **Identify compression trains**: recompression (LP→HP), export, injection, booster- [ ] **Map out all recycle loops**: scrubber liquids, export liquids, anti-surge valves
 - [ ] **Pre-create all StaticMixers** before building equipment
 - [ ] **Pre-create all recycle seed streams** (cloned, small flow rate, correct T/P)
 - [ ] **Use Heater as T/P setter** before scrubbers and at recycle return points
@@ -1063,6 +1112,20 @@ When building a new platform model from design documents:
 - [ ] **Oil TV P measurement**: `stream.TVP(20.0, "C")` for true vapor pressure at 20°C
 - [ ] **Run iterations**: 25 `run_step()` calls or single threaded `runAsThread()` with timeout
 - [ ] **Extract results**: structured response helpers for every equipment type
+- [ ] **Process safety pass (MANDATORY for a capacity, debottlenecking or
+      tie-in study)**: per vessel whose duty changes, tabulate design pressure,
+      PSV set pressure and measured operating pressure; check relief adequacy
+      against the governing case; bound the inflow with the choke Cv; and follow
+      the carry-over path of any vessel above its gas-load limit. A separator
+      over capacity sends liquid to the compressor, the dehydration bed or the
+      flare KO drum — that is a safety finding, not just a production one. See
+
+eqsim-process-modeling and
+eqsim-relief-flare-network.
+- [ ] **State the fluid characterization tier per feed**: measured PVT,
+      inherited from an old design case, assumed, or absent. A tie-in study is
+      only as good as its weakest feed, and an assumed CO2 will silently decide
+      an export-specification verdict.
 - [ ] **Validate mass balance FIRST (acceptance gate)**: sum feed `kg/hr` vs all
       product/export `kg/hr`; closure error must be `< 0.1 %` before accepting the
       solution (see Section 8.3). An imbalance means a dropped stream, non-converged

@@ -1,0 +1,213 @@
+{
+  "status": "Independent equation-implementation reference, not experimental accuracy",
+  "source_head": "69f7de043ae0d15195283329478cfa6d3b018ce3",
+  "model": "ordinary SRK or PR, rule2, unmodified component properties and alpha",
+  "method": "Spinodal quartic using NumPy polynomial roots; independent cubic polynomial roots and distinct-root log-fugacity bisection. Roots must have v>b and negative dP/dv.",
+  "input_units": "T kelvin, P bara; a,b in internal NeqSim cubic units, R=8.3144621",
+  "inputs": [
+    {
+      "eos": "SRK",
+      "component": "hydrogen",
+      "T_K": "20.369",
+      "a": "2649.56591707526",
+      "b": "1.8439641081724998",
+      "delta1": "1.0",
+      "delta2": "0.0",
+      "R": "8.3144621"
+    },
+    {
+      "eos": "SRK",
+      "component": "CO2",
+      "T_K": "302.0",
+      "a": "37266.86098415979",
+      "b": "2.9686203801521707",
+      "delta1": "1.0",
+      "delta2": "0.0",
+      "R": "8.3144621"
+    },
+    {
+      "eos": "SRK",
+      "component": "methane",
+      "T_K": "150.0",
+      "a": "26028.913137857082",
+      "b": "2.984851232640916",
+      "delta1": "1.0",
+      "delta2": "0.0",
+      "R": "8.3144621"
+    },
+    {
+      "eos": "SRK",
+      "component": "water",
+      "T_K": "373.15",
+      "a": "86315.5451306995",
+      "b": "2.1109789742760494",
+      "delta1": "1.0",
+      "delta2": "0.0",
+      "R": "8.3144621"
+    },
+    {
+      "eos": "PR",
+      "component": "hydrogen",
+      "T_K": "20.369",
+      "a": "2712.286678148171",
+      "b": "1.655886127032255",
+      "delta1": "2.414213562373095",
+      "delta2": "-0.41421356237309515",
+      "R": "8.3144621"
+    },
+    {
+      "eos": "PR",
+      "component": "CO2",
+      "T_K": "302.0",
+      "a": "39827.88891255102",
+      "b": "2.6658313370269475",
+      "delta1": "2.414213562373095",
+      "delta2": "-0.41421356237309515",
+      "R": "8.3144621"
+    },
+    {
+      "eos": "PR",
+      "component": "methane",
+      "T_K": "150.0",
+      "a": "27215.996474995372",
+      "b": "2.6804066985249855",
+      "delta1": "2.414213562373095",
+      "delta2": "-0.41421356237309515",
+      "R": "8.3144621"
+    },
+    {
+      "eos": "PR",
+      "component": "water",
+      "T_K": "373.15",
+      "a": "87817.9570267345",
+      "b": "1.8956663974467594",
+      "delta1": "2.414213562373095",
+      "delta2": "-0.41421356237309515",
+      "R": "8.3144621"
+    }
+  ],
+  "results": [
+    {
+      "eos": "SRK",
+      "component": "hydrogen",
+      "T_K": 20.369,
+      "P_bar": 0.9596548844353908,
+      "Z_liquid": 0.01452300911407561,
+      "Z_vapor": 0.9158348741545503,
+      "log_fugacity_residual": -3.169686735304822e-14,
+      "max_relative_pressure_residual": 3.885780586188048e-15,
+      "iterations": 42,
+      "initial_bracket_bar": [
+        3.3756232513419715e-07,
+        3.372250663453452
+      ]
+    },
+    {
+      "eos": "SRK",
+      "component": "CO2",
+      "T_K": 302.0,
+      "P_bar": 70.37442538366142,
+      "Z_liquid": 0.2518233903837661,
+      "Z_vapor": 0.4241889111664312,
+      "log_fugacity_residual": -5.995204332975845e-15,
+      "max_relative_pressure_residual": 4.038641775823661e-16,
+      "iterations": 34,
+      "initial_bracket_bar": [
+        69.74070734813971,
+        70.80845189502712
+      ]
+    },
+    {
+      "eos": "SRK",
+      "component": "methane",
+      "T_K": 150.0,
+      "P_bar": 10.511359267172828,
+      "Z_liquid": 0.03942568458055803,
+      "Z_vapor": 0.8244346217933094,
+      "log_fugacity_residual": 2.1091461910316411e-13,
+      "max_relative_pressure_residual": 3.582673186035448e-14,
+      "iterations": 41,
+      "initial_bracket_bar": [
+        1.989837547141242e-06,
+        19.87849498857435
+      ]
+    },
+    {
+      "eos": "SRK",
+      "component": "water",
+      "T_K": 373.15,
+      "P_bar": 0.9252928152457528,
+      "Z_liquid": 0.0007557335308087337,
+      "Z_vapor": 0.9922783819254571,
+      "log_fugacity_residual": -3.2935112970200464e-13,
+      "max_relative_pressure_residual": 1.5729972879796605e-11,
+      "iterations": 45,
+      "initial_bracket_bar": [
+        3.175802800634965e-06,
+        31.72629853518461
+      ]
+    },
+    {
+      "eos": "PR",
+      "component": "hydrogen",
+      "T_K": 20.369,
+      "P_bar": 1.0198903075454124,
+      "Z_liquid": 0.013711703942754061,
+      "Z_vapor": 0.9070641585431797,
+      "log_fugacity_residual": -1.39194211712379e-14,
+      "max_relative_pressure_residual": 3.047998834729608e-14,
+      "iterations": 42,
+      "initial_bracket_bar": [
+        3.436271174252957e-07,
+        3.4328379929761814
+      ]
+    },
+    {
+      "eos": "PR",
+      "component": "CO2",
+      "T_K": 302.0,
+      "P_bar": 70.30798013148089,
+      "Z_liquid": 0.22822325477749983,
+      "Z_vapor": 0.398309865513069,
+      "log_fugacity_residual": 5.395683899678261e-14,
+      "max_relative_pressure_residual": 4.0424585341882107e-16,
+      "iterations": 34,
+      "initial_bracket_bar": [
+        69.63191389228042,
+        70.76306737095364
+      ]
+    },
+    {
+      "eos": "PR",
+      "component": "methane",
+      "T_K": 150.0,
+      "P_bar": 10.471626681115215,
+      "Z_liquid": 0.03466658557365389,
+      "Z_vapor": 0.8152454486550567,
+      "log_fugacity_residual": -1.7133516827527728e-13,
+      "max_relative_pressure_residual": 6.140795460389804e-14,
+      "iterations": 41,
+      "initial_bracket_bar": [
+        1.991520365866041e-06,
+        19.895306362767013
+      ]
+    },
+    {
+      "eos": "PR",
+      "component": "water",
+      "T_K": 373.15,
+      "P_bar": 0.9620601707083997,
+      "Z_liquid": 0.000697215398409699,
+      "Z_vapor": 0.9917534693924417,
+      "log_fugacity_residual": 4.0795145039851377e-13,
+      "max_relative_pressure_residual": 3.682498750379182e-12,
+      "iterations": 45,
+      "initial_bracket_bar": [
+        3.1978748459239957e-06,
+        31.94679846609402
+      ]
+    }
+  ],
+  "script": "qualify-pure-cubic-saturation.py",
+  "limitations": "No CPA, electrolyte, translated volume, SAFT or mixture/critical/dew continuation qualification. No fitted coefficient or default changed."
+}

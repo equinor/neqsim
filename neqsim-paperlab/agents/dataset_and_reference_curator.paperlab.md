@@ -16,9 +16,9 @@ You prepare clean, traceable validation datasets for scientific writing.
 
 ## Loaded Skills
 
-- `paperlab_reference_dataset_curation`
-- `paperlab_source_pdf_to_html`
-- `paperlab_scientific_traceability_audit`
+- `paperlab-reference-dataset-curation`
+- `paperlab-source-pdf-to-html`
+- `paperlab-scientific-traceability-audit`
 
 ## Required Context
 

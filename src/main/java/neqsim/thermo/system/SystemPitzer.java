@@ -21,7 +21,9 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * </p>
  *
  * <p>
- * The hybrid strategy currently supports fluid phases only. Solid and wax checks are rejected explicitly when the
+ * The hybrid TP strategy supports fluid phases only. Incipient hydrate temperature, pressure and equilibrium curves are
+ * available through ThermodynamicOperations using a Pitzer-consistent liquid-water reference and a bounded outer
+ * search. This does not compute hydrate amounts. Solid and wax checks are rejected explicitly when the hybrid TP
  * strategy is active.
  * </p>
  *
@@ -64,6 +66,23 @@ public class SystemPitzer extends SystemEosGE {
   }
 
   /**
+   * Initializes chemical reactions and enables the bounded automatic acid-base parameter selector.
+   *
+   * <p>
+   * Supported Na/K/Ca chloride-sulfate topologies with carbonate, bisulfate and first H2S dissociation load their
+   * pinned source definitions lazily. Sulfur oxidation states remain separate. Other topologies, explicit legacy
+   * policy, and named manual datasets retain their existing selection.
+   * </p>
+   */
+  @Override
+  public void chemicalReactionInit() {
+    super.chemicalReactionInit();
+    if (isChemicalSystem()) {
+      ((PhasePitzer) phaseArray[1]).prepareAutomaticReactiveCarbonateSelection();
+    }
+  }
+
+  /**
    * Selects legacy Pitzer parameter loading for compatibility with historical calculations.
    *
    * <p>
@@ -74,6 +93,29 @@ public class SystemPitzer extends SystemEosGE {
    */
   public void useLegacyPitzerParameters() {
     ((PhasePitzer) phaseArray[1]).setUsePhreeqcCatalogByDefault(false);
+  }
+
+  /**
+   * Loads the PHREEQC CO2/chloride family with explicitly supplied missing neutral ternary interactions.
+   *
+   * @param co2ChlorideZeta constant zeta keyed by each present cation name; no default values are assumed
+   * @see PitzerParameterDatasets#applyPhreeqcCo2ChlorideParameters(PhasePitzer, java.util.Map)
+   */
+  public void applyPhreeqcCo2ChlorideParameters(java.util.Map<String, Double> co2ChlorideZeta) {
+    PitzerParameterDatasets.applyPhreeqcCo2ChlorideParameters((PhasePitzer) phaseArray[1], co2ChlorideZeta);
+  }
+
+  /**
+   * Loads the CO2/chloride family with explicit missing zeta and potassium-magnesium theta interactions.
+   *
+   * @param co2ChlorideZeta constant zeta keyed by each present cation name
+   * @param potassiumMagnesiumTheta finite constant K+-Mg++ theta in kg/mol; no default is assumed
+   * @see PitzerParameterDatasets#applyPhreeqcCo2ChlorideParameters(PhasePitzer, java.util.Map, double)
+   */
+  public void applyPhreeqcCo2ChlorideParameters(java.util.Map<String, Double> co2ChlorideZeta,
+      double potassiumMagnesiumTheta) {
+    PitzerParameterDatasets.applyPhreeqcCo2ChlorideParameters((PhasePitzer) phaseArray[1], co2ChlorideZeta,
+        potassiumMagnesiumTheta);
   }
 
   /**
@@ -102,6 +144,22 @@ public class SystemPitzer extends SystemEosGE {
       return false;
     }
     return PitzerParameterDatasets.tryApplyCompletePhreeqcPitzerCatalog((PhasePitzer) phaseArray[1]);
+  }
+
+  /**
+   * Reports all missing rows in the automatic PHREEQC catalog candidate without changing the selected dataset.
+   *
+   * <p>
+   * After adding components or changing composition, call {@code init(0)} before this read-only preflight. The result
+   * describes the pinned source catalog, not user-supplied parameters or the legacy fallback. An empty list is not
+   * scientific qualification and does not establish mineral saturation or precipitation accuracy.
+   * </p>
+   *
+   * @return immutable sorted missing-row descriptions
+   * @see PitzerParameterDatasets#getMissingPhreeqcPitzerCatalogRows(PhasePitzer)
+   */
+  public java.util.List<String> getMissingPhreeqcPitzerCatalogRows() {
+    return PitzerParameterDatasets.getMissingPhreeqcPitzerCatalogRows((PhasePitzer) phaseArray[1]);
   }
 
   /**
@@ -213,6 +271,22 @@ public class SystemPitzer extends SystemEosGE {
    */
   public void applyPhreeqcSodiumPotassiumChlorideParameters() {
     PitzerParameterDatasets.applyPhreeqcSodiumPotassiumChloride((PhasePitzer) phaseArray[1]);
+  }
+
+  /**
+   * Applies exact-source PHREEQC semantics for reactive aqueous NaCl, CO2, and carbonate species.
+   *
+   * <p>
+   * Call after all components have been added and, for reactive calculations, after {@code chemicalReactionInit()}, but
+   * before the first flash. This explicit mode maps NeqSim H3O+ to PHREEQC H+ and represents rows omitted by the pinned
+   * PHREEQC source as explicit zeros. It accepts only the documented NaCl-CO2-carbonate topology; automatic catalog
+   * selection remains fail-closed and unchanged.
+   * </p>
+   *
+   * @see PitzerParameterDatasets#applyPhreeqcReactiveSodiumChlorideCarbonate(PhasePitzer)
+   */
+  public void applyPhreeqcReactiveSodiumChlorideCarbonateParameters() {
+    PitzerParameterDatasets.applyPhreeqcReactiveSodiumChlorideCarbonate((PhasePitzer) phaseArray[1]);
   }
 
   /**

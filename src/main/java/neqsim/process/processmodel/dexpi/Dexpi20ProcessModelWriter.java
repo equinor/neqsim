@@ -37,6 +37,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter;
@@ -137,18 +138,54 @@ public final class Dexpi20ProcessModelWriter {
 
   private static void write(ProcessSystem processSystem, OutputStream outputStream, ModelTopology topology,
       OperatingValues operatingValues) throws IOException {
+    write(processSystem, outputStream, topology, operatingValues, null);
+  }
+
+  /**
+   * Writes the current Process topology using exact 2.0.1 definitions and controlled provenance.
+   *
+   * @param processSystem source simulation
+   * @param outputStream output XML stream
+   * @param metadata controlled export provenance
+   * @throws IOException if serialization fails
+   */
+  static void write201(ProcessSystem processSystem, OutputStream outputStream, Dexpi20PlantExportMetadata metadata)
+      throws IOException {
+    if (processSystem == null || outputStream == null || metadata == null) {
+      throw new IllegalArgumentException("processSystem, outputStream and metadata must not be null");
+    }
+    write(processSystem, outputStream, topology(processSystem, Dexpi20XmlWriter.numericalAliases(processSystem)),
+        new DirectOperatingValues(), metadata);
+  }
+
+  /**
+   * Serializes one supported Process snapshot.
+   *
+   * @param processSystem source process
+   * @param outputStream output stream
+   * @param topology material topology
+   * @param operatingValues value source
+   * @param metadata 2.0.1 provenance or null for byte-compatible legacy output
+   * @throws IOException if serialization fails
+   */
+  private static void write(ProcessSystem processSystem, OutputStream outputStream, ModelTopology topology,
+      OperatingValues operatingValues, Dexpi20PlantExportMetadata metadata) throws IOException {
     try {
       Document document = createDocument();
       Element model = document.createElement("Model");
       String modelName = identifier(processSystem.getName(), "NeqSimProcessModel");
       model.setAttribute("name", modelName);
-      model.setAttribute("uri", "urn:neqsim:dexpi:2.0:process:" + modelName);
+      model.setAttribute("uri", "urn:neqsim:dexpi:" + (metadata == null ? "2.0" : "2.0.1") + ":process:" + modelName);
       document.appendChild(model);
-      appendImport(document, model, "Core", CORE_MODEL);
-      appendImport(document, model, "Process", PROCESS_MODEL);
+      appendImport(document, model, "Core", metadata == null ? CORE_MODEL : Dexpi201XmlWriter.CORE_MODEL);
+      appendImport(document, model, "Process",
+          metadata == null ? PROCESS_MODEL : "https://data.dexpi.org/models/2.0.1/Process.xml");
 
       Element engineeringModel = object(document, null, "Core/EngineeringModel");
       model.appendChild(engineeringModel);
+      if (metadata != null) {
+        Dexpi20XmlWriter.appendEngineeringModelMetadata(document, engineeringModel, metadata);
+      }
       Element conceptualModel = components(document, engineeringModel, "ConceptualModel");
       Element processModel = object(document, "ProcessModel1", "Process/ProcessModel");
       conceptualModel.appendChild(processModel);
@@ -158,6 +195,7 @@ public final class Dexpi20ProcessModelWriter {
       int stepNumber = 1;
       for (ProcessEquipmentInterface unit : topology.units) {
         Step step = appendStep(document, processSteps, "ProcessStep" + stepNumber++, unit.getName(), type(unit));
+        appendRequiredMethod(document, step, unit);
         steps.put(unit, step);
       }
       for (Link link : topology.links) {
@@ -197,6 +235,21 @@ public final class Dexpi20ProcessModelWriter {
     }
   }
 
+  /**
+   * Supplies the mandatory method value without inventing a physical machine or exchanger subtype.
+   *
+   * @param document native instance document
+   * @param step exported process step
+   * @param unit actual source equipment
+   */
+  private static void appendRequiredMethod(Document document, Step step, ProcessEquipmentInterface unit) {
+    if (unit instanceof Compressor && !(unit instanceof Expander)) {
+      dataReference(document, step.processStep, "Method", "Process/Enumerations.CompressionMethod.Unspecified");
+    } else if (unit instanceof Cooler || unit instanceof HeatExchanger) {
+      dataReference(document, step.processStep, "Method", "Process/Enumerations.HeatExchangeMethod.Generic");
+    }
+  }
+
   private static void writeCanonical(ProcessSystem processSystem, File file,
       ProcessDiagramGraphAdapter.Result canonical) throws IOException {
     writeCanonical(processSystem, file, canonical, new DirectOperatingValues());
@@ -222,10 +275,31 @@ public final class Dexpi20ProcessModelWriter {
   }
 
   private static ModelTopology topology(ProcessSystem processSystem) {
+    try {
+      return topology(processSystem, (Map<StreamInterface, StreamInterface>) null);
+    } catch (IOException ex) {
+      throw new IllegalStateException(ex);
+    }
+  }
+
+  /**
+   * Builds the material topology, optionally closing recycles by stream identity instead of equipment.
+   *
+   * @param processSystem source process
+   * @param aliases directed stream aliases, or null to keep the legacy one-step-per-unit topology
+   * @return steps and material connections
+   * @throws IOException when an alias chain is ambiguous or cyclic
+   */
+  private static ModelTopology topology(ProcessSystem processSystem, Map<StreamInterface, StreamInterface> aliases)
+      throws IOException {
     List<ProcessEquipmentInterface> units = new ArrayList<ProcessEquipmentInterface>();
     Map<StreamInterface, ProcessEquipmentInterface> sourceByStream = new IdentityHashMap<StreamInterface, ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit == null) {
+        continue;
+      }
+      if (aliases != null
+          && (unit instanceof Recycle || unit instanceof StreamInterface && aliases.containsKey(unit))) {
         continue;
       }
       type(unit);
@@ -245,10 +319,11 @@ public final class Dexpi20ProcessModelWriter {
     int number = 1;
     for (ProcessEquipmentInterface target : units) {
       for (StreamInterface inlet : target.getInletStreams()) {
-        ProcessEquipmentInterface source = sourceByStream.get(inlet);
+        StreamInterface physical = aliases == null ? inlet : Dexpi20XmlWriter.resolveAlias(inlet, aliases);
+        ProcessEquipmentInterface source = sourceByStream.get(physical);
         if (source != null) {
-          links.add(new Link(number++, source, target, inlet));
-          consumed.put(inlet, Boolean.TRUE);
+          links.add(new Link(number++, source, target, physical));
+          consumed.put(physical, Boolean.TRUE);
         }
       }
     }
@@ -273,6 +348,7 @@ public final class Dexpi20ProcessModelWriter {
     EngineeringGraph graph = canonical.getGraph();
     List<Link> projected = new ArrayList<Link>();
     Map<Link, Boolean> consumed = new IdentityHashMap<Link, Boolean>();
+    int projectedNumber = direct.links.size() + 1;
     for (EngineeringNode node : graph.getNodes().values()) {
       if (node.getKind() != EngineeringNode.Kind.PIPE_SEGMENT) {
         continue;
@@ -282,14 +358,70 @@ public final class Dexpi20ProcessModelWriter {
         match.canonicalValueSubjectId = sourceOwnerNodeId(graph, node);
         projected.add(match);
         consumed.put(match, Boolean.TRUE);
+      } else {
+        Link canonicalLink = projectCanonicalLink(direct, node, projectedNumber);
+        if (canonicalLink != null) {
+          projectedNumber++;
+          canonicalLink.canonicalValueSubjectId = sourceOwnerNodeId(graph, node);
+          projected.add(canonicalLink);
+        }
       }
     }
     for (Link link : direct.links) {
-      if (!consumed.containsKey(link)) {
+      if (!consumed.containsKey(link) && !coveredByCanonicalPath(graph, link)) {
         projected.add(link);
       }
     }
     return new ModelTopology(direct.units, projected);
+  }
+
+  private static Link projectCanonicalLink(ModelTopology direct, EngineeringNode connection, int linkNumber) {
+    String sourceName = property(connection, "sourceEquipment");
+    String targetName = property(connection, "targetEquipment");
+    String carriedName = property(connection, "carriedObjectName");
+    ProcessEquipmentInterface source = unitNamed(direct.units, sourceName);
+    ProcessEquipmentInterface target = unitNamed(direct.units, targetName);
+    StreamInterface stream = streamNamed(direct, carriedName, sourceName, targetName);
+    if (source == null || target == null || stream == null) {
+      return null;
+    }
+    return new Link(linkNumber, source, target, stream);
+  }
+
+  private static ProcessEquipmentInterface unitNamed(List<ProcessEquipmentInterface> units, String name) {
+    for (ProcessEquipmentInterface unit : units) {
+      if (name.equals(unit.getName())) {
+        return unit;
+      }
+    }
+    return null;
+  }
+
+  private static StreamInterface streamNamed(ModelTopology direct, String carriedName, String sourceName,
+      String targetName) {
+    for (Link link : direct.links) {
+      if (carriedName.equals(streamName(link.stream)) && (sourceName.equals(link.source.getName())
+          || link.target != null && targetName.equals(link.target.getName()))) {
+        return link.stream;
+      }
+    }
+    ProcessEquipmentInterface carried = unitNamed(direct.units, carriedName);
+    if (carried instanceof StreamInterface) {
+      return (StreamInterface) carried;
+    }
+    return null;
+  }
+
+  private static boolean coveredByCanonicalPath(EngineeringGraph graph, Link link) {
+    String stream = streamName(link.stream);
+    for (EngineeringNode node : graph.getNodes().values()) {
+      if (node.getKind() == EngineeringNode.Kind.PIPE_SEGMENT && stream.equals(property(node, "carriedObjectName"))
+          && (link.source.getName().equals(property(node, "sourceEquipment"))
+              || link.target != null && link.target.getName().equals(property(node, "targetEquipment")))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String sourceOwnerNodeId(EngineeringGraph graph, EngineeringNode connection) {
@@ -348,6 +480,9 @@ public final class Dexpi20ProcessModelWriter {
       return "Process/Process.TransportingFluids";
     }
     if (unit instanceof PipeLineInterface) {
+      return "Process/Process.TransportingFluids";
+    }
+    if (unit instanceof Recycle) {
       return "Process/Process.TransportingFluids";
     }
     if (unit instanceof Compressor) {
@@ -411,6 +546,8 @@ public final class Dexpi20ProcessModelWriter {
     }
     Element values = components(document, stream, property);
     Element qualified = object(document, null, "Core/QualifiedValue");
+    data(document, qualified, "DisplayText",
+        Double.toString(value.doubleValue()) + " " + unitReference.substring(unitReference.lastIndexOf('.') + 1));
     Element data = document.createElement("Data");
     data.setAttribute("property", "Value");
     Element quantity = document.createElement("AggregatedDataValue");

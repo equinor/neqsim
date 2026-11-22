@@ -1,0 +1,34 @@
+/** Process fixtures for the four module-capacity and optimization fragments. */
+import java.util.*;
+import org.apache.logging.log4j.*;
+import neqsim.process.processmodel.*;
+import neqsim.process.equipment.stream.*;
+import neqsim.process.equipment.capacity.*;
+import neqsim.process.equipment.valve.*;
+import neqsim.process.design.*;
+import neqsim.process.util.optimizer.*;
+import neqsim.thermo.system.*;
+public class ModuleFragments {
+Logger logger=LogManager.getLogger("ModuleFragments");
+ProcessSystem inletSystem,compressionSystem,exportSystem,manifoldSystem,compressorSystem;
+ProcessModule facilityModule;
+void setup() {
+ SystemSrkEos gas=new SystemSrkEos(298.15,85.0);gas.addComponent("methane",0.9);gas.addComponent("ethane",0.1);gas.setMixingRule("classic");
+ Stream feed=new Stream("Well Feed",gas);feed.setFlowRate(10000.0,"kg/hr");
+ ThrottlingValve first=new ThrottlingValve("First pressure step",feed);first.setOutletPressure(65.0,"bara");first.setPercentValveOpening(50.0);
+ ThrottlingValve middle=new ThrottlingValve("Middle pressure step",first.getOutletStream());middle.setOutletPressure(50.0,"bara");middle.setPercentValveOpening(50.0);
+ ThrottlingValve valve=new ThrottlingValve("Pressure control",middle.getOutletStream());valve.setOutletPressure(40.0,"bara");valve.setPercentValveOpening(50.0);
+ valve.addCapacityConstraint(new CapacityConstraint("installedMassFlow","kg/hr",CapacityConstraint.ConstraintType.HARD).setDesignValue(40000.0).setValueSupplier(()->feed.getFlowRate("kg/hr")));
+ Stream outlet=new Stream("Export Gas",valve.getOutletStream());
+ inletSystem=new ProcessSystem();inletSystem.add(feed);
+ compressionSystem=new ProcessSystem();compressionSystem.add(first);compressionSystem.add(middle);compressionSystem.add(valve);
+ exportSystem=new ProcessSystem();exportSystem.add(outlet);
+ manifoldSystem=inletSystem;compressorSystem=compressionSystem;
+ facilityModule=new ProcessModule("Facility");facilityModule.add(inletSystem);facilityModule.add(compressionSystem);facilityModule.add(exportSystem);facilityModule.run();
+}
+@@DOCUMENTED_METHODS@@
+public static void main(String[] args) throws Exception {
+ org.apache.logging.log4j.core.config.Configurator.setLevel("ModuleFragments",org.apache.logging.log4j.Level.INFO);
+ for(int i=0;i<4;i++){ ModuleFragments f=new ModuleFragments();f.setup();ModuleFragments.class.getDeclaredMethod("example"+i).invoke(f);f.logger.info("PASS module fragment {}",i);}
+}
+}

@@ -1,0 +1,647 @@
+{
+  "production_baseline": "ab66ca997b22cf965ee7d6d9f63a8fc7b8559d92",
+  "profile": 2,
+  "rule": 4,
+  "components": 15,
+  "timing_excluded_from_matrix": true,
+  "window": "Whole manual JVM, including startup, warmup, measured rounds and untimed diagnostics; inclusive counts are not wall-time percentages",
+  "export_command": "java -m jdk.jfr/jdk.jfr.internal.tool.Main print --json --events jdk.ExecutionSample,jdk.NativeMethodSample CASE.jfr",
+  "jvm_options": [
+    "-Xms512m",
+    "-Xmx512m",
+    "-Xbatch",
+    "-XX:CICompilerCount=2",
+    "-XX:+PrintCompilation",
+    "-XX:StartFlightRecording=filename=CASE.jfr,settings=profile,dumponexit=true"
+  ],
+  "cases": {
+    "init3": {
+      "cpu_samples": {
+        "jdk.ExecutionSample": {
+          "events": 4366,
+          "main_events": 4366,
+          "missing_stacks": 0,
+          "truncated_stacks": 0,
+          "inclusive": [
+            [
+              "neqsim.thermo.component.ComponentGENRTLmodifiedHV.getGamma",
+              4262
+            ],
+            [
+              "neqsim.thermo.phase.PhaseGENRTLmodifiedHV.getExcessGibbsEnergy",
+              4262
+            ],
+            [
+              "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.init",
+              4078
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.diffaT",
+              1836
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffaT",
+              1765
+            ],
+            [
+              "java.lang.String.trim",
+              1069
+            ],
+            [
+              "java.lang.StringLatin1.trim",
+              1068
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.diffdiffaT",
+              592
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffaT",
+              587
+            ],
+            [
+              "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.calcA",
+              533
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.calcA",
+              526
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.aT",
+              264
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.aT",
+              247
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffalphaT",
+              133
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffaT",
+              71
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffalphaT",
+              53
+            ],
+            [
+              "neqsim.thermo.system.SystemThermo.initAnalytic",
+              52
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.init",
+              46
+            ],
+            [
+              "neqsim.thermo.system.SystemThermo.init",
+              38
+            ],
+            [
+              "neqsim.thermo.mixingrule.HuronVidalSelectedPairPerformanceBenchmark.operation",
+              35
+            ],
+            [
+              "neqsim.thermo.mixingrule.HuronVidalSelectedPairPerformanceBenchmark.main",
+              19
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.aT",
+              17
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffalphaT",
+              15
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.Finit",
+              14
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.logfugcoefdN",
+              10
+            ]
+          ],
+          "self": [
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffaT",
+              1750
+            ],
+            [
+              "java.lang.StringLatin1.trim",
+              1068
+            ],
+            [
+              "neqsim.thermo.component.ComponentGENRTLmodifiedHV.getGamma",
+              503
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffaT",
+              454
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.aT",
+              247
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffalphaT",
+              133
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffalphaT",
+              53
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffaT",
+              18
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffalphaT",
+              15
+            ],
+            [
+              "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.init",
+              13
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.aT",
+              12
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.Finit",
+              11
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.logfugcoefdN",
+              10
+            ],
+            [
+              "org.h2.mvstore.db.MVPrimaryIndex$MVStoreCursor.get",
+              7
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffdiffaT",
+              5
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.alpha",
+              5
+            ],
+            [
+              "java.lang.StringLatin1.regionMatchesCI",
+              4
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.calcB",
+              4
+            ],
+            [
+              "neqsim.thermo.system.SystemThermo.initAnalytic",
+              4
+            ],
+            [
+              "java.lang.String.equals",
+              3
+            ],
+            [
+              "java.util.Arrays.fill",
+              3
+            ],
+            [
+              "neqsim.thermo.phase.Phase.setProperties",
+              3
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.init",
+              3
+            ],
+            [
+              "java.util.HashMap.resize",
+              2
+            ],
+            [
+              "neqsim.thermo.component.Component.createComponent",
+              2
+            ]
+          ]
+        },
+        "jdk.NativeMethodSample": {
+          "events": 3,
+          "main_events": 3,
+          "missing_stacks": 0,
+          "truncated_stacks": 0,
+          "inclusive": [
+            [
+              "java.util.zip.Inflater.inflate",
+              3
+            ],
+            [
+              "java.util.zip.Inflater.inflateBytesBytes",
+              3
+            ],
+            [
+              "java.util.zip.InflaterInputStream.read",
+              3
+            ],
+            [
+              "jdk.internal.loader.Resource.getBytes",
+              3
+            ],
+            [
+              "jdk.internal.loader.URLClassPath$JarLoader$2.getBytes",
+              3
+            ]
+          ],
+          "self": [
+            [
+              "java.util.zip.Inflater.inflateBytesBytes",
+              3
+            ]
+          ]
+        }
+      },
+      "files": {
+        "pr2017-init3.jfr": "d28a3a29d658f5a0896ae475b887da8e53fa41e4dda2b0b7da1fd45acb09afbc",
+        "pr2017-init3.json": "7dda772ce9540637f3a1254bb54a48de79762fd09a7f74088c01d8f041b0a615",
+        "pr2017-init3.log": "9a957efcdd331aca05e26a8660d44026a8ce245ab3e0cf3e5f5c988ddd48533f",
+        "pr2017-init3.csv": "3dec991496900b72176d1a15a2af580863439c1ad2ede65331cbf30879a4acf5",
+        "pr2017-init3.csv.states.csv": "34c83dd9aafae4cfff5a4777f3dcbbf1fa592e9732c9115e3926f3cc3023c3b8"
+      },
+      "gamma_twu_compilation_lines": [
+        "7569 4408    b  3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffalphaT (179 bytes)",
+        "7570 4409    b  3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffdiffalphaT (526 bytes)",
+        "7570 4410    b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "7596 4456 %  b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 356 (4611 bytes)",
+        "7821 4458    b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "8006 4410       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "8018 4458       4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "8021 4473 %  b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2293 (4611 bytes)",
+        "8032 4474    b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "8054 4499 %  b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2293 (4611 bytes)",
+        "8633 4473 %     3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2293 (4611 bytes)   made not entrant",
+        "8633 4500    b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "9624 4474       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "9629 4500       4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "9630 4505    b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "9646 4512    b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "10170 4505       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "10181 4518    b  4       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffdiffalphaT (526 bytes)",
+        "10183 4409       3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffdiffalphaT (526 bytes)   made not entrant",
+        "10336 4561    b  4       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffalphaT (179 bytes)",
+        "10337 4408       3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffalphaT (179 bytes)   made not entrant"
+      ]
+    },
+    "flash": {
+      "cpu_samples": {
+        "jdk.ExecutionSample": {
+          "events": 3705,
+          "main_events": 3704,
+          "missing_stacks": 0,
+          "truncated_stacks": 0,
+          "inclusive": [
+            [
+              "neqsim.thermo.phase.PhaseGENRTLmodifiedHV.getExcessGibbsEnergy",
+              3580
+            ],
+            [
+              "neqsim.thermo.component.ComponentGENRTLmodifiedHV.getGamma",
+              3579
+            ],
+            [
+              "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.init",
+              3514
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.aT",
+              3025
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.aT",
+              2970
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.diffaT",
+              276
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffaT",
+              254
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.diffdiffaT",
+              121
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffaT",
+              121
+            ],
+            [
+              "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.calcA",
+              107
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.calcA",
+              94
+            ],
+            [
+              "java.lang.String.trim",
+              60
+            ],
+            [
+              "java.lang.StringLatin1.trim",
+              60
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffalphaT",
+              56
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.aT",
+              55
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.init",
+              38
+            ],
+            [
+              "neqsim.thermodynamicoperations.flashops.TPflash.runInternal",
+              36
+            ],
+            [
+              "neqsim.thermo.system.SystemThermo.initAnalytic",
+              35
+            ],
+            [
+              "neqsim.thermo.system.SystemThermo.init",
+              29
+            ],
+            [
+              "neqsim.thermodynamicoperations.flashops.TPmultiflash.solveBeta",
+              27
+            ],
+            [
+              "neqsim.thermodynamicoperations.flashops.TPflash.run",
+              24
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffaT",
+              22
+            ],
+            [
+              "neqsim.thermodynamicoperations.flashops.TPmultiflash.run",
+              22
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.alpha",
+              11
+            ],
+            [
+              "neqsim.thermodynamicoperations.ThermodynamicOperations.TPflash",
+              11
+            ]
+          ],
+          "self": [
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.aT",
+              2970
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffaT",
+              251
+            ],
+            [
+              "neqsim.thermo.component.ComponentGENRTLmodifiedHV.getGamma",
+              86
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffaT",
+              65
+            ],
+            [
+              "java.lang.StringLatin1.trim",
+              60
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffalphaT",
+              56
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.aT",
+              46
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffaT",
+              16
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.alpha",
+              11
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.Finit",
+              9
+            ],
+            [
+              "java.lang.String.equals",
+              8
+            ],
+            [
+              "java.lang.StringLatin1.regionMatchesCI",
+              7
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffalphaT",
+              6
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.init",
+              6
+            ],
+            [
+              "neqsim.thermo.phase.PhaseEos.molarVolume",
+              6
+            ],
+            [
+              "java.util.Arrays.fill",
+              5
+            ],
+            [
+              "neqsim.thermo.mixingrule.EosMixingRuleHandler.clone",
+              5
+            ],
+            [
+              "org.h2.mvstore.db.MVPrimaryIndex$MVStoreCursor.get",
+              5
+            ],
+            [
+              "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.init",
+              4
+            ],
+            [
+              "neqsim.thermo.system.SystemThermo.initAnalytic",
+              4
+            ],
+            [
+              "org.h2.value.ValueStringBase.compareTypeSafe",
+              4
+            ],
+            [
+              "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.diffalphaT",
+              3
+            ],
+            [
+              "neqsim.thermo.phase.Phase.getEntropy",
+              3
+            ],
+            [
+              "neqsim.thermo.phase.Phase.normalize",
+              3
+            ],
+            [
+              "neqsim.thermo.component.ComponentEos.alpha",
+              2
+            ]
+          ]
+        },
+        "jdk.NativeMethodSample": {
+          "events": 5,
+          "main_events": 4,
+          "missing_stacks": 0,
+          "truncated_stacks": 0,
+          "inclusive": [
+            [
+              "java.util.zip.Inflater.inflate",
+              2
+            ],
+            [
+              "java.util.zip.Inflater.inflateBytesBytes",
+              2
+            ],
+            [
+              "java.util.zip.InflaterInputStream.read",
+              2
+            ],
+            [
+              "java.io.FileDescriptor$1.close",
+              1
+            ],
+            [
+              "java.io.FileDescriptor.close",
+              1
+            ],
+            [
+              "java.io.FileDescriptor.close0",
+              1
+            ],
+            [
+              "java.io.FilterInputStream.read",
+              1
+            ],
+            [
+              "java.lang.ClassLoader.defineClass",
+              1
+            ],
+            [
+              "java.lang.ClassLoader.defineClass1",
+              1
+            ],
+            [
+              "java.lang.Object.clone",
+              1
+            ],
+            [
+              "java.security.SecureClassLoader.defineClass",
+              1
+            ],
+            [
+              "jdk.internal.loader.BuiltinClassLoader.defineClass",
+              1
+            ],
+            [
+              "jdk.internal.loader.BuiltinClassLoader.findClassOnClassPathOrNull",
+              1
+            ],
+            [
+              "jdk.internal.loader.Resource.getBytes",
+              1
+            ],
+            [
+              "jdk.internal.loader.URLClassPath$JarLoader$2.getBytes",
+              1
+            ],
+            [
+              "jdk.internal.ref.CleanerImpl$PhantomCleanableRef.performCleanup",
+              1
+            ],
+            [
+              "neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity.clone",
+              1
+            ],
+            [
+              "neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity.copyMatrix",
+              1
+            ],
+            [
+              "neqsim.physicalproperties.system.PhysicalProperties.clone",
+              1
+            ],
+            [
+              "sun.nio.ch.FileChannelImpl$Closer.run",
+              1
+            ]
+          ],
+          "self": [
+            [
+              "java.util.zip.Inflater.inflateBytesBytes",
+              2
+            ],
+            [
+              "java.io.FileDescriptor.close0",
+              1
+            ],
+            [
+              "java.lang.ClassLoader.defineClass1",
+              1
+            ],
+            [
+              "java.lang.Object.clone",
+              1
+            ]
+          ]
+        }
+      },
+      "files": {
+        "pr2017-flash.jfr": "3158c0046ea0dbdcf79b8d54239b9eb69437aec9330c0e90450d20381514e9cb",
+        "pr2017-flash.json": "e32e83b1c116d6f561f6c97d7570d01e627480bef10f938c28e8a6f74cfb162a",
+        "pr2017-flash.log": "cbf3f9a5380afba15ee5bdfaec79590443b05e7d08d397ac253d915935aa65e5",
+        "pr2017-flash.csv": "b77f1113b38653c5abf09d96229990973b3f05c586ac13ea1dd17ebde87856bf",
+        "pr2017-flash.csv.states.csv": "78e64abf494d63f0a6c4045d6ddb8b5b6d1d271bfdbb3626736e2e42a2ce4bb5"
+      },
+      "gamma_twu_compilation_lines": [
+        "7301 4408    b  3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffalphaT (179 bytes)",
+        "7301 4409    b  3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffdiffalphaT (526 bytes)",
+        "7302 4410    b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "7329 4456 %  b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 356 (4611 bytes)",
+        "7531 4458    b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "7700 4410       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "7711 4458       4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "7715 4473 %  b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2293 (4611 bytes)",
+        "7722 4474    b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "7744 4499 %  b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2293 (4611 bytes)",
+        "8281 4473 %     3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma @ 2293 (4611 bytes)   made not entrant",
+        "8281 4500    b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "9247 4474       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "9252 4500       4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "9253 4505    b  3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "9274 4512    b  4       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)",
+        "9805 4505       3       neqsim.thermo.component.ComponentGENRTLmodifiedHV::getGamma (4611 bytes)   made not entrant",
+        "9816 4518    b  4       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffdiffalphaT (526 bytes)",
+        "9817 4409       3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffdiffalphaT (526 bytes)   made not entrant",
+        "9986 4574    b  4       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffalphaT (179 bytes)",
+        "9987 4408       3       neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam::diffalphaT (179 bytes)   made not entrant"
+      ]
+    }
+  }
+}

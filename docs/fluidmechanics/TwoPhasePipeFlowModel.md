@@ -1,6 +1,6 @@
 ---
 title: Two-Phase Pipe Flow Model with Heat and Mass Transfer
-description: The NeqSim two-phase pipe flow model implements a **non-equilibrium thermodynamic approach** for simulating gas-liquid flow in pipes. This document describes the theoretical foundation, numerical meth...
+description: "Theory, numerical methods, and usage of NeqSim's non-equilibrium two-phase gas-liquid pipe-flow model with coupled heat and mass transfer."
 ---
 
 ## Overview

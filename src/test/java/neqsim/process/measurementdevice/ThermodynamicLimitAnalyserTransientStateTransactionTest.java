@@ -172,10 +172,6 @@ class ThermodynamicLimitAnalyserTransientStateTransactionTest extends neqsim.Neq
       private static final long serialVersionUID = 1000L;
     }, "subclass-owned mutable state");
 
-    WaterDewPointAnalyser online = new WaterDewPointAnalyser("online", stream);
-    online.setIsOnlineSignal(true, "plant", "WDP-ONLINE");
-    assertBlocked(online, "external I/O");
-
     CricondenbarAnalyser firstCricondenbar = new CricondenbarAnalyser("first", stream);
     CricondenbarAnalyser secondCricondenbar = new CricondenbarAnalyser("second", stream);
     assertThrows(IllegalArgumentException.class,

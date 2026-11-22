@@ -1,7 +1,7 @@
 ---
 title: Density Models
-description: "Density correction models in NeqSim: COSTALD (Hankinson-Thomson), Peneloux volume translation, Rackett equation. Covers liquid density for pure compounds, mixtures, TBP fractions, aqueous/polar systems (water, MEG, TEG, methanol). setLiquidDensityModel API."
-keywords: "COSTALD, density, liquid density, Hankinson-Thomson, Peneloux, volume translation, Rackett, molar volume, specific gravity, TBP fraction, pseudo-component, aqueous, polar, water density, MEG, TEG, glycol, methanol, ethanol, setLiquidDensityModel, compressed liquid, characteristic volume, V-star"
+description: "Density correction models in NeqSim: COSTALD (Hankinson-Thomson), Peneloux volume translation, Rackett equation, and the parameter-neutral binary volumetric Pitzer kernel. Covers liquid density for pure compounds, mixtures, TBP fractions, aqueous/polar systems, and electrolytes."
+keywords: "COSTALD, density, liquid density, Hankinson-Thomson, Peneloux, volume translation, Rackett, Pitzer, apparent molar volume, electrolyte density, molar volume, specific gravity, TBP fraction, pseudo-component, aqueous, polar, water density, MEG, TEG, glycol, methanol, ethanol, setLiquidDensityModel, compressed liquid, characteristic volume, V-star"
 ---
 
 This guide documents the density correction models available in NeqSim for improving volumetric predictions.
@@ -16,6 +16,7 @@ This guide documents the density correction models available in NeqSim for impro
   - [COSTALD](#costald)
   - [NASTALD (COSTALD with Polar Correction)](#nastald-costald-with-polar-correction)
   - [Rackett Equation](#rackett-equation)
+- [Binary Electrolyte Volumetric Pitzer Kernel](#binary-electrolyte-volumetric-pitzer-kernel)
 - [Usage Examples](#usage-examples)
 - [Model Selection Guide](#model-selection-guide)
 - [API Reference](#api-reference)
@@ -623,137 +624,304 @@ double Zra = fluid.getPhase(1).getComponent("n-pentane").getRacketZ();
 
 ---
 
-## Usage Examples
+## Binary Electrolyte Volumetric Pitzer Kernel
 
-### Comparing Density Models
+`PitzerBinaryVolumetricModel` evaluates the standard pressure derivative of
+the binary-electrolyte Pitzer excess Gibbs energy. It is a parameter-neutral
+thermodynamic kernel: it does not contain a built-in coefficient table and it
+is not selected by `setLiquidDensityModel(...)`.
+
+For a binary salt $M_{\nu_M}X_{\nu_X}$ with formula-unit molality $m$,
+
+$$\begin{aligned}
+\phi_V={}&V^\circ+\nu|z_Mz_X|\frac{A_V}{2b}\ln(1+b\sqrt{I})\\
+&+\nu_M\nu_XRT\left[2mB^V_{MX}+m^2\sqrt{\nu_M\nu_X}C^{\phi V}_{MX}\right],\\
+B^V_{MX}={}&\beta^{(0)V}_{MX}+\beta^{(1)V}_{MX}g(\alpha\sqrt{I}),\\
+g(x)={}&\frac{2[1-(1+x)e^{-x}]}{x^2},\\
+I={}&\frac{1}{2}\nu|z_Mz_X|m.
+\end{aligned}$$
+
+The implementation uses the standard $b=1.2$ and $\alpha=2.0$ values and an
+analytical small-$x$ expansion for $g(x)$ to prevent dilute-limit
+cancellation. All inputs use SI units. The pressure derivatives
+$\beta^{(0)V}$, $\beta^{(1)V}$, and $C^{\phi V}$ must already be evaluated at
+the temperature and pressure stored in `StateParameters`.
+
+The non-zero reference form is also available:
+
+$$\phi_V(m)=\phi_V(m_r)+F(m)-F(m_r),$$
+
+where $F$ is the Debye–Hückel plus binary-interaction contribution in the
+equation above. This form avoids deriving $V^\circ$ from small differences of
+dilute-solution densities.
+
+Density conversion uses an exact one-kilogram-solvent balance:
+
+$$\rho=\frac{1+mM}{1/\rho_w+m\phi_V}.$$
+
+The inverse conversion is provided for auditable data preparation.
 
 ```java
+PitzerBinaryVolumetricModel calciumChloride =
+    new PitzerBinaryVolumetricModel(1, 2, 2, -1);
+
+PitzerBinaryVolumetricModel.StateParameters state =
+    new PitzerBinaryVolumetricModel.StateParameters(
+        temperatureK,
+        pressurePa,
+        debyeHuckelVolumeSlope,
+        beta0PressureDerivative,
+        beta1PressureDerivative,
+        cphiPressureDerivative);
+
+double apparentMolarVolume = calciumChloride.calculateApparentMolarVolumeFromReference(
+    molality,
+    referenceMolality,
+    referenceApparentMolarVolume,
+    state);
+
+double density = PitzerBinaryVolumetricModel.calculateDensity(
+    molality,
+    calciumChlorideMolarMass,
+    pureWaterDensity,
+    apparentMolarVolume);
+```
+
+### Parameter regression and identifiability
+
+`PitzerBinaryVolumetricRegression` performs weighted linear regression for one
+common temperature-pressure state. The caller supplies every apparent-molar-
+volume observation, its absolute one-sigma uncertainty, a laboratory or
+source-lineage identifier, and the Debye-Hückel volume slope. The regression
+fits `V°`, `β⁽⁰⁾_V`, `β⁽¹⁾_V`, and `Cφ_V` without installing the result
+in a phase or changing a default model.
+
+The weighted design matrix is column-scaled and solved by singular-value
+decomposition. A fit fails closed when the concentration design is rank
+deficient or excessively ill-conditioned. `FitResult` reports coefficient
+covariance and standard uncertainties, chi-square, reduced chi-square,
+weighted RMS residual, maximum standardized residual, and deterministic
+per-source-group residual diagnostics. Covariance assumes that input
+uncertainties are absolute one-sigma values.
+
+Regression capability does not make an input dataset acceptable. Callers must
+separately establish row provenance, redistribution rights, uncertainty
+meaning, species and composition basis, validity range, and an independent
+laboratory-grouped validation split. The reserved Al Ghafri/NIST ThermoML
+pressure series must not be supplied as calibration input when it is retained
+as the campaign hold-out.
+
+### Independent source-group holdout validation
+
+`PitzerBinaryVolumetricGroupedValidation` fits only an explicit calibration
+list and evaluates a separate untouched holdout list. It rejects any
+source-lineage identifier present in both lists, reports holdout chi-square,
+weighted RMS and maximum standardized residual, and returns deterministic
+per-lineage diagnostics. The class deliberately defines no universal pass
+threshold.
+
+The string identifiers are an auditable software boundary, not proof of
+scientific independence. The caller must map each row to its real laboratory,
+apparatus, publication lineage and reuse history before assigning groups. A
+validation result is admissible only when those lineages are genuinely
+independent, all rows and uncertainties have qualified provenance, and the
+acceptance limits were fixed before the holdout was evaluated.
+
+### Repository dataset provenance
+
+`PitzerBinaryVolumetricDatasetProvenance` records a machine-auditable manifest
+for observations distributed with NeqSim. Each source-lineage record fixes its
+calibration or validation role, full citation and stable URL, license and
+redistribution decision, SHA-256 source-file checksum, uncertainty basis and
+explicit qualification, exact
+row count, and molality, temperature and pressure envelope.
+
+Rows are repository-admissible only when the manifest explicitly marks their
+uncertainty mapping as `QUALIFIED_ABSOLUTE_ONE_SIGMA`. Instrument accuracy,
+precision, or repeatability specifications and unresolved empirical error
+envelopes are non-qualified states and fail before fitting or holdout evaluation.
+
+`validateRepositoryDatasets(...)` checks both observation lists against that
+manifest before fitting. It fails closed for an undeclared lineage, role or row
+count mismatch, a state outside the declared envelope, or any source whose
+redistribution status is restricted or unknown. The original
+`validate(...)` method remains available for caller-owned private or in-memory
+data that are not bundled with NeqSim.
+
+The manifest verifies declared metadata against the supplied observations. It
+does not hash source bytes, prove that a license interpretation is correct, or
+prove experimental independence. Repository maintainers must separately
+compare the recorded checksum with the distributed file, audit the permission
+decision, map source groups to real laboratories and apparatus, and pre-register
+acceptance limits before evaluating a holdout.
+
+### Acoustic compressibility conversion
+
+`PitzerBinaryVolumetricAcousticConversion` provides the missing thermodynamic
+bridge for assessing sound-speed evidence without equating isentropic and
+isothermal response:
+
+$$\kappa_S=\frac{1}{\rho c^2},\qquad
+\kappa_T=\kappa_S+\frac{T\alpha^2}{\rho c_p}.$$
+
+Inputs use SI units: temperature in K, density in kg/m3, speed of sound in m/s,
+volumetric thermal expansivity in 1/K, and mass-specific isobaric heat capacity
+in J/(kg K). Compressibilities are returned in 1/Pa. The uncertainty method
+accepts a full 5-by-5 covariance matrix in that input order, checks that it is
+finite, symmetric, and positive semidefinite, and evaluates
+$u^2(\kappa_T)=J\Sigma J^T$ with an analytic sensitivity Jacobian. This retains
+correlations among measurements instead of silently assuming independence.
+
+The conversion does not fill missing density, expansivity, or heat-capacity
+inputs, infer their covariance, fit any coefficient, or activate a density
+model. Acoustic rows therefore remain inadmissible for volumetric-Pitzer
+calibration until every matched property, uncertainty, source lineage, and
+redistribution right passes the campaign provenance gates.
+
+The SI conversion is checked against the CC BY 4.0 compressed-water results of
+El Hawary and Meier (2023) at 303.15 K and 50 MPa. Their published sound-speed
+correlation and Table 5 density and heat-capacity values give
+$\kappa_T=3.96032\times10^{-10}$ 1/Pa. This agrees within 0.018% with the
+alternative $\kappa_Sc_p/c_v$ identity and within 0.030% with a symmetric
+45/55 MPa density derivative. The benchmark validates units and thermodynamic
+consistency of the conversion. Because the source derived density and heat
+capacity through thermodynamic integration of its acoustic measurements, this
+is not an independent experimental validation. It is pure-water evidence and
+does not qualify CaCl2 acoustic data or any volumetric-Pitzer coefficient.
+
+Reference: El Hawary and Meier (2023),
+[doi:10.1007/s10765-023-03276-1](https://doi.org/10.1007/s10765-023-03276-1).
+
+### Qualification boundary
+
+- The caller owns coefficient provenance and must keep calibration and
+  validation sources independent.
+- No Rowland–May coefficient table or PHREEQC volume fit is bundled.
+- The 197-point Al Ghafri/NIST ThermoML CaCl2 pressure series remains reserved
+  as validation evidence and is not fitted by this kernel.
+- The current `Water` salt-density correlation and every default density
+  result remain unchanged.
+- Quantitative high-pressure calcium-sulfate prediction remains unqualified
+  until a redistribution-compatible calibration dataset and independent
+  grouped-source validation pass the campaign acceptance gates.
+
+Reference: Rowland and May (2013),
+[doi:10.1016/j.fluid.2012.10.021](https://doi.org/10.1016/j.fluid.2012.10.021).
+
+---
+
+## Usage Example
+
+The following complete Java 8 program compares the maintained liquid-density
+models without changing the equation of state. Constructor inputs are kelvin and
+bara. Assertions are deliberately broad physical checks: model selection still
+requires independent data representative of the fluid and operating envelope.
+
+```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
-fluid.addComponent("methane", 0.1);
-fluid.addComponent("n-pentane", 0.9);
-fluid.setMixingRule("classic");
+public final class DensityModelComparison {
+  private static final Logger logger = LogManager.getLogger(DensityModelComparison.class);
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
+  private DensityModelComparison() {}
 
-// Default density (Peneloux volume shift)
-double densityPeneloux = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("Peneloux: " + densityPeneloux + " kg/m3");
+  public static void main(String[] args) {
+    SystemInterface hydrocarbon = createLiquid("n-hexane", 298.15, 10.0);
+    String oilPhase = "oil";
 
-// Switch to COSTALD
-fluid.setLiquidDensityModel("COSTALD");
-double densityCostald = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("COSTALD:  " + densityCostald + " kg/m3");
+    double penelouxDensity = density(hydrocarbon, oilPhase);
+    hydrocarbon.setLiquidDensityModel("COSTALD");
+    double costaldDensity = density(hydrocarbon, oilPhase);
+    hydrocarbon.setLiquidDensityModel("Rackett");
+    double rackettDensity = density(hydrocarbon, oilPhase);
+    hydrocarbon.setLiquidDensityModel("Peneloux");
+    double restoredDensity = density(hydrocarbon, oilPhase);
 
-// Switch to Rackett
-fluid.setLiquidDensityModel("Rackett");
-double densityRackett = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("Rackett:  " + densityRackett + " kg/m3");
+    assertPhysicalDensity("Peneloux", penelouxDensity, 500.0, 800.0);
+    assertPhysicalDensity("COSTALD", costaldDensity, 500.0, 800.0);
+    assertPhysicalDensity("Rackett", rackettDensity, 500.0, 800.0);
+    assert Math.abs(restoredDensity - penelouxDensity) < 0.01
+        : "Restoring Peneloux must restore the original density";
 
-// Switch back to Peneloux
-fluid.setLiquidDensityModel("Peneloux");
-double densityBack = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("Peneloux: " + densityBack + " kg/m3");
-```
+    double originalTemperatureK = hydrocarbon.getTemperature("K");
+    double originalPressureBara = hydrocarbon.getPressure("bara");
+    double referenceDensity =
+        hydrocarbon.getDensityAtReferenceConditions(15.0, "C", 1.01325, "bara");
+    assertPhysicalDensity("15 C reference", referenceDensity, 600.0, 720.0);
+    assert Math.abs(hydrocarbon.getTemperature("K") - originalTemperatureK) < 1.0e-10
+        : "Reference-condition calculation changed the live temperature";
+    assert Math.abs(hydrocarbon.getPressure("bara") - originalPressureBara) < 1.0e-10
+        : "Reference-condition calculation changed the live pressure";
 
-### Comparing with NASTALD for Polar Systems
+    SystemInterface water = createLiquid("water", 293.15, 10.0);
+    String waterPhase = water.hasPhaseType("aqueous") ? "aqueous" : "oil";
+    water.setLiquidDensityModel("COSTALD");
+    double waterCostaldDensity = density(water, waterPhase);
+    water.setLiquidDensityModel("NASTALD");
+    double waterNastaldDensity = density(water, waterPhase);
 
-```java
-SystemInterface fluid = new SystemSrkEos(293.15, 1.01325);
-fluid.addComponent("water", 0.8);
-fluid.addComponent("methanol", 0.2);
-fluid.setMixingRule("classic");
+    assertPhysicalDensity("water COSTALD", waterCostaldDensity, 900.0, 1100.0);
+    assertPhysicalDensity("water NASTALD", waterNastaldDensity, 900.0, 1100.0);
+    assert Math.abs(waterCostaldDensity - waterNastaldDensity) > 0.1
+        : "The polar correction should change the water result";
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
+    logger.info(
+        "n-hexane density kg/m3: Peneloux={}, COSTALD={}, Rackett={}, 15 C reference={}",
+        penelouxDensity,
+        costaldDensity,
+        rackettDensity,
+        referenceDensity);
+    logger.info(
+        "water density kg/m3: COSTALD={}, NASTALD={}",
+        waterCostaldDensity,
+        waterNastaldDensity);
+  }
 
-// COSTALD (V* captures polarity via back-calculation)
-fluid.setLiquidDensityModel("COSTALD");
-double rhoCostald = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
-System.out.println("COSTALD:  " + rhoCostald + " kg/m3");
+  private static SystemInterface createLiquid(
+      String component, double temperatureK, double pressureBara) {
+    SystemInterface fluid = new SystemSrkEos(temperatureK, pressureBara);
+    fluid.addComponent(component, 1.0);
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
+    return fluid;
+  }
 
-// NASTALD (explicit polar correction)
-fluid.setLiquidDensityModel("NASTALD");
-double rhoNastald = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
-System.out.println("NASTALD:  " + rhoNastald + " kg/m3");
-```
+  private static double density(SystemInterface fluid, String phaseName) {
+    double value = fluid.getPhase(phaseName).getPhysicalProperties().calcDensity();
+    assert Double.isFinite(value) : phaseName + " density is not finite";
+    return value;
+  }
 
-### Tuning Liquid Density
-
-```java
-// Create fluid with known experimental density
-SystemInterface fluid = new SystemSrkEos(293.15, 1.01325);
-fluid.addComponent("n-hexane", 1.0);
-fluid.setMixingRule("classic");
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
-
-double expDensity = 659.0;  // kg/m³ at 20°C
-double calcDensity = fluid.getPhase(1).getDensity("kg/m3");
-double error = (calcDensity - expDensity) / expDensity * 100;
-System.out.println("Initial error: " + error + "%");
-
-// Adjust volume correction to match experimental
-double molarMass = fluid.getPhase(1).getMolarMass() * 1000;  // kg/kmol
-double calcMolarVolume = molarMass / calcDensity;  // m³/kmol
-double expMolarVolume = molarMass / expDensity;    // m³/kmol
-double correction = (calcMolarVolume - expMolarVolume) / 1000;  // m³/mol
-
-fluid.getPhase(1).getComponent("n-hexane").setVolumeCorrectionConst(correction);
-fluid.initPhysicalProperties();
-
-double newDensity = fluid.getPhase(1).getDensity("kg/m3");
-System.out.println("Tuned density: " + newDensity + " kg/m³");
-```
-
-### Density vs Temperature
-
-```java
-SystemInterface fluid = new SystemSrkEos(300.0, 10.0);
-fluid.addComponent("n-heptane", 1.0);
-fluid.setMixingRule("classic");
-
-double[] temps = {280, 300, 320, 340, 360, 380};
-
-for (double T : temps) {
-    fluid.setTemperature(T, "K");
-
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.TPflash();
-
-    if (fluid.getPhase(1).getPhaseTypeName().equals("oil")) {
-        fluid.initPhysicalProperties();
-        double rho = fluid.getPhase(1).getDensity("kg/m3");
-        System.out.println("T=" + T + " K: ρ=" + rho + " kg/m³");
-    }
+  private static void assertPhysicalDensity(
+      String label, double value, double lowerBound, double upperBound) {
+    assert value > lowerBound && value < upperBound
+        : label + " density outside the demonstration bounds: " + value;
+  }
 }
 ```
 
-### High-Pressure Density
+Run with assertions enabled so the physical and state-preservation checks are
+active. The exact program is extracted, compiled with Java 8 source/target
+settings, and executed by the documentation contract.
 
-```java
-// Compressed liquid density at high pressure
-SystemInterface fluid = new SystemSrkEos(300.0, 500.0);  // 500 bar
-fluid.addComponent("n-decane", 1.0);
-fluid.setMixingRule("classic");
+### Interpretation and calibration boundary
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
-
-double rho = fluid.getPhase(0).getDensity("kg/m3");
-System.out.println("High-P density: " + rho + " kg/m³");
-
-// For high-pressure liquids, Peneloux may be insufficient
-// Consider using PC-SAFT or adjusting correction
-```
+- Peneloux, COSTALD, NASTALD, and Rackett are alternative liquid-density
+  treatments; none is universally best for every composition and state.
+- The broad bounds above catch phase-selection, unit, and non-finite-result
+  errors. They are not experimental qualification.
+- `getDensityAtReferenceConditions(...)` evaluates a reference state without
+  mutating the live fluid temperature or pressure.
+- Do not tune `setVolumeCorrectionConst(...)` from a single density point.
+  Establish parameter provenance, define the applicable temperature-pressure
+  envelope, fit a calibration dataset, and validate against independent data.
+- After changing composition or thermodynamic state, rerun the required flash
+  and physical-property initialization before interpreting density.
 
 ---
 
@@ -765,6 +933,7 @@ System.out.println("High-P density: " + rho + " kg/m³");
 | Near saturation | COSTALD | Better for saturated liquids |
 | Polar compounds (water, glycols) | COSTALD | V\* from density handles polarity |
 | Polar with database V\* | NASTALD | Adds explicit polar correction term |
+| Binary electrolyte with qualified volumetric parameters | `PitzerBinaryVolumetricModel` | Low-level opt-in kernel; no bundled coefficient set |
 | Multi-phase (gas-oil-water) | COSTALD | Single call applies to oil + aqueous |
 | Different model per phase | Per-phase API | e.g. COSTALD on oil, Peneloux on aqueous |
 | TBP/plus fractions | COSTALD | V\* from density input, no tuning needed |
@@ -788,6 +957,7 @@ System.out.println("High-P density: " + rho + " kg/m³");
 | NASTALD (polar with database V\*) | 1–3% | N/A |
 | Rackett (hydrocarbons) | 2–5% | N/A |
 | GERG-2008 | 0.1–0.5% | 0.1–0.5% |
+| Binary volumetric Pitzer kernel | Dataset-dependent | N/A |
 
 ---
 
@@ -870,6 +1040,27 @@ double Vstar = component.getCostaldCharacteristicVolume();
 component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 ```
 
+### Binary Volumetric Pitzer API
+
+| Method | Purpose |
+|--------|---------|
+| `calculateApparentMolarVolume(...)` | Evaluate the standard infinite-dilution form |
+| `calculateApparentMolarVolumeFromReference(...)` | Evaluate the numerically stable non-zero reference form |
+| `calculateDensity(...)` | Convert apparent molar volume to density on a 1 kg solvent basis |
+| `calculateApparentMolarVolumeFromDensity(...)` | Invert a density observation to apparent molar volume |
+| `calculateIonicStrength(...)` | Return the binary salt's stoichiometric ionic strength |
+| `PitzerBinaryVolumetricRegression.fit(...)` | Fit caller-supplied one-state observations with SVD rank checks |
+| `FitResult.getGroupStatistics()` | Inspect residuals by laboratory or source lineage |
+| `PitzerBinaryVolumetricGroupedValidation.validate(...)` | Fit one lineage set and evaluate a disjoint untouched holdout |
+| `PitzerBinaryVolumetricDatasetProvenance.validateRepositoryObservations(...)` | Check role, license, checksum manifest, row count and state envelope |
+| `PitzerBinaryVolumetricGroupedValidation.validateRepositoryDatasets(...)` | Enforce repository provenance before grouped fitting and holdout evaluation |
+| `PitzerBinaryVolumetricAcousticConversion.calculateIsentropicCompressibility(...)` | Convert density and sound speed to isentropic compressibility |
+| `PitzerBinaryVolumetricAcousticConversion.calculateIsothermalCompressibility(...)` | Apply the expansivity and heat-capacity correction in SI units |
+| `PitzerBinaryVolumetricAcousticConversion.convertWithUncertainty(...)` | Propagate a full input covariance through the acoustic conversion |
+
+These methods do not install a parameter dataset or alter a phase. A caller
+must explicitly supply a provenance-qualified `StateParameters` instance.
+
 ---
 
 ## References
@@ -884,3 +1075,4 @@ component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 8. Li, C.C. (1971). Critical Temperature Estimation for Simple Mixtures. *Can. J. Chem. Eng.* 49, 709–710.
 9. Jhaveri, B.S. and Youngren, G.K. (1988). Three-Parameter Modification of the Peng-Robinson Equation of State. *SPE Reservoir Eng.* 3, 1033–1040.
 10. Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). *The Properties of Gases and Liquids*, 5th ed. McGraw-Hill.
+11. Rowland, D. and May, P.M. (2013). A Pitzer-Based Characterization of Aqueous Magnesium Chloride, Calcium Chloride and Potassium Iodide Solution Densities to High Temperature and Pressure. *Fluid Phase Equilib.* 338, 54–62. [doi:10.1016/j.fluid.2012.10.021](https://doi.org/10.1016/j.fluid.2012.10.021).

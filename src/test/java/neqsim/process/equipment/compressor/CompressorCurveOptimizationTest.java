@@ -359,7 +359,7 @@ public class CompressorCurveOptimizationTest {
     logger.info("Target pressure: " + targetPressure + " bara");
 
     // Test with different flow rates
-    double[] flowRates = { 12000, 15000, 18000, 20000 };
+    double[] flowRates = {12000, 15000, 18000, 20000};
     for (double flow : flowRates) {
       feedStream.setFlowRate(flow, "kg/hr");
       process.run();

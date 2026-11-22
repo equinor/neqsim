@@ -213,3 +213,4 @@ SD time         : 12 min API 521 BD     PASS (target ≤ 15 min)
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — link operability gaps to safety scenarios
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — startup/SD blowdown loads
 - [`neqsim-platform-modeling`](../neqsim-platform-modeling/SKILL.md) — multi-area recycle decomposition
+- `neqsim-control-authority-screening` (community) — the operational counterpart: whether an installed loop has **already** run out of authority in the historian, as opposed to whether it was sized with enough

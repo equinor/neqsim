@@ -18,7 +18,11 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
   public PhaseSrkPenelouxEos() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkPenelouxEos clone() {
     PhaseSrkPenelouxEos clonedPhase = null;
@@ -26,6 +30,7 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
       clonedPhase = (PhaseSrkPenelouxEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkPenelouxEos", ex);
     }
 
     return clonedPhase;

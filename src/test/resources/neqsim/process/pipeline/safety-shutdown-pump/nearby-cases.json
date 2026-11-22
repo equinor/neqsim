@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "initialFlow_m3_s": 0.0075,
+      "requestedStep_s": 0.001,
+      "volumeResidual_m3": 5.7462715141731735E-18,
+      "momentumResidual_kg_m_s": 7.860734285713988E-11,
+      "work_J": 1538.9996036036002,
+      "elapsed_ms": 271.120076
+    },
+    {
+      "initialFlow_m3_s": 0.0075,
+      "requestedStep_s": 0.0037,
+      "volumeResidual_m3": 4.255493527005605E-18,
+      "momentumResidual_kg_m_s": 1.2889245226688217E-11,
+      "work_J": 1538.5686059841835,
+      "elapsed_ms": 84.210002
+    },
+    {
+      "initialFlow_m3_s": 0.0075,
+      "requestedStep_s": 0.009,
+      "volumeResidual_m3": -1.0706496453294356E-18,
+      "momentumResidual_kg_m_s": 7.105427357601002E-15,
+      "work_J": 1537.7385643398868,
+      "elapsed_ms": 65.075063
+    },
+    {
+      "initialFlow_m3_s": 0.01,
+      "requestedStep_s": 0.001,
+      "volumeResidual_m3": -7.8198081690517E-18,
+      "momentumResidual_kg_m_s": 3.8253489265116514E-10,
+      "work_J": 1904.847978235378,
+      "elapsed_ms": 129.217689
+    },
+    {
+      "initialFlow_m3_s": 0.01,
+      "requestedStep_s": 0.0037,
+      "volumeResidual_m3": -4.811147140404426E-18,
+      "momentumResidual_kg_m_s": 2.7213786779611837E-11,
+      "work_J": 1904.4390569623938,
+      "elapsed_ms": 12.269960999999999
+    },
+    {
+      "initialFlow_m3_s": 0.01,
+      "requestedStep_s": 0.009,
+      "volumeResidual_m3": 4.174178364069192E-18,
+      "momentumResidual_kg_m_s": 7.567280135845067E-12,
+      "work_J": 1903.651526307092,
+      "elapsed_ms": 4.692858
+    },
+    {
+      "initialFlow_m3_s": 0.0125,
+      "requestedStep_s": 0.001,
+      "volumeResidual_m3": 1.83772268236293E-17,
+      "momentumResidual_kg_m_s": -4.959304078511195E-10,
+      "work_J": 2123.504725541768,
+      "elapsed_ms": 46.890366
+    },
+    {
+      "initialFlow_m3_s": 0.0125,
+      "requestedStep_s": 0.0037,
+      "volumeResidual_m3": 9.391901319155682E-18,
+      "momentumResidual_kg_m_s": -1.1831957635877188E-10,
+      "work_J": 2123.1196495808963,
+      "elapsed_ms": 9.568622
+    },
+    {
+      "initialFlow_m3_s": 0.0125,
+      "requestedStep_s": 0.009,
+      "volumeResidual_m3": 3.0493186101154812E-18,
+      "momentumResidual_kg_m_s": -6.59525767332525E-11,
+      "work_J": 2122.3780327145614,
+      "elapsed_ms": 3.551723
+    }
+  ]
+}

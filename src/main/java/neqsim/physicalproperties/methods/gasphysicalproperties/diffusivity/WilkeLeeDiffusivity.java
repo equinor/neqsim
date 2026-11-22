@@ -12,10 +12,6 @@ public class WilkeLeeDiffusivity extends Diffusivity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  double[][] binaryDiffusionCoefficients;
-
-  double[][] binaryLennardJonesOmega;
-
   /**
    * Constructor for WilkeLeeDiffusivity.
    *
@@ -23,10 +19,6 @@ public class WilkeLeeDiffusivity extends Diffusivity {
    */
   public WilkeLeeDiffusivity(PhysicalProperties gasPhase) {
     super(gasPhase);
-    binaryDiffusionCoefficients = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-        .getNumberOfComponents()];
-    binaryLennardJonesOmega = new double[gasPhase.getPhase().getNumberOfComponents()][gasPhase.getPhase()
-        .getNumberOfComponents()];
   }
 
   /** {@inheritDoc} */
@@ -45,15 +37,14 @@ public class WilkeLeeDiffusivity extends Diffusivity {
     double H2 = 3.89411;
     double T = gasPhase.getPhase().getTemperature();
     double tempVar2 = T / binaryEnergyParameter[i][j];
-    binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
-        + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);
+    double collisionIntegral = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2) + E2 / Math.exp(F2 * tempVar2)
+        + G2 / Math.exp(H2 * tempVar2);
     // Note: the (3.03 - 0.98/sqrt(M_AB)) * 1e-3 is the Wilke-Lee prefactor replacing
     // the Chapman-Enskog 0.00266 constant
-    binaryDiffusionCoefficients[i][j] = (3.03 - 0.98 / Math.sqrt(binaryMolecularMass[i][j])) * 1.0e-3 * Math.pow(T, 1.5)
+    double coefficient = (3.03 - 0.98 / Math.sqrt(binaryMolecularMass[i][j])) * 1.0e-3 * Math.pow(T, 1.5)
         / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
-            * Math.pow(binaryMolecularDiameter[i][j], 2.0) * binaryLennardJonesOmega[i][j]);
+            * Math.pow(binaryMolecularDiameter[i][j], 2.0) * collisionIntegral);
     // Convert from cm²/s to m²/s
-    binaryDiffusionCoefficients[i][j] *= 1e-4;
-    return binaryDiffusionCoefficients[i][j];
+    return coefficient * 1e-4;
   }
 }

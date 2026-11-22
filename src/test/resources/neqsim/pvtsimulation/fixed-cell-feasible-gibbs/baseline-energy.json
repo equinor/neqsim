@@ -1,0 +1,77 @@
+[
+  {
+    "T": 300.0,
+    "pressure": 10.0,
+    "inventory": [
+      0.1065743133509231,
+      0.02008830385442146,
+      0.04684103007088043
+    ],
+    "beforeGibbs": 188.93323532116983,
+    "afterGibbs": 188.93323534811145,
+    "identityPhaseEnergy": 188.93323532116972,
+    "feasiblePhaseEnergy": 188.9332353482397,
+    "phaseClosureBefore": [
+      -2.239516731783464e-12,
+      3.8578515382248213e-13,
+      1.860761544847378e-12
+    ],
+    "phaseClosureAfter": [
+      -6.942363350859182e-15,
+      2.7391283685673784e-15,
+      1.1206313654810174e-14
+    ],
+    "residual": 3.3889557826682903e-13,
+    "freshPublicReplay": "java.lang.IllegalStateException: Fixed-cell precision refinement failed"
+  },
+  {
+    "T": 300.0,
+    "pressure": 10.0,
+    "inventory": [
+      0.1077394874686004,
+      0.02016485446850729,
+      0.04684930533912084
+    ],
+    "beforeGibbs": 195.08971579420336,
+    "afterGibbs": 195.08971582857305,
+    "identityPhaseEnergy": 195.08971579420358,
+    "feasiblePhaseEnergy": 195.08971582874142,
+    "phaseClosureBefore": [
+      -2.8599236694126784e-12,
+      4.915200191302205e-13,
+      2.3722621089738993e-12
+    ],
+    "phaseClosureAfter": [
+      -1.191191242866374e-14,
+      2.9004576518332215e-15,
+      1.289246487345963e-14
+    ],
+    "residual": 4.3165471197426086e-13,
+    "freshPublicReplay": "java.lang.IllegalStateException: Fixed-cell precision refinement failed"
+  },
+  {
+    "T": 325.0,
+    "pressure": 10.0,
+    "inventory": [
+      0.07808208975944088,
+      0.010604342195146058,
+      0.03980899435609955
+    ],
+    "beforeGibbs": 210.61723806185586,
+    "afterGibbs": 210.61723808296955,
+    "identityPhaseEnergy": 210.61723806185546,
+    "feasiblePhaseEnergy": 210.61723808302997,
+    "phaseClosureBefore": [
+      -1.91288174536397e-12,
+      1.207046615436802e-13,
+      1.8201620766156168e-12
+    ],
+    "phaseClosureAfter": [
+      7.310992089504253e-15,
+      2.9021923753091983e-15,
+      1.7770507287906412e-14
+    ],
+    "residual": 4.2366110619695974e-13,
+    "freshPublicReplay": "java.lang.IllegalStateException: Fixed-cell precision refinement failed"
+  }
+]

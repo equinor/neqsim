@@ -284,6 +284,98 @@ class ValidatorTest {
     assertTrue(hasIssueCode(root, "EMPTY_INLET"));
   }
 
+  @Test
+  void testProcessUnresolvedInletIsError() {
+    // The MCP probe: no Stream named 'feed' was defined, yet the builder ran the disconnected train.
+    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 0.9, \"ethane\": 0.1}}," + "\"process\": ["
+        + "  {\"type\": \"Compressor\", \"name\": \"K1\", \"inlet\": \"feed\", \"properties\": {\"outletPressure\": 15.0}}"
+        + "]" + "}";
+
+    JsonObject root = JsonParser.parseString(Validator.validate(json)).getAsJsonObject();
+
+    assertFalse(root.get("valid").getAsBoolean());
+    assertTrue(hasIssueCode(root, "UNRESOLVED_INLET"));
+  }
+
+  @Test
+  void testProcessForwardReferenceAndPortAliasResolve() {
+    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 0.9, \"ethane\": 0.1}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"},"
+        + "  {\"type\": \"Mixer\", \"name\": \"mix\", \"inlets\": [\"feed\", \"Gas Recycle.out\"]},"
+        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"mix.out\"},"
+        + "  {\"type\": \"Recycle\", \"name\": \"Gas Recycle\", \"inlet\": \"HP Sep.gasOut\"}" + "]" + "}";
+
+    JsonObject root = JsonParser.parseString(Validator.validate(json)).getAsJsonObject();
+
+    assertTrue(root.get("valid").getAsBoolean(), root.toString());
+    assertFalse(hasIssueCode(root, "UNRESOLVED_INLET"));
+  }
+
+  @Test
+  void testProcessMisplacedUnitParametersIsError() {
+    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"},"
+        + "  {\"type\": \"Compressor\", \"name\": \"K1\", \"inlet\": \"feed\", \"outletPressure_bara\": 15.0}" + "]"
+        + "}";
+
+    JsonObject root = JsonParser.parseString(Validator.validate(json)).getAsJsonObject();
+
+    assertFalse(root.get("valid").getAsBoolean());
+    assertTrue(hasIssueCode(root, "MISPLACED_UNIT_PARAMETERS"));
+    assertTrue(root.toString().contains("outletPressure_bara"));
+  }
+
+  @Test
+  void testProcessLegacyShorthandOnStreamIsAccepted() {
+    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\", \"flowRate\": [100.0, \"kg/hr\"]}" + "]" + "}";
+
+    JsonObject root = JsonParser.parseString(Validator.validate(json)).getAsJsonObject();
+
+    assertFalse(hasIssueCode(root, "MISPLACED_UNIT_PARAMETERS"));
+  }
+
+  @Test
+  void testProcessModelInterAreaLinkTargetIsExempt() {
+    String json = "{\"areas\": {" + "\"A\": {\"fluid\": {\"components\": {\"methane\": 1.0}}, \"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"}, {\"type\": \"Separator\", \"name\": \"Sep\", \"inlet\": \"feed\"}]},"
+        + "\"B\": {\"fluid\": {\"components\": {\"methane\": 1.0}}, \"process\": ["
+        + "  {\"type\": \"Compressor\", \"name\": \"K1\", \"inlet\": \"fromA\"}]}" + "},"
+        + "\"interAreaLinks\": [{\"sourceArea\": \"A\", \"source\": \"Sep.gasOut\", \"targetArea\": \"B\","
+        + " \"targetUnit\": \"K1\"}]}";
+
+    JsonObject root = JsonParser.parseString(Validator.validate(json)).getAsJsonObject();
+
+    assertTrue(root.get("valid").getAsBoolean(), root.toString());
+  }
+
+  @Test
+  void testUnrecognizedProcessShapeGivesTargetedError() {
+    String json = "{\"fluid\": {\"components\": {\"methane\": 1.0}}, \"units\": [{\"type\": \"Separator\"}]}";
+
+    JsonObject root = JsonParser.parseString(Validator.validate(json)).getAsJsonObject();
+
+    assertFalse(root.get("valid").getAsBoolean());
+    assertTrue(hasIssueCode(root, "UNRECOGNIZED_INPUT_SHAPE"));
+    assertFalse(hasIssueCode(root, "MISSING_COMPONENTS"));
+  }
+
+  @Test
+  void testToolScopedValidationUsesCatalogSchema() {
+    String wrong = "{\"tool\": \"runRelief\", \"input\": {\"case\": \"gas\", \"flowRate_kg_hr\": 36000.0,"
+        + " \"setPressure_barg\": 19.0}}";
+    JsonObject root = JsonParser.parseString(Validator.validate(wrong)).getAsJsonObject();
+    assertFalse(root.get("valid").getAsBoolean());
+    assertTrue(hasIssueCode(root, "SCHEMA_VIOLATION"));
+    assertTrue(root.toString().contains("massFlowRate_kg_s"), root.toString());
+
+    String right = "{\"tool\": \"run_relief\", \"input\": {\"case\": \"gas\", \"massFlowRate_kg_s\": 10.0,"
+        + " \"setPressure_bara\": 20.0, \"temperature_K\": 320.0, \"molecularWeight_kg_mol\": 0.0185}}";
+    root = JsonParser.parseString(Validator.validate(right)).getAsJsonObject();
+    assertTrue(root.get("valid").getAsBoolean(), root.toString());
+    assertTrue(hasIssueCode(root, "SCHEMA_OK"));
+  }
+
   // --- Edge cases ---
 
   @Test

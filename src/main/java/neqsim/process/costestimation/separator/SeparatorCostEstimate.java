@@ -1,6 +1,7 @@
 package neqsim.process.costestimation.separator;
 
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 
 /**
@@ -53,7 +54,10 @@ public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
       return 0.0;
     }
 
-    // Vertical-vessel correlation is the common default for process separators.
+    Separator separator = (Separator) sepMecDesign.getProcessEquipment();
+    if ("horizontal".equalsIgnoreCase(separator.getOrientation())) {
+      return getCostCalculator().calcHorizontalVesselCostByVolume(volume);
+    }
     return getCostCalculator().calcVerticalVesselCostByVolume(volume);
   }
 

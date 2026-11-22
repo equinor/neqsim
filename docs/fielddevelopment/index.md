@@ -5,3 +5,5 @@ keywords: "field development, concept selection, tieback, subsea, FPSO, NPV, IRR
 ---
 
 {% include_relative README.md %}
+
+[Well and SURF Network Integration](SURF_NETWORK_INTEGRATION.md) documents detailed network integration and qualification scope.

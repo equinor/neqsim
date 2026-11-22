@@ -37,7 +37,11 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
   public void init() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermMollerup clone() {
     AttractiveTermMollerup attractiveTerm = null;
@@ -45,6 +49,7 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
       attractiveTerm = (AttractiveTermMollerup) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermMollerup", ex);
     }
 
     return attractiveTerm;

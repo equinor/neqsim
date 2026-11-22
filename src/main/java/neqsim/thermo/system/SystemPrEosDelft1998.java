@@ -65,7 +65,11 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemPrEosDelft1998 clone() {
     SystemPrEosDelft1998 clonedSystem = null;
@@ -73,6 +77,7 @@ public class SystemPrEosDelft1998 extends SystemPrEos {
       clonedSystem = (SystemPrEosDelft1998) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemPrEosDelft1998", ex);
     }
 
     return clonedSystem;

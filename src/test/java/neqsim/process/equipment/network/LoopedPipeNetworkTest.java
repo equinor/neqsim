@@ -8,12 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.Stream;
@@ -959,7 +962,7 @@ class LoopedPipeNetworkTest {
   @Test
   void testChokeSensitivity() {
     double previousFlow = Double.MAX_VALUE;
-    double[] openings = { 100.0, 75.0, 50.0, 25.0 };
+    double[] openings = {100.0, 75.0, 50.0, 25.0};
 
     logger.info("=== Choke Sensitivity ===");
 
@@ -1531,6 +1534,57 @@ class LoopedPipeNetworkTest {
     assertEquals(LoopedPipeNetwork.NetworkElementType.COMPRESSOR, comp.getElementType());
   }
 
+  /** Chart-backed rotating equipment rejects incomplete maps before mutating the graph. */
+  @Test
+  void testMappedRotatingEquipmentRegistrationIsAtomic() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("mapped registration");
+    network.addJunctionNode("suction");
+    network.addJunctionNode("discharge");
+
+    Pump chartlessPump = new Pump("chartless pump", new Stream("pump feed", testGas.clone()));
+    Compressor chartlessCompressor = new Compressor("chartless compressor",
+        new Stream("compressor feed", testGas.clone()));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> network.addPumpWithCurve("suction", "discharge", "pump", chartlessPump));
+    assertThrows(IllegalArgumentException.class,
+        () -> network.addCompressorWithChart("suction", "discharge", "compressor", chartlessCompressor));
+    assertTrue(network.getPipeNames().isEmpty());
+  }
+
+  /** A configured compressor-chart failure must not fall through to simplified polytropic physics. */
+  @Test
+  void testMappedCompressorFailureFailsClosed() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("failed mapped compressor");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(10);
+    network.addSourceNode("supply", 30.0, 0.0);
+    network.addFixedPressureSinkNode("delivery", 60.0);
+
+    Compressor failingCompressor = new Compressor("failing compressor",
+        new Stream("compressor feed", testGas.clone())) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void run(UUID id) {
+        throw new IllegalStateException("synthetic chart failure");
+      }
+    };
+    failingCompressor.getCompressorChart().setCurves(new double[] {298.15, 1.0, 1.0, 1.0}, new double[] {9000.0},
+        new double[][] {{1000.0, 1500.0, 2000.0}}, new double[][] {{80.0, 70.0, 55.0}},
+        new double[][] {{72.0, 78.0, 74.0}});
+    failingCompressor.getCompressorChart().setUseCompressorChart(true);
+    network.addCompressorWithChart("supply", "delivery", "compressor", failingCompressor);
+
+    network.run();
+
+    LoopedPipeNetwork.NetworkPipe edge = network.getPipe("compressor");
+    assertEquals("Compressor-Chart-Infeasible", edge.getFlowRegime());
+    assertTrue(Double.isNaN(edge.getCompressorPower()));
+    assertTrue(Double.isNaN(network.getPower("kW")));
+  }
+
   /**
    * Test regulator (pressure reducing valve) element.
    */
@@ -1955,16 +2009,16 @@ class LoopedPipeNetworkTest {
     network.addSourceNode("source", 80.0, 0.0);
     network.addFixedPressureSinkNode("delivery", 50.0);
     LoopedPipeNetwork.NetworkPipe pipe = network.addPipe("source", "delivery", "profiled", 1000.0, 0.3);
-    double[] distance = new double[] { 0.0, 400.0, 1000.0 };
-    pipe.setElevationProfile(distance, new double[] { 0.0, -100.0, 20.0 });
-    pipe.setAmbientTemperatureProfile(distance, new double[] { 280.0, 275.0, 278.0 });
-    pipe.setHeatTransferProfile(distance, new double[] { 2.0, 8.0, 4.0 });
+    double[] distance = new double[] {0.0, 400.0, 1000.0};
+    pipe.setElevationProfile(distance, new double[] {0.0, -100.0, 20.0});
+    pipe.setAmbientTemperatureProfile(distance, new double[] {280.0, 275.0, 278.0});
+    pipe.setHeatTransferProfile(distance, new double[] {2.0, 8.0, 4.0});
     distance[1] = 500.0;
 
     assertTrue(pipe.hasRouteProfile());
-    assertArrayEquals(new double[] { 0.0, 400.0, 1000.0 }, pipe.getElevationProfileDistanceM(), 0.0);
+    assertArrayEquals(new double[] {0.0, 400.0, 1000.0}, pipe.getElevationProfileDistanceM(), 0.0);
     assertThrows(IllegalArgumentException.class,
-        () -> pipe.setElevationProfile(new double[] { 0.0, 900.0 }, new double[] { 0.0, 10.0 }));
+        () -> pipe.setElevationProfile(new double[] {0.0, 900.0}, new double[] {0.0, 10.0}));
   }
 
   /**
@@ -2031,9 +2085,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
-    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0).setChokeUseValveModel(true);
     network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
-    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
 
     // Get baseline production
@@ -2171,10 +2225,10 @@ class LoopedPipeNetworkTest {
 
     // Export VFP tables (to temp file)
     String tempFile = System.getProperty("java.io.tmpdir") + "/test_vfp.inc";
-    double[] flowRates = new double[] { 100, 500, 1000, 2000 };
-    double[] thps = new double[] { 10, 20, 30, 50 };
-    double[] waterCuts = new double[] { 0.0, 0.2 };
-    double[] gors = new double[] { 100, 200 };
+    double[] flowRates = new double[] {100, 500, 1000, 2000};
+    double[] thps = new double[] {10, 20, 30, 50};
+    double[] waterCuts = new double[] {0.0, 0.2};
+    double[] gors = new double[] {100, 200};
 
     // This should not throw
     network.exportVFPTables(tempFile, flowRates, thps, waterCuts, gors);
@@ -2726,9 +2780,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
-    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0).setChokeUseValveModel(true);
     network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
-    network.addChoke("wh2", "manifold", "choke2", 50.0, 40.0);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 40.0).setChokeUseValveModel(true);
     network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
 
     network.run();
@@ -2756,9 +2810,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
-    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0).setChokeUseValveModel(true);
     network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
-    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
 
     network.setWellPrice("choke1", 0.50);
@@ -2785,10 +2839,10 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
-    network.addChoke("wh", "downstream", "choke", 50.0, 50.0);
+    network.addChoke("wh", "downstream", "choke", 50.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("downstream", "platform", "pipeline", 20000, 0.3, 0.00005);
 
-    double[] openings = { 10, 30, 50, 70, 90, 100 };
+    double[] openings = {10, 30, 50, 70, 90, 100};
     java.util.Map<String, double[]> results = network.sensitivityAnalysis("choke", "choke_opening", openings);
 
     assertNotNull(results.get("totalFlow_kghr"), "Should have flow results");
@@ -2820,7 +2874,7 @@ class LoopedPipeNetworkTest {
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
     network.addPipe("wh", "platform", "pipeline", 20000, 0.3, 0.00005);
 
-    double[] pressures = { 100, 130, 160, 200 };
+    double[] pressures = {100, 130, 160, 200};
     java.util.Map<String, double[]> results = network.sensitivityAnalysis("ipr", "reservoir_pressure", pressures);
 
     double[] flows = results.get("totalFlow_kghr");
@@ -2843,8 +2897,8 @@ class LoopedPipeNetworkTest {
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
     network.addPipe("wh", "platform", "pipeline", 20000, 0.3, 0.00005);
 
-    double[] pressures = { 200, 180, 160, 140, 120 };
-    double[] years = { 0, 1, 2, 3, 4 };
+    double[] pressures = {200, 180, 160, 140, 120};
+    double[] years = {0, 1, 2, 3, 4};
 
     java.util.Map<String, double[]> forecast = network.productionForecast(pressures, years);
 
@@ -2878,8 +2932,8 @@ class LoopedPipeNetworkTest {
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
     network.addPipe("wh", "platform", "tubing", 3000, 0.15, 0.00005);
 
-    double[] flowRates = { 500, 1000, 2000, 5000, 10000 }; // kg/hr
-    double[] thps = { 50, 60, 70, 80 }; // bara
+    double[] flowRates = {500, 1000, 2000, 5000, 10000}; // kg/hr
+    double[] thps = {50, 60, 70, 80}; // bara
 
     java.util.Map<String, double[][]> tables = network.generateCoupledVFPTables(flowRates, thps);
 
@@ -2917,8 +2971,8 @@ class LoopedPipeNetworkTest {
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
     network.addPipe("wh", "platform", "tubing", 2000, 0.15, 0.00005);
 
-    double[] flowRates = { 1000, 5000, 10000 }; // kg/hr
-    double[] thps = { 50, 70 }; // bara
+    double[] flowRates = {1000, 5000, 10000}; // kg/hr
+    double[] thps = {50, 70}; // bara
 
     java.io.File tempFile = java.io.File.createTempFile("coupled_vfp_", ".inc");
     tempFile.deleteOnExit();
@@ -2942,8 +2996,8 @@ class LoopedPipeNetworkTest {
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
     network.addPipe("wh", "platform", "tubing", 2000, 0.15, 0.00005);
 
-    double[] flowRates = { 500, 2000, 5000, 10000 }; // kg/hr
-    double[] thps = { 40, 60, 80 }; // bara
+    double[] flowRates = {500, 2000, 5000, 10000}; // kg/hr
+    double[] thps = {40, 60, 80}; // bara
 
     java.util.Map<String, double[][]> tables = network.generateCoupledVFPTables(flowRates, thps);
     double[][] bhpTable = tables.values().iterator().next();
@@ -2970,7 +3024,7 @@ class LoopedPipeNetworkTest {
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
     network.addPipe("wh", "platform", "pipeline", 20000, 0.3, 0.00005);
 
-    double[] flowRates = { 2000, 5000, 10000 }; // kg/hr
+    double[] flowRates = {2000, 5000, 10000}; // kg/hr
 
     java.util.Map<String, double[]> curve = network.generateNetworkBackpressureCurve("platform", flowRates);
 
@@ -3123,11 +3177,11 @@ class LoopedPipeNetworkTest {
     network.addJunctionNode("wh");
     network.addFixedPressureSinkNode("platform", 50.0);
     network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
-    network.addChoke("bhp", "wh", "choke1", 40.0, 70.0);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 70.0).setChokeUseValveModel(true);
     network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
 
-    double[] pressures = { 250.0, 220.0, 190.0, 160.0, 130.0 };
-    double[] years = { 0, 2, 5, 8, 10 };
+    double[] pressures = {250.0, 220.0, 190.0, 160.0, 130.0};
+    double[] years = {0, 2, 5, 8, 10};
 
     Map<String, double[]> result = network.productionForecastWithOptimization("res", pressures, years, 20, 0.01);
 
@@ -3161,18 +3215,18 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 60.0);
 
     network.addWellIPR("resA", "bhpA", "iprA", 5e-6, false);
-    network.addChoke("bhpA", "whA", "chokeA", 40.0, 80.0);
+    network.addChoke("bhpA", "whA", "chokeA", 40.0, 80.0).setChokeUseValveModel(true);
     network.addWellIPR("resB", "bhpB", "iprB", 4e-6, false);
-    network.addChoke("bhpB", "whB", "chokeB", 35.0, 70.0);
+    network.addChoke("bhpB", "whB", "chokeB", 35.0, 70.0).setChokeUseValveModel(true);
 
     network.addPipe("whA", "manifold", "flA", 5000, 0.20, 0.00005);
     network.addPipe("whB", "manifold", "flB", 6000, 0.20, 0.00005);
     network.addPipe("manifold", "platform", "export", 20000, 0.30, 0.00005);
 
     Map<String, double[]> profiles = new java.util.LinkedHashMap<>();
-    profiles.put("resA", new double[] { 280, 250, 220, 190, 160 });
-    profiles.put("resB", new double[] { 220, 200, 180, 150, 120 });
-    double[] years = { 0, 3, 6, 9, 12 };
+    profiles.put("resA", new double[] {280, 250, 220, 190, 160});
+    profiles.put("resB", new double[] {220, 200, 180, 150, 120});
+    double[] years = {0, 3, 6, 9, 12};
 
     Map<String, double[]> result = network.productionForecastWithOptimization(profiles, years, 20, 0.01);
 
@@ -3220,7 +3274,7 @@ class LoopedPipeNetworkTest {
     network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
 
     // Set different composition for reservoir A (richer gas)
-    double[] richComp = { 0.80, 0.12, 0.08 }; // more ethane+propane
+    double[] richComp = {0.80, 0.12, 0.08}; // more ethane+propane
     network.setReservoirComposition("resA", richComp);
 
     // Should still solve
@@ -3247,7 +3301,7 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 60.0);
 
     network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
-    network.addChoke("bhp", "wh", "choke1", 40.0, 50.0);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
 
     network.setWellPrice("choke1", 0.30);
@@ -3273,12 +3327,12 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
-    network.addChoke("bhp", "wh", "choke1", 40.0, 80.0);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 80.0).setChokeUseValveModel(true);
     network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
 
     Map<String, double[]> profiles = new java.util.LinkedHashMap<>();
-    profiles.put("res", new double[] { 280, 240, 200, 160, 120 });
-    double[] years = { 0, 5, 10, 15, 20 };
+    profiles.put("res", new double[] {280, 240, 200, 160, 120});
+    double[] years = {0, 5, 10, 15, 20};
 
     Map<String, double[]> forecast = network.fullFieldForecast(profiles, years);
     assertNotNull(forecast, "Forecast should not be null");
@@ -3331,7 +3385,7 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res", "wh", "ipr", 5e-13, true);
-    network.addChoke("wh", "ds", "choke", 100.0, 80.0);
+    network.addChoke("wh", "ds", "choke", 100.0, 80.0).setChokeUseValveModel(true);
     network.addPipe("ds", "platform", "pipe", 10000, 0.25, 0.00005);
   }
 
@@ -3390,7 +3444,7 @@ class LoopedPipeNetworkTest {
     network.attachReservoir("res", reservoir, "gas");
 
     // Run 10-year forecast
-    double[] years = { 0, 2, 4, 6, 8, 10 };
+    double[] years = {0, 2, 4, 6, 8, 10};
     Map<String, double[]> forecast = network.productionForecastCoupled(years, 10, 0.01);
 
     assertNotNull(forecast);
@@ -3437,9 +3491,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("ResA", "whA", "iprA", 8e-13, true);
-    network.addChoke("whA", "dsA", "chokeA", 150.0, 80.0);
+    network.addChoke("whA", "dsA", "chokeA", 150.0, 80.0).setChokeUseValveModel(true);
     network.addWellIPR("ResB", "whB", "iprB", 5e-13, true);
-    network.addChoke("whB", "dsB", "chokeB", 150.0, 60.0);
+    network.addChoke("whB", "dsB", "chokeB", 150.0, 60.0).setChokeUseValveModel(true);
     network.addPipe("dsA", "manifold", "pipeA", 3000, 0.15, 0.00005);
     network.addPipe("dsB", "manifold", "pipeB", 5000, 0.12, 0.00005);
     network.addPipe("manifold", "platform", "export", 15000, 0.25, 0.00005);
@@ -3448,7 +3502,7 @@ class LoopedPipeNetworkTest {
     network.attachReservoir("ResB", resB, "gas");
 
     // Run 5-year forecast
-    double[] years = { 0, 1, 2, 3, 4, 5 };
+    double[] years = {0, 1, 2, 3, 4, 5};
     Map<String, double[]> forecast = network.productionForecastCoupled(years);
 
     double[] pA = forecast.get("pressure_ResA_bara");
@@ -3476,7 +3530,7 @@ class LoopedPipeNetworkTest {
     network.attachReservoir("res", reservoir, "gas");
 
     // Run 5-year forecast with shorter steps
-    double[] years = { 0, 1, 2, 3, 4, 5 };
+    double[] years = {0, 1, 2, 3, 4, 5};
     Map<String, double[]> forecast = network.productionForecastCoupled(years);
 
     double[] pressures = forecast.get("pressure_res_bara");

@@ -34,7 +34,7 @@ import neqsim.thermo.system.SystemInterface;
  * <tr>
  * <td>PedersenSRK</td>
  * <td>General SRK EOS</td>
- * <td>Default, automatic light/heavy switching at MW=1120</td>
+ * <td>Default, supported below MW=1120 g/mol</td>
  * <td>Pedersen et al. (1984)</td>
  * </tr>
  * <tr>
@@ -126,7 +126,8 @@ import neqsim.thermo.system.SystemInterface;
  * <ul>
  * <li><b>Default choice:</b> PedersenSRK (for SRK EOS) or PedersenPR (for PR EOS)</li>
  * <li><b>Gas condensates:</b> Twu model (K<sub>w</sub> &gt; 12)</li>
- * <li><b>Heavy oils (MW &gt; 500):</b> PedersenSRKHeavyOil or PedersenPRHeavyOil</li>
+ * <li><b>Heavy fractions:</b> Pedersen correlations reject MW &ge; 1120 g/mol and the explicit HeavyOil models; supply
+ * independently validated critical properties instead</li>
  * <li><b>Light fractions (MW &lt; 300):</b> RiaziDaubert or Lee-Kesler</li>
  * <li><b>Reservoir engineering:</b> Standing (simple, widely used)</li>
  * <li><b>Refining applications:</b> Cavett (API gravity-based)</li>
@@ -255,6 +256,8 @@ public class TBPfractionModel implements java.io.Serializable {
       this.boilingPoint = boilingPoint;
     }
 
+    /** {@inheritDoc} */
+    @Override
     public double getBoilingPoint() {
       return boilingPoint;
     }
@@ -364,8 +367,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * The model automatically switches between light oil and heavy oil coefficient sets at a molecular weight threshold
-   * of 1120 g/mol to maintain accuracy across a wide range of petroleum fractions.
+   * The standard coefficient set is supported below 1120 g/mol. The legacy heavy-oil coefficient branch is refused
+   * because it produces inconsistent critical and boiling temperatures and invalid EOS parameters. Explicit HeavyOil
+   * variants are also refused. Use independently validated critical properties for these fractions.
    * </p>
    *
    * <p>
@@ -386,23 +390,33 @@ public class TBPfractionModel implements java.io.Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-    double[][] TBPfractionCoefOil = { { 163.12, 86.052, 0.43475, -1877.4, 0.0 },
-        { -0.13408, 2.5019, 208.46, -3987.2, 1.0 }, { 0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0 } };
-    double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-        { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
-    double[] TPBracketcoefs = { 0.29441, 0.40768 };
+    double[][] TBPfractionCoefOil = {{163.12, 86.052, 0.43475, -1877.4, 0.0}, {-0.13408, 2.5019, 208.46, -3987.2, 1.0},
+        {0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0}};
+    double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
+        {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25}, {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
+    double[] TPBracketcoefs = {0.29441, 0.40768};
     double[][] TBPfractionCoefs = null;
+
+    /**
+     * Reject the unqualified heavy-oil correlations before calculating component properties.
+     *
+     * @param molarMass molecular weight in g/mol
+     * @throws UnsupportedOperationException if the heavy coefficient set would be required or explicitly requested
+     */
+    private void requireSupportedPedersenFraction(double molarMass) {
+      if (molarMass >= 1120.0 || this instanceof PedersenTBPModelSRKHeavyOil
+          || this instanceof PedersenTBPModelPRHeavyOil) {
+        throw new UnsupportedOperationException("The Pedersen heavy-oil TBP correlation is unsupported (model "
+            + getName() + ", molecular weight " + molarMass + " g/mol): its critical properties and EOS parameter "
+            + "are inconsistent. Use addTBPfraction with independently validated Tc, Pc and acentric factor.");
+      }
+    }
 
     /** {@inheritDoc} */
     @Override
     public double calcTC(double molarMass, double density) {
-      // System.out.println("TC ccc " + TBPfractionCoefs[0][0]);
-      if (molarMass < 1120) {
-        TBPfractionCoefs = TBPfractionCoefOil;
-      } else {
-        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
-      }
-      // System.out.println("coef " + TBPfractionCoefs[0][0]);
+      requireSupportedPedersenFraction(molarMass);
+      TBPfractionCoefs = TBPfractionCoefOil;
       return TBPfractionCoefs[0][0] * density + TBPfractionCoefs[0][1] * Math.log(molarMass)
           + TBPfractionCoefs[0][2] * molarMass + TBPfractionCoefs[0][3] / molarMass;
     }
@@ -410,11 +424,8 @@ public class TBPfractionModel implements java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
-      if (molarMass < 1120) {
-        TBPfractionCoefs = TBPfractionCoefOil;
-      } else {
-        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
-      }
+      requireSupportedPedersenFraction(molarMass);
+      TBPfractionCoefs = TBPfractionCoefOil;
 
       return Math
           .exp(0.01325 + TBPfractionCoefs[1][0] + TBPfractionCoefs[1][1] * Math.pow(density, TBPfractionCoefs[1][4])
@@ -424,11 +435,8 @@ public class TBPfractionModel implements java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public double calcm(double molarMass, double density) {
-      if (molarMass < 1120) {
-        TBPfractionCoefs = TBPfractionCoefOil;
-      } else {
-        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
-      }
+      requireSupportedPedersenFraction(molarMass);
+      TBPfractionCoefs = TBPfractionCoefOil;
       return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass + TBPfractionCoefs[2][2] * density
           + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
     }
@@ -450,10 +458,9 @@ public class TBPfractionModel implements java.io.Serializable {
     @Override
     public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
       double penelouxC = (thermoSystem.getPhase(0).getMolarVolume() - molarMass / (density * 10.0));
-      // System.out.println("peneloux c " + penelouxC);
-      double TC = calcTC(molarMass, density);
-      // double TB = calcTB(molarMass, density);
-      double PC = calcPC(molarMass, density);
+      // The reference component may carry independently supplied critical properties.
+      double TC = thermoSystem.getPhase(0).getComponent(0).getTC();
+      double PC = thermoSystem.getPhase(0).getComponent(0).getPC();
       return TPBracketcoefs[0]
           - penelouxC / (TPBracketcoefs[1] * neqsim.thermo.ThermodynamicConstantsInterface.R * TC / PC);
     }
@@ -463,13 +470,13 @@ public class TBPfractionModel implements java.io.Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-    double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-        { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+    double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
+        {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25}, {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
     double[][] TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
 
     public PedersenTBPModelSRKHeavyOil() {
-      TBPfractionCoefsHeavyOil = new double[][] { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-          { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+      TBPfractionCoefsHeavyOil = new double[][] {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
+          {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25}, {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
       TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
     }
   }
@@ -479,11 +486,11 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPR() {
-      double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
-          { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
-      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
-      double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
+      double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
+          {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0}, {0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0}};
+      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
+          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25}, {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
+      double[] TPBracketcoefs2 = {0.25969, 0.50033};
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TPBracketcoefs = TPBracketcoefs2;
@@ -496,11 +503,11 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPR2() {
-      double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
-          { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
-      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
-      double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
+      double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
+          {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0}, {0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0}};
+      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
+          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25}, {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
+      double[] TPBracketcoefs2 = {0.25969, 0.50033};
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TPBracketcoefs = TPBracketcoefs2;
@@ -524,8 +531,8 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPRHeavyOil() {
-      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
+      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
+          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25}, {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
       // double[][] TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
       // double[][] TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
@@ -773,7 +780,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
           -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5)) * deltaST);
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       return TC;
     }
@@ -824,7 +831,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
           -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5)) * deltaST);
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
       double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
@@ -851,7 +858,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
           -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5)) * deltaST);
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
       double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
@@ -1245,20 +1252,15 @@ public class TBPfractionModel implements java.io.Serializable {
    * @param avgDensity average density/specific gravity in g/cm³
    * @param eosType equation of state type: "SRK" or "PR"
    * @return recommended model name as a String
+   * @throws UnsupportedOperationException if the molecular weight requires the unsupported heavy Pedersen branch
    */
   public String recommendTBPModel(double avgMW, double avgDensity, String eosType) {
     double Kw = calcWatsonKFactor(avgMW, avgDensity);
     double M_gmol = avgMW * 1000; // Convert to g/mol for comparison
 
-    // Heavy oil check (MW > 500 g/mol)
-    if (M_gmol > 500) {
-      if (eosType.equalsIgnoreCase("PR")) {
-        logger.info("Recommending PedersenPRHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
-        return "PedersenPRHeavyOil";
-      } else {
-        logger.info("Recommending PedersenSRKHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
-        return "PedersenSRKHeavyOil";
-      }
+    if (M_gmol >= 1120.0) {
+      throw new UnsupportedOperationException("No Pedersen TBP model can be recommended at molecular weight " + M_gmol
+          + " g/mol. Supply independently validated critical properties instead.");
     }
 
     // Light fractions (MW < 300 g/mol) - Riazi-Daubert works well
@@ -1291,8 +1293,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * @return array of available model names
    */
   public static String[] getAvailableModels() {
-    return new String[] { "PedersenSRK", "PedersenSRKHeavyOil", "PedersenPR", "PedersenPR2", "PedersenPRHeavyOil",
-        "RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing" };
+    return new String[] {"PedersenSRK", "PedersenSRKHeavyOil", "PedersenPR", "PedersenPR2", "PedersenPRHeavyOil",
+        "RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing"};
   }
 
   /**
@@ -1303,10 +1305,10 @@ public class TBPfractionModel implements java.io.Serializable {
    * </p>
    * <ul>
    * <li><b>PedersenSRK</b>: General purpose for SRK EOS, default choice</li>
-   * <li><b>PedersenSRKHeavyOil</b>: SRK EOS for heavy oils (MW &gt; 500 g/mol)</li>
+   * <li><b>PedersenSRKHeavyOil</b>: Legacy name; automatic critical-property estimation is unsupported</li>
    * <li><b>PedersenPR</b>: General purpose for PR EOS</li>
    * <li><b>PedersenPR2</b>: PR EOS with Søreide boiling point correlation</li>
-   * <li><b>PedersenPRHeavyOil</b>: PR EOS for heavy oils</li>
+   * <li><b>PedersenPRHeavyOil</b>: Legacy name; automatic critical-property estimation is unsupported</li>
    * <li><b>RiaziDaubert</b>: Light to medium petroleum fractions (MW &lt; 300 g/mol)</li>
    * <li><b>Lee-Kesler</b>: General purpose, uses Watson K-factor</li>
    * <li><b>Twu</b>: Paraffinic fluids, based on n-alkane reference</li>

@@ -1,0 +1,117 @@
+# SYNTHETIC demonstration route: two-template tie-back with a gathering PLEM, a non-flat trunk, a riser and a host inlet.
+# Nothing here belongs to a real field. Coordinates are a SYNTHETIC LOCAL GRID, not a real CRS; every dimension and
+# thermal property is an explicit synthetic input chosen to be physically plausible (sources: DEMO-DB-001).
+schema: flow_assurance_route.v1
+route_status: synthetic
+georeferenced: false
+crs: "SYNTHETIC-LOCAL-XY (metres, x east, y north); not a geodetic CRS"
+horizontal_datum: "none (synthetic local grid)"
+vertical_datum: "MSL (synthetic); elevations positive up, seabed negative"
+chainage:
+  origin: "Template outlet of each source (path start); chainage runs along the flow direction"
+  direction: "downstream (along flow)"
+  measure: "measured (as-laid) route length, not horizontal projection"
+assets:
+  - {id: WELL-A1, kind: well, name: "Well A1 tree", x_m: -24040, y_m: 5030, elev_m: -385, modeled: false, note: "aggregated at TMPL-A"}
+  - {id: WELL-A2, kind: well, name: "Well A2 tree", x_m: -24040, y_m: 4970, elev_m: -385, modeled: false, note: "aggregated at TMPL-A"}
+  - {id: TMPL-A, kind: template, name: "Template A (4-slot)", x_m: -24000, y_m: 5000, elev_m: -385, modeled: true}
+  - {id: N-A1, kind: waypoint, name: "KP-A 4.04", x_m: -20500, y_m: 3000, elev_m: -395, modeled: true}
+  - {id: N-A2, kind: waypoint, name: "KP-A 6.88", x_m: -18500, y_m: 1000, elev_m: -392, modeled: true}
+  - {id: WELL-B1, kind: well, name: "Well B1 tree", x_m: -23040, y_m: -5970, elev_m: -400, modeled: false, note: "aggregated at TMPL-B"}
+  - {id: WELL-B2, kind: well, name: "Well B2 tree", x_m: -23040, y_m: -6030, elev_m: -400, modeled: false, note: "aggregated at TMPL-B"}
+  - {id: TMPL-B, kind: template, name: "Template B (4-slot)", x_m: -23000, y_m: -6000, elev_m: -400, modeled: true}
+  - {id: N-B1, kind: waypoint, name: "KP-B 3.51", x_m: -20000, y_m: -4200, elev_m: -415, modeled: true}
+  - {id: PLEM-1, kind: plem, name: "Gathering PLEM", x_m: -17000, y_m: 0, elev_m: -420, modeled: true}
+  - {id: N-T1, kind: waypoint, name: "Trunk KP 5.01", x_m: -12000, y_m: 0, elev_m: -445, modeled: true}
+  - {id: N-T2, kind: waypoint, name: "Trunk KP 10.22", x_m: -6800, y_m: 0, elev_m: -415, modeled: true}
+  - {id: N-T3, kind: waypoint, name: "Trunk KP 14.23", x_m: -2800, y_m: 0, elev_m: -455, modeled: true}
+  - {id: RB-1, kind: riser_base, name: "Riser base", x_m: -100, y_m: 0, elev_m: -440, modeled: true}
+  - {id: HOST-IN, kind: host_interface, name: "Host inlet (riser top / battery limit)", x_m: 0, y_m: 0, elev_m: 25, modeled: true}
+segments:
+  - {id: JMP-A1, kind: jumper, line_tag: "JMP-A1-6in", from: WELL-A1, to: TMPL-A, length_m: 60, hydraulic: false, note: "not hydraulically modelled; rate aggregated at TMPL-A"}
+  - {id: JMP-A2, kind: jumper, line_tag: "JMP-A2-6in", from: WELL-A2, to: TMPL-A, length_m: 60, hydraulic: false, note: "not hydraulically modelled; rate aggregated at TMPL-A"}
+  - {id: JMP-B1, kind: jumper, line_tag: "JMP-B1-6in", from: WELL-B1, to: TMPL-B, length_m: 60, hydraulic: false, note: "not hydraulically modelled; rate aggregated at TMPL-B"}
+  - {id: JMP-B2, kind: jumper, line_tag: "JMP-B2-6in", from: WELL-B2, to: TMPL-B, length_m: 60, hydraulic: false, note: "not hydraulically modelled; rate aggregated at TMPL-B"}
+  - &fl_a1
+    id: FL-A-01
+    kind: flowline
+    line_tag: "FL-A-01-8in-WI40"
+    from: TMPL-A
+    to: N-A1
+    length_m: 4040
+    id_m: 0.2032
+    roughness_m: 4.5e-5
+    ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}
+    burial: null
+    layers: &layers_wi40
+      - {name: "steel (X65)", material: "carbon steel", thickness_m: 0.0143, k_w_mk: 45.0, rho_kg_m3: 7850.0, cp_j_kgk: 490.0}
+      - {name: "FBE coating", material: "fusion-bonded epoxy", thickness_m: 0.0004, k_w_mk: 0.30, rho_kg_m3: 1300.0, cp_j_kgk: 1700.0}
+      - {name: "PP insulation", material: "solid PP", thickness_m: 0.040, k_w_mk: 0.17, rho_kg_m3: 900.0, cp_j_kgk: 1900.0}
+      - {name: "outer PE sheath", material: "PE", thickness_m: 0.003, k_w_mk: 0.40, rho_kg_m3: 950.0, cp_j_kgk: 2000.0}
+    source: DEMO-DB-001
+  - {id: FL-A-02, kind: flowline, line_tag: "FL-A-02-8in-WI40", from: N-A1, to: N-A2, length_m: 2836, id_m: 0.2032, roughness_m: 4.5e-5,
+     ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}, burial: null, layers: *layers_wi40, source: DEMO-DB-001}
+  - {id: FL-A-03, kind: flowline, line_tag: "FL-A-03-8in-WI40", from: N-A2, to: PLEM-1, length_m: 1808, id_m: 0.2032, roughness_m: 4.5e-5,
+     ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}, burial: null, layers: *layers_wi40, source: DEMO-DB-001}
+  - {id: FL-B-01, kind: flowline, line_tag: "FL-B-01-8in-WI40", from: TMPL-B, to: N-B1, length_m: 3506, id_m: 0.2032, roughness_m: 4.5e-5,
+     ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}, burial: null, layers: *layers_wi40, source: DEMO-DB-001}
+  - {id: FL-B-02, kind: flowline, line_tag: "FL-B-02-8in-WI40", from: N-B1, to: PLEM-1, length_m: 5170, id_m: 0.2032, roughness_m: 4.5e-5,
+     ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}, burial: null, layers: *layers_wi40, source: DEMO-DB-001}
+  - id: FL-T-01
+    kind: flowline
+    line_tag: "FL-T-01-12in-WI60"
+    from: PLEM-1
+    to: N-T1
+    length_m: 5010
+    id_m: 0.3048
+    roughness_m: 4.5e-5
+    ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}
+    burial: null
+    layers: &layers_wi60
+      - {name: "steel (X65)", material: "carbon steel", thickness_m: 0.0175, k_w_mk: 45.0, rho_kg_m3: 7850.0, cp_j_kgk: 490.0}
+      - {name: "FBE coating", material: "fusion-bonded epoxy", thickness_m: 0.0004, k_w_mk: 0.30, rho_kg_m3: 1300.0, cp_j_kgk: 1700.0}
+      - {name: "PP insulation", material: "solid PP", thickness_m: 0.060, k_w_mk: 0.17, rho_kg_m3: 900.0, cp_j_kgk: 1900.0}
+      - {name: "outer PE sheath", material: "PE", thickness_m: 0.003, k_w_mk: 0.40, rho_kg_m3: 950.0, cp_j_kgk: 2000.0}
+    source: DEMO-DB-001
+  - id: FL-T-02
+    kind: flowline
+    line_tag: "FL-T-02-12in-WI60-TR"
+    from: N-T1
+    to: N-T2
+    length_m: 5212
+    id_m: 0.3048
+    roughness_m: 4.5e-5
+    ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}
+    burial: {depth_m: 1.2, k_soil_w_mk: 1.5, note: "trenched and backfilled section (synthetic); depth to pipe axis"}
+    layers: *layers_wi60
+    source: DEMO-DB-001
+  - {id: FL-T-03, kind: flowline, line_tag: "FL-T-03-12in-WI60", from: N-T2, to: N-T3, length_m: 4008, id_m: 0.3048, roughness_m: 4.5e-5,
+     ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}, burial: null, layers: *layers_wi60, source: DEMO-DB-001}
+  - {id: FL-T-04, kind: flowline, line_tag: "FL-T-04-12in-WI60", from: N-T3, to: RB-1, length_m: 2706, id_m: 0.3048, roughness_m: 4.5e-5,
+     ambient: {t_c: 4.0, type: seabed, external_h_w_m2k: 500.0}, burial: null, layers: *layers_wi60, source: DEMO-DB-001}
+  - id: RS-01
+    kind: riser
+    line_tag: "RS-01-12in-WI80"
+    from: RB-1
+    to: HOST-IN
+    length_m: 480
+    length_note: "riser length exceeds the 3D chord (476 m) because of the synthetic lazy-wave shape; no fabrication geometry is implied"
+    id_m: 0.3048
+    roughness_m: 4.5e-5
+    ambient: {t_c: 8.0, type: water_column_mean, external_h_w_m2k: 300.0, note: "depth-averaged seawater temperature over the riser (synthetic)"}
+    burial: null
+    layers:
+      - {name: "steel (X65)", material: "carbon steel", thickness_m: 0.0206, k_w_mk: 45.0, rho_kg_m3: 7850.0, cp_j_kgk: 490.0}
+      - {name: "FBE coating", material: "fusion-bonded epoxy", thickness_m: 0.0004, k_w_mk: 0.30, rho_kg_m3: 1300.0, cp_j_kgk: 1700.0}
+      - {name: "PU insulation", material: "polyurethane", thickness_m: 0.080, k_w_mk: 0.17, rho_kg_m3: 700.0, cp_j_kgk: 1800.0}
+      - {name: "outer PE sheath", material: "PE", thickness_m: 0.003, k_w_mk: 0.40, rho_kg_m3: 950.0, cp_j_kgk: 2000.0}
+    source: DEMO-DB-001
+features:
+  - {id: INJ-A, kind: injection_point, at_node: TMPL-A, label: "MEG injection, template A", modeled: true, note: "inhibitor mixed into the template A stream"}
+  - {id: INJ-B, kind: injection_point, at_node: TMPL-B, label: "MEG injection, template B", modeled: true, note: "inhibitor mixed into the template B stream"}
+  - {id: XV-A, kind: isolation_valve, at_node: TMPL-A, label: "Template A export isolation", modeled: true, note: "used by the A-isolated line-up variant"}
+  - {id: XV-B, kind: isolation_valve, at_node: TMPL-B, label: "Template B export isolation", modeled: true, note: "used by the B-isolated line-up variant"}
+  - {id: PL-T1, kind: pig_launcher, at_node: PLEM-1, label: "Pig launcher interface (trunk)", modeled: false, note: "interface only; pigging is not simulated"}
+  - {id: PR-HOST, kind: pig_receiver, at_node: HOST-IN, label: "Pig receiver (host)", modeled: false, note: "interface only; slug receiving is not simulated"}
+  - {id: X-01, kind: crossing, segment: FL-T-02, along_m: 2600, label: "Crossing X-01 (synthetic, unverified)", modeled: false, verified: false,
+     note: "illustrative crossing; not from a survey"}

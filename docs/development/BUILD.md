@@ -78,6 +78,11 @@ NeqSim has multiple POM files for different purposes:
 
 **For normal development, use `pom.xml` only.**
 
+Both build POMs explicitly pin `maven-resources-plugin` to 3.3.1, a Java 8-compatible
+release, so resource processing does not depend on the Maven lifecycle defaults
+installed on a CI runner or downloaded by the wrapper. Keep these pins coordinated
+when updating build plugins; verify both Java 8 CI platforms before changing them.
+
 ### Current Version
 Check `pom.xml` for the current version:
 ```xml
@@ -128,7 +133,7 @@ Build without downloading dependencies (requires previous successful build):
 
 ### Run Single Test Method
 ```bash
-./mvnw test -Dtest=SeparatorTest#testTwoPhase
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator
 ```
 
 ### Run Tests by Package
@@ -357,9 +362,62 @@ On every PR, CI runs:
 4. Test coverage measurement
 5. Security vulnerability scanning
 
+### Test isolation and diagnostics
+
+Devtools routing tests create a temporary synthetic agent catalog and exercise the
+real discovery and cue parser. Public CI therefore verifies installed-agent and
+plugin discovery, aliases, absent catalogs, and malformed cues without requiring
+an optional enterprise installation. The workflow also runs the production guard
+and persistent-ledger regression suite.
+
+The Java 21 fast-test matrix uses `fail-fast: false`, so a Windows failure does not
+cancel the Ubuntu tests or hide their diagnostics. Each job retains its Surefire
+reports as `fast-test-reports-<platform>`, including after failure when reports are
+available. The existing Java 8 dependency on the fast-test matrix is unchanged.
+
+The model-specification jobs and Java 21 slow shards retry a recognized Maven
+dependency-resolution failure once after 10 seconds, using `-U` to recheck cached
+missing releases. This includes Surefire provider downloads whose POM descriptor
+cannot be fetched from Maven Central, such as an HTTP 403 response wrapped in
+`MojoExecutionException`. A second failure retains Maven's nonzero exit status.
+Compilation failures, test failures and JVM crashes do not trigger this retry.
+
+The Windows Java 21 step interprets the EJML LU `solve` and
+`PhaseSrkCPA.initCPAMatrix` methods after retained HotSpot logs identified native
+access violations in their C2-compiled code on Temurin 21.0.12.1. The exclusions
+are confined to that CI step; the complete test suite and its numerical assertions
+remain enabled. See the [workflow catalog](../../.github/WORKFLOWS.md#windows-jvm-crash-workaround)
+for crash evidence, diagnostic artifacts and the full-Windows-suite removal gate.
+
+### Slow-test shards
+
+The Java 21 slow suite runs in eight parallel jobs, each with a 60-minute limit and
+JaCoCo disabled. CI sorts the Java source files containing `@Tag("slow")` and assigns
+them round-robin using the matrix job count. Every discovered class belongs to one
+shard; Maven's `slow` group filter selects its slow tests. Adding a slow test can
+change the assignments, so use the selected-class list printed in each job's log
+when investigating a failure.
+
+The eight jobs split the previous four shards in half. In PR #4328, the four-shard
+[run 38524415607](https://github.com/equinor/neqsim/actions/runs/38524415607)
+timed out one shard at about 60 minutes; all eight shards in
+[run 38534959694](https://github.com/equinor/neqsim/actions/runs/38534959694)
+passed, with the longest taking about 27 minutes. These are observed job wall times,
+including runner variation, not a claim of reduced total CPU work. This gives the
+expensive separator, distillation and transient tests more time to finish without
+increasing the job timeout or removing numerical checks. Each job uploads its Surefire reports
+as `slow-test-reports-<zero-based shard>` even after failure, when reports are
+available. A runner terminated by the job timeout may not reach artifact upload;
+the selected-class list and test progress remain in its log.
+
+The `Assert all slow tests with Java 21 on Ubuntu` gate requires the complete
+eight-shard matrix to succeed; failure, cancellation, or unexpected skipping
+cannot pass. It skips only when change detection succeeds and no Java build is
+required, matching the existing path-filter behavior.
+
 ### CI Configuration Files
 - **Azure Pipelines**: `azure-pipelines.yml`
-- **GitHub Actions**: `.github/workflows/verify_build.yml`
+- **GitHub Actions**: `.github/workflows/core-run-build-test-and-javadoc.yml`
 
 ---
 

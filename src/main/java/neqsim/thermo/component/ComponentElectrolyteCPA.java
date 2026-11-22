@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
  * ComponentElectrolyteCPA class.
@@ -22,6 +23,19 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   double[] xsitedTdT = new double[0];
 
   /**
+   * Reinitializes ionic covolume and diameter from the CPA table. Model selection must not switch the shared ScRK
+   * defaults: CPA and ScRK components can be constructed and reinitialized in any order.
+   */
+  @Override
+  public void initFurstParam() {
+    if (ionicCharge != 0) {
+      b = (FurstElectrolyteConstants.getFurstParamCPA(0) * Math.pow(getIonicDiameter(), 3.0)
+          + FurstElectrolyteConstants.getFurstParamCPA(1)) * 1e5;
+      lennardJonesMolecularDiameter = Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0) * 1e10;
+    }
+  }
+
+  /**
    * Constructor for ComponentElectrolyteCPA.
    *
    * @param name Name of component.
@@ -31,6 +45,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    */
   public ComponentElectrolyteCPA(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
+    initFurstParam();
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][100];
     xsitedV = new double[numberOfAssociationSites];
@@ -70,6 +85,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    */
   public ComponentElectrolyteCPA(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
+    initFurstParam();
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][100];
     xsitedV = new double[numberOfAssociationSites];
@@ -94,7 +110,11 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentElectrolyteCPA clone() {
     ComponentElectrolyteCPA clonedComponent = null;
@@ -102,6 +122,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       clonedComponent = (ComponentElectrolyteCPA) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentElectrolyteCPA", ex);
     }
 
     clonedComponent.xsite = xsite.clone();
@@ -115,7 +136,9 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     clonedComponent.xsitedTdT = xsitedTdT.clone();
     System.arraycopy(this.xsitedTdT, 0, clonedComponent.xsitedTdT, 0, xsitedTdT.length);
     clonedComponent.xsitedni = xsitedni.clone();
-    System.arraycopy(this.xsitedni, 0, clonedComponent.xsitedni, 0, xsitedni.length);
+    for (int site = 0; site < xsitedni.length; site++) {
+      clonedComponent.xsitedni[site] = xsitedni[site] == null ? null : xsitedni[site].clone();
+    }
     return clonedComponent;
   }
 

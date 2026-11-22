@@ -1,0 +1,233 @@
+standards:
+  # Public publisher metadata only (verified 2026-10-25 against the URLs listed). No standard text has been read in this register:
+  # no clause is cited and nothing here states conformity. Replace with the project's controlled editions in the task/enterprise layer.
+  - id: ISO-13628-1
+    designation: "ISO 13628-1:2025"
+    title: "Petroleum and natural gas industries - Design and operation of subsea production systems - Part 1: General requirements and recommendations"
+    url: "https://www.iso.org/standard/86664.html"
+    scope_note: "General subsea production/injection-system development and operation. Does not generally cover flowlines/pipelines and associated risers; several older ISO 13628 parts are withdrawn."
+    applicability: conditional
+    applicability_reason: "System-level frame for the subsea production system; flowline and riser design use the pipeline and riser standards below."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: NORSOK-U-001
+    designation: "NORSOK U-001:2026"
+    title: "Subsea production systems"
+    url: "https://standard.no/en/sectors/petroleum/norsok-standards/u-subsea"
+    scope_note: "Applies where adopted by the project."
+    applicability: conditional
+    applicability_reason: "Only if the project adopts NORSOK."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: DNV-RP-O101
+    designation: "DNV-RP-O101"
+    title: "Technical documentation for subsea projects"
+    url: "https://www.dnv.com/"
+    scope_note: "Documentation reference; not a substitute for installation or structural analysis and not a universal report template."
+    applicability: applicable
+    applicability_reason: "Shapes the document and deliverable register."
+    role: "recommended (informative)"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: DNV-ST-F301
+    designation: "DNV-ST-F301"
+    title: "Subsea equipment and components"
+    url: "https://www.dnv.com/energy/standards-guidelines/dnv-st-f301-subsea-equipment-and-components/"
+    scope_note: "Equipment and component design and manufacturing requirements; different scope from F101/F201."
+    applicability: conditional
+    applicability_reason: "Equipment datasheets and vendor qualification."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: API-17A
+    designation: "API RP 17A"
+    title: "Design and operation of subsea production systems - general requirements"
+    url: "https://www.api.org/products-and-services/standards/digital-catalog"
+    scope_note: "General SPS requirements; verify current edition, addenda and errata in the API catalogue."
+    applicability: conditional
+    applicability_reason: "General subsea production systems."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "designation, edition and addenda not verified"
+  - id: API-17D
+    designation: "API Spec 17D"
+    title: "Subsea wellhead and tree equipment"
+    url: "https://www.api.org/products-and-services/standards/digital-catalog"
+    scope_note: "Wellheads and trees; verify current edition."
+    applicability: conditional
+    applicability_reason: "Tree datasheets."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "designation, edition and addenda not verified"
+  - id: API-17E
+    designation: "API Spec 17E"
+    title: "Subsea umbilicals"
+    url: "https://www.api.org/products-and-services/standards/digital-catalog"
+    scope_note: "Umbilical specification; manufacturer-qualified cross-section is outside this study."
+    applicability: conditional
+    applicability_reason: "Umbilical functional specification and hand-off."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "designation, edition and addenda not verified"
+  - id: API-17F
+    designation: "API Std 17F"
+    title: "Subsea production control systems"
+    url: "https://www.api.org/products-and-services/standards/digital-catalog"
+    scope_note: "Production controls; safety functions and response times are not invented here."
+    applicability: conditional
+    applicability_reason: "Control interfaces and hand-off."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "designation, edition and addenda not verified"
+  - id: API-17P
+    designation: "API RP 17P"
+    title: "Subsea structures and manifolds"
+    url: "https://www.api.org/products-and-services/standards/digital-catalog"
+    scope_note: "Templates and manifolds; schematic envelopes in this package are not vendor general arrangements."
+    applicability: conditional
+    applicability_reason: "Manifold and template datasheets."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "designation, edition and addenda not verified"
+  - id: API-17J
+    designation: "API Spec 17J"
+    title: "Unbonded flexible pipe"
+    url: "https://www.api.org/products-and-services/api-monogram-and-apiqr/latest-updates"
+    scope_note: "Applies to unbonded flexible pipe; it is not a rigid-steel flowline design standard. 2026 addendum/errata updates to the fifth edition are listed on the API update page: capture the exact project-adopted set."
+    applicability: conditional
+    applicability_reason: "Only for the flexible riser option."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "edition and addenda set not captured"
+  - id: DNV-ST-F101
+    designation: "DNV-ST-F101"
+    title: "Submarine pipeline systems"
+    url: "https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/"
+    scope_note: "Rigid pipeline limit states. A passing screen does not satisfy F201 or F301."
+    applicability: applicable
+    applicability_reason: "Rigid flowlines and jumpers."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "screening kernel run with synthetic inputs; text not read; no conformity claim"
+  - id: DNV-ST-F201
+    designation: "DNV-ST-F201"
+    title: "Riser systems"
+    url: "https://www.dnv.com/energy/standards-guidelines/dnv-st-f201-riser-systems/"
+    scope_note: "Structural design/analysis of risers under static and dynamic loading."
+    applicability: applicable
+    applicability_reason: "Production and injection risers (external solver hand-off)."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "metadata verified; analysis is an open hand-off"
+  - id: DNV-ST-N001
+    designation: "DNV-ST-N001"
+    title: "Marine operations and marine warranty"
+    url: "https://www.dnv.com/energy/standards-guidelines/dnv-st-n001-marine-operations-and-marine-warranty/"
+    scope_note: "Marine operations within its scope; vessel, lifting, sea fastening and lay analyses are evidence-controlled specialist work."
+    applicability: applicable
+    applicability_reason: "Installation and tie-in sequences."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "metadata verified; analysis is an open hand-off"
+  - id: DNV-RP-F105
+    designation: "DNV-RP-F105"
+    title: "Free spanning pipelines"
+    url: "https://www.dnv.com/energy/services/subsea-facilities/world-class-codes/"
+    scope_note: "Free-span assessment; needs soil, current and wave data."
+    applicability: conditional
+    applicability_reason: "Applicable once route survey and metocean exist."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "not assessed: no survey or metocean input"
+  - id: DNV-RP-F109
+    designation: "DNV-RP-F109"
+    title: "On-bottom stability design of submarine pipelines"
+    url: "https://www.dnv.com/energy/services/subsea-facilities/world-class-codes/"
+    scope_note: "On-bottom stability; needs environmental, soil and response-model inputs."
+    applicability: conditional
+    applicability_reason: "Applicable once metocean and soil exist."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "not assessed: no environmental or soil input"
+  - id: DNV-RP-F110
+    designation: "DNV-RP-F110"
+    title: "Global buckling of submarine pipelines"
+    url: "https://www.dnv.com/energy/services/subsea-facilities/world-class-codes/"
+    scope_note: "Global buckling; separate evidence from hydraulics."
+    applicability: conditional
+    applicability_reason: "High-temperature lines."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "not assessed: no soil or imperfection input"
+  - id: DNV-RP-F114
+    designation: "DNV-RP-F114"
+    title: "Pipe-soil interaction for submarine pipelines"
+    url: "https://www.dnv.com/energy/services/subsea-facilities/world-class-codes/"
+    scope_note: "Pipe-soil interaction; a thermal soil conductivity is not a geotechnical resistance model."
+    applicability: conditional
+    applicability_reason: "Applicable once geotechnical data exist."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "not assessed: no geotechnical input"
+  - id: ISO-13623
+    designation: "ISO 13623"
+    title: "Pipeline transportation systems"
+    url: "https://www.iso.org/committee/49570/x/catalogue/"
+    scope_note: "Rigid metallic pipeline transportation systems where adopted."
+    applicability: conditional
+    applicability_reason: "Only where the project adopts it."
+    role: "to be set by the project requirement hierarchy"
+    text_available: false
+    status: "metadata not verified"
+  - id: ISO-10628-1
+    designation: "ISO 10628-1"
+    title: "Diagrams for the chemical and petrochemical industry - Part 1: Specification of diagrams"
+    url: "https://www.iso.org/standard/51840.html"
+    scope_note: "Process-flow diagram specification; process symbols alone do not establish SURF design conformance."
+    applicability: applicable
+    applicability_reason: "Schematic and functional sheets."
+    role: "recommended (informative)"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: ISO-10628-2
+    designation: "ISO 10628-2"
+    title: "Diagrams for the chemical and petrochemical industry - Part 2: Graphical symbols"
+    url: "https://committee.iso.org/cms/live/live/en/sites/isoorg/contents/data/standard/05/18/51841.html"
+    scope_note: "Graphical symbols."
+    applicability: applicable
+    applicability_reason: "Schematic symbols."
+    role: "recommended (informative)"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: ISO-7200
+    designation: "ISO 7200"
+    title: "Technical product documentation - Data fields in title blocks and document headers"
+    url: "https://www.iso.org/standard/35446.html"
+    scope_note: "Title-block and document-header data fields."
+    applicability: applicable
+    applicability_reason: "Drawing title blocks and document control."
+    role: "recommended (informative)"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: ISO-5457
+    designation: "ISO 5457 (with applicable amendments)"
+    title: "Technical product documentation - Sizes and layout of drawing sheets"
+    url: "https://www.iso.org/standard/29017.html"
+    scope_note: "Sheet sizes and layout (A3 landscape default)."
+    applicability: applicable
+    applicability_reason: "Drawing sheet layout."
+    role: "recommended (informative)"
+    text_available: false
+    status: "metadata verified; text not read"
+  - id: ISO-129-1
+    designation: "ISO 129-1 (with applicable amendments)"
+    title: "Technical product documentation - Presentation of dimensions and tolerances"
+    url: "https://www.iso.org/standard/64007.html"
+    scope_note: "Presentation of dimensions; no tolerances or fabrication dimensions are invented."
+    applicability: applicable
+    applicability_reason: "Dimension annotations on arrangement sheets."
+    role: "recommended (informative)"
+    text_available: false
+    status: "metadata verified; text not read"

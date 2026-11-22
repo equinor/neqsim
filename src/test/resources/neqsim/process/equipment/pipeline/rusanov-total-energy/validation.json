@@ -1,0 +1,345 @@
+{
+  "base": "5d0edbdf6f9e75a89f8f7337b4769d8cb24b2694",
+  "baseline_flux_blob": "00afdfdc8a3e32ca722c8fc9fc0b62db5569c9f7",
+  "candidate_flux_blob": "61c647164d40187e07be29d5cdfe96112944f6fd",
+  "question": "Existing optional Rusanov phase-flux conservative energy, absence and metadata contract; no solver selection change",
+  "junit": {
+    "totals": {
+      "tests": 78,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "classes": [
+      "RusanovConservativeFluxTest",
+      "AUSMImplicitPressureSplitTest",
+      "DirectionalPhaseFaceFluxTest",
+      "TwoFluidPressureInterpolationTest",
+      "StratifiedPressureMomentCouplingTest",
+      "StratifiedGravityEnergyTest",
+      "ConservativeInterfacialDragTest",
+      "TwoFluidTotalEnergyContractTest",
+      "TwoFluidThermalFaceFluxTest",
+      "TwoFluidComponentOutletTest",
+      "TwoFluidConservativeEnergyReportTest",
+      "HydrocarbonComponentRelaxationTest",
+      "TwoFluidMixtureDragPartitionTest"
+    ],
+    "not_executed_in_this_selection": []
+  },
+  "matrix": {
+    "base": "5d0edbdf6f9e75a89f8f7337b4769d8cb24b2694",
+    "source_blob": "61c647164d40187e07be29d5cdfe96112944f6fd",
+    "rows": 408,
+    "decimal_digits": 80,
+    "normalized_gate": "3E-14",
+    "maximum_normalized_error": "2.639699391307774661161142069E-16",
+    "scope": "Optional local Rusanov flux only; no solver selection, component routing or pool qualification"
+  },
+  "default_ausm_408_controls_bit_identical": true,
+  "normal_optimized_numerical_files_bit_identical": true,
+  "baseline_matrix_exit": 1,
+  "baseline_diagnostic": "Conservative flux gate failed: row0",
+  "pressure_jump_relative_magnitude_error_before": 0.4,
+  "pressure_jump_error_after_W": 0.0,
+  "ramp": {
+    "source_sha": "5d0edbdf6f9e75a89f8f7337b4769d8cb24b2694 + local optional Rusanov repair",
+    "meshes": [
+      12,
+      24
+    ],
+    "intervals_s": [
+      0.25,
+      0.125
+    ],
+    "requested_time_s": 120,
+    "completed": true,
+    "elapsed_wall_s": 65.946266521
+  },
+  "performance": {
+    "baseline_ausm": {
+      "ns_min_median_max": [
+        23.508585,
+        31.42136,
+        51.76572
+      ],
+      "samples": [
+        {
+          "method": "ausm",
+          "round": "0",
+          "queries": "200000",
+          "ns_per_query": "33.431575",
+          "checksum": "1.3125064599608899E11"
+        },
+        {
+          "method": "ausm",
+          "round": "1",
+          "queries": "200000",
+          "ns_per_query": "51.76572",
+          "checksum": "2.187510766601515E11"
+        },
+        {
+          "method": "ausm",
+          "round": "2",
+          "queries": "200000",
+          "ns_per_query": "23.508585",
+          "checksum": "3.06251507324214E11"
+        },
+        {
+          "method": "ausm",
+          "round": "3",
+          "queries": "200000",
+          "ns_per_query": "27.13168",
+          "checksum": "3.937519379882765E11"
+        },
+        {
+          "method": "ausm",
+          "round": "4",
+          "queries": "200000",
+          "ns_per_query": "28.768995",
+          "checksum": "4.81252368652339E11"
+        },
+        {
+          "method": "ausm",
+          "round": "5",
+          "queries": "200000",
+          "ns_per_query": "31.42136",
+          "checksum": "5.687527993164015E11"
+        },
+        {
+          "method": "ausm",
+          "round": "6",
+          "queries": "200000",
+          "ns_per_query": "33.100685",
+          "checksum": "6.56253229980464E11"
+        }
+      ]
+    },
+    "baseline_rusanov": {
+      "ns_min_median_max": [
+        8.068105,
+        25.3808,
+        40.789075
+      ],
+      "samples": [
+        {
+          "method": "rusanov",
+          "round": "0",
+          "queries": "200000",
+          "ns_per_query": "40.789075",
+          "checksum": "-2.62535024765625E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "1",
+          "queries": "200000",
+          "ns_per_query": "37.070945",
+          "checksum": "-4.37558374609375E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "2",
+          "queries": "200000",
+          "ns_per_query": "24.077025",
+          "checksum": "-6.12581724453125E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "3",
+          "queries": "200000",
+          "ns_per_query": "25.3808",
+          "checksum": "-7.87605074296875E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "4",
+          "queries": "200000",
+          "ns_per_query": "31.262775",
+          "checksum": "-9.62628424140625E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "5",
+          "queries": "200000",
+          "ns_per_query": "14.35553",
+          "checksum": "-1.1376517739847945E15"
+        },
+        {
+          "method": "rusanov",
+          "round": "6",
+          "queries": "200000",
+          "ns_per_query": "8.068105",
+          "checksum": "-1.3126751238347945E15"
+        }
+      ]
+    },
+    "candidate_ausm": {
+      "ns_min_median_max": [
+        26.92608,
+        44.02155,
+        52.319245
+      ],
+      "samples": [
+        {
+          "method": "ausm",
+          "round": "0",
+          "queries": "200000",
+          "ns_per_query": "52.319245",
+          "checksum": "1.3125064599608899E11"
+        },
+        {
+          "method": "ausm",
+          "round": "1",
+          "queries": "200000",
+          "ns_per_query": "50.303315",
+          "checksum": "2.187510766601515E11"
+        },
+        {
+          "method": "ausm",
+          "round": "2",
+          "queries": "200000",
+          "ns_per_query": "26.92608",
+          "checksum": "3.06251507324214E11"
+        },
+        {
+          "method": "ausm",
+          "round": "3",
+          "queries": "200000",
+          "ns_per_query": "39.38606",
+          "checksum": "3.937519379882765E11"
+        },
+        {
+          "method": "ausm",
+          "round": "4",
+          "queries": "200000",
+          "ns_per_query": "42.65063",
+          "checksum": "4.81252368652339E11"
+        },
+        {
+          "method": "ausm",
+          "round": "5",
+          "queries": "200000",
+          "ns_per_query": "44.060355",
+          "checksum": "5.687527993164015E11"
+        },
+        {
+          "method": "ausm",
+          "round": "6",
+          "queries": "200000",
+          "ns_per_query": "44.02155",
+          "checksum": "6.56253229980464E11"
+        }
+      ]
+    },
+    "candidate_rusanov": {
+      "ns_min_median_max": [
+        26.58287,
+        40.94516,
+        44.47354
+      ],
+      "samples": [
+        {
+          "method": "rusanov",
+          "round": "0",
+          "queries": "200000",
+          "ns_per_query": "41.71059",
+          "checksum": "-1.87206899765625E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "1",
+          "queries": "200000",
+          "ns_per_query": "44.47354",
+          "checksum": "-3.12011499609375E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "2",
+          "queries": "200000",
+          "ns_per_query": "26.58287",
+          "checksum": "-4.36816099453125E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "3",
+          "queries": "200000",
+          "ns_per_query": "35.32036",
+          "checksum": "-5.61620699296875E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "4",
+          "queries": "200000",
+          "ns_per_query": "40.7676",
+          "checksum": "-6.86425299140625E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "5",
+          "queries": "200000",
+          "ns_per_query": "43.904475",
+          "checksum": "-8.11229898984375E14"
+        },
+        {
+          "method": "rusanov",
+          "round": "6",
+          "queries": "200000",
+          "ns_per_query": "40.94516",
+          "checksum": "-9.36034498828125E14"
+        }
+      ]
+    }
+  },
+  "environment": {
+    "java": "17.0.20",
+    "python": "3.12.14",
+    "release8_compile": "Changed implementation/test and standalone probes compiled --release8",
+    "local_java8_runtime": "not run",
+    "full_repository_tests": "not run"
+  },
+  "commands": [
+    {
+      "command": "skill prepare_maven.py evaluated before Maven/Spotless",
+      "exit": 0
+    },
+    {
+      "command": "./mvnw -q -Dtest=RusanovConservativeFluxTest -DskipITs -Djacoco.skip=true test",
+      "exit": 0
+    },
+    {
+      "command": "./mvnw -q -Dtest=RusanovConservativeFluxTest,AUSMImplicitPressureSplitTest,DirectionalPhaseFaceFluxTest,TwoFluidPressureInterpolationTest,StratifiedPressureMomentCouplingTest,StratifiedGravityEnergyTest,ConservativeInterfacialDragTest,TwoFluidTotalEnergyContractTest,TwoFluidThermalFaceFluxTest,TwoFluidComponentOutletTest,TwoFluidConservativeEnergyReportTest,HydrocarbonComponentRelaxationTest,TwoFluidMixtureDragPartitionTest -DskipITs -Djacoco.skip=true test",
+      "exit": 0
+    },
+    {
+      "command": "qualify.py normal and -O; complete408-row independent control matrix",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/run_spotless.py apply until stable; python3 devtools/run_spotless.py check",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/build_engineering_coverage.py",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/check_documentation_search.py",
+      "exit": 0
+    },
+    {
+      "command": "./mvnw -q -DskipTests -DjavadocExecutable=<environment module adapter> javadoc:javadoc",
+      "exit": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "exit": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "exit": 0
+    }
+  ],
+  "documentation_impact": "Public total-enthalpy/energy and validity contract corrected in Javadoc, model/evidence matrix and both routing skills. Executed report/raw references/inspected plot retained. No notebook.",
+  "limits": "No runtime call to Rusanov added. Two-sided diffusion needs component/energy donor ownership and coupled volume/gravity-energy/time-step qualification. No wet/dry pressure-front, retained-pool, refill/hold or predictive hydrocarbon evaporation acceptance. Issues4674/4675/3298 remain open.",
+  "local_environment_repair": "Previous task environment had a stale interpreter. Installed pre-commit4.7 in a new task-specific environment; reran both exact hooks successfully. No shared Python or repository dependency configuration modified."
+}

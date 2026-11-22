@@ -258,7 +258,7 @@ The `unlinked_claims` list MUST be empty before submission.
 
 ## Figure Quality Standards (Lessons from CPA Paper)
 
-Follow the `generate_publication_figures` skill for all figure creation:
+Follow the `generate-publication-figures` skill for all figure creation:
 
 - **Serif fonts**: Use Times New Roman, not matplotlib defaults
 - **Compact sizes**: 3.5×2.8 in (single-column), 7.0×3.5 in (double-column)

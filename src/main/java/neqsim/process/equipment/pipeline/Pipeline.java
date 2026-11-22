@@ -183,13 +183,13 @@ public class Pipeline extends TwoPortEquipment
   boolean equilibriumMassTransfer = false;
   int numberOfLegs = 1;
   int numberOfNodesInLeg = 30;
-  double[] legHeights = { 0, 0 };
-  double[] legPositions = { 0.0, 1.0 };
-  double[] pipeDiameters = { 0.1507588, 0.1507588 };
-  double[] outerTemperature = { 278.0, 278.0 };
-  double[] pipeWallRoughness = { 1e-5, 1e-5 };
-  double[] outerHeatTransferCoeffs = { 1e-5, 1e-5 };
-  double[] wallHeatTransferCoeffs = { 1e-5, 1e-5 };
+  double[] legHeights = {0, 0};
+  double[] legPositions = {0.0, 1.0};
+  double[] pipeDiameters = {0.1507588, 0.1507588};
+  double[] outerTemperature = {278.0, 278.0};
+  double[] pipeWallRoughness = {1e-5, 1e-5};
+  double[] outerHeatTransferCoeffs = {1e-5, 1e-5};
+  double[] wallHeatTransferCoeffs = {1e-5, 1e-5};
 
   PipelineMechanicalDesign pipelineMechanicalDesign = null;
 
@@ -897,11 +897,13 @@ public class Pipeline extends TwoPortEquipment
    * <ul>
    * <li>"Standard elbow (R=1.5D), 90deg" - L/D = 16</li>
    * <li>"Standard elbow (R=1D), 90deg" - L/D = 30</li>
-   * <li>"Gate valve, fully open" - L/D = 8</li>
-   * <li>"Globe valve, fully open" - L/D = 340</li>
+   * <li>"Gate Valve, full bore, full open" - L/D = 8</li>
+   * <li>"Globe Valve, full bore, full open" - L/D = 340</li>
    * </ul>
    *
    * @param name fitting name as stored in database
+   * @throws IllegalArgumentException if the name is null, blank or unknown
+   * @throws IllegalStateException if the process-design database lookup fails
    */
   public void addFittingFromDatabase(String name) {
     fittings.add(name);
@@ -911,7 +913,8 @@ public class Pipeline extends TwoPortEquipment
    * Add a standard fitting type with predefined L/D value.
    *
    * <p>
-   * Uses built-in L/D values from Crane TP-410. See {@link Fittings#addStandard(String)} for available types.
+   * Uses NeqSim's built-in equivalent-length defaults and approximations. See {@link Fittings#addStandard(String)} for
+   * available types and their basis.
    * </p>
    *
    * @param type standard fitting type

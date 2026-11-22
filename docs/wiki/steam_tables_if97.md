@@ -52,3 +52,26 @@ $
 $
 
 where $R=0.461526\,\mathrm{kJ\,kg^{-1}\,K^{-1}}$.
+
+## Published units and phase boundary
+
+`PhaseWaterIAPWS` stores molar volume in `m3/mol`. Its public density methods return
+`kg/m3`, `mol/m3`, or `lb/ft3` as requested. Region 1 is published as an aqueous phase
+and Region 2 as a gas phase, using the same saturation boundary as the property
+equations; density is not used as a substitute phase classifier.
+
+## Numerical verification and limits
+
+The model-specification gate reproduces all six Region 1 and Region 2 verification
+states in Tables 5 and 15 of the
+[revised IAPWS-IF97 release](https://iapws.org/technical-guidance/release/IF97-Rev).
+It checks specific-volume-derived density and compressibility factor, internal energy,
+enthalpy, entropy, Gibbs energy, heat capacity and sound speed through both
+`SystemWaterIF97` and the exact `PhaseWaterIAPWS` path. It also traverses the six states
+on one reused system to detect stale state and verifies `H = U + PV` and `G = H - TS`
+on a consistent molar basis.
+
+This compact implementation and its executable qualification cover only the declared
+Region 1/2 points. They do not qualify Region 3 or 5, two-phase interpolation, Cv,
+fugacity, flashes, transport properties, mixtures or arbitrary states across the full
+IF97 validity envelope.

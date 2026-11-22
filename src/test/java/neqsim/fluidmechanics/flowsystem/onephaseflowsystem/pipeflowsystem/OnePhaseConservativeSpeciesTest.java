@@ -87,10 +87,12 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(firstSpecies.isConverged(), firstSpecies.getMessage());
     assertTrue(firstSpecies.getMaximumRelativeInventoryResidual() < 1.0e-8, firstSpecies.getMessage());
     assertTrue(firstSpecies.getMaximumThermodynamicMassFractionError() <= 1.0e-10, firstSpecies.getMessage());
-    assertArrayEquals(firstSpecies.getFinalInventoryKg(), repeated.getSpeciesConservationReport().getFinalInventoryKg(),
-        0.0);
-    assertArrayEquals(firstSpecies.getMassFractionProfile()[1],
-        repeated.getSpeciesConservationReport().getMassFractionProfile()[1], 0.0);
+    // Independent Java 8 CI runs differed by two ulps in the final inventory.
+    // Keep this comparison at roundoff scale, independently of the conservation gates above.
+    assertRepeatabilityWithinRoundoff(firstSpecies.getFinalInventoryKg(),
+        repeated.getSpeciesConservationReport().getFinalInventoryKg());
+    assertRepeatabilityWithinRoundoff(firstSpecies.getMassFractionProfile()[1],
+        repeated.getSpeciesConservationReport().getMassFractionProfile()[1]);
 
     OnePhaseFlowConvergenceReport nearbyFlow = nearby.getConvergenceReport();
     assertTrue(nearbyFlow.isConverged(), nearbyFlow.getMessage());
@@ -127,8 +129,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
     pipe.setAxialDispersionModel(new ConstantAxialDispersion(0.5));
     pipe.setFailOnNonConvergence(true);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0 });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, 30.0});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {createGas(0.80, 0.20)});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
 
     assertDoesNotThrow(() -> pipe.solveTransient(1));
@@ -175,7 +177,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
     OnePhaseSpeciesConservationHistory history = first.getSpeciesConservationHistory();
     assertEquals(3, history.size());
-    assertArrayEquals(new double[] { 30.0, 60.0, 90.0 }, history.getElapsedTimeSeconds(), 0.0);
+    assertArrayEquals(new double[] {30.0, 60.0, 90.0}, history.getElapsedTimeSeconds(), 0.0);
     assertEquals(history.toJson(), repeated.getSpeciesConservationHistory().toJson());
     assertTrue(history.toJson().contains("\"elapsedTimeSeconds\""));
     assertTrue(history.toJson().contains("\"finalInventoryKg\""));
@@ -301,8 +303,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   void optInSpeciesTransportFailsLoudlyForReversedFlowWithoutLegacyStrictFlag() {
     PipeFlowSystem pipe = createInitializedPipe(3);
     pipe.setConservativeSpeciesTransport(true);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0 });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, 30.0});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {createGas(0.80, 0.20)});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
     pipe.getNode(2).setVelocityIn(-Math.abs(pipe.getNode(2).getVelocityIn().doubleValue()));
 
@@ -452,8 +454,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     PipeFlowSystem pipe = createInitializedPipe(nodes, 15000.0, massFlowKgPerSecond);
     pipe.setConservativeSpeciesTransport(true);
     pipe.setFailOnNonConvergence(true);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStep });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, timeStep});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {createGas(0.80, 0.20)});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
 
     assertDoesNotThrow(() -> pipe.solveTransient(1));
@@ -467,9 +469,9 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.setStoreSpeciesConservationHistory(true);
     assertTrue(pipe.isSpeciesConservationHistoryStorageEnabled());
     pipe.setFailOnNonConvergence(true);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0, 60.0, 90.0 });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, 30.0, 60.0, 90.0});
     pipe.getTimeSeries().setInletThermoSystems(
-        new SystemInterface[] { createGas(0.80, 0.20), createGas(0.80, 0.20), createGas(0.95, 0.05) });
+        new SystemInterface[] {createGas(0.80, 0.20), createGas(0.80, 0.20), createGas(0.95, 0.05)});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
     pipe.getTimeSeries().setOutletMolarFlowRate(null);
 
@@ -491,8 +493,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
   private static OnePhaseSpeciesConservationReport runTransientStep(PipeFlowSystem pipe, SystemInterface inlet,
       double timeStepSeconds) {
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStepSeconds });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { inlet });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, timeStepSeconds});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {inlet});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
     assertDoesNotThrow(() -> pipe.solveTransient(1));
     return pipe.getSpeciesConservationReport();
@@ -518,17 +520,17 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.setInletThermoSystem(createGas(0.95, 0.05, massFlowKgPerSecond));
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(nodes);
-    GeometryDefinitionInterface[] geometry = { new PipeData(), new PipeData() };
+    GeometryDefinitionInterface[] geometry = {new PipeData(), new PipeData()};
     for (GeometryDefinitionInterface section : geometry) {
       section.setDiameter(0.5);
       section.setInnerSurfaceRoughness(1.0e-5);
     }
     pipe.setEquipmentGeometry(geometry);
-    pipe.setLegHeights(new double[] { 0.0, 0.0 });
-    pipe.setLegPositions(new double[] { 0.0, lengthMeters });
-    pipe.setLegOuterTemperatures(new double[] { TEMPERATURE_K, TEMPERATURE_K });
-    pipe.setLegWallHeatTransferCoefficients(new double[] { 0.0, 0.0 });
-    pipe.setLegOuterHeatTransferCoefficients(new double[] { 0.0, 0.0 });
+    pipe.setLegHeights(new double[] {0.0, 0.0});
+    pipe.setLegPositions(new double[] {0.0, lengthMeters});
+    pipe.setLegOuterTemperatures(new double[] {TEMPERATURE_K, TEMPERATURE_K});
+    pipe.setLegWallHeatTransferCoefficients(new double[] {0.0, 0.0});
+    pipe.setLegOuterHeatTransferCoefficients(new double[] {0.0, 0.0});
     pipe.createSystem();
     pipe.init();
     pipe.setConservativeSpeciesTransport(true);
@@ -585,6 +587,21 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       result += value;
     }
     return result;
+  }
+
+  /**
+   * Compares independent low-flow runs within a small floating-point rounding budget.
+   *
+   * @param expected values from the first converged run
+   * @param actual values from the repeated run
+   */
+  private static void assertRepeatabilityWithinRoundoff(double[] expected, double[] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int index = 0; index < expected.length; index++) {
+      assertTrue(Double.isFinite(expected[index]) && Double.isFinite(actual[index]));
+      assertEquals(expected[index], actual[index], 8.0 * Math.ulp(expected[index]),
+          "Low-flow repeatability must remain within eight ulps at index " + index);
+    }
   }
 
   private static void assertRelativeEquals(double expected, double actual, String message) {

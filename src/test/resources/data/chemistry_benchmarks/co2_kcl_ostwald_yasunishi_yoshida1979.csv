@@ -1,0 +1,15 @@
+# Yasunishi and Yoshida (1979), as compiled by NIST SRD 106 system 62_227.
+# Source: https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_227
+# Original measurements: Journal of Chemical and Engineering Data 24 (1979), 11-14.
+# Total pressure is 101.325 kPa. KCl concentration is mol/L of equilibrium solution.
+# Ostwald coefficient L is the equilibrium gas-volume/liquid-volume partition observable.
+# Relative solubility uncertainty: 0.01. Temperature uncertainty: 0.05 K.
+# Only the unambiguous 298.15 K block is retained; the 308.15 K grouping requires source review.
+point_id,temperature_K,total_pressure_kPa,kcl_concentration_mol_per_L,experimental_ostwald_coefficient,relative_solubility_uncertainty,temperature_uncertainty_K
+YY298-KCL0000,298.15,101.325,0.000,0.8264,0.01,0.05
+YY298-KCL0498,298.15,101.325,0.498,0.7576,0.01,0.05
+YY298-KCL0980,298.15,101.325,0.980,0.7041,0.01,0.05
+YY298-KCL1890,298.15,101.325,1.890,0.6177,0.01,0.05
+YY298-KCL2702,298.15,101.325,2.702,0.5554,0.01,0.05
+YY298-KCL3505,298.15,101.325,3.505,0.5063,0.01,0.05
+YY298-KCL4131,298.15,101.325,4.131,0.4703,0.01,0.05

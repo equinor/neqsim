@@ -360,14 +360,15 @@ public final class ExampleCatalog {
    * @return JSON string for WaterHammerRunner.run()
    */
   public static String waterHammerValveClosure() {
-    return "{\n" + "  \"studyName\": \"Synthetic ESD valve closure screening\",\n" + "  \"model\": \"SRK\",\n"
-        + "  \"temperature_C\": 20.0,\n" + "  \"pressure_bara\": 45.0,\n" + "  \"components\": {\"water\": 1.0},\n"
-        + "  \"flowRate\": {\"value\": 120000.0, \"unit\": \"kg/hr\"},\n" + "  \"designPressure_bara\": 95.0,\n"
-        + "  \"pipe\": {\n" + "    \"length_m\": 1200.0,\n" + "    \"diameter_m\": 0.2032,\n"
-        + "    \"wallThickness_m\": 0.0127,\n" + "    \"roughness_m\": 4.6e-5,\n" + "    \"elevation_m\": 8.0,\n"
-        + "    \"numberOfNodes\": 80\n" + "  },\n" + "  \"fieldData\": {\n" + "    \"inletPressure_bara\": 46.0,\n"
-        + "    \"inletTemperature_C\": 19.0,\n" + "    \"flowRate_kg_hr\": 118000.0,\n" + "    \"valveOpening\": 1.0\n"
-        + "  },\n" + "  \"eventSchedule\": [\n" + "    {\"type\": \"VALVE_CLOSURE\", \"startTime_s\": 0.10, "
+    return "{\n" + "  \"studyName\": \"Synthetic Safety Shutdown valve closure screening\",\n"
+        + "  \"model\": \"SRK\",\n" + "  \"temperature_C\": 20.0,\n" + "  \"pressure_bara\": 45.0,\n"
+        + "  \"components\": {\"water\": 1.0},\n" + "  \"flowRate\": {\"value\": 120000.0, \"unit\": \"kg/hr\"},\n"
+        + "  \"designPressure_bara\": 95.0,\n" + "  \"pipe\": {\n" + "    \"length_m\": 1200.0,\n"
+        + "    \"diameter_m\": 0.2032,\n" + "    \"wallThickness_m\": 0.0127,\n" + "    \"roughness_m\": 4.6e-5,\n"
+        + "    \"elevation_m\": 8.0,\n" + "    \"numberOfNodes\": 80\n" + "  },\n" + "  \"fieldData\": {\n"
+        + "    \"inletPressure_bara\": 46.0,\n" + "    \"inletTemperature_C\": 19.0,\n"
+        + "    \"flowRate_kg_hr\": 118000.0,\n" + "    \"valveOpening\": 1.0\n" + "  },\n" + "  \"eventSchedule\": [\n"
+        + "    {\"type\": \"VALVE_CLOSURE\", \"startTime_s\": 0.10, "
         + "\"duration_s\": 0.15, \"startOpening\": 1.0, \"endOpening\": 0.0}\n" + "  ],\n"
         + "  \"simulationTime_s\": 4.0,\n" + "  \"sourceReferences\": [\"synthetic STID line-list row\", "
         + "\"synthetic tagreader event window\"]\n" + "}";

@@ -11,7 +11,7 @@ public class BerlSaddlePacking extends Packing {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Constructor for BerlSaddlePacking.
+   * Create a ceramic 25 mm Berl saddle using the qualified geometry table row.
    */
   public BerlSaddlePacking() {
     super("BerlSaddlePacking");

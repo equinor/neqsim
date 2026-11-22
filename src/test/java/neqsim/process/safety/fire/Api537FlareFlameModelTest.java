@@ -1,6 +1,7 @@
 package neqsim.process.safety.fire;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,43 @@ public class Api537FlareFlameModelTest {
     Api537FlareFlameModel model = new Api537FlareFlameModel(50.0, 50.0e6, 0.20, 200.0).setStackHeightM(40.0);
     double l = model.flameLengthM();
     assertTrue(l > 20.0 && l < 200.0, "flame length out of range: " + l);
+  }
+
+  /** Reject invalid stack heights and preserve the last valid flame geometry. */
+  @Test
+  public void testStackHeightRequiresFiniteValueAtOrAboveGrade() {
+    Api537FlareFlameModel model = new Api537FlareFlameModel(50.0, 50.0e6, 0.20, 200.0).setStackHeightM(40.0);
+    double centerHeightM = model.flameCenterHeightM();
+    for (double height : new double[] {-1.0, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class, () -> model.setStackHeightM(height));
+    }
+    assertEquals(centerHeightM, model.flameCenterHeightM(), 1.0e-9);
+    assertEquals(centerHeightM - 40.0, model.setStackHeightM(0.0).flameCenterHeightM(), 1.0e-9);
+  }
+
+  /** Reject invalid wind speeds and preserve the last valid flame tilt. */
+  @Test
+  public void testWindSpeedRequiresFiniteNonnegativeValue() {
+    Api537FlareFlameModel model = new Api537FlareFlameModel(50.0, 50.0e6, 0.20, 200.0).setWindSpeedMPerS(10.0);
+    double tilt = model.flameTiltRad();
+    for (double speed : new double[] {-1.0, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class, () -> model.setWindSpeedMPerS(speed));
+    }
+    assertEquals(tilt, model.flameTiltRad(), 1.0e-9);
+  }
+
+  /** Accept both transmissivity limits and reject invalid values without changing the flux. */
+  @Test
+  public void testTransmissivityRequiresFiniteFraction() {
+    Api537FlareFlameModel model = new Api537FlareFlameModel(50.0, 50.0e6, 0.20, 200.0);
+    double unattenuatedFlux = model.heatFluxAtGroundDistance(60.0);
+    model.setTransmissivity(0.5);
+    for (double tau : new double[] {-0.01, 1.01, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class, () -> model.setTransmissivity(tau));
+    }
+    assertEquals(0.5 * unattenuatedFlux, model.heatFluxAtGroundDistance(60.0), 1.0e-9);
+    assertEquals(0.0, model.setTransmissivity(0.0).heatFluxAtGroundDistance(60.0), 1.0e-9);
+    assertEquals(unattenuatedFlux, model.setTransmissivity(1.0).heatFluxAtGroundDistance(60.0), 1.0e-9);
   }
 
   /**

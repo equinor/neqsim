@@ -407,7 +407,7 @@ public class SimpleAmineRegenerator extends ProcessEquipmentBaseClass {
    * @return total moles of amine (MDEA, DEA, MEA, AMDEA, Piperazine)
    */
   private double countAmineMoles(SystemInterface system) {
-    String[] amineComps = { "MDEA", "DEA", "MEA", "AMDEA", "Piperazine" };
+    String[] amineComps = {"MDEA", "DEA", "MEA", "AMDEA", "Piperazine"};
     double total = 0.0;
     for (int i = 0; i < amineComps.length; i++) {
       if (system.hasComponent(amineComps[i])) {

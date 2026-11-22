@@ -1,0 +1,52 @@
+import java.io.*;
+import neqsim.thermo.system.*;
+import neqsim.thermo.phase.*;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+/** Reports equilibrium quality separately from timed harness work. */
+public final class RootBenchmarkClosure {
+  public static void main(String[] args) throws Exception {
+    try (PrintWriter out = new PrintWriter(args[0])) {
+      out.println("eos,rule,history,T_K,P_bar,phases,phase,beta,component,x,max_balance,max_norm,max_log_fugacity,max_relative_pressure");
+      for (boolean pr : new boolean[] {false, true}) {
+        for (int rule : new int[] {2, 4}) {
+          SystemInterface fluid = pr ? new SystemPrEos(298.15, 60.0) : new SystemSrkEos(298.15, 60.0);
+          String[] names = {"methane", "n-decane", "water", "MEG"};
+          double[] n = {0.65, 0.20, 0.15, 0.03};
+          for (int i = 0; i < n.length; i++) fluid.addComponent(names[i], n[i]);
+          fluid.setMixingRule(rule);
+          fluid.setMultiPhaseCheck(true);
+          ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+          for (int state = 0; state < 4; state++) {
+            fluid.setTemperature(state == 2 ? 298.35 : 298.15);
+            operations.TPflash();
+            fluid.init(3);
+            double balance = 0, norm = 0, fug = 0, pressure = 0, betaSum = 0;
+            for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+              PhaseInterface phase = fluid.getPhase(p);
+              double sum = 0;
+              betaSum += fluid.getBeta(p);
+              for (int i = 0; i < names.length; i++) {
+                sum += phase.getComponent(i).getx();
+                double ln = Math.log(phase.getComponent(i).getx()) + phase.getComponent(i).getLogFugacityCoefficient();
+                double ref = Math.log(fluid.getPhase(0).getComponent(i).getx()) + fluid.getPhase(0).getComponent(i).getLogFugacityCoefficient();
+                fug = Math.max(fug, Math.abs(ln - ref));
+              }
+              norm = Math.max(norm, Math.abs(sum - 1));
+              pressure = Math.max(pressure, Math.abs(((PhaseEos) phase).calcPressure() - 60) / 60);
+            }
+            norm = Math.max(norm, Math.abs(betaSum - 1));
+            for (int i = 0; i < names.length; i++) {
+              double calculated = 0;
+              for (int p = 0; p < fluid.getNumberOfPhases(); p++) calculated += fluid.getBeta(p) * fluid.getPhase(p).getComponent(i).getx();
+              balance = Math.max(balance, Math.abs(calculated - n[i] / 1.03));
+            }
+            for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+              for (int i = 0; i < names.length; i++) out.println((pr ? "PR" : "SRK") + "," + rule + "," + state + "," + fluid.getTemperature() + ",60," + fluid.getNumberOfPhases() + "," + fluid.getPhase(p).getType() + "," + fluid.getBeta(p) + "," + names[i] + "," + fluid.getPhase(p).getComponent(i).getx() + "," + balance + "," + norm + "," + fug + "," + pressure);
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,96 @@
+# Realistic example: three-stage separation with two recompression steps whose scrubber liquid is
+# returned upstream (recycle). The proxy is a forward three-stage train plus a scrubber that sends
+# its liquid forward to the stock tank. About 40 fluids from black oil to super-dry gas.
+name: recompression_reference_example
+
+standard_conditions: {temperature_K: 288.15, pressure_bara: 1.01325}
+feed: {pressure_bara: 120.0, temperature_C: 75.0, rate_kmol_h: 100.0}
+
+fluids:
+  id: example_field_life_set_v1
+  template:
+    eos: srk
+    components:
+      - nitrogen
+      - CO2
+      - methane
+      - ethane
+      - propane
+      - i-butane
+      - n-butane
+      - i-pentane
+      - n-pentane
+      - n-hexane
+      - {name: C7, mw_kg_mol: 0.100, density_g_cm3: 0.745}
+      - {name: C10, mw_kg_mol: 0.142, density_g_cm3: 0.790}
+      - {name: C15, mw_kg_mol: 0.206, density_g_cm3: 0.830}
+      - {name: C25, mw_kg_mol: 0.350, density_g_cm3: 0.880}
+  base_fluids:
+    black_oil: {nitrogen: 0.004, CO2: 0.010, methane: 0.30, ethane: 0.06, propane: 0.05, i-butane: 0.010,
+                n-butane: 0.025, i-pentane: 0.012, n-pentane: 0.015, n-hexane: 0.025,
+                C7: 0.100, C10: 0.130, C15: 0.120, C25: 0.139}
+    volatile_oil: {nitrogen: 0.005, CO2: 0.015, methane: 0.50, ethane: 0.08, propane: 0.06, i-butane: 0.012,
+                   n-butane: 0.025, i-pentane: 0.010, n-pentane: 0.012, n-hexane: 0.016,
+                   C7: 0.080, C10: 0.080, C15: 0.060, C25: 0.045}
+    condensate: {nitrogen: 0.006, CO2: 0.020, methane: 0.72, ethane: 0.08, propane: 0.045, i-butane: 0.010,
+                 n-butane: 0.015, i-pentane: 0.006, n-pentane: 0.007, n-hexane: 0.008,
+                 C7: 0.035, C10: 0.025, C15: 0.015, C25: 0.008}
+    lean_gas: {nitrogen: 0.008, CO2: 0.020, methane: 0.86, ethane: 0.06, propane: 0.025, i-butane: 0.005,
+               n-butane: 0.007, i-pentane: 0.003, n-pentane: 0.003, n-hexane: 0.003,
+               C7: 0.003, C10: 0.002, C15: 0.001}
+    super_dry_gas: {nitrogen: 0.010, CO2: 0.010, methane: 0.94, ethane: 0.03, propane: 0.007, i-butane: 0.001,
+                    n-butane: 0.001, i-pentane: 0.0003, n-pentane: 0.0003, n-hexane: 0.0002,
+                    C7: 0.00012, C10: 0.00006, C15: 0.00002}
+  methods:
+    - {type: explicit}
+    - {type: mixing, label: oilzone_gascap, endmembers: [black_oil, condensate], n: 6}
+    - {type: mixing, label: gor_rise, endmembers: [volatile_oil, lean_gas], n: 6}
+    - {type: variation, base: black_oil, n: 5, relative_range: 0.15, seed: 11}
+    - {type: variation, base: condensate, n: 5, relative_range: 0.15, seed: 12}
+    - {type: depletion, base: condensate, reservoir_temperature_C: 100.0,
+       pressures_bara: [350.0, 300.0, 250.0, 200.0, 150.0, 100.0, 60.0], liquid_recombination: [0.05]}
+  weights: {super_dry_gas: 0.5}
+
+reference:
+  type: recompression
+  id: three_stage_with_recompression_v1
+  stages:
+    - {name: hp, pressure_bara: 70.0, temperature_C: 70.0}
+    - {name: mp, pressure_bara: 20.0, temperature_C: 60.0}
+    - {name: lp, pressure_bara: 3.5, temperature_C: 50.0}
+  recompression:
+    - {name: k1_scrubber, gas_sources: [lp], discharge_pressure_bara: 20.0, cooler_temperature_C: 30.0, liquid_return_stage: lp}
+    - {name: k2_scrubber, gas_sources: [mp, k1_scrubber], discharge_pressure_bara: 70.0, cooler_temperature_C: 30.0, liquid_return_stage: mp}
+
+proxy:
+  name: forward_pvt_proxy
+  min_pressure_step_bar: 0.5
+  stages:
+    - {name: hp, pressure_bara: {value: 70.0, lower: 30.0, upper: 110.0}, temperature_C: {value: 70.0, lower: 30.0, upper: 90.0}}
+    - {name: mp, pressure_bara: {value: 20.0, lower: 5.0, upper: 40.0}, temperature_C: {value: 60.0, lower: 20.0, upper: 80.0}}
+    - {name: lp, pressure_bara: {value: 3.5, lower: 1.5, upper: 8.0}, temperature_C: {value: 50.0, lower: 15.0, upper: 70.0}}
+  scrubber:
+    name: scrubber
+    gas_sources: [mp, lp]
+    liquid_destination: stock_tank
+    pressure_bara: {value: 40.0, lower: 2.0, upper: 110.0}
+    temperature_C: {value: 30.0, lower: 0.0, upper: 60.0}
+
+objective:
+  oil_weight: 2.0
+  gas_weight: 1.0
+  gor_weight: 0.0
+  eps_oil_fraction: 0.05
+  loss: soft_l1
+  residual_scale: 0.2
+  dry_gas_gor_threshold: 15000.0
+  dry_gas_weight: 0.25
+  # Most stage conditions are only weakly determined by oil and gas rates (see the identifiability
+  # table). A small prior keeps them near the design values above without measurably hurting the match.
+  prior_weight: 1.0e-5
+
+optimizer: {method: de+lsq, seed: 7, global_maxiter: 6, popsize: 5, local_maxiter: 60}
+
+acceptance: {oil_mape_pct: 3.0, gas_mape_pct: 3.0, oil_p90_abs_pct: 6.0, max_failed: 0}
+
+exports: [neqsim, e300, pvtsim, fluidmagic, blackoil]

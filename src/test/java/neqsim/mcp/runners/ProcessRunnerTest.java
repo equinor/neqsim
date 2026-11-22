@@ -355,6 +355,23 @@ class ProcessRunnerTest {
   }
 
   @Test
+  void testValidateAndRun_disconnectedFlowsheetIsError() {
+    // Reproduces the MCP probe: guessed grammar without a Stream unit and with parameters beside 'properties'.
+    String json = "{\"fluid\": {\"model\": \"SRK\", \"temperature\": 303.15, \"pressure\": 5.0,"
+        + " \"components\": {\"methane\": 0.9, \"ethane\": 0.07, \"propane\": 0.03}},"
+        + " \"process\": [{\"type\": \"Compressor\", \"name\": \"K1\", \"inlet\": \"feed\", \"outletPressure_bara\": 15.0},"
+        + " {\"type\": \"Cooler\", \"name\": \"E1\", \"inlet\": \"K1\", \"outletTemperature_C\": 35.0}]}";
+    String result = ProcessRunner.validateAndRun(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("error", root.get("status").getAsString(), result);
+    assertEquals("validation", root.get("phase").getAsString());
+    assertTrue(result.contains("UNRESOLVED_INLET"), result);
+    assertTrue(result.contains("MISPLACED_UNIT_PARAMETERS"), result);
+    assertFalse(root.has("report"), "a disconnected flowsheet must not produce a report");
+  }
+
+  @Test
   void testRun_processModelAreas() {
     String result = ProcessRunner.run(processModelJson());
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();

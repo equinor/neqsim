@@ -308,7 +308,7 @@ public class CompressorChartLibrary implements Serializable {
       for (ChartEntryDto c : dto.charts) {
         CompressorChart chart = new CompressorChart();
         if (c.speeds != null && c.flows != null && c.heads != null && c.polytropicEfficiencies != null) {
-          double[] cond = c.chartConditions != null ? c.chartConditions : new double[] { 0.0, 0.0, 0.0, 0.0 };
+          double[] cond = c.chartConditions != null ? c.chartConditions : new double[] {0.0, 0.0, 0.0, 0.0};
           chart.setCurves(cond, c.speeds, c.flows, c.heads, c.polytropicEfficiencies);
           if (c.chartConditions != null && c.chartConditions.length >= 4) {
             chart.setReferenceConditions(c.chartConditions[0], c.chartConditions[1], c.chartConditions[2],

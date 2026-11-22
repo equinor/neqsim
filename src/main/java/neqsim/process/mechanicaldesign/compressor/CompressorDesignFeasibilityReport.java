@@ -387,6 +387,9 @@ public class CompressorDesignFeasibilityReport {
    * Run all feasibility checks.
    */
   private void runFeasibilityChecks() {
+    for (String issue : mechanicalDesign.getImpellerSizingIssues()) {
+      issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "IMPELLER_SIZING", issue));
+    }
     checkDischargeTemperature();
     checkPressureRatioPerStage();
     checkTipSpeed();
@@ -418,6 +421,10 @@ public class CompressorDesignFeasibilityReport {
    */
   private void checkPressureRatioPerStage() {
     int stages = mechanicalDesign.getNumberOfStages();
+    if (stages <= 0) {
+      // The impeller-sizing check already reports that no stage count is available.
+      return;
+    }
     double prPerStage = Math.pow(pressureRatio, 1.0 / stages);
     double maxPR = mechanicalDesign.getMaxPressureRatioPerStage();
     if (prPerStage > maxPR) {
@@ -760,7 +767,8 @@ public class CompressorDesignFeasibilityReport {
     operatingPoint.put("polytropicHead_kJkg", round(polytropicHead, 2));
     operatingPoint.put("polytropicEfficiency", round(polytropicEfficiency, 4));
     operatingPoint.put("gasMolecularWeight_kgkmol", round(gasMolecularWeight, 2));
-    operatingPoint.put("speed_rpm", compressor.getSpeed());
+    double operatingSpeed = compressor.getSpeed();
+    operatingPoint.put("speed_rpm", Double.isFinite(operatingSpeed) ? operatingSpeed : null);
     report.put("operatingPoint", operatingPoint);
 
     // Mechanical design
@@ -771,6 +779,12 @@ public class CompressorDesignFeasibilityReport {
       mechDesign.put("impellerDiameter_mm", round(mechanicalDesign.getImpellerDiameter(), 0));
       mechDesign.put("shaftDiameter_mm", round(mechanicalDesign.getShaftDiameter(), 0));
       mechDesign.put("tipSpeed_ms", round(mechanicalDesign.getTipSpeed(), 1));
+      mechDesign.put("impellerSizingFeasible", mechanicalDesign.isImpellerSizingFeasible());
+      mechDesign.put("impellerSizingIssues", mechanicalDesign.getImpellerSizingIssues());
+      double sizingSpeed = mechanicalDesign.getImpellerSizingSpeedRPM();
+      double inletFlowCoefficient = mechanicalDesign.getFlowCoefficient();
+      mechDesign.put("impellerSizingSpeed_rpm", Double.isFinite(sizingSpeed) ? sizingSpeed : null);
+      mechDesign.put("inletFlowCoefficient", Double.isFinite(inletFlowCoefficient) ? inletFlowCoefficient : null);
       mechDesign.put("bearingSpan_mm", round(mechanicalDesign.getBearingSpan(), 0));
       mechDesign.put("casingType", mechanicalDesign.getCasingType().name());
       mechDesign.put("driverPower_kW", round(mechanicalDesign.getDriverPower(), 1));
@@ -881,7 +895,8 @@ public class CompressorDesignFeasibilityReport {
     }
     report.put("issues", issueList);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create()
+        .toJson(report);
   }
 
   /**
@@ -889,11 +904,11 @@ public class CompressorDesignFeasibilityReport {
    *
    * @param value the value to round
    * @param decimals number of decimal places
-   * @return rounded value
+   * @return rounded value, or null when the value is unavailable
    */
-  private double round(double value, int decimals) {
+  private Double round(double value, int decimals) {
     if (Double.isNaN(value) || Double.isInfinite(value)) {
-      return value;
+      return null;
     }
     double factor = Math.pow(10, decimals);
     return Math.round(value * factor) / factor;

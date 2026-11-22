@@ -1,7 +1,5 @@
 package neqsim.physicalproperties.interfaceproperties.solidadsorption;
 
-import java.io.Serializable;
-
 /**
  * Interface for adsorption isotherm models.
  *
@@ -13,7 +11,7 @@ import java.io.Serializable;
  * @author ESOL
  * @version 2.0
  */
-public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstantsInterface, Serializable {
+public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstantsInterface {
 
   /**
    * Calculate adsorption for the specified phase.

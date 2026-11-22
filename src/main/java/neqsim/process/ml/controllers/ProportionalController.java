@@ -40,7 +40,7 @@ public class ProportionalController implements Controller {
     double error = observation[errorIndex];
     double action = -kp * error; // Negative because error = actual - setpoint
     action = Math.max(actionMin, Math.min(actionMax, action));
-    return new double[] { action };
+    return new double[] {action};
   }
 
   @Override

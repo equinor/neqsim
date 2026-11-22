@@ -61,8 +61,8 @@ public class EmissionsCalculatorTest {
     system.setSalinity(10.0, "wt%");
 
     // Set gas composition (typical Gudrun)
-    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-        new double[] { 0.51, 0.44, 0.04, 0.01 });
+    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.51, 0.44, 0.04, 0.01});
 
     // Run simulation
     system.run();
@@ -246,12 +246,12 @@ public class EmissionsCalculatorTest {
   }
 
   /**
-   * Test tuned kij parameters functionality.
+   * Test lab comparison reporting with the supported database model.
    */
   @Test
-  void testTunedKijParameters() {
+  void testLabComparisonWithDefaultParameters() {
     // Create system
-    ProducedWaterDegassingSystem system = new ProducedWaterDegassingSystem("Tuned kij Test");
+    ProducedWaterDegassingSystem system = new ProducedWaterDegassingSystem("Lab comparison Test");
 
     // Configure
     system.setWaterFlowRate(100.0, "m3/hr");
@@ -260,11 +260,11 @@ public class EmissionsCalculatorTest {
     system.setDegasserPressure(4.0, "bara");
     system.setCFUPressure(1.2, "bara");
     system.setSalinity(3.5, "wt%");
-    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-        new double[] { 0.50, 0.45, 0.04, 0.01 });
+    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.50, 0.45, 0.04, 0.01});
 
-    // Enable tuned kij parameters
-    system.setTunedInteractionParameters(true);
+    // Use the supported default model; lab input reports deviations without calibration.
+    system.setTunedInteractionParameters(false);
 
     // Set lab validation data
     system.setLabGWR(0.85);
@@ -304,8 +304,8 @@ public class EmissionsCalculatorTest {
     system.setCFUPressure(1.2, "bara");
     system.setCaissonPressure(1.013, "bara");
     system.setSalinity(3.5, "wt%");
-    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-        new double[] { 0.50, 0.45, 0.04, 0.01 });
+    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.50, 0.45, 0.04, 0.01});
 
     // Run
     system.run();

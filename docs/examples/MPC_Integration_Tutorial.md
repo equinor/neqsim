@@ -474,4 +474,3 @@ This notebook demonstrated:
 - Use step response identification for more accurate models
 - Integrate with external MPC solvers via JSON export
 - Configure real-time data exchange with OPC/Modbus
-

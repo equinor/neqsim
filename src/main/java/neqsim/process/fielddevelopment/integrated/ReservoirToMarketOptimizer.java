@@ -276,7 +276,7 @@ public class ReservoirToMarketOptimizer implements Serializable {
       boolean improved = false;
       for (int i = 0; i < n; i++) {
         double current = choke[i];
-        double[] candidates = new double[] { clamp(current + step), clamp(current - step) };
+        double[] candidates = new double[] {clamp(current + step), clamp(current - step)};
         for (int c = 0; c < candidates.length; c++) {
           double cand = candidates[c];
           if (cand == current) {

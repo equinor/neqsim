@@ -1,6 +1,8 @@
 package neqsim.process.equipment.heatexchanger;
 
 import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,11 +42,14 @@ import com.google.gson.GsonBuilder;
 public class CoolingWaterSystem implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  /** Specific heat capacity of water in kJ/(kg*K). */
-  private static final double CP_WATER = 4.186;
+  /** Absolute pressure used for water reference properties [bara]. */
+  private double coolingWaterPressure = 3.0;
 
-  /** Water density in kg/m3. */
-  private static final double DENSITY_WATER = 1000.0;
+  /** Reference-composition salinity [g/kg solution], zero for fresh water. */
+  private double coolingWaterSalinity = 0.0;
+
+  /** Calculated bulk-solution mass flow [kg/s]. */
+  private double totalMassFlowKgPerSec = 0.0;
 
   /** CW supply temperature in C (default 25 C). */
   private double cwSupplyTemperatureC = 25.0;
@@ -118,6 +123,21 @@ public class CoolingWaterSystem implements Serializable {
   }
 
   /**
+   * Restores legacy serialized system specifications with a default reference pressure.
+   *
+   * @param input serialized system input
+   * @throws IOException if the stream cannot be read
+   * @throws ClassNotFoundException if a serialized class is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (coolingWaterPressure == 0.0) {
+      coolingWaterPressure = 3.0;
+    }
+    calculated = false;
+  }
+
+  /**
    * Adds a cooling duty requirement.
    *
    * @param name cooler name
@@ -147,6 +167,40 @@ public class CoolingWaterSystem implements Serializable {
    */
   public void setCoolingWaterReturnTemperature(double tempC) {
     this.cwReturnTemperatureC = tempC;
+    calculated = false;
+  }
+
+  /**
+   * Sets the property-evaluation pressure, independently of the hydraulic system pressure drop.
+   *
+   * @param pressure absolute supply pressure [bara]
+   */
+  public void setCoolingWaterPressure(double pressure) {
+    coolingWaterPressure = pressure;
+    calculated = false;
+  }
+
+  /**
+   * Selects fresh water or fixed-salinity seawater reference properties.
+   *
+   * @param salinity reference-composition salinity [g/kg solution], zero for fresh water
+   */
+  public void setCoolingWaterSalinity(double salinity) {
+    coolingWaterSalinity = salinity;
+    calculated = false;
+  }
+
+  /**
+   * Sets tower fan power as a fraction of rejected heat; use zero for a once-through seawater circuit.
+   *
+   * @param fraction non-negative fraction of thermal duty
+   * @throws IllegalArgumentException if the fraction is negative or non-finite
+   */
+  public void setTowerFanPowerFraction(double fraction) {
+    if (!Double.isFinite(fraction) || fraction < 0.0) {
+      throw new IllegalArgumentException("Tower fan power fraction must be finite and non-negative");
+    }
+    towerFanPowerFraction = fraction;
     calculated = false;
   }
 
@@ -194,26 +248,36 @@ public class CoolingWaterSystem implements Serializable {
    * Runs the cooling water system design calculation.
    */
   public void calculate() {
+    calculated = false;
+    neqsim.thermo.util.steam.SeawaterProperties.validate(cwSupplyTemperatureC + 273.15, coolingWaterPressure,
+        coolingWaterSalinity);
+    neqsim.thermo.util.steam.SeawaterProperties.validate(cwReturnTemperatureC + 273.15, coolingWaterPressure,
+        coolingWaterSalinity);
     totalDutyKW = 0.0;
     for (CoolingRequirement req : requirements) {
+      if (!Double.isFinite(req.dutyKW) || req.dutyKW < 0.0) {
+        throw new IllegalArgumentException("Cooling requirements must be finite non-negative duties in kW");
+      }
       totalDutyKW += req.dutyKW;
     }
 
-    // CW flow rate: Q = m * Cp * deltaT => m = Q / (Cp * deltaT)
-    double deltaTK = cwReturnTemperatureC - cwSupplyTemperatureC;
-    if (deltaTK <= 0) {
-      deltaTK = 10.0; // Default 10 K rise
+    if (cwReturnTemperatureC <= cwSupplyTemperatureC) {
+      throw new IllegalArgumentException("Cooling water return temperature must exceed supply temperature");
     }
-
-    // Total mass flow in kg/sec
-    double massFlowKgPerSec = (totalDutyKW) / (CP_WATER * deltaTK);
+    double supplyEnthalpy = neqsim.thermo.util.steam.SeawaterProperties.specificEnthalpy(cwSupplyTemperatureC + 273.15,
+        coolingWaterPressure, coolingWaterSalinity);
+    double returnEnthalpy = neqsim.thermo.util.steam.SeawaterProperties.specificEnthalpy(cwReturnTemperatureC + 273.15,
+        coolingWaterPressure, coolingWaterSalinity);
+    totalMassFlowKgPerSec = totalDutyKW * 1000.0 / (returnEnthalpy - supplyEnthalpy);
+    double density = 1.0 / neqsim.thermo.util.steam.SeawaterProperties.gibbsDerivative(cwSupplyTemperatureC + 273.15,
+        coolingWaterPressure, coolingWaterSalinity, 0, 1);
 
     // Volumetric flow in m3/hr
-    totalCWFlowRateM3PerHr = (massFlowKgPerSec / DENSITY_WATER) * 3600.0;
+    totalCWFlowRateM3PerHr = (totalMassFlowKgPerSec / density) * 3600.0;
 
     // Pump power: P = Q * dP / efficiency
     // Q in m3/s, dP in Pa
-    double volumetricFlowM3PerSec = massFlowKgPerSec / DENSITY_WATER;
+    double volumetricFlowM3PerSec = totalMassFlowKgPerSec / density;
     double pressureDropPa = systemPressureDrop * 1.0e5; // bar to Pa
     pumpPowerKW = (volumetricFlowM3PerSec * pressureDropPa) / (pumpEfficiency * 1000.0);
 
@@ -251,6 +315,18 @@ public class CoolingWaterSystem implements Serializable {
       calculate();
     }
     return totalCWFlowRateM3PerHr;
+  }
+
+  /**
+   * Returns the bulk-solution mass flow calculated with reference enthalpy differences.
+   *
+   * @return mass flow [kg/s solution]
+   */
+  public double getTotalCWMassFlowRate() {
+    if (!calculated) {
+      calculate();
+    }
+    return totalMassFlowKgPerSec;
   }
 
   /**
@@ -317,6 +393,12 @@ public class CoolingWaterSystem implements Serializable {
     Map<String, Object> design = new LinkedHashMap<>();
     design.put("cwSupplyTemperature_C", cwSupplyTemperatureC);
     design.put("cwReturnTemperature_C", cwReturnTemperatureC);
+    design.put("cwPressure_bara", coolingWaterPressure);
+    design.put("cwSalinity_gPerKgSolution", coolingWaterSalinity);
+    design.put("propertyModel", coolingWaterSalinity == 0.0 ? "IAPWS-IF97" : "IAPWS-IF97 + IAPWS-08");
+    design.put("withinSalinePressureReferenceRange",
+        neqsim.thermo.util.steam.SeawaterProperties.isWithinPressureReferenceRange(
+            Math.max(cwSupplyTemperatureC, cwReturnTemperatureC) + 273.15, coolingWaterSalinity));
     design.put("systemPressureDrop_bar", systemPressureDrop);
     design.put("pumpEfficiency", pumpEfficiency);
     result.put("designParameters", design);
@@ -335,6 +417,7 @@ public class CoolingWaterSystem implements Serializable {
     Map<String, Object> results = new LinkedHashMap<>();
     results.put("totalDuty_kW", totalDutyKW);
     results.put("totalCWFlowRate_m3perHr", totalCWFlowRateM3PerHr);
+    results.put("totalCWMassFlowRate_kgPerSec", totalMassFlowKgPerSec);
     results.put("pumpPower_kW", pumpPowerKW);
     results.put("towerFanPower_kW", towerFanPowerKW);
     results.put("totalElectricalPower_kW", totalElectricalPowerKW);

@@ -1,0 +1,366 @@
+{
+  "base": "863f12f4bfb58026e523748aefab14ecaf2288aa",
+  "reusesMerged": {
+    "PR4911": "d6f564c6be158738ba3fcd5e11d39e6a864b5da5"
+  },
+  "frozenScope": "finite-scenario marginal in-place parameter/forecast quantiles and independent discrete qualification",
+  "claim": "synthetic independent-code/Decimal numerical evidence, not measured laboratory/field accuracy or continuous posterior coverage",
+  "sourceRevisionVerifiedByGitBlobHashes": true,
+  "unmodifiedMainJavaSourcesCompiled": 3676,
+  "baselineSupportControls": {
+    "checks": 36,
+    "failures": 8,
+    "maxOmittedPressureBara": 0.7258443713553788
+  },
+  "candidateSupportControls": {
+    "checks": 36,
+    "failures": 0
+  },
+  "referencePrecisionDigits": [
+    60,
+    75
+  ],
+  "referenceBytesIdenticalAcrossPrecisions": true,
+  "cases": 10,
+  "scenarios": 328,
+  "infeasibleScenarios": 1,
+  "retainedStatesIncludingInitial": 1635,
+  "retainedIntervalEndpoints": 1308,
+  "maxima": {
+    "pressureBara": 3.362967504472181e-08,
+    "waterM3": 1.7604922675218404e-07,
+    "inventoryMol": 2.7939677238464355e-09,
+    "posteriorMass": 4.5638761381194826e-09,
+    "volumeMeanM3": 4.586669319905923e-07,
+    "parameterQuantiles": 0.0,
+    "pressureQuantilesBara": 3.276161919529841e-08,
+    "correlation": 3.5035958578788495e-09
+  },
+  "originalTunedCheckpointsUnchanged": true,
+  "publicReproduction": {
+    "nonTimingNativeValuesExactlyEqual": true,
+    "cases": 10,
+    "scenarios": 328
+  },
+  "tests": {
+    "focusedJava": 12,
+    "PVTJava": 690,
+    "surroundingIncludingSlow": 3,
+    "auditPython": 15,
+    "toolingPythonPassed": 130,
+    "toolingPythonSkipped": 3,
+    "distinctAuditCorruptions": 55,
+    "repeatAssertionsDisabledCorruption": 1
+  },
+  "pythonAuditLineCoverage": {
+    "covered": 98,
+    "executable": 115,
+    "branchCoverage": "not measured"
+  },
+  "javaCoverage": {
+    "parameterQuantiles": {
+      "INSTRUCTION": {
+        "covered": 88,
+        "missed": 0
+      },
+      "BRANCH": {
+        "covered": 10,
+        "missed": 0
+      },
+      "LINE": {
+        "covered": 13,
+        "missed": 0
+      },
+      "COMPLEXITY": {
+        "covered": 6,
+        "missed": 0
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    },
+    "pressureQuantiles": {
+      "INSTRUCTION": {
+        "covered": 70,
+        "missed": 0
+      },
+      "BRANCH": {
+        "covered": 5,
+        "missed": 1
+      },
+      "LINE": {
+        "covered": 10,
+        "missed": 0
+      },
+      "COMPLEXITY": {
+        "covered": 3,
+        "missed": 1
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    },
+    "requireProbability": {
+      "INSTRUCTION": {
+        "covered": 17,
+        "missed": 0
+      },
+      "BRANCH": {
+        "covered": 6,
+        "missed": 0
+      },
+      "LINE": {
+        "covered": 3,
+        "missed": 0
+      },
+      "COMPLEXITY": {
+        "covered": 4,
+        "missed": 0
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    },
+    "quantile": {
+      "INSTRUCTION": {
+        "covered": 57,
+        "missed": 10
+      },
+      "BRANCH": {
+        "covered": 7,
+        "missed": 1
+      },
+      "LINE": {
+        "covered": 11,
+        "missed": 1
+      },
+      "COMPLEXITY": {
+        "covered": 4,
+        "missed": 1
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    }
+  },
+  "timing": {
+    "firstNativeEvaluationSeconds": 92.834659367,
+    "firstNativeQuantileQueriesSeconds": 0.005650429,
+    "pairedInteriorQuery": {
+      "baseline": 1.853435e-07,
+      "candidate": 1.9120557500000002e-07,
+      "claim": "five ABBA blocks; interior pressure query only; no simulation-speed or CI timing claim"
+    },
+    "ordinarySimulationPathChanged": false,
+    "CIWallClockAssertion": false
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "Java": "OpenJDK 17.0.20",
+    "Maven": "3.9.16",
+    "Java8Compatibility": "affected API/test/drivers compiled with --release 8 and pomJava8.xml dependencies; actual Java8 runtime pending hosted CI"
+  },
+  "documentationImpact": "Javadoc, existing indexed aquifer guide, benchmark README, PVT/field agent handoffs and existing discovery/inspectApi registration updated. No new static MCP operation or notebook.",
+  "documentationSearch": {
+    "MarkdownPages": 839,
+    "standaloneHtmlPages": 1
+  },
+  "static": {
+    "sourceAndPmd": "passed; 0 new finding groups",
+    "existingSelectedSourceFindings": 1028,
+    "existingSelectedPmdFindings": 9,
+    "Javadoc": "private doclint all except missing-comment warnings; Werror passed",
+    "localFullSpotbugs": "not claimed; reviewed analysis baseline pins Temurin17.0.21+9, available runtime17.0.20"
+  },
+  "preexistingHostedMasterBlocker": {
+    "head": "863f12f4bfb58026e523748aefab14ecaf2288aa",
+    "workflowRun": 42373721789,
+    "job": 128406929181,
+    "state": "Code health static analysis failed; 92 new finding groups"
+  },
+  "independentSourceReview": {
+    "APIblob": "ff30864d890a6bf730244ddef37ce1c3e83f7d1c",
+    "verdict": "no remaining blockers after positive-tail/runtime/CDF-guard corrections",
+    "qualification": "independent agent source review, not GitHub approval or CI"
+  },
+  "resolvedInfrastructure": [
+    "Restored omitted NeqSimTest and unchanged registry test helpers through GitHub plugin",
+    "Restored documentation assets; two large files recovered through exact-master Pages artifact with repository blob hashes verified",
+    "Bootstrapped Maven exports before final nested hook commands, correcting initial default-cache Spotless prefix failure",
+    "Created an isolated local validation snapshot for tooling tests requiring git HEAD; this is not a remote repository head",
+    "Corrected initially mistyped tooling test filename; final actual suite130passed/3skipped"
+  ],
+  "remainingAcceptance": [
+    "independent measured laboratory-to-field chain/holdouts",
+    "broader wet/critical phase paths",
+    "full aquifer/Bayesian domain qualification",
+    "qualified multi-tank transmissibility after single-tank acceptance",
+    "full Tran2025 equations/benchmark; latest SSRN delivery403 and abstract inaccessible",
+    "final merged-default-branch audit"
+  ],
+  "commands": [
+    {
+      "name": "baseline-compile",
+      "command": "./mvnw -B -ntp -DskipTests compile",
+      "exit": 0,
+      "log": "baseline-compile.log"
+    },
+    {
+      "name": "baseline-support",
+      "command": "java -cp target/run59-evidence:target/classes:$(cat target/run59-evidence/classpath.txt) QuantileEndpointQualification target/run59-evidence/baseline-endpoints.json target/run59-evidence/baseline-query-timing.json",
+      "exit": 1,
+      "log": "baseline-endpoints.log"
+    },
+    {
+      "name": "spotless-apply-1",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py apply",
+      "exit": 0,
+      "log": "spotless-apply-1.log"
+    },
+    {
+      "name": "spotless-apply-2",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py apply",
+      "exit": 0,
+      "log": "spotless-apply-2.log"
+    },
+    {
+      "name": "spotless-apply-stable",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py apply",
+      "exit": 0,
+      "log": "spotless-apply-final.log"
+    },
+    {
+      "name": "focused",
+      "command": "./mvnw -B -ntp test -Dtest=ReservoirHistoryParameterQuantilesTest,ReservoirHistoryEnsembleTest",
+      "exit": 0,
+      "log": "focused-tests-restored.log"
+    },
+    {
+      "name": "PVT",
+      "command": "./mvnw -B -ntp test -Dtest=neqsim.pvtsimulation.**",
+      "exit": 0,
+      "log": "pvt-tests.log"
+    },
+    {
+      "name": "native",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 src/test/resources/neqsim/pvtsimulation/discrete-posterior/run.py",
+      "exit": 0,
+      "log": "native-benchmark.log"
+    },
+    {
+      "name": "public-reproduction",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 src/test/resources/neqsim/pvtsimulation/discrete-posterior/run.py",
+      "exit": 0,
+      "log": "reproducible-run.log"
+    },
+    {
+      "name": "java8-classpath",
+      "command": "./mvnw -B -ntp --file pomJava8.xml dependency:build-classpath -Dmdep.outputFile=target/run59-evidence/java8-classpath.txt",
+      "exit": 0,
+      "log": "java8-classpath.log"
+    },
+    {
+      "name": "java8-compile",
+      "command": "java com.sun.tools.javac.Main --release 8 -cp target/classes:$(cat target/run59-evidence/java8-classpath.txt) -d target/run59-evidence/java8-api src/main/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsemble.java src/test/java/neqsim/pvtsimulation/util/ReservoirHistoryParameterQuantilesTest.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/DiscretePosteriorQualification.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/QuantileEndpointQualification.java",
+      "exit": 0,
+      "log": "java8-api-compile.log"
+    },
+    {
+      "name": "javadoc",
+      "command": "java -m jdk.javadoc/jdk.javadoc.internal.tool.Main -source 8 -private -Xdoclint:all,-missing -Werror -quiet -classpath target/classes:$(cat target/run59-evidence/classpath.txt) -d target/run59-evidence/javadoc src/main/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsemble.java src/test/java/neqsim/pvtsimulation/util/ReservoirHistoryParameterQuantilesTest.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/DiscretePosteriorQualification.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/QuantileEndpointQualification.java",
+      "exit": 0,
+      "log": "javadoc.log"
+    },
+    {
+      "name": "audit-tests",
+      "command": "uv run --project devtools --locked --group test devtools/.venv/bin/python -m pytest devtools/test_discrete_posterior_audit.py devtools/test_coupled_aquifer_audit.py",
+      "exit": 0,
+      "log": "audit-tests.log"
+    },
+    {
+      "name": "tooling-tests",
+      "command": "uv run --project devtools --locked --group test devtools/.venv/bin/python -m pytest devtools/test_engineering_coverage.py devtools/test_capability_search.py devtools/test_verify_agent_skill_refs.py devtools/test_pvt_report.py devtools/test_pvt_study.py devtools/test_pvt_tuning_quality.py",
+      "exit": 0,
+      "log": "tooling-tests-final.log"
+    },
+    {
+      "name": "surrounding-with-slow",
+      "command": "./mvnw -B -ntp test -Dtest=SimpleReservoirTest,GeneralizedReservoirSurveillanceTest -DexcludedTestGroups=",
+      "exit": 0,
+      "log": "surrounding-tests-with-slow.log"
+    },
+    {
+      "name": "PMD",
+      "command": "./mvnw -B -ntp -Pcode-health -DskipTests pmd:pmd",
+      "exit": 0,
+      "log": "pmd.log"
+    },
+    {
+      "name": "source-PMD-baseline",
+      "command": "uv run --project devtools --locked devtools/code_health.py --tools source,pmd --pmd target/pmd.xml --output target/run59-evidence/code-health-source-pmd.json",
+      "exit": 0,
+      "log": "code-health-source-pmd.log"
+    },
+    {
+      "name": "documentation-search",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/check_documentation_search.py",
+      "exit": 0,
+      "log": "documentation-search-qualified.log"
+    },
+    {
+      "name": "pre-commit",
+      "command": "PYTHONPATH=/workspace/scratch/ec5d078361de/precommit /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pre_commit run --all-files --hook-stage pre-commit",
+      "exit": 0,
+      "log": "pre-commit-bootstrapped.log"
+    },
+    {
+      "name": "pre-push",
+      "command": "PYTHONPATH=/workspace/scratch/ec5d078361de/precommit /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pre_commit run --all-files --hook-stage pre-push",
+      "exit": 0,
+      "log": "pre-push.log"
+    },
+    {
+      "name": "spotless-check",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py check",
+      "exit": 0,
+      "log": "spotless-check.log"
+    },
+    {
+      "name": "python-coverage",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m trace --count --missing --summary --file=target/run59-evidence/audit-trace.dat --coverdir=target/run59-evidence/python-coverage --module unittest devtools.test_discrete_posterior_audit",
+      "exit": 0,
+      "log": "python-coverage.log"
+    },
+    {
+      "name": "paired-query-diagnostic",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 src/test/resources/neqsim/pvtsimulation/discrete-posterior/paired_queries.py --baseline-classes target/run59-evidence/baseline-classes --driver-classes target/run59-evidence --classpath-file target/run59-evidence/classpath.txt --output target/run59-evidence/paired-queries",
+      "exit": 0,
+      "log": "paired-queries.log"
+    }
+  ],
+  "filesSha256": {
+    "candidate-endpoints.json": "d074e8a12caf031350cba0db7edbef3eb9652114bc09551b105c78018116073a",
+    "paired_queries.py": "1a3b4a1314dab778cbc9fa0ba9d94d4095d325663738ba45efd6047735c6bc33",
+    "QuantileEndpointQualification.java": "c141704039776b7a27d7e91b30896261827d687284eb4bffb87feda91b4257fc",
+    "SCOPE.md": "1f3182bbd9160e5eae3db627841b8219fa815c335f4322c0f614fabcac57868b",
+    "run.py": "a3f4f90f01de9c5e10040e8673e4f3e3a3a1b10666a321581161ba96e0bcdf1c",
+    "reference.json": "dc7ade355c32e85f5888ce4823fd659aab021da869ad8a00fad8740a1c6a356f",
+    "artifact-recovery.json": "c3be9d499b47209ac5a1f704d4b231c8bc670442b1c409906d6f76defd29e420",
+    "native.json": "d57596ca38c70776f77878213dab1186b8fd8211d179cafe897ba53c8007a2a9",
+    "audit-coverage.txt": "17c1c4749934702efe230365325b8a332225f6e217b402963d1f923cf7828fc7",
+    "baseline-endpoints.json": "b2175309d7358368cece501e9b9d4b549e6f860ebec7571dfed9dfd070137b72",
+    "README.md": "d1eebea00d4d5ad9fbdf7108097dc7e2147b3ae3d59d3f5e1ba7afffe5831f3e",
+    "execution.log": "eabb5bd698dbeb4e6c241e2f12e082dbb3c394187a039c7791b007fca46c09d9",
+    "query-timings.json": "ec14f2af85af67e4b104878daeca7ee6cf4659f0648f7f452e31757ed7892728",
+    "prior_quadrature_check.py": "36d0009827da98a511801000a57fb620d5fe16ee33ac6435eda2e45fd20edfab",
+    "prior-quadrature.json": "38da9319bc44c82021cf168d337045ac8d8ad7c250711f2e07f79626fbabfc42",
+    "java-coverage.json": "aee36bac986816f671453f43552ff8ae8e68299784c4de291d7f727e6f9ab832",
+    "reference.py": "cda03b32a95e986347fde26079a84b8be445414204491b9696a852f73e408fbe",
+    "DiscretePosteriorQualification.java": "5edf504377544c2f4c7ddfca3f84e2ae04d197a526df87abde8acff8f53456b1",
+    "audit.py": "bd3c2872f014e142ba8fbeee37ee99a3397e9ac5964e87e5e73754a6095158b4"
+  }
+}

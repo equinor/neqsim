@@ -1,7 +1,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseElectrolyteCPAAdvanced;
-import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
  * Thermodynamic system using the e-CPA-Advanced electrolyte equation of state.
@@ -67,11 +66,14 @@ public class SystemElectrolyteCPAAdvanced extends SystemFurstElectrolyteEos {
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
-    FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
     this.useVolumeCorrection(true);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemElectrolyteCPAAdvanced clone() {
     SystemElectrolyteCPAAdvanced clonedSystem = null;
@@ -79,6 +81,7 @@ public class SystemElectrolyteCPAAdvanced extends SystemFurstElectrolyteEos {
       clonedSystem = (SystemElectrolyteCPAAdvanced) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemElectrolyteCPAAdvanced", ex);
     }
     return clonedSystem;
   }

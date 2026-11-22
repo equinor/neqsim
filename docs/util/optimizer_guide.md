@@ -51,6 +51,36 @@ The `neqsim.process.util.optimizer` package provides a comprehensive optimizatio
 
 ## Quick Start
 
+### Example prerequisites
+
+The snippets are method bodies unless they declare a class. Put them in a Java class with
+these imports and logger, and supply a solved `ProcessSystem process` and its registered
+`StreamInterface feed`. The power examples require a `Compressor` named `compressor`;
+the pressure-boundary examples require registered streams named `feed` and `export`
+connected through a pressure-drop model, with inlet pressure above export pressure.
+Run each alternative optimization section from a fresh baseline.
+
+```java
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.*;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
+import neqsim.process.util.optimizer.ProcessOptimizationEngine.SearchAlgorithm;
+
+// Class field (replace the logger name with your application class if desired).
+private static final Logger logger = LogManager.getLogger("OptimizerExamples");
+```
+
+For a complete process definition, use the
+[external optimizer gas-processing example](../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md#complete-example-gas-processing-optimization)
+or the [pressure-boundary example](../process/pressure_boundary_optimization.md).
+
 ### ProductionOptimizer (Single-Variable Throughput)
 
 ```java
@@ -64,13 +94,18 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
     .tolerance(10.0)
     .maxIterations(30)
     .defaultUtilizationLimit(0.95)
-    .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
+    .searchMode(SearchMode.BINARY_FEASIBILITY);
 
-OptimizationResult result = optimizer.optimize(process, feedStream, config);
-System.out.println("Optimal rate: " + result.getOptimalRate());
-System.out.println("Bottleneck: " + result.getBottleneck().getName());
-System.out.println("Feasible: " + result.isFeasible());
+OptimizationResult result = optimizer.optimize(process, feed, config,
+    Collections.emptyList(), Collections.emptyList());
+logger.info("Optimal rate: " + result.getOptimalRate());
+logger.info("Bottleneck: " + (result.getBottleneck() == null ? "none" : result.getBottleneck().getName()));
+logger.info("Feasible: " + result.isFeasible());
 ```
+
+Binary feasibility search maximizes this single feed rate. Score-based searches require an
+explicit objective, such as the throughput objective in the Custom Objectives section; an empty
+objective list gives all feasible points the same score.
 
 ### ProcessOptimizationEngine (Pressure-Boundary)
 
@@ -78,19 +113,19 @@ System.out.println("Feasible: " + result.isFeasible());
 import neqsim.process.util.optimizer.ProcessOptimizationEngine;
 
 ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-engine.setFeedStreamName("Feed");
-engine.setOutletStreamName("Export");
+engine.setFeedStreamName("feed");
+engine.setOutletStreamName("export");
 engine.setSearchAlgorithm(
     ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION);
 engine.setMaxIterations(50);
 engine.setTolerance(10.0);
 
 ProcessOptimizationEngine.OptimizationResult result =
-    engine.findMaximumThroughput(50.0, 100.0, 1000.0, 50000.0);
+    engine.findMaximumThroughput(100.0, 50.0, 1000.0, 50000.0);
 
-System.out.println("Optimal flow: " + result.getOptimalValue());
-System.out.println("Converged: " + result.isConverged());
-System.out.println("Bottleneck: " + result.getBottleneck());
+logger.info("Optimal flow: " + result.getOptimalValue());
+logger.info("Converged: " + result.isConverged());
+logger.info("Bottleneck: " + result.getBottleneck());
 ```
 
 ---
@@ -138,34 +173,47 @@ neqsim.process.util.optimizer/
 Equipment capacity strategies are auto-discovered via `EquipmentCapacityStrategyRegistry`. Register custom strategies:
 
 ```java
-import neqsim.process.equipment.capacity.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CompressorCapacityStrategy;
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 
-public class CustomCapacityStrategy implements EquipmentCapacityStrategy {
-
+public class CustomCapacityStrategy extends CompressorCapacityStrategy {
     @Override
-    public boolean appliesTo(ProcessEquipmentInterface equipment) {
-        return equipment instanceof MyCustomEquipment;
+    public String getName() {
+        return "Installed compressor pressure limit";
     }
 
     @Override
-    public List<CapacityConstraint> getConstraints(
+    public int getPriority() {
+        return super.getPriority() + 1;
+    }
+
+    @Override
+    public Map<String, CapacityConstraint> getConstraints(
             ProcessEquipmentInterface equipment) {
-        MyCustomEquipment eq = (MyCustomEquipment) equipment;
-        List<CapacityConstraint> constraints = new ArrayList<>();
-        constraints.add(new CapacityConstraint(
-            "maxPressure",
-            eq.getPressure() / eq.getDesignPressure(), // utilization
-            CapacityConstraint.ConstraintSeverity.HARD,
-            "bara",
-            "Pressure vs design limit"
-        ));
+        Map<String, CapacityConstraint> constraints =
+            new LinkedHashMap<>(super.getConstraints(equipment));
+        Compressor compressor = (Compressor) equipment;
+        constraints.put("maxPressure", new CapacityConstraint("maxPressure", "bara", CapacityConstraint.ConstraintType.HARD)
+            .setUnit("bara")
+            .setDesignValue(90.0)
+            .setMaxValue(100.0)
+            .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+            .setValueSupplier(() -> compressor.getOutletStream().getPressure("bara"))
+            .setDescription("Installed discharge pressure limit"));
         return constraints;
     }
 }
+```
 
-// Register
-EquipmentCapacityStrategyRegistry.getInstance()
-    .register(new CustomCapacityStrategy());
+Register the class once during application setup:
+
+```java
+EquipmentCapacityStrategyRegistry.getInstance().register(new CustomCapacityStrategy());
 ```
 
 ---
@@ -194,7 +242,9 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
 
 ### Nelder-Mead (`NELDER_MEAD_SCORE` / `NELDER_MEAD`)
 
-Simplex method for derivative-free multi-dimensional optimization. Good for 2-10 decision variables with smooth landscapes.
+Simplex method for derivative-free optimization. `ProductionOptimizer` supports multiple
+registered manipulated variables; the feed-stream overload and `ProcessOptimizationEngine`
+examples on this page search one variable.
 
 ```java
 OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
@@ -218,7 +268,9 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
 
 ### Gradient Descent (`GRADIENT_DESCENT_SCORE` / `GRADIENT_DESCENT`)
 
-Steepest ascent with finite-difference gradients and Armijo backtracking line search. Best for smooth landscapes with 5+ variables.
+Finite-difference gradients with line search for smooth objectives. The engine performs a scalar
+flow or pressure search; use the manipulated-variable `ProductionOptimizer` overload or an
+external evaluator for a vector of decisions.
 
 ```java
 // Via ProcessOptimizationEngine for more control:
@@ -265,19 +317,21 @@ config.validate();  // Throws IllegalArgumentException if invalid
 // Add hard constraint: compressor power must stay below 5000 kW
 OptimizationConstraint powerLimit = OptimizationConstraint.lessThan(
     "MaxPower",
-    proc -> getTotalPower(proc),
+    proc -> ((Compressor) proc.getUnit("compressor")).getPower("kW"),
     5000.0,
     ConstraintSeverity.HARD,
-    100.0  // penalty weight
+    100.0,  // penalty weight
+    "Compressor shaft power in kW"
 );
 
-// Add soft constraint: prefer gas export above 10 MSm3/d
+// Add soft constraint: prefer feed/export above 10000 kg/hr
 OptimizationConstraint exportTarget = OptimizationConstraint.greaterThan(
     "MinExport",
-    proc -> getGasExport(proc),
-    10.0e6,
+    proc -> ((StreamInterface) proc.getUnit("feed")).getFlowRate("kg/hr"),
+    10000.0,
     ConstraintSeverity.SOFT,
-    50.0
+    50.0,
+    "Feed/export mass flow in kg/hr"
 );
 ```
 
@@ -287,24 +341,31 @@ OptimizationConstraint exportTarget = OptimizationConstraint.greaterThan(
 // Add secondary objective alongside throughput
 OptimizationObjective minPower = new OptimizationObjective(
     "MinPower",
-    proc -> getTotalCompressorPower(proc),
+    proc -> ((Compressor) proc.getUnit("compressor")).getPower("kW"),
     0.3,  // weight
     ObjectiveType.MINIMIZE
 );
 
 // Multi-objective Pareto via ProductionOptimizer
+OptimizationObjective throughputObj = new OptimizationObjective(
+    "Throughput",
+    proc -> ((StreamInterface) proc.getUnit("feed")).getFlowRate("kg/hr"),
+    1.0,
+    ObjectiveType.MAXIMIZE
+);
 ParetoResult pareto = optimizer.optimizePareto(process, feed, config,
-    Arrays.asList(throughputObj, minPower));
+    Arrays.asList(throughputObj, minPower), Collections.emptyList());
 ```
 
 ### Infeasibility Diagnostics
 
 ```java
-OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
+OptimizationResult result = optimizer.optimize(process, feed, config,
+    Collections.singletonList(throughputObj), Collections.emptyList());
 
 if (!result.isFeasible()) {
     String diagnosis = result.getInfeasibilityDiagnosis();
-    System.out.println(diagnosis);
+    logger.info(diagnosis);
     // Output example:
     // Infeasibility diagnosis for rate 15000.0 kg/hr:
     //   - Compressor 'K-100': 115.2% utilization (limit: 95.0%), exceeded by 20.2%
@@ -325,16 +386,16 @@ The `ProcessOptimizationEngine` provides pressure-boundary optimization, lift cu
 
 ```java
 ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-engine.setFeedStreamName("Feed");
-engine.setOutletStreamName("Export");
+engine.setFeedStreamName("feed");
+engine.setOutletStreamName("export");
 engine.setSearchAlgorithm(SearchAlgorithm.GOLDEN_SECTION);
 engine.setEnforceConstraints(true);
 
 ProcessOptimizationEngine.OptimizationResult result =
-    engine.findMaximumThroughput(50.0, 100.0, 1000.0, 50000.0);
+    engine.findMaximumThroughput(100.0, 50.0, 1000.0, 50000.0);
 
-System.out.println("Optimal: " + result.getOptimalValue());
-System.out.println("Bottleneck: " + result.getBottleneck());
+logger.info("Optimal: " + result.getOptimalValue());
+logger.info("Bottleneck: " + result.getBottleneck());
 ```
 
 ### Finding Required Inlet Pressure
@@ -370,12 +431,19 @@ ProcessOptimizationEngine.SensitivityResult sensitivity =
 ```java
 ProcessOptimizationEngine.LiftCurveData liftCurve =
     engine.generateLiftCurve(
-        new double[]{40, 50, 60, 70},     // pressures
-        new double[]{15, 25, 35},          // temperatures (C)
-        new double[]{0.0, 0.1, 0.2},      // water cuts
-        new double[]{500, 1000, 2000}      // GORs
+        new double[]{60, 70, 80, 90},      // inlet pressure, bara
+        new double[]{288.15, 298.15, 308.15}, // inlet temperature, Kelvin
+        new double[]{0.0},                // recorded water-cut label
+        new double[]{500.0}               // recorded GOR label
     );
 ```
+
+This engine sweeps pressure and temperature with the supplied composition. Its water-cut and
+GOR arguments are recorded labels; it does not recombine the fluid to those values or solve a
+reservoir well's bottom-hole pressure. Use the
+[multi-scenario recombination guide](../fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md)
+when fluid composition must change across scenarios. The result is a capacity screening grid,
+not a simulator-qualified reservoir VFP deck.
 
 ---
 
@@ -408,7 +476,7 @@ ParetoFront pareto = moOptimizer.optimizeWeightedSum(
 ### Epsilon-Constraint Method
 
 ```java
-ParetoFront pareto = moOptimizer.optimizeEpsilonConstraint(
+ParetoFront epsilonPareto = moOptimizer.optimizeEpsilonConstraint(
     process, feed,
     StandardObjective.MINIMIZE_POWER,       // primary objective
     Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT), // constrained
@@ -418,7 +486,7 @@ ParetoFront pareto = moOptimizer.optimizeEpsilonConstraint(
 ### Pareto Front Analysis
 
 ```java
-ParetoFront pareto = ...;
+// Use the ParetoFront returned by either method above.
 ParetoSolution knee = pareto.findKneePoint();
 double spacing = pareto.calculateSpacing();
 String json = pareto.toJson();
@@ -502,7 +570,7 @@ double penalized = calc.penalize(rawObjective, process);
 List<ConstraintPenaltyCalculator.ConstraintEvaluation> evals =
     calc.evaluate(process);
 for (ConstraintPenaltyCalculator.ConstraintEvaluation e : evals) {
-    System.out.printf("%s: margin=%.3f, satisfied=%b, penalty=%.1f%n",
+    logger.info("{}: margin={}, satisfied={}, penalty={}",
         e.getName(), e.getMargin(), e.isSatisfied(), e.getPenalty());
 }
 ```
@@ -523,15 +591,15 @@ import neqsim.process.util.optimizer.ProcessSimulationEvaluator;
 ProcessSimulationEvaluator evaluator = new ProcessSimulationEvaluator(process);
 
 // Decision variables
-evaluator.addParameter("feedRate", feed, "flowRate",
+evaluator.addParameter("feed", "flowRate",
     1000.0, 20000.0, "kg/hr");
-evaluator.addParameter("inletPressure", feed, "pressure",
+evaluator.addParameter("feed", "pressure",
     30.0, 100.0, "bara");
 
 // Objectives
 evaluator.addObjective("throughput",
-    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
-    proc -> proc.getMeasuredValue("feed", "flowRate", "kg/hr"));
+    proc -> ((StreamInterface) proc.getUnit("feed")).getFlowRate("kg/hr"),
+    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 
 // Constraints from equipment capacity
 evaluator.addEquipmentCapacityConstraints();
@@ -561,12 +629,12 @@ Constraints can be converted between the internal and external optimizer represe
 
 ```java
 // Internal -> External
-OptimizationConstraint internal = OptimizationConstraint.lessThan(...);
+OptimizationConstraint internal = powerLimit;
 ProcessSimulationEvaluator.ConstraintDefinition external =
     internal.toConstraintDefinition();
 
 // External -> Internal
-ProcessSimulationEvaluator.ConstraintDefinition def = ...;
+ProcessSimulationEvaluator.ConstraintDefinition def = external;
 List<OptimizationConstraint> internalConstraints =
     def.toOptimizationConstraints();
 ```
@@ -590,9 +658,9 @@ side, not to one combined two-sided constraint.
 |-----------|-------------|-------------|--------------------|-----------------------------|
 | 1 | Monotonic feasibility | Binary Search | `BINARY_FEASIBILITY` | `BINARY_SEARCH` |
 | 1 | Unimodal objective | Golden Section | `GOLDEN_SECTION_SCORE` | `GOLDEN_SECTION` |
-| 2-10 | Smooth, derivative-free | Nelder-Mead | `NELDER_MEAD_SCORE` | `NELDER_MEAD` |
-| Any | Non-convex, multi-modal | PSO | `PARTICLE_SWARM_SCORE` | `PARTICLE_SWARM` |
-| 5-20+ | Smooth, gradient-based | Gradient Descent | `GRADIENT_DESCENT_SCORE` | `GRADIENT_DESCENT` |
+| Scalar or registered vector | Smooth, derivative-free | Nelder-Mead | `NELDER_MEAD_SCORE` | `NELDER_MEAD` (scalar) |
+| Scalar or registered vector | Non-convex, multi-modal | PSO | `PARTICLE_SWARM_SCORE` | `PARTICLE_SWARM` (scalar) |
+| Scalar or registered vector | Smooth, gradient-based | Gradient Descent | `GRADIENT_DESCENT_SCORE` | `GRADIENT_DESCENT` (scalar) |
 | 1 | Smooth, quasi-Newton | BFGS | - | `BFGS` |
 
 ---
@@ -617,7 +685,8 @@ process.run();
 
 // 4. Optimize — constraints now reflect the auto-sized design limits
 OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
-    .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
+    .rateUnit("kg/hr")
+    .searchMode(SearchMode.BINARY_FEASIBILITY);
 OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 ```
 
@@ -693,7 +762,8 @@ boolean ok = calc.isFeasible(process);
 - **Configurable PSO seed**: `useFixedSeed(true).randomSeed(42L)` for reproducible results
 - **Thread-safe PSO**: All shared state properly synchronized
 - **Adaptive penalty scaling**: Penalty scales with `|rawObjective|` for balanced optimization
-- **Shadow price calculation**: Finite-difference based in `ProcessOptimizationEngine`
+- **Sensitivity screening**: The engine's legacy shadow-price values are perturbation heuristics;
+  they are not economic marginal values or optimizer KKT multipliers.
 - **Stagnation detection**: `stagnationIterations(int)` for early termination
 - **Warm start**: `initialGuess(double[])` to start near known good solutions
 - **Bounded LRU cache**: `maxCacheSize(int)` to control memory usage
@@ -714,16 +784,16 @@ boolean ok = calc.isFeasible(process);
 
 | Method | Description |
 |--------|-------------|
-| `optimize(ProcessSystem, StreamInterface, OptimizationConfig)` | Run single-objective optimization |
-| `optimizePareto(ProcessSystem, StreamInterface, OptimizationConfig, List)` | Multi-objective Pareto optimization |
-| `optimizeScenarios(ProcessSystem, StreamInterface, OptimizationConfig, List)` | Scenario-based optimization |
+| `optimize(ProcessSystem, StreamInterface, OptimizationConfig, List, List)` | Run single-objective optimization |
+| `optimizePareto(ProcessSystem, StreamInterface, OptimizationConfig, List, List)` | Multi-objective Pareto optimization |
+| `optimizeScenarios(List<ScenarioRequest>)` | Scenario-based optimization |
 
 ### ProductionOptimizer.OptimizationResult
 
 | Method | Description |
 |--------|-------------|
 | `getOptimalRate()` | Optimal flow rate |
-| `getBottleneck()` | Limiting equipment utilization record |
+| `getBottleneck()` | Limiting equipment, or null when no equipment bottleneck is identified |
 | `getBottleneckUtilization()` | Utilization fraction at bottleneck |
 | `isFeasible()` | Whether all hard constraints satisfied |
 | `getScore()` | Objective score at optimum |

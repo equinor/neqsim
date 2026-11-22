@@ -3,19 +3,22 @@ package examples;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Debug flow regime detection - why is ANNULAR predicted at low velocities?
  */
 public class FlowRegimeDebug {
+  private static final Logger logger = LogManager.getLogger(FlowRegimeDebug.class);
 
   private static final double GRAVITY = 9.81;
 
   public static void main(String[] args) {
-    System.out.println("================================================================");
-    System.out.println("  Flow Regime Detection Debug");
-    System.out.println("  Why ANNULAR at low velocities?");
-    System.out.println("================================================================\n");
+    logger.info("================================================================");
+    logger.info("  Flow Regime Detection Debug");
+    logger.info("  Why ANNULAR at low velocities?");
+    logger.info("================================================================\n");
 
     double diameter = 0.3; // m
     double area = Math.PI * diameter * diameter / 4.0;
@@ -24,8 +27,8 @@ public class FlowRegimeDebug {
 
     double[] flowRates = {1.0, 5.0, 20.0, 60.0, 100.0};
 
-    System.out.println("Two-Phase Fluid (Gas + Oil) Analysis:");
-    System.out.println("======================================\n");
+    logger.info("Two-Phase Fluid (Gas + Oil) Analysis:");
+    logger.info("======================================\n");
 
     for (double flowRate : flowRates) {
       SystemInterface fluid = createTwoPhaseFluid(temperature, pressure);
@@ -66,46 +69,46 @@ public class FlowRegimeDebug {
       // Is annular?
       boolean isAnnular = U_SG > U_SG_crit;
 
-      System.out.printf("Flow Rate: %.0f kg/s%n", flowRate);
-      System.out.printf("  Gas density:     %.1f kg/m3%n", rho_G);
-      System.out.printf("  Liquid density:  %.1f kg/m3%n", rho_L);
-      System.out.printf("  Surface tension: %.4f N/m%n", sigma);
-      System.out.printf("  Gas vol flow:    %.4f m3/s%n", Q_G);
-      System.out.printf("  Liq vol flow:    %.6f m3/s%n", Q_L);
-      System.out.printf("  U_SG (gas):      %.3f m/s%n", U_SG);
-      System.out.printf("  U_SL (liquid):   %.4f m/s%n", U_SL);
-      System.out.printf("  U_SG_crit:       %.3f m/s  (Taitel-Dukler annular threshold)%n",
-          U_SG_crit);
-      System.out.printf("  U_SG > U_SG_crit: %s  => %s%n", isAnnular ? "YES" : "NO",
-          isAnnular ? "ANNULAR" : "NOT ANNULAR (check stratified/slug)");
-      System.out.printf("  Froude number:   %.3f%n", Fr);
-      System.out.printf("  GVF (gas vol fraction): %.1f%%%n", 100 * Q_G / (Q_G + Q_L));
-      System.out.println();
+      logger.info("{}", String.format("Flow Rate: %.0f kg/s", flowRate));
+      logger.info("{}", String.format("  Gas density:     %.1f kg/m3", rho_G));
+      logger.info("{}", String.format("  Liquid density:  %.1f kg/m3", rho_L));
+      logger.info("{}", String.format("  Surface tension: %.4f N/m", sigma));
+      logger.info("{}", String.format("  Gas vol flow:    %.4f m3/s", Q_G));
+      logger.info("{}", String.format("  Liq vol flow:    %.6f m3/s", Q_L));
+      logger.info("{}", String.format("  U_SG (gas):      %.3f m/s", U_SG));
+      logger.info("{}", String.format("  U_SL (liquid):   %.4f m/s", U_SL));
+      logger.info("{}", String.format("  U_SG_crit:       %.3f m/s  (Taitel-Dukler annular threshold)",
+          U_SG_crit));
+      logger.info("{}", String.format("  U_SG > U_SG_crit: %s  => %s", isAnnular ? "YES" : "NO",
+          isAnnular ? "ANNULAR" : "NOT ANNULAR (check stratified/slug)"));
+      logger.info("{}", String.format("  Froude number:   %.3f", Fr));
+      logger.info("{}", String.format("  GVF (gas vol fraction): %.1f%%", 100 * Q_G / (Q_G + Q_L)));
+      logger.info("");
     }
 
-    System.out.println("\n================================================================");
-    System.out.println("  EXPLANATION");
-    System.out.println("================================================================");
-    System.out.println();
-    System.out.println("The Taitel-Dukler criterion for ANNULAR flow is:");
-    System.out.println("  U_SG > 3.1 * (sigma * g * (rho_L - rho_G) / rho_G^2)^0.25");
-    System.out.println();
-    System.out.println("This threshold depends on:");
-    System.out.println("  - Surface tension (sigma)");
-    System.out.println("  - Density difference (rho_L - rho_G)");
-    System.out.println("  - Gas density (rho_G) - CRITICAL: appears squared in denominator!");
-    System.out.println();
-    System.out.println("At 50 bara, the gas is DENSE (~35-40 kg/m3), which:");
-    System.out.println("  1. Lowers the critical velocity (U_SG_crit)");
-    System.out.println("  2. Makes annular flow easier to achieve");
-    System.out.println();
-    System.out.println("The gas-dominant fluid (70% methane) has very little liquid,");
-    System.out.println("so even at 1 kg/s total, the gas velocity exceeds the threshold.");
-    System.out.println();
-    System.out.println("For STRATIFIED flow to be predicted, you need:");
-    System.out.println("  - Lower pressure (lower gas density)");
-    System.out.println("  - More liquid content (higher liquid fraction)");
-    System.out.println("  - Lower gas velocity (U_SG < U_SG_crit)");
+    logger.info("\n================================================================");
+    logger.info("  EXPLANATION");
+    logger.info("================================================================");
+    logger.info("");
+    logger.info("The Taitel-Dukler criterion for ANNULAR flow is:");
+    logger.info("  U_SG > 3.1 * (sigma * g * (rho_L - rho_G) / rho_G^2)^0.25");
+    logger.info("");
+    logger.info("This threshold depends on:");
+    logger.info("  - Surface tension (sigma)");
+    logger.info("  - Density difference (rho_L - rho_G)");
+    logger.info("  - Gas density (rho_G) - CRITICAL: appears squared in denominator!");
+    logger.info("");
+    logger.info("At 50 bara, the gas is DENSE (~35-40 kg/m3), which:");
+    logger.info("  1. Lowers the critical velocity (U_SG_crit)");
+    logger.info("  2. Makes annular flow easier to achieve");
+    logger.info("");
+    logger.info("The gas-dominant fluid (70% methane) has very little liquid,");
+    logger.info("so even at 1 kg/s total, the gas velocity exceeds the threshold.");
+    logger.info("");
+    logger.info("For STRATIFIED flow to be predicted, you need:");
+    logger.info("  - Lower pressure (lower gas density)");
+    logger.info("  - More liquid content (higher liquid fraction)");
+    logger.info("  - Lower gas velocity (U_SG < U_SG_crit)");
   }
 
   private static SystemInterface createTwoPhaseFluid(double tempC, double pressure) {

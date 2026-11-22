@@ -1,6 +1,7 @@
 package neqsim.process.equipment.compressor;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import neqsim.process.equipment.mixer.Mixer;
@@ -33,6 +34,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
    */
   @Test
   @Timeout(300)
+  @Tag("slow")
   public void testCompressorWithWaterWashCPAPlusFractions() {
     double compPin = 27.9;
     double compTin = 27.0;
@@ -169,7 +171,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
 
     Compressor compressor1 = new Compressor("27AKA60", gasStream);
     compressor1.setOutletPressure(compPout, "bara");
-    compressor1.setOutTemperature(273.15 + compTout);
+    compressor1.setOutletTemperature(273.15 + compTout);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setPolytropicMethod("detailed");
     compressor1.setNumberOfCompressorCalcSteps(10);

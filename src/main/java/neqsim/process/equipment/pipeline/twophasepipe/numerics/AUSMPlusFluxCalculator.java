@@ -48,6 +48,12 @@ public class AUSMPlusFluxCalculator implements Serializable {
   /** Minimum sound speed to avoid division by zero. */
   private double minSoundSpeed = 1.0;
 
+  /** Use centered pressure for a low-Mach predictor with an implicit pressure correction. */
+  private boolean centeredPressureFluxEnabled = false;
+
+  /** Retain the two AUSM Mach contributions as independent conservative donor streams. */
+  private boolean signedDonorTransportEnabled;
+
   /**
    * State vector for one phase at a cell interface.
    */
@@ -66,7 +72,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
     /** Sound speed (m/s). */
     public double soundSpeed;
 
-    /** Specific enthalpy (J/kg). */
+    /** Total specific enthalpy, including phase kinetic energy (J/kg). */
     public double enthalpy;
 
     /** Volume fraction (0-1). */
@@ -79,7 +85,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
      * @param velocity phase velocity (m/s)
      * @param pressure phase pressure (Pa)
      * @param soundSpeed speed of sound (m/s)
-     * @param enthalpy specific enthalpy (J/kg)
+     * @param enthalpy total specific enthalpy, including phase kinetic energy (J/kg)
      * @param holdup volume fraction (0-1)
      */
     public PhaseState(double density, double velocity, double pressure, double soundSpeed, double enthalpy,
@@ -113,6 +119,30 @@ public class AUSMPlusFluxCalculator implements Serializable {
 
     /** Energy flux: α * ρ * v * H (W/m² or J/(m²·s)). */
     public double energyFlux;
+
+    /** Nonnegative mass flow carried from the left donor to the right cell (kg/s). */
+    public double forwardMassFlux;
+
+    /** Nonnegative mass flow carried from the right donor to the left cell (kg/s). */
+    public double reverseMassFlux;
+
+    /** Left-donor advective momentum contribution, excluding pressure traction (N). */
+    public double forwardAdvectiveMomentumFlux;
+
+    /** Right-donor advective momentum contribution with its signed face orientation (N). */
+    public double reverseAdvectiveMomentumFlux;
+
+    /** Left-donor total-enthalpy contribution to {@link #energyFlux} (W). */
+    public double forwardAdvectiveEnergyFlux;
+
+    /** Right-donor total-enthalpy contribution with its signed face orientation (W). */
+    public double reverseAdvectiveEnergyFlux;
+
+    /** Numerical pressure-inventory contribution to {@link #energyFlux} (W). */
+    public double numericalPressureEnergyFlux;
+
+    /** Whether the directional donor fields above were populated by the numerical operator. */
+    public boolean directionalAdvectionAvailable;
 
     /** Holdup flux: α * v (m/s). */
     public double holdupFlux;
@@ -171,10 +201,36 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * @return Phase flux at interface
    */
   public PhaseFlux calcPhaseFlux(PhaseState left, PhaseState right, double area) {
+    return calcPhaseFlux(left, right, area, 0.0);
+  }
+
+  /**
+   * Calculate a phase flux with an additional collocated face-velocity interpolation.
+   *
+   * <p>
+   * The physical AUSM transport and the pressure-interpolation correction retain separate one-sided donors. Their
+   * signed mass, advective momentum, enthalpy and holdup transports are added conservatively at the face. This avoids
+   * replacing the complete physical donor when a pressure correction crosses zero, and it lets an absent donor disable
+   * only its own outgoing stream while the opposite present donor can still fill the phase. Pressure traction and its
+   * reported interface pressure/holdup are unchanged. A zero correction preserves the original flux bit for bit.
+   * </p>
+   *
+   * @param left left phase state
+   * @param right right phase state
+   * @param area face area in m2
+   * @param faceVelocityCorrection finite signed correction to the advective face velocity in m/s
+   * @return phase flux and pressure-traction metadata
+   */
+  public PhaseFlux calcPhaseFlux(PhaseState left, PhaseState right, double area, double faceVelocityCorrection) {
+    if (!Double.isFinite(faceVelocityCorrection)) {
+      throw new IllegalArgumentException("Face-velocity correction must be finite");
+    }
     PhaseFlux flux = new PhaseFlux();
 
-    // Handle zero holdup cases
-    if (left.holdup < 1e-10 && right.holdup < 1e-10) {
+    // Only an exactly absent phase has no flux. A positive trace inventory must use
+    // the same transport at internal and external faces, without a numerical holdup cutoff.
+    if (left.holdup == 0.0 && right.holdup == 0.0) {
+      flux.directionalAdvectionAvailable = true;
       return flux;
     }
 
@@ -191,16 +247,48 @@ public class AUSMPlusFluxCalculator implements Serializable {
     double Mplus = calcMachPlus(ML);
     double Mminus = calcMachMinus(MR);
     double Mhalf = Mplus + Mminus;
+    double faceVelocity = cHalf * Mhalf;
 
     // Split pressures. A single interface holdup is used so that the holdup-gradient
     // momentum source can difference the same values and cancel the spurious force exactly.
     double alphaHalf = 0.5 * (left.holdup + right.holdup);
-    double pHalf = calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
+    double pHalf = centeredPressureFluxEnabled ? 0.5 * (left.pressure + right.pressure)
+        : calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
     double Phalf = alphaHalf * pHalf;
 
-    // Upwind selection based on interface Mach number
+    if (signedDonorTransportEnabled) {
+      double forwardMass = cHalf * Mplus * left.holdup * left.density * area;
+      double reverseMass = cHalf * Mminus * right.holdup * right.density * area;
+      flux.forwardMassFlux = forwardMass;
+      flux.reverseMassFlux = -reverseMass;
+      flux.forwardAdvectiveMomentumFlux = forwardMass * left.velocity;
+      flux.reverseAdvectiveMomentumFlux = reverseMass * right.velocity;
+      flux.forwardAdvectiveEnergyFlux = forwardMass * left.enthalpy;
+      flux.reverseAdvectiveEnergyFlux = reverseMass * right.enthalpy;
+      flux.massFlux = forwardMass + reverseMass;
+      flux.momentumFlux = flux.forwardAdvectiveMomentumFlux + flux.reverseAdvectiveMomentumFlux + Phalf * area;
+      flux.energyFlux = flux.forwardAdvectiveEnergyFlux + flux.reverseAdvectiveEnergyFlux;
+      flux.holdupFlux = cHalf * (Mplus * left.holdup + Mminus * right.holdup);
+      if (faceVelocityCorrection != 0.0) {
+        PhaseState correctionDonor = faceVelocityCorrection > 0.0 ? left : right;
+        double correctionMassFlow = faceVelocityCorrection * correctionDonor.holdup * correctionDonor.density * area;
+        flux.massFlux += correctionMassFlow;
+        flux.momentumFlux += correctionMassFlow * correctionDonor.velocity;
+        flux.energyFlux += correctionMassFlow * correctionDonor.enthalpy;
+        flux.holdupFlux += correctionDonor.holdup * faceVelocityCorrection;
+        addDirectionalAdvection(flux, correctionMassFlow, correctionDonor.velocity, correctionDonor.enthalpy);
+      }
+      flux.directionalAdvectionAvailable = true;
+      flux.interfaceHoldup = alphaHalf;
+      flux.interfacePressure = pHalf;
+      return flux;
+    }
+
+    // A zero correction retains the historical arithmetic and bit pattern. A nonzero
+    // correction is a second signed donor stream; it must not switch the physical AUSM donor.
+    boolean donorLeft = Mhalf >= 0.0;
     double rho, v, H, alpha;
-    if (Mhalf >= 0) {
+    if (donorLeft) {
       rho = left.density;
       v = left.velocity;
       H = left.enthalpy;
@@ -213,17 +301,59 @@ public class AUSMPlusFluxCalculator implements Serializable {
     }
 
     // Convective mass flux
-    double mDot = cHalf * Mhalf * alpha * rho;
+    double mDot = faceVelocity * alpha * rho;
 
     // Fluxes
     flux.massFlux = mDot * area;
     flux.momentumFlux = mDot * v * area + Phalf * area;
     flux.energyFlux = mDot * H * area;
+    addDirectionalAdvection(flux, flux.massFlux, v, H);
+    if (faceVelocityCorrection != 0.0) {
+      PhaseState correctionDonor = faceVelocityCorrection > 0.0 ? left : right;
+      double correctionMassFlow = faceVelocityCorrection * correctionDonor.holdup * correctionDonor.density * area;
+      flux.massFlux += correctionMassFlow;
+      flux.momentumFlux += correctionMassFlow * correctionDonor.velocity;
+      flux.energyFlux += correctionMassFlow * correctionDonor.enthalpy;
+      addDirectionalAdvection(flux, correctionMassFlow, correctionDonor.velocity, correctionDonor.enthalpy);
+    }
+    flux.directionalAdvectionAvailable = true;
     flux.holdupFlux = Mhalf >= 0 ? left.holdup * left.velocity : right.holdup * right.velocity;
+    if (faceVelocityCorrection != 0.0) {
+      PhaseState correctionDonor = faceVelocityCorrection > 0.0 ? left : right;
+      flux.holdupFlux += correctionDonor.holdup * faceVelocityCorrection;
+    }
     flux.interfaceHoldup = alphaHalf;
     flux.interfacePressure = pHalf;
 
     return flux;
+  }
+
+  /**
+   * Select conservative two-donor AUSM transport across flow reversal.
+   *
+   * @param enabled true to retain both split-Mach donor contributions instead of selecting by their net sign
+   */
+  public void setSignedDonorTransportEnabled(boolean enabled) {
+    signedDonorTransportEnabled = enabled;
+  }
+
+  /** @return whether both split-Mach donor contributions are retained */
+  public boolean isSignedDonorTransportEnabled() {
+    return signedDonorTransportEnabled;
+  }
+
+  /** Add one signed donor stream without cancelling an opposing stream at the same face. */
+  private static void addDirectionalAdvection(PhaseFlux flux, double massFlow, double donorVelocity,
+      double donorEnthalpy) {
+    if (massFlow >= 0.0) {
+      flux.forwardMassFlux += massFlow;
+      flux.forwardAdvectiveMomentumFlux += massFlow * donorVelocity;
+      flux.forwardAdvectiveEnergyFlux += massFlow * donorEnthalpy;
+    } else {
+      flux.reverseMassFlux -= massFlow;
+      flux.reverseAdvectiveMomentumFlux += massFlow * donorVelocity;
+      flux.reverseAdvectiveEnergyFlux += massFlow * donorEnthalpy;
+    }
   }
 
   /**
@@ -358,6 +488,16 @@ public class AUSMPlusFluxCalculator implements Serializable {
         + upwind.holdup * upwind.pressure * area;
     flux.energyFlux = upwind.holdup * upwind.density * upwind.velocity * upwind.enthalpy * area;
     flux.holdupFlux = upwind.holdup * upwind.velocity;
+    if (flux.massFlux >= 0.0) {
+      flux.forwardMassFlux = flux.massFlux;
+      flux.forwardAdvectiveMomentumFlux = flux.massFlux * upwind.velocity;
+      flux.forwardAdvectiveEnergyFlux = flux.energyFlux;
+    } else {
+      flux.reverseMassFlux = -flux.massFlux;
+      flux.reverseAdvectiveMomentumFlux = flux.massFlux * upwind.velocity;
+      flux.reverseAdvectiveEnergyFlux = flux.energyFlux;
+    }
+    flux.directionalAdvectionAvailable = true;
 
     return flux;
   }
@@ -366,42 +506,154 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * Calculate Rusanov (local Lax-Friedrichs) flux for robustness.
    *
    * <p>
-   * More dissipative but unconditionally stable. Useful for startup.
+   * The conserved phase energy is {@code alpha * (rho * H - p)}, where {@code H} is total specific enthalpy, including
+   * phase kinetic energy. The physical energy flux remains {@code alpha * rho * u * H}. Dissipating enthalpy inventory
+   * instead would introduce spurious pressure-inventory diffusion.
+   * </p>
+   * <p>
+   * This is an optional local flux, not an automatically selected fallback. Explicit updates require an appropriate
+   * Courant bound and admissible thermodynamic states; no unconditional stability or two-fluid positivity guarantee is
+   * implied. Its two-sided numerical diffusion must be represented by compatible component/energy donor ledgers before
+   * integration into a solver. Exactly absent phase properties are unused; positive traces are retained.
    * </p>
    *
    * @param left Left state
    * @param right Right state
    * @param area Cross-sectional area (m²)
    * @return Phase flux at interface
+   * @throws IllegalArgumentException if area, occupied phase states or computed outputs are invalid or nonfinite
    */
   public PhaseFlux calcRusanovFlux(PhaseState left, PhaseState right, double area) {
+    return calcRusanovFlux(left, right, area, false);
+  }
+
+  /**
+   * Evaluate the two-donor flux with acoustic or material-wave dissipation.
+   *
+   * @param left left donor state
+   * @param right right donor state
+   * @param area face area in square metres
+   * @param materialWavesOnly use the phase advection speed when a separate coupled pressure solve carries acoustics
+   * @return conservative face flux including pressure traction and directional donor contributions
+   */
+  public PhaseFlux calcRusanovFlux(PhaseState left, PhaseState right, double area, boolean materialWavesOnly) {
+    if (!(area > 0.0) || !Double.isFinite(area)) {
+      throw new IllegalArgumentException("Rusanov flux requires positive finite area");
+    }
+    validateRusanovState(left);
+    validateRusanovState(right);
     PhaseFlux flux = new PhaseFlux();
+    boolean presentLeft = left.holdup > 0.0;
+    boolean presentRight = right.holdup > 0.0;
+    if (!presentLeft && !presentRight) {
+      flux.directionalAdvectionAvailable = true;
+      return flux;
+    }
 
     // Maximum wave speed
-    double sMax = Math.max(Math.abs(left.velocity) + left.soundSpeed, Math.abs(right.velocity) + right.soundSpeed);
+    double speedLeft = presentLeft ? Math.abs(left.velocity) + (materialWavesOnly ? 0.0 : left.soundSpeed) : 0.0;
+    double speedRight = presentRight ? Math.abs(right.velocity) + (materialWavesOnly ? 0.0 : right.soundSpeed) : 0.0;
+    double sMax = Math.max(speedLeft, speedRight);
+    double uLeft = presentLeft ? left.velocity : 0.0;
+    double uRight = presentRight ? right.velocity : 0.0;
+    double pressureLeft = presentLeft ? left.holdup * left.pressure : 0.0;
+    double pressureRight = presentRight ? right.holdup * right.pressure : 0.0;
 
     // Conservative variables
-    double UL_mass = left.holdup * left.density;
-    double UR_mass = right.holdup * right.density;
-    double UL_mom = left.holdup * left.density * left.velocity;
-    double UR_mom = right.holdup * right.density * right.velocity;
-    double UL_ene = left.holdup * left.density * left.enthalpy;
-    double UR_ene = right.holdup * right.density * right.enthalpy;
+    double UL_mass = presentLeft ? left.holdup * left.density : 0.0;
+    double UR_mass = presentRight ? right.holdup * right.density : 0.0;
+    double UL_mom = UL_mass * uLeft;
+    double UR_mom = UR_mass * uRight;
+    double UL_ene = presentLeft ? UL_mass * left.enthalpy - pressureLeft : 0.0;
+    double UR_ene = presentRight ? UR_mass * right.enthalpy - pressureRight : 0.0;
 
     // Fluxes at left and right
     double FL_mass = UL_mom;
     double FR_mass = UR_mom;
-    double FL_mom = UL_mom * left.velocity + left.holdup * left.pressure;
-    double FR_mom = UR_mom * right.velocity + right.holdup * right.pressure;
-    double FL_ene = UL_mom * left.enthalpy;
-    double FR_ene = UR_mom * right.enthalpy;
+    double FL_mom = UL_mom * uLeft + pressureLeft;
+    double FR_mom = UR_mom * uRight + pressureRight;
+    double FL_ene = presentLeft ? UL_mom * left.enthalpy : 0.0;
+    double FR_ene = presentRight ? UR_mom * right.enthalpy : 0.0;
+
+    // Rusanov can be written as two nonnegative donor streams plus pressure-only
+    // numerical energy diffusion. Retaining both streams is necessary for named-
+    // component transport: cancelling them to one net mass flux would discard one
+    // donor composition even though the conservative phase update used both.
+    flux.forwardMassFlux = 0.5 * UL_mass * (uLeft + sMax) * area;
+    flux.reverseMassFlux = 0.5 * UR_mass * (sMax - uRight) * area;
+    flux.forwardAdvectiveMomentumFlux = flux.forwardMassFlux * uLeft;
+    flux.reverseAdvectiveMomentumFlux = -flux.reverseMassFlux * uRight;
+    flux.forwardAdvectiveEnergyFlux = presentLeft ? flux.forwardMassFlux * left.enthalpy : 0.0;
+    flux.reverseAdvectiveEnergyFlux = presentRight ? -flux.reverseMassFlux * right.enthalpy : 0.0;
+    flux.numericalPressureEnergyFlux = 0.5 * sMax * (pressureRight - pressureLeft) * area;
+    flux.directionalAdvectionAvailable = true;
 
     // Rusanov flux: F = 0.5*(F_L + F_R) - 0.5*s_max*(U_R - U_L)
     flux.massFlux = (0.5 * (FL_mass + FR_mass) - 0.5 * sMax * (UR_mass - UL_mass)) * area;
     flux.momentumFlux = (0.5 * (FL_mom + FR_mom) - 0.5 * sMax * (UR_mom - UL_mom)) * area;
     flux.energyFlux = (0.5 * (FL_ene + FR_ene) - 0.5 * sMax * (UR_ene - UL_ene)) * area;
+    flux.holdupFlux = 0.5 * (left.holdup * uLeft + right.holdup * uRight) - 0.5 * sMax * (right.holdup - left.holdup);
+    flux.interfaceHoldup = 0.5 * (left.holdup + right.holdup);
+    if (flux.interfaceHoldup == 0.0) {
+      throw new IllegalArgumentException("Rusanov interface holdup is not representable");
+    }
+    flux.interfacePressure = (0.5 * pressureLeft + 0.5 * pressureRight) / flux.interfaceHoldup;
+    if (!Double.isFinite(sMax) || !Double.isFinite(flux.massFlux) || !Double.isFinite(flux.momentumFlux)
+        || !Double.isFinite(flux.energyFlux) || !Double.isFinite(flux.holdupFlux)
+        || !Double.isFinite(flux.interfacePressure) || !Double.isFinite(flux.forwardMassFlux)
+        || !Double.isFinite(flux.reverseMassFlux) || !Double.isFinite(flux.forwardAdvectiveMomentumFlux)
+        || !Double.isFinite(flux.reverseAdvectiveMomentumFlux) || !Double.isFinite(flux.forwardAdvectiveEnergyFlux)
+        || !Double.isFinite(flux.reverseAdvectiveEnergyFlux) || !Double.isFinite(flux.numericalPressureEnergyFlux)) {
+      throw new IllegalArgumentException("Rusanov flux exceeds finite representable outputs");
+    }
 
     return flux;
+  }
+
+  /**
+   * Validate occupied phase properties without reading an absent phase's algebraic extension.
+   *
+   * @param state phase state with a finite area fraction
+   * @throws IllegalArgumentException if the area fraction or an occupied property is invalid
+   */
+  private static void validateRusanovState(PhaseState state) {
+    if (state == null || !Double.isFinite(state.holdup) || state.holdup < 0.0 || state.holdup > 1.0) {
+      throw new IllegalArgumentException(
+          "Rusanov phase holdup must be finite and between zero and one: " + (state == null ? "null" : state.holdup));
+    }
+    if (state.holdup > 0.0 && (!(state.density > 0.0) || !Double.isFinite(state.density)
+        || !Double.isFinite(state.velocity) || !Double.isFinite(state.pressure) || !Double.isFinite(state.enthalpy)
+        || !Double.isFinite(state.soundSpeed) || state.soundSpeed < 0.0)) {
+      throw new IllegalArgumentException("Rusanov occupied phase properties must be finite with positive density");
+    }
+  }
+
+  /**
+   * Select the pressure flux for an implicitly pressure-corrected low-Mach predictor.
+   *
+   * <p>
+   * When enabled, the face pressure is the arithmetic mean of the two pressures. AUSM mass and energy advection are
+   * unchanged. This removes the explicit acoustic velocity-difference dissipation in the AUSM pressure polynomial,
+   * which otherwise retains an acoustic timestep restriction even after an implicit pressure correction. The caller
+   * must supply the implicit pressure solve and collocated pressure-velocity coupling; this option alone is not a
+   * complete all-speed method.
+   * </p>
+   *
+   * <p>
+   * The default is the original AUSM pressure split. The centered option is intended for low-Mach pipeline IMEX
+   * transport, not for explicitly integrated acoustic waves or high-Mach shock capture. At the alternating
+   * cell-velocity grid mode it removes explicit growth but supplies no additional velocity-mode damping.
+   * </p>
+   *
+   * @param enabled true when the caller handles pressure coupling implicitly
+   */
+  public void setCenteredPressureFluxEnabled(boolean enabled) {
+    centeredPressureFluxEnabled = enabled;
+  }
+
+  /** @return true when the low-Mach predictor uses centered interface pressure */
+  public boolean isCenteredPressureFluxEnabled() {
+    return centeredPressureFluxEnabled;
   }
 
   /**

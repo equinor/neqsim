@@ -1,5 +1,7 @@
 package neqsim.process.processmodel.dexpi;
 
+import neqsim.process.engineering.pid.PidSizing;
+
 /**
  * Immutable options for the opt-in native DEXPI 2.0 Plant export path.
  *
@@ -19,10 +21,14 @@ public final class Dexpi20PlantExportOptions {
 
   private final Dexpi20PlantExportMetadata metadata;
   private final BoundaryConnectionMode boundaryConnectionMode;
+  private final PidSizing sizing;
+  private final boolean specification201;
 
   private Dexpi20PlantExportOptions(Builder builder) {
+    sizing = builder.sizing;
     metadata = builder.metadata;
     boundaryConnectionMode = builder.boundaryConnectionMode;
+    specification201 = builder.specification201;
   }
 
   /**
@@ -45,10 +51,33 @@ public final class Dexpi20PlantExportOptions {
     return boundaryConnectionMode;
   }
 
+  /** @return whether official DEXPI 2.0.1 semantics are selected */
+  public boolean isSpecification201() {
+    return specification201;
+  }
+
+  /** @return current engineering sizing projection, or null */
+  public PidSizing getSizing() {
+    return sizing;
+  }
+
   /** Builder for {@link Dexpi20PlantExportOptions}. */
   public static final class Builder {
     private final Dexpi20PlantExportMetadata metadata;
     private BoundaryConnectionMode boundaryConnectionMode = BoundaryConnectionMode.NONE;
+    private boolean specification201;
+    private PidSizing sizing;
+
+    /**
+     * Supplies engineering sizes for the native 2.0.1 path.
+     * 
+     * @param sizing current case snapshot
+     * @return this builder
+     */
+    public Builder sizing(PidSizing sizing) {
+      this.sizing = sizing;
+      return this;
+    }
 
     private Builder(Dexpi20PlantExportMetadata metadata) {
       if (metadata == null) {
@@ -68,6 +97,17 @@ public final class Dexpi20PlantExportOptions {
         throw new IllegalArgumentException("boundaryConnectionMode must not be null");
       }
       boundaryConnectionMode = mode;
+      return this;
+    }
+
+    /**
+     * Selects genuine DEXPI 2.0.1 model imports and nozzle semantics.
+     *
+     * @param enabled whether to use the 2.0.1 specification; legacy default is false
+     * @return this builder
+     */
+    public Builder specification201(boolean enabled) {
+      specification201 = enabled;
       return this;
     }
 

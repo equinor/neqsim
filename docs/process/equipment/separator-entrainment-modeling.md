@@ -1163,8 +1163,11 @@ outlet stream compositions—without disturbing the vessel mass/energy balance.
 
 During each `runTransient(dt, id)` call the following sequence executes:
 
-1. **VU flash** — The standard volume-energy (VU) flash solves for the new vessel state
-   given inlet/outlet mass flows and energy balance.
+1. **VU flash and acceptance** — The volume-energy (VU) flash solves for the new vessel
+   state from inlet/outlet mass flows and the energy balance. The separator publishes that
+   state only when it is finite, the returned volume and internal energy each close to the
+   requested value within a relative tolerance of $10^{-3}$, and the optimized
+   multicomponent operation reports convergence.
 2. **Performance calculator update** — If enhanced entrainment is enabled, the calculator
    reads physical properties directly from the post-flash vessel state (`thermoSystem`),
    estimates gas velocity from the previous-timestep outlet stream, and runs the full
@@ -1177,6 +1180,14 @@ During each `runTransient(dt, id)` call the following sequence executes:
 
 This design ensures that the dynamic mass balance remains conserved while outlet quality
 responds to changing conditions in real time.
+
+Before mutating the dynamic inventory, both separator variants capture their complete
+one-step state, including the vessel, outlet streams, levels, three-phase capacity memory,
+and the owned inlet mixer. A rejected VU result restores those objects in place and raises a
+deterministic failure. Use the process or model transactional transient entry point when the
+same rejection must also roll back the process clock, controllers, events, measurements, and
+other participating equipment. Custom separator subclasses fail transaction coverage until
+their additional mutable state is included explicitly.
 
 ### Enabling Entrainment in Dynamic Mode
 

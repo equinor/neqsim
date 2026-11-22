@@ -28,7 +28,11 @@ public abstract class Conductivity extends CommonPhysicalPropertyMethod implemen
     super(phase);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public Conductivity clone() {
     Conductivity properties = null;
@@ -37,6 +41,7 @@ public abstract class Conductivity extends CommonPhysicalPropertyMethod implemen
       properties = (Conductivity) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of Conductivity", ex);
     }
 
     return properties;

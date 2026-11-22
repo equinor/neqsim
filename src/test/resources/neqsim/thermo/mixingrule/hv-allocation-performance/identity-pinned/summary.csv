@@ -1,0 +1,2 @@
+eos,components,operation,init,rule,baseline_ns_per_op,baseline_jvm_min_ns,baseline_jvm_max_ns,baseline_bytes_per_op,candidate_ns_per_op,candidate_jvm_min_ns,candidate_jvm_max_ns,candidate_bytes_per_op,candidate_over_baseline
+SRK,4,clone_flash,3,4,1035102.90625,818794.25,1251411.5625,758497.0,1646350.84375,1109422.4375,2183279.25,758497.0,1.5905190042548003

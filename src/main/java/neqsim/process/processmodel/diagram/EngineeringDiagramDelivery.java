@@ -73,6 +73,7 @@ public final class EngineeringDiagramDelivery {
     private final EngineeringDiagramDesignationRegister designationRegister;
     private final EngineeringDiagramLayoutRegister layoutRegister;
     private final EngineeringDiagramConventionRegister conventionRegister;
+    private final EngineeringDiagramPidRegisters pidEngineeringRegisters;
 
     private Request(Builder builder) {
       plantId = requireText(builder.plantId, "plantId");
@@ -90,6 +91,10 @@ public final class EngineeringDiagramDelivery {
       designationRegister = builder.designationRegister;
       layoutRegister = builder.layoutRegister;
       conventionRegister = builder.conventionRegister;
+      pidEngineeringRegisters = builder.pidEngineeringRegisters;
+      if (pidEngineeringRegisters != null && contentProfile != ContentProfile.PID) {
+        throw new IllegalArgumentException("P&ID engineering registers require the PID content profile");
+      }
     }
 
     /**
@@ -120,6 +125,7 @@ public final class EngineeringDiagramDelivery {
       private EngineeringDiagramDesignationRegister designationRegister = new EngineeringDiagramDesignationRegister();
       private EngineeringDiagramLayoutRegister layoutRegister = new EngineeringDiagramLayoutRegister();
       private EngineeringDiagramConventionRegister conventionRegister = new EngineeringDiagramConventionRegister();
+      private EngineeringDiagramPidRegisters pidEngineeringRegisters;
 
       private Builder(String plantId, String revision, String drawingNumber, String title,
           ContentProfile contentProfile) {
@@ -181,6 +187,17 @@ public final class EngineeringDiagramDelivery {
        */
       public Builder conventionRegister(EngineeringDiagramConventionRegister value) {
         conventionRegister = requireNonNull(value, "conventionRegister");
+        return this;
+      }
+
+      /**
+       * Adds a source-linked, review-required proposal overlay to a PID delivery.
+       *
+       * @param value immutable registers for the same canonical source graph
+       * @return this builder
+       */
+      public Builder pidEngineeringRegisters(EngineeringDiagramPidRegisters value) {
+        pidEngineeringRegisters = requireNonNull(value, "pidEngineeringRegisters");
         return this;
       }
 
@@ -298,6 +315,24 @@ public final class EngineeringDiagramDelivery {
       result.put("deliveryDiagnostics", deliveryDiagnostics);
       result.put("visualFingerprintsBySheetId",
           new LinkedHashMap<String, String>(rendering.getVisualFingerprintsBySheetId()));
+      List<Map<String, Object>> sheetOrder = new ArrayList<Map<String, Object>>();
+      for (String sheetId : rendering.getSvgBySheetId().keySet()) {
+        for (EngineeringDiagramDocumentSet.Drawing drawing : documentSet.getDrawings()) {
+          for (EngineeringDiagramDocumentSet.Sheet sheet : drawing.getSheets()) {
+            if (sheetId.equals(sheet.getId())) {
+              Map<String, Object> entry = new LinkedHashMap<String, Object>();
+              entry.put("sheetId", sheetId);
+              entry.put("number", sheet.getNumber());
+              entry.put("title", sheet.getTitle());
+              entry.put("svgFile", svgRelativePath(sheetId));
+              sheetOrder.add(entry);
+            }
+          }
+        }
+      }
+      result.put("renderedSheetOrder", sheetOrder);
+      result.put("visualAcceptanceStatus", "REVIEW_REQUIRED");
+      result.put("rendererCheckScope", rendering.getPerformedChecks());
       List<Map<String, Object>> rendererDiagnostics = new ArrayList<Map<String, Object>>();
       for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : rendering.getDiagnostics()) {
         Map<String, Object> item = new LinkedHashMap<String, Object>();
@@ -444,7 +479,8 @@ public final class EngineeringDiagramDelivery {
     Path staging = Files.createTempDirectory(parent, ".neqsim-diagram-delivery-");
     try {
       NativeEngineeringDiagramRenderer.Result rendering = new NativeEngineeringDiagramRenderer(documents,
-          request.sheetFormat, request.conventionRegister, request.routingMode).render();
+          request.sheetFormat, request.conventionRegister, request.routingMode, request.pidEngineeringRegisters)
+          .render();
       if (!documents.isValid() || !rendering.isComplete()) {
         throw new IOException("Engineering-diagram delivery failed controlled document or rendering gates");
       }
@@ -454,8 +490,7 @@ public final class EngineeringDiagramDelivery {
           artifacts);
       writeArtifact(staging, PDF_FILE, "application/pdf", rendering.getPdf(), artifacts);
       for (Map.Entry<String, String> svg : rendering.getSvgBySheetId().entrySet()) {
-        String relativePath = "svg/" + safeFileName(svg.getKey()) + "-" + sha256(svg.getKey()).substring(0, 12)
-            + ".svg";
+        String relativePath = svgRelativePath(svg.getKey());
         writeArtifact(staging, relativePath, "image/svg+xml", svg.getValue().getBytes(StandardCharsets.UTF_8),
             artifacts);
       }
@@ -556,6 +591,10 @@ public final class EngineeringDiagramDelivery {
     String normalized = requireText(value, "sheetId").replaceAll("[^A-Za-z0-9._-]+", "-");
     normalized = normalized.replaceAll("^-+|-+$", "");
     return normalized.isEmpty() ? "sheet" : normalized;
+  }
+
+  private static String svgRelativePath(String sheetId) {
+    return "svg/" + safeFileName(sheetId) + "-" + sha256(sheetId).substring(0, 12) + ".svg";
   }
 
   private static String requireText(String value, String name) {

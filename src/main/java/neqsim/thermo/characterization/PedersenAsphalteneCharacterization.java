@@ -327,7 +327,8 @@ public class PedersenAsphalteneCharacterization {
    *
    * <p>
    * Creates a pseudo-component with the characterized properties and adds it to the system. The component is named
-   * "Asphaltene_PC" (following TBP naming convention) and is configured with the calculated critical properties.
+   * "Asphaltene_PC" (following TBP naming convention) and is configured with the calculated critical properties. These
+   * properties are supplied directly, without invoking the automatic TBP critical-property correlations.
    * </p>
    *
    * <p>
@@ -346,17 +347,15 @@ public class PedersenAsphalteneCharacterization {
 
     // Add asphaltene as TBP fraction with characterized properties
     // Note: addTBPfraction adds "_PC" suffix to the name
-    system.addTBPfraction("Asphaltene", moles, asphalteneMW / 1000.0, asphalteneDensity);
+    system.addTBPfraction("Asphaltene", moles, asphalteneMW / 1000.0, asphalteneDensity, criticalTemperature,
+        criticalPressure, acentricFactor);
 
     // The actual component name will be "Asphaltene_PC"
     String componentName = "Asphaltene_PC";
 
-    // Override calculated properties with Pedersen asphaltene characterization
+    // Preserve the boiling point used by the independent asphaltene characterization.
     int aspIndex = system.getPhase(0).getNumberOfComponents() - 1;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      system.getPhase(i).getComponent(aspIndex).setTC(criticalTemperature);
-      system.getPhase(i).getComponent(aspIndex).setPC(criticalPressure);
-      system.getPhase(i).getComponent(aspIndex).setAcentricFactor(acentricFactor);
       system.getPhase(i).getComponent(aspIndex).setNormalBoilingPoint(boilingPoint);
     }
 
@@ -427,7 +426,8 @@ public class PedersenAsphalteneCharacterization {
    *
    * <p>
    * For more accurate modeling, the asphaltene can be represented as multiple pseudo-components with a distribution of
-   * molecular weights. This follows the same principle as C7+ characterization.
+   * molecular weights. This follows the same principle as C7+ characterization. Each component uses its independently
+   * calculated asphaltene critical properties and boiling point.
    * </p>
    *
    * <p>
@@ -480,14 +480,13 @@ public class PedersenAsphalteneCharacterization {
 
       // Add to system with unique name (will get _PC suffix from addTBPfraction)
       String compName = "Asph_" + (i + 1);
-      system.addTBPfraction(compName, componentMoles[i], componentMW[i] / 1000.0, compChar.getAsphalteneDensity());
+      system.addTBPfraction(compName, componentMoles[i], componentMW[i] / 1000.0, compChar.getAsphalteneDensity(),
+          compChar.getCriticalTemperature(), compChar.getCriticalPressure(), compChar.getAcentricFactor());
 
-      // Set characterized properties (component was just added, so it's the last one)
+      // Preserve the boiling point used to characterize this component.
       int compIndex = system.getPhase(0).getNumberOfComponents() - 1;
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
-        system.getPhase(j).getComponent(compIndex).setTC(compChar.getCriticalTemperature());
-        system.getPhase(j).getComponent(compIndex).setPC(compChar.getCriticalPressure());
-        system.getPhase(j).getComponent(compIndex).setAcentricFactor(compChar.getAcentricFactor());
+        system.getPhase(j).getComponent(compIndex).setNormalBoilingPoint(compChar.getBoilingPoint());
       }
     }
 
@@ -498,66 +497,66 @@ public class PedersenAsphalteneCharacterization {
    * Calculates the asphaltene onset pressure at the given temperature.
    *
    * <p>
-   * Uses the Pedersen approach of searching for liquid-liquid phase split conditions. The onset pressure is where a
-   * second liquid phase (asphaltene-rich) becomes stable.
+   * Uses the Pedersen approach of searching for liquid-liquid phase split conditions. The onset pressure is where an
+   * asphaltene-rich liquid phase (more than 50 mol % asphaltene) becomes stable. The multiphase check is enabled during
+   * the search (and restored afterwards) so the split is found in the presence of a gas phase. An aqueous phase or a
+   * second hydrocarbon liquid that is not asphaltene-rich is not an onset.
    * </p>
    *
    * @param system the thermodynamic system with asphaltene component
-   * @param startPressure starting pressure for search (bar)
+   * @param startPressure starting pressure for search (bar); the fluid must be stable here
    * @param endPressure ending pressure for search (bar)
    * @return onset pressure in bar, or NaN if not found
+   * @throws IllegalStateException if the fluid already has an asphaltene-rich phase at the start pressure or a flash
+   * fails
    */
   public double calculateOnsetPressure(SystemInterface system, double startPressure, double endPressure) {
-    ThermodynamicOperations ops = new ThermodynamicOperations(system);
-
-    double pressureStep = (startPressure - endPressure) / 50.0;
-    double currentPressure = startPressure;
-    boolean wasOnePhase = true;
-
-    // Search for liquid-liquid split
-    while (currentPressure > endPressure) {
-      system.setPressure(currentPressure);
-      try {
-        ops.TPflash();
-
-        // Check for two liquid phases (not just gas-liquid)
-        int liquidPhases = countLiquidPhases(system);
-
-        if (liquidPhases >= 2 && wasOnePhase) {
-          // Found onset - refine with bisection
-          // Cap upper bound at startPressure to prevent reporting onset above P_res
-          double upperBound = Math.min(currentPressure + pressureStep, startPressure);
-          return refineOnsetPressure(system, ops, upperBound, currentPressure);
-        }
-
-        wasOnePhase = (liquidPhases <= 1);
-      } catch (Exception e) {
-        logger.debug("Flash failed at P={} bar: {}", currentPressure, e.getMessage());
-      }
-
-      currentPressure -= pressureStep;
+    if (!(startPressure > endPressure) || !(endPressure > 0.0)) {
+      throw new IllegalArgumentException("Start pressure must exceed a positive end pressure");
     }
-
-    logger.info("No asphaltene onset found in pressure range {} to {} bar", startPressure, endPressure);
-    return Double.NaN;
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    boolean multiPhase = system.doMultiPhaseCheck();
+    system.setMultiPhaseCheck(true);
+    try {
+      double pressureStep = (startPressure - endPressure) / 50.0;
+      double previousPressure = startPressure;
+      if (hasAsphalteneLiquid(system, ops, startPressure)) {
+        throw new IllegalStateException("An asphaltene-rich liquid is already present at the start pressure "
+            + startPressure + " bar; choose a higher start pressure to bracket the onset");
+      }
+      while (previousPressure > endPressure + 1e-9) {
+        double currentPressure = Math.max(endPressure, previousPressure - pressureStep);
+        if (hasAsphalteneLiquid(system, ops, currentPressure)) {
+          return refineOnsetPressure(system, ops, previousPressure, currentPressure);
+        }
+        previousPressure = currentPressure;
+      }
+      logger.info("No asphaltene onset found in pressure range {} to {} bar", startPressure, endPressure);
+      return Double.NaN;
+    } finally {
+      system.setMultiPhaseCheck(multiPhase);
+    }
   }
 
   /**
-   * Counts the number of liquid phases in the system.
+   * Flash at a pressure and report whether an asphaltene-rich liquid phase exists.
    *
    * @param system the thermodynamic system
-   * @return number of liquid phases
+   * @param ops operations on the system
+   * @param pressure pressure in bar
+   * @return true if an asphaltene-rich (more than 50 mol % asphaltene) non-solid phase exists
    */
-  private int countLiquidPhases(SystemInterface system) {
-    int liquidPhases = 0;
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      String phaseType = system.getPhase(i).getPhaseTypeName();
-      if (phaseType.contains("oil") || phaseType.contains("liquid") || phaseType.contains("aqueous")
-          || phaseType.contains("Asphaltene")) {
-        liquidPhases++;
-      }
+  private boolean hasAsphalteneLiquid(SystemInterface system, ThermodynamicOperations ops, double pressure) {
+    system.setPressure(pressure);
+    try {
+      ops.TPflash();
+    } catch (RuntimeException ex) {
+      throw new IllegalStateException("Flash failed at " + pressure + " bar during asphaltene onset search", ex);
     }
-    return liquidPhases;
+    if (system.getNumberOfPhases() < 2) {
+      return false;
+    }
+    return markAsphalteneRichLiquidPhases(system);
   }
 
   /**
@@ -659,30 +658,14 @@ public class PedersenAsphalteneCharacterization {
   private double refineOnsetPressure(SystemInterface system, ThermodynamicOperations ops, double upperP,
       double lowerP) {
     double tolerance = 0.1; // bar
-    int maxIterations = 20;
-
-    for (int i = 0; i < maxIterations; i++) {
-      if (upperP - lowerP < tolerance) {
-        break;
-      }
-
+    for (int i = 0; i < 60 && upperP - lowerP > tolerance; i++) {
       double midP = (upperP + lowerP) / 2.0;
-      system.setPressure(midP);
-
-      try {
-        ops.TPflash();
-        int liquidPhases = countLiquidPhases(system);
-
-        if (liquidPhases >= 2) {
-          lowerP = midP;
-        } else {
-          upperP = midP;
-        }
-      } catch (Exception e) {
+      if (hasAsphalteneLiquid(system, ops, midP)) {
+        lowerP = midP;
+      } else {
         upperP = midP;
       }
     }
-
     return (upperP + lowerP) / 2.0;
   }
 

@@ -1,0 +1,90 @@
+{
+  "parameterQuantiles": {
+    "INSTRUCTION": {
+      "covered": 88,
+      "missed": 0
+    },
+    "BRANCH": {
+      "covered": 10,
+      "missed": 0
+    },
+    "LINE": {
+      "covered": 13,
+      "missed": 0
+    },
+    "COMPLEXITY": {
+      "covered": 6,
+      "missed": 0
+    },
+    "METHOD": {
+      "covered": 1,
+      "missed": 0
+    }
+  },
+  "pressureQuantiles": {
+    "INSTRUCTION": {
+      "covered": 70,
+      "missed": 0
+    },
+    "BRANCH": {
+      "covered": 5,
+      "missed": 1
+    },
+    "LINE": {
+      "covered": 10,
+      "missed": 0
+    },
+    "COMPLEXITY": {
+      "covered": 3,
+      "missed": 1
+    },
+    "METHOD": {
+      "covered": 1,
+      "missed": 0
+    }
+  },
+  "requireProbability": {
+    "INSTRUCTION": {
+      "covered": 17,
+      "missed": 0
+    },
+    "BRANCH": {
+      "covered": 6,
+      "missed": 0
+    },
+    "LINE": {
+      "covered": 3,
+      "missed": 0
+    },
+    "COMPLEXITY": {
+      "covered": 4,
+      "missed": 0
+    },
+    "METHOD": {
+      "covered": 1,
+      "missed": 0
+    }
+  },
+  "quantile": {
+    "INSTRUCTION": {
+      "covered": 57,
+      "missed": 10
+    },
+    "BRANCH": {
+      "covered": 7,
+      "missed": 1
+    },
+    "LINE": {
+      "covered": 11,
+      "missed": 1
+    },
+    "COMPLEXITY": {
+      "covered": 4,
+      "missed": 1
+    },
+    "METHOD": {
+      "covered": 1,
+      "missed": 0
+    }
+  }
+}

@@ -42,7 +42,11 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     calcMolarVolume = false;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSolid clone() {
     PhaseSolid clonedPhase = null;
@@ -50,6 +54,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
       clonedPhase = (PhaseSolid) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSolid", ex);
     }
 
     return clonedPhase;

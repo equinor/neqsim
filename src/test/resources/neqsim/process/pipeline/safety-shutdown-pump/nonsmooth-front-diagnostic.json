@@ -1,0 +1,23 @@
+{
+  "smoothGateTarget": 1.7,
+  "smoothGateStatus": "FAIL",
+  "interpretation": "Abrupt linear speed start creates a nonsmooth front; retain failed smooth criterion",
+  "cases": [
+    {
+      "faces": 51,
+      "normalizedCellPressureRms": 9.993054638293439E-4
+    },
+    {
+      "faces": 101,
+      "normalizedCellPressureRms": 5.96243153799129E-4,
+      "refinementRatio": 1.6760032504557767,
+      "smoothGate": "FAIL"
+    },
+    {
+      "faces": 201,
+      "normalizedCellPressureRms": 3.5516009656257297E-4,
+      "refinementRatio": 1.6788010803293647,
+      "smoothGate": "FAIL"
+    }
+  ]
+}

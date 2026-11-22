@@ -54,6 +54,9 @@ public final class EmergencyShutdownTestPlan implements Serializable {
     scenario = builder.scenario;
     durationSeconds = requirePositive(builder.durationSeconds, "durationSeconds");
     timeStepSeconds = requirePositive(builder.timeStepSeconds, "timeStepSeconds");
+    if (!Double.isFinite(builder.triggerTimeSeconds)) {
+      throw new IllegalArgumentException("triggerTimeSeconds must be finite");
+    }
     triggerTimeSeconds = Math.max(0.0, builder.triggerTimeSeconds);
     initializeSteadyState = builder.initializeSteadyState;
     tagMap = builder.tagMap == null ? new OperationalTagMap() : builder.tagMap;

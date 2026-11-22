@@ -1,6 +1,7 @@
 ---
 name: "figure-discussion"
 description: "PaperLab skill for figure discussion workflows in scientific writing and book production."
+last_verified: "2026-09-12"
 ---
 
 # Skill: Figure Discussion (observation → mechanism → implication → recommendation)
@@ -13,7 +14,7 @@ accompanying discussion block that follows this contract. Loaded by
 `scientific-writer`, `book-author`, `narrative-framer`, and the
 `solve.task.agent` workflow.
 
-DO NOT USE for: figure generation (use `generate_publication_figures`),
+DO NOT USE for: figure generation (use `generate-publication-figures`),
 captions only (captions are a separate, terser artefact).
 
 ---

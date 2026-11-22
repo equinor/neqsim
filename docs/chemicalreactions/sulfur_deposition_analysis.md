@@ -90,6 +90,48 @@ ops.TPSolidflash();
 boolean solidPresent = gas.hasPhaseType("solid");
 ```
 
+`TPSolidflash()` preserves the components selected with `setSolidPhaseCheck(String)`.
+In particular, selecting `"S8"` does not enable precipitation of water or TBP
+pseudo-components. Calling `TPSolidflash()` without first enabling solid checking
+retains the default of checking all components.
+
+The current `SolidFlash1` solver supports one pure solid phase together with the
+fluid phases. If more than one selected component is predicted to precipitate,
+it throws `UnsupportedOperationException` before adding a solid phase; simultaneous
+independent solids are not supported by this solver. Selecting only S8 therefore
+models sulfur precipitation with other solids excluded. For mixed-solid studies,
+do not interpret a single selected-solid calculation as full equilibrium.
+
+For inventory checks, sum each component's `getNumberOfMolesInPhase()` over the
+active phases and compare it with `getNumberOfmoles()` for that component. Phase
+mole fractions and phase fractions must each sum to one.
+#### Reusing separated gas in a recompression train
+
+For a component-selected sulfur calculation, enable `setSolidPhaseCheck("S8")`
+and run `TPflash()`. After the flash, `phaseToSystem("gas")` creates an independent
+fluid containing only the gas-phase component inventory. Liquid and solid
+inventories remain in the parent system and must be accounted for as separate
+outlets or deposits.
+
+The extracted fluid preserves the EOS, mixing rule, multiphase option and solid
+selection. It can be passed directly to a `Stream`, compressor, mixer or cooler;
+there is no need to reconstruct a fresh fluid to avoid carrying over the parent
+inventory. Solid checking remains enabled so later cooling can precipitate more
+sulfur. Disable it explicitly on the extracted fluid only when the downstream
+model is intended to omit solid equilibrium.
+
+The fluid-phase solve remains subject to the material-balance and equilibrium
+checks when solid checking is enabled but no solid is present. In particular, a
+stalled three-fluid-phase trial may recover to a balanced two-fluid-phase state
+before the selected solid is checked. An active solid phase is excluded from
+that fluid-only recovery.
+
+When checking conservation, compare each component's overall molar inventory
+with the sum over active phases before and after each operation. For the H2S/S8
+system, count sulfur atoms as `n(H2S) + 8 * n(S8)` and include every liquid drain
+and removed solid. Phase extraction transfers existing material; it does not
+represent an additional chemical reaction.
+
 ### 3. SulfurDepositionAnalyser — Integrated Unit Operation
 
 The `SulfurDepositionAnalyser` is a process equipment unit that combines all sulfur analysis capabilities in a single `run()` call:

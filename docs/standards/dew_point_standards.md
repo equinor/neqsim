@@ -59,7 +59,7 @@ double waterDewPointC =
 double calculationPressureBara = waterDewPoint.getValue("pressure");
 ```
 
-For the repository fixture, the result is approximately -21.776 °C at
+For the repository fixture, the result is approximately -28.493 °C at
 70 bara. That number validates the documented API and bundled model behavior; it
 is not a generic natural-gas expectation.
 
@@ -81,10 +81,192 @@ boolean withinWaterDewPointLimit =
 current `isOnSpec()` implementation does not read. Prefer the explicit
 comparison above unless a verified `ContractInterface` has been attached.
 
-A failed flash is logged by the current class rather than rethrown. Callers
-should therefore reject non-finite or physically implausible output and retain
-the input composition, model, pressure, NeqSim version, and calculation
-diagnostics.
+The direct operation solves equality of water fugacity between the feed gas and
+a pure incipient condensed phase. It uses a bracketed temperature solve with a
+relative fugacity criterion; an exhausted iteration limit is a failure, not a
+dew point. Positive water content and positive finite absolute pressure are
+required. The legacy direct pure-MEG calculation is also supported. The standard
+classes log a failed calculation and return `NaN`, so `isOnSpec()` is false.
+
+The bracket refinement reuses its endpoint residuals for secant steps and
+bisects at least every second trial. Invalid or out-of-bracket predictions
+also use bisection. Acceptance still requires a logarithmic fugacity residual
+no greater than `1e-9`; this acceleration does not change the condensed-phase
+reference, standards model, pressure or composition treatment.
+
+### Ice, liquid water, and applicability
+
+[ISO 18453:2004](https://www.iso.org/standard/31799.html), clauses 3–5,
+uses separate water attraction functions for vapour pressure over ice below
+273.16 K and over liquid water above it. A subzero ISO result therefore must not
+be compared with a supercooled-liquid dew point without identifying the
+condensed phase. Hydrate equilibrium is another, separate boundary.
+
+The validated working range is **−15 to +5 °C and 5 to 100 bara**, subject to
+the standard's composition limits. The extended range is **−50 to +40 °C and
+1 to 300 bara**, with unknown correlation uncertainty. Thus −26 °C is outside
+the validated range but inside the extended range. Numerical convergence does
+not extend the model's engineering validity; do not use extrapolation outside
+the extended range as an ISO-qualified result.
+
+A result differing from an ideal-gas estimate alone does not identify a coding
+error. Use the same ice/liquid reference and check fugacity equilibrium, model
+parameters and applicability first. The direct operation retains the existing
+pure condensed-phase approximation; it does not model dissolved gas, mixed
+water/glycol liquids, or hydrates. Use and qualify the multiphase/CPA or hydrate
+operation for those questions. The ISO-model low-temperature deviations from
+measurements are discussed by
+[Rajzinger (2012)](https://doi.org/10.26552/com.C.2012.4A.29-35), Table 2;
+matching that model is distinct from matching experimental data.
+
+### Temperature-derivative consistency
+
+The GERG-water attraction function uses a fourth-power term. Its first and
+second temperature derivatives must differentiate that same expression, for
+both the generic `diffalphaT`/`diffdiffalphaT` APIs and the legacy GERG-specific
+aliases. All paths select the ice coefficients below 273.16 K and liquid-water
+coefficients at or above that temperature. The derivatives are branch-local;
+a finite-difference check must not straddle the coefficient switch.
+
+The former implementation differentiated a cubic term and inherited ordinary
+PR alpha derivatives through the generic APIs. Recalculate derivative-dependent
+properties, including enthalpy and heat capacity, obtained with that version.
+The direct bracketed dew-point operation does not use those temperature
+derivatives. Its existing control values are retained, apart from the corrected
+coefficient selection in the narrow interval 273.15–273.16 K.
+
+Regression coverage compares both derivatives with finite differences, checks
+the mixed-gas fugacity derivatives with `ThermodynamicModelTest`, and compares
+synthetic methane/ethane/propane dew points with an independent PR-root
+calculation using ISO 18453 Table 2–3 parameters. The bundled component database
+uses slightly different constants; the comparison tolerance is a numerical
+fixture tolerance, not the standard's experimental correlation uncertainty.
+This establishes the checked mathematical identities and model comparisons;
+full ISO conformity still requires the governing standard's controlled examples
+and complete composition and applicability checks.
+
+### Trace-water process analyser
+
+`WaterDewPointAnalyser`'s `CPA` method solves fixed-feed-gas equilibrium against
+a water-rich liquid, including dissolved gas, using Statoil SRK-CPA. It uses
+metastable liquid water below freezing and excludes solid and hydrate searches.
+Unlike the former phase-appearance search, its stopping criterion is water
+fugacity equilibrium; the amount of an incipient phase does not set the answer.
+Failed measurements return `NaN`, and the process stream remains unchanged.
+
+The direct API is `waterDewPointTemperatureFlash(true)`. It requires a
+non-reacting gas and a liquid with more than 50 mol% water. Dissolved components
+satisfy their gas/liquid fugacity equations while water closes the liquid
+composition. This keeps the solve on the aqueous branch rather than accepting
+the trivial gas-composition root. It does not check global stability against
+other liquid phases. Select the analyser's `multiphase` method on a CPA stream
+when hydrocarbon liquids or glycol-rich liquids must be included. The existing
+no-argument direct operation retains its pure-condensate reference.
+
+For a synthetic gas containing 95% methane before moisture substitution,
+3% ethane, 1% nitrogen and 1% CO2, 5 ppmv water at 43 bara gives approximately
+−43.90 °C with the mixed-liquid CPA method. GERG-water gives approximately
+−34.50 °C. These numerical fixtures use different condensed-phase models;
+agreement within 3 °C is not a valid universal acceptance criterion. Tests
+cover 1–100 ppmv at 43 and 70 bara and independently reinitialize both EOS
+phases to check every component's fugacity equality. This establishes numerical
+equilibrium, not experimental accuracy of either low-temperature model.
+
+Before the convergence correction, the fixed temperature step scaled with
+absolute water mole fraction and could stop at 10,000 iterations far from
+equilibrium, especially in dry gas. Earlier stored dew-point values from this
+operation should be recalculated. Retain the input composition, water basis,
+pressure, model, NeqSim version and convergence diagnostics with each result.
+
+## Screen an extractive analyser sample system
+
+A dew-point calculation alone does not prove that an extractive analyser sees the
+process gas. The public `AnalyserSampleSystem` class added in
+[#4715](https://github.com/equinor/neqsim/pull/4715) screens four common
+sample-system effects:
+
+- water or hydrocarbon condensation in the high-pressure tube;
+- transport lag from the process tap to the regulator;
+- minimum water-film dry-out time at a stated flow and temperature;
+- glycol-film persistence when a CPA fluid contains the selected glycol.
+
+Flows are normal litres per hour at 0 °C and 1.01325 bara. Pressures are absolute
+bara, tube dimensions are metres, and temperatures supplied to the sample-system
+setters are degrees Celsius. The water model uses Bukacek. Hydrocarbon dew point
+uses a NeqSim flash after removing water and glycols. Film calculations assume a
+saturated outlet: water dry-out is therefore a lower bound for the stated film
+mass and flow. Glycol dry-out uses a CPA flash with a vapour-pressure fallback;
+it is not a sensor-recovery guarantee.
+
+### Executable Java 8 screening example
+
+<!-- analyser-sample-system-example: complete -->
+```java
+import neqsim.process.measurementdevice.AnalyserSampleSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.util.empiric.BukacekWaterInGas;
+
+public class AnalyserSampleSystemGuideExample {
+  public static void main(String[] args) {
+    double pressureBara = 63.0;
+    double waterMoleFraction =
+        BukacekWaterInGas.getWaterInGas(273.15 - 40.0, pressureBara);
+    double dryMoleFraction = 1.0 - waterMoleFraction;
+
+    SystemInterface sampleGas =
+        new SystemSrkCPAstatoil(273.15 + 25.0, pressureBara);
+    sampleGas.addComponent("methane", 0.85 * dryMoleFraction);
+    sampleGas.addComponent("ethane", 0.08 * dryMoleFraction);
+    sampleGas.addComponent("propane", 0.04 * dryMoleFraction);
+    sampleGas.addComponent("n-butane", 0.02 * dryMoleFraction);
+    sampleGas.addComponent("n-hexane", 0.01 * dryMoleFraction);
+    sampleGas.addComponent("water", waterMoleFraction);
+    sampleGas.addComponent("TEG", 0.0);
+    sampleGas.setMixingRule(10);
+
+    AnalyserSampleSystem sampleSystem =
+        new AnalyserSampleSystem(sampleGas);
+    sampleSystem.setTubeTemperatureC(20.0);
+    sampleSystem.setRegulatorOutletPressureBara(3.5);
+    sampleSystem.setFlowsNlPerHour(15.0, 90.0);
+    sampleSystem.setTubeGeometry(1.4e-3, 9.0);
+
+    double tapDewPointC = sampleSystem.getWaterDewPointAtTapC();
+    double condensationMarginK =
+        sampleSystem.getWaterCondensationMarginK();
+    double transportLagSeconds = sampleSystem.getTransportLagSeconds();
+    double waterFilmDryOutHours =
+        sampleSystem.getWaterFilmDryOutTimeHours(
+            1.0e-3, 60.0, 2.0, 15.0);
+
+    if (Math.abs(tapDewPointC + 40.0) > 0.05
+        || sampleSystem.isWaterCondensingInTube()
+        || Math.abs(condensationMarginK - 60.0) > 0.1
+        || !Double.isFinite(transportLagSeconds)
+        || transportLagSeconds <= 1.0
+        || transportLagSeconds >= 600.0
+        || !Double.isFinite(waterFilmDryOutHours)
+        || waterFilmDryOutHours <= 0.0) {
+      throw new IllegalStateException(
+          "Sample-system screening is outside the documented bounds");
+    }
+  }
+}
+```
+
+This synthetic dry-gas case should give a water dew point near −40 °C at the tap,
+a positive condensation margin near 60 K, no water condensation, and a finite
+transport lag. Those checks validate the documented API and qualitative
+engineering bounds; they do not validate an installed sample system.
+
+Before using the result, replace the synthetic composition and geometry with
+controlled data and verify the process tap, heat tracing, regulator, bypass,
+analyser flow, material compatibility, calibration, response test, uncertainty,
+and governing measurement procedure. A positive margin is a screening result,
+not evidence of representative sampling. Do not interpret the lower-bound film
+time as an allowed restart delay or the glycol estimate as a maintenance
+interval.
 
 ## Hydrocarbon dew point with `BestPracticeHydrocarbonDewPoint`
 

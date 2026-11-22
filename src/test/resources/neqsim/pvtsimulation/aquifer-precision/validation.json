@@ -1,0 +1,929 @@
+{
+  "base": "de81c1f81c226988a2326c27ed1873094ed86e11",
+  "date": "2026-11-06",
+  "scope": "prescribed-linear-pressure finite aquifer small-exposure precision; no physical parameter or EOS solver change",
+  "evidenceType": "independent analytical synthetic ODE; not measured accuracy",
+  "frozenTolerances": {
+    "pressureBara": "1e-9",
+    "waterM3": "1e-8 + 2e-12 * max(1, abs(reference in m3))"
+  },
+  "matrixRows": 1444,
+  "comparisons": 11552,
+  "advanceCalls": 24548,
+  "referencePrecisionDigits": [
+    60,
+    75
+  ],
+  "referenceReproduction": "both CSV files byte identical at 60/75 digits",
+  "nativeReproduction": "both final JUnit output CSV files byte identical to retained candidate outputs",
+  "numericalResults": {
+    "baseline": {
+      "comparisons": 11552,
+      "failedComparisons": 16,
+      "maximumToleranceFraction": "1.08099877684627109992351863428109389829152792121285129172715",
+      "failures": [
+        {
+          "matrix": "grid",
+          "id": "682",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "grid",
+          "id": "682",
+          "column": 2,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "grid",
+          "id": "683",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "grid",
+          "id": "683",
+          "column": 3,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "grid",
+          "id": "710",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "grid",
+          "id": "710",
+          "column": 2,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "grid",
+          "id": "711",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "grid",
+          "id": "711",
+          "column": 3,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "582",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "582",
+          "column": 2,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "583",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "583",
+          "column": 3,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "606",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "606",
+          "column": 2,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "607",
+          "column": 1,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        },
+        {
+          "matrix": "boundaries",
+          "id": "607",
+          "column": 3,
+          "absoluteError": "1.621516180564483990577188E-8",
+          "tolerance": "1.500016665416708332361128967981154376E-8"
+        }
+      ]
+    },
+    "candidate": {
+      "comparisons": 11552,
+      "failedComparisons": 0,
+      "maximumToleranceFraction": "0.472510862557669037859036561179509803268151818181967228361667",
+      "failures": []
+    }
+  },
+  "pvtSuite": {
+    "tests": 685,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "scope": "all repository PVT test sources; not full repository suite"
+  },
+  "earlierBaseline": {
+    "existingAquiferTests": 11,
+    "failures": 0,
+    "errors": 0,
+    "newPrecisionTests": 2,
+    "newPrecisionFailuresOnUnmodifiedProduction": 2
+  },
+  "surroundingSuite": {
+    "tests": 64,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "toolingSuite": {
+    "tests": 50,
+    "failures": 0
+  },
+  "java8": {
+    "mode": "pomJava8.xml on JRE17 plus --release 8 compiler",
+    "classMajorVersion": 52,
+    "actualJava8JVMExecution": "pending hosted CI"
+  },
+  "runtime": {
+    "workload": "isolated mixed prescribed ramps; JRE17; independent fresh processes; 200000 warmup then 1000000 calls; ABBA repeated three times",
+    "samples": [
+      {
+        "order": 0,
+        "kind": "baseline",
+        "calls": 1000000,
+        "ns": 175153350,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 1,
+        "kind": "candidate",
+        "calls": 1000000,
+        "ns": 157455214,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 2,
+        "kind": "candidate",
+        "calls": 1000000,
+        "ns": 176092556,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 3,
+        "kind": "baseline",
+        "calls": 1000000,
+        "ns": 166964083,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 4,
+        "kind": "baseline",
+        "calls": 1000000,
+        "ns": 175687761,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 5,
+        "kind": "candidate",
+        "calls": 1000000,
+        "ns": 161538806,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 6,
+        "kind": "candidate",
+        "calls": 1000000,
+        "ns": 139558162,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 7,
+        "kind": "baseline",
+        "calls": 1000000,
+        "ns": 172381893,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 8,
+        "kind": "baseline",
+        "calls": 1000000,
+        "ns": 151772093,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 9,
+        "kind": "candidate",
+        "calls": 1000000,
+        "ns": 138354579,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 10,
+        "kind": "candidate",
+        "calls": 1000000,
+        "ns": 156317810,
+        "checksum": 2761139957.314446
+      },
+      {
+        "order": 11,
+        "kind": "baseline",
+        "calls": 1000000,
+        "ns": 154632461,
+        "checksum": 2761139957.314446
+      }
+    ],
+    "baselineMedianNs": 169672988.0,
+    "candidateMedianNs": 156886512.0,
+    "candidateToBaselineMedian": 0.924640473709345,
+    "claim": "diagnostic only; not an end-to-end reservoir speedup or field performance claim"
+  },
+  "aquiferClassCoverage": {
+    "INSTRUCTION": {
+      "missed": 47,
+      "covered": 640
+    },
+    "BRANCH": {
+      "missed": 24,
+      "covered": 78
+    },
+    "LINE": {
+      "missed": 9,
+      "covered": 100
+    },
+    "COMPLEXITY": {
+      "missed": 27,
+      "covered": 39
+    },
+    "METHOD": {
+      "missed": 3,
+      "covered": 12
+    },
+    "CLASS": {
+      "missed": 0,
+      "covered": 1
+    }
+  },
+  "documentationImpact": "updated private Javadocs, existing indexed aquifer guide, benchmark README, PVT-agent handoff, finite-aquifer capability row and regenerated inventory; no public API, notebook or new static MCP operation",
+  "remainingAcceptance": [
+    "independently admitted measured laboratory-to-field benchmark chain",
+    "broader wet/critical PVT path qualification",
+    "independent held-out produced-phase/GOR/composition accuracy",
+    "coupled aquifer zero/finite/infinite/timestep and Carter-Tracy/VEH acceptance beyond stated common limits",
+    "joint Bayesian prior/history/PVT/flow and grid/prior sensitivity acceptance",
+    "multi-tank transmissibility after qualified single tank",
+    "Tran2025 full equations and independent numerical benchmark",
+    "merged default-branch final acceptance audit"
+  ],
+  "infrastructureAndCorrectedGateFailures": [
+    "Initial materialization lacked shared NeqSimTest, guide files and four registry-test support classes; restored exact master bytes and reran tests; no source workaround or tolerance change",
+    "Initial inventory generation lacked declared test sources; restored exact files, regenerated and checked",
+    "First pre-commit invocation regenerated changed inventory; staged it and reran successfully",
+    "Maven javadoc:javadoc exited 1 because standalone javadoc launcher is absent; strict private doclint via installed JDK javadoc module exits 0",
+    "Initial strict class Checkstyle/private-doclint found existing field comments, one wrapped tag and local-final style issues; documented/fixed within the touched class and reran cleanly",
+    "Optional first unittest invocation lacked pytest; locked devtools test group supplies it and all 50 pytest checks pass"
+  ],
+  "versions": {
+    "maven": "Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)\nMaven home: /tmp/neqsim-maven-0/wrapper/dists/apache-maven-3.9.16/56ba1f9f\nJava version: 17.0.20, vendor: Ubuntu, runtime: /usr/lib/jvm/java-17-openjdk-amd64\nDefault locale: en, platform encoding: UTF-8\nOS name: \"linux\", version: \"6.18.57\", arch: \"amd64\", family: \"unix\"\n",
+    "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+    "python": "CPython 3.12.14",
+    "preCommit": "4.5.1"
+  },
+  "commands": [
+    {
+      "name": "java8-focused",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "-f",
+        "pomJava8.xml",
+        "test",
+        "-Dtest=FetkovichAquifer*Test",
+        "-Djacoco.skip=true"
+      ],
+      "exit": 0,
+      "seconds": 17.96730210199894,
+      "finishedUTC": "2026-11-06T20:27:26.901458+00:00"
+    },
+    {
+      "name": "private-javadoc",
+      "command": [
+        "java",
+        "-m",
+        "jdk.javadoc/jdk.javadoc.internal.tool.Main",
+        "-private",
+        "-Xdoclint:all",
+        "-Werror",
+        "-quiet",
+        "-d",
+        "/tmp/mbal55-evidence/javadoc",
+        "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquifer.java"
+      ],
+      "exit": 1,
+      "seconds": 0.9518844630001695,
+      "finishedUTC": "2026-11-06T20:32:50.888092+00:00"
+    },
+    {
+      "name": "private-javadoc-final",
+      "command": [
+        "java",
+        "-m",
+        "jdk.javadoc/jdk.javadoc.internal.tool.Main",
+        "-classpath",
+        "target/classes",
+        "-private",
+        "-Xdoclint:all",
+        "-Werror",
+        "-quiet",
+        "-d",
+        "/tmp/mbal55-evidence/javadoc-final",
+        "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquifer.java"
+      ],
+      "exit": 0,
+      "seconds": 0.9880192740019993,
+      "finishedUTC": "2026-11-06T20:33:13.529746+00:00"
+    },
+    {
+      "name": "inventory-generate",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 1,
+      "seconds": 1.525764761998289,
+      "finishedUTC": "2026-11-06T20:33:39.369897+00:00"
+    },
+    {
+      "name": "scoped-checkstyle",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "checkstyle:check",
+        "-Dcheckstyle.includes=**/FetkovichAquifer.java",
+        "-Dcheckstyle.failOnViolation=true",
+        "-Dcheckstyle.violationSeverity=warning"
+      ],
+      "exit": 1,
+      "seconds": 3.8597576020001725,
+      "finishedUTC": "2026-11-06T20:34:21.086297+00:00"
+    },
+    {
+      "name": "documentation-search",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 2.3525343560031615,
+      "finishedUTC": "2026-11-06T20:34:55.014396+00:00"
+    },
+    {
+      "name": "tooling-tests",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "unittest",
+        "devtools.test_engineering_coverage",
+        "devtools.test_engineering_coverage_workflow",
+        "devtools.test_capability_search",
+        "devtools.test_check_documentation_search"
+      ],
+      "exit": 1,
+      "seconds": 0.17025340699910885,
+      "finishedUTC": "2026-11-06T20:34:55.216286+00:00"
+    },
+    {
+      "name": "tooling-tests-final",
+      "command": [
+        "devtools/.venv/bin/python",
+        "-m",
+        "pytest",
+        "devtools/test_engineering_coverage.py",
+        "devtools/test_engineering_coverage_workflow.py",
+        "devtools/test_capability_search.py",
+        "devtools/test_check_documentation_search.py",
+        "-q"
+      ],
+      "exit": 0,
+      "seconds": 8.270756802998221,
+      "finishedUTC": "2026-11-06T20:35:17.048440+00:00"
+    },
+    {
+      "name": "inventory-generate-final",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 0,
+      "seconds": 1.341607849997672,
+      "finishedUTC": "2026-11-06T20:35:31.521229+00:00"
+    },
+    {
+      "name": "spotless-final-apply-1",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 3.473644374000287,
+      "finishedUTC": "2026-11-06T20:35:48.926726+00:00"
+    },
+    {
+      "name": "spotless-final-apply-2",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 1.9972878619992116,
+      "finishedUTC": "2026-11-06T20:35:50.953052+00:00"
+    },
+    {
+      "name": "scoped-checkstyle-final",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "checkstyle:check",
+        "-Dcheckstyle.includes=**/FetkovichAquifer.java",
+        "-Dcheckstyle.failOnViolation=true",
+        "-Dcheckstyle.violationSeverity=warning"
+      ],
+      "exit": 1,
+      "seconds": 3.8941623809987505,
+      "finishedUTC": "2026-11-06T20:35:54.884261+00:00"
+    },
+    {
+      "name": "all-pvt",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "jacoco:prepare-agent",
+        "test",
+        "jacoco:report",
+        "-Dtest=neqsim.pvtsimulation.**.*Test"
+      ],
+      "exit": 1,
+      "seconds": 366.3310279189973,
+      "finishedUTC": "2026-11-06T20:36:02.532115+00:00"
+    },
+    {
+      "name": "spotless-final-apply-3",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 3.138085441001749,
+      "finishedUTC": "2026-11-06T20:36:17.159902+00:00"
+    },
+    {
+      "name": "scoped-checkstyle-clean",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "checkstyle:check",
+        "-Dcheckstyle.includes=**/FetkovichAquifer.java",
+        "-Dcheckstyle.failOnViolation=true",
+        "-Dcheckstyle.violationSeverity=warning"
+      ],
+      "exit": 0,
+      "seconds": 3.5038639459999104,
+      "finishedUTC": "2026-11-06T20:36:20.701516+00:00"
+    },
+    {
+      "name": "scoped-javadoc",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "javadoc:javadoc",
+        "-Dsubpackages=neqsim.pvtsimulation.reservoirproperties.materialbalance",
+        "-Dincludes=FetkovichAquifer.java",
+        "-Dshow=private",
+        "-Ddoclint=all",
+        "-DfailOnWarnings=true"
+      ],
+      "exit": 1,
+      "seconds": 2.376509122997959,
+      "finishedUTC": "2026-11-06T20:36:23.112001+00:00"
+    },
+    {
+      "name": "all-pvt-final",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "jacoco:prepare-agent",
+        "test",
+        "jacoco:report",
+        "-Dtest=neqsim.pvtsimulation.**.*Test"
+      ],
+      "exit": 1,
+      "seconds": 31.102908093002043,
+      "finishedUTC": "2026-11-06T20:36:56.052690+00:00"
+    },
+    {
+      "name": "all-pvt-complete",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "jacoco:prepare-agent",
+        "test",
+        "jacoco:report",
+        "-Dtest=neqsim.pvtsimulation.**.*Test"
+      ],
+      "exit": 1,
+      "seconds": 7.871881040999142,
+      "finishedUTC": "2026-11-06T20:37:39.764113+00:00"
+    },
+    {
+      "name": "pre-commit",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 1,
+      "seconds": 6.364252031999058,
+      "finishedUTC": "2026-11-06T20:37:39.784983+00:00"
+    },
+    {
+      "name": "pre-commit-final",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 4.606963959999121,
+      "finishedUTC": "2026-11-06T20:38:08.715362+00:00"
+    },
+    {
+      "name": "pre-push",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 4.667910083000606,
+      "finishedUTC": "2026-11-06T20:38:13.420079+00:00"
+    },
+    {
+      "name": "scoped-spotbugs",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "spotbugs:check",
+        "-Dspotbugs.onlyAnalyze=neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquifer*",
+        "-Dspotbugs.failOnError=true"
+      ],
+      "exit": 0,
+      "seconds": 27.113236568999127,
+      "finishedUTC": "2026-11-06T20:38:14.604100+00:00"
+    },
+    {
+      "name": "private-javadoc-verified",
+      "command": [
+        "java",
+        "-m",
+        "jdk.javadoc/jdk.javadoc.internal.tool.Main",
+        "-classpath",
+        "target/classes",
+        "-private",
+        "-Xdoclint:all",
+        "-Werror",
+        "-quiet",
+        "-d",
+        "/tmp/mbal55-evidence/javadoc-verified",
+        "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquifer.java"
+      ],
+      "exit": 0,
+      "seconds": 1.0457462369995483,
+      "finishedUTC": "2026-11-06T20:38:17.183151+00:00"
+    },
+    {
+      "name": "capability-route",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/capability_search.py",
+        "finite aquifer prescribed pressure precision",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 3.369400946998212,
+      "finishedUTC": "2026-11-06T20:38:20.589320+00:00"
+    },
+    {
+      "name": "spotless-final-apply-stable",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 4.016921002999879,
+      "finishedUTC": "2026-11-06T20:39:36.368184+00:00"
+    },
+    {
+      "name": "inventory-final",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 0,
+      "seconds": 1.320660997997038,
+      "finishedUTC": "2026-11-06T20:39:37.725492+00:00"
+    },
+    {
+      "name": "pre-commit-stable",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 4.325666663997254,
+      "finishedUTC": "2026-11-06T20:39:42.136734+00:00"
+    },
+    {
+      "name": "spotless-direct-check",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 2.1971862419995887,
+      "finishedUTC": "2026-11-06T20:39:44.361835+00:00"
+    },
+    {
+      "name": "scoped-checkstyle-publish",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "checkstyle:check",
+        "-Dcheckstyle.includes=**/FetkovichAquifer.java",
+        "-Dcheckstyle.failOnViolation=true",
+        "-Dcheckstyle.violationSeverity=warning"
+      ],
+      "exit": 0,
+      "seconds": 3.4921295560016006,
+      "finishedUTC": "2026-11-06T20:41:38.706541+00:00"
+    },
+    {
+      "name": "private-javadoc-publish",
+      "command": [
+        "java",
+        "-m",
+        "jdk.javadoc/jdk.javadoc.internal.tool.Main",
+        "-classpath",
+        "target/classes",
+        "-private",
+        "-Xdoclint:all",
+        "-Werror",
+        "-quiet",
+        "-d",
+        "/tmp/mbal55-evidence/javadoc-publish",
+        "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquifer.java"
+      ],
+      "exit": 0,
+      "seconds": 0.881720186000166,
+      "finishedUTC": "2026-11-06T20:41:39.625896+00:00"
+    },
+    {
+      "name": "independent-reference-75",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "src/test/resources/neqsim/pvtsimulation/aquifer-precision/reference.py",
+        "--precision",
+        "75",
+        "--output",
+        "/tmp/mbal55-evidence/reference-75-final"
+      ],
+      "exit": 0,
+      "seconds": 1.387768047999998,
+      "finishedUTC": "2026-11-06T20:41:41.049022+00:00"
+    },
+    {
+      "name": "spotless-publish-check",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 1.9974093460004951,
+      "finishedUTC": "2026-11-06T20:42:09.067326+00:00"
+    },
+    {
+      "name": "documentation-publish-check",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 1.8545135259992094,
+      "finishedUTC": "2026-11-06T20:42:10.957969+00:00"
+    },
+    {
+      "name": "inventory-publish-check",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.3175091960001737,
+      "finishedUTC": "2026-11-06T20:42:12.308866+00:00"
+    },
+    {
+      "name": "all-pvt-verified",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "jacoco:prepare-agent",
+        "test",
+        "jacoco:report",
+        "-Dtest=neqsim.pvtsimulation.**.*Test"
+      ],
+      "exit": 0,
+      "seconds": 355.71315002100164,
+      "finishedUTC": "2026-11-06T20:44:10.349594+00:00"
+    },
+    {
+      "name": "pre-commit-publish",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 4.7398161760029325,
+      "finishedUTC": "2026-11-06T20:44:22.654946+00:00"
+    },
+    {
+      "name": "pre-push-publish",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 6.00100252500124,
+      "finishedUTC": "2026-11-06T20:44:28.688485+00:00"
+    },
+    {
+      "name": "java8-final",
+      "command": [
+        "./mvnw",
+        "-B",
+        "-ntp",
+        "-f",
+        "pomJava8.xml",
+        "test",
+        "-Dtest=FetkovichAquifer*Test",
+        "-Djacoco.skip=true"
+      ],
+      "exit": 0,
+      "seconds": 33.9112811140003,
+      "finishedUTC": "2026-11-06T20:44:50.231394+00:00"
+    },
+    {
+      "name": "release8-api",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/tmp/mbal55-evidence/release8.py"
+      ],
+      "exit": 0,
+      "seconds": 0.9622092919998977,
+      "finishedUTC": "2026-11-06T20:45:05.431716+00:00"
+    }
+  ],
+  "additionalExecutedCommands": [
+    {
+      "command": "mvnw -B -ntp test -Dtest=FetkovichAquiferTest -Djacoco.skip=true (unmodified production)",
+      "exit": 0
+    },
+    {
+      "command": "mvnw -B -ntp test -Dtest=FetkovichAquiferPrecisionTest -Djacoco.skip=true (new regression on unmodified production)",
+      "exit": 1
+    },
+    {
+      "command": "mvnw -B -ntp test -Dtest=FetkovichAquifer*Test -Djacoco.skip=true (candidate)",
+      "exit": 0
+    },
+    {
+      "command": "mvnw -B -ntp jacoco:prepare-agent test jacoco:report -Dtest=FetkovichAquifer*Test,CompositionalReservoir*Test,ReservoirHistoryEnsembleTest,GeneralizedMaterialBalanceTest,PhaseWithdrawalReservoirHistoryTest,PvtSeparatorPathTest,IndependentGasLabTankTest",
+      "exit": 0
+    },
+    {
+      "command": "cmp reference CSV files against precision75 regeneration; cmp current native outputs against candidate outputs",
+      "exit": 0
+    },
+    {
+      "command": "java com.sun.tools.javac.Main --release 8 (isolated baseline and candidate timing builds)",
+      "exit": 0
+    }
+  ],
+  "sha256": {
+    ".github/agents/pvt-simulation.agent.md": "35934eba593ffb460a66834f1ad114a2eda7d8972ea5c4e7b65e3b197be7dd30",
+    "devtools/engineering_capabilities.json": "9bc21d19749820692c87656b345d28d337fe05b895811d5ee95c454783444dc4",
+    "docs/pvtsimulation/reservoir_aquifer_uncertainty.md": "e380e96edcb969f0dd52ae7093ceae058b4c4c24e703a2a78118b0dda169da18",
+    "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquifer.java": "fb023181e9be46a74618cd47baa623d9932ac3a1019450755af486cd48598984",
+    "src/main/resources/neqsim/mcp/engineering-coverage.json": "85b67768e7625bb9266136bb8db1c03dd6fc562bb42369eec59c07c74c8d938d",
+    "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquiferPrecisionTest.java": "532c83f5ea9885b73823491edd071f594372331634753d1e3d6f9d2871fb1ad0",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/AquiferTiming.java": "ad070cb4100f393e970ead9c9cbc84099df133bf79c1ba8cf374aaef82d68e25",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/README.md": "140a62258288ce23d18045e7137d3a5339037211b927b87ac519036422c94a27",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/baseline/boundaries.csv": "e9757630ab5934be485c657250fb665d3e5c499c8ab829202fcc12e85f0c168e",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/baseline/grid.csv": "4ba06445c49c54335e4827d0ad2d9ba980b909b9f3851cbc171af43f074fe6e6",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/boundaries.csv": "2c921824721167dd4dea6d8d3398b484d28d5aa88655f68c5df52ae1a6d44700",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/candidate/boundaries.csv": "942fded2ef595653631b04aa93b8a95d9b273cf8e514a2c5edac686f8e1138af",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/candidate/grid.csv": "ba86e5a8130939d0ac5e6d705053497f0c6bff03ce790326bc3b1c5191104724",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/compare.py": "7ea122da5675081992c9002d7fcce8be3c261255224cd2c02150816f3b9418e4",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/decimal-results.json": "9850cc3b765873e12a1b21a95a5e822cac66da5aeb694dbe73420f5a1733e057",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/grid.csv": "3d70f4a4f8f100fc7b0fa21132a709265091a6a680e3bcf28897fa5383497b3a",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/numerical-results.json": "960bfe5215ec75de7fca29794c9024b57c09b77064fa47fe1cf94b11658a4c86",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/reference.py": "5e6fcd89794a8069d31eda771ddaacf321dc3aaac9f7aaca17a2497e93b785fb",
+    "src/test/resources/neqsim/pvtsimulation/aquifer-precision/timings.json": "120ebbcd6e20adf671b5e9d8cfd5c016bed2e5c48834133e9b85cc4db51ecf52"
+  }
+}

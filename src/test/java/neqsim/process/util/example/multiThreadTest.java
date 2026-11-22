@@ -55,7 +55,7 @@ public class multiThreadTest {
     comp1.setOutletPressure(50.0);
 
     Cooler cooler1 = new Cooler("cooler1", comp1.getOutletStream());
-    cooler1.setOutTemperature(283.15 + 30);
+    cooler1.setOutletTemperature(283.15 + 30);
 
     // mixer.addStream(stream_2);
     neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
@@ -93,7 +93,7 @@ public class multiThreadTest {
     comp12.setOutletPressure(45.0);
 
     Cooler cooler12 = new Cooler("cooler12", comp12.getOutletStream());
-    cooler12.setOutTemperature(283.15 + 30);
+    cooler12.setOutletTemperature(283.15 + 30);
 
     Separator separator3 = new Separator("Separator 122", cooler12.getOutletStream());
 

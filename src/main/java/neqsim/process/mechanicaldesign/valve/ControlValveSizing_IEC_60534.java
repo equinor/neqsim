@@ -103,6 +103,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Constructor for ControlValveSizing_IEC_60534.
    */
   public ControlValveSizing_IEC_60534() {
+    setAllowChoked(true);
   }
 
   /**
@@ -112,6 +113,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public ControlValveSizing_IEC_60534(ValveMechanicalDesign valveMechanicalDesign) {
     super(valveMechanicalDesign);
+    setAllowChoked(true);
   }
 
   /**

@@ -11,6 +11,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Converter from a compositional (EOS) NeqSim fluid to a Black-Oil PVT table + stream.
  *
+ * <p>
+ * Units follow {@link neqsim.blackoil.BlackOilPVTTable}: pressure in bar, Rs in Sm3/Sm3, Rv in Sm3/Sm3, formation
+ * volume factors in rm3/Sm3 and <b>viscosities in Pa.s</b>. Multiply viscosity by 1000 when writing a reservoir
+ * simulator deck, which expects cP.
+ *
  * @author esol
  */
 public class BlackOilConverter {
@@ -24,7 +29,34 @@ public class BlackOilConverter {
     public double rho_o_sc;
     public double rho_g_sc;
     public double rho_w_sc;
+
+    /**
+     * Highest pressure in the grid at which free gas is present.
+     *
+     * <p>
+     * This is the bubble point for an oil. For a retrograde gas condensate free gas is present at every pressure, so
+     * this degenerates to the top of the pressure grid and carries no meaning; use {@link #saturationPressure} instead.
+     */
     public double bubblePoint;
+
+    /**
+     * Highest pressure at which two hydrocarbon phases coexist.
+     *
+     * <p>
+     * This is the bubble point of an oil and the dew point of a gas condensate, so it is the quantity to use when the
+     * fluid type is not known in advance. NaN when the fluid is single-phase over the whole grid.
+     */
+    public double saturationPressure;
+
+    /**
+     * True when the fluid is single-phase gas at the top of the pressure grid and drops out liquid below the saturation
+     * pressure, i.e. a retrograde gas condensate.
+     *
+     * <p>
+     * A retrograde fluid needs a vaporised-oil (PVTG) treatment; a standard black-oil PVTO/PVDG table cannot represent
+     * its liquid dropout.
+     */
+    public boolean retrogradeCondensate;
   }
 
   /**
@@ -47,6 +79,7 @@ public class BlackOilConverter {
     StdTotals stdTotals = computeStdTotalsFromWhole(eosFluid, Pstd, Tstd);
 
     List<BlackOilPVTTable.Record> recs = new ArrayList<>();
+    List<PerPressureProps> propsByPressure = new ArrayList<>();
     double bubblePoint = Double.NaN;
 
     double rho_o_sc = Double.NaN;
@@ -56,6 +89,7 @@ public class BlackOilConverter {
 
     for (double p : P) {
       PerPressureProps props = evalAtPressure(eosFluid, Tref, p, Pstd, Tstd);
+      propsByPressure.add(props);
       if (!Double.isNaN(props.rho_o_sc)) {
         rho_o_sc = props.rho_o_sc;
       }
@@ -72,9 +106,9 @@ public class BlackOilConverter {
       }
     }
 
+    // Reuse the flashes already done above rather than repeating them per pressure.
     for (int i = P.length - 1; i >= 0; i--) {
-      PerPressureProps props = evalAtPressure(eosFluid, Tref, P[i], Pstd, Tstd);
-      if (props.hasFreeGas) {
+      if (propsByPressure.get(i).hasFreeGas) {
         bubblePoint = P[i];
         break;
       }
@@ -82,6 +116,17 @@ public class BlackOilConverter {
     if (Double.isNaN(bubblePoint)) {
       bubblePoint = P[0];
     }
+
+    double saturationPressure = Double.NaN;
+    for (int i = P.length - 1; i >= 0; i--) {
+      PerPressureProps props = propsByPressure.get(i);
+      if (props.hasFreeGas && props.hasFreeOil) {
+        saturationPressure = P[i];
+        break;
+      }
+    }
+    PerPressureProps atTop = propsByPressure.get(P.length - 1);
+    boolean retrograde = !Double.isNaN(saturationPressure) && atTop.hasFreeGas && !atTop.hasFreeOil;
 
     double rsAtPb = interpolateRsAt(recs, bubblePoint);
     for (int i = 0; i < recs.size(); i++) {
@@ -128,6 +173,8 @@ public class BlackOilConverter {
     out.rho_g_sc = rho_g_sc;
     out.rho_w_sc = rho_w_sc;
     out.bubblePoint = bubblePoint;
+    out.saturationPressure = saturationPressure;
+    out.retrogradeCondensate = retrograde;
     return out;
   }
 
@@ -185,6 +232,7 @@ public class BlackOilConverter {
     double Bw = Double.NaN;
     double mu_w = Double.NaN;
     boolean hasFreeGas = false;
+    boolean hasFreeOil = false;
     double rho_o_sc = Double.NaN;
     double rho_g_sc = Double.NaN;
     double rho_w_sc = Double.NaN;
@@ -206,11 +254,12 @@ public class BlackOilConverter {
       PhaseInterface wat = findWaterPhase(f);
 
       if (oil != null) {
+        out.hasFreeOil = true;
         SystemInterface oilComp = phaseAsStandaloneSystem(base, oil, Tref, p);
         ThermodynamicOperations oilResOps = new ThermodynamicOperations(oilComp);
         oilResOps.TPflash();
         oilComp.initProperties();
-        PhaseInterface oilRes = findOilPhase(oilComp);
+        PhaseInterface oilRes = singleOr(findOilPhase(oilComp), oilComp);
         double V_res_liq = (oilRes != null) ? phaseVolume(oilRes) : totalVolume(oilComp);
         double mu_o = (oilRes != null) ? oilRes.getViscosity() : Double.NaN;
 
@@ -245,7 +294,7 @@ public class BlackOilConverter {
         ThermodynamicOperations gasResOps = new ThermodynamicOperations(gasComp);
         gasResOps.TPflash();
         gasComp.initProperties();
-        PhaseInterface gasRes = findGasPhase(gasComp);
+        PhaseInterface gasRes = singleOr(findGasPhase(gasComp), gasComp);
         double V_res_gas = (gasRes != null) ? phaseVolume(gasRes) : totalVolume(gasComp);
         double mu_g = (gasRes != null) ? gasRes.getViscosity() : Double.NaN;
 
@@ -324,7 +373,80 @@ public class BlackOilConverter {
     return recs.get(recs.size() - 1).Rs;
   }
 
+  /**
+   * Returns the hydrocarbon phases ordered by density when two or more coexist.
+   *
+   * <p>
+   * Near the critical point (for example CO2-rich live oils just below the bubble point) both coexisting hydrocarbon
+   * phases can be typed as "oil". The type name then no longer separates them, so density does: the lighter phase is
+   * the gas and the denser phase the oil.
+   *
+   * @param s the flashed system
+   * @return a two-element array {lightest, densest}, or null when fewer than two hydrocarbon phases exist
+   */
+  private static PhaseInterface[] lightAndDenseHydrocarbonPhases(SystemInterface s) {
+    PhaseInterface light = null;
+    PhaseInterface dense = null;
+    int count = 0;
+    for (int i = 0; i < s.getNumberOfPhases(); i++) {
+      PhaseInterface p = s.getPhase(i);
+      if (isMostlyWater(p) || hydrocarbonFraction(p) <= 1e-6) {
+        continue;
+      }
+      count++;
+      double rho = rawDensity(p);
+      if (light == null || rho < rawDensity(light)) {
+        light = p;
+      }
+      if (dense == null || rho > rawDensity(dense)) {
+        dense = p;
+      }
+    }
+    if (count < 2 || light == dense) {
+      return null;
+    }
+    return new PhaseInterface[] {light, dense};
+  }
+
+  /**
+   * Phase density used only to order coexisting phases. The unit-less accessor is used because it is valid directly
+   * after a flash, before {@code initProperties()}.
+   *
+   * @param p the phase
+   * @return density, or 0 if it cannot be evaluated
+   */
+  private static double rawDensity(PhaseInterface p) {
+    try {
+      double rho = p.getDensity();
+      return Double.isFinite(rho) ? rho : 0.0;
+    } catch (Throwable t) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Returns the given phase, or the system's only phase when the lookup found none.
+   *
+   * <p>
+   * A phase taken out of a near-critical two-phase split and re-flashed alone is single-phase, but its type name can be
+   * either "gas" or "oil". The single phase is then the one wanted, whatever it is called.
+   *
+   * @param found the phase found by type, or null
+   * @param s the re-flashed standalone system
+   * @return the phase to use, or null when the system has more than one phase and none matched
+   */
+  private static PhaseInterface singleOr(PhaseInterface found, SystemInterface s) {
+    if (found != null) {
+      return found;
+    }
+    return s.getNumberOfPhases() == 1 ? s.getPhase(0) : null;
+  }
+
   private static PhaseInterface findOilPhase(SystemInterface s) {
+    PhaseInterface[] pair = lightAndDenseHydrocarbonPhases(s);
+    if (pair != null) {
+      return pair[1];
+    }
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
@@ -336,6 +458,10 @@ public class BlackOilConverter {
   }
 
   private static PhaseInterface findGasPhase(SystemInterface s) {
+    PhaseInterface[] pair = lightAndDenseHydrocarbonPhases(s);
+    if (pair != null) {
+      return pair[0];
+    }
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);

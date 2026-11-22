@@ -209,11 +209,31 @@ public class ChemicalInteractionRule implements Serializable {
       if (material == null || !material.toLowerCase().contains("carbon")) {
         return false;
       }
-      // optional temperature gating
-      if (thresholdSpec.startsWith("T")) {
-        return checkThreshold(thresholdSpec, "T", temperatureC);
-      }
+      return materialThresholdMatches(thresholdSpec, temperatureC);
+    }
+    return false;
+  }
+
+  /**
+   * Evaluates the optional threshold carried by a material-tagged environment rule.
+   *
+   * <p>
+   * A material rule may be unconditional ({@code *} or an empty spec), gated on temperature ({@code T&gt;60C}), or
+   * gated on a variable this assessor does not carry, such as flow velocity ({@code velocity&gt;5mps}), dissolved
+   * oxygen ({@code O2&lt;10ppb}) or water cut ({@code wc&lt;5pct}). An unsupported spec must not match: treating it as
+   * satisfied would raise the rule for every case built on that material regardless of the actual operating condition,
+   * which inflates the reported severity.
+   *
+   * @param thresholdSpec the rule's threshold specification, possibly empty or {@code *}
+   * @param temperatureC operating temperature in Celsius, used only for temperature-keyed specs
+   * @return true if the material rule applies at the supplied conditions
+   */
+  private static boolean materialThresholdMatches(String thresholdSpec, double temperatureC) {
+    if (thresholdSpec == null || thresholdSpec.isEmpty() || "*".equals(thresholdSpec)) {
       return true;
+    }
+    if (thresholdSpec.startsWith("T")) {
+      return checkThreshold(thresholdSpec, "T", temperatureC);
     }
     return false;
   }

@@ -37,7 +37,7 @@ class ArgonSolidHelmholtzEquationTest {
   @Test
   void testPressureInversionAcrossPublishedRange() {
     ArgonSolidHelmholtzEquation equation = new ArgonSolidHelmholtzEquation();
-    double[][] states = { { 20.0, 0.01 }, { 70.0, 10.0 }, { 300.0, 160000.0 } };
+    double[][] states = {{20.0, 0.01}, {70.0, 10.0}, {300.0, 160000.0}};
 
     for (double[] state : states) {
       SolidHelmholtzState result;

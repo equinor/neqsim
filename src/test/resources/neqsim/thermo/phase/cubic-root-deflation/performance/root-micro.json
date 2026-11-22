@@ -1,0 +1,770 @@
+[
+  {
+    "sample": "0",
+    "eos": "SRK",
+    "elapsed_ns": "14890462",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "1",
+    "eos": "SRK",
+    "elapsed_ns": "14395686",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "2",
+    "eos": "SRK",
+    "elapsed_ns": "15215995",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "3",
+    "eos": "SRK",
+    "elapsed_ns": "14917801",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "4",
+    "eos": "SRK",
+    "elapsed_ns": "14292995",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "5",
+    "eos": "SRK",
+    "elapsed_ns": "14656715",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "6",
+    "eos": "SRK",
+    "elapsed_ns": "15546625",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "7",
+    "eos": "SRK",
+    "elapsed_ns": "20555956",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "8",
+    "eos": "SRK",
+    "elapsed_ns": "14820478",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "9",
+    "eos": "SRK",
+    "elapsed_ns": "15214992",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "10",
+    "eos": "SRK",
+    "elapsed_ns": "14772757",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "11",
+    "eos": "SRK",
+    "elapsed_ns": "19707557",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "0",
+    "eos": "SRK",
+    "elapsed_ns": "13715668",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "1",
+    "eos": "SRK",
+    "elapsed_ns": "13960842",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "2",
+    "eos": "SRK",
+    "elapsed_ns": "13729939",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "3",
+    "eos": "SRK",
+    "elapsed_ns": "13159373",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "4",
+    "eos": "SRK",
+    "elapsed_ns": "13246132",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "5",
+    "eos": "SRK",
+    "elapsed_ns": "13962294",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "6",
+    "eos": "SRK",
+    "elapsed_ns": "13371248",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "7",
+    "eos": "SRK",
+    "elapsed_ns": "14035642",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "8",
+    "eos": "SRK",
+    "elapsed_ns": "13727626",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "9",
+    "eos": "SRK",
+    "elapsed_ns": "13844579",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "10",
+    "eos": "SRK",
+    "elapsed_ns": "13980741",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "11",
+    "eos": "SRK",
+    "elapsed_ns": "18607456",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "0",
+    "eos": "PR",
+    "elapsed_ns": "15094600",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "1",
+    "eos": "PR",
+    "elapsed_ns": "14619877",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "2",
+    "eos": "PR",
+    "elapsed_ns": "14418318",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "3",
+    "eos": "PR",
+    "elapsed_ns": "14513910",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "4",
+    "eos": "PR",
+    "elapsed_ns": "14529602",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "5",
+    "eos": "PR",
+    "elapsed_ns": "14928033",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "6",
+    "eos": "PR",
+    "elapsed_ns": "14915866",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "7",
+    "eos": "PR",
+    "elapsed_ns": "14965939",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "8",
+    "eos": "PR",
+    "elapsed_ns": "14516182",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "9",
+    "eos": "PR",
+    "elapsed_ns": "14785903",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "10",
+    "eos": "PR",
+    "elapsed_ns": "14616171",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "11",
+    "eos": "PR",
+    "elapsed_ns": "19065175",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 0
+  },
+  {
+    "sample": "0",
+    "eos": "PR",
+    "elapsed_ns": "13152111",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "1",
+    "eos": "PR",
+    "elapsed_ns": "13578173",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "2",
+    "eos": "PR",
+    "elapsed_ns": "12988558",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "3",
+    "eos": "PR",
+    "elapsed_ns": "13132292",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "4",
+    "eos": "PR",
+    "elapsed_ns": "13574597",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "5",
+    "eos": "PR",
+    "elapsed_ns": "13390695",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "6",
+    "eos": "PR",
+    "elapsed_ns": "13333530",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "7",
+    "eos": "PR",
+    "elapsed_ns": "13050331",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "8",
+    "eos": "PR",
+    "elapsed_ns": "13214765",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "9",
+    "eos": "PR",
+    "elapsed_ns": "13837256",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "10",
+    "eos": "PR",
+    "elapsed_ns": "13087476",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "11",
+    "eos": "PR",
+    "elapsed_ns": "21415197",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 0
+  },
+  {
+    "sample": "0",
+    "eos": "SRK",
+    "elapsed_ns": "13802807",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "1",
+    "eos": "SRK",
+    "elapsed_ns": "13508540",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "2",
+    "eos": "SRK",
+    "elapsed_ns": "13327411",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "3",
+    "eos": "SRK",
+    "elapsed_ns": "13283367",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "4",
+    "eos": "SRK",
+    "elapsed_ns": "15353263",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "5",
+    "eos": "SRK",
+    "elapsed_ns": "13663739",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "6",
+    "eos": "SRK",
+    "elapsed_ns": "14367622",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "7",
+    "eos": "SRK",
+    "elapsed_ns": "14958509",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "8",
+    "eos": "SRK",
+    "elapsed_ns": "15660910",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "9",
+    "eos": "SRK",
+    "elapsed_ns": "14671223",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "10",
+    "eos": "SRK",
+    "elapsed_ns": "13407630",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "11",
+    "eos": "SRK",
+    "elapsed_ns": "18875604",
+    "checksum": "5438516.759499948",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "0",
+    "eos": "SRK",
+    "elapsed_ns": "15922523",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "1",
+    "eos": "SRK",
+    "elapsed_ns": "15222214",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "2",
+    "eos": "SRK",
+    "elapsed_ns": "14929892",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "3",
+    "eos": "SRK",
+    "elapsed_ns": "14626570",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "4",
+    "eos": "SRK",
+    "elapsed_ns": "14883031",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "5",
+    "eos": "SRK",
+    "elapsed_ns": "14704556",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "6",
+    "eos": "SRK",
+    "elapsed_ns": "14658468",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "7",
+    "eos": "SRK",
+    "elapsed_ns": "15487217",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "8",
+    "eos": "SRK",
+    "elapsed_ns": "14968378",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "9",
+    "eos": "SRK",
+    "elapsed_ns": "14743133",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "10",
+    "eos": "SRK",
+    "elapsed_ns": "17671420",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "11",
+    "eos": "SRK",
+    "elapsed_ns": "20790600",
+    "checksum": "5438516.759499948",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "0",
+    "eos": "PR",
+    "elapsed_ns": "13777601",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "1",
+    "eos": "PR",
+    "elapsed_ns": "13030992",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "2",
+    "eos": "PR",
+    "elapsed_ns": "13033265",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "3",
+    "eos": "PR",
+    "elapsed_ns": "13222688",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "4",
+    "eos": "PR",
+    "elapsed_ns": "13535320",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "5",
+    "eos": "PR",
+    "elapsed_ns": "13182366",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "6",
+    "eos": "PR",
+    "elapsed_ns": "13567108",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "7",
+    "eos": "PR",
+    "elapsed_ns": "13323315",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "8",
+    "eos": "PR",
+    "elapsed_ns": "13969805",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "9",
+    "eos": "PR",
+    "elapsed_ns": "13651192",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "10",
+    "eos": "PR",
+    "elapsed_ns": "13546657",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "11",
+    "eos": "PR",
+    "elapsed_ns": "17975546",
+    "checksum": "5351354.6891827965",
+    "version": "candidate",
+    "rep": 1
+  },
+  {
+    "sample": "0",
+    "eos": "PR",
+    "elapsed_ns": "14643976",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "1",
+    "eos": "PR",
+    "elapsed_ns": "15071661",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "2",
+    "eos": "PR",
+    "elapsed_ns": "14879986",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "3",
+    "eos": "PR",
+    "elapsed_ns": "14865735",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "4",
+    "eos": "PR",
+    "elapsed_ns": "14218176",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "5",
+    "eos": "PR",
+    "elapsed_ns": "15428468",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "6",
+    "eos": "PR",
+    "elapsed_ns": "14605520",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "7",
+    "eos": "PR",
+    "elapsed_ns": "14835239",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "8",
+    "eos": "PR",
+    "elapsed_ns": "14747238",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "9",
+    "eos": "PR",
+    "elapsed_ns": "15604450",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "10",
+    "eos": "PR",
+    "elapsed_ns": "14804523",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  },
+  {
+    "sample": "11",
+    "eos": "PR",
+    "elapsed_ns": "20155536",
+    "checksum": "5351354.689182797",
+    "version": "baseline",
+    "rep": 1
+  }
+]

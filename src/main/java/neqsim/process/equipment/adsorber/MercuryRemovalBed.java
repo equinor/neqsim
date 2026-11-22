@@ -6,9 +6,11 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.CapillaryCondensationModel;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.adsorber.MercuryRemovalMechanicalDesign;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -74,6 +76,36 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * default 10 wt% = 100 000 mg/kg.
    */
   private double maxMercuryCapacity = 100000.0;
+
+  // ======================================================================
+  // Sorbent pore structure (condensable-contaminant blocking)
+  // ======================================================================
+
+  /**
+   * Representative sorbent pore radius (nm). Default 6 nm corresponds to a mesoporous alumina-supported metal-sulphide
+   * sorbent. A sulphur-impregnated activated carbon or a molecular sieve is microporous and needs a much smaller value,
+   * for which micropore volume filling rather than the Kelvin equation governs.
+   */
+  private double sorbentPoreRadius = 6.0;
+
+  /** Total sorbent pore volume (cm3/g). */
+  private double sorbentPoreVolume = 0.35;
+
+  /** Pore geometry used in the Kelvin term. */
+  private CapillaryCondensationModel.PoreType sorbentPoreType = CapillaryCondensationModel.PoreType.CYLINDRICAL;
+
+  /**
+   * Dubinin characteristic energy for the condensable contaminant on this sorbent (J/mol). Only used when the pore
+   * radius falls in the micropore range. Must be fitted to a measured isotherm of the same adsorbate on the same
+   * sorbent; it is not transferable.
+   */
+  private double dubininCharacteristicEnergy = 8000.0;
+
+  /** Affinity coefficient of the contaminant relative to the Dubinin reference vapour. */
+  private double dubininAffinityCoefficient = 1.0;
+
+  /** Micropore volume filling fraction above which the screening flags blocking. */
+  private static final double MICROPORE_BLOCKING_FRACTION = 0.05;
 
   // ======================================================================
   // Chemisorption kinetics
@@ -263,6 +295,12 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * gas phase and accumulate it on the sorbent until the local capacity is exhausted.
    * </p>
    *
+   * <p>
+   * Lowering effective capacity preserves previously captured mercury. Cells with no remaining capacity transport gas
+   * without further adsorption. Each reaction transfer is bounded by both the available gas inventory and remaining
+   * capacity, and the same mercury mass is transferred between gas and sorbent.
+   * </p>
+   *
    * @param dt time-step size in seconds
    * @param id calculation identifier
    */
@@ -326,23 +364,25 @@ public class MercuryRemovalBed extends TwoPortEquipment {
 
       // 2) Chemisorption reaction in each cell
       for (int cell = 0; cell < numberOfCells; cell++) {
+        double remainingCapacity = Math.max(0.0, effectiveCapacity - cellLoading[cell]);
+        if (!(remainingCapacity > 0.0)) {
+          // Blockage does not release the mercury already captured by irreversible chemisorption.
+          // This also avoids dividing by zero for a fully blocked fresh bed.
+          continue;
+        }
         double theta = cellLoading[cell] / effectiveCapacity; // fractional saturation
         theta = Math.min(theta, 1.0);
 
         // Irreversible first-order: r = k * C * (1 - theta)
         double reactionRate = kEff * newConc[cell] * (1.0 - theta);
 
-        // Convert reaction rate from concentration to sorbent loading
-        // dq/dt in mg/kg/s = reactionRate (ug/Nm3/s) * cellVoidVolume / cellSorbentMass
-        // * 1e-3
-        double dqdt = reactionRate * cellVoidVolume / cellSorbentMass * 1e-3;
-
-        cellLoading[cell] += subDt * dqdt;
-        cellLoading[cell] = Math.min(cellLoading[cell], effectiveCapacity);
-
-        // Corresponding concentration decrease
-        newConc[cell] -= subDt * reactionRate;
-        newConc[cell] = Math.max(0.0, newConc[cell]);
+        // Bound the transferred mercury by the gas inventory and available sorbent capacity.
+        // Concentration is ug/m3 at bed conditions; loading is mg Hg/kg sorbent.
+        double concentrationRemoved = Math.min(newConc[cell], subDt * reactionRate);
+        double capacityConcentration = remainingCapacity * cellSorbentMass / cellVoidVolume * 1.0e3;
+        concentrationRemoved = Math.min(concentrationRemoved, capacityConcentration);
+        cellLoading[cell] += concentrationRemoved * cellVoidVolume / cellSorbentMass * 1.0e-3;
+        newConc[cell] = Math.max(0.0, newConc[cell] - concentrationRemoved);
       }
 
       cellHgConcentration = newConc;
@@ -487,7 +527,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   /**
    * Get the bed utilisation factor (average loading / effective capacity).
    *
-   * @return utilisation factor (0 to 1)
+   * @return loading divided by effective capacity, or zero when effective capacity is zero; retained loading can exceed
+   * the effective capacity after degradation
    */
   public double getBedUtilisation() {
     double effectiveCapacity = maxMercuryCapacity * degradationFactor;
@@ -1153,5 +1194,269 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    */
   public double getReferenceTemperature() {
     return referenceTemperature;
+  }
+
+  // ======================================================================
+  // Condensable-contaminant pore blocking
+  // ======================================================================
+
+  /**
+   * Result of screening a condensable contaminant against the sorbent pore structure.
+   */
+  public static class ContaminantAssessment implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Name of the condensable contaminant. */
+    public String component;
+
+    /** Contaminant mole fraction in the feed gas. */
+    public double moleFraction;
+
+    /** Bulk saturation mole fraction of the contaminant at bed conditions. */
+    public double saturationMoleFraction;
+
+    /** Relative saturation (activity) of the contaminant, 1.0 at bulk saturation. */
+    public double relativeSaturation;
+
+    /** Relative saturation at which the representative pore fills, from the Kelvin equation. */
+    public double kelvinOnset;
+
+    /** Concentration at Kelvin onset, or at five percent filling for a microporous sorbent. */
+    public double maxAllowableMoleFraction;
+
+    /** Fraction of sorbent pore volume occupied by condensate, 0 to 1. */
+    public double poreFillingFraction;
+
+    /** Mechanism that governs, either "kelvin" or "micropore-filling". */
+    public String mechanism;
+
+    /** Whether the contaminant is expected to condense in the pores at the given feed concentration. */
+    public boolean condensationExpected;
+  }
+
+  /**
+   * Screen a condensable contaminant against the sorbent pore structure.
+   *
+   * <p>
+   * A guard bed works because elemental mercury reaches a sulphide site inside a pore. A pore holding liquid
+   * contaminant no longer serves the sites behind it, so the bed loses capacity and its mass-transfer zone lengthens
+   * with no free liquid visible at the inlet. This method quantifies that effect from the feed composition, the
+   * operating temperature and pressure, and the sorbent pore structure.
+   * </p>
+   *
+   * <p>
+   * For a pore in the mesopore range the Kelvin equation gives the onset. Below
+   * {@link CapillaryCondensationModel#KELVIN_VALIDITY_RADIUS_NM} the Kelvin equation is non-conservative and the
+   * Dubinin-Radushkevich micropore volume filling is used instead, which begins at only a few percent of bulk
+   * saturation.
+   * </p>
+   *
+   * @param componentName the condensable contaminant, for example "methanol" or "water"
+   * @param saturationMoleFraction the bulk saturation mole fraction of the contaminant in the gas at bed temperature
+   * and pressure, obtained by flashing the feed against an excess of the pure contaminant; must be greater than zero
+   * and no greater than one
+   * @return the assessment, never null
+   * @throws IllegalStateException if the bed has not been run, so that no feed composition is available
+   * @throws IllegalArgumentException if the saturation mole fraction is out of range
+   */
+  public ContaminantAssessment assessContaminant(String componentName, double saturationMoleFraction) {
+    if (system == null) {
+      throw new IllegalStateException("Run the bed before assessing a contaminant, so a feed composition exists");
+    }
+    if (!(saturationMoleFraction > 0.0) || saturationMoleFraction > 1.0) {
+      throw new IllegalArgumentException("Saturation mole fraction must be in <0,1], got " + saturationMoleFraction);
+    }
+    if (!system.getPhase(0).hasComponent(componentName)) {
+      throw new IllegalArgumentException("Component " + componentName + " is not present in the feed");
+    }
+
+    ContaminantAssessment result = new ContaminantAssessment();
+    result.component = componentName;
+    result.saturationMoleFraction = saturationMoleFraction;
+
+    int index = system.getPhase(0).getComponent(componentName).getComponentNumber();
+    result.moleFraction = system.getPhase(0).getComponent(index).getx();
+    result.relativeSaturation = result.moleFraction / saturationMoleFraction;
+
+    CapillaryCondensationModel model = new CapillaryCondensationModel(system);
+    model.setPoreType(sorbentPoreType);
+    model.setTotalPoreVolume(sorbentPoreVolume);
+    model.setMeanPoreRadius(sorbentPoreRadius);
+    model.setAdsorbedLayerThickness(0.0);
+    model.setSaturationMoleFraction(index, saturationMoleFraction);
+    model.setRelativeSaturationBasis(CapillaryCondensationModel.RelativeSaturationBasis.SATURATION_MOLE_FRACTION);
+
+    result.kelvinOnset = model.getCondensationPressure(sorbentPoreRadius, index, 0);
+    result.maxAllowableMoleFraction = model.getMaxAllowableMoleFraction(index, sorbentPoreRadius, 0);
+
+    if (sorbentPoreRadius < CapillaryCondensationModel.KELVIN_VALIDITY_RADIUS_NM) {
+      result.mechanism = "micropore-filling";
+      result.poreFillingFraction = CapillaryCondensationModel.microporeFillingFraction(result.relativeSaturation,
+          system.getTemperature(), dubininCharacteristicEnergy, dubininAffinityCoefficient);
+      // Invert the same Dubinin criterion used for the flag. A Kelvin limit would overstate
+      // the allowable concentration for this branch even when the filling warning is correct.
+      double limitingActivity = Math.exp(-dubininAffinityCoefficient * dubininCharacteristicEnergy
+          / (ThermodynamicConstantsInterface.R * system.getTemperature())
+          * Math.sqrt(-Math.log(MICROPORE_BLOCKING_FRACTION)));
+      result.maxAllowableMoleFraction = saturationMoleFraction * limitingActivity;
+      result.condensationExpected = result.poreFillingFraction > MICROPORE_BLOCKING_FRACTION;
+    } else {
+      result.mechanism = "kelvin";
+      result.poreFillingFraction = result.relativeSaturation >= result.kelvinOnset ? 1.0 : 0.0;
+      result.condensationExpected = result.relativeSaturation >= result.kelvinOnset;
+    }
+    return result;
+  }
+
+  /**
+   * Screen a condensable contaminant and reduce the bed degradation factor by the pore volume it blocks.
+   *
+   * <p>
+   * Sets {@link #setDegradationFactor(double)} to one minus the blocked pore fraction, so that the capacity and rate
+   * used by {@link #run(java.util.UUID)} reflect the contaminant rather than a hand-picked number.
+   * </p>
+   *
+   * @param componentName the condensable contaminant
+   * @param saturationMoleFraction the bulk saturation mole fraction at bed conditions
+   * @return the assessment that was applied
+   */
+  public ContaminantAssessment applyContaminantDegradation(String componentName, double saturationMoleFraction) {
+    ContaminantAssessment assessment = assessContaminant(componentName, saturationMoleFraction);
+    setDegradationFactor(1.0 - assessment.poreFillingFraction);
+    if (assessment.condensationExpected) {
+      logger.warn("{}: {} condenses in {} nm pores ({} basis); {} percent of pore volume blocked", getName(),
+          componentName, sorbentPoreRadius, assessment.mechanism, 100.0 * assessment.poreFillingFraction);
+    }
+    return assessment;
+  }
+
+  /**
+   * Screen a condensable contaminant and return the assessment as JSON.
+   *
+   * @param componentName the condensable contaminant
+   * @param saturationMoleFraction the bulk saturation mole fraction at bed conditions
+   * @return a JSON string describing the assessment
+   */
+  public String getContaminantAssessmentJson(String componentName, double saturationMoleFraction) {
+    ContaminantAssessment a = assessContaminant(componentName, saturationMoleFraction);
+    JsonObject json = new JsonObject();
+    json.addProperty("component", a.component);
+    json.addProperty("moleFraction", a.moleFraction);
+    json.addProperty("saturationMoleFraction", a.saturationMoleFraction);
+    json.addProperty("relativeSaturation", a.relativeSaturation);
+    json.addProperty("kelvinOnset", a.kelvinOnset);
+    json.addProperty("maxAllowableMoleFraction", a.maxAllowableMoleFraction);
+    json.addProperty("maxAllowablePpmv", a.maxAllowableMoleFraction * 1.0e6);
+    json.addProperty("poreFillingFraction", a.poreFillingFraction);
+    json.addProperty("mechanism", a.mechanism);
+    json.addProperty("condensationExpected", a.condensationExpected);
+    json.addProperty("sorbentPoreRadiusNm", sorbentPoreRadius);
+    return new GsonBuilder().setPrettyPrinting().create().toJson(json);
+  }
+
+  /**
+   * Get the representative sorbent pore radius.
+   *
+   * @return pore radius in nm
+   */
+  public double getSorbentPoreRadius() {
+    return sorbentPoreRadius;
+  }
+
+  /**
+   * Set the representative sorbent pore radius.
+   *
+   * @param radiusNm pore radius in nm, must be positive
+   */
+  public void setSorbentPoreRadius(double radiusNm) {
+    if (!(radiusNm > 0.0)) {
+      throw new IllegalArgumentException("Sorbent pore radius must be positive");
+    }
+    this.sorbentPoreRadius = radiusNm;
+  }
+
+  /**
+   * Get the total sorbent pore volume.
+   *
+   * @return pore volume in cm3/g
+   */
+  public double getSorbentPoreVolume() {
+    return sorbentPoreVolume;
+  }
+
+  /**
+   * Set the total sorbent pore volume.
+   *
+   * @param volumeCm3PerG pore volume in cm3/g, must be positive
+   */
+  public void setSorbentPoreVolume(double volumeCm3PerG) {
+    if (!(volumeCm3PerG > 0.0)) {
+      throw new IllegalArgumentException("Sorbent pore volume must be positive");
+    }
+    this.sorbentPoreVolume = volumeCm3PerG;
+  }
+
+  /**
+   * Get the sorbent pore geometry.
+   *
+   * @return the pore type
+   */
+  public CapillaryCondensationModel.PoreType getSorbentPoreType() {
+    return sorbentPoreType;
+  }
+
+  /**
+   * Set the sorbent pore geometry.
+   *
+   * @param poreType the pore type, must not be null
+   */
+  public void setSorbentPoreType(CapillaryCondensationModel.PoreType poreType) {
+    if (poreType == null) {
+      throw new IllegalArgumentException("Pore type cannot be null");
+    }
+    this.sorbentPoreType = poreType;
+  }
+
+  /**
+   * Get the Dubinin characteristic energy used for micropore filling.
+   *
+   * @return characteristic energy in J/mol
+   */
+  public double getDubininCharacteristicEnergy() {
+    return dubininCharacteristicEnergy;
+  }
+
+  /**
+   * Set the Dubinin characteristic energy used for micropore filling.
+   *
+   * @param energyJPerMol characteristic energy in J/mol, must be positive
+   */
+  public void setDubininCharacteristicEnergy(double energyJPerMol) {
+    if (!(energyJPerMol > 0.0)) {
+      throw new IllegalArgumentException("Dubinin characteristic energy must be positive");
+    }
+    this.dubininCharacteristicEnergy = energyJPerMol;
+  }
+
+  /**
+   * Get the Dubinin affinity coefficient of the contaminant.
+   *
+   * @return affinity coefficient (dimensionless)
+   */
+  public double getDubininAffinityCoefficient() {
+    return dubininAffinityCoefficient;
+  }
+
+  /**
+   * Set the Dubinin affinity coefficient of the contaminant.
+   *
+   * @param affinityCoefficient affinity coefficient, must be positive
+   */
+  public void setDubininAffinityCoefficient(double affinityCoefficient) {
+    if (!(affinityCoefficient > 0.0)) {
+      throw new IllegalArgumentException("Dubinin affinity coefficient must be positive");
+    }
+    this.dubininAffinityCoefficient = affinityCoefficient;
   }
 }

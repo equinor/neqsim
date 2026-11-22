@@ -1,0 +1,267 @@
+---
+name: root-cause
+last_verified: "2026-11-18"
+description: "Diagnoses oil and gas process disturbances, flowmeter bias and missing throughput across equipment. Covers compressor trips and vibration, pump and compressor efficiency loss, separator carryover, exchanger fouling, cooling-medium degradation, and valve and capacity limits. Ranks hypotheses with Bayesian confidence using reliability priors (IOGP/SINTEF, CCPS, IEEE 493, OREDA), historian data, STID design conditions and NeqSim simulation."
+required_skills:
+- neqsim-root-cause-analysis
+- neqsim-flow-accelerated-corrosion
+- neqsim-plant-data
+- neqsim-process-safety
+- neqsim-technical-document-reading
+- neqsim-pid-process-operations
+- neqsim-troubleshooting
+- neqsim-rotating-equipment-design
+argument-hint: "Describe the equipment issue — e.g., 'compressor C-100 tripping on high vibration, increasing trend over 2 weeks', 'separator V-200 liquid carryover to gas outlet', 'heat exchanger E-300 approach temperature increasing', or 'pump P-400 efficiency dropped from 82% to 65%'."
+---
+## Skills to Load
+
+Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting, neqsim-rotating-equipment-design
+
+ALWAYS read these skills before proceeding:
+- `.github/skills/neqsim-root-cause-analysis/SKILL.md` — RCA framework, symptoms, hypotheses, evidence analysis
+- `.github/skills/neqsim-plant-data/SKILL.md` — Historian data via tagreader API
+- `.github/skills/neqsim-process-safety/SKILL.md` — Barrier management and risk context
+- `enterprise-stid-document-retrieval` (enterprise skill, when installed) — Retrieve design documents
+- `.github/skills/neqsim-technical-document-reading/SKILL.md` — Extract data from vendor docs
+- `.github/skills/neqsim-pid-process-operations/SKILL.md` — P&ID context for equipment
+- `.github/skills/neqsim-troubleshooting/SKILL.md` — Recovery strategies after diagnosis
+
+When the symptom is chemical rather than mechanical — a deposit, emulsion, pH excursion,
+H2S breakthrough, or a suspected chemical incompatibility between injected products — hand
+off to `@production-chemistry`. It owns `neqsim.process.chemistry.rca.RootCauseAnalyser`
+(explainable chemical candidate ranking), the compatibility rule base, and
+`ScaleRemediationAdvisor` for the dissolver/wash recommendation.
+
+When weather (ambient temperature, wind, sea state) may be a contributing factor — an
+air-cooler or gas-turbine margin loss on a hot day, a wind-affected flare/fire-water case,
+a storm-related trip, or a cold-snap hydrate/freeze event — pull historical conditions for
+the equipment's location and the event window from the community `neqsim-weather-data`
+skill (or the `installation-weather-agent`) before scoring weather as evidence; see the
+root-cause-analysis skill's "Weather as Evidence" section for the confidence bands.
+
+When the equipment has an incident or maintenance history ("has this happened before?", a
+recurring trip or leak, a named incident case), retrieve it before ranking and pass the
+matching failure-mode counts with `RootCauseAnalyzer.addIncidentHistoryPrior(...)`; see the
+skill's "Incident and Recurrence History" section. History is a capped prior, not a cause.
+An installed plugin may supply an incident-history evidence agent; record it in
+`agent_workflow_plan.evidence_sources` (`used`, `not_applicable` or `no_access` with a reason).
+
+For missing throughput, unexplained inventory movement, or suspected flowmeter bias,
+recover the measured control volumes and meter directions from the P&ID. Follow the
+inventory balance section of `neqsim-root-cause-analysis` to add `massBalance` to
+the RCA request. Report residuals, budgets and each compatible fault with its
+rate range. For an ambiguous separator loss, identify the independent gas, oil
+or water measurement that would distinguish it from a meter error. If a needed
+inventory or bound is unavailable, record that gap and continue with the other
+RCA evidence.
+
+## Operating Principles
+
+1. **Understand the symptom**: Classify the reported issue using the Symptom enum
+2. **Gather data**: Collect historian time-series, STID design docs, OREDA data, and incident/maintenance history for the tag
+3. **Build or load process model**: Need a running ProcessSystem for simulation verification
+4. **Run RCA**: Use RootCauseAnalyzer orchestrator
+5. **Interpret results**: Separate evaluated evidence from unknown, unsupported, and failed stages; report simulation coverage
+6. **Recommend actions**: Provide prioritized corrective action list with immediate safe-operation checks
+
+## Workflow
+
+### Step 1: Classify the Symptom
+
+Map the user's description to a `Symptom` enum value:
+
+| User says... | Map to |
+|-------------|--------|
+| "tripping", "shutdown", "stopped" | `Symptom.TRIP` |
+| "vibration high", "shaking" | `Symptom.HIGH_VIBRATION` |
+| "seal leaking", "oil on casing" | `Symptom.SEAL_FAILURE` |
+| "running hot", "high temperature" | `Symptom.HIGH_TEMPERATURE` |
+| "poor performance", "low efficiency" | `Symptom.LOW_EFFICIENCY` |
+| "pressure wrong", "pressure spike" | `Symptom.PRESSURE_DEVIATION` |
+| "flow changed", "low flow" | `Symptom.FLOW_DEVIATION` |
+| "high power", "motor amps high" | `Symptom.HIGH_POWER` |
+| "surging", "pulsating" | `Symptom.SURGE_EVENT` |
+| "fouled", "plugged" | `Symptom.FOULING` |
+| "noise", "rattling" | `Symptom.ABNORMAL_NOISE` |
+| "liquid in gas", "carryover" | `Symptom.LIQUID_CARRYOVER` |
+
+> **Compressor fouling / efficiency loss:** when the root cause is deposits (elemental
+> sulfur S8, salt from entrained produced water, mineral scale, wax) fouling a compressor,
+> quantify it with the `neqsim.process.equipment.compressor` deposit model:
+> `CompressorDeposit` (deposit mass → head/efficiency loss), `SolidFlashDepositSource` /
+> `EntrainedSaltDepositSource` (deposit amount from the process), `CompressorDepositProfile`
+> (which impeller), `comp.buildDegradedChart()` (map after N hours), and
+> `CompressorDepositWash` (recommend a wash fluid and plan online washing to confirm
+> recovery). See the `neqsim-flow-assurance` / `neqsim-api-patterns` skills.
+
+### Step 2: Gather Data
+
+1. **Historian data**: Use `neqsim-plant-data` skill to read time-series from PI/IP.21
+   - Get 2-4 weeks of data for trending
+   - Key parameters: temperature, pressure, flow, vibration, power, efficiency
+   - Export as CSV or pass directly as `Map<String, double[]>`
+
+2. **STID/design data**: Use `enterprise-stid-document-retrieval` (enterprise skill) to get equipment datasheets
+   - Design conditions: temperature, pressure, flow
+   - Performance curves (compressor maps, pump curves)
+   - Material limits
+
+3. **OREDA data**: Automatically loaded from `ReliabilityDataSource` — no action needed
+
+### Step 3: Build Process Model
+
+If user doesn't have a running model:
+1. Extract process data from P&ID or design basis
+2. Build NeqSim ProcessSystem
+3. Calibrate to current operating conditions
+
+If user has an existing model:
+1. Load or receive the ProcessSystem
+2. Verify it runs without errors
+
+### Step 4: Run Analysis
+
+```java
+RootCauseAnalyzer rca = new RootCauseAnalyzer(processSystem, equipmentName);
+DiagnosisCase diagnosisCase = new DiagnosisCase(equipmentName)
+    .setCaseId(caseId)
+    .setTimeWindow(windowStartEpochSeconds, windowEndEpochSeconds)
+    .setProcessModel(modelId, modelRevision)
+    .addDataSource("historian", historianQueryReference);
+rca.setDiagnosisCase(diagnosisCase);
+rca.setSymptom(symptom);
+rca.setHistorianData(historianMap, timestamps);
+rca.setStidData(stidMap);
+// Set design limits from STID datasheets
+rca.setDesignLimit("vibration_mm_s", Double.NaN, 7.1);
+RootCauseReport report = rca.analyze();
+```
+
+### Step 5: Interpret and Present Results
+
+Present the report to the user with:
+1. **Top hypothesis**: Name, confidence %, category
+2. **Key evidence**: What data supports this conclusion
+3. **Simulation verification**: Status, KPI coverage, and whether direction and normalized magnitude matched
+4. **Alternative hypotheses**: Other possibilities ranked by confidence
+5. **Recommended actions**: Prioritized list from the top hypothesis
+
+Evidence is not generic trend harvesting. The RCA library attaches historian and
+STID observations only when they match a hypothesis' expected signal
+fingerprint. Call out contradictory evidence explicitly because it is often the
+fastest way to rule out attractive but wrong explanations.
+
+### Step 6: Follow-up Actions
+
+Based on the diagnosis:
+- **MECHANICAL causes**: Recommend inspection, vibration spectrum analysis, bearing replacement
+- **PROCESS causes**: Recommend process adjustments, feed analysis, operating point change
+- **CONTROL causes**: Recommend instrument calibration, controller tuning, setpoint review
+- **EXTERNAL causes**: Recommend environmental assessment, power quality check
+
+## Output Format
+
+Always provide:
+1. A summary paragraph explaining the most likely root cause
+2. The full text report from `report.toTextReport()`
+3. JSON report via `report.toJson()` for programmatic use
+4. Recommended immediate actions
+
+## Integration with MCP
+
+Use the `runRootCauseAnalysis` MCP tool for automated diagnosis:
+- Accepts process JSON, equipment name, symptom, historian CSV
+- Returns JSON report with ranked hypotheses
+- Use the schema catalog entry `run_root_cause_analysis` and the example
+   `root-cause/compressor-high-vibration` when constructing tool calls
+
+### Pre-built Examples (MCP Example Catalog)
+
+Three integration examples are available, each combining NeqSim process
+simulation, historian data (tagreader format), and STID design data:
+
+| MCP URI | Equipment | Symptom | Data Sources |
+|---------|-----------|---------|-------------|
+| `neqsim://examples/root-cause/compressor-high-vibration` | Compressor | HIGH_VIBRATION | PI historian (vibration, bearing temp, lube oil), STID datasheet |
+| `neqsim://examples/root-cause/separator-liquid-carryover` | Separator | LIQUID_CARRYOVER | PI historian (demister dP, liquid level, feed flow), STID datasheet |
+| `neqsim://examples/root-cause/hx-fouling` | Heat Exchanger | FOULING | IP.21 historian (outlet temp, shell dP, coolant flow), vendor datasheet |
+
+Use these as templates when constructing RCA inputs for real equipment.
+
+### Data Flow: Tagreader + STID + Simulation
+
+```
+Plant Historian (PI/IP.21)         STID / Vendor Docs
+         │                                  │
+    tagreader API                 enterprise STID retrieval
+         │                                  │
+    CSV / DataFrame              design limits, specs
+         │                                  │
+         └────────────┬─────────────────────┘
+                      │
+              RootCauseAnalyzer
+                      │
+          ┌───────────┼───────────┐
+          │           │           │
+     HypothesisGen  Evidence   SimVerifier
+     (OREDA priors) (historian) (NeqSim clone)
+          │           │           │
+          └───────────┼───────────┘
+                      │
+              RootCauseReport
+              (ranked hypotheses
+               with source traceability)
+```
+
+Each evidence item carries a `sourceReference` linking to the original
+historian tag or STID document, making the diagnosis fully auditable.
+
+## Identified Dynamics as Evidence
+
+Use `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) to turn a suspected driver into evidence: an identified gain and delay between driver and symptom, with a usability verdict. Where the unit has a NeqSim model, add physics residuals: two independent signals moving together suggest an equipment change, one alone an instrument fault. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
+## Common Pitfalls
+
+- **Insufficient data**: Need at least 50 data points for meaningful trend analysis
+- **Wrong symptom classification**: Multiple symptoms may be present — start with the primary one
+- **Missing design limits**: Without design limits, threshold analysis cannot run
+- **Simulation without calibration**: Process model must match current operating conditions
+- **Ignoring correlations**: Parameter correlations often point to the root cause faster than individual trends
+- **Over-reading simulation verification**: `UNKNOWN`, `UNSUPPORTED`, and `FAILED` are neutral but distinct; only `EVALUATED` scores are evidence, and low coverage limits the conclusion
+
+## Post-Trip Analysis: Detect → Trace → Restart
+
+After diagnosing the root cause, extend the analysis with the post-trip classes
+to answer: *what tripped?*, *how did the failure propagate?*, and *how do we
+restart safely?*
+
+### Classes
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `TripEventDetector` | `neqsim.process.diagnostics` | Monitors parameters against thresholds, detects trips |
+| `FailurePropagationTracer` | `neqsim.process.diagnostics` | BFS-traces failure cascade through process topology |
+| `RestartSequenceGenerator` | `neqsim.process.diagnostics.restart` | Generates topological restart plan with safety steps |
+
+### Workflow Extension
+
+After `RootCauseReport` identifies the root cause, continue with:
+
+```java
+// 1. Set up trip detection for the failed parameter
+TripEventDetector detector = new TripEventDetector(processSystem);
+detector.addTripCondition(equipmentName, "pressure", 150.0, true,
+    TripEvent.Severity.HIGH);
+List<TripEvent> trips = detector.check(simulationTime);
+
+// 2. Trace how the failure propagated
+FailurePropagationTracer tracer = new FailurePropagationTracer(processSystem);
+FailurePropagationTracer.PropagationResult propagation = tracer.trace(trips.get(0));
+
+// 3. Generate restart sequence
+RestartSequenceGenerator generator = new RestartSequenceGenerator(processSystem);
+RestartSequenceGenerator.RestartPlan plan = generator.generate(propagation);
+String restartPlanReport = plan.toTextReport();
+```
+
+See the `neqsim-root-cause-analysis` skill for full API reference.

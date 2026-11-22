@@ -21,7 +21,11 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
   public PhaseSrkCPAs() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkCPAs clone() {
     PhaseSrkCPAs clonedPhase = null;
@@ -29,6 +33,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
       clonedPhase = (PhaseSrkCPAs) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkCPAs", ex);
     }
     return clonedPhase;
   }

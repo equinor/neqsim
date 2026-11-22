@@ -1,0 +1,2 @@
+implementation,accepted,solved,solver,iterations,thermo_evaluations,k_sweeps,capped_k_evaluations,max_log_k_update,energy_residual,mesh_energy_residual,seconds,failure
+baseline-9b22698,false,false,DAMPED_SUBSTITUTION,80,21620,35305,13455,3.8922942723498760,0.020020127999391140,0.0099108556998483420,17.282590973,Reboiler duty from accepted outlets ==> expected: <561938.6135154866> but was: <561823.2964148191>

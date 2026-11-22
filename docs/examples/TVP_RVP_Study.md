@@ -774,6 +774,8 @@ Key Finding: TVP is consistently higher than RVP due to light-end vaporization d
 
 </details>
 
+![Result figure from cell 13](figures/TVP_RVP_Study_cell_13_output_1.png)
+
 ## 6. Study Effect of Butanes Content (Key RVP Driver)
 
 According to literature (Nelson, GPSA), butanes content is the primary driver of RVP for gasoline-range products. The percentage of butanes approximately equals the RVP in psi for gasoline.
@@ -885,6 +887,8 @@ plt.tight_layout()
 plt.savefig('tvp_rvp_butanes_effect.png', dpi=150, bbox_inches='tight')
 plt.show()
 ```
+
+![Result figure from cell 16](figures/TVP_RVP_Study_cell_16_output_1.png)
 
 ## 7. Compare NeqSim Results with Literature Data (Nelson 1958)
 
@@ -1019,6 +1023,8 @@ NeqSim (Light Ends Study):
 
 </details>
 
+![Result figure from cell 19](figures/TVP_RVP_Study_cell_19_output_1.png)
+
 ```python
 # Temperature Effect on TVP and RVP
 # Study how temperature affects the TVP/RVP relationship
@@ -1113,6 +1119,8 @@ Temperature Effect on TVP:
 ```
 
 </details>
+
+![Result figure from cell 20](figures/TVP_RVP_Study_cell_20_output_1.png)
 
 ```python
 # Stabilization Effect Study
@@ -1265,6 +1273,8 @@ Well stream (unstabilized)           0.0           0.0           0.0 90.864693 3
 
 </details>
 
+![Result figure from cell 21](figures/TVP_RVP_Study_cell_21_output_2.png)
+
 ```python
 # Correlation Fitting: TVP = f(RVP)
 # Fit empirical correlation between TVP and RVP from NeqSim results
@@ -1375,6 +1385,8 @@ CORRELATION FITTING RESULTS
 ```
 
 </details>
+
+![Result figure from cell 22](figures/TVP_RVP_Study_cell_22_output_2.png)
 
 ## Summary and Conclusions
 
@@ -2153,6 +2165,8 @@ MIXING RATIO STUDY: Light vs Heavy Oil (with TBP pseudo-components)
 
 </details>
 
+![Result figure from cell 35](figures/TVP_RVP_Study_cell_35_output_2.png)
+
 ### Summary: Fluid Mixing and TVP/RVP
 
 | Method | Use Case | Key Feature |
@@ -2535,6 +2549,8 @@ Note: Higher TVP/VPCR4 ratio indicates more light ends (more volatile oil)
 
 </details>
 
+![Result figure from cell 40](figures/TVP_RVP_Study_cell_40_output_1.png)
+
 ```python
 # Calculate VP reduction at V/L=4 relative to TVP for each oil type
 print("="*80)
@@ -2755,6 +2771,8 @@ Conclusion: Higher light ends (methane) content increases the TVP/VPCR4 ratio
 ```
 
 </details>
+
+![Result figure from cell 42](figures/TVP_RVP_Study_cell_42_output_2.png)
 
 ### Summary: V/L Ratio Effect on Vapor Pressure
 
@@ -3282,6 +3300,8 @@ Key Observations from Extended Literature:
 
 </details>
 
+![Result figure from cell 48](figures/TVP_RVP_Study_cell_48_output_1.png)
+
 ## Expanded Practical Applications
 
 ### 1. Crude Oil Storage and Tank Design
@@ -3669,4 +3689,3 @@ Stabilized Crude         : 137.8 MT CO2-eq/year
 
 *Notebook validated against Java tests in `TVP_RVP_StudyTest.java`*  
 *Using NeqSim with Peng-Robinson (PR) equation of state*
-

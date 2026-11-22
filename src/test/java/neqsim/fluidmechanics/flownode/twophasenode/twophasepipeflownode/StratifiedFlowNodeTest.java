@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.phase.PhaseType;
@@ -133,6 +134,7 @@ public class StratifiedFlowNodeTest {
   }
 
   @Test
+  @Tag("slow")
   void testInit3() {
     SystemInterface[] gasPhases = new SystemInterface[10];
     SystemInterface[] oilPhases = new SystemInterface[10];

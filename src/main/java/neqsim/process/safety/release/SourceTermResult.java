@@ -2,6 +2,7 @@ package neqsim.process.safety.release;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * Container for time-series release source term data.
@@ -45,6 +46,10 @@ public class SourceTermResult implements Serializable {
   private double[] jetVelocity; // m/s
   private double[] jetMomentum; // N
   private double[] liquidDropletSMD; // m (Sauter Mean Diameter)
+
+  private SystemInterface initialInventory;
+  private SystemInterface finalInventory;
+  private double releasedEnergyJ;
 
   // Cumulative values
   private double totalMassReleased; // kg
@@ -134,6 +139,39 @@ public class SourceTermResult implements Serializable {
 
   public int getNumberOfPoints() {
     return time.length;
+  }
+
+  /**
+   * Returns the initial fluid scaled to the physical vessel volume, when supplied by LeakModel.
+   *
+   * @return defensive inventory clone, or null for results without inventory accounting
+   */
+  public SystemInterface getInitialInventory() {
+    return initialInventory == null ? null : initialInventory.clone();
+  }
+
+  /**
+   * Returns the inventory at the last reported time, consistent with integrated mass and energy removal.
+   *
+   * @return defensive inventory clone, or null for results without inventory accounting
+   */
+  public SystemInterface getFinalInventory() {
+    return finalInventory == null ? null : finalInventory.clone();
+  }
+
+  /**
+   * Returns integrated outgoing stagnation enthalpy using the selected EOS energy reference.
+   *
+   * @return released energy in J; can be negative for an EOS reference state
+   */
+  public double getReleasedEnergyJ() {
+    return releasedEnergyJ;
+  }
+
+  void setInventoryAccounting(SystemInterface initial, SystemInterface remaining, double energy) {
+    initialInventory = initial.clone();
+    finalInventory = remaining.clone();
+    releasedEnergyJ = energy;
   }
 
   // Package-private setters for LeakModel to populate

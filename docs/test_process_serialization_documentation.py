@@ -33,7 +33,7 @@ def read(path: Path) -> str:
 def test_java_quick_start_checks_archive_failures() -> None:
     """The primary recipe must compile conceptually and check both documented failure signals."""
 
-    guide = read(GUIDE)
+    guide = " ".join(read(GUIDE).split()).replace("`", "")
 
     assert "import neqsim.thermo.system.SystemInterface;" in guide
     assert 'if (!process.saveToNeqsim("my_process.neqsim"))' in guide
@@ -70,10 +70,28 @@ def test_failed_save_and_trust_boundaries_are_explicit() -> None:
     source = read(XSTREAM_SOURCE)
 
     assert "partial or truncated destination can remain" in guide
+    assert "leaves no partial file" in guide
     assert "Load `.neqsim` and XML files only from trusted sources" in guide
     assert "AnyTypePermission.ANY" not in guide
-    assert "new FileOutputStream(filename)" in source
+    assert "new FileOutputStream(tempFile)" in source
+    assert "moveIntoPlace(tempFile, file);" in source
     assert "return false;" in source
+
+
+def test_cross_version_loading_is_documented_and_source_anchored() -> None:
+    """Legacy archives must load with restored field defaults and an inspectable load report."""
+
+    guide = read(GUIDE)
+    source = read(XSTREAM_SOURCE)
+
+    assert "neqsim-meta.properties" in guide
+    assert "NeqSimXtream.getLastLoadReport()" in guide
+    assert "tagName` to `tagNumber`" in guide
+    assert 'public static final String META_ENTRY = "neqsim-meta.properties";' in source
+    assert 'renamed.put("tagName", "tagNumber");' in source
+    assert "restoreMissingFields" in source
+    assert 'serialization="custom"' in guide
+    assert "loading fails with the original cause" in guide
 
 
 def test_embedded_host_portability_guidance_is_source_anchored() -> None:
@@ -93,7 +111,7 @@ def test_embedded_host_portability_guidance_is_source_anchored() -> None:
 def test_format_boundaries_and_process_entry_point_remain_discoverable() -> None:
     """Keep full-object archives distinct from selective lifecycle state at both entry points."""
 
-    guide = read(GUIDE)
+    guide = " ".join(read(GUIDE).split())
     process_guide = read(PROCESS_GUIDE)
 
     assert "selective state model rather than a" in guide

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -277,6 +278,7 @@ public class TwoFluidPipeLiteratureValidationTest {
    */
   @Test
   @DisplayName("Pressure gradient order of magnitude check")
+  @Tag("slow")
   public void testPressureGradientOrderOfMagnitude() {
     SystemInterface fluid = gasOilFluid.clone();
     Stream feed = new Stream("Feed", fluid);

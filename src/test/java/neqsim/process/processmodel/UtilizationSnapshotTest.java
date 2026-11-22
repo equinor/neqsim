@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.automation.ProcessAutomation;
 import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSource;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -82,6 +83,31 @@ public class UtilizationSnapshotTest {
       assertTrue(u.has("feasible"));
       assertTrue(u.has("constraints"));
     }
+  }
+
+  /** A utilization snapshot must expose design and configured operating limits separately. */
+  @Test
+  void testSnapshotPreservesOperatingLimitProvenance() {
+    Stream feed = buildFeed();
+    feed.clearCapacityConstraints();
+    feed.addCapacityConstraint(
+        new CapacityConstraint("flow", "kg/hr", ConstraintType.HARD).setDesignValue(120000.0).setCurrentValue(100000.0)
+            .setSource(ConstraintSource.VENDOR_DATASHEET, "vendor sheet rev 4").setDataSource("installedDataSheet")
+            .setOperatingLimit(90000.0, ConstraintSource.USER_RULE, "operating procedure OP-17")
+            .setOperatingLimitConfidence(0.85).setOperatingLimitValidityRange(80000.0, 110000.0));
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+
+    JsonObject constraint = JsonParser.parseString(process.getUtilizationSnapshotJson()).getAsJsonObject()
+        .getAsJsonArray("units").get(0).getAsJsonObject().getAsJsonArray("constraints").get(0).getAsJsonObject();
+
+    assertEquals(120000.0, constraint.get("design").getAsDouble(), 0.0);
+    assertEquals(90000.0, constraint.get("applicableLimit").getAsDouble(), 0.0);
+    assertEquals("CONFIGURED_OPERATING", constraint.get("applicableLimitRole").getAsString());
+    assertEquals("USER_RULE", constraint.get("applicableLimitSource").getAsString());
+    assertEquals("operating procedure OP-17", constraint.get("applicableLimitSourceReference").getAsString());
+    assertEquals(0.85, constraint.get("operatingLimitConfidence").getAsDouble(), 0.0);
+    assertTrue(constraint.get("violated").getAsBoolean());
   }
 
   /**

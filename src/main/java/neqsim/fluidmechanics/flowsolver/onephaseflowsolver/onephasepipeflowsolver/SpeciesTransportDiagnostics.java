@@ -1,7 +1,8 @@
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+
 import java.io.Serializable;
-import java.util.Arrays;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
@@ -55,19 +56,19 @@ public final class SpeciesTransportDiagnostics implements Serializable {
       double[] cellPecletNumbers, String physicalDispersionModelName, double[] physicalAxialDispersionM2PerSecond,
       double[] cellPhysicalDispersionNumbers, boolean physicalDispersionIncluded, String message) {
     this.scheme = scheme;
-    this.cellCourantNumbers = copy(cellCourantNumbers);
+    this.cellCourantNumbers = copyArrayOrEmpty(cellCourantNumbers);
     this.maximumCellCourantNumber = maximumFinite(this.cellCourantNumbers);
     this.effectiveCellCourantNumber = effectiveCellCourantNumber;
     this.substeps = substeps;
-    this.firstOrderImplicitNumericalDispersionM2PerSecond = copy(numericalDispersionM2PerSecond);
+    this.firstOrderImplicitNumericalDispersionM2PerSecond = copyArrayOrEmpty(numericalDispersionM2PerSecond);
     this.maximumFirstOrderImplicitNumericalDispersionM2PerSecond = maximumFinite(
         this.firstOrderImplicitNumericalDispersionM2PerSecond);
-    this.cellPecletNumbers = copy(cellPecletNumbers);
+    this.cellPecletNumbers = copyArrayOrEmpty(cellPecletNumbers);
     this.physicalDispersionModelName = physicalDispersionModelName;
-    this.physicalAxialDispersionM2PerSecond = copy(physicalAxialDispersionM2PerSecond);
+    this.physicalAxialDispersionM2PerSecond = copyArrayOrEmpty(physicalAxialDispersionM2PerSecond);
     this.minimumPhysicalAxialDispersionM2PerSecond = minimumFinite(this.physicalAxialDispersionM2PerSecond);
     this.maximumPhysicalAxialDispersionM2PerSecond = maximumFinite(this.physicalAxialDispersionM2PerSecond);
-    this.cellPhysicalDispersionNumbers = copy(cellPhysicalDispersionNumbers);
+    this.cellPhysicalDispersionNumbers = copyArrayOrEmpty(cellPhysicalDispersionNumbers);
     this.maximumCellPhysicalDispersionNumber = maximumFinite(this.cellPhysicalDispersionNumbers);
     this.physicalDispersionIncluded = physicalDispersionIncluded;
     this.inletDispersionBoundaryCondition = AxialDispersionBoundaryCondition.DIRICHLET_INLET;
@@ -93,7 +94,7 @@ public final class SpeciesTransportDiagnostics implements Serializable {
 
   /** @return defensive copy of full-step local mass Courant numbers */
   public double[] getCellCourantNumbers() {
-    return copy(cellCourantNumbers);
+    return copyArrayOrEmpty(cellCourantNumbers);
   }
 
   /** @return maximum full-step local mass Courant number */
@@ -122,7 +123,7 @@ public final class SpeciesTransportDiagnostics implements Serializable {
    * @return defensive copy in m2/s; entries are non-finite when cell length was unavailable
    */
   public double[] getFirstOrderImplicitNumericalDispersionM2PerSecond() {
-    return copy(firstOrderImplicitNumericalDispersionM2PerSecond);
+    return copyArrayOrEmpty(firstOrderImplicitNumericalDispersionM2PerSecond);
   }
 
   /** @return maximum finite first-order implicit numerical-dispersion reference in m2/s */
@@ -136,7 +137,7 @@ public final class SpeciesTransportDiagnostics implements Serializable {
    * @return defensive copy; entries are non-finite while physical dispersion is disabled
    */
   public double[] getCellPecletNumbers() {
-    return copy(cellPecletNumbers);
+    return copyArrayOrEmpty(cellPecletNumbers);
   }
 
   /** @return stable selected physical axial-dispersion model name */
@@ -146,7 +147,7 @@ public final class SpeciesTransportDiagnostics implements Serializable {
 
   /** @return defensive copy of physical axial-dispersion coefficients by cell in m2/s */
   public double[] getPhysicalAxialDispersionM2PerSecond() {
-    return copy(physicalAxialDispersionM2PerSecond);
+    return copyArrayOrEmpty(physicalAxialDispersionM2PerSecond);
   }
 
   /** @return minimum finite physical axial-dispersion coefficient in m2/s */
@@ -170,7 +171,7 @@ public final class SpeciesTransportDiagnostics implements Serializable {
    * @return defensive copy of cell physical-dispersion numbers
    */
   public double[] getCellPhysicalDispersionNumbers() {
-    return copy(cellPhysicalDispersionNumbers);
+    return copyArrayOrEmpty(cellPhysicalDispersionNumbers);
   }
 
   /** @return maximum full-step explicit physical-dispersion number */
@@ -209,10 +210,6 @@ public final class SpeciesTransportDiagnostics implements Serializable {
     return new GsonBuilder().registerTypeAdapter(Double.class, finiteDoubleSerializer)
         .registerTypeAdapter(Double.TYPE, finiteDoubleSerializer).serializeNulls().setPrettyPrinting().create()
         .toJson(this);
-  }
-
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
   }
 
   private static double maximumFinite(double[] values) {

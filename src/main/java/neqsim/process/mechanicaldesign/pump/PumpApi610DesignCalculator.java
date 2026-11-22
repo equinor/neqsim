@@ -224,9 +224,9 @@ public class PumpApi610DesignCalculator implements Serializable {
   private boolean seallessPump;
 
   // Candidate driver ratings and calculated results.
-  private double[] driverCandidateRatingsKw = new double[] { 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5,
+  private double[] driverCandidateRatingsKw = new double[] {0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5,
       22.0, 30.0, 37.0, 45.0, 55.0, 75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0, 500.0, 630.0, 800.0,
-      1000.0, 1250.0, 1600.0, 2000.0, 2500.0, 3150.0, 4000.0, 5000.0, 6300.0, 8000.0, 10000.0 };
+      1000.0, 1250.0, 1600.0, 2000.0, 2500.0, 3150.0, 4000.0, 5000.0, 6300.0, 8000.0, 10000.0};
   private double operatingFlowRatio = Double.NaN;
   private String operatingRegion = "NOT_EVALUATED";
   private double npshMarginM = Double.NaN;

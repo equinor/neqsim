@@ -66,7 +66,7 @@ class DesignStandardsUtilityTest {
     @DisplayName("Aggregate noise of identical sources equals source + 10*log10(n)")
     void aggregateNoiseShouldBeMathematicallyCorrect() {
       double single = 90.0;
-      double[] sources = { single, single };
+      double[] sources = {single, single};
       double combined = NoiseAssessment.aggregateNoise(sources);
       // Two identical sources: +3 dB
       assertEquals(single + 3.0, combined, 0.1, "Two equal sources should add ~3 dB");

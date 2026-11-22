@@ -40,11 +40,17 @@ Given a research plan and literature review, you:
 |-------|---------|
 | `TPflash` | Main SS + stability analysis flash |
 | `SysNewtonRhapsonTPflash` | NR solver (u-variable, EJML) |
-| `SysNewtonRhapsonTPflashNew` | NR solver (JAMA) |
+| `SysNewtonRhapsonTPflashNew` | Deprecated legacy JAMA solver; retained for compatibility, not used by the production TP-flash path |
 | `RachfordRice` | Phase-split beta solver |
 | `Flash` | Base class with shared parameters |
 
 All in: `src/main/java/neqsim/thermodynamicoperations/flashops/`
+
+Use `ThermodynamicOperations.TPflash()` for application calculations. The legacy
+`SysNewtonRhapsonTPflashNew` and current `SysNewtonRhapsonTPflash` use different
+iteration variables; do not treat their internal state as interchangeable. Follow
+the [API lifecycle policy](../../docs/development/api-lifecycle.md) before removing
+the legacy public class (issue #4212).
 
 ### Chemical Equilibrium / Gibbs Reactor
 

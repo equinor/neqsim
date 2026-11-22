@@ -73,6 +73,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | [dexpi-reader.md](dexpi-reader) | **DEXPI P&ID import/export with ISO 10628 shapes, auto-layout, instruments, mechanical design data, configurable visualization, and round-trip support** |
 | [dexpi-pid-current-master-audit.md](dexpi-pid-current-master-audit) | **Current-source DEXPI/P&ID inventory, #2443 reconciliation, executable baseline, qualification boundaries, and #2899 criterion traceability** |
 | [dexpi-reference-cases.md](dexpi-reference-cases) | **Synthetic public simple, branched, and multi-area DEXPI/P&ID regression cases and qualification boundaries** |
+| [dexpi-physics-bridge-evaluation.md](dexpi-physics-bridge-evaluation) | **Executed evaluation of simulation-to-DEXPI and DEXPI-to-simulation fidelity, pyDEXPI cross-checks, round-trip fixes, and prioritised roadmap** |
 | [engineering-diagram-delivery.md](engineering-diagram-delivery) | **Fail-closed publication and independent intake assessment of controlled semantic JSON, DEXPI, native SVG/PDF, hashes, and review-required diagnostics** |
 | [engineering-diagram-performance.md](engineering-diagram-performance) | **Deterministic DEXPI package, native rendering, and revision-impact regression evidence with conservative CI budgets** |
 | [engineering-diagram-document-model.md](engineering-diagram-document-model) | **Immutable controlled drawings and sheets with stable identities, paired off-page references, revision metadata, and proposal boundaries** |
@@ -88,7 +89,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
-| [olga_pvt_table_generation.md](olga_pvt_table_generation) | **Export any NeqSim fluid as an OLGA `.tab` PVT table and hydrate equilibrium curve - two-phase and three-phase generators, absent-phase handling, grid selection, hydrate curve export, and how to validate output by running it in OLGA** |
+| [olga_pvt_table_generation.md](olga_pvt_table_generation) | **Export any NeqSim fluid as an OLGA `.tab` PVT table and hydrate equilibrium curve - two-phase and three-phase generators, explicit and envelope-refined grids, standard-state insertion, produced water, salinity, IAPWS reference water properties, monotonic absent-phase fill, quality report and Markdown table report, hydrate curve export, and how to validate output by running it in OLGA** |
 
 ---
 

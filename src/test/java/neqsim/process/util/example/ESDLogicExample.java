@@ -93,7 +93,7 @@ public class ESDLogicExample {
 
     // Splitter
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -116,7 +116,7 @@ public class ESDLogicExample {
     esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5);
 
     // Step 3: Redirect flow to blowdown (simultaneous with BD valve)
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 1.0 }), 0.0);
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 1.0}), 0.0);
 
     // Create ESD push button and link to logic
     PushButton esdButton = new PushButton("ESD-PB-101");

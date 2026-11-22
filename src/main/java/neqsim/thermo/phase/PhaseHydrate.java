@@ -9,8 +9,15 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.component.ComponentHydrateGF;
 import neqsim.thermo.component.ComponentHydratePVTsim;
+import neqsim.thermo.component.ComponentHydratePitzer;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.mixingrule.MixingRulesInterface;
+import neqsim.thermo.system.SystemElectrolyteCPA;
+import neqsim.thermo.system.SystemElectrolyteCPAAdvanced;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermo.system.SystemSrkCPA;
 
 /**
  * PhaseHydrate class.
@@ -36,17 +43,81 @@ public class PhaseHydrate extends Phase {
    * @param fluidModel a {@link java.lang.String} object
    */
   public PhaseHydrate(String fluidModel) {
-    if (fluidModel.isEmpty()) {
-      hydrateModel = "PVTsimHydrateModel";
-    } else if (fluidModel.equals("CPAs-SRK-EOS-statoil") || fluidModel.equals("CPAs-SRK-EOS")
-        || fluidModel.equals("CPA-SRK-EOS") || fluidModel.equals("Electrolyte-CPA-EOS-statoil")) {
-      hydrateModel = "CPAHydrateModel";
-    } else {
-      hydrateModel = "PVTsimHydrateModel";
-    }
+    hydrateModel = hydrateModelForFluidModelName(fluidModel);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Creates a hydrate phase whose cavity model matches the fluid model family of a system.
+   *
+   * <p>
+   * The family is decided from the system class, not from its model name, so every SRK-CPA solver variant (SystemSrkCPA
+   * and subclasses such as the FullyImplicit, Reduced, Broyden and Anderson implementations) and every SRK-based
+   * electrolyte CPA system use the CPA-fitted {@link ComponentHydrateGF} parameters. The choice of association solver
+   * therefore cannot change the hydrate equilibrium. PR-CPA and UMR-CPA keep the PVTsim parameters because the CPA
+   * hydrate parameters were regressed with SRK-CPA.
+   * </p>
+   *
+   * @param system fluid system that owns the hydrate phase
+   */
+  public PhaseHydrate(SystemInterface system) {
+    hydrateModel = hydrateModelFor(system);
+  }
+
+  /**
+   * Selects the hydrate cavity model for a fluid system.
+   *
+   * @param system fluid system
+   * @return {@code "PitzerHydrateModel"}, {@code "CPAHydrateModel"} or {@code "PVTsimHydrateModel"}
+   */
+  public static String hydrateModelFor(SystemInterface system) {
+    if (system instanceof SystemPitzer) {
+      return "PitzerHydrateModel";
+    }
+    if (system instanceof SystemSrkCPA || system instanceof SystemElectrolyteCPAstatoil) {
+      return "CPAHydrateModel";
+    }
+    if (system instanceof SystemElectrolyteCPA || system instanceof SystemElectrolyteCPAAdvanced) {
+      return "CPAHydrateModel";
+    }
+    return hydrateModelForFluidModelName(system == null ? "" : system.getModelName());
+  }
+
+  /**
+   * Selects the hydrate cavity model from a fluid model name. Prefer {@link #hydrateModelFor} when a system exists.
+   *
+   * @param fluidModel fluid model name, for example {@code "CPAs-SRK-EOS-statoil-FullyImplicit"}
+   * @return {@code "PitzerHydrateModel"}, {@code "CPAHydrateModel"} or {@code "PVTsimHydrateModel"}
+   */
+  public static String hydrateModelForFluidModelName(String fluidModel) {
+    if (fluidModel == null || fluidModel.isEmpty()) {
+      return "PVTsimHydrateModel";
+    }
+    if ("Pitzer-GE-model".equals(fluidModel)) {
+      return "PitzerHydrateModel";
+    }
+    if (fluidModel.startsWith("CPAs-SRK-EOS") || fluidModel.equals("CPA-SRK-EOS")) {
+      return "CPAHydrateModel";
+    }
+    if (fluidModel.startsWith("Electrolyte-CPA")) {
+      return "CPAHydrateModel";
+    }
+    return "PVTsimHydrateModel";
+  }
+
+  /**
+   * Returns the selected hydrate cavity model.
+   *
+   * @return {@code "PitzerHydrateModel"}, {@code "CPAHydrateModel"} or {@code "PVTsimHydrateModel"}
+   */
+  public String getHydrateModel() {
+    return hydrateModel;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseHydrate clone() {
     PhaseHydrate clonedPhase = null;
@@ -54,6 +125,7 @@ public class PhaseHydrate extends Phase {
       clonedPhase = (PhaseHydrate) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseHydrate", ex);
     }
 
     return clonedPhase;
@@ -81,7 +153,9 @@ public class PhaseHydrate extends Phase {
     super.addComponent(name, molesInPhase, compNumber);
     // componentArray[compNumber] = new ComponentHydrateStatoil(name, moles, molesInPhase,
     // compNumber);
-    if (hydrateModel.equals("CPAHydrateModel")) {
+    if (hydrateModel.equals("PitzerHydrateModel")) {
+      componentArray[compNumber] = new ComponentHydratePitzer(name, moles, molesInPhase, compNumber);
+    } else if (hydrateModel.equals("CPAHydrateModel")) {
       componentArray[compNumber] = new ComponentHydrateGF(name, moles, molesInPhase, compNumber);
       // System.out.println("hydrate model: CPA-EoS hydrate model selected");
     } else {

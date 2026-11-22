@@ -17,6 +17,35 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
   /**
+   * Smallest overall mole fraction for which a component carries association sites during initialization.
+   *
+   * <p>
+   * Negligible feed components can make the association Hessian ill-conditioned. Site topology is built before
+   * {@link neqsim.thermo.component.Component#init(double, double, double, double, int)} resets phase mole fractions to
+   * the overall composition for initialization type zero. The cutoff must therefore use the component's overall mole
+   * count and the current system total, not a stale phase mole fraction from an earlier flash.
+   * </p>
+   *
+   * <p>
+   * This numerical cutoff applies only to constructing the initial association system. It is not a solubility limit and
+   * must not remove sites from a material feed component merely because it was depleted in one phase.
+   * </p>
+   */
+  double MIN_ASSOCIATION_MOLE_FRACTION = 1.0e-20;
+
+  /**
+   * Check whether a component is negligible in the composition used by initialization type zero.
+   *
+   * @param component the component to test
+   * @param totalNumberOfMoles total system mole count passed to phase initialization
+   * @return true when the component must be treated as non-associating during initialization
+   */
+  static boolean hasNegligibleAssociation(neqsim.thermo.component.ComponentInterface component,
+      double totalNumberOfMoles) {
+    return !(component.getNumberOfmoles() > MIN_ASSOCIATION_MOLE_FRACTION * totalNumberOfMoles);
+  }
+
+  /**
    * Getter for property hcpatot.
    *
    * @return a double

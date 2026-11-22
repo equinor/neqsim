@@ -1,45 +1,98 @@
 ---
 title: "Introduction to Agentic Engineering with NeqSim"
-description: "A comprehensive introduction to using AI agents for engineering calculations and process simulation with NeqSim. Explains what agentic programming is, why it matters for engineers, the architecture of NeqSim's agent system, and how to get started from scratch."
+description: "A beginner-friendly introduction to using AI agents for engineering calculations and process simulation with NeqSim. Explains what agentic programming is, why it matters for engineers, the three-layer agent architecture, the agent catalog and skills library, the 3-step task-solving workflow, worked getting-started examples, best practices, prompt templates, a cheat sheet, and a glossary."
 ---
 
 # Introduction to Agentic Engineering with NeqSim
 
-This guide explains how NeqSim combines AI agents with a rigorous physics engine
-to solve engineering problems. It is written for engineers and scientists who are
-new to AI-assisted workflows and want to understand both the concepts and the
-practical tools.
+> **In one sentence:** you describe an engineering problem in plain language,
+> an AI agent writes and runs the simulation, and the NeqSim physics engine
+> makes sure the numbers are right.
 
-**What you will learn:**
+This guide is written for engineers and scientists who are new to AI-assisted
+workflows. No prior experience with AI agents is assumed.
 
-- What agentic programming means and why it matters for engineering
-- How NeqSim's multi-agent architecture works
-- The role of agents, skills, and the physics engine
-- How to start using agents to solve real problems
-- Worked examples from simple to complex
+**Reading time:** about 25 minutes end to end. The first hands-on example
+takes 5 minutes.
 
-**Who this is for:** Process engineers, reservoir engineers, thermodynamics
-specialists, and anyone who wants to use AI to accelerate engineering work
-without sacrificing physical accuracy.
+### What you will learn
+
+- What agentic programming means, and why it matters for engineering
+- How NeqSim's three-layer agent architecture works
+- The difference between an **agent**, a **skill**, and the **physics engine**
+- How to run your first agent command
+- How to go from a one-line question to a complete engineering report
+
+**Who this is for:** process engineers, reservoir engineers, thermodynamics
+specialists, and anyone who wants AI speed without losing physical rigor.
+
+**What you need:** VS Code, GitHub Copilot, Python 3.8+, and Java 8+.
+The setup commands are in [Prerequisites](#prerequisites).
+
+### Pick your reading path
+
+| If you are... | Start at | Then read |
+|---------------|----------|-----------|
+| New to AI agents | [1. Why AI alone is not enough](#1-the-problem-ai-alone-cannot-do-engineering) | Everything, in order |
+| Familiar with AI, new to NeqSim | [3. Architecture](#3-neqsims-agent-architecture) | Sections 4, 5, 7 |
+| In a hurry | [7. Your first agent interaction](#7-getting-started-your-first-agent-interaction) | Section 10, then the [Cheat sheet](#cheat-sheet) |
+| Evaluating the approach | [11. Comparison](#11-comparison-with-traditional-approaches) | Sections 1 and 6 |
+
+### Contents
+
+**Part I — Concepts**
+
+1. [The problem: AI alone cannot do engineering](#1-the-problem-ai-alone-cannot-do-engineering)
+2. [What is agentic programming?](#2-what-is-agentic-programming)
+3. [NeqSim's agent architecture](#3-neqsims-agent-architecture)
+
+**Part II — The toolbox**
+
+4. [The agent catalog](#4-the-agent-catalog)
+5. [The skills library](#5-the-skills-library)
+
+**Part III — Doing the work**
+
+6. [The task-solving workflow](#6-the-task-solving-workflow)
+7. [Getting started: your first agent interaction](#7-getting-started-your-first-agent-interaction)
+8. [Multi-agent composition](#8-multi-agent-composition)
+
+**Part IV — Reference**
+
+9. [How the physics engine works](#9-how-the-physics-engine-works)
+10. [Best practices](#10-best-practices)
+11. [Comparison with traditional approaches](#11-comparison-with-traditional-approaches)
+12. [Where to go next](#12-where-to-go-next)
+13. [Cheat sheet](#cheat-sheet) and [Glossary](#glossary)
 
 ---
 
+# Part I — Concepts
+
 ## 1. The Problem: AI Alone Cannot Do Engineering
 
-Large Language Models (LLMs) like GPT-4, Claude, and Copilot are remarkable
-at understanding natural language, writing code, and reasoning about structure.
-But they have a fundamental limitation for engineering work:
+Large Language Models (LLMs) such as GPT, Claude, and Copilot are remarkable at
+understanding natural language, writing code, and reasoning about structure.
+But they have one fundamental limitation for engineering work.
 
-**LLMs hallucinate physics.**
+> **Key point:** LLMs hallucinate physics. They predict plausible text, they do
+> not solve equations.
 
 Ask an LLM "what is the density of methane at 200 bara and 25 degrees C?" and
-you may get a plausible-sounding but wrong answer. It cannot solve the cubic
-equation of state. It cannot iterate to find the correct compressibility factor.
-It cannot evaluate fugacity coefficients or check phase stability.
+you may get a confident but wrong answer. It cannot solve the cubic equation of
+state, iterate to the correct compressibility factor, evaluate fugacity
+coefficients, or check phase stability.
 
-NeqSim, on the other hand, can do all of these things with thermodynamic rigor,
-but it has no understanding of natural language, cannot interpret engineering
-intent, and produces raw numbers without context.
+NeqSim has the opposite problem. It does all of the above with thermodynamic
+rigor, but it has no understanding of natural language, cannot interpret
+engineering intent, and returns raw numbers without context.
+
+| | Language model | NeqSim engine |
+|---|----------------|---------------|
+| Understands intent | Yes | No |
+| Writes code | Yes | No |
+| Solves an EOS | No | Yes |
+| Guarantees the number | No | Yes |
 
 **The solution: combine them.**
 
@@ -97,7 +150,7 @@ capability the agent can invoke when needed.
 
 | Concept | Definition | NeqSim Example |
 |---------|-----------|----------------|
-| **Agent** | An AI with a specific purpose, instructions, and tool access | `@solve.task` solves engineering problems end-to-end |
+| **Agent** | An AI with a specific purpose, instructions, and tool access | `@solve-task` solves engineering problems end-to-end |
 | **Skill** | A knowledge package loaded on-demand by agents | `neqsim-api-patterns` — code recipes for creating fluids |
 | **Tool** | A capability the agent can invoke (read file, run code, search) | Terminal execution, file creation, notebook cell runner |
 | **Physics Engine** | The computational backend that does the math | NeqSim Java library (EOS, flash, equipment models) |
@@ -139,7 +192,7 @@ specialist, and skills provide domain knowledge that agents load on demand.
                     └──┬────────────────┬───┘
                        │                │
             ┌──────────▼───┐    ┌───────▼──────────┐
-            │ @process.model│    │ @flow.assurance  │
+            │ @process-model│    │ @flow-assurance  │
             │ (Pipeline P,T)│    │ (Hydrate curve)  │
             └──────┬───────┘    └───────┬──────────┘
                    │                    │
@@ -176,9 +229,15 @@ calls this engine.
 
 ---
 
+# Part II — The Toolbox
+
 ## 4. The Agent Catalog
 
-NeqSim provides 16 specialist agents organized by function.
+NeqSim provides 16 specialist agents, organized by function. You invoke one by
+typing its `@name` at the start of a message in VS Code Copilot Chat.
+
+> **If you remember only one thing:** when in doubt, type `@neqsim.help` and
+> describe the problem in plain language. It routes the request for you.
 
 ### Routing and Discovery
 
@@ -187,7 +246,7 @@ These agents help you find the right tool for the job.
 | Agent | Command | What It Does |
 |-------|---------|-------------|
 | **Router** | `@neqsim.help` | Analyzes your request and routes to the correct specialist. Use when unsure which agent to pick. |
-| **Capability Scout** | `@capability.scout` | Checks what NeqSim can do for a task. Identifies gaps and plans implementations. Use before complex multi-discipline work. |
+| **Capability Scout** | `@capability-scout` | Checks what NeqSim can do for a task. Identifies gaps and plans implementations. Use before complex multi-discipline work. |
 
 **Example:**
 ```
@@ -201,23 +260,23 @@ design) and composes a multi-agent pipeline.
 
 | Agent | Command | Engineering Discipline |
 |-------|---------|----------------------|
-| **Thermodynamic Fluid** | `@thermo.fluid` | Create fluids, select EOS, run flash calculations, get properties |
-| **Process Simulation** | `@process.model` | Build flowsheets with separators, compressors, heat exchangers, valves |
-| **PVT Simulation** | `@pvt.simulation` | Run lab experiments (CME, CVD, swelling test, saturation pressure) |
-| **Flow Assurance** | `@flow.assurance` | Hydrate prediction, wax, corrosion, pipeline pressure drop |
-| **Gas Quality** | `@gas.quality` | ISO 6976, EN 16726, Wobbe index, custody transfer |
-| **Mechanical Design** | `@mechanical.design` | Wall thickness, material selection, cost estimation per ASME/DNV/API |
-| **Safety** | `@safety.depressuring` | Blowdown, PSV sizing, fire case, source term generation |
-| **Field Development** | `@field.development` | Concept selection, subsea tieback, economics (NPV/IRR), production forecasting |
+| **Thermodynamic Fluid** | `@thermo-fluid` | Create fluids, select EOS, run flash calculations, get properties |
+| **Process Simulation** | `@process-model` | Build flowsheets with separators, compressors, heat exchangers, valves |
+| **PVT Simulation** | `@pvt-simulation` | Run lab experiments (CME, CVD, swelling test, saturation pressure) |
+| **Flow Assurance** | `@flow-assurance` | Hydrate prediction, wax, corrosion, pipeline pressure drop |
+| **Gas Quality** | `@gas-quality` | ISO 6976, EN 16726, Wobbe index, custody transfer |
+| **Mechanical Design** | `@mechanical-design` | Wall thickness, material selection, cost estimation per ASME/DNV/API |
+| **Safety** | `@safety-depressuring` | Blowdown, PSV sizing, fire case, source term generation |
+| **Field Development** | `@field-development` | Concept selection, subsea tieback, economics (NPV/IRR), production forecasting |
 
 ### Workflow and Productivity
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **Solve Engineering Task** | `@solve.task` | End-to-end task solving with 3-step workflow (scope, simulation, report) |
-| **Quick Process Sim** | `@solve.process` | Fast path to a working simulation notebook |
-| **Jupyter Notebook** | `@notebook.example` | Creates example notebooks with visualization |
-| **Unit Tests** | `@neqsim.test` | Writes JUnit 5 tests for NeqSim code |
+| **Solve Engineering Task** | `@solve-task` | End-to-end task solving with 3-step workflow (scope, simulation, report) |
+| **Quick Process Sim** | `@solve-process` | Fast path to a working simulation notebook |
+| **Jupyter Notebook** | `@notebook-example` | Creates example notebooks with visualization |
+| **Unit Tests** | `@neqsim-test` | Writes JUnit 5 tests for NeqSim code |
 | **Documentation** | `@documentation` | Creates and updates markdown guides and tutorials |
 
 ---
@@ -259,7 +318,7 @@ Skills encode the lessons learned from hundreds of simulations.
 ### How Skills Are Used
 
 Skills are loaded **automatically** based on context. When you ask
-`@process.model` to build a compressor train, it automatically loads:
+`@process-model` to build a compressor train, it automatically loads:
 
 1. `neqsim-api-patterns` — to use the correct Java API calls
 2. `neqsim-input-validation` — to check your pressure and temperature values
@@ -270,10 +329,12 @@ to load based on what you asked for.
 
 ---
 
+# Part III — Doing the Work
+
 ## 6. The Task-Solving Workflow
 
-NeqSim's most powerful pattern is the **3-step task-solving workflow** that
-the `@solve.task` agent executes automatically.
+NeqSim's most powerful pattern is the **3-step task-solving workflow** that the
+`@solve-task` agent executes automatically.
 
 ### The Three Steps
 
@@ -291,7 +352,7 @@ the `@solve.task` agent executes automatically.
 
 ### Every Task Gets a Folder
 
-When you invoke `@solve.task`, it immediately creates a structured folder:
+When you invoke `@solve-task`, it immediately creates a structured folder:
 
 ```
 task_solve/2026-03-21_hydrate_analysis/
@@ -381,16 +442,19 @@ developed.
 
 ## 7. Getting Started: Your First Agent Interaction
 
+This section takes you from an empty machine to a validated engineering report.
+Work through it in order.
+
 ### Prerequisites
 
 | Requirement | Purpose |
 |-------------|---------|
-| [VS Code](https://code.visualstudio.com/) | Editor |
+| [VS Code](https://code.visualstudio.com/) | Editor that hosts the chat |
 | [GitHub Copilot extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) | AI agent host |
-| [Python 3.8+](https://python.org) | Runs notebooks |
+| [Python 3.8+](https://python.org) | Runs the analysis notebooks |
 | [Java JDK 8+](https://adoptium.net) | NeqSim physics engine |
 
-### Setup (One Time)
+### Step 1 — Set up (once)
 
 ```bash
 # Clone the repository
@@ -398,46 +462,69 @@ git clone https://github.com/equinor/neqsim.git
 cd neqsim
 
 # Build NeqSim
-./mvnw install            # Linux/Mac
+./mvnw install             # Linux/Mac
 mvnw.cmd install           # Windows
 
 # Install Python helpers
 pip install neqsim                     # Released package
-pip install matplotlib python-docx     # For reports and plots
+pip install matplotlib python-docx     # For plots and reports
 ```
 
-### Example 1: Quick Property Lookup
+### Step 2 — Open the chat
 
-Open VS Code Copilot Chat and type:
+Open VS Code in the cloned folder and open Copilot Chat
+(`Ctrl+Alt+I` on Windows/Linux, `Cmd+Alt+I` on macOS). Agents are invoked by
+typing `@` followed by the agent name.
 
-```
-@thermo.fluid What is the density of methane at 100 bara and 25 degrees C?
+### Step 3 — Work through the four examples
+
+The examples below escalate from a single number to a full deliverable. Run
+them in order the first time; each one introduces a new capability.
+
+| Example | Agent | Effort | You get |
+|---------|-------|--------|---------|
+| 1. Property lookup | `@thermo-fluid` | Seconds | One validated number |
+| 2. Process simulation | `@process-model` | Minutes | A running flowsheet |
+| 3. Full engineering task | `@solve-task` | Longer | Task folder + report |
+| 4. Capability assessment | `@capability-scout` | Minutes | A gap analysis |
+
+#### Example 1 — Quick property lookup
+
+Type this into Copilot Chat:
+
+```text
+@thermo-fluid What is the density of methane at 100 bara and 25 degrees C?
 ```
 
 The agent will:
+
 1. Create a `SystemSrkEos` fluid with methane
 2. Run a TP flash at 298.15 K and 100 bara
 3. Call `initProperties()` to initialize transport properties
 4. Report the density in kg/m3
 
-### Example 2: Process Simulation
+> **Why this matters:** step 3 is the single most common mistake when writing
+> NeqSim code by hand. The agent never forgets it, because a skill enforces it.
 
-```
-@process.model Build a 3-stage compression train from 5 to 150 bara
+#### Example 2 — Process simulation
+
+```text
+@process-model Build a 3-stage compression train from 5 to 150 bara
 with intercooling to 35 degrees C after each stage
 ```
 
 The agent will:
+
 1. Create the feed fluid
-2. Add three compressor + cooler pairs
-3. Set intermediate pressures using equal compression ratio
+2. Add three compressor and cooler pairs
+3. Set intermediate pressures using an equal compression ratio
 4. Build a `ProcessSystem` and run it
-5. Report power consumption and outlet temperatures for each stage
+5. Report power consumption and outlet temperature for each stage
 
-### Example 3: Full Engineering Task
+#### Example 3 — Full engineering task
 
-```
-@solve.task Calculate the hydrate formation temperature for a wet natural
+```text
+@solve-task Calculate the hydrate formation temperature for a wet natural
 gas at pressures from 20 to 200 bara. The gas composition is 85% methane,
 8% ethane, 4% propane, 2% CO2, 1% N2 with water-saturated conditions.
 Compare against CSMHyd data.
@@ -447,12 +534,12 @@ The agent executes the complete 3-step workflow — scope, simulation with
 validation, and report generation — producing a Word document with figures,
 tables, and references.
 
-### Example 4: Capability Assessment
+#### Example 4 — Capability assessment
 
 Before starting a complex task, check what NeqSim can do:
 
-```
-@capability.scout Can NeqSim handle acid gas injection design with
+```text
+@capability-scout Can NeqSim handle acid gas injection design with
 H2S/CO2 phase behavior, well casing design, corrosion assessment,
 and NPV economics?
 ```
@@ -466,7 +553,7 @@ implementation plans for any gaps.
 ## 8. Multi-Agent Composition
 
 For complex tasks spanning multiple disciplines, agents can work together
-in pipelines. The router agent or `@solve.task` automatically composes
+in pipelines. The router agent or `@solve-task` automatically composes
 these pipelines when it detects cross-discipline needs.
 
 ### Common Composition Patterns
@@ -476,9 +563,9 @@ these pipelines when it detects cross-discipline needs.
 Task: "Design a 20-inch export pipeline for 150 bara"
 
 ```
-@process.model  →  Get operating conditions (P, T, flow, composition)
+@process-model  →  Get operating conditions (P, T, flow, composition)
        ↓
-@mechanical.design  →  Calculate wall thickness per DNV-OS-F101
+@mechanical-design  →  Calculate wall thickness per DNV-OS-F101
 ```
 
 **Pattern 2: Fluid + Flow Assurance**
@@ -486,9 +573,9 @@ Task: "Design a 20-inch export pipeline for 150 bara"
 Task: "Check for hydrates in a wet gas pipeline"
 
 ```
-@thermo.fluid  →  Create CPA fluid with water and MEG
+@thermo-fluid  →  Create CPA fluid with water and MEG
        ↓
-@flow.assurance  →  Run hydrate curve + pipeline P,T profile
+@flow-assurance  →  Run hydrate curve + pipeline P,T profile
 ```
 
 **Pattern 3: Capability Scout + Specialists**
@@ -496,24 +583,25 @@ Task: "Check for hydrates in a wet gas pipeline"
 Task: "Full field development study with subsea tieback"
 
 ```
-@capability.scout  →  Assess all needed capabilities, identify gaps
+@capability-scout  →  Assess all needed capabilities, identify gaps
        ↓
-@process.model  →  Steady-state process design
+@process-model  →  Steady-state process design
        ↓
-@flow.assurance  →  Pipeline sizing and hydrate management
+@flow-assurance  →  Pipeline sizing and hydrate management
        ↓
-@mechanical.design  →  Equipment sizing and SURF cost estimation
+@mechanical-design  →  Equipment sizing and SURF cost estimation
        ↓
-@solve.task  →  Economics (NPV), uncertainty, risk analysis, report
+@solve-task  →  Economics (NPV), uncertainty, risk analysis, report
 ```
 
 ---
 
+# Part IV — Reference
+
 ## 9. How the Physics Engine Works
 
-Every agent interaction ultimately calls the NeqSim Java library.
-Understanding the basics helps you provide better prompts and interpret
-results correctly.
+Every agent interaction ultimately calls the NeqSim Java library. Understanding
+the basics helps you write better prompts and interpret results correctly.
 
 ### Thermodynamic Models
 
@@ -558,6 +646,27 @@ sequentially with recycle convergence as needed.
 
 ## 10. Best Practices
 
+### Anatomy of a Good Prompt
+
+A weak prompt gets a generic answer. A good prompt names the agent, the fluid,
+the conditions, and the deliverable.
+
+| Ingredient | Weak | Strong |
+|------------|------|--------|
+| Agent | (none) | `@flow-assurance` |
+| Fluid | "some gas" | "85% C1, 8% C2, 4% C3, 2% CO2, 1% N2, water-saturated" |
+| Conditions | "high pressure" | "20 to 200 bara, 4 degrees C seabed" |
+| Standard | (none) | "per NORSOK P-002" |
+| Deliverable | "tell me about hydrates" | "hydrate curve plus a Word report" |
+
+Putting them together:
+
+```text
+@flow-assurance Calculate the hydrate formation curve from 20 to 200 bara
+for a water-saturated gas of 85% C1, 8% C2, 4% C3, 2% CO2, 1% N2, and
+report the MEG dosage needed for a 4 degrees C seabed with 3 K margin.
+```
+
 ### For Beginners
 
 1. **Start with `@neqsim.help`** — describe your problem in plain language and
@@ -566,14 +675,14 @@ sequentially with recycle convergence as needed.
    composition in your request
 3. **Mention standards if applicable** — "per ISO 6976" or "per DNV-OS-F101"
    triggers deeper analysis
-4. **Use `@capability.scout` for complex tasks** — check what is available
+4. **Use `@capability-scout` for complex tasks** — check what is available
    before starting
 
 ### For Experienced Users
 
 1. **Go directly to specialist agents** — skip the router if you know which
    discipline applies
-2. **Use `@solve.task` for formal deliverables** — it produces Word + HTML
+2. **Use `@solve-task` for formal deliverables** — it produces Word + HTML
    reports with validation
 3. **Check `TASK_LOG.md` for past solutions** — avoid solving the same problem
    twice
@@ -608,6 +717,9 @@ sequentially with recycle convergence as needed.
 
 ## 12. Where to Go Next
 
+Suggested order for a new user: run the tutorial, skim the agent reference,
+then keep the API patterns skill open while you work.
+
 | Goal | Resource |
 |------|----------|
 | Solve your first task | [Solve an Engineering Task](../tutorials/solve-engineering-task) tutorial |
@@ -620,6 +732,48 @@ sequentially with recycle convergence as needed.
 
 ---
 
+## Cheat Sheet
+
+Keep this next to you for the first week.
+
+**The five commands you will use most**
+
+| Command | Use it when |
+|---------|-------------|
+| `@neqsim.help <problem>` | You do not know which agent to pick |
+| `@thermo-fluid <question>` | You need a fluid property or a flash |
+| `@process-model <description>` | You need a flowsheet built and run |
+| `@solve-task <task>` | You need a documented, validated deliverable |
+| `@capability-scout <task>` | You want to know if NeqSim can do it at all |
+
+**Prompt template**
+
+```text
+@<agent> <what to calculate>
+Fluid: <composition or fluid type>
+Conditions: <temperature, pressure, flow rate>
+Standard: <ISO / API / NORSOK / DNV reference, if any>
+Deliver: <number | plot | notebook | report>
+```
+
+**Unit conventions in the NeqSim Java API**
+
+| Quantity | Default unit |
+|----------|--------------|
+| Temperature | K (kelvin) |
+| Pressure | bara (bar absolute) |
+| Flow rate | kg/hr |
+| Density | kg/m3 |
+
+**Three rules the agents enforce for you**
+
+1. Always set a mixing rule: `fluid.setMixingRule("classic")`
+2. Always call `fluid.initProperties()` after a flash, before reading
+   density, viscosity, or thermal conductivity
+3. Never use Java 9+ syntax — NeqSim must compile with Java 8
+
+---
+
 ## Glossary
 
 | Term | Definition |
@@ -627,7 +781,7 @@ sequentially with recycle convergence as needed.
 | **Agent** | An AI assistant with specific instructions, domain knowledge, and tool access. Each agent handles one engineering discipline. |
 | **Skill** | A knowledge package (markdown file) loaded by agents to provide domain-specific rules and patterns. |
 | **Router** | The `@neqsim.help` agent that analyzes requests and delegates to specialists. |
-| **Capability Scout** | The `@capability.scout` agent that assesses what NeqSim can do for a given task. |
+| **Capability Scout** | The `@capability-scout` agent that assesses what NeqSim can do for a given task. |
 | **Flash Calculation** | The core thermodynamic calculation that determines phase composition and properties at given conditions. |
 | **EOS** | Equation of State — the mathematical model relating pressure, volume, temperature, and composition. |
 | **CPA** | Cubic-Plus-Association — an EOS extension for hydrogen-bonding molecules (water, alcohols). |

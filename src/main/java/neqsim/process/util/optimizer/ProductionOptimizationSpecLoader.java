@@ -114,7 +114,9 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * ProductionOptimizer optimizer = new ProductionOptimizer();
  * for (ScenarioRequest scenario : scenarios) {
  *   OptimizationResult result = optimizer.optimizeScenario(scenario);
- *   System.out.println(scenario.getName() + ": " + result.getOptimalRate());
+ *   if (!Double.isFinite(result.getOptimalRate())) {
+ *     throw new IllegalStateException("Optimization result is not finite");
+ *   }
  * }
  * }</pre>
  *
@@ -123,7 +125,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </p>
  *
  * <pre>
- * from neqsim.neqsimpython import jneqsim
+ * from neqsim import jneqsim
  * from jpype import JImplements, JOverride
  * import java.nio.file.Paths as JPaths
  * import java.util.HashMap as JHashMap

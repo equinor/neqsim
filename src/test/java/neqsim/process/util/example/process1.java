@@ -56,7 +56,7 @@ public class process1 {
     neqsim.process.equipment.compressor.Compressor compr = new neqsim.process.equipment.compressor.Compressor("compr",
         stream_1);
     compr.setOutletPressure(80.0);
-    compr.setOutTemperature(345.0);
+    compr.setOutletTemperature(345.0);
     compr.setUsePolytropicCalc(true);
     // compr.setNumberOfCompressorCalcSteps(10);
 

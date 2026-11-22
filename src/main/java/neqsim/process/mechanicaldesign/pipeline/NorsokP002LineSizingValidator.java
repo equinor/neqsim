@@ -150,6 +150,39 @@ public class NorsokP002LineSizingValidator implements Serializable {
   }
 
   /**
+   * Screens a nominal pipe size at the actual process conditions. Selects the smallest tabulated bore meeting both the
+   * service velocity ceiling and the configured fraction of erosional velocity. Pressure loss, minimum velocity, wall
+   * strength and relief cases require separate checks.
+   *
+   * @param fluid flashed material stream at its operating flow
+   * @param schedule schedule key from {@link PipeDesign#scheduleLookup}
+   * @return nominal pipe size (NPS), or empty for unknown service, invalid flow or an out-of-table bore
+   * @throws IllegalArgumentException if the schedule is unsupported
+   */
+  public java.util.OptionalDouble recommendNominalPipeSize(SystemInterface fluid, String schedule) {
+    if (!PipeDesign.isSupportedSchedule(schedule)) {
+      throw new IllegalArgumentException("Unsupported pipe schedule: " + schedule);
+    }
+    ServiceType service = detectService(fluid);
+    if (service == ServiceType.UNKNOWN) {
+      return java.util.OptionalDouble.empty();
+    }
+    double flow = getMixtureVolumetricFlowRate(fluid);
+    double density = getMixtureDensity(fluid);
+    double erosionLimit = maximumErosionalVelocityFraction * erosionalVelocityConstant / Math.sqrt(density);
+    double limit = Math.min(getUpperVelocityLimit(service, erosionLimit), erosionLimit);
+    if (!(flow > 0 && density > 0 && limit > 0) || !Double.isFinite(flow) || !Double.isFinite(limit)) {
+      return java.util.OptionalDouble.empty();
+    }
+    double bore = Math.sqrt(4.0 * flow / (Math.PI * limit));
+    try {
+      return java.util.OptionalDouble.of(PipeDesign.nearestPipe(null, bore, null, schedule)[0]);
+    } catch (IllegalArgumentException outOfRange) {
+      return java.util.OptionalDouble.empty();
+    }
+  }
+
+  /**
    * Detects the line service from the fluid phase state.
    *
    * @param fluid thermodynamic fluid

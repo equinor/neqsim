@@ -33,8 +33,11 @@ This document provides a high-level introduction to the process optimization cap
 | Calculate flow rates for pressure boundaries | `FlowRateOptimizer` | [Flow Rate Optimization](flow-rate-optimization.md) |
 | Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipse-vfp-export) |
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
+| Apply a facility operating restriction without replacing the equipment rating | `CapacityConstraint.setOperatingLimit(...)` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md#facility-operating-limits-without-losing-the-design-basis) |
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | Optimize full multi-area process models | `ProcessModelSimulationEvaluator` | Use area-qualified `ProcessAutomation` addresses and installed `CapacityConstraint` limits |
+| Sample fail-closed 1D/2D operating-envelope slices | `ProcessModelOperatingEnvelopeStudy` | Reuse `ProcessModelOperatingActionSetEvaluator`; every point retains complete candidate/restoration evidence |
+| Compare accepted envelopes across ordered lifecycle periods | `ProcessModelOperatingEnvelopeLifecycleStudy` | Admit only complete exact-runtime period evidence; retain stable action identities and report sampled bottleneck migration |
 | Ramp producers until a full facility reaches a bottleneck | `ProcessModelThroughputOptimizer` | Use producer mappings, installed capacity tables, and exported case traces |
 | Compare one installed capacity alternative with the same search policy | `ProcessModelDebottleneckStudy` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#paired-installed-capacity-alternatives) |
 | Rank independently documented capacity alternatives on one compatible metric | `ProcessModelDebottleneckRanking` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#ranking-independent-debottleneck-alternatives) |
@@ -128,6 +131,12 @@ NeqSim provides three main levels of optimization capability:
 
 ## The Two Main Optimizers
 
+The single-system Java snippets use the complete `OptimizationGuideSetup.java` from
+[Getting Started](getting-started.md). Compile that class first; put snippet imports above
+your class and execute the remaining statements in a method. Run the base setup below
+before independent extensions. The multi-area sections explicitly require the named
+model, installed limits and actions described in their linked tests and guides.
+
 ### ProcessOptimizationEngine
 
 **Purpose:** Find maximum throughput for given inlet/outlet pressure conditions while respecting equipment constraints.
@@ -146,20 +155,32 @@ NeqSim provides three main levels of optimization capability:
 - Auto-detects feed and outlet streams
 - Generates sensitivity analysis
 
+<!-- overview-example: 0 -->
 ```java
-// ProcessOptimizationEngine - throughput-focused
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+ProcessSystem process = OptimizationGuideSetup.createProcess();
+Stream feed = (Stream) process.getUnit("feed");
+Compressor compressor = (Compressor) process.getUnit("comp");
+Logger logger = LogManager.getLogger("OptimizationOverview");
 ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-
-// Find max throughput at given pressures
-OptimizationResult result = engine.findMaximumThroughput(
-    50.0,      // inlet pressure (bara)
-    10.0,      // outlet pressure (bara)
-    1000.0,    // min flow rate
-    100000.0   // max flow rate
-);
-
-System.out.println("Max flow: " + result.getOptimalValue() + " kg/hr");
-System.out.println("Bottleneck: " + result.getBottleneck());
+engine.setFeedStreamName("feed");
+engine.setOutletStreamName("outlet");
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH);
+engine.setTolerance(1.0);
+ProcessOptimizationEngine.OptimizationResult result =
+    engine.findMaximumThroughput(50.0, 150.0, 10000.0, 200000.0);
+if (!result.isConverged()) {
+    throw new IllegalStateException(result.getErrorMessage());
+}
+feed.setFlowRate(result.getOptimalValue(), "kg/hr");
+process.run();
+logger.info("Max flow: {} kg/hr; bottleneck: {}", result.getOptimalValue(), result.getBottleneck());
 ```
 
 ### ProductionOptimizer
@@ -181,26 +202,28 @@ System.out.println("Bottleneck: " + result.getBottleneck());
 - Parallel scenario evaluation
 - Works with any `ProcessSystem`
 
+<!-- overview-example: 1 -->
 ```java
-// ProductionOptimizer - general-purpose
+import java.util.Arrays;
+import java.util.List;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
+
 ProductionOptimizer optimizer = new ProductionOptimizer();
-
-// Configure optimization
-OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)
-    .tolerance(100.0)
-    .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
-    .maxIterations(30);
-
-// Define objectives
+OptimizationConfig config = new OptimizationConfig(10000.0, 200000.0)
+    .rateUnit("kg/hr").defaultUtilizationLimit(1.0).utilizationMarginFraction(0.05)
+    .tolerance(1.0).searchMode(SearchMode.GOLDEN_SECTION_SCORE).maxIterations(60);
 List<OptimizationObjective> objectives = Arrays.asList(
     new OptimizationObjective("throughput",
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
-        1.0, ObjectiveType.MAXIMIZE)
-);
-
-// Run optimization
-OptimizationResult result = optimizer.optimize(process, feed, config, objectives, null);
-System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
+        proc -> ((Stream) proc.getUnit("outlet")).getFlowRate("kg/hr"),
+        1.0, ObjectiveType.MAXIMIZE));
+ProductionOptimizer.OptimizationResult result = optimizer.optimize(process, feed, config, objectives, null);
+if (!result.isFeasible()) {
+    throw new IllegalStateException("No feasible operating point");
+}
+feed.setFlowRate(result.getOptimalRate(), "kg/hr");
+process.run();
+logger.info("Optimal rate: {} kg/hr", result.getOptimalRate());
 ```
 
 ---
@@ -211,11 +234,13 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 |----------|-------------|-----|
 | "What's the max flow at P_in=50, P_out=10?" | `ProcessOptimizationEngine` | Designed exactly for this |
 | "Find bottleneck equipment" | `ProcessOptimizationEngine` | Has constraint evaluation built-in |
-| "Generate Eclipse VFP tables" | `ProcessOptimizationEngine` | Has `EclipseVFPExporter` integration |
+| "Format supplied well BHP as VFPPROD" | `EclipseVFPExporter` | Explicit axes/units; see [export contract](vfp-export-contract.md) |
 | "Minimize operating cost" | `ProductionOptimizer` | Custom objective function support |
 | "Optimize pressure AND flow rate together" | `ProductionOptimizer` | Multi-variable support |
 | "Trade off throughput vs power consumption" | `ProductionOptimizer.optimizePareto()` | Pareto multi-objective |
 | "Increase several producers until the full facility reaches a bottleneck" | `ProcessModelThroughputOptimizer` | Maps producers, loads installed capacities, and records the active bottleneck per case |
+| "Trace how the feasible region and installed or plant bottleneck changes across one or two declared actions" | `ProcessModelOperatingEnvelopeStudy` | Samples the existing transactional action evaluator, keeps infeasible points, and stops on unsafe baseline recovery |
+| "Compare accepted envelopes as reservoir, availability, and operating limits change" | `ProcessModelOperatingEnvelopeLifecycleStudy` | Aggregates independently validated periods with stable action identities and no shared mutable model state |
 | "Quantify one documented equipment expansion against the installed case" | `ProcessModelDebottleneckStudy` | Pairs identical searches, metrics, evidence, and state recovery |
 | "Rank several independently evaluated equipment alternatives" | `ProcessModelDebottleneckRanking` | Requires one exact metric definition and one identical deterministic baseline; rejects unlike evidence |
 | "Evaluate 100 scenarios in parallel" | `ProductionOptimizer` | Has parallel evaluation |
@@ -225,9 +250,82 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 
 ## Full ProcessModel Optimization
 
+For single-process searches, `ProductionOptimizer` rejects failed compressor-speed
+solves and invalid fixed-speed chart points as hard infeasible trials. These appear
+as `compressorSpeedSolve` and `compressorChartOperatingPoint` constraints. Failed
+trials do not evaluate objectives or user constraints against stale downstream
+results, including when optional simulation validation is disabled. Other calculation
+exceptions propagate so configuration and programming errors remain visible.
+
 Use `ProcessModelThroughputOptimizer` for large fixed-equipment studies such as increasing one or more producer feed rates until a separator, compressor, valve, heat exchanger, or export train reaches its installed capacity. It is the ergonomic layer for the common full-facility throughput-to-bottleneck task.
 
 Use `ProcessModelSimulationEvaluator` directly when you need a lower-level black-box bridge to SciPy, NLopt, SQP, Pyomo, or another external optimizer.
+
+Use `ProcessModelOperatingEnvelopeStudy` when the engineering question is a sampled one- or two-dimensional operating envelope over already-declared `ProcessModelOperatingAction` controls. The study reuses `ProcessModelOperatingActionSetEvaluator` for every grid point, so failed or infeasible points retain the same constraint and restoration evidence and sampling stops immediately if the mutable baseline cannot be restored and reconverged. At feasible points, the leading row is selected from finite normalized installed-equipment and typed plant/shared/coupled evidence; raw kW, velocity, rate, surge margin, and other unlike physical quantities are never compared. Infeasible points use the exact fail-closed rejection source: the first applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated hard model constraint in declaration order. Each adjacent grid edge also reports an `OperatingRegionTransition` when feasibility, the exact evaluator outcome, or the leading constraint/evidence layer changes. The record preserves both endpoint outcomes, action semantics, interval width, and constraint identities. It always states that the event is sampled and not interpolated; this is especially important for discrete route or line-up actions. A sampled slice is not proof of a continuous feasible boundary or optimizer active set.
+
+For a live field network, add `FieldWellNetworkProcessUnit` to the normal process area
+and address its canonical choke and edge controls through `ProcessAutomation`. This
+lets the same transactional evaluator run the coupled well/network solve before
+separator, compressor, common-shaft and shared-power evidence is captured. Splitter
+route actions preserve the requested outlet fraction exactly and proportionally
+rescale the remaining outlets, which is required for deterministic candidate
+read-back and exact reverse-order restoration. Common-shaft casing/allocation
+consistency uses the explicitly configured power-balance tolerance; stale calculation
+identities, non-finite evidence and discrepancies outside that tolerance still fail
+closed.
+
+A fixed separator-arrival boundary can be declared as a continuous action through
+`sink.<node>.pressure`. Discovery exposes that input only for a fixed-pressure sink;
+calculated node pressure remains an output and attempts to address a junction as a sink
+are rejected. Route-conditioned pressure studies should use a separate exact 2D
+route × pressure slice. They must not collapse route choice into a continuous variable
+or promote the combined controls to an interpolated 3D operating surface.
+
+A variable common-shaft speed can likewise be exposed through a fixed-speed
+`CompressorShaftCalculator` action. Sample separator arrival pressure × shaft speed as an exact 2D slice: each cell
+runs the coupled process and retains the existing export-pressure, compressor-map, common-speed, driver/gearbox and
+shared-power evidence. Reject incomplete, stale or non-finite cells; do not relax those constraints to fill the slice
+or infer an unsampled continuous surface.
+
+When a declared driver limit is the qualification target, add a separate exact 1D shaft-speed slice and refine only
+an evaluated feasible/infeasible crossing. Preserve both terminal bracket endpoints, their signed driver-power
+margins, every refinement recovery gate, and the per-casing surge/stonewall evidence. The refined bracket is diagnostic:
+do not infer monotonic behavior outside it or promote its midpoint to an operating set point without the normal
+optimizer acceptance and replay.
+
+A casing-map boundary uses the same exact speed action and the installed `surgeMargin` or `stonewallMargin` row.
+When a reviewed facility procedure requires more clearance than the preserved map default, configure an operating
+override on that row and keep the map-derived value supplier, physical unit, source reference and signed margin in the
+receipt. To demonstrate bottleneck migration, restore that override before applying a tighter driver rating and
+reevaluate the same low/high speed points with the same evaluator. The two receipts must identify the map row and the
+driver row independently; a driver-limited result must never hide a negative casing-map margin, and neither receipt
+authorizes changing an OEM map or protection setting.
+
+The source-backed living acceptance also exports this pair as `map_driver_migration_evidence`. The receipt is bound
+to the living-task cycle, evaluator, continuous speed action, unit and identical sampled endpoints. It retains both
+complete slice records, the configured map-limit role and provenance, the independently refined map and driver
+boundaries, explicit map-override clearance, and complete baseline restoration. Set
+`production.require_map_driver_migration_evidence: true` when the receipt is required. The existing #4187 production
+guard reconstructs sampled transitions and every midpoint recovery gate before the proposal can enter the ledger;
+promotion then carries the unchanged receipt into `results.json` and the reviewed baseline snapshot. A changed or
+tampered constraint identity, limit role, provenance, endpoint grid, cycle ID, refinement, or restoration flag fails
+closed. This is persistence of advisory qualification evidence, not a second optimizer or permission to change an
+OEM map, driver rating, or operating set point.
+
+The living report renders every valid ledger receipt in a cycle-ordered map-to-driver timeline. Superseded receipts
+remain visible with their invalidating cycle, while malformed or cycle-mismatched receipts are withheld. The canonical
+current-best and immutable final reports independently validate the promoted receipt before rendering the exact map
+restriction, configured operating-limit role and provenance, driver restriction/rating, and identical common-speed
+endpoints. When lifecycle and migration evidence are both required, the guard also resolves each diagnostic identity
+to exactly one `AVAILABLE` row in the same current period's complete accepted-replay utilization coverage. It rejects
+an ambiguous or missing identity, the same row used twice, or configured map provenance that remains after the receipt
+says the temporary override was cleared. Both report views show the joined accepted-replay current value, applicable
+limit, utilization, basis, and provenance for the map and driver identities. These report views are advisory consumers
+of guarded evidence; they do not recalculate compressor physics or turn a refined boundary into an approved operating
+point. Installed-equipment display identities are qualified by process area (`area::equipment/constraint`), while
+stable IDs preserve the coverage model, area, and equipment separately. Declared coverage must include both
+compressor map margins and the equipment-local shaft-power constraint alongside registered plant driver limits,
+because either driver representation can lead the diagnostic boundary.
 
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
@@ -259,7 +357,10 @@ The typical workflow is:
 
 The high-level API pattern below is covered by the focused unit test `ProcessModelThroughputOptimizerTest`.
 
+<!-- overview-example: 2 -->
 ```java
+// Requires connected "wells" and "separation" areas with a 10000 kg/hr baseline feed.
+// Save the installed-capacity CSV shown below before running this fragment.
 ProcessModelThroughputOptimizer optimizer = new ProcessModelThroughputOptimizer(model);
 optimizer.addProducer("feed", "wells::feed.flowRate", 1.0, 2.0, "kg/hr");
 optimizer.setObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
@@ -291,7 +392,9 @@ separation,separator,installedGasCapacity,wells::feed.flowRate,15000,16500,kg/hr
 
 For custom optimizers, use the underlying `ProcessModelSimulationEvaluator`. The API pattern below is covered by the focused unit test `ProcessModelSimulationEvaluatorTest`.
 
+<!-- overview-example: 3 -->
 ```java
+// Uses the same connected two-area model and its installed separator limit.
 ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(model);
 evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
 evaluator.addObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
@@ -344,6 +447,24 @@ each dynamic limit supplier is sampled once per ranking call.
 Enabled limits with undefined (`NaN`) utilization remain visible at the end for diagnosis.
 Call `rankCapacityConstraints(model)` directly only when a ranking is needed outside an evaluator
 run; it returns the same snapshot shape without adding a process simulation.
+
+Plant-wide budgets and coupled-equipment restrictions should be registered with
+`addPlantConstraint(...)` or `addPlantConstraintGroup(...)`, using immutable
+`PlantConstraintDefinition` and exact-calculation `PlantConstraintSample` evidence. A group callback
+is sampled once per completed model evaluation, so a `PlantCommonShaftEvidence` result can contribute
+its common-speed, casing-map, shaft/driver-power, torque and gearbox rows without rebuilding the train
+for each constraint. Prefer `addCommonShaftConstraintGroup(...)` for this adapter: it freezes the
+canonical definition contract and verifies the returned candidate identity before exposing samples.
+Use the callback's evaluator-owned `calculationId` for the evidence and
+`sourceCalculationId(compressor.getCalculationIdentifier().toString())` for casing freshness when
+those identities differ. `PlantSharedResourceEvidence.toPlantConstraintSample()` provides the corresponding
+single-row path for a shared shaft-power or electrical-demand budget. Missing, stale, non-finite,
+out-of-validity, mismatched or incomplete evidence fails closed through `PlantUtilizationSnapshot`.
+Optimizer arrays retain dimensionless utilization and margin, while
+`EvaluationResult.getPlantConstraintEvidence()` preserves physical units, provenance, coverage and
+operating status in registration order. Runtime callbacks are transient. A deserialized evaluator
+therefore retains its registration metadata but fails closed; construct a fresh evaluator and
+re-register the callbacks before resuming optimization.
 
 `ProcessModelSimulationEvaluator` complements rather than replaces the other optimizers. Use `ProcessOptimizationEngine` for compact throughput cases on one process, `ProductionOptimizer` for existing single-system objective workflows, and `ProcessModelSimulationEvaluator` when the optimization boundary is the full plant model.
 
@@ -414,15 +535,12 @@ Equipment constraints define operating limits. Each equipment type has a strateg
 | Pipe | Erosional velocity, pressure drop |
 | Valve | Cv capacity, choke conditions |
 
-> **⚠️ Important**: Most equipment constraints are **disabled by default** for backward compatibility. The optimizer automatically falls back to traditional capacity methods (`getCapacityMax()`/`getCapacityDuty()`) when no enabled constraints exist. To use multi-constraint capacity analysis, you must explicitly enable constraints:
->
-> ```java
-separator.useEquinorConstraints();  // Enable Equinor TR3500 constraints
-// OR
-separator.enableConstraints();       // Enable all constraints
-> ```
->
-> See [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default) for details.
+Constraint availability and default enablement depend on the equipment. Inspect
+`getCapacityConstraints()` and each constraint's `isEnabled()` flag; explicitly configure
+installed ratings and enable the required constraints before optimization. Chart-dependent
+compressor limits remain disabled without a chart. A missing or disabled limit is not
+proof that the physical equipment has unlimited capacity. See the
+[capacity setup guide](../CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default).
 
 ### Utilization Ratio
 
@@ -438,6 +556,7 @@ $$\text{utilization} = \frac{\text{actual value}}{\text{design limit}}$$
 
 The **bottleneck** is the equipment with the highest utilization ratio:
 
+<!-- overview-example: 4 -->
 ```java
 String bottleneck = engine.findBottleneckEquipment();
 // Returns equipment name with highest utilization
@@ -535,7 +654,10 @@ non-finite value, limit violation, or sample outside an explicitly declared vali
 closed with a distinct `Outcome`. An absent validity range is reported as `NOT_ASSESSED` and is not
 silently invented.
 
+<!-- overview-example: 5 -->
 ```java
+// Requires a solved producer/well model with an enabled "well drawdown" limit.
+// export is a downstream stream; the current producer rate is inside the action bounds.
 ProcessModelSimulationEvaluator simulation = new ProcessModelSimulationEvaluator(model);
 simulation.addObjective("export gas", processModel -> export.getFlowRate("kg/hr"),
     ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
@@ -584,7 +706,10 @@ reruns the baseline. The serializable result exposes immutable per-action reques
 residuals, tolerances and provenance together with objective, constraint, hydraulic and restoration
 evidence for Java and JPype/Python.
 
+<!-- overview-example: 6 -->
 ```java
+// simulation wraps a connected two-well model with an explicit objective and installed limits.
+// Both independent well actions and candidate rates use kg/hr for the allocation search below.
 ProcessModelOperatingActionSetEvaluator allocation =
     new ProcessModelOperatingActionSetEvaluator(
         "field-allocation", "Field production allocation",
@@ -622,7 +747,9 @@ transfer, so the sum remains constant while per-action bounds and all configured
 hydraulic constraints are enforced by NeqSim. The optimizer stops immediately if rollback or
 restored-baseline convergence fails.
 
+<!-- overview-example: 7 -->
 ```java
+// Continue with allocation above; initial rates sum to totalRate and lie inside their bounds.
 ProcessModelAllocationOptimizer optimizer = new ProcessModelAllocationOptimizer(
     "field-rate-allocation", "Field rate allocation",
     "approved well envelopes and host capacity basis revision A", allocation,
@@ -659,6 +786,336 @@ declared step tolerance; it does not prove global optimality. Validate nearby al
 conservation, product specifications, rotating-equipment maps, utilities, safety and market limits,
 and use independent model/evaluator/optimizer instances for parallel searches.
 
+### Mixed continuous/discrete operating-point search
+
+Use `ProcessModelOperatingPointOptimizer` when the same atomic action set contains independent
+continuous controls and exact discrete choices—for example well-choke openings together with HP/LP
+separator routing. The optimizer reuses `ProcessModelOperatingActionSetEvaluator` for every trial.
+It never interpolates a route selection, bypasses a hard constraint, or continues after incomplete
+baseline recovery.
+
+The deterministic coordinate search explores both directions of each continuous action using a
+shrinking fraction of its declared range and every alternative declared value of each discrete
+action. It accepts the best feasible finite-objective move from each complete neighborhood. The hard
+evaluation budget includes a reserved final evaluation: the selected point must replay from the
+restored baseline with the same objective before it is exposed as accepted.
+
+For a qualified continuous control that crosses a sharp map, driver, capacity, or other hard
+constraint, boundary refinement can be enabled explicitly. The optimizer bisects only between an
+eligible feasible point and a fully restored, converged rejection on that same continuous
+coordinate. Every midpoint consumes the normal evaluation budget and passes through the complete
+simulator, constraint snapshot, restoration, and replay contract; discrete routes are never
+interpolated. This is a sampled feasibility-boundary refinement, not permission to weaken a limit or
+accept an unconverged point.
+
+```java
+ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer(
+    "field-operating-point", "Field operating point",
+    "approved choke envelopes and qualified separator line-ups", actionSet)
+        .setInitialCandidate(initialChokesAndRoutes)
+        .setObjectiveIndex(0)
+        .setInitialStepFraction(0.25)
+        .setRelativeStepTolerance(1.0e-3)
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setMaximumEvaluations(100);
+
+ProcessModelOperatingPointOptimizer.OperatingPointSearchResult search = optimizer.optimize();
+if (!search.isAcceptedPointReplayed()) {
+  throw new IllegalStateException(search.getDiagnostics().toString());
+}
+Map<String, Object> optimizerEvidence = search.getOptimizerEvidence(currentCycleId);
+double[] acceptedChokesAndRoutes = search.getAcceptedCandidateValues();
+```
+
+`getOptimizerEvidence(cycleId)` emits the exact fail-closed fields used by the living-task production
+guard: current cycle identity, exact optimizer termination reason, candidate convergence/feasibility/finiteness, complete constraint and
+action evidence, complete state restoration, accepted-point replay, evaluation count, and measured
+runtime. The termination reason distinguishes tolerance convergence from an evaluation-budget stop; both still require
+the same feasible accepted-point replay, and budget exhaustion is never relabelled as convergence. When boundary
+refinement is enabled, it also records the configured per-direction maximum
+and the number of midpoint evaluations actually performed. A `true` evidence block qualifies only
+the configured steady-state model and limits. It is
+not a global-optimality claim, a dynamic/safety study, or permission to write to a control system.
+
+Pass the completed search to the overloads on `ProcessModelOperatingEnvelopeStudy` to use the
+terminal replay as the exact one- or two-dimensional slice anchor. The study verifies the complete
+replay, exact runtime evaluator identity, action/objective/constraint/hydraulic definition identity,
+unchanged installed-limit metadata, current model convergence, and
+unchanged baseline action values before running another point. `getAcceptedPointBottleneck(search)`
+returns the already-recorded unit-safe leading constraint without rerunning the model. Definition or
+baseline drift fails before mutation; callers must rerun the search instead of treating an old
+candidate as current. The reported row and the envelope remain sampled evidence, not causal
+attribution, a shadow price, a continuous feasible boundary, or operating approval.
+
+For a persistent engineering cycle, call
+`getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` after all requested slices complete.
+The compact immutable map combines the existing optimizer guard block, the accepted-point
+bottleneck, every sampled point, bottleneck transition, explicit operating-region transition,
+optional fail-closed continuous-boundary receipt, and per-slice plus aggregate evaluation counts
+and wall-clock runtimes. Accepted-envelope schema v2 also includes
+`cross_slice_constraint_summary`. Summary version 2 traverses every exact required-hydraulic,
+installed-equipment, and typed plant constraint already recorded at sampled points and final refined
+endpoints, so a secondary line, separator, compressor-map, common-shaft, or shared-power limit can
+remain visible even when it is not the single leading bottleneck. It groups rows only when source,
+qualified constraint name, applicable limit, unit, limit role, and limit provenance all match. Rows
+with any rejection rank first by occurrence; otherwise feasible rows enter only when their finite
+dimensionless normalized margin is at or below the configured threshold (default 0.10), whose
+provenance is exported. Physical margins remain visible evidence but are never ranked across unlike
+units. The summary reuses evaluator evidence and performs no additional process simulations;
+`summarizeConstraints(...)` exposes the same immutable read-only result. Summary version 1 remains a
+supported persisted-input contract for leading-only historical evidence. This is a deterministic
+screening report, not an optimizer active set, shadow price, causal attribution, or approval. Every
+slice must come from the exact runtime study, share the
+accepted candidate anchor, and have complete restoration/reconvergence. A foreign, deserialized,
+duplicate-axis, partial-recovery, or stale slice is rejected before export. Non-finite optional
+numerical fields are emitted as JSON `null`; they are never promoted to accepted evidence. Runtime
+is provenance for #2939 coordination, not a generic performance claim.
+
+`getOperatingRegionTransitions()` is the diagnostic handoff for map, injectivity, driver, capacity,
+and routing event studies. `BECAME_FEASIBLE` and `BECAME_INFEASIBLE` identify sampled feasibility
+changes; `EVALUATION_OUTCOME_CHANGED` preserves changes between exact fail-closed rejection classes;
+and `LEADING_CONSTRAINT_CHANGED` records a changed evidence identity or layer without comparing unlike
+physical units. Opt in with `setMaximumBoundaryRefinementEvaluations(...)` and record a positive
+range-relative tolerance plus provenance to bisect only `BECAME_FEASIBLE` or `BECAME_INFEASIBLE`
+edges on continuous actions. Every midpoint uses the unchanged complete transactional evaluator;
+only finite, converged, fully restored feasible or explicit hard/validity-rejected points may tighten
+the bracket. The receipt retains every midpoint and both final independently evaluated sides. It is
+not interpolation, an accepted set point, or operating approval. Each final side also retains its
+exact unit-safe leading or rejecting constraint, including the signed physical margin and engineering
+unit. This makes the reported headroom traceable without recomputing or substituting a different
+constraint after the refinement. A discrete edge is two evaluated line-ups only and is never refined
+into a route fraction or topology.
+
+Use `ProcessModelOperatingEnvelopeLifecycleStudy` when the accepted envelope must be compared across
+ordered field periods. Build each period from its own converged model/evaluator definition, search, and
+accepted-point slices, then add it with a non-negative strictly increasing elapsed time and explicit
+configuration provenance. The lifecycle study invokes the same exact-runtime envelope export gate before
+accepting a period, requires identical ordered action identifiers across periods, aggregates evaluation/runtime
+provenance, and reports changes in the accepted leading constraint between adjacent periods. Schema version 8
+also exports `period_change_diagnostics`: accepted-action deltas, comparable/added/removed slice axes, exact
+sampled-point overlap, feasible-point changes, and leading-constraint changes for every adjacent period pair. For
+matching axes it compares the complete sampled `operating_region_transitions` rows and reports exact retained,
+removed, and added events. Points and events are compared only when their physical evidence is exactly equal;
+changed grids are reported explicitly and are never interpolated. Schema v8 also compares complete
+`operating_region_boundary_refinements` receipts exactly, including tolerance provenance, every midpoint,
+terminal bracket, endpoint constraint/headroom evidence, and status. It additionally reports exact retained, removed,
+and added ranked constraint identities across adjacent periods. Identity includes `REJECTING` or `NEAR_ACTIVE`
+classification, source, qualified name, applicable limit, unit, limit role, and provenance. Rank, counts, headroom,
+and representative rows are deliberately excluded from identity; a classification or engineering-basis change is
+reported as one removed and one added identity rather than being hidden as a rank change.
+
+When a period is driven by an independently accepted reservoir/network state, use the `addPeriod` overload that
+accepts ordered `AcceptedStateMetric` values. Each metric carries a stable ID, name, finite value, explicit unit, and
+source provenance. Metric IDs, order, and units must remain identical across periods. Schema versions 4 through 8 retain the
+exact accepted state under each period when supplied and adds exact `accepted_state_changes` to the adjacent
+period diagnostics. This is the handoff for accepted reservoir pressure, production/injection rates, cumulative
+throughput, common-shaft power, or other already-qualified state; it does not make an independently calculated or
+forecast value accepted. State metrics remain optional in schema v8/v9 and remain readable in schemas v4 through v7. It does not copy
+reservoir, separator, compressor-map, shaft, driver, or power-limit physics; those remain in each period's
+canonical model and constraint evidence.
+
+```java
+ProcessModelOperatingEnvelopeLifecycleStudy lifecycle =
+    new ProcessModelOperatingEnvelopeLifecycleStudy(
+        "field-life", "Field lifecycle envelope", "approved forecast cases", "year");
+lifecycle.addPeriod(
+    "year-0", "Early life", 0.0, "forecast case E0",
+    earlyStudy, earlySearch, earlyChokeSlice, earlyRoutingSlice, earlyPowerSlice);
+lifecycle.addPeriod(
+    currentCycleId, "Late life", 5.0, "forecast case L5",
+    lateStudy, lateSearch, lateChokeSlice, lateRoutingSlice, latePowerSlice);
+String lifecycleEvidenceJson = lifecycle.toEvidenceJson(currentCycleId);
+```
+
+```python
+from neqsim_continuous.production import proposal_from_lifecycle_context
+
+
+def run(ctx):
+    lifecycle_json = build_lifecycle_study(ctx).toEvidenceJson(ctx.cycle_id)
+    proposal = proposal_from_lifecycle_context(
+        lifecycle_json,
+        ctx=ctx,
+        title="Increase accepted field export",
+        predicted=predicted_kpis,
+    )
+    return {"proposals": [proposal]}
+```
+
+Periods are independent by design: never mutate a completed period's model and reuse its accepted search as
+evidence for a later period. A missing, stale, unconverged, non-finite, partially restored, foreign, duplicate-axis,
+or action-incompatible period is rejected instead of producing a partial lifecycle report. Bottleneck transitions
+are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
+operating approval.
+
+Lifecycle schema versions 1 through 10 remain readable by the persistent production guard for stored historical
+evidence. A lifecycle with installed-equipment coverage exports schema version 9. When the declared coverage also
+includes registry-qualified plant constraints it exports schema version 11; without coverage it remains schema version
+8 for compatibility. Schema v10 remains readable, while schema v11 adds a deterministic constraint follow-up
+opportunity screen. The screen classifies exact current rejecting constraints and next-bottleneck candidates from the
+complete sampled/refined constraint ladder, preserving physical headroom, applicable limit, unit, role, provenance,
+axes, and evidence counts. It is not a causal attribution, shadow price, predicted benefit, equipment qualification,
+permission, or approval; a paired relief study is required before making a debottleneck-benefit claim. Schema v12 is
+emitted only when at least one installed-equipment screen row carries a qualified
+`ProcessModelDebottleneckStudy` receipt. Transactional studies use
+`OperatingActionCandidateListSearch` with the exact envelope action evaluator. The receipt binds the paired baseline
+action vector and selected-objective identity to the accepted replay, reruns the same ordered search under the proposed
+direct capacity limit, and is withheld unless both scenarios are converged, feasible and finite and both the action
+state and complete installed-limit state are restored. The objective binding retains the accepted replay value, paired
+sample, residual, allowed replay/search tolerance and tolerance provenance; it never hides numerical repeatability
+within a declared tolerance.
+
+Schema v13 is emitted when one period carries a complete ranked portfolio of at least two such exact receipts.
+Create every direct installed-capacity study against the same transactional evaluator, accepted action vector,
+ordered candidate search, and selected objective; then call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefPortfolio(...)`. The method qualifies every receipt first and uses
+`ProcessModelDebottleneckRanking.rankObjectives(...)` to compare the immutable transactional objective evidence.
+Partial portfolios fail closed: changed objective metadata, baseline actions, baseline objectives or constraints,
+failed restoration, non-finite evidence, or any unrankable candidate prevents the portfolio receipt. Competition
+ranks are deterministic, retain input order inside the declared tie tolerance, and remain advisory sampled deltas.
+They do not imply additive benefits, interaction effects, causality, a shadow price, global optimality, investment
+approval, permission to alter an installed limit, or operating approval.
+
+Schema v14 is emitted when a schema-v13 period also carries one qualified joint evaluation of two or more portfolio
+members. Construct one list-based `ProcessModelDebottleneckStudy` with those exact alternatives and the same
+transactional evaluator, accepted action vector, ordered candidate search and objective policy, then call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefCombination(...)`. The study applies all direct limits in declared
+order, evaluates the combined process once, restores every limit in reverse order and reconverges the original state.
+The receipt records the actual joint objective delta, the arithmetic sum of the already-qualified independent deltas,
+their signed interaction difference, and exact baseline-to-joint installed-constraint bottleneck migration. The guard
+and report recompute all arithmetic and membership bindings. They never infer the joint response from additive
+assumptions, and reject non-finite, stale, foreign, partially restored or incomplete evidence.
+
+Schema v15 extends the same exact joint-combination binding to paired operating-envelope slices. First evaluate one
+or more complete baseline slices from the accepted replay. Then call
+`ProcessModelDebottleneckStudy.evaluateCombinedEnvelope(...)` with those exact runtime slices; the study applies every
+combination member together, repeats the identical axes, grids, anchors and refinement policy, stops on any unsafe
+point recovery, restores every installed limit in reverse order and reconverges the restored process. Finally call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefEnvelope(...)` with the same accepted search, portfolio, combination
+study and accepted-point result. Qualification rejects foreign, deserialized, partial, non-finite, stale or
+structurally mismatched slices. The receipt retains both complete slice blocks, exact sampled feasibility/outcome and
+leading-constraint identity changes, and signed shifts of terminal feasible/infeasible refinement-bracket endpoints
+only when exactly one baseline and one relieved continuous boundary are comparable on an axis. A bracket endpoint is
+not promoted to an exact boundary, discrete routes are never interpolated, and no independent relief delta is treated
+as additive.
+
+Schema v16 adds exact sampled-cell topology when an accepted envelope contains a two-dimensional slice. Each cell is
+identified by its lower grid indexes and four clockwise corner sequence indexes, classified only from independently
+evaluated corner feasibility, and linked to the exact sampled perimeter edges where feasibility changes. The paired
+combined-relief receipt compares those complete baseline and relieved cell records. It does not infer feasible area,
+an interior contour, or a boundary between discrete pressure-level routes; any continuous refinement remains a
+separate fail-closed bracket.
+
+Schema v11 retains the schema-v10 requirement for non-empty, independently declared plant-constraint IDs in addition to the
+schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
+calculation binding to the accepted-point replay. Supply both
+`getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
+this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14/v15/v16/v17 exports retain optional
+accepted-state metrics and require schema-v2
+cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
+endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, validates any v12/v13
+receipt against the exact installed identity, limit, unit, action set, accepted action vector, objective identity,
+accepted value, paired residual/tolerance, finite delta and restoration flags, reconstructs each schema-v13 portfolio
+identity, candidate count, input indices, alternative identities, common objective policy and competition rank from
+the persisted deltas, reconstructs each schema-v14 joint membership, objective arithmetic, restoration state and
+bottleneck migration without assuming additivity, reconstructs every schema-v15 paired slice grid, point identity
+change, refinement count and bracket-endpoint shift from the persisted baseline and jointly relieved slices,
+reconstructs every schema-v16 sampled cell and perimeter boundary family from the persisted 2D grid, and then
+requires every schema-v17 period to retain an accepted optimizer termination reason from the same replayed search, and then
+recomputes every
+period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
+migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,
+and, when present, state-metric identity,
+units, finite values, and exact deltas. A missing or modified
+count, event, delta, axis set, feasibility change, state metric, coverage row, or ranked identity therefore fails closed
+instead of becoming a trusted advisory result.
+
+Long-lived Task Solver studies can persist this map as `lifecycle_envelope_evidence` beside the current
+`accepted_point_envelope_evidence`. Enable both `production.require_envelope_evidence` and
+`production.require_lifecycle_envelope_evidence`; assign the current lifecycle period the task cycle ID and reuse
+that period's exact accepted-point envelope as the current proposal evidence. The production guard revalidates all
+periods and aggregate/transition closure from persisted JSON, then invalidates and supersedes the lifecycle advice
+when mapped reservoir state, availability, routing, operating limits, or other evidence changes. This reuses the
+existing #4187 ledger and revalidation path rather than introducing another lifecycle state store.
+
+Promotion automatically copies one exact schema-v8/v9 block from the reviewed cycle's current guard-approved ledger
+proposal into both the current-best `results.json` and its immutable baseline snapshot. It independently replays the
+production validation and refuses stale, superseded, rejected, modified, unguarded, or ambiguous evidence before
+changing the baseline. When lifecycle evidence is required, a cycle without that receipt cannot be promoted.
+
+The supported Java-to-living-task boundary is the compact JSON returned by
+`ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceJson(currentCycleId)`. It fails before serialization unless
+one independently validated lifecycle period has that exact cycle ID. A task-local `scripts.optimize` stage passes
+the JSON and cycle context to `neqsim_continuous.production.proposal_from_lifecycle_context(...)`. The adapter rejects
+stale, duplicate, non-finite, incomplete, or edited evidence, derives exact setpoints and the accepted envelope, and
+reuses the same production validators that guard and promotion use. It also binds the Java search's selected-objective
+name, direction, unit, initial value, and accepted value to the task-local `goal.yaml` objective and reviewed baseline
+KPI. The task must declare `objective.metric`, `objective.source_name`, `objective.direction`, and `objective.unit`.
+Historical evidence without replay metadata still requires exact baseline equality. Current Java evidence may bind the
+initial objective within its explicit `replay_relative_tolerance` and `replay_tolerance_provenance`; the production
+guard rejects missing provenance, non-finite/negative values, or a relative tolerance above $10^{-6}$. This uses the
+same simulator-replay qualification as terminal optimizer acceptance and does not permit a physical-constraint or
+operating-limit tolerance. The adapter derives the directional
+gain and objective prediction instead of trusting task-script constants. Set
+`production.require_objective_evidence: true` with the existing envelope requirements so the guard repeats this
+binding before publication. The task may supply additional finite constraint predictions but must not rebuild Java
+evidence dictionaries. The separate `report.prepare` hook refreshes report inputs after accepted results exist and is
+not a proposal-ingestion path. The lower-level `proposal_from_lifecycle_json(...)` remains available for compatibility
+when callers already own separately qualified proposal metadata.
+
+The engineer-runnable source example is `devtools/field_to_facility_living_example.py`. It calls the exact ten-well
+Java fixture from `target/test-classes`, assigns generated living-task cycle IDs to the current lifecycle periods, and
+then exercises the adapter, production guard, append-only ledger, reviewed promotion, selective limit revalidation,
+living report, and canonical HTML report. Run it after compiling tests and generating the Maven dependency classpath:
+
+```bash
+./mvnw -B -ntp -DskipTests test-compile dependency:build-classpath \
+  -Dmdep.outputFile=target/optimization-classpath.txt
+NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimization-classpath.txt)" \
+  python devtools/field_to_facility_living_example.py \
+  --output-parent target/field-to-facility-example
+```
+
+The command refuses an existing task directory, runs the initial 1.01 shared-power-limit case, promotes only its
+guard-approved exact replay, changes the declared multiplier to 1.02, selectively recomputes the affected evidence,
+promotes the replacement cycle, and prints a compact JSON summary. The retained task folder contains the append-only
+ledger, both cycle receipts, `continuous/LIVING_REPORT.md`, the canonical HTML report, and
+`field_to_facility_acceptance_summary.json`. Use
+`--initial-shared-power-multiplier` and `--revised-shared-power-multiplier` only for finite values greater than 1.0.
+The complete regression remains
+`devtools.test_field_to_facility_living_workflow.FieldToFacilityLivingWorkflowTest`; it exercises the same reusable
+Python orchestration helpers and adds tamper-rejection assertions.
+
+The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
+selected-objective identity and reviewed-baseline binding, schema-v11 persistence and constraint-opportunity
+reconstruction, complete declared installed and
+plant-wide constraint coverage with operating-limit provenance, common-shaft/compressor-map/driver/shared-power
+evidence, the separator/scrubber-to-shared-power bottleneck migration, and report
+rendering, including the cycle-by-cycle map-to-driver ledger timeline and the promoted canonical migration section.
+It is a
+synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
+instruction to relax any physical constraint.
+
+The same acceptance now performs a second living-task cycle after changing the task-local shared-power operating
+limit in `continuous/user_input.yaml`. An explicit evidence-impact rule selects the Java optimization, KPI,
+constraint, guard, ledger, and report-digest stages while retaining an unrelated completed stage and its KPI. Before
+the new optimization is published, the evidence stage marks the previous optimizer receipt stale and superseded.
+The replacement proposal must carry the new cycle ID, the unchanged reviewed objective baseline, fresh finite Java
+evidence, and a `revalidation_of` ledger link to the invalidated proposal. Unmapped input changes still fail closed to
+a full cycle. Selective execution is therefore an execution/provenance claim only: it does not reuse an accepted
+candidate, constraint snapshot, or partially restored model state.
+
+The canonical task report consumes accepted top-level schema-v8/v9 `lifecycle_envelope_evidence` in both ordinary
+current-best and immutable final-report generation. It renders the exact per-period `REJECTING` and `NEAR_ACTIVE`
+rows, representative values, signed physical headroom with engineering units, and adjacent-period identity
+migration. Schema v9 additionally renders every declared installed-capacity row with current value, applicable limit,
+utilization, unit, basis, and provenance. Before rendering, it requires complete ordered period evidence, finite counts/runtime, complete slices,
+matching representative identities, exact reconstructed identity deltas, and—when a promoted living-task baseline
+exists—the matching source cycle. A mismatch produces an explicit evidence-withheld section rather than a partial
+bottleneck claim. This report view is downstream of, and does not replace, the production guard. Rankings remain
+period-local; unlike-unit margins are not compared, and the output is not causal attribution, a shadow price,
+equipment qualification, operating approval, or authority to weaken a physical constraint.
+
 ### Trace-qualified bottleneck-relief evidence
 
 `ProcessModelAllocationBottleneckAnalyzer` reads a completed
@@ -667,7 +1124,9 @@ an operating action. It keeps only fully recovered candidates whose selected raw
 on the best feasible sample by more than the declared objective tolerance and which contain at
 least one exact finite hard-constraint violation.
 
+<!-- overview-example: 8 -->
 ```java
+// Continue with the completed allocation search above.
 ProcessModelAllocationBottleneckAnalyzer analyzer =
     new ProcessModelAllocationBottleneckAnalyzer(
         "field-allocation-relief", "Field allocation bottleneck relief",
@@ -701,14 +1160,16 @@ approval.
 
 ### ProcessOptimizationEngine Algorithms
 
+<!-- overview-example: 9 -->
 ```java
-engine.setSearchAlgorithm(SearchAlgorithm.GOLDEN_SECTION);
-engine.setSearchAlgorithm(SearchAlgorithm.BFGS);
-engine.setSearchAlgorithm(SearchAlgorithm.GRADIENT_ACCELERATED);
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION);
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BFGS);
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT);
 ```
 
 ### ProductionOptimizer Algorithms
 
+<!-- overview-example: 10 -->
 ```java
 config.searchMode(SearchMode.BINARY_FEASIBILITY);
 config.searchMode(SearchMode.GOLDEN_SECTION_SCORE);
@@ -723,58 +1184,89 @@ config.searchMode(SearchMode.GRADIENT_DESCENT_SCORE);  // New (Jan 2026)
 
 ## Python usage through neqsim-python
 
-Both optimizers work seamlessly from Python using neqsim-python:
+Install `neqsim==3.20.0` in a fresh Python runtime. The second block continues from the first:
 
 ### ProcessOptimizationEngine from Python
 
 ```python
 from neqsim import jneqsim
 
-# Get classes
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 ProcessOptimizationEngine = jneqsim.process.util.optimizer.ProcessOptimizationEngine
-SearchAlgorithm = ProcessOptimizationEngine.SearchAlgorithm
 
-# Create and configure
+gas = SystemSrkEos(303.15, 50.0)
+gas.addComponent("methane", 0.90)
+gas.addComponent("ethane", 0.10)
+gas.setMixingRule("classic")
+feed = Stream("feed", gas)
+feed.setFlowRate(50000.0, "kg/hr")
+compressor = Compressor("comp", feed)
+compressor.setOutletPressure(150.0, "bara")
+compressor.setUsePolytropicCalc(True)
+compressor.setPolytropicEfficiency(0.78)
+compressor.getMechanicalDesign().setMaxDesignPower(4000.0)
+power_limit = compressor.getCapacityConstraints().get("power")
+power_limit.setMaxValue(100.0)
+compressor.clearCapacityConstraints()
+compressor.addCapacityConstraint(power_limit)
+outlet = Stream("outlet", compressor.getOutletStream())
+process = ProcessSystem()
+for equipment in [feed, compressor, outlet]:
+    process.add(equipment)
+process.run()
+
 engine = ProcessOptimizationEngine(process)
-engine.setSearchAlgorithm(SearchAlgorithm.GOLDEN_SECTION)
-
-# Find max throughput
-result = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 100000.0)
-print(f"Max flow: {result.getOptimalValue():.0f} kg/hr")
-print(f"Bottleneck: {result.getBottleneck()}")
+engine.setFeedStreamName("feed")
+engine.setOutletStreamName("outlet")
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH)
+engine.setTolerance(1.0)
+result = engine.findMaximumThroughput(50.0, 150.0, 10000.0, 200000.0)
+assert result.isConverged(), str(result.getErrorMessage())
+feed.setFlowRate(result.getOptimalValue(), "kg/hr")
+process.run()
+assert compressor.getPower("kW") <= 4000.0
+assert abs(feed.getFlowRate("kg/hr") - outlet.getFlowRate("kg/hr")) < 1e-6
+print(f"Maximum flow: {result.getOptimalValue():.1f} kg/hr")
+print(f"Power: {compressor.getPower('kW'):.2f} kW; bottleneck: {result.getBottleneck()}")
 ```
 
 ### ProductionOptimizer from Python
 
 ```python
-from neqsim import jneqsim
-from jpype import JImplements, JOverride
+# Continue from the process constructed in the preceding block.
+from jpype import JClass, JImplements, JOverride
 
-# Get classes
 ProductionOptimizer = jneqsim.process.util.optimizer.ProductionOptimizer
 OptimizationConfig = ProductionOptimizer.OptimizationConfig
 OptimizationObjective = ProductionOptimizer.OptimizationObjective
 SearchMode = ProductionOptimizer.SearchMode
+ObjectiveType = ProductionOptimizer.ObjectiveType
 
-# Define objective function as Java interface
 @JImplements("java.util.function.ToDoubleFunction")
 class ThroughputObjective:
     @JOverride
     def applyAsDouble(self, proc):
         return proc.getUnit("outlet").getFlowRate("kg/hr")
 
-# Configure and run
-optimizer = ProductionOptimizer()
-config = OptimizationConfig(50000.0, 200000.0) \
-    .tolerance(100.0) \
-    .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
-
-objectives = [
-    OptimizationObjective("throughput", ThroughputObjective(), 1.0)
-]
-
-result = optimizer.optimize(process, feed, config, objectives, None)
-print(f"Optimal rate: {result.getOptimalRate():.0f} kg/hr")
+config = (OptimizationConfig(10000.0, 200000.0)
+          .rateUnit("kg/hr")
+          .tolerance(1.0)
+          .maxIterations(60)
+          .defaultUtilizationLimit(1.0)
+          .utilizationMarginFraction(0.05)
+          .searchMode(SearchMode.GOLDEN_SECTION_SCORE))
+objectives = JClass("java.util.ArrayList")()
+objectives.add(OptimizationObjective("throughput", ThroughputObjective(), 1.0, ObjectiveType.MAXIMIZE))
+result = ProductionOptimizer().optimize(process, feed, config, objectives, None)
+assert result.isFeasible()
+feed.setFlowRate(result.getOptimalRate(), "kg/hr")
+process.run()
+assert 0.0 < compressor.getPower("kW") <= 0.95 * 4000.0
+assert abs(feed.getFlowRate("kg/hr") - outlet.getFlowRate("kg/hr")) < 1e-6
+print(f"Optimal rate: {result.getOptimalRate():.1f} kg/hr")
 ```
 
 ---
@@ -783,77 +1275,50 @@ print(f"Optimal rate: {result.getOptimalRate():.0f} kg/hr")
 
 ### Example 1: Find Maximum Compressor Throughput
 
+<!-- overview-example: 11 -->
 ```java
-import neqsim.process.util.optimizer.ProcessOptimizationEngine;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-// Create gas system
-SystemInterface gas = new SystemSrkEos(288.15, 50.0);
-gas.addComponent("methane", 0.9);
-gas.addComponent("ethane", 0.1);
-gas.setMixingRule("classic");
+public class CompressorThroughputOverview {
+    private static final Logger logger = LogManager.getLogger(CompressorThroughputOverview.class);
 
-// Build process
-Stream feed = new Stream("feed", gas);
-feed.setFlowRate(50000, "kg/hr");
-feed.setPressure(50.0, "bara");
-
-Compressor compressor = new Compressor("comp", feed);
-compressor.setOutletPressure(100.0);
-
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(compressor);
-process.run();
-
-// Find maximum throughput
-ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-engine.setFeedStreamName("feed");
-engine.setSearchAlgorithm(SearchAlgorithm.GOLDEN_SECTION);
-
-OptimizationResult result = engine.findMaximumThroughput(
-    50.0,      // inlet pressure
-    100.0,     // outlet pressure
-    10000.0,   // min flow
-    200000.0   // max flow
-);
-
-System.out.println("Maximum throughput: " + result.getOptimalValue() + " kg/hr");
-System.out.println("Limited by: " + result.getBottleneck());
+    public static void main(String[] args) {
+        ProcessSystem process = OptimizationGuideSetup.createProcess();
+        ProcessOptimizationEngine.OptimizationResult result = OptimizationGuideSetup.optimize(process);
+        logger.info("Maximum throughput: {} kg/hr; limited by {}; power: {} kW", result.getOptimalValue(),
+            result.getBottleneck(), ((Compressor) process.getUnit("comp")).getPower("kW"));
+    }
+}
 ```
 
 ### Example 2: Multi-Objective Pareto Optimization
 
+<!-- overview-example: 12 -->
 ```java
+import java.util.Arrays;
+import java.util.List;
 import neqsim.process.util.optimizer.ProductionOptimizer;
 import neqsim.process.util.optimizer.ProductionOptimizer.*;
 
 ProductionOptimizer optimizer = new ProductionOptimizer();
-
-// Define competing objectives
 List<OptimizationObjective> objectives = Arrays.asList(
     new OptimizationObjective("throughput",
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
+        proc -> ((Stream) proc.getUnit("outlet")).getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE),
     new OptimizationObjective("power",
         proc -> ((Compressor) proc.getUnit("comp")).getPower("kW"),
-        1.0, ObjectiveType.MINIMIZE)
-);
-
-// Configure Pareto optimization
-OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)
-    .paretoGridSize(20)  // 20 weight combinations
-    .tolerance(100.0);
-
-// Generate Pareto front
-ParetoResult pareto = optimizer.optimizePareto(process, feed, config, objectives);
-
-System.out.println("Pareto front has " + pareto.getPoints().size() + " solutions");
-for (ParetoPoint point : pareto.getPoints()) {
-    System.out.printf("Flow: %.0f kg/hr, Power: %.0f kW%n",
-        point.getObjectives().get("throughput"),
-        point.getObjectives().get("power"));
+        1.0, ObjectiveType.MINIMIZE));
+OptimizationConfig config = new OptimizationConfig(10000.0, 200000.0)
+    .paretoGridSize(20).tolerance(1.0).maxIterations(60);
+ParetoResult pareto = optimizer.optimizePareto(process, feed, config, objectives, null);
+logger.info("Pareto front has {} solutions", pareto.getParetoFront().size());
+for (ParetoPoint point : pareto.getParetoFront()) {
+    logger.info("Flow {} kg/hr; power {} kW", point.getObjectiveValues().get("throughput"),
+        point.getObjectiveValues().get("power"));
 }
 ```
 
@@ -895,29 +1360,33 @@ scenarios:
 
 ### Loading YAML Specs in Java
 
+<!-- overview-example: 13 -->
 ```java
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.function.ToDoubleFunction;
+import java.nio.file.Paths;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.optimizer.ProductionOptimizationSpecLoader;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
 
-// Create registries mapping spec keys to objects
 Map<String, ProcessSystem> processes = new HashMap<>();
 processes.put("myProcess", process);
-
 Map<String, StreamInterface> feeds = new HashMap<>();
 feeds.put("wellFeed", feed);
-
 Map<String, ToDoubleFunction<ProcessSystem>> metrics = new HashMap<>();
-metrics.put("throughputMetric", p -> p.getUnit("outlet").getFlowRate("kg/hr"));
+metrics.put("throughputMetric", p -> ((Stream) p.getUnit("outlet")).getFlowRate("kg/hr"));
 metrics.put("powerMetric", p -> ((Compressor) p.getUnit("comp")).getPower("kW"));
-
-// Load scenarios from YAML
+// Save the YAML block above to optimization.yaml before running this section.
 List<ScenarioRequest> scenarios = ProductionOptimizationSpecLoader.load(
     Paths.get("optimization.yaml"), processes, feeds, metrics);
-
-// Run each scenario
 ProductionOptimizer optimizer = new ProductionOptimizer();
-for (ScenarioRequest scenario : scenarios) {
-    OptimizationResult result = optimizer.optimizeScenario(scenario);
-    System.out.println(scenario.getName() + ": " + result.getOptimalRate());
+for (ScenarioResult scenario : optimizer.optimizeScenarios(scenarios)) {
+    logger.info("{}: {} kg/hr; feasible {}", scenario.getName(), scenario.getResult().getOptimalRate(),
+        scenario.getResult().isFeasible());
 }
 ```
 
@@ -939,10 +1408,11 @@ for (ScenarioRequest scenario : scenarios) {
 | `ProcessModelSimulationEvaluator` | External optimizer interface for multi-area `ProcessModel` studies | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelOperatingActionSetEvaluator` | Atomic coupled-action candidate evaluation | `evaluate(double[])` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelAllocationOptimizer` | Fixed-total continuous allocation search with complete candidate evidence | `optimize()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
+| `ProcessModelOperatingPointOptimizer` | Bounded mixed continuous/discrete search with accepted-point replay | `optimize()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelThroughputOptimizer` | Full-model throughput-to-bottleneck study helper | `findMaximumThroughput()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `InstalledCapacityTableLoader` | Attach fixed equipment limits from CSV | `load()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
 | `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipse-vfp-export) |
-| `LiftCurveGenerator` | Lift curve tables | `generateLiftCurve()` | [Flow Rate Optimization](flow-rate-optimization.md) |
+| `LiftCurveGenerator` | Process pressure requirements; well qualification is separate | `generateTable()` | [Flow Rate Optimization](flow-rate-optimization.md) |
 | `BatchParameterEstimator` | Model calibration | `solve()` | [Data Reconciliation and Steady-State Detection](data-reconciliation.md) |
 | `ProductionOptimizationSpecLoader` | YAML/JSON config loading | `load()` | [YAML Format](#yaml-specification-files) |
 
@@ -957,4 +1427,8 @@ Choose based on your use case:
 - **Full `ProcessModel` custom external optimization** → `ProcessModelSimulationEvaluator`
 - **Coupled well-rate candidate with mandatory rollback** → `ProcessModelOperatingActionSetEvaluator`
 - **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
+- **Mixed choke/setpoint and discrete line-up search** → `ProcessModelOperatingPointOptimizer`
 - **Model calibration** → `BatchParameterEstimator`
+
+
+

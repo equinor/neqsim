@@ -1,7 +1,7 @@
 ---
 name: neqsim-utility-design
 version: "1.0.0"
-description: "Screening-level utility-system DESIGN with NeqSim Java classes and the MCP designUtilities tool — fired steam Boiler, Deaerator, vapour-compression RefrigerationCycle, on-site NitrogenSystem generator, and multi-pressure SteamNetwork header cascade, plus the UtilitySystemDesigner aggregator that harvests demands from a run ProcessSystem/ProcessModel. USE WHEN: a task needs to size a utility duty/flow/power, estimate utility CO2 and operating cost, build a steam header balance, or expose utility sizing through MCP. Pairs with neqsim-utilities-specification (which decides utility LEVELS) and neqsim-heat-integration (grand composite curve drives the duties)."
+description: "Screening-level utility-system design with NeqSim and the MCP designUtilities tool - fired Boiler, Deaerator, RefrigerationCycle, NitrogenSystem, multi-pressure SteamNetwork and the UtilitySystemDesigner that harvests demands from a run flowsheet. USE WHEN: sizing a utility duty/flow/power, estimating utility CO2 and cost, building a steam header balance, or exposing utility sizing through MCP. Levels: neqsim-utilities-specification; duties: neqsim-heat-integration."
 last_verified: "2026-06-27"
 ---
 
@@ -181,3 +181,12 @@ wiring any utility flowsheet into a closed optimization loop.
 - [`neqsim-utilities-specification`](../neqsim-utilities-specification/SKILL.md) — choosing utility levels
 - [`neqsim-heat-integration`](../neqsim-heat-integration/SKILL.md) — deriving duties from composite curves
 - [`neqsim-power-generation`](../neqsim-power-generation/SKILL.md) — HRSG / steam-turbine network
+
+- [Utilities design report](../neqsim-utilities-design-report/SKILL.md) — reconcile consumers, simultaneous case loads, supply/distribution, utility-loss scenarios and report acceptance using the main process-report workflow.
+
+## Reference cooling water and seawater
+
+Load [neqsim-cooling-water](../neqsim-cooling-water/SKILL.md) for water-cooled
+process equipment, seawater utilities, reference IAPWS properties, coolant flow
+and pumping. Keep each exchanger side on its own fluid model and distinguish
+fixed-salinity bulk utilities from electrolyte chemistry and salt mixing.

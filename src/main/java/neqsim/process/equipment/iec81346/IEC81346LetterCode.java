@@ -1,6 +1,5 @@
 package neqsim.process.equipment.iec81346;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -97,7 +96,7 @@ import neqsim.process.equipment.EquipmentEnum;
  * @author Even Solbraa
  * @version 1.0
  */
-public enum IEC81346LetterCode implements Serializable {
+public enum IEC81346LetterCode {
 
   /** Two or more purposes or tasks (multi-functional assemblies). */
   A("Two or more purposes or tasks"),

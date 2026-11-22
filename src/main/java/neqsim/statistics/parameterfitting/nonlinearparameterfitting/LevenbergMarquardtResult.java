@@ -1,7 +1,7 @@
 package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 import java.io.Serializable;
-import Jama.Matrix;
+import neqsim.util.util.ArrayUtils;
 
 /**
  * Immutable result from a Levenberg-Marquardt parameter fitting run.
@@ -67,14 +67,34 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
    */
   public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations, double finalChiSquare,
-      double gradientNorm, Matrix covarianceMatrix, Matrix correlationMatrix, double[] parameterStandardErrors) {
+      double gradientNorm, double[][] covarianceMatrix, double[][] correlationMatrix,
+      double[] parameterStandardErrors) {
     this.convergenceReason = convergenceReason;
     this.iterations = iterations;
     this.finalChiSquare = finalChiSquare;
     this.gradientNorm = gradientNorm;
-    this.covarianceMatrix = matrixToArray(covarianceMatrix);
-    this.correlationMatrix = matrixToArray(correlationMatrix);
-    this.parameterStandardErrors = copyArray(parameterStandardErrors);
+    this.covarianceMatrix = ArrayUtils.copyMatrixArray(covarianceMatrix);
+    this.correlationMatrix = ArrayUtils.copyMatrixArray(correlationMatrix);
+    this.parameterStandardErrors = ArrayUtils.copyArray(parameterStandardErrors);
+  }
+
+  /**
+   * Creates a result from primitive arrays without ambiguous null matrix arguments.
+   *
+   * @param convergenceReason reason why the optimizer stopped
+   * @param iterations number of solver iterations performed
+   * @param finalChiSquare final weighted chi-square value
+   * @param gradientNorm final norm of the weighted gradient vector
+   * @param covarianceMatrix fitted-parameter covariance matrix, or null if unavailable
+   * @param correlationMatrix fitted-parameter correlation matrix, or null if unavailable
+   * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
+   * @return immutable result with independent copies of the supplied data
+   */
+  public static LevenbergMarquardtResult fromArrays(ConvergenceReason convergenceReason, int iterations,
+      double finalChiSquare, double gradientNorm, double[][] covarianceMatrix, double[][] correlationMatrix,
+      double[] parameterStandardErrors) {
+    return new LevenbergMarquardtResult(convergenceReason, iterations, finalChiSquare, gradientNorm, covarianceMatrix,
+        correlationMatrix, parameterStandardErrors);
   }
 
   /**
@@ -83,7 +103,7 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @return a result with {@link ConvergenceReason#NOT_RUN}
    */
   public static LevenbergMarquardtResult notRun() {
-    return new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN, null, null, null);
+    return fromArrays(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN, null, null, null);
   }
 
   /**
@@ -132,30 +152,12 @@ public final class LevenbergMarquardtResult implements Serializable {
   }
 
   /**
-   * Returns a copy of the fitted-parameter covariance matrix.
-   *
-   * @return covariance matrix, or null if unavailable
-   */
-  public Matrix getCovarianceMatrix() {
-    return covarianceMatrix == null ? null : new Matrix(copyMatrixArray(covarianceMatrix));
-  }
-
-  /**
-   * Returns a copy of the fitted-parameter correlation matrix.
-   *
-   * @return correlation matrix, or null if unavailable
-   */
-  public Matrix getCorrelationMatrix() {
-    return correlationMatrix == null ? null : new Matrix(copyMatrixArray(correlationMatrix));
-  }
-
-  /**
    * Returns a copy of the fitted-parameter covariance matrix array.
    *
    * @return covariance matrix values, or null if unavailable
    */
   public double[][] getCovarianceMatrixArray() {
-    return copyMatrixArray(covarianceMatrix);
+    return ArrayUtils.copyMatrixArray(covarianceMatrix);
   }
 
   /**
@@ -164,7 +166,7 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @return correlation matrix values, or null if unavailable
    */
   public double[][] getCorrelationMatrixArray() {
-    return copyMatrixArray(correlationMatrix);
+    return ArrayUtils.copyMatrixArray(correlationMatrix);
   }
 
   /**
@@ -173,48 +175,6 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @return parameter standard errors, or null if unavailable
    */
   public double[] getParameterStandardErrors() {
-    return copyArray(parameterStandardErrors);
-  }
-
-  /**
-   * Copies matrix values into an array.
-   *
-   * @param matrix matrix to copy
-   * @return copied matrix values, or null if matrix is null
-   */
-  private static double[][] matrixToArray(Matrix matrix) {
-    return matrix == null ? null : copyMatrixArray(matrix.getArray());
-  }
-
-  /**
-   * Copies a matrix array.
-   *
-   * @param matrix matrix array to copy
-   * @return copied matrix array, or null if matrix is null
-   */
-  private static double[][] copyMatrixArray(double[][] matrix) {
-    if (matrix == null) {
-      return null;
-    }
-    double[][] copy = new double[matrix.length][];
-    for (int i = 0; i < matrix.length; i++) {
-      copy[i] = copyArray(matrix[i]);
-    }
-    return copy;
-  }
-
-  /**
-   * Copies an array.
-   *
-   * @param values values to copy
-   * @return copied values, or null if values is null
-   */
-  private static double[] copyArray(double[] values) {
-    if (values == null) {
-      return null;
-    }
-    double[] copy = new double[values.length];
-    System.arraycopy(values, 0, copy, 0, values.length);
-    return copy;
+    return ArrayUtils.copyArray(parameterStandardErrors);
   }
 }

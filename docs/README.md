@@ -18,11 +18,23 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
+/**
+ * Runs a basic SRK TP-flash and validates its gas-state screening results.
+ *
+ * @author NeqSim
+ * @version 1.0
+ */
 public final class NeqSimQuickStart {
   private static final Logger logger = LogManager.getLogger(NeqSimQuickStart.class);
 
+  /** Utility class. */
   private NeqSimQuickStart() {}
 
+  /**
+   * Run the quick-start flash and fail closed if its gas-state results are invalid.
+   *
+   * @param args command-line arguments; unused
+   */
   public static void main(String[] args) {
     SystemInterface gas = new SystemSrkEos(298.15, 50.0);
     gas.addComponent("methane", 0.90);
@@ -35,8 +47,27 @@ public final class NeqSimQuickStart {
     operations.TPflash();
     gas.initProperties();
 
-    logger.info("Density: {} kg/m3", gas.getDensity("kg/m3"));
-    logger.info("Compressibility: {}", gas.getZ());
+    double density = gas.getDensity("kg/m3");
+    double compressibility = gas.getZ();
+    require(Double.isFinite(density) && density > 0.0 && density < 200.0,
+        "Gas density left the validated 0-200 kg/m3 screening range");
+    require(Double.isFinite(compressibility) && compressibility > 0.0 && compressibility < 2.0,
+        "Compressibility left the validated 0-2 screening range");
+
+    logger.info("Density: {} kg/m3", density);
+    logger.info("Compressibility: {}", compressibility);
+  }
+
+  /**
+   * Fail closed when a quick-start engineering contract is not satisfied.
+   *
+   * @param condition contract result
+   * @param message failure description
+   */
+  private static void require(boolean condition, String message) {
+    if (!condition) {
+      throw new IllegalStateException(message);
+    }
   }
 }
 ```
@@ -55,9 +86,11 @@ public final class NeqSimQuickStart {
 
 ### Process Simulation
 
-| Package | Documentation | Description |
+| Package / topic | Documentation | Description |
 |---------|---------------|-------------|
 | `neqsim.process` | [process/](process/) | Process equipment, unit operations, controllers, process systems, safety systems |
+| JSON builder input | [process/json_process_models_and_systems.md](process/json_process_models_and_systems.md) | Build hand-written ProcessSystem and ProcessModel JSON with validation, stream wiring, and supported ports |
+| JSON model export | [process/process_json_export_and_e300_fluids.md](process/process_json_export_and_e300_fluids.md) | Export live models to portable JSON, including named and E300-equivalent fluids |
 | `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
 
 ### Engineering
@@ -332,10 +365,10 @@ Specialized guides for advanced features and use cases:
 
 ## Getting Help
 
-- **GitHub Issues:** Report bugs and request features
-- **Discussions:** Ask questions and share knowledge
-- **API JavaDoc:** Generated from source code
-- **Examples:** See `examples/` and `notebooks/` directories
+- **[GitHub Issues](https://github.com/equinor/neqsim/issues):** Report bugs and request features
+- **[Discussions](https://github.com/equinor/neqsim/discussions):** Ask questions and share knowledge
+- **[API JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html):** Browse the generated Java API reference
+- **[Examples](examples/index.md):** Find curated, runnable examples by topic
 
 ---
 

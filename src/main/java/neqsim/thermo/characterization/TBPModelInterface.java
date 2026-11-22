@@ -124,9 +124,22 @@ public interface TBPModelInterface {
   public String getName();
 
   /**
-   * setBoilingPoint.
+   * Pin the normal boiling point used by {@link #calcTB(double, double)}.
    *
-   * @param boilingPoint a double
+   * <p>
+   * While a positive value is set, <code>calcTB</code> returns it verbatim instead of correlating it from molar mass
+   * and density. Callers must reset it to 0.0 afterwards, otherwise the value leaks into every subsequent fraction
+   * characterized with the same model instance.
+   * </p>
+   *
+   * @param boilingPoint normal boiling point in K, or 0.0 to use the model correlation
    */
   public void setBoilingPoint(double boilingPoint);
+
+  /**
+   * Get the pinned normal boiling point.
+   *
+   * @return normal boiling point in K, or 0.0 when the model correlation is in use
+   */
+  public double getBoilingPoint();
 }

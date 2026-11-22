@@ -13,7 +13,7 @@ class TPflashAqueousPhaseRemovalRecoveryTest {
 
   @Test
   void failedThirdPhaseTrialCannotReplaceBalancedAqueousEquilibrium() {
-    for (boolean pengRobinson : new boolean[] { false, true }) {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
       SystemInterface ordinary = createAndFlash(pengRobinson, 16.0, false);
       SystemInterface multiphase = createAndFlash(pengRobinson, 16.0, true);
 
@@ -32,7 +32,7 @@ class TPflashAqueousPhaseRemovalRecoveryTest {
 
   @Test
   void nearbyGenuineThreePhaseEquilibriumIsRetained() {
-    for (boolean pengRobinson : new boolean[] { false, true }) {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
       SystemInterface multiphase = createAndFlash(pengRobinson, 24.0, true);
 
       assertEquals(3, multiphase.getNumberOfPhases());

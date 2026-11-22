@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-08-02"
+last_verified: "2026-11-22"
 ---
 
 # NeqSim Capability Map
@@ -9,7 +9,30 @@ last_verified: "2026-08-02"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-08-02
+## Start with current source and deployed capabilities
+
+Treat the tables below as navigation hints, not an exhaustive or qualified support list.
+For any unfamiliar capability, first follow
+[the discovery contract](../../../docs/development/AGENT_CAPABILITY_DISCOVERY.md).
+In a checkout, run `uv run --project devtools --locked devtools/capability_search.py "<need or API>" --json`.
+It searches current source types and public member names across all Java domains and returns
+agent/skill entry points, documentation and bounded test references. Use `--audit` to check
+package routing completeness. Source routing is distinct from the operation coverage registry.
+With MCP, search the deployed artifact and inspect the exact API/schema before execution.
+Read only the relevant sections and follow references; do not load this entire inventory for
+every calculation. Recheck source, tests and runtime version before accepting a stated gap.
+
+For measured agent/MCP coverage, inspect `getCapabilities.engineeringCoverage`
+and use `runCapability` with `action="coverage"`, `view="capabilities"` or
+`view="apis"`, a query and bounded pagination. Follow the returned tool, API,
+skill and agent references; retrieve the schema and inspect setup before running.
+Reuse the catalog digest across pages. Declared routes and source/test mentions
+are not successful execution or engineering qualification. An unmapped API needs
+review, not an automatic conclusion that it is unsupported. See
+`docs/development/ENGINEERING_CAPABILITY_COVERAGE.md` for the evidence contract
+and campaign #3153 completion gates.
+
+**Last updated:** 2026-10-03 (section L lists the capability families that have a dedicated skill added in the 2026-10 audit)
 
 ---
 
@@ -53,6 +76,7 @@ Use this to quickly check if a capability exists before searching the source cod
 | `SystemSpanWagnerEos` | Pure CO2 | CO2 reference EOS |
 | `SystemLeachmanEos` | Pure hydrogen | H2 reference EOS |
 | `SystemWaterIF97` | Pure water / steam | IAPWS-IF97 |
+| `SystemSeawater` | Fixed-salinity seawater cooling utility | IF97 + IAPWS-08; g/kg solution; see `neqsim-cooling-water` |
 | `SystemVegaEos` | LNG / cryogenic | Specialized for LNG |
 
 ### SAFT Family
@@ -68,8 +92,9 @@ Use this to quickly check if a capability exists before searching the source cod
 |-------|-----------|-------|
 | `SystemBWRSEos` | Benedict-Webb-Rubin-Starling | Only CH4 + C2H6 parameterized |
 | `SystemIdealGas` | Ideal gas law | Teaching / reference |
-| `SystemBnsEos` | BNS EOS | Specialized |
+| `SystemBnsEos` | BNS EOS with optional helium and fitted LBC viscosity | [Specialized gas properties](../../../docs/thermo/fluid_creation_guide.md#53-other-reference-equations) |
 | `SystemUMRPRUEos` | UMRPRU group contribution | Predictive mixing rules |
+| `SystemUMRPRUMCEos` | UMR-PRU with Mathias-Copeman alpha | Equinor UMR-PRU group and Mathias-Copeman parameters, including H2 and single MEG/TEG groups ([parameter set](../../../docs/thermo/component_database_guide.md#umr-pru-mc-parameter-set-equinor)). Mercury and water group parameters of the mercury calculator (libhg 2.0.3); `MercuryPhaseEquilibrium` adds a separate liquid or solid mercury phase; `MercuryFluidConverter` converts an E300 fluid to it and `MercuryProcessAnalyzer` tracks mercury and free mercury through a process (`@mercury-distribution`). Not for mercury with glycols. [Mercury thermodynamics](../../../docs/thermo/mercury_thermodynamics.md), [mercury distribution studies](../../../docs/process/mercury-distribution-study.md) |
 | `SystemNRTL` | Activity coefficient (NRTL) | Liquid-liquid equilibrium |
 | `SystemUNIFAC` | Activity coefficient (UNIFAC) | Group contribution |
 | `SystemSoreideWhitson` | Soreide-Whitson for oil/water | HC-water mutual solubility |
@@ -103,7 +128,7 @@ Use this to quickly check if a capability exists before searching the source cod
 | Hydrate P | `ops.hydrateFormationPressure()` | Hydrate formation pressure |
 | Wax T | `ops.calcWAT()` | Wax appearance temperature |
 | Freeze T | `ops.freezingPointTemperatureFlash()` | Freeze-out temperature |
-| Water dew point | `ops.waterDewPointTemperature()` | Water content specification |
+| Water dew point | `ops.waterDewPointTemperatureFlash()` | ISO 18453 / GERG-water: `SystemGERGwaterEos` with `setMixingRule(8)`; follow the `neqsim-standards-lookup` execution rule |
 
 **CRITICAL:** After any flash, call `fluid.initProperties()` before reading
 transport properties (viscosity, thermal conductivity, density).
@@ -122,7 +147,7 @@ transport properties (viscosity, thermal conductivity, density).
 | `ThreePhaseSeparator` | 3-phase (gas/oil/water) | `process.equipment.separator` |
 | `GasScrubber` | Gas scrubbing | `process.equipment.separator` |
 | `GasScrubberSimple` | Simplified scrubber | `process.equipment.separator` |
-| `NeqSeparator` | Non-equilibrium separator | `process.equipment.separator` |
+| `NeqGasScrubber` | Non-equilibrium (mass-transfer) gas scrubber | `process.equipment.separator` |
 
 ### Compression & Expansion
 
@@ -180,8 +205,8 @@ transport properties (viscosity, thermal conductivity, density).
 | `TransientWellbore` | Shutdown cooling / depressurization transient | `process.equipment.pipeline` |
 | `CO2FlowCorrections` | CO2-specific two-phase flow corrections (static utility) | `process.equipment.pipeline` |
 | `InterfacialFriction` | Interfacial friction closures (Taitel-Dukler, Andritsos-Hanratty, Wallis, Oliemans) | `process.equipment.pipeline.twophasepipe.closure` |
-| `OnePhasePipeFlowNode` | Single-phase pipe | `fluidmechanics` |
-| `TwoPhasePipeFlowNode` | Two-phase pipe | `fluidmechanics` |
+| `onePhasePipeFlowNode` | Single-phase pipe flow node | `fluidmechanics.flownode.onephasenode` |
+| `StratifiedFlowNode`, `SlugFlowNode`, `AnnularFlow`, `BubbleFlowNode`, `DropletFlowNode` | Two-phase pipe flow-regime nodes | `fluidmechanics.flownode.twophasenode.twophasepipeflownode` |
 
 ### Reactors
 
@@ -225,11 +250,14 @@ transport properties (viscosity, thermal conductivity, density).
 | `TemperatureTransmitter` | Temperature measurement (TT) | `process.measurementdevice` |
 | `LevelTransmitter` | Level measurement (LT) | `process.measurementdevice` |
 | `VolumeFlowTransmitter` | Volume flow measurement (FT) | `process.measurementdevice` |
-| `MassFlowTransmitter` | Mass flow measurement | `process.measurementdevice` |
+| `MultiPhaseMeter`, `WellAllocator` | Multiphase meter and well allocation | `process.measurementdevice` |
+| `OrificeFlowMeter`, `VenturiFlowMeter`, `NozzleFlowMeter`, `ConeFlowMeter`, `WedgeFlowMeter`, `DifferentialPressureFlowMeter` | Differential-pressure flow meters | `process.measurementdevice` |
+| `CompositionAnalyzer`, `MolarMassAnalyser`, `NMVOCAnalyser`, `CricondenbarAnalyser`, `HydrateEquilibriumTemperatureAnalyser`, `pHProbe` | Composition, molar mass, NMVOC, cricondenbar, hydrate temperature and pH analysers | `process.measurementdevice` |
+| `FlowInducedVibrationAnalyser`, `CompressorMonitor`, `CombustionEmissionsCalculator`, `GasDetector`, `FireDetector`, `PushButton` | Vibration, compressor monitoring, emissions and F&G / ESD input devices | `process.measurementdevice` |
+| `SoftSensor`, `VirtualFlowMeter` | Virtual measurement with uncertainty (see `neqsim-advanced-control-mpc-and-virtual-sensing`) | `process.measurementdevice.vfm` |
 | `WaterDewPointAnalyser` | Water dew point measurement | `process.measurementdevice` |
 | `HydrocarbonDewPointAnalyser` | HC dew point measurement | `process.measurementdevice` |
 | `WaterContentAnalyser` | Water content measurement | `process.measurementdevice` |
-| `CO2waterAnalyser` | CO2 in water measurement | `process.measurementdevice` |
 | `AlarmConfig` | Alarm HH/H/L/LL thresholds per IEC 61511 | `process.measurementdevice` |
 | `AlarmState` | Current alarm state tracking | `process.measurementdevice` |
 | `ProcessAlarmManager` | System-wide alarm management | `process.measurementdevice` |
@@ -258,7 +286,7 @@ transport properties (viscosity, thermal conductivity, density).
 | `SetPoint` | Set point controller | `process.equipment.util` |
 | `Calculator` | Custom calculator | `process.equipment.util` |
 | `StreamSaturatorUtil` | Stream saturation | `process.equipment.util` |
-| `GasGenerator` | Gas generation | `process.equipment.util` |
+| `NeqStream`, `EquilibriumStream`, `VirtualStream` | Non-equilibrium, equilibrium and virtual stream variants | `process.equipment.stream` |
 | `Flare` | Flare system | `process.equipment.flare` |
 | `Filter` | Particle filter | `process.equipment.filter` |
 | `Ejector` | Ejector / eductor | `process.equipment.ejector` |
@@ -287,8 +315,8 @@ transport properties (viscosity, thermal conductivity, density).
 | `SwellingTest` | Gas injection swelling | `pvtsimulation.simulation` |
 | `SaturationPressure` | Bubble/dew point P | `pvtsimulation.simulation` |
 | `SaturationTemperature` | Bubble/dew point T | `pvtsimulation.simulation` |
-| `SlimTube` | Slim tube / MMP | `pvtsimulation.simulation` |
-| `ViscositySimulation` | Viscosity vs P | `pvtsimulation.simulation` |
+| `SlimTubeSim`, `MMPCalculator` | Slim tube / minimum miscibility pressure | `pvtsimulation.simulation` |
+| `ViscositySim`, `ViscosityWaxOilSim`, `DensitySim`, `WaxFractionSim`, `SolutionGasWaterRatio`, `MultiStageSeparatorTest` | Viscosity, density, wax fraction, Rsw and multi-stage separator tests | `pvtsimulation.simulation` |
 | `GOR` | Gas-oil ratio vs P | `pvtsimulation.simulation` |
 
 ### Reservoir Material Balance & Surveillance (inverse)
@@ -298,7 +326,7 @@ transport properties (viscosity, thermal conductivity, density).
 | `DeclineCurveAnalysis` | Arps + Duong (2011) decline; forward rate/EUR and least-squares history matching (`fitArps`, `fitDuong`) | `pvtsimulation.util` |
 | `GasMaterialBalance` | Gas P/Z straight line (OGIP), Cole plot aquifer diagnostic, Havlena-Odeh | `pvtsimulation.reservoirproperties.materialbalance` |
 | `OilMaterialBalance` | Havlena-Odeh oil balance (OOIP, gas-cap ratio m, water drive, Pirson drive indices) | `pvtsimulation.reservoirproperties.materialbalance` |
-| `VanEverdingenHurstAquifer` | Radial aquifer influence functions, Carter-Tracy cumulative influx, ECLIPSE AQUTAB export | `pvtsimulation.reservoirproperties.materialbalance` |
+| `VanEverdingenHurstAquifer`, `FiniteRadialAquiferInfluence` | Infinite radial and opt-in sealed-annulus rate influence, Carter–Tracy cumulative influx and ECLIPSE AQUTAB export. The prepared response supports outer/inner radius ratios 2–10. | `pvtsimulation.reservoirproperties.materialbalance` |
 
 ### Flow Assurance (PVT module)
 
@@ -310,8 +338,9 @@ transport properties (viscosity, thermal conductivity, density).
 
 | Class | Assessment | Package |
 |-------|-----------|---------|
-| `NorsokM506CorrosionRate` | NORSOK M-506 CO2 corrosion (fugacity, in-situ pH, FeCO3 film, shear, glycol/inhibitor) | `process.corrosion` |
-| `NorsokM506ElectrolyteBridge` | Drives NORSOK M-506 from a `SystemElectrolyteCPAstatoil` brine (rigorous pH + FeCO3 supersaturation) | `process.corrosion` |
+| `NorsokM506Rev2` | NORSOK M-506 Rev. 2 unmitigated corrosion rate for water-wet carbon steel | `process.corrosion` |
+| `NorsokM506CorrosionRate` | Legacy de Waard-Milliams CO2 corrosion screening (fugacity, in-situ pH, FeCO3 film, shear, glycol/inhibitor) | `process.corrosion` |
+| `NorsokM506ElectrolyteBridge` | Drives legacy corrosion screening from a `SystemElectrolyteCPAstatoil` brine (rigorous pH + FeCO3 supersaturation) | `process.corrosion` |
 | `CO2CorrosionAnalyzer` | de Waard-Milliams from an electrolyte fluid | `pvtsimulation.flowassurance` |
 | `PipeSegmentIntegrity` | Per-segment CO2 corrosion + CaCO3 scale profile along a line (`fromPipe`) | `process.corrosion` |
 | `RobustAqueousPH` | Always-finite, source-tagged in-situ pH with explicit pCO2 basis (rigorous else CO2-water correlation) | `process.corrosion` |
@@ -329,7 +358,8 @@ transport properties (viscosity, thermal conductivity, density).
 
 | Class | Purpose | Package |
 |-------|---------|---------|
-| `ModelTuning` | EOS parameter fitting | `pvtsimulation.modeltuning` |
+| `BaseTuningClass`, `TuneToSaturation` | EOS parameter fitting to saturation data | `pvtsimulation.modeltuning` |
+| `PVTRegression`, `PVTRegressionFunction` | Multi-experiment PVT regression (CCE/CVD/DLE/separator/viscosity) with `UncertaintyAnalysis` | `pvtsimulation.regression` |
 
 ---
 
@@ -342,19 +372,27 @@ transport properties (viscosity, thermal conductivity, density).
 | `Standard_ISO6578` | ISO 6578 — LNG custody transfer | `standards.gasquality` |
 | `Standard_ISO15403` | ISO 15403 — natural gas for vehicles | `standards.gasquality` |
 | `Standard_EN16726` | EN 16726 — European gas quality | `standards.gasquality` |
-| `UKgasQuality` | UK gas quality specification | `standards.gasquality` |
-| `GasChromatographData` | GC data processing | `standards.gasquality` |
-| `BrackettedMolarComposition` | Molar composition bracketing | `standards.gasquality` |
+| `UKspecifications_ICF_SI` | UK gas quality specification | `standards.gasquality` |
+| `GasChromotograpyhBase` | GC data processing (spelling as in source) | `standards.gasquality` |
 | `Draft_GERG2004` | GERG-2004 draft implementation | `standards.gasquality` |
 | `SulfurSpecificationMethod` | H2S / total sulfur limits | `standards.gasquality` |
+| `Standard_ISO12213`, `Standard_ISO6974`, `Standard_ISO13443`, `Standard_ISO15112`, `Standard_ISO18453`, `Standard_ISO14687`, `Standard_ISO23874`, `Standard_EN16723`, `Standard_GPA2145`, `Standard_GPA2172` | Compressibility, GC composition, reference conditions, energy determination, water dew point, hydrogen purity, GC hydrocarbon dew point, biomethane, physical constants | `standards.gasquality` |
+| `Standard_AGA3`, `Standard_AGA7`, `CriticalFlowOrifice`, `GpsaOrificeCalculator`, `OrificeWellTester` | Orifice, turbine and critical-flow metering | `standards.gasquality` |
+| `BestPracticeHydrocarbonDewPoint` | Hydrocarbon dew-point best-practice evaluation | `standards.gasquality` |
 
 ### Oil Quality
 
 | Class | Standard | Package |
 |-------|---------|---------|
 | `Standard_ASTM_D6377` | ASTM D6377 — vapor pressure | `standards.oilquality` |
-| `Standard_ASTM_D2887` | ASTM D2887 — simulated distillation | `standards.oilquality` |
+| `Standard_ASTM_D86` | ASTM D86 — atmospheric distillation curve | `standards.oilquality` |
+| `RiaziDaubertDistillationConversion` | D86 to TBP conversion (published-point) | `standards.oilquality` |
 | `Standard_ASTM_D4294` | ASTM D4294 — sulfur in oil | `standards.oilquality` |
+| `Standard_ASTM_D445` / `D4052` / `D97` / `D2500` / `D3230` / `D4737` / `D611` / `D1322` | Kinematic viscosity, density, pour point, cloud point, salt, calculated cetane, aniline point, smoke point | `standards.oilquality` |
+| `Standard_TVP`, `Standard_BSW`, `Standard_EN116` | True vapor pressure, BS&W, cold filter plugging point | `standards.oilquality` |
+| `CrudeDesalterCalculator` | Crude desalter screening | `standards.oilquality` |
+
+No ASTM D2887 (simulated distillation by GC) class exists; use `Standard_ASTM_D86` or TBP cuts.
 
 ---
 
@@ -406,8 +444,23 @@ transport properties (viscosity, thermal conductivity, density).
 | `AlarmTripScheduleGenerator` | Alarm/trip setpoints per IEC 61511 / NORSOK I-001 | `process.mechanicaldesign` |
 | `InstrumentScheduleGenerator` | ISA-5.1 tagged instrument schedule with live MeasurementDevice bridge | `process.mechanicaldesign` |
 | `SparePartsInventory` | Recommended spare parts by equipment type with lead times | `process.mechanicaldesign` |
-| `FireProtectionDesign` | Jet fire, BLEVE, pool fire scenario assessment (API 521) | `process.mechanicaldesign.designstandards` |
+| `FireProtectionDesign` | Jet fire, BLEVE, pool fire scenario assessment (API 521); `firewaterDemand(...)` is a lumped m3/h deliverables figure only | `process.mechanicaldesign.designstandards` |
 | `NoiseAssessment` | Equipment noise + ISO 9613-2 atmospheric attenuation | `process.mechanicaldesign.designstandards` |
+
+### Active Fire Protection (fire water / deluge)
+
+| Class | Purpose | Package |
+|-------|---------|---------|
+| `FireWaterDemandCalculator` | Area and dedicated-object fire-water demand, simultaneous-release factor, AFFF concentrate | `process.safety.firewater` |
+| `DelugeNozzleLayout` | Nozzle count from the larger of the flow and spray-overlap criteria, grid spacing, clearance check | `process.safety.firewater` |
+| `FireMonitorCoverage` | Monitor substitution screening with wind drift and line-of-sight | `process.safety.firewater` |
+| `FireWaterCoverageAssessment` | Gates a new deluge section against an existing system — separates coverage, flow and pressure-margin deficits | `process.safety.firewater` |
+| `ActiveFireProtectionScreening` | Inventory → PFP → fire-water hierarchy and the one-directional active-vs-passive substitution rule | `process.safety.firewater` |
+
+**Use these, not `FireProtectionDesign.firewaterDemand(...)`, for any coverage,
+nozzle-count or adequacy question.** `FireProtectionDesign` returns a single
+lumped demand for the deliverables package and has no coverage, nozzle or
+hydraulic-feasibility logic.
 
 ### Electrical Design
 
@@ -431,6 +484,11 @@ transport properties (viscosity, thermal conductivity, density).
 ---
 
 ## G. Physical Properties
+
+For model selection, named-phase guards, transport initialization, binary/effective diffusion,
+interfacial phase pairs and model-specific validation, load the `neqsim-api-patterns`
+[physical-property reference](../neqsim-api-patterns/references/physical-properties.md).
+The tested guides in `docs/physical_properties/` cover more than the short table below.
 
 | Class | Property | Package |
 |-------|---------|---------|
@@ -526,14 +584,14 @@ transport properties (viscosity, thermal conductivity, density).
 
 | Gap | Description | Workaround |
 |-----|-------------|------------|
-| **Rate-based distillation** | No mass-transfer-rate column model | Use equilibrium stages with efficiency |
+| **Rate-based distillation** | Partial: `RateBasedPackedColumn` (segmented packed column) and `RateBasedAbsorber`; trays remain equilibrium-stage | Use `neqsim-column-internals-and-rate-based`; trays with efficiency |
 | **Asphaltene modeling** | Limited asphaltene precipitation | Use PC-SAFT with tuned parameters |
-| **Erosion modeling** | No erosion rate calculation | API RP 14E velocity check only |
+| **Erosion modeling** | `ErosionPredictionCalculator` (DNV RP O501 sand erosion, `pvtsimulation.flowassurance`) and network erosion tracking; no CFD erosion | API RP 14E velocity check plus the calculator |
 | **Detailed heat exchanger design** | TEMA-level design with Bell-Delaware, vibration, ASME VIII | Full thermal-hydraulic + mechanical via `ShellAndTubeDesignCalculator` |
 | **Dynamic simulation** | Limited transient capability | `runTransient()` on ProcessSystem |
 | **Reservoir coupling** | Simple reservoir only | No full reservoir simulator |
-| **Control system simulation** | PID controllers + AlarmConfig + InstrumentScheduleGenerator + DynamicProcessHelper | No DCS/SIS emulation |
-| **Amine sweetening** | Basic Kent-Eisenberg / DM | No rate-based amine model |
+| **Control system simulation** | PID, cascade/override/ratio/split-range structures, first-order MPC (`process.mpc`, `ModelPredictiveController`), alarms, instrument schedules, `DynamicProcessHelper` | No DCS/SIS emulation; see `neqsim-advanced-control-mpc-and-virtual-sensing` |
+| **Amine sweetening** | Efficiency-based `SimpleAmineAbsorber` / `SimpleAmineRegenerator`, Kent-Eisenberg and Desmukh-Mather thermo, `RateBasedAbsorber` packed mass transfer | Screening-level; no vendor-calibrated reactive rate model; see `neqsim-acid-gas-treating` |
 | **Membrane separation** | Basic membrane model | No detailed permeation |
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
@@ -584,6 +642,63 @@ transport properties (viscosity, thermal conductivity, density).
 
 ---
 
+## L. Capability Families With a Dedicated Skill (2026-10 audit)
+
+These families are implemented in NeqSim and are routed to a skill and agent. Verdicts are
+**R** = rigorous / mechanistic, **S** = screening or empirical, **C** = case-specific reference.
+Always load the skill before using the classes; it records the verified API and gotchas.
+
+### Lift curves and well deliverability (`vfp-lift-curve-agent`)
+
+| Capability | Key classes (package) | Verdict | Skill |
+|---|---|---|---|
+| VFPPROD / VFPINJ table build with axes, rate cap, sanity enforcement, deck text | `VfpTableBuilder`, `VfpDeckReader`, `EclipseVFPExporter` (`process.fielddevelopment.reservoir`, `process.util.optimizer`) | S/R (depends on calibration) | `neqsim-vfp-lift-curves` |
+| Pluggable lift model: deviated tubing survey, any forward pressure chain | `TubingVlpProvider`, `ForwardVlpProvider`, `RecombinationFluidFactory`, `TubingPerformance` (`process.equipment.pipeline`) | S | `neqsim-vfp-lift-curves` |
+
+### Gas processing, refining, produced water (`@gas-processing-refining`)
+
+| Capability | Key classes (package) | Verdict | Skill |
+|---|---|---|---|
+| Claus sulfur recovery, tail gas, incinerator | `SulfurRecoveryProcessBuilder`, `SulfurRecoveryUnit`, `ClausReactionFurnace`, `ClausCatalyticConverter`, `SulfurCondenser`, `TailGasTreatmentUnit`, `ThermalIncinerator` (`process.equipment.reactor.sulfurrecovery`) | R/S | `neqsim-sulfur-recovery` |
+| Amine sweetening, H2S scavenger | `SimpleAmineAbsorber`, `SimpleAmineRegenerator`, `H2SScavenger` (`process.equipment.absorber`) | S | `neqsim-acid-gas-treating` |
+| Rate-based absorber, staged absorber/stripper | `RateBasedAbsorber`, `AbsorptionColumn`, `StrippingColumn` | R/S | `neqsim-acid-gas-treating` |
+| Membrane, PSA | `MembraneSeparator`, `PressureSwingAdsorptionBed`, `PSACascade`, `AdsorptionBed` | S | `neqsim-acid-gas-treating` |
+| Crude assay, blending, hydrotreating receipts | `OilAssayCharacterisation`, `RefineryAssayBlend`, `RefineryLinearBlendOptimizer`, `RefineryHydrotreating*Balance` (`thermo.characterization`) | S | `neqsim-refinery-crude-processing` |
+| Crude column reference cases | `DoeBigHillVacuumFractionationCase`, `SarirAtmosphericFractionationCase` (`process.equipment.distillation`) | C | `neqsim-refinery-crude-processing` |
+| Shortcut, packed and rate-based columns | `ShortcutDistillationColumn`, `PackedColumn`, `RateBasedPackedColumn` | R/S | `neqsim-column-internals-and-rate-based` |
+| Tray / packing hydraulics, column diameter | `ColumnInternalsDesigner`, `TrayHydraulicsCalculator`, `PackingHydraulicsCalculator` | S | `neqsim-column-internals-and-rate-based` |
+| Produced-water train, hydrocyclone, flotation | `ProducedWaterTreatmentTrain`, `Hydrocyclone`, `GasFlotationUnit` (`process.equipment.watertreatment`) | S | `neqsim-produced-water-and-solids-separation` |
+| Solids, filters, crystallizer, extraction | `SolidsSeparator`, `RotaryVacuumFilter`, `Filter`, `Crystallizer`, `LiquidLiquidExtractor` | S | `neqsim-produced-water-and-solids-separation` |
+
+### Networks, energy, production, machinery (`@network-energy-systems`, `@rotating-equipment`)
+
+| Capability | Key classes (package) | Verdict | Skill |
+|---|---|---|---|
+| Looped gas/oil network, optimisation, quality | `LoopedPipeNetwork`, `NetworkOptimizer`, `NetworkQualityEvaluator` (`process.equipment.network`) | R | `neqsim-pipeline-and-terminal-networks` |
+| Gas linepack, transient compositional network | `TransientGasNetwork`, `GasLinepackState`, `TransientCompositionalPipeNetwork`, `TwoFluidPipeNetwork` | R | `neqsim-pipeline-and-terminal-networks` |
+| Terminal tanks, cargo, crude parcels | `OilNetworkSchedule`, `OilTerminalTank`, `CargoNomination`, `CrudeAssay` | S | `neqsim-pipeline-and-terminal-networks` |
+| Energy bus, electrification, drive trains | `EnergyBus`, `CoupledProcessEnergySolver`, `MotorDriveTrain` (`process.equipment.energy`) | S | `neqsim-energy-systems-and-electrification` |
+| GT catalog, degradation, wash, dispatch, wind/solar | `GasTurbineUnit`, `GasTurbineDegradation`, `TurbineDispatchOptimizer`, `OffshoreEnergySystem` (`process.equipment.powergeneration`) | S | `neqsim-energy-systems-and-electrification` |
+| Integrated production, well-test match, gas-lift allocation | `IntegratedProductionModel`, `WellTestMatcher`, `GasLiftNetworkOptimizer` (`process.fielddevelopment.integrated`) | S | `neqsim-integrated-production-and-lifecycle` |
+| Host tie-in capacity, lifecycle, fiscal cash flow | `TieInCapacityPlanner`, `FieldLifecycleEvaluator`, `CashFlowEngine` | S | `neqsim-integrated-production-and-lifecycle` |
+| Capacity constraints, bottlenecks, guarded writes | `CapacityConstraint`, `BottleneckTracker`, `ProcessAutomation`, `ProductionRateFitter` | R | `neqsim-capacity-and-utilization-analysis` |
+| Chart calibration, trains, turboexpander, pump NPSH | `CompressorChartCalibrator`, `CompressorTrain`, `TurboExpanderMapIngestion`, `PumpApi610DesignCalculator` | R/S | `neqsim-rotating-equipment-design` |
+| LNG tank ageing, rollover, BOG, shipping | `LNGTankLayeredModel`, `LNGRolloverDetector`, `LNGBOGHandlingNetwork`, `LNGShipModel` (`process.equipment.lng`) | S | `neqsim-lng-liquefaction` |
+
+### Engineering automation, control, safety operations
+
+| Capability | Key classes (package) | Verdict | Skill |
+|---|---|---|---|
+| Design loop, P&ID synthesis, DEXPI/CFIHOS, change impact | `EngineeringDesignLoop`, `PidDesignSynthesizer`, `DexpiEngineeringExporter`, `Cfihos20HandoverExporter`, `GeneralizedImpactAnalyzer` (`process.engineering`) | S (review required) | `neqsim-engineering-design-package` |
+| MPC, step-response, exporters | `ProcessLinkedMPC`, `ProcessLinearizer`, `ModelPredictiveController` (`process.mpc`, `process.controllerdevice`) | S | `neqsim-advanced-control-mpc-and-virtual-sensing` |
+| Virtual flow meter, soft sensor, reconciliation | `VirtualFlowMeter`, `SoftSensor`, `DataReconciliationEngine`, `SteadyStateDetector` | S | `neqsim-advanced-control-mpc-and-virtual-sensing` |
+| Superstructure candidate generation | `ProcessResearcher`, `ProcessSynthesisGraph` (`process.research`) | S (bounded enumeration) | `neqsim-process-synthesis-research` |
+| Release source terms (HEM, drift-flux, Fanno, decompression) | `ReleaseFlowRequest`, `HomogeneousEquilibriumReleaseModel`, `SourceTermSession` (`process.safety.release`) | R/S | `neqsim-release-source-terms` |
+| ESD test, dynamic scenarios, operational/portfolio risk | `EmergencyShutdownTestRunner`, `DynamicSafetyScenarioRunner`, `OperationalRiskSimulator` (`process.safety`) | S | `neqsim-operational-risk-and-safety-validation` |
+| Open drain, process-safety-system review, P-002 / STS0131 gates | `OpenDrainReviewEngine`, `ProcessSafetySystemReviewEngine`, `NorsokP002ComplianceChecker`, `Sts0131Gate` | S (evidence-based) | `neqsim-operational-risk-and-safety-validation` |
+
+---
+
 ## Quick Lookup: "Can NeqSim do X?"
 
 | Question | Answer | Class/Method |
@@ -591,7 +706,7 @@ transport properties (viscosity, thermal conductivity, density).
 | Phase envelope? | ✅ | `ops.calcPTphaseEnvelope()` |
 | Hydrate temperature? | ✅ | `ops.hydrateEquilibriumTemperature()` |
 | Wax appearance? | ✅ | `ops.calcWAT()` |
-| CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` (screening); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (rigorous, brine-driven) |
+| CO2 corrosion rate? | ✅ | `NorsokM506Rev2` (Rev. 2 unmitigated rate); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (legacy screen with optional electrolyte pH) |
 | H2S sour classification? | ✅ | `DeWaardMilliamsCorrosion.isSourService()` |
 | Per-segment corrosion+scale profile? | ✅ | `PipeSegmentIntegrity.fromPipe(...)` |
 | Flow-accelerated corrosion in a closed heating/cooling loop? | ✅ | `FlowAcceleratedCorrosion` (screening index; NORSOK M-506 does **not** apply to a CO2-free loop) |
@@ -601,10 +716,14 @@ transport properties (viscosity, thermal conductivity, density).
 | Compressor power? | ✅ | `Compressor.getPower("kW")` |
 | NPV / DCF? | ✅ | `DCFCalculator` |
 | Well casing design? | ✅ | `WellDesignCalculator` |
+| VFPPROD / VFPINJ lift curve (vertical lift performance, THP/BHP table) for Eclipse or OPM Flow? | ✅ (screening to study grade, depends on calibration) | `VfpTableBuilder` + `TubingVlpProvider` / `ForwardVlpProvider`, skill `neqsim-vfp-lift-curves`, agent `vfp-lift-curve-agent` |
+| Deviated tubing pressure drop from a survey? | ✅ | `TubingPerformance.setSurvey(md, tvd, id)` (`process.equipment.pipeline`) |
 | TEG dehydration? | ✅ | `SimpleTEGAbsorber` |
 | Sulfur deposition? | ✅ | `SulfurDepositionAnalyser` |
 | JT cooling? | ✅ | `ThrottlingValve` |
 | Depressurization? | ✅ | `ProcessSystem.runTransient()` |
+| Fire-water / deluge coverage of an area? | ✅ | `FireWaterDemandCalculator` + `DelugeNozzleLayout` + `FireWaterCoverageAssessment` (`neqsim.process.safety.firewater`) |
+| Can PFP or fire monitors replace deluge? | ✅ | `ActiveFireProtectionScreening`, `FireMonitorCoverage` |
 | PSV sizing (gas / liquid, fire case)? | ✅ | `ReliefValveSizing` (`neqsim.process.util.fire`) |
 | Two-phase PSV (API 520 omega / HEM)? | ✅ | `ReliefValveSizing.calculateTwoPhaseReliefArea(...)` (Leung omega method) |
 | Tank venting (API 2000)? | 🔧 | `Api2000TankVentingScreeningKernel` — caller-controlled normal/emergency demand aggregation and rated-capacity/pressure screen; no API table lookup or vent sizing |
@@ -613,7 +732,7 @@ transport properties (viscosity, thermal conductivity, density).
 | Pipe-soil interaction (DNV-RP-F114)? | 🔧 | `DnvRpF114PipeSoilInteractionScreeningKernel` — current-edition caller-controlled vertical/axial/lateral demand-resistance margins; no geotechnical model derivation or conformity decision |
 | Monte Carlo? | ✅ | `MonteCarloSimulator` |
 | Heat integration? | ✅ | `PinchAnalyzer` |
-| Amine sweetening? | ⚠️ Basic | Kent-Eisenberg model |
+| Amine sweetening? | ⚠️ Screening | `SimpleAmineAbsorber`, Kent-Eisenberg; see `neqsim-acid-gas-treating` |
 | Biogas production? | ✅ | `AnaerobicDigester` |
 | Fermentation kinetics? | ✅ | `FermentationReactor` (Monod/Contois) |
 | Biogas upgrading? | ✅ | `BiogasUpgrader` (4 technologies) |
@@ -621,9 +740,9 @@ transport properties (viscosity, thermal conductivity, density).
 | Sustainability / LCA? | ✅ | `SustainabilityMetrics` |
 | Biogas-to-grid module? | ✅ | `BiogasToGridModule` |
 | Waste-to-energy CHP? | ✅ | `WasteToEnergyCHPModule` |
-| Rate-based column? | ❌ | Not available |
+| Rate-based column? | ✅ packed / ⚠️ trays | `RateBasedPackedColumn`, `RateBasedAbsorber`; trays are equilibrium-stage |
 | Scale prediction? | ✅ | `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (rate), `BrineMixingScaleEvaluator` (mixing), `system.checkScalePotential(phase)` |
-| Detailed HX design? | ❌ | Use duty + LMTD |
+| Detailed HX design? | ✅ | `ShellAndTubeDesignCalculator` (TEMA, Bell-Delaware, ASME VIII) |
 | Full reservoir sim? | ❌ | `SimpleReservoir` only |
 | CO2 injection well analysis? | ✅ | `CO2InjectionWellAnalyzer` |
 | CO2 wellbore shutdown transient? | ✅ | `TransientWellbore` |
@@ -638,6 +757,25 @@ transport properties (viscosity, thermal conductivity, density).
 | VFD selection? | ✅ | `VariableFrequencyDrive` |
 | Cable sizing? | ✅ | `ElectricalCable` |
 | Hazardous area classification? | ✅ | `HazardousAreaClassification` |
+| Claus sulfur recovery unit? | ✅ | `SulfurRecoveryUnit` (`neqsim-sulfur-recovery`) |
+| Crude assay blend or hydrotreating balance? | ✅ screening | `RefineryAssayBlend`, `RefineryHydrotreating*Balance` (`neqsim-refinery-crude-processing`) |
+| Packed column flooding / HETP? | ✅ | `ColumnInternalsDesigner`, `PackingHydraulicsCalculator` |
+| Produced-water oil-in-water train? | ✅ screening | `ProducedWaterTreatmentTrain` (`neqsim-produced-water-and-solids-separation`) |
+| Looped gas network with quality limits? | ✅ | `LoopedPipeNetwork` + `NetworkQualityEvaluator` |
+| Gas linepack transient? | ✅ | `TransientGasNetwork` |
+| Terminal tank and cargo schedule? | ✅ | `OilNetworkSchedule` |
+| Power-from-shore / energy bus / wind-solar dispatch? | ✅ screening | `EnergyBus`, `CoupledProcessEnergySolver`, `OffshoreEnergySystem` |
+| Gas turbine degradation and wash planning? | ✅ | `GasTurbineDegradation`, `GasTurbineWashPlanner` |
+| Well-test matching, gas-lift allocation? | ✅ | `WellTestMatcher`, `GasLiftNetworkOptimizer` |
+| Host tie-in capacity? | ✅ | `TieInCapacityPlanner` |
+| Flowsheet bottleneck / utilization? | ✅ | `BottleneckTracker`, `getUtilizationSnapshot()` |
+| Compressor chart calibration, turboexpander map, pump NPSH? | ✅ | `neqsim-rotating-equipment-design` |
+| Model predictive control / virtual flow meter? | ⚠️ screening | `ProcessLinkedMPC`, `VirtualFlowMeter` |
+| Process synthesis / superstructure? | ⚠️ bounded enumeration | `ProcessResearcher` |
+| P&ID synthesis, DEXPI, CFIHOS handover? | ⚠️ review required | `neqsim-engineering-design-package` |
+| Leak / rupture source term? | ✅ | `HomogeneousEquilibriumReleaseModel`, `SourceTermSession` |
+| ESD test, dynamic safety scenarios, operational risk? | ⚠️ screening | `EmergencyShutdownTestRunner`, `OperationalRiskSimulator` |
+| LNG tank ageing / rollover? | ✅ | `LNGTankLayeredModel`, `LNGRolloverDetector` |
 
 ---
 

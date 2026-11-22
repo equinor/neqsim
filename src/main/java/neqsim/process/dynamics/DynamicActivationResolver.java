@@ -97,6 +97,17 @@ public final class DynamicActivationResolver {
     if (exchanger.getWallMass() <= 0.0 || exchanger.getHeatTransferArea() <= 0.0) {
       return DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
     }
+    double[] parameters = {exchanger.getWallMass(), exchanger.getWallCp(), exchanger.getHeatTransferArea(),
+        exchanger.getShellSideHtc(), exchanger.getTubeSideHtc()};
+    for (double parameter : parameters) {
+      if (!Double.isFinite(parameter) || parameter <= 0.0) {
+        return DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
+      }
+    }
+    if (!Double.isFinite(exchanger.getShellHoldupVolume()) || exchanger.getShellHoldupVolume() < 0.0
+        || !Double.isFinite(exchanger.getTubeHoldupVolume()) || exchanger.getTubeHoldupVolume() < 0.0) {
+      return DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
+    }
     return DynamicActivationStatus.ACTIVE;
   }
 
@@ -115,7 +126,8 @@ public final class DynamicActivationResolver {
     if (exchanger.getHeatTransferArea() <= 0.0) {
       return "dynamicModelEnabled is true but heatTransferArea is not positive";
     }
-    return "dynamic heat-exchanger wall-energy path is active";
+    return "dynamic heat-exchanger wall-energy path is active: conservative mixed-fluid enthalpy integration; "
+        + "single-phase fixed-pressure scope";
   }
 
   private static DynamicActivationStatus resolveBatteryStorage(BatteryStorage battery) {

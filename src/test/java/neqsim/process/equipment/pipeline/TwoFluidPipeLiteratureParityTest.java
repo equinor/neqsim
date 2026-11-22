@@ -851,7 +851,7 @@ public class TwoFluidPipeLiteratureParityTest {
     @Test
     @DisplayName("dP increases monotonically with flow rate")
     void testPressureDropMonotonicity() {
-      double[] flows = { 5000, 10000, 20000, 40000 };
+      double[] flows = {5000, 10000, 20000, 40000};
       double prevDp = 0;
 
       logger.info("=== dP Monotonicity ===");
@@ -938,7 +938,7 @@ public class TwoFluidPipeLiteratureParityTest {
     @Test
     @DisplayName("Larger pipe diameter gives lower dP")
     void testDiameterEffect() {
-      double[] diameters = { 0.1, 0.15, 0.2, 0.3 }; // 100mm to 300mm
+      double[] diameters = {0.1, 0.15, 0.2, 0.3}; // 100mm to 300mm
       double prevDp = Double.MAX_VALUE;
 
       logger.info("=== Diameter Effect ===");

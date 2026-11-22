@@ -184,7 +184,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
     // Gas routing splitter (process/PSV/ESD) - 3 outputs
     Splitter gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 3);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0, 0.0 });
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0, 0.0});
 
     // Process outlet stream
     Stream processStream = new Stream("Process Stream", gasSplitter.getSplitStream(0));
@@ -393,7 +393,7 @@ public class ProcessLogicAlarmIntegratedExample {
     setup.esdLogic = new ESDLogic("ESD Level 1");
     setup.esdLogic.addAction(new CloseValveAction(inletValve), 0.0);
     setup.esdLogic.addAction(new CloseValveAction(esdInletValve), 0.0);
-    setup.esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 0.0, 1.0 }), 0.5);
+    setup.esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 0.0, 1.0}), 0.5);
     setup.esdLogic.addAction(new EnergizeESDValveAction(bdValve, 100.0), 0.5);
     setup.esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0);
 

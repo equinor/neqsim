@@ -75,7 +75,7 @@ NeqSim provides comprehensive PVT modeling capabilities:
 SystemInterface fluid = new SystemSrkEos(373.15, 250.0);
 fluid.addComponent("methane", 0.60);
 fluid.addComponent("ethane", 0.08);
-fluid.addTBPfraction("C7+", 0.20, 220.0, 0.85);  // mole frac, MW, SG
+fluid.addTBPfraction("C7+", 0.20, 220.0 / 1000.0, 0.85);  // mole frac, MW [g/mol], SG
 fluid.setMixingRule("classic");
 
 // Characterize plus-fraction using Pedersen method
@@ -828,7 +828,7 @@ exportPLET.setHubSizeInches(12.0);
 exportPLET.setStructureType(PLET.StructureType.GRAVITY_BASE);
 exportPLET.setWaterDepth(380.0);
 exportPLET.setDesignPressure(200.0);
-exportPLET.setMaterialGrade("X65");
+exportPLET.getMechanicalDesign().setHubMaterialGrade("F22");
 exportPLET.run();
 
 // Dynamic Riser with Lazy-Wave Configuration
@@ -910,7 +910,7 @@ treeDesign.calcDesign();
 PLETMechanicalDesign pletDesign = 
     (PLETMechanicalDesign) exportPLET.getMechanicalDesign();
 pletDesign.setMaxOperationPressure(200.0);
-pletDesign.setMaterialGrade("X65");
+pletDesign.setHubMaterialGrade("F22");  // F22 Class 3 pressure-bearing hub
 pletDesign.setDesignStandardCode("DNV-ST-F101");
 pletDesign.setRegion(SubseaCostEstimator.Region.NORWAY);
 pletDesign.calcDesign();
@@ -995,6 +995,13 @@ for (SubseaCostEstimator.Region region : SubseaCostEstimator.Region.values()) {
     System.out.println("  " + region.name() + ": $" + String.format("%,.0f", regional.getTotalCost()));
 }
 ```
+
+`SubseaCostEstimator` applies one regional multiplier to all monetary outputs,
+including BOM unit rates and contingency, using GOM as the baseline. Physical
+quantities, durations and manhours remain unchanged. Region setters revalue an
+existing estimate without compounding; the default constructor selects NORWAY.
+These factors and baseline hourly/vessel rates are Java screening assumptions,
+not values read from `SubseaLaborRates.csv` or `SubseaVesselRates.csv`.
 
 **Regional Cost Factors:**
 

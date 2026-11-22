@@ -310,7 +310,7 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     feed.setPressure(60.0, "bara");
 
     Cooler cooler = new Cooler("inlet cooler", feed);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     ThreePhaseSeparator sep = new ThreePhaseSeparator("inlet separator", cooler.getOutletStream());
 

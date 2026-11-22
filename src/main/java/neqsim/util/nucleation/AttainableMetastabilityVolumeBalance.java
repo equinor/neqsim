@@ -278,6 +278,7 @@ public class AttainableMetastabilityVolumeBalance {
       liquid.setTemperature(initialTemperatureK);
       liquid.setPressure(initialPressurePa / 1.0e5);
       liquidOps.TPflash();
+      liquid.init(2);
       sRef = liquid.getEntropy("J/molK");
     } catch (Exception ex) {
       message = "Could not evaluate the initial liquid state: " + ex.getMessage();
@@ -394,11 +395,13 @@ public class AttainableMetastabilityVolumeBalance {
 
     liquid.setTemperature(t0);
     ops.TPflash();
+    liquid.init(2);
     double f0 = liquid.getEntropy("J/molK") - entropyTarget;
 
     for (int iter = 0; iter < 40; iter++) {
       liquid.setTemperature(t1);
       ops.TPflash();
+      liquid.init(2);
       double f1 = liquid.getEntropy("J/molK") - entropyTarget;
 
       if (Math.abs(f1) < 1.0e-6) {

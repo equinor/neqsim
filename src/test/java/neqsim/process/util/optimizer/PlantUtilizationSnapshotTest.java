@@ -10,7 +10,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
@@ -18,6 +23,88 @@ import neqsim.process.equipment.network.NetworkDecisionVariable;
 
 /** Regression tests for complete immutable plant utilization snapshots. */
 class PlantUtilizationSnapshotTest {
+
+  @Test
+  void failedConvergenceCannotBeHiddenByAnEmptyRegistry() {
+    PlantUtilizationSnapshot snapshot = PlantUtilizationSnapshot.builder(new PlantConstraintRegistry(), "failed")
+        .convergenceComplete(false).build();
+    assertFalse(snapshot.isComplete());
+    assertFalse(snapshot.isFeasible());
+    assertTrue(snapshot.getCoverageDiagnostics().contains("INCOMPLETE_CONVERGENCE"));
+  }
+
+  @Test
+  void independentExpectationsExposeOmittedEquipmentAndConstraints() {
+    PlantConstraintRegistry registry = new PlantConstraintRegistry();
+    UtilizationCoverageReport expected = UtilizationCoverageReport.builder("Plant")
+        .expectConstraint("Compression", "K-1", "power").registry(registry).build();
+    PlantUtilizationSnapshot snapshot = PlantUtilizationSnapshot.builder(registry, "calc-coverage")
+        .expectedCoverage(expected).convergenceComplete(true).build();
+    assertFalse(snapshot.isComplete());
+    assertFalse(snapshot.isFeasible());
+    assertTrue(snapshot.getCoverageDiagnostics().contains("INCOMPLETE_EXPECTED_COVERAGE"));
+    assertTrue(snapshot.getCoverageDiagnostics().stream()
+        .anyMatch(value -> value.startsWith("UNREGISTERED_EXPECTED_CONSTRAINT:")));
+  }
+
+  @Test
+  void qualifiedSnapshotRequiresExplicitConvergenceAndNeverResamplesCoverage() throws Exception {
+    AtomicInteger supplierCalls = new AtomicInteger();
+    CapacityConstraint constraint = new CapacityConstraint("power", "kW", ConstraintType.HARD).setDesignValue(100.0)
+        .setSeverity(ConstraintSeverity.HARD).setDataSource("engineering basis").setValueSupplier(() -> {
+          supplierCalls.incrementAndGet();
+          return 75.0;
+        });
+    SnapshotEquipment equipment = new SnapshotEquipment(constraint);
+    PlantConstraintDefinition definition = definition("power",
+        PlantConstraintScope.equipment("Plant", "Compression", "K-1"), ConstraintSeverity.HARD, true);
+    PlantConstraintRegistry registry = new PlantConstraintRegistry().register(definition);
+    UtilizationCoverageReport coverage = UtilizationCoverageReport.builder("Plant").equipment("Compression", equipment)
+        .registry(registry).build();
+    assertTrue(coverage.isComplete(), coverage.getDiagnostics().toString());
+    assertEquals(1, supplierCalls.get());
+    PlantConstraintSample sample = available(definition, "calc-qualified", 75.0, 100.0, 0.75, 25.0);
+    PlantUtilizationSnapshot implicit = PlantUtilizationSnapshot.builder(registry, "calc-qualified")
+        .expectedCoverage(coverage).sample(sample).build();
+    assertFalse(implicit.isComplete());
+    assertTrue(implicit.getCoverageDiagnostics().contains("CONVERGENCE_NOT_DECLARED"));
+    PlantUtilizationSnapshot qualified = PlantUtilizationSnapshot.builder(registry, "calc-qualified")
+        .expectedCoverage(coverage).sample(sample).convergenceComplete(true).build();
+    assertTrue(qualified.isFeasible());
+    assertEquals(0.75, qualified.getBottleneck().getNormalizedUtilization(), 0.0);
+    assertEquals(1, supplierCalls.get(), "Binding a captured preflight must not invoke equipment suppliers");
+    PlantUtilizationSnapshot restored = roundTrip(qualified);
+    assertTrue(restored.isFeasible());
+    assertEquals(coverage.getRequiredConstraintIds(), restored.getExpectedCoverage().getRequiredConstraintIds());
+    assertThrows(IllegalArgumentException.class, () -> PlantUtilizationSnapshot
+        .builder(new PlantConstraintRegistry(), "calc-qualified").expectedCoverage(coverage));
+    PlantUtilizationSnapshot.Builder stale = PlantUtilizationSnapshot.builder(registry, "calc-qualified")
+        .expectedCoverage(coverage).sample(sample).convergenceComplete(true);
+    registry.register(definition("temperature", PlantConstraintScope.equipment("Plant", "Compression", "K-1"),
+        ConstraintSeverity.HARD, true));
+    assertThrows(IllegalArgumentException.class, stale::build, "Registry mutation after binding must fail closed");
+  }
+
+  private static final class SnapshotEquipment extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1L;
+    private final CapacityConstraint constraint;
+
+    private SnapshotEquipment(CapacityConstraint constraint) {
+      super("K-1");
+      this.constraint = constraint;
+      setCapacityAnalysisEnabled(true);
+    }
+
+    @Override
+    public Map<String, CapacityConstraint> getCapacityConstraints() {
+      return Collections.singletonMap("power", constraint);
+    }
+
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
+    }
+  }
 
   @Test
   void completeSnapshotRetainsEveryRowAndBuildsDeterministicLadder() {

@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseUMRCPA;
 
 /**
@@ -7,10 +8,11 @@ import neqsim.thermo.phase.PhaseUMRCPA;
  *
  * <p>
  * This model combines the Peng-Robinson physical term with the Universal Mixing Rule (UMR) driven by UNIFAC
- * group-contribution activity coefficients, the 3-parameter Mathias-Copeman alpha function (attractive term 13,
- * {@code _umrmc} group-interaction tables), and a CPA association term for self- and cross-associating compounds
- * (water, glycols, alcohols). The association contribution is added to the Helmholtz energy in
- * {@link PhaseUMRCPA#getF()}.
+ * group-contribution activity coefficients, the 3-parameter Mathias-Copeman alpha function (attractive term 13), and a
+ * CPA association term for self- and cross-associating compounds (water, glycols, alcohols). The group-interaction
+ * parameters come from the {@code _umrcpa} tables, which are separate from the {@code _umrmc} tables of UMR-PRU because
+ * the association term carries the hydrogen bonding of water. The association contribution is added to the Helmholtz
+ * energy in {@link PhaseUMRCPA#getF()}.
  * </p>
  *
  * <p>
@@ -24,6 +26,8 @@ import neqsim.thermo.phase.PhaseUMRCPA;
  * @author Even Solbraa
  */
 public class SystemUMRCPAEoS extends SystemPrEos {
+  /** Canonical system name used by the model switch and mixing-rule selection. */
+  static final String MODEL_NAME = "UMR-CPA";
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -44,9 +48,9 @@ public class SystemUMRCPAEoS extends SystemPrEos {
     super(T, P);
     // Engage the co-volume combining rule used by the UMR-PRU family.
     setBmixType(1);
-    modelName = "UMR-CPA";
-    // Attractive term 13 selects the 3-parameter Mathias-Copeman alpha and the _umrmc
-    // group-interaction tables, matching the UMR-PRU-MC physical term.
+    modelName = MODEL_NAME;
+    // Attractive term 13 selects the 3-parameter Mathias-Copeman alpha, matching the UMR-PRU-MC
+    // physical term. The UMR-CPA phase reads the _umrcpa group-interaction tables.
     attractiveTermNumber = 13;
 
     // Recreates phases created in super constructor SystemPrEos.
@@ -56,5 +60,37 @@ public class SystemUMRCPAEoS extends SystemPrEos {
       phaseArray[i].setPressure(P);
     }
     this.useVolumeCorrection(true);
+  }
+
+  /**
+   * Add a previously characterized cut without refitting its critical properties under the target EOS.
+   *
+   * @param source source TBP or plus fraction
+   */
+  void addCharacterizedCut(ComponentInterface source) {
+    addTBPfraction(source.getComponentName(), source.getNumberOfmoles(), source.getMolarMass(),
+        source.getNormalLiquidDensity(), source.getTC(), source.getPC(), source.getAcentricFactor());
+    int index = getNumberOfComponents() - 1;
+    String assignedName = getComponent(index).getComponentName();
+    if (!source.getComponentName().equals(assignedName)) {
+      renameComponent(assignedName, source.getComponentName());
+    }
+    for (int phase = 0; phase < getMaxNumberOfPhases(); phase++) {
+      ComponentInterface cut = getPhase(phase).getComponent(index);
+      cut.setNormalBoilingPoint(source.getNormalBoilingPoint());
+      cut.setCriticalVolume(source.getCriticalVolume());
+      cut.setCriticalViscosity(source.getCriticalViscosity());
+      cut.setParachorParameter(source.getParachorParameter());
+      cut.setTriplePointTemperature(source.getTriplePointTemperature());
+      cut.setHeatOfFusion(source.getHeatOfFusion());
+      cut.setCpA(source.getCpA());
+      cut.setCpB(source.getCpB());
+      cut.setCpC(source.getCpC());
+      cut.setCpD(source.getCpD());
+      cut.setCpE(source.getCpE());
+      if (source.isIsPlusFraction()) {
+        cut.setIsPlusFraction(true);
+      }
+    }
   }
 }

@@ -42,7 +42,7 @@ class LearningPathsDocumentationTest(unittest.TestCase):
             "ReadingFluidProperties.ipynb": "Executed",
             "PVT_Simulation_and_Tuning.ipynb": "Source only",
             "NetworkSolverTutorial.ipynb": "Source only",
-            "ProductionOptimizer_Tutorial.ipynb": "Source only",
+            "ProductionOptimizer_Tutorial.ipynb": "Executed",
         }
         for notebook, status in expected.items():
             catalog_row = next(

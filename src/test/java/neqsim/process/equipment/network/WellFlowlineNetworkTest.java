@@ -338,7 +338,7 @@ class WellFlowlineNetworkTest {
     network.setTargetEndpointPressure(60.0, "bara");
     process.add(network);
 
-    double[] openings = new double[] { 40.0, 70.0, 100.0 };
+    double[] openings = new double[] {40.0, 70.0, 100.0};
     double bestOilRate = -1.0;
     double bestChoke1 = 0.0;
     double bestChoke2 = 0.0;

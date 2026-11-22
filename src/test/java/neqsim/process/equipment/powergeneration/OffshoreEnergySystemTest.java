@@ -114,7 +114,7 @@ public class OffshoreEnergySystemTest extends neqsim.NeqSimTest {
     system.setGasTurbineCapacity(30.0e6);
     system.setGasTurbineMinLoad(0.0);
 
-    double[] windSpeeds = { 0.0, 5.0, 10.0, 12.0, 20.0, 3.0 };
+    double[] windSpeeds = {0.0, 5.0, 10.0, 12.0, 20.0, 3.0};
     system.runHourlyDispatch(windSpeeds);
 
     assertEquals(windSpeeds.length, system.getDispatchHistory().size());

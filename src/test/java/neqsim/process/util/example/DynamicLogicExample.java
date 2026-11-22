@@ -273,8 +273,8 @@ public class DynamicLogicExample {
     logger.info("\n=== EXAMPLE 3: DYNAMIC LOGIC SEQUENCES ===");
 
     // Create a dynamic configuration for logic
-    String[] scenarios = { "Normal Operation", "High Flow", "Emergency" };
-    double[] valveSettings = { 60.0, 85.0, 10.0 };
+    String[] scenarios = {"Normal Operation", "High Flow", "Emergency"};
+    double[] valveSettings = {60.0, 85.0, 10.0};
 
     for (int i = 0; i < scenarios.length; i++) {
       final String scenario = scenarios[i];

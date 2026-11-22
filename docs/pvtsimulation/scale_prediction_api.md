@@ -15,6 +15,45 @@ Both approaches share improved Ksp correlations, pressure corrections, and T-dep
 
 ---
 
+## Silica in commingled produced water
+
+Use the [produced-water compatibility example](https://github.com/equinor/neqsim/tree/master/examples/produced-water-compatibility)
+for a formation-water blend sweep. In process mode the SRK-CPA flowsheet
+passes solvent-water retention and gas CO₂ fugacity to PHREEQC Pitzer.
+Station mode uses water assays and supplied temperatures and pressures, with
+optional CO₂ fugacity and solvent-water retention. Both modes support closed
+aqueous DIC. They also calculate fixed-fugacity scenarios where a fugacity is
+available. Results include pre-precipitation SI, local equilibrium amorphous
+silica removal potential, solvent-water blend fractions and model checks.
+The [produced-water compatibility workflow](https://github.com/equinor/neqsim/blob/master/.github/skills/neqsim-produced-water-compatibility/SKILL.md)
+covers assay normalization, scenario selection and reporting.
+
+`SilicaScaleSaturation.saturationIndex` accepts the decimal log activities of
+neutral H₄SiO₄ and water and the matching decimal log dissolution constant.
+For the dissolution of SiO₂(s) into H₄SiO₄(aq), with two water molecules consumed,
+SI is log₁₀(aH₄SiO₄) − 2 log₁₀(aH₂O) − log₁₀(K). Pass the dissociation
+constant for the solid being screened. `log10DissolutionConstantAtOneAtmosphere`
+provides a 25–100 °C reference for amorphous silica, chalcedony and quartz
+from [PHREEQC 3.7.3 pitzer.dat](https://github.com/phreeqc-dev/phreeqc3/blob/v3.7.3/database/pitzer.dat).
+For other pressures, pass the pressure-corrected constant from the same
+geochemical model as the activities. The native API's five benchmark cases
+cover dilute water and NaCl brines up to 2.5 mol/kg water at 1 atm.
+
+Native electrolyte speciation still lacks a registered dissolved silica
+reaction system. Total Si, SiO₂ mass concentration and aqueous H₄SiO₄ activity
+have different meanings. Obtain the species activity from an aqueous model
+that supports the case. Positive SI indicates supersaturation. Deposition
+kinetics, solids carry-over, and injection impairment need additional evidence.
+
+## Full-Pitzer barite mixing qualification
+
+Na–Ba–Cl–SO4 formation-water mixtures remain unsupported for qualified full-Pitzer barite
+precipitation. After `init(0)`, `SystemPitzer.getMissingPhreeqcPitzerCatalogRows()` reports all
+absent candidate source rows without invoking a flash. See the
+[barite qualification report](../thermo/pitzer_barite_qualification.md) for the exact gaps,
+public feed matrix, standard states and independent-validation requirements. Preserve the
+coverage failure; standalone binary screening is not a substitute for full-mixture qualification.
+
 ## Architecture Overview
 
 ```
@@ -211,6 +250,35 @@ for i in range(1, len(table)):
 - MEG-aware (temporarily replaces MEG with water for calculation)
 - Returns **saturation ratio** (SR = IAP/Ksp), where SR > 1 = supersaturated
 
+### Dissolved-salt saturation diagnostics
+
+`calcSaltSaturation(String)` adds dissociated salt formula units until the aqueous ion activity
+product reaches the COMPSALT solubility product. Use
+`calcSaltSaturationWithDiagnostics(String)` for the same system mutation plus immutable convergence
+and work diagnostics:
+
+```java
+SystemPitzer fluid = new SystemPitzer(404.15, 995.0);
+fluid.addComponent("water", 55.508);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+SaltSaturationResult result =
+    operations.calcSaltSaturationWithDiagnostics("CaSO4_A");
+
+double initialSaturationRatio = result.getInitialSaturationRatio();
+double finalSaturationRatio = result.getFinalSaturationRatio();
+double addedFormulaUnitsMol = result.getAddedSaltMoles();
+int fullThermodynamicInitializations = result.getThermodynamicInitializationCount();
+boolean converged = result.isConverged();
+```
+
+The result also reports bracket and bisection evaluation counts, whether the input was already
+saturated, whether the solve reached its iteration limit, and the absolute residual from unit
+saturation. These diagnostics expose the existing calculation's work without adding flashes or
+changing its `1e-6` saturation-ratio tolerance. They do not create a solid phase, describe
+precipitated mass, or qualify the COMPSALT, Ksp, reaction-volume, or activity-model parameters.
+
 ### Activity-consistent pure-mineral precipitation
 
 `ThermodynamicOperations.precipitateScale(String)` removes one named COMPSALT mineral
@@ -251,6 +319,15 @@ the mineral-reaction database. Every trial extent is evaluated on a fresh clone;
 composition is reflashed and physical properties are reinitialised. Consequently the residual
 fluid can continue through `Stream`, `Heater`, and `ProcessSystem` calculations. Ions remain in the
 aqueous phase, while gas and oil phases retain their EOS roles.
+
+For reactive electrolyte-CPA feeds containing only water and ions, TP flash first tests an aqueous
+endpoint with closed chemical equilibrium. It accepts that endpoint only when water fugacity is
+no greater than that of the pure-water vapor-root trial at the same temperature and pressure.
+This prevents singular gas trials from being interpreted as
+undersaturation during precipitation searches. Brines above the solvent boiling boundary and
+feeds with any positive neutral solute retain the general phase search. The caller's phase
+configuration is preserved; the scale API's saturation and balance acceptance tolerances are
+unchanged.
 
 Callers should require a complementarity residual such as
 `solid.getComplementarityViolation() <= 1e-5` and independently check total and elemental balances.
@@ -320,6 +397,20 @@ CalciumSulfatePhaseBoundaryQualification evidence =
     operations.qualifyCalciumSulfatePhaseBoundary();
 
 double transitionC = evidence.getPredictedPureWaterTransitionCelsius();
+double transitionAtPressureC = evidence.getPredictedPureWaterTransitionAtEvaluatedPressureCelsius();
+double anhydriteVdelta = evidence.getAnhydriteLumpedReactionVolumeCm3PerMol();
+double ambientReactionVolume =
+    evidence.getCrystallographicTransitionReactionVolumeCm3PerMol();
+double compsaltReactionVolume =
+    evidence.getCompsaltTransitionReactionVolumeCm3PerMol();
+boolean independentAqueousPressureEvidence =
+    evidence.hasIndependentAqueousPressureEvidence();
+boolean aqueousPressureRowsAudited =
+    CalciumSulfatePhaseBoundaryQualification.isAqueousPressureEvidenceRowAudited();
+boolean aqueousPressureDensityQualified =
+    CalciumSulfatePhaseBoundaryQualification.isAqueousPressureDensityModelQualified();
+boolean aqueousLimitingVolumeResolved =
+    evidence.isAqueousLimitingVolumeEvidenceResolved();
 double requiredWaterActivity25C = evidence.getRequiredWaterActivityAt25Celsius();
 boolean publicationReady = evidence.isPublicationReady();
 ```
@@ -340,6 +431,60 @@ experimental lineage without redistributing the copyrighted primary table. The c
 registered envelopes, so the result deliberately reports `REJECTED` and `publicationReady=false`; it does not tune a
 coefficient toward the evidence. Absolute-solubility residuals, primary-row uncertainty, mixed-brine qualification and
 the high-pressure reaction-volume convention remain explicit follow-on boundaries.
+
+The pressure diagnostic reproduces the exact constant-volume correction used by the authoritative COMPSALT Ksp path,
+with a 1.01325 bara correlation reference. It reports `Vdelta=-52.4 cm3/mol` for anhydrite and
+`Vdelta=-33.0 cm3/mol` for gypsum, their separate logarithmic Ksp corrections at the evaluated state, and the resulting
+pure-water transition prediction. These are lumped reaction-volume coefficients—not pure-mineral molar volumes. The
+diagnostic therefore always reports `aqueousSpeciesVolumeResolved=false` and `highPressureQualified=false`. The primary
+high-pressure anhydrite-solubility lineage is Dickson, Blount and Tunell (1963),
+[DOI 10.2475/ajs.261.1.61](https://doi.org/10.2475/ajs.261.1.61); no copyrighted table rows or fitted coefficients are
+redistributed. Quantitative adoption still requires a complete primary-row audit, aqueous-species volume mapping, and
+an uncertainty-aware held-out acceptance criterion.
+
+The same result exposes an independent ambient structural check without changing either COMPSALT
+coefficient. Antao (2011), [DOI 10.1154/1.3659285](https://doi.org/10.1154/1.3659285), reports an
+anhydrite synchrotron unit-cell volume of 305.487(1) Å3 with four formula units per cell. De la
+Torre et al. (2004), [DOI 10.1154/1.1725254](https://doi.org/10.1154/1.1725254), report a gypsum
+synchrotron unit-cell volume of 494.536(5) Å3, also with four formula units per cell. Together with
+the Pátek et al. (2009) liquid-water reference density at 298.15 K and 0.1 MPa,
+[DOI 10.1063/1.3043575](https://doi.org/10.1063/1.3043575), the nominal ambient cycle
+
+`V(anhydrite) + 2 V(H2O,l) - V(gypsum)`
+
+is +7.67528 cm3/mol. The difference between the existing lumped COMPSALT values is +19.4 cm3/mol,
+or 2.52759 times the measurement-derived cycle. This independently confirms that the current
+pressure response is not a pure-mineral-volume mapping. It is a diagnostic, not a replacement
+`Vdelta`: published cell standard errors do not bound thermal expansion, compressibility, sample
+and other systematic effects, or aqueous partial molar volumes. Consequently
+`highPressureQualified` and `aqueousSpeciesVolumeResolved` remain false.
+
+The result also registers the independent finite-concentration aqueous pressure evidence separately
+from the missing limiting-volume term. Al Ghafri et al. (2012),
+[DOI 10.1021/je2013704](https://doi.org/10.1021/je2013704), provide 197 CaCl2 density points in
+[NIST ThermoML](https://trc.nist.gov/ThermoML/10.1021/je2013704.html): 1–6 mol/kg,
+283.15–472.96 K, and 10.5–681.2 bara. The complete JSON and XML records were independently
+extracted to identical canonical row hashes, and the test fixture retains every row's 95% combined
+expanded density uncertainty. Against this hold-out, the current aqueous density path has MARE
+0.632%, RMSRE 0.845%, and maximum absolute relative error 2.661%; it is therefore explicitly
+unqualified for quantitative pressure-density use. This is not primarily an ambient-density offset:
+anchoring each of 25 molality-temperature isotherms to its lowest-pressure observation leaves 172
+pressure increments with MARE 0.596%, RMSRE 0.732%, maximum absolute relative error 2.129%, and a
+maximum increment residual 48.0 times the combined expanded source uncertainty. The anchored MARE
+also increases from 0.341% at 1 mol/kg to 0.670% at 3 mol/kg and 0.810% at 6 mol/kg. The existing
+path therefore fails the offset-free pressure-response test, and a replacement must represent the
+solution pressure response rather than merely retune an atmospheric density intercept. The
+machine-readable record is available under
+the [NIST data license](https://www.nist.gov/open/license). Its lowest concentration is 1 mol/kg, so
+it cannot determine the infinite-dilution CaCl2 volume needed to close the calcium-sulfate
+reaction-volume cycle. The candidate dilute lineage, Oakes et al. (1990),
+[DOI 10.1021/je00061a022](https://doi.org/10.1021/je00061a022), predates the ThermoML archive;
+row-level audit, propagated uncertainty, and redistribution-compatible provenance remain unresolved.
+Accordingly `hasIndependentAqueousPressureEvidence()` and
+`isAqueousPressureEvidenceRowAudited()` are true, while
+`isAqueousPressureDensityModelQualified()`, `isAqueousPressureResponseQualified()`, and
+`isAqueousLimitingVolumeEvidenceResolved()` remain false. These flags register evidence scope only;
+they do not change a COMPSALT coefficient or make high-pressure calcium-sulfate use qualified.
 
 The process-system test carries the solid ledger beside the residual fluid through a
 `Stream -> Heater -> ProcessSystem` calculation, then re-equilibrates it at the outlet. Its

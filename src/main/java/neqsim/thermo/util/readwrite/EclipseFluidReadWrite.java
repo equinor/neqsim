@@ -16,11 +16,15 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.component.ComponentPR;
 import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -64,6 +68,40 @@ public class EclipseFluidReadWrite {
 
   /** Default number of parsed E300 fluids retained by the cache. */
   public static final int DEFAULT_MAX_CACHE_SIZE = 64;
+
+  /** Conversion between NeqSim critical volume (cm3/mol) and the E300 VCRIT unit (m3/kmol). */
+  private static final double CM3_PER_MOL_PER_M3_PER_KMOL = 1000.0;
+
+  /**
+   * Largest VCRIT value (m3/kmol) that is still interpreted as being in E300 units. The lightest real component has Vc
+   * of about 50 cm3/mol (0.05 m3/kmol) and even very heavy pseudo-components stay below about 5 m3/kmol, whereas legacy
+   * NeqSim-written files hold cm3/mol values of 56 or more.
+   */
+  private static final double MAX_VCRIT_M3_PER_KMOL = 20.0;
+
+  /**
+   * Converts the VCRIT section read from an E300 file to NeqSim critical volume (cm3/mol).
+   *
+   * <p>
+   * Standard E300 files (Eclipse, PVTsim) hold VCRIT in m3/kmol and are scaled by 1000. Files written by earlier NeqSim
+   * versions stored cm3/mol under the same keyword and are returned unchanged.
+   * </p>
+   *
+   * @param vcrit values read from the VCRIT section
+   * @return critical volumes in cm3/mol, same order as the input
+   */
+  private static ArrayList<Double> vcritToCm3PerMol(List<Double> vcrit) {
+    double max = 0.0;
+    for (Double v : vcrit) {
+      max = Math.max(max, Math.abs(v));
+    }
+    ArrayList<Double> converted = new ArrayList<Double>(vcrit.size());
+    double factor = max < MAX_VCRIT_M3_PER_KMOL ? CM3_PER_MOL_PER_M3_PER_KMOL : 1.0;
+    for (Double v : vcrit) {
+      converted.add(v * factor);
+    }
+    return converted;
+  }
 
   /** Upper bound on the number of parsed E300 fluids retained by the cache. */
   private static volatile int maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
@@ -164,10 +202,6 @@ public class EclipseFluidReadWrite {
       return null;
     }
     String trimmedName = name.trim();
-    // PVTsim E300 files use uppercase IC4/IC5 for characterized pseudo-fractions.
-    if ("IC4".equals(trimmedName) || "IC5".equals(trimmedName)) {
-      return null;
-    }
     String normalized = name.trim().replace(" ", "").replace("_", "").replace("-", "").toUpperCase();
     switch (normalized) {
     case "C1":
@@ -279,6 +313,11 @@ public class EclipseFluidReadWrite {
     case "EBENZENE":
       return "ethylbenzene";
     default:
+      // Any other spelling of a database component (case, hyphens, synonyms). Bare Cn names (C7, C10 ...)
+      // are characterized pseudo-fractions in E300 files and are not resolved.
+      if (!normalized.matches("C\\d+") && neqsim.thermo.component.ComponentNameResolver.isKnownName(trimmedName)) {
+        return neqsim.thermo.component.ComponentNameResolver.resolve(trimmedName);
+      }
       return null;
     }
   }
@@ -367,7 +406,7 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file cannot be read
    */
   public static SystemInterface read(String inputFile, SystemInterface targetFluid) {
-    return readImpl(inputFile, targetFluid);
+    return readImpl(inputFile, targetFluid, false);
   }
 
   /**
@@ -378,7 +417,20 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile) {
-    return readImpl(inputFile, null);
+    return readImpl(inputFile, null, false);
+  }
+
+  /**
+   * Reads a PR fluid and explicitly applies its OMEGAB section. Ordinary {@link #read(String)} retains the historical
+   * behavior of ignoring that section, so existing imported-fluid results do not change. Use this method to reload a
+   * fluid exported with covolume tuning. File EOS selection, naming, and other import behavior are unchanged.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @return populated PR fluid with persistent covolume coefficients
+   * @throws IllegalArgumentException if the file or supplied PR coefficients are invalid
+   */
+  public static SystemInterface readWithPrOmegaB(String inputFile) {
+    return readImpl(inputFile, null, true);
   }
 
   /**
@@ -421,9 +473,10 @@ public class EclipseFluidReadWrite {
    *
    * @param inputFile path to the Eclipse E300 fluid file
    * @param forcedFluid optional pre-created fluid to populate (null to auto-create from EOS keyword)
+   * @param applyPrOmegaB whether to apply the OMEGAB section to PR components
    * @return the populated fluid system
    */
-  private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid) {
+  private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid, boolean applyPrOmegaB) {
     File file = new File(inputFile);
     if (!file.exists()) {
       throw new IllegalArgumentException(
@@ -440,7 +493,7 @@ public class EclipseFluidReadWrite {
     // of the static field cannot mismatch a cached entry with the prefix it was parsed under.
     String activePseudoName = pseudoName;
     boolean cacheable = forcedFluid == null && useCache;
-    String key = cacheable ? cacheKey(file, activePseudoName) : null;
+    String key = cacheable ? cacheKey(file, activePseudoName) + (applyPrOmegaB ? ":with-pr-omegab" : "") : null;
     if (cacheable) {
       SystemInterface cached = fluidCache.get(key);
       if (cached != null) {
@@ -464,6 +517,7 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> SSHIFTS = new ArrayList<Double>();
       ArrayList<Double> TBOIL = new ArrayList<Double>();
       ArrayList<Double> VCRIT = new ArrayList<Double>();
+      ArrayList<Double> VCRITVIS = new ArrayList<Double>();
       ArrayList<Double> PARACHOR = new ArrayList<Double>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
@@ -472,9 +526,13 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
       ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
+      String unitSystem = "METRIC";
       String EOS;
       while ((st = br.readLine()) != null) {
         st = st.trim();
+        if ("METRIC".equals(st) || "FIELD".equals(st) || "LAB".equals(st) || "PVT-M".equals(st)) {
+          unitSystem = st;
+        }
 
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
@@ -590,6 +648,9 @@ public class EclipseFluidReadWrite {
           if (st == null) {
             break;
           }
+        }
+        if (st.equals("VCRITVIS")) {
+          VCRITVIS.addAll(readViscosityCriticalVolumes(br));
         }
         if (st.equals("SSHIFT")) {
           while ((st = readLineClean(br)) != null) {
@@ -753,6 +814,7 @@ public class EclipseFluidReadWrite {
           }
         }
       }
+      VCRIT = vcritToCm3PerMol(VCRIT);
       for (int counter = 0; counter < names.size(); counter++) {
         String name = mapE300ComponentName(names.get(counter));
         if (name != null) {
@@ -823,6 +885,9 @@ public class EclipseFluidReadWrite {
         // Re-init so calca() runs with the new OmegaA values.
         fluid.init(0);
       }
+      if (applyPrOmegaB) {
+        applyPrOmegaB(fluid, OMEGAB_list, names.size());
+      }
       if (kij == null) {
         kij = new Double[names.size()][names.size()];
         for (Double[] row : kij) {
@@ -850,6 +915,14 @@ public class EclipseFluidReadWrite {
       } else if (usePedersen) {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
+      }
+      if (!VCRITVIS.isEmpty() && (LBCCOEF.size() >= 5 || !usePedersen)) {
+        if (!"METRIC".equals(unitSystem)) {
+          throw new IllegalArgumentException("VCRITVIS currently requires METRIC input units");
+        }
+        applyLbcCriticalVolumes(fluid, VCRITVIS, names.size());
+      } else if (LBCCOEF.size() >= 5) {
+        applyVcritAsLbcCriticalVolumes(fluid, VCRIT, names.size(), unitSystem);
       }
 
       // Enable the multi-phase (VLLE) flash when the fluid contains water. A
@@ -1045,6 +1118,31 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, String[] fluidNames) {
+    return readReplicated(inputFile, fluidNames, false);
+  }
+
+  /**
+   * Reads replicated named PR fluids while applying the source OMEGAB section to every component block.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param fluidNames names for replicated source fluids
+   * @return populated fluid with persistent per-component PR covolume coefficients
+   * @throws IllegalArgumentException if the file or supplied PR coefficients are invalid
+   */
+  public static SystemInterface readWithPrOmegaB(String inputFile, String[] fluidNames) {
+    return readReplicated(inputFile, fluidNames, true);
+  }
+
+  /**
+   * Reads replicated named fluid blocks with optional PR covolume tuning.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param fluidNames names for replicated source fluids
+   * @param applyPrOmegaB whether to apply the OMEGAB section to PR components
+   * @return populated fluid with replicated components and BIPs
+   * @throws IllegalArgumentException if the file or supplied PR coefficients are invalid
+   */
+  private static SystemInterface readReplicated(String inputFile, String[] fluidNames, boolean applyPrOmegaB) {
     File file = new File(inputFile);
     if (!file.exists()) {
       throw new IllegalArgumentException(
@@ -1071,6 +1169,7 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> SSHIFTS = new ArrayList<Double>();
       ArrayList<Double> TBOIL = new ArrayList<Double>();
       ArrayList<Double> VCRIT = new ArrayList<Double>();
+      ArrayList<Double> VCRITVIS = new ArrayList<Double>();
       ArrayList<Double> PARACHOR = new ArrayList<Double>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
@@ -1079,9 +1178,13 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
       ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
+      String unitSystem = "METRIC";
       String EOS;
       while ((st = br.readLine()) != null) {
         st = st.trim();
+        if ("METRIC".equals(st) || "FIELD".equals(st) || "LAB".equals(st) || "PVT-M".equals(st)) {
+          unitSystem = st;
+        }
         // System.out.println("EOS " +EOS );
         if (st.equals("EOS")) {
           st = st.trim();
@@ -1158,6 +1261,9 @@ public class EclipseFluidReadWrite {
             }
             VCRIT.add(Double.parseDouble(st));
           }
+        }
+        if (st.equals("VCRITVIS")) {
+          VCRITVIS.addAll(readViscosityCriticalVolumes(br));
         }
         if (st.trim().equals("SSHIFT")) {
           while ((st = br.readLine().trim().replace("/", "")) != null) {
@@ -1307,6 +1413,7 @@ public class EclipseFluidReadWrite {
         }
       }
 
+      VCRIT = vcritToCm3PerMol(VCRIT);
       for (String fluidName : fluidNames) {
         for (int counter = 0; counter < names.size(); counter++) {
           String name = mapE300ComponentName(names.get(counter));
@@ -1357,13 +1464,19 @@ public class EclipseFluidReadWrite {
       // Apply per-component OmegaA overrides when OMEGAA section was present.
       if (!OMEGAA_list.isEmpty()) {
         for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
-          for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
-            neqsim.thermo.component.ComponentEos comp = (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum)
-                .getComponent(k);
-            comp.setOmegaA(OMEGAA_list.get(k));
+          for (int componentIndex = 0; componentIndex < fluid.getNumberOfComponents(); componentIndex++) {
+            int baseIndex = componentIndex % names.size();
+            if (baseIndex < OMEGAA_list.size()) {
+              neqsim.thermo.component.ComponentEos comp = (neqsim.thermo.component.ComponentEos) fluid
+                  .getPhase(phaseNum).getComponent(componentIndex);
+              comp.setOmegaA(OMEGAA_list.get(baseIndex));
+            }
           }
         }
         fluid.init(0);
+      }
+      if (applyPrOmegaB) {
+        applyPrOmegaB(fluid, OMEGAB_list, names.size());
       }
 
       int nCompsPerFluid = names.size(); // base number of components
@@ -1416,6 +1529,20 @@ public class EclipseFluidReadWrite {
       } else if (usePedersen) {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
+      }
+      if (!VCRITVIS.isEmpty() && (LBCCOEF.size() >= 5 || !usePedersen)) {
+        if (!"METRIC".equals(unitSystem)) {
+          throw new IllegalArgumentException("VCRITVIS currently requires METRIC input units");
+        }
+        applyLbcCriticalVolumes(fluid, VCRITVIS, names.size());
+      } else if (LBCCOEF.size() >= 5) {
+        applyVcritAsLbcCriticalVolumes(fluid, VCRIT, names.size(), unitSystem);
+      }
+      for (String componentName : names) {
+        if ("water".equals(mapE300ComponentName(componentName))) {
+          fluid.setMultiPhaseCheck(true);
+          break;
+        }
       }
     } catch (IOException ex) {
       throw new IllegalArgumentException("Failed to read Eclipse fluid file: " + inputFile + ". " + ex.getMessage(),
@@ -1727,9 +1854,22 @@ public class EclipseFluidReadWrite {
     // OmegaB EOS parameter
     writer.write("-- OmegaB\n");
     writer.write("OMEGAB\n");
-    double omegaB = eosType.startsWith("PR") ? 0.07780 : 0.08664;
+    double omegaBDefault = eosType.startsWith("PR") ? 0.07780 : 0.08664;
+    boolean hasPrOmegaBOverrides = false;
+    if (eosType.startsWith("PR")) {
+      for (int i = 0; i < nComps; i++) {
+        if (fluid.getComponent(i) instanceof ComponentPR && ((ComponentPR) fluid.getComponent(i)).hasOmegaBOverride()) {
+          hasPrOmegaBOverrides = true;
+          break;
+        }
+      }
+    }
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaB));
+      if (hasPrOmegaBOverrides && fluid.getComponent(i) instanceof ComponentPR) {
+        writer.write("     " + Double.toString(((ComponentPR) fluid.getComponent(i)).getOmegaB()) + "\n");
+      } else {
+        writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaBDefault));
+      }
     }
     writer.write("/\n");
 
@@ -1749,21 +1889,32 @@ public class EclipseFluidReadWrite {
     }
     writer.write("/\n");
 
-    // Critical volumes (m3/kmol)
+    // Critical volumes (m3/kmol). NeqSim stores critical volume in cm3/mol, so divide by 1000.
     writer.write("-- Critical Volume (m3/kmol)\n");
     writer.write("VCRIT\n");
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "   %.6f\n", fluid.getComponent(i).getCriticalVolume()));
+      writer.write(String.format(java.util.Locale.US, "   %.6f\n",
+          fluid.getComponent(i).getCriticalVolume() / CM3_PER_MOL_PER_M3_PER_KMOL));
     }
     writer.write("/\n");
+
+    if (fluid.getPhase(0).getPhysicalProperties().isLBCViscosityModel()) {
+      writer.write("-- Critical volumes for viscosity only (m3/kmol)\n");
+      writer.write("VCRITVIS\n");
+      LBCViscosityMethod lbc = (LBCViscosityMethod) fluid.getPhase(0).getPhysicalProperties().getViscosityModel();
+      for (double volume : lbc.getCriticalVolumes()) {
+        writer.write("   " + Double.toString(volume / CM3_PER_MOL_PER_M3_PER_KMOL) + "\n");
+      }
+      writer.write("/\n");
+    }
 
     // Critical Z-factors
     writer.write("-- Critical Z-factors\n");
     writer.write("ZCRIT\n");
     for (int i = 0; i < nComps; i++) {
-      // Zcrit = Pc * Vc / (R * Tc) where R = 8.314 J/(mol·K)
+      // Zcrit = Pc * Vc / (R * Tc) with Pc in Pa, Vc in m3/mol (cm3/mol * 1e-6), R = 8.314 J/(mol K)
       double pc = fluid.getComponent(i).getPC() * 1e5; // bar to Pa
-      double vc = fluid.getComponent(i).getCriticalVolume() / 1000.0; // m3/kmol to m3/mol
+      double vc = fluid.getComponent(i).getCriticalVolume() * 1.0e-6; // cm3/mol to m3/mol
       double tc = fluid.getComponent(i).getTC();
       double zcrit = pc * vc / (8.314 * tc);
       writer.write(String.format(java.util.Locale.US, "   %.5f\n", zcrit));
@@ -1801,7 +1952,7 @@ public class EclipseFluidReadWrite {
     for (int i = 1; i < nComps; i++) {
       StringBuilder line = new StringBuilder();
       for (int j = 0; j < i; j++) {
-        line.append(String.format(java.util.Locale.US, "  %.6f", kij[i][j]));
+        line.append("  ").append(formatRoundTrip(kij[i][j]));
       }
       writer.write(line.toString() + "\n");
     }
@@ -1813,7 +1964,7 @@ public class EclipseFluidReadWrite {
     for (int i = 1; i < nComps; i++) {
       StringBuilder line = new StringBuilder();
       for (int j = 0; j < i; j++) {
-        line.append(String.format(java.util.Locale.US, "  %.6f", kij[i][j]));
+        line.append("  ").append(formatRoundTrip(kij[i][j]));
       }
       writer.write(line.toString() + "\n");
     }
@@ -1894,6 +2045,35 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Applies E300 PR covolume coefficients to every allocated phase and every replicated fluid block.
+   *
+   * @param fluid imported fluid
+   * @param values dimensionless OMEGAB values in base component order
+   * @param blockSize number of components in one source-fluid block
+   * @throws IllegalArgumentException if a supplied PR coefficient is not positive and finite
+   */
+  private static void applyPrOmegaB(SystemInterface fluid, List<Double> values, int blockSize) {
+    if (values.isEmpty()) {
+      return;
+    }
+    if (!(fluid.getComponent(0) instanceof ComponentPR)) {
+      throw new IllegalArgumentException("OMEGAB overrides require a PR fluid");
+    }
+    if (values.size() != blockSize) {
+      throw new IllegalArgumentException("OMEGAB must contain one value per component");
+    }
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        ComponentInterface current = fluid.getPhase(phase).getComponent(component);
+        if (current instanceof ComponentPR) {
+          ((ComponentPR) current).setOmegaB(values.get(component % blockSize));
+        }
+      }
+    }
+    fluid.init(0);
+  }
+
+  /**
    * Determines the EOS type string for the fluid.
    *
    * @param fluid the fluid
@@ -1947,6 +2127,19 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Formats a double so that parsing the text returns exactly the same value.
+   *
+   * @param value number to format
+   * @return plain decimal text with the shortest round-trip digits, 0.0 for non-finite input
+   */
+  private static String formatRoundTrip(double value) {
+    if (Double.isNaN(value) || Double.isInfinite(value)) {
+      return "0.0";
+    }
+    return java.math.BigDecimal.valueOf(value).toPlainString();
+  }
+
+  /**
    * Gets binary interaction parameters from fluid.
    *
    * @param fluid the fluid
@@ -1968,18 +2161,124 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Read a slash-terminated VCRITVIS array, retaining component order and accepting inline comments.
+   *
+   * @param reader reader positioned immediately after the VCRITVIS keyword
+   * @return positive finite values in the source METRIC m3/kmol units
+   * @throws IOException if the input cannot be read
+   * @throws IllegalArgumentException if values are invalid or the block has no terminator
+   */
+  private static List<Double> readViscosityCriticalVolumes(BufferedReader reader) throws IOException {
+    List<Double> volumes = new ArrayList<Double>();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      int comment = line.indexOf("--");
+      String numeric = comment >= 0 ? line.substring(0, comment) : line;
+      int terminator = numeric.indexOf('/');
+      String values = (terminator >= 0 ? numeric.substring(0, terminator) : numeric).trim();
+      if (!values.isEmpty()) {
+        for (String token : values.split("\\s+")) {
+          double value = Double.parseDouble(token);
+          if (!Double.isFinite(value) || value <= 0.0) {
+            throw new IllegalArgumentException("VCRITVIS values must be finite and positive");
+          }
+          volumes.add(value);
+        }
+      }
+      if (terminator >= 0) {
+        if (volumes.isEmpty()) {
+          throw new IllegalArgumentException("VCRITVIS requires one value per source component");
+        }
+        return volumes;
+      }
+    }
+    throw new IllegalArgumentException("VCRITVIS must be terminated by a slash");
+  }
+
+  /**
+   * Use the thermodynamic VCRIT values as LBC critical volumes when a file has LBCCOEF but no VCRITVIS.
+   *
+   * <p>
+   * Eclipse E300 evaluates the LBC correlation with VCRIT unless VCRITVIS is given. Without this, NeqSim would estimate
+   * critical volumes of the (TBP) imported components from a correlation and ignore the file values. Only METRIC files
+   * with one positive finite value per source component are handled; other cases keep the default estimate.
+   * </p>
+   *
+   * @param fluid model containing one or more replicated component blocks
+   * @param vcritCm3PerMol VCRIT values already converted to cm3/mol, in source component order
+   * @param blockSize number of source components before optional replication
+   * @param unitSystem unit system keyword of the source file
+   */
+  private static void applyVcritAsLbcCriticalVolumes(SystemInterface fluid, List<Double> vcritCm3PerMol, int blockSize,
+      String unitSystem) {
+    if (!"METRIC".equals(unitSystem) || vcritCm3PerMol.size() != blockSize) {
+      return;
+    }
+    ArrayList<Double> metricVolumes = new ArrayList<Double>(blockSize);
+    for (Double value : vcritCm3PerMol) {
+      if (value == null || !Double.isFinite(value) || value <= 0.0) {
+        return;
+      }
+      metricVolumes.add(value / CM3_PER_MOL_PER_M3_PER_KMOL);
+    }
+    applyLbcCriticalVolumes(fluid, metricVolumes, blockSize);
+  }
+
+  /**
+   * Apply METRIC viscosity-only volumes while preserving the separate thermodynamic VCRIT values.
+   *
+   * @param fluid model containing one or more replicated component blocks
+   * @param metricVolumes one positive finite m3/kmol value per source component
+   * @param blockSize number of source components before optional replication
+   * @throws IllegalArgumentException if component counts or volume values are invalid
+   */
+  private static void applyLbcCriticalVolumes(SystemInterface fluid, List<Double> metricVolumes, int blockSize) {
+    if (blockSize < 1 || metricVolumes.size() != blockSize || fluid.getNumberOfComponents() % blockSize != 0) {
+      throw new IllegalArgumentException("VCRITVIS requires one value per source component");
+    }
+    double[] volumes = new double[fluid.getNumberOfComponents()];
+    for (int i = 0; i < volumes.length; i++) {
+      double value = metricVolumes.get(i % blockSize);
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalArgumentException("VCRITVIS values must be finite and positive");
+      }
+      volumes[i] = value * CM3_PER_MOL_PER_M3_PER_KMOL;
+    }
+    for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+      PhaseInterface phase = fluid.getPhase(p);
+      PhaseType originalType = phase.getType();
+      try {
+        for (PhaseType type : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+          phase.setType(type);
+          if (!phase.getPhysicalProperties().isLBCViscosityModel()) {
+            phase.getPhysicalProperties().setViscosityModel("LBC");
+          }
+          ((LBCViscosityMethod) phase.getPhysicalProperties().getViscosityModel()).setCriticalVolumes(volumes);
+        }
+      } finally {
+        phase.setType(originalType);
+      }
+    }
+  }
+
+  /**
    * Apply LBC viscosity model with custom parameters to fluid.
    *
    * @param fluid the fluid to configure
    * @param lbcParams array of 5 LBC dense contribution parameters
    */
   private static void applyLBCViscosityModel(SystemInterface fluid, double[] lbcParams) {
-    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+    for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+      PhaseInterface phase = fluid.getPhase(p);
+      PhaseType originalType = phase.getType();
       try {
-        fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("LBC");
-        fluid.getPhase(phase).getPhysicalProperties().setLbcParameters(lbcParams);
-      } catch (Exception e) {
-        logger.debug("Could not set LBC model for phase " + phase + ": " + e.getMessage());
+        for (PhaseType type : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+          phase.setType(type);
+          phase.getPhysicalProperties().setViscosityModel("LBC");
+          phase.getPhysicalProperties().setLbcParameters(lbcParams);
+        }
+      } finally {
+        phase.setType(originalType);
       }
     }
   }
@@ -1990,11 +2289,16 @@ public class EclipseFluidReadWrite {
    * @param fluid the fluid to configure
    */
   private static void applyPFCTViscosityModel(SystemInterface fluid) {
-    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+    for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+      PhaseInterface phase = fluid.getPhase(p);
+      PhaseType originalType = phase.getType();
       try {
-        fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("PFCT");
-      } catch (Exception e) {
-        logger.debug("Could not set PFCT model for phase " + phase + ": " + e.getMessage());
+        for (PhaseType type : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+          phase.setType(type);
+          phase.getPhysicalProperties().setViscosityModel("PFCT");
+        }
+      } finally {
+        phase.setType(originalType);
       }
     }
   }

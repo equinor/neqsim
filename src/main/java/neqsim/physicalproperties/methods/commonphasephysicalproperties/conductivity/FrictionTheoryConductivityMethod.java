@@ -3,7 +3,6 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.conducti
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -37,7 +36,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  * @version 1.0
  */
-public class FrictionTheoryConductivityMethod extends Conductivity implements ThermodynamicConstantsInterface {
+public class FrictionTheoryConductivityMethod extends Conductivity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */

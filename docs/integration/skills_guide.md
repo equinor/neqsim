@@ -11,7 +11,7 @@ description: "Comprehensive guide to skills and agents in NeqSim's agentic engin
 > |------------|---------|
 > | **Use an existing core skill** | Nothing — workspace agents load them automatically from the `.github/skills/` discovery layer |
 > | **Create a new core skill** | `neqsim new-skill "name"` → edit SKILL.md → register in README + copilot-instructions → PR |
-> | **Install a community skill** | `neqsim skill install neqsim-topic` → canonical install in `~/.neqsim/skills` → export with `--target vscode` or `--target generic`. If the skill ships a Python package (`pyproject.toml`), the installer downloads it whole and `pip install -e`'s it automatically — no separate manual install step. |
+> | **Install a community skill** | `neqsim skill install neqsim-topic` → canonical install in `~/.neqsim/skills` → export with `--target vscode` or `--target generic`. If the skill ships a Python package (`pyproject.toml`), the installer downloads it whole and `pip install -e`'s it automatically — no separate manual install step. Reinstalls only re-run pip when the package's `pyproject.toml` changed. |
 > | **Install a community agent** | `neqsim agent install agent-name` → canonical install in `~/.neqsim/agents` → export with `--target vscode` or `--target generic` |
 > | **Check PaperLab commands** | `neqsim paperlab` prints help only; this confirms the command exists but does not install anything |
 > | **Use PaperLab in VS Code** | `neqsim paperlab install --vscode` for the `@paperlab` gateway; add `--include-internal` only for direct specialist-agent compatibility |
@@ -466,11 +466,29 @@ neqsim skill installed
 # Get details about a specific skill
 neqsim skill info neqsim-my-topic
 
+# Skip Python package installs during a bulk install, then install them later
+neqsim skill install --all --target vscode --no-pip
+neqsim skill sync-packages
+
+# Install one skill's Python package on first use (no-op when already importable)
+neqsim skill ensure neqsim-my-topic
+
+# Report export health and which packaged skills are importable
+neqsim skill doctor --target vscode
+
 # Remove a skill
 neqsim skill remove neqsim-my-topic
 ```
 
 Installed community skills are stored at `~/.neqsim/skills/<name>/SKILL.md`.
+
+A skill that ships a Python package is installed **editable**, so re-running
+`install --force` only re-runs pip when that skill's `pyproject.toml`
+(dependencies/metadata) changed — refreshing a large catalog does not reinstall
+every package. `--no-pip` defers the package installs entirely; run
+`neqsim skill sync-packages` (all pending, one pip pass) or `neqsim skill ensure
+<name>` (one skill, on first use) before using a skill that imports its own
+package.
 
 ### Step 5: Make Installed Skills Visible to Agents
 
@@ -899,7 +917,8 @@ SSO in one command — no hand-editing of YAML required:
 
 ```bash
 # One step: create the catalog, register a private GitHub repo, and sign in
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+# --catalog-path reads the catalog published in the repo instead of scanning it
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml --login
 
 # Internal Git server instead of GitHub:
 neqsim skill private-init --url https://git.internal.company.com/neqsim/enterprise-skills.git
@@ -911,6 +930,10 @@ neqsim skill add-repo --repo my-org/another-skills-repo --login
 `private-init` prints the exact catalog file location at the end so you can edit
 it afterwards. Use `private-init` for first-time setup and `add-repo` to register
 additional repos later — they accept the same options. Then:
+
+> If `neqsim` is not recognized (no elevated privileges, console script not on
+> PATH), run the same commands as `python -m neqsim_cli ...` — the arguments are
+> identical.
 
 ```bash
 neqsim skill list --private                 # verify discovered skills
@@ -954,7 +977,7 @@ neqsim skill install neqsim-company-stid
 The identical flow exists for agents — swap `skill` for `agent`:
 
 ```bash
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
 neqsim agent list --private
 neqsim agent install <name> --vscode
 ```
@@ -1102,12 +1125,12 @@ stidapi:
 
 ```bash
 # Download documents for specific equipment tags
-python devtools/stid_download.py \
+python -m enterprise_stid_document_retrieval.stid_download \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --tags 35-KA001A 35-KA001B
 
 # Download + convert to PNG for AI image analysis
-python devtools/stid_download.py \
+python -m enterprise_stid_document_retrieval.stid_download \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --tags 35-KA001A --convert-png
 ```
@@ -1115,7 +1138,7 @@ python devtools/stid_download.py \
 ### Download by Document Number
 
 ```bash
-python devtools/stid_download.py \
+python -m enterprise_stid_document_retrieval.stid_download \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --docs E001-AS-P-XB-00001-01
 ```
@@ -1123,7 +1146,7 @@ python devtools/stid_download.py \
 ### Programmatic Retrieval
 
 ```python
-from devtools.doc_retriever import retrieve_documents
+from enterprise_stid_document_retrieval.doc_retriever import retrieve_documents
 
 docs = retrieve_documents(
     tags=['35-KA001A'],

@@ -117,7 +117,7 @@ public class STS0131AcceptanceCriteria implements Serializable {
 ```
 
 **Data access integration:** The time-to-rupture calculation needs:
-- Material derating curves (can come from STID material certificates → `neqsim-stid-retriever`)
+- Material derating curves (can come from STID → `enterprise-stid-document-retrieval`)
 - Fire zone geometry (from PFP/fire documents → `neqsim-technical-document-reading`)
 - Personnel egress time (from escape analysis documents)
 
@@ -174,7 +174,7 @@ public class NorsokP002LineSizingValidator {
 }
 ```
 
-**Agent integration:** The `@make a neqsim process simulation` agent could automatically run P-002 validation after building a process model, flagging any pipe segments that violate sizing criteria.
+**Agent integration:** The `@process-model` agent could automatically run P-002 validation after building a process model, flagging any pipe segments that violate sizing criteria.
 
 ---
 
@@ -275,7 +275,7 @@ public class TR2237Templates {
 }
 ```
 
-**Why this is useful:** When the `@run neqsim safety and depressuring simulation` agent creates a barrier register, it can auto-populate with TR2237 templates and then the `SafetySystemPerformanceAnalyzer` validates each barrier against the pre-defined criteria.
+**Why this is useful:** When the `@safety-depressuring` agent creates a barrier register, it can auto-populate with TR2237 templates and then the `SafetySystemPerformanceAnalyzer` validates each barrier against the pre-defined criteria.
 
 ---
 

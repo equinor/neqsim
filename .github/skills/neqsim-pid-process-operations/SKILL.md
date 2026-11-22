@@ -1,8 +1,8 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.8.0"
-description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
-last_verified: "2026-07-17"
+version: "1.9.0"
+description: "Prepare professional P&ID drawing packages with native DEXPI 2.0.1 from a NeqSim process model, add traceable instrumentation and safeguards, and bind final P&ID tags to steady-state simulations and dynamic tests. Also interpret P&ID symbols, import process topology, link historian tags, evaluate valve/equipment changes and prepare water-hammer or blowdown/flare handoffs."
+last_verified: "2026-11-18"
 requires:
   python_packages: [pandas]
 ---
@@ -52,6 +52,15 @@ Use this skill with:
 - `neqsim-water-hammer` for hydraulic surge screening from fast liquid-line events,
 - `neqsim-depressurization-mdmt` for blowdown and minimum-temperature cases,
 - `neqsim-professional-reporting` for evidence traceability and report outputs.
+
+## Prepare a Professional P&ID
+
+Read [the professional P&ID workflow](references/professional-pid.md) when the
+user asks to generate a P&ID, a DEXPI 2.0.1 package, or steady-state/dynamic
+tests using the final drawing. Start from the runnable NeqSim model and
+governed project; produce actual vector drawings, native exchange data,
+registers, P&ID-to-simulation bindings and validation evidence. Keep proposed
+engineering additions and unresolved design decisions explicit.
 
 ## P&ID Symbol Interpretation Model
 
@@ -204,6 +213,61 @@ Use `plant-pydexpi.xml` for pyDEXPI import and inspect
 `interoperability-report.json`; native schema validity, semantic-profile
 validity, pyDEXPI import and commercial-CAE round-trip are distinct gates.
 Do not flatten large vendor maps into P&ID attributes.
+
+For controlled professional-package intake, use
+`ProfessionalPidPackageReader.read(...)` after restoring the exact executable
+project ID and revision. It verifies the package manifest, canonical model,
+bindings and native DEXPI 2.0.1 relationships together. Use `readStrict(...)`
+only for a supported lossless subset, and compare a regenerated package with
+`ProfessionalPidPackageReader.compare(...)`. Unsupported or incomplete source
+semantics must remain explicit non-equivalence diagnostics.
+
+For a professional P&ID that must show relief, blowdown, vent and drain
+devices on the drawings instead of in the HOLD register, call
+`PidStandardConnectionProposals.complete(pid, project.getEngineeringProcessSystem())`
+after synthesis and before `PidSimulationBindings.from(...)`. It supplies dedicated
+equipment nozzles and flare/closed-drain destinations with a traceable
+`NEQSIM-STANDARD-CONNECTION-PROPOSAL` evidence reference, keeps them
+review-required, and never overwrites project inputs. Then require
+`drawingHasNoErrors=true` in `professional-pid-readiness.json`: it includes the
+automated `PID_STANDARD_*` drawing checks (ISO 5457 frame, ISO 7200 title block,
+ISA-5.1 valve/function symbols, direct same-sheet signals, line numbers, text
+height). Report `PID_STANDARD_SIGNAL_SELF_REFERENCE` warnings and the
+`lineNumberRegister` (generated line numbers need line-list confirmation). The
+conventions table is in `docs/pid-design-synthesis.md#drawing-conventions-applied-to-every-sheet`.
+Model the real liquid letdown valve after each separator: the level loop then
+uses it as the final element instead of adding a second LCV. Read nozzle
+identities from `nozzleRegister` (drawings show N1, N2, ...), and expect relief,
+blowdown, vent and drain routes on the pooled auxiliary sheets. Simple `Heater` and
+`Cooler` units (one inlet, one outlet, no instrument-detail sheet) are drawn as
+bands on shared "Heat exchangers" sheets, up to three per sheet; find a unit's
+sheet from `drawingIndex[].subjectTag`, which lists every tag on a shared sheet.
+To size the safeguards from the simulation, call
+`PidSafetyStudies.run(pid, process, PidSafetyStudies.Policy.screening())` after the
+standard connections and before binding. It sets PSV set pressure and orifice
+(blocked outlet, fire, gas blow-by), BDV orifice by dynamic blowdown, flare load,
+trip set points, NOG 070 SIL targets with PFDavg screening, and quotes them in the
+HAZOP preparation; the package then contains `pid-safety-studies.json`. Declare
+compressor segment volumes with `Policy.segmentVolume(tag, m3)` and report every
+finding (`docs/process/safety/pid-safety-studies.md`).
+
+For P&ID-to-simulation requests ("build/run a model from this P&ID", "round-trip
+the DEXPI file"), use `DexpiSimulationBuilder` on a Proteus-profile file, then
+read `getDiagnostics()` before `run()`. Resolve every
+`DEXPI_BUILD_SPECIFICATION_MISSING` (set outlet pressure or temperature on the
+named unit) and review `DEXPI_BUILD_ADDITIONAL_FEED` and
+`DEXPI_BUILD_SPLIT_FACTORS_ASSUMED`; never hide them. The builder keeps in-line
+control valves, resolves separator gas/liquid/water outlets from the
+`NeqSimPortAttributes` nozzle roles (with fallbacks), wires all mixer inlets,
+closes loops with `Recycle`, and applies exported outlet specifications. A
+NeqSim export rebuilt with the same fluid template reproduces the source results
+(`DexpiSimulationRoundTripTest`). DEXPI carries no composition, so always supply
+the fluid template. Native DEXPI 2.x files are rejected explicitly; export
+Proteus for simulation round trips. For native Process exchange prefer
+`Dexpi201ProcessModelWriter` (the 2.0.0 path omits the mandatory `Method` on
+compression and cooling steps), and note it currently rejects models that
+contain a `Recycle`. Known gaps and priorities are in
+`docs/integration/dexpi-physics-bridge-evaluation.md`.
 
 Do not call the Proteus graphical file DEXPI 2.0. Antisurge recycle topology is
 connected discharge-to-suction; PSV/BDV proposals use dedicated equipment
@@ -489,7 +553,9 @@ engineering-simulator contracts over mutating the live process:
    inputs, evidence, standards, uncertainty, and review state are explicit.
 4. Use `CoupledReliefBlowdownFlareCalculation` when steady relief groups and
    dynamic blowdown share a disposal system. Never infer credible causes or
-   concurrency groups from topology alone.
+   concurrency groups from topology alone. Assign each reviewed PSV scenario and BDV source to its
+   initiating event and opening window. Review `getDisposalCases()` for the governing timestamp, source
+   contributions, and each individual capacity status. Supply the relieving gas for a thermal limit.
 5. Use `DynamicSafetyScenarioRunner` for response-time verification. Build
    logic through a `LogicFactory` against equipment in the isolated process
    copy; never retain valve/controller references from the live base model.

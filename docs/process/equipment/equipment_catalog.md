@@ -8,12 +8,12 @@ non-abstract class that implements `ProcessEquipmentInterface`, directly or thro
 base class. Helper classes, result records, strategies, enums, and interfaces are intentionally
 excluded from the equipment count.
 
-**Current source inventory:** 237 concrete equipment classes in 33 packages.
+**Current source inventory:** 244 concrete equipment classes in 33 packages.
 
 Regenerate this page after adding or removing equipment:
 
 ```text
-python devtools/generate_equipment_documentation_catalog.py
+uv run --project devtools --locked devtools/generate_equipment_documentation_catalog.py
 ```
 
 ## Equipment by source package
@@ -24,7 +24,7 @@ python devtools/generate_equipment_documentation_catalog.py
 | `adsorber` | [Adsorbers](adsorbers) and [adsorption beds](adsorption_bed)<br>Adsorption beds, mercury removal, and PSA equipment | `AdsorptionBed`, `MercuryRemovalBed`, `PSACascade`, `PressureSwingAdsorptionBed`, `SimpleAdsorber` |
 | `battery` | [Battery storage](battery_storage)<br>Electrical energy storage and balancing | `BatteryStorage` |
 | `blackoil` | [Black-oil separation](black_oil_separator)<br>Black-oil PVT separation in ProcessSystem | `BlackOilSeparator` |
-| `compressor` | [Compressors](compressors)<br>Compressors, trains, drivers, maps, and anti-surge models | `Compressor`, `CompressorTrain`, `RecycleFlowCoordinator` |
+| `compressor` | [Compressors](compressors)<br>Compressors, trains, drivers, maps, and anti-surge models | `Compressor`, `CompressorTrain`, `MinimumFlowSpill`, `RecycleFlowCoordinator` |
 | `diffpressure` | [Differential-pressure equipment](differential_pressure)<br>Orifice and differential-pressure flow equipment | `Orifice` |
 | `distillation` | [Distillation](distillation)<br>Tray, packed, reactive, and shortcut columns | `Condenser`, `DistillationColumn`, `PackedColumn`, `RateBasedPackedColumn`, `ReactiveTray`, `Reboiler`, `ScrubColumn`, `ShortcutDistillationColumn`, `SimpleTray`, `VLSolidTray` |
 | `ejector` | [Ejectors](ejectors)<br>Motive/suction ejector equipment | `Ejector` |
@@ -39,17 +39,17 @@ python devtools/generate_equipment_documentation_catalog.py
 | `membrane` | [Membranes](membranes)<br>Membrane separators | `MembraneSeparator` |
 | `mixer` | [Mixers and splitters](mixers_splitters)<br>Equilibrium, static, non-equilibrium, and phase mixers | `Mixer`, `StaticMixer`, `StaticNeqMixer`, `StaticPhaseMixer` |
 | `network` | [Networks](networks)<br>Pipe, looped, and well-flowline networks | `LoopedPipeNetwork`, `PipeFlowNetwork`, `WellFlowlineNetwork` |
-| `pipeline` | [Pipelines](pipelines)<br>Steady and transient single-, two-, and multiphase pipelines | `AdiabaticPipe`, `AdiabaticTwoPhasePipe`, `IncompressiblePipeFlow`, `MultiphasePipe`, `OnePhasePipeLine`, `PipeBeggsAndBrills`, `PipeGray`, `PipeHagedornBrown`, `PipeMukherjeeAndBrill`, `Pipeline`, `Riser`, `SimpleTPoutPipeline`, `TopsidePiping`, `TransientPipe`, `TransientWellbore`, `TubingPerformance`, `TwoFluidPipe`, `TwoPhasePipeLine`, `WaterHammerPipe` |
-| `powergeneration` | [Power generation](power_generation)<br>Turbines, fuel cells, renewables, and combined-cycle systems | `CombinedCycleSystem`, `FuelCell`, `GasTurbine`, `GasTurbineUnit`, `GasTurbineVendorPerformance`, `HRSG`, `OffshoreEnergySystem`, `SolarPanel`, `SteamTurbine`, `WindFarm`, `WindTurbine` |
+| `pipeline` | [Pipelines](pipelines)<br>Steady and transient single-, two-, and multiphase pipelines | `AdiabaticPipe`, `AdiabaticTwoPhasePipe`, `IncompressiblePipeFlow`, `MultiphasePipe`, `OnePhasePipeLine`, `PipeBeggsAndBrills`, `PipeGray`, `PipeHagedornBrown`, `PipeMukherjeeAndBrill`, `Pipeline`, `Riser`, `SimpleTPoutPipeline`, `TopsidePiping`, `TransientPipe`, `TransientWellbore`, `TubingPerformance`, `TwoFluidPipe`, `TwoPhasePipeLine`, `VfpPipeline`, `WaterHammerPipe` |
+| `powergeneration` | [Power generation](power_generation)<br>Turbines, fuel cells, renewables, and combined-cycle systems | `CombinedCycleSystem`, `FuelCell`, `GasTurbine`, `GasTurbineUnit`, `GasTurbineVendorPerformance`, `HRSG`, `OffshoreEnergySystem`, `PlatformPowerSystemUnit`, `SolarPanel`, `SteamTurbine`, `WindFarm`, `WindTurbine` |
 | `pump` | [Pumps](pumps)<br>Centrifugal, ESP, jet, and sucker-rod pumps | `ESPPump`, `JetPump`, `Pump`, `SuckerRodPump` |
-| `reactor` | [Reactors](reactors)<br>Equilibrium, kinetic, reforming, sulfur, and bioprocess reactors | `AmmoniaSynthesisReactor`, `AnaerobicDigester`, `AutothermalReformer`, `BiomassGasifier`, `CO2ImpurityKineticReactor`, `CatalyticTubeReformer`, `ClausCatalyticConverter`, `ClausReactionFurnace`, `EnzymeTreatment`, `FermentationReactor`, `Fermenter`, `FurnaceBurner`, `GibbsReactor`, `GibbsReactorCO2`, `IronSulfideOxidationSource`, `PartialOxidationReactor`, `PlugFlowReactor`, `PyrolysisReactor`, `QualifiedCO2ImpurityKineticReactor`, `QuenchSection`, `ReactiveWasteHeatBoiler`, `ReformerFurnace`, `StirredTankReactor`, `SubDewPointSulfurReactor`, `SulfurCondenser`, `SulfurDepositionAnalyser`, `SulfurOxidationReactor`, `SulfurRecoveryUnit`, `SyngasBurnerZone`, `TailGasTreatmentUnit`, `ThermalIncinerator`, `WaterGasShiftReactor` |
+| `reactor` | [Reactors](reactors) and [multi-burner hot-oil heater](multi_burner_fired_heater)<br>Chemical reactors and optional finite-rate gas-fired hot-oil equipment | `AmmoniaSynthesisReactor`, `AnaerobicDigester`, `AutothermalReformer`, `BiomassGasifier`, `CO2ImpurityKineticReactor`, `CatalyticTubeReformer`, `ClausCatalyticConverter`, `ClausReactionFurnace`, `EnzymeTreatment`, `FermentationReactor`, `Fermenter`, `FiniteRateCombustionReactor`, `FurnaceBurner`, `GibbsReactor`, `GibbsReactorCO2`, `IronSulfideOxidationSource`, `MultiBurnerFiredHeater`, `PartialOxidationReactor`, `PlugFlowReactor`, `PyrolysisReactor`, `QualifiedCO2ImpurityKineticReactor`, `QuenchSection`, `ReactiveWasteHeatBoiler`, `ReformerFurnace`, `StirredTankReactor`, `SubDewPointSulfurReactor`, `SulfurCondenser`, `SulfurDepositionAnalyser`, `SulfurOxidationReactor`, `SulfurRecoveryUnit`, `SyngasBurnerZone`, `TailGasTreatmentUnit`, `ThermalIncinerator`, `WaterGasShiftReactor` |
 | `reservoir` | [Reservoirs and wells](reservoirs)<br>Reservoir, inflow, surveillance, and well-system equipment | `AnnularLeakagePath`, `CementDegradationModel`, `InjectionConformanceMonitor`, `MultiCompartmentReservoir`, `ReservoirCVDsim`, `ReservoirDiffLibsim`, `ReservoirTPsim`, `SimpleReservoir`, `TubingPerformance`, `WellFlow`, `WellSystem` |
 | `separator` | [Separators](separators)<br>Phase, solids, cryogenic, and extraction separators | `CryogenicSeparator`, `Crystallizer`, `EndFlash`, `GasScrubber`, `GasScrubberSimple`, `Hydrocyclone`, `LiquidLiquidExtractor`, `NeqGasScrubber`, `PressureFilter`, `RotaryVacuumFilter`, `ScrewPress`, `Separator`, `SolidsCentrifuge`, `SolidsSeparator`, `ThreePhaseGasScrubber`, `ThreePhaseSeparator`, `TwoPhaseSeparator` |
 | `solidhandling` | [Solid handling](solid_handling)<br>Biological feedstock preparation and solids handling | `BioFeedstockPreparation` |
 | `splitter` | [Mixers and splitters](mixers_splitters)<br>Flow, component, capture, and upgrading splitters | `BiogasUpgrader`, `ComponentCaptureUnit`, `ComponentSplitter`, `Splitter` |
 | `stream` | [Streams](streams)<br>Material, equilibrium, virtual, and diagnostic streams | `EquilibriumStream`, `IronIonSaturationStream`, `NeqStream`, `ScalePotentialCheckStream`, `Stream`, `VirtualStream` |
-| `subsea` | [Subsea equipment](subsea_equipment)<br>Trees, manifolds, boosters, jumpers, flowlines, and umbilicals | `FlexiblePipe`, `FloatingSubstructure`, `MooringSystem`, `PLEM`, `PLET`, `SimpleFlowLine`, `SubseaBooster`, `SubseaJumper`, `SubseaManifold`, `SubseaPowerCable`, `SubseaTree`, `SubseaWell`, `Umbilical` |
-| `tank` | [Tanks](tanks)<br>Storage, LNG, and vessel-depressurization equipment | `LNGTank`, `Tank`, `VesselDepressurization` |
+| `subsea` | [Subsea equipment](subsea_equipment)<br>Trees, manifolds, boosters, jumpers, flowlines, and umbilicals | `FlexiblePipe`, `FloatingSubstructure`, `MooringSystem`, `PLEM`, `PLET`, `SimpleFlowLine`, `SubseaBooster`, `SubseaJumper`, `SubseaManifold`, `SubseaPowerCable`, `SubseaSeparationStation`, `SubseaTree`, `SubseaWell`, `Umbilical` |
+| `tank` | [Tanks](tanks)<br>Storage, LNG, and vessel-depressurization equipment | `LNGTank`, `MountainCavern`, `Tank`, `VesselDepressurization` |
 | `util` | [Process utilities](util/)<br>Adjusters, recycles, calculators, fitters, setters, and utility systems | `Adjuster`, `AntiSurgeCalculator`, `Calculator`, `CompressorShaftCalculator`, `FlowRateAdjuster`, `FlowSetter`, `FuelGasSystem`, `GORfitter`, `LubeOilSystem`, `MPFMfitter`, `MoleFractionControllerUtil`, `MultiVariableAdjuster`, `NeqSimUnit`, `PressureDrop`, `ProductionRateFitter`, `Recycle`, `SetPoint`, `Setter`, `SpreadsheetBlock`, `StreamSaturatorUtil`, `StreamTransition`, `UnisimCalculator`, `UtilityAirSystem` |
 | `valve` | [Valves](valves)<br>Control, shutdown, relief, rupture-disk, and throttling valves | `BlowdownValve`, `CheckValve`, `ControlValve`, `ESDValve`, `HIPPSValve`, `LevelControlValve`, `PSDValve`, `PressureControlValve`, `RuptureDisk`, `SafetyReliefValve`, `SafetyValve`, `ThrottlingValve` |
 | `watertreatment` | [Water treatment](water_treatment)<br>Hydrocyclone, flotation, and produced-water treatment trains | `GasFlotationUnit`, `Hydrocyclone`, `ProducedWaterTreatmentTrain` |

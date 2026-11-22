@@ -1,0 +1,63 @@
+# Flow-assurance study basis (TEMPLATE). Fill every field from a controlled source; leave nothing guessed.
+# A value nobody can source stays 'unavailable - TO BE CONFIRMED' and gets a data_gaps entry that states its effect on conclusions.
+# Reference example: devtools/fa_examples/offshore_tieback/basis.yaml (synthetic).
+schema: flow_assurance_basis.v1
+basis_status: draft                      # change to 'confirmed' only when a person has confirmed the basis
+document:
+  title: "unavailable - TO BE CONFIRMED"
+  subtitle: ""
+  document_number: "unavailable - TO BE CONFIRMED"
+  revision: "A"
+  issue_status: "DRAFT"
+  date: "unavailable - TO BE CONFIRMED"
+  company: "unavailable - TO BE CONFIRMED"
+  project: "unavailable - TO BE CONFIRMED"
+  prepared_by: "not assigned"            # the toolkit never assigns people
+  checked_by: "not assigned"
+  approved_by: "not assigned"
+  readiness: SCREENING                   # NOT_READY | SCREENING | REVIEWED (REVIEWED needs the review block below)
+  readiness_note: "basis not confirmed"
+  revision_history:
+    - {rev: A, date: "unavailable - TO BE CONFIRMED", description: "Draft", by: "not assigned"}
+  review: {reviewer: null, date: null, scope: null, record: null}   # fill only from a real independent review record
+study:
+  objective: "unavailable - TO BE CONFIRMED"          # the decision the study supports
+  decisions: ["unavailable - TO BE CONFIRMED"]
+  decision_criteria: [["C-EXAMPLE"]]                  # criterion ids that give the evidence for each decision (same order)
+  maturity: "unavailable - TO BE CONFIRMED"           # screening, concept, FEED, operations
+  audience: "unavailable - TO BE CONFIRMED"
+  alternatives: ["unavailable - TO BE CONFIRMED"]
+  battery_limits: {included: ["unavailable - TO BE CONFIRMED"], excluded: ["unavailable - TO BE CONFIRMED"], upstream: "unavailable - TO BE CONFIRMED", downstream: "unavailable - TO BE CONFIRMED"}
+  field_life_stages: ["unavailable - TO BE CONFIRMED"]
+conventions:
+  units: "unavailable - TO BE CONFIRMED"
+  pressure_reference: "unavailable - TO BE CONFIRMED"           # absolute/gauge and the reference node
+  composition_basis: "unavailable - TO BE CONFIRMED"           # mole fraction; water and inhibitor on a MASS basis
+  rate_basis: "unavailable - TO BE CONFIRMED"                  # mass, molar or standard-volume (state the standard conditions)
+  standard_conditions: {t_c: 15.0, p_bara: 1.01325, definition: "unavailable - TO BE CONFIRMED"}
+  chainage: "unavailable - TO BE CONFIRMED"                    # origin, direction, measured length vs horizontal projection
+  vertical_datum: "unavailable - TO BE CONFIRMED"
+sources:                                  # every input document: id, title, document, revision, page/sheet, class, provenance
+  - {id: SRC-1, title: "unavailable - TO BE CONFIRMED", document: "unavailable - TO BE CONFIRMED", revision: "unavailable - TO BE CONFIRMED",
+     location: "unavailable - TO BE CONFIRMED", input_class: unavailable, provenance: "unavailable - TO BE CONFIRMED", status: "unavailable - TO BE CONFIRMED"}
+fluids:                                   # one entry per fluid: EOS, composition (mole fractions summing to 1), PVT evidence, water and inhibitor basis
+  FLUID-1:
+    description: "unavailable - TO BE CONFIRMED"
+    eos_hydraulics: "unavailable - TO BE CONFIRMED"
+    eos_hydrate: "unavailable - TO BE CONFIRMED"
+    heavy_end: "unavailable - TO BE CONFIRMED"
+    pvt_evidence: "unavailable - TO BE CONFIRMED"
+    water: {salinity: "unavailable - TO BE CONFIRMED", composition: "unavailable - TO BE CONFIRMED"}
+    source: SRC-1
+    components: []                        # [{name: methane, mole_fraction: 0.85}, ...]
+solver: {increments: 10, hydrate_grid_bara: [40, 55, 70, 90, 110, 140, 180, 230], mesh_sensitivity_increments: [5, 10, 20], erosional_c_si: 122.0}
+acceptance_criteria:                      # sourced inputs; never an invented universal value
+  - {id: C-EXAMPLE, text: "unavailable - TO BE CONFIRMED", quantity: hydrate_margin_min, operator: ">=", value: 0.0, unit: K, applies_to: [BASE],
+     source: "unavailable - TO BE CONFIRMED", requirement_class: mandatory, applicability: "unavailable - TO BE CONFIRMED"}
+threats: {}                               # declare 'not_applicable' threats here with a reason; calculated ones follow from the results
+mitigation_options: []                    # [{id, title, case, baseline, uncertainty}]
+assumptions: [{id: A-01, text: "unavailable - TO BE CONFIRMED", effect: "unavailable - TO BE CONFIRMED"}]
+exclusions: ["unavailable - TO BE CONFIRMED"]
+data_gaps: [{id: G-01, item: "unavailable - TO BE CONFIRMED", effect_on_conclusions: "unavailable - TO BE CONFIRMED"}]
+model: {name: "unavailable - TO BE CONFIRMED", version: "unavailable - TO BE CONFIRMED", simulator: NeqSim, eos: "unavailable - TO BE CONFIRMED",
+        mixing_rule: "unavailable - TO BE CONFIRMED", convergence: "unavailable - TO BE CONFIRMED"}

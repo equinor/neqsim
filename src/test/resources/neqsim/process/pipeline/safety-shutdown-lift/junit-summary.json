@@ -1,0 +1,138 @@
+[
+  {
+    "name": "neqsim.mcp.catalog.ExampleCatalogTest",
+    "tests": "25",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "5.433"
+  },
+  {
+    "name": "neqsim.mcp.catalog.SchemaCatalogTest",
+    "tests": "28",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.06"
+  },
+  {
+    "name": "neqsim.mcp.runners.DynamicRunnerTest",
+    "tests": "2",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.987"
+  },
+  {
+    "name": "neqsim.mcp.runners.PipelineRunnerTest",
+    "tests": "8",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.739"
+  },
+  {
+    "name": "neqsim.process.equipment.EquipmentFactoryTest",
+    "tests": "13",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.21"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.AcousticLiftCheckValveTest",
+    "tests": "13",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "5.211"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.AcousticPumpBoundaryTest",
+    "tests": "13",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.631"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.AcousticValveBoundaryTest",
+    "tests": "14",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "2.382"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.SlugImpactForceTest",
+    "tests": "7",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.006"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.TransientForceCalculatorTest",
+    "tests": "6",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.006"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.WaterHammerConservationTest",
+    "tests": "6",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.444"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.WaterHammerKernelTest",
+    "tests": "16",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.502"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.WaterHammerPipeTest",
+    "tests": "13",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.112"
+  },
+  {
+    "name": "neqsim.process.equipment.pipeline.WaterHammerPipeValveInitializationTest",
+    "tests": "3",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.275"
+  },
+  {
+    "name": "neqsim.process.processmodel.JsonProcessBuilderTest",
+    "tests": "54",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.648"
+  },
+  {
+    "name": "neqsim.process.safety.esd.EmergencyShutdownTestRunnerTest",
+    "tests": "2",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.058"
+  },
+  {
+    "name": "neqsim.process.safety.sif.ClosedLoopSafetyFunctionTest",
+    "tests": "2",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.051"
+  }
+]

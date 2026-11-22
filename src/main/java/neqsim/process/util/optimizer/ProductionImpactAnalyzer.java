@@ -419,10 +419,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       // For heaters/coolers, set to no heat transfer
       if (equipment instanceof Heater) {
-        ((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
+        ((Heater) equipment).setOutletTemperature(((Heater) equipment).getInletStream().getTemperature());
       }
       if (equipment instanceof Cooler) {
-        ((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
+        ((Cooler) equipment).setOutletTemperature(((Cooler) equipment).getInletStream().getTemperature());
       }
 
       result.addAffectedEquipment(equipmentName);
@@ -483,7 +483,7 @@ public class ProductionImpactAnalyzer implements Serializable {
       double maxProduction = result.getProductionWithFailure();
 
       // Simple optimization: try reducing flow in steps
-      double[] flowFactors = { 1.0, 0.9, 0.8, 0.7, 0.6, 0.5 };
+      double[] flowFactors = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5};
 
       for (double factor : flowFactors) {
         double testFlow = currentFlow * factor;

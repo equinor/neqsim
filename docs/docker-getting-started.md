@@ -3,7 +3,6 @@ title: Building and Running NeqSim with Docker
 description: "Complete guide to building NeqSim in a Docker container and using it from Java and Python (jpype) — self-contained image, dev container, and headless usage."
 ---
 
-# Building and Running NeqSim with Docker
 
 This guide shows how to run NeqSim inside a Docker container and use it from both
 **Java** and **Python** (via jpype). Docker gives you a reproducible environment with
@@ -39,6 +38,28 @@ Verify Docker is installed and running:
 docker --version
 docker info
 ```
+
+### Automatic startup for agents and skills
+
+Docker does not need to be open before a Docker-backed task. Agents run
+`neqsim docker ensure --linux` before Linux-container work. This starts an
+installed local Docker Desktop on Windows/macOS or a Docker service on Linux,
+then waits up to 120 seconds for the engine (not just the CLI) to respond.
+Already-running engines are reused, and Docker is left running afterward.
+Use `--timeout 180` for a longer deadline; omit `--linux` for Windows-container
+work. The resolved Docker executable is printed for installations not on PATH.
+
+In a source checkout, the equivalent command is
+`uv run --project devtools --locked devtools/docker_runtime.py ensure --linux`.
+With the toolkit installed but no `neqsim` on PATH, use the selected Python
+interpreter with `-m neqsim_cli docker ensure --linux`.
+
+Startup is on demand, not at every agent session. It never installs software,
+uses sudo, accepts licence prompts, switches contexts or container modes, or
+reconfigures WSL. Missing Docker, first-run setup, permission failures, remote
+endpoint failures and readiness timeouts produce explicit nonzero failures.
+Resolve the reported prerequisite and retry; offline hand-offs remain available
+where the relevant skill supports them.
 
 ---
 
@@ -304,7 +325,7 @@ finishes you can run Java tests, Python scripts, and notebooks directly in the e
 
 ## Related Documentation
 
-- [Getting Started with NeqSim in Java](java-getting-started.md)
-- [Python Quickstart](quickstart/python-quickstart.md)
-- [Developer Setup](development/DEVELOPER_SETUP.md)
-- [Modules Overview](modules.md)
+- [Getting Started with NeqSim in Java](java-getting-started)
+- [Python Quickstart](quickstart/python-quickstart)
+- [Developer Setup](development/DEVELOPER_SETUP)
+- [Modules Overview](modules)

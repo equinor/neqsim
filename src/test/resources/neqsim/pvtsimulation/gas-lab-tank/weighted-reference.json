@@ -1,0 +1,467 @@
+{
+  "provenance": "synthetic perturbations; independently evaluated classic SRK; no measured uncertainty",
+  "cases": [
+    {
+      "name": "unequal",
+      "sigmasBara": [
+        0.1,
+        0.7,
+        0.25,
+        0.5
+      ],
+      "observedPressuresBara": [
+        196.89558568381074,
+        194.38965746907962,
+        190.8725914590222,
+        187.8636957766591
+      ],
+      "lowerVolumeM3": 800,
+      "upperVolumeM3": 1300,
+      "fittedVolumeM3": 987.0081656396466,
+      "calibrationChiSquare": 2.4184047655191034,
+      "holdoutChiSquare": 0.5435844038284943,
+      "standardizedResiduals": [
+        -1.1109051122746028,
+        0.8335501091973185,
+        0.6996347707900131,
+        0.7372817669171633
+      ],
+      "boundLimited": false,
+      "rows": [
+        {
+          "pressureBara": 197.0066761950382,
+          "producedMoles": [
+            89887.46176970158,
+            10112.538230298416
+          ],
+          "injectedMoles": [
+            0.0,
+            20000.0
+          ],
+          "surfaceGasVolumeM3": 2358.767195735204
+        },
+        {
+          "pressureBara": 193.80617239264149,
+          "producedMoles": [
+            89705.80261311185,
+            10294.197386888143
+          ],
+          "injectedMoles": [
+            10000.0,
+            0.0
+          ],
+          "surfaceGasVolumeM3": 2358.747036975657
+        },
+        {
+          "pressureBara": 190.6976827663247,
+          "producedMoles": [
+            89630.1057046074,
+            10369.894295392594
+          ],
+          "injectedMoles": [
+            0.0,
+            15000.0
+          ],
+          "surfaceGasVolumeM3": 2358.738626408388
+        },
+        {
+          "pressureBara": 187.49505489320052,
+          "producedMoles": [
+            89459.32166904435,
+            10540.67833095565
+          ],
+          "injectedMoles": [
+            5000.0,
+            5000.0
+          ],
+          "surfaceGasVolumeM3": 2358.719628246009
+        }
+      ]
+    },
+    {
+      "name": "equal",
+      "sigmasBara": [
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "observedPressuresBara": [
+        196.89558568381074,
+        194.38965746907962,
+        190.8725914590222,
+        187.8636957766591
+      ],
+      "lowerVolumeM3": 800,
+      "upperVolumeM3": 1300,
+      "fittedVolumeM3": 1024.8478786687303,
+      "calibrationChiSquare": 0.8130017637433243,
+      "holdoutChiSquare": 0.03132650462006071,
+      "standardizedResiduals": [
+        -0.44267561851968706,
+        0.7119203591753751,
+        -0.3319781057587108,
+        -0.17699295076375418
+      ],
+      "boundLimited": false,
+      "rows": [
+        {
+          "pressureBara": 197.1169234930706,
+          "producedMoles": [
+            89891.63698996454,
+            10108.363010035459
+          ],
+          "injectedMoles": [
+            0.0,
+            20000.0
+          ],
+          "surfaceGasVolumeM3": 2358.7676586436514
+        },
+        {
+          "pressureBara": 194.03369728949193,
+          "producedMoles": [
+            89716.7298605179,
+            10283.270139482098
+          ],
+          "injectedMoles": [
+            10000.0,
+            0.0
+          ],
+          "surfaceGasVolumeM3": 2358.7482505769226
+        },
+        {
+          "pressureBara": 191.03858051190156,
+          "producedMoles": [
+            89643.9044720871,
+            10356.09552791289
+          ],
+          "injectedMoles": [
+            0.0,
+            15000.0
+          ],
+          "surfaceGasVolumeM3": 2358.7401600270177
+        },
+        {
+          "pressureBara": 187.952192252041,
+          "producedMoles": [
+            89479.64506529318,
+            10520.354934706818
+          ],
+          "injectedMoles": [
+            5000.0,
+            5000.0
+          ],
+          "surfaceGasVolumeM3": 2358.7218906805156
+        }
+      ]
+    },
+    {
+      "name": "scaled",
+      "sigmasBara": [
+        0.3,
+        2.1,
+        0.75,
+        0.5
+      ],
+      "observedPressuresBara": [
+        196.89558568381074,
+        194.38965746907962,
+        190.8725914590222,
+        187.8636957766591
+      ],
+      "lowerVolumeM3": 800,
+      "upperVolumeM3": 1300,
+      "fittedVolumeM3": 987.0081656396466,
+      "calibrationChiSquare": 0.2687116406132337,
+      "holdoutChiSquare": 0.5435844038284943,
+      "standardizedResiduals": [
+        -0.37030170409153423,
+        0.27785003639910616,
+        0.2332115902633377,
+        0.7372817669171633
+      ],
+      "boundLimited": false,
+      "rows": [
+        {
+          "pressureBara": 197.0066761950382,
+          "producedMoles": [
+            89887.46176970158,
+            10112.538230298416
+          ],
+          "injectedMoles": [
+            0.0,
+            20000.0
+          ],
+          "surfaceGasVolumeM3": 2358.767195735204
+        },
+        {
+          "pressureBara": 193.80617239264149,
+          "producedMoles": [
+            89705.80261311185,
+            10294.197386888143
+          ],
+          "injectedMoles": [
+            10000.0,
+            0.0
+          ],
+          "surfaceGasVolumeM3": 2358.747036975657
+        },
+        {
+          "pressureBara": 190.6976827663247,
+          "producedMoles": [
+            89630.1057046074,
+            10369.894295392594
+          ],
+          "injectedMoles": [
+            0.0,
+            15000.0
+          ],
+          "surfaceGasVolumeM3": 2358.738626408388
+        },
+        {
+          "pressureBara": 187.49505489320052,
+          "producedMoles": [
+            89459.32166904435,
+            10540.67833095565
+          ],
+          "injectedMoles": [
+            5000.0,
+            5000.0
+          ],
+          "surfaceGasVolumeM3": 2358.719628246009
+        }
+      ]
+    },
+    {
+      "name": "holdout shifted",
+      "sigmasBara": [
+        0.1,
+        0.7,
+        0.25,
+        0.5
+      ],
+      "observedPressuresBara": [
+        196.89558568381074,
+        194.38965746907962,
+        190.8725914590222,
+        192.8636957766591
+      ],
+      "lowerVolumeM3": 800,
+      "upperVolumeM3": 1300,
+      "fittedVolumeM3": 987.0081656396466,
+      "calibrationChiSquare": 2.4184047655191034,
+      "holdoutChiSquare": 115.28921974217177,
+      "standardizedResiduals": [
+        -1.1109051122746028,
+        0.8335501091973185,
+        0.6996347707900131,
+        10.737281766917164
+      ],
+      "boundLimited": false,
+      "rows": [
+        {
+          "pressureBara": 197.0066761950382,
+          "producedMoles": [
+            89887.46176970158,
+            10112.538230298416
+          ],
+          "injectedMoles": [
+            0.0,
+            20000.0
+          ],
+          "surfaceGasVolumeM3": 2358.767195735204
+        },
+        {
+          "pressureBara": 193.80617239264149,
+          "producedMoles": [
+            89705.80261311185,
+            10294.197386888143
+          ],
+          "injectedMoles": [
+            10000.0,
+            0.0
+          ],
+          "surfaceGasVolumeM3": 2358.747036975657
+        },
+        {
+          "pressureBara": 190.6976827663247,
+          "producedMoles": [
+            89630.1057046074,
+            10369.894295392594
+          ],
+          "injectedMoles": [
+            0.0,
+            15000.0
+          ],
+          "surfaceGasVolumeM3": 2358.738626408388
+        },
+        {
+          "pressureBara": 187.49505489320052,
+          "producedMoles": [
+            89459.32166904435,
+            10540.67833095565
+          ],
+          "injectedMoles": [
+            5000.0,
+            5000.0
+          ],
+          "surfaceGasVolumeM3": 2358.719628246009
+        }
+      ]
+    },
+    {
+      "name": "upper1000 interior",
+      "sigmasBara": [
+        0.1,
+        0.7,
+        0.25,
+        0.5
+      ],
+      "observedPressuresBara": [
+        196.89558568381074,
+        194.38965746907962,
+        190.8725914590222,
+        187.8636957766591
+      ],
+      "lowerVolumeM3": 800,
+      "upperVolumeM3": 1000,
+      "fittedVolumeM3": 987.0081656396466,
+      "calibrationChiSquare": 2.4184047655191034,
+      "holdoutChiSquare": 0.5435844038284943,
+      "standardizedResiduals": [
+        -1.1109051122746028,
+        0.8335501091973185,
+        0.6996347707900131,
+        0.7372817669171633
+      ],
+      "boundLimited": false,
+      "rows": [
+        {
+          "pressureBara": 197.0066761950382,
+          "producedMoles": [
+            89887.46176970158,
+            10112.538230298416
+          ],
+          "injectedMoles": [
+            0.0,
+            20000.0
+          ],
+          "surfaceGasVolumeM3": 2358.767195735204
+        },
+        {
+          "pressureBara": 193.80617239264149,
+          "producedMoles": [
+            89705.80261311185,
+            10294.197386888143
+          ],
+          "injectedMoles": [
+            10000.0,
+            0.0
+          ],
+          "surfaceGasVolumeM3": 2358.747036975657
+        },
+        {
+          "pressureBara": 190.6976827663247,
+          "producedMoles": [
+            89630.1057046074,
+            10369.894295392594
+          ],
+          "injectedMoles": [
+            0.0,
+            15000.0
+          ],
+          "surfaceGasVolumeM3": 2358.738626408388
+        },
+        {
+          "pressureBara": 187.49505489320052,
+          "producedMoles": [
+            89459.32166904435,
+            10540.67833095565
+          ],
+          "injectedMoles": [
+            5000.0,
+            5000.0
+          ],
+          "surfaceGasVolumeM3": 2358.719628246009
+        }
+      ]
+    },
+    {
+      "name": "upper980 bound",
+      "sigmasBara": [
+        0.1,
+        0.7,
+        0.25,
+        0.5
+      ],
+      "observedPressuresBara": [
+        196.89558568381074,
+        194.38965746907962,
+        190.8725914590222,
+        187.8636957766591
+      ],
+      "lowerVolumeM3": 800,
+      "upperVolumeM3": 980,
+      "fittedVolumeM3": 980.0,
+      "calibrationChiSquare": 2.5376387645478156,
+      "holdoutChiSquare": 0.8359113819861828,
+      "standardizedResiduals": [
+        -0.8973997310384099,
+        0.8964891859095699,
+        0.9636491201818231,
+        0.9142818941585701
+      ],
+      "boundLimited": true,
+      "rows": [
+        {
+          "pressureBara": 196.9853256569146,
+          "producedMoles": [
+            89886.65292475873,
+            10113.347075241274
+          ],
+          "injectedMoles": [
+            0.0,
+            20000.0
+          ],
+          "surfaceGasVolumeM3": 2358.767106056056
+        },
+        {
+          "pressureBara": 193.76211503894294,
+          "producedMoles": [
+            89703.68562095566,
+            10296.314379044341
+          ],
+          "injectedMoles": [
+            10000.0,
+            0.0
+          ],
+          "surfaceGasVolumeM3": 2358.746801843575
+        },
+        {
+          "pressureBara": 190.63167917897673,
+          "producedMoles": [
+            89627.43184598969,
+            10372.568154010318
+          ],
+          "injectedMoles": [
+            0.0,
+            15000.0
+          ],
+          "surfaceGasVolumeM3": 2358.738329207508
+        },
+        {
+          "pressureBara": 187.40655482957982,
+          "producedMoles": [
+            89455.3820872503,
+            10544.617912749702
+          ],
+          "injectedMoles": [
+            5000.0,
+            5000.0
+          ],
+          "surfaceGasVolumeM3": 2358.719189633822
+        }
+      ]
+    }
+  ]
+}

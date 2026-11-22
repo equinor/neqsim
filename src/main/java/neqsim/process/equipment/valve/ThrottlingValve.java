@@ -1,14 +1,18 @@
 package neqsim.process.equipment.valve;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.mechanicaldesign.valve.ValveTrimSizingResult;
@@ -19,6 +23,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.unit.PressureUnit;
 
 /**
  * ThrottlingValve class.
@@ -26,10 +31,19 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author esol
  * @version $Id: $Id
  */
-public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
-    neqsim.process.equipment.capacity.CapacityConstrainedEquipment, neqsim.process.design.AutoSizeable {
+public class ThrottlingValve extends TwoPortEquipment
+    implements ValveInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment,
+    neqsim.process.design.AutoSizeable, TransientStateParticipant<ThrottlingValve.TransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Persistent identity used by transient rollback and event provenance. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
+  /** Last physical-step identity that advanced actuator dynamics. */
+  private UUID lastActuatorStepId = null;
+  /** Whether repeated calls with one physical-step identity advance actuator state only once. */
+  private boolean physicalStepIdempotencyEnabled = false;
+  /** Whether this hydraulic valve published its inlet demand as zero in the prior step. */
+  private boolean transientInletZeroFlowPublished = false;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
@@ -79,7 +93,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   private double deltaPressure = 0.0;
   private boolean allowChoked = false;
   private boolean allowLaminar = true;
-  private double xt = 0.6; // critical pressure drop ratio for choked flow
   private double lastInletTemperature = Double.NaN;
   private double lastInletPressure = Double.NaN;
   private double lastInletFlowRate = Double.NaN;
@@ -152,10 +165,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     return getMechanicalDesign().maxDesignVolumeFlow;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Returns the configured outlet pressure in absolute bar, independently of the unit used to set it.
+   *
+   * @return configured outlet pressure in bara
+   */
   @Override
   public double getOutletPressure() {
-    return this.pressure;
+    return new PressureUnit(pressure, pressureUnit).getValue("bara");
   }
 
   /** {@inheritDoc} */
@@ -232,6 +249,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     getOutletStream().getThermoSystem().setPressure(pressure, pressureUnit);
   }
 
+  /**
+   * Applies a solver pressure without changing the user's configured pressure unit.
+   *
+   * @param pressureBara calculated outlet pressure in absolute bar
+   */
+  private void setCalculatedOutletPressure(double pressureBara) {
+    setOutletPressure(new PressureUnit(pressureBara, "bara").getValue(pressureUnit));
+  }
+
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
@@ -243,10 +269,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     if (inThermo.getTemperature() != lastInletTemperature || inThermo.getPressure() != lastInletPressure
         || pressure != lastOutletPressure || Kv != lastKv || percentValveOpening != lastPercentValveOpening
         || requestedValveOpening != lastRequestedValveOpening || deltaPressure != lastDeltaPressure || Fp != lastFp
-        || foulingFraction != lastFoulingFraction || xt != lastXt || valveKvSet != lastValveKvSet
-        || isoThermal != lastIsoThermal || acceptNegativeDP != lastAcceptNegativeDP
-        || isCalcPressure != lastIsCalcPressure || allowChoked != lastAllowChoked || allowLaminar != lastAllowLaminar
-        || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
+        || foulingFraction != lastFoulingFraction || getMechanicalDesign().getValveSizingMethod().getxT() != lastXt
+        || valveKvSet != lastValveKvSet || isoThermal != lastIsoThermal || acceptNegativeDP != lastAcceptNegativeDP
+        || isCalcPressure != lastIsCalcPressure
+        || getMechanicalDesign().getValveSizingMethod().isAllowChoked() != lastAllowChoked
+        || allowLaminar != lastAllowLaminar || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
         || !java.util.Objects.equals(getSpecification(), lastSpecification)) {
       return true;
     }
@@ -267,7 +294,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     return false;
   }
 
-  private void updateRecalculationState() {
+  /**
+   * Captures the connected inlet and valve configuration for subsequent recalculation checks. Subclasses using a
+   * temporary hydraulic inlet must refresh this state after restoring their connected inlet.
+   */
+  protected void updateRecalculationState() {
     if (getInletStream() == null || getInletStream().getThermoSystem() == null) {
       lastInletComposition = null;
       return;
@@ -284,14 +315,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     lastDeltaPressure = deltaPressure;
     lastFp = Fp;
     lastFoulingFraction = foulingFraction;
-    lastXt = xt;
+    lastXt = getMechanicalDesign().getValveSizingMethod().getxT();
     lastPressureUnit = pressureUnit;
     lastSpecification = getSpecification();
     lastValveKvSet = valveKvSet;
     lastIsoThermal = isoThermal;
     lastAcceptNegativeDP = acceptNegativeDP;
     lastIsCalcPressure = isCalcPressure;
-    lastAllowChoked = allowChoked;
+    lastAllowChoked = getMechanicalDesign().getValveSizingMethod().isAllowChoked();
     lastAllowLaminar = allowLaminar;
   }
 
@@ -315,17 +346,34 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * @return Molar flow in mole/sec.
    */
   public double calculateMolarFlow() {
-    double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
-        .calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), inStream, outStream);
+    return calculateMolarFlowForStreams(inStream, outStream);
+  }
 
-    return flow_m3_sec * inStream.getFluid().getDensity("kg/m3") / inStream.getFluid().getMolarMass("kg/mol");
+  /**
+   * Evaluates the same native capacity on explicit, initialized intensive stream states.
+   *
+   * <p>
+   * Reviewed pressure-boundary subclasses may supply a detached normalized inlet for an algebraic capacity query. This
+   * helper does not flash, mutate a stream, move an actuator or stamp calculation identifiers. Ordinary valve execution
+   * continues to supply its actual connected streams.
+   * </p>
+   *
+   * @param capacityInlet initialized inlet state for the capacity evaluation
+   * @param capacityOutlet downstream pressure boundary for the capacity evaluation
+   * @return native capacity in mole/sec
+   */
+  protected final double calculateMolarFlowForStreams(StreamInterface capacityInlet, StreamInterface capacityOutlet) {
+    double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
+        .calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), capacityInlet, capacityOutlet);
+
+    return flow_m3_sec * capacityInlet.getFluid().getDensity("kg/m3") / capacityInlet.getFluid().getMolarMass("kg/mol");
   }
 
   /**
    * Calculates the outlet pressure based on the adjusted Kv value.
    *
    * @param KvAdjusted the adjusted flow coefficient (Kv)
-   * @return the calculated outlet pressure
+   * @return the calculated outlet pressure in bara, independently of the configured pressure unit
    */
   public double calculateOutletPressure(double KvAdjusted) {
     return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(KvAdjusted, inStream) / 1.0e5;
@@ -347,14 +395,18 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (getInletStream().getThermoSystem() != null) {
-      thermoSystem = getInletStream().getThermoSystem().clone();
-    } else {
+    StreamInterface inlet = getInletStream();
+    if (inlet.getThermoSystem() == null) {
       logger.error("Inlet stream thermo system is null");
       return;
     }
-
-    double inletMolarFlow = getInletStream().getThermoSystem().getFlowRate("mole/sec");
+    double inletMolarFlow = inlet.getThermoSystem().getFlowRate("mole/sec");
+    if (inlet.getCalculationIdentifier() == null && !isNegligibleFlow(inletMolarFlow)) {
+      // A flow-rate setter initializes EOS properties but does not establish the equilibrium inlet phase.
+      inlet.run(id);
+      inletMolarFlow = inlet.getThermoSystem().getFlowRate("mole/sec");
+    }
+    thermoSystem = inlet.getThermoSystem().clone();
     if (isBelowLowFlowThreshold()) {
       isActive(false);
       applyZeroFlowState(id);
@@ -400,11 +452,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     // update outlet pressure if required
     if (valveKvSet && isCalcPressure) {
       outPres = calculateOutletPressure(adjustKv(Kv, percentValveOpening));
-      setOutletPressure(outPres);
+      setCalculatedOutletPressure(outPres);
     }
     if (deltaPressure != 0) {
       thermoSystem.setPressure(thermoSystem.getPressure(pressureUnit) - deltaPressure, pressureUnit);
-      setOutletPressure(thermoSystem.getPressure());
+      setCalculatedOutletPressure(thermoSystem.getPressure("bara"));
     }
 
     if ((inStream.getPressure(pressureUnit) - pressure) < 0) {
@@ -418,13 +470,17 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     }
 
     if (getSpecification().equals("out stream")) {
-      thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
+      thermoSystem.setPressure(outStream.getPressure("bara"), "bara");
+    }
+
+    // An unset pressure retains the outlet stream's existing absolute pressure.
+    if (getOutletPressure() == 0.0) {
+      thermoSystem.setPressure(outPres, "bara");
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
-        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
-      thermoSystem.setPressure(outPres, pressureUnit);
+    if (isIsoThermal() || Math.abs(thermoSystem.getPressure("bara") - inletPressure) < 1e-6
+        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || thermoSystem.getPressure("bara") == 0) {
       thermoOps.TPflash();
     } else {
       runPHflashWithNaNRetry(thermoOps, enthalpy);
@@ -500,89 +556,165 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
 
     runController(dt, id);
 
-    inStream.getFluid().initProperties();
-    thermoSystem = inStream.getThermoSystem().clone();
-
     double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
+    boolean pressureBoundaryZero = isZeroFlowPressureBoundaryEnabled() && Double.isFinite(inletMolarFlow)
+        && inletMolarFlow >= 0.0 && isNegligibleFlow(inletMolarFlow);
+    boolean recoveringOwnZero = !isCalcPressure
+        && ((transientInletZeroFlowPublished && inletMolarFlow == 0.0) || pressureBoundaryZero)
+        && hasUsableInletComposition();
     if (isBelowLowFlowThreshold()) {
+      thermoSystem = inStream.getThermoSystem().clone();
       isActive(false);
-      applyZeroFlowState(id);
+      applyZeroTransientFlowState(id);
       return;
     }
-    if (isNegligibleFlow(inletMolarFlow)) {
+    if (isNegligibleFlow(inletMolarFlow) && !recoveringOwnZero) {
+      thermoSystem = inStream.getThermoSystem().clone();
+      transientInletZeroFlowPublished = false;
       applyZeroFlowState(id);
       return;
     }
     isActive(true);
 
-    thermoSystem.init(2);
-    double enthalpy = thermoSystem.getEnthalpy();
-
-    double outPres = getOutletStream().getThermoSystem().getPressure();
-    pressure = outPres;
-    double deltaP = Math.max(inStream.getPressure() - outPres, 0.0);
-
-    if ((thermoSystem.getPressure(pressureUnit) - outPres) < 0) {
-      if (isAcceptNegativeDP()) {
-        thermoSystem.setPressure(outPres, pressureUnit);
+    boolean positiveFlowPublished = false;
+    try {
+      if (recoveringOwnZero) {
+        // Positive normalization is intensive-property workspace only. It is replaced
+        // by actual hydraulic flow below, or restored to exact zero in finally.
+        inStream.getThermoSystem().setTotalNumberOfMoles(1.0);
       }
-    } else {
-      thermoSystem.setPressure(outPres, pressureUnit);
-    }
-
-    if (getSpecification().equals("out stream")) {
-      thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
-    }
-    double adjustKv = adjustKv(Kv, percentValveOpening);
-    if (deltaP > 0.0 && !isCalcPressure) {
-      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
-
-      if (molarFlow > 0.0) {
-        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-        inStream.getThermoSystem().initProperties();
-      }
-    }
-    // update outlet pressure if required
-    if (valveKvSet && isCalcPressure) {
       inStream.getFluid().initProperties();
-      outPres = calculateOutletPressure(adjustKv);
-      thermoSystem.setPressure(outPres);
-      setOutletPressure(outPres);
-    }
+      thermoSystem = inStream.getThermoSystem().clone();
 
-    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    if (isIsoThermal()) {
-      thermoOps.TPflash();
-    } else {
-      runPHflashWithNaNRetry(thermoOps, enthalpy);
-    }
-    thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    outStream.setThermoSystem(thermoSystem);
+      thermoSystem.init(2);
+      double enthalpy = thermoSystem.getEnthalpy();
 
-    if (deltaP > 0.0) {
-      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
-      if (molarFlow <= 0.0) {
-        applyZeroFlowState(id);
+      double outPres = getOutletStream().getPressure("bara");
+      pressure = getOutletStream().getPressure(pressureUnit);
+      double deltaP = Math.max(inStream.getPressure() - outPres, 0.0);
+
+      if ((thermoSystem.getPressure("bara") - outPres) < 0) {
+        if (isAcceptNegativeDP()) {
+          thermoSystem.setPressure(outPres, "bara");
+        }
+      } else {
+        thermoSystem.setPressure(outPres, "bara");
+      }
+
+      if (getSpecification().equals("out stream")) {
+        thermoSystem.setPressure(outStream.getPressure("bara"), "bara");
+      }
+      double adjustKv = adjustKv(Kv, percentValveOpening);
+      if (deltaP > 0.0 && !isCalcPressure) {
+        molarFlow = ensureValidMolarFlow(calculateMolarFlow());
+
+        if (molarFlow > 0.0) {
+          inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+          inStream.getThermoSystem().initProperties();
+        }
+      }
+      // update outlet pressure if required
+      if (valveKvSet && isCalcPressure) {
+        inStream.getFluid().initProperties();
+        outPres = calculateOutletPressure(adjustKv);
+        thermoSystem.setPressure(outPres, "bara");
+        setCalculatedOutletPressure(outPres);
+        deltaP = Math.max(inStream.getPressure("bara") - outPres, 0.0);
+      }
+
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+      if (isIsoThermal()) {
+        thermoOps.TPflash();
+      } else {
+        runPHflashWithNaNRetry(thermoOps, enthalpy);
+      }
+      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      outStream.setThermoSystem(thermoSystem);
+
+      if (deltaP > 0.0) {
+        molarFlow = ensureValidMolarFlow(calculateMolarFlow());
+        if (molarFlow <= 0.0) {
+          applyZeroTransientFlowState(id);
+          return;
+        }
+      } else {
+        applyZeroTransientFlowState(id);
         return;
       }
-    } else {
-      applyZeroFlowState(id);
-      return;
-    }
 
-    try {
-      inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      inStream.getThermoSystem().initProperties();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      try {
+        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        inStream.getThermoSystem().initProperties();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
+      }
+      try {
+        outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        outStream.getThermoSystem().initProperties();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
+      }
+      transientInletZeroFlowPublished = false;
+      finishRun(id);
+      positiveFlowPublished = true;
+    } finally {
+      if (recoveringOwnZero && (!positiveFlowPublished || transientInletZeroFlowPublished)) {
+        inStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+        if (outStream != null && outStream.getThermoSystem() != null) {
+          outStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+        }
+      }
     }
-    try {
-      outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      outStream.getThermoSystem().initProperties();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
+  }
+
+  /**
+   * Allows a reviewed pressure-boundary subclass to calculate native Cv flow from zero specified throughput.
+   *
+   * <p>
+   * The default is false: an ordinary initially dry valve remains dry. An opt-in model treats finite nonnegative
+   * negligible throughput with usable composition as an intensive-property workspace only; actual computed flow
+   * replaces it, or both ports return to exact zero on closure, absent forward pressure difference or failure. This
+   * does not supply an inventory.
+   * </p>
+   *
+   * @return true only for an explicitly pressure-driven boundary model
+   */
+  protected boolean isZeroFlowPressureBoundaryEnabled() {
+    return false;
+  }
+
+  /**
+   * Reports whether a previously blocked inlet retains a finite composition seed.
+   *
+   * @return true when all stored fractions are finite and their sum is positive
+   */
+  private boolean hasUsableInletComposition() {
+    if (inStream.getFluid().getNumberOfComponents() == 0) {
+      return false;
     }
-    finishRun(id);
+    double sum = 0.0;
+    for (double fraction : inStream.getFluid().getMolarComposition()) {
+      if (!Double.isFinite(fraction) || fraction < 0.0) {
+        return false;
+      }
+      sum += fraction;
+    }
+    return Double.isFinite(sum) && sum > 0.0;
+  }
+
+  /**
+   * Publishes no hydraulic withdrawal at both ports without changing steady-state semantics.
+   *
+   * @param id current physical-step identifier
+   */
+  private void applyZeroTransientFlowState(UUID id) {
+    if (!isCalcPressure) {
+      double previousFlow = inStream.getThermoSystem().getTotalNumberOfMoles();
+      transientInletZeroFlowPublished = transientInletZeroFlowPublished
+          || (Double.isFinite(previousFlow) && previousFlow > minimumMolarFlow);
+      inStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+    }
+    applyZeroFlowState(id);
   }
 
   private static final double minimumMolarFlow = 1e-12;
@@ -682,6 +814,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
+    if (physicalStepIdempotencyEnabled && dt == 0.0) {
+      setCalculationIdentifier(id);
+      return;
+    }
+    if (physicalStepIdempotencyEnabled && id != null && id.equals(lastActuatorStepId)) {
+      setCalculationIdentifier(id);
+      return;
+    }
     double controllerRequest = requestedValveOpening;
     if (hasController && getController().isActive()) {
       getController().runTransient(this.percentValveOpening, dt, id);
@@ -690,7 +830,319 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
     percentValveOpening = clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
+    if (physicalStepIdempotencyEnabled && dt > 0.0) {
+      lastActuatorStepId = id;
+    }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Enables one actuator advance per non-null physical-step UUID.
+   *
+   * <p>
+   * The policy is disabled by default so legacy loops that reuse one calculation identifier across multiple physical
+   * timesteps retain their historical behavior. Transactional adaptive studies should enable it and supply a distinct
+   * UUID for every physical interval. Zero-duration algebraic evaluations do not consume actuator advancement for a
+   * later positive interval with that identifier.
+   * </p>
+   *
+   * @param enabled true to make actuator advancement idempotent for one physical-step UUID
+   */
+  public void setPhysicalStepIdempotencyEnabled(boolean enabled) {
+    physicalStepIdempotencyEnabled = enabled;
+    if (!enabled) {
+      lastActuatorStepId = null;
+    }
+  }
+
+  /**
+   * Reports whether physical-step UUID idempotency is enabled.
+   *
+   * @return true when one UUID can advance actuator state only once
+   */
+  public boolean isPhysicalStepIdempotencyEnabled() {
+    return physicalStepIdempotencyEnabled;
+  }
+
+  /**
+   * Audits valve-owned state without rejecting controllers that the process transaction captures independently.
+   *
+   * @return {@code null} when this valve can be captured, otherwise a deterministic blocker
+   */
+  protected final String getValveTransientStateCoverageIssue() {
+    String baseIssue = getBaseTransientStateCoverageIssue(true);
+    if (baseIssue != null) {
+      return baseIssue;
+    }
+    if (inStream == null || outStream == null || thermoSystem == null) {
+      return "valve inlet, outlet, and thermodynamic state must be initialized";
+    }
+    if (outStream.getClass() != Stream.class) {
+      return "valve outlet must be a concrete local Stream instance";
+    }
+    String outletIssue = ((Stream) outStream).getTransientStateCoverageIssue();
+    if (outletIssue != null) {
+      return "valve outlet: " + outletIssue;
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:valve:" + transientStateIdentity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != ThrottlingValve.class && getClass() != ControlValve.class) {
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
+    return getValveTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture valve '" + getName() + "': " + coverageIssue);
+    }
+    return new TransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransientState snapshot) {
+    restoreTransientStepState(snapshot);
+  }
+
+  /**
+   * Restores valve-owned state without replacing the valve or either connected stream.
+   *
+   * @param snapshot checkpoint captured from this valve
+   */
+  protected void restoreTransientStepState(TransientState snapshot) {
+    Objects.requireNonNull(snapshot, "valve transient snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Transient snapshot belongs to another valve");
+    }
+    restoreBaseTransientState(snapshot.baseState);
+    ((Stream) outStream).restoreTransientState(snapshot.outletState);
+    thermoSystem = snapshot.thermoSystemIsOutletSystem ? outStream.getThermoSystem()
+        : cloneSystem(snapshot.thermoSystem);
+    valveKvSet = snapshot.valveKvSet;
+    isoThermal = snapshot.isoThermal;
+    pressure = snapshot.pressure;
+    Kv = snapshot.kv;
+    maxMolarFlow = snapshot.maxMolarFlow;
+    minMolarFlow = snapshot.minMolarFlow;
+    maxValveOpening = snapshot.maxValveOpening;
+    minValveOpening = snapshot.minValveOpening;
+    percentValveOpening = snapshot.percentValveOpening;
+    requestedValveOpening = snapshot.requestedValveOpening;
+    valveTravelTimeSec = snapshot.valveTravelTimeSec;
+    valveOpeningTravelTimeSec = snapshot.valveOpeningTravelTimeSec;
+    valveClosingTravelTimeSec = snapshot.valveClosingTravelTimeSec;
+    valveTimeConstantSec = snapshot.valveTimeConstantSec;
+    travelModel = snapshot.travelModel;
+    valveDeadband = snapshot.valveDeadband;
+    valveStiction = snapshot.valveStiction;
+    valveHysteresis = snapshot.valveHysteresis;
+    lastMoveDirection = snapshot.lastMoveDirection;
+    isStuck = snapshot.stuck;
+    stuckPosition = snapshot.stuckPosition;
+    molarFlow = snapshot.molarFlow;
+    pressureUnit = snapshot.pressureUnit;
+    acceptNegativeDP = snapshot.acceptNegativeDp;
+    isCalcPressure = snapshot.calcPressure;
+    gasValve = snapshot.gasValve;
+    Fp = snapshot.fp;
+    foulingFraction = snapshot.foulingFraction;
+    deltaPressure = snapshot.deltaPressure;
+    allowChoked = snapshot.allowChoked;
+    getMechanicalDesign().getValveSizingMethod().setAllowChoked(snapshot.sizingAllowChoked);
+    getMechanicalDesign().getValveSizingMethod().setxT(snapshot.sizingXt);
+    allowLaminar = snapshot.allowLaminar;
+    lastInletTemperature = snapshot.lastInletTemperature;
+    lastInletPressure = snapshot.lastInletPressure;
+    lastInletFlowRate = snapshot.lastInletFlowRate;
+    lastInletComposition = snapshot.lastInletComposition == null ? null : snapshot.lastInletComposition.clone();
+    lastOutletPressure = snapshot.lastOutletPressure;
+    lastKv = snapshot.lastKv;
+    lastPercentValveOpening = snapshot.lastPercentValveOpening;
+    lastRequestedValveOpening = snapshot.lastRequestedValveOpening;
+    lastDeltaPressure = snapshot.lastDeltaPressure;
+    lastFp = snapshot.lastFp;
+    lastFoulingFraction = snapshot.lastFoulingFraction;
+    lastXt = snapshot.lastXt;
+    lastPressureUnit = snapshot.lastPressureUnit;
+    lastSpecification = snapshot.lastSpecification;
+    lastValveKvSet = snapshot.lastValveKvSet;
+    lastIsoThermal = snapshot.lastIsoThermal;
+    lastAcceptNegativeDP = snapshot.lastAcceptNegativeDp;
+    lastIsCalcPressure = snapshot.lastIsCalcPressure;
+    lastAllowChoked = snapshot.lastAllowChoked;
+    lastAllowLaminar = snapshot.lastAllowLaminar;
+    autoSized = snapshot.autoSized;
+    maxDesignAIV = snapshot.maxDesignAiv;
+    lastActuatorStepId = snapshot.lastActuatorStepId;
+    physicalStepIdempotencyEnabled = snapshot.physicalStepIdempotencyEnabled;
+    transientInletZeroFlowPublished = snapshot.transientInletZeroFlowPublished;
+  }
+
+  /**
+   * Clones a thermodynamic system for an identity-preserving valve checkpoint.
+   *
+   * @param source system to copy
+   * @return independent copy, or {@code null}
+   */
+  private static SystemInterface cloneSystem(SystemInterface source) {
+    return source == null ? null : source.clone();
+  }
+
+  /** Serializable checkpoint for valve actuator, flow, cache, and outlet state. */
+  public static class TransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ProcessEquipmentTransientState baseState;
+    private final SystemInterface thermoSystem;
+    private final boolean thermoSystemIsOutletSystem;
+    private final Stream.TransientState outletState;
+    private final boolean valveKvSet;
+    private final boolean isoThermal;
+    private final double pressure;
+    private final double kv;
+    private final double maxMolarFlow;
+    private final double minMolarFlow;
+    private final double maxValveOpening;
+    private final double minValveOpening;
+    private final double percentValveOpening;
+    private final double requestedValveOpening;
+    private final double valveTravelTimeSec;
+    private final double valveOpeningTravelTimeSec;
+    private final double valveClosingTravelTimeSec;
+    private final double valveTimeConstantSec;
+    private final ValveTravelModel travelModel;
+    private final double valveDeadband;
+    private final double valveStiction;
+    private final double valveHysteresis;
+    private final int lastMoveDirection;
+    private final boolean stuck;
+    private final double stuckPosition;
+    private final double molarFlow;
+    private final String pressureUnit;
+    private final boolean acceptNegativeDp;
+    private final boolean calcPressure;
+    private final boolean gasValve;
+    private final double fp;
+    private final double foulingFraction;
+    private final double deltaPressure;
+    private final boolean allowChoked;
+    private final boolean sizingAllowChoked;
+    private final double sizingXt;
+    private final boolean allowLaminar;
+    private final double lastInletTemperature;
+    private final double lastInletPressure;
+    private final double lastInletFlowRate;
+    private final double[] lastInletComposition;
+    private final double lastOutletPressure;
+    private final double lastKv;
+    private final double lastPercentValveOpening;
+    private final double lastRequestedValveOpening;
+    private final double lastDeltaPressure;
+    private final double lastFp;
+    private final double lastFoulingFraction;
+    private final double lastXt;
+    private final String lastPressureUnit;
+    private final String lastSpecification;
+    private final boolean lastValveKvSet;
+    private final boolean lastIsoThermal;
+    private final boolean lastAcceptNegativeDp;
+    private final boolean lastIsCalcPressure;
+    private final boolean lastAllowChoked;
+    private final boolean lastAllowLaminar;
+    private final boolean autoSized;
+    private final double maxDesignAiv;
+    private final UUID lastActuatorStepId;
+    private final boolean physicalStepIdempotencyEnabled;
+    private final boolean transientInletZeroFlowPublished;
+
+    /**
+     * Creates a complete checkpoint of mutable state owned by a throttling valve.
+     *
+     * @param source valve to capture
+     */
+    protected TransientState(ThrottlingValve source) {
+      stateIdentity = source.getTransientStateIdentity();
+      baseState = source.captureBaseTransientState();
+      thermoSystem = cloneSystem(source.thermoSystem);
+      thermoSystemIsOutletSystem = source.outStream != null
+          && source.thermoSystem == source.outStream.getThermoSystem();
+      outletState = ((Stream) source.outStream).captureTransientState();
+      valveKvSet = source.valveKvSet;
+      isoThermal = source.isoThermal;
+      pressure = source.pressure;
+      kv = source.Kv;
+      maxMolarFlow = source.maxMolarFlow;
+      minMolarFlow = source.minMolarFlow;
+      maxValveOpening = source.maxValveOpening;
+      minValveOpening = source.minValveOpening;
+      percentValveOpening = source.percentValveOpening;
+      requestedValveOpening = source.requestedValveOpening;
+      valveTravelTimeSec = source.valveTravelTimeSec;
+      valveOpeningTravelTimeSec = source.valveOpeningTravelTimeSec;
+      valveClosingTravelTimeSec = source.valveClosingTravelTimeSec;
+      valveTimeConstantSec = source.valveTimeConstantSec;
+      travelModel = source.travelModel;
+      valveDeadband = source.valveDeadband;
+      valveStiction = source.valveStiction;
+      valveHysteresis = source.valveHysteresis;
+      lastMoveDirection = source.lastMoveDirection;
+      stuck = source.isStuck;
+      stuckPosition = source.stuckPosition;
+      molarFlow = source.molarFlow;
+      pressureUnit = source.pressureUnit;
+      acceptNegativeDp = source.acceptNegativeDP;
+      calcPressure = source.isCalcPressure;
+      gasValve = source.gasValve;
+      fp = source.Fp;
+      foulingFraction = source.foulingFraction;
+      deltaPressure = source.deltaPressure;
+      allowChoked = source.allowChoked;
+      sizingAllowChoked = source.getMechanicalDesign().getValveSizingMethod().isAllowChoked();
+      sizingXt = source.getMechanicalDesign().getValveSizingMethod().getxT();
+      allowLaminar = source.allowLaminar;
+      lastInletTemperature = source.lastInletTemperature;
+      lastInletPressure = source.lastInletPressure;
+      lastInletFlowRate = source.lastInletFlowRate;
+      lastInletComposition = source.lastInletComposition == null ? null : source.lastInletComposition.clone();
+      lastOutletPressure = source.lastOutletPressure;
+      lastKv = source.lastKv;
+      lastPercentValveOpening = source.lastPercentValveOpening;
+      lastRequestedValveOpening = source.lastRequestedValveOpening;
+      lastDeltaPressure = source.lastDeltaPressure;
+      lastFp = source.lastFp;
+      lastFoulingFraction = source.lastFoulingFraction;
+      lastXt = source.lastXt;
+      lastPressureUnit = source.lastPressureUnit;
+      lastSpecification = source.lastSpecification;
+      lastValveKvSet = source.lastValveKvSet;
+      lastIsoThermal = source.lastIsoThermal;
+      lastAcceptNegativeDp = source.lastAcceptNegativeDP;
+      lastIsCalcPressure = source.lastIsCalcPressure;
+      lastAllowChoked = source.lastAllowChoked;
+      lastAllowLaminar = source.lastAllowLaminar;
+      autoSized = source.autoSized;
+      maxDesignAiv = source.maxDesignAIV;
+      lastActuatorStepId = source.lastActuatorStepId;
+      physicalStepIdempotencyEnabled = source.physicalStepIdempotencyEnabled;
+      transientInletZeroFlowPublished = source.transientInletZeroFlowPublished;
+    }
   }
 
   private double clampValveOpening(double value) {
@@ -1258,21 +1710,27 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * isAllowChoked.
+   * Returns whether the active valve-sizing method applies its choked-flow capacity limit.
    *
-   * @return a boolean
+   * @return {@code true} when choked-flow capacity limiting is enabled
    */
   public boolean isAllowChoked() {
+    if (getMechanicalDesign() != null && getMechanicalDesign().getValveSizingMethod() != null) {
+      return getMechanicalDesign().getValveSizingMethod().isAllowChoked();
+    }
     return allowChoked;
   }
 
   /**
-   * Setter for the field <code>allowChoked</code>.
+   * Sets whether the active valve-sizing method applies its choked-flow capacity limit.
    *
-   * @param allowChoked a boolean
+   * @param allowChoked {@code true} to cap flow at the choked-flow limit
    */
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
+    if (getMechanicalDesign() != null && getMechanicalDesign().getValveSizingMethod() != null) {
+      getMechanicalDesign().getValveSizingMethod().setAllowChoked(allowChoked);
+    }
   }
 
   /**
@@ -1575,12 +2033,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * Auto-sizes the valve based on current flow conditions with specified design opening.
+   * Auto-sizes the valve based on current flow conditions with specified design opening. The inlet must have been
+   * flashed at the design conditions. Sizing preserves its flow, phase split and initialized thermodynamic state.
    *
    * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
    * @param designOpeningPercent the target valve opening percentage at design flow (typically 50%)
+   * @throws IllegalArgumentException if the safety factor is not finite and positive or the design opening is not in
+   * (0, 100]
    */
   public void autoSize(double safetyFactor, double designOpeningPercent) {
+    if (!Double.isFinite(safetyFactor) || safetyFactor <= 0.0 || !Double.isFinite(designOpeningPercent)
+        || designOpeningPercent <= 0.0 || designOpeningPercent > 100.0) {
+      throw new IllegalArgumentException(
+          "Valve sizing requires a positive safety factor and design opening in (0, 100]");
+    }
     if (getInletStream() == null) {
       throw new IllegalStateException("Cannot auto-size valve without inlet stream");
     }
@@ -1589,13 +2055,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     // have established a Cv at a different operating point; running with that stale Cv
     // must not overwrite the new design flow before it is captured for sizing.
     double designFlowRate = getInletStream().getFlowRate("kg/hr");
-    double outletFlowRate = getOutletStream().getFlowRate("kg/hr");
+    double designMolarFlowRate = getInletStream().getFlowRate("mole/sec");
+    double outletMolarFlowRate = getOutletStream().getFlowRate("mole/sec");
 
     // Run the valve first to establish phase type and thermodynamic conditions.
     run();
 
-    getInletStream().setFlowRate(designFlowRate, "kg/hr");
-    getOutletStream().setFlowRate(outletFlowRate, "kg/hr");
+    // setFlowRate() reinitializes the phase state even for an unchanged rate. In
+    // rich gas this can nearly double the density and size a different valve.
+    restoreMolarFlowRate(getInletStream(), designMolarFlowRate);
+    restoreMolarFlowRate(getOutletStream(), outletMolarFlowRate);
 
     // Check if we have meaningful flow
     double flowRate = designFlowRate;
@@ -1604,7 +2073,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     double designCv;
 
     if (hasFlow) {
-      // Calculate Cv at 100% opening for current flow
+      // calcDesign converts effective Cv to full-open Cv using the current opening.
+      // Select the requested design opening before sizing, including when re-sizing
+      // a valve that is currently operating at a different position.
+      setPercentValveOpening(designOpeningPercent);
       getMechanicalDesign().calcDesign();
       double calculatedCv = getMechanicalDesign().getValveCvMax();
 
@@ -1662,6 +2134,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     initializeCapacityConstraints();
 
     autoSized = true;
+  }
+
+  /**
+   * Restores a sizing flow only when it changed, retaining the stream's phase split and composition.
+   *
+   * @param stream stream whose design flow is to be restored
+   * @param molarFlowRate original molar flow in mol/s
+   */
+  private void restoreMolarFlowRate(StreamInterface stream, double molarFlowRate) {
+    SystemInterface fluid = stream.getFluid();
+    if (fluid.getTotalNumberOfMoles() != molarFlowRate) {
+      fluid.setTotalNumberOfMoles(molarFlowRate);
+      fluid.init(2);
+    }
   }
 
   /**

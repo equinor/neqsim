@@ -1,521 +1,161 @@
 ---
 title: Umbilicals
-description: Documentation for subsea umbilical equipment in NeqSim.
+description: Subsea umbilical in NeqSim - cross-section and weights, tube burst and collapse, armour and catenary tension, chemical and hydraulic line hydraulics, power cable, design checks, and the figure and hand-off skills.
 ---
 
-Documentation for subsea umbilical equipment in NeqSim.
+An umbilical is a bundle of hydraulic tubes, chemical injection tubes, electrical cables and
+optical fibres inside armour and sheaths. NeqSim sizes and checks it from the element list, the
+route length and the water depth.
 
 ## Table of Contents
-- [Overview](#overview)
-- [Umbilical Class](#umbilical-class)
-- [Umbilical Types](#umbilical-types)
-- [Functional Elements](#functional-elements)
-- [Configuration](#configuration)
-- [Usage Examples](#usage-examples)
-- [Design Standards](#design-standards)
-- [Related Documentation](#related-documentation)
+- [Classes](#classes)
+- [Quick start](#quick-start)
+- [Physics](#physics)
+- [Design checks](#design-checks)
+- [Results as JSON](#results-as-json)
+- [Figures and hand-off](#figures-and-hand-off)
+- [Defaults and limitations](#defaults-and-limitations)
+- [Design standards](#design-standards)
+- [Related documentation](#related-documentation)
 
 ---
 
-## Overview
+## Classes
 
-**Location:** `neqsim.process.equipment.subsea`
-
-An umbilical is a bundled assembly of tubes, hoses, and cables used to supply subsea equipment with:
-
-- Hydraulic fluid for valve actuation
-- Electrical power for equipment
-- Control signals and data
-- Chemicals (MEG, methanol, scale/corrosion inhibitors)
+**Location:** `neqsim.process.equipment.subsea` and `neqsim.process.mechanicaldesign.subsea`
 
 | Class | Description |
 |-------|-------------|
-| `Umbilical` | Subsea umbilical assembly |
-| `UmbilicalMechanicalDesign` | Mechanical design calculations |
+| `Umbilical` | Equipment: element list, geometry, weights, line hydraulics, power cable |
+| `UmbilicalFluid` | Density, temperature-dependent viscosity and bulk modulus of a line fluid; presets or `fromNeqSim(...)` |
+| `UmbilicalMechanicalDesign` | Tube wall, armour layers, catenary tension, design checks, JSON |
+| `UmbilicalHydraulicsCalculator` | Friction pressure drop, hydrostatic head, flow for a pressure budget, pressure-step response |
+| `UmbilicalElectricalCalculator` | Conductor resistance, skin effect, three-phase cable as a distributed line, optical budget |
+| `UmbilicalStructuralCalculator` | Burst and collapse wall, armour capacity, catenary, element packing |
+| `UmbilicalFunctionalDesign` | Static functional checks: actuation time, optical budget, weight ratio, J-tube pull-in |
 
 ---
 
-## Umbilical Class
-
-### Class Hierarchy
-
-```
-ProcessEquipmentBaseClass
-└── Umbilical
-    ├── enum: UmbilicalType
-    ├── enum: CrossSectionType
-    └── static class: UmbilicalElement
-```
-
-### Key Features
-
-- **Multiple Construction Types**: Steel tube, thermoplastic, integrated
-- **Element Management**: Hydraulic, chemical, electrical, fiber optic
-- **Pressure/Temperature Rating**: Individual element specifications
-- **Length-Based Calculations**: Pressure drop and power loss
-- **Weight Estimation**: Dry and wet weights
-
-### Constructor
+## Quick start
 
 ```java
 import neqsim.process.equipment.subsea.Umbilical;
-
-// Create steel tube umbilical
-Umbilical umbilical = new Umbilical("Main Umbilical");
-umbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
-umbilical.setLength(25000.0);  // 25 km
-umbilical.setWaterDepth(450.0);
-```
-
----
-
-## Umbilical Types
-
-### UmbilicalType Enumeration
-
-| Type | Description | Application |
-|------|-------------|-------------|
-| `STEEL_TUBE` | Steel tubes for hydraulic/chemical | Modern standard |
-| `THERMOPLASTIC` | Nylon/PE hoses | Legacy systems |
-| `INTEGRATED_PRODUCTION` | Combined with small bore production | Compact systems |
-| `ELECTRO_HYDRAULIC` | Combined hydraulic + electrical | Standard |
-| `ELECTRIC_ONLY` | All-electric control | Future systems |
-
-### Cross-Section Types
-
-| Type | Description |
-|------|-------------|
-| `CIRCULAR` | Standard circular cross-section |
-| `FLAT` | Ribbon/flat configuration |
-| `BUNDLED` | Loose bundled elements |
-
-### Selecting Umbilical Type
-
-```java
-// Modern steel tube umbilical
-umbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
-umbilical.setCrossSectionType(Umbilical.CrossSectionType.CIRCULAR);
-
-// All-electric system
-umbilical.setUmbilicalType(Umbilical.UmbilicalType.ELECTRIC_ONLY);
-```
-
----
-
-## Functional Elements
-
-### UmbilicalElement Class
-
-Each element within the umbilical has specific properties:
-
-| Property | Description | Unit |
-|----------|-------------|------|
-| Type | hydraulic, chemical, electrical, fiber | - |
-| ID/OD | Inner/outer diameter | mm |
-| Design Pressure | Maximum working pressure | bar |
-| Material | Construction material | - |
-| Function | Specific purpose | - |
-
-### Adding Hydraulic Lines
-
-```java
-// Add LP and HP hydraulic supply lines
-umbilical.addHydraulicLine("LP Hydraulic", 12.7, 345.0);  // 12.7mm ID, 345 bar
-umbilical.addHydraulicLine("HP Hydraulic", 9.5, 690.0);   // 9.5mm ID, 690 bar
-
-// Hydraulic return line
-umbilical.addHydraulicLine("Hydraulic Return", 19.0, 100.0);
-```
-
-### Adding Chemical Lines
-
-```java
-// MEG injection line
-umbilical.addChemicalLine("MEG", 25.4, 150.0);  // 25.4mm ID, 150 bar
-
-// Methanol injection
-umbilical.addChemicalLine("Methanol", 19.0, 200.0);
-
-// Scale inhibitor
-umbilical.addChemicalLine("Scale Inhibitor", 12.7, 150.0);
-
-// Corrosion inhibitor
-umbilical.addChemicalLine("Corrosion Inhibitor", 9.5, 150.0);
-```
-
-### Adding Electrical Cables
-
-```java
-// Main power cable (3-phase, 6.6 kV)
-umbilical.addElectricalCable("Power", 3, 6600.0);  // 3 cores, 6600V
-
-// Auxiliary power
-umbilical.addElectricalCable("Auxiliary Power", 3, 690.0);
-
-// Control/signal cables
-umbilical.addElectricalCable("Control", 7, 24.0);  // 7 cores, 24V
-```
-
-### Adding Fiber Optic Cables
-
-```java
-// Control and monitoring fiber
-umbilical.addFiberOptic("Control", 12);  // 12 fibers
-
-// Communication fiber
-umbilical.addFiberOptic("Communication", 24);  // 24 fibers
-```
-
----
-
-## Configuration
-
-### Basic Configuration
-
-```java
-import neqsim.process.equipment.subsea.Umbilical;
-
-// Create and configure umbilical
-Umbilical umbilical = new Umbilical("Production Umbilical");
-
-// Set type and length
-umbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
-umbilical.setLength(30000.0);      // 30 km
-umbilical.setWaterDepth(500.0);
-
-// Design parameters
-umbilical.setDesignLife(25);       // years
-umbilical.setDesignTemperature(90.0);  // °C max
-
-// Add functional elements
-umbilical.addHydraulicLine("LP Hydraulic", 12.7, 345.0);
-umbilical.addHydraulicLine("HP Hydraulic", 9.5, 690.0);
-umbilical.addChemicalLine("MEG", 25.4, 150.0);
-umbilical.addChemicalLine("Methanol", 19.0, 200.0);
-umbilical.addElectricalCable("Power", 3, 6600.0);
-umbilical.addFiberOptic("Control", 12);
-```
-
-### Flow Calculations
-
-```java
-// Set chemical injection rates
-umbilical.setMEGInjectionRate(5.0, "m3/hr");
-umbilical.setMethanolInjectionRate(2.0, "m3/hr");
-
-// Calculate pressure drops
-double megDeltaP = umbilical.calculatePressureDrop("MEG");
-double methanolDeltaP = umbilical.calculatePressureDrop("Methanol");
-
-System.out.println("MEG pressure drop: " + megDeltaP + " bar");
-System.out.println("Methanol pressure drop: " + methanolDeltaP + " bar");
-```
-
-### Power Calculations
-
-```java
-// Set power transmission parameters
-umbilical.setPowerTransmissionVoltage(6600.0);  // V
-umbilical.setPowerLoad(5.0);  // MW
-
-// Calculate losses
-double voltageDrop = umbilical.calculateVoltageDrop();
-double powerLoss = umbilical.calculatePowerLoss();
-
-System.out.println("Voltage drop: " + voltageDrop + "%");
-System.out.println("Power loss: " + powerLoss + " MW");
-```
-
----
-
-## Usage Examples
-
-### Example 1: Complete Umbilical Configuration
-
-```java
-import neqsim.process.equipment.subsea.Umbilical;
-
-// Create main production umbilical
-Umbilical mainUmbilical = new Umbilical("Main Production Umbilical");
-mainUmbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
-mainUmbilical.setLength(25000.0);  // 25 km to manifold
-mainUmbilical.setWaterDepth(450.0);
-
-// Hydraulic supply/return
-mainUmbilical.addHydraulicLine("LP Supply", 12.7, 345.0);
-mainUmbilical.addHydraulicLine("HP Supply", 9.5, 690.0);
-mainUmbilical.addHydraulicLine("LP Return", 15.9, 100.0);
-
-// Chemical injection
-mainUmbilical.addChemicalLine("MEG Injection", 25.4, 150.0);
-mainUmbilical.addChemicalLine("Methanol", 19.0, 200.0);
-mainUmbilical.addChemicalLine("Scale Inhibitor", 12.7, 150.0);
-mainUmbilical.addChemicalLine("Corrosion Inhibitor", 9.5, 150.0);
-mainUmbilical.addChemicalLine("LDHI", 9.5, 150.0);
-
-// Electrical power
-mainUmbilical.addElectricalCable("Main Power", 3, 6600.0);
-mainUmbilical.addElectricalCable("Auxiliary Power", 3, 690.0);
-
-// Fiber optics
-mainUmbilical.addFiberOptic("Control/Communication", 24);
-mainUmbilical.addFiberOptic("Spare", 12);
-
-// Get summary
-System.out.println("Umbilical: " + mainUmbilical.getName());
-System.out.println("Length: " + mainUmbilical.getLength() / 1000 + " km");
-System.out.println("Elements: " + mainUmbilical.getElementCount());
-```
-
-### Example 2: Chemical Injection Sizing
-
-```java
-// Umbilical for MEG injection system
-Umbilical megUmbilical = new Umbilical("MEG Supply");
-megUmbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
-megUmbilical.setLength(30000.0);
-
-// Main MEG line - sized for injection rate
-double megRate = 8.0;  // m³/hr required injection rate
-double velocity = 2.0;  // m/s target velocity
-
-// Calculate required diameter
-double areaRequired = (megRate / 3600.0) / velocity;  // m²
-double diameterRequired = Math.sqrt(4 * areaRequired / Math.PI) * 1000;  // mm
-
-System.out.println("Required MEG line ID: " + diameterRequired + " mm");
-
-// Add MEG line (use next standard size)
-umbilical.addChemicalLine("MEG", 32.0, 200.0);  // 32mm ID
-
-// Calculate actual pressure drop
-megUmbilical.setMEGInjectionRate(megRate, "m3/hr");
-double actualDeltaP = megUmbilical.calculatePressureDrop("MEG");
-
-System.out.println("MEG pressure drop over " + megUmbilical.getLength()/1000 + " km: " + actualDeltaP + " bar");
-```
-
-### Example 3: Power Transmission Design
-
-```java
-// Long step-out umbilical for subsea booster
-Umbilical powerUmbilical = new Umbilical("Power Umbilical");
-powerUmbilical.setUmbilicalType(Umbilical.UmbilicalType.ELECTRO_HYDRAULIC);
-powerUmbilical.setLength(80000.0);  // 80 km
-powerUmbilical.setWaterDepth(1200.0);
-
-// Power cable for 6 MW booster
-powerUmbilical.addElectricalCable("Main Power", 3, 36000.0);  // 36 kV transmission
-
-// Set load parameters
-powerUmbilical.setPowerLoad(6.0);  // MW
-powerUmbilical.setPowerFactor(0.9);
-
-// Calculate transmission losses
-double voltageDrop = powerUmbilical.calculateVoltageDrop();
-double losses = powerUmbilical.calculatePowerLoss();
-double efficiency = (6.0 - losses) / 6.0 * 100;
-
-System.out.println("Transmission voltage: 36 kV");
-System.out.println("Step-out distance: 80 km");
-System.out.println("Voltage drop: " + String.format("%.1f", voltageDrop) + "%");
-System.out.println("Power loss: " + String.format("%.2f", losses) + " MW");
-System.out.println("Efficiency: " + String.format("%.1f", efficiency) + "%");
-```
-
-### Example 4: Umbilical with Mechanical Design
-
-```java
 import neqsim.process.mechanicaldesign.subsea.UmbilicalMechanicalDesign;
 
-// Create umbilical
-Umbilical umbilical = new Umbilical("Export Umbilical");
-umbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
-umbilical.setLength(40000.0);
-umbilical.setWaterDepth(800.0);
+Umbilical umbilical = new Umbilical("Control umbilical");
+umbilical.setLength(15000.0); // m
+umbilical.setWaterDepth(100.0); // m
 
-// Add elements
-umbilical.addHydraulicLine("LP", 12.7, 345.0);
-umbilical.addHydraulicLine("HP", 9.5, 690.0);
-umbilical.addChemicalLine("MEG", 25.4, 150.0);
-umbilical.addElectricalCable("Power", 3, 6600.0);
-umbilical.addFiberOptic("Control", 24);
+umbilical.addHydraulicLine("LP hydraulic supply", 9.5, 345.0); // ID mm, design pressure bar
+umbilical.addHydraulicLine("HP hydraulic supply", 6.35, 690.0);
+umbilical.addChemicalLine("MEG", 25.4, 345.0);
+umbilical.addElectricalCable("Power", 3, 3300.0, 16.0); // cores, V, conductor mm2
+umbilical.addFiberOptic("Fibre", 12);
 
-// Get mechanical design
+umbilical.setInjectionRate("MEG", 0.5, "m3/hr");
+umbilical.setPowerLoad(0.05); // MW at the subsea end
+
+double megDropBar = umbilical.calculatePressureDrop("MEG");
+double response90 = umbilical.calculateLineResponse("LP hydraulic supply", 0.9).getTimeToFractionS();
+double voltageDropPercent = umbilical.calculateVoltageDrop();
+
 UmbilicalMechanicalDesign design = umbilical.getMechanicalDesign();
-
-// Configure
-design.setArmorType("Double Cross-Wound");
-design.setOuterSheath("HDPE");
-design.setCorrosionProtection("Galvanized armor + cathodic");
-
-// Calculate design
 design.calcDesign();
-
-// Get results
-System.out.println("Outer diameter: " + design.getOuterDiameter() + " mm");
-System.out.println("Dry weight: " + design.getDryWeight() + " kg/m");
-System.out.println("Wet weight: " + design.getWetWeight() + " kg/m");
-System.out.println("MBR: " + design.getMinimumBendRadius() + " m");
-System.out.println("MWS: " + design.getMaxWallTension() + " kN");
-
-// Get JSON report
-String report = design.toJson();
+boolean acceptable = design.isDesignAcceptable();
+String json = design.toJson();
 ```
+
+Element lines get a fluid from their name (water-glycol for hydraulic lines, MEG, methanol, or a
+generic chemical). Use `addChemicalLine(name, id, pressure, UmbilicalFluid)` to set another one, for
+example `UmbilicalFluid.fromNeqSim("Lean MEG", system, 277.15, 200.0)` from a flashed NeqSim fluid.
 
 ---
 
-## Design Standards
+## Physics
 
-### Applicable Standards
+| Topic | Method |
+|-------|--------|
+| Tube wall, internal pressure | `t = P ID / (2 (S + P Y - P))` with `S = 0.6 SMYS`, `Y = 0.4` |
+| Tube wall, external pressure | DNV-ST-F101 collapse `(pc - pel)(pc^2 - pp^2) = pc pel pp f0 D/t`, ovality 0.5 %, safety factor 1.5, empty tube at hydrostatic pressure |
+| Cross-section | Element outer diameters packed with a circle-packing efficiency, inner sheath, helical armour wires (`n = pi D cos(a) / d_w`), outer sheath |
+| Weights | Per element from material density and fluid fill; weight in air (empty and filled) and in seawater (filled minus displaced seawater) |
+| Line friction | Darcy-Weisbach: `64/Re` laminar, Haaland turbulent, linear blend 2300 to 4000 |
+| Hydrostatic head | `rho g h` with the water depth as the elevation difference between topside and seabed |
+| Line response | Distributed resistance-compliance line with `R = 128 mu L / (pi D^4)` and the compliance of fluid and tube wall; time constant `4 R C / pi^2`; the closed-end step response is solved with the exact series; the acoustic transit time `L / c` is the lower bound |
+| Power cable | Exact long-line two-port with `R_ac = R_dc (1 + Ys)` (IEC 60287-1-1), coaxial capacitance, trefoil reactance; gives sending voltage, loss, voltage drop, charging current and no-load rise |
+| Catenary | Free hanging with horizontal tangent at touchdown: `T_top = w (a + h)`, bend radius at touchdown `a = H / w`, suspended length `sqrt(h^2 + 2 a h)` |
+| Armour | Smallest layer count whose capacity (`n A_w sigma cos(alpha)` per layer) covers the amplified top tension including the weight of those layers |
+
+Typical consequences: cold MEG is 40 to 50 mPa s at 4 C, so a chemical line over tens of kilometres
+is laminar and its friction drop scales with `L / D^4`; hydraulic lines over 15 km need minutes, not
+seconds, for the far end to follow a topside pressure step; a long power cable has a charging
+current that can raise the receiving voltage at light load.
+
+---
+
+## Design checks
+
+`UmbilicalMechanicalDesign.getDesignChecks()` returns pass or fail for:
+
+| Check | Meaning |
+|-------|---------|
+| `selfSinking` | Submerged weight is positive |
+| `tubeBurstUtilizationBelow1` | Hoop stress at design pressure within the allowable |
+| `tubeCollapseUtilizationBelow1` | Collapse pressure over the safety factor covers hydrostatic pressure |
+| `armorCapacityCoversDesignTension` | Armour capacity covers the amplified top tension |
+| `touchdownBendRadiusAboveMBR` | Touchdown radius above the minimum bend radius |
+| `installationTensionWithinVesselLimit` | Design tension within `setMaxInstallationTensionKN` |
+| `lineFrictionDropWithinPressureBudget` | Friction drop at design flow below `setMaxFrictionDropFraction` (default 0.5) of the line design pressure |
+
+---
+
+## Results as JSON
+
+`toJson()` contains the sections `configuration`, `elements`, `calculatedResults`, `elementResults`
+(per element geometry, friction drop, response time), `powerTransmission`, `designChecks`,
+`weight`, `costEstimation`, and the data that drawings and charts need: `crossSection`,
+`hydraulicCurves`, `catenaryProfile` and `powerSweep`.
+
+---
+
+## Figures and hand-off
+
+The community skill `neqsim-umbilical-design` (agent `umbilical-design-agent`) turns the JSON into
+the cross-section drawing, the line hydraulics, tension and bend radius, power cable and design
+check charts, an "umbilical on a page", captions, key numbers and a `HANDOFF.md` with the evidence
+status of every input and the open items.
+
+---
+
+## Defaults and limitations
+
+Screening defaults (replace by the vendor data sheet): super duplex tube with SMYS 550 MPa, usage
+factor 0.6, collapse safety factor 1.5; armour wires 4 mm at 15 degrees with 1400 MPa tensile
+strength and 40 % allowable; inner sheath 2 mm, outer sheath 5 mm; touchdown offset half the water
+depth; tension amplification 1.3; conductor 90 C. Setters exist on `Umbilical`
+(`setTubeDesignBasis`, `setArmorWireStrength`, `setArmorWireDiameterMm`, `setTouchdownOffsetM`,
+`setTensionAmplificationFactor`, `setConductorTemperatureC`, ...).
+
+Not included: dynamic riser analysis, fatigue, torsion balance, crush, installation and burial
+design, proximity and armour loss and dielectric loss in the power cable, temperature variation
+along the line. For a free-standing power cable model see `SubseaPowerCable`.
+
+---
+
+## Design standards
 
 | Standard | Title |
 |----------|-------|
-| API RP 17E | Subsea Umbilicals |
-| API Spec 17E | Specification for Subsea Production Control Umbilicals |
-| ISO 13628-5 | Subsea Umbilicals |
-| DNV-ST-F101 | Submarine Pipeline Systems (for steel tubes) |
-
-### Design Parameters
-
-| Parameter | Typical Range | Unit |
-|-----------|--------------|------|
-| Length | 5-150 | km |
-| Water Depth | 100-3000 | m |
-| Outer Diameter | 80-250 | mm |
-| Dry Weight | 15-100 | kg/m |
-| MBR | 2-5 | m |
-| Design Life | 20-30 | years |
-
-### Material Selection
-
-| Component | Material | Application |
-|-----------|----------|-------------|
-| Steel Tubes | Super Duplex 25Cr | Hydraulic/chemical |
-| Thermoplastic Hoses | PA11, PVDF | Legacy systems |
-| Electrical Cables | EPR/XLPE insulation | Power/signal |
-| Fiber Optics | Single/multi-mode | Control/comms |
-| Armor | Galvanized steel | Mechanical protection |
-| Outer Sheath | HDPE, PA11 | Abrasion protection |
+| API Spec 17E / ISO 13628-5 | Subsea umbilicals |
+| API RP 17E | Subsea umbilicals |
+| DNV-ST-F101 | Submarine pipeline systems (collapse of steel tubes) |
+| IEC 60287-1-1 | Electric cables: current rating, skin effect |
 
 ---
 
-## Typical Umbilical Cross-Section
-
-```
-         ┌─────────────────────┐
-         │    Outer Sheath     │
-         │  ┌───────────────┐  │
-         │  │    Armor      │  │
-         │  │  ┌─────────┐  │  │
-         │  │  │ LP Hyd  │  │  │
-         │  │  │  ┌───┐  │  │  │
-         │  │  │  │HP │  │  │  │
-         │  │  │  │Hyd│  │  │  │
-         │  │  │  └───┘  │  │  │
-         │  │  │ MEG  CH │  │  │
-         │  │  │ ┌──┐┌──┐│  │  │
-         │  │  │ │  ││  ││  │  │
-         │  │  │ └──┘└──┘│  │  │
-         │  │  │ Power   │  │  │
-         │  │  │ ┌────┐  │  │  │
-         │  │  │ │Fiber│ │  │  │
-         │  │  │ └────┘  │  │  │
-         │  │  └─────────┘  │  │
-         │  └───────────────┘  │
-         └─────────────────────┘
-```
-
----
-
-## Related Documentation
+## Related documentation
 
 - [Subsea Trees](subsea_trees) - Christmas tree modeling
 - [Subsea Manifolds](subsea_manifolds) - Manifold modeling
 - [Subsea Boosters](subsea_boosters) - Boosting systems
-- PLEM/PLET - Pipeline end structures *(see SURF subsea equipment overview)*
-
----
-
-## API Reference
-
-### Umbilical
-
-```java
-// Constructors
-Umbilical(String name)
-
-// Type configuration
-void setUmbilicalType(UmbilicalType type)
-UmbilicalType getUmbilicalType()
-void setCrossSectionType(CrossSectionType type)
-CrossSectionType getCrossSectionType()
-
-// Physical parameters
-void setLength(double meters)
-double getLength()
-void setWaterDepth(double meters)
-void setDesignLife(int years)
-void setDesignTemperature(double celsius)
-
-// Adding elements
-void addHydraulicLine(String name, double idMm, double pressureBar)
-void addChemicalLine(String name, double idMm, double pressureBar)
-void addElectricalCable(String name, int cores, double voltage)
-void addFiberOptic(String name, int fibers)
-
-// Element management
-int getElementCount()
-List<UmbilicalElement> getElements()
-
-// Flow calculations
-void setMEGInjectionRate(double rate, String unit)
-void setMethanolInjectionRate(double rate, String unit)
-double calculatePressureDrop(String chemicalName)
-
-// Power calculations
-void setPowerTransmissionVoltage(double volts)
-void setPowerLoad(double megawatts)
-void setPowerFactor(double pf)
-double calculateVoltageDrop()
-double calculatePowerLoss()
-
-// Mechanical design
-UmbilicalMechanicalDesign getMechanicalDesign()
-```
-
-### UmbilicalType Enum
-
-```java
-enum UmbilicalType {
-    STEEL_TUBE,
-    THERMOPLASTIC,
-    INTEGRATED_PRODUCTION,
-    ELECTRO_HYDRAULIC,
-    ELECTRIC_ONLY
-}
-```
-
-### CrossSectionType Enum
-
-```java
-enum CrossSectionType {
-    CIRCULAR,
-    FLAT,
-    BUNDLED
-}
-```
-
-### UmbilicalElement Class
-
-```java
-class UmbilicalElement {
-    String getName()
-    String getType()  // hydraulic, chemical, electrical, fiber
-    double getInnerDiameter()
-    double getOuterDiameter()
-    double getDesignPressure()
-    String getMaterial()
-    String getFunction()
-}
-```
+- [SURF design study](../../development/SURF_DESIGN_STUDY) - umbilical in the SURF design workflow

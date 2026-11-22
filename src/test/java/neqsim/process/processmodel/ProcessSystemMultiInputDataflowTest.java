@@ -80,9 +80,9 @@ class ProcessSystemMultiInputDataflowTest {
       mixer.addStream(first);
       mixer.addStream(second);
       Heater firstHeater = new Heater("first heater " + branch, mixer.getOutletStream());
-      firstHeater.setOutTemperature(308.15 + branch);
+      firstHeater.setOutletTemperature(308.15 + branch);
       Heater product = new Heater("product heater " + branch, firstHeater.getOutletStream());
-      product.setOutTemperature(312.15 + branch);
+      product.setOutletTemperature(312.15 + branch);
       process.add(first);
       process.add(second);
       process.add(mixer);

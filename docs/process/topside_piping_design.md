@@ -347,6 +347,10 @@ System.out.println("Lock-in risk: " + lockInRisk);
 
 ## Stress Analysis
 
+The formulas below are single-point screening checks. For a full nozzle-to-nozzle analysis with
+bends, support lift-off, friction and nozzle loads, use
+[PipeStressModel](mechanical_design/pipe_stress_model.md).
+
 ### ASME B31.3 Stress Categories
 
 | Stress Category | Formula | Allowable |
@@ -647,7 +651,7 @@ System.out.println("Acceptable: " + ok);
 
 ```python
 from neqsim.thermo import fluid
-from neqsim import jNeqSim
+from neqsim import jneqsim
 
 # Create fluid
 gas = fluid('srk')
@@ -657,7 +661,7 @@ gas.addComponent('propane', 0.03)
 gas.setMixingRule('classic')
 
 # Create stream
-Stream = jNeqSim.process.equipment.stream.Stream
+Stream = jneqsim.process.equipment.stream.Stream
 feed = Stream("Feed", gas)
 feed.setFlowRate(10000.0, "kg/hr")
 feed.setTemperature(40.0, "C")
@@ -665,7 +669,7 @@ feed.setPressure(50.0, "bara")
 feed.run()
 
 # Create topside piping
-TopsidePiping = jNeqSim.process.equipment.pipeline.TopsidePiping
+TopsidePiping = jneqsim.process.equipment.pipeline.TopsidePiping
 gasHeader = TopsidePiping.createProcessGas("Gas Header", feed)
 gasHeader.setLength(50.0)
 gasHeader.setDiameter(0.2032)
@@ -693,10 +697,10 @@ print(json.dumps(report, indent=2))
 ### Velocity Analysis Script
 
 ```python
-from neqsim import jNeqSim
+from neqsim import jneqsim
 
 # Create calculator directly
-Calculator = jNeqSim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesignCalculator
+Calculator = jneqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesignCalculator
 calc = Calculator()
 
 # Configure

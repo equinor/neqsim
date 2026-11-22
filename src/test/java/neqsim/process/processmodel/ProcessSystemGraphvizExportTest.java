@@ -230,7 +230,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     Splitter gasSplitter = new Splitter("splitter", dewPointScrubber2.getGasOutStream());
     gasSplitter.setSplitNumber(2);
-    gasSplitter.setFlowRates(new double[] { -1.0, 2966.0 }, "kg/hr");
+    gasSplitter.setFlowRates(new double[] {-1.0, 2966.0}, "kg/hr");
     Stream fuelGas = (Stream) gasSplitter.getSplitStream(1);
     fuelGas.setName("fuel gas");
 
@@ -428,7 +428,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     Manifold gasManifold = new Manifold("gas manifold");
     gasManifold.addStream(gasToInjectionManifold);
-    gasManifold.setSplitFactors(new double[] { 0.3, 0.3, 0.4 });
+    gasManifold.setSplitFactors(new double[] {0.3, 0.3, 0.4});
 
     process.add(osebergCFeed);
     process.add(osebergCWaterFeed);
@@ -502,12 +502,12 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     firstStageCompressor.setPolytropicEfficiency(0.7);
     firstStageCompressor.setOutletPressure(25.0, "bara");
 
-    firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(new double[] { 0.0, 0.5, 1.0 },
-        new double[] { 0.0, 0.5, 1.0 }, new double[] { 0.0, 0.5, 1.0 });
+    firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(new double[] {0.0, 0.5, 1.0},
+        new double[] {0.0, 0.5, 1.0}, new double[] {0.0, 0.5, 1.0});
 
     Splitter gasSplitterAntiSurge = new Splitter("1st stage anti surge splitter");
     gasSplitterAntiSurge.setInletStream(firstStageCompressor.getOutletStream());
-    gasSplitterAntiSurge.setFlowRates(new double[] { -1.0, 1.0 }, "kg/hr");
+    gasSplitterAntiSurge.setFlowRates(new double[] {-1.0, 1.0}, "kg/hr");
 
     Calculator antiSurgeCalculator = new Calculator("anti surge calculator_1");
     antiSurgeCalculator.addInputVariable(firstStageCompressor);
@@ -558,7 +558,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     fluid.createDatabase(true);
     fluid.setMixingRule(2);
     fluid.setMolarComposition(
-        new double[] { 0.005, 0.01, 0.85, 0.05, 0.04, 0.015, 0.01, 0.008, 0.007, 0.005, 0.004, 0.011 });
+        new double[] {0.005, 0.01, 0.85, 0.05, 0.04, 0.015, 0.01, 0.008, 0.007, 0.005, 0.004, 0.011});
     return fluid;
   }
 

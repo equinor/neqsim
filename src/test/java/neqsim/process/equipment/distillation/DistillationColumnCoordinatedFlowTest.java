@@ -51,6 +51,27 @@ public class DistillationColumnCoordinatedFlowTest {
     assertNotEquals(initialPumparoundDuty, pumparound.getDuty(), 1.0e-8);
   }
 
+  /** Verify a subset feed with a different component order and a copied recycle remain conservative. */
+  @Test
+  public void reorderedSubsetFeedAndCopiedPumparoundRetainComponentInventory() {
+    Stream primaryFeed = createPrimaryFeed();
+    SystemInterface fluid = new SystemSrkEos(273.15 + 35.0, 10.0);
+    fluid.addComponent("n-butane", 0.40);
+    fluid.addComponent("propane", 0.60);
+    fluid.setMixingRule("classic");
+    Stream sideFeed = new Stream("reordered side feed", fluid);
+    sideFeed.setFlowRate(50.0, "kg/hr");
+    sideFeed.run();
+    DistillationColumn column = createColumn(primaryFeed, sideFeed);
+    DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("copied PA", 3, 5, 0.02, 4.0);
+    column.run();
+    assertAcceptedAndBalanced(column, pumparound, primaryFeed, sideFeed);
+
+    DistillationColumn copy = (DistillationColumn) column.copy();
+    copy.run();
+    assertAcceptedAndBalanced(copy, copy.getPumparounds().get(0), primaryFeed, sideFeed);
+  }
+
   /**
    * Create the C3-C5 main feed.
    *
@@ -99,8 +120,8 @@ public class DistillationColumnCoordinatedFlowTest {
     column.addFeedStream(sideFeed, 5);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.2);
-    column.getCondenser().setOutTemperature(273.15 + 30.0);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getCondenser().setOutletTemperature(273.15 + 30.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
     column.setCondenserRefluxRatio(1.8);
     column.setReboilerVaporBoilupRatio(1.20);

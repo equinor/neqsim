@@ -64,7 +64,7 @@ final class ColumnMeshResidualEvaluator {
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
         double inlet = vaporIn + liquidIn + feedIn;
-        double outlet = vaporOut + liquidOut;
+        double outlet = vaporOut + liquidOut + state.getExternalOutletComponentFlow(tray, comp);
         imbalance += Math.abs(outlet - inlet);
         throughput += Math.abs(inlet) + Math.abs(outlet);
       }
@@ -94,7 +94,7 @@ final class ColumnMeshResidualEvaluator {
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
         double inlet = vaporIn + liquidIn + feedIn;
-        double outlet = vaporOut + liquidOut;
+        double outlet = vaporOut + liquidOut + state.getExternalOutletComponentFlow(tray, comp);
         double scale = Math.max(ColumnMeshState.getMinimumScale(), Math.abs(inlet) + Math.abs(outlet));
         builder.add((outlet - inlet) / scale, ColumnMeshEquationType.MATERIAL, tray, componentNames[comp]);
       }
@@ -176,10 +176,19 @@ final class ColumnMeshResidualEvaluator {
     for (int trayIndex = 0; trayIndex < column.getTrays().size(); trayIndex++) {
       SimpleTray tray = column.getTray(trayIndex);
       try {
-        double targetEnthalpy = finiteOrZero(tray.calcMixStreamEnthalpy());
-        SystemInterface traySystem = tray.getThermoSystem().clone();
-        traySystem.init(3);
-        double actualEnthalpy = finiteOrZero(traySystem.getEnthalpy());
+        double targetEnthalpy;
+        if (tray instanceof Reboiler) {
+          targetEnthalpy = tray.calcMixStreamEnthalpy0() + ((Reboiler) tray).getDuty();
+        } else if (tray instanceof Condenser) {
+          targetEnthalpy = tray.calcMixStreamEnthalpy0() + ((Condenser) tray).getDuty();
+        } else {
+          targetEnthalpy = tray.calcMixStreamEnthalpy();
+        }
+        double actualEnthalpy = tray.getMaterialOutletEnthalpy();
+        if (!Double.isFinite(targetEnthalpy) || !Double.isFinite(actualEnthalpy)) {
+          builder.add(Double.POSITIVE_INFINITY, ColumnMeshEquationType.ENERGY, trayIndex, null);
+          continue;
+        }
         double scale = Math.max(1.0, Math.abs(targetEnthalpy) + Math.abs(actualEnthalpy));
         builder.add((actualEnthalpy - targetEnthalpy) / scale, ColumnMeshEquationType.ENERGY, trayIndex, null);
       } catch (Exception ex) {
@@ -263,24 +272,22 @@ final class ColumnMeshResidualEvaluator {
   private static void addSpecificationResiduals(DistillationColumn column, ResidualBuilder builder) {
     column.updateSpecificationResidualDiagnostics();
     if (column.getTopSpecification() != null) {
-      addFinite(column.getLastTopSpecificationResidual(), builder, "top");
+      addSpecificationResidual(column.getLastTopSpecificationResidual(), builder, "top");
     }
     if (column.getBottomSpecification() != null) {
-      addFinite(column.getLastBottomSpecificationResidual(), builder, "bottom");
+      addSpecificationResidual(column.getLastBottomSpecificationResidual(), builder, "bottom");
     }
   }
 
   /**
-   * Add a specification residual if it is finite.
+   * Retain a specification residual, including non-finite values that must reject convergence.
    *
    * @param value residual value
    * @param builder residual builder
    * @param label residual label
    */
-  private static void addFinite(double value, ResidualBuilder builder, String label) {
-    if (Double.isFinite(value)) {
-      builder.add(value, ColumnMeshEquationType.SPECIFICATION, -1, label);
-    }
+  private static void addSpecificationResidual(double value, ResidualBuilder builder, String label) {
+    builder.add(value, ColumnMeshEquationType.SPECIFICATION, -1, label);
   }
 
   /**
@@ -363,16 +370,6 @@ final class ColumnMeshResidualEvaluator {
     } catch (Exception ex) {
       return 0.0;
     }
-  }
-
-  /**
-   * Convert a non-finite diagnostic value to zero.
-   *
-   * @param value value to sanitize
-   * @return value when finite, otherwise zero
-   */
-  private static double finiteOrZero(double value) {
-    return Double.isFinite(value) ? value : 0.0;
   }
 
   /** Builder for residual vectors and metadata. */

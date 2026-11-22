@@ -1,0 +1,53 @@
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.UUID;
+import neqsim.thermo.system.*;
+import neqsim.thermo.phase.*;
+import neqsim.thermodynamicoperations.*;
+import neqsim.thermodynamicoperations.flashops.*;
+import neqsim.process.safety.release.*;
+public final class VuEvidence {
+ public static void main(String[] args) throws Exception {
+  Class<?> test=Class.forName("neqsim.thermodynamicoperations.flashops.VUCaloricStateQualificationTest");
+  Method factory=test.getDeclaredMethod("fluid",boolean.class,int.class,String.class,double.class,double.class,double.class);factory.setAccessible(true);
+  Method diff=test.getDeclaredMethod("differences",boolean.class,int.class,String.class,double.class,double.class,double.class,double.class,double.class);diff.setAccessible(true);
+  try(PrintWriter out=new PrintWriter(args[0]+"/jacobian.csv")){
+   out.println("eos,rule,state,moles,T_K,P_bar,entry,analytical,coarse,fine,mixed_relative_error,gibbs_identity_mol,relative_pressure_residual");
+   for(boolean pr:new boolean[]{false,true})for(int rule:new int[]{2,4})for(String state:new String[]{"gas","oil","aqueous"})for(double amount:new double[]{1,1000}){
+    double t=state.equals("gas")?350:state.equals("oil")?300:330,p=state.equals("gas")?40:state.equals("oil")?20:50;
+    SystemInterface f=(SystemInterface)factory.invoke(null,pr,rule,state,t,p,amount);
+    double vt=f.getdVdTpn(),vp=f.getdVdPtn();double[] a={vt,vp,f.getCp()-p*vt,-t*vt-p*vp};
+    double[] c=(double[])diff.invoke(null,pr,rule,state,t,p,amount,.005,.002),b=(double[])diff.invoke(null,pr,rule,state,t,p,amount,.0025,.001);
+    PhaseInterface phase=f.getPhase(0);double g=-phase.getGresTP()/(neqsim.thermo.ThermodynamicConstantsInterface.R*t);
+    for(int i=0;i<f.getNumberOfComponents();i++)g+=phase.getComponent(i).getNumberOfMolesInPhase()*phase.getComponent(i).getLogFugacityCoefficient();
+    double pe=Math.abs(((PhaseEos)phase).calcPressure()-p)/p;
+    for(int i=0;i<4;i++)out.println((pr?"PR":"SRK")+","+rule+","+state+","+amount+","+t+","+p+","+i+","+a[i]+","+c[i]+","+b[i]+","+Math.abs(a[i]-b[i])/Math.max(Math.abs(a[i]),amount*1e-7)+","+g+","+pe);
+   }
+  }
+  try(PrintWriter out=new PrintWriter(args[0]+"/returned-states.csv")){
+   out.println("eos,rule,state,history,refinements,iterations,T_K,P_bar,relative_volume_error,relative_energy_error,relative_returned_enthalpy_drift");
+   for(boolean pr:new boolean[]{false,true})for(int rule:new int[]{2,4})for(String state:new String[]{"gas","oil","aqueous"}){
+    double t=state.equals("gas")?350:state.equals("oil")?300:330,p=state.equals("gas")?40:state.equals("oil")?20:50;
+    SystemInterface f=(SystemInterface)factory.invoke(null,pr,rule,state,t+2,p*1.02,1);
+    int history=0;
+    for(double shift:new double[]{0,0,.2,0}){
+     SystemInterface ref=(SystemInterface)factory.invoke(null,pr,rule,state,t+shift,p,1);
+     double v=ref.getVolume(),u=ref.getInternalEnergy(),scale=Math.max(1,Math.abs(u)),ve=0,ue=0,hd=0;int it=0,k=0;
+     for(k=1;k<=32;k++){
+      ThermodynamicOperations op=new ThermodynamicOperations(f);op.VUflash(v,u);it+=((OptimizedVUflash)op.getOperation()).getLastIterationCount();double h=f.getEnthalpy();f.init(2);hd=Math.max(hd,Math.abs(f.getEnthalpy()-h)/scale);ve=Math.abs(f.getVolume()/v-1);ue=Math.abs(f.getInternalEnergy()-u)/scale;if(ve<=1e-11&&ue<=1e-11)break;
+     }
+     out.println((pr?"PR":"SRK")+","+rule+","+state+","+(history++)+","+k+","+it+","+f.getTemperature()+","+f.getPressure()+","+ve+","+ue+","+hd);
+    }
+   }
+  }
+  SystemInterface f=new SystemSrkEos(300,20);f.addComponent("propane",.8);f.addComponent("n-butane",.2);f.setMixingRule("classic");new ThermodynamicOperations(f).TPflash();f.init(3);
+  PhaseType type=f.hasPhaseType(PhaseType.OIL)?PhaseType.OIL:PhaseType.LIQUID;
+  ReleaseInventory vessel=new ReleaseInventory("liquid",f,.02,.001,.62,3e5,new HomogeneousEquilibriumReleaseModel(),.01,type);
+  vessel.runTransient(.05,UUID.randomUUID());
+  ReleaseInventory.Balance b=vessel.getBalance();
+  try(PrintWriter out=new PrintWriter(args[0]+"/inventory-candidate.csv")){
+   out.println("T_K,P_bar,V_m3,U_J,released_mass_kg,released_enthalpy_J,initial_U_J,energy_balance_J,VU_solves");
+   SystemInterface end=vessel.getFluid();out.println(end.getTemperature()+","+end.getPressure()+","+end.getVolume("m3")+","+b.getInternalEnergyJ()+","+b.getReleasedMassKg()+","+b.getReleasedEnergyJ()+","+b.getInitialEnergyJ()+","+(b.getInternalEnergyJ()+b.getReleasedEnergyJ()-b.getInitialEnergyJ())+","+vessel.getLastVolumeEnergySolves());
+  }
+ }
+}

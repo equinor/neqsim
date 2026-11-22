@@ -3,7 +3,7 @@
 > **Mandatory artifact for Standard and Comprehensive tasks.**
 > Quick tasks may skip this and write a one-paragraph summary in `notes.md` instead.
 >
-> Produced by `@capability.scout` (or by the solver agent invoking the scout
+> Produced by `@capability-scout` (or by the solver agent invoking the scout
 > step) BEFORE writing any notebook code. The point is to discover gaps while
 > they are still cheap to fix.
 
@@ -47,12 +47,12 @@ or mark it as a gap.
 | 4 |  | `neqsim.process.util.fielddevelopment.DCFCalculator` | ✅ Covered |
 
 **Search method used:** `grep_search` on `src/main/java/neqsim/...`,
-`@capability.scout` agent, `neqsim-capability-map` skill.
+`@capability-scout` agent, `neqsim-capability-map` skill.
 
 ## 4. Skills to Load
 
 List the skills the solver should load for this task (run
-`python devtools/skill_search.py "<task title>"` to get top-k recommendations,
+`uv run --project devtools --locked devtools/skill_search.py "<task title>"` to get top-k recommendations,
 then prune).
 
 - `neqsim-...`
@@ -60,7 +60,7 @@ then prune).
 
 ## 4b. Agents to Delegate To
 
-Run `python devtools/agent_search.py "<task title>" --top 8` to rank the best
+Run `uv run --project devtools --locked devtools/agent_search.py "<task title>" --top 8` to rank the best
 specialist agents across all repos (neqsim + community + enterprise), then
 prune. Record the chosen agents and *why*. The skills each agent loads are shown
 in the search output — prefer delegating to an agent over re-loading its skills
@@ -72,7 +72,7 @@ manually, so authentication/governance and its internal workflow are handled.
 | 2 |  |  |  |  |
 | 3 |  |  |  |  |
 
-> Store the raw ranking: `python devtools/agent_search.py "<task>" --json --out
+> Store the raw ranking: `uv run --project devtools --locked devtools/agent_search.py "<task>" --json --out
 > step1_scope_and_research/agent_plan.json` — this file is part of the audit
 > trail and feeds `results.json` `agent_workflow_plan`.
 
@@ -82,7 +82,7 @@ Decide how the selected agents/skills are composed. Pick ONE:
 
 - **Single agent** — one specialist covers the whole task.
 - **Composition pattern** — a known 2–3 agent sequence from `router.agent.md`
-  (e.g. `@process.model` → `@mechanical.design`). List the stages.
+  (e.g. `@process-model` → `@mechanical-design`). List the stages.
 - **Declarative workflow** — for ≥3 disciplines or repeatable programs, use MCP
   `composeWorkflow` / `composeMultiServerWorkflow`, or an `engineering-harness`
   study. Note the workflow name/id.
@@ -112,7 +112,7 @@ For each ❌ Gap in section 3, decide one of:
 - **Workaround in notebook** — implement in Python, document the limitation.
 - **NeqSim Improvement Proposal (NIP)** — specify the new Java class and tests
   in `neqsim_improvements.md`. Triggered automatically into a GitHub issue
-  when the PR merges (see `.github/workflows/task_nip_issues.yml`).
+  when the PR merges (see `.github/workflows/ai-auto-open-nip-issues.yml`).
 
 | # | Gap | Decision | Owner | Effort |
 |---|---|---|---|---|

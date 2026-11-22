@@ -213,7 +213,7 @@ class IEC81346Test {
     process.add(compressor);
 
     Cooler cooler = new Cooler("Aftercooler", compressor.getOutletStream());
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     process.add(cooler);
 
     ThrottlingValve valve = new ThrottlingValve("LP Valve", separator.getLiquidOutStream());
@@ -365,7 +365,7 @@ class IEC81346Test {
     comp1.setOutletPressure(100.0);
     compression.add(comp1);
     Cooler cooler = new Cooler("Intercooler", comp1.getOutletStream());
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     compression.add(cooler);
     Compressor comp2 = new Compressor("2nd Stage", cooler.getOutletStream());
     comp2.setOutletPressure(200.0);
@@ -588,7 +588,7 @@ class IEC81346Test {
     process.add(sep1);
 
     Cooler cool1 = new Cooler("Cooler 1", sep1.getGasOutStream());
-    cool1.setOutTemperature(273.15 + 20.0);
+    cool1.setOutletTemperature(273.15 + 20.0);
     process.add(cool1);
 
     Separator sep2 = new Separator("Sep 2", cool1.getOutletStream());

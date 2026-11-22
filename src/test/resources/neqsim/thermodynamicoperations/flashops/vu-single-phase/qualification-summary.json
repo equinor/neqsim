@@ -1,0 +1,15 @@
+{
+  "base_head": "29d8d307cef748f186150206b832b27a14b7e58e",
+  "selected_production_change": "caloric initialization/reuse only; no coupled Newton step",
+  "raw_returned_states": 48,
+  "jacobian_entries": 96,
+  "max_jacobian_mixed_error": 1.689274205542906e-07,
+  "maxima": {
+    "relative_returned_H_drift": 0.0,
+    "relative_returned_U_drift": 0.0,
+    "relative_independent_H_error": 0.0,
+    "relative_independent_U_error": 0.0,
+    "relative_volume_error": 5.437680675735024e-07,
+    "relative_enthalpy_target_error": 1.4907686608981376e-06
+  }
+}

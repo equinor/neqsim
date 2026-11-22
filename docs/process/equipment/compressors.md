@@ -65,6 +65,15 @@ System.out.println("Outlet temperature: " + outletT + " °C");
 
 ## Calculation Methods
 
+For single-phase inlets, `setUseGERG2008(true)`, `setUseLeachman(true)` or
+`setUseVega(true)` selects the matching PS solver for the model's entropy
+reference. Isentropic, polytropic and specified-outlet-temperature calculations
+use that solver directly. Entropy from one property model must not be passed to
+the standard EOS PS solver: the reference values can differ substantially.
+Standard EOS PS flashes enforce the
+[entropy convergence contract](../../thermodynamicoperations/README.md#ps-flash-convergence)
+and report non-convergence instead of silently returning an unconverged state.
+
 ### Isentropic Compression
 
 ```java
@@ -80,6 +89,46 @@ double isentropicPower = compressor.getPower("kW");
 
 More accurate for real gas behavior.
 
+`setPolytropicMethod(...)` selects the head basis for both pressure-specified and
+chart-based polytropic calculations. The default is `schultz`; `detailed` uses
+the configured number of pressure steps. In chart mode, NeqSim solves the outlet
+pressure at which the selected method reproduces the chart head and efficiency.
+The pressure solve uses bracketed interpolation with periodic bisection, retaining
+the same head-residual criterion while reducing repeated thermodynamic flashes.
+During Schultz speed solving, the target-pressure isentropic state is evaluated
+once and reused as efficiency changes. During the forward replay, NeqSim uses
+the requested pressure directly if the selected speed's chart head matches the
+Schultz head within the pressure inversion's head tolerance. The replay still
+flashes the outlet at the chart duty. If the head check fails, NeqSim solves for
+the actual fixed-speed discharge pressure and reports the pressure residual.
+Finite pressure rises below one microbar
+remain part of the polytropic forward calculation, allowing small nonzero shaft
+duties to be inverted without a zero-head interval. For
+$0 < \Delta P/P_\mathrm{in} \leq 10^{-7}\eta_p$, the differential limit
+$H_p=\Delta P/\rho_\mathrm{in}$, with $\Delta P$ in Pa and selected-model inlet density in kg/m³,
+avoids subtracting nearly equal isentropic enthalpies. A local volume-derivative
+estimate must also place its first-order
+head error below $10^{-9}$ kJ/kg. The differential temperature is only an initial
+guess for the selected model's PH flash, which retains the outlet energy and
+phase-equilibrium calculation. On the EOS route, a differential step additionally
+resolves the enthalpy increment to a duty-relative tolerance with a floating-point
+roundoff floor. This prevents the much larger total-enthalpy reference from hiding
+a sub-watt energy-balance error. Equilibrated temperature corrections include
+phase redistribution; they do not replace the calculated duty with its setpoint.
+Failure to resolve that energy balance raises an exception. Ordinary compression
+steps and the GERG/Leachman/Vega single-phase PH routes retain their existing criteria.
+An exactly unchanged pressure returns zero duty
+and clears the stored head, exponent and compression-ratio values.
+The final power satisfies $W=\dot{m}H_p/\eta_p$, where $W$ is power in W,
+$\dot{m}$ is mass flow in kg/s, $H_p$ is head in J/kg and $\eta_p$ is efficiency.
+
+**Compatibility:** chart-based polytropic results now use the selected method.
+Existing models can consequently change outlet pressure, solved speed, discharge
+temperature and power. Select `ideal_inlet_properties` to retain the historical
+chart relation with constant inlet $Z$ and heat-capacity ratio. This explicit
+method also works without a chart; its caloric outlet still uses the selected
+fluid property model. Recheck tuned chart factors against the vendor's head basis.
+
 ```java
 compressor.setPolytropicEfficiency(0.80);  // 80%
 compressor.setUsePolytropicCalc(true);
@@ -89,7 +138,129 @@ double polytropicHead = compressor.getPolytropicHead("kJ/kg");
 double polytropicExponent = compressor.getPolytropicExponent();
 ```
 
+### Efficiency from Measured Discharge Temperature
+
+`solveEfficiency(targetTemperatureK)` fits the efficiency selected by
+`setUsePolytropicCalc(...)` while keeping the inlet and outlet pressure fixed.
+To fit an efficiency after a chart calculation, disable the chart with
+`getCompressorChart().setUseCompressorChart(false)` and disable speed solving with
+`setSolveSpeed(false)`. The same compressor then uses the selected efficiency at
+its outlet pressure; its previously calculated chart duty does not fix the power
+of later chart-free runs. An explicit `setPower(...)` or connected shaft-power
+specification still takes precedence over efficiency in a chart-free run.
+
+<!-- compressor-guide-example: chart-to-efficiency -->
+{% raw %}
+```java
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+/** Demonstrates a chart run followed by a chart-free efficiency fit. */
+public final class CompressorChartEfficiencyExample {
+  private static final Logger logger =
+      LogManager.getLogger(CompressorChartEfficiencyExample.class);
+
+  private CompressorChartEfficiencyExample() {}
+
+  /**
+   * Runs the complete compressor chart-to-efficiency workflow.
+   *
+   * @param args command-line arguments; not used
+   */
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(313.15, 40.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("nitrogen", 0.01);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("compressor feed", fluid);
+    feed.setFlowRate(2.0e6, "Sm3/day");
+    feed.run();
+
+    Compressor compressor = new Compressor("chart compressor", feed);
+    compressor.setUsePolytropicCalc(true);
+    compressor.setPolytropicMethod("schultz");
+    compressor.setCompressorChartType("interpolate and extrapolate");
+    compressor.getCompressorChart().setCurves(
+        new double[0],
+        new double[] {8000.0, 10000.0},
+        new double[][] {{1500.0, 2000.0, 2500.0}, {1875.0, 2500.0, 3125.0}},
+        new double[][] {{110.0, 100.0, 85.0}, {171.9, 156.3, 132.8}},
+        new double[][] {{78.0, 80.0, 77.0}, {78.0, 80.0, 77.0}});
+    compressor.getCompressorChart().setHeadUnit("kJ/kg");
+    compressor.setSpeed(9000.0);
+    compressor.setOutletPressure(100.0, "bara");
+    compressor.setSolveSpeed(true);
+    compressor.run();
+
+    double chartEfficiency = compressor.getPolytropicEfficiency();
+    double targetTemperatureK = compressor.getOutletStream().getTemperature() + 3.0;
+
+    compressor.getCompressorChart().setUseCompressorChart(false);
+    compressor.setSolveSpeed(false);
+    double fittedEfficiency = compressor.solveEfficiency(targetTemperatureK);
+
+    if (!Double.isFinite(fittedEfficiency)
+        || fittedEfficiency <= 0.0
+        || fittedEfficiency >= chartEfficiency) {
+      throw new IllegalStateException("Expected a lower finite fitted efficiency");
+    }
+    if (Math.abs(compressor.getOutletStream().getTemperature() - targetTemperatureK)
+        > 0.01) {
+      throw new IllegalStateException("Efficiency solve missed the temperature target");
+    }
+
+    compressor.run();
+    if (Math.abs(compressor.getOutletStream().getTemperature() - targetTemperatureK)
+        > 0.01) {
+      throw new IllegalStateException("Chart-free rerun did not preserve the fit");
+    }
+
+    logger.info(
+        "Fitted polytropic efficiency {} at outlet temperature {} K",
+        fittedEfficiency,
+        compressor.getOutletStream().getTemperature());
+  }
+}
+```
+{% endraw %}
+
+It uses a safeguarded secant step and bisects when a trial leaves the feasible
+efficiency interval. If that sign bracket stalls on a phase-boundary temperature
+jump, the solve continues with a short local secant around the closest sample and,
+if needed, repeats the bracketed secant from an interior efficiency. A successful
+solve matches the discharge temperature within
+`setEfficiencySolveTolerance(...)` (default 0.01 K), including targets far from the
+initial efficiency. A target already within tolerance is accepted immediately.
+
+The fitted efficiency and calculated outlet remain available for later `run()`
+calls. The method preserves whether temperature-specified mode was enabled;
+on success it records the supplied target for that mode. Invalid temperatures or
+tolerances raise `IllegalArgumentException`. A non-finite calculation or failure
+to reach the target raises `IllegalStateException` instead of returning an
+unconverged efficiency. In particular, a discharge temperature below that
+attainable at unity efficiency cannot be fitted at fixed pressure.
+
+For polytropic calculations without a chart, `setOutTemperature(...)` uses this
+same inverse calculation and selected method. It no longer estimates efficiency
+from a separate pressure-density logarithmic fit. A temperature specification
+combined with an active chart retains its existing separate behavior.
+
+Treat a fitted value as an effective efficiency when composition uncertainty or
+anti-surge recycle heating is included in the measurement. Check the resulting
+power against an independent measurement before using it for calibration.
+
 ### Power Specified
+
+With polytropic calculation and outlet-pressure solving enabled, the specified
+power is converted to head and inverted using the selected polytropic method.
+This also changes historical outlet pressures that used the inlet-property
+formula; `ideal_inlet_properties` retains that formula.
 
 ```java
 compressor.setPower(5000.0, "kW");  // Specify power
@@ -139,6 +310,22 @@ compressor.setSpeed(10000);  // Operating speed
 ```
 
 ### Operating Point
+
+For fixed-speed map calculations, `run()` rejects nonfinite or negative head and
+nonfinite efficiencies outside `(0, 100]` percent before computing discharge
+pressure or requesting a PH flash. The exception includes the compressor name,
+actual inlet flow, speed, head, and efficiency. Check the selected map and its
+flow/speed range when this occurs. A polynomial extrapolation can produce such
+invalid values even when all tabulated points are physical. The public efficiency
+setters retain their configuration-clamping behavior; they do not make an invalid
+map operating point valid. The failure type is
+`Compressor.ChartOperatingPointException`, a subtype of `IllegalArgumentException`.
+`ProductionOptimizer` records this specific failure as the hard
+`compressorChartOperatingPoint` constraint and skips downstream objectives for
+that trial. Unrelated calculation exceptions still propagate. The speed solver already excludes these map values
+when searching for a feasible operating point.
+For `CompressorShaft.solveSpeed(...)`, choose trial bounds at which every body
+has physical map values; invalid bound evaluations propagate this diagnostic.
 
 ```java
 compressor.setSpeed(10000);  // RPM
@@ -952,3 +1139,58 @@ print(f"Mechanical efficiency: {comp.getMechanicalEfficiency()*100:.1f}%")
 - [Process Package](../) - Package overview
 - [Expanders](expanders.md) - Expansion equipment
 - [Pumps](pumps.md) - Liquid compression
+
+## Algebraic minimum-flow spill
+
+`MinimumFlowSpill` is a steady-state assembly for a prescribed minimum compressor
+suction flow. It avoids a numerical `Recycle` loop when the return is assumed to
+have the feed composition and is cooled back to feed suction temperature and pressure.
+The gross suction is the larger of the minimum flow and net feed; the external
+forward discharge keeps the net feed flow. Internal spill is not an external outlet.
+
+Configure the internal compressor through `getCompressor()`. Add the assembly to
+the process once; adding its internal compressor separately would execute it twice.
+Capacity constraints delegate to that compressor and therefore use gross suction.
+ProcessSystem power includes the gross compression work and cooler duty includes
+the ideal spill heat rejection with the usual negative cooling sign.
+
+```java
+SystemSrkEos fluid = new SystemSrkEos(303.15, 10.0);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.1);
+fluid.setMixingRule("classic");
+Stream feed = new Stream("feed", fluid);
+feed.setFlowRate(0.2, "kg/sec");
+feed.run();
+MinimumFlowSpill spill = new MinimumFlowSpill("LP compressor", feed);
+spill.setMinimumInletFlow(10.0, "kg/sec");
+spill.getCompressor().setOutletPressure(30.0);
+spill.getCompressor().setIsentropicEfficiency(0.75);
+ProcessSystem process = new ProcessSystem("compression");
+process.add(feed);
+process.add(spill);
+boolean converged = process.runUntilConverged(3);
+```
+
+Imports are `neqsim.thermo.system.SystemSrkEos`,
+`neqsim.process.equipment.stream.Stream`,
+`neqsim.process.equipment.compressor.MinimumFlowSpill`, and
+`neqsim.process.processmodel.ProcessSystem`. This example is executed by
+`MinimumFlowSpillTest.spillClosesMassAndEnergyWithoutRecycle`.
+It produces 10 kg/s gross suction, 9.8 kg/s internal spill and 0.2 kg/s forward flow.
+
+| API | Basis |
+| --- | --- |
+| `setMinimumInletFlow(value, unit)` | Imposed gross suction minimum; finite and non-negative |
+| `getNetFlow(unit)` | Net feed at suction conditions |
+| `getSpillFlow(unit)` | Circulation at suction conditions, including actual-volume units |
+| `getOutletStream()` | Net discharge at compressor outlet conditions |
+| `getSpillStream()` | Internal spill at discharge conditions, for inspection |
+| `getPower(unit)` | Gross compressor power |
+| `getSpillCoolingDuty(unit)` | Heat rejected to restore spill to suction state; W, kW or MW |
+
+This fixed minimum is not a surge curve or a dynamic protection system. The
+internal compressor's `AntiSurge` flow modification must be disabled. Use an
+explicit recycle valve and cooler when condensation, separation, mixing
+temperature, valve capacity or dynamic response must be solved. No asset data
+or vendor qualification is implied by the synthetic example.

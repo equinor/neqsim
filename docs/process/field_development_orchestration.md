@@ -1,578 +1,330 @@
 ---
 title: Field Development Design Orchestration
-description: The `FieldDevelopmentDesignOrchestrator` provides a unified workflow for coordinating process simulation, mechanical design, and design validation throughout a field development project lifecycle. It ...
+description: Coordinate a base-case process simulation, mechanical design, TORG application, and reporting; explicitly run changed operating conditions for each design case.
 ---
 
 # Field Development Design Orchestration
 
 ## Overview
 
-The `FieldDevelopmentDesignOrchestrator` provides a unified workflow for coordinating process simulation, mechanical design, and design validation throughout a field development project lifecycle. It integrates TORG requirements, design standards, and design cases into a structured workflow.
+`FieldDevelopmentDesignOrchestrator` coordinates a process simulation, TORG application,
+mechanical design, validation messages, and a text report. It lives in
+`neqsim.process.mechanicaldesign`, together with `DesignPhase`, `DesignCase`, and
+`DesignValidationResult`.
+
+**Current scope:** one workflow call runs the supplied process once. Adding multiple design
+cases creates result labels containing the same base-case design totals; it does not change
+flow, composition, pressure, or temperature and simulate each scenario. The complete example
+below explicitly updates throughput and runs a separate workflow for each case.
+
+`MechanicalDesignGuideDocumentationTest` compiles and runs that example, including mass-balance,
+finite-result, and compressor-power trend checks. It is a synthetic API demonstration, not a
+qualified field design or independent validation of equipment correlations.
 
 ## Orchestrator Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                    FieldDevelopmentDesignOrchestrator                         │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                               │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌────────────┐ │
-│  │ Design Phase │───▶│ Design Cases │───▶│    TORG      │───▶│  Workflow  │ │
-│  │  (Lifecycle) │    │ (Scenarios)  │    │ (Standards)  │    │  Execute   │ │
-│  └──────────────┘    └──────────────┘    └──────────────┘    └────────────┘ │
-│         │                   │                   │                   │        │
-│         ▼                   ▼                   ▼                   ▼        │
-│  ┌──────────────────────────────────────────────────────────────────────────┐│
-│  │                         Workflow Steps                                    ││
-│  │  1. Initialize    2. Run Process   3. Apply   4. Mechanical  5. Validate ││
-│  │     Environment      Simulation       TORG       Design         Results  ││
-│  └──────────────────────────────────────────────────────────────────────────┘│
-│         │                                                           │        │
-│         ▼                                                           ▼        │
-│  ┌──────────────┐                                          ┌────────────────┐│
-│  │ Design Case  │                                          │  Validation    ││
-│  │ Results      │                                          │  Results       ││
-│  └──────────────┘                                          └────────────────┘│
-│                                                                               │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+| Object | Role |
+|--------|------|
+| `ProcessSystem` | User-defined fluid, feeds, equipment, and operating conditions |
+| `DesignPhase` | Reporting metadata and validation requirements |
+| `DesignCase` | Scenario label and indicative load factor |
+| `TorgManager` | Active requirements and standards application |
+| `SystemMechanicalDesign` | Per-equipment calculations and aggregate results |
+| `DesignValidationResult` | Messages, metrics, and severity-based status |
 
 ## Design Phases
 
-The `DesignPhase` enum represents project lifecycle stages with associated accuracy requirements:
+The table reflects the current enum values. Accuracy ranges are planning metadata, not measured
+error bounds guaranteed by NeqSim.
 
-| Phase | Description | Accuracy Range | Requires Full Design |
-|-------|-------------|----------------|---------------------|
-| `SCREENING` | Early opportunity screening | ±40-50% | No |
-| `CONCEPT_SELECT` | Concept selection study | ±30% | No |
-| `PRE_FEED` | Pre-FEED study | ±25% | No |
-| `FEED` | Front-End Engineering Design | ±15-20% | Yes |
-| `DETAIL_DESIGN` | Detailed engineering | ±10% | Yes |
-| `AS_BUILT` | As-built verification | ±5% | Yes |
+| Phase | `getAccuracyRange()` | Detailed compliance flag | Full mechanical-design flag |
+|-------|----------------------|--------------------------|-----------------------------|
+| `SCREENING` | ±40-50% | No | No |
+| `CONCEPT_SELECT` | ±25-35% | No | No |
+| `PRE_FEED` | ±20-30% | No | No |
+| `FEED` | ±15-20% | Yes | Yes |
+| `DETAIL_DESIGN` | ±10-15% | Yes | Yes |
+| `AS_BUILT` | ±5% | Yes | No |
 
 ### Using Design Phases
 
-```java
-import neqsim.process.mechanicaldesign.designstandards.DesignPhase;
-
-// Get phase properties
-DesignPhase phase = DesignPhase.FEED;
-
-String accuracy = phase.getAccuracyRange();           // "±15-20%"
-boolean compliance = phase.requiresDetailedCompliance(); // true
-boolean fullDesign = phase.requiresFullMechanicalDesign(); // true
-
-// Phase comparisons
-boolean isLate = phase.isLaterThan(DesignPhase.CONCEPT_SELECT); // true
-boolean isEarly = phase.isEarlierThan(DesignPhase.DETAIL_DESIGN); // true
-```
+Use `setDesignPhase(...)` on the orchestrator. `DesignPhase` exposes
+`getAccuracyRange()`, `requiresDetailedCompliance()`, and `requiresFullMechanicalDesign()`.
+There are no `isLaterThan` or `isEarlierThan` methods. The workflow still calls system mechanical
+design in every phase; these flags control validation, not selection of a different solver.
 
 ## Design Cases
 
-The `DesignCase` enum defines operating scenarios for equipment sizing:
+These are the enum's current indicative values. Replace them with project operating cases
+where known; a scalar throughput change does not model startup, shutdown, or relief physics.
 
-| Case | Load Factor | Sizing Critical | Relief Required |
-|------|-------------|-----------------|-----------------|
-| `NORMAL` | 1.0 | Yes | No |
-| `MAXIMUM` | 1.1 | Yes | Yes |
-| `MINIMUM` | 0.3 | No (turndown) | No |
-| `STARTUP` | 0.1 | No | No |
-| `SHUTDOWN` | 0.1 | No | No |
-| `UPSET` | 1.2 | Yes | Yes |
-| `EMERGENCY` | 1.0 | No | Yes |
-| `WINTER` | 1.0 | Yes | No |
-| `SUMMER` | 1.0 | Yes | No |
-| `EARLY_LIFE` | 1.0 | Yes | No |
-| `LATE_LIFE` | 0.8 | Yes | No |
+| Case | Typical load factor | `isSizingCritical()` | `requiresReliefSizing()` |
+|------|---------------------|----------------------|-------------------------|
+| `NORMAL` | 1.0 | No | No |
+| `MAXIMUM` | 1.15 | Yes | No |
+| `MINIMUM` | 0.4 | No | No |
+| `STARTUP` | 0.0 | No | No |
+| `SHUTDOWN` | 0.0 | No | No |
+| `UPSET` | 1.25 | Yes | Yes |
+| `EMERGENCY` | 1.5 | No | Yes |
+| `WINTER` | 1.0 | No | No |
+| `SUMMER` | 1.0 | No | No |
+| `EARLY_LIFE` | 1.2 | Yes | No |
+| `LATE_LIFE` | 0.6 | No | No |
 
 ### Using Design Cases
 
-```java
-import neqsim.process.mechanicaldesign.designstandards.DesignCase;
-
-// Get case properties
-DesignCase designCase = DesignCase.MAXIMUM;
-
-double loadFactor = designCase.getTypicalLoadFactor();  // 1.1
-boolean sizing = designCase.isSizingCritical();         // true
-boolean turndown = designCase.isTurndownCase();         // false
-boolean relief = designCase.requiresReliefSizing();     // true
-
-// Get relevant cases for different purposes
-List<DesignCase> sizingCases = DesignCase.getSizingCriticalCases();
-List<DesignCase> reliefCases = DesignCase.getReliefSizingCases();
-List<DesignCase> turndownCases = DesignCase.getTurndownCases();
-```
+Read the factor with `getTypicalLoadFactor()`. `isTurndownCase()` is true for `MINIMUM` and
+`LATE_LIFE`. To select sizing or relief cases, iterate over `DesignCase.values()` and apply the
+corresponding predicate; static methods such as `getSizingCriticalCases()` do not exist.
 
 ## Complete Workflow Example
 
 ### Step 1: Create Orchestrator
 
-```java
-import neqsim.process.mechanicaldesign.designstandards.FieldDevelopmentDesignOrchestrator;
-import neqsim.process.mechanicaldesign.designstandards.DesignPhase;
-import neqsim.process.mechanicaldesign.designstandards.DesignCase;
-import neqsim.process.processmodel.ProcessSystem;
-
-// Build process system
-ProcessSystem process = new ProcessSystem();
-Stream feed = new Stream("Feed", fluid);
-feed.setFlowRate(100.0, "kg/hr");
-process.add(feed);
-
-Separator separator = new Separator("HP Separator", feed);
-process.add(separator);
-
-Compressor compressor = new Compressor("Export Compressor", separator.getGasOutStream());
-compressor.setOutletPressure(80.0, "bara");
-process.add(compressor);
-
-// Create orchestrator
-FieldDevelopmentDesignOrchestrator orchestrator = 
-    new FieldDevelopmentDesignOrchestrator(process);
-```
+The constructor requires both `ProcessSystem` and project ID:
+`new FieldDevelopmentDesignOrchestrator(process, "DOCS-FIELD")`.
+Define the fluid, feed rate, and all equipment before creating it; see the complete class below.
+The example treats the feed as an external boundary: run `feed.run()` explicitly, and include
+only the separator and compressor in the orchestrated system. The current FEED compliance
+check otherwise attempts to require design standards on the plain feed stream, whose base
+mechanical-design accessor returns a new placeholder object on each call.
 
 ### Step 2: Configure Design Phase and Cases
 
-```java
-// Set design phase
-orchestrator.setDesignPhase(DesignPhase.FEED);
-
-// Add design cases to evaluate
-orchestrator.addDesignCase(DesignCase.NORMAL);
-orchestrator.addDesignCase(DesignCase.MAXIMUM);
-orchestrator.addDesignCase(DesignCase.MINIMUM);
-orchestrator.addDesignCase(DesignCase.UPSET);
-```
+The constructor initially selects `NORMAL` and `MAXIMUM`. Replace the list using
+`setDesignCases(...)`; `addDesignCase(...)` adds a unique label. In the example, one label is
+selected per actual simulation so each result has an unambiguous operating point.
 
 ### Step 3: Load and Apply TORG
 
-```java
-import neqsim.process.mechanicaldesign.torg.TorgManager;
-import neqsim.process.mechanicaldesign.torg.CsvTorgDataSource;
+For a programmatic document, use `orchestrator.getTorgManager().setActiveTorg(torg)` before
+running. For file input, configure that manager with a `CsvTorgDataSource`, then call
+`load(projectId)` and activate the returned document, or use `loadAndApply(projectId, process)`.
 
-// Configure TORG source
-TorgManager torgManager = new TorgManager();
-torgManager.addDataSource(new CsvTorgDataSource("project_torg.csv"));
-
-// Load TORG for project
-boolean loaded = orchestrator.loadTorg(torgManager, "TROLL-WEST-2025");
-if (!loaded) {
-    throw new IllegalStateException("Failed to load TORG");
-}
-```
+The orchestrator's `loadTorg(projectId)` and `loadTorg(projectId, dataSource)` currently only
+report whether a document was found. They do not activate it. Check `getActiveTorg()` before
+relying on TORG application. See [TORG Integration](torg_integration) for CSV formats and the
+current environmental-temperature unit limitation. This example does not include environmental
+metadata in the active TORG.
 
 ### Step 4: Run Complete Workflow
 
-```java
-// Run complete design workflow
-orchestrator.runCompleteDesignWorkflow();
-```
+`runCompleteDesignWorkflow()` returns a boolean. The sequence initializes results, runs one
+process calculation, applies the active TORG, runs mechanical design, optionally generates
+engineering deliverables, validates, and records a summary.
 
-This executes the following steps:
-1. **Initialize** - Set up environment and validate configuration
-2. **Run Process Simulation** - Execute process calculations for all design cases
-3. **Apply TORG** - Apply standards and requirements from TORG
-4. **Run Mechanical Design** - Calculate equipment sizing and material selection
-5. **Validate** - Check compliance with standards and requirements
+Inspect both this boolean and `getSystemMechanicalDesign().getLastCalculationResult()`.
+The system design uses best-effort execution, so a partial equipment calculation can be recorded
+without causing the orchestrator itself to throw. A true workflow result is not sufficient
+proof that all equipment calculations completed.
 
 ### Step 5: Get Results
 
-```java
-// Get validation results
-DesignValidationResult results = orchestrator.validateDesign();
-
-if (results.isValid()) {
-    System.out.println("Design validation passed!");
-} else {
-    System.out.println("Design validation failed:");
-    for (DesignValidationResult.ValidationMessage msg : results.getMessages()) {
-        System.out.println("  " + msg.getSeverity() + ": " + msg.getMessage());
-    }
-}
-
-// Get results for each design case
-Map<DesignCase, DesignCaseResult> caseResults = orchestrator.getDesignCaseResults();
-for (Map.Entry<DesignCase, DesignCaseResult> entry : caseResults.entrySet()) {
-    DesignCase dc = entry.getKey();
-    DesignCaseResult result = entry.getValue();
-    System.out.println(dc.name() + ": " + (result.isConverged() ? "Converged" : "Failed"));
-}
-```
+Use `getValidationResult()`, `getCaseResults()`, `getWorkflowHistory()`, and
+`generateDesignReport()`. `DesignCaseResult` and `WorkflowStep` are nested classes of the
+orchestrator. `validateDesign()` is private; it is invoked by the workflow.
 
 ## Design Validation Results
 
-The `DesignValidationResult` class provides structured validation feedback:
-
 ### Severity Levels
 
-| Level | Description | Blocks Design |
-|-------|-------------|---------------|
-| `INFO` | Informational messages | No |
-| `WARNING` | Potential issues, review recommended | No |
-| `ERROR` | Design problems, must be addressed | Yes |
-| `CRITICAL` | Severe issues, safety implications | Yes |
+| Severity | Meaning in the result container | Makes `isValid()` false |
+|----------|---------------------------------|------------------------|
+| `INFO` | Information | No |
+| `WARNING` | Review required | No |
+| `ERROR` | Reported error | Yes |
+| `CRITICAL` | Reported critical issue | Yes |
 
 ### Using Validation Results
 
-```java
-import neqsim.process.mechanicaldesign.designstandards.DesignValidationResult;
+Retrieve all messages with `getMessages()`, filter with `getMessages(Severity.ERROR)`, and count
+with `getCount(Severity.ERROR)`. `hasWarnings()` and `hasErrors()` are available;
+`getMessagesBySeverity()`, `getErrorCount()`, and `hasCriticalIssues()` are not.
 
-DesignValidationResult result = orchestrator.validateDesign();
-
-// Check overall status
-boolean isValid = result.isValid();          // true if no ERROR/CRITICAL
-boolean hasWarnings = result.hasWarnings();  // true if any WARNING
-boolean hasCritical = result.hasCriticalIssues(); // true if any CRITICAL
-
-// Get counts by severity
-int errorCount = result.getErrorCount();
-int warningCount = result.getWarningCount();
-
-// Get all messages
-List<ValidationMessage> allMessages = result.getMessages();
-
-// Filter by severity
-List<ValidationMessage> errors = result.getMessagesBySeverity(Severity.ERROR);
-List<ValidationMessage> warnings = result.getMessagesBySeverity(Severity.WARNING);
-
-// Print formatted summary
-System.out.println(result.getSummary());
-```
-
-Example output:
-```
-Design Validation Summary
-=========================
-Status: PASSED WITH WARNINGS
-
-Messages:
-  [INFO] HP Separator design completed successfully
-  [INFO] Export Compressor design completed successfully
-  [WARNING] HP Separator corrosion allowance (2.0 mm) is below TORG requirement (3.0 mm)
-  [WARNING] Minimum case shows separator efficiency at 85% (target 90%)
-
-Statistics:
-  - Info: 2
-  - Warnings: 2
-  - Errors: 0
-  - Critical: 0
-```
+`getSummary()` provides a compact count summary. The workflow checks standard assignment and
+some basic weight/pressure conditions. It reports TORG environmental ranges and safety factors
+as information; it does not establish comprehensive TORG compliance. Also inspect positive,
+finite calculated values and independent engineering acceptance criteria.
 
 ## Design Report Generation
 
-Generate comprehensive design reports:
-
-```java
-// Generate design report
-String report = orchestrator.generateDesignReport();
-System.out.println(report);
-
-// Save to file
-Files.write(Paths.get("design_report.txt"), report.getBytes());
-```
-
-Example report:
-```
-Field Development Design Report
-================================
-Project: TROLL-WEST-2025
-Phase: FEED (±15-20% accuracy)
-Generated: 2025-01-06 14:30:00
-
-TORG Information
-----------------
-Revision: Rev 2
-Company: EQUINOR
-Design Life: 25 years
-
-Design Cases Evaluated
-----------------------
-1. NORMAL (Load Factor: 1.0)
-   Status: Converged
-   Iterations: 5
-   
-2. MAXIMUM (Load Factor: 1.1)
-   Status: Converged
-   Iterations: 7
-   
-3. MINIMUM (Load Factor: 0.3)
-   Status: Converged
-   Iterations: 4
-   
-4. UPSET (Load Factor: 1.2)
-   Status: Converged
-   Iterations: 9
-
-Equipment Summary
------------------
-HP Separator:
-  - Design Pressure: 55.0 barg
-  - Design Temperature: 150°C
-  - Material: SA-516-70
-  - Wall Thickness: 25.4 mm
-  - Weight: 12,500 kg
-  - Standards: ASME VIII Div 1, NORSOK P-002
-
-Export Compressor:
-  - Stages: 2
-  - Power: 2.5 MW
-  - Discharge Pressure: 80 bara
-  - Material: API 617 compliant
-  - Standards: API 617
-
-Validation Summary
-------------------
-Overall Status: PASSED WITH WARNINGS
-- 0 Critical issues
-- 0 Errors
-- 2 Warnings
-- 4 Info messages
-
-See detailed validation report for warning details.
-```
+`generateDesignReport()` returns a string with project/run identifiers, phase, case labels,
+aggregate equipment results, validation messages, and workflow history. It does not contain
+independently solved results for labels that were merely added to one workflow. Keep each
+report with its actual input conditions and software revision.
 
 ## Workflow Customization
 
 ### Custom Workflow Steps
 
-```java
-// Add custom pre-processing step
-orchestrator.addPreProcessStep("Custom Pre-Check", () -> {
-    // Custom validation logic
-    if (!checkCustomRequirements()) {
-        throw new IllegalStateException("Custom requirements not met");
-    }
-});
-
-// Add custom post-processing step
-orchestrator.addPostProcessStep("Export Results", () -> {
-    // Export to external system
-    exportToExternalDatabase(orchestrator.getResults());
-});
-```
+Call application prechecks before `runCompleteDesignWorkflow()` and export results afterward.
+There are no `addPreProcessStep` or `addPostProcessStep` callback methods.
 
 ### Selective Case Execution
 
-```java
-// Run only sizing-critical cases
-orchestrator.clearDesignCases();
-for (DesignCase dc : DesignCase.getSizingCriticalCases()) {
-    orchestrator.addDesignCase(dc);
-}
-orchestrator.runCompleteDesignWorkflow();
-```
+Use `setDesignCases(Collections.singletonList(designCase))` for an explicitly configured
+operating point, as in the example. `clearDesignCases()` is not a public method.
 
 ### Phase-Specific Behavior
 
-```java
-DesignPhase phase = orchestrator.getDesignPhase();
-
-if (phase.requiresFullMechanicalDesign()) {
-    // Full mechanical design with detailed calculations
-    orchestrator.setDetailedCalculations(true);
-} else {
-    // Simplified calculations for early phases
-    orchestrator.setDetailedCalculations(false);
-}
-```
+Choose a phase to select validation requirements and report metadata. There is no
+`setDetailedCalculations(...)` switch on this orchestrator.
 
 ## Integration with Process Simulation
 
 ### Updating Process Conditions
 
-```java
-// For each design case, update process conditions
-for (DesignCase designCase : orchestrator.getDesignCases()) {
-    // Adjust feed rate based on case
-    double loadFactor = designCase.getTypicalLoadFactor();
-    feed.setFlowRate(baseFlowRate * loadFactor, "kg/hr");
-    
-    // Adjust temperature for seasonal cases
-    if (designCase == DesignCase.WINTER) {
-        feed.setTemperature(-20.0, "C");
-    } else if (designCase == DesignCase.SUMMER) {
-        feed.setTemperature(35.0, "C");
-    }
-    
-    // Run simulation
-    process.run();
-    
-    // Store results
-    orchestrator.storeDesignCaseResult(designCase, process);
-}
-```
+Change the actual feed/equipment inputs before each workflow. The example scales mass flow
+from the 10,000 kg/hr base rate while holding SRK composition, 50 bara inlet pressure, 30 °C
+inlet temperature, 80 bara compressor outlet pressure, and 75% isentropic efficiency constant.
+A corresponding change in compressor power is expected for this fixed operating state.
 
 ### Equipment Sizing Envelope
 
-```java
-// Get sizing envelope across all cases
-SizingEnvelope envelope = orchestrator.getSizingEnvelope();
-
-double maxPressure = envelope.getMaxDesignPressure();
-double maxTemperature = envelope.getMaxDesignTemperature();
-double maxFlow = envelope.getMaxFlowRate();
-
-System.out.println("Sizing Envelope:");
-System.out.println("  Max Pressure: " + maxPressure + " barg");
-System.out.println("  Max Temperature: " + maxTemperature + " °C");
-System.out.println("  Max Flow: " + maxFlow + " kg/hr");
-```
+There is no orchestrator `getSizingEnvelope()` API. Store the results of the separately executed
+cases in an application map and compare the quantities relevant to each item: gas volume flow,
+liquid residence requirement, pressure, temperature, power, and mechanical dimensions. Do not
+select every design variable from a single case merely because it has the highest total weight.
 
 ## Error Handling
 
-```java
-try {
-    orchestrator.runCompleteDesignWorkflow();
-} catch (TorgNotFoundException e) {
-    System.err.println("TORG not found: " + e.getMessage());
-    // Fall back to default standards
-    orchestrator.applyDefaultStandards();
-    orchestrator.runCompleteDesignWorkflow();
-} catch (DesignConvergenceException e) {
-    System.err.println("Design did not converge: " + e.getMessage());
-    // Get partial results
-    DesignValidationResult partial = e.getPartialResults();
-    System.out.println(partial.getSummary());
-} catch (StandardNotSupportedException e) {
-    System.err.println("Standard not supported: " + e.getMessage());
-    String remediation = e.getRemediation();
-    System.out.println("Suggested action: " + remediation);
-}
-```
+Check the workflow return value and inspect validation/history even after failure. Check the
+structured mechanical-design result's `isComplete()` before accepting totals. The previously
+shown `TorgNotFoundException`, `DesignConvergenceException`, and
+`StandardNotSupportedException` handlers are not part of this orchestrator's public workflow.
 
 ## Best Practices
 
 ### 1. Progressive Refinement
 
-Start with coarse phases and refine:
-
-```java
-// Screening phase - quick estimates
-orchestrator.setDesignPhase(DesignPhase.SCREENING);
-orchestrator.addDesignCase(DesignCase.NORMAL);
-orchestrator.addDesignCase(DesignCase.MAXIMUM);
-orchestrator.runCompleteDesignWorkflow();
-
-// If viable, move to FEED
-if (orchestrator.validateDesign().isValid()) {
-    orchestrator.setDesignPhase(DesignPhase.FEED);
-    // Add more cases for detailed analysis
-    orchestrator.addDesignCase(DesignCase.MINIMUM);
-    orchestrator.addDesignCase(DesignCase.UPSET);
-    orchestrator.addDesignCase(DesignCase.WINTER);
-    orchestrator.addDesignCase(DesignCase.SUMMER);
-    orchestrator.runCompleteDesignWorkflow();
-}
-```
+Replace screening assumptions with project data as the study matures. Changing the phase label
+alone does not refine model physics or input quality.
 
 ### 2. Document All Assumptions
 
-```java
-// Add assumptions to report
-orchestrator.addAssumption("Feed composition based on 2024 well test data");
-orchestrator.addAssumption("Ambient temperature range from met-ocean study");
-orchestrator.addAssumption("Design life 25 years per TORG Rev 2");
-```
+Keep a companion record of composition, flow basis, operating cases, design margins, material
+choices, standards, and correlation limits. `addAssumption(...)` is not an orchestrator API.
 
 ### 3. Version Control Integration
 
-```java
-// Tag design run with version info
-orchestrator.setRunMetadata("git_commit", getGitCommitHash());
-orchestrator.setRunMetadata("torg_revision", torg.getRevision());
-orchestrator.setRunMetadata("analyst", System.getProperty("user.name"));
-```
+Store the input model, software commit, TORG revision, and per-case reports together. The
+orchestrator supplies a run UUID but has no `setRunMetadata(...)` method.
 
 ### 4. Reproducibility
 
-```java
-// Save complete configuration for reproducibility
-orchestrator.saveConfiguration("design_config_2025-01-06.json");
-
-// Later, reload and re-run
-FieldDevelopmentDesignOrchestrator restored = 
-    FieldDevelopmentDesignOrchestrator.loadConfiguration("design_config_2025-01-06.json");
-restored.runCompleteDesignWorkflow();
-```
+Retain executable model construction code. There are no `saveConfiguration(...)` or
+`loadConfiguration(...)` methods on this orchestrator.
 
 ## Complete Example
 
+The example logs summaries at INFO level; enable INFO output in your Log4j2 configuration to
+see them. Its result checks run regardless of the logging level.
+
 ```java
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.equipment.separator.Separator;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.mechanicaldesign.designstandards.*;
-import neqsim.process.mechanicaldesign.torg.*;
+import neqsim.process.mechanicaldesign.DesignCase;
+import neqsim.process.mechanicaldesign.DesignPhase;
+import neqsim.process.mechanicaldesign.DesignValidationResult;
+import neqsim.process.mechanicaldesign.FieldDevelopmentDesignOrchestrator;
+import neqsim.process.mechanicaldesign.SystemMechanicalDesignResult;
+import neqsim.process.mechanicaldesign.designstandards.StandardType;
+import neqsim.process.mechanicaldesign.torg.TechnicalRequirementsDocument;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class FieldDevelopmentDesignExample {
-    
-    public static void main(String[] args) {
-        // 1. Create fluid and process
-        SystemSrkEos fluid = new SystemSrkEos(280.0, 50.0);
-        fluid.addComponent("methane", 0.85);
-        fluid.addComponent("ethane", 0.08);
-        fluid.addComponent("propane", 0.04);
-        fluid.addComponent("n-butane", 0.03);
-        fluid.setMixingRule("classic");
-        
-        ProcessSystem process = new ProcessSystem();
-        
-        Stream feed = new Stream("Well Feed", fluid);
-        feed.setFlowRate(50000.0, "kg/hr");
-        process.add(feed);
-        
-        Separator hpSep = new Separator("HP Separator", feed);
-        process.add(hpSep);
-        
-        Compressor exportComp = new Compressor("Export Compressor", hpSep.getGasOutStream());
-        exportComp.setOutletPressure(150.0, "bara");
-        process.add(exportComp);
-        
-        // 2. Create orchestrator
-        FieldDevelopmentDesignOrchestrator orchestrator = 
-            new FieldDevelopmentDesignOrchestrator(process);
-        
-        // 3. Configure for FEED phase
-        orchestrator.setDesignPhase(DesignPhase.FEED);
-        
-        // 4. Add design cases
-        orchestrator.addDesignCase(DesignCase.NORMAL);
-        orchestrator.addDesignCase(DesignCase.MAXIMUM);
-        orchestrator.addDesignCase(DesignCase.MINIMUM);
-        orchestrator.addDesignCase(DesignCase.UPSET);
-        orchestrator.addDesignCase(DesignCase.EARLY_LIFE);
-        orchestrator.addDesignCase(DesignCase.LATE_LIFE);
-        
-        // 5. Load TORG
-        TorgManager torgManager = new TorgManager();
-        torgManager.addDataSource(new CsvTorgDataSource("project_torg.csv"));
-        orchestrator.loadTorg(torgManager, "TROLL-WEST-2025");
-        
-        // 6. Run complete workflow
-        orchestrator.runCompleteDesignWorkflow();
-        
-        // 7. Validate and report
-        DesignValidationResult validation = orchestrator.validateDesign();
-        System.out.println(validation.getSummary());
-        
-        if (validation.isValid()) {
-            String report = orchestrator.generateDesignReport();
-            System.out.println(report);
-        } else {
-            System.err.println("Design validation failed!");
-            for (ValidationMessage msg : validation.getMessagesBySeverity(Severity.ERROR)) {
-                System.err.println("  ERROR: " + msg.getMessage());
-            }
-        }
+  private static final Logger logger = LogManager.getLogger(FieldDevelopmentDesignExample.class);
+
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(303.15, 50.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.10);
+    fluid.addComponent("n-butane", 0.05);
+    fluid.addComponent("n-pentane", 0.05);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("Feed", fluid);
+    Separator separator = new Separator("HP Separator", feed);
+    separator.setInternalDiameter(1.0);
+    Compressor compressor = new Compressor("Export Compressor", separator.getGasOutStream());
+    compressor.setOutletPressure(80.0, "bara");
+    compressor.setIsentropicEfficiency(0.75);
+    ProcessSystem process = new ProcessSystem();
+    process.add(separator);
+    process.add(compressor);
+    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+      equipment.getMechanicalDesign().setCompanySpecificDesignStandards("default");
     }
+    separator.getMechanicalDesign().setMaxOperationPressure(50.0, "bara");
+    compressor.getMechanicalDesign().setMaxOperationPressure(80.0, "bara");
+    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
+        .projectId("DOCS-FIELD").projectName("Synthetic gas processing study")
+        .addStandard(StandardType.ASME_VIII_DIV1.getDesignStandardCategory(), StandardType.ASME_VIII_DIV1)
+        .addStandard(StandardType.API_12J.getDesignStandardCategory(), StandardType.API_12J)
+        .addStandard(StandardType.API_617.getDesignStandardCategory(), StandardType.API_617).build();
+
+    double baseFlowKgPerHour = 10000.0;
+    Map<DesignCase, Double> powersKw = new EnumMap<>(DesignCase.class);
+    for (DesignCase designCase : Arrays.asList(DesignCase.NORMAL, DesignCase.MAXIMUM, DesignCase.MINIMUM)) {
+      feed.setFlowRate(baseFlowKgPerHour * designCase.getTypicalLoadFactor(), "kg/hr");
+      feed.run();
+      FieldDevelopmentDesignOrchestrator orchestrator =
+          new FieldDevelopmentDesignOrchestrator(process, "DOCS-FIELD-" + designCase.name());
+      orchestrator.setDesignPhase(DesignPhase.FEED);
+      orchestrator.setDesignCases(Collections.singletonList(designCase));
+      orchestrator.getTorgManager().setActiveTorg(torg);
+      boolean workflowCompleted = orchestrator.runCompleteDesignWorkflow();
+      DesignValidationResult validation = orchestrator.getValidationResult();
+      if (!workflowCompleted || orchestrator.getSystemMechanicalDesign() == null) {
+        throw new IllegalStateException(validation.getMessages().toString());
+      }
+      SystemMechanicalDesignResult calculation =
+          orchestrator.getSystemMechanicalDesign().getLastCalculationResult()
+              .orElseThrow(() -> new IllegalStateException("No mechanical calculation result"));
+      if (!calculation.isComplete()) {
+        throw new IllegalStateException("Some equipment designs did not complete");
+      }
+      double massOut = separator.getGasOutStream().getFlowRate("kg/hr")
+          + separator.getLiquidOutStream().getFlowRate("kg/hr");
+      double powerKw = compressor.getPower("kW");
+      double weightKg = orchestrator.getCaseResults().get(designCase).getTotalWeight();
+      if (!Double.isFinite(massOut)
+          || Math.abs(massOut - feed.getFlowRate("kg/hr")) > 1.0e-5
+          || !Double.isFinite(powerKw) || powerKw <= 0.0
+          || !Double.isFinite(weightKg) || weightKg <= 0.0) {
+        throw new IllegalStateException("Invalid mass balance, power, or mechanical weight");
+      }
+      powersKw.put(designCase, powerKw);
+      logger.info("{}: feed={} kg/hr, compressor={} kW, estimated weight={} kg, warnings={}",
+          designCase.name(), feed.getFlowRate("kg/hr"), powerKw, weightKg,
+          validation.getCount(DesignValidationResult.Severity.WARNING));
+      logger.info("{}", orchestrator.generateDesignReport());
+    }
+    if (!(powersKw.get(DesignCase.MINIMUM) < powersKw.get(DesignCase.NORMAL)
+        && powersKw.get(DesignCase.NORMAL) < powersKw.get(DesignCase.MAXIMUM))) {
+      throw new IllegalStateException("Expected compressor power to increase with throughput");
+    }
+  }
 }
 ```
 
+The executed feed rates are 10,000, 11,500, and 4,000 kg/hr. Each report corresponds to one
+actual process run. Review any warnings even when the boolean result is true; the example's
+checks establish software execution and basic physical consistency only.
+
 ## See Also
 
-- [Mechanical Design Standards](mechanical_design_standards) - Available standards and categories
-- [Mechanical Design Database](mechanical_design_database) - Data source configuration
-- [TORG Integration](torg_integration) - Technical requirements documents
+- [Mechanical Design Standards](mechanical_design_standards)
+- [Mechanical Design Database](mechanical_design_database)
+- [TORG Integration](torg_integration)
+- [Process Design Guide](process_design_guide)

@@ -10,6 +10,7 @@ This guide documents the viscosity calculation methods available in NeqSim for g
 - [Overview](#overview)
 - [Available Models](#available-models)
   - [LBC (Lohrenz-Bray-Clark)](#lbc-lohrenz-bray-clark)
+  - [BNS gas viscosity](#bns-gas-viscosity)
   - [Friction Theory](#friction-theory)
   - [PFCT (Pedersen)](#pfct-pedersen)
   - [Polynomial Correlation](#polynomial-correlation)
@@ -48,6 +49,52 @@ assuming a fallback.
 
 ## Available Models
 
+### Letsou-Stiel saturated-liquid estimator
+
+`Letsou-Stiel` is an opt-in pure-liquid estimator when fitted viscosity data are unavailable.
+It uses critical temperature, critical pressure, molar mass and acentric factor. It implements
+the polynomial representation of the Letsou-Stiel tables in the [ChemSep book](https://www.chemsep.org/downloads/docs/book2.pdf),
+equations 10.158–10.161, also documented by [COCO/TEA](https://www.cocosimulator.org/index_help.php?page=TEA%2Fviscosity.htm).
+This is an estimation alternative, not a replacement for a fluid-specific reference correlation.
+
+The supported reduced-temperature interval is $0.76 \leq T/T_c \leq 0.98$.
+The result estimates **saturated-liquid** viscosity; selecting it on a compressed-liquid phase
+does not add a pressure correction. The implementation refuses mixtures, gas/solid phases,
+nonfinite or nonpositive required inputs, and temperatures outside that interval. Selection
+validates the current state before replacing the previous model. Establish the liquid phase
+with a flash before selecting it. Later out-of-range state changes are rejected by the model;
+the existing physical-property initialization handler may log such an exception, so callers
+must keep subsequent states inside the supported interval.
+
+**Class:** `LetsouStielViscosity`. Its static `calculateViscosity` API takes temperature and
+critical temperature in K, molar mass in kg/mol, critical pressure in **bara**, and returns Pa s.
+The inherited liquid-model `getPureComponentViscosity(0)` interface retains mPa s.
+No database coefficients or fitted binary interactions are required. No mixture mixing rule
+or automatic fallback is claimed.
+
+```java
+SystemInterface fluid = new SystemSrkEos(500.0, 40.0);
+fluid.addComponent("benzene", 1.0);
+fluid.setMixingRule("classic");
+new ThermodynamicOperations(fluid).TPflash();
+fluid.initProperties();
+fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("Letsou-Stiel");
+fluid.getPhase("oil").initPhysicalProperties();
+double saturatedLiquidEstimatePas = fluid.getPhase("oil").getViscosity("kg/msec");
+```
+
+`LetsouStielViscosityTest` executes this example and the independent ethanol example
+(400 K, 46.07 g/mol, 516.25 K, 6.383 MPa, acentric factor 0.6371), which gives
+0.0002036150875308 Pa s. That is a correlation implementation check, not an experimental
+accuracy claim for ethanol or associating liquids. See the [method audit](method_alignment_audit).
+
+The `Viscosity` liquid mixture method uses tabulated `gijvisc` interactions from
+the `inter` component-pair table in its Grunberg-Nissan mixing expression.
+Pairs without tabulated data use zero interaction. Ions and TBP fractions are
+excluded from this pair lookup; their presence does not suppress later valid
+component pairs. These parameters affect the liquid mixture method, not the
+separate `LBCViscosityMethod` implementation described below.
+
 ### LBC (Lohrenz-Bray-Clark)
 
 The Lohrenz-Bray-Clark (1964) method is widely used in reservoir simulation. It combines a dilute gas correlation with a dense fluid polynomial correction.
@@ -62,6 +109,13 @@ where:
 - $\eta^*$ is the dilute gas viscosity
 - $\eta_r$ is a function of reduced density
 - $\xi$ is the inverse viscosity parameter
+
+The mixture viscosity-reducing parameter uses pseudo-critical (Kay) mixing, as in
+Lohrenz, Bray and Clark (JPT, 1964) and Eclipse E300:
+
+$$\xi_m = \frac{T_{pc}^{1/6}}{M^{1/2} P_{pc}^{2/3}}, \quad T_{pc} = \sum_i x_i T_{c,i}, \quad P_{pc} = \sum_i x_i P_{c,i}, \quad M = \sum_i x_i M_i$$
+
+with $T$ in K, $P$ in atm and $M$ in g/mol. The reduced density uses $V_{pc} = \sum_i x_i V_{c,i}$.
 
 The dense fluid contribution uses a polynomial:
 $$\eta_r = a_0 + a_1\rho_r + a_2\rho_r^2 + a_3\rho_r^3 + a_4\rho_r^4$$
@@ -81,6 +135,18 @@ $$\eta_r = a_0 + a_1\rho_r + a_2\rho_r^2 + a_3\rho_r^3 + a_4\rho_r^4$$
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
 fluid.getPhase("oil").initPhysicalProperties();
 ```
+
+---
+
+### BNS gas viscosity
+
+`SystemBnsEos` selects the BNS calibration of LBC for its gas and dense fluid phases.
+It combines Stiel–Thodos dilute-gas viscosity and Herning–Zipperer mixing with the
+SPE-229932-MS dense-fluid polynomial. The BNS critical volumes for viscosity include
+a molar-mass-dependent hydrocarbon volume and the fitted 2026 helium value. The reduced
+density comes from the BNS EOS with its current volume-correction setting. See
+[BNS fluid creation](../thermo/fluid_creation_guide.md#53-other-reference-equations)
+for setting the composition and initializing physical properties.
 
 ---
 
@@ -178,6 +244,19 @@ fluid.getPhase("oil").initPhysicalProperties();
 Use `"CSP"` as an equivalent alias for `"PFCT"`, or select `"PFCT-Heavy-Oil"` for
 characterized heavy fractions. Reinitialize the phase after any selection.
 
+PFCT, PFCT-Mod86 and PFCT-Heavy-Oil clones keep independent mutable methane
+reference fluids. This includes the default gas/oil transport models on cloned
+process streams, so parallel branches can evaluate viscosity at different
+temperatures and pressures without overwriting a sibling reference state.
+Model parameters and correction factors are retained. Configure fluids and
+mixing parameters before launching parallel calculations; do not mutate a
+stream that another calculation is using.
+
+Saved PFCT models that predate CSP tuning recover four unity correction factors
+when loaded through native Java serialization or the legacy `.neqsim` loader.
+Existing tuned factors are preserved. Loaded models can be cloned and evaluated
+with the same independent parameter and methane-reference ownership.
+
 ---
 
 ### Polynomial Correlation
@@ -224,8 +303,30 @@ Specialized high-accuracy methods for specific fluids:
 
 **Class:** `CO2ViscosityMethod`
 
-- Fenghour et al. correlation
-- Covers gas, liquid, and supercritical regions
+- Laesecke–Muzny (2017) **background viscosity**: dilute, initial-density Rainwater–Friend and residual terms.
+- The 2026 [NIST IR 8608, section 11](https://doi.org/10.6028/NIST.IR.8608) retains this reference formulation.
+- Pure CO₂ only, using the phase's current temperature and mass density. An unavailable or nonfinite phase
+  density uses the existing Span–Wagner density fallback. Wrong species and mixtures raise an argument exception.
+- `calculateViscosity(temperature, density)` accepts K and kg/m³ and returns **Pa s**. It supports 100–2000 K
+  mathematically; callers must establish a physical gas, liquid or supercritical state inside the paper's range.
+  Input checks do not enforce the melting curve or qualify every accepted temperature/density pair.
+- `calculateDiluteGasViscosity(temperature)` supports 100–10000 K. Temperatures above 2000 K are the paper's
+  explicitly documented **zero-density extrapolation**, and are refused by the finite-density API.
+- **Critical enhancement is excluded.** The paper identifies a region approximately bounded by 300–310 K and
+  300–600 kg/m³ where this contribution can exceed 1%. These boundaries are guidance, not a sharp cutoff.
+  This implementation does not establish near-critical viscosity accuracy.
+
+The earlier implementation omitted the linear-in-density contribution and failed all six finite-density
+check values in [Laesecke and Muzny (2017), Table 6](https://doi.org/10.1063/1.4977429), with an error up to 6.8%.
+`CO2ViscosityReferenceValuesTest` now checks all nine Table 6 values to their printed rounding precision.
+`CO2ViscosityMethodTest` also checks seven Table 8 pressure-temperature recommendations through the existing
+Span–Wagner phase/property path with a 0.1% tolerance. This is a bounded implementation and EOS integration
+check, not a universal experimental-accuracy statement.
+
+Both stateless APIs use the existing MCP `runCapability` invocation route. The ordinary `CO2Model` key and
+the existing pure-CO₂ Span–Wagner defaults use the corrected background model. PFCT mixtures are unaffected.
+See the [method audit](method_alignment_audit) for parameter provenance, remaining critical-enhancement work,
+and computation-cost evidence.
 
 #### Hydrogen
 
@@ -262,7 +363,7 @@ fluid.getPhase("gas").initPhysicalProperties();
 | Heavy oils | PFCT-Heavy-Oil | Extended for high MW |
 | Characterized crudes | PFCT | Works with pseudo-components |
 | General gas processing | Friction theory or PFCT | Validate against representative data |
-| Pure CO₂ | CO2Model | High accuracy |
+| Pure CO₂ | CO2Model | Reference background correlation; critical enhancement excluded |
 | Pure H₂ | Muzny | Reference accuracy |
 | Pure helium | KTA | Reference-fluid correlation |
 | Aqueous systems | Salt Water | Water/brine correlation |
@@ -270,6 +371,26 @@ fluid.getPhase("gas").initPhysicalProperties();
 ---
 
 ## Tuning Parameters
+
+### LBC viscosity-only critical volumes
+
+`LBCViscosityMethod.getCriticalVolumes()` returns the effective per-component
+volumes used by the correlation, in **cm³/mol** and phase component order.
+`setCriticalVolumes(double[])` accepts a positive finite value for every
+component. It configures the viscosity correlation independently of each
+component's thermodynamic critical volume. Passing null clears the override and
+restores the legacy estimation route, including the existing Whitson-based TBP
+estimate. The input and output arrays are defensive copies, and overrides remain
+independent after model cloning or compatible-version native serialization.
+Changing the component slate requires a new array; stale counts fail explicitly.
+
+This optional contract supports [`VCRITVIS` E300 delivery](../pvtsimulation/eclipse_e300_fluid_import.md#viscosity-only-critical-volumes-vcritvis)
+and JSON `viscosityModel.criticalVolumesCm3PerMol` reload without silently
+re-estimating the transport parameter. Configure the same effective volumes and
+LBC coefficients on every phase that may become active. The guarded PVT delivery
+rejects phase-specific settings that one E300 component block cannot represent.
+The enabled [LbcFluidRoundTripTest](../../src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java)
+checks these APIs and actual petroleum-oil viscosity over pressure states.
 
 ### LBC Parameter Tuning
 

@@ -3,17 +3,29 @@ title: Python Quickstart
 description: Get started with NeqSim in Python. Installation, first flash calculation, and first process simulation in under 5 minutes.
 ---
 
-# Python Quickstart
-
 Get NeqSim running in Python in under 5 minutes.
 
 ## Step 1: Install neqsim-python (1 minute)
+
+### pip (Java 17+)
 
 ```bash
 pip install neqsim
 ```
 
-This installs the Python package with bundled Java libraries. Requires Java 8+ installed.
+### conda (OpenJDK included)
+
+```bash
+conda install -c conda-forge neqsim
+```
+
+The current `neqsim-python` package requires Python 3.10+. A pip installation also
+requires Java 17 or newer; install a 64-bit JDK from
+[Adoptium](https://adoptium.net/) and keep the Python and Java architectures aligned.
+The Conda package installs OpenJDK automatically, so it does not need a separate Java
+setup. See the authoritative
+[NeqSim Python installation guide](https://github.com/equinor/neqsim-python#install)
+when selecting a runtime.
 
 ## Step 2: First Flash Calculation (2 minutes)
 
@@ -85,7 +97,7 @@ process.add(separator)
 
 # 5. Add compressor on gas outlet
 compressor = Compressor("Gas Compressor", separator.getGasOutStream())
-compressor.setOutletPressure(80.0)  # bara
+compressor.setOutletPressure(80.0, "bara")
 compressor.setIsentropicEfficiency(0.75)
 process.add(compressor)
 
@@ -135,9 +147,9 @@ PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
 |-------|----------|
 | `TypeError: unsupported format string` | Java String needs conversion: `str(java_string)` |
 | `AttributeError: 'NoneType'` | JVM not started - use `from neqsim import jneqsim` |
-| Wrong density values | Use `getDensity("kg/m3")` with unit for Peneloux correction |
+| Unexpected density | Selecting a density unit does not enable Peneloux volume correction; correction is a separate validated model choice |
 | Temperature seems wrong | NeqSim uses **Kelvin**. Convert: `T_K = T_C + 273.15` |
-| `JVMNotFoundException` | Install Java 8+ and set JAVA_HOME |
+| `JVMNotFoundException` | For pip, install Java 17+ and set `JAVA_HOME`; Conda installs OpenJDK automatically |
 
 ### Java String Conversion
 
@@ -155,20 +167,50 @@ print(f"{comp_name:<12}")  # Works!
 
 ## Working with Units
 
+This standalone example uses an SRK hydrocarbon mixture. Set the stream's state
+and flow before running it, then read properties from its **current fluid**:
+`run()` may replace the fluid object. Rerun and initialize properties again after
+changing temperature, pressure, composition, or flow.
+
 ```python
-# Temperature: always Kelvin internally
-temp_kelvin = fluid.getTemperature()
-temp_celsius = fluid.getTemperature() - 273.15
+import math
+from neqsim import jneqsim
 
-# Setting with units
-stream.setTemperature(30.0, "C")      # Celsius
-stream.setPressure(50.0, "bara")      # bara
+fluid = jneqsim.thermo.system.SystemSrkEos(298.15, 10.0)  # K, bara
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+fluid.setMixingRule("classic")
 
-# Getting with units
-density = fluid.getDensity("kg/m3")   # IMPORTANT: includes Peneloux correction
-viscosity = fluid.getViscosity("cP")
-enthalpy = fluid.getEnthalpy("kJ/kg")
+stream = jneqsim.process.equipment.stream.Stream("units example", fluid)
+stream.setFlowRate(1000.0, "kg/hr")
+stream.setTemperature(30.0, "C")
+stream.setPressure(50.0, "bara")       # Absolute pressure, not gauge pressure
+stream.run()                          # TP flash at the specified stream state
+
+solved_fluid = stream.getFluid()
+solved_fluid.initProperties()          # Initialize caloric and transport properties
+temp_kelvin = solved_fluid.getTemperature()
+temp_celsius = solved_fluid.getTemperature("C")
+pressure = solved_fluid.getPressure("bara")
+density = solved_fluid.getDensity("kg/m3")
+viscosity = solved_fluid.getViscosity("cP")
+enthalpy = solved_fluid.getEnthalpy("kJ/kg")  # Specific enthalpy, not an energy rate
+
+assert math.isclose(temp_kelvin, 303.15, abs_tol=1e-8)
+assert math.isclose(temp_celsius, 30.0, abs_tol=1e-8)
+assert math.isclose(pressure, 50.0, abs_tol=1e-8)
+assert math.isfinite(density) and density > 0.0
+assert math.isfinite(viscosity) and viscosity > 0.0
+assert math.isfinite(enthalpy)          # Its sign depends on the reference state
+print(f"T = {temp_celsius:.2f} C, P = {pressure:.2f} bara")
+print(f"Density = {density:.3f} kg/m3, viscosity = {viscosity:.5f} cP")
+print(f"Specific enthalpy = {enthalpy:.3f} kJ/kg")
 ```
+
+Choosing `"kg/m3"` changes the density unit, not the density model; Peneloux
+volume correction is a separate model choice. These checks demonstrate API and
+unit handling, not experimental validation of this fluid model.
 
 ## Next Steps
 

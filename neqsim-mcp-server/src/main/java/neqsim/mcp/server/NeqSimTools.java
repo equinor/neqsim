@@ -211,15 +211,15 @@ public class NeqSimTools {
    * @param inputJson the JSON string to validate
    * @return JSON string with validation results
    */
-  @Tool(description = "Validate a flash or process JSON input before running it. "
-      + "Checks component names, temperature/pressure ranges, EOS compatibility, "
-      + "and process wiring. Process JSON may contain named fluids, fluidRef, plural inlets, "
-      + "forward recycle references, areas, and interAreaLinks. Returns issues with severity "
-      + "and fix suggestions. Validation is pre-flight only; a successful run must still be "
-      + "checked for convergence, warnings, and mass/energy balance closure.")
+  @Tool(description = "Validate a tool input before running it. Flash and process JSON are auto-detected and "
+      + "checked for component names, T/P ranges, EOS compatibility, unresolved inlet references and equipment "
+      + "parameters placed outside 'properties'. Any other tool input is validated against its catalog schema by "
+      + "wrapping it: {\"tool\": \"runRelief\", \"input\": {...}} (camelCase or snake_case tool name). "
+      + "Returns issues with severity and fix suggestions. Validation is pre-flight only; a successful run must still "
+      + "be checked for convergence, warnings, and mass/energy balance closure.")
   public String validateInput(
-      @ToolArg(description = "JSON string to validate. Can be a flash input or "
-          + "process definition - the validator auto-detects the type.") String inputJson) {
+      @ToolArg(description = "JSON string to validate: a flash input, a process definition, or "
+          + "{\"tool\": <toolName>, \"input\": <toolInput>} for schema-based validation of any tool.") String inputJson) {
     String policyBlocked = enforceToolAccess("validateInput");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -305,17 +305,17 @@ public class NeqSimTools {
    * @param schemaType input or output
    * @return JSON schema string
    */
-  @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. "
-      + "For run_process, the input schema is the authoritative discoverable grammar for "
+  @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. Tool names are snake_case "
+      + "(runRelief -> run_relief). For run_process, the input schema is the authoritative discoverable grammar for "
       + "ProcessSystem and ProcessModel JSON, including equipment types, inlet/inlets wiring, "
       + "port aliases, named fluids, connections, areas, interAreaLinks, and convergence settings. "
-      + "Schema-backed tools include run_flash, run_process, validate_input, "
-      + "list_components, run_batch, get_property_table, get_phase_envelope, "
-      + "get_capabilities, run_pvt, run_flow_assurance, calculate_standard, "
-      + "run_pipeline, run_reservoir, run_field_economics, run_dynamic, "
-      + "run_bioprocess, size_equipment, compare_processes, manage_session, "
-      + "visualize, run_hazop, run_barrier_register, and "
-      + "run_safety_system_performance. Types: input, output.")
+      + "Every calculation tool (run_flash, run_process, run_pvt, run_flow_assurance, run_chemistry, "
+      + "calculate_standard, run_pipeline, run_water_hammer, run_reservoir, run_field_economics, run_dynamic, "
+      + "run_bioprocess, size_equipment, design_utilities, run_relief, run_flare_network, run_lopa, run_sil, "
+      + "run_risk_matrix, run_hazop, run_hazop_scenario, run_barrier_register, run_safety_system_performance, "
+      + "run_materials_review, run_root_cause_analysis, run_parametric_study, compare_processes, ...) has an "
+      + "input schema whose field names and units mirror the runner exactly; pass the same JSON to validateInput "
+      + "as {tool, input} to check it before running. Types: input, output.")
   public String getSchema(
       @ToolArg(description = "Schema-backed tool name, e.g. run_flash, run_process, "
           + "run_dynamic, run_hazop, or run_safety_system_performance") final String toolName,
@@ -589,10 +589,12 @@ public class NeqSimTools {
       + "tag bindings, NeqSim automation addresses, valve actions, and controller time series. "
       + "Actions: getSchema, validateTagMap, applyFieldData, runScenario, "
       + "runEvidencePackage, evaluateControllerResponse, analyzePipeSections, and "
-      + "evaluateOperatingEnvelope. Use this for questions like what happens if a valve closes, "
-      + "how to bind private historian tags to logical model variables, whether a level/pressure "
-      + "controller response is stable, or which operating margins are closest to trip. This "
-      + "operates on a local simulation copy only and does not write to plant systems.")
+      + "evaluateOperatingEnvelope. Requests are bounded to 1048576 UTF-8 bytes. Use this for "
+      + "questions like what happens if a valve closes, how to bind private historian tags to "
+      + "logical model variables, whether a level/pressure controller response is stable, or "
+      + "which operating margins are closest to trip. This operates on a local simulation copy "
+      + "only, does not write to plant systems, does not establish causality or controller/safety "
+      + "adequacy, and requires qualified engineering review.")
   public String runOperationalStudy(
       @ToolArg(description = "JSON with 'action'. For validateTagMap/applyFieldData/runScenario: "
           + "include 'processJson' plus optional 'tagBindings' and 'fieldData'. Scenario actions "
@@ -1458,23 +1460,24 @@ public class NeqSimTools {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Solve a high-level engineering task by automatic planning and execution.
+   * Route a supported engineering task to a bounded fixed plan of existing runners.
    *
    * @param taskJson JSON with task description and parameters
-   * @return JSON with execution plan, step results, validation, and report
+   * @return JSON with keyword classification, fixed plan, step results, validation, and report
    */
-  @Tool(description = "[EXPERIMENTAL — Tier 3] Solve a complete engineering task. "
-      + "Takes a high-level description "
-      + "(e.g., 'Design a 3-stage compression system from 5 to 150 bara'), automatically "
-      + "classifies the task, builds a multi-step execution plan, executes each step, "
-      + "chains results between steps, runs engineering validation against industry rules, "
-      + "and returns a structured report. Limited validation — results require independent "
-      + "review. Not available in STUDY_TEAM, DIGITAL_TWIN, or ENTERPRISE modes.")
+  @Tool(description = "[EXPERIMENTAL — Tier 3] Route a supported engineering task through "
+      + "a deterministic fixed plan of existing NeqSim runners. Keyword families cover "
+      + "compression, separation, dehydration, pipeline, PVT, flow assurance, reservoir, "
+      + "economics, and dynamic studies. The caller supplies the fluid and runner parameters; "
+      + "unsupported task descriptions fail closed. Results are collected for review, not "
+      + "semantically transformed between steps. Limited validation — results require "
+      + "independent engineering review. Not available in STUDY_TEAM, DIGITAL_TWIN, "
+      + "or ENTERPRISE modes.")
   public String solveTask(
-      @ToolArg(description = "JSON with: 'task' (natural language description), "
-          + "'fluid' (composition), 'parameters' (task-specific values like outletPressure, "
-          + "stages, intercoolerTemp), optional 'process' (equipment definitions), "
-          + "optional 'validate' (true/false, default true).") String taskJson) {
+      @ToolArg(description = "JSON with: required non-blank 'task' (keyword-based description), "
+          + "'fluid' (canonical model and composition), 'parameters' (runner-specific values), "
+          + "optional 'process' (equipment definitions), and optional 'validate' "
+          + "(true/false, default true).") String taskJson) {
     String policyBlocked = enforceToolAccess("solveTask");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -1745,16 +1748,19 @@ public class NeqSimTools {
    * @param streamJson JSON with streaming action and parameters
    * @return JSON with operation ID or polled results
    */
-  @Tool(description = "Run simulations with incremental streaming results. "
-      + "Starts async operations (parametric sweeps, dynamic sims, Monte Carlo) "
-      + "and polls for new results as they become available. "
-      + "Actions: startParametricSweep, startDynamicStreaming, startMonteCarlo, "
-      + "pollResults, cancelOperation, listOperations.")
+  @Tool(description = "Run bounded in-process simulations with incremental polling. "
+      + "Starts canonical NeqSim parametric sweeps, dynamic simulations, or deterministic "
+      + "Monte Carlo studies. Requests are capped at 1000 sweep points, 10000 dynamic "
+      + "steps, or 1000 iterations; polls return at most 100 records. Operations are "
+      + "principal-scoped, retained in process for 30 minutes, and not durable or distributed. "
+      + "Results require independent engineering review. Actions: startParametricSweep, "
+      + "startDynamicStreaming, startMonteCarlo, pollResults, cancelOperation, listOperations.")
   public String streamSimulation(
-      @ToolArg(description = "JSON with: 'action' (startParametricSweep|startDynamicStreaming|"
-          + "startMonteCarlo|pollResults|cancelOperation|listOperations). "
-          + "For start actions: simulation parameters. "
-          + "For pollResults: 'operationId' and 'lastIndex'.") String streamJson) {
+      @ToolArg(description = "JSON with action. Sweep: components, sweepVariable "
+          + "(temperature|pressure), from, to, points and documented units. Dynamic: processJson, "
+          + "totalTime and timeStep. Monte Carlo: components, iterations and distribution "
+          + "parameters. Poll: operationId and non-negative lastIndex. List reports active "
+          + "execution and fixed request limits.") String streamJson) {
     String policyBlocked = enforceToolAccess("streamSimulation");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -1779,14 +1785,14 @@ public class NeqSimTools {
    * @return JSON with SVG/Mermaid/HTML content
    */
   @Tool(description = "Generate inline visualizations for simulation results. "
-      + "Produces SVG charts (phase envelopes, compressor maps, bar charts), "
-      + "Mermaid flowsheet diagrams, and styled HTML tables. "
-      + "Types: phaseEnvelope, flowsheetDiagram, compressorMap, barChart, styledTable.")
+      + "Produces SVG charts, Mermaid flowsheet diagrams, and styled HTML tables. "
+      + "Types: phaseEnvelope, flowsheet, compressorMap, propertyTable, barChart, pieChart, "
+      + "lineChart. Aliases: flowsheetDiagram, styledTable, table.")
   public String generateVisualization(
-      @ToolArg(description = "JSON with: 'type' (phaseEnvelope|flowsheetDiagram|compressorMap|"
-          + "barChart|styledTable). For phaseEnvelope: fluid components. "
-          + "For flowsheetDiagram: processJson. For barChart: labels, values. "
-          + "For styledTable: headers, rows, caption.") String vizJson) {
+      @ToolArg(description = "JSON with 'type'. Chart inputs: barChart labels/values, pieChart "
+          + "categories/values, lineChart xValues/yValues. Flowsheet accepts equipment and "
+          + "connections. propertyTable accepts headers, rows, and title or caption. "
+          + "Aliases: flowsheetDiagram, styledTable, table.") String vizJson) {
     String policyBlocked = enforceToolAccess("generateVisualization");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -1811,18 +1817,20 @@ public class NeqSimTools {
    * @param compositionJson JSON with composition action and parameters
    * @return JSON with workflow plan or server info
    */
-  @Tool(description = "Compose multi-server engineering workflows across MCP servers. "
-      + "Browse external servers (cost estimation, plant historian, CAD, safety), "
-      + "plan cross-domain workflows (digital-twin, feed study, vendor evaluation), "
-      + "and describe NeqSim capabilities. "
-      + "Actions: listServers, registerServer, removeServer, listWorkflows, "
-      + "getWorkflow, planComposition, describeCapabilities.")
+  @Tool(description = "Plan bounded multi-server workflow metadata only; this tool does not connect to "
+      + "or execute external servers. Browse external-server metadata, inspect fixed workflow templates, "
+      + "and create deterministic host-execution plans. Requests are capped at 16384 bytes and reject "
+      + "connection, execution, or credential material. The host remains responsible for identity, "
+      + "authorization, transport security, data handling, execution, step compatibility, "
+      + "and independent engineering review. Actions: listServers, registerServer, removeServer, "
+      + "listWorkflows, getWorkflow, planComposition, describeCapabilities.")
   public String composeMultiServerWorkflow(
-      @ToolArg(description = "JSON with: 'action' (listServers|registerServer|removeServer|"
-          + "listWorkflows|getWorkflow|planComposition|describeCapabilities). "
-          + "For planComposition: 'task' (natural language description). "
-          + "For getWorkflow: 'workflowId' (digital-twin|feed-study|vendor-evaluation|"
-          + "safety-study).") String compositionJson) {
+      @ToolArg(description = "Bounded metadata-only JSON with: 'action' "
+          + "(listServers|registerServer|removeServer|listWorkflows|getWorkflow|planComposition|"
+          + "describeCapabilities). For registerServer: 'name' plus optional description, domain, transport, "
+          + "version, tools, and dataFormats; do not provide endpoints, commands, headers, credentials, or tokens. "
+          + "For planComposition: non-blank 'task' up to 4096 characters. For getWorkflow: 'workflowId' "
+          + "(digital-twin|feed-study|vendor-evaluation|safety-study).") String compositionJson) {
     String policyBlocked = enforceToolAccess("composeMultiServerWorkflow");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -2006,12 +2014,14 @@ public class NeqSimTools {
    */
   @Tool(description = "Discover calculation methods and process equipment from the running NeqSim artifact, "
       + "then invoke JSON-safe public static calculations without a domain-specific MCP tool. "
+      + "Use action='coverage' for paginated agent/skill/API mappings and explicit evidence gaps. "
       + "Use action='search' with a free-text query first. Matches labelled static-json can be passed back with "
       + "action='invoke'; matches labelled process-json must be configured and run through runProcess. "
       + "Execution is restricted to bounded neqsim.* methods and has a fixed timeout.")
   public String runCapability(
       @ToolArg(description = "JSON with action='search', query, optional limit; or action='invoke', exact "
-          + "className, methodName, optional parameterTypes, and arguments from a static-json search match") String capabilityJson) {
+          + "className, methodName, optional parameterTypes, and arguments from a static-json search match; "
+          + "or action='coverage', view='capabilities' or 'apis', optional query, domain, offset, limit (1-50), catalogDigest") String capabilityJson) {
     String policyBlocked = enforceToolAccess("runCapability");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -2090,13 +2100,16 @@ public class NeqSimTools {
    * @param comparisonJson JSON with cases array
    * @return JSON string with comparison results
    */
-  @Tool(description = "Compare two or more process configurations side by side. "
-      + "Run multiple process cases and get a comparison table of key outputs "
-      + "(temperatures, pressures, duties, compositions). "
-      + "Use getExample with category 'comparison' for templates.")
+  @Tool(description = "Compare two to 32 process configurations in deterministic request order. "
+      + "Requests are limited to 1 MiB UTF-8; optional unique names are limited to 256 characters. "
+      + "Each case is delegated to canonical ProcessRunner and partial failures remain visible with "
+      + "explicit completion counts. Comparison does not establish compatible bases, accuracy, "
+      + "convergence, facility fidelity, or engineering approval. Use getExample with category "
+      + "'comparison' for templates.")
   public String compareProcesses(
-      @ToolArg(description = "JSON with 'cases' array. Each case has 'name', 'fluid', "
-          + "and 'process' (same format as runProcess). Minimum 2 cases.") String comparisonJson) {
+      @ToolArg(description = "JSON object with a 'cases' array of 2 to 32 entries. Each case has "
+          + "'fluid' and 'process' in runProcess format and may have a unique bounded 'name'.")
+      String comparisonJson) {
     String policyBlocked = enforceToolAccess("compareProcesses");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -2121,12 +2134,12 @@ public class NeqSimTools {
    * @param reliefJson JSON spec with relief case and inputs
    * @return JSON string with sizing result
    */
-  @Tool(description = "Size a Pressure Safety Valve (PSV) per API 520 / API 521. "
-      + "Supports four cases: 'gas' (vapour service), 'liquid' (liquid relief), "
-      + "'twoPhase' (Leung omega method, Appendix D), and 'fireHeatInput' (API 521 "
-      + "wetted-area fire heat absorption). Returns required orifice area, recommended "
-      + "API standard orifice letter (D-T), correction factors (Kd/Kb/Kc/Kw/Kv), and "
-      + "validation warnings.")
+  @Tool(description = "Run bounded pressure-relief sizing screening (maximum 16384 UTF-8 bytes) "
+      + "using NeqSim's canonical API 520/API 521-oriented equations. Supports gas, liquid, "
+      + "twoPhase, and fireHeatInput cases. Returns sizing evidence and explicit advisory "
+      + "boundaries; it does not establish scenario completeness, certify standard-edition "
+      + "conformance or installation acceptability, authorize plant action, or replace "
+      + "qualified pressure-relief/process-safety review.")
   public String runRelief(
       @ToolArg(description = "JSON with: 'case' (gas|liquid|twoPhase|fireHeatInput). "
           + "For gas: 'massFlowRate_kg_s', 'setPressure_bara', 'temperature_K', "
@@ -2152,20 +2165,21 @@ public class NeqSimTools {
   }
 
   /**
-   * Run a Layer of Protection Analysis (LOPA) per IEC 61511 / CCPS LOPA.
+   * Run a bounded Layer of Protection Analysis (LOPA) screening calculation.
    *
    * @param lopaJson JSON spec with scenario, frequencies, and layers
    * @return JSON string with LOPA result and gap analysis
    */
-  @Tool(description = "Run a Layer of Protection Analysis (LOPA) per IEC 61511 / CCPS LOPA. "
-      + "Computes the mitigated event frequency by stacking PFDs of independent "
-      + "protection layers (BPCS, alarms, relief valves, SIFs), compares against a target, "
-      + "and reports the gap, total RRF, and required additional SIL/PFD if the target "
-      + "is not met.")
+  @Tool(description = "Run bounded caller-supplied LOPA screening (maximum 16384 UTF-8 bytes and 100 layers). "
+      + "Uses NeqSim's canonical LOPA result to multiply ordered layer PFDs and compare the mitigated "
+      + "frequency with a caller-supplied target. IEC 61511 and CCPS are context only: this tool does not "
+      + "identify hazards, establish IPL independence, verify SIL or safeguards, determine risk acceptance, "
+      + "claim standards compliance, authorize plant action, or replace qualified process-safety review.")
   public String runLOPA(
       @ToolArg(description = "JSON with: 'scenario' (name), 'initiatingEventFrequency_per_year', "
-          + "'targetFrequency_per_year', and 'layers' array. Each layer has 'name' and 'pfd' "
-          + "(probability of failure on demand, 0-1). Example: "
+          + "'targetFrequency_per_year', and a non-empty 'layers' array (maximum 100). Frequencies must be "
+          + "finite and greater than zero. Each layer has a non-blank 'name' and finite 'pfd' "
+          + "(probability of failure on demand, greater than 0 and at most 1). Example: "
           + "{\"scenario\":\"HP separator overpressure\",\"initiatingEventFrequency_per_year\":0.1,"
           + "\"targetFrequency_per_year\":1e-5,\"layers\":[{\"name\":\"BPCS\",\"pfd\":0.1},"
           + "{\"name\":\"PSV\",\"pfd\":0.01}]}") String lopaJson) {
@@ -2183,16 +2197,16 @@ public class NeqSimTools {
   }
 
   /**
-   * Verify a Safety Instrumented Function (SIF) against its claimed SIL per IEC 61508/61511.
+   * Screen caller-supplied SIF reliability inputs against a claimed PFD-based SIL band.
    *
    * @param silJson JSON spec with SIF metadata and component reliability data
-   * @return JSON string with SIL verification result
+   * @return JSON string with bounded SIF PFD screening evidence
    */
-  @Tool(description = "Verify a Safety Instrumented Function (SIF) against its claimed SIL "
-      + "per IEC 61508 / IEC 61511. Computes PFDavg from component-level failure rates "
-      + "(sensors, logic solver, final elements) using simplified architecture formulae "
-      + "(1oo1, 1oo2, 2oo3), determines achieved SIL, hardware fault tolerance, and "
-      + "verification issues.")
+  @Tool(description = "Bounded caller-supplied Safety Instrumented Function PFD screening. "
+      + "Accepts at most 16384 UTF-8 bytes and 100 components, using canonical NeqSim formulae "
+      + "for 1oo1, 1oo2, and 2oo3. The PFD-based SIL band is indicative only: this does not "
+      + "select or approve SIL, establish IEC 61508/61511 conformance, or replace independent "
+      + "functional-safety assessment and accountable approval.")
   public String runSIL(
       @ToolArg(description = "JSON with: 'name', 'claimedSIL' (1-4), 'architecture' "
           + "(1oo1|1oo2|2oo3), 'proofTestInterval_hours', and EITHER 'pfdAvg' (direct) OR "
@@ -2205,27 +2219,31 @@ public class NeqSimTools {
     try {
       return standardizeResponse("runSIL", SILRunner.run(silJson), "general");
     } catch (Exception e) {
-      return errorJson("SIL verification failed: " + e.getMessage());
+      return errorJson("SIL screening could not be processed");
     } finally {
       McpRequestContext.clear();
     }
   }
 
   /**
-   * Score risk events on a 5x5 matrix per ISO 31000 / NORSOK Z-013.
+   * Score caller-supplied risk events on a bounded generic 5x5 screening matrix.
    *
    * @param riskJson JSON spec with risk events
    * @return JSON string with scored matrix
    */
-  @Tool(description = "Score risk events on a 5x5 matrix per ISO 31000 / NORSOK Z-013. "
-      + "Each event is categorised by probability (1-5) and consequence (1-5), either "
-      + "directly or from frequency (failures/year) and production loss (%). "
-      + "Returns risk score, level (LOW/MEDIUM/HIGH/CRITICAL) and colour for each event "
-      + "plus the overall worst-case.")
+  @Tool(description = "Score caller-supplied events on a bounded generic 5x5 screening matrix. "
+      + "The request is capped at 16384 UTF-8 bytes and 100 events. Each event uses exactly one "
+      + "input mode: integer probability/consequence levels from 1 to 5, or non-negative "
+      + "failures/year plus production loss from 0 to 100 percent. Returns deterministic scores, "
+      + "levels, display colours, input basis, and an advisory boundary. This does not identify "
+      + "hazards, validate safeguards or risk acceptance, establish ISO 31000 or NORSOK Z-013 "
+      + "compliance, authorize plant action, or replace project-specific qualified review.")
   public String runRiskMatrix(
-      @ToolArg(description = "JSON with: 'events' array. Each event has 'name' and EITHER "
-          + "('probabilityLevel' 1-5 + 'consequenceLevel' 1-5) OR "
-          + "('failuresPerYear' + 'productionLossPercent'), plus optional 'mitigation'.") String riskJson) {
+      @ToolArg(description = "Bounded JSON with an 'events' array of 1 to 100 records. Each event has an optional "
+          + "name (maximum 256 characters) and exactly one complete mode: integer 'probabilityLevel' 1-5 plus "
+          + "integer 'consequenceLevel' 1-5, or non-negative 'failuresPerYear' plus "
+          + "'productionLossPercent' from 0 to 100. Optional 'mitigation' is a string of at most 2048 characters. "
+          + "The caller owns the category basis and engineering review.") String riskJson) {
     String policyBlocked = enforceToolAccess("runRiskMatrix");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -2245,10 +2263,12 @@ public class NeqSimTools {
    * @param flareJson JSON spec with heat duty and radiation parameters
    * @return JSON string with radiation profile and safe-distance contour
    */
-  @Tool(description = "Compute flare-tip thermal radiation per API 521 §6 / API 537. "
-      + "Calculates the radiant heat flux at user-specified ground distances and the "
-      + "safe ground distance to API 521 thresholds (1.58, 4.73, 6.31, 9.46 kW/m²) "
-      + "used for personnel exposure and equipment limits.")
+  @Tool(description = "Compute bounded flare-tip thermal-radiation screening with the canonical "
+      + "NeqSim Flare model. Requests are capped at 16384 UTF-8 bytes and exactly one positive "
+      + "finite heat duty. Accepts 1 to 200 positive finite distances plus bounded flame height "
+      + "and radiant fraction. Returns deterministic profiles and reference-threshold contours "
+      + "for screening only; it does not claim standards conformance, safe siting, mechanical "
+      + "design, plant authority, or replace qualified engineering review.")
   public String runFlareNetwork(
       @ToolArg(description = "JSON with: 'heatDuty_MW' (or 'heatDuty_W'), optional "
           + "'flameHeight_m' (default 30), 'radiantFraction' (default 0.18), and "
@@ -2322,8 +2342,17 @@ public class NeqSimTools {
       return policyBlocked;
     }
     try {
-      return standardizeResponse("runHazopScenario", HazopScenarioRunner.run(scenarioJson),
-          "general");
+      String runnerResult = HazopScenarioRunner.run(scenarioJson);
+      JsonObject runner = JsonParser.parseString(runnerResult).getAsJsonObject();
+      if (runner.has("status") && "ok".equals(runner.get("status").getAsString())) {
+        // The runner's "ok" is its own result status; the MCP envelope uses "success".
+        // Retain legacy top-level finding fields and the complete runner result in data.
+        JsonObject envelope = runner.deepCopy();
+        envelope.addProperty("status", "success");
+        envelope.add("data", runner);
+        return standardizeResponse("runHazopScenario", envelope.toString(), "general");
+      }
+      return standardizeResponse("runHazopScenario", runnerResult, "general");
     } catch (Exception e) {
       return errorJson("HAZOP scenario evaluation failed: " + e.getMessage());
     } finally {
@@ -2339,9 +2368,11 @@ public class NeqSimTools {
    * @return JSON string with validation findings and safety-analysis handoffs
    */
   @Tool(description = "Validate and transform an evidence-linked safety barrier register. "
-      + "Accepts extracted document evidence, performance standards, safety barriers, "
-      + "and safety critical elements (SCEs). Returns validation findings plus handoff "
-      + "blocks for LOPA, SIL verification, bow-tie analysis, and QRA screening.")
+      + "Accepts at most 65536 UTF-8 bytes, 100 items per collection, 256 object members, "
+      + "4096 characters per text value, and 12 nested levels. Returns advisory validation "
+      + "findings and screening handoffs for LOPA, SIL, bow-tie, and QRA. It does not identify "
+      + "hazards, verify barrier independence/effectiveness, establish standards compliance, "
+      + "authorize plant action, or replace qualified process-safety review.")
   public String runBarrierRegister(
       @ToolArg(description = "JSON with 'register' containing registerId, evidence, "
           + "performanceStandards, barriers, and safetyCriticalElements. Use getExample "
@@ -2411,6 +2442,7 @@ public class NeqSimTools {
           + "optional 'historianCsv' (CSV with timestamp,param1,param2,...), "
           + "optional 'designLimits' ({param: [min, max]}), "
           + "optional 'stidData' ({param: value}), "
+          + "optional 'massBalance' (synchronized signals, sampleIntervalSeconds, inventoryChangeBoundsKg and directed meters), "
           + "optional 'simulationEnabled' (true/false, default true).") String rcaJson) {
     String policyBlocked = enforceToolAccess("runRootCauseAnalysis");
     if (policyBlocked != null) {

@@ -1,8 +1,10 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.SteadyStateConvergenceReport.TerminationReason;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -92,5 +94,6 @@ public class TwoFluidPipePressureFloorTest {
     assertTrue(pipe.isSteadyStatePressureFloorLimited(), "A profile resting on the pressure floor must be flagged");
     assertFalse(pipe.isSteadyStateConverged(),
         "A profile resting on the pressure floor must not be reported as converged");
+    assertEquals(TerminationReason.PRESSURE_FLOOR_LIMIT, pipe.getSteadyStateConvergenceReport().getTerminationReason());
   }
 }

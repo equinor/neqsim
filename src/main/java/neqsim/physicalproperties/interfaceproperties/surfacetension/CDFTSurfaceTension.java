@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -14,7 +15,10 @@ import neqsim.thermo.system.SystemInterface;
  * Computes the interfacial tension of a pure component by minimising the excess grand potential across a planar
  * vapour-liquid interface using a non-local density functional derived directly from the cubic equation of state (PR or
  * SRK). Unlike gradient theory, the surface tension emerges from the non-local treatment of attractive interactions
- * without requiring an empirical influence parameter.
+ * without requiring an empirical influence parameter. Aqueous interfaces, invalid numerical parameters and failed or
+ * invalid integrals use a logged fallback: Parachor for gas interfaces and Firozabadi-Ramley for liquid-liquid
+ * interfaces. Invalid bulk states and failed correlations raise an exception. Negative integrals are not reported as
+ * zero.
  * </p>
  *
  * <p>
@@ -117,7 +121,18 @@ public class CDFTSurfaceTension extends SurfaceTension {
   /** {@inheritDoc} */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
+    if (!validateInterface(interface1, interface2)) {
+      return 0.0;
+    }
     try {
+      if (system.getPhase(interface1).getType() == PhaseType.AQUEOUS
+          || system.getPhase(interface2).getType() == PhaseType.AQUEOUS) {
+        throw new IllegalStateException("The dispersive cDFT functional is not qualified for aqueous interfaces");
+      }
+      if (nGrid < 3 || !Double.isFinite(attractiveRangeFactor) || attractiveRangeFactor <= 0.0
+          || !Double.isFinite(domainHalfWidthInD) || domainHalfWidthInD <= 0.0) {
+        throw new IllegalStateException("Invalid cDFT grid or kernel parameters");
+      }
       int nc = system.getPhase(0).getNumberOfComponents();
 
       // In predictive mode, auto-set lambda from acentric factor
@@ -151,11 +166,9 @@ public class CDFTSurfaceTension extends SurfaceTension {
         }
       }
 
-      return Math.max(sigmaRaw, 0.0);
-    } catch (Exception ex) {
-      logger.error("cDFT failed: " + ex.getMessage() + ". Falling back to parachor.");
-      ParachorSurfaceTension fallback = new ParachorSurfaceTension(system);
-      return fallback.calcSurfaceTension(interface1, interface2);
+      return validateResult(sigmaRaw);
+    } catch (RuntimeException failure) {
+      return correlationFallback(interface1, interface2, failure);
     }
   }
 
@@ -267,7 +280,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
     logger.debug("cDFT: T={} K, rhoLiq={}, rhoVap={}, optDelta/dMol={}, sigma={} mN/m", temperature, rhoLiq, rhoVap,
         optDelta / dMol, sigma * 1000.0);
 
-    return Math.max(sigma, 0.0);
+    return validateResult(sigma);
   }
 
   /**
@@ -321,8 +334,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
       if (ri < 1.0e-10) {
         ri = 1.0e-10;
       }
-      if (b * ri >= 0.999) {
-        ri = 0.999 / b;
+      if (!Double.isFinite(b * ri) || b <= 0.0 || b * ri >= 1.0) {
+        throw new IllegalStateException("cDFT profile exceeds the EOS covolume");
       }
 
       // f_rep = rho * RT * [ln(rho) - 1 - ln(1 - b*rho)]
@@ -382,8 +395,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
    */
   private double muRepExcess(double rhoM, double t, double b) {
     double bRho = b * rhoM;
-    if (bRho >= 0.999) {
-      bRho = 0.999;
+    if (!Double.isFinite(bRho) || rhoM <= 0.0 || b <= 0.0 || bRho >= 1.0) {
+      throw new IllegalStateException("cDFT bulk density exceeds the EOS covolume");
     }
     return R * t * (-Math.log(1.0 - bRho) + bRho / (1.0 - bRho));
   }
@@ -655,7 +668,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
 
     logger.debug("cDFT mixture: T={} K, nc={}, optDelta/dMol={}, sigma={} mN/m", temperature, nc, optDelta / dMol,
         sigma * 1000.0);
-    return Math.max(sigma, 0.0);
+    return validateResult(sigma);
   }
 
   /**
@@ -738,8 +751,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
           aMix += xi * xj * aij[ic][jc];
         }
       }
-      if (bMix * rhoT >= 0.999) {
-        rhoT = 0.999 / bMix;
+      if (!Double.isFinite(bMix * rhoT) || bMix <= 0.0 || bMix * rhoT >= 1.0) {
+        throw new IllegalStateException("cDFT mixture profile exceeds the EOS covolume");
       }
 
       // f_ideal = RT * sum_i rho_i * (ln(rho_i) - 1)
@@ -811,8 +824,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
         aMix += xi * xj * aij[i][j];
       }
     }
-    if (bMix * rhoT >= 0.999) {
-      rhoT = 0.999 / bMix;
+    if (!Double.isFinite(bMix * rhoT) || bMix <= 0.0 || bMix * rhoT >= 1.0) {
+      throw new IllegalStateException("cDFT bulk mixture exceeds the EOS covolume");
     }
 
     // f_ideal = RT * sum_i rho_i * (ln(rho_i) - 1)

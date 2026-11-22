@@ -1,0 +1,21 @@
+{
+  "classes": 80,
+  "tests": 679,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "offgridCases": 54,
+  "offgridRows": 1080,
+  "offgridStatusCounts": {
+    "pass": 54
+  },
+  "maxima": {
+    "maxAmountErrorMol": 7.114975275612778e-12,
+    "maxCompositionError": 8.594513989379493e-14,
+    "maxRelativeVolumeError": 1.687538997430238e-14,
+    "maxInternalVolumeResidual": 1.532107773982716e-14,
+    "maxComponentClosureMol": 2.842170943040401e-14
+  },
+  "currentMasterResultByteIdentical": true,
+  "originalResultByteIdenticalToParent": true
+}

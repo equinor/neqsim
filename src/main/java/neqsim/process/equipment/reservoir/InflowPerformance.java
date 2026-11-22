@@ -205,8 +205,8 @@ public class InflowPerformance implements Serializable {
         wellboreRadiusMetre, viscosityCentiPoise, formationVolumeFactor, kvOverKh, skin);
     InflowPerformance inflow = new InflowPerformance(Model.JOSHI_HORIZONTAL, index, reservoirPressure,
         bubblePointPressure);
-    inflow.joshiInputs = new double[] { permeabilityMilliDarcy, netPayMetre, drainLengthMetre, drainageRadiusMetre,
-        wellboreRadiusMetre, viscosityCentiPoise, formationVolumeFactor, kvOverKh, skin };
+    inflow.joshiInputs = new double[] {permeabilityMilliDarcy, netPayMetre, drainLengthMetre, drainageRadiusMetre,
+        wellboreRadiusMetre, viscosityCentiPoise, formationVolumeFactor, kvOverKh, skin};
     return inflow;
   }
 
@@ -366,7 +366,7 @@ public class InflowPerformance implements Serializable {
     List<double[]> rows = new ArrayList<double[]>(points);
     for (int index = points - 1; index >= 0; index--) {
       double pwf = reservoirPressure * index / (points - 1.0);
-      rows.add(new double[] { pwf, rate(pwf) });
+      rows.add(new double[] {pwf, rate(pwf)});
     }
     return rows;
   }

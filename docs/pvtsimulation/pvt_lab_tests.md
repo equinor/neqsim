@@ -24,6 +24,18 @@ explicitly:
 | `SeparatorTest.setSeparatorConditions` temperature array | K |
 | `ViscositySim.setTemperaturesAndPressures` temperature array | K |
 | `ViscositySim` viscosity outputs | Pa·s; multiply by 1000 for cP |
+| `ConstantMassExpansion.getOilDensity()` | Oil-phase density in kg/m³; NaN if no oil phase exists |
+| `ConstantMassExpansion.getOilViscosity()` | Oil-phase dynamic viscosity in Pa·s; NaN if no oil phase exists |
+
+For CCE oil-property comparisons, use `getOilDensity()` and `getOilViscosity()`.
+Both select the named oil phase above and below the bubble point, preserve the
+constant-composition path, and share the pressure-array index. The legacy
+`getDensity()` reports phase-zero density, which is normally gas density in a
+gas-oil state. The legacy `getViscosity()` reports single-phase viscosity and NaN
+in multiphase states. Their existing behavior is preserved. The named oil
+accessors reuse the physical-property initialization already performed at each
+pressure and require no additional flash calculations. Regression evidence:
+[`ConstantMassExpansionOilPropertiesTest`](../../src/test/java/neqsim/pvtsimulation/simulation/ConstantMassExpansionOilPropertiesTest.java).
 
 `addTBPfraction` and `addPlusFraction` preserve `+` in a pseudo-component label when
 they append the internal `_PC` suffix, for example `C20+_PC`. However, the default Pedersen
@@ -37,7 +49,7 @@ label such as `C20`, not `C20+`, before calling `characterisePlusFraction()`.
 | Constant mass expansion (CCE/CME) | `ConstantMassExpansion` | Relative volume, liquid volume as percent of saturation volume, gas Z-factor, Y-function |
 | Constant volume depletion (CVD) | `ConstantVolumeDepletion` | Saturation pressure, relative volume, liquid volume as percent of saturation volume, cumulative mole-percent depletion |
 | Differential liberation (DL) | `DifferentialLiberation` | Saturation pressure, Bo, Bg, Rs, oil density, gas Z-factor |
-| Legacy separator test | `SeparatorTest` | Per-stage GOR and oil formation-volume factor arrays |
+| Legacy separator test | `SeparatorTest` | Per-stage GOR, oil formation-volume factor and gas gravity; stock-tank oil density, API gravity and gas gravity |
 | Swelling test | `SwellingTest` | Pressure and relative-oil-volume arrays |
 | Pressure/temperature viscosity grid | `ViscositySim` | Gas, oil, and aqueous viscosity arrays in Pa·s |
 
@@ -45,11 +57,50 @@ label such as `C20`, not `C20+`, before calling `characterisePlusFraction()`.
 dedicated slim-tube or multi-contact workflow; do not infer it from the swelling-factor
 curve alone.
 
+## Repeated saturation-temperature tuning
+
+`SaturationTemperature` defaults to a descending 30–1200 K search on a 10 K grid.
+This selects the uppermost resolved two-phase-to-single-phase crossing, including
+retrograde and disconnected phase regions, independently of the initial temperature.
+The result is refined to a bracket width of 1e-5 K. Regions narrower than the coarse
+grid can be missed; this is not a complete phase-envelope calculation.
+
+For repeated dew-point fitting, explicitly supply bounds that contain the desired
+upper boundary throughout the pressure and composition range being fitted:
+
+```java
+SaturationTemperature simulation = new SaturationTemperature(fluid);
+simulation.setTemperatureSearchBounds(260.0, 320.0); // K; establish these for your fluid
+simulation.run();
+double saturationTemperatureK = simulation.getSaturationTemperature();
+```
+
+This scans the same 10 K grid inside the supplied interval, including both endpoints,
+and refines its uppermost crossing with full multiphase TP flashes. It re-evaluates the
+current fluid on every call, so composition and pressure changes do not reuse stale
+phase classifications. The bounds remain fixed between calls. The 24-component
+UMR-PRU regression for issue #3795 covers heavy-component factors from 0.5 to 1.5
+at 52.1 bara and limits each bounded call to 30 flashes.
+
+If the upper endpoint is multiphase or the interval has no resolved crossing, the
+calculation falls back to the global search. If that search finds no boundary, the
+legacy result is 1200 K; it must not be interpreted as a converged saturation point.
+The caller's multiphase-check setting is restored even when a flash throws.
+
+**Bounds are a caller-supplied physical constraint, not an automatic global guarantee.**
+A local crossing and a single-phase upper endpoint cannot rule out a separate
+two-phase region above the bounds. Establish a suitable interval using global scans
+or phase-envelope calculations across the tuning range. Use
+`clearTemperatureSearchBounds()` to return to the global search when the interval
+is no longer justified. Existing callers retain the global behavior; they must opt in
+to bounded searching to obtain the reduced flash count.
+
 ## Executable constant-mass-expansion example
 
 This complete Java example uses SI molar masses for every characterized fraction. The
 pressure schedule and returned arrays share the same index.
 
+<!-- pvt-lab-example: constant-mass-expansion -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -108,6 +159,19 @@ public final class ConstantMassExpansionExample {
     double[] gasZ = cce.getZgas();
     double[] yFunction = cce.getYfactor();
 
+    if (relativeVolume.length != pressuresBara.length
+        || liquidRelativeVolume.length != pressuresBara.length
+        || gasZ.length != pressuresBara.length
+        || yFunction.length != pressuresBara.length
+        || !Double.isFinite(relativeVolume[0])
+        || !Double.isFinite(liquidRelativeVolume[12])
+        || !Double.isFinite(gasZ[12])
+        || !Double.isFinite(yFunction[12])
+        || !Double.isFinite(cce.getSaturationPressure())
+        || cce.getSaturationPressure() <= 0.0) {
+      throw new IllegalStateException("Constant-mass-expansion result is invalid");
+    }
+
     for (int i = 0; i < pressuresBara.length; i++) {
       logger.info("{} bara: Vrel={}, Vliq={} %, Zgas={}, Y={}", pressuresBara[i],
           relativeVolume[i], liquidRelativeVolume[i], gasZ[i], yFunction[i]);
@@ -117,9 +181,9 @@ public final class ConstantMassExpansionExample {
 }
 ```
 
-The focused documentation regression executes this example and checks representative
-finite values and array lengths. Treat calculated values as model results, not laboratory
-measurements.
+The focused documentation regression compiles and executes this exact marked Java 8
+fence, while its retained numerical regression checks representative values and array
+lengths. Treat calculated values as model results, not laboratory measurements.
 
 ## Current API map
 
@@ -131,19 +195,89 @@ Read `getSaturationPressure`, `getRelativeVolume`, `getLiquidRelativeVolume`,
 `getCummulativeMolePercDepleted` is the current compatibility API.
 `getLiquidRelativeVolume` returns percent of saturation volume, not a unitless fraction.
 
+The legacy `setTemperaturesAndPressures(temperaturesK, pressuresBara)` also sets the
+pressure schedule used by `runCalc`, replacing any earlier schedule. `runCalc` remains
+isothermal: use `setTemperature` for its common temperature; the temperature array
+is used by `runTuning`. Regression evidence:
+[`ConstantVolumeDepletionTest`](../../src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java).
+
+`calculateGasDensityQC()` evaluates $\rho_g = P M_g / (Z R T)$ with the gas molar mass recorded at
+each depletion step and the test temperature converted to kelvin from the unit passed to
+`setTemperature`. Before equinor/neqsim#5209 it used phase 0 of the final cell state for every
+step and the raw temperature value, so a temperature set in °C gave densities several times
+too high.
+
+### Saturation state in CCE and DL
+
+`ConstantMassExpansion` and `DifferentialLiberation` locate the saturation pressure by
+bisection and then evaluate the saturated cell at the single-phase side of the final bracket.
+The saturation volume is the volume of the whole cell (`getCorrectedVolume()`, summed over all
+phases), never the volume of one phase picked by index. Near the phase boundary the last
+bisection midpoint can hold a trace incipient phase (vapour fraction about 1e-8) stored as
+phase 0; reading that phase gave a saturation volume of 7e-10 m³ and relative volumes of
+order 1e5 before equinor/neqsim#5209. The CCE saturation compressibility is likewise that of
+the single-phase saturated fluid. DL reads the oil phase by type and liberates the gas phase
+by type. The same rule holds at any temperature, including states where the bracket midpoint
+is genuinely two-phase. Regression evidence: `DifferentialLiberationTest`
+(`testTracePhaseAtSaturationDoesNotDefineSaturationVolume`) and `ConstantMassExpansionTest`
+(`testSaturationStateIsSinglePhase`).
+
+### Volume conventions (volume shift, gas gravity, standard volumes)
+
+When the fluid uses Peneloux volume correction (`useVolumeCorrection(true)`, the default for
+EoS phases), every volume reported by `ConstantMassExpansion` and `DifferentialLiberation` is
+the corrected volume, as in Pedersen et al. (2015), *Phase Behavior of Petroleum Reservoir
+Fluids*, Sec. 3.1:
+
+| Result | Definition |
+| --- | --- |
+| CCE `getRelativeVolume()`, `getLiquidRelativeVolume()`, `getYfactor()` | From `getCorrectedVolume()` of the cell and of the saturated fluid |
+| CCE and DL `getZgas()`, CCE `getZsaturation()` | `getZvolcorr()` = P M / (ρ R T) with the corrected density |
+| DL `getBg()` | Corrected reservoir gas volume divided by its standard volume |
+| DL `getRelGasGravity()`, `SeparatorTest.getGasGravity()` | M_gas / M_air with M_air = 28.96546 g/mol |
+| DL `getGasStandardVolume()`, `getRs()` | Liberated gas at 288.15 K and 1.01325 bara with Z = 1; liquid that would drop out at standard conditions is counted as equivalent gas (Pedersen Eq. 3.7) |
+
+The Z = 1 standard-gas convention is the laboratory default. Call
+`setUseIdealGasStandardVolume(false)` on `DifferentialLiberation` to evaluate each liberated
+gas as a single gas phase at standard conditions with its real (corrected) Z instead; this
+gives smaller standard volumes and Rs, typically by less than 1 %.
+
+In NeqSim 3.29.0 and earlier the gas gravity was divided by 28.0 g/mol (3.4 % high), DL Z and Bg and the
+CCE relative volume used the uncorrected EoS volume, and DL Rs mixed the two standard-gas
+conventions (equinor/neqsim#5195). Regression evidence:
+[`PvtVolumeConventionsTest`](../../src/test/java/neqsim/pvtsimulation/simulation/PvtVolumeConventionsTest.java).
+
+`RegressionParameter.VOLUME_SHIFT_C7PLUS` multiplies the effective Peneloux shift of every
+plus and TBP fraction, whether it comes from the default Rackett correlation, a dimensionless
+shift constant or an E300 `SSHIFT`. It changes liquid densities only when the fluid uses
+volume correction.
+
 ### Differential liberation
 
 Configure `DifferentialLiberation` with `setTemperature`, `setPressures`, and `runCalc`.
 Read `getSaturationPressure`, `getBo`, `getBg`, `getRs`, `getOilDensity`, `getZgas`, and
-`getRelGasGravity`. Result arrays align with the pressure schedule.
+`getRelGasGravity`. Result arrays align with the pressure schedule. Standard-volume and gas
+gravity conventions are listed above.
 
 ### Separator tests
 
 The legacy `SeparatorTest` accepts all stages in one call:
 `setSeparatorConditions(temperaturesK, pressuresBara)`. After `runCalc`, read the per-stage
-arrays from `getGOR` and `getBofactor`. For named stages, reservoir-condition handling,
+arrays from `getGOR`, `getBofactor` and `getGasGravity` (NaN for a stage without gas), and
+the stock-tank results from `getStockTankOilDensity()` (kg/m³, volume-corrected),
+`getStockTankOilAPIGravity()` and `getStockTankGasGravity()` (NaN when no gas is released at
+standard conditions). For named stages, reservoir-condition handling,
 stock-tank results, and cumulative GOR, prefer `MultiStageSeparatorTest`; see the
 [PVT simulation overview](README.md).
+
+Each `MultiStageSeparatorTest` stage row (`getOilDensity()`, `getOilMW()`,
+`getOilViscosity()`) describes the liquid flashed at that stage's pressure and temperature:
+the properties are read from the flashed, initialised stage phase before it is carried to the
+next stage. Before equinor/neqsim#5208 the oil density was read from the carried copy before
+its physical properties were re-initialised, so every row reported the previous stage's oil
+density (the first row reported the reservoir oil). Regression evidence:
+`MultiStageSeparatorTestTest.testStageOilPropertiesMatchIndependentFlash`, which compares
+each row with an independent sequential flash.
 
 ### Swelling tests
 
@@ -151,11 +285,57 @@ Set the injection fluid with `setInjectionGas`, supply cumulative injected-gas m
 percentages with `setCummulativeMolePercentGasInjected`, and call `runCalc`. Read the
 pressure and relative-oil-volume arrays from `getPressures` and `getRelativeOilVolume`.
 
+The percentages are relative to the **original oil moles**: an addition of 20 mol%
+means 0.2 mol of injection fluid per initial mole of oil, not 20% of the final
+mixture. Supply a nonempty, finite, nonnegative, nondecreasing schedule. Repeated
+amounts repeat a stage without adding gas; the first amount may be nonzero.
+
+Set the experiment temperature with `setTemperature(value, "C")` or
+`setTemperature(value, "K")`; the one-argument setter always uses K, including after
+an earlier Celsius setting. Explicit nonfinite or nonpositive absolute temperatures
+are rejected by `runCalc`; an explicit NaN is not treated as an omitted setting.
+If no temperature is set, the constructor oil's temperature is used. The unmodified reference oil and
+every swollen mixture are evaluated at that same temperature. At zero addition
+the swelling factor is exactly one. Previously, the reference could use the
+construction temperature while later stages used another temperature, and the
+unit supplied to the two-argument setter was ignored.
+
+The ratio uses density-corrected volumes, including configured volume translation.
+Previously, the uncorrected cubic-EOS volume was used even when liquid-density
+volume shifts were enabled.
+
+Each run starts from the oil snapshot captured by the constructor. To use a
+different initial oil or EOS parameter set, construct a new `SwellingTest` after
+configuring that fluid. The original oil and injection-gas template remain
+unchanged; `getThermoSystem` returns the final swollen mixture. Rerunning the same
+experiment does not inject the gas twice.
+
+This API follows **bubble points only**. It does not follow swelling through a
+critical transition onto a dew branch, calculate MMP, or generate the full CCE
+dropout curve at each addition. Failed bubble-point solves throw
+`IllegalStateException` with the failing stage and original cause; result arrays
+remain NaN unless every stage succeeds. Do not interpret a failed solve as a
+physical swelling factor. Follow the remaining EOR work in
+[the qualification matrix](pedersen_method_qualification.md).
+
+`SwellingTestTest` checks temperature units, cumulative component/mass balances,
+new injection components under SRK and PR, input preservation, repeat runs and
+explicit failures. Its binary SRK numerical benchmark is independently generated
+by `devtools/generate_srk_swelling_reference.py`; it is not experimental oil data.
+
 ### Viscosity grids
 
 `ViscositySim.setTemperaturesAndPressures(temperaturesK, pressuresBara)` defines paired
 states. After `runCalc`, use `getGasViscosity`, `getOilViscosity`, and
 `getAqueousViscosity`. These arrays are in Pa·s.
+
+For compatibility, these numerical arrays contain zero where the corresponding
+phase is absent. Use `getGasPhaseAvailable`, `getOilPhaseAvailable` and
+`getAqueousPhaseAvailable` to distinguish absence from a computed value at each
+paired state. The Boolean arrays are captured from the actual flash within
+`runCalc`; a viscosity value alone does not establish phase presence. The
+[PVT study adapter and report](pvt_fluid_study_report.md) retain these masks in
+the canonical dataset and encode absent-phase viscosities as JSON `null`.
 
 ## Calibration workflow
 

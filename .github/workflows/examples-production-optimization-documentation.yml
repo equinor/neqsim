@@ -1,0 +1,121 @@
+name: "[Examples] Production Optimization Documentation"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/examples-production-optimization-documentation.yml'
+      - '.github/workflows/docs-convert-notebooks-to-markdown.yml'
+      - 'docs/process/optimization/**'
+      - 'docs/process/*optimization*'
+      - 'docs/process/*FRAMEWORK.md'
+      - 'docs/process/processmodel/process_module.md'
+      - 'docs/wiki/bottleneck_analysis.md'
+      - 'docs/examples/**'
+      - 'docs/fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md'
+      - 'docs/integration/**'
+      - 'docs/util/optimizer_guide.md'
+      - 'docs/convert_notebooks.py'
+      - 'docs/test_convert_notebooks.py'
+      - 'examples/notebooks/**'
+      - 'devtools/*optimization*'
+      - 'devtools/test_optimizer_guide_examples.py'
+      - 'devtools/test_field_to_facility_living_workflow.py'
+      - 'devtools/optimization_java_fragments/**'
+      - 'devtools/neqsim_dev_setup.py'
+      - 'src/main/java/neqsim/process/util/optimizer/**'
+      - 'src/main/java/neqsim/process/util/reconciliation/**'
+      - 'src/main/java/neqsim/process/equipment/capacity/**'
+      - 'src/main/java/neqsim/process/equipment/compressor/**'
+      - 'src/main/java/neqsim/process/equipment/network/**'
+      - 'src/main/java/neqsim/process/equipment/stream/**'
+      - 'src/main/java/neqsim/process/equipment/util/MultiVariableAdjuster.java'
+      - 'src/test/java/neqsim/process/**'
+      - 'src/test/python/**'
+      - 'pom.xml'
+
+permissions:
+  contents: read
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Compile and execute documentation and affected Java regressions
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=PracticalOptimizationDocumentationTest,OptimizationEntryDocumentationTest,ProductionOptimizationGuideExamplesTest,ProcessModelOptimizationOverviewDocumentationTest,OptimizationGuideExamplesTest,CapacityOptimizationDocumentationTest,OptimizationIntegrationDocumentationTest,ProcessOptimizationEngineOperatingPointTest,ProcessOptimizationEngineTest,ProductionOptimizerSelectedPointTest,ProductionOptimizerTest,ProductionOptimizerAdvancedTest,FlowRateOptimizerTest,ProcessModelOptimizationViewTest,BatchStudyTest,BatchStudyDocumentationRegressionTest,PressureBoundaryOptimizerTest,PressureBoundaryCapacityIntegrationTest,SteadyStateDetectorTest,SteadyStateDocumentationRegressionTest,SQPoptimizerTest,SQPDocumentationRegressionTest,CompressorCapacityPowerUnitsTest,StreamFlowRateInvalidationTest,StreamTest,StreamPerformanceOptionsTest,StreamTransientStateTransactionTest,FluidMagicInputTest,RecombinationFlashGeneratorTest,RecombinationFlashGeneratorRateConsistencyTest,LoopDetectorFlowConservationTest,LoopedPipeNetworkOperatingPointTest,LoopedPipeNetworkTest,NetworkValidationBenchmarkTest
+          test dependency:build-classpath -Dmdep.outputFile=target/optimization-classpath.txt
+      - name: Install latest NeqSim and documented Python dependencies
+        run: uv sync --project devtools --group test --group optimization-docs --upgrade-package neqsim
+      - name: Compile all remaining Java fragments and execute capacity/design examples
+        run: uv run --project devtools --locked --group test --group optimization-docs devtools/check_optimization_java_fragments.py
+      - name: Execute standalone Python examples against the latest NeqSim release
+        env:
+          MPLBACKEND: Agg
+        run: |
+          uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_practical_optimization_examples -v
+          uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_optimization_entry_examples -v
+      - name: Execute Python documentation against current Java source
+        env:
+          MPLBACKEND: Agg
+        run: |
+          export NEQSIM_TEST_CLASSPATH="$PWD/target/classes:$PWD/target/test-classes:$(cat target/optimization-classpath.txt)"
+          uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_practical_optimization_examples -v
+          uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_optimization_entry_examples -v
+          uv run --project devtools --locked --group test --group optimization-docs python src/test/python/test_production_optimization_guides.py
+          uv run --project devtools --locked --group test --group optimization-docs devtools/test_optimizer_guide_examples.py
+          uv run --project devtools --locked --group test --group optimization-docs devtools/test_optimization_integration_examples.py
+          uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_field_to_facility_living_workflow -v
+      - name: Verify notebook conversion and documentation search
+        run: |
+          uv run --project devtools --locked --group test --group optimization-docs python -m unittest discover -s docs -p 'test_*.py'
+          uv run --project devtools --locked --group test --group optimization-docs devtools/check_documentation_search.py
+      - name: Retain test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: optimization-documentation-tests
+          path: target/surefire-reports/
+
+  notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Compile workspace classes and prepare notebook classpath
+        run: >-
+          ./mvnw -B -ntp -DskipTests compile dependency:build-classpath
+          -Dmdep.outputFile=target/neqsim-dev-classpath.txt
+      - name: Install notebook dependencies
+        run: uv sync --project devtools --group optimization-notebooks --upgrade-package neqsim
+      - name: Execute all fourteen production optimization notebooks
+        run: uv run --project devtools --locked --group optimization-notebooks devtools/check_optimization_notebooks.py
+      - name: Retain executed notebooks, HTML, figures and failure logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: optimization-notebooks
+          path: target/optimization-notebooks/

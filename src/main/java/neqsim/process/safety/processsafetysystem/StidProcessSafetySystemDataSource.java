@@ -22,10 +22,10 @@ import com.google.gson.JsonParser;
  */
 public class StidProcessSafetySystemDataSource {
   /** Top-level arrays interpreted as process safety review items. */
-  public static final String[] REVIEW_ARRAY_KEYS = new String[] { "items", "processSafetyFunctions", "safetyFunctions",
+  public static final String[] REVIEW_ARRAY_KEYS = new String[] {"items", "processSafetyFunctions", "safetyFunctions",
       "psdValves", "shutdownValves", "psvs", "psvValves", "alarms", "alarmActions", "sifs",
       "safetyInstrumentedFunctions", "secondaryPressureProtection", "utilityDependencies", "survivabilityItems",
-      "logicSolvers", "causeAndEffectActions", "instrumentData", "tagreaderEvidence" };
+      "logicSolvers", "causeAndEffectActions", "instrumentData", "tagreaderEvidence"};
 
   private final JsonObject source;
 

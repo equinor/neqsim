@@ -33,10 +33,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class DoeBigHillAtmosphericFractionationTest {
-  private static final double[] LOWER_BOUNDARY_F = { 175.0, 250.0, 375.0, 530.0, 650.0 };
-  private static final double[] UPPER_BOUNDARY_F = { 250.0, 375.0, 530.0, 650.0, 1050.0 };
-  private static final double[] WEIGHT_PERCENT = { 8.6, 15.2, 15.2, 11.1, 30.3 };
-  private static final double[] SPECIFIC_GRAVITY = { 0.7815, 0.8305, 0.8623, 0.9226, 0.9477 };
+  private static final double[] LOWER_BOUNDARY_F = {175.0, 250.0, 375.0, 530.0, 650.0};
+  private static final double[] UPPER_BOUNDARY_F = {250.0, 375.0, 530.0, 650.0, 1050.0};
+  private static final double[] WEIGHT_PERCENT = {8.6, 15.2, 15.2, 11.1, 30.3};
+  private static final double[] SPECIFIC_GRAVITY = {0.7815, 0.8305, 0.8623, 0.9226, 0.9477};
   private static final int SIDE_DRAW_TRAY = 4;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
   private static final double REPEAT_TOLERANCE = 1.0e-2;
@@ -57,6 +57,8 @@ public class DoeBigHillAtmosphericFractionationTest {
 
     String firstRunDiagnostics = column.getConvergenceDiagnostics();
     assertTrue(column.solved(), firstRunDiagnostics);
+    assertEquals(0.20, column.getTemperatureTolerance(), 0.0, firstRunDiagnostics);
+    assertEquals(300, column.getMaxNumberOfIterations(), firstRunDiagnostics);
     assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), firstRunDiagnostics);
     assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(), firstRunDiagnostics);
     assertTrue(column.getLastMeshResidualNorm() <= column.getMeshResidualTolerance(), firstRunDiagnostics);
@@ -78,6 +80,8 @@ public class DoeBigHillAtmosphericFractionationTest {
 
     String repeatedRunDiagnostics = column.getConvergenceDiagnostics();
     assertTrue(column.solved(), repeatedRunDiagnostics);
+    assertTrue(column.wasSequentialWarmStateReused(), repeatedRunDiagnostics);
+    assertEquals(0, column.getLastIterationCount(), repeatedRunDiagnostics);
     assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), repeatedRunDiagnostics);
     assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(),
         repeatedRunDiagnostics);
@@ -120,7 +124,7 @@ public class DoeBigHillAtmosphericFractionationTest {
     column.setTopPressure(1.2);
     column.setBottomPressure(1.5);
     column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    column.getReboiler().setOutTemperature(600.0);
+    column.getReboiler().setOutletTemperature(600.0);
     column.setCondenserRefluxRatio(1.0);
     column.setLiquidSideDrawFraction(SIDE_DRAW_TRAY, 0.10);
     column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);

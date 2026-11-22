@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "frontmatter-scalar-refactor",
+      "base_revision": "d8c9354ab490564c3c2220b8f735c645cd575c79",
+      "prompt": "Consolidate scalar metadata parsing in devtools/verify_skills_agents.py onto the existing shared frontmatter implementation. Preserve its scalar dictionary interface, folded descriptions, and quoted description content. Keep dependency-list extraction separate. Add regression coverage and run the relevant verifier and discovery checks.",
+      "allowed_paths": [
+        "devtools/verify_skills_agents.py",
+        "devtools/test_verify_skills_agents.py"
+      ],
+      "acceptance_test": "frontmatter_contract.py",
+      "expected_tests": 4,
+      "timeout_seconds": 120,
+      "qualification": "Python maintenance pilot; no thermodynamic or performance qualification",
+      "base_files_sha256": {
+        "devtools/verify_skills_agents.py": "6c9e8c14d6a4e5c33c715b405ceef5199b33af12c269d3e1ed3a6f234a9d1bff",
+        "devtools/agent_frontmatter.py": "0ad9fee7c48ad0d1f699bb0fb989f56f7590f315f5846a90d1c68ba2a049bd1a"
+      }
+    }
+  ]
+}

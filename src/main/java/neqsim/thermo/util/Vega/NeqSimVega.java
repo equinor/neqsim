@@ -4,6 +4,7 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.StateOfMatter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -99,12 +100,20 @@ public class NeqSimVega {
    * @return a double
    */
   public double getMolarDensity() {
-    int flag = 0;
+    int flag = StateOfMatter.isLiquid(phase.getType()) ? 2 : 0;
     intW ierr = new intW(0);
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 100.0;
     Vega.DensityVega(flag, phase.getTemperature(), pressure, D, ierr, herr);
+    if (ierr.val != 0 || !Double.isFinite(D.val) || D.val <= 0.0) {
+      throw new IllegalStateException("Vega density calculation failed for " + phase.getType() + " at "
+          + phase.getTemperature() + " K and " + phase.getPressure() + " bar(a): " + herr.val);
+    }
+    if (flag == 2 && phase.getTemperature() < Vega.Tc && D.val <= Vega.Dc) {
+      throw new IllegalStateException("Vega liquid density calculation returned a non-liquid root at "
+          + phase.getTemperature() + " K and " + phase.getPressure() + " bar(a)");
+    }
     return D.val;
   }
 
@@ -245,8 +254,8 @@ public class NeqSimVega {
     // arg7);
     Vega.propertiesVega(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt,
         kappa, A);
-    double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
-        cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
+    double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
+        cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
     return properties;
   }
 

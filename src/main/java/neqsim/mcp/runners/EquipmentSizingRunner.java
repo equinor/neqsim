@@ -254,7 +254,7 @@ public final class EquipmentSizingRunner {
       fluid.addComponent(compName, components.get(compName).getAsDouble());
     }
 
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
     fluid.setMixingRule(mixingRule);
 
     return fluid;

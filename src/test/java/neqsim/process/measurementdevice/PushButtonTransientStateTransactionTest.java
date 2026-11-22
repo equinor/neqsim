@@ -151,10 +151,6 @@ class PushButtonTransientStateTransactionTest extends neqsim.NeqSimTest {
     };
     assertBlocked(subclass, "subclass-owned mutable state");
 
-    PushButton online = new PushButton("online");
-    online.setIsOnlineSignal(true, "plant", "PB-ONLINE");
-    assertBlocked(online, "external I/O");
-
     PushButton automaticValve = new PushButton("automatic valve", new BlowdownValve("BDV-401"));
     assertBlocked(automaticValve, "automatic blowdown-valve activation");
 

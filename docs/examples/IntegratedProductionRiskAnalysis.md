@@ -556,6 +556,8 @@ Risk matrix saved to 'risk_matrix.png'
 
 </details>
 
+![Result figure from cell 12](figures/IntegratedProductionRiskAnalysis_cell_12_output_1.png)
+
 ## 6. Monte Carlo Risk Simulation
 
 Run Monte Carlo simulation to estimate:
@@ -701,6 +703,8 @@ Results saved to 'monte_carlo_results.png'
 ```
 
 </details>
+
+![Result figure from cell 15](figures/IntegratedProductionRiskAnalysis_cell_15_output_1.png)
 
 ## 7. Well Prioritization Under Risk
 
@@ -851,6 +855,8 @@ Well prioritization analysis saved to 'well_prioritization_risk.png'
 ```
 
 </details>
+
+![Result figure from cell 18](figures/IntegratedProductionRiskAnalysis_cell_18_output_1.png)
 
 ## 8. Operational Recommendations
 
@@ -1063,6 +1069,8 @@ print("\n✓ Dashboard saved to 'integrated_dashboard.png'")
 ```
 
 </details>
+
+![Result figure from cell 22](figures/IntegratedProductionRiskAnalysis_cell_22_output_1.png)
 
 ## 10. Real-Time Monitoring Dashboard
 
@@ -1517,6 +1525,8 @@ print("\n✓ Dashboard snapshot saved to 'realtime_dashboard_snapshot.png'")
 
 </details>
 
+![Result figure from cell 27](figures/IntegratedProductionRiskAnalysis_cell_27_output_1.png)
+
 ### Real-Time Risk Update
 
 When equipment trips occur, we can update the risk assessment in real-time using the collected alarm data. This demonstrates how operational events feed back into risk analysis.
@@ -1865,4 +1875,3 @@ This notebook demonstrated the **complete operational planning workflow**:
 - [Production Bottleneck Analysis](https://github.com/equinor/neqsim/blob/master/docs/examples/ProductionSystem_BottleneckAnalysis.ipynb)
 - [Multi-Scenario VFP Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/MultiScenarioVFP_Tutorial.ipynb)
 - [Field Development Workflow](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb)
-

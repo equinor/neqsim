@@ -631,6 +631,41 @@ The transient network modes make ownership of flow and pressure explicit:
 | `Cooler` | dynamic temperature control disabled (default) | Historical specified-temperature behavior is retained. |
 | `Cooler` | configured dynamic temperature control | A bounded utility-valve/NTU model applies actuator and process thermal lags. |
 
+The dynamic cooler advances its actuator and thermal state once per physical
+timestep. Repeated evaluations with the same non-null calculation UUID reuse
+the timestep's initial valve position and outlet temperature while recalculating
+the heat-transfer target from the current inlet conditions. This supports the
+second pass of semi-implicit integration without applying the lag twice. Use a
+new UUID for each physical timestep. If the inlet is at or below the cooling
+medium temperature, this cooling-only model passes through the inlet temperature
+and adds no heat.
+
+For a scan-consistent temperature loop, register the outlet `TemperatureTransmitter`
+with the `ProcessSystem` and enable its physical-step sampling mode. The public
+synthetic qualification uses a 10,000 kg/h methane/ethane feed, an 80/35/20 C
+design point, 5 s utility-actuator and 10 s thermal time constants, and a 4/30/0
+PID. Following an 80 to 100 C inlet step, the 1 s scan case limits the 60 s outlet
+peak/final temperature to 38.3/37.6 C, IAE to 161 C-s, peak held-sample error to
+3.3 C and controller-output travel to 5.6 percentage points. The 1.0/0.5 s
+ten-second comparison limits outlet and opening differences to 0.75 C and one
+percentage point. A stuck-at-35 C sensor case must mask more than a 5 C real
+excursion; it is retained as a fail-loud safety limitation, not a passed
+safeguarding case. These synthetic limits qualify numerical execution only. They
+do not establish vendor response, hazard completeness, alarm/trip settings,
+independence, voting, SIL, relief adequacy or an approved control tuning.
+The cooler's physical-step UUID guard prevents double advancement inside one
+accepted step, but the cooler is not claimed here as a complete
+`TransientStateParticipant`. Do not use this chain as evidence for adaptive
+trial rejection or whole-step rollback until every equipment-owned state has
+explicit transaction coverage.
+
+Valve `autoSize(safetyFactor, designOpeningPercent)` evaluates the sizing
+correlation at the requested design opening, including when it differs from the
+current valve position. With a safety factor of 1 and no minimum-Cv floor
+limitation, that opening reproduces the design flow after transient handoff.
+The safety factor must be finite and positive, and the design opening must be
+finite and in (0, 100] percent; configured valve travel limits still apply.
+
 Example handoff after the steady-state recycle has converged:
 
 ```java

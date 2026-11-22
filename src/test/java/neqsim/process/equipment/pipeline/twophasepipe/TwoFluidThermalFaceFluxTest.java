@@ -9,17 +9,20 @@ import org.junit.jupiter.api.Test;
 class TwoFluidThermalFaceFluxTest {
   @Test
   void closedExternalFacesAreZeroWhileInternalConvectionRemainsActive() {
-    TwoFluidSection[] sections = new TwoFluidSection[] { createGasSection(0.0, 0.0), createGasSection(10.0, 2.0),
-        createGasSection(20.0, 0.0) };
+    TwoFluidSection[] sections = new TwoFluidSection[] {createGasSection(0.0, 0.0), createGasSection(10.0, 2.0),
+        createGasSection(20.0, 0.0)};
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
     equations.calcRHS(sections, 10.0);
     double[][] faceFluxes = equations.getLastPhaseMassFaceFluxes();
+    double[] energyFluxes = equations.getLastEnergyFaceFluxes();
 
     for (int phase = 0; phase < 3; phase++) {
       assertEquals(0.0, faceFluxes[0][phase], 0.0);
       assertEquals(0.0, faceFluxes[faceFluxes.length - 1][phase], 0.0);
     }
+    assertEquals(0.0, energyFluxes[0], 0.0);
+    assertEquals(0.0, energyFluxes[energyFluxes.length - 1], 0.0);
     double internalThroughput = 0.0;
     for (int face = 1; face < faceFluxes.length - 1; face++) {
       for (int phase = 0; phase < 3; phase++) {
@@ -27,20 +30,29 @@ class TwoFluidThermalFaceFluxTest {
       }
     }
     assertTrue(internalThroughput > 0.0, "Closing the external faces must not disable internal convection");
+    assertTrue(Math.abs(energyFluxes[1]) > 0.0, "Internal convection must retain its total-energy flux");
 
     double retainedInternalGasFlow = faceFluxes[1][0];
     double[][] weightedFluxes = new double[faceFluxes.length][3];
+    double[] weightedEnergyFluxes = new double[energyFluxes.length];
     equations.accumulateLastPhaseMassFaceFluxes(weightedFluxes, 0.25);
     equations.accumulateLastPhaseMassFaceFluxes(weightedFluxes, 0.75);
+    equations.accumulateLastEnergyFaceFluxes(weightedEnergyFluxes, 0.25);
+    equations.accumulateLastEnergyFaceFluxes(weightedEnergyFluxes, 0.75);
     for (int face = 0; face < faceFluxes.length; face++) {
+      assertEquals(energyFluxes[face], weightedEnergyFluxes[face], 1.0e-12,
+          "Stage accumulation must preserve the weighted conservative energy flow");
       for (int phase = 0; phase < 3; phase++) {
         assertEquals(faceFluxes[face][phase], weightedFluxes[face][phase], 1.0e-12,
             "Stage accumulation must preserve the weighted conservative face flow");
       }
     }
     faceFluxes[0][0] = 1.0;
+    energyFluxes[0] = 1.0;
     assertEquals(0.0, equations.getLastPhaseMassFaceFluxes()[0][0], 0.0,
         "Callers must not be able to mutate the retained integration-stage fluxes");
+    assertEquals(0.0, equations.getLastEnergyFaceFluxes()[0], 0.0,
+        "Callers must not be able to mutate the retained energy fluxes");
 
     sections[1].setGasVelocity(4.0);
     sections[1].updateConservativeVariables();
@@ -56,7 +68,7 @@ class TwoFluidThermalFaceFluxTest {
 
   @Test
   void singleSectionReturnsClosedBoundaryFacesWithoutAnInternalInterface() {
-    TwoFluidSection[] sections = new TwoFluidSection[] { createGasSection(0.0, 0.0) };
+    TwoFluidSection[] sections = new TwoFluidSection[] {createGasSection(0.0, 0.0)};
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
     double[][] faceFluxes = equations.calcPhaseMassFaceFluxes(sections, 10.0);
@@ -67,6 +79,45 @@ class TwoFluidThermalFaceFluxTest {
         assertEquals(0.0, faceFluxes[face][phase], 0.0);
       }
     }
+  }
+
+  @Test
+  void countercurrentBoundaryEnergyRetainsOppositePhaseSignsAndExactTotal() {
+    TwoFluidSection section = createGasSection(0.0, 1.5);
+    section.setGasHoldup(0.4);
+    section.setLiquidHoldup(0.6);
+    section.setOilHoldup(0.6);
+    section.setWaterHoldup(0.0);
+    section.setGasVelocity(1.5);
+    section.setLiquidVelocity(-0.2);
+    section.setOilVelocity(-0.2);
+    section.setWaterVelocity(0.0);
+    section.setPhaseEnthalpies(5.0e4, 4.0e4);
+    section.updateConservativeVariables();
+    section.updateDerivedQuantities();
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setAllowOutletPhaseBackflow(true);
+
+    equations.calcRHS(new TwoFluidSection[] {section}, 10.0);
+    double[] total = equations.getLastEnergyFaceFluxes();
+    double[][] phase = equations.getLastBoundaryPhaseEnergyFluxes();
+    assertTrue(phase[0][0] > 0.0);
+    assertTrue(phase[0][1] < 0.0);
+    assertTrue(phase[1][0] > 0.0);
+    assertTrue(phase[1][1] < 0.0);
+    assertEquals(total[0], phase[0][0] + phase[0][1] + phase[0][2], 0.0);
+    assertEquals(total[1], phase[1][0] + phase[1][1] + phase[1][2], 0.0);
+
+    double[][] accumulated = new double[2][3];
+    equations.accumulateLastBoundaryPhaseEnergyFluxes(accumulated, 0.25);
+    equations.accumulateLastBoundaryPhaseEnergyFluxes(accumulated, 0.75);
+    for (int boundary = 0; boundary < 2; boundary++) {
+      for (int phaseIndex = 0; phaseIndex < 3; phaseIndex++) {
+        assertEquals(phase[boundary][phaseIndex], accumulated[boundary][phaseIndex], 1.0e-12);
+      }
+    }
+    phase[0][0] = 0.0;
+    assertTrue(equations.getLastBoundaryPhaseEnergyFluxes()[0][0] > 0.0);
   }
 
   private TwoFluidSection createGasSection(double position, double gasVelocity) {

@@ -8,11 +8,11 @@ import neqsim.process.equipment.distillation.DistillationColumn.SolverType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
-@Tag("slow")
 public class DistillationSpeedTest {
   private static final Logger logger = LogManager.getLogger(DistillationSpeedTest.class);
 
   @Test
+  @Tag("slow")
   public void compareSolvers() {
     int warmupRuns = 2;
     int benchmarkRuns = 5;
@@ -77,8 +77,8 @@ public class DistillationSpeedTest {
     // Use auto-feed assignment
     column.addFeedStream(feed);
 
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.getCondenser().setRefluxRatio(2.0);
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);

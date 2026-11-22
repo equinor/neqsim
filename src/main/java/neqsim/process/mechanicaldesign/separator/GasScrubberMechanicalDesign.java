@@ -126,10 +126,18 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (getDesignStandard().containsKey("gas scrubber process design")) {
       logger.info("gas scrubber process design: {}",
           getDesignStandard().get("gas scrubber process design").getStandardName());
-      gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getGasLoadFactor();
-      volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getVolumetricDesignFactor();
+      GasScrubberDesignStandard standard = (GasScrubberDesignStandard) getDesignStandard()
+          .get("gas scrubber process design");
+      if (!isProcessDesignParameterOverridden("GasLoadFactor")) {
+        gasLoadFactor = standard.getGasLoadFactor();
+        recordProcessDesignParameterSource("GasLoadFactor",
+            standard.getProcessDesignParameterSources().get("GasLoadFactor"));
+      }
+      if (!isProcessDesignParameterOverridden("VolumetricDesignFactor")) {
+        volumeSafetyFactor = standard.getVolumetricDesignFactor();
+        recordProcessDesignParameterSource("VolumetricDesignFactor",
+            standard.getProcessDesignParameterSources().get("FlowDesignFactor"));
+      }
     } else {
       logger.info("no gas scrubber process design specified");
     }
@@ -173,6 +181,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
+    updateWallThicknessForSizedDiameter();
     // System.out.println("inner Diameter " + innerDiameter);
 
     // calculating from standard codes
@@ -211,6 +220,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     tantanLength = innerDiameter * 5;
     setInnerDiameter(innerDiameter);
+
+    // Vessel internal volume (m3) from the scrubber-sized geometry. super.calcDesign() set this
+    // from the base separator pass, so it must be refreshed after the scrubber re-sizing.
+    setVolumeTotal(
+        neqsim.thermo.ThermodynamicConstantsInterface.pi * Math.pow(innerDiameter / 2.0, 2.0) * tantanLength);
 
     setWeightElectroInstrument(electricalWeight);
 

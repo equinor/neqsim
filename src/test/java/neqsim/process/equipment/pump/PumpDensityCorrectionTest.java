@@ -28,14 +28,14 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     pumpChart = new PumpChart();
 
     // Set up pump curve at reference speed
-    double[] speed = new double[] { 1000.0 };
-    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 } };
-    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0 } };
-    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0 } };
+    double[] speed = new double[] {1000.0};
+    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0}};
+    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0}};
+    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0}};
 
     // chartConditions: [refMW, refTemp, refPressure, refZ, refDensity]
     // Set reference density to 998 kg/m³ (water)
-    double[] chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0, 998.0 };
+    double[] chartConditions = new double[] {18.0, 298.15, 1.0, 1.0, 998.0};
 
     pumpChart.setCurves(chartConditions, speed, flow, head, efficiency);
     pumpChart.setHeadUnit("meter");
@@ -97,13 +97,13 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     // Test that charts without density in chartConditions work as before
     PumpChart chartNoDensity = new PumpChart();
 
-    double[] speed = new double[] { 1000.0 };
-    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0 } };
-    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0 } };
-    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0 } };
+    double[] speed = new double[] {1000.0};
+    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0}};
+    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0}};
+    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0}};
 
     // Only 4 elements - no density
-    double[] chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0 };
+    double[] chartConditions = new double[] {18.0, 298.15, 1.0, 1.0};
 
     chartNoDensity.setCurves(chartConditions, speed, flow, head, efficiency);
     chartNoDensity.setHeadUnit("meter");
@@ -126,10 +126,10 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     // Test setting reference density via setter method
     PumpChart chart = new PumpChart();
 
-    double[] speed = new double[] { 1000.0 };
-    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0 } };
-    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0 } };
-    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0 } };
+    double[] speed = new double[] {1000.0};
+    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0}};
+    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0}};
+    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0}};
 
     chart.setCurves(new double[] {}, speed, flow, head, efficiency);
     chart.setHeadUnit("meter");
@@ -163,11 +163,11 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     pump.setSpeed(1000.0);
 
     // Set pump chart with water reference density
-    double[] speed = new double[] { 1000.0 };
-    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 } };
-    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0 } };
-    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0 } };
-    double[] chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0, 998.0 };
+    double[] speed = new double[] {1000.0};
+    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0}};
+    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0}};
+    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0}};
+    double[] chartConditions = new double[] {18.0, 298.15, 1.0, 1.0, 998.0};
 
     pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
     pump.getPumpChart().setHeadUnit("meter");

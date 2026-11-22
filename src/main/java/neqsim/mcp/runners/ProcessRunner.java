@@ -217,6 +217,14 @@ public class ProcessRunner {
   private static String runProcessSystem(String normalizedJson, long startTime, boolean preValidationPassed,
       JsonArray validationIssues) {
     SimulationResult result = ProcessSystem.fromJsonAndRun(normalizedJson);
+    String unresolved = firstUnresolvedInletWarning(result);
+    if (unresolved != null) {
+      // The builder runs the disconnected flowsheet and only warns; for the tool that is a failed run.
+      return errorJson("UNRESOLVED_INLET", "Process ran with disconnected equipment: " + unresolved,
+          "Every 'inlet'/'inlets' entry must name a unit in the 'process' array (feeds are units of type "
+              + "'Stream') or a 'unitName.port' alias such as gasOut, liquidOut, out, splitStream_0. "
+              + "Call validateInput first; it lists the unresolved references and the defined unit names.");
+    }
     String simJson = result.toJson();
 
     String model = extractModel(normalizedJson);
@@ -834,8 +842,8 @@ public class ProcessRunner {
     if (properties.has("mechanicalDesign")) {
       return "mechanicalDesign";
     }
-    String[] designProperties = { "compressorChart", "cv", "internalDiameter", "separatorLength", "diameter",
-        "pipeWallThickness", "maxDesignDuty", "designDuty", "maxDesignPower", "maxDesignVolumeFlow" };
+    String[] designProperties = {"compressorChart", "cv", "internalDiameter", "separatorLength", "diameter",
+        "pipeWallThickness", "maxDesignDuty", "designDuty", "maxDesignPower", "maxDesignVolumeFlow"};
     for (String designProperty : designProperties) {
       if (properties.has(designProperty)) {
         return designProperty;
@@ -1544,9 +1552,9 @@ public class ProcessRunner {
       return;
     }
     JsonObject data = new JsonObject();
-    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report", "convergenceSummary",
+    String[] fields = {"processSystemName", "processModelName", "areaCount", "areas", "report", "convergenceSummary",
         "convergenceReport", "autoSizing", "designReport", "utilizationSnapshot", "bottleneckRanking",
-        "processDefinition", "pythonScript" };
+        "processDefinition", "pythonScript"};
     for (String field : fields) {
       if (response.has(field)) {
         data.add(field, response.get(field));
@@ -1664,7 +1672,7 @@ public class ProcessRunner {
    * @param properties mutable properties object
    */
   private static void normalizeLegacyPropertyObjects(JsonObject properties) {
-    String[] unitAwareKeys = { "flowRate", "temperature", "pressure" };
+    String[] unitAwareKeys = {"flowRate", "temperature", "pressure"};
     for (String key : unitAwareKeys) {
       if (properties.has(key) && properties.get(key).isJsonObject()) {
         JsonObject obj = properties.getAsJsonObject(key);
@@ -1676,6 +1684,24 @@ public class ProcessRunner {
         }
       }
     }
+  }
+
+  /**
+   * Finds the first builder warning that reports an inlet reference which could not be wired.
+   *
+   * @param result simulation result whose warnings are inspected
+   * @return the unresolved-inlet warning text, or null when every inlet was wired
+   */
+  private static String firstUnresolvedInletWarning(SimulationResult result) {
+    if (result == null || result.getWarnings() == null) {
+      return null;
+    }
+    for (String warning : result.getWarnings()) {
+      if (warning != null && warning.startsWith("Unresolved inlet")) {
+        return warning;
+      }
+    }
+    return null;
   }
 
   /**

@@ -108,6 +108,10 @@ class ExamplesIndexDocumentationTest(unittest.TestCase):
         java_files = sorted(EXAMPLES_DIR.glob("*.java"))
         self.assertIn("outside Maven's compiled source tree", self.java_section)
         self.assertIn("legacy console output", self.java_section)
+        self.assertIn(
+            "build verification only, not runtime or engineering-result",
+            self.java_section,
+        )
         self.assertNotIn(
             "https://github.com/equinor/neqsim/blob/master/docs/examples/",
             self.java_section,
@@ -121,7 +125,7 @@ class ExamplesIndexDocumentationTest(unittest.TestCase):
                 for line in self.java_section.splitlines()
                 if link in line
             )
-            self.assertIn("| **Source only** |", row)
+            self.assertIn("| **Build-verified source** |", row)
 
     def test_catalog_does_not_overpromise_colab_execution(self):
         self.assertNotIn("no installation needed", self.index.lower())

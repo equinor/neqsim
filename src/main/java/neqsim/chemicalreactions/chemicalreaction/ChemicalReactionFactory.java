@@ -27,7 +27,7 @@ public final class ChemicalReactionFactory {
   }
 
   /**
-   * getChemicalReaction.
+   * Load the enabled STANDARD reaction-data row, ignoring superseded parameter fits.
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.chemicalreactions.chemicalreaction.ChemicalReaction} object
@@ -42,7 +42,8 @@ public final class ChemicalReactionFactory {
     String reference = "";
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM reactiondata where name='" + name + "'")) {
+        java.sql.ResultSet dataSet = database.getResultSet(
+            "SELECT * FROM reactiondata WHERE usereaction=1 AND name='" + name.replace("'", "''") + "'")) {
       if (dataSet.next()) {
         String reacname = dataSet.getString("name");
         K[0] = Double.parseDouble(dataSet.getString("K1"));
@@ -82,22 +83,26 @@ public final class ChemicalReactionFactory {
       nameArray[i] = names.get(i);
       stocCoefArray[i] = Double.parseDouble(stocCoef.get(i));
     }
-    return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy, refT, reference);
+    ChemicalReaction reaction = new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy,
+        refT, reference);
+    // Legacy database kinetic fields have not been qualified as reference rates and J/mol activation energies.
+    reaction.useLegacyKineticRateLaw();
+    return reaction;
   }
 
   /**
-   * Get names of all chemical rections in database.
+   * Get unique names of enabled STANDARD chemical reactions in the database.
    *
    * @return Names of all chemical reactions in database.
    */
   public static String[] getChemicalReactionNames() {
     ArrayList<String> nameList = new ArrayList<String>();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT name FROM REACTIONDATA")) {
-      dataSet.next();
-      do {
+        java.sql.ResultSet dataSet = database
+            .getResultSet("SELECT DISTINCT name FROM REACTIONDATA WHERE usereaction=1")) {
+      while (dataSet.next()) {
         nameList.add(dataSet.getString("name").trim());
-      } while (dataSet.next());
+      }
     } catch (Exception ex) {
       logger.error("Failed reading from database.");
     }

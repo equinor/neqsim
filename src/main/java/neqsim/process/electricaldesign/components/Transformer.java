@@ -20,8 +20,8 @@ public class Transformer implements java.io.Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Standard transformer kVA ratings per IEC. */
-  private static final double[] STANDARD_RATINGS_KVA = { 100, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600,
-      2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000, 25000 };
+  private static final double[] STANDARD_RATINGS_KVA = {100, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600,
+      2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000, 25000};
 
   private double ratedPowerKVA;
   private double primaryVoltageV;

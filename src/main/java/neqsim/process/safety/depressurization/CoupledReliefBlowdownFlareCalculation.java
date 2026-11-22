@@ -9,6 +9,8 @@ import neqsim.process.engineering.calculation.EngineeringCalculationContext;
 import neqsim.process.engineering.calculation.EngineeringCalculationModule;
 import neqsim.process.engineering.calculation.EngineeringCalculationResult;
 import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareInput.ReliefStudyEntry;
+import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareInput.DischargeWindow;
+import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource.BlowdownSource;
 import neqsim.process.safety.overpressure.OverpressureStudyResult;
 import neqsim.process.safety.overpressure.ReliefScenario;
 
@@ -16,7 +18,7 @@ import neqsim.process.safety.overpressure.ReliefScenario;
 public final class CoupledReliefBlowdownFlareCalculation
     implements EngineeringCalculationModule<CoupledReliefBlowdownFlareInput, CoupledReliefBlowdownFlareResult> {
   private static final String METHOD = "NeqSim coupled relief-blowdown-flare envelope";
-  private static final String METHOD_VERSION = "1.0";
+  private static final String METHOD_VERSION = "1.1";
   private final DynamicBlowdownFlareStudyRunner dynamicRunner;
 
   public CoupledReliefBlowdownFlareCalculation() {
@@ -85,21 +87,21 @@ public final class CoupledReliefBlowdownFlareCalculation
     }
 
     List<OverpressureStudyResult> reliefResults = new ArrayList<OverpressureStudyResult>();
-    Map<String, Double> groupLoads = new LinkedHashMap<String, Double>();
+    Map<String, FlareDischargeTimeline> events = new LinkedHashMap<String, FlareDischargeTimeline>();
     List<String> findings = new ArrayList<String>();
     boolean capacityAcceptable = true;
     for (ReliefStudyEntry entry : input.getReliefStudies()) {
       OverpressureStudyResult relief = entry.getStudy().evaluate();
       reliefResults.add(relief);
-      ReliefScenario governing = relief.getGoverningScenario();
+      ReliefScenario governing = entry.getSelectedScenario() == null ? relief.getMaximumLoadScenario()
+          : entry.getSelectedScenario();
       if (governing == null) {
         capacityAcceptable = false;
         findings.add(entry.getStudy().getItem().getName() + " has no credible governing relief scenario.");
         continue;
       }
-      Double current = groupLoads.get(entry.getConcurrencyGroup());
-      groupLoads.put(entry.getConcurrencyGroup(),
-          Double.valueOf((current == null ? 0.0 : current.doubleValue()) + governing.getReliefRateKgPerS()));
+      events.computeIfAbsent(entry.getConcurrencyGroup(), name -> new FlareDischargeTimeline()).addRelief(entry,
+          governing);
       if (!relief.isCapacityAdequate() || relief.getAcceptance() == null || !relief.getAcceptance().isAccepted()) {
         capacityAcceptable = false;
         findings.add(entry.getStudy().getItem().getName() + " relief sizing or accumulated-pressure check failed.");
@@ -107,20 +109,41 @@ public final class CoupledReliefBlowdownFlareCalculation
     }
 
     DynamicBlowdownFlareStudyHandoff dynamic = dynamicRunner.run(input.getDynamicStudy());
-    double steadyPeak = maximum(groupLoads);
-    double dynamicPeak = dynamicPeak(dynamic);
-    boolean dynamicAcceptable = dynamicCapacityAcceptable(dynamic, findings);
-    capacityAcceptable = capacityAcceptable && dynamicAcceptable;
-    double governingFlow = Math.max(steadyPeak, dynamicPeak);
-    String governingBasis = dynamicPeak > steadyPeak ? "DYNAMIC_BLOWDOWN_PEAK" : "STEADY_RELIEF_CONCURRENCY_GROUP";
+    addBlowdownEvents(input, dynamic, events);
+    Map<String, Double> groupLoads = new LinkedHashMap<String, Double>();
+    List<FlareDisposalCaseResult> cases = new ArrayList<FlareDisposalCaseResult>();
+    FlareDisposalCaseResult governing = null;
+    for (Map.Entry<String, FlareDischargeTimeline> event : events.entrySet()) {
+      FlareDisposalCaseResult disposal = event.getValue().evaluate(event.getKey(), input.getDynamicStudy());
+      cases.add(disposal);
+      if (disposal.getPeakSteadyMassFlowKgPerS() > 0.0) {
+        groupLoads.put(event.getKey(), disposal.getPeakSteadyMassFlowKgPerS());
+      }
+      if (governing == null || disposal.getPeakMassFlowKgPerS() > governing.getPeakMassFlowKgPerS()) {
+        governing = disposal;
+      }
+      if (disposal.getCapacityStatus() != FlareDisposalCaseResult.CapacityStatus.WITHIN_LIMIT) {
+        capacityAcceptable = false;
+        findings.add(event.getKey() + " disposal capacity: " + disposal.getCapacityChecks());
+      }
+    }
+    if (governing == null) {
+      return result.status(EngineeringCalculationResult.Status.FAILED).message("No discharge cases could be evaluated.")
+          .build();
+    }
+    boolean reliefAtPeak = governing.getContributionsKgPerS().keySet().stream().anyMatch(tag -> tag.startsWith("PSV:"));
+    boolean blowdownAtPeak = governing.getContributionsKgPerS().keySet().stream()
+        .anyMatch(tag -> tag.startsWith("BDV:"));
+    String governingBasis = reliefAtPeak && blowdownAtPeak ? "COINCIDENT_RELIEF_AND_BLOWDOWN"
+        : reliefAtPeak ? "STEADY_RELIEF_CONCURRENCY_GROUP" : "DYNAMIC_BLOWDOWN_PEAK";
     CoupledReliefBlowdownFlareResult value = new CoupledReliefBlowdownFlareResult(input.getStudyId(), reliefResults,
-        groupLoads, dynamic, governingFlow, governingBasis, capacityAcceptable, findings);
+        groupLoads, dynamic, governing, governingBasis, cases, capacityAcceptable, findings);
     EngineeringCalculationResult.Status status = readiness.requiresReview() || !capacityAcceptable
         ? EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED
         : EngineeringCalculationResult.Status.CALCULATED;
     return result.status(status).value(value).input("reliefStudyCount", Integer.valueOf(reliefResults.size()))
-        .input("concurrencyGroupCount", Integer.valueOf(groupLoads.size())).input("steadyPeakKgPerS", steadyPeak)
-        .input("dynamicPeakKgPerS", dynamicPeak)
+        .input("concurrencyGroupCount", Integer.valueOf(groupLoads.size()))
+        .input("steadyPeakKgPerS", maximum(groupLoads)).input("dynamicPeakKgPerS", dynamicPeak(dynamic))
         .message("Calculated loads require process-safety, piping, flare, and mechanical engineering approval.")
         .build();
   }
@@ -143,24 +166,24 @@ public final class CoupledReliefBlowdownFlareCalculation
     return peak instanceof Number ? ((Number) peak).doubleValue() : 0.0;
   }
 
-  private static boolean dynamicCapacityAcceptable(DynamicBlowdownFlareStudyHandoff handoff, List<String> findings) {
-    Map<String, Object> result = handoff.getResult();
-    if (result == null) {
-      findings.add("Dynamic blowdown/flare calculation did not produce a result.");
-      return false;
+  private static void addBlowdownEvents(CoupledReliefBlowdownFlareInput input, DynamicBlowdownFlareStudyHandoff handoff,
+      Map<String, FlareDischargeTimeline> events) {
+    Map<String, Object> histories = map(handoff.getResult().get("sourceResults"));
+    // Legacy studies define a separate simultaneous-BDV contingency. Avoid collisions with user event names.
+    String standalone = "STANDALONE_BLOWDOWN";
+    List<String> named = new ArrayList<String>(events.keySet());
+    for (DischargeWindow window : input.getBlowdownWindows().values()) {
+      named.add(window.getEvent());
     }
-    Map<String, Object> combined = map(result.get("combinedLoad"));
-    Map<String, Object> flare = map(result.get("flareLoad"));
-    Map<String, Object> capacity = map(flare.get("capacity"));
-    boolean acceptable = !Boolean.FALSE.equals(combined.get("headerMachAcceptable"))
-        && !Boolean.TRUE.equals(capacity.get("overloaded"));
-    if (Boolean.FALSE.equals(combined.get("headerMachAcceptable"))) {
-      findings.add("Transient flare-header Mach exceeds the configured acceptance limit.");
+    while (named.contains(standalone)) {
+      standalone += "_";
     }
-    if (Boolean.TRUE.equals(capacity.get("overloaded"))) {
-      findings.add("Transient flare load exceeds at least one configured flare capacity limit.");
+    for (BlowdownSource source : input.getDynamicStudy().getSources()) {
+      DischargeWindow window = input.getBlowdownWindows().get(source.getSourceId());
+      String event = window == null ? standalone : window.getEvent();
+      events.computeIfAbsent(event, ignored -> new FlareDischargeTimeline()).addBlowdown(source, window,
+          map(histories.get(source.getSourceId())));
     }
-    return acceptable;
   }
 
   @SuppressWarnings("unchecked")

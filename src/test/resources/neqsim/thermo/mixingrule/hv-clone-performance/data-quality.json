@@ -1,0 +1,15 @@
+{
+  "rounds.csv": {
+    "original_sha256": "f490f0e7f3ed0c7027b7b4a3ca26cde86e3d95f78019817d2e58d24537237c61",
+    "failed_preflight_prefix_bytes": 1637,
+    "failed_prefix_sha256": "90a7cdde3a04bf660a5bb11c1fdf9dcc739ef18d0802d5502505b2675a4e250a",
+    "accepted_sha256": "3a2aa57ed55fe740e0bf5d7ee6a0ca7a8200a493a241430d09788a6715a59d96"
+  },
+  "rounds.csv.states.csv": {
+    "original_sha256": "48bea172d0659946d9f232d6e70e4b5edccb3703e21533b5afa37bd1ed516621",
+    "failed_preflight_prefix_bytes": 221,
+    "failed_prefix_sha256": "4ee6195b3e024fedf18fecd411e5476f34ecf7a722c83559789989dc60430e72",
+    "accepted_sha256": "9afd15b7b94d8f53e27638b9f42c8f254e0e37399d27b0b99d5a8707e9382ba7"
+  },
+  "reason": "Exact failed CSV-format preflight prefix quarantined before analysis; no warmed accepted row was removed or selected by elapsed time. Header plus remaining bytes preserves every successful run record, including slow rounds."
+}

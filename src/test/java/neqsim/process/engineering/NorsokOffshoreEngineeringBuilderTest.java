@@ -33,6 +33,8 @@ import neqsim.process.processmodel.dexpi.Dexpi20XmlValidator;
 import neqsim.process.processmodel.dexpi.Dexpi20ModelInspector;
 import neqsim.process.processmodel.dexpi.Dexpi20SemanticValidator;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
+import neqsim.process.safety.api14c.Api14cDeviceDeclaration;
+import neqsim.process.safety.api14c.Api14cDeviceType;
 import neqsim.process.safety.overpressure.BlockedOutletRelief;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.overpressure.ProtectedItem;
@@ -78,11 +80,11 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     process.add(exportLine);
     process.run();
 
-    double[] chartConditions = new double[] { 19.0, 303.15, 50.0, 0.90 };
-    double[] speeds = new double[] { 8000.0, 10000.0 };
-    double[][] flows = new double[][] { { 4000.0, 6000.0, 8000.0 }, { 5000.0, 7500.0, 10000.0 } };
-    double[][] heads = new double[][] { { 55.0, 50.0, 42.0 }, { 85.0, 78.0, 65.0 } };
-    double[][] efficiencies = new double[][] { { 70.0, 78.0, 72.0 }, { 71.0, 80.0, 73.0 } };
+    double[] chartConditions = new double[] {19.0, 303.15, 50.0, 0.90};
+    double[] speeds = new double[] {8000.0, 10000.0};
+    double[][] flows = new double[][] {{4000.0, 6000.0, 8000.0}, {5000.0, 7500.0, 10000.0}};
+    double[][] heads = new double[][] {{55.0, 50.0, 42.0}, {85.0, 78.0, 65.0}};
+    double[][] efficiencies = new double[][] {{70.0, 78.0, 72.0}, {71.0, 80.0, 73.0}};
     compressor.getCompressorChart().setCurves(chartConditions, speeds, flows, heads, efficiencies);
     compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.getAntiSurge().setActive(true);
@@ -152,6 +154,12 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
         .setSelectedOrificeAreaIn2(10.0).setInletPiping(0.10, 2.0, 2.0).setOutletPiping(0.20, 20.0, 5.0)
         .setConcurrencyGroup("FIRE-ZONE-A").setFireZone("A").setTwoPhaseMethod("API_520_OMEGA_WHEN_APPLICABLE")
         .setEvidenceReference("PSV-DATASHEET-20-001-REV-A"));
+    project.addApi14cDevice(new Api14cDeviceDeclaration("20-VG-001", Api14cDeviceType.PSV, "20-PSV-001",
+        "PSV-DATASHEET-20-001-REV-A", null));
+    project.addApi14cDevice(
+        new Api14cDeviceDeclaration("20-KA-001", Api14cDeviceType.PSH, "20-PSH-001", "SRS-20-001", "ESD-20-001"));
+    project.addApi14cDevice(
+        new Api14cDeviceDeclaration("20-VG-001", Api14cDeviceType.PSH, "20-PSH-002", "SRS-20-002", "ESD-20-001"));
     project.addEvidenceRecord(new EngineeringEvidenceRecord("HAZOP-20-001", "HAZOP", "A")
         .setTitle("Compression train HAZOP").setSourceOrganization("Project technical safety")
         .linkEquipment("20-KA-001").linkEquipment("20-VG-001").linkRequirement(pressureSifRequirement));
@@ -265,6 +273,20 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(calculations.contains("BLOWDOWN_FLARE_INPUT"));
     assertTrue(calculations.contains("fitnessForConstruction"));
     JsonObject calculationJson = JsonParser.parseString(calculations).getAsJsonObject();
+    JsonArray chart = calculationJson.getAsJsonArray("apiRp14cProtectionReview");
+    JsonObject separator = findReliefCoverage(chart, "20-VG-001");
+    JsonArray declarations = separator.getAsJsonArray("declaredFunctions");
+    JsonObject psv = declarations.get(0).getAsJsonObject().getAsJsonObject("installedReliefScreen");
+    assertEquals("20-PSV-001", psv.get("deviceTag").getAsString());
+    assertEquals(2, psv.getAsJsonArray("scenarioChecks").size());
+    assertEquals(68.0 - 1.01325, psv.get("setPressureBarg").getAsDouble(), 1e-9);
+    assertEquals("UNRESOLVED", declarations.get(1).getAsJsonObject().get("sequenceLinkStatus").getAsString());
+    assertTrue(separator.getAsJsonArray("undeclaredDeviceTypes").toString().contains("LSH"));
+    JsonObject shutdown = findReliefCoverage(chart, "20-KA-001").getAsJsonArray("declaredFunctions").get(0)
+        .getAsJsonObject().getAsJsonObject("shutdownSequence");
+    assertEquals("ESD-20-001", shutdown.get("sequenceId").getAsString());
+    assertEquals(2, shutdown.getAsJsonArray("actions").size());
+    assertEquals("NOT_RUN_USE_EMERGENCY_SHUTDOWN_TEST_RUNNER", shutdown.get("dynamicValidationStatus").getAsString());
     JsonArray blowdown = calculationJson.getAsJsonArray("dynamicBlowdownAndFlareSizing");
     assertEquals("NOT_CALCULATED_NOT_READY", blowdown.get(0).getAsJsonObject().get("status").getAsString());
     JsonArray readiness = calculationJson.getAsJsonArray("engineeringReadiness");
@@ -356,7 +378,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
       top = Math.max(top, y);
     }
 
-    String[] elementNames = new String[] { "ProcessInstrumentationFunction", "PipingComponent" };
+    String[] elementNames = new String[] {"ProcessInstrumentationFunction", "PipingComponent"};
     for (String elementName : elementNames) {
       NodeList elements = document.getElementsByTagName(elementName);
       for (int i = 0; i < elements.getLength(); i++) {
@@ -424,8 +446,8 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
         positions = new ArrayList<double[]>();
         positionsByEquipment.put(equipmentTag, positions);
       }
-      positions.add(new double[] { Double.parseDouble(location.getAttribute("X")),
-          Double.parseDouble(location.getAttribute("Y")) });
+      positions.add(new double[] {Double.parseDouble(location.getAttribute("X")),
+          Double.parseDouble(location.getAttribute("Y"))});
     }
     for (Map.Entry<String, List<double[]>> entry : positionsByEquipment.entrySet()) {
       List<double[]> positions = entry.getValue();

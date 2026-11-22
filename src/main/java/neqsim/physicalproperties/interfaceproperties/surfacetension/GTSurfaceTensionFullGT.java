@@ -248,6 +248,10 @@ public class GTSurfaceTensionFullGT {
       }
       // End Remesh
     }
+    if (i == Nrefinements) {
+      throw new IllegalStateException("Full gradient-theory mesh refinement did not converge");
+    }
+    GTSurfaceTensionUtils.requireFinite(sigma, "full gradient-theory integral");
     return sigma;
   }
 
@@ -414,6 +418,10 @@ public class GTSurfaceTensionFullGT {
       }
     }
 
+    if (NewtonStep == N_Newton) {
+      throw new IllegalStateException("Full gradient-theory Newton iteration did not converge");
+    }
+    GTSurfaceTensionUtils.requireFinite(sigma, "full gradient-theory integral");
     return sigma;
   }
 

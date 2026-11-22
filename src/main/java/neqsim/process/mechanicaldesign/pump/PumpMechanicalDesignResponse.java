@@ -35,119 +35,119 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
   private int numberOfStages;
 
   /** Impeller diameter [mm]. */
-  private double impellerDiameter;
+  private double impellerDiameter = Double.NaN;
 
   /** Impeller width [mm]. */
-  private double impellerWidth;
+  private double impellerWidth = Double.NaN;
 
   /** Shaft diameter at impeller [mm]. */
-  private double shaftDiameter;
+  private double shaftDiameter = Double.NaN;
 
   /** Rated speed [rpm]. */
-  private double ratedSpeed;
+  private double ratedSpeed = Double.NaN;
 
   /** Specific speed (Ns). */
-  private double specificSpeed;
+  private double specificSpeed = Double.NaN;
 
   /** Suction specific speed (Nss). */
-  private double suctionSpecificSpeed;
+  private double suctionSpecificSpeed = Double.NaN;
 
   /** Required driver power [kW]. */
-  private double driverPower;
+  private double driverPower = Double.NaN;
 
   /** Driver power margin factor. */
-  private double driverMargin;
+  private double driverMargin = Double.NaN;
 
   /** Rated flow [m³/h]. */
-  private double ratedFlow;
+  private double ratedFlow = Double.NaN;
 
   /** Rated head [m]. */
-  private double ratedHead;
+  private double ratedHead = Double.NaN;
 
   /** Best efficiency point flow [m³/h]. */
-  private double bepFlow;
+  private double bepFlow = Double.NaN;
 
   /** Best efficiency point head [m]. */
-  private double bepHead;
+  private double bepHead = Double.NaN;
 
   /** Pump efficiency at rated point. */
-  private double efficiency;
+  private double efficiency = Double.NaN;
 
   /** Net positive suction head required [m]. */
-  private double npshr;
+  private double npshr = Double.NaN;
 
   /** Net positive suction head available [m]. */
-  private double npsha;
+  private double npsha = Double.NaN;
 
   /** NPSH margin [m]. */
-  private double npshMargin;
+  private double npshMargin = Double.NaN;
 
   /** NPSH margin ratio [NPSHa/NPSHr]. */
-  private double npshMarginRatio;
+  private double npshMarginRatio = Double.NaN;
 
   /** Absorbed pump shaft power [kW]. */
-  private double absorbedPower;
+  private double absorbedPower = Double.NaN;
 
   /** Hydraulic liquid power [kW]. */
-  private double hydraulicPower;
+  private double hydraulicPower = Double.NaN;
 
   /** Casing wall thickness [mm]. */
-  private double casingWallThickness;
+  private double casingWallThickness = Double.NaN;
 
   /** Suction nozzle size [inches]. */
-  private double suctionNozzleSize;
+  private double suctionNozzleSize = Double.NaN;
 
   /** Discharge nozzle size [inches]. */
-  private double dischargeNozzleSize;
+  private double dischargeNozzleSize = Double.NaN;
 
   /** Minimum continuous flow [m³/h]. */
-  private double minimumContinuousFlow;
+  private double minimumContinuousFlow = Double.NaN;
 
   /** Suction pressure [bara]. */
-  private double suctionPressure;
+  private double suctionPressure = Double.NaN;
 
   /** Discharge pressure [bara]. */
-  private double dischargePressure;
+  private double dischargePressure = Double.NaN;
 
   /** Differential pressure [bar]. */
-  private double differentialPressure;
+  private double differentialPressure = Double.NaN;
 
   /** Fluid temperature [°C]. */
-  private double fluidTemperature;
+  private double fluidTemperature = Double.NaN;
 
   /** Fluid density [kg/m³]. */
-  private double fluidDensity;
+  private double fluidDensity = Double.NaN;
 
   /** Fluid viscosity [cP]. */
-  private double fluidViscosity;
+  private double fluidViscosity = Double.NaN;
 
   // ============================================================================
   // Process Design Parameters (added for TR3500 compliance)
   // ============================================================================
 
   /** NPSH margin factor. */
-  private double npshMarginFactor;
+  private double npshMarginFactor = Double.NaN;
 
   /** Hydraulic power margin factor. */
-  private double hydraulicPowerMargin;
+  private double hydraulicPowerMargin = Double.NaN;
 
   /** Preferred Operating Region low boundary fraction of BEP. */
-  private double porLowFraction;
+  private double porLowFraction = Double.NaN;
 
   /** Preferred Operating Region high boundary fraction of BEP. */
-  private double porHighFraction;
+  private double porHighFraction = Double.NaN;
 
   /** Allowable Operating Region low boundary fraction of BEP. */
-  private double aorLowFraction;
+  private double aorLowFraction = Double.NaN;
 
   /** Allowable Operating Region high boundary fraction of BEP. */
-  private double aorHighFraction;
+  private double aorHighFraction = Double.NaN;
 
   /** Maximum suction specific speed. */
-  private double maxSuctionSpecificSpeed;
+  private double maxSuctionSpecificSpeed = Double.NaN;
 
   /** Head margin factor. */
-  private double headMarginFactor;
+  private double headMarginFactor = Double.NaN;
 
   /** Structured API 610 screening result with pass/fail/data-gap checks. */
   private PumpApi610DesignCalculator api610Screening;
@@ -186,6 +186,8 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
       return;
     }
 
+    setMaxDesignPressure(mecDesign.getDesignPressure() > 0.0 ? mecDesign.getDesignPressure() : Double.NaN);
+    setMaxDesignTemperature(mecDesign.getDesignPressure() > 0.0 ? mecDesign.getDesignTemperature() : Double.NaN);
     this.numberOfStages = mecDesign.getNumberOfStages();
     this.impellerDiameter = mecDesign.getImpellerDiameter();
     this.impellerWidth = mecDesign.getImpellerWidth();

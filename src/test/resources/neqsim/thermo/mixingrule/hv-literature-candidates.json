@@ -1,0 +1,869 @@
+{
+  "status": "Research catalogue; no default coefficients changed",
+  "hv_source": {
+    "author": "Georgios K. Folas",
+    "title": "Modeling of Complex Mixtures Containing Hydrogen Bonding Molecules",
+    "year_on_thesis": 2006,
+    "repository_year": 2007,
+    "url": "https://backend.orbit.dtu.dk/ws/portalfiles/portal/123926886/CDocuments_and_SettingsalbDesktopPh.D._Georgios_K._Folas.pdf.pdf",
+    "tables": "6.1-6.3, printed pages 132-133, PDF indices 151-152",
+    "convention": "SRK infinite-pressure Huron-Vidal with volume-weighted modified NRTL; tau12=(g12-g22)/(RT)=D12/T; tau21=(g21-g11)/(RT)=D21/T",
+    "coefficient_units": "D12 and D21 kelvin; alpha dimensionless; both temperature offsets zero",
+    "qualification": "Polar pure components use Mathias-Copeman alpha. Complete original pure-component configuration must accompany coefficients. These are not ordinary low-pressure NRTL parameters."
+  },
+  "pairs": [
+    {
+      "component1": "water",
+      "component2": "methane",
+      "D12": 410,
+      "D21": 2291,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "water",
+      "component2": "propane",
+      "D12": 847,
+      "D21": 2650,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": [
+        278,
+        366
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-butane",
+      "D12": 793,
+      "D21": 2501,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        420
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-hexane",
+      "D12": 1187,
+      "D21": 2878,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": [
+        280,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-heptane",
+      "D12": -81,
+      "D21": 2741,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "water",
+      "component2": "n-octane",
+      "D12": 4272,
+      "D21": 2520,
+      "alpha": 0.25,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        550
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-decane",
+      "D12": -228,
+      "D21": 2690,
+      "alpha": 0.14,
+      "table": "6.1",
+      "temperature_range_K": [
+        290,
+        566
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "benzene",
+      "D12": 591,
+      "D21": 1998,
+      "alpha": 0.175,
+      "table": "6.1",
+      "temperature_range_K": [
+        273,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "toluene",
+      "D12": 535,
+      "D21": 2031,
+      "alpha": 0.17,
+      "table": "6.1",
+      "temperature_range_K": [
+        273,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "ethylbenzene",
+      "D12": 641,
+      "D21": 1908,
+      "alpha": 0.17,
+      "table": "6.1",
+      "temperature_range_K": [
+        303,
+        568
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "m-xylene",
+      "D12": 282,
+      "D21": 2023,
+      "alpha": 0.17,
+      "table": "6.1",
+      "temperature_range_K": [
+        373,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "1-hexene",
+      "D12": 2729,
+      "D21": 2401,
+      "alpha": 0.24,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        496
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "1-decene",
+      "D12": 793,
+      "D21": 2389,
+      "alpha": 0.16,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        550
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "methane",
+      "D12": 181,
+      "D21": 2274,
+      "alpha": 0.07,
+      "table": "6.2",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "MEG",
+      "component2": "n-hexane",
+      "D12": 1249,
+      "D21": 2553,
+      "alpha": 0.2,
+      "table": "6.2",
+      "temperature_range_K": [
+        308,
+        330
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "n-heptane",
+      "D12": 430,
+      "D21": 2595,
+      "alpha": 0.13,
+      "table": "6.2",
+      "temperature_range_K": [
+        316,
+        352
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "benzene",
+      "D12": 13,
+      "D21": 1927,
+      "alpha": 0.15,
+      "table": "6.2",
+      "temperature_range_K": [
+        279,
+        342
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "toluene",
+      "D12": 726,
+      "D21": 1624,
+      "alpha": 0.27,
+      "table": "6.2",
+      "temperature_range_K": [
+        279,
+        382
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "water",
+      "D12": 105,
+      "D21": 59,
+      "alpha": 0.95,
+      "table": "6.2",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "TEG",
+      "component2": "n-heptane",
+      "D12": 143,
+      "D21": 2157,
+      "alpha": 0.06,
+      "table": "6.3",
+      "temperature_range_K": [
+        309,
+        351
+      ]
+    },
+    {
+      "component1": "TEG",
+      "component2": "benzene",
+      "D12": 15,
+      "D21": 809,
+      "alpha": 0.16,
+      "table": "6.3",
+      "temperature_range_K": [
+        279,
+        288
+      ]
+    },
+    {
+      "component1": "TEG",
+      "component2": "toluene",
+      "D12": 45,
+      "D21": 1091,
+      "alpha": 0.15,
+      "table": "6.3",
+      "temperature_range_K": [
+        279,
+        345
+      ]
+    }
+  ],
+  "pure_component_sources": {
+    "source_url": "https://backend.orbit.dtu.dk/ws/portalfiles/portal/5653725/PhD_Derawi.pdf",
+    "source_title": "Samer Omar Derawi, Modeling of Phase Equilibria Containing Associating Fluids, 2002",
+    "MEG": {
+      "TC_K": 720.0,
+      "PC_bar": 82.0,
+      "MC": [
+        1.1121,
+        0.9679,
+        -1.42
+      ],
+      "references": "Table4.1 PDFp62; Table4.10 PDFp83; Table5.5 PDFp97",
+      "alpha_fit_Tr": [
+        0.4,
+        0.9
+      ]
+    },
+    "TEG": {
+      "TC_K": 769.5,
+      "PC_bar": 33.2,
+      "MC": [
+        1.9673,
+        -3.5617,
+        7.3424
+      ],
+      "references": "Table4.1 PDFp62; Table5.5 PDFp97"
+    },
+    "water_caution": "Folas chapter6 uses Pedersen1996 water MC values. Folas Table2.8 values1.0873,-0.6377,0.6345 are for SRK/MHV2 and must not silently be assumed identical to chapter6 configuration."
+  },
+  "MEG_heptane_physical_reproduction": {
+    "pressure_bara": 1.0,
+    "measured_source": "Derawi2002 Table3.3 PDFp46, printedp34; DOI10.1021/je010199a",
+    "measurement_basis": "Table reports100*mass_fraction. Values below divided by100; no mole-fraction interpretation.",
+    "measurement_uncertainty": "MEG2% and hydrocarbon5% relative as stated immediately before Table3.3; model deviations exceed these uncertainties.",
+    "data": [
+      {
+        "T_K": 315.95,
+        "w_MEG_in_HC": 0.000198,
+        "w_HC_in_MEG": 0.001478
+      },
+      {
+        "T_K": 322.75,
+        "w_MEG_in_HC": 0.000287,
+        "w_HC_in_MEG": 0.001532
+      },
+      {
+        "T_K": 329.75,
+        "w_MEG_in_HC": 0.000399,
+        "w_HC_in_MEG": 0.00176
+      },
+      {
+        "T_K": 336.55,
+        "w_MEG_in_HC": 0.000553,
+        "w_HC_in_MEG": 0.001903
+      },
+      {
+        "T_K": 341.15,
+        "w_MEG_in_HC": 0.000677,
+        "w_HC_in_MEG": 0.002024
+      },
+      {
+        "T_K": 346.95,
+        "w_MEG_in_HC": 0.000867,
+        "w_HC_in_MEG": 0.002119
+      },
+      {
+        "T_K": 351.85,
+        "w_MEG_in_HC": 0.001066,
+        "w_HC_in_MEG": 0.002238
+      }
+    ],
+    "model_configuration": "SystemSrkEos,rule4,multiphasecheck,MEG/n-heptane .5/.5mol; apply both directedClassicOrHV flags=HV; alpha.13;D12=430,D21=2595;DT12=DT21=0 on all allocated phases; MEGPC82bar and attractiveTerm4 MC1.1121,.9679,-1.4200 on all phases; default n-heptane pureproperties.",
+    "observed_AARD_percent": {
+      "HC_in_MEG": 6.706562621364773,
+      "MEG_in_HC": 21.261932815658238
+    },
+    "published_AARD_percent": {
+      "HC_in_MEG": 6.7,
+      "MEG_in_HC": 21.2
+    },
+    "published_comparison_reference": "FolasTable6.6 PDFp158,printedp139",
+    "interpretation": "Reproduces the published model correlation; not measurement-uncertainty accuracy. Current globalMEGPC90bar is incompatible with this fitted dataset; no global default changed.",
+    "reproduction_test": "neqsim.thermo.mixingrule.HuronVidalLiteratureReproductionTest",
+    "numerical_qualification": {
+      "test": "HuronVidalLiteratureReproductionTest",
+      "checks": "All five native ThermodynamicModelTest identities at 1e-8; checkNumerically at 1e-6 with byte-identical source serialization; independent fixed-composition liquid T differences at h=0.001/0.0005 K",
+      "history": "Both component orders; 315.95,315.95,329.75,351.85,315.95 K against fresh controls",
+      "raw_report": "hv-source-compatible/MEG-heptane.csv",
+      "scope": "Numerical consistency of the explicit source-paired SRK configuration; physical errors remain above reported measurement uncertainties"
+    }
+  },
+  "missing_active_HV_pairs_in_current_INTER": [
+    "water/n-octane",
+    "water/n-decane",
+    "MEG/methane",
+    "MEG/n-hexane",
+    "MEG/n-heptane",
+    "MEG/benzene",
+    "MEG/toluene",
+    "TEG/n-heptane",
+    "TEG/benzene",
+    "TEG/toluene"
+  ],
+  "activation_caution": "Dormant existing MEG/heptane alpha.39867 and largeD/DT resemble ordinaryNRTLTable3.6 of Derawi2002, not Folas's refitted volumeweightedHVTable6.2. Do not activate dormant data without checking model convention.",
+  "experimental_assessment_sources": [
+    {
+      "doi": "10.1016/j.fluid.2006.11.001",
+      "kind": "ternary VLE endpoint-derived feed assessment, z=0.5x+0.5y",
+      "resource": "hv-meg-qualification/folas-2007-ternary.csv",
+      "states": 6,
+      "temperature_range_K": [
+        278.15,
+        298.15
+      ],
+      "pressure_range_bara": [
+        50,
+        200
+      ],
+      "source_dataset": 3,
+      "uncertainty": "NIST compiler expanded 95% for liquid MEG and vapor MEG only; liquid methane and vapor water not supplied",
+      "qualification": "Default accuracy unqualified; no measured overall feed; ambiguous binary dataset 2 excluded",
+      "test": "HuronVidalMegExperimentalAssessmentTest"
+    },
+    {
+      "doi": "10.1021/acs.jced.8b00115",
+      "kind": "measured overall-feed ternary VLE",
+      "resource": "hv-meg-qualification/kruger-2018.csv",
+      "states": 16,
+      "vapor_meg_observations": 10,
+      "components": [
+        "MEG",
+        "water",
+        "methane"
+      ],
+      "temperature_range_K": [
+        288.16,
+        323.19
+      ],
+      "pressure_range_MPa": [
+        5.93,
+        12.53
+      ],
+      "uncertainty": "Point composition expanded 3 sigma; literal source scales retained",
+      "qualification": "Default SRK/PR-HV accuracy unqualified; no published CPA coefficients transferred",
+      "test": "HuronVidalMegExperimentalAssessmentTest"
+    },
+    {
+      "doi": "10.1021/je9004905",
+      "kind": "measured pure MEG vapor pressure",
+      "resource": "hv-meg-qualification/pure-meg-2009.csv",
+      "states": 15,
+      "temperature_range_K": [
+        307.7,
+        384.5
+      ],
+      "uncertainty": "NIST compiler point expanded 95% pressure uncertainty in kPa",
+      "qualification": "Ordinary native cubic parity demonstrated; physical pressure errors retained; no alpha retuning",
+      "test": "HuronVidalMegExperimentalAssessmentTest"
+    }
+  ],
+  "source_paired_pure_MEG_assessment": {
+    "parameter_source": "Already catalogued Derawi2002 Tables4.1/5.5; same MEG pure configuration as MEG_heptane_physical_reproduction; no refit",
+    "measurement_doi": "10.1021/je9004905",
+    "measurement_resource": "hv-meg-qualification/pure-meg-2009.csv",
+    "report": "hv-source-compatible/pure-MEG.csv",
+    "states": 15,
+    "temperature_range_K": [
+      307.7,
+      384.5
+    ],
+    "AARD_percent": 5.861635531497968,
+    "points_inside_compiler_expanded_95_pressure_uncertainty": 15,
+    "numerical_basis": "Pure coexistence only: original bubble beta0=1e-10; use equal 0.5/0.5 phase amounts at unchanged saturation pressure to resolve native mole differences. No mixed-phase fraction is adjusted.",
+    "qualification": "All native identities and numerical checks asserted. Point pressure comparisons do not propagate input or fitted-parameter uncertainty and do not qualify mixture partition, PR transfer, hydrates or library defaults."
+  },
+  "PR_water_gas_source": {
+    "doi": "10.1016/j.fluid.2015.09.029",
+    "table": "Table1, printed page41, PDF page5; visually verified with earlier primary Yushchenko2015 Table1 printed76",
+    "pdf_sha256": "96c5980287ebbafa18149a4aa8919337c13f23904e42fde0832d0c22a1dc8f31",
+    "receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6463374933",
+    "component1": "water",
+    "convention": "PR infinite-pressure covolume-weighted modified NRTL; tau12=D12/T+DT12 and tau21=D21/T+DT21",
+    "units": {
+      "D12_D21": "K",
+      "DT12_DT21_alpha": "dimensionless"
+    },
+    "temperature_emphasis_K": [
+      323.15,
+      423.15
+    ],
+    "pressure_emphasis_bara": [
+      25,
+      700
+    ],
+    "qualification": "Staged research only. Exact source Tc/Pc/omega unresolved; library pure properties in executable assessment are explicit transfer assumptions. No default activation. Source expanded gamma equation15 has an inner-index inconsistency and PR log denominator13 a sign inconsistency; derive from GE/cubic rather than copying these expressions.",
+    "pure_alpha": "[1+m(1-sqrt(T/Tc))]^2; m=.37464+1.54226w-.26992w^2 for w<=.49, otherwise .3796+1.485w-.1644w^2+.01667w^3. Post-equilibrium volume shift does not affect fugacity.",
+    "pairs": [
+      {
+        "component2": "nitrogen",
+        "D12": -64.5,
+        "DT12": -1.05,
+        "D21": 3500,
+        "DT21": -1,
+        "alpha": 0.08
+      },
+      {
+        "component2": "CO2",
+        "D12": -4127,
+        "DT12": 8.9,
+        "D21": 5230,
+        "DT21": -8,
+        "alpha": 0.03
+      },
+      {
+        "component2": "H2S",
+        "D12": 0,
+        "DT12": 2.9,
+        "D21": 1250,
+        "DT21": -1.5,
+        "alpha": 0.03
+      },
+      {
+        "component2": "methane",
+        "D12": -1500,
+        "DT12": 11,
+        "D21": 4050,
+        "DT21": -5.2,
+        "alpha": 0.16
+      },
+      {
+        "component2": "ethane",
+        "D12": -804.3,
+        "DT12": -0.2,
+        "D21": 4280,
+        "DT21": -3,
+        "alpha": 0.09
+      },
+      {
+        "component2": "propane",
+        "D12": -1584,
+        "DT12": -0.44,
+        "D21": 4750,
+        "DT21": -3.3,
+        "alpha": 0.07
+      },
+      {
+        "component2": "n-butane",
+        "D12": 4968,
+        "DT12": -19.6,
+        "D21": 1567,
+        "DT21": 5.7,
+        "alpha": 0.06
+      }
+    ],
+    "n_butane_water_assessment": {
+      "status": "Staged declared-input assessment, physical qualification open",
+      "resources": "hv-water-nbutane/",
+      "test": "HuronVidalWaterButaneAssessmentTest",
+      "measurements": "Reamer et al. 1952 paired endpoints via Liège 2006 Appendix 5; separate Le Breton and McKetta 1964 aqueous data via IUPAC SDS 24 and Liège",
+      "inside_source_emphasis_rows": {"Reamer_paired": 10, "Le_Breton_aqueous": 3},
+      "AARD_percent": {"Reamer_rich_water": 4.70, "Reamer_aqueous_n_butane": 88.17, "Le_Breton_aqueous_n_butane": 73.98},
+      "limits": "Water-pressure control leaves large aqueous errors. Three dense native rich roots are labeled GAS in measured two-liquid region. Original Reamer table status, point uncertainty, exact source pure inputs and fitted composition envelope remain unresolved."
+    },
+    "nitrogen_water_assessment": {
+      "measurement_dois": [
+        "10.1021/je049676q",
+        "10.1021/je049869d"
+      ],
+      "rows": [
+        35,
+        52
+      ],
+      "uncertainty": "NIST compiler expanded95% absolute mole-fraction uncertainty preserved. Primary-thesis Tables6.6/6.16 images verified separately; original journal-table/version and full uncertainty reconciliation remain unresolved",
+      "protocol": "Separate binary flashes on declared synthetic equal-mole feed. No measured-feed or paired-tie-line inference. Current library pure properties retained. No experimental accuracy threshold.",
+      "inside_source_emphasis_rows": [
+        6,
+        5
+      ],
+      "test": "HuronVidalWaterNitrogenAssessmentTest",
+      "resources": "hv-water-nitrogen/",
+      "scope": "Nitrogen fixture qualifies only its stated numerical scope. Separate staged CO2 diagnostics retain failed physical comparisons; neither activates production coefficients."
+    }
+  },
+  "CO2_water_source_diagnostics": {
+    "status": "Staged declared-input diagnostics; physical/source-author reproduction unqualified; no default activation",
+    "component1": "CO2",
+    "component2": "water",
+    "convention": "Infinite-pressure covolume-weighted modified NRTL, linear covolume, tau12=D12[K]/T+DT12, tau21=D21[K]/T+DT21",
+    "alpha_dimensionless": 0.03,
+    "primary_sources": [
+      {
+        "doi": "10.1016/j.fluid.2015.09.029",
+        "table": "Table1; water-first source order must be reversed here",
+        "receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6463374933"
+      },
+      {
+        "doi": "10.1016/j.fluid.2017.02.006",
+        "tables": "Tables1 and5; paired Twu and HV",
+        "receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6494390915"
+      }
+    ],
+    "profiles": [
+      {
+        "profile": 0,
+        "EOS": "PR",
+        "source_year": 2016,
+        "D12_K": 5230,
+        "DT12": -8,
+        "D21_K": -4127,
+        "DT21": 8.9,
+        "pure": "Current library CO2 Tc304.19K/Pc73.815bara/omega.2276; water647.30/220.89/.344; ordinary source PR alpha; native cubic OmegaA.45724333333/OmegaB.077803333"
+      },
+      {
+        "profile": 1,
+        "EOS": "SRK",
+        "source_year": 2017,
+        "D12_K": 5820,
+        "DT12": -2.565,
+        "D21_K": -3339,
+        "DT21": 0.139,
+        "CO2_Twu_LMN": [
+          0.046115,
+          0.91388,
+          6.8838
+        ],
+        "water_Twu_LMN": [
+          0.36117,
+          0.87308,
+          2.4389
+        ]
+      },
+      {
+        "profile": 2,
+        "EOS": "PR",
+        "source_year": 2017,
+        "D12_K": 5831,
+        "DT12": -2.559,
+        "D21_K": -3311,
+        "DT21": 0.0377,
+        "CO2_Twu_LMN": [
+          0.022762,
+          0.92848,
+          7.7217
+        ],
+        "water_Twu_LMN": [
+          0.40274,
+          0.87,
+          1.8869
+        ],
+        "OmegaA": 0.4572355289213822,
+        "OmegaB": 0.07779607390388846
+      }
+    ],
+    "profiles1_2_declared_reference_critical_inputs": {
+      "CO2_TC_K": 304.1282,
+      "CO2_PC_bara": 73.773,
+      "water_TC_K": 647.096,
+      "water_PC_bara": 220.64,
+      "qualification": "Explicit reference inputs; exact original author configuration unresolved"
+    },
+    "measurement_sources": [
+      {
+        "doi": "10.1002/aic.14818",
+        "rows": 58,
+        "direction": "water in CO2",
+        "uncertainty": "Author expanded enhancement factor f; not direct ywater interval",
+        "fit_relation": "In-sample Aasen2017"
+      },
+      {
+        "doi": "10.1016/j.fluid.2018.02.002",
+        "rows": 29,
+        "direction": "CO2 in water",
+        "uncertainty": "Original absolute U(x),k2 retained",
+        "fit_relation": "Post-2017 holdout"
+      },
+      {
+        "doi": "10.3390/physchem1020012",
+        "rows": 33,
+        "usable_rows": 32,
+        "direction": "CO2 in water",
+        "uncertainty": "Original absolute U(x),k2 retained",
+        "blocked": "A1row6 original P=1.0.0180MPa unresolved in PDF and HTML",
+        "fit_relation": "Post-2017 holdout"
+      }
+    ],
+    "resources": "hv-co2-source/",
+    "test": "HuronVidalCo2SourceDiagnosticTest",
+    "benchmark": "HuronVidalCo2SourcePerformanceBenchmark",
+    "tested_base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+    "native_evidence": "All-five identities1e-8/checkNumerically1e-6 with serialization preservation; independent liquid T h=.001/.0005K; 411 complete flashes including357 usable observation/profile endpoints; all360 attempted rows retained",
+    "AARD_percent_gas2015_reverse2018_reverse2021": [
+      [
+        10.226503053835104,
+        75.86518212744764,
+        83.6450028017046
+      ],
+      [
+        1.7066817759321689,
+        7.686267878589651,
+        5.4448304308523845
+      ],
+      [
+        1.617461396786688,
+        6.007318480856138,
+        4.948557910084073
+      ]
+    ],
+    "physical_limits": "No accuracy threshold passed or source-author exact-input reproduction. Most reverse2017 predictions exceed author uncertainty. Reconcile pure vapor pressure and source inputs; no MEG/methanol/heavy/hydrate/ice/brine/general-extrapolation claim.",
+    "performance_limits": "Binary CLASSICAL/HV characterization changes thermodynamics/solver work. No code optimization, large-mixture, allocation, portable throughput or absolute-optimality claim.",
+    "selection_control": "102 forced-GAS five-component controls (water/CO2/methane/methanol/MEG), both component orders, three profiles and repeated/changed states; all ordinary kij unchanged; only CO2/water HV; dormant coefficient invariance and CLASSICAL rule2 reduction. Numerical scope only; no inhibitor partition or phase-stability qualification.",
+    "uncertainty_and_lineage": "gas-primary.csv/reverse-primary.csv retain author uncertainty and malformed original pressure; offline devtools/audit_huron_vidal_co2_source.py verifies primary hashes and exact decimal/unit/direction projection. Gas U(f) is not U(y). No parameter covariance available.",
+    "source_fit_range_not_acceptance": {
+      "2016": "Source emphasis323.15–423.15K/25–700bara; no continuous qualification claim",
+      "2017": "Mixed fit approximately274–478K/below60.8MPa; original pure-input reconciliation incomplete",
+      "composition": "Only individual measured solubility endpoints assessed; synthetic feed is not measured feed"
+    },
+    "native_requalification_base": "8a2438b99b9a2ac03e2d923406d3660cc98a59f8",
+    "timing_base_remains": "9975919e7908fe4ef34bbfeca37055d8883116fa; no new-head timing claim",
+    "native_pure_water_prerequisite": {
+      "reference_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6494390915",
+      "reference": "IAPWS SR1-86(1992); correlation, not experimental uncertainty",
+      "inputs": "Declared Tc647.096K/Pc220.64bara and paired2017 Twu; exact original author inputs unresolved",
+      "temperatures_K": [
+        274.18,
+        298.15,
+        323.15,
+        353.15,
+        373.15,
+        473.15,
+        600
+      ],
+      "calculations": 112,
+      "retained_endpoint_rows": 56,
+      "numerical_relative_pressure_parity_limit": 5e-08,
+      "diagnostics": {
+        "SRK": {
+          "controls": 28,
+          "AARD_percent": 0.5759076051433284,
+          "max_relative_independent_error": 1.509903313490213e-14
+        },
+        "PR": {
+          "controls": 28,
+          "AARD_percent": 0.5644582854952792,
+          "max_relative_independent_error": 9.547918011776346e-15
+        }
+      },
+      "qualification": "Native declared-input parity only; no physical acceptance tolerance or mixture extrapolation"
+    },
+    "native_pure_co2_prerequisite": {
+      "base": "19abb3270c18c7a9c74938893173cb37917460c1",
+      "reference": "CoolProp/CoolProp@626c95bc670b58ce64603907ed3fc192f946d4f2 dev/fluids/CarbonDioxide.json ANCILLARIES.pS; Span/Wagner1996 DOI10.1063/1.555991",
+      "reference_kind": "Saturation correlation, not direct measurements or full Helmholtz EOS; fit error is not experimental uncertainty or acceptance tolerance",
+      "temperatures_K": [
+        216.592,
+        220,
+        230,
+        250,
+        273.15,
+        290,
+        298.15,
+        301
+      ],
+      "configurations": "Existing declared profiles0/1/2, unchanged critical/alpha/cubic inputs; no author-input reproduction claim",
+      "independent_points": 24,
+      "native_saturations": 384,
+      "native_controls": "rules2/4; starts0.1/100bara; fresh/repeated/next-retained-temperature/returned states; stable distinct roots; pressure closure5e-7bara; log-fugacity1e-8; root parity5e-8relative; balanced pure amounts for all-five identities1e-8/checkNumerically1e-6; source serialization unchanged",
+      "AARD_percent_by_profile": [
+        0.7763853275393708,
+        0.20000530372055736,
+        0.1980951409067372
+      ],
+      "max_native_relative_root_difference": 5.684341886080802e-14,
+      "artifacts": "hv-co2-source/pure-co2-{reference.csv,reference.json,independent.csv,native.csv}; devtools/audit_huron_vidal_pure_co2.py",
+      "qualification": "Declared-input numerical parity only. No parameter activation/retuning, experimental acceptance, author reconstruction, mixture partition, solid/hydrate or extrapolation qualification",
+      "max_native_EOS_pressure_error_bara": 8.846257060213247e-13,
+      "max_native_log_fugacity_error": 1.149080830487037e-14
+    }
+  },
+  "quarantined_2020_primary_leads": {
+    "screened_utc": "2026-11-01",
+    "campaign_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6563508130",
+    "activation": "None; existing seven PR2016 tuples and opt-in profiles unchanged",
+    "cavalcanti_filho_chapoy_burgass": {
+      "doi": "10.1016/j.jngse.2020.103654",
+      "primary_url": "https://pure.hw.ac.uk/ws/portalfiles/portal/42418315/On_water_content_final_version.pdf",
+      "inspected": "Rendered accepted-manuscript PDF pages13/17/20: pure-alpha Table4, PR-HV Tables5/6, equations6/8-12",
+      "licence": "Institutional accepted manuscript CC BY-NC-ND; manuscript and table images not redistributed",
+      "blocked": "Printed alpha/tau expressions differ from existing model conventions. Exact author critical inputs, directed energy/temperature convention, fitted range, uncertainty and both-direction measurements require reconciliation before any transfer",
+      "qualification": "Primary research lead only; hydrate Table7 is not ordinary TP or independent inhibitor-partition qualification"
+    },
+    "epelle": {
+      "doi": "10.1016/j.jngse.2020.103259",
+      "primary_record": "https://era.ed.ac.uk/items/9d0657a0-c135-4494-aeff-f119ac035cf2/full",
+      "blocked": "The earlier completed thesis inspection found the 2020 article only in the publication list, not its original numeric HV tables. Later reader/transfer limits do not supersede that completed inspection. The original article coefficient tables remain missing; no tuple is qualified by the thesis citation.",
+      "prior_retrieval_receipt": "https://github.com/equinor/neqsim/issues/4573#issuecomment-6432934660",
+      "prior_receipt_reported_pdf": {
+        "url": "https://era.ed.ac.uk/bitstreams/b0b6bd91-7c16-4d3e-a557-23572522c7a4/download",
+        "bytes": 45319923,
+        "sha256": "6152bdcd49290a818fcbf91e8fc54c9157d22238e40f5b0513f0668c40520c24",
+        "qualification": "Earlier campaign receipt, not a fresh PDF download or independently recovered coefficient table"
+      }
+    },
+    "hemmingsen": {
+      "doi": "10.1016/j.fluid.2011.05.010",
+      "blocked": "Legally accessible primary numeric Tables2/3 and pure-MEG configuration not recovered; separate SRK/PR water-MEG tuples remain inactive"
+    }
+  },
+  "CO2_MEG_measurement_receipt": {
+    "doi": "10.1021/acs.jced.7b00537",
+    "resource": "hv-co2-meg-receipts/",
+    "auditor": "devtools/audit_huron_vidal_meg_receipts.py",
+    "status": "Quarantined source receipts; no HV parameters or measured overall feed",
+    "qualification": "Primary manuscript images verified; original archive identities, both phase representations, duplicate observations and distinct author/compiler uncertainties retained. Final-publication reconciliation, source-compatible HV/pure inputs and reverse MEG partition remain missing."
+  },
+  "nitrogen_water_measurement_versions": {
+    "resource": "hv-water-nitrogen/thesis-2004/",
+    "auditor": "devtools/audit_huron_vidal_nitrogen_sources.py",
+    "status": "Source-version audit only; no HV activation or independent new holdout",
+    "primary": "Chapoy2004, pastel-00001202, Table6.6 PDF162/printed161; nitrogen Table6.16 PDF190/printed189",
+    "qualification": "35 gas rows agree exactly; 52 liquid rows retain 41 concentration differences at common T/P and two temperature versions. Author nitrogen-mole calibration, printed AD_exp and compiler U95 remain distinct. Final-journal/version history, complete measurement uncertainty and source-compatible PR pure inputs remain unresolved."
+  },
+  "MEG_natural_gas_measurement_receipt": {
+    "doi": "10.1021/acs.jced.8b00495",
+    "resource": "hv-meg-natural-gas/",
+    "auditor": "devtools/audit_huron_vidal_natural_gas.py",
+    "states": 11,
+    "observations": 218,
+    "missing_vapor_MEG_experiments": [
+      6,
+      9
+    ],
+    "status": "Quarantined primary source data; no HV parameters or measured overall molar feed",
+    "qualification": "Accepted-manuscript Tables2/3/4/5/9/10 and supplement S1/S2 visually checked. Original ppm/directed y/x, loading volumes, nominal-versus-loading T/P, one-sigma repeatability and separate apparatus uncertainties retained. Purity/species/density-unit conflicts, final-publication reconciliation and complete source-compatible HV/pure inputs remain unresolved. CPA coefficients not transferred; no new selected pairs or heavy-fraction activation."
+  },
+  "meg_methane_declared_input_diagnostic": {
+    "status": "Staged native numerical diagnostic only; no activated profile or accepted original-author reconstruction",
+    "protocol": "hv-meg-methane/README.md",
+    "provenance": "hv-meg-methane/provenance.json",
+    "observations": "Six liquid-methane rows; gas dataset2 identity quarantined; vaporMEG unmeasured",
+    "inputs": "SRK Folas6.2 tuple plus Derawi MEG MC and declared library methane; source-author methane inputs unresolved",
+    "qualification": "Native unit-basis all-five/checkNumerically, independent fixed-root T stencils, amount/order/history, CLASSICAL remainder and independent binary prediction parity; physical acceptance pending",
+    "limits": "First liquid point outside compiler U95; two points below MEG alpha fit range; no PR transfer/reverse partition/hydrate/ice/brine qualification"
+  },
+  "PR_water_propane_reverse_assessment": {
+    "status": "staged research, separate aqueous and propane-rich measurements",
+    "tuple_doi": "10.1016/j.fluid.2015.09.029",
+    "measurement_doi": "10.1021/ie50518a051",
+    "measurement_version": "IUPAC SDS-24 compiler page 46, PDF page 8, visually verified",
+    "observations": 18,
+    "within_nominal_fitted_TP": 5,
+    "aqueous_AARD_percent": 12.619052294175315,
+    "aqueous_AARD_with_local_water_pressure_control_percent": 11.657682695786658,
+    "independent_aqueous_experiment": {
+      "source": "Azarnoosh and McKetta, Petroleum Refiner 37, 275–278 (1958), original measurements reproduced on IUPAC SDS-24 printed page 42, PDF page 4",
+      "observations": 9,
+      "temperature_K": [377.59444444444443, 410.92777777777775],
+      "absolute_pressure_bar": [26.903342957941533, 35.280473069140655],
+      "aqueous_AARD_percent": 14.176135307965618,
+      "aqueous_AARD_with_local_water_pressure_control_percent": 13.303991794084759,
+      "uncertainty": "IUPAC page 40 estimates 1% pressure and 2% relative aqueous composition error. Temperature error and point confidence intervals are unavailable. IUPAC evaluation classifies the dataset as tentative.",
+      "observations_file": "hv-water-propane/azarnoosh-mcketta-observations.csv"
+    },
+    "propane_rich_water_assessment": {
+      "source": "Kobayashi and Katz (1953), reproduced in Liège (2006) Appendix 4, pp. 137–138, PDF pages 151–152. Reported rich-phase mole fractions were image-verified in the reproduction.",
+      "observations_file": "hv-water-propane/kobayashi-katz-rich-observations.csv",
+      "observations": 22,
+      "within_nominal_fitted_TP": 21,
+      "temperature_K": [383.15, 422.0388888888889],
+      "absolute_pressure_bar": [17.37478837878336, 193.26004692749902],
+      "in_window_AARD_percent": 6.255949958395845,
+      "in_window_AARD_with_local_water_pressure_control_percent": 7.890965787504777,
+      "limits": "Original table, point uncertainty, and phase labels unavailable. Reproduction calls the phase propane-rich liquid. The fit cites this experiment. Observations are at separate coordinates from the aqueous datasets."
+    },
+    "protocol": "hv-water-propane/README.md"
+  },
+  "frost_methane_bidirectional": {
+    "status": "Staged bidirectional assessment only",
+    "source": "Frost 2014 DTU thesis Tables 2.6 and 2.9; journal DOI 10.1021/je400684k compiler datasets 1 and 2",
+    "versions": "23 thesis water pairs and 22 pressure-matched journal pairs are retained separately; 11 thesis MEG liquid values and eight gas values",
+    "T_K": [
+      283,
+      323.56
+    ],
+    "P_bara": [
+      46,
+      195
+    ],
+    "profiles": "Existing water-first PR 2016 methane tuple with declared library pure inputs; separate Folas SRK MEG-first tuple with Derawi Mathias-Copeman and Soave control",
+    "uncertainty": "Separate compiler pressure and gas-water U95 fields. Table 2.9 pointwise uncertainties unestablished; three absent gas observations retained as missing",
+    "test": "HuronVidalFrostAssessmentTest",
+    "resource": "hv-frost/",
+    "boundary": "No activation, fit or extension to gas/oil/water, ice, hydrates or brine. Original source-author pure profiles still unresolved"
+  },
+  "explicit_activity_binding": {
+    "api": "PhaseGENRTLmodifiedHV.setParams(phase, alpha, Dij, DijT, rules, kij)",
+    "scope": "Complete explicit HV input binding in the owning EOS component order; zero offsets must be explicit; pure critical and alpha inputs remain on the EOS phase.",
+    "constructor_caution": "Legacy superclass initialization reloads database matrices. Constructor-only arguments are not a complete source-profile binding. Global migration also affects the WS adapter and requires separate convention/derivative/equilibrium qualification.",
+    "ownership": "setParams retains supplied references; supported system clones bind detached handler tables; finish configuration before worker evaluation.",
+    "executable_contract": "HuronVidalPhasePureRequestTest",
+    "parameter_changes": "none; no tuple, EOS/pure alpha convention, provenance, validity range or default activation changed"
+  }
+}

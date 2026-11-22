@@ -422,6 +422,8 @@ plt.savefig("reservoir_to_market_fig1_pressure_cascade.png", dpi=150, bbox_inche
 plt.show()
 ```
 
+![Result figure from cell 10](figures/process%20equipmentutl_cell_10_output_1.png)
+
 ## 4. Topsides train and integrated field KPIs
 
 The *Topsides* `ProcessSystem` takes the flowline arrival stream into an inlet
@@ -567,6 +569,8 @@ plt.savefig("reservoir_to_market_fig2_depletion.png", dpi=150, bbox_inches="tigh
 plt.show()
 ```
 
+![Result figure from cell 15](figures/process%20equipmentutl_cell_15_output_1.png)
+
 ## 6. Production-rate optimisation
 
 Higher production rates earn more revenue but draw the wellhead and arrival
@@ -664,6 +668,8 @@ plt.tight_layout()
 plt.savefig("reservoir_to_market_fig3_optimisation.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
+
+![Result figure from cell 18](figures/process%20equipmentutl_cell_18_output_1.png)
 
 ## 7. Part 2 — Topside and wellhead-choke capacity as a bottleneck
 
@@ -909,6 +915,8 @@ fig.tight_layout()
 fig.savefig("reservoir_to_market_fig4_topside_capacity.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
+
+![Result figure from cell 22](figures/process%20equipmentutl_cell_22_output_1.png)
 
 **Discussion — the topside separator is the real limiter, with the choke close behind.**
 Part 1 optimised production against export-compressor power alone and reached
@@ -1182,6 +1190,8 @@ fig.savefig("reservoir_to_market_fig5_network_allocation.png", dpi=150, bbox_inc
 plt.show()
 ```
 
+![Result figure from cell 27](figures/process%20equipmentutl_cell_27_output_1.png)
+
 **Discussion — one ranking spanning the whole field.** With `WellFlow` made
 constraint-aware and the new `ProcessModel.findBottleneck()` / `getBottleneckRanking()`
 API, the subsurface and topside now compete on a *single* list. At 5.2 MSm³/day the
@@ -1403,6 +1413,8 @@ fig.tight_layout()
 fig.savefig("reservoir_to_market_fig6_bottleneck_migration.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
+
+![Result figure from cell 31](figures/process%20equipmentutl_cell_31_output_1.png)
 
 **Discussion — the bottleneck is a moving target (Figure 6).** Holding the field
 rate at a constant 3.2 MSm³/day and depleting the reservoir year by year, the new
@@ -1734,5 +1746,3 @@ the binding constraint changes identity:
 8. **Bottleneck migration over time** — the new `BottleneckTracker` records the
    binding constraint at every time step and reports the migration timeline,
    transition events and peak loading (Figure 6).
-
-

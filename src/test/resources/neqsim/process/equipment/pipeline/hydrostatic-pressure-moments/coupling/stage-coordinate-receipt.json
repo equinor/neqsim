@@ -1,0 +1,9 @@
+{
+  "source_head": "8e88e8755a3422474ca1a50402bff5935858887d",
+  "source_blob": "704966f147522007f13c535ae1d65a8492e0c759",
+  "candidate_sha256": "e341f9824b1fd7f1009b90a52ecd498031b080d110e10e7a7909e289602c524e",
+  "candidate_exit_code": 1,
+  "production_changed": false,
+  "eos_energy_endpoint_tolerances_changed": false,
+  "interpretation": "Diagnostic candidate only; no pooling or physical-rate qualification"
+}

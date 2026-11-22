@@ -3,8 +3,6 @@ title: "Simulation Hooks, Events, and Auto-Validation"
 description: "Guide to NeqSim's lifecycle hooks for ProcessSystem and ProcessModel — progress listeners, event bus integration, and auto-validation. Covers real-time monitoring, digital twin dashboards, Jupyter callbacks, and debugging convergence."
 ---
 
-# Simulation Hooks, Events, and Auto-Validation
-
 NeqSim provides three opt-in observability mechanisms for process simulations:
 
 1. **Progress Listeners** — typed callback interfaces for fine-grained lifecycle monitoring
@@ -12,6 +10,9 @@ NeqSim provides three opt-in observability mechanisms for process simulations:
 3. **Auto-Validation** — pre-run equipment/area validation with logged warnings
 
 All three are **zero-overhead when disabled** (the default). Existing code is unaffected — no behavioral changes unless you explicitly opt in.
+
+The Java fragments below assume a class-level Log4j2 logger, for example:
+`private static final Logger logger = LogManager.getLogger(YourClass.class);`.
 
 ---
 
@@ -76,20 +77,20 @@ process.setProgressListener(new ProcessSystem.SimulationProgressListener() {
     @Override
     public void onUnitComplete(ProcessEquipmentInterface unit,
             int unitIndex, int totalUnits, int iterationNumber) {
-        System.out.printf("  [%d/%d] %s completed%n",
+        logger.info("[{}/{}] {} completed",
             unitIndex + 1, totalUnits, unit.getName());
     }
 
     @Override
     public void onIterationComplete(int iterationNumber,
             boolean converged, double recycleError) {
-        System.out.printf("Iteration %d: converged=%b, error=%.2e%n",
+        logger.info("Iteration {}: converged={}, error={}",
             iterationNumber, converged, recycleError);
     }
 
     @Override
     public void onSimulationComplete(int totalIterations, boolean converged) {
-        System.out.printf("Simulation done in %d iterations (converged=%b)%n",
+        logger.info("Simulation done in {} iterations (converged={})",
             totalIterations, converged);
     }
 });
@@ -204,20 +205,20 @@ plant.setProgressListener(new ProcessModel.ModelProgressListener() {
     @Override
     public void onProcessAreaComplete(String areaName, ProcessSystem process,
             int areaIndex, int totalAreas, int iterationNumber) {
-        System.out.printf("  Area '%s' completed (%d/%d) [iter %d]%n",
+        logger.info("Area '{}' completed ({}/{}) [iter {}]",
             areaName, areaIndex + 1, totalAreas, iterationNumber);
     }
 
     @Override
     public void onIterationComplete(int iterationNumber,
             boolean converged, double maxError) {
-        System.out.printf("Outer iteration %d: converged=%b, error=%.2e%n",
+        logger.info("Outer iteration {}: converged={}, error={}",
             iterationNumber, converged, maxError);
     }
 
     @Override
     public void onModelComplete(int totalIterations, boolean converged) {
-        System.out.printf("Plant model: %d iterations, converged=%b%n",
+        logger.info("Plant model: {} iterations, converged={}",
             totalIterations, converged);
     }
 });
@@ -312,12 +313,12 @@ ProcessEventBus bus = ProcessEventBus.getInstance();
 
 // Subscribe to ALL events
 bus.subscribe(event -> {
-    System.out.println(event.getSource() + ": " + event.getDescription());
+    logger.info("{}: {}", event.getSource(), event.getDescription());
 });
 
 // Subscribe to specific type only
 bus.subscribe(ProcessEvent.EventType.ERROR, event -> {
-    logger.error("Simulation error: " + event.getDescription());
+    logger.error("Simulation error: {}", event.getDescription());
 });
 
 // Subscribe to severity-based filter
@@ -436,12 +437,12 @@ plant.setProgressListener(new ProcessModel.ModelProgressListener() {
     @Override
     public void onProcessAreaComplete(String areaName, ProcessSystem process,
             int areaIndex, int totalAreas, int iterationNumber) {
-        System.out.printf("Area '%s' done%n", areaName);
+        logger.info("Area '{}' done", areaName);
     }
 
     @Override
     public void onModelComplete(int totalIterations, boolean converged) {
-        System.out.printf("Plant: %d iterations, converged=%b%n",
+        logger.info("Plant: {} iterations, converged={}",
             totalIterations, converged);
     }
 });
@@ -569,3 +570,35 @@ event.getTimestamp();     // Instant
 event.getProperties();    // Map<String, Object>
 event.putProperty("key", value);
 ```
+
+## Open recycle loops and run status
+
+`ProcessSystem.getOpenRecycles()` returns an immutable list of active unsolved
+`Recycle` names, identified by equipment type rather than a naming convention.
+Locked-inactive and bypassed loops are excluded. `getConvergenceDiagnostics()`
+also includes these names. Small external mass imbalance is not evidence that
+the internal loops have closed.
+
+For a `ProcessSystem` run, `getRunStatus()` and `getRunStatusJson()` distinguish
+successful equipment execution (`success`) from numerical convergence (`converged`).
+An unsolved recycle can therefore yield `success=true`, `converged=false`.
+`runUntilConverged(maxIterations)` retains its boolean return and requires all
+active units and recycles to solve.
+
+| RunStatus accessor / JSON field | Meaning |
+| --- | --- |
+| `isConverged()` / `converged` | All active units and recycle loops solved |
+| `getOpenRecycles()` / `openRecycles` | Snapshot of unresolved loop names |
+| `getOpenRecycleCount()` / `openRecycleCount` | Number of unresolved loops |
+| `isStagnated()` / `stagnated` | Recycle error stopped improving across the existing iteration window |
+| `getPassCount()` / `passCount` | Full process passes attempted, distinct from inner recycle iterations |
+| `getTerminationReason()` / `terminationReason` | `CONVERGED`, `STAGNATED`, `ITERATION_LIMIT`, `NOT_CONVERGED`, `INTERRUPTED`, `FAILED`, or `NOT_RUN` |
+
+`runUntilConverged` reports `ITERATION_LIMIT` when its pass budget is exhausted
+without a detected recycle stall. Optimized execution reports its existing
+stagnation guard; sequential execution observes the same error window without
+changing its established iteration budget. Other execution paths still report
+open-loop names and convergence but may not detect stagnation. These additive
+fields describe `ProcessSystem`; multi-area `ProcessModel` retains its separate
+convergence-report API. `ProcessSystemOpenRecycleTest` verifies unresolved loops,
+stagnation reporting, immutable lists, reset behavior and inactive-loop filtering.

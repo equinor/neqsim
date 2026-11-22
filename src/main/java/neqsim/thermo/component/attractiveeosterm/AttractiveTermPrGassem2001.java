@@ -27,7 +27,11 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
     super(component);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermPrGassem2001 clone() {
     AttractiveTermPrGassem2001 attractiveTerm = null;
@@ -35,6 +39,7 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
       attractiveTerm = (AttractiveTermPrGassem2001) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermPrGassem2001", ex);
     }
 
     return attractiveTerm;

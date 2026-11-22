@@ -639,7 +639,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    */
   private double getPropertyFromEquipment(ProcessEquipmentInterface equipment, String property, String unit) {
     // Try standard getter patterns
-    String[] getterPrefixes = { "get", "is" };
+    String[] getterPrefixes = {"get", "is"};
     String capitalizedProperty = property.substring(0, 1).toUpperCase() + property.substring(1);
 
     for (String prefix : getterPrefixes) {

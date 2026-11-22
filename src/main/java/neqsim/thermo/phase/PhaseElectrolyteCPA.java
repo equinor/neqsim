@@ -89,19 +89,134 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   /** {@inheritDoc} */
   @Override
   public PhaseElectrolyteCPA clone() {
-    PhaseElectrolyteCPA clonedPhase = null;
-    try {
-      clonedPhase = (PhaseElectrolyteCPA) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    PhaseElectrolyteCPA clonedPhase = (PhaseElectrolyteCPA) super.clone();
+    if (clonedPhase == null) {
+      throw new IllegalStateException("Cannot clone electrolyte-CPA phase: base phase clone failed");
     }
+    clonedPhase.lngi = lngi == null ? null : lngi.clone();
+    clonedPhase.moleculeNumber = moleculeNumber == null ? null : moleculeNumber.clone();
+    clonedPhase.assSiteNumber = assSiteNumber == null ? null : assSiteNumber.clone();
+    clonedPhase.selfAccociationScheme = copyArray(selfAccociationScheme);
+    clonedPhase.crossAccociationScheme = copyArray(crossAccociationScheme);
+    clonedPhase.gvector = copyArray(gvector);
+    clonedPhase.delta = copyArray(delta);
+    clonedPhase.deltaNog = copyArray(deltaNog);
+    clonedPhase.deltadT = copyArray(deltadT);
+    clonedPhase.deltadTdT = copyArray(deltadTdT);
+    clonedPhase.Klkni = copyArray(Klkni);
+    clonedPhase.KlkTVMatrix = KlkTVMatrix == null ? null : KlkTVMatrix.copy();
+    clonedPhase.KlkTTMatrix = KlkTTMatrix == null ? null : KlkTTMatrix.copy();
+    clonedPhase.KlkTMatrix = KlkTMatrix == null ? null : KlkTMatrix.copy();
+    clonedPhase.udotTimesmMatrix = udotTimesmMatrix == null ? null : udotTimesmMatrix.copy();
+    clonedPhase.mVector = mVector == null ? null : mVector.copy();
+    clonedPhase.udotMatrix = udotMatrix == null ? null : udotMatrix.copy();
+    clonedPhase.uMatrix = uMatrix == null ? null : uMatrix.copy();
+    clonedPhase.QMatksiksiksi = QMatksiksiksi == null ? null : QMatksiksiksi.copy();
+    clonedPhase.KlkVVVMatrix = KlkVVVMatrix == null ? null : KlkVVVMatrix.copy();
+    clonedPhase.KlkVVMatrix = KlkVVMatrix == null ? null : KlkVVMatrix.copy();
+    clonedPhase.udotTimesmiMatrix = udotTimesmiMatrix == null ? null : udotTimesmiMatrix.copy();
+    clonedPhase.ksiMatrix = ksiMatrix == null ? null : ksiMatrix.copy();
+    clonedPhase.KlkMatrix = KlkMatrix == null ? null : KlkMatrix.copy();
+    clonedPhase.hessianMatrix = hessianMatrix == null ? null : hessianMatrix.copy();
+    clonedPhase.hessianInvers = hessianInvers == null ? null : hessianInvers.copy();
+    clonedPhase.KlkVMatrix = KlkVMatrix == null ? null : KlkVMatrix.copy();
+    clonedPhase.corr2Matrix = corr2Matrix == null ? null : corr2Matrix.copy();
+    clonedPhase.corr3Matrix = corr3Matrix == null ? null : corr3Matrix.copy();
+    clonedPhase.corr4Matrix = corr4Matrix == null ? null : corr4Matrix.copy();
+    // Factorizations own mutable scratch and cannot be shared. Rebuild lazily from the copied
+    // Hessian if a derivative is requested before the clone next solves its association sites.
     clonedPhase.hessianLU = null;
     clonedPhase.hessianLUinput = null;
     clonedPhase.hessianLUSize = -1;
-    // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
-    // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
+    // Keep the configured CPA mixing-rule parameters shared, as in the EOS clone contract.
+    // Concurrent mixing-rule reconfiguration is not supported.
 
     return clonedPhase;
+  }
+
+  /**
+   * Copies an owned association matrix without sharing rows.
+   *
+   * @param source source matrix, possibly null
+   * @return independent matrix with the same values and shape, or null
+   */
+  private static double[][] copyArray(double[][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = source[i] == null ? null : source[i].clone();
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association tensor without sharing nested rows.
+   *
+   * @param source source tensor, possibly null
+   * @return independent tensor with the same values and shape, or null
+   */
+  private static double[][][] copyArray(double[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association matrix without sharing rows.
+   *
+   * @param source source matrix, possibly null
+   * @return independent matrix with the same values and shape, or null
+   */
+  private static int[][] copyArray(int[][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = source[i] == null ? null : source[i].clone();
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association tensor without sharing nested rows.
+   *
+   * @param source source tensor, possibly null
+   * @return independent tensor with the same values and shape, or null
+   */
+  private static int[][][] copyArray(int[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association tensor without sharing nested rows.
+   *
+   * @param source source tensor, possibly null
+   * @return independent tensor with the same values and shape, or null
+   */
+  private static int[][][][] copyArray(int[][][][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
   }
 
   /** {@inheritDoc} */
@@ -121,7 +236,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       selfAccociationScheme = new int[numberOfComponents][0][0];
       crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
       for (int i = 0; i < numberOfComponents; i++) {
-        if (getComponent(i).getNumberOfmoles() < 1e-100) {
+        if (PhaseCPAInterface.hasNegligibleAssociation(getComponent(i), totalNumberOfMoles)) {
           getComponent(i).setNumberOfAssociationSites(0);
         } else {
           getComponent(i).setNumberOfAssociationSites(getComponent(i).getOrginalNumberOfAssociationSites());
@@ -204,6 +319,23 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       // super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     }
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType > 1) {
+      // The final superclass initialization solves the volume again. Rebuild derivatives
+      // at that returned volume rather than retaining the previous volume iteration.
+      volInit();
+      gcpa = calc_g();
+      setGcpav(calc_lngV());
+      gcpavv = calc_lngVV();
+      gcpavvv = calc_lngVVV();
+      // Refresh delta at the final contact value before solving the association sites.
+      initCPAMatrix(1);
+      solveX();
+      hcpatot = calc_hCPA();
+      initCPAMatrix(initType);
+      for (int i = 0; i < numberOfComponents; i++) {
+        componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta, numberOfComponents, initType);
+      }
+    }
   }
 
   /**
@@ -618,8 +750,16 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
    * @return solution of {@code hessianMatrix * x = rhs}
    */
   private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
-    if (hessianInvers != null) {
-      return hessianInvers.mult(rhs);
+    if ((hessianLU == null || hessianLUSize != totalNumberOfAccociationSites) && hessianInvers == null) {
+      int n = totalNumberOfAccociationSites;
+      LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
+      DMatrixRMaj input = hessianMatrix.getDDRM().copy();
+      if (!solver.setA(input)) {
+        throw new IllegalStateException("Unable to factor copied electrolyte-CPA association Hessian");
+      }
+      hessianLU = solver;
+      hessianLUinput = input;
+      hessianLUSize = n;
     }
     if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
       DMatrixRMaj rhsMat = rhs.getDDRM();
@@ -627,13 +767,13 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       hessianLU.solve(rhsMat, out);
       return SimpleMatrix.wrap(out);
     }
-    throw new IllegalStateException("Hessian factorization has not been initialized");
+    return hessianInvers.mult(rhs);
   }
 
   /**
    * solveX.
    *
-   * @return a boolean
+   * @return false if the association Hessian cannot produce a finite correction, otherwise the solver result
    */
   public boolean solveX() {
     if (getTotalNumberOfAccociationSites() == 0) {
@@ -719,6 +859,13 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
       CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
       hessianLU.solve(corr3Matrix, corr4Matrix);
+      // EJML can accept a singular Hessian in setA(). Reject its non-finite
+      // solution before it contaminates the association sites and fugacities.
+      for (int site = 0; site < n; site++) {
+        if (!Double.isFinite(corr4Matrix.unsafe_get(site, 0))) {
+          return false;
+        }
+      }
 
       temp = 0;
       double newX;
@@ -796,6 +943,12 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
    * @return a double
    */
   public double calcRootVolFinder(PhaseType pt) {
+    if (pt == PhaseType.GAS) {
+      // The scan below never records a gas root: solvedBonVlow starts at 1.0 and is only assigned while it is below
+      // 1e-3, so a GAS request always returned 1.0 after evaluating all 2000 grid points. Return that value directly;
+      // molarVolumeChangePhase then solves from the dense end exactly as before.
+      return 1.0;
+    }
     double solvedBonVHigh = 0.0;
     double solvedBonVlow = 1.0;
     double oldh = 1;

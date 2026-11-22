@@ -38,6 +38,9 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
   /** Design standard code. */
   private String designStandardCode = "API-Spec-17D";
 
+  /** Pressure-bearing body grade; the legacy F22 designation assumes Class 3. */
+  private String materialGrade = "F22";
+
   // ============ Calculated Properties ============
   /** Bore wall thickness in mm. */
   private double boreWallThickness = 0.0;
@@ -113,8 +116,8 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
     double designPressure = tree.getDesignPressure();
     double boreSize = tree.getBoreSizeInches() * 25.4; // mm
 
-    // Material properties for tree block (typically F22 or Inconel clad)
-    double smys = 517.0; // MPa for F22
+    // Screening body strength; cladding does not add pressure-bearing strength.
+    double smys = SubseaDesignData.yieldStrength(materialGrade);
     double designFactor = 0.67; // Per API 17D
 
     // Bore wall thickness
@@ -325,6 +328,7 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
 
     JsonObject config = new JsonObject();
     config.addProperty("treeType", tree.getTreeType().name());
+    config.addProperty("materialGrade", materialGrade);
     config.addProperty("pressureRating", tree.getPressureRating().name());
     config.addProperty("boreSizeInches", tree.getBoreSizeInches());
     config.addProperty("actuatorType", tree.getActuatorType());
@@ -405,6 +409,18 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
    */
   public void setDesignStandardCode(String designStandardCode) {
     this.designStandardCode = designStandardCode;
+  }
+
+  /**
+   * Sets the pressure-bearing body material. F22 denotes the Class 3 screening assumption; select F22-Class1 explicitly
+   * for Class 1 forgings.
+   *
+   * @param materialGrade qualified grade in MaterialProperties_Subsea.csv
+   * @throws IllegalArgumentException if the grade is unknown
+   */
+  public void setMaterialGrade(String materialGrade) {
+    SubseaDesignData.yieldStrength(materialGrade);
+    this.materialGrade = materialGrade;
   }
 
   /**

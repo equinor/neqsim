@@ -144,7 +144,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
             } catch (Exception e) {
               bettaVal = Double.NaN;
             }
-            refinedTransitionPoints.add(new double[] { p, tTransition, bettaVal });
+            refinedTransitionPoints.add(new double[] {p, tTransition, bettaVal});
             pressurePhaseEnvelope.add(p);
             temperaturePhaseEnvelope.add(tTransition);
           }

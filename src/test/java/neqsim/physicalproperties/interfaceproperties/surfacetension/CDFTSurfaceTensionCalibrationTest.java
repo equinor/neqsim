@@ -25,14 +25,14 @@ class CDFTSurfaceTensionCalibrationTest {
   private static final Logger logger = LogManager.getLogger(CDFTSurfaceTensionCalibrationTest.class);
 
   /** Experimental reference data: {component, EOS, T(K), sigma_exp(mN/m)}. */
-  private static final Object[][] DATA = { { "methane", "PR", 90.7, 18.90 }, { "methane", "PR", 111.0, 14.90 },
-      { "methane", "PR", 150.0, 6.60 }, { "methane", "PR", 170.0, 2.80 }, { "ethane", "PR", 184.0, 17.10 },
-      { "ethane", "PR", 230.0, 9.40 }, { "ethane", "PR", 270.0, 3.60 }, { "propane", "PR", 230.0, 13.60 },
-      { "propane", "PR", 270.0, 8.60 }, { "propane", "PR", 320.0, 3.40 }, { "n-butane", "PR", 270.0, 13.20 },
-      { "n-butane", "PR", 320.0, 7.60 }, { "n-pentane", "PR", 300.0, 14.60 }, { "n-pentane", "PR", 350.0, 9.10 },
-      { "n-hexane", "PR", 300.0, 16.30 }, { "n-hexane", "PR", 340.0, 12.50 }, { "n-hexane", "PR", 400.0, 5.80 },
-      { "nitrogen", "PR", 77.0, 9.40 }, { "nitrogen", "PR", 90.0, 6.20 }, { "CO2", "PR", 220.0, 15.50 },
-      { "CO2", "PR", 250.0, 8.50 }, { "CO2", "PR", 280.0, 2.60 }, };
+  private static final Object[][] DATA = {{"methane", "PR", 90.7, 18.90}, {"methane", "PR", 111.0, 14.90},
+      {"methane", "PR", 150.0, 6.60}, {"methane", "PR", 170.0, 2.80}, {"ethane", "PR", 184.0, 17.10},
+      {"ethane", "PR", 230.0, 9.40}, {"ethane", "PR", 270.0, 3.60}, {"propane", "PR", 230.0, 13.60},
+      {"propane", "PR", 270.0, 8.60}, {"propane", "PR", 320.0, 3.40}, {"n-butane", "PR", 270.0, 13.20},
+      {"n-butane", "PR", 320.0, 7.60}, {"n-pentane", "PR", 300.0, 14.60}, {"n-pentane", "PR", 350.0, 9.10},
+      {"n-hexane", "PR", 300.0, 16.30}, {"n-hexane", "PR", 340.0, 12.50}, {"n-hexane", "PR", 400.0, 5.80},
+      {"nitrogen", "PR", 77.0, 9.40}, {"nitrogen", "PR", 90.0, 6.20}, {"CO2", "PR", 220.0, 15.50},
+      {"CO2", "PR", 250.0, 8.50}, {"CO2", "PR", 280.0, 2.60},};
 
   /**
    * Sweeps attractiveRangeFactor and prints AAD at each value.

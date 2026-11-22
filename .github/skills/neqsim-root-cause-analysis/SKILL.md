@@ -1,8 +1,8 @@
 ---
 name: neqsim-root-cause-analysis
-version: "1.2.0"
-description: "Root cause analysis (RCA) framework for process equipment — Bayesian-inspired diagnosis integrating multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA) as prior, plant historian evidence (likelihood), and NeqSim simulation verification. USE WHEN: diagnosing compressor trips, high vibration, efficiency loss, separator carryover, heat exchanger fouling, or any operational anomaly. Anchors on neqsim.process.diagnostics classes."
-last_verified: "2026-07-19"
+version: "1.4.0"
+description: "Oil and gas process troubleshooting for missing throughput, flowmeter bias and equipment faults. Combines reliability priors (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), historian evidence and NeqSim verification for Bayesian-style diagnosis. USE WHEN: diagnosing compressor trips, vibration, efficiency loss, separator carryover, exchanger fouling, or misleading control-loop correlations. Anchors on neqsim.process.diagnostics."
+last_verified: "2026-11-18"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.equipment.failure, neqsim.process.automation]
 ---
@@ -21,6 +21,49 @@ multi-source reliability data, plant historian time-series, and STID design cond
 - Heat exchanger fouling assessment
 - Valve erosion or malfunction
 - Any operational anomaly requiring structured root cause identification
+
+## Already-closed incident with a "document learning" ask
+
+When the failure is already resolved and recorded (for example a closed Blalys whose
+only open subtask is to document learning), do not re-derive the cause. Cite the
+recorded cause, test it for consistency against the historian and alarm evidence
+(consistent, contradicted or not testable), then deliver a consequence and learning
+screening: capacity impact (for a derated driver use `Compressor.getDriverLimitedEnvelope()`),
+the barrier or early indicator that would have shortened the outage, and the cost of
+recurrence. Mark causal claims beyond the recorded cause as hypotheses.
+## Rapid Triage Mode (live disturbance)
+
+A full RCA is a study. When the plant is **still down** and a response team needs a
+direction within minutes, run the same framework in a reduced, explicitly labelled
+mode rather than a different method:
+
+| | Full RCA | Rapid triage |
+|---|---|---|
+| Prior | Multi-source reliability data | Reliability prior only, no source reconciliation |
+| Likelihood | Full historian window, quality-screened | Last stable period to now, unscreened |
+| Verification | NeqSim simulation of each hypothesis | Skipped; verification is deferred |
+| Output | Ranked hypotheses with confidence | Top 3 candidates, confidence capped at `MODERATE` |
+| Cause claim | Established when evidence supports it | `NOT_DETERMINED` unless a single candidate dominates |
+
+Rules that make the reduced mode safe to act on:
+
+1. **Label the mode in the output.** A triage result must never be presented, or
+   later quoted, as a completed RCA.
+2. **Cap the confidence.** Without simulation verification the confidence ceiling is
+   `MODERATE`, regardless of how strongly the historian agrees.
+3. **Time-box it.** State the box up front. When it expires, report the ranking as it
+   stands plus what is still unknown — restoration decisions do not wait for cause.
+4. **Report single-source dependence.** If every piece of evidence for the leading
+   candidate comes from one instrument or one system, say so; that is the most common
+   way a triage conclusion turns out wrong.
+5. **Promote, do not restart.** When the plant is stable, re-run the same hypotheses
+   in full mode with simulation verification. Carry forward the case, hypotheses and
+   evidence identifiers. Recompute from the original priors and count each observation
+   once, including observations reused from rapid triage.
+
+Rapid triage is the diagnose step of a live-disturbance response loop. The incident
+coordination, phase gating, and restoration-option evaluation around it live in the
+operations agents that call this skill.
 
 ## Architecture Overview
 
@@ -166,6 +209,24 @@ print(str(report.toTextReport()))
 - **FLOW_DEVIATION**: Trim erosion, actuator malfunction, positioner calibration drift
 - **ABNORMAL_NOISE**: Cavitation, flashing, vibration from upstream piping
 
+## Inventory balance for missing throughput
+
+Use `neqsim.process.diagnostics.ProcessBalanceDiagnosis` or the optional
+`massBalance` evidence block of `runRootCauseAnalysis` when a flow discrepancy
+crosses a separator, export line, receiver or connected control volumes.
+Check the sign and units of every meter against the P&ID, identify each shared
+meter once, and align inventories (kg) and instantaneous rates (kg/s) on the
+same equally spaced timestamps. Establish the inventory-change and healthy
+meter error bounds from the measurement basis. Level, volumetric flow and
+standard gas flow require conversion before use. Missing inventories, tags,
+quality or uncertainty can make the balance inconclusive.
+
+Give the root-cause agent the signed net inflow, accumulation, residual and
+bound per volume, all candidate intervals and one independent check that would
+distinguish the surviving explanations. Use the worked request, status
+interpretation and references in the [RCA guide](../../../docs/diagnostics/root_cause_analysis.md#diagnosing-a-flow-discrepancy-across-connected-equipment).
+A single surviving signature depends on the declared topology and fault family.
+
 ## Evidence Analysis Methods
 
 Evidence is hypothesis-specific. Built-in hypotheses define expected signal
@@ -202,10 +263,137 @@ Pearson correlation between all parameter pairs. Reports correlations with |r| >
 - **STRONG**: |r| > 0.9
 - **MODERATE**: 0.7 < |r| < 0.9
 
+### Correlation when a controller closes the loop
+
+The most common way a historian correlation misleads is that **a control loop
+already connects the two signals being correlated**. The loop guarantees a
+correlation with exactly the sign the wrong hypothesis predicts, so the raw
+number looks like confirmation of a mechanism that is not there.
+
+**1. Ask what the controller does before reading the correlation.**
+Write the loop down first: *does the plant move B in response to A?* If it does,
+a correlation between A and B is expected under the null hypothesis and proves
+nothing. Do not run the correlation at all until this question is answered.
+
+**2. Difference both series.**
+First differences remove a shared trend — seasonal, production ramp, or
+instrument drift — which is the other manufacturer of spurious correlation.
+What survives is genuine short-term coupling.
+
+**3. Use the sign of the lag to resolve direction.**
+This is the part that discriminates. Scan lags in **both** directions and ask
+which signal leads:
+
+| Pattern | Interpretation |
+|---------|----------------|
+| Driver leads by the physical transport time | The causal mechanism under test |
+| Response leads the driver | The controller acting — the loop read backwards |
+| Peak at zero lag only | Shared common cause, or sampling too coarse to separate |
+| Flat across all lags | No coupling at the resolution available |
+
+State the expected lag **before** looking. A transport short-circuit has a
+transit time of minutes; a controller responds in seconds; a seasonal common
+cause has no lag structure at all. If the observed peak does not sit where the
+hypothesis requires, the hypothesis fails regardless of the correlation
+magnitude.
+
+**Worked example.** An investigation suspected that a warm discharge stream was
+short-circuiting back to a cold intake, and correlated intake temperature
+against discharge flow:
+
+```
+raw correlation, intake temperature vs discharge flow:   r = +0.37
+```
+
+Positive, moderate, right sign — it reads as confirmation. It is not. A
+temperature controller opened the discharge valve when the intake ran warm, so
+warm intake *caused* high flow rather than the reverse, and both series carried
+the same seasonal ramp. Two mechanisms manufactured the correlation, neither of
+them the hypothesis under test:
+
+```
+after differencing both series, every lag from -3 h to +3 h:   |r| < 0.10
+                                                     peak:     r = +0.04
+```
+
+The hypothesis fails. The raw figure is dangerous precisely because it is
+plausible rather than absurd.
+
+A saturated controller is the mirror image of this failure: the loop that
+*acts* fools the correlation, while a loop that has *stopped acting* lets
+unchanged disturbances through and makes the process look like it has a new
+external problem. Screen for it with `neqsim-control-authority-screening`
+before accepting an external cause for "the controlled variable got worse".
+
 ### STID Cross-Reference
 Compares current (latest) values to STID design values.
 - **STRONG**: > 20% deviation from design
 - **MODERATE**: 10-20% deviation
+
+### Weather as Evidence (ambient/met-ocean conditions)
+
+Some trips and performance shifts correlate with **weather at the equipment's
+location**, not with anything in the historian: an air-cooler/fin-fan or a
+gas-turbine driver losing margin on a hot day, a flare/dispersion or
+fire-water-monitor case degraded by wind, a marine/topside motion event during
+a storm, or a cold snap driving a hydrate/freeze-related valve or instrument
+failure. When the hypothesis list includes an ambient-condition driver, pull
+the historical weather for the equipment's location and the trip/event window
+with the community `neqsim-weather-data` skill (`WeatherDataService.get_historical`
+or the `installation-weather-agent`) and compare it against the equipment's
+design/rated ambient envelope (ISO ambient for a gas turbine, design ambient
+for an air cooler, etc.):
+
+- **STRONG**: the ambient condition at the event time is outside the
+  equipment's design/rated envelope (e.g. ambient above ISO plus derate margin).
+- **MODERATE**: inside the envelope but at a seasonal or historical extreme
+  for the site (compare against `design_site_conditions`'s percentiles).
+- Treat this like the control-loop correlation trap above: a weather match is
+  circumstantial evidence, not proof. Score it, do not promote it to a
+  confirmed cause without a NeqSim verification run (e.g. re-flash the gas
+  turbine or air cooler at the observed ambient condition and check the
+  predicted margin against what was actually seen).
+- There is no built-in ambient-temperature hypothesis in the compressor/pump/
+  separator/heat-exchanger/valve libraries above; add one as a custom
+  hypothesis (see Extending the Framework) when weather is a candidate driver.
+
+### Incident and Recurrence History (prior layer, not likelihood)
+
+Records of earlier incidents on the same equipment, its sister equipment or the same
+unit (company incident database, maintenance failure history, earlier RCA reports) say
+how often a failure mode has occurred here. That is a **reliability prior**, so it
+enters the prior stage of `Prior × Likelihood × Verification`, never the likelihood
+(the current event's own signals) and never as a confirmed cause.
+
+1. Retrieve the history for the equipment tag, then the unit, over a stated window.
+   Use the installed incident-history evidence agent when the plugin provides one;
+   otherwise ask the user for the case list. Record `no_access` or `not_applicable`
+   in `agent_workflow_plan.evidence_sources` rather than silently skipping.
+2. Map each record to a hypothesis by failure mode (seal leak, bearing, fouling,
+   valve sticking, instrument fault, utility loss ...). Count only records that match
+   the failure mode, not every record on the unit. Keep the case numbers.
+3. Pass the counts to the analyzer before `analyze()`:
+
+```java
+rca.addIncidentHistoryPrior("Seal degradation", 3, "cases 1001, 1007, 1012");
+rca.addIncidentHistoryPrior("Bearing", 1, "case 1020");
+```
+
+   Each matching hypothesis prior is multiplied by `1 + 0.15 × count`, capped at 1.75,
+   and a weak supporting evidence item with the case references is attached for the
+   audit trail. The likelihood score is not touched. Confidence is renormalised, so the
+   effect is relative. Unmatched names are logged, not applied.
+4. Rules that keep it honest:
+   - Recurrence is a screening signal, not a demonstrated common cause. Same tag, same
+     failure mode and a comparable operating regime strengthen it; same unit alone does not.
+   - No recorded incidents never lowers a prior (under-reporting is common).
+   - Closed cases with a recorded cause are stronger than open ones; quote the recorded
+     cause as a hypothesis to test against the historian, not as the answer.
+   - A hypothesis raised only by history and contradicted by the historian stays low:
+     the likelihood term dominates once there is measured evidence.
+   - Report the history window, record count, matching count and the data gap
+     (system coverage, reporting culture) in `assumptions` / `data_gaps`.
+   - Remove personal data from case text before it enters a task folder.
 
 ## Simulation Verification
 
@@ -245,11 +433,14 @@ emitted in `RootCauseReport.toJson()` and MCP JSON.
 |-------|------------|
 | `neqsim-autonomous-investigation` | **Upstream** — when the symptom/driver is NOT given, run the observe→hypothesize→test loop and discover lead-lag relationships (`RelationshipGraph`) first, then feed the discovered candidate causes into RCA instead of a fixed symptom |
 | `neqsim-plant-data` | Read historian data via tagreader API |
-| `neqsim-stid-retriever` | Retrieve STID design documents |
+| `neqsim-control-authority-screening` | Rule out a saturated control valve before accepting an external cause for "the controlled variable got worse" |
+| `neqsim-heat-exchanger-fouling-assessment` | Quantify exchanger degradation behind a cooling or duty shortfall hypothesis |
+| `enterprise-stid-document-retrieval` (enterprise) | Retrieve STID design documents |
 | `neqsim-technical-document-reading` | Extract design values from datasheets |
 | `neqsim-troubleshooting` | Recovery strategies after diagnosis |
 | `neqsim-process-safety` | Link RCA findings to barrier management |
 | `neqsim-pid-process-operations` | P&ID context for equipment relationships |
+| `neqsim-weather-data` (community) | Historical ambient temperature, wind and sea-state for the equipment's location and event window, when weather is a candidate driver |
 
 **When the symptom is unknown**, do not ask the user "what should I look for?".
 Chain `neqsim-plant-data → neqsim-autonomous-investigation → this skill`: the
@@ -404,7 +595,7 @@ historian_csv = df.to_csv(index=False)
 
 ### Step 2: Extract STID Design Data
 
-Use the `neqsim-stid-retriever` and `neqsim-technical-document-reading` skills
+Use the `enterprise-stid-document-retrieval` (enterprise) and `neqsim-technical-document-reading` skills
 to extract design limits and reference values from STID datasheets.
 
 ```python
@@ -558,3 +749,12 @@ print(str(plan.toTextReport()))
 - **Equipment-specific actions**: auto-selects restart actions by equipment type (compressor, separator, pump, HX, valve, column, pipe)
 - **Output**: `RestartPlan` with `toJson()`, `toTextReport()`
 - **Plan structure**: Safety check → Root cause verification → Utilities → Equipment (upstream-first) → System verification
+
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+Two kinds of evidence from `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) strengthen or weaken a hypothesis:
+
+- **Identified relationships:** a usable gain with the physically expected sign and delay, between a candidate driver and the symptom, in a window with excitation. Timing alone does not.
+- **Physics residuals:** measured minus NeqSim-expected values at each observed operating point, calibrated on a healthy window. Two independent residuals moving together (for example compressor power and discharge temperature) point to an equipment change. One moving alone points to an instrument or model fault.
+
+Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).

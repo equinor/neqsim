@@ -10,6 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -26,6 +27,7 @@ class ReactiveElectrolyteEquilibriumTest extends neqsim.NeqSimTest {
 
   /** Both electrolyte model families retain a certified reactive state across repeated and changed flashes. */
   @Test
+  @Tag("slow")
   void carbonateFlashClosesForElectrolyteEosAndGe() throws Exception {
     assertReactiveFlashContract(createPitzerSystem());
     assertReactiveFlashContract(createElectrolyteCpaSystem());

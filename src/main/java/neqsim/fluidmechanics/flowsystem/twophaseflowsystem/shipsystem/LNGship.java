@@ -332,7 +332,7 @@ public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem
    */
   public String[][] getResults(String name) {
     String[][] table = new String[numberOffTimeSteps + 1][26];
-    String[] names = { "Time", "temperature", "WI", "GCV", "density", "volume", "energy" };
+    String[] names = {"Time", "temperature", "WI", "GCV", "density", "volume", "energy"};
 
     for (int i = 0; i < 13; i++) {
       for (int j = 0; j < numberOffTimeSteps + 1; j++) {

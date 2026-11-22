@@ -10,6 +10,7 @@ import com.google.gson.JsonParser;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.WellToTopsideSlugControlStudy;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.monitor.TwoFluidPipeResponse;
@@ -66,6 +67,9 @@ public class PipelineRunner {
     if ("waterHammer".equalsIgnoreCase(analysis) || "liquidHammer".equalsIgnoreCase(analysis)
         || "hydraulicTransient".equalsIgnoreCase(analysis)) {
       return WaterHammerRunner.run(json);
+    }
+    if ("wellToTopsideSlugControl".equalsIgnoreCase(analysis)) {
+      return runWellToTopsideSlugControl(input);
     }
     String solver = getString(input, "solver", analysis);
     if (!isTwoFluidSolver(solver) && !isBeggsAndBrillSolver(solver)) {
@@ -168,6 +172,64 @@ public class PipelineRunner {
     provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
     result.add("provenance", GSON.toJsonTree(provenance));
     return GSON.toJson(result);
+  }
+
+  /**
+   * Runs the deterministic {@code #5036} well-to-topside open-loop and regulated replay.
+   *
+   * @param input parsed pipeline runner input
+   * @return response envelope with comparison metrics and sampled time series
+   */
+  private static String runWellToTopsideSlugControl(JsonObject input) {
+    long startTime = System.currentTimeMillis();
+    double duration = input.has("durationSeconds") ? input.get("durationSeconds").getAsDouble()
+        : WellToTopsideSlugControlStudy.DEFAULT_DURATION_SECONDS;
+    double timeStep = input.has("timeStepSeconds") ? input.get("timeStepSeconds").getAsDouble()
+        : WellToTopsideSlugControlStudy.DEFAULT_TIME_STEP_SECONDS;
+    double sampleInterval = input.has("sampleIntervalSeconds") ? input.get("sampleIntervalSeconds").getAsDouble() : 1.0;
+    int meshRefinement = input.has("meshRefinement") ? input.get("meshRefinement").getAsInt() : 1;
+    try {
+      JsonObject result = new JsonObject();
+      result.addProperty("status", "success");
+      JsonObject data = GSON
+          .toJsonTree(WellToTopsideSlugControlStudy.runComparison(duration, timeStep, meshRefinement, sampleInterval))
+          .getAsJsonObject();
+      result.add("data", data);
+      JsonObject evidence = new JsonObject();
+      evidence.addProperty("benchmark", "neqsim-5036-well-to-topside");
+      evidence.addProperty("boundary", data.get("outletBoundaryMode").getAsString());
+      evidence.addProperty("meshCells", 60 * meshRefinement);
+      evidence.addProperty("timeStepSeconds", timeStep);
+      evidence.addProperty("independentFieldComparison", false);
+      evidence.addProperty("pairedRefinementExecuted", false);
+      evidence.addProperty("suppliedWellPressureDisturbance", true);
+      for (String mode : new String[] {"openLoop", "regulated"}) {
+        JsonObject replay = data.getAsJsonObject(mode);
+        JsonObject quantities = new JsonObject();
+        quantities.add("pipePhaseResidualKg", replay.get("maximumPipeResidual_kg"));
+        quantities.add("peakRiserLiquidKgPerSecond", replay.get("liquidPeak_kg_s"));
+        quantities.add("meanInletProductionKgPerSecond", replay.get("meanProduction_kg_s"));
+        evidence.add(mode, quantities);
+      }
+      result.add("quantityEvidence", evidence);
+      ResultProvenance provenance = new ResultProvenance();
+      provenance.setCalculationType("well-to-topside slug-control replay");
+      provenance.setThermodynamicModel("SRK");
+      provenance.setMixingRule("classic");
+      provenance.addAssumption("The riser outlet pressure is prescribed independently of the separator.");
+      provenance.addLimitation("Phase inventory residuals measure numerical balance. Assess liquid peaks and "
+          + "control rankings on independent meshes, time steps and observed trajectories.");
+      provenance.setConverged(true);
+      provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      result.add("provenance", GSON.toJsonTree(provenance));
+      return GSON.toJson(result);
+    } catch (IllegalArgumentException exception) {
+      return errorJson("INPUT_ERROR", exception.getMessage(),
+          "Use positive duration/time step, meshRefinement 1 or 2, and sample interval at least the time step");
+    } catch (RuntimeException exception) {
+      return errorJson("WELL_TO_TOPSIDE_REPLAY_ERROR", exception.getMessage(),
+          "Run the fixed-boundary #5036 regression and inspect the coupled solver diagnostics");
+    }
   }
 
   /**
@@ -320,7 +382,7 @@ public class PipelineRunner {
         fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
     fluid.setMixingRule(mixingRule);
     fluid.setMultiPhaseCheck(true);
     return fluid;

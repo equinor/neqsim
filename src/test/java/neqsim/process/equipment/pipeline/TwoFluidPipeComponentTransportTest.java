@@ -48,6 +48,9 @@ class TwoFluidPipeComponentTransportTest {
     assertEquals(0.0, report.getInterphaseLatentHeatEnergyJ(), 1.0e-12);
     assertTrue(first.getComponentMassFractionProfile(Phase.GAS, "nitrogen")[0] > 0.05,
         "The inlet composition front must enter the first physical cell");
+    assertPublishedComponents(first);
+    assertEquals(0.05, first.getOutletStream().getFluid().getPhase(0).getComponent("nitrogen").getz(), 1.0e-10,
+        "The inlet composition change must not arrive at the outlet ahead of conservative transport");
 
     assertArrayEquals(first.getComponentMassFractionProfile(Phase.GAS, "nitrogen"),
         repeated.getComponentMassFractionProfile(Phase.GAS, "nitrogen"), 0.0);
@@ -100,9 +103,164 @@ class TwoFluidPipeComponentTransportTest {
 
     assertTrue(pipe.getLastComponentConservationReport().isConverged(),
         pipe.getLastComponentConservationReport().getMessage());
-    assertArrayEquals(new String[] { "methane", "nitrogen" },
+    assertArrayEquals(new String[] {"methane", "nitrogen"},
         pipe.getLastComponentConservationReport().getComponentNames());
     assertTrue(pipe.getComponentMassFractionProfile(Phase.GAS, "nitrogen")[0] > 0.05);
+    assertPublishedComponents(pipe);
+  }
+
+  @Test
+  void rejectedComponentStepPreservesInventoriesAndEveryIntervalLedger() {
+    SystemInterface fluid = createGas(0.95, 0.05);
+    TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
+    section.setPressure(70.0e5);
+    section.setTemperature(288.15);
+    section.setGasMassPerLength(1.0);
+    TwoFluidSection[] cells = {section};
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    double[][] sources = new double[1][3];
+    transport.advance(0.1, new double[][] {{0.1, 0.0, 0.0}, {0.1, 0.0, 0.0}}, sources, cells, fluid, fluid, 1.0e-8);
+    String before = transport.createReport(0.1, 1, 1.0e-8).toJson();
+    // The inlet is processed before this unsupported outlet inflow. Neither may enter the accepted ledger.
+    assertThrows(IllegalStateException.class, () -> transport.advance(0.1,
+        new double[][] {{0.2, 0.0, 0.0}, {-0.1, 0.0, 0.0}}, sources, cells, fluid, fluid, 1.0e-8));
+    assertEquals(before, transport.createReport(0.1, 1, 1.0e-8).toJson());
+    // An independently inconsistent hydrodynamic endpoint must also discard the fully evaluated candidate.
+    assertThrows(IllegalStateException.class, () -> transport.advance(0.1,
+        new double[][] {{0.2, 0.0, 0.0}, {0.0, 0.0, 0.0}}, sources, cells, fluid, fluid, 1.0e-8));
+    assertEquals(before, transport.createReport(0.1, 1, 1.0e-8).toJson());
+    transport.advance(0.1, new double[][] {{0.1, 0.0, 0.0}, {0.1, 0.0, 0.0}}, sources, cells, fluid, fluid, 1.0e-8);
+    assertTrue(transport.createReport(0.2, 2, 1.0e-8).isConverged());
+  }
+
+  @Test
+  void nonFiniteComponentTransportInputsFailBeforeAnyLedgerMutation() {
+    SystemInterface fluid = createGas(0.95, 0.05);
+    TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
+    section.setPressure(70.0e5);
+    section.setTemperature(288.15);
+    section.setGasMassPerLength(1.0);
+    TwoFluidSection[] cells = {section};
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    String before = transport.createReport(0.0, 0, 1.0e-8).toJson();
+    for (double invalid : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class, () -> transport.advance(0.1,
+          new double[][] {{invalid, 0.0, 0.0}, {0.0, 0.0, 0.0}}, new double[1][3], cells, fluid, fluid, 1.0e-8));
+      assertEquals(before, transport.createReport(0.0, 0, 1.0e-8).toJson());
+      assertThrows(IllegalArgumentException.class, () -> transport.advance(0.1, new double[2][3],
+          new double[][] {{invalid, 0.0, 0.0}}, cells, fluid, fluid, 1.0e-8));
+      assertEquals(before, transport.createReport(0.0, 0, 1.0e-8).toJson());
+    }
+  }
+
+  @Test
+  void simultaneousInternalDonorStreamsConserveComponentsAndValidateTheirNet() {
+    SystemInterface fluid = new SystemSrkEos(300.15, 50.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("n-heptane", 0.30);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    TwoFluidSection left = componentCell(0.0, 1.0);
+    TwoFluidSection right = componentCell(1.0, 1.0);
+    left.setPressure(50.0e5);
+    left.setTemperature(350.15);
+    right.setPressure(10.0e5);
+    right.setTemperature(250.15);
+    TwoFluidSection[] cells = {left, right};
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    double[][][] before = transport.getInventoryKg();
+    double largestFractionDifference = 0.0;
+    for (int component = 0; component < before[0][0].length; component++) {
+      largestFractionDifference = Math.max(largestFractionDifference,
+          Math.abs(before[0][0][component] - before[1][0][component]));
+    }
+    assertTrue(largestFractionDifference > 1.0e-3, "The control must exercise distinct left/right donor composition");
+
+    double dt = 0.1;
+    double[][] netFaces = new double[3][3];
+    netFaces[1][0] = 0.1;
+    double[][][] directional = new double[1][3][2];
+    directional[0][0][0] = 0.2;
+    directional[0][0][1] = 0.1;
+    left.setGasMassPerLength(0.99);
+    right.setGasMassPerLength(1.01);
+    transport.advance(dt, netFaces, directional, new double[2][3], null, null, cells, fluid, null, fluid, 1.0e-10);
+
+    double[][][] after = transport.getInventoryKg();
+    for (int component = 0; component < before[0][0].length; component++) {
+      double leftFraction = before[0][0][component] / 1.0;
+      double rightFraction = before[1][0][component] / 1.0;
+      assertEquals(before[0][0][component] - dt * 0.2 * leftFraction + dt * 0.1 * rightFraction, after[0][0][component],
+          1.0e-14);
+      assertEquals(before[1][0][component] + dt * 0.2 * leftFraction - dt * 0.1 * rightFraction, after[1][0][component],
+          1.0e-14);
+      assertEquals(before[0][0][component] + before[1][0][component], after[0][0][component] + after[1][0][component],
+          1.0e-14);
+    }
+    assertTrue(transport.createReport(dt, 1, 1.0e-10).isConverged());
+
+    String accepted = transport.createReport(dt, 1, 1.0e-10).toJson();
+    directional[0][0][1] = 0.05;
+    assertThrows(IllegalArgumentException.class, () -> transport.advance(dt, netFaces, directional, new double[2][3],
+        null, null, cells, fluid, null, fluid, 1.0e-10));
+    assertEquals(accepted, transport.createReport(dt, 1, 1.0e-10).toJson());
+  }
+
+  @Test
+  void optInRusanovPipeCarriesComponentsWhileAusmRemainsDefault() {
+    SystemInterface richFluid = new SystemSrkEos(280.15, 70.0);
+    richFluid.addComponent("nitrogen", 0.05);
+    richFluid.addComponent("methane", 0.75);
+    richFluid.addComponent("n-heptane", 0.20);
+    richFluid.setMixingRule("classic");
+    richFluid.setMultiPhaseCheck(true);
+    Stream inlet = new Stream("rusanov-components-inlet", richFluid);
+    inlet.setFlowRate(5.0, "kg/sec");
+    inlet.run();
+    TwoFluidPipe pipe = new TwoFluidPipe("rusanov-components-pipe", inlet);
+    pipe.setLength(20.0);
+    pipe.setDiameter(0.20);
+    pipe.setNumberOfSections(4);
+    pipe.setOutletPressure(69.0, "bara");
+    pipe.setTimeIntegrationMethod(TimeIntegrator.Method.EULER);
+    pipe.setEnableAdaptiveTimestepping(false);
+    pipe.setEnableSlugTracking(false);
+    pipe.setSteadyStateMaxWallClockTime(2.0);
+    pipe.setComponentTransportEnabled(true);
+    pipe.setEnableWaterOilSlip(true);
+    pipe.run();
+    assertTrue(!pipe.isRusanovInternalFluxEnabled());
+    pipe.setRusanovInternalFluxEnabled(true);
+
+    pipe.runTransient(0.002, TRANSIENT_ID);
+
+    assertTrue(pipe.isRusanovInternalFluxEnabled());
+    assertEquals(0.002, pipe.getLastComponentConservationReport().getElapsedTimeSeconds(), 0.0);
+    assertTrue(pipe.getLastComponentConservationReport().isConverged(),
+        pipe.getLastComponentConservationReport().getMessage());
+    assertTrue(pipe.getLastComponentConservationReport().getMaximumRelativeInventoryResidual() <= 1.0e-8,
+        pipe.getLastComponentConservationReport().getMessage());
+  }
+
+  private static TwoFluidSection componentCell(double position, double gasMassKgPerM) {
+    TwoFluidSection section = new TwoFluidSection(position, 1.0, 0.20, 0.0);
+    section.setPressure(70.0e5);
+    section.setTemperature(288.15);
+    section.setGasMassPerLength(gasMassKgPerM);
+    return section;
+  }
+
+  private static void assertPublishedComponents(TwoFluidPipe pipe) {
+    TwoFluidComponentConservationReport report = pipe.getLastComponentConservationReport();
+    SystemInterface outlet = pipe.getOutletStream().getFluid();
+    String[] names = report.getComponentNames();
+    double[] transported = report.getOutletBoundaryMassKg();
+    for (int component = 0; component < names.length; component++) {
+      double published = outlet.getTotalNumberOfMoles() * outlet.getPhase(0).getComponent(names[component]).getz()
+          * outlet.getPhase(0).getComponent(names[component]).getMolarMass();
+      assertEquals(transported[component] / report.getElapsedTimeSeconds(), published, 1.0e-10,
+          "Published component flow must use the accepted boundary ledger: " + names[component]);
+    }
   }
 
   @Test
@@ -112,30 +270,39 @@ class TwoFluidPipeComponentTransportTest {
     section.setPressure(70.0e5);
     section.setTemperature(288.15);
     section.setGasMassPerLength(1.0);
-    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] { section });
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] {section});
 
     double[][] faceFluxesKgS = new double[2][3];
-    double[][] phaseSourcesKgPerMetreSecond = { { 1.0, -2.0, 1.0 } };
+    double[][] phaseSourcesKgPerMetreSecond = {{1.0, -2.0, 1.0}};
     IllegalStateException exception = assertThrows(IllegalStateException.class, () -> transport.advance(1.0,
-        faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] { section }, fluid, fluid, 1.0e-8));
+        faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] {section}, fluid, fluid, 1.0e-8));
     assertTrue(exception.getMessage().contains("Direct oil-water component transfer"));
   }
 
   @Test
-  void reverseFlowThroughInletFailsBeforeComponentAdvection() {
+  void reverseFlowThroughInletUsesCellCompositionAndSignedBoundaryLedger() {
     SystemInterface fluid = createGas(0.95, 0.05);
     TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
     section.setPressure(70.0e5);
     section.setTemperature(288.15);
     section.setGasMassPerLength(1.0);
-    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] { section });
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] {section});
 
     double[][] faceFluxesKgS = new double[2][3];
-    faceFluxesKgS[0][0] = -1.0;
+    faceFluxesKgS[0][0] = -0.1;
     double[][] phaseSourcesKgPerMetreSecond = new double[1][3];
-    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> transport.advance(1.0,
-        faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] { section }, fluid, fluid, 1.0e-8));
-    assertTrue(exception.getMessage().contains("inlet boundary"));
+    TwoFluidSection updated = section.clone();
+    updated.setGasMassPerLength(0.9);
+    transport.advance(1.0, faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] {updated}, fluid, fluid,
+        1.0e-8);
+
+    TwoFluidComponentConservationReport report = transport.createReport(1.0, 1, 1.0e-8);
+    assertTrue(report.isConverged(), report.getMessage());
+    double[] signedInlet = report.getInletBoundaryMassKg(Phase.GAS);
+    assertEquals(-0.1, signedInlet[0] + signedInlet[1], 1.0e-12);
+    assertTrue(signedInlet[0] < 0.0);
+    assertTrue(signedInlet[1] < 0.0);
+    assertEquals(0.0, report.getOutletBoundaryMassKg()[0] + report.getOutletBoundaryMassKg()[1], 0.0);
   }
 
   @Test
@@ -155,12 +322,12 @@ class TwoFluidPipeComponentTransportTest {
     section.setPressure(70.0e5);
     section.setTemperature(288.15);
     section.setGasMassPerLength(1.0);
-    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] { section });
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] {section});
 
     double[][] faceFluxesKgS = new double[2][3];
     double[][] phaseSourcesKgPerMetreSecond = new double[1][3];
     IllegalArgumentException advanceException = assertThrows(IllegalArgumentException.class,
-        () -> transport.advance(1.0, faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] { section },
+        () -> transport.advance(1.0, faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] {section},
             fluid, null, 1.0e-8));
     assertTrue(advanceException.getMessage().contains("Fluid template"));
 
@@ -296,24 +463,24 @@ class TwoFluidPipeComponentTransportTest {
     pipe.setInletThermoSystem(createGas(0.95, 0.05));
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(nodes);
-    GeometryDefinitionInterface[] geometry = { new PipeData(), new PipeData() };
+    GeometryDefinitionInterface[] geometry = {new PipeData(), new PipeData()};
     for (GeometryDefinitionInterface section : geometry) {
       section.setDiameter(0.20);
       section.setInnerSurfaceRoughness(1.0e-5);
     }
     pipe.setEquipmentGeometry(geometry);
-    pipe.setLegHeights(new double[] { 0.0, 0.0 });
-    pipe.setLegPositions(new double[] { 0.0, lengthMetres });
-    pipe.setLegOuterTemperatures(new double[] { 288.15, 288.15 });
-    pipe.setLegWallHeatTransferCoefficients(new double[] { 0.0, 0.0 });
-    pipe.setLegOuterHeatTransferCoefficients(new double[] { 0.0, 0.0 });
+    pipe.setLegHeights(new double[] {0.0, 0.0});
+    pipe.setLegPositions(new double[] {0.0, lengthMetres});
+    pipe.setLegOuterTemperatures(new double[] {288.15, 288.15});
+    pipe.setLegWallHeatTransferCoefficients(new double[] {0.0, 0.0});
+    pipe.setLegOuterHeatTransferCoefficients(new double[] {0.0, 0.0});
     pipe.createSystem();
     pipe.init();
     pipe.solveSteadyState(1);
     pipe.setConservativeSpeciesTransport(true);
     pipe.setFailOnNonConvergence(true);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, durationSeconds });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, durationSeconds});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {createGas(0.80, 0.20)});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
     pipe.solveTransient(1);
     double[][] profile = pipe.getSpeciesConservationReport().getMassFractionProfile();

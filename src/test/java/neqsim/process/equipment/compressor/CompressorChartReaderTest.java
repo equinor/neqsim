@@ -39,6 +39,8 @@ public class CompressorChartReaderTest {
     Compressor compressor = new Compressor("compressor1", stream);
     compressor.setCompressorChartType("interpolate and extrapolate");
     compressor.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    compressor.setPolytropicMethod("ideal_inlet_properties");
     // compressor.setMaximumSpeed(7383);
     // compressor.setMinimumSpeed(4922);
     compressor.setSpeed(3000);
@@ -59,6 +61,12 @@ public class CompressorChartReaderTest {
 
     compressor.run();
 
-    Assertions.assertEquals(5303.497378, compressor.getSpeed(), 0.1);
+    // Linear interpolation of the CSV speed curves, without a second speed correction to head.
+    Assertions.assertEquals(5160.045840, compressor.getSpeed(), 0.1);
+    double solvedSpeed = compressor.getSpeed();
+    compressor.setSpeed(6000.0);
+    compressor.run();
+    Assertions.assertEquals(solvedSpeed, compressor.getSpeed(), 0.1,
+        "Solving from another initial speed must recover the same operating point");
   }
 }

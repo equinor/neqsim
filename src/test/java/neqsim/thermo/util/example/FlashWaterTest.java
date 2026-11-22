@@ -15,8 +15,8 @@ class FlashWaterTest {
   static SystemInterface waterSystem = null;
   static ThermodynamicOperations thermoOps;
 
-  static double[] P_bar = new double[] { 1, 1, 1, 1, 10, 10, 10, 10, 100, 100, 100, 100 };
-  static double[] T_C = new double[] { 0, 15, 30, 100, 0, 15, 30, 100, 0, 15, 30, 100 };
+  static double[] P_bar = new double[] {1, 1, 1, 1, 10, 10, 10, 10, 100, 100, 100, 100};
+  static double[] T_C = new double[] {0, 15, 30, 100, 0, 15, 30, 100, 0, 15, 30, 100};
 
   static double[] enthalpy = new double[P_bar.length];
   static double[] entropy = new double[P_bar.length];

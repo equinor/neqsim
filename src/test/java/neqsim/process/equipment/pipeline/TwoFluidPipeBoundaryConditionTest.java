@@ -26,7 +26,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Physical behavior during transient: pressure buildup, velocity decay</li>
  * <li>Convenience methods (closeOutlet, openOutlet, closeInlet, openInlet)</li>
  * </ul>
- * </p>
  *
  * @author ESOL
  * @version 1.0
@@ -393,7 +392,7 @@ class TwoFluidPipeBoundaryConditionTest {
   void testConstantFlowStepDoesNotCreateDomainMass() {
     double initialFlowRate = 6.0;
     double timeStep = 1.0e-3;
-    double[] steppedFlowRates = { 12.0, 30.0 };
+    double[] steppedFlowRates = {12.0, 30.0};
     UUID calculationId = UUID.fromString("00000000-0000-0000-0000-000000002718");
 
     for (double steppedFlowRate : steppedFlowRates) {
@@ -423,7 +422,9 @@ class TwoFluidPipeBoundaryConditionTest {
   @DisplayName("Steady-state handoff preserves inventory and avoids an O(1) hydraulic jump")
   void testSteadyStateToTransientHandoffIsContinuous() {
     assertSteadyStateToTransientHandoffIsContinuous("two-phase", createTwoPhaseFluid(), 6.0, 75.0, 58.0);
-    assertSteadyStateToTransientHandoffIsContinuous("three-phase", createThreePhaseFluid(), 6.0, 80.0, 60.0);
+    // 1.5 kg/s keeps the gas-liquid flow stratified, so the oil and water layers slip. At 6 kg/s the flow is annular;
+    // gas agitation then disperses the liquids and the steady split correctly has no oil/water slip (#5046).
+    assertSteadyStateToTransientHandoffIsContinuous("three-phase", createThreePhaseFluid(), 1.5, 80.0, 60.0);
   }
 
   // =====================================================================
@@ -609,10 +610,17 @@ class TwoFluidPipeBoundaryConditionTest {
     TwoFluidPipe handoffPipe = createRegressionPipe(name + "-handoff", fluid, flowRateKgSec, inletPressureBara,
         outletPressureBara);
     if ("three-phase".equals(name)) {
-      handoffPipe.setElevationProfile(new double[] { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5 });
+      handoffPipe.setElevationProfile(new double[] {0.0, 0.1, 0.2, 0.3, 0.4, 0.5});
     }
     handoffPipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
+    // A one-second wall-clock guard truncates initialization on slower CI runners. The
+    // handoff must start from the same completed iteration sequence on every platform.
+    handoffPipe.setSteadyStateMaxWallClockTime(60.0);
     handoffPipe.run();
+    assertFalse(handoffPipe.isSteadyStateWallClockLimited(),
+        name + " handoff initialization must finish before the wall-clock guard");
+    assertTrue(handoffPipe.isSteadyStateConverged(),
+        name + " handoff must start from a converged steady-state profile");
 
     double[] pressureBefore = handoffPipe.getPressureProfile();
     double[] liquidHoldupBefore = handoffPipe.getLiquidHoldupProfile();

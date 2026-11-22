@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -61,11 +62,8 @@ public class NaphtaliSandholmSolver {
   /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
-  /** Maximum forced-root fugacity fixed-point sweeps for one tray evaluation. */
-  private static final int THERMO_K_VALUE_ITERATIONS = 2;
-
-  /** Maximum forced-root fugacity sweeps when refining a retained column state. */
-  private static final int THERMO_WARM_START_K_VALUE_ITERATIONS = 3;
+  /** Maximum forced-root fugacity sweeps for a cold, retained or recovery tray evaluation. */
+  private static final int THERMO_K_VALUE_ITERATIONS = 30;
 
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
   private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
@@ -116,6 +114,15 @@ public class NaphtaliSandholmSolver {
 
   /** Vapor component flows v_{i,j} in mol/hr. Indexed [j][i]. */
   private double[][] vap;
+
+  /** Last one-mole vapor state evaluated for each tray. */
+  private SystemInterface[] lastVaporSystems;
+
+  /** Frozen vapor derivative states used only while perturbing a Jacobian base. */
+  private SystemInterface[] jacobianBaseVaporSystems;
+
+  /** Vapor state returned by the latest composition-derivative evaluation. */
+  private SystemInterface currentVaporSystem;
 
   /** K-values K_{i,j}. Indexed [j][i]. */
   private double[][] K;
@@ -191,6 +198,12 @@ public class NaphtaliSandholmSolver {
   /** Reference thermo system cloned from the feed for flash calculations. */
   private SystemInterface referenceSystem;
 
+  /** Reusable thermodynamics-only copy of {@link #referenceSystem} for single-phase property evaluations. */
+  private SystemInterface singlePhaseWorkSystem;
+
+  /** Reference system instance that {@link #singlePhaseWorkSystem} was copied from. */
+  private SystemInterface singlePhaseWorkSource;
+
   /**
    * Enable Boston-Sullivan inside-out refinement of the seed when at least one tray temperature is pinned (e.g. T-spec
    * reboiler). The smooth Wilson BP seed misses sharp T-pinches; B-S inner loop (per-component tridiag MB + bubble-T)
@@ -204,6 +217,8 @@ public class NaphtaliSandholmSolver {
 
   /** Whether to initialize the MESH variables from the converged column tray state. */
   private boolean warmStartFromColumn = false;
+  /** Use the BP seed directly when correcting an unsatisfied terminal ratio. */
+  private boolean terminalRatioNewtonSeed;
 
   /**
    * Largest per-tray, per-component molar imbalance (relative to total feed) accepted by the early-exit branches.
@@ -273,7 +288,7 @@ public class NaphtaliSandholmSolver {
   /** Number of tray thermodynamic evaluations in the last solve. */
   private int lastThermoEvaluationCount;
 
-  /** Number of forced-root fugacity fixed-point iterations in the last solve. */
+  /** Number of forced-root fugacity iterations in the last solve. */
   private int lastThermoKValueIterationCount;
 
   /** Number of tray evaluations that reached the K-value iteration cap. */
@@ -402,7 +417,7 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
-   * Get the number of forced-root fugacity fixed-point iterations in the latest solve.
+   * Get the number of forced-root fugacity iterations in the latest solve.
    *
    * @return K-value iteration count
    */
@@ -559,6 +574,15 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
+   * Select the bubble-point seed for a guarded terminal-ratio correction.
+   *
+   * @param enabled whether to bypass the terminal-duty Sum-Rates initializer
+   */
+  void setTerminalRatioNewtonSeed(boolean enabled) {
+    terminalRatioNewtonSeed = enabled;
+  }
+
+  /**
    * Set the largest per-component tray imbalance an early-exit branch may accept.
    *
    * @param tolerance imbalance relative to total feed flow, must be finite and greater than zero
@@ -614,7 +638,21 @@ public class NaphtaliSandholmSolver {
     if (!componentImbalanceAcceptable(stageName)) {
       return false;
     }
-    if (!hasActiveSideDraws()) {
+    boolean activeRatio = false;
+    for (int terminal : new int[] {0, N - 1}) {
+      double ratioResidual = terminalRatioResidual(terminal);
+      if (hasTerminalRatioControl(terminal)) {
+        activeRatio = true;
+        double denominatorFlow = terminal == N - 1 ? V[terminal] : L[terminal];
+        if (!(denominatorFlow > 1.0e-20)) {
+          return false;
+        }
+        if (!Double.isFinite(ratioResidual) || Math.abs(ratioResidual) > tolerance) {
+          return false;
+        }
+      }
+    }
+    if (!hasActiveSideDraws() && !activeRatio) {
       return true;
     }
     double summationResidual = computeMaxSummationResidual();
@@ -744,14 +782,22 @@ public class NaphtaliSandholmSolver {
       // energy is in the 1-5% range, run Sum-Rates (which adjusts T from the
       // energy balance) — that refines T without invoking Newton, which is
       // documented to diverge for the no-condenser/T-spec topology.
-      if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01 && meshClosureAcceptable("Bubble-Point")) {
+      // With both terminal stages, require Newton correction unless the full residual passed
+      // above. The no-condenser shortcut otherwise publishes only approximate tray traffic,
+      // including the previous traffic after a small temperature or feed change.
+      if (useOverallMBClosure && !hasCondenser && mbErrorBP < 0.005 && energyErrorBP < 0.01
+          && meshClosureAcceptable("Bubble-Point")) {
         logger.info("NS: mass+energy balance OK (mb={}%, E={}%), accepting solution",
             String.format("%.4f", mbErrorBP * 100), String.format("%.2f", energyErrorBP * 100));
         logger.debug("NS: accepting Bubble-Point solution without Sum-Rates correction");
         applyResultsToColumn(id, 0, norm, startTime);
         return true;
       }
-      if (!warmStartFromColumn && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
+      // Sum-Rates uses terminal energy equations and cannot preserve active flow-ratio boundaries.
+      // Retain the Bubble-Point seed for the simultaneous ratio-constrained Newton equations.
+      if (!warmStartFromColumn
+          && (!terminalRatioNewtonSeed || !hasTerminalRatioControl(0) && !hasTerminalRatioControl(N - 1))
+          && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
         // Mass balance OK but energy not — use Sum-Rates method to correct T
         // The BP method determines T from bubble-point (sum Kx = 1), which
         // fails for wide-boiling / absorber columns. SR determines T from
@@ -786,7 +832,7 @@ public class NaphtaliSandholmSolver {
         // sensitivities propagate exponentially — observed Newton blowup
         // from ||F||=4 to 1e5 in one step). Once SR has closed mass balance
         // and energy balance, accept that result and skip Newton.
-        if (useOverallMBClosure && mbAfterSR < 0.05 && energyAfterSR < 0.05
+        if (useOverallMBClosure && !hasCondenser && mbAfterSR < 0.05 && energyAfterSR < 0.05
             && meshClosureAcceptable("Sum-Rates without Newton")) {
           logger.debug("NS: accepting Sum-Rates result without Newton because overall-MB closure is ill-conditioned "
               + "(mass balance={}%, energy={}%);", mbAfterSR * 100, energyAfterSR * 100);
@@ -1084,6 +1130,16 @@ public class NaphtaliSandholmSolver {
     }
 
     referenceSystem = firstFeed.getThermoSystem().clone();
+    for (int trayIndex = 0; trayIndex < N; trayIndex++) {
+      for (StreamInterface feed : column.getInnerSolverFeedStreams(trayIndex)) {
+        for (int component = 0; component < feed.getThermoSystem().getNumberOfComponents(); component++) {
+          ComponentInterface source = feed.getThermoSystem().getComponent(component);
+          if (!referenceSystem.hasComponent(source.getComponentName())) {
+            referenceSystem.addComponent(source);
+          }
+        }
+      }
+    }
     // Disable multiPhaseCheck in the solver's reference system — the BP method
     // only handles two-phase VLE and 3-phase flashes produce wrong K-values
     // and feed splits.
@@ -1100,6 +1156,7 @@ public class NaphtaliSandholmSolver {
     liq = new double[N][C];
     vap = new double[N][C];
     K = new double[N][C];
+    lastVaporSystems = new SystemInterface[N];
     trayEta = new double[N];
     // Cache effective Murphree efficiency per stage. Reboiler (j=0) and
     // condenser (j=N-1 when present) are always rigorous equilibrium and stay
@@ -1143,14 +1200,14 @@ public class NaphtaliSandholmSolver {
         P[j] = fallbackPressure;
       }
       internalVaporFraction[j] = 1.0 - tray.getGasSideDrawFraction();
-      internalLiquidFraction[j] = 1.0 - tray.getLiquidSideDrawFraction();
+      internalLiquidFraction[j] = 1.0 - tray.getLiquidSideDrawFraction() - tray.getLiquidPumparoundDrawFraction();
     }
 
     // Process every external feed in the same deterministic tray/stream order used
     // when DistillationColumn captured originalFeedSystems and flow rates.
     // Use originalFeedSystems (cloned before init() corrupted them) if available.
     for (int trayIdx = 0; trayIdx < N; trayIdx++) {
-      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIdx);
+      List<StreamInterface> feeds = column.getInnerSolverFeedStreams(trayIdx);
       if (feeds.isEmpty()) {
         continue;
       }
@@ -1207,11 +1264,11 @@ public class NaphtaliSandholmSolver {
             feedSys.getTemperature() - 273.15, feedSys.getPressure(), feedSys.getEnthalpy());
 
         for (int i = 0; i < C; i++) {
-          double zi = feedSys.getPhase(0).getComponent(i).getx(); // overall composition
+          double zi = feedComponentFraction(feedSys, 0, i); // overall composition
           if (feedSys.getNumberOfPhases() > 1) {
             // Split feed into vapor and liquid portions
-            double yi = feedSys.getPhase(0).getComponent(i).getx();
-            double xi = feedSys.getPhase(1).getComponent(i).getx();
+            double yi = feedComponentFraction(feedSys, 0, i);
+            double xi = feedComponentFraction(feedSys, 1, i);
             feedVap[trayIdx][i] += feedMoles * beta * yi;
             feedLiq[trayIdx][i] += feedMoles * (1.0 - beta) * xi;
           } else {
@@ -1239,17 +1296,17 @@ public class NaphtaliSandholmSolver {
             // Extract vapor composition from the flash
             double[] yFeed = new double[C];
             for (int i = 0; i < C; i++) {
-              yFeed[i] = feedSys.getPhase(0).getComponent(i).getx();
+              yFeed[i] = feedComponentFraction(feedSys, 0, i);
             }
-            feedHV[trayIdx] = computeSinglePhaseEnthalpy(yFeed, feedTempK, feedPressBar, true);
+            feedHV[trayIdx] += nVap * computeSinglePhaseEnthalpy(yFeed, feedTempK, feedPressBar, true);
           }
           if (nLiq > 0) {
             // Extract liquid composition from the flash
             double[] xFeed = new double[C];
             for (int i = 0; i < C; i++) {
-              xFeed[i] = feedSys.getPhase(1).getComponent(i).getx();
+              xFeed[i] = feedComponentFraction(feedSys, 1, i);
             }
-            feedHL[trayIdx] = computeSinglePhaseEnthalpy(xFeed, feedTempK, feedPressBar, false);
+            feedHL[trayIdx] += nLiq * computeSinglePhaseEnthalpy(xFeed, feedTempK, feedPressBar, false);
           }
           feedVTotal[trayIdx] += nVap;
           feedLTotal[trayIdx] += nLiq;
@@ -1257,17 +1314,22 @@ public class NaphtaliSandholmSolver {
           // Single phase feed — route by actual phase type, NOT beta.
           double[] zFeed = new double[C];
           for (int i = 0; i < C; i++) {
-            zFeed[i] = feedSys.getPhase(0).getComponent(i).getx();
+            zFeed[i] = feedComponentFraction(feedSys, 0, i);
           }
           if (singlePhaseIsVapor) {
-            feedHV[trayIdx] = computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, true);
+            feedHV[trayIdx] += feedMoles * computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, true);
             feedVTotal[trayIdx] += feedMoles;
           } else {
-            feedHL[trayIdx] = computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, false);
+            feedHL[trayIdx] += feedMoles * computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, false);
             feedLTotal[trayIdx] += feedMoles;
           }
         }
       }
+    }
+
+    for (int trayIndex = 0; trayIndex < N; trayIndex++) {
+      feedHV[trayIndex] /= Math.max(feedVTotal[trayIndex], 1.0e-30);
+      feedHL[trayIndex] /= Math.max(feedLTotal[trayIndex], 1.0e-30);
     }
 
     // Initialize tray state from current column trays (use existing solution as
@@ -1335,6 +1397,12 @@ public class NaphtaliSandholmSolver {
       refluxRatio = cond.getRefluxRatio();
     }
 
+    for (int terminal : new int[] {0, N - 1}) {
+      if (hasTerminalRatioControl(terminal) && !Double.isNaN(fixedTemperature[terminal])) {
+        seedTemperature[terminal] = fixedTemperature[terminal];
+        fixedTemperature[terminal] = Double.NaN;
+      }
+    }
     totalFeedMolesField = totalFeedMoles;
     // Closure strategy: when the user pins reboiler T but does NOT also specify
     // a boilup ratio (boilupRatio is still the NeqSim default 0.1), the
@@ -1367,19 +1435,21 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
-   * Initialize MESH variables from the current column tray state for a changed-input warm solve.
+   * Initialize MESH variables from the current column tray state for warm solving or terminal recovery.
    *
    * <p>
    * The prior converged phase flows are scaled to the new total feed rate. The subsequent Newton correction then
    * resolves material and energy residuals for the changed feed without repeating the cold Bubble-Point and Sum-Rates
-   * basin-finding stages.
+   * basin-finding stages. Terminal recovery instead preserves the current flow basis and reconstructs gross phase
+   * inventories before side-draw and pumparound withdrawals, with the current return streams held fixed.
    * </p>
    *
    * @param totalFeedMoles current total external feed flow in mol/hr
    * @return {@code true} when every tray supplied finite gas and liquid phase flows
    */
   private boolean initializeTrayStateFromColumn(double totalFeedMoles) {
-    if (!column.getSideDrawSpecifications().isEmpty() || !column.getPumparounds().isEmpty()) {
+    if (!terminalRatioNewtonSeed
+        && (!column.getSideDrawSpecifications().isEmpty() || !column.getPumparounds().isEmpty())) {
       logger.info("NS: skipping scaled warm MESH state because side draws or pumparounds are configured");
       return false;
     }
@@ -1389,7 +1459,7 @@ public class NaphtaliSandholmSolver {
     if (!(previousTotalFeedMoles > 1.0e-12) || !Double.isFinite(previousTotalFeedMoles)) {
       return false;
     }
-    double flowScaleFactor = totalFeedMoles / previousTotalFeedMoles;
+    double flowScaleFactor = terminalRatioNewtonSeed ? 1.0 : totalFeedMoles / previousTotalFeedMoles;
     if (!(flowScaleFactor > 0.0) || !Double.isFinite(flowScaleFactor)) {
       return false;
     }
@@ -1407,6 +1477,14 @@ public class NaphtaliSandholmSolver {
       StreamInterface liquidStream = tray.getLiquidOutStream();
       double gasFlow = gasStream.getFlowRate("mol/hr") * flowScaleFactor;
       double liquidFlow = liquidStream.getFlowRate("mol/hr") * flowScaleFactor;
+      if (terminalRatioNewtonSeed) {
+        if (!(internalVaporFraction[trayIndex] > 0.0) || !(internalLiquidFraction[trayIndex] > 0.0)) {
+          return false;
+        }
+        // The retained outlets are after withdrawals; MESH variables represent the full phase inventories.
+        gasFlow /= internalVaporFraction[trayIndex];
+        liquidFlow /= internalLiquidFraction[trayIndex];
+      }
       double trayTemperature = tray.getTemperature();
       if (!(gasFlow > 0.0) || !(liquidFlow > 0.0) || !Double.isFinite(gasFlow) || !Double.isFinite(liquidFlow)
           || !Double.isFinite(trayTemperature)) {
@@ -1481,7 +1559,7 @@ public class NaphtaliSandholmSolver {
     double feedTemp = 0;
     double feedTempWeight = 0;
     for (int trayIdx = 0; trayIdx < N; trayIdx++) {
-      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIdx);
+      List<StreamInterface> feeds = column.getInnerSolverFeedStreams(trayIdx);
       if (feeds.isEmpty()) {
         continue;
       }
@@ -2692,11 +2770,19 @@ public class NaphtaliSandholmSolver {
     logger.info("SR: starting Sum-Rates energy correction. T[0]={} T[N-1]={}", String.format("%.1f", T[0] - 273.15),
         String.format("%.1f", T[N - 1] - 273.15));
 
-    // Save BP solution as fallback
+    // Keep the K-value basin and its evaluated vapor derivatives with every primary checkpoint.
+    // Rejected SR trials must not seed the restored BP or best state with another thermodynamic branch.
     double[][] bpLiq = new double[N][C];
     double[] bpT = new double[N];
     double[] bpV = new double[N];
     saveTrayState(bpLiq, bpT, bpV);
+    double[][] bpK = new double[N][C];
+    double[][] bpVap = new double[N][C];
+    double[] bpL = new double[N];
+    double[] bpHL = new double[N];
+    double[] bpHV = new double[N];
+    saveDerivedThermodynamicState(bpK, bpVap, bpL, bpHL, bpHV);
+    SystemInterface[] bpVaporSystems = lastVaporSystems.clone();
     double bpMbErr = computeMassBalanceError();
     double bpEnergyErr = computeMaxRelativeEnergyError();
 
@@ -2705,6 +2791,13 @@ public class NaphtaliSandholmSolver {
     double[] bestT = new double[N];
     double[] bestV = new double[N];
     saveTrayState(bestLiq, bestT, bestV);
+    double[][] bestK = new double[N][C];
+    double[][] bestVap = new double[N][C];
+    double[] bestL = new double[N];
+    double[] bestHL = new double[N];
+    double[] bestHV = new double[N];
+    saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+    SystemInterface[] bestVaporSystems = lastVaporSystems.clone();
     double bestMbErr = bpMbErr;
     double bestEnergyErr = bpEnergyErr;
 
@@ -2894,6 +2987,8 @@ public class NaphtaliSandholmSolver {
         bestEnergyErr = eErr;
         bestMbErr = mbErr;
         saveTrayState(bestLiq, bestT, bestV);
+        saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+        System.arraycopy(lastVaporSystems, 0, bestVaporSystems, 0, N);
       }
 
       // Convergence: T stable and mass balance acceptable
@@ -2908,6 +3003,8 @@ public class NaphtaliSandholmSolver {
         logger.debug("SR: mass balance degraded to {}%; reducing damping", mbErr * 100);
         logger.warn("SR: mass balance degraded to {}%, reducing damping", String.format("%.1f", mbErr * 100));
         restoreTrayState(bestLiq, bestT, bestV);
+        restoreDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+        System.arraycopy(bestVaporSystems, 0, lastVaporSystems, 0, N);
         evaluateThermo();
         dampT *= 0.5;
         maxClampT = Math.max(maxClampT * 0.5, 1.0);
@@ -2918,8 +3015,10 @@ public class NaphtaliSandholmSolver {
       }
     }
 
-    // Restore best solution found
+    // Re-evaluate the saved seed because SR checkpoints may follow an unevaluated temperature update.
     restoreTrayState(bestLiq, bestT, bestV);
+    restoreDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+    System.arraycopy(bestVaporSystems, 0, lastVaporSystems, 0, N);
     evaluateThermo();
 
     double finalMb = computeMassBalanceError();
@@ -2935,6 +3034,8 @@ public class NaphtaliSandholmSolver {
       logger.debug("SR solution is worse than Bubble-Point solution; reverting");
       logger.info("SR: solution worse than BP, reverting");
       restoreTrayState(bpLiq, bpT, bpV);
+      restoreDerivedThermodynamicState(bpK, bpVap, bpL, bpHL, bpHV);
+      System.arraycopy(bpVaporSystems, 0, lastVaporSystems, 0, N);
       evaluateThermo();
     }
   }
@@ -2953,8 +3054,8 @@ public class NaphtaliSandholmSolver {
     double[] eErr = computeEnergyErrors();
     double maxRelErr = 0;
     for (int j = 0; j < N; j++) {
-      if (!Double.isNaN(fixedTemperature[j])) {
-        continue; // skip fixed-T trays (reboiler) — they have a duty
+      if (!Double.isNaN(fixedTemperature[j]) || hasTerminalRatioControl(j)) {
+        continue; // Terminal specifications determine a free duty.
       }
       double hOut = Math.abs(V[j] * hV[j] + L[j] * hL[j]);
       double hIn = 0;
@@ -3179,8 +3280,11 @@ public class NaphtaliSandholmSolver {
         F[base + i] = Mij / flowScale;
       }
 
-      // Energy balance (or fixed temperature specification)
-      if (!Double.isNaN(fixedTemperature[j])) {
+      // Terminal ratios replace the free terminal duty equation.
+      double ratioResidual = terminalRatioResidual(j);
+      if (hasTerminalRatioControl(j)) {
+        F[base + C] = ratioResidual;
+      } else if (!Double.isNaN(fixedTemperature[j])) {
         // Fixed temperature: residual is T_j - T_spec
         F[base + C] = (T[j] - fixedTemperature[j]) / tempScale;
       } else {
@@ -3244,6 +3348,7 @@ public class NaphtaliSandholmSolver {
     double[] baseHL = new double[N];
     double[] baseHV = new double[N];
     saveDerivedThermodynamicState(baseK, baseVap, baseL, baseHL, baseHV);
+    jacobianBaseVaporSystems = lastVaporSystems.clone();
 
     for (int jj = 0; jj < N; jj++) {
       for (int k = 0; k < varsPerTray; k++) {
@@ -3273,6 +3378,8 @@ public class NaphtaliSandholmSolver {
       }
     }
 
+    lastVaporSystems = jacobianBaseVaporSystems;
+    jacobianBaseVaporSystems = null;
     double[] restoredResidual = computeResidual();
     lastJacobianBaseResidualMutation = Math.max(lastJacobianBaseResidualMutation,
         vectorDifferenceNorm(F0, restoredResidual));
@@ -3402,6 +3509,52 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
+   * Map a feed phase composition onto the solver's named component basis.
+   *
+   * @param feed feed system
+   * @param phase phase index
+   * @param component reference component index
+   * @return phase mole fraction, or zero for a component absent from this feed
+   */
+  private double feedComponentFraction(SystemInterface feed, int phase, int component) {
+    String name = referenceSystem.getComponent(component).getComponentName();
+    return feed.getPhase(phase).hasComponent(name) ? feed.getPhase(phase).getComponent(name).getx() : 0.0;
+  }
+
+  /**
+   * Test whether the specified terminal replaces its duty equation by a ratio boundary.
+   *
+   * @param tray stage index
+   * @return true for an explicitly active supported ratio mode
+   */
+  private boolean hasTerminalRatioControl(int tray) {
+    if (tray == N - 1 && hasCondenser) {
+      Condenser condenser = column.getCondenser();
+      return condenser.isRefluxSet() && !condenser.isTotalCondenser() && !condenser.isSeparation_with_liquid_reflux();
+    }
+    return tray == 0 && hasReboiler && column.getReboiler().isRefluxSet();
+  }
+
+  /**
+   * Evaluate an active partial-condenser or reboiler ratio boundary equation.
+   *
+   * @param tray terminal tray index
+   * @return scaled flow equation, or NaN when no terminal ratio is active
+   */
+  private double terminalRatioResidual(int tray) {
+    if (tray == N - 1 && hasCondenser) {
+      Condenser condenser = column.getCondenser();
+      if (condenser.isRefluxSet() && !condenser.isTotalCondenser() && !condenser.isSeparation_with_liquid_reflux()) {
+        return (L[tray] - refluxRatio * V[tray]) / flowScale;
+      }
+    }
+    if (tray == 0 && hasReboiler && column.getReboiler().isRefluxSet()) {
+      return (V[tray] - boilupRatio * L[tray]) / flowScale;
+    }
+    return Double.NaN;
+  }
+
+  /**
    * Compute the residual equations for a single tray.
    *
    * @param j tray index
@@ -3427,8 +3580,11 @@ public class NaphtaliSandholmSolver {
       Fj[i] = Mij / flowScale;
     }
 
-    // Energy balance (or fixed temperature specification)
-    if (!Double.isNaN(fixedTemperature[j])) {
+    // Terminal ratios replace the free terminal duty equation.
+    double ratioResidual = terminalRatioResidual(j);
+    if (hasTerminalRatioControl(j)) {
+      Fj[C] = ratioResidual;
+    } else if (!Double.isNaN(fixedTemperature[j])) {
       Fj[C] = (T[j] - fixedTemperature[j]) / tempScale;
     } else {
       double Hj = Lj * hL[j] + V[j] * hV[j];
@@ -3531,6 +3687,7 @@ public class NaphtaliSandholmSolver {
     // is used by computeSinglePhaseEnthalpy() for enthalpies.
     double[] phiL = new double[C];
     double[] phiV = new double[C];
+    double[][] vaporCompositionDerivatives = new double[C][C];
     boolean phiOk = computeSinglePhaseFugacityCoefficients(x, T[j], Pbar, false, phiL);
 
     // Initial y guess: use previous K (or Wilson if uninitialised), normalised.
@@ -3548,35 +3705,45 @@ public class NaphtaliSandholmSolver {
       y[i] = (sumKxGuess > 1e-20) ? y[i] / sumKxGuess : x[i];
     }
 
+    if (phiOk && trayEta[j] >= 1.0 - 1.0e-10) {
+      predictKValues(j, x, y, phiL, Pbar);
+    }
+
     // Self-consistency loop: K = phi_L(x) / phi_V(y), then y = K x / sum(K x).
-    // Perform at most two sweeps for a cold state and one additional sweep when
-    // refining a retained state. Stop once the existing convergence criterion is
-    // met so already-converged compositions do not pay for a redundant EOS call.
+    // A truncated inner iteration makes the MESH residual depend on the previous K
+    // estimate, and can give a finite-difference Jacobian an inconsistent base. Allow
+    // bounded convergence for cold and retained states, stopping at the existing
+    // tolerance so converged compositions avoid redundant EOS work.
     boolean kOk = phiOk;
     boolean kConverged = false;
     double finalMaxLogKUpdate = Double.POSITIVE_INFINITY;
     if (kOk) {
-      int maximumKValueIterations = warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS
-          : THERMO_K_VALUE_ITERATIONS;
-      for (int sweep = 0; sweep < maximumKValueIterations; sweep++) {
-        if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
+      for (int sweep = 0; sweep < THERMO_K_VALUE_ITERATIONS; sweep++) {
+        if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV, vaporCompositionDerivatives)) {
           kOk = false;
           break;
         }
         lastThermoKValueIterationCount++;
-        double sumKxLocal = 0;
+        double[] logUpdate = new double[C];
+        double[] previousKValues = new double[C];
         finalMaxLogKUpdate = 0.0;
         for (int i = 0; i < C; i++) {
           double previousK = K[j][i];
           if (!(previousK > 1e-20 && previousK < 1e15)) {
             previousK = wilsonK(i, T[j], Pbar);
           }
-          double Knew = phiL[i] / Math.max(phiV[i], 1e-30);
-          Knew = Math.max(Knew, 1e-15);
-          Knew = Math.min(Knew, 1e15);
-          finalMaxLogKUpdate = Math.max(finalMaxLogKUpdate, Math.abs(Math.log(Knew / previousK)));
-          K[j][i] = Knew;
-          y[i] = Knew * x[i];
+          previousKValues[i] = previousK;
+          double Knew = Math.max(1e-15, Math.min(1e15, phiL[i] / Math.max(phiV[i], 1e-30)));
+          logUpdate[i] = Math.log(Knew / previousK);
+          finalMaxLogKUpdate = Math.max(finalMaxLogKUpdate, Math.abs(logUpdate[i]));
+        }
+        if (finalMaxLogKUpdate > THERMO_K_VALUE_TOLERANCE) {
+          refineLogKUpdate(logUpdate, vaporCompositionDerivatives, y);
+        }
+        double sumKxLocal = 0.0;
+        for (int i = 0; i < C; i++) {
+          K[j][i] = Math.max(1e-15, Math.min(1e15, previousKValues[i] * Math.exp(logUpdate[i])));
+          y[i] = K[j][i] * x[i];
           sumKxLocal += y[i];
         }
         for (int i = 0; i < C; i++) {
@@ -3592,6 +3759,7 @@ public class NaphtaliSandholmSolver {
     }
 
     if (kOk) {
+      lastVaporSystems[j] = currentVaporSystem;
       lastThermoMaxLogKValueUpdate = Math.max(lastThermoMaxLogKValueUpdate, finalMaxLogKUpdate);
       if (!kConverged) {
         lastThermoKValueNonConvergedCount++;
@@ -4277,8 +4445,28 @@ public class NaphtaliSandholmSolver {
    */
   private boolean computeSinglePhaseFugacityCoefficients(double[] composition, double tempK, double pressBar,
       boolean isVapor, double[] phiOut) {
+    return computeSinglePhaseFugacityCoefficients(composition, tempK, pressBar, isVapor, phiOut, null);
+  }
+
+  /**
+   * Evaluate forced-root fugacity coefficients and optional composition derivatives.
+   *
+   * @param composition normalized phase composition
+   * @param tempK temperature in kelvin
+   * @param pressBar absolute pressure in bar
+   * @param isVapor whether the gas root is requested
+   * @param phiOut fugacity coefficient destination
+   * @param compositionDerivatives optional d(ln phi_i)/dn_k destination on a one-mole basis
+   * @return true when the phase calculation is finite
+   */
+  private boolean computeSinglePhaseFugacityCoefficients(double[] composition, double tempK, double pressBar,
+      boolean isVapor, double[] phiOut, double[][] compositionDerivatives) {
     try {
-      SystemInterface sys = referenceSystem.clone();
+      // Only fugacities and their derivatives are read, so the work copy does not need the
+      // transport and interfacial property models of the reference fluid. A state that is kept
+      // for the K-value predictor needs its own copy; every other evaluation reuses one.
+      SystemInterface sys = compositionDerivatives == null ? getSinglePhaseWorkSystem()
+          : referenceSystem.cloneThermoOnly();
       sys.setTemperature(tempK);
       sys.setPressure(pressBar);
       sys.setTotalNumberOfMoles(1.0);
@@ -4287,19 +4475,130 @@ public class NaphtaliSandholmSolver {
       sys.setNumberOfPhases(1);
       sys.setPhaseType(0, isVapor ? PhaseType.GAS : PhaseType.LIQUID);
       sys.setForcePhaseTypes(true);
-      sys.init(2);
+      sys.init(compositionDerivatives == null ? 1 : 3);
+      if (compositionDerivatives != null) {
+        currentVaporSystem = sys;
+      }
       for (int i = 0; i < C; i++) {
         double phi = sys.getPhase(0).getComponent(i).getFugacityCoefficient();
         if (!(phi > 0.0) || Double.isNaN(phi) || Double.isInfinite(phi)) {
           return false;
         }
         phiOut[i] = phi;
+        if (compositionDerivatives != null) {
+          for (int k = 0; k < C; k++) {
+            compositionDerivatives[i][k] = sys.getPhase(0).getComponent(i).getdfugdn(k);
+          }
+        }
       }
       return true;
     } catch (Exception e) {
       logger.debug("Single-phase fugacity failed for {} phase at T={}K P={}bar", isVapor ? "vapor" : "liquid", tempK,
           pressBar);
       return false;
+    }
+  }
+
+  /**
+   * Predict K-values for a nearby state from the latest local vapor derivatives.
+   *
+   * <p>
+   * The predictor only reuses local derivatives. Every predicted state still undergoes a new forced-root fugacity
+   * evaluation and the unchanged logarithmic K convergence gate.
+   * </p>
+   *
+   * @param tray perturbed tray
+   * @param liquidComposition current normalized liquid composition
+   * @param vaporComposition initial vapor guess, updated in place
+   * @param liquidFugacity current liquid fugacity coefficients
+   * @param pressureBar current pressure in bar
+   */
+  private void predictKValues(int tray, double[] liquidComposition, double[] vaporComposition, double[] liquidFugacity,
+      double pressureBar) {
+    SystemInterface base = jacobianBaseVaporSystems == null ? lastVaporSystems[tray] : jacobianBaseVaporSystems[tray];
+    if (base == null || Math.abs(T[tray] - base.getTemperature()) > 1.0
+        || Math.abs(pressureBar - base.getPressure()) > 1.0e-8) {
+      return;
+    }
+    double[] baseComposition = base.getMolarComposition();
+    double maxCompositionChange = 0.0;
+    for (int k = 0; k < C; k++) {
+      maxCompositionChange = Math.max(maxCompositionChange, Math.abs(vaporComposition[k] - baseComposition[k]));
+    }
+    if (maxCompositionChange > 1.0e-2) {
+      return;
+    }
+    double[][] derivatives = new double[C][C];
+    double[] logUpdate = new double[C];
+    for (int i = 0; i < C; i++) {
+      ComponentInterface component = base.getPhase(0).getComponent(i);
+      double lnPhi = Math.log(component.getFugacityCoefficient())
+          + component.getdfugdt() * (T[tray] - base.getTemperature());
+      for (int k = 0; k < C; k++) {
+        derivatives[i][k] = component.getdfugdn(k);
+        lnPhi += derivatives[i][k] * (vaporComposition[k] - baseComposition[k]);
+      }
+      logUpdate[i] = Math.log(liquidFugacity[i] / K[tray][i]) - lnPhi;
+      if (!Double.isFinite(logUpdate[i]) || Math.abs(logUpdate[i]) > 0.1) {
+        return;
+      }
+    }
+    refineLogKUpdate(logUpdate, derivatives, vaporComposition);
+    double sum = 0.0;
+    for (int i = 0; i < C; i++) {
+      K[tray][i] *= Math.exp(logUpdate[i]);
+      vaporComposition[i] = K[tray][i] * liquidComposition[i];
+      sum += vaporComposition[i];
+    }
+    for (int i = 0; i < C; i++) {
+      vaporComposition[i] /= sum;
+    }
+    lastThermoCacheHitCount++;
+  }
+
+  /**
+   * Newton-correct the implicit vapor-composition K-value equation.
+   *
+   * <p>
+   * With y = K*x/sum(K*x), the derivative of ln(phi_i) with respect to ln(K_k) is y_k*(dln(phi_i)/dn_k - sum_l
+   * y_l*dln(phi_i)/dn_l). A finite, bounded correction replaces the slower fixed-point direction; singular or oversized
+   * steps retain it.
+   * </p>
+   *
+   * @param logUpdate fixed-point logarithmic K update, replaced in place when safe
+   * @param derivatives vapor fugacity composition derivatives on the one-mole basis
+   * @param composition normalized vapor composition
+   */
+  private void refineLogKUpdate(double[] logUpdate, double[][] derivatives, double[] composition) {
+    SimpleMatrix jacobian = SimpleMatrix.identity(C);
+    SimpleMatrix residual = new SimpleMatrix(C, 1);
+    for (int i = 0; i < C; i++) {
+      double normalizationDerivative = 0.0;
+      for (int k = 0; k < C; k++) {
+        normalizationDerivative += composition[k] * derivatives[i][k];
+      }
+      residual.set(i, 0, logUpdate[i]);
+      for (int k = 0; k < C; k++) {
+        double derivative = composition[k] * (derivatives[i][k] - normalizationDerivative);
+        if (!Double.isFinite(derivative)) {
+          return;
+        }
+        jacobian.set(i, k, jacobian.get(i, k) + derivative);
+      }
+    }
+    try {
+      SimpleMatrix correction = jacobian.solve(residual);
+      for (int i = 0; i < C; i++) {
+        double value = correction.get(i, 0);
+        if (!Double.isFinite(value) || Math.abs(value) > Math.max(1.0, 2.0 * Math.abs(logUpdate[i]))) {
+          return;
+        }
+      }
+      for (int i = 0; i < C; i++) {
+        logUpdate[i] = correction.get(i, 0);
+      }
+    } catch (RuntimeException exception) {
+      logger.debug("Implicit vapor-composition Newton correction was singular; retaining fixed-point step");
     }
   }
 
@@ -4319,9 +4618,38 @@ public class NaphtaliSandholmSolver {
     return (Pc / pressBar) * Math.exp(5.37 * (1.0 + omega) * (1.0 - Tc / tempK));
   }
 
+  /**
+   * Get the reusable work copy for forced single-phase property evaluations.
+   *
+   * <p>
+   * Each evaluation sets temperature, pressure and composition and reinitializes the fluid from scratch, so the result
+   * does not depend on the state left by the previous evaluation. Reusing one thermodynamics-only copy removes a full
+   * fluid clone, the dominant cost of a residual or Jacobian evaluation, from every call.
+   * </p>
+   *
+   * @return work copy of the current reference system without transport-property models
+   */
+  private SystemInterface getSinglePhaseWorkSystem() {
+    if (singlePhaseWorkSystem == null || singlePhaseWorkSource != referenceSystem) {
+      singlePhaseWorkSystem = referenceSystem.cloneThermoOnly();
+      singlePhaseWorkSource = referenceSystem;
+    }
+    return singlePhaseWorkSystem;
+  }
+
+  /**
+   * Evaluate the molar enthalpy of a forced single phase.
+   *
+   * @param composition normalized phase composition
+   * @param tempK temperature in kelvin
+   * @param pressBar absolute pressure in bar
+   * @param isVapor whether the gas root is requested
+   * @return molar enthalpy in J/mol, or zero when the phase calculation fails
+   */
   private double computeSinglePhaseEnthalpy(double[] composition, double tempK, double pressBar, boolean isVapor) {
     try {
-      SystemInterface sys = referenceSystem.clone();
+      // Only the phase enthalpy is read, so the reusable thermodynamics-only work copy suffices.
+      SystemInterface sys = getSinglePhaseWorkSystem();
       sys.setTemperature(tempK);
       sys.setPressure(pressBar);
       sys.setTotalNumberOfMoles(1.0);
@@ -4981,9 +5309,9 @@ public class NaphtaliSandholmSolver {
    *
    * <p>
    * For each tray, creates a two-phase thermo system at the converged T, P, and overall composition for tray-state
-   * reporting. When a side draw is active, internal and side-product streams are materialized from the solver's vapor
-   * and liquid component-flow arrays so each split preserves the accepted species inventory exactly. Columns without
-   * side draws retain the established equilibrium-composition materialization path.
+   * reporting. Side-product streams retain the solver component-flow arrays. Columns without side draws retain the
+   * independent total vapor flow and its normalized phase composition, matching the enthalpy evaluation basis. Every
+   * material outlet preserves its intended EOS root across later caloric initialization.
    * </p>
    *
    * @param id calculation identifier
@@ -5009,23 +5337,6 @@ public class NaphtaliSandholmSolver {
         sumLiq += liq[j][i];
       }
       L[j] = Math.max(sumLiq, 1e-20);
-
-      // Established equilibrium-composition path for columns without side draws.
-      double[] x = new double[C];
-      double[] y = new double[C];
-      double sumY = 0.0;
-      for (int i = 0; i < C; i++) {
-        x[i] = liq[j][i] / L[j];
-        y[i] = K[j][i] * x[i];
-        sumY += y[i];
-      }
-      if (sumY > 1e-20) {
-        for (int i = 0; i < C; i++) {
-          y[i] /= sumY;
-        }
-      } else {
-        System.arraycopy(x, 0, y, 0, C);
-      }
 
       // Overall composition z from liquid + vapor component flows
       double totalMoles = L[j] + V[j];
@@ -5079,32 +5390,29 @@ public class NaphtaliSandholmSolver {
         tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
 
         if (internalLiquidFraction[j] < 1.0) {
-          SystemInterface liquidSideSystem = createAppliedPhaseSystem(j, liq[j], 1.0 - internalLiquidFraction[j],
+          SystemInterface liquidSideSystem = createAppliedPhaseSystem(j, liq[j], tray.getLiquidSideDrawFraction(),
               PhaseType.LIQUID);
           tray.setCachedLiquidSideDrawStream(
               new neqsim.process.equipment.stream.Stream("liq_side_" + j, liquidSideSystem));
         }
+        if (tray.getLiquidPumparoundDrawFraction() > 0.0) {
+          SystemInterface drawSystem = createAppliedPhaseSystem(j, liq[j], tray.getLiquidPumparoundDrawFraction(),
+              PhaseType.LIQUID);
+          tray.setCachedLiquidPumparoundDrawStream(
+              new neqsim.process.equipment.stream.Stream("pa_draw_" + j, drawSystem));
+        }
       } else {
-        SystemInterface gasSystem = referenceSystem.clone();
-        gasSystem.setTemperature(T[j]);
-        gasSystem.setPressure(P[j] / 1e5);
-        gasSystem.setTotalNumberOfMoles(V[j] / 3600.0);
-        gasSystem.setMolarComposition(y);
-        gasSystem.init(0);
-        gasSystem.setNumberOfPhases(1);
-        gasSystem.setPhaseType(0, PhaseType.GAS);
-        gasSystem.init(2);
+        // V is the independent vapor-flow variable; hV uses the normalized K*x composition.
+        // Legacy BP/SR acceptance may retain a small summation residual, so publishing the
+        // unnormalized vapor component sum would change the accepted flow and energy basis.
+        double vaporMoles = 0.0;
+        for (int component = 0; component < C; component++) {
+          vaporMoles += vap[j][component];
+        }
+        double vaporInventoryFraction = vaporMoles > 1.0e-20 ? V[j] / vaporMoles : 0.0;
+        SystemInterface gasSystem = createAppliedPhaseSystem(j, vap[j], vaporInventoryFraction, PhaseType.GAS);
         tray.setCachedGasOutStream(new neqsim.process.equipment.stream.Stream("gas_" + j, gasSystem));
-
-        SystemInterface liqSystem = referenceSystem.clone();
-        liqSystem.setTemperature(T[j]);
-        liqSystem.setPressure(P[j] / 1e5);
-        liqSystem.setTotalNumberOfMoles(L[j] / 3600.0);
-        liqSystem.setMolarComposition(x);
-        liqSystem.init(0);
-        liqSystem.setNumberOfPhases(1);
-        liqSystem.setPhaseType(0, PhaseType.LIQUID);
-        liqSystem.init(2);
+        SystemInterface liqSystem = createAppliedPhaseSystem(j, liq[j], 1.0, PhaseType.LIQUID);
         tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
       }
     }

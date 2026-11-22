@@ -235,9 +235,12 @@ public class AsphalteneStabilityAnalyzer {
    * </p>
    *
    * @param temperature temperature in Kelvin
-   * @return onset pressure in bara, or NaN if not found
+   * @return onset pressure in bara, or NaN if no transition is sampled
+   * @throws IllegalArgumentException if the feed is not characterized or settings are invalid
+   * @throws IllegalStateException if the start is precipitated or the search cannot be completed
    */
   public double calculateOnsetPressure(double temperature) {
+    onsetPressure = Double.NaN;
     if (system == null) {
       logger.error("System not set - cannot calculate onset pressure");
       return Double.NaN;
@@ -261,7 +264,9 @@ public class AsphalteneStabilityAnalyzer {
    * Calculates the asphaltene onset temperature at a given pressure.
    *
    * @param pressure pressure in bara
-   * @return onset temperature in Kelvin, or NaN if not found
+   * @return onset temperature in Kelvin, or NaN if no transition is sampled
+   * @throws IllegalArgumentException if the feed is not characterized or settings are invalid
+   * @throws IllegalStateException if the search cannot be completed
    */
   public double calculateOnsetTemperature(double pressure) {
     if (system == null) {
@@ -385,16 +390,20 @@ public class AsphalteneStabilityAnalyzer {
         report.append(String.format("   Undersaturation: %.1f bar%n", reservoirPressure - bubbleP));
       }
 
-      double onsetP = calculateOnsetPressure(reservoirTemperature);
-      if (!Double.isNaN(onsetP)) {
-        report.append(String.format("   Onset pressure: %.1f bara%n", onsetP));
+      try {
+        double onsetP = calculateOnsetPressure(reservoirTemperature);
+        if (!Double.isNaN(onsetP)) {
+          report.append(String.format("   Onset pressure: %.1f bara%n", onsetP));
 
-        // Check if production path crosses onset
-        if (wellheadPressure < onsetP && reservoirPressure > onsetP) {
-          report.append("   WARNING: Production path crosses asphaltene onset!\n");
+          // Check if production path crosses onset
+          if (wellheadPressure < onsetP && reservoirPressure > onsetP) {
+            report.append("   WARNING: Production path crosses asphaltene onset!\n");
+          }
+        } else {
+          report.append("   Onset pressure: Not found in operating range\n");
         }
-      } else {
-        report.append("   Onset pressure: Not found in operating range\n");
+      } catch (IllegalArgumentException | IllegalStateException failure) {
+        report.append("   Onset pressure: Unavailable (").append(failure.getMessage()).append(")\n");
       }
     }
     report.append("\n");

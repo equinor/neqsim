@@ -92,9 +92,9 @@ public final class DispersedBubbleDragSolver {
         gasViscosity, liquidViscosity, liquidHoldup, diameter, surfaceTension);
     double pairCoefficient = relaxedSlip > 0.0 ? relaxedForce / relaxedSlip : 0.0;
 
-    double[] pseudoMasses = { gasMass, liquidMass };
-    double[] pseudoMomenta = { gasMomentum, liquidMomentum };
-    double[][] pairCoefficients = { { 0.0, pairCoefficient }, { pairCoefficient, 0.0 } };
+    double[] pseudoMasses = {gasMass, liquidMass};
+    double[] pseudoMomenta = {gasMomentum, liquidMomentum};
+    double[][] pairCoefficients = {{0.0, pairCoefficient}, {pairCoefficient, 0.0}};
     double[] relaxedPseudoMomenta = StiffInterphaseMomentumSolver.solve(pseudoMasses, pseudoMomenta, pairCoefficients,
         timeStep);
 

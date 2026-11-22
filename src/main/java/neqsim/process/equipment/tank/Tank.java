@@ -124,6 +124,20 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
   }
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the tank's internal fluid, so that {@link #getPressure()}, {@link #getTemperature()} and
+   * {@link #getFluid()} reflect the vessel state computed by {@link #run(UUID)} / {@link #runTransient(double, UUID)},
+   * instead of the base class default of {@code null}.
+   * </p>
+   */
+  @Override
+  public SystemInterface getThermoSystem() {
+    return thermoSystem;
+  }
+
+  /**
    * setInletStream.
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -137,6 +151,148 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     thermoSystem = inletStream.getThermoSystem().clone();
     liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
     liquidOutStream = new Stream("liquidOutStream", liquidSystem);
+  }
+
+  /**
+   * Getter for the field <code>separatorDiameter</code>.
+   *
+   * <p>
+   * This, together with {@link #getSeparatorLength()}, defines the fixed total volume (liquidVolume + gasVolume) used
+   * by {@link #run(UUID)} and {@link #runTransient(double, UUID)} to solve the vessel pressure from a fixed-volume
+   * flash. Configuring it is required before using a Tank as a dynamic, pressure-building vessel (e.g. an underground
+   * storage cavern), since the previously unused {@link #setVolume(double)} does not affect these calculations.
+   * </p>
+   *
+   * @return separator (vessel) diameter in meter
+   */
+  public double getSeparatorDiameter() {
+    return separatorDiameter;
+  }
+
+  /**
+   * Setter for the field <code>separatorDiameter</code>.
+   *
+   * @param separatorDiameter separator (vessel) diameter in meter
+   */
+  public void setSeparatorDiameter(double separatorDiameter) {
+    this.separatorDiameter = separatorDiameter;
+  }
+
+  /**
+   * Getter for the field <code>separatorLength</code>.
+   *
+   * @return separator (vessel) length in meter
+   */
+  public double getSeparatorLength() {
+    return separatorLength;
+  }
+
+  /**
+   * Setter for the field <code>separatorLength</code>.
+   *
+   * @param separatorLength separator (vessel) length in meter
+   */
+  public void setSeparatorLength(double separatorLength) {
+    this.separatorLength = separatorLength;
+  }
+
+  /**
+   * Configure the fixed total volume (liquid + gas) that {@link #run(UUID)} and {@link #runTransient(double, UUID)} use
+   * for the fixed-volume flash, as an equivalent cylinder of the given diameter.
+   *
+   * <p>
+   * Useful for representing a bounded vessel with a known total volume but non-cylindrical shape (e.g. an underground
+   * rock cavern), where only the total volume is known.
+   * </p>
+   *
+   * @param totalVolume total fixed volume of the vessel, in cubic meter
+   * @param diameter equivalent cylinder diameter to assume, in meter
+   */
+  public void setTotalVolume(double totalVolume, double diameter) {
+    if (totalVolume <= 0.0 || diameter <= 0.0) {
+      throw new IllegalArgumentException("totalVolume and diameter must be positive");
+    }
+    this.separatorDiameter = diameter;
+    this.separatorLength = totalVolume / (Math.PI / 4.0 * diameter * diameter);
+  }
+
+  /**
+   * Getter for the field <code>heatTransferNumber</code>, the overall wall heat transfer coefficient (W/m2K) used by
+   * {@link #runTransient(double, UUID)} for the vessel-wall to fluid heat exchange. Defaults to a generic steel-tank
+   * value; for vessels with a very different wall (e.g. an underground rock cavern), configure this together with
+   * {@link #setSteelWallArea}, {@link #setSteelWallMass} and {@link #setSteelCp}, or set it to 0.0 for an adiabatic
+   * wall.
+   *
+   * @return overall wall heat transfer coefficient, W/m2K
+   */
+  public double getHeatTransferNumber() {
+    return heatTransferNumber;
+  }
+
+  /**
+   * Setter for the field <code>heatTransferNumber</code>.
+   *
+   * @param heatTransferNumber overall wall heat transfer coefficient, W/m2K
+   */
+  public void setHeatTransferNumber(double heatTransferNumber) {
+    this.heatTransferNumber = heatTransferNumber;
+  }
+
+  /**
+   * Getter for the field <code>steelWallArea</code>, the wall area (m2) used in the wall-to-fluid heat transfer term of
+   * {@link #runTransient(double, UUID)}.
+   *
+   * @return wall area, m2
+   */
+  public double getSteelWallArea() {
+    return steelWallArea;
+  }
+
+  /**
+   * Setter for the field <code>steelWallArea</code>.
+   *
+   * @param steelWallArea wall area, m2
+   */
+  public void setSteelWallArea(double steelWallArea) {
+    this.steelWallArea = steelWallArea;
+  }
+
+  /**
+   * Getter for the field <code>steelWallMass</code>, the wall thermal mass (kg) used in
+   * {@link #runTransient(double, UUID)}.
+   *
+   * @return wall mass, kg
+   */
+  public double getSteelWallMass() {
+    return steelWallMass;
+  }
+
+  /**
+   * Setter for the field <code>steelWallMass</code>.
+   *
+   * @param steelWallMass wall mass, kg
+   */
+  public void setSteelWallMass(double steelWallMass) {
+    this.steelWallMass = steelWallMass;
+  }
+
+  /**
+   * Getter for the field <code>steelCp</code>, the wall specific heat capacity (J/kgK) used in
+   * {@link #runTransient(double, UUID)}.
+   *
+   * @return wall specific heat capacity, J/kgK
+   */
+  public double getSteelCp() {
+    return steelCp;
+  }
+
+  /**
+   * Setter for the field <code>steelCp</code>.
+   *
+   * @param steelCp wall specific heat capacity, J/kgK
+   */
+  public void setSteelCp(double steelCp) {
+    this.steelCp = steelCp;
   }
 
   /**

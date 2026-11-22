@@ -29,7 +29,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Constraint severity levels work correctly</li>
  * <li>Operating envelope validation catches out-of-range conditions</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

@@ -1,0 +1,55 @@
+{
+  "campaign": 4707,
+  "study": "Safety Shutdown forward pump coastdown",
+  "base": "1929a43a8f431f81161732b2c9a1deb5f753ac42",
+  "baseTree": "7dcfb0d65f3ba82e8243290c3bb610813bf858bf",
+  "java": "OpenJDK17.0.20; changed main/test units compiled with --release 8; actual hosted Java8 pending",
+  "baselineTests": {
+    "tests": 238,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "candidateTests": {
+    "tests": 265,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "sourceSha256": {
+    "src/main/java/neqsim/process/equipment/pipeline/AcousticPumpBoundary.java": "769f784a2814e4010a6296430087c19dc3954f849afb688298e05e558d990ec4",
+    "src/main/java/neqsim/process/equipment/pipeline/WaterHammerPipe.java": "f822bb8d63b975be2f06cf7e80495a69fa9f5a3503c964f262ef20c1f86c4ece",
+    "src/main/java/neqsim/process/operations/WaterHammerStudy.java": "8b1cd5b6d9d9e862b5241fccedc259b420829c5aaf3d5d86c4f78abc8e920cf6",
+    "src/test/java/neqsim/process/equipment/pipeline/AcousticPumpBoundaryTest.java": "4f2d5e19879e2041b48c11ab3e7adc3996602a8cc80f4345dd96b2f5b81f0ff6"
+  },
+  "commandsExecuted": [
+    "work-with-neqsim scripts/prepare_maven.py before Maven/Spotless",
+    "python3 devtools/run_spotless.py apply (repeated until stable)",
+    "./mvnw -q -Dtest=AcousticPumpBoundaryTest,WaterHammerConservationTest,AcousticValveBoundaryTest,WaterHammerKernelTest,WaterHammerPipeTest,WaterHammerPipeValveInitializationTest,TransientForceCalculatorTest,PipelineRunnerTest,ProcessAutomationTest,JsonProcessBuilderTest,TabulatedValveCharacteristicTest,CompressorFixedSpeedControlTest,PumpTest,PumpChartTest test (exit0)",
+    "java -m jdk.compiler/com.sun.tools.javac.Main --release 8 (3 main units and1test unit; exit0)",
+    "Final265-test surefire selection after changed-unit --release8 compile (exit0; selection as full-lifecycle test)",
+    "Private Javadoc/doclint for three changed main units (exit0;46 existing warnings, none from new boundary)",
+    "python3 devtools/run_spotless.py check (exit0)",
+    "python3 devtools/check_documentation_search.py (exit0;818Markdown+1HTML)",
+    "uv run --offline --project devtools --locked devtools/build_engineering_coverage.py (exit0)",
+    "uv tool run --offline pre-commit run --all-files --hook-stage pre-commit (exit0)",
+    "uv tool run --offline pre-commit run --all-files --hook-stage pre-push (exit0)"
+  ],
+  "initialBenchmarkFailure": "8tests:7pass/1fail, smooth gate1.7 applied to abrupt linear-start nonsmooth front. Full failure log and reproducible FAIL ratios retained; smooth-start and time-only gates unchanged.",
+  "qualification": {
+    "forwardAnalyticalRoots": "PASS",
+    "acousticVolumeMomentum": "PASS",
+    "smoothStartRefinement": "PASS",
+    "timeOnlyWorkRefinement": "PASS",
+    "nonsmoothFrontSmoothGate": "FAIL",
+    "fullTripAndSlam": "NOT_EVALUATED",
+    "physicalConservationEOS": "NOT_EVALUATED",
+    "shaftEnergy": "NOT_EVALUATED",
+    "integratedSafetyShutdown": "NOT_EVALUATED",
+    "assetSILSRSSupports": "NOT_EVALUATED"
+  },
+  "runtime": "elapsed_ms are local observed runs, not warmed throughput or portable speed claims",
+  "data": "Entirely public synthetic tables; no calibration/asset/vendor data",
+  "review": "Independent review and NRC-4707 decision remain pending; no readiness claim",
+  "logSanitization": "Original failed Maven log retained with trailing whitespace removed; numerical results and failure text unchanged. Final whitespace-only JavaDoc cleanup is formatter-stable."
+}

@@ -63,11 +63,11 @@ class NetworkPumpTest {
   void testCurvePumpUsesSpeedAndReportsOperatingPoint() {
     SystemInterface oil = createOil(5.0);
     Pump configuredPump = new Pump("curve pump");
-    double[] chartConditions = new double[] { 0.200, 298.15, 1.0, 1.0, 850.0 };
-    double[] speeds = new double[] { 2000.0, 3000.0 };
-    double[][] flows = new double[][] { { 20.0, 40.0, 60.0 }, { 30.0, 60.0, 90.0 } };
-    double[][] heads = new double[][] { { 80.0, 70.0, 50.0 }, { 180.0, 158.0, 113.0 } };
-    double[][] efficiencies = new double[][] { { 65.0, 75.0, 68.0 }, { 68.0, 80.0, 72.0 } };
+    double[] chartConditions = new double[] {0.200, 298.15, 1.0, 1.0, 850.0};
+    double[] speeds = new double[] {2000.0, 3000.0};
+    double[][] flows = new double[][] {{20.0, 40.0, 60.0}, {30.0, 60.0, 90.0}};
+    double[][] heads = new double[][] {{80.0, 70.0, 50.0}, {180.0, 158.0, 113.0}};
+    double[][] efficiencies = new double[][] {{65.0, 75.0, 68.0}, {68.0, 80.0, 72.0}};
     configuredPump.getPumpChart().setCurves(chartConditions, speeds, flows, heads, efficiencies);
     configuredPump.getPumpChart().setHeadUnit("meter");
     configuredPump.setSpeed(2500.0);

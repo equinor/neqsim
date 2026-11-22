@@ -68,6 +68,8 @@ public class NonEquilibriumBlowdownModel implements Serializable {
   private double fireFlameTempK = 1100.0;
   private double fireConvCoeff = 30.0;
   private double fireExposedArea = 0.0;
+  private boolean fireEnabled = true;
+  private boolean flashBoilOffEnabled = true;
 
   private double wallMass = 0.0;
   private double wallCp = 470.0;
@@ -108,6 +110,41 @@ public class NonEquilibriumBlowdownModel implements Serializable {
     this.orificeDiameter = orificeDiameter;
     this.dischargeCoefficient = dischargeCoefficient;
     this.backPressure = backPressure;
+  }
+
+  /**
+   * Switches the fire boundary condition on or off.
+   *
+   * <p>
+   * The model applies a fire to the wall by default, also when {@link #setFireExposure(double, double, double, double)}
+   * has not been called (default flame 1100 K on an area of 4 V^(2/3)). For a cold (no-fire) blowdown, for example a
+   * minimum design metal temperature check, call {@code setFireEnabled(false)}: the wall then exchanges heat only with
+   * the vessel contents and the outside is adiabatic.
+   * </p>
+   *
+   * @param enabled true to heat the wall with the configured fire (default), false for no external heat input
+   * @return this model for chaining
+   */
+  public NonEquilibriumBlowdownModel setFireEnabled(boolean enabled) {
+    this.fireEnabled = enabled;
+    return this;
+  }
+
+  /**
+   * Switches isenthalpic flash boil-off of the liquid zone on or off.
+   *
+   * <p>
+   * When enabled (default), the liquid zone is flashed isenthalpically to the new vapour pressure every step and the
+   * vapour it forms is moved to the vapour zone, cooling the liquid. Disable it only to reproduce results made before
+   * this step existed, when the liquid boiled from wall heat alone.
+   * </p>
+   *
+   * @param enabled true to flash the liquid zone at each new pressure (default)
+   * @return this model for chaining
+   */
+  public NonEquilibriumBlowdownModel setFlashBoilOffEnabled(boolean enabled) {
+    this.flashBoilOffEnabled = enabled;
+    return this;
   }
 
   /**
@@ -382,7 +419,7 @@ public class NonEquilibriumBlowdownModel implements Serializable {
       double qRad = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(fireEmissivity, 1.0, fireFlameTempK,
           tWall);
       double qConv = fireConvCoeff * (fireFlameTempK - tWall);
-      double fireFlux = Math.max(qRad + qConv, 0.0);
+      double fireFlux = fireEnabled ? Math.max(qRad + qConv, 0.0) : 0.0;
       double qFire = fireFlux * effExternalArea;
 
       // --- Wall area split between unwetted (vapour) and wetted (liquid) ---
@@ -424,10 +461,14 @@ public class NonEquilibriumBlowdownModel implements Serializable {
       tWall = Math.max(MIN_ZONE_TEMPERATURE_K, Math.min(tWall, fireFlameTempK));
 
       // --- Vapour energy balance (fire via unwetted wall, minus interfacial, plus mixing of cold
-      // boil-off) ---
+      // boil-off, minus the flow work done by the remaining vapour on the discharged mass) ---
+      // The vapour zone is a fixed-volume open system: m cv dT = Q - (h - u) dm_out, with h - u = Z R T / M.
+      // Without the flow-work term the vapour did not cool on depressurization at all.
       if (massGas > 1.0e-9 && cpGasMass > 0.0) {
-        double dUgas = (qWallToGas - qInterface) * timeStep + dmVap * cpGasMass * (tLiq - tGas);
-        tGas += dUgas / (massGas * cpGasMass);
+        double cvGasMass = cpGasMass / Math.max(gamma, 1.0);
+        double flowWork = z * GAS_CONSTANT * tGas / mwGas * dmOut;
+        double dUgas = (qWallToGas - qInterface) * timeStep + dmVap * cvGasMass * (tLiq - tGas) - flowWork;
+        tGas += dUgas / (massGas * cvGasMass);
       }
       // The vapour is heated only by the unwetted wall, so it cannot exceed the wall temperature.
       tGas = Math.max(MIN_ZONE_TEMPERATURE_K, Math.min(tGas, tWall));
@@ -446,12 +487,65 @@ public class NonEquilibriumBlowdownModel implements Serializable {
       }
       transferMoles(liquid, gas, dmVap, mwLiq);
 
+      // --- Flash boil-off: liquid left superheated by the pressure drop flashes isenthalpically ---
+      // Without this step the liquid zone only boiled from wall heat, so a cold blowdown emptied the vapour zone
+      // while the liquid stayed at its initial pressure-equilibrium state.
+      if (flashBoilOffEnabled && massOf(liquid) > 1.0e-6) {
+        try {
+          liquid.setTemperature(tLiq);
+          liquid.setPressure(pPa / 1.0e5);
+          liqOps.TPflash();
+          liquid.init(2);
+          double hLiq = liquid.getEnthalpy();
+          liqOps.PHflash(hLiq);
+          double gasMassBefore = massOf(gas);
+          double dmFlash = moveVapourPhase(liquid, gas);
+          tLiq = liquid.getTemperature();
+          if (dmFlash > 0.0) {
+            double mixed = gasMassBefore + dmFlash;
+            tGas = (gasMassBefore * tGas + dmFlash * tLiq) / mixed;
+          }
+        } catch (Exception ex) {
+          logger.debug("liquid-zone flash boil-off fallback at t={}: {}", t, ex.getMessage());
+          res.flashFallbackCount++;
+        }
+      }
+
       t += timeStep;
       res.append(t, pPa / 1.0e5, tGas, tLiq, tWall, massOf(gas), massOf(liquid));
     }
 
     res.recordFinal(tGas, tLiq);
     return res;
+  }
+
+  /**
+   * Moves the vapour phase that a flash created in the liquid-zone fluid to the vapour-zone fluid.
+   *
+   * @param liquid the liquid-zone fluid after a flash; its vapour phase, if any, is removed
+   * @param gas the vapour-zone fluid that receives the moles; it must have the same component list
+   * @return mass moved in kg (0 when the flash left a single liquid phase)
+   */
+  private static double moveVapourPhase(SystemInterface liquid, SystemInterface gas) {
+    if (liquid.getNumberOfPhases() < 2 || !liquid.hasPhaseType("gas")) {
+      return 0.0;
+    }
+    neqsim.thermo.phase.PhaseInterface vapour = liquid.getPhase("gas");
+    double mass = vapour.getNumberOfMolesInPhase() * vapour.getMolarMass();
+    int nc = liquid.getNumberOfComponents();
+    double[] moles = new double[nc];
+    for (int i = 0; i < nc; i++) {
+      moles[i] = vapour.getComponent(i).getNumberOfMolesInPhase();
+    }
+    for (int i = 0; i < nc; i++) {
+      if (moles[i] > 0.0) {
+        liquid.addComponent(i, -moles[i]);
+        gas.addComponent(i, moles[i]);
+      }
+    }
+    liquid.init(0);
+    gas.init(0);
+    return mass;
   }
 
   /**

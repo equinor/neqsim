@@ -1,7 +1,7 @@
 ---
 name: neqsim-electrolyte-systems
 description: "Electrolyte and brine chemistry guidance for NeqSim. USE WHEN: modeling produced water, scale prediction, CO2/H2S in aqueous systems, MEG/DEG injection, hydrate inhibitor dosing, or any system with ions, salts, or electrolytes. Covers SystemElectrolyteCPAstatoil setup, ion components, scale risk assessment, and brine handling patterns."
-last_verified: "2026-09-01"
+last_verified: "2026-11-21"
 ---
 
 # Electrolyte Systems Guide
@@ -24,10 +24,42 @@ Guide for modeling electrolyte/brine systems in NeqSim.
 |--------|-------------|-------------|
 | Water + salt + HC gas | `SystemElectrolyteCPAstatoil` | `10` |
 | MEG/DEG + water + gas | `SystemSrkCPAstatoil` | `10` |
+| MEG + NaCl brine + gas (activity model) | `SystemPitzer` | `"classic"` |
 | Pure water + gas | `SystemSrkCPAstatoil` | `10` |
 | Brine + multiple salts | `SystemElectrolyteCPAstatoil` | `10` |
 
 ## Basic Electrolyte Setup
+
+### Pitzer hydrate and mixed-chloride route
+
+For Pitzer water activities use `SystemPitzer` with `setMixingRule("classic")` and
+`setMultiPhaseCheck(true)`. The hydrate onset temperature/pressure/curve operations use
+`PitzerHydrateFlash` and a matched liquid-water reference. See
+`docs/thermo/pitzer_hydrate_equilibrium.md` for the tested setup and limits.
+`applyPhreeqcCo2ChlorideParameters(Map<String, Double>)` loads the pinned PHREEQC Na/K/Ca/Mg-Cl
+and CO2 lambda rows, but requires an explicit CO2-cation-Cl zeta for every present cation.
+Zero is an explicit screening assumption, not a fitted catalog coefficient. It remains unqualified.
+When both K+ and Mg++ are present (including zero-amount components), the pinned catalog also lacks their theta row.
+Use `applyPhreeqcCo2ChlorideParameters(zeta, potassiumMagnesiumTheta)` with an explicit finite value;
+the one-argument overload rejects that topology. For concentration sweeps retain the same components and neutral
+parameter dataset at zero salt. See the guide's 57-point reference assessment: numerical convergence and a
+passing regression suite do not mean every experimental comparison passed the 1 K accuracy criterion.
+Do not silently fill missing tuples or equate parameter coverage with scientific validation.
+
+MEG in `SystemPitzer`: the `PitzerMegParameters` dataset (`neqsim-pitzer-meg-nacl-v1`) loads automatically.
+It is fitted to MEG–water freezing points and 298 K water activities (Tsurko et al. 2026) and to a
+water/NaCl/MEG melting-point equation (Benson et al. 2010). Valid to 17.6 mol/kg MEG, with Na+/Cl- as the only
+ions. K+/Ca++/Mg++ with MEG, or MEG with methanol, fail closed. Zero rows assumed for dissolved gases are listed by
+`PhasePitzer.getMegAssumedZeroRows()`. Before this dataset existed, Pitzer put MEG in the gas phase and ignored it
+in the water activity. Methanol still enters the Pitzer brine ideally (no parameters): screening only.
+
+e-CPA speed (measured 21 Nov 2026): one flash takes 87–172 ms, against 430–530 ms before the volume-solver fixes and
+13–24 ms for SRK-CPA. With no ions, use `SystemSrkCPAstatoil`.
+
+Hand off to `neqsim-flow-assurance` / `flow.assurance` with the configured fluid, salt mole basis,
+dataset identity, supplied zeta/theta values, pressure grid and operating temperature. Carry forward
+the Henry-domain lower limit (CO2 274.19 K; methane 275.46 K) and onset-only scope; subzero
+hydrate predictions require a qualified low-temperature aqueous gas reference.
 
 ```java
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
@@ -122,6 +154,13 @@ Before hand-rolling the flash, note these ready-made helpers (see the
   and flash first (otherwise carbonate/bicarbonate/pH speciation is missing and
   the SR is wrong).
 
+Once the SI/SR is known, the **inhibitor** side (minimum inhibitor concentration, residual SI
+after treatment, chemical compatibility, and what a pH adjuster or H2S scavenger does to the
+brine) lives in `neqsim-production-chemistry`
+(`ScaleInhibitorPerformance`, `ScaleControlAssessor`, `ProductionChemicalScaleScenario`).
+A `StreamChemistryAdapter` / `fromStream(...)` helper reads the ion table straight off the
+electrolyte stream built here — do not retype it.
+
 ### Activity-consistent calcium-sulfate equilibrium
 
 Use the pure-mineral operation when the engineering question is gypsum/anhydrite equilibrium rather than screening
@@ -141,6 +180,9 @@ separates this mineral-standard-state evidence from the Pitzer or electrolyte-CP
 currently fail-closed against the CC BY 4.0 Voigt–Freyer pure-water and NaCl crossing envelopes and does not qualify
 high-pressure use; do not fit or reinterpret Pitzer interactions to hide a mineral-correlation mismatch. See
 `docs/pvtsimulation/scale_prediction_api.md` for the source matrix, numerical residuals, and limits.
+The object registers the NIST ThermoML CaCl2 pressure series as independent finite-concentration
+evidence, but explicitly leaves the dilute limiting-volume term unresolved; do not treat the presence
+of pressure evidence as high-pressure calcium-sulfate qualification.
 
 ### CaCO3 (Calcite) Scaling
 
@@ -309,10 +351,22 @@ double pH = co2Brine.getpH();               // ~3.9 for CO2-saturated water
 | Salinity | wt% NaCl equiv | Based on Na+/Cl- content |
 | pH | dimensionless | From H+ activity |
 
+## Gas-solubility reference assessments
+
+Match reported gas partial pressure and **final aqueous** salt molality. Account
+for solvent evaporation: 1 kg feed water need not leave 1 kg aqueous water.
+Rebuild independent trial fluids, compensate feed water, and bracket from valid
+liquid-bearing states. Verify component inventory, ion confinement and molecular
+fugacity equality before using a trial in a pressure root. Check that changing
+the finite gas-reservoir size leaves the matched result unchanged. Use `init(1)`
+for fixed-T/P fugacities, retaining accuracy deviations as evidence.
+See `KClCO2SolubilityReferenceAssessmentTest` and the
+[benchmark notes](../../../src/test/resources/data/chemistry_benchmarks/co2_kcl_hydrate_dholabhai1993.md).
+
 ## Common Pitfalls
 
 1. **Charge balance**: Total positive charges must equal total negative charges
-2. **Mixing rule must be numeric `10`**: Not `"classic"` — CPA requires numeric mixing rule
+2. **Mixing rule is model-specific**: CPA requires numeric `10`; `SystemPitzer` uses `"classic"`
 3. **Ion names are case-sensitive**: `"Na+"` not `"na+"` or `"NA+"`
 4. **Multi-phase check**: Always enable for electrolyte systems (`setMultiPhaseCheck(true)`)
 5. **Temperature limits**: Electrolyte models may have narrower valid T range than HC models

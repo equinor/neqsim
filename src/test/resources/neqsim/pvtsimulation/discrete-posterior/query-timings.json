@@ -1,0 +1,2889 @@
+{
+  "summary": {
+    "baseline": 1.853435e-07,
+    "candidate": 1.9120557500000002e-07,
+    "claim": "five ABBA blocks; interior pressure query only; no simulation-speed or CI timing claim"
+  },
+  "runs": [
+    {
+      "block": 0,
+      "position": 0,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/0-0-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/0-0-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.037282504,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.02286955,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.011461865,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003652158,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003507093,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005406672,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003344883,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003367566,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003351984,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003352213,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008164763,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007843537,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00767642,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00427318,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003008363,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003157875,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002921144,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005713467,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.7535465e-07
+    },
+    {
+      "block": 0,
+      "position": 1,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/0-1-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/0-1-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.024319542,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.011596124,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.010273723,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006237454,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003472061,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009671229,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008619038,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007778881,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00335636,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003557168,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003503067,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003428456,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007560708,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003195171,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002443926,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002409985,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002711723,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002585526,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.7360305e-07
+    },
+    {
+      "block": 0,
+      "position": 2,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/0-2-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/0-2-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.034047365,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.016941626,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.004234072,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004307521,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003611088,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007095948,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003544669,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003663275,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003593241,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003553752,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008716102,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008825564,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008561763,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006977742,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003600893,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003460534,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.0035454,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006229753,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.8316375e-07
+    },
+    {
+      "block": 0,
+      "position": 3,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/0-3-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/0-3-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.035299191,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.016739255,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.010975714,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003640981,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002863048,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.012297955,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006832528,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.0056287,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002568361,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003186217,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00287782,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002353242,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008261287,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002500339,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002924068,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002829878,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002547139,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002557735,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.43891e-07
+    },
+    {
+      "block": 1,
+      "position": 0,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/1-0-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/1-0-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.029281533,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.025099349,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.018814314,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004205179,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004163898,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009769715,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008076082,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00783813,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004432477,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003345063,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003351543,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003375598,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008535894,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003413014,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003377441,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002823889,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00233947,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002524065,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.7065069999999998e-07
+    },
+    {
+      "block": 1,
+      "position": 1,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/1-1-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/1-1-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.035898876,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.015421179,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.014260368,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006006482,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004662578,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.024893794,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006855721,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005502734,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006070166,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003975584,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003662554,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006010608,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003307046,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003357391,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003292906,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00326911,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00340402,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003380155,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.987792e-07
+    },
+    {
+      "block": 1,
+      "position": 2,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/1-2-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/1-2-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.026421511,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.011857783,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.013706506,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00622133,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003591188,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008958682,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00347817,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003458962,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003434817,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003425562,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009019522,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005696131,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005664024,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005754788,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005447403,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004483552,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002294164,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002255306,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 2.241776e-07
+    },
+    {
+      "block": 1,
+      "position": 3,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/1-3-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/1-3-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.0760686,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.040329666,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.004968221,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005628801,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004115907,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.012823536,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00266187,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.015538524,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006473894,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005204012,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.018473609,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009990683,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008050604,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008193026,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007765862,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006266528,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003239015,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003257032,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 3.236947e-07
+    },
+    {
+      "block": 2,
+      "position": 0,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/2-0-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/2-0-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.030504979,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.016325261,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.015687419,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006582116,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007648338,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009832488,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003294518,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003047802,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002701769,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003417991,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.013222127,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008242779,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007774615,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006492443,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00287744,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002289026,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002349095,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00647086,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 3.2354300000000003e-07
+    },
+    {
+      "block": 2,
+      "position": 1,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/2-1-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/2-1-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.045507797,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.024564124,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.030606679,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.023844767,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.027187918,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.029505495,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.014097837,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00813197,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009164277,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.012102611,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006097666,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006534666,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009305611,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006340538,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002674327,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009843495,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002669331,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002476624,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 4.5821385e-07
+    },
+    {
+      "block": 2,
+      "position": 2,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/2-2-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/2-2-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.052712447,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.019207136,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.004497313,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004121685,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003672639,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.01516504,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.013889988,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008215378,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.0082361,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006513444,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00225146,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002407041,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002266383,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008255948,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002384568,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002223088,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002289176,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002276537,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.8363195000000002e-07
+    },
+    {
+      "block": 2,
+      "position": 3,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/2-3-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/2-3-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.038531588,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.025073861,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.019470407,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004087815,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004122847,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009889062,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008582974,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008374385,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00831037,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003900868,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003445422,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003428457,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005099065,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00325581,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003550578,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003510899,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002903192,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002286442,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.950434e-07
+    },
+    {
+      "block": 3,
+      "position": 0,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/3-0-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/3-0-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.03928807,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.017858796,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.012778158,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00446855,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003584318,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.01026503,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008104925,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008054119,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003613922,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003467966,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003512872,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003472192,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008860105,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002346922,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002777991,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002474722,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.0024466,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002384388,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.756436e-07
+    },
+    {
+      "block": 3,
+      "position": 1,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/3-1-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/3-1-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.054494156,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.014606891,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.014064606,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.012165348,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002562762,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.014070595,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008810702,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002670592,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002764236,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003473703,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003331813,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.011267406,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003458351,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003284012,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003393745,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003398011,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003203903,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00725206,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.6990055e-07
+    },
+    {
+      "block": 3,
+      "position": 2,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/3-2-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/3-2-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.04082735,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.011967265,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.00416576,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004214552,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003922099,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009622056,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003689233,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003601574,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003634792,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004385676,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.011381375,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009997692,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009049787,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007655487,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007778941,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007710299,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003686169,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003583957,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 2.1928379999999998e-07
+    },
+    {
+      "block": 3,
+      "position": 3,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/3-3-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/3-3-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.053728175,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.021495853,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.004853061,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003833678,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003960446,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00858016,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002567138,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002536333,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002529783,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002684823,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008330499,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007493518,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008056903,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008402177,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008077144,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008144964,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006722123,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003446773,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 3.3610615e-07
+    },
+    {
+      "block": 4,
+      "position": 0,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/4-0-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/4-0-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.040599966,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.02059124,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.022693639,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007967822,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002526919,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009698245,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.01843772,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008707629,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.021531305,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003765186,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009837826,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006890634,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005836659,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006309661,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004981761,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002392399,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002465658,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002711232,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 3.1548305e-07
+    },
+    {
+      "block": 4,
+      "position": 1,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/4-1-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/4-1-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.042721604,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.015341741,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.015969232,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.015561256,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008752705,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008602648,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008636784,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008217421,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005565596,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003620181,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003473814,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003541054,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006389775,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00434056,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003089152,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002646947,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002573328,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002537976,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 2.17028e-07
+    },
+    {
+      "block": 4,
+      "position": 2,
+      "label": "candidate",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/4-2-candidate.endpoints.json",
+        "target/run59-evidence/paired-queries/4-2-candidate.timing.json"
+      ],
+      "exit": 0,
+      "endpointFailures": 0,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.039773072,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.009091924,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.004757362,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004144509,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002739925,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.007324752,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006381578,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006588625,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005631505,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00275029,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002285841,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002304308,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004637585,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002304008,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002253683,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002333562,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002265461,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002240574,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.3699625e-07
+    },
+    {
+      "block": 4,
+      "position": 3,
+      "label": "baseline",
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/baseline-classes:/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence:/workspace/scratch/ec5d078361de/neqsim/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "QuantileEndpointQualification",
+        "target/run59-evidence/paired-queries/4-3-baseline.endpoints.json",
+        "target/run59-evidence/paired-queries/4-3-baseline.timing.json"
+      ],
+      "exit": 1,
+      "endpointFailures": 8,
+      "samples": [
+        {
+          "block": 0,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.036484107,
+          "checksum": 3919971.6979457317
+        },
+        {
+          "block": 1,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.026123677,
+          "checksum": 7839943.395890879
+        },
+        {
+          "block": 2,
+          "warmup": true,
+          "queries": 20000,
+          "seconds": 0.012157577,
+          "checksum": 11759915.093852047
+        },
+        {
+          "block": 3,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.004032272,
+          "checksum": 15679886.791815821
+        },
+        {
+          "block": 4,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003406774,
+          "checksum": 19599858.48975277
+        },
+        {
+          "block": 5,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.009646391,
+          "checksum": 23519830.18767929
+        },
+        {
+          "block": 6,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00804802,
+          "checksum": 27439801.885605812
+        },
+        {
+          "block": 7,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.008361245,
+          "checksum": 31359773.583532333
+        },
+        {
+          "block": 8,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.006552932,
+          "checksum": 35279745.281458855
+        },
+        {
+          "block": 9,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003472451,
+          "checksum": 39199716.979385376
+        },
+        {
+          "block": 10,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003329379,
+          "checksum": 43119688.6773119
+        },
+        {
+          "block": 11,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.003645989,
+          "checksum": 47039660.37523842
+        },
+        {
+          "block": 12,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.005772374,
+          "checksum": 50959632.07316494
+        },
+        {
+          "block": 13,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00234544,
+          "checksum": 54879603.77109146
+        },
+        {
+          "block": 14,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002297508,
+          "checksum": 58799575.46901798
+        },
+        {
+          "block": 15,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002327943,
+          "checksum": 62719547.166944504
+        },
+        {
+          "block": 16,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.00229182,
+          "checksum": 66639518.864871025
+        },
+        {
+          "block": 17,
+          "warmup": false,
+          "queries": 20000,
+          "seconds": 0.002312211,
+          "checksum": 70559490.56279755
+        }
+      ],
+      "medianSecondsPerQuery": 1.7362255e-07
+    }
+  ]
+}

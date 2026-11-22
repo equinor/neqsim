@@ -41,7 +41,7 @@ public class PloadingCurve implements OperationInterface {
   double[] lnOldK;
   double oldDeltalnK[];
   double deltalnK[];
-  double[] tm = { 1, 1 };
+  double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
   JProgressBar monitor;
@@ -137,7 +137,7 @@ public class PloadingCurve implements OperationInterface {
     double TC = system.getTC();
     double PC = system.getPC();
     logger.info("tc : " + TC + "  PC : " + PC);
-    String[] navn = { "CO2 fugacity", "", "", "" };
+    String[] navn = {"CO2 fugacity", "", "", ""};
     String title = "CO2 vapour pressure";
 
     Graph2b graph2 = new Graph2b(points, navn, title, "loading [-]", "Fugacity CO2 [bar]");

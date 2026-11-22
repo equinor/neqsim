@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.attractiveeosterm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAstatoil;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAWaterCaloric;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermGERG;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCop;
@@ -34,6 +35,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonStatoil;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * Abstract ComponentEos class.
@@ -48,7 +50,12 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double b = 1;
 
-  /** Per-component OmegaA override. NaN means use the EOS default. */
+  /**
+   * Per-component OmegaA override. NaN means use the EOS default. Only a finite, positive value is treated as an
+   * override: an instance created without running its constructor (for example by XStream when loading a
+   * {@code .neqsim} file written before this field existed) holds 0.0 here, and a zero OmegaA would silently remove the
+   * EOS attraction term.
+   */
   protected double omegaAOverride = Double.NaN;
 
   public double m = 0;
@@ -72,8 +79,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double aDiffDiffT = 0;
 
-  public double[] Aij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
-  public double[] Bij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] Aij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] Bij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   protected double delta1 = 0;
 
   protected double delta2 = 0;
@@ -142,7 +149,74 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       clonedComponent.setAttractiveParameter(clonedAttractiveTerm);
     }
 
+    // A clone can be initialized without overwriting the source's composition curvature.
+    clonedComponent.Aij = Aij.clone();
+    clonedComponent.Bij = Bij.clone();
+    clonedComponent.dAdndn = dAdndn.clone();
+    clonedComponent.dBdndn = dBdndn.clone();
     return clonedComponent;
+  }
+
+  /**
+   * Compares two work arrays whose allocated lengths may differ, treating missing trailing entries as zero.
+   *
+   * @param first first array
+   * @param second second array
+   * @return true if both arrays hold the same values
+   */
+  private static boolean equalsIgnoringTrailingZeros(double[] first, double[] second) {
+    if (first == second) {
+      return true;
+    }
+    if (first == null || second == null) {
+      return false;
+    }
+    int length = Math.max(first.length, second.length);
+    for (int i = 0; i < length; i++) {
+      double a = i < first.length ? first[i] : 0.0;
+      double b = i < second.length ? second[i] : 0.0;
+      if (Double.doubleToLongBits(a) != Double.doubleToLongBits(b)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void fitCompositionDerivativeArrays(int numberOfComponents) {
+    super.fitCompositionDerivativeArrays(numberOfComponents);
+    int size = Math.max(1, numberOfComponents);
+    if (Aij.length != size) {
+      Aij = java.util.Arrays.copyOf(Aij, size);
+    }
+    if (Bij.length != size) {
+      Bij = java.util.Arrays.copyOf(Bij, size);
+    }
+    if (dAdndn.length != size) {
+      dAdndn = java.util.Arrays.copyOf(dAdndn, size);
+    }
+    if (dBdndn.length != size) {
+      dBdndn = java.util.Arrays.copyOf(dBdndn, size);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void ensureCompositionDerivativeCapacity(int numberOfComponents) {
+    super.ensureCompositionDerivativeCapacity(numberOfComponents);
+    if (Aij.length < numberOfComponents) {
+      Aij = java.util.Arrays.copyOf(Aij, numberOfComponents);
+    }
+    if (Bij.length < numberOfComponents) {
+      Bij = java.util.Arrays.copyOf(Bij, numberOfComponents);
+    }
+    if (dAdndn.length < numberOfComponents) {
+      dAdndn = java.util.Arrays.copyOf(dAdndn, numberOfComponents);
+    }
+    if (dBdndn.length < numberOfComponents) {
+      dBdndn = java.util.Arrays.copyOf(dBdndn, numberOfComponents);
+    }
   }
 
   /** {@inheritDoc} */
@@ -174,6 +248,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
         / (-R * temp * phase.dFdVdV() - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
 
     if (initType >= 3) {
+      ensureCompositionDerivativeCapacity(numberOfComponents);
       for (int j = 0; j < numberOfComponents; j++) {
         Aij[j] = phase.calcAij(componentNumber, j, phase, temp, pres, numberOfComponents);
         Bij[j] = phase.calcBij(componentNumber, j, phase, temp, pres, numberOfComponents);
@@ -181,63 +256,78 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws RuntimeException wrapping {@link neqsim.util.exception.InvalidInputException} if {@code i} does not
+   * correspond to a known attractive-term formulation (valid range: 0-23). On this failure, neither
+   * {@link #getAttractiveTermNumber()} nor {@link #getAttractiveTerm()} is changed.
+   */
   @Override
   public void setAttractiveTerm(int i) {
+    AttractiveTermInterface term = selectAttractiveTerm(i);
+    if (term == null) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "setAttractiveTerm", "i", "unrecognised attractive term " + i));
+    }
+    setAttractiveParameter(term);
     attractiveTermNumber = i;
-    if (i == 0) {
-      setAttractiveParameter(new AttractiveTermSrk(this));
-    } else if (i == 1) {
-      setAttractiveParameter(new AttractiveTermPr(this));
-    } else if (i == 2) {
-      setAttractiveParameter(new AttractiveTermSchwartzentruber(this, getSchwartzentruberParams()));
-    } else if (i == 3) {
-      setAttractiveParameter(new AttractiveTermMollerup(this, getSchwartzentruberParams()));
-    } else if (i == 4) {
-      setAttractiveParameter(new AttractiveTermMatCop(this, getMatiascopemanParams()));
-    } else if (i == 5) {
-      setAttractiveParameter(new AttractiveTermRk(this));
-    } else if (i == 6) {
-      setAttractiveParameter(new AttractiveTermPr1978(this));
-    } else if (i == 7) {
-      setAttractiveParameter(new AttractiveTermPrDelft1998(this));
-    } else if (i == 8) {
-      setAttractiveParameter(new AttractiveTermPrGassem2001(this));
-    } else if (i == 9) {
-      setAttractiveParameter(new AttractiveTermPrDanesh(this));
-    } else if (i == 10) {
-      setAttractiveParameter(new AttractiveTermGERG(this));
-    } else if (i == 11) {
-      setAttractiveParameter(new AttractiveTermTwuCoon(this));
-    } else if (i == 12) {
-      setAttractiveParameter(new AttractiveTermTwuCoonParam(this, getTwuCoonParams()));
-    } else if (i == 13) {
-      setAttractiveParameter(new AttractiveTermMatCopPR(this, getMatiascopemanParamsPR()));
-    } else if (i == 14) {
-      setAttractiveParameter(new AttractiveTermTwu(this));
-    } else if (i == 15) {
-      setAttractiveParameter(new AttractiveTermCPAstatoil(this));
-    } else if (i == 16) {
-      setAttractiveParameter(new AttractiveTermUMRPRU(this));
-    } else if (i == 17) {
-      setAttractiveParameter(new AttractiveTermMatCopPRUMR(this));
-    } else if (i == 18) {
-      if (componentName.equals("mercury")) {
-        setAttractiveParameter(new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams()));
-      } else {
-        setAttractiveParameter(new AttractiveTermSrk(this));
-      }
-    } else if (i == 19) {
-      setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
-    } else if (i == 20) {
-      setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
-    } else if (i == 21) {
-      setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
-    } else if (i == 22) {
-      setAttractiveParameter(new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA()));
-    } else {
-      logger.error("error selecting an alpha formulation term");
-      logger.info("ok setting alpha function");
+  }
+
+  private AttractiveTermInterface selectAttractiveTerm(int i) {
+    switch (i) {
+    case 0:
+      return new AttractiveTermSrk(this);
+    case 1:
+      return new AttractiveTermPr(this);
+    case 2:
+      return new AttractiveTermSchwartzentruber(this, getSchwartzentruberParams());
+    case 3:
+      return new AttractiveTermMollerup(this, getSchwartzentruberParams());
+    case 4:
+      return new AttractiveTermMatCop(this, getMatiascopemanParams());
+    case 5:
+      return new AttractiveTermRk(this);
+    case 6:
+      return new AttractiveTermPr1978(this);
+    case 7:
+      return new AttractiveTermPrDelft1998(this);
+    case 8:
+      return new AttractiveTermPrGassem2001(this);
+    case 9:
+      return new AttractiveTermPrDanesh(this);
+    case 10:
+      return new AttractiveTermGERG(this);
+    case 11:
+      return new AttractiveTermTwuCoon(this);
+    case 12:
+      return new AttractiveTermTwuCoonParam(this, getTwuCoonParams());
+    case 13:
+      return new AttractiveTermMatCopPR(this, getMatiascopemanParamsPR());
+    case 14:
+      return new AttractiveTermTwu(this);
+    case 15:
+      return new AttractiveTermCPAstatoil(this);
+    case 16:
+      return new AttractiveTermUMRPRU(this);
+    case 17:
+      return new AttractiveTermMatCopPRUMR(this);
+    case 18:
+      return componentName.equals("mercury") ? new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams())
+          : new AttractiveTermSrk(this);
+    case 19:
+      return new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU());
+    case 20:
+      return new AttractiveTermSoreideWhitson(this);
+    case 21:
+      return new AttractiveTermPrLeeKesler(this);
+    case 22:
+      return new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA());
+    case 23:
+      return "water".equals(componentName) ? new AttractiveTermCPAWaterCaloric(this)
+          : new AttractiveTermCPAstatoil(this);
+    default:
+      return null;
     }
   }
 
@@ -307,13 +397,13 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double getBij(int j) {
-    return Bij[j];
+    return j < Bij.length ? Bij[j] : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getAij(int j) {
-    return Aij[j];
+    return j < Aij.length ? Aij[j] : 0.0;
   }
 
   /** {@inheritDoc} */
@@ -372,6 +462,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double pressure = phase.getPressure();
     int numberOfComponents = phase.getNumberOfComponents();
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getComponents();
+    ensureCompositionDerivativeCapacity(numberOfComponents);
 
     for (int i = 0; i < numberOfComponents; i++) {
       // System.out.println("dfdndn " + dFdNdN(i, phase, numberOfComponents,
@@ -410,6 +501,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     vol = phase.getMolarVolume();
     voli = getVoli();
+    ensureCompositionDerivativeCapacity(Math.max(numberOfComponents, k + 1));
 
     dfugdn[k] = (this.dFdNdN(k, phase, numberOfComponents, temperature, pressure)
         + 1.0 / phase.getNumberOfMolesInPhase()
@@ -436,12 +528,15 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double getdAdndn(int j) {
-    return dAdndn[j];
+    return j < dAdndn.length ? dAdndn[j] : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setdAdndn(int jComp, double val) {
+    if (jComp >= dAdndn.length) {
+      ensureCompositionDerivativeCapacity(jComp + 1);
+    }
     dAdndn[jComp] = val;
   }
 
@@ -499,12 +594,15 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double getdBdndn(int j) {
-    return dBdndn[j];
+    return j < dBdndn.length ? dBdndn[j] : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setdBdndn(int jComp, double val) {
+    if (jComp >= dBdndn.length) {
+      ensureCompositionDerivativeCapacity(jComp + 1);
+    }
     dBdndn[jComp] = val;
   }
 
@@ -582,7 +680,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double[] getDeltaEosParameters() {
-    double[] param = { delta1, delta2 };
+    double[] param = {delta1, delta2};
     return param;
   }
 
@@ -595,11 +693,18 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /**
    * Override the OmegaA parameter used in {@link #calca()}. Once set, every call to {@code calca()} (including those
    * triggered by {@code init()}) will use this value instead of the EOS class default. Use {@code Double.NaN} to revert
-   * to the EOS default.
+   * to the EOS default. Values that are not finite and positive are ignored with a warning, because OmegaA must be
+   * positive for a physical attraction term.
    *
    * @param omegaA the OmegaA value, e.g. 0.45724 for PR or 0.42748 for SRK.
    */
   public void setOmegaA(double omegaA) {
+    if (!Double.isNaN(omegaA) && !isValidOmegaA(omegaA)) {
+      logger.warn("Ignoring OmegaA override {} for component {}: OmegaA must be finite and positive", omegaA,
+          getComponentName());
+      this.omegaAOverride = Double.NaN;
+      return;
+    }
     this.omegaAOverride = omegaA;
   }
 
@@ -609,7 +714,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * @return true if an OmegaA override is active
    */
   public boolean hasOmegaAOverride() {
-    return !Double.isNaN(omegaAOverride);
+    return isValidOmegaA(omegaAOverride);
   }
 
   /**
@@ -618,7 +723,17 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * @return active OmegaA override, or NaN
    */
   public double getOmegaAOverride() {
-    return omegaAOverride;
+    return hasOmegaAOverride() ? omegaAOverride : Double.NaN;
+  }
+
+  /**
+   * Checks whether a value can be used as an OmegaA override.
+   *
+   * @param omegaA candidate OmegaA value
+   * @return true if the value is finite and positive
+   */
+  private static boolean isValidOmegaA(double omegaA) {
+    return omegaA > 0.0 && !Double.isInfinite(omegaA);
   }
 
   /** {@inheritDoc} */
@@ -799,10 +914,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     result = result && Double.compare(aDerTn, other.aDerTn) == 0;
     result = result && Double.compare(bDern, other.bDern) == 0;
     result = result && Double.compare(bDerTn, other.bDerTn) == 0;
-    result = result && java.util.Arrays.equals(Aij, other.Aij);
-    result = result && java.util.Arrays.equals(Bij, other.Bij);
-    result = result && java.util.Arrays.equals(dAdndn, other.dAdndn);
-    result = result && java.util.Arrays.equals(dBdndn, other.dBdndn);
+    result = result && equalsIgnoringTrailingZeros(Aij, other.Aij);
+    result = result && equalsIgnoringTrailingZeros(Bij, other.Bij);
+    result = result && equalsIgnoringTrailingZeros(dAdndn, other.dAdndn);
+    result = result && equalsIgnoringTrailingZeros(dBdndn, other.dBdndn);
     result = result && (attractiveParameter == null ? other.attractiveParameter == null
         : attractiveParameter.equals(other.attractiveParameter));
     result = result && super.equals(obj);

@@ -18,12 +18,12 @@ public class CompressorChartLibraryTest {
 
   private CompressorChartInterface makeChart(double headScale) {
     CompressorChart chart = new CompressorChart();
-    double[] chartConditions = { 18.0, 298.15, 50.0, 0.9 };
-    double[] speeds = { 10000.0, 11000.0 };
-    double[][] flows = { { 1000.0, 2000.0, 3000.0 }, { 1100.0, 2100.0, 3100.0 } };
-    double[][] heads = { { 100.0 * headScale, 90.0 * headScale, 80.0 * headScale },
-        { 110.0 * headScale, 100.0 * headScale, 90.0 * headScale } };
-    double[][] effs = { { 75.0, 80.0, 78.0 }, { 76.0, 81.0, 79.0 } };
+    double[] chartConditions = {18.0, 298.15, 50.0, 0.9};
+    double[] speeds = {10000.0, 11000.0};
+    double[][] flows = {{1000.0, 2000.0, 3000.0}, {1100.0, 2100.0, 3100.0}};
+    double[][] heads = {{100.0 * headScale, 90.0 * headScale, 80.0 * headScale},
+        {110.0 * headScale, 100.0 * headScale, 90.0 * headScale}};
+    double[][] effs = {{75.0, 80.0, 78.0}, {76.0, 81.0, 79.0}};
     chart.setCurves(chartConditions, speeds, flows, heads, effs);
     chart.setHeadUnit("kJ/kg");
     chart.setUseCompressorChart(true);

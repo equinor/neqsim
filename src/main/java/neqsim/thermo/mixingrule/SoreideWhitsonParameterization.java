@@ -11,7 +11,7 @@ public enum SoreideWhitsonParameterization {
   CHABAB_2019,
 
   /**
-   * Drop-in aqueous and non-aqueous BIPs published by Burgoyne and Nielsen (2026).
+   * Burgoyne and Nielsen (2026) drop-in BIPs with the November 2026 coupled-equilibrium aqueous refit.
    *
    * <p>
    * This parameterization covers CO2, H2S, methane, nitrogen, hydrogen, ethane, propane, and n-butane paired with

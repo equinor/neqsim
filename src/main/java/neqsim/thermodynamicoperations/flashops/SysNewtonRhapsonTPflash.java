@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.thermo.system.SystemInterface;
@@ -65,6 +66,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
 
   /** Pre-allocated EJML LU solver. */
   private transient LinearSolverDense<DMatrixRMaj> linearSolver;
+
+  /** True when the last Newton step was discarded because it was longer than the feasible composition interval. */
+  private boolean lastStepDiscarded = false;
 
   /**
    * Constructor for sysNewtonRhapsonTPflash.
@@ -165,6 +169,22 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * init.
    */
   public void init() {
+    initWithLevel(3);
+  }
+
+  /**
+   * Synchronizes the converged phase amounts and computes the fugacities and Gibbs energy for seed validation.
+   */
+  void initForSeedValidation() {
+    initWithLevel(1);
+  }
+
+  /**
+   * Synchronizes the phase compositions and K-values with the current Newton iterate before initializing the system.
+   *
+   * @param initLevel thermodynamic system initialization level
+   */
+  private void initWithLevel(int initLevel) {
     double betaSum = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       betaSum += uVector[i];
@@ -179,8 +199,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
     }
 
-    // Full system init: computes fugacities, T/P/composition derivatives
-    system.init(3);
+    system.init(initLevel);
   }
 
   /**
@@ -216,6 +235,38 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       betaTrial += uTrial[i];
     }
     return betaTrial > 1e-12 && betaTrial < 1.0 - 1e-12;
+  }
+
+  /**
+   * Check whether the current Newton direction, scaled by the step length, is longer than the feasible interval. Each
+   * component amount in the first phase lies between zero and its feed amount, and the phase fraction between zero and
+   * one, so a longer step leaves the physical domain from any starting point.
+   *
+   * @param alpha step length applied to the Newton direction
+   * @return true if the step moves a component by more than its feed amount or the phase fraction by more than one
+   */
+  private boolean exceedsFeasibleInterval(double alpha) {
+    double betaStep = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double step = alpha * dxVector.get(i, 0);
+      if (z[i] > 0.0 && Math.abs(step) > z[i]) {
+        return true;
+      }
+      betaStep += step;
+    }
+    return Math.abs(betaStep) > 1.0;
+  }
+
+  /**
+   * Tells whether the last call to {@link #solve()} discarded its Newton step. A step is discarded when no trial point
+   * passed the line search and the shortest step is still longer than the feasible composition interval. The system is
+   * then restored to the iterate from before the step, and the caller should take a successive substitution step
+   * instead.
+   *
+   * @return true if the last Newton step was discarded
+   */
+  public boolean wasLastStepDiscarded() {
+    return lastStepDiscarded;
   }
 
   /**
@@ -256,12 +307,38 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @return a double
    */
   public double solve() {
+    return solve(false);
+  }
+
+  /**
+   * Takes a Newton step for a stability seed, using residual improvement to resolve Gibbs line-search comparisons near
+   * floating-point precision.
+   *
+   * @return relative change in phase amounts, or zero if no step is accepted
+   */
+  double solveWithResidualFallback() {
+    return solve(true);
+  }
+
+  /**
+   * Takes one Newton step with a feasibility-preserving line search.
+   *
+   * @param useResidualFallback whether to resolve indistinguishable Gibbs changes using the fugacity residual
+   * @return relative change in phase amounts
+   */
+  private double solve(boolean useResidualFallback) {
     ensureSolverInitialized();
     iter++;
+    if (lastStepDiscarded) {
+      // The caller replaced the discarded step with its own update, so restart from the system state.
+      setu();
+      lastStepDiscarded = false;
+    }
     init();
 
     double qCurrent = computeQ();
     setfvec();
+    double currentResidual = useResidualFallback ? CommonOps_DDRM.elementMaxAbs(fvecVector) : 0.0;
     setJac();
 
     // Levenberg-Marquardt regularization for stability
@@ -289,6 +366,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     double alpha = 1.0;
     double c1 = 1e-4;
     int maxBacktrack = 8;
+    double gibbsRoundoff = useResidualFallback ? 8.0 * Math.ulp(qCurrent) : 0.0;
+    boolean accepted = false;
     for (int bt = 0; bt < maxBacktrack; bt++) {
       for (int i = 0; i < numberOfComponents; i++) {
         uTrialVector[i] = uVector[i] - alpha * dxVector.get(i, 0);
@@ -298,8 +377,15 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
         try {
           setTrialAndComputeFugacities(uTrialVector);
           double qTrial = computeQ();
-          // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
-          if (qTrial <= qCurrent - c1 * alpha * slope) {
+          double requiredDecrease = c1 * alpha * slope;
+          accepted = qTrial <= qCurrent - requiredDecrease;
+          // Near equilibrium Q changes quadratically, while fugacity residuals change linearly.
+          if (useResidualFallback && slope > 0.0 && requiredDecrease <= gibbsRoundoff
+              && Math.abs(qTrial - qCurrent) <= gibbsRoundoff) {
+            setfvec();
+            accepted = CommonOps_DDRM.elementMaxAbs(fvecVector) < currentResidual;
+          }
+          if (accepted) {
             break;
           }
         } catch (Exception ex) {
@@ -308,6 +394,17 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       }
 
       alpha *= 0.5;
+    }
+    if (useResidualFallback && !accepted) {
+      init();
+      return 0.0;
+    }
+    if (!accepted && exceedsFeasibleInterval(alpha)) {
+      // An indefinite Hessian can give a direction that no backtracking shortens enough. Taking it would
+      // leave a negative phase fraction that the next iteration reads as a converged single phase.
+      lastStepDiscarded = true;
+      initWithLevel(1);
+      return 1.0;
     }
 
     // Update u with accepted step

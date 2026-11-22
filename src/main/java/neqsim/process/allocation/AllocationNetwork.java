@@ -98,7 +98,7 @@ public class AllocationNetwork implements Serializable {
       UnitSplit split = factors.getUnitSplits().get(units.get(u).getName());
       List<StreamInterface> outlets = split.getOutletStreams();
       for (int s = 0; s < outlets.size(); s++) {
-        streamProducer.put(outlets.get(s), new int[] { u, s });
+        streamProducer.put(outlets.get(s), new int[] {u, s});
       }
       for (StreamInterface in : split.getInletStreams()) {
         List<Integer> consumers = streamConsumers.get(in);

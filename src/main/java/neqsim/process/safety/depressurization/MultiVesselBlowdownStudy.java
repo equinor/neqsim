@@ -114,7 +114,7 @@ public class MultiVesselBlowdownStudy implements Serializable {
    * @return this study for chaining
    */
   public MultiVesselBlowdownStudy setGridStep(double dt) {
-    if (dt <= 0.0) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
       throw new IllegalArgumentException("grid step must be positive");
     }
     this.gridStepS = dt;
@@ -143,12 +143,10 @@ public class MultiVesselBlowdownStudy implements Serializable {
     }
 
     List<Double> grid = new ArrayList<>();
-    for (double t = 0.0; t <= endTime + 1.0e-9; t += gridStepS) {
+    for (double t = 0.0; t < endTime; t += gridStepS) {
       grid.add(t);
     }
-    if (grid.isEmpty()) {
-      grid.add(0.0);
-    }
+    grid.add(endTime);
 
     List<Double> total = new ArrayList<>();
     Map<String, List<Double>> perSource = new LinkedHashMap<>();
@@ -188,13 +186,36 @@ public class MultiVesselBlowdownStudy implements Serializable {
       double pPa = headerPressureBara * 1.0e5;
       double rho = pPa * headerMolarMassKgPerMol / (R_GAS * headerTemperatureK);
       velocity = peakTotal / (rho * area);
-      double sonic = Math.sqrt(headerGamma * R_GAS * headerTemperatureK / headerMolarMassKgPerMol);
-      mach = velocity / sonic;
+      mach = peakHeaderMach(peakTotal, headerDiameterM, headerPressureBara, headerTemperatureK, headerMolarMassKgPerMol,
+          headerGamma);
       machOk = mach <= maxAllowableMach;
     }
 
     return new MultiVesselBlowdownResult(grid, total, perSource, peakTotal, peakTime, peakContribution, velocity, mach,
         maxAllowableMach, machOk);
+  }
+
+  /**
+   * Evaluate the common ideal-gas header Mach screen at a specified mass flow.
+   *
+   * @param massFlow mass flow in kg/s
+   * @param diameter diameter in m
+   * @param pressure pressure in bara
+   * @param temperature temperature in K
+   * @param molarMass molar mass in kg/mol
+   * @param gamma isentropic exponent
+   * @return Mach number or NaN for missing inputs
+   */
+  static double peakHeaderMach(double massFlow, double diameter, double pressure, double temperature, double molarMass,
+      double gamma) {
+    if (!(diameter > 0.0 && pressure > 0.0 && temperature > 0.0 && molarMass > 0.0 && gamma > 0.0)
+        || !Double.isFinite(diameter) || !Double.isFinite(pressure) || !Double.isFinite(temperature)
+        || !Double.isFinite(molarMass) || !Double.isFinite(gamma)) {
+      return Double.NaN;
+    }
+    double area = Math.PI * 0.25 * diameter * diameter;
+    double rho = pressure * 1.0e5 * molarMass / (R_GAS * temperature);
+    return massFlow / (rho * area) / Math.sqrt(gamma * R_GAS * temperature / molarMass);
   }
 
   /**
@@ -208,14 +229,11 @@ public class MultiVesselBlowdownStudy implements Serializable {
   private double interpolateMassFlow(DepressurizationResult r, double t) {
     List<Double> times = r.time;
     List<Double> flows = r.massFlowKgPerS;
-    if (times.isEmpty()) {
+    if (times.isEmpty() || t < times.get(0) || t > times.get(times.size() - 1)) {
       return 0.0;
     }
-    if (t <= times.get(0)) {
+    if (t == times.get(0)) {
       return flows.get(0);
-    }
-    if (t >= times.get(times.size() - 1)) {
-      return 0.0;
     }
     for (int i = 1; i < times.size(); i++) {
       if (t <= times.get(i)) {
@@ -315,6 +333,18 @@ public class MultiVesselBlowdownStudy implements Serializable {
      */
     public Map<String, Double> getPeakContributionKgPerS() {
       return peakContributionKgPerS;
+    }
+
+    /**
+     * Compare the simultaneous source rates at the sampled mass peak with the installed dry-gas network capacity.
+     * Supply each device source pressure and opening at this timestamp. This post-processing does not rerun the
+     * vessels.
+     *
+     * @param network fixed-opening gas network whose device tags match the source names
+     * @return coupled steady gas capacity and local flange backpressures
+     */
+    public SteadyFlareGasNetwork.Result ratePeakGasCapacity(SteadyFlareGasNetwork network) {
+      return network.rate(getPeakContributionKgPerS());
     }
 
     /**

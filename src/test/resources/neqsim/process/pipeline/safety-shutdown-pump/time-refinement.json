@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "timeRefinement": [
+    {
+      "courant": 0.9,
+      "continuousWork_J": 1845.1393212799492,
+      "endpointHeldWork_J": 1842.480754695488,
+      "absoluteError_J": 2.6585665844611412
+    },
+    {
+      "courant": 0.45,
+      "continuousWork_J": 1845.1393212799492,
+      "endpointHeldWork_J": 1843.7949392441055,
+      "absoluteError_J": 1.344382035843637
+    },
+    {
+      "courant": 0.225,
+      "continuousWork_J": 1845.1393212799492,
+      "endpointHeldWork_J": 1844.4670885919736,
+      "absoluteError_J": 0.6722326879755656
+    }
+  ]
+}

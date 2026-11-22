@@ -96,6 +96,90 @@ public class CapacityConstraint implements Serializable {
     ADVISORY
   }
 
+  /**
+   * Enum describing the provenance of a constraint limit - the kind of authority that backs the number.
+   *
+   * <p>
+   * This is a separate axis from {@link ConstraintSeverity}: severity says <em>how a violation is handled</em>, whereas
+   * the source says <em>why the limit exists and who stands behind it</em>. A vendor surge limit and a company standard
+   * may both be HARD, but they are not renegotiable on the same terms.
+   * </p>
+   *
+   * <p>
+   * It is also distinct from {@link CapacityConstraint#getDataSource()}. The data source is a free-text label
+   * identifying which part of the model supplied the number ("equipment", "mechanicalDesign",
+   * "installed_capacity_table"); the constraint source classifies the underlying authority. A limit with
+   * {@code dataSource = "mechanicalDesign"} may have a source of {@link #CONFORMITY_STANDARD} or
+   * {@link #VENDOR_DATASHEET} depending on how the design was set.
+   * </p>
+   *
+   * <p>
+   * Recommended pairings with severity:
+   * </p>
+   * <ul>
+   * <li>{@link #CONFORMITY_STANDARD} - typically SOFT or ADVISORY, unless company policy makes it binding</li>
+   * <li>{@link #USER_RULE} - severity chosen by operations</li>
+   * <li>{@link #PROCESS_EMPIRICAL} - typically HARD, calibrated against observed plant behaviour</li>
+   * <li>{@link #VENDOR_DATASHEET} - typically HARD or CRITICAL for mechanical and surge limits</li>
+   * <li>{@link #AUTO_SIZE} - design point produced by sizing code; usually SOFT</li>
+   * <li>{@link #DEFAULT} - built-in constraint with no declared provenance</li>
+   * </ul>
+   */
+  public enum ConstraintSource {
+    /**
+     * Limit comes from an industry or company standard (API 12J, NORSOK P-002, ISO, ASME, DNV, or a company technical
+     * requirement). The specific document is recorded in {@link CapacityConstraint#getSourceReference()}.
+     */
+    CONFORMITY_STANDARD,
+
+    /**
+     * Limit defined by the user, operations, or the asset team. Examples: a maximum compressor speed imposed for
+     * vibration management, or a separator load factor derived from operating experience.
+     */
+    USER_RULE,
+
+    /**
+     * Limit derived from empirical observation of plant behaviour. Typically a correlation between an operating
+     * variable (rate, pressure) and a downstream consequence (carry-over, fouling, scaling) fitted to historian data.
+     * See {@link EmpiricalCarryOverConstraint}.
+     */
+    PROCESS_EMPIRICAL,
+
+    /**
+     * Limit taken from a vendor or OEM datasheet - compressor surge curve, valve trim Cv, mechanical overspeed, sealing
+     * pressure.
+     */
+    VENDOR_DATASHEET,
+
+    /**
+     * Limit generated automatically by equipment sizing code, such as an {@code autoSize()} call.
+     */
+    AUTO_SIZE,
+
+    /**
+     * Default fallback, used by built-in constraints where no provenance has been declared.
+     */
+    DEFAULT
+  }
+
+  /**
+   * Role of the physical limit currently used for utilization and feasibility.
+   *
+   * <p>
+   * This is deliberately separate from {@link ConstraintSource}. The source records who or what supports a number,
+   * while the role records whether the active number is a qualified design/rated value, a conservative screening
+   * default, or a facility-specific operating override.
+   * </p>
+   */
+  public enum ApplicableLimitRole {
+    /** A built-in or otherwise unqualified conservative screening limit. */
+    DEFAULT_SCREENING,
+    /** The declared design, rated, datasheet, standard, empirical, or auto-sized limit. */
+    DESIGN_RATED,
+    /** A separately configured operating limit that leaves the design/default basis intact. */
+    CONFIGURED_OPERATING
+  }
+
   /** Name of the constraint (e.g., "speed", "gasLoadFactor"). */
   private final String name;
 
@@ -111,6 +195,15 @@ public class CapacityConstraint implements Serializable {
   /** Severity level for optimization (CRITICAL, HARD, SOFT, ADVISORY). */
   private ConstraintSeverity severity = ConstraintSeverity.HARD;
 
+  /** Provenance of the limit - the kind of authority that backs it. */
+  private ConstraintSource source = ConstraintSource.DEFAULT;
+
+  /**
+   * Free-text reference identifying the source: the standard number ("API 12J"), the team that imposed the rule, or the
+   * historian tag set used to fit an empirical correlation. Optional.
+   */
+  private String sourceReference = "";
+
   /** Design/rated value for this constraint. */
   private double designValue = Double.MAX_VALUE;
 
@@ -119,6 +212,33 @@ public class CapacityConstraint implements Serializable {
 
   /** Minimum required value (for constraints like residence time). */
   private double minValue = 0.0;
+
+  /** Whether a separate facility-specific operating limit is configured. */
+  private boolean operatingLimitSet = false;
+
+  /** Facility-specific operating limit in {@link #getUnit()}. */
+  private double operatingLimit = Double.NaN;
+
+  /** Authority backing the facility-specific operating limit. */
+  private ConstraintSource operatingLimitSource = ConstraintSource.USER_RULE;
+
+  /** Free-text reference for the facility-specific operating limit. */
+  private String operatingLimitSourceReference = "";
+
+  /** Whether confidence was explicitly assigned to the operating override. */
+  private boolean operatingLimitConfidenceSet = false;
+
+  /** Evidence-quality confidence assigned to the operating override. */
+  private double operatingLimitConfidence = Double.NaN;
+
+  /** Whether an applicability range was explicitly assigned to the operating override. */
+  private boolean operatingLimitValidityRangeSet = false;
+
+  /** Lower inclusive applicability bound for the operating override. */
+  private double operatingLimitValidityMinimum = Double.NaN;
+
+  /** Upper inclusive applicability bound for the operating override. */
+  private double operatingLimitValidityMaximum = Double.NaN;
 
   /** Fraction of design value that triggers a warning (e.g., 0.9 = 90%). */
   private double warningThreshold = 0.9;
@@ -131,6 +251,9 @@ public class CapacityConstraint implements Serializable {
 
   /** Cached current value (updated when getCurrentValue() is called). */
   private double currentValue = 0.0;
+
+  /** Whether a current value was explicitly assigned or successfully sampled. */
+  private boolean currentValueSet = false;
 
   /** Description of the constraint for documentation. */
   private String description = "";
@@ -252,6 +375,107 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
+   * Configures a facility-specific operating limit without replacing the declared design/default value or its
+   * provenance.
+   *
+   * <p>
+   * The override follows the existing constraint direction. For a minimum constraint it is the minimum acceptable
+   * operating value; otherwise it is the maximum acceptable operating value. Calling this method clears any previously
+   * configured override confidence and validity range so stale metadata cannot silently follow a changed limit.
+   * </p>
+   *
+   * @param limit finite positive operating limit in {@link #getUnit()}
+   * @param source authority backing the override; {@code null} is treated as {@link ConstraintSource#USER_RULE}
+   * @param sourceReference free-text facility rule, operating procedure, or data reference
+   * @return this constraint for method chaining
+   * @throws IllegalArgumentException if the limit is non-finite or not positive
+   */
+  public CapacityConstraint setOperatingLimit(double limit, ConstraintSource source, String sourceReference) {
+    if (!Double.isFinite(limit) || limit <= 0.0) {
+      throw new IllegalArgumentException("operating limit must be finite and positive");
+    }
+    operatingLimit = limit;
+    operatingLimitSet = true;
+    operatingLimitSource = source == null ? ConstraintSource.USER_RULE : source;
+    operatingLimitSourceReference = sourceReference == null ? "" : sourceReference;
+    clearOperatingLimitConfidence();
+    clearOperatingLimitValidityRange();
+    return this;
+  }
+
+  /**
+   * Clears the facility-specific operating override and restores the design/default limit as the applicable limit.
+   *
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint clearOperatingLimit() {
+    operatingLimit = Double.NaN;
+    operatingLimitSet = false;
+    operatingLimitSource = ConstraintSource.USER_RULE;
+    operatingLimitSourceReference = "";
+    clearOperatingLimitConfidence();
+    clearOperatingLimitValidityRange();
+    return this;
+  }
+
+  /**
+   * Sets evidence-quality confidence for the configured operating override.
+   *
+   * @param confidence confidence from zero to one, inclusive
+   * @return this constraint for method chaining
+   * @throws IllegalStateException if no operating limit is configured
+   * @throws IllegalArgumentException if confidence is non-finite or outside [0, 1]
+   */
+  public CapacityConstraint setOperatingLimitConfidence(double confidence) {
+    requireOperatingLimit();
+    validateConfidence(confidence);
+    operatingLimitConfidence = confidence;
+    operatingLimitConfidenceSet = true;
+    return this;
+  }
+
+  /**
+   * Clears explicitly assigned operating-override confidence.
+   *
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint clearOperatingLimitConfidence() {
+    operatingLimitConfidence = Double.NaN;
+    operatingLimitConfidenceSet = false;
+    return this;
+  }
+
+  /**
+   * Sets the scalar applicability range for the configured operating override.
+   *
+   * @param minimum lower inclusive bound in {@link #getUnit()}
+   * @param maximum upper inclusive bound in {@link #getUnit()}
+   * @return this constraint for method chaining
+   * @throws IllegalStateException if no operating limit is configured
+   * @throws IllegalArgumentException if either bound is non-finite or minimum exceeds maximum
+   */
+  public CapacityConstraint setOperatingLimitValidityRange(double minimum, double maximum) {
+    requireOperatingLimit();
+    validateValidityRange(minimum, maximum);
+    operatingLimitValidityMinimum = minimum;
+    operatingLimitValidityMaximum = maximum;
+    operatingLimitValidityRangeSet = true;
+    return this;
+  }
+
+  /**
+   * Clears the configured operating-override applicability range.
+   *
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint clearOperatingLimitValidityRange() {
+    operatingLimitValidityMinimum = Double.NaN;
+    operatingLimitValidityMaximum = Double.NaN;
+    operatingLimitValidityRangeSet = false;
+    return this;
+  }
+
+  /**
    * Sets the warning threshold as a fraction of design value.
    *
    * @param warningThreshold fraction (0.0 to 1.0) at which to warn
@@ -289,6 +513,62 @@ public class CapacityConstraint implements Serializable {
    */
   public ConstraintSeverity getSeverity() {
     return severity;
+  }
+
+  /**
+   * Sets the provenance of this constraint.
+   *
+   * @param source the kind of authority backing the limit; {@code null} is treated as {@link ConstraintSource#DEFAULT}
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSource(ConstraintSource source) {
+    this.source = source == null ? ConstraintSource.DEFAULT : source;
+    return this;
+  }
+
+  /**
+   * Sets the provenance together with a free-text reference identifying the specific source.
+   *
+   * @param source the kind of authority backing the limit; {@code null} is treated as {@link ConstraintSource#DEFAULT}
+   * @param sourceReference free-text identifier such as a standard number, an owning team, or the historian tag set
+   * used to fit the limit; {@code null} is stored as an empty string
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSource(ConstraintSource source, String sourceReference) {
+    this.source = source == null ? ConstraintSource.DEFAULT : source;
+    this.sourceReference = sourceReference == null ? "" : sourceReference;
+    return this;
+  }
+
+  /**
+   * Sets only the free-text source reference, leaving the {@link ConstraintSource} unchanged. Useful for constraint
+   * subclasses that already declare their own source in the constructor.
+   *
+   * @param sourceReference free-text identifier such as a standard number, an owning team, or the historian tag set
+   * used to fit the limit; {@code null} is stored as an empty string
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSourceReference(String sourceReference) {
+    this.sourceReference = sourceReference == null ? "" : sourceReference;
+    return this;
+  }
+
+  /**
+   * Gets the provenance of this constraint.
+   *
+   * @return the source, never {@code null}; defaults to {@link ConstraintSource#DEFAULT}
+   */
+  public ConstraintSource getSource() {
+    return source == null ? ConstraintSource.DEFAULT : source;
+  }
+
+  /**
+   * Gets the free-text source reference, such as a standard number, owning team, or historian tag set.
+   *
+   * @return the reference string, empty if none has been set
+   */
+  public String getSourceReference() {
+    return sourceReference == null ? "" : sourceReference;
   }
 
   /**
@@ -340,6 +620,7 @@ public class CapacityConstraint implements Serializable {
    */
   public CapacityConstraint setCurrentValue(double value) {
     this.currentValue = value;
+    this.currentValueSet = true;
     return this;
   }
 
@@ -367,19 +648,186 @@ public class CapacityConstraint implements Serializable {
   public double getCurrentValue() {
     if (valueSupplier != null) {
       currentValue = valueSupplier.getAsDouble();
+      currentValueSet = true;
     }
     return currentValue;
   }
 
   /**
-   * Gets the utilization as a fraction of design value.
+   * Checks whether a value can be sampled or an explicit value has been retained.
    *
    * <p>
-   * For normal constraints (higher is worse), returns current/design. For minimum constraints (lower is worse), returns
-   * design/current.
+   * This method does not invoke the supplier or assert that its value is finite. The legacy getter still returns zero
+   * for an unset value; evidence consumers can use this method to distinguish that default from an explicitly assigned
+   * zero. Older serialized constraints have no assignment flag, so their cached values require reassignment before they
+   * qualify as current evidence.
    * </p>
    *
-   * @return utilization as fraction (1.0 = 100% of design)
+   * @return true when a supplier or an explicitly assigned or sampled value exists
+   */
+  public boolean hasCurrentValue() {
+    return valueSupplier != null || currentValueSet;
+  }
+
+  /**
+   * Gets the raw operating value before normalization by the design limit.
+   *
+   * @return current operating value in {@link #getUnit()}
+   */
+  public double getRawValue() {
+    return getCurrentValue();
+  }
+
+  /**
+   * Returns the denominator used for utilization, including minimum requirements.
+   *
+   * @return design limit in {@link #getUnit()}, or Double.MAX_VALUE if unset
+   */
+  public double getDesignLimit() {
+    return isMinimumConstraint() ? minValue : designValue;
+  }
+
+  /**
+   * Returns the physical limit currently used for utilization and feasibility.
+   *
+   * @return configured operating override when present, otherwise the design/default limit
+   */
+  public double getApplicableLimit() {
+    return operatingLimitSet ? operatingLimit : getDesignLimit();
+  }
+
+  /**
+   * Returns the role of the physical limit currently used for utilization and feasibility.
+   *
+   * @return configured operating, qualified design/rated, or default screening role
+   */
+  public ApplicableLimitRole getApplicableLimitRole() {
+    if (operatingLimitSet) {
+      return ApplicableLimitRole.CONFIGURED_OPERATING;
+    }
+    if (getSource() == ConstraintSource.DEFAULT && ("default".equals(dataSource) || "not_set".equals(dataSource))) {
+      return ApplicableLimitRole.DEFAULT_SCREENING;
+    }
+    return ApplicableLimitRole.DESIGN_RATED;
+  }
+
+  /** @return true when a separate facility-specific operating limit is active */
+  public boolean hasOperatingLimit() {
+    return operatingLimitSet;
+  }
+
+  /**
+   * Gets the configured operating override.
+   *
+   * @return operating limit in {@link #getUnit()}, or NaN when unset
+   */
+  public double getOperatingLimit() {
+    return operatingLimitSet ? operatingLimit : Double.NaN;
+  }
+
+  /** @return authority backing the operating override, or null when unset */
+  public ConstraintSource getOperatingLimitSource() {
+    return operatingLimitSet ? operatingLimitSource == null ? ConstraintSource.USER_RULE : operatingLimitSource : null;
+  }
+
+  /** @return operating-override reference, empty when unset */
+  public String getOperatingLimitSourceReference() {
+    return operatingLimitSet && operatingLimitSourceReference != null ? operatingLimitSourceReference : "";
+  }
+
+  /** @return true when confidence is explicitly assigned to the operating override */
+  public boolean hasOperatingLimitConfidence() {
+    return operatingLimitSet && operatingLimitConfidenceSet;
+  }
+
+  /** @return operating-override confidence, or NaN when unset */
+  public double getOperatingLimitConfidence() {
+    return hasOperatingLimitConfidence() ? operatingLimitConfidence : Double.NaN;
+  }
+
+  /** @return true when an applicability range is assigned to the operating override */
+  public boolean hasOperatingLimitValidityRange() {
+    return operatingLimitSet && operatingLimitValidityRangeSet;
+  }
+
+  /** @return lower operating-override applicability bound, or NaN */
+  public double getOperatingLimitValidityMinimum() {
+    return hasOperatingLimitValidityRange() ? operatingLimitValidityMinimum : Double.NaN;
+  }
+
+  /** @return upper operating-override applicability bound, or NaN */
+  public double getOperatingLimitValidityMaximum() {
+    return hasOperatingLimitValidityRange() ? operatingLimitValidityMaximum : Double.NaN;
+  }
+
+  /** @return authority backing the applicable limit */
+  public ConstraintSource getApplicableLimitSource() {
+    return operatingLimitSet ? getOperatingLimitSource() : getSource();
+  }
+
+  /** @return reference supporting the applicable limit */
+  public String getApplicableLimitSourceReference() {
+    return operatingLimitSet ? getOperatingLimitSourceReference() : getSourceReference();
+  }
+
+  /** @return true when confidence is assigned to the applicable limit */
+  public boolean hasApplicableLimitConfidence() {
+    return operatingLimitSet ? operatingLimitConfidenceSet : confidenceSet;
+  }
+
+  /** @return applicable-limit confidence, or NaN when unset */
+  public double getApplicableLimitConfidence() {
+    return operatingLimitSet ? (operatingLimitConfidenceSet ? operatingLimitConfidence : Double.NaN)
+        : (confidenceSet ? confidence : Double.NaN);
+  }
+
+  /** @return true when an applicability range is assigned to the applicable limit */
+  public boolean hasApplicableLimitValidityRange() {
+    return operatingLimitSet ? operatingLimitValidityRangeSet : validityRangeSet;
+  }
+
+  /** @return lower applicable-limit validity bound, or NaN */
+  public double getApplicableLimitValidityMinimum() {
+    return operatingLimitSet ? (operatingLimitValidityRangeSet ? operatingLimitValidityMinimum : Double.NaN)
+        : (validityRangeSet ? validityMinimum : Double.NaN);
+  }
+
+  /** @return upper applicable-limit validity bound, or NaN */
+  public double getApplicableLimitValidityMaximum() {
+    return operatingLimitSet ? (operatingLimitValidityRangeSet ? operatingLimitValidityMaximum : Double.NaN)
+        : (validityRangeSet ? validityMaximum : Double.NaN);
+  }
+
+  /**
+   * Returns the declared engineering basis without inferring vendor certification.
+   *
+   * @return default, datasheet, autoSize, standard, empirical, or custom
+   */
+  public String getBasis() {
+    ConstraintSource resolvedSource = getSource();
+    if (resolvedSource == ConstraintSource.VENDOR_DATASHEET) {
+      return "datasheet";
+    }
+    if (resolvedSource == ConstraintSource.AUTO_SIZE) {
+      return "autoSize";
+    }
+    if (resolvedSource == ConstraintSource.CONFORMITY_STANDARD) {
+      return "standard";
+    }
+    if (resolvedSource == ConstraintSource.PROCESS_EMPIRICAL) {
+      return "empirical";
+    }
+    if (resolvedSource == ConstraintSource.USER_RULE
+        || (!"default".equals(dataSource) && !"not_set".equals(dataSource))) {
+      return "custom";
+    }
+    return "default";
+  }
+
+  /**
+   * Gets utilization as a fraction of the declared design limit.
+   *
+   * @return utilization fraction
    */
   public double getUtilization() {
     return getUtilization(getCurrentValue());
@@ -396,17 +844,18 @@ public class CapacityConstraint implements Serializable {
    * @return utilization as fraction (1.0 = 100% of design)
    */
   public double getUtilization(double currentValue) {
-    if (minValue > 0 && designValue == Double.MAX_VALUE) {
+    double applicableLimit = getApplicableLimit();
+    if (isMinimumConstraint()) {
       // This is a minimum constraint (e.g., residence time)
       if (currentValue <= 0) {
         return MAX_UTILIZATION;
       }
-      return Math.min(minValue / currentValue, MAX_UTILIZATION);
+      return Math.min(applicableLimit / currentValue, MAX_UTILIZATION);
     }
-    if (designValue <= 0 || designValue == Double.MAX_VALUE) {
+    if (applicableLimit <= 0 || applicableLimit == Double.MAX_VALUE) {
       return 0.0;
     }
-    return Math.min(currentValue / designValue, MAX_UTILIZATION);
+    return Math.min(currentValue / applicableLimit, MAX_UTILIZATION);
   }
 
   /**
@@ -644,9 +1093,7 @@ public class CapacityConstraint implements Serializable {
    * @throws IllegalArgumentException if confidence is non-finite or outside [0, 1]
    */
   public CapacityConstraint setConfidence(double confidence) {
-    if (Double.isNaN(confidence) || Double.isInfinite(confidence) || confidence < 0.0 || confidence > 1.0) {
-      throw new IllegalArgumentException("confidence must be finite and in the range [0, 1]");
-    }
+    validateConfidence(confidence);
     this.confidence = confidence;
     this.confidenceSet = true;
     return this;
@@ -696,12 +1143,7 @@ public class CapacityConstraint implements Serializable {
    * @throws IllegalArgumentException if either bound is non-finite or minimum exceeds maximum
    */
   public CapacityConstraint setValidityRange(double minimum, double maximum) {
-    if (Double.isNaN(minimum) || Double.isInfinite(minimum) || Double.isNaN(maximum) || Double.isInfinite(maximum)) {
-      throw new IllegalArgumentException("validity range bounds must be finite");
-    }
-    if (minimum > maximum) {
-      throw new IllegalArgumentException("validity range minimum must not exceed maximum");
-    }
+    validateValidityRange(minimum, maximum);
     validityMinimum = minimum;
     validityMaximum = maximum;
     validityRangeSet = true;
@@ -750,6 +1192,19 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
+   * Checks whether the current value lies within the applicability range of the active limit.
+   *
+   * @return true when the active design or operating limit declares a range and the current value is within it
+   */
+  public boolean isCurrentValueWithinApplicableLimitValidityRange() {
+    if (!hasApplicableLimitValidityRange()) {
+      return false;
+    }
+    double value = getCurrentValue();
+    return value >= getApplicableLimitValidityMinimum() && value <= getApplicableLimitValidityMaximum();
+  }
+
+  /**
    * Clears the assigned validity range.
    *
    * @return this constraint for method chaining
@@ -788,17 +1243,46 @@ public class CapacityConstraint implements Serializable {
     return this;
   }
 
+  /** Requires a configured operating limit before assigning its evidence metadata. */
+  private void requireOperatingLimit() {
+    if (!operatingLimitSet) {
+      throw new IllegalStateException("an operating limit must be configured first");
+    }
+  }
+
+  /**
+   * Validates one evidence-quality confidence value.
+   *
+   * @param value confidence value to validate
+   */
+  private static void validateConfidence(double value) {
+    if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+      throw new IllegalArgumentException("confidence must be finite and in the range [0, 1]");
+    }
+  }
+
+  /**
+   * Validates one inclusive scalar applicability range.
+   *
+   * @param minimum lower inclusive bound
+   * @param maximum upper inclusive bound
+   */
+  private static void validateValidityRange(double minimum, double maximum) {
+    if (!Double.isFinite(minimum) || !Double.isFinite(maximum)) {
+      throw new IllegalArgumentException("validity range bounds must be finite");
+    }
+    if (minimum > maximum) {
+      throw new IllegalArgumentException("validity range minimum must not exceed maximum");
+    }
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append(name).append(": ");
     sb.append(String.format("%.2f", getCurrentValue())).append(" ").append(unit);
-    // For min constraints (designValue=MAX_VALUE), show minValue as the constraint value
-    if (minValue > 0 && designValue == Double.MAX_VALUE) {
-      sb.append(String.format(" (%.1f%% of min %.2f)", getUtilizationPercent(), minValue));
-    } else {
-      sb.append(String.format(" (%.1f%% of design %.2f)", getUtilizationPercent(), designValue));
-    }
+    sb.append(String.format(" (%.1f%% of %s %.2f)", getUtilizationPercent(),
+        operatingLimitSet ? "operating limit" : isMinimumConstraint() ? "minimum" : "design", getApplicableLimit()));
     if (isViolated()) {
       sb.append(" [EXCEEDED]");
     } else if (isNearLimit()) {

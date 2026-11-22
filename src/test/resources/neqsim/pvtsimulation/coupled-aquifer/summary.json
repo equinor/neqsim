@@ -1,0 +1,236 @@
+{
+  "replays": 64,
+  "endpoints": 1920,
+  "failures": [],
+  "totalReplaySeconds": 97.720623965,
+  "cases": [
+    {
+      "capacityRatio": 0.25,
+      "productivityRatio": 0.1,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 5.93554005945407e-06,
+      "maxWaterErrorM3": 3.5413410831353076e-05,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 1.7053025658242404e-13,
+      "finalPoreClosureM3": 2.5011104298755527e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.2499808059959124,
+        "maxWaterErrorM3": 0.2499847263721527
+      }
+    },
+    {
+      "capacityRatio": 0.25,
+      "productivityRatio": 0.1,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 1.3153085205885873e-05,
+      "maxWaterErrorM3": 9.480373688930399e-05,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 4.263256414560601e-13,
+      "finalPoreClosureM3": 3.183231456205249e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.2499878939413106,
+        "maxWaterErrorM3": 0.24998661299020708
+      }
+    },
+    {
+      "capacityRatio": 0.25,
+      "productivityRatio": 1.0,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 7.223140875112222e-05,
+      "maxWaterErrorM3": 0.00034822057951311436,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 3.126388037344441e-13,
+      "finalPoreClosureM3": 1.8189894035458565e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.2497250350595291,
+        "maxWaterErrorM3": 0.24972473642528803
+      }
+    },
+    {
+      "capacityRatio": 0.25,
+      "productivityRatio": 1.0,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 0.00017253741907552467,
+      "maxWaterErrorM3": 0.0008794142029495688,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 2.2737367544323206e-13,
+      "finalPoreClosureM3": 1.5916157281026244e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.2496962401389955,
+        "maxWaterErrorM3": 0.25029466821477886
+      }
+    },
+    {
+      "capacityRatio": 1.0,
+      "productivityRatio": 0.1,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 7.651531149122093e-06,
+      "maxWaterErrorM3": 4.5581410965667146e-05,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 1.9895196601282805e-13,
+      "finalPoreClosureM3": 2.1600499167107046e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.24999586140492283,
+        "maxWaterErrorM3": 0.24999583219279414
+      }
+    },
+    {
+      "capacityRatio": 1.0,
+      "productivityRatio": 0.1,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 1.4910416751945377e-05,
+      "maxWaterErrorM3": 0.00011491953473807826,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 2.8421709430404007e-13,
+      "finalPoreClosureM3": 2.0463630789890885e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.24999758872496639,
+        "maxWaterErrorM3": 0.2499981046902126
+      }
+    },
+    {
+      "capacityRatio": 1.0,
+      "productivityRatio": 1.0,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 0.00015789303461133386,
+      "maxWaterErrorM3": 0.0007894223997393368,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 6.821210263296962e-13,
+      "finalPoreClosureM3": 2.0463630789890885e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.24994162060188413,
+        "maxWaterErrorM3": 0.24994293827800965
+      }
+    },
+    {
+      "capacityRatio": 1.0,
+      "productivityRatio": 1.0,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 0.0003249767697184325,
+      "maxWaterErrorM3": 0.0017875635836581694,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 7.105427357601002e-13,
+      "finalPoreClosureM3": 2.0463630789890885e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.24991006440302102,
+        "maxWaterErrorM3": 0.2501472621078709
+      }
+    },
+    {
+      "capacityRatio": -1.0,
+      "productivityRatio": 0.1,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 8.344739086396658e-06,
+      "maxWaterErrorM3": 4.967460631988274e-05,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 3.524291969370097e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.25000297257249,
+        "maxWaterErrorM3": 0.25000294586695165
+      }
+    },
+    {
+      "capacityRatio": -1.0,
+      "productivityRatio": 0.1,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 1.5616299492648977e-05,
+      "maxWaterErrorM3": 0.0001237325203398143,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 3.183231456205249e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.250001799882017,
+        "maxWaterErrorM3": 0.2500177896840442
+      }
+    },
+    {
+      "capacityRatio": -1.0,
+      "productivityRatio": 1.0,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 0.0002888928011657299,
+      "maxWaterErrorM3": 0.0014687843514593624,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 3.637978807091713e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.24998392425945853,
+        "maxWaterErrorM3": 0.25000823977249576
+      }
+    },
+    {
+      "capacityRatio": -1.0,
+      "productivityRatio": 1.0,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 0.0004929375249389523,
+      "maxWaterErrorM3": 0.0029026866382224625,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 1.0231815394945443e-12,
+      "ratios64to32": {
+        "maxPressureErrorBara": 0.2499679724891134,
+        "maxWaterErrorM3": 0.24999406369149435
+      }
+    },
+    {
+      "capacityRatio": 0.0,
+      "productivityRatio": 1.0,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 9.947598300641403e-13,
+      "maxWaterErrorM3": 0.0,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 2.8421709430404007e-12,
+      "ratios64to32": {}
+    },
+    {
+      "capacityRatio": 0.0,
+      "productivityRatio": 1.0,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 8.526512829121202e-13,
+      "maxWaterErrorM3": 0.0,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 3.183231456205249e-12,
+      "ratios64to32": {}
+    },
+    {
+      "capacityRatio": 1.0,
+      "productivityRatio": 0.0,
+      "fraction": 0.2,
+      "intervals": 64,
+      "maxPressureErrorBara": 9.947598300641403e-13,
+      "maxWaterErrorM3": 0.0,
+      "componentBalanceErrorMol": 1.862645149230957e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 2.8421709430404007e-12,
+      "ratios64to32": {}
+    },
+    {
+      "capacityRatio": 1.0,
+      "productivityRatio": 0.0,
+      "fraction": 0.5,
+      "intervals": 64,
+      "maxPressureErrorBara": 8.526512829121202e-13,
+      "maxWaterErrorM3": 0.0,
+      "componentBalanceErrorMol": 4.190951585769653e-09,
+      "storagePressureErrorBara": 0.0,
+      "finalPoreClosureM3": 3.183231456205249e-12,
+      "ratios64to32": {}
+    }
+  ]
+}

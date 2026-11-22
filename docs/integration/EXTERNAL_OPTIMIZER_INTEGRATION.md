@@ -150,9 +150,14 @@ sensitivities separately because only one side can normally be active at a given
 
 ## Java Setup
 
+This method-body fragment requires a solved `processSystem` with registered units `feed`,
+`valve`, `compressor`, and an outlet `Stream` named `outlet`. The full Python example
+below includes its complete process definition.
+
 ```java
 import neqsim.process.util.optimizer.ProcessSimulationEvaluator;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.compressor.Compressor;
 
 // Create evaluator with process system
 ProcessSimulationEvaluator evaluator = new ProcessSimulationEvaluator(processSystem);
@@ -163,7 +168,7 @@ evaluator.addParameter("valve", "pressure", 10.0, 50.0, "bara");
 
 // Add objective (minimize compressor power)
 evaluator.addObjective("power",
-    process -> process.getUnit("compressor").getEnergy("kW"));
+    process -> ((Compressor) process.getUnit("compressor")).getPower("kW"));
 
 // Add constraints
 evaluator.addConstraintLowerBound("minPressure",
@@ -230,23 +235,34 @@ process.add(valve)
 ```python
 # Create evaluator
 evaluator = ProcessSimulationEvaluator(process)
+evaluator.setFiniteDifferenceStep(1.0e-4)
+evaluator.setUseRelativeStep(True)
 
 # Add parameters (decision variables)
 evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr")
 
 # Add objective
-evaluator.addObjective("outletPressure",
-    lambda p: p.getUnit("valve").getOutletStream().getPressure("bara"))
+evaluator.addObjective(
+    "throughput",
+    lambda p: p.getUnit("feed").getFlowRate("kg/hr") / 10000.0,
+    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+)
 
 # Add constraints
 evaluator.addConstraintLowerBound("minFlow",
     lambda p: p.getUnit("feed").getFlowRate("kg/hr"),
     5000.0)
+evaluator.addConstraintUpperBound("maxFlow",
+    lambda p: p.getUnit("feed").getFlowRate("kg/hr"),
+    40000.0)
 ```
 
 ### Using SciPy Optimizers
 
 #### Gradient-Based Optimization (L-BFGS-B)
+
+L-BFGS-B enforces bounds only. For this rate example, incorporate both hard rate limits
+into its bounds. Use SLSQP below for general nonlinear constraints.
 
 ```python
 def objective(x):
@@ -262,6 +278,7 @@ def objective_with_gradient(x):
 
 # Get bounds from evaluator
 bounds = [(b[0], b[1]) for b in evaluator.getBounds()]
+bounds[0] = (5000.0, 40000.0)
 x0 = np.array(evaluator.getInitialValues())
 
 # Run L-BFGS-B optimization
@@ -271,7 +288,7 @@ result = minimize(
     method='L-BFGS-B',
     jac=True,
     bounds=bounds,
-    options={'maxiter': 100, 'disp': True}
+    options={'maxiter': 100}
 )
 
 print(f"Optimal x: {result.x}")
@@ -291,17 +308,22 @@ def constraints_func(x):
 # Define constraints for SLSQP
 constraints = [{
     'type': 'ineq',
-    'fun': lambda x: constraints_func(x)  # All margins must be ≥ 0
+    'fun': lambda x: constraints_func(x),  # All margins must be ≥ 0
+    'jac': lambda x: np.asarray(evaluator.estimateConstraintJacobian(x)),
 }]
 
 result = minimize(
     objective,
     x0,
     method='SLSQP',
+    jac=lambda x: np.asarray(evaluator.estimateGradient(x)),
     bounds=bounds,
     constraints=constraints,
-    options={'maxiter': 100, 'disp': True}
+    options={'maxiter': 100, 'disp': True, 'ftol': 1e-12}
 )
+if not result.success or not evaluator.isFeasible(result.x):
+    raise RuntimeError(result.message)
+print(f"SLSQP optimal flow: {result.x[0]:.1f} kg/hr")
 ```
 
 #### Global Optimization (Differential Evolution)
@@ -323,66 +345,82 @@ result = differential_evolution(
 
 ### Multi-Objective Optimization
 
+The next example requires the compressor/cooler process from the complete example below.
+Create a fresh evaluator so its objective vector has exactly two entries. The objective
+scales are illustrative reference values; select them for the engineering study.
+
 ```python
-from scipy.optimize import minimize
+multi_evaluator = ProcessSimulationEvaluator(process)
+multi_evaluator.addParameter("feed", "flowRate", 10000.0, 100000.0, "kg/hr")
+multi_evaluator.addObjective(
+    "power",
+    lambda p: p.getUnit("compressor").getPower("kW") / 1000.0,
+)
+multi_evaluator.addObjective(
+    "throughput",
+    lambda p: p.getUnit("feed").getFlowRate("kg/hr") / 10000.0,
+    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+)
 
-# Setup with multiple objectives
-evaluator.addObjective("power", lambda p: p.getUnit("compressor").getEnergy("kW"))
-evaluator.addObjective("throughput",
-    lambda p: p.getUnit("product").getFlowRate("kg/hr"),
-    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE)
-
-def weighted_objective(x, weights):
-    result = evaluator.evaluate(x)
-    return result.getWeightedObjective(weights)
-
-# Pareto front approximation via weighted sum
 pareto_points = []
-for w1 in np.linspace(0.1, 0.9, 5):
-    weights = np.array([w1, 1.0 - w1])
+for power_weight in np.linspace(0.1, 0.9, 5):
+    weights = np.array([power_weight, 1.0 - power_weight])
     result = minimize(
-        lambda x: weighted_objective(x, weights),
-        x0,
-        method='L-BFGS-B',
-        bounds=bounds
+        lambda x: multi_evaluator.evaluate(x).getWeightedObjective(weights),
+        np.array(multi_evaluator.getInitialValues()),
+        method="L-BFGS-B",
+        bounds=[tuple(b) for b in multi_evaluator.getBounds()],
     )
+    if not result.success:
+        raise RuntimeError(result.message)
     pareto_points.append({
-        'weights': weights,
-        'x': result.x,
-        'objectives': evaluator.evaluate(result.x).getObjectivesRaw()
+        "weights": weights,
+        "x": result.x,
+        "scaled_objectives": list(multi_evaluator.evaluate(result.x).getObjectivesRaw()),
     })
 ```
 
 ## Using with NLopt (Python)
 
+Install the optional `nlopt` package in the same Python environment first.
+This section uses the single-objective feed/valve evaluator from Basic setup.
+
 ```python
 import nlopt
 import numpy as np
 
-def nlopt_objective(x, grad):
+# Scale the single feed-rate decision and the kg/hr constraint residuals.
+# Optimizing the unscaled 10,000-kg/hr variable can satisfy a numerical stopping
+# test long before it reaches the installed maximum.
+parameter_scale = np.array([10000.0])
+constraint_scale = 10000.0
+
+def nlopt_objective(z, grad):
     """NLopt objective function"""
+    x = z * parameter_scale
     if grad.size > 0:
         gradient = evaluator.estimateGradient(x)
         for i, g in enumerate(gradient):
-            grad[i] = g
+            grad[i] = g * parameter_scale[i]
     return evaluator.evaluateObjective(x)
 
-def nlopt_constraint(x, grad, idx):
+def nlopt_constraint(z, grad, idx):
     """NLopt constraint function"""
+    x = z * parameter_scale
     if grad.size > 0:
         jacobian = evaluator.estimateConstraintJacobian(x)
         for i, j in enumerate(jacobian[idx]):
-            grad[i] = -j  # NLopt uses g(x) ≤ 0, we return -margin
+            grad[i] = -j * parameter_scale[i] / constraint_scale
     margins = evaluator.getConstraintMargins(x)
-    return -margins[idx]  # Convert to ≤ 0 form
+    return -margins[idx] / constraint_scale  # NLopt requires g(z) <= 0
 
 # Create optimizer
 n = evaluator.getParameterCount()
 opt = nlopt.opt(nlopt.LD_SLSQP, n)
 
 # Set bounds
-opt.set_lower_bounds(evaluator.getLowerBounds())
-opt.set_upper_bounds(evaluator.getUpperBounds())
+opt.set_lower_bounds(np.asarray(evaluator.getLowerBounds()) / parameter_scale)
+opt.set_upper_bounds(np.asarray(evaluator.getUpperBounds()) / parameter_scale)
 
 # Set objective
 opt.set_min_objective(nlopt_objective)
@@ -396,7 +434,11 @@ for i in range(evaluator.getConstraintCount()):
 
 # Optimize
 opt.set_maxeval(200)
-x_opt = opt.optimize(evaluator.getInitialValues())
+opt.set_xtol_rel(1.0e-7)
+opt.set_ftol_abs(1.0e-8)
+x_opt = opt.optimize(np.asarray(evaluator.getInitialValues()) / parameter_scale) * parameter_scale
+if not np.all(np.asarray(evaluator.getConstraintMargins(x_opt)) >= -0.01):
+    raise RuntimeError("NLopt returned a point outside the declared 0.01 kg/hr residual tolerance")
 ```
 
 ## Using with Pyomo
@@ -448,9 +490,34 @@ evaluator.setFiniteDifferenceStep(1e-6)
 # Use relative step size
 evaluator.setUseRelativeStep(True)  # step = h * max(|x_i|, 1)
 
-# Optional second-order stencil for smooth interior operating points
-FiniteDifferenceMethod = jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator.FiniteDifferenceMethod
-evaluator.setFiniteDifferenceMethod(FiniteDifferenceMethod.CENTRAL)
+```
+
+The remaining sensitivity APIs require a `ProcessModelSimulationEvaluator`. The following
+setup wraps the solved feed/valve `process` in a named area; execute it before the quality,
+qualification, and activity examples below.
+
+```python
+ModelEvaluator = jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator
+process_model = jneqsim.process.processmodel.ProcessModel()
+process_model.add("wells", process)
+model_evaluator = ModelEvaluator(process_model)
+model_evaluator.addParameter("wells::feed.flowRate", 1000.0, 50000.0, "kg/hr")
+model_evaluator.addObjective(
+    "feed rate",
+    lambda model: model.getVariableValue("wells::feed.flowRate", "kg/hr"),
+)
+model_evaluator.addConstraintUpperBound(
+    "feed capacity",
+    lambda model: model.getVariableValue("wells::feed.flowRate", "kg/hr"),
+    40000.0,
+)
+model_evaluator.getObjectives().get(0).setUnit("kg/hr")
+model_evaluator.getConstraints().get(0).setUnit("kg/hr")
+model_evaluator.setFiniteDifferenceStep(1.0e-4)
+model_evaluator.setUseRelativeStep(True)
+FiniteDifferenceMethod = ModelEvaluator.FiniteDifferenceMethod
+model_evaluator.setFiniteDifferenceMethod(FiniteDifferenceMethod.CENTRAL)
+x = np.array([10000.0])
 ```
 
 `ProcessModelSimulationEvaluator` keeps `FORWARD` as the default because it requires only one
@@ -466,7 +533,7 @@ For a reusable quality record, run the coarse step and one halved step through t
 objective/constraint API:
 
 ```python
-quality_result = evaluator.estimateSensitivitiesWithQuality(x)
+quality_result = model_evaluator.estimateSensitivitiesWithQuality(x)
 gradient = quality_result.getObjectiveGradient()
 jacobian = quality_result.getConstraintJacobian()
 
@@ -592,8 +659,7 @@ ArrayList = jpype.JClass("java.util.ArrayList")
 
 reference_by_name = {
     # Values are positive and use each constraint's declared unit.
-    "export compressor power": (12_000.0, "installed motor rating"),
-    "gas export nomination": (1_000_000.0, "daily nomination basis"),
+    "feed capacity": (40000.0, "illustrative installed feed limit"),
 }
 
 scales = ArrayList()
@@ -652,11 +718,17 @@ rank economic value without an optimizer-specific solution and objective scaling
 
 Use `ProcessModelOperatingAction` when an optimizer candidate must retain stable engineering
 identity, provenance, exact value semantics, and an explicit restoration token instead of being an
-anonymous numeric setter:
+anonymous numeric setter. The following actions use the `wells::feed.flowRate`
+model constructed in the sensitivity setup; discrete rates represent enumerated operating modes:
 
 ```python
 Action = jneqsim.process.util.optimizer.ProcessModelOperatingAction
 JDoubleArray = jpype.JArray(jpype.JDouble)
+
+# Restore the declared base point after the sensitivity perturbations, and retain
+# its exact unit-converted read-back for the discrete mode's current value.
+model_evaluator.evaluate(x)
+current_feed_rate = process_model.getVariableValue("wells::feed.flowRate", "kg/hr")
 
 feed_target = Action.continuous(
     "field-feed",
@@ -667,13 +739,13 @@ feed_target = Action.continuous(
     "kg/hr",
     "approved operating envelope revision A",
 )
-pressure_mode = Action.discrete(
-    "compressor-lineup",
-    "Compressor line-up",
-    "compression::lineup-selector.value",
-    JDoubleArray([1.0, 2.0, 3.0]),
-    "count",
-    "installed train line-up table revision B",
+feed_mode = Action.discrete(
+    "field-feed-mode",
+    "Field feed mode",
+    "wells::feed.flowRate",
+    JDoubleArray([5000.0, current_feed_rate, 15000.0]),
+    "kg/hr",
+    "enumerated production modes revision B",
 )
 
 capability = feed_target.inspectCapability(process_model)
@@ -687,7 +759,7 @@ if not application.isApplied():
 
 # Running and validating the candidate remains explicit.
 process_model.run()
-# Inspect convergence, constraints, conservation, and product specifications here.
+assert abs(process_model.getVariableValue("wells::feed.flowRate", "kg/hr") - 12000.0) < 1.0e-6
 
 restoration = feed_target.restore(process_model, baseline)
 if not restoration.isApplied():
@@ -704,11 +776,14 @@ Register an action with the established model evaluator when an external optimiz
 candidate loop:
 
 ```python
-binding = feed_target.registerWith(evaluator)
+continuous_evaluator = ModelEvaluator(process_model)
+binding = feed_target.registerWith(continuous_evaluator)
 print(binding.getParameterIndex(), binding.getInitialValue())
 
-lineup_binding = compressor_lineup.registerWith(evaluator)
-allowed_lineups = list(lineup_binding.getAllowedValues())
+# An alternative discrete problem uses its own evaluator.
+discrete_evaluator = ModelEvaluator(process_model)
+mode_binding = feed_mode.registerWith(discrete_evaluator)
+allowed_rates = list(mode_binding.getAllowedValues())
 ```
 
 Registration requires the current model value to belong to the declared candidate domain; an
@@ -724,6 +799,90 @@ Java-serializable for JPype workflows.
 Capability inspection proves only that the exact address is readable in the declared unit.
 Application proves only write/read-back consistency. Neither runs NeqSim, changes topology,
 establishes process feasibility, selects a line-up, or constitutes operating or safety approval.
+
+### Synthetic reservoir, wells, and gathering setup
+
+Run this setup before the hydraulic, coupled-allocation, and bottleneck-relief examples.
+It creates two real `WellFlow` units connected to a common separator. All limits and
+the allocation value proxy are synthetic; the proxy gives well A twice well B's weight
+so a fixed-total allocation has a nonconstant objective. It is not an economic forecast.
+
+```python
+SimpleReservoir = jneqsim.process.equipment.reservoir.SimpleReservoir
+WellFlow = jneqsim.process.equipment.reservoir.WellFlow
+Separator = jneqsim.process.equipment.separator.Separator
+CapacityConstraint = jneqsim.process.equipment.capacity.CapacityConstraint
+ProcessModel = jneqsim.process.processmodel.ProcessModel
+
+reservoir_fluid = SystemSrkEos(303.15, 100.0)
+for component, amount in {
+    "methane": 0.90, "ethane": 0.10,
+}.items():
+    reservoir_fluid.addComponent(component, amount)
+reservoir_fluid.setMixingRule(2)
+reservoir_fluid.setMultiPhaseCheck(True)
+reservoir = SimpleReservoir("reservoir")
+reservoir.setReservoirFluid(reservoir_fluid, 1.0e9, 0.0, 0.0)
+producer_a = reservoir.addGasProducer("producer A")
+producer_b = reservoir.addGasProducer("producer B")
+producer_a.setName("producer A")
+producer_b.setName("producer B")
+producer_a.setFlowRate(0.6, "MSm3/day")
+producer_b.setFlowRate(0.4, "MSm3/day")
+well_a, well_b = WellFlow("well A"), WellFlow("well B")
+subsurface = ProcessSystem("subsurface")
+subsurface.add(reservoir)
+for producer, well in [(producer_a, well_a), (producer_b, well_b)]:
+    well.setInletStream(producer)
+    well.setWellProductionIndex(5.0e-4)
+    subsurface.add(producer)
+    subsurface.add(well)
+subsurface.run()
+for well in [well_a, well_b]:
+    well.setMaxDrawdown(1.5 * well.getDrawdown(), "bara")
+    well.useWellConstraints()
+
+initial_well_a_rate = producer_a.getFlowRate("kg/hr")
+initial_well_b_rate = producer_b.getFlowRate("kg/hr")
+total_rate = initial_well_a_rate + initial_well_b_rate
+gathering_separator = Separator("inlet separator", well_a.getOutletStream())
+gathering_separator.addStream(well_b.getOutletStream())
+gathering_capacity = CapacityConstraint(
+    "installed gathering rate", "kg/hr", CapacityConstraint.ConstraintType.HARD,
+).setDesignValue(1.10 * total_rate).setSeverity(
+    CapacityConstraint.ConstraintSeverity.HARD,
+).setDataSource("synthetic shared installed gathering capacity").setConfidence(
+    0.90,
+).setValidityRange(0.5 * total_rate, 1.5 * total_rate).setValueSupplier(
+    lambda: producer_a.getFlowRate("kg/hr") + producer_b.getFlowRate("kg/hr"),
+)
+gathering_separator.clearCapacityConstraints()
+gathering_separator.addCapacityConstraint(gathering_capacity)
+gathering = ProcessSystem("gathering")
+gathering.add(gathering_separator)
+hydraulic_model = ProcessModel()
+hydraulic_model.add("Subsurface", subsurface)
+hydraulic_model.add("Gathering", gathering)
+hydraulic_model.run()
+assert np.isclose(
+    gathering_separator.getGasOutStream().getFlowRate("kg/hr")
+    + gathering_separator.getLiquidOutStream().getFlowRate("kg/hr"),
+    total_rate, rtol=1.0e-6, atol=1.0e-6,
+)  # Mass balance within one ppm.
+
+def well_action(identifier, name, baseline_rate):
+    return Action.continuous(
+        identifier, name, f"Subsurface::{name}.flowRate",
+        0.5 * baseline_rate, 1.5 * baseline_rate, "kg/hr",
+        "synthetic well operating envelope",
+    ).withReadBackTolerance(
+        baseline_rate * 1.0e-5, 0.0, "ten ppm mass-flow conversion tolerance for this synthetic model",
+    )
+
+well_a_action = well_action("well-a-rate", "producer A", initial_well_a_rate)
+well_b_action = well_action("well-b-rate", "producer B", initial_well_b_rate)
+well_a_rate, well_b_rate = 0.8 * initial_well_a_rate, 0.8 * initial_well_b_rate
+```
 
 ### Evaluate and restore one hydraulic operating candidate
 
@@ -744,32 +903,26 @@ HydraulicRole = (
     ActionEvaluator.HydraulicLimitRole
 )
 
-simulation = SimulationEvaluator(process_model)
+simulation = SimulationEvaluator(hydraulic_model)
 simulation.setIncludeStrategyCapacityConstraints(False)
-
-well_rate = Action.continuous(
-    "producer-rate",
-    "Producer gas rate",
-    "Subsurface::producer.flowRate",
-    0.5,
-    1.5,
-    "MSm3/day",
-    "approved well operating envelope revision A",
-).withReadBackTolerance(
-    1.0e-5,
-    0.0,
-    "producer flow-control tag resolution in MSm3/day",
+simulation.addObjective(
+    "synthetic allocation value proxy",
+    lambda model: (2.0 * model.getVariableValue("Subsurface::producer A.flowRate", "kg/hr")
+                   + model.getVariableValue("Subsurface::producer B.flowRate", "kg/hr")),
+    SimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
 )
+simulation.getObjectives().get(0).setUnit("weighted-kg/hr")
+well_rate = well_a_action
 hydraulic = ActionEvaluator(simulation, well_rate)
 hydraulic.requireHydraulicConstraint(
     HydraulicRole.WELL_INFLOW_OUTFLOW,
     "Subsurface",
-    "well",
+    "well A",
     "well drawdown",
     "installed maximum drawdown basis",
 )
 
-candidate = hydraulic.evaluate(1.2)
+candidate = hydraulic.evaluate(1.2 * initial_well_a_rate)
 if not candidate.isBaselineRestored():
     raise RuntimeError(list(candidate.getDiagnostics()))
 if not candidate.isBaselineSimulationConverged():
@@ -818,12 +971,15 @@ ActionSetEvaluator = (
     jneqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator
 )
 
+actions = ArrayList()
+actions.add(well_a_action)
+actions.add(well_b_action)
 allocation = ActionSetEvaluator(
     "field-allocation",
     "Field production allocation",
     "approved well envelopes and gathering basis revision A",
     simulation,
-    [well_a_action, well_b_action],
+    actions,
 )
 allocation.requireHydraulicConstraint(
     HydraulicRole.WELL_INFLOW_OUTFLOW,
@@ -875,6 +1031,243 @@ Java lists for JPype consumers and are Java-serializable.
 The evaluator does not optimize the vector, interpolate discrete line-ups, change routing or
 hydraulic correlations, or establish operating approval. Validate conservation, constraint
 residuals, product specifications and nearby operating points with the underlying NeqSim model.
+
+### Search mixed continuous and discrete operating actions
+
+`ProcessModelOperatingPointOptimizer` composes the same atomic evaluator for a bounded local search
+that may include both continuous setpoints and exact discrete line-ups. Continuous coordinates use
+a shrinking fraction of their own declared ranges; discrete coordinates use only
+`ProcessModelOperatingAction.getAllowedValues()`. The optimizer stops immediately after incomplete
+restoration and reserves its final budgeted evaluation for replay of the selected feasible point.
+
+```python
+OperatingPointOptimizer = (
+    jneqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer
+)
+
+optimizer = OperatingPointOptimizer(
+    "field-operating-point",
+    "Field operating point",
+    "approved well envelopes and qualified line-ups",
+    allocation,
+)
+optimizer.setInitialCandidate([well_a_rate, well_b_rate])
+optimizer.setObjectiveIndex(0)
+optimizer.setInitialStepFraction(0.25)
+optimizer.setRelativeStepTolerance(1.0e-3)
+optimizer.setMaximumEvaluations(100)
+
+search = optimizer.optimize()
+if not search.isAcceptedPointReplayed():
+    raise RuntimeError(list(search.getDiagnostics()))
+
+accepted = list(search.getAcceptedCandidateValues())
+optimizer_evidence = dict(search.getOptimizerEvidence("documentation-cycle"))
+proposal = {
+    "setpoints": dict(zip(["well-a-rate", "well-b-rate"], accepted)),
+    "optimizer_evidence": optimizer_evidence,
+}
+```
+
+The evidence map uses the exact keys required by the continuous production guard. Its booleans are
+derived from the terminal replay and cannot become true for an unconverged, infeasible, non-finite,
+partially applied, partially restored, or unreplayed point. `evaluation_count` includes the replay;
+`runtime_seconds` is measured wall-clock provenance for coordination with performance work, not a
+claim that the generic optimizer or simulator became faster.
+
+For post-search interpretation, construct `ProcessModelOperatingEnvelopeStudy` with the same action
+set evaluator. Its search-result overloads anchor one- or two-dimensional slices at
+`search.getAcceptedCandidateValues()`, while `getAcceptedPointBottleneck(search)` reads the leading
+unit-safe constraint directly from the terminal replay without another simulation. The handoff
+fails closed before mutation if the replay is incomplete, evaluator actions/objectives/constraints
+or required hydraulic bindings changed, installed-limit metadata changed, the current baseline is
+unconverged, or any baseline action value drifted. The runtime evaluator reference is deliberately
+transient, so a deserialized search remains immutable evidence but cannot authorize new model
+mutation. Rerun optimization after such a change; never reuse a stale accepted point.
+
+After one or more accepted-point slices complete, use
+`getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` to obtain a compact JSON-friendly
+multi-slice block. It includes the optimizer guard evidence, accepted-point bottleneck, axes,
+sampled points, exact rejection identities, bottleneck transitions, sampled operating-region
+transitions, diagnostics, and measured
+search/envelope evaluation counts and runtimes. Schema v2 adds a deterministic
+`cross_slice_constraint_summary`. Summary version 2 ranks the complete exact constraint
+ladder retained at every sampled point and final refined endpoint, rather than only the leading row;
+this preserves secondary near-active plant constraints without another model evaluation. Rejecting
+evidence precedes feasible near-active evidence, and the latter uses only a configured finite
+normalized-margin threshold with explicit provenance. Exact
+source/name/applicable-limit/unit/role/provenance identity prevents rows with incompatible engineering
+bases from collapsing. Raw physical margins remain in representative rows and are not compared across
+units. Persisted summary version 1 remains valid for historical leading-only envelopes. The call is
+read-only and requires the exact runtime
+study plus complete, uniquely addressed slices anchored at the accepted candidate. It rejects
+foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
+rather than combining it into a current cycle.
+
+Every `operating_region_transitions` row retains the traversed action's `CONTINUOUS` or `DISCRETE`
+semantics, exact endpoint outcomes and feasibility, constraint identities/evidence layers, and the
+sampled interval width. The row is explicitly marked `interpolated: false` and
+`sampled_event_only: true`. External tools must not infer a continuous boundary from a discrete
+route/line-up edge, and must not treat a continuous sampled edge as an approved set point without a
+separate qualified refinement and replay.
+
+For field-to-facility studies, a fixed separator-arrival pressure may be an explicit continuous action while the
+HP/LP route remains discrete. Consume their jointly sampled behavior only from the exact route × pressure slice and
+its sampled cells. Do not interpolate between route indexes, infer an unsampled pressure contour, or combine that
+surface with a choke axis into a generalized 3D envelope.
+
+The same rule applies when common shaft speed is an explicit bounded action. Use the existing
+`CompressorShaftCalculator` in fixed-speed mode and consume separator pressure × shaft speed only from the exact 2D
+slice. Every point remains subject to the export-pressure boundary, per-casing surge/stonewall map evidence,
+common-speed consistency, shaft/driver/gearbox limits and the shared plant-power budget. Missing, non-finite, stale or
+unrestored points are rejected rather than interpolated or repaired by weakening a physical constraint.
+
+To qualify a declared driver-power crossing, external consumers may additionally use a separate exact 1D speed slice.
+Refine only when exact low/high points straddle feasibility, and retain the feasible/infeasible endpoint driver margins,
+per-casing map rows and every converged/restored midpoint receipt. The bracket is local diagnostic evidence—not proof
+of monotonicity beyond the bracket, an approved set point, or permission to change the driver rating.
+
+For a casing-map-led crossing, preserve the exact installed `surgeMargin` or `stonewallMargin` identity, configured
+operating-limit provenance, physical unit and signed endpoint margins. A facility-specific clearance override may be
+more conservative than the preserved map default, but an external tool must not rewrite map curves, relax the default
+limit or reinterpret a non-finite row as available. Driver-versus-map migration requires two fresh evaluations of the
+same speed endpoints: restore the map override before tightening the driver rating, and reject the driver-led result if
+any casing map row is negative, stale or unavailable.
+
+For continuous-task hand-off, retain the exact Java receipt under `map_driver_migration_evidence` and require it in
+the production plan. Consumers must preserve its cycle ID, evaluator/action identity, rpm endpoint grid, configured
+map constraint/limit/provenance, driver constraint/rating, both full slice records, override-clearance flag,
+restoration flag and advisory classification. The #4187 guard independently reconstructs the sampled transitions and
+refined brackets from the persisted points; editing only the summary identities is therefore insufficient to make a
+receipt pass. Revalidation emits a new cycle-bound receipt and supersedes the earlier ledger item rather than treating
+historical map or driver evidence as current.
+
+The living report presents valid receipts as a cycle-ordered timeline and labels superseded evidence with the cycle
+that invalidated it. The canonical current-best/final report accepts only a promoted receipt whose cycle matches the
+reviewed baseline, then shows the exact configured map restriction and provenance, driver rating, and common-speed
+endpoint grid. If the production plan requires both lifecycle and migration evidence, the guard additionally joins the
+map and driver names to unique, independently `AVAILABLE` rows in the same current-period accepted-replay coverage.
+Installed-equipment names use the Java exporter's `area::equipment/constraint` form; the coverage model name remains
+part of the separate stable equipment ID. Declare both casing-map margin rows and the shaft-power row when either
+can lead a diagnostic boundary. Resolve them from accepted-replay evidence, without sampling the restored model.
+Keep this coverage scoped to explicitly declared constraint identities and retain each row's real provenance;
+generated test charts must identify their synthetic source rather than imply vendor qualification.
+The joined view keeps exact current value, limit, utilization, basis, and provenance, and rejects configured map
+provenance that survives despite an override-clearance claim. Invalid or ambiguous links are explicitly withheld.
+Reporting remains downstream of the production guard and must not recompute a boundary, substitute a different
+constraint identity, or imply permission to relax equipment limits.
+
+Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
+may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
+$10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
+and operating limits remain exact under their existing contracts.
+
+It also exports the exact terminal search classification. Schema-v17 field lifecycle evidence requires each period to
+retain either `CONVERGED_WITH_REPLAYED_FEASIBLE_CANDIDATE` or
+`BUDGET_EXHAUSTED_WITH_REPLAYED_FEASIBLE_CANDIDATE`; missing, unknown, unconverged, recovery-failed, or
+replay-failed values are withheld. Reports show this reason beside the validated objective, evaluation count, and
+runtime. A budget-limited feasible incumbent remains advisory sampled evidence and is never presented as converged or
+globally optimal.
+
+When opt-in refinement is enabled, `operating_region_boundary_refinements` retains the action bounds,
+relative and absolute tolerances with provenance, every exact midpoint candidate/outcome/recovery gate,
+the final independently evaluated feasible/infeasible bracket, and the exact leading or rejecting
+constraint at each endpoint. Endpoint rows include signed physical margin and unit; consumers must
+preserve them verbatim and must not replace them with a later model snapshot. A `CONVERGED` receipt means only that
+the bracket width met its configured diagnostic tolerance. Consumers must not convert either side or its
+midpoint into an accepted control target without the normal optimizer acceptance and terminal replay.
+
+For ordered reservoir/facility periods, add each independently completed search and slice set to
+`ProcessModelOperatingEnvelopeLifecycleStudy`. The lifecycle layer reuses the exact-runtime envelope export gate,
+requires stable ordered action identifiers, and records adjacent-period changes in the accepted leading constraint.
+Each period may have its own canonical reservoir inputs, equipment availability, separator/scrubber limits,
+qualified compressor maps, shaft/driver limits, and shared-power budget. Do not carry a mutable evaluator or accepted
+search into a revised period: rebuild, converge, optimize, replay, and sample that period independently. The lifecycle
+map is rejected rather than partially emitted if a period is stale, unconverged, non-finite, incompletely restored, or
+action-incompatible. Its transitions remain sampled advisory evidence, not a continuous forecast or operating approval.
+Schema-v8 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
+They report exact retained, removed, and added sampled events; event identity includes action semantics, endpoints,
+outcomes, feasibility, and constraint layers. External integrations must preserve these rows verbatim and must not
+interpolate a discrete route event or infer an unsampled continuous boundary.
+They also compare complete boundary-refinement receipts; changing a tolerance, midpoint, recovery flag,
+terminal bracket, endpoint constraint/headroom row, or status is an evidence change rather than a
+numerically equivalent migration. Schema v8 then compares the exact ranked rejecting/near-active identity set between
+adjacent periods. Classification, source, qualified name, applicable limit, unit, limit role, and provenance define an
+identity; rank and occurrence counts do not. External consumers can therefore report emergence, disappearance, or a
+classification/basis change without comparing physical margins across units. The production guard continues to read
+schemas v1-v7 for historical evidence, while v8 additionally reconstructs every identity delta from each period's
+schema-v2 summary after validating its grouping, counts, ordering, threshold, and representative rows.
+
+Plant-covered lifecycle schema v11 also freezes a `constraint_opportunity_summary` beside every period envelope.
+The production guard and canonical report independently reconstruct this screen from the exact complete constraint
+ladder. Rejecting rows are current constraint investigations; feasible near-active rows are next-bottleneck
+candidates. Each row preserves the sampled or refined physical headroom, applicable limit, unit, role, provenance,
+axes, and evidence counts. This is screening evidence only—not causality, a shadow price, predicted relief, permission
+to alter a limit, or operating approval. Run a separately qualified paired relief study before reporting a
+debottleneck benefit. Schemas v8-v10 remain readable for historical lifecycle evidence.
+
+Schema v12 adds a qualified paired-relief receipt to an exact installed-equipment opportunity row. Use
+`ProcessModelDebottleneckStudy.OperatingActionCandidateListSearch` with the same
+`ProcessModelOperatingActionSetEvaluator` as the operating-envelope study, evaluate the baseline and proposed direct
+capacity limit with the common ordered candidate policy, and pass the completed result through
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefStudy(...)`. Qualification rejects a foreign evaluator or result,
+a baseline action-vector mismatch, an objective identity/value mismatch outside the declared replay/search tolerance,
+non-finite objective evidence, any failed scenario, or incomplete capacity/action/process restoration. The emitted
+receipt retains the accepted and paired baseline objective values, residual, allowed tolerance and provenance. It is
+paired sampled evidence only, not causal attribution, a shadow price, permission to alter a limit, design approval,
+investment approval, or operating approval.
+
+Schema v13 adds a deterministic portfolio rank when at least two independent direct installed-capacity alternatives
+each have an exact qualified receipt. Construct a `ProcessModelDebottleneckRanking` portfolio identity and an
+`ObjectiveRankingPolicy` for the exact transactional objective, then call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefPortfolio(...)` with one-to-one study and result lists. This path
+uses `rankObjectives(...)` because an operating-action study freezes objective evidence before restoring the accepted
+process state; it never samples a metric callback from the restored model. Every candidate must share the exact action
+search, accepted baseline, objective metadata, objective and constraint baseline evidence, and verified restoration.
+The production guard and canonical report independently reconstruct the portfolio identity, membership, input indices,
+candidate count and competition ranks. Any partial, non-finite, stale or incompatible portfolio fails closed. Ranks
+compare only the sampled objective deltas and do not make alternative benefits additive or establish interactions,
+causality, a shadow price, global optimality, investment approval, limit-change permission or operating approval.
+
+Schema v14 adds one qualified joint evaluation of two or more exact schema-v13 portfolio members. Build a list-based
+`ProcessModelDebottleneckStudy` with the same transactional evaluator, accepted baseline, ordered candidate search and
+objective policy, then pass the completed result to
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefCombination(...)`. The combined study changes every declared direct
+installed limit, observes one simulator response, restores every capacity state in reverse order and reconverges the
+original process. Its receipt carries exact portfolio membership, the observed combined objective delta, the sum of
+the independently observed deltas, their signed interaction difference, and the baseline/joint most-utilized installed
+constraint identities. External consumers must preserve those fields rather than synthesizing an additive benefit.
+The production guard and canonical report independently reconstruct membership, objective arithmetic, action/baseline
+bindings, restoration and bottleneck migration; incomplete, foreign, non-finite, stale or partially restored evidence
+fails closed. The interaction and migration remain sampled screening evidence, not causality, a shadow price,
+mechanical design qualification, investment approval, limit-change permission or operating approval.
+
+The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
+the proposal as `accepted_point_envelope_evidence` and set
+`production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard
+then verifies exact action/setpoint binding, optimizer/cycle identity, slice identity and anchors, complete
+baseline recovery, unique axes, and reconciled point/evaluation/runtime totals before the existing ledger stores
+the proposal. A later route, limit or evidence revision must run a new cycle and produce a fresh block; a stale
+cycle id, mismatched action vector, or copied partial slice is withheld rather than resumed as a current candidate.
+For a persistent field study, map production/injection route line-ups, controlled reservoir-lifecycle boundaries,
+mapped network pump/compressor power, common-shaft speed/power, driver limits, shared host-power limits, and
+`continuous/goal.yaml` limits to the living-task `guard`, with dependencies on the model update, optimizer,
+gates, and constraints. Canonical route selectors remain discrete process actions; reservoir pressure remains a model
+input synchronized by its owning `WellFlow.ReservoirLayer`. Mapped field-network and standalone rotating-equipment
+power remains solved evidence from `ProcessModel.getPower(...)`, with the existing common-shaft and shared-resource
+constraint evidence retained. Do not copy map or driver physics into the task layer. Non-finite power evidence or an
+exceeded driver/shared-power limit fails closed without replacement advice. The evidence stage appends
+an invalidation event for the old ledger item before model, optimizer, or guard execution. This remains effective
+if optimizer output is malformed or the guard fails and the proposal-publication stage is skipped. Retried and
+resumed invalidation is idempotent; dry runs do not change the ledger. Unfinished advice is superseded; a new item is proposed only
+after the revised full-model point and envelope pass the same guard. The replacement carries `revalidation_of` and
+the changed paths, so an earlier approval is never silently transferred to new setpoints or a new physical limit.
+If re-optimization finds no safe point, the old evidence remains explicitly non-current and no replacement advice
+is exposed. A later safe operating definition resumes the append-only lineage from that superseded item instead of
+creating an untraceable incumbent. This reuses the standard evidence inventory and append-only ledger rather than
+adding optimizer state.
+In custom production plans, retain the template's ordering with `evidence` before model update, optimization, and
+`guard` so invalidation happens even when later stages fail.
 
 ### Search a fixed-total continuous allocation
 
@@ -1027,22 +1420,70 @@ ArrayList = jpype.JClass("java.util.ArrayList")
 Study = jneqsim.process.util.optimizer.ProcessModelDebottleneckStudy
 
 candidates = ArrayList()
-candidates.add(JArray(JDouble)([800.0]))
-candidates.add(JArray(JDouble)([999.0]))
-candidates.add(JArray(JDouble)([1199.0]))
+for rate in [800.0, 999.0, 1099.0, 1149.0, 1199.0]:
+    candidates.add(JArray(JDouble)([rate]))
 
 search = Study.CandidateListSearch(
-    "throughput-grid",
-    "Ordered throughput grid",
-    "screening candidate set rev A",
-    candidates,
-    0,
-    0.0,
+    "throughput-grid", "Ordered throughput grid", "screening candidate set rev A",
+    candidates, 0, 0.0,
 )
 
-# Configure CapacityAlternative, ProcessModelDebottleneckStudy, and metric
-# definitions with explicit units/provenance as shown in the optimization guide.
+def make_study(proposed_limit):
+    fluid = SystemSrkEos(298.15, 50.0)
+    fluid.addComponent("methane", 0.90)
+    fluid.addComponent("ethane", 0.10)
+    fluid.setMixingRule("classic")
+    study_feed = Stream("feed", fluid)
+    study_feed.setFlowRate(800.0, "kg/hr")
+    separator = Separator("separator", study_feed)
+    installed = CapacityConstraint(
+        "installed gas rate", "kg/hr", CapacityConstraint.ConstraintType.HARD,
+    ).setDesignValue(1000.0).setMaxValue(1300.0).setSeverity(
+        CapacityConstraint.ConstraintSeverity.HARD,
+    ).setDataSource("synthetic installed basis").setConfidence(0.95).setValidityRange(
+        500.0, 1400.0,
+    ).setValueSupplier(lambda: study_feed.getFlowRate("kg/hr"))
+    separator.clearCapacityConstraints()
+    separator.addCapacityConstraint(installed)
+    wells, separation = ProcessSystem("wells"), ProcessSystem("separation")
+    wells.add(study_feed)
+    separation.add(separator)
+    model = ProcessModel()
+    model.add("wells", wells)
+    model.add("separation", separation)
+    model.run()
+    evaluator = ModelEvaluator(model)
+    evaluator.setIncludeStrategyCapacityConstraints(False)
+    evaluator.addParameter("wells::feed.flowRate", 800.0, 1400.0, "kg/hr")
+    evaluator.addObjective(
+        "feed production", lambda m: m.getVariableValue("wells::feed.flowRate", "kg/hr"),
+        ModelEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+    )
+    evaluator.getObjectives().get(0).setUnit("kg/hr")
+    evaluator.addEquipmentCapacityConstraints()
+    alternative = Study.CapacityAlternative(
+        f"separator-gas-{proposed_limit:.0f}", "Raise installed gas capacity",
+        "synthetic brownfield screening case", "separation", "separator",
+        "installed gas rate", proposed_limit, "kg/hr", Study.LimitDirection.MAXIMUM,
+        "synthetic replacement equipment basis", 0.90, 900.0, 1300.0,
+    )
+    study = Study(
+        f"separator-study-{proposed_limit:.0f}", "Paired separator capacity study",
+        "synthetic deterministic screening", evaluator, alternative, search, 0,
+    )
+    study.addMetric(Study.MetricDefinition(
+        "production", "Feed production", Study.MetricKind.PRODUCTION, "kg/hr",
+        "wet feed mass rate", "NeqSim stream result", "single steady state", 1.0, True,
+        lambda m: m.getVariableValue("wells::feed.flowRate", "kg/hr"),
+    ))
+    return study
+
+study = make_study(1200.0)
 result = study.evaluate()
+if str(result.getOutcome()) != "COMPLETED":
+    raise RuntimeError(list(result.getDiagnostics()))
+assert result.isCapacityRestored() and result.isProcessStateRestored()
+assert abs(result.getObjectiveDelta() - 200.0) < 1.0e-6
 
 baseline_parameters = list(result.getBaseline().getSelectedParameters())
 alternative_parameters = list(result.getAlternative().getSelectedParameters())
@@ -1104,6 +1545,9 @@ ranking = Ranking(
     policy,
 )
 
+result_1100 = make_study(1100.0).evaluate()
+result_1150 = make_study(1150.0).evaluate()
+result_1200 = result
 study_results = ArrayList()
 study_results.add(result_1100)
 study_results.add(result_1150)
@@ -1111,6 +1555,8 @@ study_results.add(result_1200)
 portfolio = ranking.rank(study_results)
 
 best = portfolio.getBestCandidate()
+if best is None:
+    raise RuntimeError("No compatible completed study was rankable")
 best_alternative_id = best.getAlternativeDefinition().getId()
 best_delta = best.getDelta()
 best_unit = portfolio.getPolicy().getUnit()
@@ -1146,7 +1592,7 @@ economics; never sum their raw deltas or compare unlike units.
 import json
 
 problem_json = evaluator.toJson()
-problem = json.loads(problem_json)
+problem = json.loads(str(problem_json))
 
 print("Parameters:", problem['parameters'])
 print("Objectives:", problem['objectives'])
@@ -1155,7 +1601,7 @@ print("Constraints:", problem['constraints'])
 
 ### Process cloning and parallel evaluation
 
-Only `ProcessSimulationEvaluator` exposes `setCloneForEvaluation(true)`. It clones the
+Use the original single-system `evaluator` for this section. Only `ProcessSimulationEvaluator` exposes `setCloneForEvaluation(true)`. It clones the
 `ProcessSystem` used for an evaluation so the registered base process is not mutated by that
 call:
 
@@ -1169,8 +1615,16 @@ model per worker, and validate deterministic equivalence before parallel product
 
 ## Complete Example: Gas Processing Optimization
 
+Candidate cloning isolates each call from previous operating points. Current source also
+invalidates a stream after flow setters reset phase information; older builds can otherwise
+reuse an unflashed feed and report an incorrect compression duty during small perturbations.
+The final positive-duty check catches that invalid result for this compression case.
+
+Run this block independently after installing `neqsim`, NumPy, and SciPy. It minimizes
+power with a minimum feed of 10000 kg/hr and a minimum export pressure of 60 bara,
+so the expected optimum is at both lower limits. It is not a throughput-maximization case.
+
 ```python
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
 from neqsim import jneqsim
@@ -1181,7 +1635,7 @@ ProcessSimulationEvaluator = (
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 Stream = jneqsim.process.equipment.stream.Stream
 Compressor = jneqsim.process.equipment.compressor.Compressor
-Cooler = jneqsim.process.equipment.cooler.Cooler
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 
 # Create process
@@ -1206,6 +1660,7 @@ process.run()
 
 # Setup optimization
 evaluator = ProcessSimulationEvaluator(process)
+evaluator.setCloneForEvaluation(True)
 
 # Decision variables
 evaluator.addParameter("feed", "flowRate", 10000.0, 100000.0, "kg/hr")
@@ -1213,7 +1668,7 @@ evaluator.addParameter("compressor", "outletPressure", 50.0, 120.0, "bara")
 
 # Minimize compressor power
 evaluator.addObjective("power",
-    lambda p: p.getUnit("compressor").getEnergy("kW"))
+    lambda p: p.getUnit("compressor").getPower("kW"))
 
 # Constraints
 evaluator.addConstraintLowerBound("minOutletPressure",
@@ -1224,34 +1679,48 @@ evaluator.addConstraintUpperBound("maxOutletTemp",
     lambda p: p.getUnit("cooler").getOutletStream().getTemperature("C"),
     50.0)
 
-# Optimize with SLSQP
-def objective(x):
-    return evaluator.evaluateObjective(x)
+# Scale decisions and residuals so finite differences resolve simulator changes.
+# z = [feed / 10000 kg/hr, discharge pressure / 100 bara]
+scale = np.array([10000.0, 100.0])
 
-def constraint_margins(x):
-    return evaluator.getConstraintMargins(x)
+def objective(z):
+    return evaluator.evaluateObjective(z * scale) / 1000.0
 
-bounds = [(b[0], b[1]) for b in evaluator.getBounds()]
-x0 = evaluator.getInitialValues()
+def constraint_margins(z):
+    # Reserve a 1e-6 bara/C interior margin: SLSQP accepts tiny negative residuals,
+    # while the evaluator checks the original engineering limits strictly.
+    return (np.asarray(evaluator.getConstraintMargins(z * scale)) - 1.0e-6) / 100.0
+
+bounds = [(b[0] / scale[i], b[1] / scale[i])
+          for i, b in enumerate(evaluator.getBounds())]
+x0 = np.asarray(evaluator.getInitialValues()) / scale
 
 result = minimize(
     objective,
     x0,
-    method='SLSQP',
+    method="SLSQP",
     bounds=bounds,
-    constraints={'type': 'ineq', 'fun': constraint_margins},
-    options={'maxiter': 100, 'disp': True}
+    constraints={"type": "ineq", "fun": constraint_margins},
+    options={"maxiter": 100, "eps": 1.0e-4, "ftol": 1.0e-8},
 )
+optimal_values = result.x * scale
 
 # Display results
+final_evaluation = evaluator.evaluate(optimal_values)
+if not result.success or not final_evaluation.isFeasible():
+    raise RuntimeError(f"Optimization failed: {result.message}")
+if final_evaluation.getObjective() <= 0.0:
+    raise RuntimeError("Compression duty must be positive for this case")
+if not final_evaluation.isSimulationConverged():
+    raise RuntimeError("Final process calculation did not converge")
 print("\n=== Optimization Results ===")
-print(f"Optimal flow rate: {result.x[0]:.1f} kg/hr")
-print(f"Optimal outlet pressure: {result.x[1]:.1f} bara")
-print(f"Minimum power: {result.fun:.1f} kW")
-print(f"Constraint margins: {constraint_margins(result.x)}")
+print(f"Optimal flow rate: {optimal_values[0]:.1f} kg/hr")
+print(f"Optimal outlet pressure: {optimal_values[1]:.1f} bara")
+print(f"Minimum power: {final_evaluation.getObjective():.1f} kW")
+print(f"Constraint margins (bara, C): {list(final_evaluation.getConstraintMargins())}")
 print(f"Total evaluations: {evaluator.getEvaluationCount()}")
 
-jpype.shutdownJVM()
+# Keep the JVM available for later NeqSim calculations in this Python session.
 ```
 
 ## Troubleshooting
@@ -1260,8 +1729,8 @@ jpype.shutdownJVM()
 
 1. **Simulation doesn't converge**: Check that parameter bounds are physically reasonable
 2. **Gradient estimation fails**: Try larger finite difference step
-3. **Slow evaluations**: Enable caching or reduce process complexity
-4. **Thread safety errors**: Enable `setCloneForEvaluation(True)`
+3. **Slow evaluations**: Measure evaluation counts and reduce process complexity; caching must be implemented with a complete, safe external key
+4. **Thread safety errors**: Give each worker its own evaluator and process; cloning alone does not make an evaluator thread-safe
 
 ### Performance Tips
 
@@ -1320,6 +1789,26 @@ on `ProcessSimulationEvaluator`.
 | `getInstalledCapacityEvidenceAtBestFeasible()` | Complete immutable installed-capacity evidence at the feasible incumbent |
 | `getInstalledCapacityEvidenceAtBestSampledObjective()` | Complete immutable installed-capacity evidence at the best sampled objective |
 
+### ProcessModelOperatingPointOptimizer
+
+| Method | Description |
+|--------|-------------|
+| `optimize()` | Run bounded deterministic mixed-action coordinate search through the atomic evaluator and replay the selected point |
+| `OperatingPointSearchResult.getCandidates()` | Complete immutable candidate, restoration, incumbent, and replay trace |
+| `getAcceptedPointReplay()` / `getAcceptedCandidateValues()` | Terminal replay evidence and defensive selected action vector; empty/null after failed acceptance |
+| `isConstraintEvidenceComplete()` / `isActionsComplete()` | Fail-closed terminal completeness checks used by live optimization |
+| `getOptimizerEvidence(cycleId)` | Exact current-cycle guard block with convergence, feasibility, finiteness, constraint/action completeness, recovery, replay, count, and runtime |
+
+### ProcessModelOperatingEnvelopeStudy accepted-point handoff
+
+| Method | Description |
+|--------|-------------|
+| `evaluateOneDimensional(actionId, values, search)` | Validate the accepted replay and sample one axis around its exact action vector |
+| `evaluateTwoDimensional(firstId, firstValues, secondId, secondValues, search)` | Validate the accepted replay and sample two axes around its exact action vector |
+| `getAcceptedPointBottleneck(search)` | Return the replayed point's unit-safe leading constraint without another model evaluation |
+| `SliceResult.getSampledCells()` / `toEvidenceMap()` | Return strict-JSON-friendly sampled points and, for a 2D slice, exact four-corner cell classifications and sampled perimeter boundary families without inferring an interior or interpolating discrete routes |
+| `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` | Combine the current accepted point and one or more exact-runtime complete slices into one immutable live-task evidence block without rerunning the model |
+
 ### ProcessModelDebottleneckStudy
 
 | Method | Description |
@@ -1364,3 +1853,6 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+
+
+

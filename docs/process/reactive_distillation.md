@@ -3,8 +3,6 @@ title: "Reactive Distillation in NeqSim"
 description: "Guide to reactive distillation using equilibrium-based reactive flash on each tray. Covers API usage, the Modified RAND method integration with the column solver, NR=0 optimization, partial reactive sections, and benchmark validation."
 ---
 
-# Reactive Distillation in NeqSim
-
 ## Overview
 
 Reactive distillation combines chemical reaction and separation in a single unit operation. In NeqSim, this is implemented by replacing the standard PH flash on each tray with a **reactive PH flash** that solves simultaneous chemical equilibrium (CE) and phase equilibrium (PE) via the Modified RAND method.
@@ -39,60 +37,62 @@ DistillationColumn
 
 ### Java
 
+<!-- reactive-distillation-quick-start: complete -->
+
 ```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// WGS system: CO + H2O ⇌ CO2 + H2
-SystemInterface fluid = new SystemSrkEos(273.15 + 250.0, 10.0);
-fluid.addComponent("CO", 0.40);
-fluid.addComponent("water", 0.40);
-fluid.addComponent("CO2", 0.10);
-fluid.addComponent("hydrogen", 0.10);
-fluid.setMixingRule("classic");
+public final class ReactiveDistillationGuideExample {
+  private ReactiveDistillationGuideExample() {}
 
-Stream feed = new Stream("WGS feed", fluid);
-feed.setFlowRate(500.0, "kg/hr");
-feed.setTemperature(250.0, "C");
-feed.setPressure(10.0, "bara");
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 250.0, 10.0);
+    fluid.addComponent("CO", 0.40);
+    fluid.addComponent("water", 0.40);
+    fluid.addComponent("CO2", 0.10);
+    fluid.addComponent("hydrogen", 0.10);
+    fluid.setMixingRule("classic");
 
-// Create column with reboiler only (no condenser)
-DistillationColumn column = new DistillationColumn("WGS Column", 3, true, false);
-column.setReactive(true);  // All middle trays become reactive
-column.addFeedStream(feed, 2);
-column.getReboiler().setOutTemperature(273.15 + 350.0);
-column.setTopPressure(10.0);
-column.setBottomPressure(10.0);
-column.run();
+    Stream feed = new Stream("WGS feed", fluid);
+    feed.setFlowRate(500.0, "kg/hr");
+    feed.setTemperature(250.0, "C");
+    feed.setPressure(10.0, "bara");
+    feed.run();
 
-// Products
-double h2InGas = column.getGasOutStream().getFluid()
-    .getPhase(0).getComponent("hydrogen").getx();
-System.out.println("H2 mole fraction in gas: " + h2InGas);
+    DistillationColumn column = new DistillationColumn("WGS Column", 2, true, false);
+    column.setReactive(true);
+    column.addFeedStream(feed, 2);
+    column.getReboiler().setOutletTemperature(273.15 + 350.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(100);
+    column.run();
+
+    double h2InGas = column.getGasOutStream().getFluid()
+        .getPhase(0).getComponent("hydrogen").getx();
+    if (!Double.isFinite(h2InGas) || h2InGas <= 0.10 || h2InGas >= 1.0) {
+      throw new IllegalStateException("Unexpected hydrogen mole fraction: " + h2InGas);
+    }
+  }
+}
 ```
 
 ### Partial Reactive Section
 
-To make only specific trays reactive (e.g., trays 2–4 out of 6):
-
-```java
-DistillationColumn column = new DistillationColumn("Column", 6, true, true);
-column.setReactive(true, 2, 4);  // Only trays 2, 3, 4 are reactive
-column.addFeedStream(feed, 3);
-column.run();
-
-// Check which trays are reactive
-for (int i = 0; i < column.getNumberOfTrays(); i++) {
-    System.out.println("Tray " + i + " reactive: "
-        + column.getTray(i).isUseReactiveFlash());
-}
-```
+To make only a bounded section reactive, call `setReactive(true, startTray, endTray)`
+before adding the feed. For example, `setReactive(true, 2, 4)` marks trays 2, 3, and 4.
+After the column runs, use `getTray(i).isUseReactiveFlash()` to verify the configured
+section. This selector changes which trays use equilibrium reaction calculations; it does
+not add reaction kinetics or qualify tray hardware.
 
 ### Python (Jupyter)
 
 ```python
+import math
+
 from neqsim import jneqsim
 
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
@@ -110,18 +110,23 @@ feed = Stream("WGS feed", fluid)
 feed.setFlowRate(500.0, "kg/hr")
 feed.setTemperature(250.0, "C")
 feed.setPressure(10.0, "bara")
+feed.run()
 
 column = DistillationColumn("WGS Column", 3, True, False)
 column.setReactive(True)
 column.addFeedStream(feed, 2)
-column.getReboiler().setOutTemperature(273.15 + 350.0)
+column.getReboiler().setOutletTemperature(273.15 + 350.0)
 column.setTopPressure(10.0)
 column.setBottomPressure(10.0)
 column.run()
 
 h2_gas = column.getGasOutStream().getFluid().getPhase(0).getComponent("hydrogen").getx()
-print(f"H2 in gas product: {h2_gas:.4f}")
+assert math.isfinite(h2_gas)
+assert 0.10 < h2_gas < 1.0
 ```
+
+The Python assertions mirror the executable Java quick-start contract and pass silently.
+They are screening checks for this synthetic equilibrium case, not experimental validation.
 
 ## NR=0 Optimization
 

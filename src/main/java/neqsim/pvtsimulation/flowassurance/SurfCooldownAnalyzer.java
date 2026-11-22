@@ -99,10 +99,22 @@ public class SurfCooldownAnalyzer implements Serializable {
   /** Verdict returned when the fluid never forms hydrates above seabed temperature. */
   public static final String VERDICT_NO_HYDRATE_RISK = "NO_HYDRATE_RISK";
 
+  /** Mole fraction below which the water content is treated as absent. */
+  private static final double WATER_PRESENCE_TOLERANCE = 1.0e-12;
+
   // --- Inputs ---
 
   /** The produced fluid, used for property and hydrate evaluation. */
   private final SystemInterface fluid;
+
+  /** True when the fluid carries a water component above {@link #WATER_PRESENCE_TOLERANCE}. */
+  private boolean waterPresent = false;
+
+  /** Overall water mole fraction in the fluid, zero when absent. */
+  private double waterMoleFraction = 0.0;
+
+  /** When true, {@link #calculate()} fails instead of warning on a dry fluid. */
+  private boolean requireWater = false;
 
   /** Internal diameter in metres. */
   private double internalDiameter = 0.254;
@@ -318,6 +330,7 @@ public class SurfCooldownAnalyzer implements Serializable {
    * </p>
    */
   public void calculate() {
+    detectWater();
     extractFluidProperties();
     computeHydrateEquilibriumTemperature();
 
@@ -343,6 +356,46 @@ public class SurfCooldownAnalyzer implements Serializable {
 
     evaluateNoTouchTime();
     calculated = true;
+  }
+
+  /**
+   * Detects whether the fluid carries a water component, and how much.
+   *
+   * <p>
+   * A fluid with no water cannot form hydrates, so the analyzer reports {@link #VERDICT_NO_HYDRATE_RISK} and an
+   * unbounded no-touch time. That is correct for a deliberately dry gas and <b>dangerously wrong</b> for a wet line
+   * whose fluid file simply has no water component - the two are indistinguishable from the verdict alone. Callers can
+   * tell them apart with {@link #isWaterPresent()}, and a design workflow should set {@link #setRequireWater(boolean)}
+   * so the dry case fails instead of passing silently.
+   * </p>
+   *
+   * @throws RuntimeException wrapping an {@link neqsim.util.exception.InvalidInputException} if the fluid carries no
+   * water and {@link #setRequireWater(boolean)} has been enabled
+   */
+  private void detectWater() {
+    waterMoleFraction = 0.0;
+    waterPresent = false;
+    double totalMoles = fluid.getTotalNumberOfMoles();
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      if ("water".equalsIgnoreCase(fluid.getComponent(i).getName())) {
+        // Read moles, not getz(): the composition array is only populated by init(0), so a fluid
+        // built with addComponent and never flashed reports zero for every mole fraction.
+        double moles = fluid.getComponent(i).getNumberOfmoles();
+        waterMoleFraction = totalMoles > 0.0 ? moles / totalMoles : 0.0;
+        waterPresent = moles > WATER_PRESENCE_TOLERANCE;
+        break;
+      }
+    }
+    if (!waterPresent) {
+      String message = "the fluid carries no water, so no hydrate equilibrium temperature can be "
+          + "computed and the no-touch time is not meaningful; add water with "
+          + "EclipseFluidReadWrite.read(file, true) or addWaterToFluid(fluid, 0.5)";
+      if (requireWater) {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException("SurfCooldownAnalyzer", "calculate",
+            "fluid", "- " + message));
+      }
+      logger.warn("SurfCooldownAnalyzer: {}", message);
+    }
   }
 
   /**
@@ -507,6 +560,60 @@ public class SurfCooldownAnalyzer implements Serializable {
   }
 
   /**
+   * Returns whether the fluid carries a water component.
+   *
+   * <p>
+   * Check this before believing a no-touch time. A fluid with no water reports {@link #VERDICT_NO_HYDRATE_RISK} with an
+   * unbounded no-touch time, which is right for a deliberately dry gas and wrong for a wet line whose fluid file is
+   * missing water.
+   * </p>
+   *
+   * @return true when water is present above a 1e-12 mole-fraction tolerance
+   */
+  public boolean isWaterPresent() {
+    if (!calculated) {
+      calculate();
+    }
+    return waterPresent;
+  }
+
+  /**
+   * Returns the overall water mole fraction used for the hydrate assessment.
+   *
+   * @return water mole fraction, or zero when the fluid carries no water component
+   */
+  public double getWaterMoleFraction() {
+    if (!calculated) {
+      calculate();
+    }
+    return waterMoleFraction;
+  }
+
+  /**
+   * Controls whether a dry fluid is a hard failure.
+   *
+   * <p>
+   * Default is false, which preserves the historical behaviour: a dry fluid logs a warning and reports
+   * {@link #VERDICT_NO_HYDRATE_RISK}. Set true in a design workflow, where a fluid without water is almost always the
+   * wrong file rather than a deliberately dry gas.
+   * </p>
+   *
+   * @param requireWaterIn true to throw when the fluid carries no water
+   */
+  public void setRequireWater(boolean requireWaterIn) {
+    this.requireWater = requireWaterIn;
+  }
+
+  /**
+   * Returns whether a dry fluid is treated as a hard failure.
+   *
+   * @return true when {@link #calculate()} throws on a fluid without water
+   */
+  public boolean isRequireWater() {
+    return requireWater;
+  }
+
+  /**
    * Returns the underlying cooldown calculator for access to the full temperature profile.
    *
    * @return the cooldown calculator, or null if {@link #calculate()} has not been run
@@ -529,6 +636,8 @@ public class SurfCooldownAnalyzer implements Serializable {
     }
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("verdict", verdict);
+    result.put("waterPresentInFluid", Boolean.valueOf(waterPresent));
+    result.put("waterMoleFraction", round2(waterMoleFraction * 1.0e6) / 1.0e6);
     result.put("noTouchTime_hours", round2(noTouchTimeHours));
     result.put("requiredNoTouchTime_hours",
         Double.isNaN(requiredNoTouchTimeHours) ? null : round2(requiredNoTouchTimeHours));

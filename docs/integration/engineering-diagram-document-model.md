@@ -61,10 +61,25 @@ records `DIAGRAM_CONTENT_PROFILE_OBJECT_OMITTED`. These are loss/projection diag
 the omitted objects remain available in the canonical semantic snapshot and to other drawing or
 exchange projections.
 
-The BFD policy treats current unit operations as conservative functional blocks; it does not infer
+The default BFD policy treats current unit operations as conservative functional blocks; it does not infer
 or aggregate licensed-standard process blocks. The PFD and P&ID policies likewise do not qualify
 symbols, content, layout, measurement/control conventions, or drawing practice. None of the three
 profiles claims ISO 10628, ISO 14617, ISA, or project-standard conformance or engineering approval.
+
+## Declared BFD aggregation
+
+For explicitly declared process sections, use `EngineeringBlockFlowProjection.fromGraph(graph,
+sectionByOwnerId)` before creating the BFD document. Assignments use exact canonical equipment or
+boundary-stream owner IDs. Unassigned owners stay visible. The projection retains separate material
+directions, product branches and inter-section returns. Each displayed aggregate connection contains
+`sourceConnectionIds`; each block contains `sourceOwnerIds` and `internalConnectionIds`. Together these
+lists account for every original material connection exactly once. Unknown assignments and unresolved
+material endpoints fail instead of losing a flow. `toGraph()` returns an independent graph snapshot,
+and `toJson()` retains the complete mapping. Section membership never creates a connection.
+
+Material-block rectangles use 4.2 mm label fonts and connection-facing ports, with separate return
+routes below the main flow. These dimensions are schematic, not vessel dimensions or flow-dependent
+equipment sizing. Symbol conventions below continue to apply to the ordinary equipment views.
 
 ## Project symbol conventions
 
@@ -74,6 +89,14 @@ renderer-native generic vector shapes (`RECTANGLE`, `DIAMOND`, or `HEXAGON`), ex
 `#RRGGBB` stroke/fill colours, source/revision metadata, and a `PROPOSED` or `REVIEWED`
 evidence state. Reviewed entries require reviewer and review-record references; they still do not
 approve a generated drawing for design or construction.
+
+Two additional opt-in proposal shapes support process reviews without claiming a qualified symbol
+catalog. `PROCESS_EQUIPMENT` selects deterministic separator, heat-exchanger, compressor, pump,
+valve, mixer, splitter, and simulator-recycle families from the canonical `javaClass` property.
+`LINE_TERMINAL` makes canonical `LINE` objects visible as directional terminal symbols. Unknown
+equipment classes retain the labelled equipment fallback. These families are renderer-native visual
+language only; project or standards qualification still requires the traceability and review evidence
+described below.
 
 Pass the register to `NativeEngineeringDiagramRenderer` through the additive constructor overloads.
 An empty register retains byte-compatible legacy rectangle rendering. Once a non-empty register is
@@ -91,8 +114,9 @@ register and remain unchanged.
 
 ## Fixed-port orthogonal routing
 
-Native rendering retains `RoutingMode.LEGACY_CENTER` by default, so every existing constructor keeps
-the previous center-to-center SVG/PDF bytes and visual fingerprints. Select
+Native rendering retains `RoutingMode.LEGACY_CENTER` by default. Its center-to-center geometry and
+font scale are unchanged; both modes now remove duplicate continuation views and order pages by
+controlled sheet number. Select
 `RoutingMode.FIXED_PORT_ORTHOGONAL` through the additive renderer constructors when a controlled
 drawing view needs explicit canonical port geometry:
 
@@ -104,18 +128,70 @@ NativeEngineeringDiagramRenderer.Result result = renderer.render();
 ```
 
 The opt-in mode resolves each connection's stable `sourceEndpointId` and `targetEndpointId`, anchors
-the corresponding port/nozzle at the left or right bound of its owner symbol, and exposes the endpoint
+the corresponding port/nozzle at its owner-symbol bound, and exposes the endpoint
 identity on the SVG port marker. Port slots are sorted by stable identity. Branches therefore retain
 distinct anchors, connections between the same owner pair receive deterministic parallel lanes, and
 declared recycle or backward connections receive a deterministic orthogonal return path. Reciprocal
-off-page connectors remain the cross-sheet boundary, while a reviewed protected route remains
-authoritative and is never replaced by automatic routing.
+off-page connectors remain the cross-sheet boundary. Their lanes follow the local canonical endpoint
+where space permits and retain deterministic minimum separation when several continuations share one
+sheet edge. Connection labels are selected from horizontal route segments using deterministic
+object- and label-collision scoring instead of being placed on a shared vertical trunk. For an
+unprotected connection, automatic routing evaluates the direct orthogonal path and deterministic
+page channels. Routes first leave/approach the actual nozzle side, including on reverse-flow rows.
+Selection penalizes border violations and all object-envelope intersections (including endpoint
+interiors), then shared track length, label collisions and route length. Endpoint boundary contact is
+allowed; traversing the endpoint interior is diagnosed. A reviewed protected route remains authoritative
+and is never replaced by automatic routing. Each fixed-port
+route also carries a deterministic vector arrowhead in SVG and PDF. When the opt-in `LINE_TERMINAL` convention is present,
+each visible off-page label combines the canonical connection designation, directional `TO` or
+`FROM`, and the controlled peer-sheet number. Stable connector and peer-sheet identities remain in
+the document model and SVG semantic attributes without being exposed as reader-facing drawing text.
+Long line-terminal identities remain complete and are reduced only as far as 2.2 mm text to fit
+inside the fixed vector symbol; the renderer never truncates or substitutes a machine identifier.
+Fixed-port PDF fonts now retain the declared SVG font size in paper units (`mm * 72 / 25.4` points),
+without the previous implicit 22 percent reduction. Legacy-center PDF font scaling is unchanged.
+
+An endpoint may explicitly set `diagramPortSide` to `NORTH`, `EAST`, `SOUTH` or `WEST` before document
+projection. `NativeEngineeringDiagramRenderer.PortSide` enumerates these exact values. North is
+upwards in paper coordinates. Undeclared ordinary process endpoints keep east-facing outlets and
+west-facing inlets. Invalid declarations produce `DIAGRAM_RENDER_INVALID_PORT_SIDE` and fail the
+render-completeness gate. This constraint controls attachment geometry; it does not rotate the
+equipment symbol or establish a reviewed nozzle location.
 
 `DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED` reports a malformed endpoint that cannot resolve to an owner.
 A valid peer owner absent from an off-page connection's current sheet is expected and does not create a
-false warning. Fixed-port routing is deterministic proposal geometry; it is not obstacle-optimal,
-standards-qualified, or drawing-approved. Projects should retain protected routes where accountable
-layout refinement is required.
+false warning. Connector-lane, obstacle-aware route, and route-label placement reduce common
+congestion but do not suppress the renderer's whole-sheet collision diagnostics. Fixed-port routing
+is deterministic proposal geometry; it is not globally obstacle-optimal, standards-qualified, or
+drawing-approved. Projects should retain protected routes where accountable layout refinement is
+required.
+
+`EngineeringDiagramLayoutRegister.SheetOverviewRegion` can place a controlled
+detail-sheet index on another sheet using source-evidenced paper-millimetre
+geometry. The native renderer labels the region with the referenced sheet and
+its canonical equipment membership. It also marks the index as not process
+connectivity, so the feature cannot be mistaken for duplicated equipment or a
+synthesized flowsheet. Unknown/self references fail document validation and
+out-of-bounds regions remain visible with a structured warning.
+
+## Source-linked P&ID proposal overlay
+
+The five-argument `NativeEngineeringDiagramRenderer` constructor accepts an optional
+`EngineeringDiagramPidRegisters` snapshot. A non-null snapshot must have the same canonical source
+graph fingerprint as the rendered document set. The renderer then adds a deterministic,
+review-required overlay to SVG and PDF with stable semantic identities for proposed nozzles, valves,
+instruments, declared isolation/drain/vent/relief interfaces, and control or safeguarding signal
+relationships.
+
+Each register row receives its own symbol and full tag at its source equipment. Category-specific
+callout rails use stable spacing and distribute repeated connections across deterministic perimeter
+points on the owning equipment instead of converging on one centre point. Control/safeguarding
+relationships use deterministic lanes per source/target equipment pair instead of sharing one
+overlapping centre path. The overlay is still not a substitute for project-approved symbols,
+routing, data, or discipline checking.
+Supplying `null` preserves existing PFD and legacy renderer bytes. The overlay does not alter the
+document topology or either DEXPI exchange profile, and it does not infer pipe size, class, schedule,
+material, reducer duty, completed control logic, or safety design.
 
 ## Java example
 
@@ -552,7 +628,15 @@ The rendering result also carries deterministic drawing-quality diagnostics. It 
 object symbols, symbols clipped by the border/header/title-block boundary, primary labels estimated
 to exceed their available symbol width, connection routes crossing non-endpoint objects, connection
 labels overlapping objects or other connection labels, missing connection labels, and missing
-semantic-object references. Existing controlled-document diagnostics are retained in the same report,
+semantic-object references. Validation now also runs on the completed scene after connectors,
+symbols, port markers, P&ID markers/signals and title blocks have been added. The
+`DIAGRAM_RENDER_SCENE_*` diagnostics cover border clipping, estimated text/text and text/route or
+marker collisions, marker/process-route and marker/object intersections, and signal/object
+intersections. `DIAGRAM_RENDER_DUPLICATE_ROUTE` detects identical repeated physical-route emission;
+`DIAGRAM_RENDER_ROUTE_ENDPOINT_INTERSECTION` includes protected endpoint traversal without rewriting
+the protected geometry. These checks use conservative rectangles and estimated text widths, not
+measured glyph outlines. Crossing-versus-junction interpretation and reviewed symbol semantics still
+require additional qualification. Existing controlled-document diagnostics are retained in the same report,
 including broken reciprocal off-page pairs and stale manual layout references. Errors make
 `Result.isComplete()` false; warnings retain the proposed geometry unchanged for review. These
 geometric and text-width checks are conservative proposal gates, not proof of standards compliance or
@@ -567,6 +651,24 @@ one semantic connection identity.
 The adapter reuses `ProcessDiagramGraphAdapter`. It does not modify the source `ProcessSystem` or
 `ProcessModel`, and it does not change legacy `toDOT()`, `ProcessDiagramExporter`, native DEXPI 2.0,
 or Proteus/P&ID output.
+
+## Professional P&ID native scene profile
+
+`ProfessionalPidPackageExporter` additionally supports the source-connected
+professional native scene profile described in the
+[P&ID synthesis guide](../pid-design-synthesis.md#native-iso-basis-drawing-and-connectivity-checks).
+It uses ISO A1 paper dimensions, controlled document/issue fields, function-specific
+symbols and actual source orientation, with separate sensing and control-signal
+styles. Its derived sheet index and complete geometry specifications are retained
+beside the source-area document set. The generic renderer and explicit manual
+layout inputs keep their existing behavior.
+
+The shared `PidPhysicalProjection` resolves the source and proposal attachments
+for both this drawing profile and native DEXPI. Unknown source types, missing
+utility tie-ins, ambiguous series order and missing line design remain explicit
+HOLDs; no generic symbol or guessed pipe can establish a complete professional
+P&ID. Independent standard/catalogue review and accountable drawing approval
+remain separate from native file generation and automated geometry checks.
 
 ## Engineering and approval boundary
 

@@ -1,0 +1,58 @@
+{
+  "protocol": "CUMULATIVE_RESERVOIR_HISTORY",
+  "reservoir_reference": "Synthetic isolated tank",
+  "source_reference": "Constructed source audit example",
+  "data_use_reference": "Original synthetic data",
+  "bounds_reference": "Constructed closed decimal bounds, not measurement uncertainty",
+  "date_basis_reference": "UTC midnight at the start of the stated date",
+  "pressure_datum_reference": "Synthetic field-average pressure at 2000 m TVDSS",
+  "streams": {
+    "well-A oil": {"direction": "production", "unit": "Sm3", "basis_reference": "Synthetic stock tank, 288.15 K and 1.01325 bara"},
+    "well-B water": {"direction": "injection", "unit": "mol", "basis_reference": "Synthetic injected water total"}
+  },
+  "rows": [
+    {
+      "id": "start",
+      "source_reference": "Synthetic observer at the starting boundary",
+      "date": "2024-02-28",
+      "cumulative": {
+        "well-A oil": {"unit": "Sm3", "lower": "0", "upper": "0"},
+        "well-B water": {"unit": "mol", "lower": "20", "upper": "20"}
+      }
+    },
+    {
+      "id": "match",
+      "source_reference": "Synthetic end of first interval",
+      "date": "2024-02-29",
+      "pressure": {
+        "source_reference": "Synthetic field-average calibration observation",
+        "kind": "field_average",
+        "datum_reference": "Synthetic field-average pressure at 2000 m TVDSS",
+        "role": "calibration",
+        "value": {"unit": "bara", "lower": "199", "upper": "199"},
+        "sigma": {"unit": "bar", "lower": "0.2", "upper": "0.2"}
+      },
+      "cumulative": {
+        "well-A oil": {"unit": "Sm3", "lower": "5.9", "upper": "6.1"},
+        "well-B water": {"unit": "mol", "lower": "22", "upper": "22"}
+      }
+    },
+    {
+      "id": "holdout",
+      "source_reference": "Synthetic end of second interval",
+      "date": "2024-03-03",
+      "pressure": {
+        "source_reference": "Synthetic field-average holdout observation",
+        "kind": "field_average",
+        "datum_reference": "Synthetic field-average pressure at 2000 m TVDSS",
+        "role": "holdout",
+        "value": {"unit": "bara", "lower": "195", "upper": "195"},
+        "sigma": {"unit": "bar", "lower": "0.3", "upper": "0.3"}
+      },
+      "cumulative": {
+        "well-A oil": {"unit": "Sm3", "lower": "8.4", "upper": "8.6"},
+        "well-B water": {"unit": "mol", "lower": "22", "upper": "22"}
+      }
+    }
+  ]
+}

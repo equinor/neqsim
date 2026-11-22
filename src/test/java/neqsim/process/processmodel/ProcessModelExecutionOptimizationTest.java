@@ -241,7 +241,7 @@ class ProcessModelExecutionOptimizationTest {
     Stream feed = new Stream("feed", createGasFluid());
     feed.setFlowRate(1000.0, "kg/hr");
     Heater producer = new Heater("producer", feed);
-    producer.setOutTemperature(298.15);
+    producer.setOutletTemperature(298.15);
     StreamInterface boundary = producer.getOutletStream();
     Separator consumer = new Separator("consumer", boundary);
 
@@ -273,7 +273,7 @@ class ProcessModelExecutionOptimizationTest {
     Stream feed = new Stream("feed", createGasFluid());
     feed.setFlowRate(1000.0, "kg/hr");
     Heater producer = new Heater("producer", feed);
-    producer.setOutTemperature(298.15);
+    producer.setOutletTemperature(298.15);
     StreamInterface boundary = producer.getOutletStream();
     Separator consumer = new Separator("consumer", boundary);
 
@@ -307,7 +307,7 @@ class ProcessModelExecutionOptimizationTest {
     Stream feed = new Stream("feed", createGasFluid());
     feed.setFlowRate(1000.0, "kg/hr");
     Heater producer = new Heater("producer", feed);
-    producer.setOutTemperature(298.15);
+    producer.setOutletTemperature(298.15);
     StreamInterface boundary = producer.getOutletStream();
     Separator consumer = new Separator("consumer", boundary);
 

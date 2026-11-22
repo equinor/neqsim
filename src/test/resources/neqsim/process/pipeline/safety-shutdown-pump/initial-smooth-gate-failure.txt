@@ -1,0 +1,20 @@
+[ERROR] Tests run: 8, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 3.042 s <<< FAILURE! -- in neqsim.process.equipment.pipeline.AcousticPumpBoundaryTest
+[ERROR] neqsim.process.equipment.pipeline.AcousticPumpBoundaryTest.forwardCoastdownRefinementAndWork -- Time elapsed: 1.552 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Frozen smooth-wave refinement ratio: 1.6760032504557767 ==> expected: <true> but was: <false>
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:232)
+	at neqsim.process.equipment.pipeline.AcousticPumpBoundaryTest.forwardCoastdownRefinementAndWork(AcousticPumpBoundaryTest.java:318)
+
+[ERROR] Failures:
+[ERROR]   AcousticPumpBoundaryTest.forwardCoastdownRefinementAndWork:318 Frozen smooth-wave refinement ratio: 1.6760032504557767 ==> expected: <true> but was: <false>
+[ERROR] Tests run: 8, Failures: 1, Errors: 0, Skipped: 0
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.6.1:test (default-test) on project neqsim: There are test failures.
+[ERROR]
+[ERROR] See /workspace/scratch/2baf2ab76839/safety-shutdown/target/surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

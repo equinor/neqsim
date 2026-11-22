@@ -11,12 +11,40 @@ class InterfacialFrictionTest {
   private static final double GRAVITY = 9.81;
   private static final double DEFAULT_BUBBLE_SURFACE_TENSION = 0.02;
 
+  /** Verify confinement and drag at the gas-density crossing in a liquid-rich slug. */
+  @Test
+  void slugDragRemainsFiniteAndOpposesSlipWhenDensityOrderingChanges() {
+    InterfacialFriction friction = new InterfacialFriction();
+    double diameter = 0.1;
+    double liquidDensity = 502.0;
+    double liquidHoldup = 1.0 - 6.75e-10;
+    double pipeArea = Math.PI * diameter * diameter / 4.0;
+    double confinedArea = 6.0 * (1.0 - liquidHoldup) * pipeArea / (diameter / 10.0);
+    double liquidVelocity = 1.4;
+    double slipSpeed = 101.4;
+    for (double gasDensity : new double[] {490.0, liquidDensity, 514.0}) {
+      InterfacialFriction.InterfacialFrictionResult forward = friction.calculate(FlowRegime.SLUG,
+          liquidVelocity + slipSpeed, liquidVelocity, gasDensity, liquidDensity, 1.5e-5, 1.0e-3, liquidHoldup, diameter,
+          0.02);
+      double reverseForce = friction.calcInterfacialForce(FlowRegime.SLUG, liquidVelocity - slipSpeed, liquidVelocity,
+          gasDensity, liquidDensity, 1.5e-5, 1.0e-3, liquidHoldup, diameter, 0.02);
+      double dragCoefficient = 0.44;
+      double expectedShear = dragCoefficient * (diameter / 10.0) / (8.0 * diameter) * gasDensity * slipSpeed
+          * slipSpeed;
+      assertEquals(confinedArea, forward.interfacialAreaPerLength, 1.0e-20);
+      assertEquals(expectedShear, forward.interfacialShear, 1.0e-10);
+      assertEquals(-expectedShear * confinedArea, reverseForce, 1.0e-15);
+      assertEquals(0.0, friction.calcInterfacialForce(FlowRegime.SLUG, liquidVelocity - slipSpeed, liquidVelocity,
+          gasDensity, liquidDensity, 1.5e-5, 1.0e-3, 1.0, diameter, 0.02), 0.0);
+    }
+  }
+
   @Test
   void dispersedBubbleForceMatchesSchillerNaumannDragLaw() {
     InterfacialFriction friction = new InterfacialFriction();
-    double[] diameters = { 0.05, 0.10, 0.30 };
-    double[] liquidHoldups = { 0.80, 0.95, 1.0 - 1.0e-8 };
-    double[] slipVelocities = { -1.0, -0.10, 0.10, 1.0 };
+    double[] diameters = {0.05, 0.10, 0.30};
+    double[] liquidHoldups = {0.80, 0.95, 1.0 - 1.0e-8};
+    double[] slipVelocities = {-1.0, -0.10, 0.10, 1.0};
 
     for (double diameter : diameters) {
       for (double liquidHoldup : liquidHoldups) {
@@ -101,6 +129,28 @@ class InterfacialFrictionTest {
     assertFalse(friction.isUseCorrectedBubbleDrag());
     assertTrue(legacy < corrected);
     assertEquals(bubbleDiameter / diameter, legacy / corrected, 1.0e-14);
+  }
+
+  @Test
+  void transientStratifiedWaveForceRetainsPublishedEnhancement() {
+    InterfacialFriction friction = new InterfacialFriction();
+    double gasVelocity = 3.25;
+    double liquidVelocity = 0.15;
+    double gasDensity = 82.0;
+    double liquidHoldup = 0.08;
+    double diameter = 0.30;
+    double superficialGasVelocity = gasVelocity * (1.0 - liquidHoldup);
+    double liquidLevelFraction = new GeometryCalculator().calculateFromHoldup(liquidHoldup, diameter).liquidLevel
+        / diameter;
+
+    InterfacialFriction.InterfacialFrictionResult smooth = friction.calculate(FlowRegime.STRATIFIED_SMOOTH, gasVelocity,
+        liquidVelocity, gasDensity, 750.0, 1.5e-5, 1.0e-3, liquidHoldup, diameter, 0.025);
+    InterfacialFriction.InterfacialFrictionResult wavy = friction.calculate(FlowRegime.STRATIFIED_WAVY, gasVelocity,
+        liquidVelocity, gasDensity, 750.0, 1.5e-5, 1.0e-3, liquidHoldup, diameter, 0.025);
+
+    double expected = InterfacialFriction.andritsosHanrattyEnhancement(superficialGasVelocity, gasDensity,
+        liquidLevelFraction);
+    assertEquals(expected, wavy.frictionFactor / smooth.frictionFactor, 1.0e-12);
   }
 
   private static double inferredBubbleDiameter(InterfacialFriction friction, double surfaceTension) {

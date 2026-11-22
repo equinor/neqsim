@@ -66,6 +66,20 @@ NeqSim supports comprehensive compressor performance modeling through compressor
 | `CompressorChartLibrary` | **Named bundle/database of several charts** for one compressor (select by name, JSON round-trip) |
 | `CompressorChartMetadata` | **Self-describing metadata** for a chart (casing/model, service, tag, document, curve type, reference conditions) |
 
+### Polytropic head basis
+
+With polytropic calculations enabled, both fixed-speed and pressure-target speed
+calculations honor `Compressor.setPolytropicMethod(...)` (default `schultz`). The
+chart's head and efficiency are matched to the same thermodynamic calculation
+used without a chart, including the selected GERG-2008, Leachman or Vega property
+model. Head in `meter` is converted using 9.81 m/s²; `kJ/kg` is specific work.
+Inlet guide vane corrections are applied before matching the thermodynamic head.
+
+This corrects the historical use of constant inlet properties regardless of the
+reported method. Existing chart models can produce different outlet pressures,
+speeds, temperatures and powers. Select `ideal_inlet_properties` explicitly when
+reproducing that historical relation. See [calculation methods and compatibility](compressors.md#polytropic-compression).
+
 ### Compressor Operating Envelope
 
 ```
@@ -835,6 +849,27 @@ chart.setOperatingMW(20.0)
 
 Multi-speed (variable speed) compressors have performance curves at multiple rotational speeds. NeqSim interpolates between these curves to determine performance at any operating speed.
 
+For `CompressorChartAlternativeMapLookupExtrapolate` (the `"interpolate and extrapolate"`
+chart type), head is evaluated on the two surrounding speed curves at the requested
+actual flow and then linearly interpolated in speed. The interpolated head is not
+scaled by speed again: the supplied curves already represent the speed dependence.
+This preserves continuity through every reference speed, which is required for
+repeatable speed solves and compressor-capacity optimization. This corrects older
+behavior that introduced downward jumps just above reference speeds and could make
+a previously feasible optimizer point exceed the speed limit when replayed.
+
+Exact reference-curve values, efficiency interpolation, flow extrapolation, and the
+existing single-curve linear speed scaling outside the speed range are unchanged.
+Operating points between speed curves can therefore produce different head, speed,
+power, and utilization than older versions; re-evaluate optimized setpoints after
+upgrading. Extrapolation remains a model estimate and does not extend the allowable
+equipment operating envelope.
+
+`CompressorChartKhader2015` inherits this interpolation in its dimensionless
+Mach-number coordinates. Its head between reference curves changes for the same
+reason. The sound-speed corrections to flow, speed, and head remain unchanged;
+re-evaluate operating points using the actual gas composition.
+
 ### Setting Up Multi-Speed Curves
 
 ```java
@@ -1073,6 +1108,47 @@ Distance to Stone Wall = (Single Stone Wall Flow Point / Operating Flow) - 1
 
 ## Speed Calculation from Operating Point
 
+When `Compressor.setSolveSpeed(true)` solves an outlet-pressure target, the
+accepted speed is retained once the pressure residual is within 0.001 bar.
+The reported speed, chart head, efficiency and power therefore describe the same
+iterate. Re-running an unchanged inlet and target does not take an additional
+Newton step after convergence, which could otherwise move a capacity-limited
+operating point across its limit.
+
+The outlet stream is always calculated from the returned speed using the same
+chart-forward calculation as fixed-speed operation, including guide-vane and
+anti-surge effects. An unreachable pressure target must not be interpreted as a
+successful operating point just because `run()` returns:
+
+- `isSpeedSolveConverged()` reports whether the final outlet pressure is within
+  0.001 bar of the requested target.
+- `getSpeedSolvePressureResidual()` returns achieved minus requested pressure in
+  bar, or `NaN` when no speed-solve result is available for the latest run.
+- `solved()` and `isSimulationValid()` are false when an enabled chart speed solve
+  misses its target; `getSimulationValidationErrors()` explains the failure.
+- Read achieved pressure from `getOutletStream().getPressure("bara")`.
+  `getOutletPressure()` retains the requested setpoint in its configured unit,
+  so repeated runs continue to solve the same target, including after failure.
+
+With `setLimitSpeed(true)`, the search is limited to the configured minimum and
+maximum speeds. A result at a speed limit is still marked non-converged if it
+does not deliver the target. With `setLimitSpeed(false)` (the default), speed
+extrapolation remains allowed for compatibility. Pressure convergence alone
+does not establish that speed, surge, stonewall or power constraints are met;
+check those constraints separately before accepting an operating point.
+
+If the search does not converge, the solver uses its best finite evaluated speed
+and reports the actual forward result with a warning. This is not proof that
+the target is globally unreachable on a non-monotonic map. A search with no valid
+chart operating point raises `Compressor.SpeedSolveException` (an
+`IllegalStateException`) instead of publishing a target-pressure result.
+`ProductionOptimizer` rejects this specific failed trial and continues searching;
+unrelated calculation exceptions still propagate. Its `compressorSpeedSolve`
+hard constraint also rejects an unmet target when capacity analysis is enabled or
+optional output validation is disabled. It does not evaluate objectives or
+downstream constraints on a failed trial's stale outlet state. Diagnostics reset
+at the start of every run, including fixed-speed runs.
+
 When you need to determine the compressor speed required to achieve a specific operating point (flow and head), NeqSim provides a robust algorithm that works both within the defined curve range and with extrapolation beyond it.
 
 ### The `getSpeed()` and `getSpeedValue()` Methods
@@ -1297,40 +1373,55 @@ JSON is the recommended format for compressor curves due to its readability and 
 
 #### Java Usage
 
+Save the JSON above as `compressor_curve.json` and this complete example as
+`CompressorJsonExample.java`. Pass the JSON filename as the command-line argument.
+At fixed speed the map determines outlet pressure; the example reports that pressure
+instead of imposing an independent pressure target. Actual inlet flow is 20,000 m³/h,
+inside the 6327.9 RPM curve's flow range.
+
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create a simple gas stream
-SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.setMixingRule("classic");
+public class CompressorJsonExample {
+    private static final Logger logger = LogManager.getLogger(CompressorJsonExample.class);
 
-Stream inlet = new Stream("inlet", fluid);
-inlet.setFlowRate(20000.0, "m3/hr");
-inlet.setTemperature(35.0, "C");
-inlet.setPressure(37.0, "bara");
-inlet.run();
+    public static Compressor run(String chartFile) throws Exception {
+        SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+        fluid.addComponent("methane", 0.85);
+        fluid.addComponent("ethane", 0.10);
+        fluid.addComponent("propane", 0.05);
+        fluid.setMixingRule("classic");
 
-// Create compressor and load curves from JSON file
-Compressor compressor = new Compressor("K-100", inlet);
-compressor.setOutletPressure(110.0, "bara");
-compressor.setUsePolytropicCalc(true);
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.setTemperature(35.0, "C");
+        inlet.setPressure(37.0, "bara");
+        inlet.setFlowRate(20000.0, "m3/hr"); // Set actual volume after temperature and pressure.
+        inlet.run();
 
-// Load compressor curves from JSON file
-compressor.loadCompressorChartFromJson("path/to/compressor_curve.json");
+        Compressor compressor = new Compressor("K-100", inlet);
+        compressor.setUsePolytropicCalc(true);
+        compressor.loadCompressorChartFromJson(chartFile);
+        compressor.setSpeed(6327.9);
+        compressor.run();
 
-// Set speed and run
-compressor.setSpeed(6327.9);  // RPM matching one of the curves
-compressor.run();
+        logger.info("Power: {} kW", compressor.getPower("kW"));
+        logger.info("Outlet pressure: {} bara", compressor.getOutletPressure());
+        logger.info("Polytropic efficiency: {}%", compressor.getPolytropicEfficiency() * 100.0);
+        logger.info("Polytropic head: {} kJ/kg", compressor.getPolytropicHead("kJ/kg"));
+        return compressor;
+    }
 
-// Results now use the loaded performance curves
-System.out.println("Power: " + compressor.getPower("kW") + " kW");
-System.out.println("Polytropic Efficiency: " + (compressor.getPolytropicEfficiency() * 100) + "%");
-System.out.println("Polytropic Head: " + compressor.getPolytropicHead("kJ/kg") + " kJ/kg");
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            throw new IllegalArgumentException("Pass the compressor chart JSON filename");
+        }
+        run(args[0]);
+    }
+}
 ```
 
 #### Loading from JSON String
@@ -1357,36 +1448,27 @@ compressor.loadCompressorChartFromJsonString(jsonString);
 #### Python Usage (neqsim-python)
 
 ```python
-from neqsim.thermo import fluid
-from neqsim.process import stream, compressor
+from neqsim import jneqsim
 
-# Create inlet stream
-gas = fluid('srk')
+gas = jneqsim.thermo.system.SystemSrkEos(308.15, 37.0)
 gas.addComponent("methane", 0.85)
 gas.addComponent("ethane", 0.10)
 gas.addComponent("propane", 0.05)
 gas.setMixingRule("classic")
 
-inlet = stream(gas)
+inlet = jneqsim.process.equipment.stream.Stream("inlet", gas)
 inlet.setFlowRate(20000.0, "m3/hr")
-inlet.setTemperature(35.0, "C")
-inlet.setPressure(37.0, "bara")
 inlet.run()
 
-# Create compressor
-comp = compressor(inlet)
-comp.setOutletPressure(110.0, "bara")
+comp = jneqsim.process.equipment.compressor.Compressor("K-100", inlet)
 comp.setUsePolytropicCalc(True)
-
-# Load curves from JSON file
-comp.loadCompressorChartFromJson("compressor_curves/example_compressor_curve.json")
-
-# Set speed and run
+comp.loadCompressorChartFromJson("compressor_curve.json")
 comp.setSpeed(6327.9)
 comp.run()
 
 print(f"Power: {comp.getPower('kW'):.2f} kW")
-print(f"Efficiency: {comp.getPolytropicEfficiency()*100:.2f}%")
+print(f"Outlet pressure: {comp.getOutletPressure():.2f} bara")
+print(f"Efficiency: {comp.getPolytropicEfficiency() * 100:.2f}%")
 ```
 
 #### Saving Curves to JSON
@@ -2795,63 +2877,76 @@ comp.run();  // Speed automatically adjusted based on chart
 
 ### Python Example - Dynamic Simulation
 
+This standalone example uses the supported `jneqsim` gateway and a short deterministic step
+loop. It demonstrates the rotor-state and operating-history APIs; it is not a vendor transient
+performance model.
+
 ```python
-from neqsim import jNeqSim
-from jpype import JClass
+from neqsim import jneqsim
 
-# Import classes
-Compressor = jNeqSim.process.equipment.compressor.Compressor
-CompressorState = JClass('neqsim.process.equipment.compressor.CompressorState')
-CompressorDriver = JClass('neqsim.process.equipment.compressor.CompressorDriver')
-DriverType = JClass('neqsim.process.equipment.compressor.DriverType')
-AntiSurge = jNeqSim.process.equipment.compressor.AntiSurge
-StartupProfile = JClass('neqsim.process.equipment.compressor.StartupProfile')
-ShutdownProfile = JClass('neqsim.process.equipment.compressor.ShutdownProfile')
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+CompressorDriver = jneqsim.process.equipment.compressor.CompressorDriver
+DriverType = jneqsim.process.equipment.compressor.DriverType
+AntiSurge = jneqsim.process.equipment.compressor.AntiSurge
 
-# Create compressor (assuming inlet stream exists)
-comp = Compressor("K-100", inlet_stream)
+# Build and initialize the inlet stream.
+fluid = SystemSrkEos(298.15, 50.0)
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+fluid.setMixingRule("classic")
+
+inlet_stream = Stream("dynamic inlet", fluid)
+inlet_stream.setFlowRate(5000.0, "kg/hr")
+inlet_stream.setTemperature(25.0, "C")
+inlet_stream.setPressure(40.0, "bara")
+inlet_stream.run()
+
+# Initialize a steady operating point before starting the dynamic state model.
+comp = Compressor("K-100 dynamic", inlet_stream)
 comp.setOutletPressure(100.0, "bara")
-comp.setSpeed(10000)
+comp.setUsePolytropicCalc(True)
+comp.setPolytropicEfficiency(0.78)
+comp.setSpeed(10000.0)
 comp.run()
 
-# Configure dynamic features
 comp.enableOperatingHistory()
 comp.setRotationalInertia(15.0)
 comp.setSurgeWarningThreshold(0.15)
 comp.setSurgeCriticalThreshold(0.05)
 
-# Set up gas turbine driver
-driver = CompressorDriver(DriverType.GAS_TURBINE, 5000)
-driver.setAmbientTemperature(308.15)  # 35°C
+driver = CompressorDriver(DriverType.GAS_TURBINE, 5000.0)
+driver.setAmbientTemperature(308.15)  # 35 degrees C
 comp.setDriver(driver)
 
-# Configure anti-surge
 anti_surge = comp.getAntiSurge()
 anti_surge.setControlStrategy(AntiSurge.ControlStrategy.PID)
 anti_surge.setPIDParameters(2.0, 0.5, 0.1)
 
-# Run dynamic simulation
-dt = 0.1  # 100 ms
-sim_time = 0.0
+dt = 0.1
+number_of_steps = 100
+comp.startCompressor(10000.0)
 
-comp.startCompressor(10000)
-
-while sim_time < 300.0:
-    inlet_stream.run()
-    comp.run()
+for step in range(number_of_steps):
+    sim_time = step * dt
     comp.updateDynamicState(dt)
+    surge_margin = comp.getDistanceToSurge()
+    valve_position = anti_surge.updateController(surge_margin, dt)
 
-    # Print state periodically
-    if int(sim_time) % 10 == 0 and sim_time == int(sim_time):
-        print(f"t={sim_time:.0f}s: State={comp.getOperatingState()}, "
-              f"Speed={comp.getSpeed():.0f} RPM, "
-              f"Surge margin={comp.getDistanceToSurge()*100:.1f}%")
+    if step % 10 == 0:
+        print(
+            f"t={sim_time:.1f}s: State={comp.getOperatingState()}, "
+            f"Speed={comp.getSpeed():.0f} RPM, "
+            f"Surge margin={surge_margin * 100:.1f}%, "
+            f"Recycle valve={valve_position * 100:.1f}%"
+        )
 
-    sim_time += dt
-
-# Export results
-comp.getOperatingHistory().exportToCSV("compressor_dynamic.csv")
-print(str(comp.getOperatingHistory().generateSummary()))
+history = comp.getOperatingHistory()
+assert history is not None
+assert history.getPointCount() > 0
+print(str(history.generateSummary()))
 ```
 
 ---

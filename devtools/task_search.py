@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Cross-task keyword search across all task_solve/ folders.
+"""Cross-task keyword search across every configured task root.
 
 Searches results.json, notes.md, task_spec.md, and notebook sources for keywords.
 Useful for finding prior work, reusable patterns, and avoiding duplicate effort.
+
+Task folders may live outside the repository (`neqsim --set-task-root`), so the
+roots come from task_roots.resolve_task_roots(): --task-root, NEQSIM_TASK_ROOT,
+the saved default, then <repo>/task_solve.
 
 Usage:
     python devtools/task_search.py "hydrate"
     python devtools/task_search.py "SRK CPA" --type results
     python devtools/task_search.py "compressor" --json
+    python devtools/task_search.py "psv" --task-root "D:/tasks"
 """
 
 import argparse
@@ -17,8 +22,13 @@ import re
 import sys
 from pathlib import Path
 
-
-TASK_ROOT = Path(__file__).resolve().parent.parent / "task_solve"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from task_roots import (  # noqa: E402
+    add_task_root_argument,
+    describe,
+    find_task_folders,
+    resolve_task_roots,
+)
 
 # Files to search inside each task folder
 SEARCHABLE_FILES = [
@@ -92,24 +102,14 @@ def search_results_json(filepath, pattern, case_insensitive=True):
     return matches
 
 
-def find_task_folders():
-    """Find all task folders (exclude TASK_TEMPLATE)."""
-    if not TASK_ROOT.exists():
-        return []
-    folders = []
-    for entry in sorted(TASK_ROOT.iterdir()):
-        if entry.is_dir() and entry.name != "TASK_TEMPLATE":
-            folders.append(entry)
-    return folders
-
-
-def run_search(query, search_type="all", as_json=False):
-    """Run search across all task folders."""
+def run_search(query, search_type="all", as_json=False, task_root=None):
+    """Run search across all task folders in every configured task root."""
     pattern = re.escape(query) if not any(c in query for c in r".*+?[](){}|\\^$") else query
-    folders = find_task_folders()
+    roots = resolve_task_roots(task_root)
+    folders = find_task_folders(roots)
 
     if not folders:
-        print("No task folders found in {}".format(TASK_ROOT))
+        print("No task folders found in {}".format(describe(roots)))
         return
 
     all_results = {}
@@ -206,7 +206,7 @@ def run_search(query, search_type="all", as_json=False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Search across all task_solve/ folders for keywords."
+        description="Search every configured task root for keywords."
     )
     parser.add_argument("query", help="Search term or regex pattern")
     parser.add_argument(
@@ -218,8 +218,9 @@ def main():
     parser.add_argument(
         "--json", action="store_true", help="Output results as JSON"
     )
+    add_task_root_argument(parser)
     args = parser.parse_args()
-    run_search(args.query, args.type, args.json)
+    run_search(args.query, args.type, args.json, args.task_root)
 
 
 if __name__ == "__main__":

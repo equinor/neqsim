@@ -441,7 +441,13 @@ MultiStreamHeatExchanger2(String name)
 | `run()` | Execute the solver |
 | `getOutStream(int index)` | Get outlet stream by index (order of addition) |
 | `getUA()` | Get calculated UA value (W/K) |
-| `getTemperatureApproach()` | Get approach temperature setting |
+| `getTemperatureApproach()` | Get the achieved minimum approach (pinch) of the last solution (°C) |
+| `getSpecifiedTemperatureApproach()` | Get the specified approach temperature (°C) |
+| `getSolverStatus()` | Outcome of the last run: `CONVERGED`, `DEGENERATE`, `INFEASIBLE`, `FALLBACK`, `FAILED` or `NOT_RUN` |
+| `getSolverMessage()` | Explanation of the last outcome; empty when converged normally |
+| `isSpecificationMet()` | True when all active equations are met (`CONVERGED` or `DEGENERATE`); see the mode table below |
+| `getMaximumFeasibleApproach()` | Approach upper bound from fixed outlets and inlets (°C); not a feasibility guarantee; NaN with fewer than 2 unknowns |
+| `setThrowOnUnmetSpecification(boolean)` | Strict mode: publish the best-effort outlets, then throw `IllegalStateException` if an active specification is unmet |
 | `getCompositeCurve()` | Get composite curve data for plotting |
 
 ### Solver Configuration
@@ -500,6 +506,64 @@ Always visualize composite curves to verify:
 ---
 
 ## Troubleshooting
+
+### Approach temperature cannot be met with fixed outlets
+
+With energy balance the hot and cold composite curves end at the same load. A fixed cold outlet $T_{c,out}^{fix}$
+therefore limits the warm-end difference, and a fixed hot outlet $T_{h,out}^{fix}$ limits the cold-end difference:
+
+$$
+\Delta T_{min} \le \min\left(T_{h,in}^{max} - T_{c,out}^{fix},\; T_{h,out}^{fix} - T_{c,in}^{min}\right)
+$$
+
+No choice of the unknown outlets can raise the approach above this bound. Despite its API name,
+`getMaximumFeasibleApproach()` is a necessary upper bound, not the calculated maximum achievable
+pinch: internal pinches, the energy balance and a specified UA may impose tighter limits.
+
+- Above the bound, the two-unknown mode reports `INFEASIBLE`, skips Newton refinement and attempts
+  a best-effort result. Its message reports the achieved approach and energy residual in kW;
+  check both before using the result. Energy balance is not guaranteed for every infeasible input.
+- At the bound, the two-unknown mode reports `DEGENERATE` only if a nearby, distinct,
+  energy-balanced solution preserves the pinch imposed by fixed outlets. This is a local
+  numerical check of non-uniqueness, not a proof for every possible outlet state.
+- The three-unknown mode also enforces UA. If its approach already exceeds the bound, it throws
+  immediately with status `INFEASIBLE`, in either strict or permissive mode. No three-unknown
+  best-effort solution is provided.
+
+`isSpecificationMet()` checks the equations active in the selected mode:
+
+| Unknown outlets | Equations checked |
+|---|---|
+| 0 | Energy balance of the fixed outlet temperatures |
+| 1 | Energy balance; the approach setting is not an enforced constraint |
+| 2 | Energy balance and minimum approach |
+| 3 | Energy balance, minimum approach and specified UA |
+
+Residuals must be finite and smaller in magnitude than the solver tolerance. A returned result
+that misses an active equation is `FALLBACK`. Numerical failures before an outlet result is
+published are `FAILED` and continue to throw. `NOT_RUN` is the initial state. Every run resets
+the diagnostic fields so that a corrected specification can recover from an earlier failure.
+
+Check the status after `run()`, or enable strict mode to get an exception:
+
+```java
+mshx.setThrowOnUnmetSpecification(true); // optional: throw after publishing an unmet best-effort result
+mshx.run();
+if (!mshx.isSpecificationMet() || mshx.getSolverStatus() == MultiStreamHeatExchanger2.SolverStatus.DEGENERATE) {
+  logger.warn("{} approach upper bound: {}", mshx.getSolverMessage(), mshx.getMaximumFeasibleApproach());
+}
+```
+
+For a returned best-effort result, strict mode publishes the outlet streams and calculation
+identifier before throwing, so the diagnostic message and outlet state refer to the same run.
+If the calculation fails before publication, previous outlet streams must not be treated as a
+new result. The example's strict-mode and degenerate branches are exercised by
+`MultiStreamHeatExchanger2Test.testSolverStatusDegenerateAtFeasibleApproachLimit`.
+
+`toJson()` includes `solverStatus`, `solverMessage`, `specificationMet`,
+`specifiedTemperatureApproach` and the finite `maximumFeasibleApproach` when evaluated.
+Approach temperature inputs must be finite and non-negative. Three-unknown solves require
+a finite, positive UA in W/K.
 
 ### "Failed to converge after maxIterations"
 

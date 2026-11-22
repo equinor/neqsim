@@ -652,7 +652,7 @@ public class EnKFParameterEstimator implements Serializable {
   private double[][] invertMatrix(double[][] matrix) {
     int n = matrix.length;
     if (n == 1) {
-      return new double[][] { { 1.0 / matrix[0][0] } };
+      return new double[][] {{1.0 / matrix[0][0]}};
     }
     if (n == 2) {
       double det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
@@ -660,8 +660,7 @@ public class EnKFParameterEstimator implements Serializable {
         // Regularize
         det = 1e-10;
       }
-      return new double[][] { { matrix[1][1] / det, -matrix[0][1] / det },
-          { -matrix[1][0] / det, matrix[0][0] / det } };
+      return new double[][] {{matrix[1][1] / det, -matrix[0][1] / det}, {-matrix[1][0] / det, matrix[0][0] / det}};
     }
     // For larger matrices, use Gaussian elimination or external library
     // This is a simplified implementation for small matrices

@@ -59,7 +59,7 @@ if defined PY goto :found
 
 echo.
 echo ERROR: No working Python interpreter was found.
-echo Install Python 3.8+ from https://www.python.org/downloads/
+echo Install Python 3.11 or newer from https://www.python.org/downloads/
 echo (check "Add python.exe to PATH"), then re-run install.cmd.
 exit /b 1
 
@@ -85,11 +85,40 @@ if errorlevel 1 goto :err_pip
 goto :done
 
 :install_uv
+set "UV_EXE=%USERPROFILE%\.local\bin\uv.exe"
+if exist "%UV_EXE%" goto :uv_ready
 where uv >nul 2>&1
-if errorlevel 1 goto :err_no_uv
+if not errorlevel 1 (
+	set "UV_EXE=uv"
+	goto :uv_ready
+)
+echo uv not found - bootstrapping it with the selected Python...
+%PY% -m pip --version >nul 2>&1
+if not errorlevel 1 goto :uv_pip_ok
+%PY% -m ensurepip --upgrade
+if errorlevel 1 goto :err_uv_boot
+:uv_pip_ok
+%PY% -m pip install --user uv >nul 2>&1
+if errorlevel 1 goto :uv_install_current
+set "UV_INSTALL_MODE=user"
+goto :uv_find_executable
+:uv_install_current
+%PY% -m pip install uv
+if errorlevel 1 goto :err_uv_boot
+set "UV_INSTALL_MODE=current"
+:uv_find_executable
+if /I "%UV_INSTALL_MODE%"=="user" goto :uv_user_scripts
+for /f "usebackq delims=" %%E in (`%PY% -c "import sysconfig; print(sysconfig.get_path('scripts'))"`) do set "UV_SCRIPTS=%%E"
+goto :uv_set_executable
+:uv_user_scripts
+for /f "usebackq delims=" %%E in (`%PY% -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))"`) do set "UV_SCRIPTS=%%E"
+:uv_set_executable
+set "UV_EXE=%UV_SCRIPTS%\uv.exe"
+if not exist "%UV_EXE%" goto :err_uv_boot
+:uv_ready
 for /f "delims=" %%E in ('%PY% -c "import sys; print(sys.executable)"') do set "PYEXE=%%E"
 echo Installing (editable, via uv): %TARGET%
-uv pip install --python "%PYEXE%" -e "%TARGET%"
+"%UV_EXE%" pip install --python "%PYEXE%" -e "%TARGET%"
 if errorlevel 1 goto :err_uv
 goto :done
 
@@ -97,14 +126,48 @@ goto :done
 echo.
 echo Ensuring the 'neqsim' command is on your PATH...
 %PY% "%DEVTOOLS%\ensure_on_path.py"
+
+REM A PATH change written to the registry reaches only NEW processes, so add the
+REM directory to this session too -- otherwise the command advertised below fails
+REM in the very window the user is standing in.
+set "NEQSIM_SCRIPTS="
+for /f "usebackq delims=" %%D in (`%PY% "%DEVTOOLS%\ensure_on_path.py" --print-script-dir 2^>nul`) do set "NEQSIM_SCRIPTS=%%D"
+if defined NEQSIM_SCRIPTS set "PATH=%PATH%;%NEQSIM_SCRIPTS%"
+
 echo.
-echo Done. Verify with:
+where neqsim >nul 2>&1
+if errorlevel 1 goto :cli_missing
+echo Done. The 'neqsim' command is available in this cmd session.
+echo Try it now:  neqsim doctor --skip-jar
+echo If you started install.cmd from PowerShell, that window still needs a new
+echo terminal - or run install.ps1 instead, which fixes the session you are in.
+set "CLI=neqsim"
+goto :cli_ready
+
+:cli_missing
+echo Done, but the 'neqsim' command is not resolvable here.
+echo Use this instead - it is the same entry point and always works:
 echo   %PY% -m neqsim_cli --help
-echo If the 'neqsim' command is not found in this window, open a NEW terminal
-echo (PATH changes only apply to newly opened terminals), or use the line above.
-echo If running 'neqsim' shows "The term 'neqsim' is not recognized" in a VS Code
-echo terminal, fully quit and reopen VS Code -- a new integrated terminal is NOT
-echo enough (VS Code captures PATH at launch). A virtualenv avoids this.
+echo To find out why:  %PY% -m neqsim_cli doctor --skip-jar
+echo In a VS Code terminal, fully quit and reopen VS Code -- a new integrated
+echo terminal is NOT enough, because VS Code captures PATH at launch.
+REM Keep the examples below runnable for whoever is reading them.
+set "CLI=%PY% -m neqsim_cli"
+
+:cli_ready
+echo.
+echo Where solved tasks are saved:
+echo   Default (nothing set): ^<this repository^>\task_solve
+echo   Change it:  %CLI% --set-task-root "D:\Engineering Tasks"   (or 'cwd')
+echo   Check it:   %CLI% --show-task-root
+echo The setting is saved in %USERPROFILE%\.neqsim\task_defaults.json and is used
+echo by 'neqsim new-task' and the AI agents, so tasks can live outside the clone.
+echo.
+echo Word template for generated reports:
+echo   Default (nothing set): built-in NeqSim report styling
+echo   Change it:  %CLI% --set-report-template "C:\path\company template.docx"
+echo   Check it:   %CLI% --show-report-template
+echo Every Word report then inherits its styles, fonts, headers, and footers.
 exit /b 0
 
 :err_pip_boot
@@ -113,8 +176,10 @@ exit /b 1
 :err_pip
 echo ERROR: pip install failed. See the output above for details.
 exit /b 1
-:err_no_uv
-echo ERROR: 'uv' was requested but is not installed. Run: %PY% -m pip install uv
+:err_uv_boot
+echo ERROR: could not bootstrap uv with the selected Python.
+echo Check that pip and network access are available, then install uv manually:
+echo   https://docs.astral.sh/uv/getting-started/installation/
 exit /b 1
 :err_uv
 echo ERROR: 'uv pip install' failed. See the output above for details.

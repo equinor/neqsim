@@ -27,11 +27,11 @@ class PumpViscosityCorrectionTest {
     chart = new PumpChart();
 
     // Set up a typical pump curve (tested with water at 998 kg/m³)
-    speed = new double[] { 1000.0, 1500.0 };
-    flow = new double[][] { { 10, 20, 30, 40, 50 }, { 15, 30, 45, 60, 75 } };
-    head = new double[][] { { 100, 95, 88, 78, 65 }, { 225, 214, 198, 175, 146 } };
-    efficiency = new double[][] { { 60, 75, 82, 78, 68 }, { 62, 77, 84, 80, 70 } };
-    chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0, 998.0 }; // MW, T, P, Z, density
+    speed = new double[] {1000.0, 1500.0};
+    flow = new double[][] {{10, 20, 30, 40, 50}, {15, 30, 45, 60, 75}};
+    head = new double[][] {{100, 95, 88, 78, 65}, {225, 214, 198, 175, 146}};
+    efficiency = new double[][] {{60, 75, 82, 78, 68}, {62, 77, 84, 80, 70}};
+    chartConditions = new double[] {18.0, 298.15, 1.0, 1.0, 998.0}; // MW, T, P, Z, density
 
     chart.setCurves(chartConditions, speed, flow, head, efficiency);
     chart.setHeadUnit("meter");

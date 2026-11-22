@@ -103,8 +103,10 @@ System.out.println("Stack power:   " + power / 1.0e3 + " kW");
 
 ## Technologies and I-V Models
 
-Select a technology to apply representative defaults for cell voltage, current
-density, operating temperature/pressure and faradaic efficiency:
+Select a technology to apply cell voltage, current density and nominal Faradaic
+efficiency. Set inlet temperature and pressure separately; the enum's temperature
+and pressure getters are reference values. Calling `setTechnology` overwrites
+previous voltage/current-efficiency settings, so apply measured overrides afterwards:
 
 ```java
 import neqsim.process.equipment.electrolyzer.ElectrolyzerTechnology;
@@ -115,7 +117,45 @@ electrolyzer.setTechnology(ElectrolyzerTechnology.PEM);
 
 Available technologies: `PEM`, `ALKALINE`, `SOEC`, `AEM`.
 
-For a physically consistent operating voltage, attach an
+### Current-efficiency basis and remaining qualification
+
+Faradaic efficiency is $\eta_F=2F\dot n_{H_2}/I_{eq}$, a charge-utilization ratio.
+An LHV/HHV energy efficiency also depends on voltage, heating value and the
+stack/system boundary. External SOEC heat does not establish current efficiency.
+
+`ALKALINE` uses a nominal screening estimate from Ulleberg (2003),
+[DOI 10.1016/S0360-3199(02)00033-2](https://doi.org/10.1016/S0360-3199(02)00033-2),
+Eq. (9), Table 3, PHOEBUS: 80 °C, reported 7 bar, stationary 30 wt% KOH.
+The paper reports pressure without establishing a separate gauge/absolute
+conversion; the existing NeqSim reference remains 7 bara.
+With $j_m$ in **mA/cm²**, the published expression is
+$\eta_F=0.96j_m^2/(250+j_m^2)$; 250 has units (mA/cm²)².
+At the existing nominal 0.4 A/cm² this gives **0.9585023401**.
+This evaluates the fitted expression beyond the current-efficiency measurements
+in Fig. 6. It is an explicit extrapolation for screening, not a measured
+0.4 A/cm² benchmark, a universal alkaline constant or a qualified operating range.
+The source provides no uncertainty interval for that extrapolation.
+
+At fixed 1.85 V this changes native stack SEC from 79.33746 to **51.31884 kWh/kg**
+on the getter's 0.002016 kg/mol H₂ basis. The reference is frozen after technology
+selection: changing load, temperature or pressure does not update current
+efficiency. Supply an equipment-specific value with `setFaradaicEfficiency`
+after selecting the technology; low-load/crossover behavior needs separate evidence.
+
+The existing coarse alkaline I–V coefficients instead give **1.7064354 V**
+at 0.4 A/cm² and 80 °C, hence **47.33637 kWh/kg** with this same current efficiency.
+The two voltage models are different screening cases; neither is validated by
+agreement with a rounded industry SEC. `AlkalineFaradaicDefaultTest` executes
+both native POWER and matched WATER_FEED cases against independent Faraday-law,
+stoichiometry, power and SEC calculations.
+
+PEM (0.65), SOEC (0.85) and AEM (0.60) still have **unqualified legacy current
+efficiencies**. [#4682](https://github.com/equinor/neqsim/issues/4682) remains open
+for their primary-source basis, uncertainty/applicability, off-design behavior
+and coherent voltage/SEC qualification. The material-balance repair in
+[#4681](https://github.com/equinor/neqsim/issues/4681) is a separate completed change.
+
+For a current-dependent screening voltage, attach an
 `ElectrolyzerIVCharacteristic`. When set, the cell voltage is computed from the
 current density and temperature through the polarisation model:
 
@@ -138,8 +178,50 @@ The `Electrolyzer` supports two operating modes via
 | `WATER_FEED` (default) | Inlet water molar rate | Electrical power |
 | `POWER` | Available electrical power | Water demand and H₂/O₂ production |
 
-`WATER_FEED` is the default and preserves backward-compatible behaviour.
+`WATER_FEED` is the default. The inlet must contain pure water: every mole
+supplied is consumed and produces one mole of hydrogen and half a mole of
+oxygen. Faradaic efficiency is a current-utilization factor, not a water
+conversion fraction. There is no residual-water or electrolyte outlet.
 `setAvailablePower(...)` automatically switches the unit into `POWER` mode.
+
+Both modes use the same Faraday-law balance:
+
+$$\dot n_{H_2}=\dot n_{H_2O}=\frac{\eta_F I_{eq}}{2F},\qquad \dot n_{O_2}=\frac{\dot n_{H_2}}{2},\qquad P_{DC}=V_{cell}I_{eq}$$
+
+Here flows are in mol/s, $F=96485.3329$ C/mol, voltage is in V and power is in W.
+$I_{eq}$ (`getStackCurrent()`, A) is the sum of cell currents; with cells in
+series it is the terminal current multiplied by the number of cells. It is
+paired with the **cell** voltage, not the total stack voltage.
+
+In `WATER_FEED`, the inlet flow, composition, pressure and temperature remain
+specified by the caller. Current is $2F\dot n_{H_2O}/\eta_F$. When stack area
+is supplied, current density is derived from current and total active area;
+otherwise the explicitly configured density drives an attached I-V model.
+In `POWER`, `run()` deliberately sets and runs the connected inlet stream at
+the **actual stoichiometric water demand**, including zero demand at zero
+power or standby. Use a dedicated demand stream when connecting to a larger
+water-supply model. Pressure, temperature and pure-water composition are retained.
+Mixed feeds are rejected before changing their flow; electrolyte circulation,
+impurities, excess water and residual-water separation require a separate model.
+
+At fixed voltage, the stack SEC is proportional to $1/\eta_F$ in both modes:
+
+$$\mathrm{SEC}_{DC}=\frac{2FV_{cell}}{\eta_F M_{H_2}\,3.6\times10^6}$$
+
+SEC is in kWh/kg and the native getter uses $M_{H_2}=0.002016$ kg/mol.
+At 18 MW DC, 1.85 V and $\eta_F=0.62$, either mode at matched production
+consumes 31.260877955 mol/s water, produces the same hydrogen rate and
+15.630438977 mol/s oxygen, and reports 79.337462426 kWh/kg.
+`ElectrolyzerFaradaicBalanceTest` checks these balances, matched fixed-voltage
+and I-V cases, repeated runs and changing operating conditions.
+
+**Migration from the pre-#4681 calculation:** for nonunity efficiency,
+water-feed mode now consumes all specified water and requires current divided
+by $\eta_F$; power mode now requests only the water represented by the products.
+Unity-efficiency material and electrical results retain their previous basis.
+The technology defaults themselves remain under separate qualification in
+[#4682](https://github.com/equinor/neqsim/issues/4682); selecting a technology
+does not establish a measured current efficiency or a validated nominal SEC.
 
 ---
 
@@ -292,10 +374,19 @@ double systemPower = electrolyzer.getSystemPower();   // W (includes BoP)
 
 ## Thermal Model and Water Consumption
 
-Waste heat is generated by the overpotential above the thermoneutral voltage
-($V_{tn} = 1.481$ V, HHV basis):
+The screening heat balance uses electrical input minus hydrogen chemical
+power, with fixed $V_{tn}=1.481$ V on a 25 °C HHV basis:
 
-$$Q = \max(0,\; V_{cell} - V_{tn})\,I_{stack}$$
+$$Q_{out}=\max(0,\;P_{DC}-2FV_{tn}\dot n_{H_2})=\max(0,\;(V_{cell}-\eta_F V_{tn})I_{eq})$$
+
+This includes the heat associated with unproductive current. It assumes that
+charge which does not yield exported hydrogen dissipates its electrical input
+inside the stack; no side-product chemical energy is exported. It excludes
+sensible/latent enthalpy, temperature-dependent reaction enthalpy, gas crossover
+and external heat integration. For a negative signed balance the getter returns
+zero; external heat demand is $\max(0,2FV_{tn}\dot n_{H_2}-P_{DC})$ on this same
+reference basis. This is especially relevant to SOEC and is not a complete
+high-temperature steam-electrolysis heat balance.
 
 Water consumption is stoichiometric — one mole of water per mole of hydrogen:
 
@@ -308,7 +399,7 @@ double water_kgh = electrolyzer.getWaterConsumption("kg/hr");
 
 | Method | Description |
 |--------|-------------|
-| `getWasteHeat()` | Stack waste heat from the overpotential (W) |
+| `getWasteHeat()` | Nonnegative stack heat output on the fixed-HHV screening basis (W) |
 | `getWaterConsumption(String unit)` | Stoichiometric water demand (`mole/sec`, `kg/sec`, `kg/hr`) |
 
 ---

@@ -46,7 +46,7 @@ public class BinaryInteractionParameterAdapter implements ParameterUpdateAdapter
   /** {@inheritDoc} */
   @Override
   public FittingParameter[] getParameters() {
-    return new FittingParameter[] { parameter };
+    return new FittingParameter[] {parameter};
   }
 
   /** {@inheritDoc} */

@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.util.database.NeqSimProcessDesignDataBase;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 
 /**
  * Data source for loading pipeline mechanical design parameters from the NeqSim database.
@@ -29,7 +30,7 @@ public class PipelineMechanicalDesignDataSource {
   private static final String MATERIAL_QUERY = "SELECT * FROM MaterialPipeProperties WHERE grade='%s'";
 
   /** Query template for company-specific design factors. */
-  private static final String DESIGN_FACTORS_QUERY = "SELECT SPECIFICATION, MAXVALUE, MINVALUE FROM TechnicalRequirements_Process "
+  private static final String DESIGN_FACTORS_QUERY = "SELECT SPECIFICATION, MAXVALUE, MINVALUE, UNIT FROM TechnicalRequirements_Process "
       + "WHERE EQUIPMENTTYPE='Pipeline' AND Company='%s'";
 
   /** Query template for piping requirements. */
@@ -82,6 +83,18 @@ public class PipelineMechanicalDesignDataSource {
    * Pipeline design factors holder.
    */
   public static class PipeDesignFactors {
+    /** Actual sources for recognized loaded values; absence denotes a built-in value. */
+    private final java.util.Map<String, String> sources = new java.util.LinkedHashMap<String, String>();
+
+    /**
+     * Return provenance of recognized loaded parameters.
+     *
+     * @return immutable source snapshot; absent keys use the explicitly declared holder defaults
+     */
+    public java.util.Map<String, String> getSources() {
+      return java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<String, String>(sources));
+    }
+
     /** Design factor (F). */
     public double designFactor = 0.72;
     /** Joint factor (E). */
@@ -94,7 +107,7 @@ public class PipelineMechanicalDesignDataSource {
     public double safetyFactor = 1.0;
     /** Design code. */
     public String designCode = "ASME_B31_8";
-    /** Fabrication tolerance. */
+    /** Remaining-wall factor after negative mill tolerance, e.g. 0.875 for a 12.5% tolerance. */
     public double fabricationTolerance = 0.875;
   }
 
@@ -160,69 +173,81 @@ public class PipelineMechanicalDesignDataSource {
   public PipeDesignFactors loadDesignFactors(String companyIdentifier) {
     PipeDesignFactors factors = new PipeDesignFactors();
 
-    if (companyIdentifier == null || companyIdentifier.isEmpty()) {
-      return factors;
-    }
+    String selectedCompany = ProcessDesignParameters.resolveCompany(companyIdentifier);
+    for (String layer : new String[] {"default", selectedCompany}) {
+      String query = String.format(Locale.ROOT, DESIGN_FACTORS_QUERY, layer.replace("'", "''"));
+      try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
+          ResultSet dataSet = database.getResultSet(query)) {
+        while (dataSet.next()) {
+          String specification = dataSet.getString("SPECIFICATION");
+          double maxValue = parseDouble(dataSet.getString("MAXVALUE"));
 
-    String query = String.format(Locale.ROOT, DESIGN_FACTORS_QUERY, companyIdentifier);
+          if (specification == null) {
+            continue;
+          }
 
-    try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-        ResultSet dataSet = database.getResultSet(query)) {
-      while (dataSet.next()) {
-        String specification = dataSet.getString("SPECIFICATION");
-        double maxValue = parseDouble(dataSet.getString("MAXVALUE"));
-
-        if (specification == null) {
-          continue;
+          String key = specification.toLowerCase(Locale.ROOT);
+          if (("designfactor".equals(key) || "jointfactor".equals(key) || "corrosionallowance".equals(key)
+              || "locationclass".equals(key) || "safetyfactor".equals(key) || "fabricationtolerance".equals(key))
+              && !Double.isFinite(maxValue)) {
+            throw new IllegalStateException("Invalid pipeline factor " + specification + " for " + layer);
+          }
+          switch (key) {
+          case "designfactor":
+            if (!Double.isNaN(maxValue)) {
+              factors.sources.put("designfactor", "TechnicalRequirements_Process:" + layer);
+              factors.designFactor = maxValue;
+            }
+            break;
+          case "jointfactor":
+            if (!Double.isNaN(maxValue)) {
+              factors.sources.put("jointfactor", "TechnicalRequirements_Process:" + layer);
+              factors.jointFactor = maxValue;
+            }
+            break;
+          case "corrosionallowance":
+            if (!Double.isNaN(maxValue)) {
+              factors.sources.put("corrosionallowance", "TechnicalRequirements_Process:" + layer);
+              factors.corrosionAllowance = maxValue;
+            }
+            break;
+          case "locationclass":
+            if (!Double.isNaN(maxValue)) {
+              factors.sources.put("locationclass", "TechnicalRequirements_Process:" + layer);
+              factors.locationClass = (int) maxValue;
+            }
+            break;
+          case "safetyfactor":
+            if (!Double.isNaN(maxValue)) {
+              factors.sources.put("safetyfactor", "TechnicalRequirements_Process:" + layer);
+              factors.safetyFactor = maxValue;
+            }
+            break;
+          case "designcode":
+            String codeValue = dataSet.getString("MAXVALUE");
+            if (codeValue != null && !codeValue.isEmpty()) {
+              factors.designCode = codeValue;
+            }
+            break;
+          case "fabricationtolerance":
+            if (!Double.isNaN(maxValue)) {
+              factors.sources.put("fabricationtolerance", "TechnicalRequirements_Process:" + layer);
+              factors.fabricationTolerance = remainingWallFactor(maxValue, dataSet.getString("UNIT"));
+            }
+            break;
+          default:
+            break;
+          }
         }
-
-        switch (specification.toLowerCase(Locale.ROOT)) {
-        case "designfactor":
-          if (!Double.isNaN(maxValue)) {
-            factors.designFactor = maxValue;
-          }
-          break;
-        case "jointfactor":
-          if (!Double.isNaN(maxValue)) {
-            factors.jointFactor = maxValue;
-          }
-          break;
-        case "corrosionallowance":
-          if (!Double.isNaN(maxValue)) {
-            factors.corrosionAllowance = maxValue;
-          }
-          break;
-        case "locationclass":
-          if (!Double.isNaN(maxValue)) {
-            factors.locationClass = (int) maxValue;
-          }
-          break;
-        case "safetyfactor":
-          if (!Double.isNaN(maxValue)) {
-            factors.safetyFactor = maxValue;
-          }
-          break;
-        case "designcode":
-          String codeValue = dataSet.getString("MAXVALUE");
-          if (codeValue != null && !codeValue.isEmpty()) {
-            factors.designCode = codeValue;
-          }
-          break;
-        case "fabricationtolerance":
-          if (!Double.isNaN(maxValue)) {
-            factors.fabricationTolerance = maxValue;
-          }
-          break;
-        default:
-          break;
-        }
+      } catch (IllegalArgumentException ex) {
+        throw ex;
+      } catch (Exception ex) {
+        throw new IllegalStateException("Cannot load pipeline design factors for company: " + layer, ex);
       }
-    } catch (Exception ex) {
-      logger.warn("Could not load design factors for company: " + companyIdentifier, ex);
     }
 
     // Also try piping-specific requirements
-    loadPipingRequirements(companyIdentifier, factors);
+    loadPipingRequirements(selectedCompany, factors);
 
     return factors;
   }
@@ -251,6 +276,7 @@ public class PipelineMechanicalDesignDataSource {
         case "corrosionallowance":
           if (!Double.isNaN(maxValue)) {
             factors.corrosionAllowance = maxValue;
+            factors.sources.put("corrosionallowance", "TechnicalRequirements_Piping:" + companyIdentifier);
           }
           break;
         default:
@@ -293,8 +319,8 @@ public class PipelineMechanicalDesignDataSource {
     }
 
     String query = String.format(Locale.ROOT,
-        "SELECT SPECIFICATION, MINVALUE, MAXVALUE FROM %s WHERE STANDARD_CODE='%s' AND EQUIPMENTTYPE='%s'", tableName,
-        designCode, equipmentType);
+        "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT FROM %s WHERE STANDARD_CODE='%s' AND EQUIPMENTTYPE='%s'",
+        tableName, designCode, equipmentType);
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet dataSet = database.getResultSet(query)) {
@@ -322,7 +348,7 @@ public class PipelineMechanicalDesignDataSource {
           }
         } else if (specLower.contains("fabricationtolerance")) {
           if (!Double.isNaN(maxValue)) {
-            factors.fabricationTolerance = 1.0 - maxValue; // Convert 0.125 to 0.875
+            factors.fabricationTolerance = remainingWallFactor(maxValue, dataSet.getString("UNIT"));
           }
         } else if (specLower.contains("temperaturederat")) {
           if (!Double.isNaN(maxValue)) {
@@ -330,6 +356,8 @@ public class PipelineMechanicalDesignDataSource {
           }
         }
       }
+    } catch (IllegalArgumentException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.debug("Could not load from standards table " + tableName + ": " + ex.getMessage());
     }
@@ -366,6 +394,8 @@ public class PipelineMechanicalDesignDataSource {
           + "is not a current-edition implementation");
     }
 
+    // Validate the named identity even when the database also supplies strengths.
+    calculator.setMaterialGrade(materialGrade);
     // Load material properties from MaterialPipeProperties table
     Optional<PipeMaterialData> materialOpt = loadMaterialProperties(materialGrade);
     if (materialOpt.isPresent()) {
@@ -386,7 +416,8 @@ public class PipelineMechanicalDesignDataSource {
     }
 
     // Apply loaded factors to calculator
-    calculator.setDesignFactor(factors.designFactor);
+    calculator.setCompanyDesignFactor(factors.designFactor,
+        factors.getSources().containsKey("designfactor") ? factors.getSources().get("designfactor") : "BUILT_IN");
     calculator.setJointFactor(factors.jointFactor);
     calculator.setCorrosionAllowance(factors.corrosionAllowance / 1000.0); // mm to m
     calculator.setFabricationTolerance(factors.fabricationTolerance);
@@ -396,7 +427,7 @@ public class PipelineMechanicalDesignDataSource {
     String code = normalizeCode(selectedCode);
     if (code.contains("B31_8") || code.contains("B31.8")) {
       calculator.setDesignCode(PipeMechanicalDesignCalculator.ASME_B31_8);
-      calculator.setLocationClass(factors.locationClass);
+      calculator.setCompanyLocationClass(factors.locationClass);
     } else if (code.contains("B31_4") || code.contains("B31.4")) {
       calculator.setDesignCode(PipeMechanicalDesignCalculator.ASME_B31_4);
     } else if (code.contains("B31_3") || code.contains("B31.3")) {
@@ -409,6 +440,39 @@ public class PipelineMechanicalDesignDataSource {
     }
   }
 
+  /**
+   * Convert explicitly tagged database tolerance values to the calculator's remaining-wall factor. Legacy dimensionless
+   * rows ({@code -}) use the negative tolerance fraction convention.
+   *
+   * @param value stored tolerance or factor
+   * @param unit convention identifier from the database UNIT column
+   * @return remaining fraction of nominal wall, in the interval (0, 1]
+   * @throws IllegalArgumentException if the convention or value is invalid
+   */
+  private double remainingWallFactor(double value, String unit) {
+    String convention = unit == null ? "-" : unit.trim().toLowerCase(Locale.ROOT);
+    double factor;
+    if (convention.isEmpty() || "-".equals(convention) || "negative_wall_tolerance_fraction".equals(convention)) {
+      factor = 1.0 - value;
+    } else if ("remaining_wall_factor".equals(convention)) {
+      factor = value;
+    } else if ("%".equals(convention)) {
+      factor = 1.0 - value / 100.0;
+    } else {
+      throw new IllegalArgumentException("Unsupported fabrication tolerance unit: " + unit);
+    }
+    if (!Double.isFinite(factor) || factor <= 0.0 || factor > 1.0) {
+      throw new IllegalArgumentException("Invalid fabrication tolerance " + value + " with unit " + unit);
+    }
+    return factor;
+  }
+
+  /**
+   * Parse an optional numeric database cell.
+   *
+   * @param value cell text
+   * @return numeric value, or NaN when absent or nonnumeric
+   */
   private double parseDouble(String value) {
     if (value == null || value.isEmpty()) {
       return Double.NaN;

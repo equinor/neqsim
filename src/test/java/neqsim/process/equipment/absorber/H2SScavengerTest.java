@@ -148,7 +148,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
   void testContactTimeEffect() {
     logger.info("\n=== Contact Time Effect Test ===");
 
-    double[] contactTimes = { 5.0, 15.0, 30.0, 60.0, 120.0 };
+    double[] contactTimes = {5.0, 15.0, 30.0, 60.0, 120.0};
 
     for (double ct : contactTimes) {
       H2SScavenger scavenger = new H2SScavenger("Scavenger", feedStream);
@@ -169,7 +169,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
   void testMixingEfficiencyEffect() {
     logger.info("\n=== Mixing Efficiency Effect Test ===");
 
-    double[] mixingEfficiencies = { 0.3, 0.5, 0.7, 0.85, 1.0 };
+    double[] mixingEfficiencies = {0.3, 0.5, 0.7, 0.85, 1.0};
 
     for (double me : mixingEfficiencies) {
       H2SScavenger scavenger = new H2SScavenger("Scavenger", feedStream);

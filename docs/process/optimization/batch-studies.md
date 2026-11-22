@@ -47,62 +47,87 @@ Early-phase engineering requires rapid evaluation of many alternatives. The `Bat
 
 ### Basic Usage
 
+The Java blocks use the imports and base process below. Put executable statements
+inside `public static void main(String[] args) throws Exception`; place imports
+above your class. Later blocks are alternatives continuing from this setup; use
+separate scopes when reusing variable names. Python blocks run in order in one
+session with `neqsim`, `jpype1`, `pandas`, `numpy`, and `matplotlib` installed.
+
+Java output uses Log4j2. Declare this field inside your example class:
+`private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger("OptimizationExample");`.
+
 ```java
+import java.util.*;
+import java.time.Duration;
+import neqsim.process.util.optimizer.BatchStudy;
+import neqsim.process.util.optimizer.BatchStudy.*;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.setMixingRule("classic");
+Stream feed = new Stream("feed", fluid);
+feed.setFlowRate(10000.0, "kg/hr");
+Heater heater = new Heater("heater", feed);
+heater.setOutTemperature(350.0, "K");
+Compressor compressor = new Compressor("compressor", heater.getOutletStream());
+compressor.setOutletPressure(100.0, "bara");
+compressor.setIsentropicEfficiency(0.78);
 ProcessSystem baseCase = new ProcessSystem();
-// ... configure base case ...
+baseCase.add(feed);
+baseCase.add(heater);
+baseCase.add(compressor);
+baseCase.run();
 
-// Build a batch study
+// BatchStudy temperature parameters are in degrees Celsius.
 BatchStudy study = BatchStudy.builder(baseCase)
-    // Vary parameters
-    .vary("heater.duty", 1.0e6, 5.0e6, 5)       // 5 values from 1-5 MW
-    .vary("compressor.pressure", 30.0, 80.0, 6)  // 6 values from 30-80 bar
-
-    // Define objectives
+    .vary("heater.outletTemperature", 30.0, 100.0, 5)
+    .vary("compressor.outletPressure", 80.0, 120.0, 6)
     .addObjective("power", Objective.MINIMIZE,
-        process -> process.getTotalPowerConsumption())
+        proc -> ((Compressor) proc.getUnit("compressor")).getPower("kW"))
     .addObjective("throughput", Objective.MAXIMIZE,
-        process -> process.getThroughput())
+        proc -> ((Stream) proc.getUnit("feed")).getFlowRate("kg/hr"))
+    // Illustrative purchased-electricity factor: 0.2 kg CO2e/kWh.
     .addObjective("emissions", Objective.MINIMIZE,
-        process -> process.getTotalCO2Emissions())
-
-    // Configure execution
-    .parallelism(8)
+        proc -> 0.2 * ((Compressor) proc.getUnit("compressor")).getPower("kW"))
+    .parallelism(4)
     .name("HeaterCompressorStudy")
     .stopOnFailure(false)
-
     .build();
-
-// Run the study
 BatchStudyResult result = study.run();
-
-// Analyze results
-System.out.println("Total cases: " + result.getTotalCases());
-System.out.println("Completed: " + result.getCompletedCases());
-System.out.println("Failed: " + result.getFailedCases());
-
-// Export results
+logger.info(result.getSummary());
+if (result.getFailureCount() != 0) {
+    throw new IllegalStateException("Inspect failed cases before ranking the study");
+}
 result.exportToCSV("batch_results.csv");
 ```
 
 ### Convenience Method on ProcessSystem
 
 ```java
-// Quick batch study creation
-BatchStudy.Builder studyBuilder = process.createBatchStudy();
+// Continue from Basic Usage.
+BatchStudy.Builder studyBuilder = baseCase.createBatchStudy();
 ```
 
 ## Parameter Variation Methods
 
 ```java
-// Method 1: Range with steps
-.vary("parameter", min, max, steps)
-// Example: .vary("pressure", 10.0, 50.0, 5)
-// Generates: [10.0, 20.0, 30.0, 40.0, 50.0]
-
-// Method 2: Explicit values (varargs)
-.vary("parameter", value1, value2, value3)
-// Example: .vary("pressure", 10.0, 25.0, 50.0)
-// Uses exactly those values
+// Range: five values [80, 90, 100, 110, 120] bara.
+BatchStudy rangeStudy = BatchStudy.builder(baseCase)
+    .vary("compressor.outletPressure", 80.0, 120.0, 5).build();
+// Explicit values: use an array to avoid selecting the range overload.
+BatchStudy explicitStudy = BatchStudy.builder(baseCase)
+    .vary("compressor.outletPressure", new double[] {80.0, 100.0, 120.0}).build();
+// A single case uses the explicit-values overload (a range needs >= 2 steps).
+BatchStudy singleStudy = BatchStudy.builder(baseCase)
+    .vary("compressor.outletPressure", new double[] {100.0}).build();
 ```
 
 ## Supported Parameter Paths
@@ -112,7 +137,7 @@ Parameters are specified as `equipment.property`:
 | Property               | Equipment Types            | Example                           |
 | ---------------------- | -------------------------- | --------------------------------- |
 | `duty`                 | Heaters, Coolers           | `heater.duty`                     |
-| `pressure`             | Valves, Separators         | `valve.pressure`                  |
+| `pressure`             | Valves, Compressors, Pumps         | `valve.pressure`                  |
 | `outletPressure`       | Valves, Compressors, Pumps | `compressor.outletPressure`       |
 | `opening`              | Valves                     | `valve.opening`                   |
 | `percentValveOpening`  | Valves                     | `valve.percentValveOpening`       |
@@ -124,7 +149,14 @@ Parameters are specified as `equipment.property`:
 | `flowRate`             | Streams                    | `stream.flowRate`                 |
 | `internalDiameter`     | Separators                 | `separator.internalDiameter`      |
 
-*Note: The parameter path system is extensible for additional properties.*
+Temperatures in `temperature` and `outletTemperature` paths are **°C**, pressures
+are **bara**, duty is **W**, flow is **kg/hr**, diameter is **m**, opening is **%**,
+and efficiencies are fractions. A separator pressure is set by its inlet boundary;
+`separator.pressure` is not a supported variation. Unknown equipment/property paths
+produce failed cases instead of silently leaving the process unchanged.
+
+Range variation requires at least two steps. For one value or an explicit list,
+pass `double[]` (Python: `JArray(JDouble)`) to select the varargs overload.
 
 ## Result Analysis
 
@@ -133,9 +165,9 @@ Parameters are specified as `equipment.property`:
 ```java
 // Summary statistics
 int total = result.getTotalCases();
-int completed = result.getCompletedCases();
-int failed = result.getFailedCases();
-Duration runtime = result.getTotalRuntime();
+int completed = result.getSuccessCount();
+int failed = result.getFailureCount();
+String summary = result.getSummary();
 
 // Find best cases
 CaseResult bestByPower = result.getBestCase("power");
@@ -145,12 +177,12 @@ CaseResult bestByEmissions = result.getBestCase("emissions");
 List<CaseResult> allResults = result.getAllResults();
 
 // Filter successful cases
-List<CaseResult> successful = result.getSuccessfulCases();
+List<CaseResult> successful = result.getSuccessfulResults();
 
 // Export
 result.exportToCSV("results.csv");
 result.exportToJSON("results.json");
-String json = result.toJson();  // Get as JSON string
+String json = result.toJson();  // Timestamps/durations are ISO-8601 strings
 
 // Pareto front analysis (non-dominated solutions)
 List<CaseResult> paretoFront = result.getParetoFront("power", "emissions");
@@ -159,7 +191,10 @@ List<CaseResult> paretoFront = result.getParetoFront("power", "emissions");
 ### CaseResult
 
 ```java
-CaseResult caseResult = ...;
+CaseResult caseResult = result.getBestCase("power");
+if (caseResult == null) {
+    throw new IllegalStateException("No successful finite power objective");
+}
 
 // Parameter values used
 Map<String, Double> params = caseResult.parameters.values;
@@ -179,22 +214,23 @@ Duration caseRuntime = caseResult.runtime;
 ## Multi-Objective Analysis
 
 ```java
-// Define multiple objectives
-BatchStudy study = BatchStudy.builder(baseCase)
-    .vary("pressure", 20.0, 80.0, 7)
-    .addObjective("capex", Objective.MINIMIZE, this::estimateCAPEX)
-    .addObjective("opex", Objective.MINIMIZE, this::estimateOPEX)
+// Illustrative economic screening, not vendor CAPEX estimates.
+// Power: kW; CAPEX proxy: currency; OPEX proxy: currency/year;
+// purchased-electricity emissions: kg CO2e/hour; throughput: kg/hour.
+BatchStudy economicStudy = BatchStudy.builder(baseCase)
+    .vary("feed.flowRate", 5000.0, 15000.0, 5)
+    .addObjective("capex", Objective.MINIMIZE,
+        proc -> 1000.0 * Math.pow(
+            ((Compressor) proc.getUnit("compressor")).getPower("kW"), 0.7))
+    .addObjective("opex", Objective.MINIMIZE,
+        proc -> 8000.0 * 0.10 * ((Compressor) proc.getUnit("compressor")).getPower("kW"))
     .addObjective("emissions", Objective.MINIMIZE,
-        p -> p.getEmissions().getTotalCO2e("ton/yr"))
-    .addObjective("recovery", Objective.MAXIMIZE, this::calculateRecovery)
+        proc -> 0.20 * ((Compressor) proc.getUnit("compressor")).getPower("kW"))
+    .addObjective("throughput", Objective.MAXIMIZE,
+        proc -> ((Stream) proc.getUnit("feed")).getFlowRate("kg/hr"))
     .build();
-
-BatchStudyResult result = study.run();
-
-// Pareto analysis
-List<CaseResult> paretoFront = result.getParetoFront(
-    "capex", "emissions"  // Trade-off these objectives
-);
+BatchStudyResult economicResult = economicStudy.run();
+List<CaseResult> economicFront = economicResult.getParetoFront("opex", "throughput");
 ```
 
 ## Integration Examples
@@ -202,56 +238,78 @@ List<CaseResult> paretoFront = result.getParetoFront(
 ### With Emissions Tracking
 
 ```java
-.addObjective("co2", Objective.MINIMIZE, process -> {
-    EmissionsTracker tracker = new EmissionsTracker(process);
-    return tracker.calculateEmissions().getTotalCO2e("ton/yr");
-})
+// Add a purchased-electricity emissions objective to a new builder.
+// Replace this illustrative factor with the applicable electricity inventory.
+BatchStudy.Builder emissionsStudy = BatchStudy.builder(baseCase)
+    .addObjective("co2e_kg_hr", Objective.MINIMIZE,
+        proc -> 0.20 * ((Compressor) proc.getUnit("compressor")).getPower("kW"));
 ```
 
 ### With Safety Scenarios
 
 ```java
-// Run batch study for each safety scenario
-for (ProcessSafetyScenario scenario : scenarios) {
+// Pressure-boundary scenarios; this is steady-state screening, not a relief study.
+for (double dischargePressure : new double[] {90.0, 100.0, 110.0}) {
     ProcessSystem scenarioCase = baseCase.copy();
-    scenario.applyTo(scenarioCase);
-
-    BatchStudy study = BatchStudy.builder(scenarioCase)
-        .vary("pressure", 20.0, 80.0, 5)
-        .addObjective("safety_margin", Objective.MAXIMIZE,
-            this::calculateSafetyMargin)
+    ((Compressor) scenarioCase.getUnit("compressor"))
+        .setOutletPressure(dischargePressure, "bara");
+    BatchStudy scenarioStudy = BatchStudy.builder(scenarioCase)
+        .vary("feed.flowRate", 5000.0, 15000.0, 5)
+        .addObjective("power_margin_kW", Objective.MAXIMIZE,
+            proc -> 1000.0 - ((Compressor) proc.getUnit("compressor")).getPower("kW"))
         .build();
-
-    BatchStudyResult result = study.run();
-    // Analyze results for this scenario
+    BatchStudyResult scenarioResult = scenarioStudy.run();
+    logger.info(scenarioResult.getSummary());
 }
 ```
 
 ## Concept Screening Example
 
 ```java
-// Screen compressor staging options
+// Compare 1-4 stages at the same 30 bara suction and 150 bara discharge.
+// Vary flow in every concept; keep the final pressure identical.
+Map<Integer, BatchStudyResult> conceptResults = new LinkedHashMap<>();
 for (int stages = 1; stages <= 4; stages++) {
-    ProcessSystem concept = createCompressorConcept(stages);
-
-    BatchStudy study = BatchStudy.builder(concept)
-        .name("Concept-" + stages + "-stages")
-        .vary("totalPressureRatio", 3.0, 10.0, 8)
-        .addObjective("power", Objective.MINIMIZE, this::getTotalPower)
-        .addObjective("capex", Objective.MINIMIZE, this::estimateCAPEX)
-        .parallelism(4)
-        .build();
-
-    BatchStudyResult result = study.run();
-    conceptResults.put(stages, result);
+    ProcessSystem concept = new ProcessSystem();
+    Stream conceptFeed = new Stream("feed", fluid.clone());
+    conceptFeed.setPressure(30.0, "bara");
+    conceptFeed.setFlowRate(10000.0, "kg/hr");
+    concept.add(conceptFeed);
+    neqsim.process.equipment.stream.StreamInterface inlet = conceptFeed;
+    for (int stage = 1; stage <= stages; stage++) {
+        Compressor stageCompressor = new Compressor("stage" + stage, inlet);
+        stageCompressor.setOutletPressure(30.0 * Math.pow(5.0, (double) stage / stages));
+        stageCompressor.setIsentropicEfficiency(0.78);
+        concept.add(stageCompressor);
+        inlet = stageCompressor.getOutletStream();
+        if (stage < stages) {
+            Cooler intercooler = new Cooler("cooler" + stage, inlet);
+            intercooler.setOutTemperature(308.15, "K");
+            concept.add(intercooler);
+            inlet = intercooler.getOutletStream();
+        }
+    }
+    BatchStudy conceptStudy = BatchStudy.builder(concept)
+        .vary("feed.flowRate", 5000.0, 15000.0, 3)
+        .addObjective("power", Objective.MINIMIZE, proc -> {
+            double powerKW = 0.0;
+            for (neqsim.process.equipment.ProcessEquipmentInterface unit : proc.getUnitOperations()) {
+                if (unit instanceof Compressor) {
+                    powerKW += ((Compressor) unit).getPower("kW");
+                }
+            }
+            return powerKW;
+        })
+        .parallelism(2).build();
+    conceptResults.put(stages, conceptStudy.run());
 }
-
-// Compare concepts
 for (Map.Entry<Integer, BatchStudyResult> entry : conceptResults.entrySet()) {
     CaseResult best = entry.getValue().getBestCase("power");
-    System.out.printf("%d stages: %.0f kW power%n",
-        entry.getKey(),
-        best.objectiveValues.get("power"));
+    if (best == null) {
+        throw new IllegalStateException("No successful cases for " + entry.getKey());
+    }
+    logger.info(String.format("%d stages: %.1f kW at %.0f kg/hr%n", entry.getKey(),
+        best.objectiveValues.get("power"), best.parameters.values.get("feed.flowRate")));
 }
 ```
 
@@ -331,23 +389,23 @@ base_process.run()
 
 ```python
 # Define objective functions using Java interface
-@JImplements("java.util.function.ToDoubleFunction")
+@JImplements("java.util.function.Function")
 class PowerObjective:
     @JOverride
-    def applyAsDouble(self, proc):
+    def apply(self, proc):
         comp = proc.getUnit("compressor")
         return comp.getPower("kW") if comp else 0.0
 
-@JImplements("java.util.function.ToDoubleFunction")
+@JImplements("java.util.function.Function")
 class ThroughputObjective:
     @JOverride
-    def applyAsDouble(self, proc):
+    def apply(self, proc):
         return proc.getUnit("feed").getFlowRate("kg/hr")
 
-@JImplements("java.util.function.ToDoubleFunction")
+@JImplements("java.util.function.Function")
 class EfficiencyObjective:
     @JOverride
-    def applyAsDouble(self, proc):
+    def apply(self, proc):
         comp = proc.getUnit("compressor")
         return comp.getPolytropicEfficiency() * 100 if comp else 0.0
 ```
@@ -358,7 +416,7 @@ class EfficiencyObjective:
 # Build batch study using builder pattern
 study = BatchStudy.builder(base_process) \
     .name("HeaterCompressorStudy") \
-    .vary("heater.outletTemperature", 300.0, 400.0, 5) \
+    .vary("heater.outletTemperature", 30.0, 100.0, 5) \
     .vary("compressor.outletPressure", 80.0, 120.0, 5) \
     .addObjective("power", Objective.MINIMIZE, PowerObjective()) \
     .addObjective("throughput", Objective.MAXIMIZE, ThroughputObjective()) \
@@ -371,9 +429,9 @@ result = study.run()
 
 # Print summary
 print(f"Total cases: {result.getTotalCases()}")
-print(f"Completed: {result.getCompletedCases()}")
-print(f"Failed: {result.getFailedCases()}")
-print(f"Runtime: {result.getTotalRuntime()}")
+print(f"Completed: {result.getSuccessCount()}")
+print(f"Failed: {result.getFailureCount()}")
+print(str(result.getSummary()))
 ```
 
 ### Analyzing Results
@@ -387,7 +445,7 @@ print(f"\nBest by power: {best_power.objectiveValues.get('power'):.1f} kW")
 print(f"Best by throughput: {best_throughput.objectiveValues.get('throughput'):.0f} kg/hr")
 
 # Get all successful results
-successful = result.getSuccessfulCases()
+successful = result.getSuccessfulResults()
 print(f"\nSuccessful cases: {len(list(successful))}")
 
 # Get Pareto front for two objectives
@@ -406,7 +464,7 @@ result.exportToJSON("batch_results.json")
 
 # Get JSON string directly
 json_str = result.toJson()
-data = json.loads(json_str)
+data = json.loads(str(json_str))
 ```
 
 ### Converting to Pandas DataFrame
@@ -466,7 +524,7 @@ if 'param_heater.outletTemperature' in df_success.columns:
         s=100
     )
     plt.colorbar(scatter, ax=ax1, label='Power (kW)')
-    ax1.set_xlabel('Heater Outlet Temperature (K)')
+    ax1.set_xlabel('Heater Outlet Temperature (°C)')
     ax1.set_ylabel('Compressor Outlet Pressure (bara)')
     ax1.set_title('Power Consumption Heat Map')
 
@@ -504,8 +562,8 @@ plt.show()
 # Vary with explicit values instead of range
 study = BatchStudy.builder(base_process) \
     .name("ExplicitValuesStudy") \
-    .vary("compressor.outletPressure", 80.0, 100.0, 120.0) \
-    .vary("heater.outletTemperature", 320.0, 350.0, 380.0) \
+    .vary("compressor.outletPressure", jpype.JArray(jpype.JDouble)([80.0, 100.0, 120.0])) \
+    .vary("heater.outletTemperature", jpype.JArray(jpype.JDouble)([40.0, 60.0, 80.0])) \
     .addObjective("power", Objective.MINIMIZE, PowerObjective()) \
     .parallelism(2) \
     .build()
@@ -515,6 +573,9 @@ print(f"Evaluated {result.getTotalCases()} combinations")
 ```
 
 ### Concept Screening Example
+
+Every concept has 30 bara suction and 150 bara final discharge. The flow sweep
+is common to all concepts, so the power comparison uses equivalent boundaries.
 
 ```python
 def create_staged_compressor(num_stages, fluid):
@@ -534,7 +595,7 @@ def create_staged_compressor(num_stages, fluid):
         comp = Compressor(f"stage{i+1}", inlet_stream)
         outlet_p = 30.0 * (stage_ratio ** (i + 1))
         comp.setOutletPressure(outlet_p, "bara")
-        comp.setPolytropicEfficiency(0.78)
+        comp.setIsentropicEfficiency(0.78)
         process.add(comp)
 
         if i < num_stages - 1:  # Add intercooler
@@ -554,10 +615,10 @@ concept_results = {}
 for stages in range(1, 5):
     concept = create_staged_compressor(stages, fluid.clone())
 
-    @JImplements("java.util.function.ToDoubleFunction")
+    @JImplements("java.util.function.Function")
     class TotalPowerObj:
         @JOverride
-        def applyAsDouble(self, proc):
+        def apply(self, proc):
             total = 0.0
             for unit in proc.getUnitOperations():
                 if unit.getClass().getSimpleName() == "Compressor":
@@ -566,7 +627,7 @@ for stages in range(1, 5):
 
     study = BatchStudy.builder(concept) \
         .name(f"Concept-{stages}-stages") \
-        .vary("stage1.outletPressure", 40.0, 60.0, 3) \
+        .vary("feed.flowRate", 5000.0, 15000.0, 3) \
         .addObjective("totalPower", Objective.MINIMIZE, TotalPowerObj()) \
         .parallelism(2) \
         .build()

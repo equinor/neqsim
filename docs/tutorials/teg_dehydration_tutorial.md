@@ -44,6 +44,7 @@ state. Do not label an arbitrary fixed water mole fraction as saturated.
 
 ## Complete Java example
 
+<!-- teg-equilibrium-example: conservative-contact -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,12 +57,26 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
+/**
+ * Runs a conservative equilibrium-contact screening calculation for TEG dehydration.
+ *
+ * @author NeqSim
+ * @version 1.0
+ */
 public final class TegEquilibriumScreening {
   private static final Logger logger =
       LogManager.getLogger(TegEquilibriumScreening.class);
 
+  /** Utility class. */
   private TegEquilibriumScreening() {}
 
+  /**
+   * Return one component's mass flow across every phase in a stream.
+   *
+   * @param stream process stream
+   * @param componentName NeqSim component name
+   * @return component mass flow in kg/hr
+   */
   private static double componentFlow(
       StreamInterface stream, String componentName) {
     double flow = 0.0;
@@ -77,6 +92,11 @@ public final class TegEquilibriumScreening {
     return flow;
   }
 
+  /**
+   * Run the screening case and fail closed if its engineering contracts are not met.
+   *
+   * @param args command-line arguments; unused
+   */
   public static void main(String[] args) {
     SystemSrkCPAstatoil gasFluid =
         new SystemSrkCPAstatoil(273.15 + 30.0, 70.0);
@@ -123,6 +143,7 @@ public final class TegEquilibriumScreening {
     process.run();
 
     StreamInterface wetGas = saturator.getOutletStream();
+    StreamInterface mixedContact = equilibriumContact.getOutletStream();
     StreamInterface productGas = phaseSplitter.getGasOutStream();
     StreamInterface richTeg = phaseSplitter.getLiquidOutStream();
 
@@ -136,6 +157,8 @@ public final class TegEquilibriumScreening {
     double productWaterFlow = componentFlow(productGas, "water");
     double richWaterFlow = componentFlow(richTeg, "water");
 
+    double waterTransferred = wetWaterFlow - productWaterFlow;
+    double richTegFlow = richTeg.getFlowRate("kg/hr");
     double waterResidual = wetWaterFlow + leanWaterFlow
         - productWaterFlow - richWaterFlow;
     double totalMassResidual =
@@ -143,12 +166,38 @@ public final class TegEquilibriumScreening {
         - productGas.getFlowRate("kg/hr")
         - richTeg.getFlowRate("kg/hr");
 
+    require(Double.isFinite(wetWater) && Double.isFinite(productWater),
+        "Gas-phase water fractions must be finite");
+    require(productWater < 0.1 * wetWater,
+        "The equilibrium contact must remove more than 90% of gas-phase water");
+    require(waterTransferred > 22.0 && waterTransferred < 25.0,
+        "Water transfer left the validated 22-25 kg/h screening envelope");
+    require(richTegFlow > 3040.0 && richTegFlow < 3050.0,
+        "Rich-liquid flow left the validated 3040-3050 kg/h screening envelope");
+    require(mixedContact.getFluid().getNumberOfPhases() > 1,
+        "The equilibrium contact must retain multiple phases");
+    require(Math.abs(waterResidual) < 1.0e-8,
+        "Water-component balance did not close");
+    require(Math.abs(totalMassResidual) < 1.0e-8,
+        "Total mass balance did not close");
+
     logger.info("Saturated gas water: {} mol-ppm", wetWater * 1.0e6);
     logger.info("Equilibrium gas water: {} mol-ppm", productWater * 1.0e6);
-    logger.info("Water transferred: {} kg/h",
-        wetWaterFlow - productWaterFlow);
+    logger.info("Water transferred: {} kg/h", waterTransferred);
     logger.info("Water balance residual: {} kg/h", waterResidual);
     logger.info("Total mass residual: {} kg/h", totalMassResidual);
+  }
+
+  /**
+   * Fail closed when an engineering contract is not satisfied.
+   *
+   * @param condition contract result
+   * @param message failure description
+   */
+  private static void require(boolean condition, String message) {
+    if (!condition) {
+      throw new IllegalStateException(message);
+    }
   }
 }
 ```

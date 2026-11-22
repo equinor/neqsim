@@ -408,6 +408,23 @@ public final class OperationalEvidencePackage {
     object.addProperty("severity", constraint.getSeverity().name());
     object.addProperty("currentValue", constraint.getCurrentValue());
     object.addProperty("designValue", constraint.getDisplayDesignValue());
+    object.addProperty("applicableLimit", constraint.getApplicableLimit());
+    object.addProperty("applicableLimitRole", constraint.getApplicableLimitRole().name());
+    object.addProperty("applicableLimitSource", constraint.getApplicableLimitSource().name());
+    object.addProperty("applicableLimitSourceReference", constraint.getApplicableLimitSourceReference());
+    object.addProperty("basis", constraint.getBasis());
+    if (constraint.hasOperatingLimit()) {
+      object.addProperty("operatingLimit", constraint.getOperatingLimit());
+      object.addProperty("operatingLimitSource", constraint.getOperatingLimitSource().name());
+      object.addProperty("operatingLimitSourceReference", constraint.getOperatingLimitSourceReference());
+      if (constraint.hasOperatingLimitConfidence()) {
+        object.addProperty("operatingLimitConfidence", constraint.getOperatingLimitConfidence());
+      }
+      if (constraint.hasOperatingLimitValidityRange()) {
+        object.addProperty("operatingLimitValidityMinimum", constraint.getOperatingLimitValidityMinimum());
+        object.addProperty("operatingLimitValidityMaximum", constraint.getOperatingLimitValidityMaximum());
+      }
+    }
     object.addProperty("maxValue", constraint.getMaxValue());
     object.addProperty("minValue", constraint.getMinValue());
     object.addProperty("warningThreshold", constraint.getWarningThreshold());

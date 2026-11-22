@@ -19,7 +19,7 @@ public final class TwoFluidComponentTransport implements Serializable {
   private static final int WATER = 2;
   private static final int PHASE_COUNT = 3;
   private static final double MASS_FLOOR_KG = 1.0e-12;
-  private static final double FLOW_DIRECTION_TOLERANCE_KG_S = 1.0e-12;
+  private static final double MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG = 1.0e-10;
 
   private final String[] componentNames;
   private final double[] componentMolarMassKgMol;
@@ -28,6 +28,9 @@ public final class TwoFluidComponentTransport implements Serializable {
   private double[] intervalInitialInventoryKg;
   private double[] intervalInletMassKg;
   private double[] intervalOutletMassKg;
+  private double[] intervalOutboundMassKg;
+  private double[][] intervalInletPhaseMassKg;
+  private double[][] intervalOutletPhaseMassKg;
   private double[][] intervalInterphaseTransferKg;
   private double[][][] intervalCellInterphaseTransferKg;
   private double intervalLatentHeatEnergyJ;
@@ -40,13 +43,25 @@ public final class TwoFluidComponentTransport implements Serializable {
    * @param sections initialized hydrodynamic cells
    */
   public TwoFluidComponentTransport(SystemInterface fluidTemplate, TwoFluidSection[] sections) {
+    this(fluidTemplate, sections, null);
+  }
+
+  /**
+   * Initialize with an independent aqueous composition, without equilibrating it with the gas.
+   *
+   * @param fluidTemplate gas/reference fluid containing the complete named-component slate
+   * @param sections initialized hydrodynamic cells
+   * @param aqueousFluid independent aqueous composition, or null for equilibrium initialization
+   */
+  public TwoFluidComponentTransport(SystemInterface fluidTemplate, TwoFluidSection[] sections,
+      SystemInterface aqueousFluid) {
     if (fluidTemplate == null || sections == null || sections.length == 0) {
       throw new IllegalArgumentException("Component transport requires a fluid template and at least one section");
     }
     SystemInterface prepared = prepareFluid(fluidTemplate, "initial component transport state");
     componentNames = sortedComponentNames(prepared);
-    if (componentNames.length < 2) {
-      throw new IllegalArgumentException("Component-resolved transport requires at least two components");
+    if (componentNames.length < 1) {
+      throw new IllegalArgumentException("Component-resolved transport requires at least one component");
     }
     componentMolarMassKgMol = componentMolarMasses(prepared, componentNames);
     cellCount = sections.length;
@@ -55,11 +70,19 @@ public final class TwoFluidComponentTransport implements Serializable {
       SystemInterface localFluid = prepared.clone();
       localFluid.setPressure(sections[cell].getPressure() / 1.0e5, "bara");
       localFluid.setTemperature(sections[cell].getTemperature(), "K");
-      localFluid = prepareFluid(localFluid, "initial component state for cell " + cell);
+      localFluid = flashOwnedFluid(localFluid, "initial component state for cell " + cell);
       double[][] initialPhaseFractions = phaseMassFractions(localFluid);
+      if (aqueousFluid != null) {
+        validateComponentSlate(aqueousFluid);
+        double molarMass = aqueousFluid.getMolarMass();
+        for (int component = 0; component < componentNames.length; component++) {
+          initialPhaseFractions[WATER][component] = aqueousFluid.getPhase(0).getComponent(componentNames[component])
+              .getz() * componentMolarMassKgMol[component] / molarMass;
+        }
+      }
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         double phaseMassKg = phaseMassKg(sections[cell], phase);
-        if (phaseMassKg > MASS_FLOOR_KG && sum(initialPhaseFractions[phase]) <= 0.0) {
+        if (phaseMassKg > 0.0 && sum(initialPhaseFractions[phase]) <= 0.0) {
           throw new IllegalArgumentException("Unsupported initial phase/component slate in cell " + cell
               + ": hydrodynamic phase " + phaseName(phase) + " has mass but no matching thermodynamic phase");
         }
@@ -71,11 +94,86 @@ public final class TwoFluidComponentTransport implements Serializable {
     beginInterval();
   }
 
+  private TwoFluidComponentTransport(TwoFluidComponentTransport accepted) {
+    componentNames = accepted.componentNames;
+    componentMolarMassKgMol = accepted.componentMolarMassKgMol;
+    cellCount = accepted.cellCount;
+    // Advection builds a separate candidate inventory; these accepted arrays are only read.
+    componentInventoryKg = accepted.componentInventoryKg;
+    intervalInitialInventoryKg = accepted.intervalInitialInventoryKg;
+    intervalInletMassKg = accepted.intervalInletMassKg.clone();
+    intervalOutletMassKg = accepted.intervalOutletMassKg.clone();
+    intervalOutboundMassKg = accepted.intervalOutboundMassKg.clone();
+    intervalInletPhaseMassKg = copyMatrix(accepted.intervalInletPhaseMassKg);
+    intervalOutletPhaseMassKg = copyMatrix(accepted.intervalOutletPhaseMassKg);
+    intervalInterphaseTransferKg = new double[PHASE_COUNT][];
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      intervalInterphaseTransferKg[phase] = accepted.intervalInterphaseTransferKg[phase].clone();
+    }
+    intervalCellInterphaseTransferKg = copy(accepted.intervalCellInterphaseTransferKg);
+    intervalLatentHeatEnergyJ = accepted.intervalLatentHeatEnergyJ;
+    maximumPhaseMassSynchronizationErrorKg = accepted.maximumPhaseMassSynchronizationErrorKg;
+  }
+
+  /**
+   * Obtain a defensive snapshot of the cell/phase/component inventories.
+   *
+   * @return component masses in kg, with gas/oil/aqueous phase order
+   */
+  public double[][][] getInventoryKg() {
+    return copy(componentInventoryKg);
+  }
+
+  /**
+   * Construct a homogeneous EOS state at the actual transported phase composition. No TP flash or component
+   * redistribution is performed.
+   *
+   * @param cell cell index
+   * @param phase gas=0, oil=1, aqueous=2
+   * @param template thermodynamic template
+   * @param pressurePa absolute pressure in Pa
+   * @param temperatureK temperature in K
+   * @return initialized single-phase fluid
+   */
+  public SystemInterface createPhaseState(int cell, int phase, SystemInterface template, double pressurePa,
+      double temperatureK) {
+    validateComponentSlate(template);
+    double[] amounts = componentInventoryKg[cell][phase];
+    double totalMoles = 0.0;
+    for (int i = 0; i < amounts.length; i++) {
+      totalMoles += amounts[i] / componentMolarMassKgMol[i];
+    }
+    if (!(totalMoles > 0.0)) {
+      throw new IllegalStateException("Cannot evaluate an empty transported phase");
+    }
+    SystemInterface fluid = template.clone();
+    double[] composition = new double[fluid.getNumberOfComponents()];
+    for (int i = 0; i < composition.length; i++) {
+      int index = componentIndex(fluid.getPhase(0).getComponent(i).getComponentName());
+      composition[i] = amounts[index] / componentMolarMassKgMol[index] / totalMoles;
+    }
+    fluid.setMolarComposition(composition);
+    fluid.setPressure(pressurePa / 1.0e5);
+    fluid.setTemperature(temperatureK);
+    fluid.setNumberOfPhases(1);
+    fluid.setMaxNumberOfPhases(1);
+    fluid.setForcePhaseTypes(true);
+    fluid.init(0);
+    fluid.setNumberOfPhases(1);
+    fluid.setBeta(0, 1.0);
+    fluid.setPhaseType(0, forcedPhaseType(phase));
+    fluid.initProperties();
+    return fluid;
+  }
+
   /** Reset per-call boundary and interphase ledgers while retaining distributed inventories. */
   public void beginInterval() {
     intervalInitialInventoryKg = totalComponentInventory();
     intervalInletMassKg = new double[componentNames.length];
     intervalOutletMassKg = new double[componentNames.length];
+    intervalOutboundMassKg = new double[componentNames.length];
+    intervalInletPhaseMassKg = new double[PHASE_COUNT][componentNames.length];
+    intervalOutletPhaseMassKg = new double[PHASE_COUNT][componentNames.length];
     intervalInterphaseTransferKg = new double[PHASE_COUNT][componentNames.length];
     intervalCellInterphaseTransferKg = new double[cellCount][PHASE_COUNT][componentNames.length];
     intervalLatentHeatEnergyJ = 0.0;
@@ -97,26 +195,205 @@ public final class TwoFluidComponentTransport implements Serializable {
   public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
       double[][] phaseMassSourceKgPerMetreSecond, TwoFluidSection[] sections, SystemInterface inletFluid,
       SystemInterface fluidTemplate, double tolerance) {
+    return advance(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, null, null, sections,
+        inletFluid, null, fluidTemplate, tolerance);
+  }
+
+  /**
+   * Advance components with independently specified inlet and reversed-outlet donor states.
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param phaseMassFaceFluxKgS stage-weighted gas/oil/water face mass flows
+   * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
+   * @param sections accepted hydrodynamic cell states
+   * @param inletFluid current inlet boundary fluid
+   * @param outletFluid external outlet donor for reversed flow, or {@code null}
+   * @param fluidTemplate thermodynamic template used for cell flashes
+   * @param tolerance relative conservation/synchronization tolerance
+   * @return composition-dependent latent heat added in each cell over the accepted step, in joules
+   */
+  public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][] phaseMassSourceKgPerMetreSecond, TwoFluidSection[] sections, SystemInterface inletFluid,
+      SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
+    return advance(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, null, null, sections,
+        inletFluid, outletFluid, fluidTemplate, tolerance);
+  }
+
+  /**
+   * Advance components using component source rates frozen at the same Runge-Kutta stages as the hydrodynamic phase
+   * sources.
+   *
+   * <p>
+   * Inventory, boundary/source ledgers, latent heat and synchronization diagnostics are committed together only after
+   * the complete component substep verifies. An exception leaves this transport object unchanged. This transaction does
+   * not roll back the caller's hydrodynamic state or provide concurrent access synchronization.
+   * </p>
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param phaseMassFaceFluxKgS stage-weighted gas/oil/water face mass flows
+   * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
+   * @param componentSourceKgPerMetreSecond stage-weighted cell/phase/component sources, or {@code null} to allocate
+   * from the accepted post-advection state
+   * @param latentHeatSourceWPerMetre stage-weighted cell latent-heat sources, or {@code null} with legacy allocation
+   * @param sections accepted hydrodynamic cell states
+   * @param inletFluid current inlet boundary fluid
+   * @param fluidTemplate thermodynamic template used for cell flashes
+   * @param tolerance relative conservation/synchronization tolerance
+   * @return composition-dependent latent heat added in each cell over the accepted step, in joules
+   */
+  public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
+      double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
+      SystemInterface fluidTemplate, double tolerance) {
+    return advance(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond,
+        componentSourceKgPerMetreSecond, latentHeatSourceWPerMetre, sections, inletFluid, null, fluidTemplate,
+        tolerance);
+  }
+
+  /**
+   * Advance stage-frozen component sources with explicit thermodynamic donors at both external faces.
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param phaseMassFaceFluxKgS stage-weighted gas/oil/water face mass flows
+   * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
+   * @param componentSourceKgPerMetreSecond stage-weighted cell/phase/component sources, or {@code null}
+   * @param latentHeatSourceWPerMetre stage-weighted cell latent-heat sources, or {@code null}
+   * @param sections accepted hydrodynamic cell states
+   * @param inletFluid current inlet boundary fluid
+   * @param outletFluid external outlet donor for reversed flow, or {@code null}
+   * @param fluidTemplate thermodynamic template used for cell flashes
+   * @param tolerance relative conservation/synchronization tolerance
+   * @return composition-dependent latent heat added in each cell over the accepted step, in joules
+   */
+  public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
+      double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
+      SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
+    return advance(timeStepSeconds, phaseMassFaceFluxKgS, null, phaseMassSourceKgPerMetreSecond,
+        componentSourceKgPerMetreSecond, latentHeatSourceWPerMetre, sections, inletFluid, outletFluid, fluidTemplate,
+        tolerance);
+  }
+
+  /**
+   * Advance stage-frozen components while retaining both donor streams at every internal face.
+   *
+   * <p>
+   * {@code directionalInternalPhaseMassFluxKgS[face][phase][0]} is the nonnegative left-to-right stream and index 1 is
+   * the nonnegative right-to-left stream. Their difference must reproduce the corresponding internal entry in
+   * {@code phaseMassFaceFluxKgS}. Supplying {@code null} preserves the historical single-donor interpretation of the
+   * signed net flow. External faces remain signed because their donor compositions are explicit boundary states.
+   * </p>
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param phaseMassFaceFluxKgS stage-weighted net gas/oil/water face mass flows
+   * @param directionalInternalPhaseMassFluxKgS internal forward/reverse streams, or {@code null}
+   * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
+   * @param componentSourceKgPerMetreSecond stage-weighted component sources, or {@code null}
+   * @param latentHeatSourceWPerMetre stage-weighted latent heat sources, or {@code null}
+   * @param sections accepted hydrodynamic cells
+   * @param inletFluid inlet donor state
+   * @param outletFluid reversed-outlet donor state, or {@code null}
+   * @param fluidTemplate thermodynamic template
+   * @param tolerance relative conservation tolerance
+   * @return cell latent heat energies in joules
+   */
+  public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][][] directionalInternalPhaseMassFluxKgS, double[][] phaseMassSourceKgPerMetreSecond,
+      double[][][] componentSourceKgPerMetreSecond, double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections,
+      SystemInterface inletFluid, SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
     validateAdvanceArguments(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, sections,
         tolerance);
+    validateDirectionalInternalFlows(phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS, tolerance);
+    TwoFluidComponentTransport candidate = new TwoFluidComponentTransport(this);
+    double[] latentHeat = candidate.advanceCandidate(timeStepSeconds, phaseMassFaceFluxKgS,
+        directionalInternalPhaseMassFluxKgS, phaseMassSourceKgPerMetreSecond, componentSourceKgPerMetreSecond,
+        latentHeatSourceWPerMetre, sections, inletFluid, outletFluid, fluidTemplate, tolerance);
+    candidate.validateFiniteState();
+    componentInventoryKg = candidate.componentInventoryKg;
+    intervalInletMassKg = candidate.intervalInletMassKg;
+    intervalOutletMassKg = candidate.intervalOutletMassKg;
+    intervalOutboundMassKg = candidate.intervalOutboundMassKg;
+    intervalInletPhaseMassKg = candidate.intervalInletPhaseMassKg;
+    intervalOutletPhaseMassKg = candidate.intervalOutletPhaseMassKg;
+    intervalInterphaseTransferKg = candidate.intervalInterphaseTransferKg;
+    intervalCellInterphaseTransferKg = candidate.intervalCellInterphaseTransferKg;
+    intervalLatentHeatEnergyJ = candidate.intervalLatentHeatEnergyJ;
+    maximumPhaseMassSynchronizationErrorKg = candidate.maximumPhaseMassSynchronizationErrorKg;
+    return latentHeat;
+  }
+
+  private void validateFiniteState() {
+    requireFiniteValues(intervalInletMassKg);
+    requireFiniteValues(intervalOutletMassKg);
+    requireFiniteValues(intervalOutboundMassKg);
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      requireFiniteValues(intervalInletPhaseMassKg[phase]);
+      requireFiniteValues(intervalOutletPhaseMassKg[phase]);
+    }
+    for (double[] transfer : intervalInterphaseTransferKg) {
+      requireFiniteValues(transfer);
+    }
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        requireFiniteValues(componentInventoryKg[cell][phase]);
+        requireFiniteValues(intervalCellInterphaseTransferKg[cell][phase]);
+      }
+    }
+    requireFiniteValues(new double[] {intervalLatentHeatEnergyJ, maximumPhaseMassSynchronizationErrorKg});
+  }
+
+  private static void requireFiniteValues(double[] values) {
+    for (double value : values) {
+      if (!Double.isFinite(value)) {
+        throw new IllegalStateException("Component candidate inventory and transport ledgers must remain finite");
+      }
+    }
+  }
+
+  private double[] advanceCandidate(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][][] directionalInternalPhaseMassFluxKgS, double[][] phaseMassSourceKgPerMetreSecond,
+      double[][][] componentSourceKgPerMetreSecond, double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections,
+      SystemInterface inletFluid, SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
     if (fluidTemplate == null) {
       throw new IllegalArgumentException("Fluid template cannot be null for component transport");
     }
     SystemInterface preparedInlet = prepareFluid(inletFluid, "component inlet boundary");
     validateComponentSlate(preparedInlet);
     double[][] inletPhaseFractions = phaseMassFractions(preparedInlet);
+    double[][] outletPhaseFractions = null;
+    if (outletFluid != null) {
+      SystemInterface preparedOutlet = prepareFluid(outletFluid, "component outlet boundary");
+      validateComponentSlate(preparedOutlet);
+      outletPhaseFractions = phaseMassFractions(preparedOutlet);
+    }
     double[][][] oldFractions = currentMassFractions();
     double[][][] updated = copy(componentInventoryKg);
     double[] latentHeatEnergyByCellJ = new double[cellCount];
+    double[][][] frozenComponentTransferKg = null;
+    if (componentSourceKgPerMetreSecond != null) {
+      frozenComponentTransferKg = new double[cellCount][][];
+      for (int cell = 0; cell < cellCount; cell++) {
+        double[] phaseTransferKg = new double[PHASE_COUNT];
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          phaseTransferKg[phase] = phaseMassSourceKgPerMetreSecond[cell][phase] * sections[cell].getLength()
+              * timeStepSeconds;
+        }
+        frozenComponentTransferKg[cell] = componentTransferFromSourceRates(cell, timeStepSeconds,
+            sections[cell].getLength(), phaseTransferKg, componentSourceKgPerMetreSecond, tolerance);
+      }
+      prepareAppearingPhaseDonors(timeStepSeconds, phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS,
+          frozenComponentTransferKg, inletPhaseFractions, outletPhaseFractions, oldFractions, tolerance);
+    }
 
     for (int face = 0; face <= cellCount; face++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        double phaseFlowKgS = phaseMassFaceFluxKgS[face][phase];
-        if (phaseFlowKgS >= -FLOW_DIRECTION_TOLERANCE_KG_S) {
-          advectPositiveFace(timeStepSeconds, face, phase, Math.max(0.0, phaseFlowKgS), inletPhaseFractions,
-              oldFractions, updated);
-        } else {
-          advectNegativeFace(timeStepSeconds, face, phase, -phaseFlowKgS, oldFractions, updated);
+        double forwardFlowKgS = forwardFlow(phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS, face, phase);
+        double reverseFlowKgS = reverseFlow(phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS, face, phase);
+        if (forwardFlowKgS > 0.0) {
+          advectPositiveFace(timeStepSeconds, face, phase, forwardFlowKgS, inletPhaseFractions, oldFractions, updated);
+        }
+        if (reverseFlowKgS > 0.0) {
+          advectNegativeFace(timeStepSeconds, face, phase, reverseFlowKgS, outletPhaseFractions, oldFractions, updated);
         }
       }
     }
@@ -132,9 +409,22 @@ public final class TwoFluidComponentTransport implements Serializable {
       if (Math.abs(sum(phaseTransferKg)) > tolerance * transferScale) {
         throw new IllegalStateException("Hydrodynamic interphase sources do not sum to zero in cell " + cell);
       }
-      double[][] componentTransfer = allocateComponentTransfer(cell, phaseTransferKg, updated, sections, fluidTemplate);
-      latentHeatEnergyByCellJ[cell] = calculateLatentHeatEnergyJ(cell, componentTransfer, updated, sections,
-          fluidTemplate);
+      double[][] componentTransfer;
+      if (componentSourceKgPerMetreSecond == null) {
+        componentTransfer = allocateComponentTransfer(cell, phaseTransferKg, updated, sections, fluidTemplate);
+      } else {
+        componentTransfer = frozenComponentTransferKg[cell];
+      }
+      if (componentSourceKgPerMetreSecond == null) {
+        latentHeatEnergyByCellJ[cell] = calculateLatentHeatEnergyJ(cell, componentTransfer, updated, sections,
+            fluidTemplate);
+      } else {
+        if (latentHeatSourceWPerMetre == null || latentHeatSourceWPerMetre.length != cellCount
+            || !Double.isFinite(latentHeatSourceWPerMetre[cell])) {
+          throw new IllegalArgumentException("Stage-frozen component sources require finite cell latent-heat sources");
+        }
+        latentHeatEnergyByCellJ[cell] = latentHeatSourceWPerMetre[cell] * sections[cell].getLength() * timeStepSeconds;
+      }
       intervalLatentHeatEnergyJ += latentHeatEnergyByCellJ[cell];
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         for (int component = 0; component < componentNames.length; component++) {
@@ -150,37 +440,590 @@ public final class TwoFluidComponentTransport implements Serializable {
     return latentHeatEnergyByCellJ;
   }
 
+  /**
+   * Supply empty phase donors with validated source-stage composition without changing inventory.
+   *
+   * <p>
+   * All outgoing faces share the old, newly created and accepted incoming phase mass budget. A source-created or
+   * incoming phase may relay through initially empty cells, matching the coupled pressure corrector's conservative
+   * transfer graph. Existing phases retain their old upwind composition, and sources are added exactly once after
+   * advection. The enclosing candidate transaction retains the final component nonnegativity checks.
+   * </p>
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param faceFlowsKgS accepted gas/oil/water face mass flows
+   * @param componentTransferKg validated cell/phase/component source transfers
+   * @param inletFractions specified inlet phase/component mass fractions
+   * @param outletFractions specified reversed-outlet phase/component mass fractions, or {@code null}
+   * @param donorFractions old upwind fractions, updated only for empty appearing phases
+   * @param tolerance relative mass-budget tolerance
+   * @throws IllegalStateException if an empty donor cannot fund its outgoing transfers
+   */
+  private void prepareAppearingPhaseDonors(double timeStepSeconds, double[][] faceFlowsKgS,
+      double[][][] directionalInternalFlowsKgS, double[][][] componentTransferKg, double[][] inletFractions,
+      double[][] outletFractions, double[][][] donorFractions, double tolerance) {
+    for (int pass = 0; pass < cellCount; pass++) {
+      boolean changed = false;
+      for (int cell = 0; cell < cellCount; cell++) {
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          if (sum(donorFractions[cell][phase]) > 0.0) {
+            continue;
+          }
+          double outgoingKg = timeStepSeconds * (reverseFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell, phase)
+              + forwardFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell + 1, phase));
+          if (outgoingKg <= 0.0) {
+            continue;
+          }
+          double[] availableComponentKg = componentTransferKg[cell][phase].clone();
+          double availableKg = sum(availableComponentKg);
+          boolean unresolvedIncoming = false;
+          double leftIncomingKg = timeStepSeconds * forwardFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell, phase);
+          if (leftIncomingKg > 0.0) {
+            double[] leftFractions = cell == 0 ? inletFractions[phase] : donorFractions[cell - 1][phase];
+            if (sum(leftFractions) <= 0.0) {
+              unresolvedIncoming = true;
+            } else {
+              availableKg += leftIncomingKg;
+              for (int component = 0; component < componentNames.length; component++) {
+                availableComponentKg[component] += leftIncomingKg * leftFractions[component];
+              }
+            }
+          }
+          double rightIncomingKg = timeStepSeconds
+              * reverseFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell + 1, phase);
+          if (rightIncomingKg > 0.0) {
+            double[] rightFractions = cell + 1 < cellCount ? donorFractions[cell + 1][phase]
+                : outletFractions == null ? null : outletFractions[phase];
+            if (rightFractions == null || sum(rightFractions) <= 0.0) {
+              unresolvedIncoming = true;
+            } else {
+              availableKg += rightIncomingKg;
+              for (int component = 0; component < componentNames.length; component++) {
+                availableComponentKg[component] += rightIncomingKg * rightFractions[component];
+              }
+            }
+          }
+          if (unresolvedIncoming) {
+            continue;
+          }
+          double budgetToleranceKg = Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG,
+              tolerance * Math.max(MASS_FLOOR_KG, availableKg));
+          if (availableKg <= 0.0 || outgoingKg > availableKg + budgetToleranceKg) {
+            throw new IllegalStateException(
+                "Insufficient " + phaseName(phase) + " source/incoming donor inventory in cell " + cell + ": outgoing="
+                    + outgoingKg + " kg, available=" + availableKg + " kg");
+          }
+          for (int component = 0; component < componentNames.length; component++) {
+            if (availableComponentKg[component] < 0.0) {
+              throw new IllegalStateException("A previously empty " + phaseName(phase)
+                  + " donor cannot use a negative component-creation source in cell " + cell);
+            }
+            donorFractions[cell][phase][component] = availableComponentKg[component] / availableKg;
+          }
+          changed = true;
+        }
+      }
+      if (!changed) {
+        break;
+      }
+    }
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        double outgoingKg = timeStepSeconds * (reverseFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell, phase)
+            + forwardFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell + 1, phase));
+        if (outgoingKg > 0.0 && sum(donorFractions[cell][phase]) <= 0.0) {
+          throw new IllegalStateException("Insufficient " + phaseName(phase)
+              + " source/incoming donor inventory in cell " + cell + ": outgoing=" + outgoingKg + " kg");
+        }
+      }
+    }
+  }
+
+  /**
+   * Resolve phase-mass sources into named-component sources at one hydrodynamic RHS stage.
+   *
+   * <p>
+   * Condensation uses the receiving-phase composition from the exact local equilibrium state that generated the
+   * hydrodynamic source. Evaporation uses the conserved donor-phase composition. Freezing these allocations at the RHS
+   * stage prevents a later slug/advection split from asking a different post-transport flash to reconstruct the
+   * already-accepted phase appearance.
+   * </p>
+   *
+   * @param phaseMassSourceKgPerMetreSecond cell gas/oil/water source rates
+   * @param localEquilibriumStates local flashed states used to calculate those source rates
+   * @param tolerance relative source-closure tolerance
+   * @return cell/phase/component source rates in kg/(m s)
+   */
+  public double[][][] createComponentSourceRates(double[][] phaseMassSourceKgPerMetreSecond,
+      SystemInterface[] localEquilibriumStates, double tolerance) {
+    if (phaseMassSourceKgPerMetreSecond == null || phaseMassSourceKgPerMetreSecond.length != cellCount
+        || localEquilibriumStates == null || localEquilibriumStates.length != cellCount || !Double.isFinite(tolerance)
+        || tolerance <= 0.0) {
+      throw new IllegalArgumentException("Component source arrays must match the grid and tolerance must be positive");
+    }
+    double[][][] source = new double[cellCount][PHASE_COUNT][componentNames.length];
+    double[][][] donorFractions = currentMassFractions();
+    for (int cell = 0; cell < cellCount; cell++) {
+      double[] phaseSource = phaseMassSourceKgPerMetreSecond[cell];
+      if (phaseSource == null || phaseSource.length != PHASE_COUNT) {
+        throw new IllegalArgumentException("Every component cell must contain gas, oil, and water source rates");
+      }
+      double scale = Math.max(MASS_FLOOR_KG,
+          Math.max(Math.abs(phaseSource[GAS]), Math.max(Math.abs(phaseSource[OIL]), Math.abs(phaseSource[WATER]))));
+      if (Math.abs(sum(phaseSource)) > tolerance * scale) {
+        throw new IllegalStateException("Hydrodynamic interphase sources do not sum to zero in cell " + cell);
+      }
+      if ((phaseSource[OIL] > 0.0 && phaseSource[WATER] < 0.0)
+          || (phaseSource[OIL] < 0.0 && phaseSource[WATER] > 0.0)) {
+        throw new IllegalStateException("Direct oil-water component transfer is outside the validated closure");
+      }
+      double gasSource = phaseSource[GAS];
+      if (gasSource > 0.0) {
+        for (int donorPhase : new int[] {OIL, WATER}) {
+          double withdrawalRate = Math.max(0.0, -phaseSource[donorPhase]);
+          if (withdrawalRate <= 0.0) {
+            continue;
+          }
+          if (sum(donorFractions[cell][donorPhase]) <= 0.0) {
+            throw new IllegalStateException(
+                "Unsupported evaporation from empty " + phaseName(donorPhase) + " component inventory in cell " + cell);
+          }
+          for (int component = 0; component < componentNames.length; component++) {
+            double componentRate = withdrawalRate * donorFractions[cell][donorPhase][component];
+            source[cell][donorPhase][component] -= componentRate;
+            source[cell][GAS][component] += componentRate;
+          }
+        }
+      } else if (gasSource < 0.0) {
+        if (localEquilibriumStates[cell] == null) {
+          throw new IllegalArgumentException("Missing local equilibrium state for condensation in cell " + cell);
+        }
+        double[][] equilibriumFractions = phaseMassFractions(localEquilibriumStates[cell]);
+        for (int receivingPhase : new int[] {OIL, WATER}) {
+          double additionRate = Math.max(0.0, phaseSource[receivingPhase]);
+          if (additionRate <= 0.0) {
+            continue;
+          }
+          if (sum(equilibriumFractions[receivingPhase]) <= 0.0) {
+            throw new IllegalStateException("Unsupported phase appearance: source-stage flash provides no "
+                + phaseName(receivingPhase) + " composition in cell " + cell);
+          }
+          for (int component = 0; component < componentNames.length; component++) {
+            double componentRate = additionRate * equilibriumFractions[receivingPhase][component];
+            source[cell][receivingPhase][component] += componentRate;
+            source[cell][GAS][component] -= componentRate;
+          }
+        }
+      } else if (phaseSource[OIL] != 0.0 || phaseSource[WATER] != 0.0) {
+        throw new IllegalStateException("Direct oil-water component transfer is outside the validated closure");
+      }
+    }
+    return source;
+  }
+
+  /**
+   * Relax dry hydrocarbon component inventories toward their local equilibrium phase inventories.
+   *
+   * <p>
+   * Each oil source is its equilibrium component inventory minus its conserved inventory, divided by cell length and
+   * the existing relaxation time. Gas receives the exact opposite source. Components may counter-transfer even when net
+   * phase mass transfer vanishes. This is an approximate relaxation law, not a predictive interfacial rate. A
+   * source-only Euler step no longer than the relaxation time is a convex inventory update.
+   * </p>
+   *
+   * @param equilibriumStates source-stage flashes of the conserved local composition
+   * @param sections physical cells supplying lengths
+   * @param relaxationTimeSeconds positive finite relaxation time in seconds
+   * @return cell/phase/component rates in kg/(m s), or null when aqueous inventory or equilibrium is present
+   */
+  public double[][][] createHydrocarbonRelaxationSourceRates(SystemInterface[] equilibriumStates,
+      TwoFluidSection[] sections, double relaxationTimeSeconds) {
+    if (equilibriumStates == null || equilibriumStates.length != cellCount || sections == null
+        || sections.length != cellCount || !(relaxationTimeSeconds > 0.0) || !Double.isFinite(relaxationTimeSeconds)) {
+      throw new IllegalArgumentException("Hydrocarbon relaxation requires matching cells, flashes and positive time");
+    }
+    double[][][] result = createHydrocarbonEquilibriumInventoryChanges(equilibriumStates, sections);
+    if (result == null) {
+      return null;
+    }
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        for (int component = 0; component < componentNames.length; component++) {
+          result[cell][phase][component] /= relaxationTimeSeconds;
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Calculate the dry-hydrocarbon component inventory changes required to reach local phase equilibrium.
+   *
+   * <p>
+   * The returned gas and oil changes are equal and opposite for every component. Values have units kg/m and are
+   * changes, not rates. Separating the target from its kinetics lets finite-rate closures use the same conservative
+   * phase target without assigning an arbitrary relaxation time.
+   * </p>
+   *
+   * @param equilibriumStates source-stage flashes of the conserved local composition
+   * @param sections physical cells supplying lengths
+   * @return cell/phase/component equilibrium inventory changes in kg/m, or null when aqueous inventory or equilibrium
+   * is present
+   */
+  public double[][][] createHydrocarbonEquilibriumInventoryChanges(SystemInterface[] equilibriumStates,
+      TwoFluidSection[] sections) {
+    if (equilibriumStates == null || equilibriumStates.length != cellCount || sections == null
+        || sections.length != cellCount) {
+      throw new IllegalArgumentException("Hydrocarbon targets require matching cells and flashes");
+    }
+    double[][][] result = new double[cellCount][PHASE_COUNT][componentNames.length];
+    for (int cell = 0; cell < cellCount; cell++) {
+      SystemInterface equilibrium = equilibriumStates[cell];
+      if (equilibrium == null || sections[cell] == null || !(sections[cell].getLength() > 0.0)
+          || !Double.isFinite(sections[cell].getLength())) {
+        throw new IllegalArgumentException("Hydrocarbon relaxation requires flashed states and finite cell lengths");
+      }
+      validateComponentSlate(equilibrium);
+      if (phaseInventory(componentInventoryKg[cell][WATER]) > 0.0) {
+        return null;
+      }
+      double equilibriumMass = 0.0;
+      double equilibriumOilMass = 0.0;
+      for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
+        PhaseInterface phaseState = equilibrium.getPhase(phase);
+        double mass = phaseState.getMass();
+        if (!Double.isFinite(mass) || mass < 0.0) {
+          throw new IllegalArgumentException("Equilibrium phase masses must be finite and nonnegative");
+        }
+        int identity = phaseIndex(phaseState.getType());
+        if (identity == WATER && mass > 0.0) {
+          return null;
+        }
+        if (identity < 0 && mass > 0.0) {
+          throw new IllegalArgumentException("Unsupported hydrocarbon relaxation phase " + phaseState.getType());
+        }
+        equilibriumMass += mass;
+        if (identity == OIL) {
+          equilibriumOilMass += mass;
+        }
+      }
+      if (!(equilibriumMass > 0.0)) {
+        throw new IllegalArgumentException("Equilibrium state must contain positive mass");
+      }
+      double mass = phaseInventory(componentInventoryKg[cell][GAS]) + phaseInventory(componentInventoryKg[cell][OIL]);
+      double targetOilMass = mass * equilibriumOilMass / equilibriumMass;
+      double[][] fractions = phaseMassFractions(equilibrium);
+      for (int component = 0; component < componentNames.length; component++) {
+        double oilChangePerMetre = (targetOilMass * fractions[OIL][component]
+            - componentInventoryKg[cell][OIL][component]) / sections[cell].getLength();
+        result[cell][OIL][component] = oilChangePerMetre;
+        result[cell][GAS][component] = -oilChangePerMetre;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Relax each conserved component toward its gas, oil and aqueous equilibrium partition.
+   *
+   * <p>
+   * Each component retains its own total inventory. Its equilibrium phase masses supply partition weights, not a
+   * receiving-phase composition that can withdraw an unavailable species from a donor. A source-only Euler interval no
+   * longer than the relaxation time is a convex update toward nonnegative component targets. This is an approximate
+   * equilibrium-relaxation law, not a predictive interfacial mass-transfer coefficient.
+   * </p>
+   *
+   * @param equilibriumStates source-stage flashes of the conserved local compositions
+   * @param sections physical cells supplying lengths
+   * @param relaxationTimeSeconds positive finite relaxation time in seconds
+   * @return cell/phase/component rates in kg/(m s), with each component conserved across phases
+   * @throws IllegalArgumentException if the grid, states, time or phase masses are invalid
+   * @throws IllegalStateException if an equilibrium partition loses a conserved component
+   */
+  public double[][][] createEquilibriumRelaxationSourceRates(SystemInterface[] equilibriumStates,
+      TwoFluidSection[] sections, double relaxationTimeSeconds) {
+    if (equilibriumStates == null || equilibriumStates.length != cellCount || sections == null
+        || sections.length != cellCount || !(relaxationTimeSeconds > 0.0) || !Double.isFinite(relaxationTimeSeconds)) {
+      throw new IllegalArgumentException("Equilibrium relaxation requires matching cells, flashes and positive time");
+    }
+    double[][][] result = new double[cellCount][PHASE_COUNT][componentNames.length];
+    for (int cell = 0; cell < cellCount; cell++) {
+      SystemInterface equilibrium = equilibriumStates[cell];
+      if (equilibrium == null || sections[cell] == null || !(sections[cell].getLength() > 0.0)
+          || !Double.isFinite(sections[cell].getLength())) {
+        throw new IllegalArgumentException("Equilibrium relaxation requires flashed states and finite cell lengths");
+      }
+      validateComponentSlate(equilibrium);
+      double[] phaseMass = new double[PHASE_COUNT];
+      for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
+        PhaseInterface phaseState = equilibrium.getPhase(phase);
+        double mass = phaseState.getMass();
+        int identity = phaseIndex(phaseState.getType());
+        if (!Double.isFinite(mass) || mass < 0.0 || identity < 0 && mass > 0.0) {
+          throw new IllegalArgumentException("Unsupported equilibrium phase mass or type " + phaseState.getType());
+        }
+        if (identity >= 0) {
+          phaseMass[identity] += mass;
+        }
+      }
+      if (!(sum(phaseMass) > 0.0)) {
+        throw new IllegalArgumentException("Equilibrium state must contain positive mass");
+      }
+      double[][] fractions = phaseMassFractions(equilibrium);
+      for (int component = 0; component < componentNames.length; component++) {
+        double inventory = 0.0;
+        double partitionSum = 0.0;
+        double[] target = new double[PHASE_COUNT];
+        int balancePhase = GAS;
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          inventory += componentInventoryKg[cell][phase][component];
+          target[phase] = phaseMass[phase] * fractions[phase][component];
+          partitionSum += target[phase];
+          if (target[phase] > target[balancePhase]) {
+            balancePhase = phase;
+          }
+        }
+        if (inventory == 0.0) {
+          continue;
+        }
+        if (!(partitionSum > 0.0) || !Double.isFinite(partitionSum)) {
+          throw new IllegalStateException(
+              "Equilibrium partition lost component '" + componentNames[component] + "' in cell " + cell);
+        }
+        double otherTargets = 0.0;
+        double otherRates = 0.0;
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          if (phase != balancePhase) {
+            target[phase] = inventory * (target[phase] / partitionSum);
+            otherTargets += target[phase];
+            double rate = (target[phase] - componentInventoryKg[cell][phase][component]) / sections[cell].getLength()
+                / relaxationTimeSeconds;
+            result[cell][phase][component] = rate;
+            otherRates += rate;
+          }
+        }
+        // Balance the largest partition so roundoff cannot make an absent trace target negative.
+        target[balancePhase] = inventory - otherTargets;
+        if (!(target[balancePhase] >= 0.0) || !Double.isFinite(target[balancePhase])) {
+          throw new IllegalStateException("Invalid equilibrium component partition in cell " + cell);
+        }
+        result[cell][balancePhase][component] = -otherRates;
+        result[cell][GAS][component] = -(result[cell][OIL][component] + result[cell][WATER][component]);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Calculate composition-resolved latent-heat source rates at the same local equilibrium states as the component
+   * source allocation.
+   *
+   * @param componentSourceKgPerMetreSecond cell/phase/component source rates in kg/(m s)
+   * @param localEquilibriumStates source-stage local equilibrium states
+   * @return heat released to sensible energy in each cell, in W/m
+   */
+  public double[] createLatentHeatSourceRates(double[][][] componentSourceKgPerMetreSecond,
+      SystemInterface[] localEquilibriumStates) {
+    if (componentSourceKgPerMetreSecond == null || componentSourceKgPerMetreSecond.length != cellCount
+        || localEquilibriumStates == null || localEquilibriumStates.length != cellCount) {
+      throw new IllegalArgumentException("Latent-heat source arrays must match the component grid");
+    }
+    double[] sourceWPerMetre = new double[cellCount];
+    double[][][] donorFractions = currentMassFractions();
+    for (int cell = 0; cell < cellCount; cell++) {
+      if (localEquilibriumStates[cell] == null) {
+        throw new IllegalArgumentException("Missing local equilibrium state for latent heat in cell " + cell);
+      }
+      double[][] enthalpyJkg = componentSpecificEnthalpies(localEquilibriumStates[cell]);
+      double[][] forcedDonorEnthalpyJkg = new double[PHASE_COUNT][];
+      double phaseFormationWPerMetre = 0.0;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        if (componentSourceKgPerMetreSecond[cell][phase] == null
+            || componentSourceKgPerMetreSecond[cell][phase].length != componentNames.length) {
+          throw new IllegalArgumentException("Every latent-heat source phase must contain the component slate");
+        }
+        for (int component = 0; component < componentNames.length; component++) {
+          double massSource = componentSourceKgPerMetreSecond[cell][phase][component];
+          if (massSource == 0.0) {
+            continue;
+          }
+          double specificEnthalpyJkg = enthalpyJkg[phase][component];
+          if (!Double.isFinite(specificEnthalpyJkg) && massSource < 0.0 && sum(donorFractions[cell][phase]) > 0.0) {
+            if (forcedDonorEnthalpyJkg[phase] == null) {
+              forcedDonorEnthalpyJkg[phase] = forcedPhaseSpecificEnthalpies(localEquilibriumStates[cell],
+                  donorFractions[cell][phase], phase, cell);
+            }
+            specificEnthalpyJkg = forcedDonorEnthalpyJkg[phase][component];
+          }
+          if (!Double.isFinite(specificEnthalpyJkg)) {
+            throw new IllegalStateException("Unsupported source-stage latent-enthalpy closure: component '"
+                + componentNames[component] + "' has no partial enthalpy in thermodynamic " + phaseName(phase)
+                + " phase while mass transfers in cell " + cell);
+          }
+          phaseFormationWPerMetre += massSource * specificEnthalpyJkg;
+        }
+      }
+      sourceWPerMetre[cell] = -phaseFormationWPerMetre;
+    }
+    return sourceWPerMetre;
+  }
+
+  private double[] forcedPhaseSpecificEnthalpies(SystemInterface template, double[] massFractions, int phase,
+      int cell) {
+    double[] componentMoles = new double[componentNames.length];
+    double totalMoles = 0.0;
+    for (int component = 0; component < componentNames.length; component++) {
+      componentMoles[component] = massFractions[component] / componentMolarMassKgMol[component];
+      totalMoles += componentMoles[component];
+    }
+    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles)) {
+      throw new IllegalStateException("Cannot construct disappearing " + phaseName(phase)
+          + " enthalpy state from an empty component inventory in cell " + cell);
+    }
+    SystemInterface forced = template.clone();
+    double[] templateComposition = new double[forced.getNumberOfComponents()];
+    for (int templateIndex = 0; templateIndex < forced.getNumberOfComponents(); templateIndex++) {
+      String name = forced.getPhase(0).getComponent(templateIndex).getComponentName();
+      templateComposition[templateIndex] = componentMoles[componentIndex(name)] / totalMoles;
+    }
+    try {
+      forced.setMolarComposition(templateComposition);
+      forced.setNumberOfPhases(1);
+      forced.setMaxNumberOfPhases(1);
+      forced.setForcePhaseTypes(true);
+      forced.init(0);
+      forced.setPhaseType(0, forcedPhaseType(phase));
+      forced.init(3);
+      return componentSpecificEnthalpies(forced)[phase];
+    } catch (Exception exception) {
+      throw new IllegalStateException("Cannot evaluate disappearing " + phaseName(phase)
+          + " partial enthalpies in cell " + cell + ": " + exception.getMessage(), exception);
+    }
+  }
+
+  private static PhaseType forcedPhaseType(int phase) {
+    switch (phase) {
+    case GAS:
+      return PhaseType.GAS;
+    case OIL:
+      return PhaseType.LIQUID;
+    case WATER:
+      return PhaseType.AQUEOUS;
+    default:
+      throw new IllegalArgumentException("Unsupported phase index " + phase);
+    }
+  }
+
+  /**
+   * Validate stage-frozen transfers against phase sources and conservation of every chemical component.
+   *
+   * @param cell cell index
+   * @param timeStepSeconds accepted substep duration
+   * @param cellLengthMetres cell length in metres
+   * @param phaseTransferKg accepted hydrodynamic phase transfers in kg
+   * @param componentSourceKgPerMetreSecond stage-frozen cell/phase/component source rates
+   * @param tolerance relative conservation tolerance
+   * @return validated phase/component transfers in kg
+   * @throws IllegalArgumentException if the source arrays do not match the grid or component slate
+   * @throws IllegalStateException if source transfers are nonfinite or inconsistent
+   */
+  private double[][] componentTransferFromSourceRates(int cell, double timeStepSeconds, double cellLengthMetres,
+      double[] phaseTransferKg, double[][][] componentSourceKgPerMetreSecond, double tolerance) {
+    if (componentSourceKgPerMetreSecond.length != cellCount || componentSourceKgPerMetreSecond[cell] == null
+        || componentSourceKgPerMetreSecond[cell].length != PHASE_COUNT) {
+      throw new IllegalArgumentException("Component source arrays must match the hydrodynamic grid");
+    }
+    double[][] transfer = new double[PHASE_COUNT][componentNames.length];
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      double componentSumKg = 0.0;
+      if (componentSourceKgPerMetreSecond[cell][phase] == null
+          || componentSourceKgPerMetreSecond[cell][phase].length != componentNames.length) {
+        throw new IllegalArgumentException("Every component source phase must contain the tracked component slate");
+      }
+      for (int component = 0; component < componentNames.length; component++) {
+        double value = componentSourceKgPerMetreSecond[cell][phase][component] * cellLengthMetres * timeStepSeconds;
+        if (!Double.isFinite(value)) {
+          throw new IllegalStateException("Non-finite component source in cell " + cell);
+        }
+        transfer[phase][component] = value;
+        componentSumKg += value;
+      }
+      double scale = Math.max(MASS_FLOOR_KG, Math.max(Math.abs(phaseTransferKg[phase]), Math.abs(componentSumKg)));
+      if (!Double.isFinite(componentSumKg) || Math.abs(componentSumKg - phaseTransferKg[phase]) > Math
+          .max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG, tolerance * scale)) {
+        throw new IllegalStateException(
+            "Component sources do not reproduce the " + phaseName(phase) + " hydrodynamic source in cell " + cell
+                + ": component transfer=" + componentSumKg + " kg, phase transfer=" + phaseTransferKg[phase] + " kg");
+      }
+    }
+    for (int component = 0; component < componentNames.length; component++) {
+      double residualKg = 0.0;
+      double scaleKg = MASS_FLOOR_KG;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        residualKg += transfer[phase][component];
+        scaleKg = Math.max(scaleKg, Math.abs(transfer[phase][component]));
+      }
+      if (!Double.isFinite(residualKg)
+          || Math.abs(residualKg) > Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG, tolerance * scaleKg)) {
+        throw new IllegalStateException("Interphase sources do not conserve component " + componentNames[component]
+            + " in cell " + cell + ": residual=" + residualKg + " kg");
+      }
+    }
+    return transfer;
+  }
+
   private void advectPositiveFace(double timeStepSeconds, int face, int phase, double phaseFlowKgS,
       double[][] inletPhaseFractions, double[][][] oldFractions, double[][][] updated) {
     double[] donorFractions = face == 0 ? inletPhaseFractions[phase] : oldFractions[face - 1][phase];
-    validateDonorComposition(donorFractions, phaseFlowKgS, face, phase);
+    validateDonorComposition(donorFractions, timeStepSeconds * phaseFlowKgS, face, phase);
     for (int component = 0; component < componentNames.length; component++) {
       double transportedMassKg = timeStepSeconds * phaseFlowKgS * donorFractions[component];
       if (face > 0) {
         updated[face - 1][phase][component] -= transportedMassKg;
       } else {
         intervalInletMassKg[component] += transportedMassKg;
+        intervalInletPhaseMassKg[phase][component] += transportedMassKg;
       }
       if (face < cellCount) {
         updated[face][phase][component] += transportedMassKg;
       } else {
         intervalOutletMassKg[component] += transportedMassKg;
+        intervalOutletPhaseMassKg[phase][component] += transportedMassKg;
+        intervalOutboundMassKg[component] += transportedMassKg;
       }
     }
   }
 
   private void advectNegativeFace(double timeStepSeconds, int face, int phase, double phaseFlowKgS,
-      double[][][] oldFractions, double[][][] updated) {
+      double[][] outletPhaseFractions, double[][][] oldFractions, double[][][] updated) {
     if (face == 0) {
-      throw new IllegalStateException("Unsupported component outflow through the inlet boundary in " + phaseName(phase)
-          + ": positive inlet flow is required when component transport is enabled");
+      double[] donorFractions = oldFractions[0][phase];
+      validateDonorComposition(donorFractions, timeStepSeconds * phaseFlowKgS, face, phase);
+      for (int component = 0; component < componentNames.length; component++) {
+        double transportedMassKg = timeStepSeconds * phaseFlowKgS * donorFractions[component];
+        updated[0][phase][component] -= transportedMassKg;
+        intervalInletMassKg[component] -= transportedMassKg;
+        intervalInletPhaseMassKg[phase][component] -= transportedMassKg;
+      }
+      return;
     }
     if (face == cellCount) {
-      throw new IllegalStateException("Unsupported component inflow through the outlet boundary in " + phaseName(phase)
-          + ": provide a validated outlet composition before enabling reverse boundary flow");
+      if (outletPhaseFractions == null) {
+        throw new IllegalStateException("Unsupported component inflow through the outlet boundary in "
+            + phaseName(phase) + ": provide a validated outlet composition before enabling reverse boundary flow");
+      }
+      double[] donorFractions = outletPhaseFractions[phase];
+      validateDonorComposition(donorFractions, timeStepSeconds * phaseFlowKgS, face, phase);
+      for (int component = 0; component < componentNames.length; component++) {
+        double transportedMassKg = timeStepSeconds * phaseFlowKgS * donorFractions[component];
+        updated[cellCount - 1][phase][component] += transportedMassKg;
+        intervalOutletMassKg[component] -= transportedMassKg;
+        intervalOutletPhaseMassKg[phase][component] -= transportedMassKg;
+      }
+      return;
     }
     double[] donorFractions = oldFractions[face][phase];
-    validateDonorComposition(donorFractions, phaseFlowKgS, face, phase);
+    validateDonorComposition(donorFractions, timeStepSeconds * phaseFlowKgS, face, phase);
     for (int component = 0; component < componentNames.length; component++) {
       double transportedMassKg = timeStepSeconds * phaseFlowKgS * donorFractions[component];
       updated[face][phase][component] -= transportedMassKg;
@@ -190,8 +1033,11 @@ public final class TwoFluidComponentTransport implements Serializable {
     }
   }
 
-  private void validateDonorComposition(double[] donorFractions, double phaseFlowKgS, int face, int phase) {
-    if (phaseFlowKgS > FLOW_DIRECTION_TOLERANCE_KG_S && sum(donorFractions) <= 0.0) {
+  private void validateDonorComposition(double[] donorFractions, double transportedMassKg, int face, int phase) {
+    if (!Double.isFinite(transportedMassKg)) {
+      throw new IllegalStateException("Component face transfer must remain finite");
+    }
+    if (transportedMassKg > 0.0 && sum(donorFractions) <= 0.0) {
       throw new IllegalStateException(
           "Boundary/face flow has no " + phaseName(phase) + " component composition at face " + face);
     }
@@ -223,6 +1069,79 @@ public final class TwoFluidComponentTransport implements Serializable {
     }
     return flashWithComponentMasses(fluidTemplate, componentMassKg, pressurePa, temperatureK,
         "thermodynamic synchronization for cell " + cellIndex);
+  }
+
+  /**
+   * Construct the interval-average outlet fluid from the accepted component boundary transfers.
+   *
+   * <p>
+   * Each component flow equals its positive outbound transfer divided by the accepted interval duration. Reversed
+   * phases remain signed in the conservation report but are external donor material, not downstream product.
+   * Composition is mapped by component name, independent of template order. A TP flash at the requested outlet state
+   * preserves total outbound component flows; its equilibrium phase split need not equal the transported hydrodynamic
+   * phase split. With zero outbound transfer the result has zero flow and the template composition is retained only as
+   * a thermodynamic carrier. Call this after a converged component report. The transport state and input template are
+   * not modified.
+   * </p>
+   *
+   * @param fluidTemplate thermodynamic template with the tracked component slate
+   * @param pressurePa outlet absolute pressure in Pa
+   * @param temperatureK outlet temperature in K
+   * @param elapsedTimeSeconds accepted interval duration in s
+   * @return independent flashed outlet fluid with interval-average flow in mol/s internally
+   * @throws IllegalArgumentException for invalid time, pressure, temperature or component slate
+   * @throws IllegalStateException for invalid transferred mass or failed thermodynamic evaluation
+   */
+  public SystemInterface createOutletFluid(SystemInterface fluidTemplate, double pressurePa, double temperatureK,
+      double elapsedTimeSeconds) {
+    if (fluidTemplate == null || !(elapsedTimeSeconds > 0.0) || !Double.isFinite(elapsedTimeSeconds)
+        || !(pressurePa > 0.0) || !Double.isFinite(pressurePa) || !(temperatureK > 0.0)
+        || !Double.isFinite(temperatureK)) {
+      throw new IllegalArgumentException(
+          "Component outlet requires a template and positive finite time, pressure and temperature");
+    }
+    validateComponentSlate(fluidTemplate);
+    double[] templateMolarMasses = componentMolarMasses(fluidTemplate, componentNames);
+    for (int component = 0; component < componentNames.length; component++) {
+      if (Math.abs(templateMolarMasses[component] - componentMolarMassKgMol[component]) > 1.0e-12
+          * componentMolarMassKgMol[component]) {
+        throw new IllegalArgumentException(
+            "Component outlet template changes the tracked molar mass of " + componentNames[component]);
+      }
+    }
+    double totalMass = 0.0;
+    for (double mass : intervalOutboundMassKg) {
+      if (!Double.isFinite(mass) || mass < 0.0) {
+        throw new IllegalStateException("Outbound component transfer must be finite and nonnegative");
+      }
+      totalMass += mass;
+    }
+    double massFlow = totalMass / elapsedTimeSeconds;
+    if (!Double.isFinite(massFlow)) {
+      throw new IllegalStateException("Component outlet mass flow must be finite");
+    }
+    SystemInterface outletTemplate = fluidTemplate;
+    if (!(fluidTemplate.getTotalNumberOfMoles() > 1.0e-100)) {
+      // Setting a flow on an empty NeqSim system seeds equal component amounts. Restore the specified composition
+      // explicitly before flashing or replacing it with the accepted outlet composition.
+      double[] carrierComposition = fluidTemplate.getMolarComposition().clone();
+      outletTemplate = fluidTemplate.clone();
+      outletTemplate.setTotalFlowRate(1.0, "mol/sec");
+      outletTemplate.setMolarComposition(carrierComposition);
+    }
+    SystemInterface outlet;
+    if (totalMass > 0.0) {
+      outlet = flashWithComponentMasses(outletTemplate, intervalOutboundMassKg, pressurePa, temperatureK,
+          "accepted component outlet");
+    } else {
+      SystemInterface carrier = outletTemplate.clone();
+      carrier.setTotalFlowRate(1.0, "mol/sec");
+      carrier.setPressure(pressurePa / 1.0e5, "bara");
+      carrier.setTemperature(temperatureK, "K");
+      outlet = flashOwnedFluid(carrier, "closed component outlet");
+    }
+    outlet.setTotalFlowRate(massFlow, "kg/sec");
+    return outlet;
   }
 
   /**
@@ -272,7 +1191,7 @@ public final class TwoFluidComponentTransport implements Serializable {
         for (int component = 0; component < componentNames.length; component++) {
           phaseMass += componentInventoryKg[cell][phase][component];
         }
-        if (phaseMass <= MASS_FLOOR_KG) {
+        if (phaseMass <= 0.0) {
           continue;
         }
         foundNonEmptyPhase = true;
@@ -306,7 +1225,8 @@ public final class TwoFluidComponentTransport implements Serializable {
         intervalInitialInventoryKg, finalInventory, intervalInletMassKg, intervalOutletMassKg, residual,
         relativeResidual, maximumRelativeResidual, finalPhaseInventory, intervalInterphaseTransferKg,
         maximumTransferResidualKg, profiles, minimumFraction, maximumFraction, maximumSumError,
-        maximumPhaseMassSynchronizationErrorKg, intervalLatentHeatEnergyJ, converged, message);
+        maximumPhaseMassSynchronizationErrorKg, intervalLatentHeatEnergyJ, intervalInletPhaseMassKg,
+        intervalOutletPhaseMassKg, converged, message);
   }
 
   /**
@@ -324,7 +1244,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     double[] result = new double[cellCount];
     for (int cell = 0; cell < cellCount; cell++) {
       double phaseMass = phaseInventory(componentInventoryKg[cell][phaseIndex]);
-      result[cell] = phaseMass <= MASS_FLOOR_KG ? 0.0 : componentInventoryKg[cell][phaseIndex][component] / phaseMass;
+      result[cell] = phaseMass <= 0.0 ? 0.0 : componentInventoryKg[cell][phaseIndex][component] / phaseMass;
     }
     return result;
   }
@@ -338,18 +1258,18 @@ public final class TwoFluidComponentTransport implements Serializable {
       TwoFluidSection[] sections, SystemInterface fluidTemplate) {
     double[][] transfer = new double[PHASE_COUNT][componentNames.length];
     double gasTransfer = phaseTransferKg[GAS];
-    if ((phaseTransferKg[OIL] > MASS_FLOOR_KG && phaseTransferKg[WATER] < -MASS_FLOOR_KG)
-        || (phaseTransferKg[OIL] < -MASS_FLOOR_KG && phaseTransferKg[WATER] > MASS_FLOOR_KG)) {
+    if ((phaseTransferKg[OIL] > 0.0 && phaseTransferKg[WATER] < 0.0)
+        || (phaseTransferKg[OIL] < 0.0 && phaseTransferKg[WATER] > 0.0)) {
       throw new IllegalStateException("Direct oil-water component transfer is outside the validated closure");
     }
     if (gasTransfer > 0.0) {
-      for (int donorPhase : new int[] { OIL, WATER }) {
+      for (int donorPhase : new int[] {OIL, WATER}) {
         double withdrawalKg = Math.max(0.0, -phaseTransferKg[donorPhase]);
         if (withdrawalKg <= 0.0) {
           continue;
         }
         double donorMass = phaseInventory(updated[cell][donorPhase]);
-        if (donorMass <= MASS_FLOOR_KG) {
+        if (donorMass <= 0.0) {
           throw new IllegalStateException(
               "Unsupported evaporation from empty " + phaseName(donorPhase) + " component inventory in cell " + cell);
         }
@@ -363,7 +1283,7 @@ public final class TwoFluidComponentTransport implements Serializable {
       SystemInterface equilibrium = createThermodynamicStateFrom(updated, cell, fluidTemplate,
           sections[cell].getPressure(), sections[cell].getTemperature(), "condensation allocation in cell " + cell);
       double[][] equilibriumFractions = phaseMassFractions(equilibrium);
-      for (int receivingPhase : new int[] { OIL, WATER }) {
+      for (int receivingPhase : new int[] {OIL, WATER}) {
         double additionKg = Math.max(0.0, phaseTransferKg[receivingPhase]);
         if (additionKg <= 0.0) {
           continue;
@@ -378,7 +1298,7 @@ public final class TwoFluidComponentTransport implements Serializable {
           transfer[GAS][component] -= componentMass;
         }
       }
-    } else if (Math.abs(phaseTransferKg[OIL]) > MASS_FLOOR_KG || Math.abs(phaseTransferKg[WATER]) > MASS_FLOOR_KG) {
+    } else if (phaseTransferKg[OIL] != 0.0 || phaseTransferKg[WATER] != 0.0) {
       throw new IllegalStateException("Direct oil-water component transfer is outside the validated closure");
     }
     return transfer;
@@ -387,7 +1307,7 @@ public final class TwoFluidComponentTransport implements Serializable {
   private double calculateLatentHeatEnergyJ(int cell, double[][] componentTransferKg, double[][][] inventories,
       TwoFluidSection[] sections, SystemInterface fluidTemplate) {
     double transferredMassScaleKg = maximumAbsolute(componentTransferKg);
-    if (transferredMassScaleKg <= MASS_FLOOR_KG) {
+    if (transferredMassScaleKg == 0.0) {
       return 0.0;
     }
     SystemInterface localFluid = createThermodynamicStateFrom(inventories, cell, fluidTemplate,
@@ -397,7 +1317,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
       for (int component = 0; component < componentNames.length; component++) {
         double transferredComponentMassKg = componentTransferKg[phase][component];
-        if (Math.abs(transferredComponentMassKg) <= MASS_FLOOR_KG) {
+        if (transferredComponentMassKg == 0.0) {
           continue;
         }
         if (!Double.isFinite(componentSpecificEnthalpyJkg[phase][component])) {
@@ -438,31 +1358,38 @@ public final class TwoFluidComponentTransport implements Serializable {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         double targetMassKg = phaseMassKg(sections[cell], phase);
         double componentMassKg = phaseInventory(updated[cell][phase]);
+        requireFiniteValues(updated[cell][phase]);
+        requireFiniteValues(new double[] {componentMassKg});
         double errorKg = componentMassKg - targetMassKg;
         maximumPhaseMassSynchronizationErrorKg = Math.max(maximumPhaseMassSynchronizationErrorKg, Math.abs(errorKg));
         double scale = Math.max(MASS_FLOOR_KG, Math.max(Math.abs(componentMassKg), Math.abs(targetMassKg)));
-        if (Math.abs(errorKg) > tolerance * scale) {
+        double synchronizationToleranceKg = Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG, tolerance * scale);
+        if (Math.abs(errorKg) > synchronizationToleranceKg) {
           throw new IllegalStateException("Component sum and hydrodynamic " + phaseName(phase) + " mass differ in cell "
               + cell + " by " + errorKg + " kg");
         }
         for (int component = 0; component < componentNames.length; component++) {
-          if (updated[cell][phase][component] < -tolerance * scale) {
+          if (updated[cell][phase][component] < -synchronizationToleranceKg) {
             throw new IllegalStateException("Negative component inventory for '" + componentNames[component] + "' in "
-                + phaseName(phase) + " cell " + cell);
+                + phaseName(phase) + " cell " + cell + ": inventory=" + updated[cell][phase][component]
+                + " kg, tolerance=" + synchronizationToleranceKg + " kg, phase component sum=" + componentMassKg
+                + " kg, hydrodynamic phase mass=" + targetMassKg + " kg");
           }
           updated[cell][phase][component] = Math.max(0.0, updated[cell][phase][component]);
         }
         componentMassKg = phaseInventory(updated[cell][phase]);
-        if (targetMassKg <= MASS_FLOOR_KG) {
-          Arrays.fill(updated[cell][phase], 0.0);
+        // An empty component phase can coexist with hydrodynamic round-off within the allowance.
+        // A positive trace inventory must still synchronize instead of being discarded by that allowance.
+        if (componentMassKg == 0.0 && targetMassKg == 0.0) {
+          continue;
         } else if (componentMassKg > 0.0) {
           double correction = targetMassKg / componentMassKg;
           for (int component = 0; component < componentNames.length; component++) {
             updated[cell][phase][component] *= correction;
           }
         } else {
-          throw new IllegalStateException(
-              "Positive hydrodynamic " + phaseName(phase) + " mass has no component inventory in cell " + cell);
+          throw new IllegalStateException("Positive hydrodynamic " + phaseName(phase)
+              + " mass has no component inventory in cell " + cell + ": target mass=" + targetMassKg + " kg");
         }
       }
     }
@@ -500,7 +1427,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     fluid.setMolarComposition(templateComposition);
     fluid.setPressure(pressurePa / 1.0e5, "bara");
     fluid.setTemperature(temperatureK, "K");
-    return prepareFluid(fluid, context);
+    return flashOwnedFluid(fluid, context);
   }
 
   private double[][] phaseMassFractions(SystemInterface fluid) {
@@ -549,19 +1476,91 @@ public final class TwoFluidComponentTransport implements Serializable {
       if (face == null || face.length != PHASE_COUNT) {
         throw new IllegalArgumentException("Every component face must contain gas, oil, and water mass flow");
       }
+      for (double flow : face) {
+        if (!Double.isFinite(flow)) {
+          throw new IllegalArgumentException("Component face mass flow must be finite");
+        }
+      }
     }
     for (double[] source : sources) {
       if (source == null || source.length != PHASE_COUNT) {
         throw new IllegalArgumentException("Every component cell must contain gas, oil, and water source rates");
       }
+      for (double rate : source) {
+        if (!Double.isFinite(rate)) {
+          throw new IllegalArgumentException("Component phase mass source must be finite");
+        }
+      }
     }
+    for (TwoFluidSection section : sections) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        phaseMassKg(section, phase);
+      }
+    }
+  }
+
+  /** Validate optional two-donor streams against the conservative net hydrodynamic flux. */
+  private void validateDirectionalInternalFlows(double[][] netFaces, double[][][] directionalInternalFlows,
+      double tolerance) {
+    if (directionalInternalFlows == null) {
+      return;
+    }
+    if (directionalInternalFlows.length != Math.max(0, cellCount - 1)) {
+      throw new IllegalArgumentException("Directional component flows must match the internal finite-volume faces");
+    }
+    for (int face = 0; face < directionalInternalFlows.length; face++) {
+      if (directionalInternalFlows[face] == null || directionalInternalFlows[face].length != PHASE_COUNT) {
+        throw new IllegalArgumentException("Every directional component face must contain three phases");
+      }
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        double[] streams = directionalInternalFlows[face][phase];
+        if (streams == null || streams.length != 2 || !Double.isFinite(streams[0]) || !Double.isFinite(streams[1])
+            || streams[0] < 0.0 || streams[1] < 0.0) {
+          throw new IllegalArgumentException("Directional component streams must be finite and nonnegative");
+        }
+        double directionalNet = streams[0] - streams[1];
+        double hydrodynamicNet = netFaces[face + 1][phase];
+        double scale = Math.max(MASS_FLOOR_KG, Math.max(Math.abs(hydrodynamicNet), Math.max(streams[0], streams[1])));
+        if (Math.abs(directionalNet - hydrodynamicNet) > Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG,
+            tolerance * scale)) {
+          throw new IllegalArgumentException("Directional donor streams do not reproduce the hydrodynamic net at face "
+              + face + ", phase " + phase + ": directional=" + directionalNet + ", net=" + hydrodynamicNet);
+        }
+      }
+    }
+  }
+
+  /** Return the nonnegative left-to-right stream at one physical face. */
+  private double forwardFlow(double[][] netFaces, double[][][] directionalInternalFlows, int face, int phase) {
+    if (directionalInternalFlows != null && face > 0 && face < cellCount) {
+      return directionalInternalFlows[face - 1][phase][0];
+    }
+    return Math.max(0.0, netFaces[face][phase]);
+  }
+
+  /** Return the nonnegative right-to-left stream at one physical face. */
+  private double reverseFlow(double[][] netFaces, double[][][] directionalInternalFlows, int face, int phase) {
+    if (directionalInternalFlows != null && face > 0 && face < cellCount) {
+      return directionalInternalFlows[face - 1][phase][1];
+    }
+    return Math.max(0.0, -netFaces[face][phase]);
   }
 
   private static SystemInterface prepareFluid(SystemInterface source, String context) {
     if (source == null) {
       throw new IllegalArgumentException("Fluid cannot be null for " + context);
     }
-    SystemInterface fluid = source.clone();
+    return flashOwnedFluid(source.clone(), context);
+  }
+
+  /**
+   * Flash a working fluid already owned by this calculation and initialize its properties.
+   *
+   * @param fluid independent working fluid to update
+   * @param context location of the calculation for error reporting
+   * @return the flashed working fluid
+   */
+  private static SystemInterface flashOwnedFluid(SystemInterface fluid, String context) {
     try {
       ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
       operations.TPflash();
@@ -611,7 +1610,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     for (int cell = 0; cell < cellCount; cell++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         double phaseMass = phaseInventory(componentInventoryKg[cell][phase]);
-        if (phaseMass > MASS_FLOOR_KG) {
+        if (phaseMass > 0.0) {
           for (int component = 0; component < componentNames.length; component++) {
             result[cell][phase][component] = componentInventoryKg[cell][phase][component] / phaseMass;
           }
@@ -650,7 +1649,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     for (int cell = 0; cell < cellCount; cell++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         double phaseMass = phaseInventory(componentInventoryKg[cell][phase]);
-        if (phaseMass > MASS_FLOOR_KG) {
+        if (phaseMass > 0.0) {
           for (int component = 0; component < componentNames.length; component++) {
             result[phase][component][cell] = componentInventoryKg[cell][phase][component] / phaseMass;
           }
@@ -696,6 +1695,9 @@ public final class TwoFluidComponentTransport implements Serializable {
   }
 
   private static double phaseMassKg(TwoFluidSection section, int phase) {
+    if (section == null || !(section.getLength() > 0.0) || !Double.isFinite(section.getLength())) {
+      throw new IllegalArgumentException("Component cells require a positive finite length");
+    }
     double massPerLength;
     switch (phase) {
     case GAS:
@@ -710,7 +1712,11 @@ public final class TwoFluidComponentTransport implements Serializable {
     default:
       throw new IllegalArgumentException("Unsupported phase index " + phase);
     }
-    return Math.max(0.0, massPerLength * section.getLength());
+    double mass = massPerLength * section.getLength();
+    if (!Double.isFinite(mass) || mass < 0.0) {
+      throw new IllegalArgumentException("Component cells require finite nonnegative conservative phase mass");
+    }
+    return mass;
   }
 
   private static double phaseInventory(double[] componentInventory) {
@@ -742,6 +1748,14 @@ public final class TwoFluidComponentTransport implements Serializable {
       for (int second = 0; second < values[first].length; second++) {
         result[first][second] = Arrays.copyOf(values[first][second], values[first][second].length);
       }
+    }
+    return result;
+  }
+
+  private static double[][] copyMatrix(double[][] values) {
+    double[][] result = new double[values.length][];
+    for (int row = 0; row < values.length; row++) {
+      result[row] = Arrays.copyOf(values[row], values[row].length);
     }
     return result;
   }

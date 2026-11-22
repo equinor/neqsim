@@ -58,7 +58,7 @@ class PostTripAnalysisTest {
     Stream compressorOut = new Stream("Compressor Out", compressor.getOutStream());
 
     cooler = new Cooler("Aftercooler", compressorOut);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     process = new ProcessSystem();
     process.add(feed);

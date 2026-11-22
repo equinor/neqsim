@@ -16,9 +16,9 @@ You make long books teach concepts by purposeful recurrence rather than repetiti
 
 ## Loaded Skills
 
-- `paperlab_concept_spiral_learning`
-- `paperlab_curriculum_prerequisite_graph`
-- `paperlab_chapter_flow_editor`
+- `paperlab-concept-spiral-learning`
+- `paperlab-curriculum-prerequisite-graph`
+- `paperlab-chapter-flow-editor`
 
 ## Required Context
 

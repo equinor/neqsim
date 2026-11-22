@@ -5,6 +5,9 @@ description: Fail-closed publication of assessed DEXPI, controlled semantic JSON
 
 # Engineering diagram delivery workflow
 
+For the coordinated dual-profile reference workflow and its source-fidelity, exchange-profile, and visual-acceptance
+boundaries, see [Separation/compression PFD and P&ID visual acceptance](comparesimulations-pfd-pid-acceptance.md).
+
 `EngineeringDiagramDelivery` is an opt-in Java facade for publishing the related engineering-diagram
 projections of one canonical NeqSim model as a single assessed delivery. It supports both a
 `ProcessSystem` and a multi-area `ProcessModel` without changing the existing DOT/Graphviz, Classic,
@@ -57,6 +60,13 @@ After a successful process run, add `.operatingCaseId("NORMAL-01")` to retain th
 unit-explicit operating-case snapshot in the controlled document and assessed DEXPI output. Optional
 designation, layout, and symbol-convention registers can be supplied through the request builder;
 their existing evidence and review rules remain authoritative.
+
+The manifest's `renderedSheetOrder` contains each actual sheet number, title, identity and `svgFile`
+path in PDF page order. Use this list for preview captions and navigation instead of alphabetically
+sorting filenames or inventing sheet numbers by enumeration. Numeric controlled numbers sort
+numerically (2 precedes 10); numeric sheets precede alphanumeric numbers, which sort lexically.
+`visualAcceptanceStatus` remains `REVIEW_REQUIRED`, independently of delivery completeness.
+`rendererCheckScope` identifies the implemented geometric checks and their estimated-text basis.
 
 The destination directory must not exist. The facade writes to a sibling staging directory, runs
 the controlled-document, native-rendering, and bounded DEXPI gates, and publishes the complete

@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Multi-layer radial heat transfer calculator for pipeline thermal analysis.
@@ -413,7 +414,10 @@ public class MultilayerThermalCalculator implements Serializable {
    * Perform transient thermal calculation for one time step.
    *
    * <p>
-   * Uses explicit finite difference scheme for each layer. The heat balance for each layer is:
+   * Uses a passive backward-Euler radial conduction solve with the configured fluid temperature held fixed. Each lumped
+   * layer node is at the geometric mean of its inner and outer radii. Half the cylindrical layer resistance lies on
+   * each side of that node, so the links recover the configured steady resistance exactly. The heat balance for each
+   * layer is:
    * </p>
    *
    * <pre>
@@ -421,87 +425,276 @@ public class MultilayerThermalCalculator implements Serializable {
    * </pre>
    *
    * @param dt Time step in seconds
+   * @throws IllegalArgumentException if time, temperatures or thermal configuration are invalid
+   * @throws IllegalStateException if the thermal system cannot be solved without invalid temperatures
    */
   public void updateTransient(double dt) {
-    lastFluidHeatTransferPerLength = 0.0;
-    lastAmbientHeatTransferPerLength = 0.0;
+    advanceThermalState(dt, 0.0, 0.0, false);
+  }
+
+  /**
+   * Advance fluid sensible energy and the radial layers in one conservative local implicit solve.
+   *
+   * @param fluidCapacity fluid heat capacity per unit length in J/(m K), positive and finite
+   * @param fluidSource externally supplied fluid heat source per unit length in W/m
+   * @param dt positive finite time step in s
+   * @return updated fluid temperature in K
+   * @throws IllegalArgumentException if inputs or thermal configuration are invalid
+   * @throws IllegalStateException if the thermal system has no valid finite solution
+   */
+  double advanceCoupledTransient(double fluidCapacity, double fluidSource, double dt) {
+    return advanceThermalState(dt, fluidCapacity, fluidSource, true);
+  }
+
+  /**
+   * Solve a tridiagonal passive heat-capacity chain before committing any temperatures or heat diagnostics.
+   *
+   * @param dt step duration in s
+   * @param fluidCapacity fluid capacity in J/(m K), unused for a fixed fluid boundary
+   * @param fluidSource external source in W/m, unused for a fixed fluid boundary
+   * @param coupled whether the fluid is the first unknown instead of a fixed boundary
+   * @return endpoint fluid temperature in K
+   * @throws IllegalArgumentException if configuration or inputs are not physically admissible
+   * @throws IllegalStateException if an elimination pivot or endpoint is invalid
+   */
+  private double advanceThermalState(double dt, double fluidCapacity, double fluidSource, boolean coupled) {
+    requireThermalValue(dt, "time step", true);
+    requireThermalValue(fluidTemperature, "fluid temperature", true);
+    requireThermalValue(ambientTemperature, "ambient temperature", true);
+    requireThermalValue(innerRadius, "inner radius", true);
+    requireThermalValue(innerHTC, "inner coefficient", false);
+    requireThermalValue(outerHTC, "outer coefficient", false);
+    if (coupled) {
+      requireThermalValue(fluidCapacity, "fluid heat capacity", true);
+      if (!Double.isFinite(fluidSource)) {
+        throw new IllegalArgumentException("Fluid heat source must be finite");
+      }
+    }
+    for (RadialThermalLayer layer : layers) {
+      requireThermalValue(layer.getThickness(), "layer thickness", true);
+      requireThermalValue(layer.getInnerRadius(), "layer inner radius", true);
+      requireThermalValue(layer.getThermalConductivity(), "layer conductivity", false);
+      requireThermalValue(layer.getTemperature(), "layer temperature", true);
+      if (enableThermalMass) {
+        requireThermalValue(layer.getThermalMassPerLength(), "layer heat capacity", true);
+      }
+    }
+
     if (!enableThermalMass || layers.isEmpty()) {
-      double steadyHeatTransferPerLength = calculateHeatLossPerLength();
-      lastFluidHeatTransferPerLength = steadyHeatTransferPerLength;
-      lastAmbientHeatTransferPerLength = steadyHeatTransferPerLength;
-      return;
-    }
-
-    int n = layers.size();
-    double[] newTemperatures = new double[n];
-
-    for (int i = 0; i < n; i++) {
-      RadialThermalLayer layer = layers.get(i);
-      double Ti = layer.getTemperature();
-      double thermalMass = layer.getThermalMassPerLength(); // J/(K·m)
-
-      // Heat flux from inside
-      double Q_in;
-      if (i == 0) {
-        // From fluid to first layer
-        double ri = layer.getInnerRadius();
-        Q_in = innerHTC * 2.0 * Math.PI * ri * (fluidTemperature - Ti);
-        lastFluidHeatTransferPerLength = Q_in;
-      } else {
-        // From previous layer
-        RadialThermalLayer prevLayer = layers.get(i - 1);
-        double T_prev = prevLayer.getTemperature();
-        double r_interface = layer.getInnerRadius();
-
-        // Contact conductance at interface (simplified: use harmonic mean of conductivities)
-        double k_prev = prevLayer.getThermalConductivity();
-        double k_curr = layer.getThermalConductivity();
-        double k_eff = 2.0 * k_prev * k_curr / (k_prev + k_curr + 1e-10);
-
-        // Approximate contact width as mean of thicknesses
-        double dx = (prevLayer.getThickness() + layer.getThickness()) / 2.0;
-        Q_in = k_eff * 2.0 * Math.PI * r_interface / dx * (T_prev - Ti);
+      double conductance = 0.0;
+      if (innerHTC > 0.0 && outerHTC > 0.0) {
+        boolean conducting = true;
+        for (RadialThermalLayer layer : layers) {
+          conducting &= layer.getThermalConductivity() > 0.0;
+        }
+        if (conducting) {
+          conductance = 1.0 / calculateTotalThermalResistance();
+        }
       }
-
-      // Heat flux to outside
-      double Q_out;
-      if (i == n - 1) {
-        // From last layer to ambient
-        double ro = layer.getOuterRadius();
-        Q_out = outerHTC * 2.0 * Math.PI * ro * (Ti - ambientTemperature);
-        lastAmbientHeatTransferPerLength = Q_out;
-      } else {
-        // To next layer
-        RadialThermalLayer nextLayer = layers.get(i + 1);
-        double T_next = nextLayer.getTemperature();
-        double r_interface = layer.getOuterRadius();
-
-        double k_curr = layer.getThermalConductivity();
-        double k_next = nextLayer.getThermalConductivity();
-        double k_eff = 2.0 * k_curr * k_next / (k_curr + k_next + 1e-10);
-
-        double dx = (layer.getThickness() + nextLayer.getThickness()) / 2.0;
-        Q_out = k_eff * 2.0 * Math.PI * r_interface / dx * (Ti - T_next);
+      requireThermalValue(conductance, "steady conductance", false);
+      double endpoint = fluidTemperature;
+      if (coupled) {
+        double capacityRate = fluidCapacity / dt;
+        requireThermalValue(capacityRate, "fluid capacity rate", true);
+        endpoint = (capacityRate * fluidTemperature + fluidSource + conductance * ambientTemperature)
+            / (capacityRate + conductance);
       }
-
-      // Update temperature
-      double dT = (Q_in - Q_out) * dt / thermalMass;
-      newTemperatures[i] = Ti + dT;
+      requireThermalEndpoint(endpoint);
+      double heat = conductance * (endpoint - ambientTemperature);
+      if (!Double.isFinite(heat)) {
+        throw new IllegalStateException("Steady thermal flux must be finite");
+      }
+      fluidTemperature = endpoint;
+      lastFluidHeatTransferPerLength = heat;
+      lastAmbientHeatTransferPerLength = heat;
+      return endpoint;
     }
 
-    // Apply new temperatures
-    for (int i = 0; i < n; i++) {
-      layers.get(i).setTemperature(newTemperatures[i]);
+    int offset = coupled ? 1 : 0;
+    int size = layers.size() + offset;
+    double[] capacities = new double[size];
+    double[] rhs = new double[size];
+    double[] links = new double[size + 1];
+    if (coupled) {
+      capacities[0] = fluidCapacity / dt;
+      rhs[0] = capacities[0] * fluidTemperature + fluidSource;
     }
+    double innerFilmResistance = innerHTC > 0.0 ? 1.0 / (innerHTC * 2.0 * Math.PI * layers.get(0).getInnerRadius())
+        : Double.POSITIVE_INFINITY;
+    double innerConductance = 1.0 / (innerFilmResistance + halfLayerThermalResistance(layers.get(0)));
+    links[offset] = innerConductance;
+    for (int layer = 0; layer < layers.size(); layer++) {
+      int node = layer + offset;
+      RadialThermalLayer current = layers.get(layer);
+      capacities[node] = current.getThermalMassPerLength() / dt;
+      rhs[node] = capacities[node] * current.getTemperature();
+      if (layer + 1 < layers.size()) {
+        RadialThermalLayer next = layers.get(layer + 1);
+        links[node + 1] = 1.0 / (halfLayerThermalResistance(current) + halfLayerThermalResistance(next));
+      }
+    }
+    RadialThermalLayer lastLayer = layers.get(layers.size() - 1);
+    double outerFilmResistance = outerHTC > 0.0 ? 1.0 / (outerHTC * 2.0 * Math.PI * lastLayer.getOuterRadius())
+        : Double.POSITIVE_INFINITY;
+    links[size] = 1.0 / (halfLayerThermalResistance(lastLayer) + outerFilmResistance);
+    if (!coupled) {
+      rhs[0] += links[0] * fluidTemperature;
+    }
+    rhs[size - 1] += links[size] * ambientTemperature;
+    double[] pivots = new double[size];
+    for (int node = 0; node < size; node++) {
+      requireThermalValue(capacities[node], "capacity rate", true);
+      requireThermalValue(links[node], "radial conductance", false);
+      requireThermalValue(links[node + 1], "radial conductance", false);
+      double ratio = node == 0 ? 0.0 : Math.min(1.0, links[node] / pivots[node - 1]);
+      pivots[node] = capacities[node] + links[node + 1] + links[node] * (1.0 - ratio);
+      if (node > 0) {
+        rhs[node] += ratio * rhs[node - 1];
+      }
+      if (!Double.isFinite(pivots[node]) || pivots[node] <= 0.0 || !Double.isFinite(rhs[node])) {
+        throw new IllegalStateException("Invalid radial thermal elimination at node " + node);
+      }
+    }
+    double[] endpoint = new double[size];
+    for (int node = size - 1; node >= 0; node--) {
+      endpoint[node] = (rhs[node] + (node + 1 < size ? links[node + 1] * endpoint[node + 1] : 0.0)) / pivots[node];
+      requireThermalEndpoint(endpoint[node]);
+    }
+    double updatedFluid = coupled ? endpoint[0] : fluidTemperature;
+    double innerHeat = innerConductance * (updatedFluid - endpoint[offset]);
+    double outerHeat = links[size] * (endpoint[size - 1] - ambientTemperature);
+    if (!Double.isFinite(innerHeat) || !Double.isFinite(outerHeat)) {
+      throw new IllegalStateException("Endpoint thermal fluxes must be finite");
+    }
+    for (int layer = 0; layer < layers.size(); layer++) {
+      layers.get(layer).setTemperature(endpoint[layer + offset]);
+    }
+    fluidTemperature = updatedFluid;
+    lastFluidHeatTransferPerLength = innerHeat;
+    lastAmbientHeatTransferPerLength = outerHeat;
+    return updatedFluid;
+  }
+
+  /**
+   * Return the exact cylindrical resistance from a layer boundary to its geometric-midradius node.
+   *
+   * @param layer validated radial layer
+   * @return half-layer resistance in m K/W, or positive infinity for a nonconducting layer
+   */
+  private static double halfLayerThermalResistance(RadialThermalLayer layer) {
+    return layer.getThermalConductivity() > 0.0 ? 0.5 * layer.getThermalResistance() : Double.POSITIVE_INFINITY;
+  }
+
+  /**
+   * Validate a scalar in the passive thermal configuration.
+   *
+   * @param value scalar value
+   * @param name quantity name for a failure diagnostic
+   * @param positive whether zero is forbidden
+   * @throws IllegalArgumentException if the value is nonfinite or outside its sign domain
+   */
+  private static void requireThermalValue(double value, String name, boolean positive) {
+    if (!Double.isFinite(value) || (positive ? value <= 0.0 : value < 0.0)) {
+      throw new IllegalArgumentException(name + " must be finite and " + (positive ? "positive" : "nonnegative"));
+    }
+  }
+
+  /**
+   * Reject a failed endpoint before publishing any layer or diagnostic values.
+   *
+   * @param temperature proposed temperature in K
+   * @throws IllegalStateException if the endpoint is not a finite positive absolute temperature
+   */
+  private static void requireThermalEndpoint(double temperature) {
+    if (!Double.isFinite(temperature) || temperature <= 0.0) {
+      throw new IllegalStateException("Thermal endpoint temperature must be positive and finite");
+    }
+  }
+
+  /**
+   * Validate a privately advanced thermal state before the connected pipe publishes any candidate values.
+   *
+   * <p>
+   * Layer identities, geometry, materials and the outer boundary configuration belong to the connected calculator. They
+   * must agree with the candidate. Fluid/ambient temperatures, the locally evaluated inner coefficient, layer
+   * temperatures and heat-flux diagnostics may advance. Concrete calculator and layer types are required because the
+   * acceptance operation does not cover additional subclass-owned state or user callbacks.
+   * </p>
+   *
+   * @param candidate completed private calculator state
+   * @throws IllegalStateException if configuration differs or candidate thermal values are invalid
+   */
+  void validateCandidateConfiguration(MultilayerThermalCalculator candidate) {
+    if (candidate == null || getClass() != MultilayerThermalCalculator.class
+        || candidate.getClass() != MultilayerThermalCalculator.class || layers.size() != candidate.layers.size()
+        || innerRadius != candidate.innerRadius || outerHTC != candidate.outerHTC
+        || enableThermalMass != candidate.enableThermalMass) {
+      throw new IllegalStateException("Thermal candidate must retain the connected calculator configuration");
+    }
+    if (!Double.isFinite(candidate.innerHTC) || candidate.innerHTC < 0.0 || !Double.isFinite(candidate.outerHTC)
+        || candidate.outerHTC < 0.0 || !Double.isFinite(candidate.fluidTemperature) || candidate.fluidTemperature <= 0.0
+        || !Double.isFinite(candidate.ambientTemperature) || candidate.ambientTemperature <= 0.0
+        || !Double.isFinite(candidate.overallUValue) || candidate.overallUValue < 0.0
+        || !Double.isFinite(candidate.lastFluidHeatTransferPerLength)
+        || !Double.isFinite(candidate.lastAmbientHeatTransferPerLength)) {
+      throw new IllegalStateException("Thermal candidate requires finite temperatures, coefficients and heat fluxes");
+    }
+    for (int layer = 0; layer < layers.size(); layer++) {
+      RadialThermalLayer accepted = layers.get(layer);
+      RadialThermalLayer proposed = candidate.layers.get(layer);
+      if (accepted.getClass() != RadialThermalLayer.class || proposed.getClass() != RadialThermalLayer.class
+          || !Objects.equals(accepted.getName(), proposed.getName())
+          || accepted.getMaterialType() != proposed.getMaterialType()
+          || accepted.getInnerRadius() != proposed.getInnerRadius()
+          || accepted.getOuterRadius() != proposed.getOuterRadius()
+          || accepted.getThermalConductivity() != proposed.getThermalConductivity()
+          || accepted.getDensity() != proposed.getDensity()
+          || accepted.getSpecificHeat() != proposed.getSpecificHeat()) {
+        throw new IllegalStateException("Thermal candidate must retain the connected radial-layer configuration");
+      }
+      if (!Double.isFinite(proposed.getTemperature()) || proposed.getTemperature() <= 0.0
+          || !Double.isFinite(proposed.getPreviousTemperature()) || proposed.getPreviousTemperature() <= 0.0) {
+        throw new IllegalStateException("Thermal candidate radial-layer temperatures must be positive and finite");
+      }
+    }
+  }
+
+  /**
+   * Install a validated candidate while preserving the connected calculator and all its radial-layer objects.
+   *
+   * <p>
+   * The owning pipe must validate first and keep both objects unchanged between validation and acceptance. Exact
+   * concrete layer types are checked during validation, so the temperature assignments below invoke no user code. Both
+   * current and previous temperatures are retained. Geometry and material values remain owned by the original layers;
+   * no allocation or heat-transfer solve occurs during acceptance.
+   * </p>
+   *
+   * @param candidate previously validated private thermal state
+   */
+  void acceptCandidateState(MultilayerThermalCalculator candidate) {
+    for (int layer = 0; layer < layers.size(); layer++) {
+      RadialThermalLayer accepted = layers.get(layer);
+      RadialThermalLayer proposed = candidate.layers.get(layer);
+      accepted.initializeTemperature(proposed.getPreviousTemperature());
+      accepted.setTemperature(proposed.getTemperature());
+    }
+    innerHTC = candidate.innerHTC;
+    outerHTC = candidate.outerHTC;
+    fluidTemperature = candidate.fluidTemperature;
+    ambientTemperature = candidate.ambientTemperature;
+    overallUValue = candidate.overallUValue;
+    uValueDirty = candidate.uValueDirty;
+    lastFluidHeatTransferPerLength = candidate.lastFluidHeatTransferPerLength;
+    lastAmbientHeatTransferPerLength = candidate.lastAmbientHeatTransferPerLength;
   }
 
   /**
    * Get the fluid-to-first-layer heat transfer used by the most recent transient update.
    *
    * <p>
-   * The sign is positive when energy leaves the fluid. With thermal mass and radial layers enabled, this is the
-   * instantaneous explicit flux evaluated from the pre-update temperatures. When thermal mass is disabled or no layers
-   * are configured, it is the steady overall-U heat loss.
+   * The sign is positive when energy leaves the fluid. This is the backward-Euler endpoint flux used throughout the
+   * accepted thermal step's discrete energy balance. When thermal mass is disabled or no layers are configured, it is
+   * the steady overall-U heat loss evaluated at the endpoint fluid temperature.
    * </p>
    *
    * @return fluid-to-wall heat transfer in W/m
@@ -514,9 +707,9 @@ public class MultilayerThermalCalculator implements Serializable {
    * Get the last-layer-to-ambient heat transfer used by the most recent transient update.
    *
    * <p>
-   * The sign is positive when energy leaves the radial layers for the ambient. With thermal mass and radial layers
-   * enabled, this is the instantaneous explicit outer-layer flux. When thermal mass is disabled or no layers are
-   * configured, it is the steady overall-U heat loss.
+   * The sign is positive when energy leaves the radial layers for the ambient. This is the backward-Euler endpoint flux
+   * used throughout the accepted thermal step's discrete energy balance. When thermal mass is disabled or no layers are
+   * configured, it is the steady overall-U heat loss evaluated at the endpoint fluid temperature.
    * </p>
    *
    * @return wall-to-ambient heat transfer in W/m

@@ -11,7 +11,7 @@ public class RachigRingPacking extends Packing {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Constructor for RachigRingPacking.
+   * Create a ceramic 25 mm Raschig ring using the qualified geometry table row.
    */
   public RachigRingPacking() {
     super("RachigRingPacking");

@@ -75,6 +75,15 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(VesselDepressurization.class);
 
+  /** Liquid film coefficient used when the liquid correlation cannot be evaluated [W/(m2*K)]. */
+  private static final double LIQUID_HTC_FALLBACK = 100.0;
+
+  /** Vent the gas phase only when gas and liquid are both present (blowdown valve on top of the vessel). */
+  private volatile boolean vapourOnlyDischarge = true;
+
+  /** True once {@link #run(UUID)} has scaled the inventory to the vessel volume. */
+  private volatile boolean inventoryInitialized = false;
+
   /**
    * Calculation type for vessel thermodynamics.
    */
@@ -828,6 +837,50 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    */
   public void setDischargeCoefficient(double cd) {
     this.dischargeCoefficient = cd;
+  }
+
+  /**
+   * Selects whether a discharge with gas and liquid present vents the gas phase only.
+   *
+   * <p>
+   * A blowdown valve sits on top of the vessel, so with a liquid level it vents vapour. When enabled (default), the
+   * orifice flow uses the Z, molar mass and Cp/Cv of the gas phase, only gas-phase moles leave the vessel, and the
+   * energy balance removes the gas-phase specific enthalpy. Before this option existed the orifice used mixture
+   * properties and removed every phase in proportion, which for a separator at 40 bara with 45 % level gave about three
+   * times the real vapour rate and drained the liquid through the blowdown valve. Set false to discharge the bulk
+   * (homogeneous) mixture, for example for a bottom drain.
+   * </p>
+   *
+   * @param enabled true to vent the gas phase only (default), false to discharge the bulk mixture
+   */
+  public void setVapourOnlyDischarge(boolean enabled) {
+    this.vapourOnlyDischarge = enabled;
+  }
+
+  /**
+   * Returns whether a two-phase discharge vents the gas phase only.
+   *
+   * @return true if only the gas phase is vented when gas and liquid are present
+   */
+  public boolean isVapourOnlyDischarge() {
+    return vapourOnlyDischarge;
+  }
+
+  /**
+   * Returns the index of the phase that is vented, or -1 when the bulk mixture is discharged.
+   *
+   * @return gas-phase index for a vapour-only discharge with liquid present, else -1
+   */
+  private int ventedGasPhaseIndex() {
+    if (!vapourOnlyDischarge || flowDirection != FlowDirection.DISCHARGE || thermoSystem.getNumberOfPhases() < 2) {
+      return -1;
+    }
+    for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
+      if (thermoSystem.getPhase(j).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+        return j;
+      }
+    }
+    return -1;
   }
 
   /**
@@ -1654,6 +1707,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double Z = thermoSystem.getZ();
     double MW = thermoSystem.getMolarMass(); // kg/mol
     double gamma = thermoSystem.getGamma(); // Cp/Cv
+    int ventPhase = ventedGasPhaseIndex();
+    if (ventPhase >= 0) {
+      neqsim.thermo.phase.PhaseInterface gas = thermoSystem.getPhase(ventPhase);
+      Z = gas.getZ();
+      MW = gas.getMolarMass();
+      gamma = gas.getGamma();
+    }
 
     // No flow if pressure difference is negligible
     if (Math.abs(P1 - P2) < 1.0) {
@@ -1914,39 +1974,98 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double Twall = twoPhaseHeatTransfer ? liquidWallTemperature : getWallTemperature();
     double Tfluid = thermoSystem.getTemperature();
 
-    // Get liquid phase properties
-    double k = 0.1, Cp = 2000.0, mu = 1e-3, rho = 500.0;
     double satTemp = Tfluid; // Assume at saturation for two-phase
 
-    try {
-      for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-        if (!thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
-          k = thermoSystem.getPhase(i).getThermalConductivity();
-          Cp = thermoSystem.getPhase(i).getCp() / thermoSystem.getPhase(i).getNumberOfMolesInPhase()
-              / thermoSystem.getPhase(i).getMolarMass(); // J/(kg*K)
-          mu = thermoSystem.getPhase(i).getViscosity();
-          rho = thermoSystem.getPhase(i).getDensity("kg/m3");
-          break;
-        }
-      }
-    } catch (Exception e) {
-      // Use fallback values
-    }
+    // Liquid properties: mass-weighted over every non-gas phase, so a vessel with both oil and water uses the
+    // combined liquid pool rather than whichever liquid phase happens to be listed first.
+    double[] props = getLiquidPoolProperties();
+    double k = props[0];
+    double Cp = props[1];
+    double mu = props[2];
+    double rho = props[3];
 
     boolean isVertical = (orientation == VesselOrientation.VERTICAL);
 
-    // Use natural convection for liquid, potentially enhanced by boiling
-    double hConv = VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
-        isVertical);
-
-    // Check for boiling conditions (wall above saturation)
-    if (Twall > satTemp + 1.0) {
-      // Use wetted wall correlation (includes boiling)
-      return VesselHeatTransferCalculator.calculateWettedWallFilmCoefficient(Twall, Tfluid, satTemp, L, k, Cp, mu, rho,
+    try {
+      // Check for boiling conditions (wall above saturation)
+      if (Twall > satTemp + 1.0) {
+        // Use wetted wall correlation (includes boiling)
+        return VesselHeatTransferCalculator.calculateWettedWallFilmCoefficient(Twall, Tfluid, satTemp, L, k, Cp, mu,
+            rho, isVertical);
+      }
+      // Use natural convection for liquid
+      return VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp, mu, rho,
           isVertical);
+    } catch (RuntimeException e) {
+      logger.warn("Liquid HTC calculation failed, using fallback {} W/(m2*K): {}", LIQUID_HTC_FALLBACK, e.getMessage());
+      return LIQUID_HTC_FALLBACK;
     }
+  }
 
-    return hConv;
+  /**
+   * Returns the mass-weighted transport and caloric properties of the liquid pool (all non-gas phases).
+   *
+   * <p>
+   * Any property that is missing, zero or not finite falls back to a typical hydrocarbon-liquid value (k = 0.1 W/(m*K),
+   * Cp = 2000 J/(kg*K), mu = 1e-3 Pa*s, rho = 500 kg/m3) so that a heat transfer coefficient can always be computed.
+   * </p>
+   *
+   * @return array {thermal conductivity [W/(m*K)], Cp [J/(kg*K)], viscosity [Pa*s], density [kg/m3]}
+   */
+  private double[] getLiquidPoolProperties() {
+    double[] fallback = {0.1, 2000.0, 1e-3, 500.0};
+    double[] sum = new double[4];
+    double totalMass = 0.0;
+    try {
+      for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
+        neqsim.thermo.phase.PhaseInterface phase = thermoSystem.getPhase(i);
+        if (phase.getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+          continue;
+        }
+        double mass = phase.getNumberOfMolesInPhase() * phase.getMolarMass();
+        if (!(mass > 0.0)) {
+          continue;
+        }
+        double conductivity = phase.getThermalConductivity();
+        double specificHeat = phase.getCp() / mass;
+        double viscosity = phase.getViscosity();
+        double density = phase.getDensity("kg/m3");
+        double[] values = {conductivity, specificHeat, viscosity, density};
+        for (int j = 0; j < 4; j++) {
+          if (!(values[j] > 0.0) || !Double.isFinite(values[j])) {
+            values[j] = fallback[j];
+          }
+          sum[j] += mass * values[j];
+        }
+        totalMass += mass;
+      }
+    } catch (RuntimeException e) {
+      logger.debug("Liquid property lookup failed, using fallback values: {}", e.getMessage());
+      return fallback;
+    }
+    if (!(totalMass > 0.0)) {
+      return fallback;
+    }
+    for (int j = 0; j < 4; j++) {
+      sum[j] /= totalMass;
+    }
+    return sum;
+  }
+
+  /**
+   * Recomputes the transport properties (viscosity, thermal conductivity, density) of every phase.
+   *
+   * <p>
+   * The transient step only re-initialises the thermodynamics. Without this call the film-coefficient correlations read
+   * viscosities and conductivities left over from an earlier state, or zero for a phase that has just appeared.
+   * </p>
+   */
+  private void refreshTransportProperties() {
+    try {
+      thermoSystem.initPhysicalProperties();
+    } catch (RuntimeException e) {
+      logger.debug("Transport property update failed, keeping previous values: {}", e.getMessage());
+    }
   }
 
   /**
@@ -2077,6 +2196,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       break;
     case CALCULATED:
     case TRANSIENT_WALL:
+      refreshTransportProperties();
       if (twoPhaseHeatTransfer && thermoSystem.getNumberOfPhases() > 1) {
         Q = calculateTwoPhaseHeatRate();
       } else {
@@ -2180,6 +2300,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     // Update outlet stream
     updateOutletStream();
 
+    inventoryInitialized = true;
     setCalculationIdentifier(id);
   }
 
@@ -2202,6 +2323,16 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
+    // Total volume of all liquid phases (oil and aqueous) at the feed state. The target liquid volume is shared
+    // between them in proportion to these volumes, so a gas/oil/water feed fills the level once, not once per
+    // liquid phase.
+    double currentLiquidVolume = 0.0;
+    for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
+      if (!thermoSystem.getPhase(j).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+        currentLiquidVolume += thermoSystem.getPhase(j).getVolume() * 1e-5; // L to m³
+      }
+    }
+
     // Scale moles in each phase to match target volumes
     for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
       double currentPhaseVolume = thermoSystem.getPhase(j).getVolume() * 1e-5; // L to m³
@@ -2209,6 +2340,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
       if (thermoSystem.getPhase(j).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
         targetVolume = targetGasVolume;
+      } else if (currentLiquidVolume > 0.0) {
+        targetVolume = targetLiquidVolume * currentPhaseVolume / currentLiquidVolume;
       } else {
         targetVolume = targetLiquidVolume;
       }
@@ -2281,31 +2414,48 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     // Calculate mass flow
     double massFlowRate = calculateMassFlowRate();
     double deltaMass = massFlowRate * dt;
+    int ventPhase = ventedGasPhaseIndex();
+    double ventMass = initialMass;
+    double ventSpecificEnthalpy = initialH / initialMass;
+    if (ventPhase >= 0) {
+      neqsim.thermo.phase.PhaseInterface gas = thermoSystem.getPhase(ventPhase);
+      ventMass = gas.getNumberOfMolesInPhase() * gas.getMolarMass();
+      ventSpecificEnthalpy = gas.getEnthalpy() / ventMass;
+    }
 
-    // Don't remove more mass than available
-    if (deltaMass > initialMass * 0.99) {
-      deltaMass = initialMass * 0.99;
+    // Don't remove more mass than the vented inventory holds
+    if (deltaMass > ventMass * 0.99) {
+      deltaMass = ventMass * 0.99;
       massFlowRate = deltaMass / dt;
     }
 
-    // Update mass (adjust moles proportionally for all components in all phases)
     double newMass = initialMass - deltaMass;
-    double moleFactor = newMass / initialMass;
-
-    // Scale moles for each component consistently across all phases.
-    // Use overall component moles (not phase-specific) to set total moles correctly,
-    // then scale phase-specific moles proportionally.
-    for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
-      // Get total moles for this component (independent of phase distribution)
-      double totalCompMoles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
-      double scaledTotal = totalCompMoles * moleFactor;
-      for (int j = 0; j < thermoSystem.getMaxNumberOfPhases(); j++) {
-        thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledTotal);
-        double phaseMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
-        thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(phaseMoles * moleFactor);
+    if (ventPhase >= 0) {
+      // Vapour-only discharge: remove the vented moles from the gas phase only
+      double fraction = deltaMass / ventMass;
+      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+        double gasMoles = thermoSystem.getPhase(ventPhase).getComponent(i).getNumberOfMolesInPhase();
+        thermoSystem.addComponent(i, -fraction * gasMoles, ventPhase);
       }
+    } else {
+      // Bulk discharge: adjust moles proportionally for all components in all phases
+      double moleFactor = newMass / initialMass;
+
+      // Scale moles for each component consistently across all phases.
+      // Use overall component moles (not phase-specific) to set total moles correctly,
+      // then scale phase-specific moles proportionally.
+      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+        // Get total moles for this component (independent of phase distribution)
+        double totalCompMoles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
+        double scaledTotal = totalCompMoles * moleFactor;
+        for (int j = 0; j < thermoSystem.getMaxNumberOfPhases(); j++) {
+          thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledTotal);
+          double phaseMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
+          thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(phaseMoles * moleFactor);
+        }
+      }
+      thermoSystem.setTotalNumberOfMoles(thermoSystem.getTotalNumberOfMoles() * moleFactor);
     }
-    thermoSystem.setTotalNumberOfMoles(thermoSystem.getTotalNumberOfMoles() * moleFactor);
 
     // Reinitialize with new moles before flash
     thermoSystem.init(0);
@@ -2353,8 +2503,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
           // IDLE: no mass flow, only heat exchange
           hOut = 0.0;
         } else if (flowDirection == FlowDirection.DISCHARGE) {
-          // Gas leaving carries its own specific enthalpy
-          hOut = initialH / initialMass;
+          // Fluid leaving carries its own specific enthalpy (gas phase only for a vapour-only discharge)
+          hOut = ventSpecificEnthalpy;
         } else {
           // FILLING: incoming gas enthalpy at inlet temperature and vessel pressure
           hOut = calculateInletSpecificEnthalpy();
@@ -2552,12 +2702,18 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Updates the outlet stream with current conditions.
    */
   private void updateOutletStream() {
-    SystemInterface outSystem = thermoSystem.clone();
+    // The vented fluid is the gas phase for a vapour-only discharge, otherwise the bulk inventory. Its total
+    // enthalpy is kept through the orifice (isenthalpic expansion to the back pressure).
+    thermoSystem.init(2);
+    int ventPhase = ventedGasPhaseIndex();
+    SystemInterface outSystem = ventPhase >= 0 ? thermoSystem.phaseToSystem(ventPhase) : thermoSystem.clone();
+    double ventEnthalpy = ventPhase >= 0 ? thermoSystem.getPhase(ventPhase).getEnthalpy() : thermoSystem.getEnthalpy();
+    outSystem.setMultiPhaseCheck(thermoSystem.doMultiPhaseCheck());
     outSystem.setPressure(backPressure / 1e5);
     ThermodynamicOperations ops = new ThermodynamicOperations(outSystem);
     try {
-      // Isenthalpic expansion through orifice
-      ops.PHflash(thermoSystem.getEnthalpy() / thermoSystem.getTotalNumberOfMoles(), 0);
+      // Isenthalpic expansion through orifice (total enthalpy of the vented fluid, J)
+      ops.PHflash(ventEnthalpy, 0);
     } catch (Exception e) {
       logger.warn("Outlet flash failed: " + e.getMessage());
     }
@@ -2794,12 +2950,23 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Runs a complete simulation with configurable output interval.
    *
+   * <p>
+   * If {@link #run(UUID)} has not been called yet, it is called first so that the inventory is scaled to the vessel
+   * volume (and liquid level) before the first time step.
+   * </p>
+   *
    * @param endTime Total simulation time [s]
    * @param dt Time step [s]
    * @param recordInterval Record data every N steps (1 = every step)
    * @return SimulationResult containing history data
    */
   public SimulationResult runSimulation(double endTime, double dt, int recordInterval) {
+    if (!inventoryInitialized) {
+      // Without run() the inventory is the feed stream's flow-rate moles, not the vessel volume, and the first
+      // step collapses the pressure to almost zero.
+      logger.info("runSimulation called before run(); initialising the vessel inventory first");
+      run(UUID.randomUUID());
+    }
     List<Double> timeData = new ArrayList<>();
     List<Double> pressureData = new ArrayList<>();
     List<Double> temperatureData = new ArrayList<>();

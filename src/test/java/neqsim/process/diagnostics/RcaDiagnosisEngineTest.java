@@ -20,14 +20,14 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
   @Test
   public void testRegimeMatchingAndSensorBiasDiagnosis() {
     RcaProcessWindow low = RcaProcessWindow.builder("LOW", 1.0).operatingCondition("flow_setpoint", 80.0)
-        .signal("pressure", new double[] { 10.0, 10.1, 9.9, 10.0, 10.1, 9.9 })
-        .signal("flow", new double[] { 79.0, 80.0, 81.0, 80.0, 79.5, 80.5 }).build();
+        .signal("pressure", new double[] {10.0, 10.1, 9.9, 10.0, 10.1, 9.9})
+        .signal("flow", new double[] {79.0, 80.0, 81.0, 80.0, 79.5, 80.5}).build();
     RcaProcessWindow high = RcaProcessWindow.builder("HIGH", 1.0).operatingCondition("flow_setpoint", 120.0)
-        .signal("pressure", new double[] { 12.0, 12.1, 11.9, 12.0, 12.1, 11.9 })
-        .signal("flow", new double[] { 119.0, 120.0, 121.0, 120.0, 119.5, 120.5 }).build();
+        .signal("pressure", new double[] {12.0, 12.1, 11.9, 12.0, 12.1, 11.9})
+        .signal("flow", new double[] {119.0, 120.0, 121.0, 120.0, 119.5, 120.5}).build();
     RcaProcessWindow biased = RcaProcessWindow.builder("TEST", 1.0).operatingCondition("flow_setpoint", 118.0)
-        .signal("pressure", new double[] { 14.0, 14.1, 13.9, 14.0, 14.1, 13.9 })
-        .signal("flow", new double[] { 119.0, 120.0, 121.0, 120.0, 119.5, 120.5 }).build();
+        .signal("pressure", new double[] {14.0, 14.1, 13.9, 14.0, 14.1, 13.9})
+        .signal("flow", new double[] {119.0, 120.0, 121.0, 120.0, 119.5, 120.5}).build();
 
     RcaNormalOperationModel model = RcaNormalOperationModel.fit(Arrays.asList(low, high));
     RcaFaultHypothesis normal = RcaFaultHypothesis.builder("NORMAL", "No material deviation.")
@@ -54,13 +54,13 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
    */
   @Test
   public void testWindowCopiesSignalsAndRejectsMismatchedSchema() {
-    double[] values = { 1.0, 2.0, 3.0 };
+    double[] values = {1.0, 2.0, 3.0};
     RcaProcessWindow window = RcaProcessWindow.builder("NORMAL", 1.0).signal("x", values).build();
     values[0] = 99.0;
     assertEquals(1.0, window.getSignal("x")[0], 0.0);
 
     RcaNormalOperationModel model = RcaNormalOperationModel.fit(Collections.singletonList(window));
-    RcaProcessWindow other = RcaProcessWindow.builder("TEST", 1.0).signal("y", new double[] { 1.0, 2.0, 3.0 }).build();
+    RcaProcessWindow other = RcaProcessWindow.builder("TEST", 1.0).signal("y", new double[] {1.0, 2.0, 3.0}).build();
     boolean failed = false;
     try {
       model.analyze(other);
@@ -76,9 +76,9 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
   @Test
   public void testNormalWindowsRequireConsistentOperatingConditionSchema() {
     RcaProcessWindow first = RcaProcessWindow.builder("FIRST", 1.0).operatingCondition("gas_flow", 100.0)
-        .operatingCondition("liquid_flow", 10.0).signal("pressure", new double[] { 10.0, 10.1, 9.9 }).build();
+        .operatingCondition("liquid_flow", 10.0).signal("pressure", new double[] {10.0, 10.1, 9.9}).build();
     RcaProcessWindow second = RcaProcessWindow.builder("SECOND", 1.0).operatingCondition("gas_flow", 120.0)
-        .signal("pressure", new double[] { 11.0, 11.1, 10.9 }).build();
+        .signal("pressure", new double[] {11.0, 11.1, 10.9}).build();
 
     boolean failed = false;
     try {
@@ -96,8 +96,8 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
   public void testWindowRejectsNamesThatCollideAfterNormalization() {
     boolean signalFailed = false;
     try {
-      RcaProcessWindow.builder("TEST", 1.0).signal("pressure", new double[] { 10.0, 10.1, 9.9 })
-          .signal(" pressure ", new double[] { 11.0, 11.1, 10.9 }).build();
+      RcaProcessWindow.builder("TEST", 1.0).signal("pressure", new double[] {10.0, 10.1, 9.9})
+          .signal(" pressure ", new double[] {11.0, 11.1, 10.9}).build();
     } catch (IllegalArgumentException expected) {
       signalFailed = true;
     }
@@ -106,7 +106,7 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
     boolean conditionFailed = false;
     try {
       RcaProcessWindow.builder("TEST", 1.0).operatingCondition("flow", 100.0).operatingCondition(" flow ", 101.0)
-          .signal("pressure", new double[] { 10.0, 10.1, 9.9 }).build();
+          .signal("pressure", new double[] {10.0, 10.1, 9.9}).build();
     } catch (IllegalArgumentException expected) {
       conditionFailed = true;
     }

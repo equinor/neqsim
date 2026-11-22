@@ -66,7 +66,11 @@ public class SystemPrDanesh extends SystemPrEos {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemPrDanesh clone() {
     SystemPrDanesh clonedSystem = null;
@@ -74,6 +78,7 @@ public class SystemPrDanesh extends SystemPrEos {
       clonedSystem = (SystemPrDanesh) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemPrDanesh", ex);
     }
 
     return clonedSystem;

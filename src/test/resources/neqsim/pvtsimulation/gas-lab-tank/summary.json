@@ -1,0 +1,22 @@
+{
+  "base": "b20e324a60a94778b11425257bb3d8e9636389b7",
+  "classes": 81,
+  "tests": 681,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "fittedVolumeM3": 1017.299992527677,
+  "volumeErrorM3": 7.472322977264412e-06,
+  "holdoutChiSquare": 3.1155022405922013e-14,
+  "shiftedHoldoutChiSquare": 100.0000035301571,
+  "maxOriginalCceRelativeVolumeError": 0.001132626400731085,
+  "maxTunedCceRelativeVolumeError": 2.220446049250313e-16,
+  "maxDirectPressureErrorBara": 5.684341886080801e-13,
+  "maxFittedPressureErrorBara": 8.825392683320388e-08,
+  "maxFittedComponentErrorMol": 3.921022653230466e-06,
+  "maxSurfaceRelativeVolumeError": 1.850741782050136e-13,
+  "reference60And75DigitJsonIdentical": true,
+  "ordinaryProductionJavaChanged": 0,
+  "maxNamedComponentClosureMol": 9.313225746154785e-10,
+  "scope": "synthetic gas-only independent-code benchmark; no measured accuracy or defined GOR"
+}

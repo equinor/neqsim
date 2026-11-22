@@ -1,9 +1,29 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change.
+Please follow the project's [Code of Conduct](CODE_OF_CONDUCT.md) in all project interactions.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+## Your first contribution
+
+You can open an issue, submit a pull request from a fork, or leave review feedback without a
+repository invitation.
+
+- **Report a bug.** Search for an existing issue before opening one. Include your NeqSim version,
+  the smallest example that reproduces the problem, and what you expected to happen. For a
+  calculation discrepancy, include the inputs, units, and any reference results you can share.
+  [NeqSim issues](https://github.com/equinor/neqsim/issues)
+- **Submit a fix.** Small bug fixes, documentation corrections, and focused tests can go straight
+  to a pull request. Fork the repository, create a branch for your change, and open a pull request
+  from that branch targeting `equinor/neqsim:master`. Describe what changed, link any related issue,
+  and list the checks you ran.
+  [GitHub's guide to contributing from a fork](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project)
+- **Review a proposed fix.** Open the pull request and select **Files changed** to leave comments on
+  the relevant lines. If you start a review, submit it with **Comment** to share your feedback.
+  If you reported the issue, try your original example with the proposed fix and share the result.
+  [GitHub's guide to reviewing a pull request](https://docs.github.com/en/pull-requests/get-started/reviewing-pull-requests-quickstart)
+
+Start a discussion in an issue before changing a public API, introducing or substantially changing
+an engineering model, or making a change that spans several subsystems. For a major design change,
+see the [NeqSim Request for Comments process](docs/development/rfc-process.md).
 
 ## Getting Started
 
@@ -18,7 +38,7 @@ neqsim doctor              # detailed environment health check
 
 > The `install` script finds a working Python and runs `python -m pip` for you,
 > so it works even when `pip`/`python` are not on PATH. To install manually,
-> use `python -m pip install -e devtools/` (not bare `pip`).
+> use `uv sync --project devtools` (not bare `pip`).
 
 > **`neqsim` not found?** Your Python Scripts directory may not be on PATH.
 > See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found) for fix instructions.
@@ -28,6 +48,13 @@ See [VISION_AGENTS.md](VISION_AGENTS.md) for what belongs in the core repo vs. c
 **Not sure which repository a new agent or skill belongs in?** See the
 [Where Does This Go? placement guide](https://github.com/equinor/neqsim-community-skills/blob/main/docs/where-does-this-go.md)
 — one decision tree for core vs. community vs. enterprise, and skill vs. agent.
+
+## GitHub Actions Workflows
+
+See the [workflow catalog and naming rules](.github/WORKFLOWS.md) before adding or
+renaming a workflow. Keep executable YAML directly in `.github/workflows/`; use
+category filename prefixes rather than subdirectories. Rename-dependent path
+filters, dispatch commands, badges, and contract tests must be updated together.
 
 ## Code Formatting (Spotless)
 
@@ -47,7 +74,8 @@ Run these from the repository root (use `./mvnw` on Linux/macOS, `mvnw.cmd` on W
 ./mvnw spotless:check      # verify formatting — must exit 0 before pushing
 ```
 
-Always run `spotless:apply`, then commit the changes, **before** opening or updating a PR:
+After editing Java, run `spotless:apply` and commit the formatted changes before opening or
+updating a pull request:
 
 ```bash
 ./mvnw spotless:apply
@@ -61,10 +89,12 @@ To format automatically on every commit (and verify on push), install the local
 [pre-commit](https://pre-commit.com/) hooks from `.pre-commit-config.yaml`:
 
 - `pre-commit` stage: `spotless:apply` (auto-format Java files on commit)
+- `pre-commit` stage: regenerate engineering capability coverage when related
+   Java, catalog, skill, or agent files change (`uv run --project devtools --locked devtools/build_engineering_coverage.py`)
 - `pre-push` stage: `spotless:check` (verify formatting before push)
 
 ```bash
-pip install pre-commit
+uv tool install pre-commit
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
@@ -74,7 +104,8 @@ Run the hooks manually across the whole repository:
 pre-commit run --all-files
 ```
 
-> These hooks require a local JDK and Maven. They invoke the Maven wrapper through
+> These hooks require `uv`, a local JDK, and Maven. Python devtools commands run through the
+> `devtools` project and its lockfile. Java formatting invokes the Maven wrapper through
 > `devtools/run_spotless.py`, which selects `mvnw.cmd` on Windows and `./mvnw` elsewhere, so the
 > hooks work on Windows, macOS, and Linux. They are **not** run by pre-commit.ci, which has no JVM —
 > formatting is checked by the `Pre-commit checks` GitHub Action instead.
@@ -153,7 +184,7 @@ Install extensions [Language Support for Java(TM) by Red Hat](https://marketplac
   },
   "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
   "java.saveActions.organizeImports": true,
-  "java.checkstyle.version": "10.18.1",
+  "java.checkstyle.version": "14.4.0",
   "java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
   "java.debug.settings.hotCodeReplace": "never",
   "[xml]": {

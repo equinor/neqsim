@@ -6,6 +6,7 @@
 
 package neqsim.thermo.component;
 
+import java.util.Arrays;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -33,6 +34,14 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
   /** {@inheritDoc} */
   @Override
+  public ComponentGENRTLmodifiedHV clone() {
+    ComponentGENRTLmodifiedHV copy = (ComponentGENRTLmodifiedHV) super.clone();
+    copy.dlngammadn = dlngammadn == null ? null : dlngammadn.clone();
+    return copy;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
     double[][] HVgijT = new double[numberOfComponents][numberOfComponents];
@@ -40,7 +49,62 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
   }
 
   /**
-   * getGamma.
+   * Evaluates the complete dimensionless excess-Gibbs sum with call-local classical row attraction reuse.
+   *
+   * <p>
+   * The workspace belongs only to this invocation. No component, phase or cloned handler retains it. Custom activity
+   * components use their original virtual entry points for the whole sum. Pure attractions are requested lazily; an
+   * all-HV matrix never evaluates an unused pure alpha model.
+   * </p>
+   *
+   * @param phase cubic phase supplying composition and pure-component models
+   * @param activities corresponding activity components
+   * @param count active component count
+   * @param temperature evaluation temperature in kelvin
+   * @param pressure evaluation pressure in bara
+   * @param pt selected phase root
+   * @param nonrandomness directed nonrandomness coefficients
+   * @param energies directed interaction energies in kelvin
+   * @param offsets directed dimensionless temperature offsets
+   * @param kij classical interaction coefficients
+   * @param rules pair selections with their historical exact nested-loop semantics
+   * @return sum of component mole fractions times log activity coefficients
+   */
+  public static double excessGibbsSum(PhaseInterface phase, ComponentInterface[] activities, int count,
+      double temperature, double pressure, PhaseType pt, double[][] nonrandomness, double[][] energies,
+      double[][] offsets, double[][] kij, String[][] rules) {
+    boolean standard = true;
+    for (int i = 0; i < count; i++) {
+      if (activities[i].getClass() != ComponentGENRTLmodifiedHV.class) {
+        standard = false;
+        break;
+      }
+    }
+    boolean classicalRows = false;
+    for (int i = 0; standard && count > 1 && !classicalRows && i < count; i++) {
+      for (int j = 0; j < count; j++) {
+        if (!rules[i][j].equals("HV")) {
+          classicalRows = true;
+          break;
+        }
+      }
+    }
+    double[] rowPure = classicalRows ? new double[count] : null;
+    boolean[] rowReady = classicalRows ? new boolean[count] : null;
+    double sum = 0.0;
+    for (int i = 0; i < count; i++) {
+      ComponentGENRTLmodifiedHV activity = (ComponentGENRTLmodifiedHV) activities[i];
+      double coefficient = standard
+          ? activity.getGammaWithRowPureTerms(phase, count, temperature, pressure, pt, nonrandomness, energies, offsets,
+              kij, rules, rowPure, rowReady)
+          : activity.getGamma(phase, count, temperature, pressure, pt, nonrandomness, energies, offsets, kij, rules);
+      sum += phase.getComponent(i).getx() * Math.log(coefficient);
+    }
+    return sum;
+  }
+
+  /**
+   * Evaluates modified NRTL with invocation-local reuse of classical column pure terms.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -56,6 +120,30 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    */
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT, double[][] intparam, String[][] mixRule) {
+    return getGammaWithRowPureTerms(phase, numberOfComponents, temperature, pressure, pt, HValpha, HVgij, HVgijT,
+        intparam, mixRule, null, null);
+  }
+
+  /**
+   * Evaluates one activity coefficient with an optional workspace scoped to a single complete phase evaluation.
+   *
+   * @param phase cubic phase supplying the pure functions
+   * @param numberOfComponents active count
+   * @param temperature kelvin
+   * @param pressure bara
+   * @param pt phase root
+   * @param HValpha directed nonrandomness
+   * @param HVgij directed energies in kelvin
+   * @param HVgijT dimensionless offsets
+   * @param intparam classical binary coefficients
+   * @param mixRule pair selections
+   * @param rowPure lazy row energies, or null to preserve the standalone entry point
+   * @param rowReady initialized row entries, or null without reuse
+   * @return activity coefficient
+   */
+  private double getGammaWithRowPureTerms(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT, double[][] intparam,
+      String[][] mixRule, double[] rowPure, boolean[] rowReady) {
     int type = phase.getInitType();
     double A = 0;
     double B = 0;
@@ -95,9 +183,15 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     double dG2dt = 0;
     double dGdtdt = 0;
     double dG2dtdt = 0.0;
-    double[][] Gmatrix = new double[numberOfComponents][numberOfComponents];
-    double[][] tauMatrix = new double[numberOfComponents][numberOfComponents];
-    dlngammadn = new double[numberOfComponents];
+    // Call-local flat workspaces avoid row-array allocation without retaining a cubic-size cache.
+    double[] Gmatrix = type == 3 ? new double[numberOfComponents * numberOfComponents] : null;
+    double[] tauMatrix = type == 3 ? new double[numberOfComponents * numberOfComponents] : null;
+    // Each component owns this vector, including after cloning. Lower init levels must clear it too.
+    if (dlngammadn == null || dlngammadn.length != numberOfComponents) {
+      dlngammadn = new double[numberOfComponents];
+    } else {
+      Arrays.fill(dlngammadn, 0.0);
+    }
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     double dA2dTetter = 0;
     double dA2dTdTetter = 0;
@@ -118,6 +212,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     A = 0;
     B = 0;
     dlngammadt = 0.0;
+    dlngammadtdt = 0.0;
     dA2dTetter = 0;
     dA3dTetter = 0;
     dA4dTetter = 0;
@@ -258,6 +353,12 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
       dDdTdT = 0;
       // System.out.println("hei");
 
+      // A column's pure term is independent of l. Keep it call-local and lazy so
+      // HV-only columns do not evaluate an unused pure-component alpha model.
+      boolean columnPureReady = false;
+      double columnPure = 0.0;
+      double columnPureDT = 0.0;
+      double columnPureDTT = 0.0;
       for (l = 0; l < numberOfComponents; l++) {
         if (mixRule[l][j].equals("HV")) {
           Dij = HVgij[l][j];
@@ -267,15 +368,33 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
           dtaudt = -Dij / (temperature * temperature);
           dtaudtdt = 2.0 * Dij / (temperature * temperature * temperature);
         } else {
-          gjj = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
-          gii = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
+          if (!columnPureReady) {
+            columnPure = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
+            if (type > 1) {
+              columnPureDT = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
+              columnPureDTT = -deltaEOS * comp_Array[j].diffdiffaT(temperature) / comp_Array[j].getb();
+            }
+            columnPureReady = true;
+          }
+          gjj = columnPure;
+          if (rowPure == null) {
+            gii = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
+          } else {
+            if (!rowReady[l]) {
+              rowPure[l] = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
+              rowReady[l] = true;
+            }
+            gii = rowPure[l];
+          }
           gij = -2.0 * Math.sqrt(comp_Array[l].getb() * comp_Array[j].getb())
               / (comp_Array[l].getb() + comp_Array[j].getb()) * Math.sqrt(gii * gjj) * (1.0 - intparam[l][j]);
           tau = (gij - gjj) / (R * temperature);
+          // Classic pairs have zero nonrandomness at every initialization level.
+          alpha = 0.0;
 
           if (phase.getInitType() > 1) {
-            double dgjjdt = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
-            double dgjjdtdt = -deltaEOS * comp_Array[j].diffdiffaT(temperature) / comp_Array[j].getb();
+            double dgjjdt = columnPureDT;
+            double dgjjdtdt = columnPureDTT;
             double dgiidt = -deltaEOS * comp_Array[l].diffaT(temperature) / comp_Array[l].getb();
             double dgiidtdt = -deltaEOS * comp_Array[l].diffdiffaT(temperature) / comp_Array[l].getb();
 
@@ -288,12 +407,10 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
                     * 0.5 * -0.5)
                     + (1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[l][j])
                         * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt) * 0.5));
-            alpha = 0.0;
-
             dtaudt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
                 - gij / (R * temperature * temperature);
             dtaudtdt = -dgjjdtdt / (R * temperature) + dgjjdt / (R * temperature * temperature)
-                + dgjjdt / (R * temperature * temperature) - 2 * dgjjdt / (R * temperature * temperature * temperature)
+                + dgjjdt / (R * temperature * temperature) - 2 * gjj / (R * temperature * temperature * temperature)
                 + dgijdtdt / (R * temperature) - dgijdt / (R * temperature * temperature)
                 - dgijdt / (R * temperature * temperature) + 2 * gij / (R * temperature * temperature * temperature);
           }
@@ -301,12 +418,15 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
         G = comp_Array[l].getb() * Math.exp(-alpha * tau);
         dGdt = dtaudt * -alpha * G;
-        Gmatrix[l][j] = G;
-        tauMatrix[l][j] = tau;
+        if (type == 3) {
+          Gmatrix[l * numberOfComponents + j] = G;
+          tauMatrix[l * numberOfComponents + j] = tau;
+        }
 
         C += G * comp_Array[l].getx();
         D += G * tau * comp_Array[l].getx();
         if (phase.getInitType() > 1) {
+          dGdtdt = -alpha * (dtaudtdt * G + dtaudt * dGdt);
           dCdT += dGdt * comp_Array[l].getx();
           dCdTdT += dGdtdt * comp_Array[l].getx();
           dDdT += comp_Array[l].getx() * dGdt * tau + comp_Array[l].getx() * G * dtaudt;
@@ -324,29 +444,19 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         dA4dTdTetter += dA4dTdT * dCdT * D / (C * C * C) + dA4dT * dCdTdT * D / (C * C * C)
             + dA4dT * dCdT * dDdT / (C * C * C) - 3.0 * dA4dT * dCdT * D / (C * C * C * C) * dCdT;
         dA5dTetter += dA5dT * D / (C * C);
-        dA5dTdTetter += dA5dTdT * D / (C * C) + dA5dT * dDdT / (C * C) - 2 * dA5dT * D / (C * C) * dCdT;
+        dA5dTdTetter += dA5dTdT * D / (C * C) + dA5dT * dDdT / (C * C) - 2 * dA5dT * D / (C * C * C) * dCdT;
         dA6dTetter += dA6dT * dDdT / (C * C);
         dA6dTdTetter += dA6dTdT * dDdT / (C * C) + dA6dT * dDdTdT / (C * C) - 2 * dA6dT * dDdT / (C * C * C) * dCdT;
       }
       if (mixRule[componentNumber][j].equals("HV")) {
         tau2 = HVgij[componentNumber][j] / (temperature) + HVgijT[componentNumber][j];
-        dtau2dt = -HVgij[componentNumber][j] / (temperature * temperature);
       } else {
         gii = -deltaEOS * comp_Array[componentNumber].aT(temperature) / comp_Array[componentNumber].getb();
-        double dgiidt = -deltaEOS * comp_Array[componentNumber].diffaT(temperature)
-            / comp_Array[componentNumber].getb();
         gjj = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
-        double dgjjdt = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
         gij = -2.0 * Math.pow(comp_Array[componentNumber].getb() * comp_Array[j].getb(), 0.5)
             / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * Math.pow(gii * gjj, 0.5)
             * (1.0 - intparam[componentNumber][j]);
         tau2 = (gij - gjj) / (R * temperature);
-
-        double dgijdt = -2.0 * Math.sqrt(comp_Array[componentNumber].getb() * comp_Array[j].getb())
-            / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * 1.0 / Math.sqrt(gii * gjj)
-            * (1.0 - intparam[componentNumber][j]) * (dgiidt * gjj + dgjjdt * gii) * 0.5;
-        dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
-            - gij / (R * temperature * temperature);
       }
 
       F += E / C * (tau2 - D / C);
@@ -359,8 +469,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     if (phase.getInitType() > 1) {
       dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter - dA6dTetter);
       dlngammadtdt = dAdTdT / B - dBdT * dAdT / Math.pow(B, 2.0) - dAdT / (B * B) * dBdT
-          + 2 * dBdT * A / Math.pow(B, 3.0) * dBdT - A / (B * B) * dBdTdT + 0 * dA2dTdTetter - 0 * dA3dTdTetter
-          + 0 * dA4dTdTetter - 0 * dA5dTdTetter - 0 * dA6dTdTetter;
+          + 2 * dBdT * A / Math.pow(B, 3.0) * dBdT - A / (B * B) * dBdTdT + dA2dTdTetter - dA3dTdTetter + dA4dTdTetter
+          - dA5dTdTetter - dA6dTdTetter;
     }
 
     gamma = Math.exp(lngamma);
@@ -376,35 +486,41 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
       double Dtemp = 0;
       double Ftemp = 0;
       double Gtemp = 0;
+      double nt = 0;
+      double[] columnSum = new double[numberOfComponents];
+      double[] columnEnergySum = new double[numberOfComponents];
+      // These column reductions are independent of the differentiated component p.
+      for (int f = 0; f < numberOfComponents; f++) {
+        nt += comp_Array[f].getNumberOfMolesInPhase();
+        for (int g = 0; g < numberOfComponents; g++) {
+          columnSum[f] += comp_Array[g].getx() * Gmatrix[g * numberOfComponents + f];
+          columnEnergySum[f] += comp_Array[g].getx() * Gmatrix[g * numberOfComponents + f]
+              * tauMatrix[g * numberOfComponents + f];
+        }
+      }
 
       for (int p = 0; p < numberOfComponents; p++) {
-        dAdn = tauMatrix[p][componentNumber] * Gmatrix[p][componentNumber];
-        dBdn = Gmatrix[p][componentNumber];
-        dEdn = Gmatrix[componentNumber][p] * tauMatrix[componentNumber][p];
+        dAdn = tauMatrix[p * numberOfComponents + componentNumber] * Gmatrix[p * numberOfComponents + componentNumber];
+        dBdn = Gmatrix[p * numberOfComponents + componentNumber];
+        dEdn = Gmatrix[componentNumber * numberOfComponents + p] * tauMatrix[componentNumber * numberOfComponents + p];
         // dFdn = Gmatrix[componentNumber][p];
         Dtemp = 0;
-        Ctemp = 0;
-        Etemp = 0;
+        Ctemp = columnSum[p];
+        Etemp = columnEnergySum[p];
         Ftemp = 0;
         Gtemp = 0;
-        double nt = 0;
         for (int f = 0; f < numberOfComponents; f++) {
-          nt += comp_Array[f].getNumberOfMolesInPhase();
-          Ctemp += comp_Array[f].getx() * Gmatrix[f][p];
-          Etemp += comp_Array[f].getx() * Gmatrix[f][p] * tauMatrix[f][p];
-          double sum = 0.0;
-          double sum2 = 0.0;
-          for (int g = 0; g < numberOfComponents; g++) {
-            sum += comp_Array[g].getx() * Gmatrix[g][f];
-            sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
-          }
-          Dtemp += Gmatrix[p][f] * Gmatrix[componentNumber][f] * tauMatrix[componentNumber][f] * comp_Array[f].getx()
-              / (sum * sum);
-          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[componentNumber][f] / (sum * sum * sum);
-          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[componentNumber][f] / (sum * sum);
+          double sum = columnSum[f];
+          double sum2 = columnEnergySum[f];
+          Dtemp += Gmatrix[p * numberOfComponents + f] * Gmatrix[componentNumber * numberOfComponents + f]
+              * tauMatrix[componentNumber * numberOfComponents + f] * comp_Array[f].getx() / (sum * sum);
+          Ftemp += comp_Array[f].getx() * Gmatrix[p * numberOfComponents + f] * sum2
+              * Gmatrix[componentNumber * numberOfComponents + f] / (sum * sum * sum);
+          Gtemp += comp_Array[f].getx() * Gmatrix[p * numberOfComponents + f] * tauMatrix[p * numberOfComponents + f]
+              * Gmatrix[componentNumber * numberOfComponents + f] / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-            - Etemp * Gmatrix[componentNumber][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
+            - Etemp * Gmatrix[componentNumber * numberOfComponents + p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
         // E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
         dlngammadn[p] /= (nt);
       }

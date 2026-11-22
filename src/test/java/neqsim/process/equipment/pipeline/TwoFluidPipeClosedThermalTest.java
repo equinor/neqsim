@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,95 @@ class TwoFluidPipeClosedThermalTest {
   private static final double CLOSED_ENERGY_TOLERANCE_J = 1.0e-5;
 
   private static final UUID TRANSIENT_ID = UUID.fromString("00000000-0000-0000-0000-000000002792");
+
+  @Test
+  void configuredWallInventorySurvivesInitializationAndIsDefensive() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+    Stream inlet = new Stream("wall-inventory-inlet", fluid);
+    inlet.setFlowRate(6.0, "kg/sec");
+    inlet.setTemperature(300.0, "K");
+    inlet.setPressure(60.0, "bara");
+    inlet.run();
+    TwoFluidPipe pipe = new TwoFluidPipe("wall-inventory-pipe", inlet);
+    pipe.setLength(40.0);
+    pipe.setDiameter(0.20);
+    pipe.setNumberOfSections(4);
+    pipe.setEnableJouleThomson(false);
+    pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
+    double[] configured = {295.0, 294.0, 293.0, 292.0};
+    pipe.setInitialWallTemperatureProfile(configured, "K");
+    configured[0] = 100.0;
+
+    pipe.run();
+
+    assertArrayEquals(new double[] {295.0, 294.0, 293.0, 292.0}, pipe.getWallTemperatureProfile(), 0.0);
+    double[] escaped = pipe.getWallTemperatureProfile();
+    escaped[0] = 100.0;
+    assertEquals(295.0, pipe.getWallTemperatureProfile()[0], 0.0);
+    assertArrayEquals(pipe.getInitialWallTemperatureProfile(), pipe.getWallTemperatureProfile(), 0.0);
+    assertThrows(IllegalArgumentException.class,
+        () -> pipe.setInitialWallTemperatureProfile(new double[] {300.0}, "K"));
+    assertThrows(IllegalArgumentException.class,
+        () -> pipe.setInitialWallTemperatureProfile(new double[] {300.0, 300.0, 300.0, 0.0}, "K"));
+    assertThrows(IllegalArgumentException.class, () -> pipe.setWallProperties(0.0, 7800.0, 500.0));
+  }
+
+  @Test
+  void configuredWallInventoryInitializesEveryMultilayerNodeAndSurvivesReplay() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+    Stream inlet = new Stream("multilayer-wall-inventory-inlet", fluid);
+    inlet.setFlowRate(6.0, "kg/sec");
+    inlet.setTemperature(300.0, "K");
+    inlet.setPressure(60.0, "bara");
+    inlet.run();
+
+    TwoFluidPipe pipe = new TwoFluidPipe("multilayer-wall-inventory-pipe", inlet);
+    pipe.setLength(40.0);
+    pipe.setDiameter(0.20);
+    pipe.setNumberOfSections(4);
+    pipe.setEnableJouleThomson(false);
+    pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
+    pipe.configureSubseaThermalModel(0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+    double[] configured = {295.0, 294.0, 293.0, 292.0};
+    pipe.setInitialWallTemperatureProfile(configured, "K");
+
+    pipe.run();
+
+    double[][] radialState = pipe.getMultilayerLayerTemperatureProfileSnapshot();
+    assertNotNull(radialState);
+    for (int cell = 0; cell < radialState.length; cell++) {
+      for (double layerTemperature : radialState[cell]) {
+        assertEquals(configured[cell], layerTemperature, 0.0,
+            "Every radial node must start at the configured cell temperature");
+      }
+    }
+    radialState[0][0] = 100.0;
+    assertEquals(configured[0], pipe.getMultilayerLayerTemperatureProfileSnapshot()[0][0], 0.0);
+
+    TwoFluidPipe replay = (TwoFluidPipe) pipe.copy();
+    pipe.closeInlet();
+    pipe.closeOutlet();
+    replay.closeInlet();
+    replay.closeOutlet();
+    pipe.setSurfaceTemperature(280.0, "K");
+    replay.setSurfaceTemperature(280.0, "K");
+    pipe.runTransient(1.0e-3, TRANSIENT_ID);
+    replay.runTransient(1.0e-3, TRANSIENT_ID);
+    assertArrayEquals(pipe.getWallTemperatureProfile(), replay.getWallTemperatureProfile(), 0.0);
+    assertMultilayerStatesEqual(pipe.getMultilayerLayerTemperatureProfileSnapshot(),
+        replay.getMultilayerLayerTemperatureProfileSnapshot());
+
+    pipe.setInitialWallTemperatureProfile(null, "K");
+    pipe.run();
+    assertNull(pipe.getMultilayerLayerTemperatureProfileSnapshot(),
+        "A new steady run must discard the previously evolved radial inventory");
+  }
 
   @Test
   void closedTemperatureHistoryIgnoresDisconnectedInletNominalFlow() {
@@ -92,7 +182,7 @@ class TwoFluidPipeClosedThermalTest {
     double[][] faceMassFlows = new double[4][3];
     faceMassFlows[1][0] = 1.0;
     faceMassFlows[2][0] = 1.0;
-    double[] previousTemperatures = { 300.0, 320.0, 340.0 };
+    double[] previousTemperatures = {300.0, 320.0, 340.0};
 
     double source = TwoFluidPipe.calculateExplicitSensibleAdvectionSource(1, faceMassFlows, previousTemperatures, 280.0,
         2000.0, 10.0);
@@ -122,10 +212,10 @@ class TwoFluidPipeClosedThermalTest {
 
   @Test
   void invalidThermalMassFallbackUsesFinitePositiveFloor() {
-    assertArrayEquals(new double[] { 2.0, 3.0, 1.0e-12 },
-        new double[] { TwoFluidPipe.selectFinitePositiveFluidMassPerLength(2.0, Double.NaN),
+    assertArrayEquals(new double[] {2.0, 3.0, 1.0e-12},
+        new double[] {TwoFluidPipe.selectFinitePositiveFluidMassPerLength(2.0, Double.NaN),
             TwoFluidPipe.selectFinitePositiveFluidMassPerLength(Double.NaN, 3.0),
-            TwoFluidPipe.selectFinitePositiveFluidMassPerLength(Double.NaN, Double.NaN) },
+            TwoFluidPipe.selectFinitePositiveFluidMassPerLength(Double.NaN, Double.NaN)},
         0.0);
   }
 
@@ -289,9 +379,9 @@ class TwoFluidPipeClosedThermalTest {
 
   @Test
   void explicitAndImexPathsCloseForSimpleAndMultilayerModels() {
-    TimeIntegrator.Method[] methods = { TimeIntegrator.Method.EULER, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION };
+    TimeIntegrator.Method[] methods = {TimeIntegrator.Method.EULER, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION};
     for (TimeIntegrator.Method method : methods) {
-      for (boolean multilayer : new boolean[] { false, true }) {
+      for (boolean multilayer : new boolean[] {false, true}) {
         PipeFixture fixture = createInitializedPipe("thermal-path-" + method + "-" + multilayer);
         double[] initial = fixture.pipe.getTemperatureProfile();
         fixture.pipe.setTimeIntegrationMethod(method);
@@ -348,7 +438,7 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   @Test
-  void disabledHeatTransferLeavesTemperatureUnchangedAndDoesNotCreateReport() {
+  void disabledHeatTransferLeavesTemperatureUnchangedWhenEnergyIsDisabled() {
     PipeFixture fixture = createInitializedPipe("disabled-heat-transfer");
     double[] initial = fixture.pipe.getTemperatureProfile();
     fixture.pipe.closeInlet();
@@ -356,6 +446,7 @@ class TwoFluidPipeClosedThermalTest {
     fixture.pipe.setEnableJouleThomson(false);
     fixture.pipe.setSurfaceTemperature(280.0, "K");
     fixture.pipe.setHeatTransferCoefficient(0.0);
+    fixture.pipe.setIncludeEnergyEquation(false);
 
     fixture.pipe.runTransient(1.0e-3, TRANSIENT_ID);
 
@@ -383,6 +474,13 @@ class TwoFluidPipeClosedThermalTest {
       sum += value;
     }
     return sum / values.length;
+  }
+
+  private void assertMultilayerStatesEqual(double[][] expected, double[][] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int cell = 0; cell < expected.length; cell++) {
+      assertArrayEquals(expected[cell], actual[cell], 0.0);
+    }
   }
 
   private double[] initialLayerTemperatures(MultilayerThermalCalculator calculator) {

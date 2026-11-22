@@ -1,0 +1,317 @@
+schema: pvt_study.v1
+study:
+  id: PVT-SYNTHETIC-CONDENSATE-001
+  title: Synthetic gas-condensate PVT fluid study
+  intended_use: Demonstrate condensation and a true depletion protocol with reproducible
+    model export
+  synthetic: true
+  document_number: PVT-SYNTHETIC-CONDENSATE-001
+  revision: '0'
+  issue_status: SOFTWARE DEMONSTRATION - NOT FOR DESIGN
+samples:
+- id: CONDENSATE-001
+  type: synthetic reservoir gas-condensate definition
+  source: Synthetic software fixture; no physical sampling campaign
+  synthetic: true
+  accepted: true
+  representativeness: This numerical composition only
+analyses:
+- id: COMPOSITION-CONDENSATE-001
+  sample_id: CONDENSATE-001
+  basis: mole_fraction
+  source: Synthetic mixture in this version-controlled YAML, not laboratory measurements
+  components:
+  - name: methane
+    value: 0.8
+  - name: ethane
+    value: 0.06
+  - name: propane
+    value: 0.04
+  - name: n-butane
+    value: 0.02
+  - name: n-pentane
+    value: 0.01
+  - name: n-hexane
+    value: 0.01
+  - name: C7
+    kind: tbp
+    value: 0.01
+    molar_mass_kg_mol: 0.092
+    density_g_cm3: 0.727
+  - name: C8
+    kind: tbp
+    value: 0.01
+    molar_mass_kg_mol: 0.104
+    density_g_cm3: 0.749
+  - name: C10
+    kind: plus
+    value: 0.04
+    molar_mass_kg_mol: 0.18
+    density_g_cm3: 0.81
+fluid:
+  sample_id: CONDENSATE-001
+  analysis_id: COMPOSITION-CONDENSATE-001
+  eos: PR
+  mixing_rule: 2
+  viscosity_model: LBC
+  temperature:
+    value: 110.0
+    unit: C
+  pressure:
+    value: 400.0
+    unit: bara
+  characterization:
+    plus_fraction_model: Pedersen
+    lumps: 3
+    mass_relative_tolerance: 1.0e-06
+experiments:
+- id: CONDENSATE-CCE
+  sample_id: CONDENSATE-001
+  kind: CCE
+  role: calibration
+  temperature:
+    value: 110.0
+    unit: C
+  pressures:
+    values:
+    - 450.0
+    - 350.0
+    - 250.0
+    - 150.0
+    - 100.0
+    - 50.0
+    unit: bara
+  source_kind: synthetic_reference
+  reference_basis: Fixed-composition closed cell, saturation-volume basis
+- id: CONDENSATE-CVD
+  sample_id: CONDENSATE-001
+  kind: CVD
+  role: validation
+  temperature:
+    value: 110.0
+    unit: C
+  pressures:
+    values:
+    - 450.0
+    - 350.0
+    - 250.0
+    - 150.0
+    - 100.0
+    - 50.0
+    unit: bara
+  source_kind: synthetic_reference
+  reference_basis: Fixed-cell-volume depletion with stage-wise equilibrium gas removal
+- id: CONDENSATE-VISCOSITY
+  sample_id: CONDENSATE-001
+  kind: VISCOSITY
+  role: validation
+  temperature:
+    value: 110.0
+    unit: C
+  pressures:
+    values:
+    - 400.0
+    - 250.0
+    - 100.0
+    - 50.0
+    unit: bara
+  source_kind: synthetic_reference
+- id: CONDENSATE-CCE-HOLDOUT
+  sample_id: CONDENSATE-001
+  kind: CCE
+  role: validation
+  temperature:
+    value: 100.0
+    unit: C
+  pressures:
+    values:
+    - 450.0
+    - 350.0
+    - 250.0
+    - 150.0
+    - 100.0
+    - 50.0
+    unit: bara
+  source_kind: synthetic_reference
+  reference_basis: Fixed-composition closed cell, saturation-volume basis
+observations:
+- id: CONDENSATE-CCE-relative_volume
+  experiment_id: CONDENSATE-CCE
+  property: relative_volume
+  unit: '1'
+  values:
+  - 0.8818646539990737
+  - 0.9895841502339903
+  - 1.2523406069893022
+  - 1.9944112681257402
+  - 3.023300270092615
+  - 6.294377074774111
+  uncertainty:
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: condensate_reference.json
+    table: CONDENSATE-CCE/relative_volume
+    reference_parameter_identity: fb23c405dbe939c97e9aa3c2a6f080ee7387bc9dbc325f18e6288b185c02913f
+  acceptance_max_absolute_error: 0.0005
+- id: CONDENSATE-CVD-liquid_dropout_percent
+  experiment_id: CONDENSATE-CVD
+  property: liquid_dropout_percent
+  unit: '% saturation volume'
+  values:
+  - 0.0
+  - 0.0
+  - 14.861320387457303
+  - 15.321956065944756
+  - 14.068517428604132
+  - 12.413031631938717
+  uncertainty:
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.05
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: condensate_reference.json
+    table: CONDENSATE-CVD/liquid_dropout_percent
+    reference_parameter_identity: fb23c405dbe939c97e9aa3c2a6f080ee7387bc9dbc325f18e6288b185c02913f
+  acceptance_max_absolute_error: 0.01
+- id: CONDENSATE-CVD-gas_z_factor
+  experiment_id: CONDENSATE-CVD
+  property: gas_z_factor
+  unit: '1'
+  values:
+  - 1.1706965056567171
+  - 1.0163961654560687
+  - 0.9100892666015727
+  - 0.884481679704377
+  - 0.9000573295031484
+  - 0.9349845845651049
+  uncertainty:
+  - 0.002
+  - 0.002
+  - 0.002
+  - 0.002
+  - 0.002
+  - 0.002
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: condensate_reference.json
+    table: CONDENSATE-CVD/gas_z_factor
+    reference_parameter_identity: fb23c405dbe939c97e9aa3c2a6f080ee7387bc9dbc325f18e6288b185c02913f
+  acceptance_max_absolute_error: 0.001
+- id: CONDENSATE-VISCOSITY-viscosity_pa_s
+  experiment_id: CONDENSATE-VISCOSITY
+  property: viscosity_pa_s
+  unit: Pa s
+  values:
+  - 3.76956205816474e-05
+  - 2.409754815567089e-05
+  - 1.484878814538768e-05
+  - 1.3500840764646012e-05
+  uncertainty:
+  - 1.0e-06
+  - 1.0e-06
+  - 1.0e-06
+  - 1.0e-06
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: condensate_reference.json
+    table: CONDENSATE-VISCOSITY/viscosity_pa_s
+    reference_parameter_identity: fb23c405dbe939c97e9aa3c2a6f080ee7387bc9dbc325f18e6288b185c02913f
+  acceptance_max_absolute_error: 1.0e-06
+  phase: gas
+- id: CONDENSATE-CCE-HOLDOUT-relative_volume
+  experiment_id: CONDENSATE-CCE-HOLDOUT
+  property: relative_volume
+  unit: '1'
+  values:
+  - 0.8916875589523995
+  - 0.9942423908118496
+  - 1.2514351029192456
+  - 1.9865221074444466
+  - 3.0158143468335075
+  - 6.303227067699835
+  uncertainty:
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: condensate_reference.json
+    table: CONDENSATE-CCE-HOLDOUT/relative_volume
+    reference_parameter_identity: fb23c405dbe939c97e9aa3c2a6f080ee7387bc9dbc325f18e6288b185c02913f
+  acceptance_max_absolute_error: 0.0005
+calibration:
+  parameters:
+  - name: BIP_METHANE_C7PLUS
+    lower: 0.024
+    upper: 0.026
+    initial: 0.0248
+    source: Restricted synthetic numerical fixture domain around the independently
+      fixed reference BIP 0.025. Broader trials and some starting guesses reject nonconservative
+      flash endpoints; this is not global optimizer qualification.
+  max_iterations: 15
+validation:
+  states:
+  - temperature:
+      value: 110.0
+      unit: C
+    pressure:
+      value: 400.0
+      unit: bara
+  - temperature:
+      value: 90.0
+      unit: C
+    pressure:
+      value: 100.0
+      unit: bara
+  export_pressures_bara:
+  - 400.0
+  - 150.0
+  - 50.0
+standards: []
+data_gaps:
+- No physical sample, laboratory measurement or target simulator ingestion is supplied
+- Synthetic data demonstrate recovery and replay only; no experimental-accuracy claim
+- Supplied synthetic uncertainties are reported in metrics; current CCE fitting engine
+  uses its fixed residual scale
+- No standards conformity or statistical parameter-confidence interval is claimed
+- Condensate calibration is restricted to the declared numerical fixture bounds and
+  start; broader near-critical optimizer trials can fail conservation guards
+synthetic_reference:
+  kind: synthetic_reference
+  reference_generator: pvt_examples/generate_reference.py
+  engine_source_revision: 9f1c667aeed816a3fa0ce78f5981fcbfc3eb4e3e
+  engine_and_workflow_identity: 4c7fcf0ec4659cb0b9275825de28d696c03145421e6776a13bed91a12884a7de
+  reference_eos: PR, classic mixing rule 2, declared LBC transport
+  reference_grouped_methane_heavy_bip: 0.025
+  initial_candidate: Same composition and characterization, original database BIPs
+    before fitting
+  reference_parameter_identity: fb23c405dbe939c97e9aa3c2a6f080ee7387bc9dbc325f18e6288b185c02913f
+  added_noise: none
+  noise_seed: null
+  independence: Temperature and experiment hold-outs test numerical recovery; all
+    share the same synthetic EOS and do not establish independent physical accuracy
+  uncertainty: Explicit arbitrary synthetic standard uncertainties; no confidence
+    interval or laboratory accreditation claim

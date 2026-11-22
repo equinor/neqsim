@@ -172,8 +172,17 @@ public class PfpDemandCalculator implements Serializable {
    * Bare-steel time to reach the critical temperature under the incident fire flux.
    *
    * @return time to critical temperature in s
+   * @throws IllegalArgumentException if the initial steel temperature is not positive and finite or the critical steel
+   * temperature is not finite and strictly above the initial temperature
    */
   public double bareSteelTimeToCriticalS() {
+    if (!Double.isFinite(initialTemperatureK) || !Double.isFinite(criticalTemperatureK) || initialTemperatureK <= 0.0
+        || criticalTemperatureK <= initialTemperatureK) {
+      throw new IllegalArgumentException(
+          "Expected finite steel temperatures with 0 K < initialTemperatureK < criticalTemperatureK, got "
+              + "initialTemperatureK=" + initialTemperatureK + " K and criticalTemperatureK=" + criticalTemperatureK
+              + " K");
+    }
     double deltaT = criticalTemperatureK - initialTemperatureK;
     double qAbs = absorptivity * incidentHeatFluxWPerM2;
     return steelMassPerAreaKgPerM2() * STEEL_CP * deltaT / qAbs;
@@ -182,22 +191,33 @@ public class PfpDemandCalculator implements Serializable {
   /**
    * Evaluate the PFP demand for a required survival (fire endurance) time.
    *
+   * <p>
+   * Temperature relationships are checked here so the setters can be called in any order. The thickness calculation
+   * uses the actual positive difference between the fire temperature and the mean steel temperature.
+   * </p>
+   *
    * @param requiredSurvivalTimeS the required survival time in s (e.g. 3600 for 60 min)
    * @return the PFP demand result
+   * @throws IllegalArgumentException if the survival time is nonpositive, the steel temperatures are invalid for
+   * {@link #bareSteelTimeToCriticalS()}, or the fire temperature is nonfinite or at or below the mean steel temperature
    */
   public PfpDemandResult evaluate(double requiredSurvivalTimeS) {
     if (requiredSurvivalTimeS <= 0.0) {
       throw new IllegalArgumentException("required survival time must be positive");
     }
     double tBare = bareSteelTimeToCriticalS();
+    double steelAvg = 0.5 * initialTemperatureK + 0.5 * criticalTemperatureK;
+    double drivingTemp = fireTemperatureK - steelAvg;
+    if (!Double.isFinite(fireTemperatureK) || drivingTemp <= 0.0) {
+      throw new IllegalArgumentException("fireTemperatureK (" + fireTemperatureK
+          + " K) must be finite and greater than the mean steel temperature (" + steelAvg + " K)");
+    }
     boolean pfpRequired = tBare < requiredSurvivalTimeS;
 
     double requiredThicknessM = 0.0;
     if (pfpRequired) {
       double deltaT = criticalTemperatureK - initialTemperatureK;
       double qAllow = steelMassPerAreaKgPerM2() * STEEL_CP * deltaT / requiredSurvivalTimeS;
-      double steelAvg = 0.5 * (initialTemperatureK + criticalTemperatureK);
-      double drivingTemp = Math.max(1.0, fireTemperatureK - steelAvg);
       requiredThicknessM = pfpConductivityWPerMK * drivingTemp / qAllow;
     }
 

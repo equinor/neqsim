@@ -55,6 +55,8 @@ class pHProbeTest {
     logger.info("pH " + phmeasurement.getMeasuredValue());
     assertEquals(13.5830, phmeasurement.getMeasuredValue(), 0.01);
     assertEquals(1, phmeasurement.reactiveThermoSystem.getNumberOfPhases());
+    assertEquals(1, phmeasurement.reactiveThermoSystem.getMaxNumberOfPhases());
+    assertTrue(phmeasurement.reactiveThermoSystem.isForcePhaseTypes());
     assertTrue(phmeasurement.reactiveThermoSystem.hasPhaseType("aqueous"));
     assertTrue(Math.abs(
         phmeasurement.reactiveThermoSystem.getChemicalReactionOperations().getReactivePhaseChargeMoles()) <= 1.0e-8);

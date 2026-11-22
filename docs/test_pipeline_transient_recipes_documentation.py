@@ -58,9 +58,10 @@ class PipelineTransientRecipesDocumentationTest(unittest.TestCase):
         self.assertNotRegex(body_without_fences, r"(?m)^# ")
 
     def test_transient_recipe_uses_java_uuid_overload(self):
-        self.assertIn(
-            "public void runTransient(double dt, UUID id)",
+        # Synchronization changes implementation, not the documented UUID overload.
+        self.assertRegex(
             self.two_fluid_source,
+            r"\bpublic\s+(?:synchronized\s+)?void\s+runTransient\(double dt, UUID id\)",
         )
         self.assertIn("from java.util import UUID", self.guide)
         self.assertIn("UUID.randomUUID()", self.guide)

@@ -56,31 +56,53 @@ SOURCE_CATALOG = [
     ("pepr", "PEPR", "PEPR action file attachments"),
     ("stid", "STID", "STID controlled documents (datasheets, P&IDs, drawings)"),
     ("tr2000", "TR2000", "Piping-class, valve, material and rating data"),
+    ("equipment-portal", "Equipment Portal", "Equipment-class pages, SPS handbooks, reference prices and package documents"),
+    ("omnia-maps", "Omnia Maps", "Pipeline Map (ArcGIS Online) layer catalog, access report, routes, templates and waypoints"),
     ("maintenance", "SAP / Maintenance", "Work orders, failure reports, linked documents"),
     ("servicenow", "ServiceNow", "Referenced records (RITM / INC / CHG / SCTASK)"),
     ("tagreader", "Plant historian", "PI / IP.21 (tagreader) signal exports"),
+    ("ots", "OTS historian", "Omnia Timeseries (OTS) catalogue, raw and aggregated signal exports"),
+    ("alarm-events", "Alarm & Events", "Alarm and event log extracts (iiot-ae-api-v1)"),
     ("seeq", "Seeq", "Seeq signal and capsule exports"),
     ("pdm", "PDM", "Production Data Mart allocation and production-accounting evidence"),
     ("rigga", "Rigga (legacy)", "Legacy PDM Streamer production-volume exports"),
     ("vendor", "Vendor", "Vendor datasheets, manuals, performance maps"),
+    ("semi", "SEMI", "Manufacturer equipment model documents from semi.equinor.com (SMI/SDI ids)"),
     ("lab", "Lab / PVT", "Lab, PVT and gas-sample reports"),
+    ("osdu", "OSDU Data Platform", "OSDU Storage records and Reservoir DDMS (RESQML) exports"),
+    ("fmu", "FMU project share", "Reservoir-model project files (Eclipse includes, ERT, RMS volumes)"),
+    ("geochemdb", "GeochemDB", "Geochemical analyses of fluid, gas and rock samples"),
+    ("welldb", "WellDB", "Well reports and page-referenced search hits from the well document share"),
+    ("powerbi", "Power BI", "Report tables and metadata read from Power BI"),
+    ("sodir", "Sodir", "Norwegian Offshore Directorate publications, maps and fact pages"),
+    ("earlier-tasks", "Earlier tasks", "Data and results reused from earlier task folders"),
     ("literature", "Literature", "Papers, standards, textbooks"),
     ("web", "Web", "Saved web pages, article extracts, online references"),
     ("manual", "Manual upload", "User-provided documents"),
     ("other", "Other", "Uncategorised / needs filing"),
 ]
 SOURCE_KEYS = [key for key, _name, _desc in SOURCE_CATALOG]
+# Folder names agents already write that belong to a catalogued source.
+SOURCE_FOLDER_ALIASES = {
+    "fmu_share": "fmu", "ores": "osdu", "rddms": "osdu",
+    "equipment_portal": "equipment-portal", "omnia_maps": "omnia-maps",
+    "alarm_events": "alarm-events", "alarms": "alarm-events", "timeseries": "ots",
+    "earlier_tasks": "earlier-tasks", "previous_tasks": "earlier-tasks",
+}
 SOURCE_NAME = {key: name for key, name, _desc in SOURCE_CATALOG}
 SOURCE_DESC = {key: desc for key, _name, desc in SOURCE_CATALOG}
 
 # Generated / bookkeeping artifacts that are not "collected documents".
+# Kept in sync with devtools/validate_task_results.py check_document_evidence.
 SKIP_FILES = {
     "SOURCES.md",
+    "README.md",
     "collection_manifest.json",
     "manifest.json",
     "retrieval_manifest.json",
     "document_evidence_manifest.json",
     "related_peprs.json",
+    "document_root_index.md",
 }
 
 
@@ -121,6 +143,9 @@ def _infer_source_from_name(name: str) -> str:
         ("seeq", r"seeq"),
         ("pdm", r"\bpdm\b|production_volume"),
         ("rigga", r"rigga"),
+        ("equipment-portal", r"(?<![a-z0-9])equipment[ _-]portal(?=[ ._-]|$)"),
+        ("omnia-maps", r"(?<![a-z0-9])omnia[ _-]maps(?=[ ._-]|$)"),
+        ("semi", r"(?<![a-z0-9])(?:semi[ _-]|semi\.equinor\b|s[md]i[-_]\d)"),
         ("tr2000", r"tr2000|\bpcs[_-]|\bvds[_-]|\bmds[_-]|pipe[_-]?class"),
         ("stid", r"stid|p&id|pid[_-]|_pid|datasheet|drawing|\bds[_-]|\baa[_-]|\bmd[_-]"),
         ("vendor", r"vendor|performance|curve|\bmap\b|manual"),
@@ -215,6 +240,7 @@ def _record_filename(record: dict) -> str:
 
 def _record_source(record: dict) -> str:
     value = str(record.get("source") or record.get("system") or "").strip().lower()
+    value = SOURCE_FOLDER_ALIASES.get(value, value)
     return value if value in SOURCE_KEYS else ""
 
 
@@ -250,8 +276,9 @@ def scan_references(task_dir: Path, references_dir: Path) -> dict:
 
             record = dict(metadata.get(filename.lower(), {}))
             # Source precedence: subfolder > manifest > filename inference > other.
-            if len(rel_parts) > 1 and rel_parts[0] in SOURCE_KEYS:
-                source = rel_parts[0]
+            folder = SOURCE_FOLDER_ALIASES.get(rel_parts[0], rel_parts[0]) if len(rel_parts) > 1 else ""
+            if folder in SOURCE_KEYS:
+                source = folder
             else:
                 source = _record_source(record) or _infer_source_from_name(filename) or "other"
 
@@ -426,6 +453,63 @@ def render_sources_md(record: dict) -> str:
     return "\n".join(lines)
 
 
+def _default_evidence_status(name: str) -> str:
+    """Machine-readable caches need no extraction; real documents do."""
+    lower = name.lower()
+    structured = (".json", ".csv", ".csv.gz", ".parquet", ".gz", ".ndjson", ".yaml", ".yml")
+    if lower.endswith(structured):
+        return "structured_data"
+    if lower.endswith((".md", ".txt", ".log", ".py")):
+        return "structured_data"
+    # Eclipse/OPM/ERT/RESQML model inputs are keyword text read by a simulator, not prose to extract.
+    simulator = (".inc", ".ecl", ".data", ".sch", ".grdecl", ".vfp", ".ert", ".cfg", ".epc")
+    if lower.endswith(simulator):
+        return "structured_data"
+    return "not_started"
+
+
+def build_document_evidence(record: dict, existing: dict | None) -> dict:
+    """Derive document_evidence_manifest.json from the collection record.
+
+    The task quality gate reads this file, one entry per reference file, and treats
+    ``not_started`` / ``pending`` / ``unprocessed`` as unprocessed. Statuses already
+    recorded by hand or by an extraction agent are preserved.
+    """
+    previous = {}
+    for entry in (existing or {}).get("sources", []) or []:
+        if isinstance(entry, dict) and entry.get("path"):
+            previous[str(entry["path"])] = entry
+
+    sources = []
+    for block in record.get("sources", []):
+        for doc in block.get("documents", []):
+            path = doc["file"]
+            prior = previous.get(path, {})
+            status = prior.get("status")
+            # A placeholder status is re-derived, so an improved default reaches existing tasks.
+            if not status or status == "not_started":
+                status = _default_evidence_status(doc["name"])
+            sources.append(
+                {
+                    "path": path,
+                    "source": block["source"],
+                    "system_name": block["system_name"],
+                    "status": status,
+                    "title": prior.get("title") or doc.get("title") or doc["name"],
+                    "summary": prior.get("summary") or doc.get("summary", ""),
+                    "sha256": doc.get("sha256", ""),
+                    "bytes": doc.get("bytes", 0),
+                }
+            )
+    return {
+        "schema": "document_evidence_manifest.v1",
+        "generated_utc": record["generated_utc"],
+        "task_dir": record["task_dir"],
+        "sources": sources,
+        "totals": {"files": len(sources)},
+    }
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("task_dir", help="Task folder root")
@@ -465,8 +549,19 @@ def main(argv=None) -> int:
     with sources_md_path.open("w", encoding="utf-8") as stream:
         stream.write(render_sources_md(record))
 
+    evidence_path = task_dir / "step1_scope_and_research" / "document_evidence_manifest.json"
+    evidence = build_document_evidence(record, _load_json(evidence_path))
+    with evidence_path.open("w", encoding="utf-8") as stream:
+        json.dump(evidence, stream, indent=2)
+
     print(f"Wrote {sources_md_path}")
     print(f"Wrote {manifest_path}")
+    print(f"Wrote {evidence_path}")
+    unprocessed = sum(
+        1 for entry in evidence["sources"] if entry["status"] == "not_started"
+    )
+    if unprocessed:
+        print(f"  {unprocessed} document(s) still need extraction evidence.")
     print(
         f"  {record['totals']['documents']} document(s) across "
         f"{record['totals']['sources']} source(s)."

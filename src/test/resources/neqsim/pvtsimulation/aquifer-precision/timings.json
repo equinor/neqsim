@@ -1,0 +1,93 @@
+{
+  "workload": "isolated mixed prescribed ramps; JRE17; independent fresh processes; 200000 warmup then 1000000 calls; ABBA repeated three times",
+  "samples": [
+    {
+      "order": 0,
+      "kind": "baseline",
+      "calls": 1000000,
+      "ns": 175153350,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 1,
+      "kind": "candidate",
+      "calls": 1000000,
+      "ns": 157455214,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 2,
+      "kind": "candidate",
+      "calls": 1000000,
+      "ns": 176092556,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 3,
+      "kind": "baseline",
+      "calls": 1000000,
+      "ns": 166964083,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 4,
+      "kind": "baseline",
+      "calls": 1000000,
+      "ns": 175687761,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 5,
+      "kind": "candidate",
+      "calls": 1000000,
+      "ns": 161538806,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 6,
+      "kind": "candidate",
+      "calls": 1000000,
+      "ns": 139558162,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 7,
+      "kind": "baseline",
+      "calls": 1000000,
+      "ns": 172381893,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 8,
+      "kind": "baseline",
+      "calls": 1000000,
+      "ns": 151772093,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 9,
+      "kind": "candidate",
+      "calls": 1000000,
+      "ns": 138354579,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 10,
+      "kind": "candidate",
+      "calls": 1000000,
+      "ns": 156317810,
+      "checksum": 2761139957.314446
+    },
+    {
+      "order": 11,
+      "kind": "baseline",
+      "calls": 1000000,
+      "ns": 154632461,
+      "checksum": 2761139957.314446
+    }
+  ],
+  "baselineMedianNs": 169672988.0,
+  "candidateMedianNs": 156886512.0,
+  "candidateToBaselineMedian": 0.924640473709345,
+  "claim": "diagnostic only; not an end-to-end reservoir speedup or field performance claim"
+}

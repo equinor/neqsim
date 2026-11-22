@@ -1,0 +1,55 @@
+name: "[Core] V-101 Disposal Benchmark"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'examples/relief/**'
+      - 'src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudy.java'
+      - 'src/main/java/neqsim/process/equipment/separator/Separator.java'
+      - 'src/main/java/neqsim/process/safety/depressurization/DepressurizationSimulator.java'
+      - 'src/main/java/neqsim/process/safety/depressurization/SteadyFlareGasNetwork.java'
+      - '.github/workflows/core-v101-disposal-benchmark.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v101-disposal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Compile the native reference and resolve dependencies
+        run: ./mvnw -B -ntp test-compile dependency:build-classpath -Dmdep.outputFile=target/relief-classpath.txt
+      - name: Replay the relief and blowdown benchmarks
+        run: |
+          export NEQSIM_CLASSPATH="$PWD/target/test-classes:$PWD/target/classes:$(cat target/relief-classpath.txt)"
+          run_python() { uv run --project devtools --locked python "$@"; }
+          run_python examples/relief/verify_v101_disposal.py v101-results --revision "$(git rev-parse HEAD)" --run > v101-verification.json
+          run_python examples/relief/steady_disposal_limit.py > v101-results/steady-limit.json
+          for dt in 1 2; do
+            run_python examples/relief/spadeadam_s12.py --dt "$dt" > "v101-results/s12-$dt.json"
+          done
+      - name: Retain the time histories and numerical holds
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: v101-disposal-results
+          path: |
+            v101-results/
+            v101-verification.json

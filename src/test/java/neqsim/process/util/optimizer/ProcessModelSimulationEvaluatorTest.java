@@ -108,7 +108,7 @@ class ProcessModelSimulationEvaluatorTest {
   void nominationAndQualityAdaptersProduceFreshDeterministicEvidence() {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
-    NetworkNomination nomination = new NetworkNomination("sales meter", new double[] { 10000.0, 12000.0 }, "kg/hr",
+    NetworkNomination nomination = new NetworkNomination("sales meter", new double[] {10000.0, 12000.0}, "kg/hr",
         NetworkDecisionVariable.RateBasis.MASS, 0.02);
     AtomicInteger nominationSamples = new AtomicInteger();
     evaluator.addNominationConstraint("sales nomination", "separation", nomination, 0,
@@ -292,7 +292,7 @@ class ProcessModelSimulationEvaluatorTest {
       }
     }, 15000.0);
 
-    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 12000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {12000.0});
 
     assertTrue(result.isSimulationConverged(), "model should converge");
     assertTrue(result.isFeasible(), "feed should be below the upper bound");
@@ -303,7 +303,7 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(evaluator.getParameters().get(0).isClampToBounds(),
         "ordinary parameters must retain legacy clamping by default");
 
-    ProcessModelSimulationEvaluator.EvaluationResult clamped = evaluator.evaluate(new double[] { 25000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult clamped = evaluator.evaluate(new double[] {25000.0});
     assertTrue(clamped.isSimulationConverged());
     assertEquals(20000.0, fixture.model.getVariableValue("wells::feed.flowRate", "kg/hr"), 1.0e-6,
         "ordinary parameters must retain their historical bound clamping");
@@ -363,7 +363,7 @@ class ProcessModelSimulationEvaluatorTest {
     double originalFlowRate = fixture.feed.getFlowRate("kg/hr");
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-        () -> evaluator.evaluate(new double[] { Double.NaN }));
+        () -> evaluator.evaluate(new double[] {Double.NaN}));
 
     assertTrue(exception.getMessage().contains("Parameter 0"));
     assertEquals(originalFlowRate, fixture.feed.getFlowRate("kg/hr"), 0.0);
@@ -399,7 +399,7 @@ class ProcessModelSimulationEvaluatorTest {
           }
         }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE).addEquipmentCapacityConstraints();
 
-    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 13000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {13000.0});
 
     assertFalse(result.isFeasible(), "installed capacity should be exceeded");
     assertTrue(evaluator.getConstraintCount() > 0, "capacity constraints should be registered");
@@ -609,7 +609,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setIncludeStrategyCapacityConstraints(false);
     evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
 
-    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 10000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {10000.0});
 
     assertTrue(result.isSimulationConverged());
     assertEquals(1, result.getRankedCapacityConstraints().size());
@@ -638,8 +638,8 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setIncludeStrategyCapacityConstraints(false);
     evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
 
-    ProcessModelSimulationEvaluator.EvaluationResult lowRate = evaluator.evaluate(new double[] { 10000.0 });
-    ProcessModelSimulationEvaluator.EvaluationResult highRate = evaluator.evaluate(new double[] { 14000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult lowRate = evaluator.evaluate(new double[] {10000.0});
+    ProcessModelSimulationEvaluator.EvaluationResult highRate = evaluator.evaluate(new double[] {14000.0});
 
     List<ProcessModelSimulationEvaluator.BottleneckStatus> lowRanked = lowRate.getRankedCapacityConstraints();
     List<ProcessModelSimulationEvaluator.BottleneckStatus> highRanked = highRate.getRankedCapacityConstraints();
@@ -678,7 +678,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setIncludeStrategyCapacityConstraints(false);
     evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr").addEquipmentCapacityConstraints();
 
-    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 10000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {10000.0});
     ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
 
     assertTrue(result.isFeasible());
@@ -705,7 +705,9 @@ class ProcessModelSimulationEvaluatorTest {
     CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
         .setDesignValue(12000.0).setMaxValue(13200.0).setWarningThreshold(0.85).setSeverity(ConstraintSeverity.CRITICAL)
         .setDescription("Synthetic separator gas handling limit").setDataSource("mechanicalDesign:test")
-        .setConfidence(0.95).setValidityRange(8000.0, 14000.0).setValueSupplier(() -> {
+        .setConfidence(0.95).setValidityRange(8000.0, 14000.0)
+        .setOperatingLimit(11000.0, CapacityConstraint.ConstraintSource.USER_RULE, "facility operating procedure OP-17")
+        .setOperatingLimitConfidence(0.90).setOperatingLimitValidityRange(8000.0, 14000.0).setValueSupplier(() -> {
           supplierCalls.incrementAndGet();
           return 13000.0;
         });
@@ -719,8 +721,8 @@ class ProcessModelSimulationEvaluatorTest {
     ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
 
     assertEquals(1, supplierCalls.get(), "one completed point must sample each installed supplier once");
-    assertEquals(13.0 / 12.0, result.getConstraintValues()[0], 1.0e-12);
-    assertEquals(-1.0 / 12.0, result.getConstraintMargins()[0], 1.0e-12);
+    assertEquals(13.0 / 11.0, result.getConstraintValues()[0], 1.0e-12);
+    assertEquals(-2.0 / 11.0, result.getConstraintMargins()[0], 1.0e-12);
     assertEquals("1", evaluator.getConstraints().get(0).getUnit());
     assertEquals("kg/hr", evaluator.getConstraints().get(0).getCapacityPhysicalUnit());
     assertEquals(1, result.getInstalledEquipmentCapacityEvidence().size());
@@ -732,19 +734,25 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(ConstraintType.HARD, evidence.getConstraintType());
     assertEquals(ConstraintSeverity.CRITICAL, evidence.getSeverity());
     assertTrue(evidence.isEnabled());
-    assertEquals(13.0 / 12.0, evidence.getNormalizedUtilization(), 1.0e-12);
-    assertEquals(-1.0 / 12.0, evidence.getNormalizedMargin(), 1.0e-12);
+    assertEquals(13.0 / 11.0, evidence.getNormalizedUtilization(), 1.0e-12);
+    assertEquals(-2.0 / 11.0, evidence.getNormalizedMargin(), 1.0e-12);
     assertEquals("1", evidence.getNormalizedUnit());
     assertEquals(13000.0, evidence.getCurrentValue(), 0.0);
     assertEquals(12000.0, evidence.getDesignValue(), 0.0);
     assertEquals(0.0, evidence.getMinimumValue(), 0.0);
     assertEquals(13200.0, evidence.getMaximumValue(), 0.0);
-    assertEquals(12000.0, evidence.getApplicableLimit(), 0.0);
-    assertEquals(-1000.0, evidence.getPhysicalMargin(), 0.0);
-    assertEquals(1000.0, evidence.getRequiredRelief(), 0.0);
+    assertEquals(11000.0, evidence.getApplicableLimit(), 0.0);
+    assertEquals(-2000.0, evidence.getPhysicalMargin(), 0.0);
+    assertEquals(2000.0, evidence.getRequiredRelief(), 0.0);
     assertEquals(0.85, evidence.getWarningThreshold(), 0.0);
     assertEquals("kg/hr", evidence.getPhysicalUnit());
     assertEquals("mechanicalDesign:test", evidence.getDataSource());
+    assertTrue(evidence.hasOperatingLimit());
+    assertEquals(11000.0, evidence.getOperatingLimit(), 0.0);
+    assertEquals(CapacityConstraint.ApplicableLimitRole.CONFIGURED_OPERATING, evidence.getApplicableLimitRole());
+    assertEquals(CapacityConstraint.ConstraintSource.USER_RULE, evidence.getApplicableLimitSource());
+    assertEquals("facility operating procedure OP-17", evidence.getApplicableLimitSourceReference());
+    assertEquals(0.90, evidence.getConfidence(), 0.0);
     assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.AVAILABLE, evidence.getEvidenceStatus());
     assertEquals(InstalledEquipmentCapacityEvidence.EvidenceApplicability.WITHIN_VALIDITY_RANGE,
         evidence.getEvidenceApplicability());
@@ -758,7 +766,7 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals("kg/hr", adapter.getPhysicalUnit());
 
     installedCapacity.setDesignValue(20000.0).setUnit("t/day").setDataSource("mutated later");
-    assertEquals(12000.0, evidence.getApplicableLimit(), 0.0);
+    assertEquals(11000.0, evidence.getApplicableLimit(), 0.0);
     assertEquals("kg/hr", evidence.getPhysicalUnit());
     assertEquals("mechanicalDesign:test", evidence.getDataSource());
 
@@ -773,7 +781,7 @@ class ProcessModelSimulationEvaluatorTest {
 
     InstalledEquipmentCapacityEvidence restoredEvidence = restored.getInstalledEquipmentCapacityEvidence().get(0);
     assertEquals("separation::separator/installedGasCapacity", restoredEvidence.getQualifiedConstraintName());
-    assertEquals(1000.0, restoredEvidence.getRequiredRelief(), 0.0);
+    assertEquals(2000.0, restoredEvidence.getRequiredRelief(), 0.0);
     assertNotSame(restored.getInstalledEquipmentCapacityEvidence(), restored.getInstalledEquipmentCapacityEvidence());
     assertThrows(UnsupportedOperationException.class, () -> restored.getInstalledEquipmentCapacityEvidence().clear());
   }
@@ -785,7 +793,7 @@ class ProcessModelSimulationEvaluatorTest {
     Stream compressorFeed = new Stream("compressor feed", fluid);
     Compressor compressor = new Compressor("export compressor", compressorFeed);
     compressor.setOutletPressure(70.0, "bara");
-    final double[] correctedSpeed = new double[] { 9500.0 };
+    final double[] correctedSpeed = new double[] {9500.0};
     compressor.clearCapacityConstraints();
     compressor.addCapacityConstraint(new CapacityConstraint("mapCorrectedSpeed", "RPM", ConstraintType.HARD)
         .setDesignValue(10000.0).setMaxValue(10500.0).setSeverity(ConstraintSeverity.HARD)
@@ -865,8 +873,8 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setUseRelativeStep(false);
     evaluator.setFiniteDifferenceStep(10.0);
 
-    double[] gradient = evaluator.estimateGradient(new double[] { 10000.0 });
-    double[][] jacobian = evaluator.estimateConstraintJacobian(new double[] { 10000.0 });
+    double[] gradient = evaluator.estimateGradient(new double[] {10000.0});
+    double[][] jacobian = evaluator.estimateConstraintJacobian(new double[] {10000.0});
 
     assertEquals(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.FORWARD, evaluator.getFiniteDifferenceMethod());
     assertEquals(1.0, gradient[0], 1.0e-8);
@@ -887,8 +895,8 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setFiniteDifferenceStep(10.0);
     evaluator.setFiniteDifferenceMethod(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.CENTRAL);
 
-    double[] gradient = evaluator.estimateGradient(new double[] { 10000.0 });
-    double[] nearbyGradient = evaluator.estimateGradient(new double[] { 10010.0 });
+    double[] gradient = evaluator.estimateGradient(new double[] {10000.0});
+    double[] nearbyGradient = evaluator.estimateGradient(new double[] {10010.0});
 
     assertEquals(2000.0, gradient[0], 1.0e-8);
     assertEquals(2020.0, nearbyGradient[0], 1.0e-8);
@@ -910,7 +918,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setFiniteDifferenceMethod(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.CENTRAL);
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
 
     double analyticalDerivative = 3.0 * 1000.0 * 1000.0;
@@ -933,9 +941,9 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(5, evaluator.getEvaluationCount(), "base plus coarse/fine evaluations on both sides");
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult nearby = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1010.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1010.0});
     ProcessModelSimulationEvaluator.SensitivityQualityResult nearbyRepeat = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1010.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1010.0});
     assertEquals(3062800.0, nearby.getObjectiveGradient()[0], 1.0e-8);
     assertEquals(nearby.getObjectiveGradient()[0], nearbyRepeat.getObjectiveGradient()[0], 0.0);
     assertEquals(nearby.getParameterQuality().get(0).getMaximumRelativeDisagreement(),
@@ -986,7 +994,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setFiniteDifferenceStep(100.0);
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1600.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1600.0});
     ProcessModelSimulationEvaluator.SensitivityParameterSnapshot parameter = result.getParameterSnapshots().get(0);
     ProcessModelSimulationEvaluator.SensitivityObjectiveSnapshot objectiveSnapshot = result.getObjectiveSnapshot();
     ProcessModelSimulationEvaluator.SensitivityConstraintSnapshot rangeSnapshot = result.getConstraintSnapshots()
@@ -1037,7 +1045,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.getParameters().get(0).setName("mutated parameter");
     evaluator.getObjectives().get(0).setName("mutated objective");
     evaluator.getConstraints().get(0).setName("mutated constraint");
-    evaluator.evaluate(new double[] { 1000.0 });
+    evaluator.evaluate(new double[] {1000.0});
     assertEquals("field feed", parameter.getName());
     assertEquals("export production", objectiveSnapshot.getName());
     assertEquals("operating envelope", rangeSnapshot.getName());
@@ -1074,7 +1082,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setFiniteDifferenceStep(10.0);
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 10000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {10000.0});
     ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
 
     assertEquals(1.0, result.getObjectiveGradient()[0], 1.0e-8);
@@ -1100,7 +1108,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.addConstraintUpperBound("feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 11000.0);
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 10000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {10000.0});
     ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
 
     assertEquals(0.0, result.getObjectiveGradient()[0], 0.0);
@@ -1131,7 +1139,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setFiniteDifferenceMethod(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.CENTRAL);
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
 
     assertTrue(Double.isNaN(result.getObjectiveGradient()[0]));
@@ -1158,7 +1166,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.setFiniteDifferenceStep(100.0);
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     int evaluationsAfterSampling = evaluator.getEvaluationCount();
     ProcessModelSimulationEvaluator.SensitivityQualificationPolicy strict = ProcessModelSimulationEvaluator.SensitivityQualificationPolicy
         .strict(1.0e-8);
@@ -1225,7 +1233,7 @@ class ProcessModelSimulationEvaluatorTest {
     evaluator.addConstraintUpperBound("feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 1100.0);
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult fixedResult = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment fixed = fixedResult.assessConstraintSensitivities(
         ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(0.0)).get(0);
     assertFalse(fixed.isAccepted());
@@ -1239,7 +1247,7 @@ class ProcessModelSimulationEvaluatorTest {
     boundedEvaluator.setUseRelativeStep(false);
     boundedEvaluator.setFiniteDifferenceStep(100.0);
     ProcessModelSimulationEvaluator.SensitivityQualityResult boundedResult = boundedEvaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     ProcessModelSimulationEvaluator.SensitivityQualificationPolicy centralRequired = new ProcessModelSimulationEvaluator.SensitivityQualificationPolicy(
         1.0e-8, true, true, false);
     ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment bounded = boundedResult

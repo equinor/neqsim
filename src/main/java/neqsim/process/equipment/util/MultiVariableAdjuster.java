@@ -21,8 +21,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </p>
  *
  * <p>
- * The underlying algorithm uses damped successive substitution (x_{n+1} = x_n + alpha * residuals) which provides
- * robust first-order convergence for a wide range of process gains.
+ * Each call applies x_{n+1} = x_n + 0.1 * (target - current), followed by bounds clamping. The method does not estimate
+ * a Jacobian or apply Broyden updates. Convergence depends on the sign and scale of each paired process response;
+ * arbitrary coupled targets or differently scaled units are not guaranteed to converge.
  * </p>
  *
  * <h2>Problem Statement</h2>
@@ -38,24 +39,27 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <h2>Key Features</h2>
  * <ul>
  * <li>Simultaneous N-variable convergence (vs N independent single-variable loops)</li>
- * <li>Damped successive substitution with configurable relaxation</li>
+ * <li>Damped successive substitution with a fixed relaxation factor of 0.1</li>
  * <li>Variable bounds enforcement with clamping</li>
- * <li>Configurable convergence tolerance and maximum iterations</li>
+ * <li>Configurable absolute residual tolerance; outer iteration count is controlled by ProcessSystem</li>
  * <li>Support for pressure, temperature, flow rate, and molar flow adjustments</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
  *
  * <pre>{@code
+ * // feed is an existing thermodynamic inlet Stream. The product copies it.
+ * neqsim.process.equipment.stream.Stream product = new neqsim.process.equipment.stream.Stream("product", feed);
+ * neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
+ * process.add(feed);
+ * process.add(product);
  * MultiVariableAdjuster adj = new MultiVariableAdjuster("MV-Adj");
  *
- * // Add adjusted variables (manipulated)
- * adj.addAdjustedVariable(compressor, "pressure", "bara");
- * adj.addAdjustedVariable(heater, "temperature", "C");
- *
- * // Add target specifications (in same order)
- * adj.addTargetSpecification(separator, "pressure", 85.0, "bara");
- * adj.addTargetSpecification(cooler, "temperature", 30.0, "C");
+ * // Adjust actual feed properties, then observe the re-run downstream stream.
+ * adj.addAdjustedVariable(feed, "pressure", "bara");
+ * adj.addAdjustedVariable(feed, "temperature", "C");
+ * adj.addTargetSpecification(product, "pressure", 85.0, "bara");
+ * adj.addTargetSpecification(product, "temperature", 30.0, "C");
  *
  * // Optional: set bounds
  * adj.setVariableBounds(0, 50.0, 200.0); // pressure
@@ -69,7 +73,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @author NeqSim
  * @version 1.0
  * @see Adjuster
- * @see BroydenAccelerator
  */
 public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -83,7 +86,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /** List of target specification definitions. */
   private List<TargetSpecification> targetSpecifications = new ArrayList<TargetSpecification>();
 
-  /** Maximum number of outer iterations. */
+  /** Stored iteration setting retained for compatibility; run() does not enforce it. */
   private int maxIterations = 50;
 
   /** Convergence tolerance on the residual norm. */
@@ -161,6 +164,12 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /**
    * Add an adjusted (manipulated) variable.
    *
+   * <p>
+   * A stream reference changes that stream. A two-port equipment or mixer reference resolves to its outlet stream; it
+   * does not change the equipment's outlet-pressure or outlet-temperature specification. Use an actual feed stream when
+   * the equipment would otherwise overwrite its outlet state on the next process run.
+   * </p>
+   *
    * @param equipment the equipment whose variable is manipulated
    * @param variable the variable name (pressure, temperature, flow)
    * @param unit the unit string (bara, C, kg/hr, etc.)
@@ -231,9 +240,14 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set maximum number of iterations.
+   * Store the legacy maximum-iteration setting.
    *
-   * @param maxIter maximum iterations
+   * <p>
+   * This setting is currently not consulted by {@link #run(UUID)}. The enclosing ProcessSystem controls the outer
+   * iteration loop; this method does not impose a per-adjuster stopping limit.
+   * </p>
+   *
+   * @param maxIter stored maximum iterations
    */
   public void setMaxIterations(int maxIter) {
     this.maxIterations = maxIter;
@@ -242,14 +256,14 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /**
    * Set convergence tolerance.
    *
-   * @param tol convergence tolerance on max residual
+   * @param tol absolute tolerance on the maximum raw residual, in the units chosen for each target
    */
   public void setTolerance(double tol) {
     this.tolerance = tol;
   }
 
   /**
-   * Get the number of iterations performed in the last run.
+   * Get the accumulated number of adjustment steps on this instance.
    *
    * @return iteration count
    */

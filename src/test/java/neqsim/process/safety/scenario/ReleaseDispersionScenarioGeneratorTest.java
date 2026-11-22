@@ -6,6 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.junit.jupiter.api.io.TempDir;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import neqsim.process.safety.release.SourceTermResult;
+import neqsim.process.safety.cfd.CfdSourceTermExporter;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
@@ -31,7 +40,7 @@ class ReleaseDispersionScenarioGeneratorTest {
     ProcessSystem process = createGasProcess(false);
 
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-        .boundaryConditions(standardWeather()).holeDiameter(50.0, "mm").inventoryVolume(3.0).releaseDuration(30.0, 5.0)
+        .boundaryConditions(standardWeather()).holeDiameter(50.0, "mm").inventoryVolume(3.0).releaseDuration(0.5, 0.1)
         .generateScenarios();
 
     assertFalse(scenarios.isEmpty());
@@ -43,7 +52,7 @@ class ReleaseDispersionScenarioGeneratorTest {
     assertTrue(scenario.getStreamMassFlowRateKgPerS() > 0.0);
     assertEquals(0.05, scenario.getHoleDiameterM(), 1.0e-12);
     assertEquals(3.0, scenario.getInventoryVolumeM3(), 1.0e-12);
-    assertEquals(30.0, scenario.getReleaseDurationSeconds(), 1.0e-12);
+    assertEquals(0.5, scenario.getReleaseDurationSeconds(), 1.0e-12);
     assertTrue(scenario.getSourceTerm().getPeakMassFlowRate() > 0.0);
     assertTrue(scenario.getDispersionResult().getDistanceToLflM() > 0.0);
     assertTrue(scenario.hasFlammableCloud());
@@ -55,7 +64,7 @@ class ReleaseDispersionScenarioGeneratorTest {
     ProcessSystem process = createGasProcess(true);
 
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-        .boundaryConditions(standardWeather()).holeDiameter(50.0, "mm").inventoryVolume(2.0).releaseDuration(20.0, 5.0)
+        .boundaryConditions(standardWeather()).holeDiameter(10.0, "mm").inventoryVolume(2.0).releaseDuration(20.0, 5.0)
         .toxicEndpoint("H2S", 100.0).generateScenarios();
 
     assertFalse(scenarios.isEmpty());
@@ -126,9 +135,10 @@ class ReleaseDispersionScenarioGeneratorTest {
   void releaseTaxonomyAndWeatherEnvelopeGenerateMatrixMetadata() {
     ProcessSystem process = createSingleStreamProcess();
 
+    // The metadata fixture stays within its initial gas regime; condensation is tested separately.
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
         .releaseCases(ReleaseCase.FIVE_MM_HOLE, ReleaseCase.FULL_BORE_RUPTURE).fullBoreDiameter(150.0, "mm")
-        .addWeatherCase("stable-D", standardWeather()).releaseDuration(20.0, 5.0).generateScenarios();
+        .addWeatherCase("stable-D", standardWeather()).releaseDuration(0.05, 0.01).generateScenarios();
 
     assertEquals(2, scenarios.size());
     assertEquals("5 mm process leak", scenarios.get(0).getReleaseCaseName());
@@ -158,6 +168,49 @@ class ReleaseDispersionScenarioGeneratorTest {
     assertEquals(1, cfdCases.size());
     assertTrue(cfdCases.get(0).validate().isValid());
     assertTrue(cfdCases.get(0).toJson().contains("TrappedInventoryCalculator"));
+  }
+
+  @Test
+  void condensingReleaseFailsInsteadOfExportingAnUnsupportedTrajectory() {
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> new ReleaseDispersionScenarioGenerator(createGasProcess(false)).boundaryConditions(standardWeather())
+            .holeDiameter(50.0, "mm").inventoryVolume(3.0).releaseDuration(30.0, 5.0).generateCfdSourceTermCases());
+    assertTrue(failure.getMessage().contains("BLOWDOWN_PHASE_BOUNDARY"), failure.getMessage());
+  }
+
+  @Test
+  void generatorAndJsonExportsPreserveExactFinalTimeAndConservativeMass(@TempDir Path directory) throws Exception {
+    SystemInterface nitrogen = new SystemSrkEos(300.0, 10.0);
+    nitrogen.addComponent("nitrogen", 1.0);
+    nitrogen.setMixingRule("classic");
+    Stream stream = new Stream("nitrogen", nitrogen);
+    stream.setFlowRate(1.0, "kg/sec");
+    ProcessSystem process = new ProcessSystem();
+    process.add(stream);
+    process.run();
+    ReleaseDispersionScenarioGenerator generator = new ReleaseDispersionScenarioGenerator(process).inventoryVolume(1.0)
+        .holeDiameter(0.01).releaseDuration(2.5, 1.0);
+    SourceTermResult source = generator.generateScenarios().get(0).getSourceTerm();
+    assertEquals(2.5, source.getTime()[3], 0.0);
+    assertEquals(source.getInitialInventory().getMass("kg") - source.getFinalInventory().getMass("kg"),
+        source.getTotalMassReleased(), 1e-10);
+    Path legacyFile = directory.resolve("source.json");
+    source.exportToJSON(legacyFile.toString());
+    JsonObject legacy = JsonParser.parseString(new String(Files.readAllBytes(legacyFile), StandardCharsets.UTF_8))
+        .getAsJsonObject();
+    assertEquals(2.5, legacy.getAsJsonArray("timeSeries").get(3).getAsJsonObject().get("t").getAsDouble(), 0.0);
+    assertEquals(source.getTotalMassReleased(), legacy.get("totalMassReleased_kg").getAsDouble(), 1e-12);
+    CfdSourceTermCase cfd = generator.generateCfdSourceTermCases().get(0);
+    assertTrue(cfd.validate().isValid());
+    Path cfdFile = directory.resolve("cfd.json");
+    new CfdSourceTermExporter().exportJson(cfd, cfdFile.toString());
+    JsonObject exported = JsonParser.parseString(new String(Files.readAllBytes(cfdFile), StandardCharsets.UTF_8))
+        .getAsJsonObject().getAsJsonObject("sourceTerm");
+    JsonArray rows = exported.getAsJsonArray("timeSeries");
+    assertEquals(4, rows.size());
+    assertEquals(2.5, rows.get(3).getAsJsonObject().get("timeS").getAsDouble(), 0.0);
+    assertEquals(source.getTotalMassReleased(), exported.get("totalMassReleasedKg").getAsDouble(), 1e-10);
+    assertEquals(source.getPressure()[3], rows.get(3).getAsJsonObject().get("pressurePa").getAsDouble(), 1e-6);
   }
 
   private static BoundaryConditions standardWeather() {

@@ -64,7 +64,11 @@ public class LiquidPhysicalProperties extends PhysicalProperties {
     densityCalc = new Density(this);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public LiquidPhysicalProperties clone() {
     LiquidPhysicalProperties properties = null;
@@ -73,6 +77,7 @@ public class LiquidPhysicalProperties extends PhysicalProperties {
       properties = (LiquidPhysicalProperties) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of LiquidPhysicalProperties", ex);
     }
     return properties;
   }

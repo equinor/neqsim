@@ -1,5 +1,7 @@
 package neqsim.process.engineering.dexpi;
 
+import neqsim.process.processmodel.dexpi.Dexpi20PlantExportOptions;
+import neqsim.process.engineering.pid.PidSizing;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -141,6 +143,93 @@ public final class DexpiEngineeringExporter {
     public Map<String, Path> getRegisterFiles() {
       return Collections.unmodifiableMap(registerFiles);
     }
+  }
+
+  /**
+   * Writes native DEXPI 2.0.1 with governed instrumentation and safeguarding requirements. The result is a
+   * review-required semantic exchange; drawing and named-tool qualification remain separate evidence scopes.
+   *
+   * @param project governed engineering project
+   * @param file destination native XML file
+   * @param metadata controlled export and plant provenance
+   * @return conformance assessment for the final enriched XML bytes
+   * @throws IOException if serialization or validation fails
+   */
+  public static neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment.Report exportDexpi201(
+      EngineeringProject project, Path file, neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata metadata)
+      throws IOException {
+    return exportDexpi201(project, file, metadata, true);
+  }
+
+  /**
+   * Writes native DEXPI 2.0.1 with an explicit authority for requirement-derived P&amp;ID proposals.
+   *
+   * <p>
+   * Set {@code includeRequirementProposals} to false when the caller subsequently materializes its canonical
+   * {@code PidDesignModel}. This prevents a second, unbound requirement-derived instrumentation/nozzle model from being
+   * added beside that P&amp;ID. All requirements remain in the engineering manifest and review register. Documentary
+   * engineering assessments never synthesize process instruments in either mode.
+   * </p>
+   *
+   * @param project governed source project
+   * @param file native exchange output
+   * @param metadata explicit native export provenance
+   * @param includeRequirementProposals whether typed engineering requirements supply generic instrumentation/safeguards
+   * @return exact native schema and supported-profile assessment
+   * @throws IOException if writing or native assessment fails
+   */
+  public static neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment.Report exportDexpi201(
+      EngineeringProject project, Path file, neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata metadata,
+      boolean includeRequirementProposals) throws IOException {
+    if (project == null || file == null || metadata == null) {
+      throw new IllegalArgumentException("project, file and metadata must not be null");
+    }
+    return exportDexpi201(project, file, metadata, includeRequirementProposals, new PidSizing(project));
+  }
+
+  /**
+   * Writes an engineering export using the same sizing snapshot as the drawing set.
+   * 
+   * @param project engineering source
+   * @param file native destination
+   * @param metadata controlled export metadata
+   * @param includeRequirementProposals include requirement-derived proposals
+   * @param sizing sizing snapshot of this project
+   * @return assessment of the final XML
+   * @throws IOException if writing fails
+   */
+  public static neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment.Report exportDexpi201(
+      EngineeringProject project, Path file, neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata metadata,
+      boolean includeRequirementProposals, PidSizing sizing) throws IOException {
+    Path outputName = file == null ? null : file.getFileName();
+    if (project == null || outputName == null || sizing == null || metadata == null) {
+      throw new IllegalArgumentException("project, sizing and a destination filename are required");
+    }
+    if (project.validate().hasErrors()) {
+      throw new IllegalStateException("Engineering project has blocking validation errors");
+    }
+    neqsim.process.processmodel.dexpi.Dexpi201XmlWriter.writeAndAssess(project.getEngineeringProcessSystem(),
+        file.toFile(),
+        Dexpi20PlantExportOptions.builder(metadata).specification201(true).sizing(sizing)
+            .boundaryConnectionMode(Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS)
+            .build());
+    Dexpi20EngineeringMaterializer.materialize(project, file, includeRequirementProposals);
+    Path evidence = file.resolveSibling(outputName + ".engineering-projection.json");
+    Map<String, Object> projection = Dexpi20EngineeringMaterializer.projectionEvidence(project,
+        includeRequirementProposals);
+    projection.put("requirementProposalProjectionPolicy",
+        includeRequirementProposals ? "GENERIC_ENGINEERING_PROPOSALS_EXCLUDING_ASSESSMENTS"
+            : "CANONICAL_PID_MODEL_IS_SOLE_REQUIREMENT_PCE_AUTHORITY");
+    List<String> suppressed = new ArrayList<String>();
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (!includeRequirementProposals || requirement.getType() == EngineeringRequirement.Type.ENGINEERING_ASSESSMENT) {
+        suppressed.add(requirement.getId());
+      }
+    }
+    projection.put("requirementsRetainedWithoutGenericPce", suppressed);
+    Files.write(evidence,
+        new GsonBuilder().setPrettyPrinting().create().toJson(projection).getBytes(StandardCharsets.UTF_8));
+    return neqsim.process.processmodel.dexpi.Dexpi201XmlWriter.assess(file);
   }
 
   /**

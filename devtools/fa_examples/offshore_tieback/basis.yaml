@@ -1,0 +1,175 @@
+# SYNTHETIC demonstration basis for the flow-assurance study report. No real field, company data or measured data.
+# Every value that a real study must source is marked as synthetic in the source register; nothing is approved by software.
+schema: flow_assurance_basis.v1
+basis_status: confirmed
+document:
+  title: "Synthetic Offshore Tie-back - Flow-Assurance Study (Demonstration)"
+  subtitle: "Two templates, gathering PLEM, 17 km trunk, riser and host inlet"
+  document_number: "FA-DEMO-001"
+  revision: "A"
+  issue_status: "DEMONSTRATION - SYNTHETIC DATA"
+  date: "2026-10-25"
+  company: "NeqSim demonstration (no company)"
+  project: "Synthetic tie-back (no real field)"
+  prepared_by: "not assigned"
+  checked_by: "not assigned"
+  approved_by: "not assigned"
+  readiness: SCREENING
+  readiness_note: "synthetic demonstration; not for design or construction"
+  readiness_explanation: "All inputs are synthetic and no independent review has been recorded. The software assigns no review or approval."
+  revision_history:
+    - {rev: A, date: "2026-10-25", description: "First issue of the synthetic demonstration package", by: "not assigned"}
+  review: {reviewer: null, date: null, scope: null, record: null}
+study:
+  objective: "Demonstrate a reproducible flow-assurance study report: decide whether the synthetic two-template tie-back can be operated across plateau, turndown and late-life conditions with MEG inhibition, which operating limits govern, and which mitigation is effective in late life."
+  decisions:
+    - "Is MEG injection at the stated dose sufficient to keep the hydrate margin at or above the project criterion in plateau, turndown and late life?"
+    - "Does the trunk insulation give the cooldown time required before the hydrate equilibrium temperature is reached after a shut-in?"
+    - "Which of the late-life mitigations (higher MEG dose or thicker insulation) restores the margin, and by how much?"
+  decision_criteria: [["C-HYD-01"], ["C-COOL-01"], ["C-HYD-01", "C-COOL-01"]]
+  maturity: "Concept screening (synthetic demonstration)"
+  audience: "Users of the NeqSim flow-assurance report toolkit; reviewers of the workflow"
+  alternatives:
+    - "Baseline: 60 mm PP trunk insulation, MEG dose per case"
+    - "Mitigation M1: MEG rate raised to a 30 wt % aqueous mass fraction"
+    - "Mitigation M2: trunk insulation increased by 30 mm"
+    - "Mitigation M3: MEG at 30 wt % aqueous and branch insulation increased from 40 mm to 80 mm"
+    - "Mitigation M4: turndown MEG rate raised to a 40 wt % aqueous mass fraction"
+  battery_limits:
+    included: ["Template outlets (aggregated well streams)", "Branch flowlines A and B", "Gathering PLEM", "Trunk flowline", "Riser", "Host-interface (riser top) pressure boundary"]
+    excluded: ["Reservoir and well performance (source pressures are calculated, not matched to a well model)", "Host process and slug-catcher design", "Umbilicals and MEG distribution lines", "Structural and fabrication design of any component"]
+    upstream: "aggregated stream at each template outlet (rate and temperature specified)"
+    downstream: "host inlet at the riser top, absolute pressure specified"
+  field_life_stages: ["plateau (early life)", "turndown", "late life (high water, lower rate and pressure)"]
+conventions:
+  units: "SI-based engineering units; pressure bara, temperature degC, lengths m, rates kg/s or kg/h, time h"
+  pressure_reference: "absolute pressure (bara) at the stated node; hydrostatic reference is the local elevation"
+  composition_basis: "hydrocarbon composition in mole fraction (dry); water and inhibitor added by mass rate; inhibitor concentration is a MASS fraction of the aqueous phase (MEG / (MEG + water))"
+  rate_basis: "mass rates (kg/s, kg/h); standard-volume equivalents use the standard conditions below and the NeqSim EOS gas density"
+  standard_conditions: {t_c: 15.0, p_bara: 1.01325, definition: "15 degC and 1.01325 bara (a common petroleum-industry reference; the project may define a different standard state)"}
+  chainage: "metres along the measured (as-laid) route from the template outlet of each source, along the flow direction; horizontal projection and elevation are separate quantities"
+  vertical_datum: "MSL (synthetic); elevation positive up"
+  coordinates: "SYNTHETIC LOCAL GRID, not georeferenced"
+  heat_transfer: "U-values referenced to the inner pipe surface; internal film neglected"
+sources:
+  - {id: DEMO-DB-001, title: "Synthetic design basis embedded in basis.yaml, route.yaml and cases.yaml", document: "FA-DEMO-INPUTS", revision: "A",
+     location: "devtools/fa_examples/offshore_tieback/*.yaml", input_class: synthetic, provenance: "authored for this demonstration; physically plausible values, not from a real field", status: "synthetic"}
+  - {id: DEMO-FLUID-001, title: "Synthetic lean gas-condensate composition", document: "FA-DEMO-INPUTS", revision: "A", location: "basis.yaml fluids.WELLSTREAM-1",
+     input_class: synthetic, provenance: "authored; no PVT report exists", status: "synthetic"}
+fluids:
+  WELLSTREAM-1:
+    description: "Synthetic lean gas-condensate wellstream (dry hydrocarbons); produced water and lean MEG are added by mass rate"
+    eos_hydraulics: "SRK, classic mixing rule, multiphase check"
+    eos_hydrate: "SRK-CPA (Statoil), CPA mixing rule, hydrate check"
+    heavy_end: "no C7+ fraction: the composition stops at n-hexane; heavy-end characterisation is not applicable and the condensate yield is therefore not representative of a real condensate"
+    pvt_evidence: "none - synthetic composition; no laboratory PVT report, no saturation-pressure or density comparison"
+    water: {salinity: "not supplied; treated as fresh water (no salt effect on the hydrate temperature)", composition: "H2O only"}
+    inhibitor: {name: MEG, basis: "mass fraction of MEG in the aqueous phase; lean stream purity per case"}
+    source: DEMO-FLUID-001
+    components:
+      - {name: nitrogen, mole_fraction: 0.004}
+      - {name: CO2, mole_fraction: 0.020}
+      - {name: methane, mole_fraction: 0.850}
+      - {name: ethane, mole_fraction: 0.060}
+      - {name: propane, mole_fraction: 0.030}
+      - {name: i-butane, mole_fraction: 0.006}
+      - {name: n-butane, mole_fraction: 0.010}
+      - {name: n-pentane, mole_fraction: 0.005}
+      - {name: n-hexane, mole_fraction: 0.015}
+solver:
+  increments: 10
+  hydrate_grid_bara: [40, 55, 70, 90, 110, 140, 180, 230]
+  mesh_sensitivity_increments: [5, 10, 20]
+  erosional_c_si: 122.0
+acceptance_criteria:
+  - id: C-HYD-01
+    text: "The minimum hydrate margin (local temperature minus the hydrate equilibrium temperature at the local pressure and aqueous inhibitor mass fraction) shall be at least 3 K along the route in operation"
+    quantity: hydrate_margin_min
+    operator: ">="
+    value: 3.0
+    unit: K
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
+    source: "DEMO-DB-001 (synthetic project criterion; not a code requirement)"
+    requirement_class: mandatory
+    applicability: "operating cases with inhibitor injection; the margin is a project temperature allowance, not a standard value"
+  - id: C-SRC-01
+    text: "The calculated source (template outlet) flowing pressure shall not exceed 180 bara"
+    quantity: source_pressure_max
+    operator: "<="
+    value: 180.0
+    unit: bara
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
+    source: "DEMO-DB-001 (synthetic available source pressure)"
+    requirement_class: mandatory
+    applicability: "all operating cases"
+  - id: C-VEL-01
+    text: "The mixture velocity shall not exceed 15 m/s anywhere on the route"
+    quantity: mixture_velocity_max
+    operator: "<="
+    value: 15.0
+    unit: m/s
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
+    source: "DEMO-DB-001 (synthetic project velocity limit)"
+    requirement_class: recommended
+    applicability: "all operating cases"
+  - id: C-EROS-01
+    text: "The ratio of mixture velocity to the erosional velocity V_e = 122 / sqrt(rho_mix) (rho in kg/m3, equivalent to API RP 14E-style C = 100) shall not exceed 1.0"
+    quantity: erosional_ratio_max
+    operator: "<="
+    value: 1.0
+    unit: "-"
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
+    source: "DEMO-DB-001 (synthetic project choice of the C-factor; not a design-code verification)"
+    requirement_class: recommended
+    applicability: "clean, sand-free service"
+  - id: C-COOL-01
+    text: "After a shut-in the retained fluid shall take at least 8 h to cool to the hydrate equilibrium temperature at the settle-out pressure"
+    quantity: cooldown_time_min
+    operator: ">="
+    value: 8.0
+    unit: h
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4]
+    source: "DEMO-DB-001 (synthetic cooldown allowance)"
+    requirement_class: mandatory
+    applicability: "shut-in events; time to the equilibrium temperature, not time to plug"
+threats:
+  T-ASPHALTENE: {status: not_applicable, reason: "the synthetic fluid is a dry lean gas-condensate (C1-nC6 only, no heavy ends); asphaltene precipitation is not credible for this composition. This is an applicability judgement for the synthetic fluid and must be re-examined for a real fluid."}
+  T-SAND: {status: not_applicable, reason: "the synthetic basis states sand-free production; DNV-RP-O501 is not applied"}
+  T-SURGE: {status: not_applicable, reason: "water-hammer and acoustic-surge events are outside the scope of this study (see exclusions); no valve closure or pump trip is defined"}
+mitigation_options:
+  - {id: M1, title: "Raise the MEG rate to a 30 wt % aqueous mass fraction", case: LATE-M1, baseline: LATE,
+     uncertainty: "inhibitor losses to gas and condensate are not modelled; the CPA hydrate depression at 30 wt % MEG has no measured confirmation here"}
+  - {id: M2, title: "Increase the trunk PP insulation from 60 mm to 90 mm", case: LATE-M2, baseline: LATE,
+     uncertainty: "wet-insulation degradation, field-joint heat loss and the external film coefficient are not modelled; effect on cooldown uses the lumped model"}
+  - {id: M3, title: "Raise the MEG rate to 30 wt % and increase the branch PP insulation from 40 mm to 80 mm", case: LATE-M3, baseline: LATE,
+     uncertainty: "combined option; inhibitor losses, wet-insulation degradation and installation feasibility of the thicker branch insulation are not assessed"}
+  - {id: M4, title: "Turndown: raise the MEG rate to a 40 wt % aqueous mass fraction", case: TURN-M4, baseline: TURNDOWN,
+     uncertainty: "the CPA hydrate depression at 40 wt % MEG has no measured confirmation here; MEG losses and the regeneration capacity for the higher rate are not assessed"}
+assumptions:
+  - {id: A-01, text: "All input values are synthetic and plausible; none is a measurement or a design value.", effect: "Results demonstrate the workflow and must not be used for any real decision."}
+  - {id: A-02, text: "Template outlet streams are aggregated: individual wells and jumpers are not modelled hydraulically.", effect: "Well-to-well interaction and jumper pressure drop are excluded."}
+  - {id: A-03, text: "The hydraulic fluid uses SRK with a classic mixing rule; MEG is carried in the aqueous phase.", effect: "Water and MEG association is not represented; aqueous density and holdup are approximate."}
+  - {id: A-04, text: "All inhibitor stays in the aqueous phase (no loss to gas or condensate) and is not diluted by condensed water along the route.", effect: "The aqueous inhibitor concentration is an upper bound; margins may be overstated."}
+  - {id: A-05, text: "The shut-in settle-out pressure is a specified value; the inhibitor is retained in place after shut-in.", effect: "Pressure decay, redistribution and inhibitor dilution during the shut-in are not modelled."}
+  - {id: A-06, text: "Seabed and mean water-column ambient temperatures are constant per segment.", effect: "Seasonal variation is not covered; a sensitivity case is recommended."}
+exclusions:
+  - "Reservoir, wells and tubing; structural, fabrication and installation design."
+  - "Transient hydraulics: startup, restart, depressurisation, sweep-out, pigging, slug receiving, severe slugging."
+  - "Wax, asphaltene, scale, corrosion and sand assessments (see the threat applicability matrix for the status of each)."
+  - "Acoustic surge and water/liquid hammer."
+data_gaps:
+  - {id: G-01, item: "No laboratory PVT, water analysis or hydrate-equilibrium measurement exists for the synthetic fluid.", effect_on_conclusions: "Hydrate temperatures and holdup are model results only; no calibration or independent field validation of the hydraulic and hydrate models is possible."}
+  - {id: G-02, item: "No wax appearance temperature, asphaltene stability, brine composition or CO2 corrosion inputs were supplied.", effect_on_conclusions: "Wax, scale and corrosion threats are open; the study does not show them to be safe."}
+  - {id: G-03, item: "No external transient simulation results (restart, pigging) were supplied.", effect_on_conclusions: "Startup, restart, sweep-out and slug-receiving conclusions are open; hand-off packages are provided."}
+  - {id: G-04, item: "No surveyed route, installed insulation condition or ambient-temperature records exist.", effect_on_conclusions: "Geometry and thermal inputs are schematic; the plan drawing is not georeferenced."}
+  - {id: G-05, item: "Standards texts were not available; only public publisher metadata was verified.", effect_on_conclusions: "No clause-level conformity is claimed for any standard."}
+model:
+  name: "fa_solver steady network model"
+  version: "1.0"
+  simulator: "NeqSim (jneqsim)"
+  eos: "SRK (hydraulics), SRK-CPA (hydrate)"
+  mixing_rule: "classic (hydraulics), CPA mixing rule 10 (hydrate)"
+  convergence: "inner source-pressure solves to 0.05 bar, junction pressure to 0.05 bar, secant iteration, at most 14 inner and 8 outer iterations"
+notes:
+  - "Synthetic demonstration: all inputs are authored, no real field is represented."
+  - "Steady-state results use Beggs and Brill; transient and slugging results are not produced."

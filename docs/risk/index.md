@@ -33,7 +33,7 @@ This documentation covers NeqSim's comprehensive **Operational Risk Simulation F
 |---------|-------------|
 | [Advanced Framework Overview](overview.md#framework-capabilities) | Overview of the implemented risk-analysis packages |
 | [P1: Dynamic Simulation](dynamic-simulation) | Monte Carlo with transient modeling |
-| [P2: SIS/SIF Integration](sis-integration) | IEC 61508/61511, LOPA, SIL verification |
+| [P2: SIS/SIF Integration](sis-integration) | PFD and LOPA screening; independent assessment required |
 | [P4: Bow-Tie Analysis](bowtie-analysis) | Barrier analysis, threat/consequence visualization |
 | [P6: Condition-Based Reliability](condition-based) | Health monitoring, RUL estimation |
 

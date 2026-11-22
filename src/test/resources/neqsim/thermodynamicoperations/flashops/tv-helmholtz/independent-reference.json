@@ -1,0 +1,130 @@
+{
+  "T": 293.15,
+  "V_internal": 99799.99999997062,
+  "n": [
+    702.5935344863223,
+    123.98709432111573,
+    10.27690550956323,
+    1.1418783899514702
+  ],
+  "phase_checks": [
+    {
+      "independent_F_RT": -5280.219290635383,
+      "independent_Hres_J": -401840.452843548,
+      "reported_Hres_J": -401840.45284354733,
+      "P_bar": 19.137473174060446,
+      "A": 18469775745.411636,
+      "reported_A": 18469775745.411636,
+      "AT": -33350855.73310433,
+      "reported_AT": -33350855.73310433,
+      "B": 2450.9690818652043,
+      "reported_B": 2450.9690818652048
+    },
+    {
+      "independent_F_RT": -44.199679593182985,
+      "independent_Hres_J": -141996.44516626306,
+      "reported_Hres_J": -141996.44516626297,
+      "P_bar": 19.137473174059778,
+      "A": 6685629.890931177,
+      "reported_A": 6685629.890931176,
+      "AT": -14200.294570394712,
+      "reported_AT": -14200.294570394712,
+      "B": 45.1597555284386,
+      "reported_B": 45.1597555284386
+    }
+  ],
+  "one_phase_F_RT": -5312.834926426312,
+  "candidate_F_RT": -5324.418970228571,
+  "candidate_minus_one_phase_A_J": -28234.769559449524,
+  "one_phase_Hres_J": -418019.8895590394,
+  "candidate_Hres_J": -543836.8980098111,
+  "candidate_total_H_J": 108851.76530284919,
+  "trials": [
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5324.418970228567,
+      "q": [
+        0.0010035510369461429,
+        0.0006574657251499448,
+        0.001013801212861879,
+        0.0013626043985744923,
+        0.0005167717407782641
+      ],
+      "nit": 22
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5324.418970228567,
+      "q": [
+        0.0010035525242882027,
+        0.000657464008099427,
+        0.0010138009522357705,
+        0.0013626043998788031,
+        0.0005167716452082049
+      ],
+      "nit": 20
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5324.418970228551,
+      "q": [
+        0.0010035525205278296,
+        0.0006574652266974942,
+        0.0010138025842798897,
+        0.0013626044228268032,
+        0.0005167718313945927
+      ],
+      "nit": 20
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5324.4189702285685,
+      "q": [
+        0.0010035538680514074,
+        0.0006574645784153139,
+        0.001013804626591436,
+        0.001362604390546325,
+        0.0005167719897181457
+      ],
+      "nit": 28
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5324.4189702285685,
+      "q": [
+        0.0010035519252919703,
+        0.000657465933746661,
+        0.0010138026234694827,
+        0.001362604382421931,
+        0.000516771828870425
+      ],
+      "nit": 32
+    }
+  ],
+  "provenance": {
+    "source_head": "3b511e7513447254e7a4aa0570b23a319b740481",
+    "model": "SystemUMRPRUMCEos; Mathias-Copeman alpha13; rule2; quadratic covolume type1",
+    "units": "n mol; T K; P bara; H/A J; volume internal 1e5*m3",
+    "protocol": "Existing TVFlashTest public fixture, 1kg/s liquid +50 additions of .3kg/s gas,293.15K,.998m3; no parameter fit",
+    "interpretation": "Five perturbed starting points return the same two-phase local minimum; its Helmholtz energy is lower than the former homogeneous endpoint. Not a universal global phase-stability or experimental accuracy proof.",
+    "ideal_heat_capacity": "Total enthalpy includes separately maintained ideal Cp data; residual reference is the physically discriminating invariant.",
+    "component_order": [
+      "methane",
+      "ethane",
+      "n-pentane",
+      "nC16"
+    ],
+    "java_temperature_checks_K": [
+      293.05,
+      293.15,
+      293.25
+    ],
+    "amount_basis": "One-second-equivalent inlet charges reproduce the existing flow-configured addFluid TV fixture; scalar n values are treated as molar inventories for fixed-T,V,n minimization.",
+    "parameter_basis": "Equinor UMR-PRU parameter set (COMP.csv MCPR and corrected nC16 Tc/Pc/omega), regenerated 2026-11-22"
+  }
+}

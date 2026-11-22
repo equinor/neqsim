@@ -102,7 +102,7 @@ public class BlowdownValveESDSystemTest {
     // Splitter to divide gas between process and blowdown
     // Split factor [0] = process stream, [1] = blowdown stream
     gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
 
     processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -210,7 +210,7 @@ public class BlowdownValveESDSystemTest {
         logger.info(">>> FEED INLET VALVE CLOSES <<<\n");
         esdButton.push(); // Push button activates BD valve
         // Redirect all flow to blowdown
-        gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 });
+        gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
         // Stop feeding separator (simulate inlet valve closure on ESD)
         // Use minimal purge flow to avoid numerical issues with zero moles
         feedStream.setFlowRate(0.1, "kg/hr");
@@ -483,7 +483,7 @@ public class BlowdownValveESDSystemTest {
     // Activate both blowdown valves
     bdValve.activate();
     bdValve2.activate();
-    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 });
+    gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
 
     // Run simulation
     double timeStep = 1.0;
@@ -558,7 +558,7 @@ public class BlowdownValveESDSystemTest {
 
     // Blowdown system on separator
     Splitter hpSplitter = new Splitter("HP Splitter", hpSepGasOut, 2);
-    hpSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially to process
+    hpSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially to process
 
     Stream hpBlowdownStream = new Stream("HP BD Stream", hpSplitter.getSplitStream(1));
 
@@ -632,7 +632,7 @@ public class BlowdownValveESDSystemTest {
       // Activate ESD when pressure gets high
       if (!esdActivated && time >= esdActivationTime) {
         hpEsdButton.push();
-        hpSplitter.setSplitFactors(new double[] { 0.0, 1.0 }); // All to blowdown
+        hpSplitter.setSplitFactors(new double[] {0.0, 1.0}); // All to blowdown
         // Stop feeding separator - use minimal purge flow to avoid numerical issues
         highPressureFeed.setFlowRate(0.1, "kg/hr");
         esdActivated = true;

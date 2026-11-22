@@ -121,7 +121,7 @@ public class FieldDevelopmentReportExporter {
       return rows;
     }
     for (DevelopmentCaseTemplate template : templates) {
-      rows.add(new String[] { template.getCaseName(), String.format("%.3f", template.getEconomics().getNpv()) });
+      rows.add(new String[] {template.getCaseName(), String.format("%.3f", template.getEconomics().getNpv())});
     }
     return rows;
   }

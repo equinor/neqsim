@@ -26,40 +26,57 @@ NeqSim provides thermodynamics-based implementations of key ASTM standards used 
 
 All classes are in `neqsim.standards.oilquality`.
 
+For raw VPCR4 versus correlated RVPE, bubble-point TVP, and an explicitly declared
+dry-hydrocarbon plus water-saturation storage basis, see the
+[vapor-pressure water-basis guide](astm_d6377_rvp.md#water-contact-storage-a-declared-engineering-basis).
+This engineering approximation does not establish ASTM laboratory equivalence or product compliance.
+
 ---
 
 ## Quick Start
 
+The following example is complete Java source. It creates a characterized crude oil, calculates API gravity and an atmospheric distillation curve with the current oil-quality APIs, and validates the returned values without console output.
+
+<!-- oil-quality-quick-start: complete -->
 ```java
+import neqsim.standards.oilquality.Standard_ASTM_D4052;
+import neqsim.standards.oilquality.Standard_ASTM_D86;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.standards.oilquality.*;
 
-// Create a characterized crude oil
-SystemSrkEos oil = new SystemSrkEos(273.15 + 15.0, 1.01325);
-oil.addComponent("methane", 0.01);
-oil.addComponent("ethane", 0.02);
-oil.addComponent("propane", 0.03);
-// TBP molar mass is kg/mol; density is specific gravity (g/cm3 numerically).
-oil.addTBPfraction("C7", 0.15, 0.095, 0.72);
-oil.addTBPfraction("C10", 0.20, 0.135, 0.78);
-oil.addTBPfraction("C20", 0.30, 0.280, 0.85);
-oil.addTBPfraction("C30", 0.29, 0.450, 0.91);
-oil.setMixingRule(2);
+public final class OilQualityQuickStartExample {
+  private OilQualityQuickStartExample() {}
 
-// API gravity
-Standard_ASTM_D4052 apiStd = new Standard_ASTM_D4052(oil);
-apiStd.calculate();
-double apiGravity = apiStd.getValue("API");
-String classification = apiStd.getOilClassification();
-System.out.println("API gravity: " + apiGravity + " (" + classification + ")");
+  public static void main(String[] args) {
+    SystemSrkEos oil = new SystemSrkEos(273.15 + 15.0, 1.01325);
+    oil.addComponent("methane", 0.01);
+    oil.addComponent("ethane", 0.02);
+    oil.addComponent("propane", 0.03);
+    // TBP molar mass is kg/mol; density is specific gravity (g/cm3 numerically).
+    oil.addTBPfraction("C7", 0.15, 0.095, 0.72);
+    oil.addTBPfraction("C10", 0.20, 0.135, 0.78);
+    oil.addTBPfraction("C20", 0.30, 0.280, 0.85);
+    oil.addTBPfraction("C30", 0.29, 0.450, 0.91);
+    oil.setMixingRule(2);
 
-// Distillation curve
-Standard_ASTM_D86 distStd = new Standard_ASTM_D86(oil);
-distStd.calculate();
-double ibp = distStd.getValue("IBP", "C");
-double t50 = distStd.getValue("T50", "C");
-double fbp = distStd.getValue("FBP", "C");
-System.out.println("IBP=" + ibp + ", T50=" + t50 + ", FBP=" + fbp + " C");
+    Standard_ASTM_D4052 apiStd = new Standard_ASTM_D4052(oil);
+    apiStd.calculate();
+    double apiGravity = apiStd.getValue("API");
+    String classification = apiStd.getOilClassification();
+    if (!Double.isFinite(apiGravity) || "Unknown".equals(classification)) {
+      throw new IllegalStateException("API gravity calculation failed");
+    }
+
+    Standard_ASTM_D86 distStd = new Standard_ASTM_D86(oil);
+    distStd.calculate();
+    double ibpC = distStd.getValue("IBP", "C");
+    double t50C = distStd.getValue("T50", "C");
+    double fbpC = distStd.getValue("FBP", "C");
+    if (!Double.isFinite(ibpC) || !Double.isFinite(t50C) || !Double.isFinite(fbpC)
+        || ibpC > t50C || t50C > fbpC) {
+      throw new IllegalStateException("Distillation curve must be finite and ordered");
+    }
+  }
+}
 ```
 
 ---
@@ -697,6 +714,75 @@ d4052.calculate()
 print(f"API gravity: {d4052.getValue('API'):.1f}")
 print(f"Classification: {d4052.getOilClassification()}")
 ```
+
+---
+
+
+## Riazi-Daubert D86/TBP reference conversion
+
+`RiaziDaubertDistillationConversion` exposes the seven discrete recovery points from the
+Riazi-Daubert atmospheric distillation interconversion as a Java/JPype-friendly, fail-closed API.
+The source relation is
+
+$T_{\mathrm{TBP}} = a\,T_{\mathrm{D86}}^b$
+
+where both temperatures are evaluated in kelvin at the same liquid-volume percentage recovered.
+The public methods accept and return degrees Celsius and perform the kelvin conversion internally.
+
+```java
+double tbpT50C =
+    RiaziDaubertDistillationConversion.convertD86ToTbpC(101.5, 50.0);
+double recoveredD86T50C =
+    RiaziDaubertDistillationConversion.convertTbpToD86C(tbpT50C, 50.0);
+```
+
+Only 0, 10, 30, 50, 70, 90, and 95 vol% are qualified. Intermediate percentages are rejected
+because coefficient interpolation is not part of this reference-point contract. Each point also
+has a source-defined D86 temperature range; input or inverse results outside that range are
+rejected. `getReferenceData()` returns a defensive copy with columns
+
+`[recovery vol%, a, b, minimum D86 C, maximum D86 C, example D86 C, example TBP C]`.
+
+The public worked example converts D86
+`[36.5, 54.1, 76.9, 101.5, 131.0, 171.0, 186.5] °C` to TBP
+`[14.1, 33.4, 68.9, 101.6, 135.1, 180.5, 194.1] °C`, subject to published rounding.
+
+Source: M. R. Riazi and T. E. Daubert, “Analytical correlations interconvert
+distillation-curve types,” *Oil & Gas Journal*, vol. 84, no. 34, pp. 50–54, 57,
+August 25, 1986 ([public bibliographic record](https://www.osti.gov/biblio/5212509)).
+
+After `Standard_ASTM_D86.calculate()` has generated the simulated TBP-like curve, a strict
+reference-point conversion is available directly from the standard:
+
+```java
+double qualifiedD86T50C = d86.getQualifiedD86Temperature(50.0);
+double qualifiedD86T90K = d86.getQualifiedD86Temperature(90.0, "K");
+```
+
+For complete source-row reporting, `getQualifiedD86Curve()` returns exactly the seven qualified
+rows as `[recovery vol%, temperature_C]`; the overload accepts `"C"`, `"K"`, `"F"`, or
+`"R"`:
+
+```java
+double[][] qualifiedCurveC = d86.getQualifiedD86Curve();
+double[][] qualifiedCurveK = d86.getQualifiedD86Curve("K");
+```
+
+Every row delegates to the strict point accessor. The method constructs the full result before
+returning it, fails if any required point is unavailable or outside its source domain, and returns
+a new array on each call. It never fills gaps with intermediate coefficient interpolation.
+
+`getQualifiedD86Temperature` delegates to the qualified reference converter, accepts only the
+seven published recovery points, enforces the point-specific source domain, and applies the
+standard's configured barometric correction after conversion. An unsupported recovery such as
+5 vol% is rejected; the method does not interpolate coefficients.
+
+This empirical conversion does not implement the ASTM D86 laboratory procedure, establish
+standards conformance, or independently validate NeqSim's simulated full curve against
+laboratory measurements. The existing `Standard_ASTM_D86.TBP_CONVERTED` basis and
+`getD86Curve()` retain their legacy full-curve coefficient interpolation for compatibility.
+They now reuse the qualified coefficient table as their single data source, but intermediate
+recovery points remain explicitly unqualified.
 
 ---
 

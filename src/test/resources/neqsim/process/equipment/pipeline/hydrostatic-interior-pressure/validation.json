@@ -1,0 +1,840 @@
+{
+  "production_head": "04473d528649e43130168f258bdc717aa3715ca9",
+  "comparison_master": "aec17276c6af57c0b0be56e8c302893bc623fb5f",
+  "full_main_source_compile": {
+    "command": "./mvnw -q -DskipTests compile",
+    "exit_code": 0,
+    "source_units": 3622
+  },
+  "java8_compatibility": [
+    {
+      "command": "./mvnw -q -f pomJava8.xml -DskipTests compile",
+      "exit_code": 0
+    },
+    {
+      "command": "java --module jdk.compiler/com.sun.tools.javac.Main --release 8 (three added/modified test sources)",
+      "exit_code": 0,
+      "class_file_major": 52
+    }
+  ],
+  "java_runtime": "OpenJDK 17.0.20",
+  "python_runtime": "3.12.14",
+  "publication_gates": [
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "documentation_pages": {
+    "markdown": 822,
+    "standalone_html": 1
+  },
+  "junit_methods": [
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidClosedBoundaryMomentumTest",
+      "method": "coupledClosedFacesRetainCellInertiaAndBlockBoundaryMass(Method)[1]",
+      "seconds": 2.732,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidClosedBoundaryMomentumTest",
+      "method": "coupledClosedFacesRetainCellInertiaAndBlockBoundaryMass(Method)[2]",
+      "seconds": 0.088,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReportTest",
+      "method": "boundaryResolvedAdvectionProvidesExactNetworkRoutingTerms",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReportTest",
+      "method": "closedCellResidualDoesNotUseAbsoluteStoredEnergyAsItsScale",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReportTest",
+      "method": "rejectsNonfiniteOrNegativeDiagnosticValuesAndTolerances",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReportTest",
+      "method": "serializationPreservesTheAcceptedLedgerAndRecoveryDiagnostics",
+      "seconds": 0.017,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReportTest",
+      "method": "signedOpenDomainLedgerAllowsNegativeCaloricReferenceEnergy",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReportTest",
+      "method": "zeroChangeAndZeroTransferHaveZeroRelativeResidual",
+      "seconds": 0.0,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "closedIsochoricHeatingStoresWallHeatOnce",
+      "seconds": 0.669,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "conservativeHandoffRejectsUninitializedPipe",
+      "seconds": 0.016,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "conservativeHandoffRejectsUnsupportedModelWithoutPartialPreparation",
+      "seconds": 0.027,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "convergedSteadyStateCanHandOffToConservativeTransientOwnership",
+      "seconds": 0.039,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "idealGasFillingMatchesTheRigidVesselFirstLaw",
+      "seconds": 1.595,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "idealNitrogenBlowdownRecoversCoolingAndTheStoredEnergy",
+      "seconds": 1.554,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "legacyModeRemainsTheDefaultAndRetainsItsHistoricalBlowdownResponse",
+      "seconds": 0.154,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "nearbyBlowdownConditionsRecoverVolumeAndEnergy",
+      "seconds": 0.443,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "serializedCopyKeepsTheConservativeOwnerAndProducesTheSameNextState",
+      "seconds": 0.075,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "stationaryClosedAdiabaticStateIsInvariant",
+      "seconds": 0.113,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "method": "unsupportedIntegratorFailsWithoutAdvancingState",
+      "seconds": 0.008,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "aliasedPortsAndUnspecifiedSubclassCommitHooksRejectBeforeEvaluation",
+      "seconds": 0.046,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "anUnauditedTransientEosHelperCannotBeSilentlyLostDuringStaging",
+      "seconds": 0.053,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "configuredTransientOilWaterClosuresSurviveAcceptance",
+      "seconds": 0.027,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "connectedStorageKeepsItsIdentityAndAcceptedConservativeTransfers",
+      "seconds": 0.059,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "downstreamPublicationFailureRestoresFluidAndKeepsAcceptedPipe",
+      "seconds": 0.047,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "incompleteIntervalDiscardsHydrodynamicsComponentsHistoriesAndAllClocks",
+      "seconds": 0.116,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "legacyPartialIntervalContractRemainsAvailable",
+      "seconds": 0.057,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "serializationRetainsSelectionAndInvalidClocksRejectBeforeWork",
+      "seconds": 0.03,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "method": "successfulTransactionMatchesLegacyNumericsAndPreservesConnections",
+      "seconds": 0.111,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
+      "method": "levelOutletAdvancesAcrossSignedFallbackWithExplicitThermodynamicDonor",
+      "seconds": 15.868,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
+      "method": "levelOutletCrossesConservativeFirstOilAppearanceAtOriginalInterval",
+      "seconds": 6.559,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
+      "method": "originalTerrainCompletesPressureRampWithConservedComponentTargets",
+      "seconds": 103.922,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
+      "method": "originalTerrainCrossesConservativeFirstOilAppearance",
+      "seconds": 14.424,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
+      "method": "refinedLevelOutletCrossesConservativeFirstOilAppearance",
+      "seconds": 36.86,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "method": "affineHydrostaticBalance",
+      "seconds": 0.097,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "method": "closedInletIgnoresExternalDonor",
+      "seconds": 0.008,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "method": "horizontalAcousticReflection",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "method": "inadmissibleWallPressureRejected",
+      "seconds": 0.005,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "method": "mixtureTotalForceUsesConservativeInertia",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "method": "wallDoesNotLeakMassOrEnthalpy",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "method": "wallRejectionRestoresPublishedLedger",
+      "seconds": 0.008,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeEnergyTransportTest",
+      "method": "boundaryTransfersCloseEnergyIncludingNegativeCaloricReferences",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeEnergyTransportTest",
+      "method": "internalTransfersUseIndependentUpwindPhaseEnthalpiesAndConserveTotalEnergy",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeEnergyTransportTest",
+      "method": "invalidDonorAndLengthRejectTransactionally",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeEnergyTransportTest",
+      "method": "outletBackflowRejectsWithoutChangingAnyCellEnergy",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "method": "appearingTraceContractsSlipWithoutIncreasingKineticEnergyOrCreatingMass",
+      "seconds": 0.011,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "method": "bulkLiquidDragPreservesIndependentLiquidSlipUntilOilWaterDragIsSelected",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "method": "disabledIdentityAndSerializedOwnershipArePreserved",
+      "seconds": 0.056,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "method": "reversedSlipAndArbitrarilySmallPositiveInertiaRemainPassive",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "method": "smallStepUsesTheNativeBlendedForceAndRemovesItFromTheExplicitSourceExactlyOnce",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "method": "zeroDurationTransfersOnlyAbsentPhaseRoundoffAndRejectsMaterialMomentum",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.HydrostaticPressureReconstructionTest",
+      "method": "horizontalCorrectionIsExactZero",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.HydrostaticPressureReconstructionTest",
+      "method": "hydrostaticTerrainAndDensityMatrix",
+      "seconds": 0.155,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.HydrostaticPressureReconstructionTest",
+      "method": "hydrostaticWaterExtension",
+      "seconds": 0.019,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.HydrostaticPressureReconstructionTest",
+      "method": "signedPressureWorkUsesMassDonor",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.HydrostaticPressureReconstructionTest",
+      "method": "transactionalEvaluationRestoresCorrectionLedger",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.MultiphaseHydrostaticForceQualificationTest",
+      "method": "signedMultiphaseWorkAndAbsentPhaseLimits",
+      "seconds": 0.007,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.MultiphaseHydrostaticForceQualificationTest",
+      "method": "unequalDensityForcesAndExactAbsentPhaseLimit",
+      "seconds": 0.385,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testCalcRHSReturnsValidResult",
+      "seconds": 0.005,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testEqualVelocitiesMinimizeInterfacialShear",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testGravityAffectsInclinedPipe",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testHigherVelocityGivesHigherWallShear",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testInterfacialShearComputed",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testMassConservationWithEvaporation",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testMomentumBalanceWithNoFlow",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testPressureGradientAffectsMomentum",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testStateVectorExtraction",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testStateVectorSetting",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "method": "testWallShearIsNonNegative",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "cloneRetainsIndependentConservativeState",
+      "seconds": 0.0,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "gasWaterInterfaceTransfersEqualAndOppositeMomentum",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "gravityWorkUsesAllThreePhaseMassFluxes",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "liquidFilledGeometryPartitionsEntireWall",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "phaseChangeTransfersDonorMomentumConservatively",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "pureOilLowReynoldsFrictionMatchesPoiseuille",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "recoversGasOnlyStateWithoutStaleLiquid",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "rejectsNonPhysicalHoldupPartitions",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "roundTripsAllSevenConservativeVariables",
+      "seconds": 0.0,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "method": "thinWaterFilmGeometryRecoversSpecifiedArea",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidIndependentPhaseFluxTest",
+      "method": "materialContactAtRestDoesNotCreatePhaseMomentum",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidIndependentPhaseFluxTest",
+      "method": "oppositeOilWaterVelocitiesCarryMassInOppositeDirections",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidIndependentPhaseFluxTest",
+      "method": "uniformLowDensityGasCarriesItsActualMassAtBothBoundaries",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "fullRhsDoesNotAccelerateAnAbsentLiquidPhase",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "noSlipInterfacialPressureCancelsEachPresentLiquidPressureFlux",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "noSlipMechanicalForceGivesCommonLiquidAcceleration",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "noSlipPhaseChangeKeepsDonorMomentumInItsReceivingPhase",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "noSlipVirtualMassUsesAllLiquidRatesAndConservesPhaseReaction",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "oilWaterSlipDragRemainsPairwiseConservative",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "phasePresenceRoutesSourcesAndPreservesTotalForce",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "method": "traceLiquidWallForceUsesActualLiquidShares",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "chemicallyInconsistentSourceAllocationsAreRejectedWithoutMutation",
+      "seconds": 2.334,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "combinedOutgoingFacesCannotDoubleSpendOneAppearanceSource",
+      "seconds": 0.076,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "conflictingComponentAndPhaseSourcesAreRejectedWithoutMutation",
+      "seconds": 0.046,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "emptyOilDonorWithoutSourceIsRejectedWithoutMutation",
+      "seconds": 0.049,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "existingPhaseKeepsItsOriginalUpwindComposition",
+      "seconds": 0.054,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "incomingOilCanFundSameStepOnwardDeparture",
+      "seconds": 0.042,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "newlyCondensedOilCanAdvectInTheNegativeDirection",
+      "seconds": 0.04,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "newlyCondensedOilCanAdvectWithinItsCreatedMassBudget",
+      "seconds": 0.029,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "newlyCondensedOilCanLeaveThroughTheOutletConservatively",
+      "seconds": 0.037,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "nonFiniteAppearanceSourcesAreRejectedWithoutMutation",
+      "seconds": 0.084,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "outgoingOilCannotExceedTheSameStageCreatedMass",
+      "seconds": 0.031,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "traceOilFaceTransferKeepsSourceStageComposition(double)[1]",
+      "seconds": 0.041,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "method": "traceOilFaceTransferKeepsSourceStageComposition(double)[2]",
+      "seconds": 0.024,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "method": "closedPressureModeHasTheExpectedDampingRatesAndConservesEachPhase",
+      "seconds": 0.005,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "method": "constantAndAffinePressuresAddNoFluxOnNonuniformCellsWithChangingAreaAndDensity",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "method": "correctedAdvectionPreservesAbsentAndArbitrarilySmallDonorInventories",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "method": "correctedVelocitySelectsTheSameSignedDonorForMassMomentumAndEnergy",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "method": "externalTransportAndPhaseSourcesRemainInTheExactCellLedger",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "method": "invalidTrialsAndUnsupportedDonorsCannotReplaceRetainedDiagnostics",
+      "seconds": 0.004,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "method": "zeroCorrectionRetainsEveryOriginalFluxBit",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidThermalFaceFluxTest",
+      "method": "closedExternalFacesAreZeroWhileInternalConvectionRemainsActive",
+      "seconds": 0.002,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidThermalFaceFluxTest",
+      "method": "singleSectionReturnsClosedBoundaryFacesWithoutAnInternalInterface",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTotalEnergyContractTest",
+      "method": "aColderWallRemovesEnergy",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTotalEnergyContractTest",
+      "method": "everyUniformFaceCarriesTotalPhaseEnthalpy",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTotalEnergyContractTest",
+      "method": "gravityWorkUsesEachSignedPhaseMomentum",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTotalEnergyContractTest",
+      "method": "stationaryWallFrictionCannotCreateTotalEnergy",
+      "seconds": 0.0,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "method": "capturesTheCurrentLedgerAndRestoresPreviouslyPublishedDiagnostics",
+      "seconds": 0.006,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "method": "integratesPhaseSourcesUsingIndividualCellLengths",
+      "seconds": 0.003,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "method": "reportsTrialBackflowSeparatelyFromAnEarlierStickyClamp",
+      "seconds": 0.001,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "method": "restoresAllPublishedDiagnosticsAfterAnEvaluationThrows",
+      "seconds": 0.004,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "method": "serializesExactLedgerWithoutAliasingLaterOperatorEvaluations",
+      "seconds": 0.005,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidVariableAreaPressureRegressionTest",
+      "method": "constantPressureAtRestIsBalancedAcrossChangingAreaInEveryPhase",
+      "seconds": 0.014,
+      "result": "passed"
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidVariableAreaPressureRegressionTest",
+      "method": "stationaryPhaseContactsBalanceWithoutInterfacialStabilization",
+      "seconds": 0.001,
+      "result": "passed"
+    }
+  ],
+  "phase_force_work_replay": "Both retained CSV files match a second complete assertion-enabled execution byte for byte.",
+  "visual_review": "Both figures inspected after final render: labels, units, legends, bounds, error bars and all three analytical panels readable; PNG render inspected, SVG saved.",
+  "coverage_inventory": "Regenerated; blob remains 8910ed140ab0ceb12fd7a7811eb805249e71ba46. No production/route registration changes in this extension.",
+  "baseline_regression": {
+    "new_force_test": "expected failure; rise/smooth/12/pure oil acceleration error 0.0032325841882565446 m/s2",
+    "original_no_slip_cancellation_test": "one method passed on unmodified master",
+    "historical_full_ramp": "one method, both 12/24 meshes through 120 s, passed; 118.336 s wall"
+  },
+  "resolved_attempts": [
+    "Initial local test materialization omitted NeqSimTest; recovered exact current helper before final Maven runs.",
+    "First slow-test invocation used the wrong exclusion property and selected no slow tests; it is not acceptance evidence. The corrected -DexcludedTestGroups= invocation ran five methods, all passed.",
+    "One legacy no-slip expected force assumed constant face pressure on an inclined density-varying fixture. Updated independent half-cell-pressure expectation and added horizontal control, preserving 1e-10 tolerance and exact absence assertions."
+  ],
+  "limits": [
+    "No full-repository test pass claimed; 122 selected methods in 20 classes executed.",
+    "No local Java 8 JVM run claimed.",
+    "No new Tengesdal five-second run; historical failed gate retained.",
+    "No resolved pool-retention trajectory, physical valve/receiver blowdown, same-gas inlet refill/hold or predictive finite-rate evaporation qualification."
+  ]
+}

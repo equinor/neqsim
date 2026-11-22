@@ -1073,6 +1073,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 29](figures/BeerBrewing_BioProcess_Simulation_cell_29_output_1.png)
+
 ## Step 13b — Mash Temperature vs Fermentability
 
 Mash temperature is arguably the **most important** variable a brewer controls.
@@ -1194,6 +1196,8 @@ G.O.D.S. NEIPA mashes at 64°C → activity = 0.72 → dry, crisp finish
 
 </details>
 
+![Result figure from cell 31](figures/BeerBrewing_BioProcess_Simulation_cell_31_output_1.png)
+
 ## Step 14 — VLE Analysis: CO₂ Solubility in Beer
 
 A crucial property for beer quality is **CO₂ solubility** — how much
@@ -1287,6 +1291,8 @@ This is why conditioning at 2 °C under slight pressure gives well-carbonated be
 ```
 
 </details>
+
+![Result figure from cell 33](figures/BeerBrewing_BioProcess_Simulation_cell_33_output_1.png)
 
 ## Step 14b — Electrolyte CPA: Beer pH from CO2 Dissolution
 
@@ -1901,6 +1907,8 @@ Typical real NEIPA: pH 4.1-4.4, total organic acids 800-2000 mg/L
 
 </details>
 
+![Result figure from cell 39](figures/BeerBrewing_BioProcess_Simulation_cell_39_output_1.png)
+
 ## Step 15 — ODE-Based Fermentation Kinetics
 
 For a more detailed look at the fermentation dynamics, we solve the
@@ -2063,6 +2071,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 42](figures/BeerBrewing_BioProcess_Simulation_cell_42_output_1.png)
+
 ## Step 16 — Temperature Profile Through the Brewery
 
 Visualize the temperature at each stage of the brewing process — from the
@@ -2121,6 +2131,8 @@ for i in range(len(stages) - 1):
 plt.tight_layout()
 plt.show()
 ```
+
+![Result figure from cell 44](figures/BeerBrewing_BioProcess_Simulation_cell_44_output_1.png)
 
 ## Step 16b — Multi-Sugar Fermentation: Sequential Uptake
 
@@ -2358,6 +2370,8 @@ Key insights:
 ```
 
 </details>
+
+![Result figure from cell 46](figures/BeerBrewing_BioProcess_Simulation_cell_46_output_1.png)
 
 ## Process Simulation Checkpoint
 
@@ -2777,6 +2791,8 @@ Brewing insight:
 ```
 
 </details>
+
+![Result figure from cell 51](figures/BeerBrewing_BioProcess_Simulation_cell_51_output_2.png)
 
 ---
 
@@ -3752,6 +3768,8 @@ Plot saved as 'GODS_NEIPA_fermentation_kinetics.png'
 
 </details>
 
+![Result figure from cell 63](figures/BeerBrewing_BioProcess_Simulation_cell_63_output_1.png)
+
 ### Step F: CO₂ Solubility in G.O.D.S. NEIPA — Carbonation Analysis
 
 For a NEIPA, carbonation is typically 2.2–2.7 volumes CO₂ (moderate to high).
@@ -3853,6 +3871,8 @@ Key CO2 solubility values:
 ```
 
 </details>
+
+![Result figure from cell 65](figures/BeerBrewing_BioProcess_Simulation_cell_65_output_1.png)
 
 ```python
 # ═══════════════════════════════════════════════════════════════
@@ -4101,4 +4121,3 @@ density/VLE data (analogous to the glucose fitting shown above) to improve
 multi-sugar phase equilibrium predictions.
 
 *Skaal! — E.C. Dahls G.O.D.S. NEIPA successfully simulated with NeqSim on Grainfather G30v3*
-

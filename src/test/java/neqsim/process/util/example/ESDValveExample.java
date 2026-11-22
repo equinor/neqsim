@@ -235,7 +235,7 @@ public class ESDValveExample {
 
     logger.info("═══ COMPARING DIFFERENT STROKE TIMES ═══\n");
 
-    double[] strokeTimes = { 5.0, 10.0, 20.0 };
+    double[] strokeTimes = {5.0, 10.0, 20.0};
     for (double strokeTime : strokeTimes) {
       logger.printf(org.apache.logging.log4j.Level.INFO, "Testing with stroke time: %.1f seconds%n", strokeTime);
 

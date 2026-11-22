@@ -52,7 +52,7 @@ public class ManifoldLowFlowTest extends neqsim.NeqSimTest {
 
     Manifold manifold = new Manifold("manifold");
     manifold.addStream(feed);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
+    manifold.setSplitFactors(new double[] {0.5, 0.5});
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

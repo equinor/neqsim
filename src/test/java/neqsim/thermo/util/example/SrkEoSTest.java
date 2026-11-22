@@ -34,17 +34,6 @@ public class SrkEoSTest {
   }
 
   /**
-   * testTPflash.
-   */
-  @Test
-  @Disabled
-  public void testTPflash() {
-    ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
-    testOps.TPflash();
-    assertEquals(2, thermoSystem.getNumberOfPhases());
-  }
-
-  /**
    * testSaturateWIthWater.
    */
   @Test

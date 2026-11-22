@@ -150,7 +150,7 @@ class RLIntegrationTest {
     action.define("valve2", 0.0, 1.0, "fraction");
     action.define("setpoint", 0.0, 100.0, "%");
 
-    action.setFromNormalizedArray(new double[] { 0.25, 0.75, 0.5 });
+    action.setFromNormalizedArray(new double[] {0.25, 0.75, 0.5});
 
     assertEquals(0.25, action.get("valve1"), 1e-6);
     assertEquals(0.75, action.get("valve2"), 1e-6);
@@ -346,7 +346,7 @@ class RLIntegrationTest {
     assertNotNull(resetResult.info);
 
     // Step returns proper structure
-    GymEnvironment.StepResult stepResult = env.step(new double[] { 0.05 });
+    GymEnvironment.StepResult stepResult = env.step(new double[] {0.05});
     assertNotNull(stepResult.observation);
     assertEquals(8, stepResult.observation.length);
     assertFalse(Double.isNaN(stepResult.reward));
@@ -366,7 +366,7 @@ class RLIntegrationTest {
     env.reset();
     int steps = 0;
     while (!env.isDone() && steps < 100) {
-      env.step(new double[] { 0.0 }); // No change
+      env.step(new double[] {0.0}); // No change
       steps++;
     }
 
@@ -400,8 +400,8 @@ class RLIntegrationTest {
 
     // Create actions for both agents
     Map<String, double[]> actions = new HashMap<>();
-    actions.put("separator", new double[] { 0.01 }); // Small level control action
-    actions.put("compressor", new double[] { 0.0 }); // No speed change
+    actions.put("separator", new double[] {0.01}); // Small level control action
+    actions.put("compressor", new double[] {0.0}); // No speed change
 
     // Step
     MultiAgentEnvironment.MultiAgentStepResult result = env.step(actions);
@@ -424,8 +424,8 @@ class RLIntegrationTest {
     env.reset();
 
     Map<String, double[]> actions = new HashMap<>();
-    actions.put("separator", new double[] { 0.0 });
-    actions.put("compressor", new double[] { 0.0 });
+    actions.put("separator", new double[] {0.0});
+    actions.put("compressor", new double[] {0.0});
 
     MultiAgentEnvironment.MultiAgentStepResult result = env.step(actions);
 
@@ -443,17 +443,17 @@ class RLIntegrationTest {
     ProportionalController pController = new ProportionalController("P-Level", 6, 0.5, -0.1, 0.1);
 
     // Positive error (level above setpoint) -> negative action (close valve)
-    double[] obs1 = new double[] { 0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.5 }; // error = 0.2
+    double[] obs1 = new double[] {0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.5}; // error = 0.2
     double[] action1 = pController.computeAction(obs1);
     assertTrue(action1[0] < 0); // Should be negative
 
     // Negative error (level below setpoint) -> positive action (open valve)
-    double[] obs2 = new double[] { 0.4, 0.5, 0.5, 0.5, 0.5, 0.5, -0.2, 0.5 }; // error = -0.2
+    double[] obs2 = new double[] {0.4, 0.5, 0.5, 0.5, 0.5, 0.5, -0.2, 0.5}; // error = -0.2
     double[] action2 = pController.computeAction(obs2);
     assertTrue(action2[0] > 0); // Should be positive
 
     // Action should be clamped
-    double[] obs3 = new double[] { 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.8, 0.5 }; // Large error
+    double[] obs3 = new double[] {0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.8, 0.5}; // Large error
     double[] action3 = pController.computeAction(obs3);
     assertEquals(-0.1, action3[0], 1e-6); // Clamped to min
   }
@@ -463,12 +463,12 @@ class RLIntegrationTest {
     PIDController pidController = new PIDController("PID-Level", 6, 0.3, 0.05, 0.1, -0.1, 0.1, 1.0);
 
     // First step - no derivative
-    double[] obs1 = new double[] { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.5 };
+    double[] obs1 = new double[] {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.5};
     double[] action1 = pidController.computeAction(obs1);
     assertNotNull(action1);
 
     // Second step - has derivative
-    double[] obs2 = new double[] { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.05, 0.5 };
+    double[] obs2 = new double[] {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.05, 0.5};
     double[] action2 = pidController.computeAction(obs2);
     assertNotNull(action2);
 
@@ -483,17 +483,17 @@ class RLIntegrationTest {
     BangBangController bbController = new BangBangController("BB-Level", 0, 0.5, 0.05, 0.05, -0.05);
 
     // Below setpoint - deadband -> low action (open valve)
-    double[] obs1 = new double[] { 0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5 };
+    double[] obs1 = new double[] {0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
     double[] action1 = bbController.computeAction(obs1);
     assertEquals(0.05, action1[0], 1e-6);
 
     // Above setpoint + deadband -> high action (close valve)
-    double[] obs2 = new double[] { 0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5 };
+    double[] obs2 = new double[] {0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
     double[] action2 = bbController.computeAction(obs2);
     assertEquals(-0.05, action2[0], 1e-6);
 
     // Within deadband -> maintain previous action
-    double[] obs3 = new double[] { 0.52, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5 };
+    double[] obs3 = new double[] {0.52, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
     double[] action3 = bbController.computeAction(obs3);
     assertEquals(-0.05, action3[0], 1e-6); // Should maintain previous
   }
@@ -502,7 +502,7 @@ class RLIntegrationTest {
   void testRandomController() {
     RandomController randController = new RandomController("Random", -0.1, 0.1);
 
-    double[] obs = new double[] { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5 };
+    double[] obs = new double[] {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
 
     // All actions should be within bounds
     for (int i = 0; i < 100; i++) {

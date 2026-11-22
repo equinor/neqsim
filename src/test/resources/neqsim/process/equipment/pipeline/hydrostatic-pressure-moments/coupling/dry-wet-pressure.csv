@@ -1,0 +1,3 @@
+enabled,dry_oil_mass_kg_m,dry_oil_mass_rate_kg_ms,dry_oil_momentum_rate_N_m,internal_oil_force_N
+false,0.0,0.0,0.0,0.0
+true,0.0,0.0,-27.25192515168584,272.5192515168584

@@ -48,6 +48,34 @@ SCOPE_PAGES = (
     DOCS / "standards/sales_contracts.md",
 )
 
+PVT_LANDING_PAGE = DOCS / "pvtsimulation/README.md"
+STANDARDS_LANDING_PAGE = DOCS / "standards/README.md"
+PVT_SEPARATOR_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/pvtsimulation/PvtSimulationDocumentationTest.java"
+)
+E300_IMPORT_PAGE = DOCS / "pvtsimulation/eclipse_e300_fluid_import.md"
+E300_READER = (
+    DOCS.parent
+    / "src/main/java/neqsim/thermo/util/readwrite/EclipseFluidReadWrite.java"
+)
+E300_READER_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/thermo/util/readwrite/"
+    "EclipseFluidReadWriteTest.java"
+)
+EROSION_GUIDE = DOCS / "pvtsimulation/flowassurance/erosion_prediction.md"
+EROSION_SOURCE = (
+    DOCS.parent
+    / "src/main/java/neqsim/pvtsimulation/flowassurance/"
+    "ErosionPredictionCalculator.java"
+)
+EROSION_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/pvtsimulation/flowassurance/"
+    "ErosionPredictionCalculatorTest.java"
+)
+
 
 def metadata_value(metadata, name):
     """Return a plain scalar, including folded YAML front-matter values."""
@@ -103,6 +131,12 @@ def remove_fenced_code(source):
     return "\n".join(rendered)
 
 
+def heading_slug(heading):
+    """Return the source heading fragment used by the documentation site."""
+    normalized = re.sub(r"[^a-z0-9 _-]", "", heading.lower())
+    return normalized.strip().replace(" ", "-")
+
+
 def target_candidates(source, target):
     """Return repository-source candidates for one documentation target."""
     parsed = urlsplit(target.strip().strip("<>"))
@@ -131,8 +165,156 @@ def target_candidates(source, target):
     return tuple(candidates)
 
 
+def section_after_heading(source, heading):
+    """Return the Markdown section that starts at an exact level-two heading."""
+    match = re.search(
+        rf"^{re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
+        source,
+        re.MULTILINE | re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError(f"Missing section: {heading}")
+    return match.group("section")
+
+
 class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-5 documentation surface."""
+
+    def test_pvt_separator_quickstart_matches_executable_regression(self):
+        page = PVT_LANDING_PAGE.read_text(encoding="utf-8")
+        java_test = PVT_SEPARATOR_TEST.read_text(encoding="utf-8")
+        section = section_after_heading(
+            page, "## Runnable multi-stage separator example"
+        )
+
+        self.assertNotIn("System.out", section)
+        self.assertIn("LogManager.getLogger(PvtSeparatorQuickStart.class)", section)
+        self.assertIn("logger.info(", section)
+        self.assertIn("PvtSimulationDocumentationTest", section)
+
+        workflow_markers = (
+            'new SystemSrkEos(373.15, 300.0)',
+            'setReservoirConditions(300.0, 100.0)',
+            'addSeparatorStage(50.0, 40.0, "HP separator")',
+            'addSeparatorStage(10.0, 30.0, "LP separator")',
+            "addStockTankStage()",
+            "separatorTest.run()",
+        )
+        for marker in workflow_markers:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, section)
+                # The exact-source gate embeds these markers in Java string literals.
+                self.assertIn(marker.replace('"', r'\"'), java_test)
+
+        regression_markers = (
+            "assertEquals(3, stages.size())",
+            'assertEquals("LP separator", stages.get(1).getStageName())',
+            "Double.isFinite(separatorTest.getTotalGOR())",
+            "separatorTest.getBo() > 1.0",
+            "Double.isFinite(separatorTest.getStockTankOilDensity())",
+            "separatorTest.getStockTankOilDensity() > 500.0",
+            "separatorTest.getStockTankOilDensity() < 1200.0",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
+
+    def test_e300_component_name_resolution_matches_implementation(self):
+        guide = E300_IMPORT_PAGE.read_text(encoding="utf-8")
+        reader = E300_READER.read_text(encoding="utf-8")
+        java_test = E300_READER_TEST.read_text(encoding="utf-8")
+
+        guide_markers = (
+            "### Component Name Resolution",
+            "known database spellings and aliases",
+            "`ComponentNameResolver`",
+            "`C7` and `C10`",
+            "grouped cuts such as `C10-C12`",
+            "ideal-gas heat-capacity coefficients",
+            "from g/mol to kg/mol",
+            "standard liquid density in kg/L",
+        )
+        for marker in guide_markers:
+            with self.subTest(guide_marker=marker):
+                self.assertIn(marker, guide)
+
+        source_markers = (
+            'if (!normalized.matches("C\\\\d+")',
+            "ComponentNameResolver.isKnownName(trimmedName)",
+            "ComponentNameResolver.resolve(trimmedName)",
+            "fluid.addTBPfraction("
+            "name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity)",
+        )
+        for marker in source_markers:
+            with self.subTest(source_marker=marker):
+                self.assertIn(marker, reader)
+
+        regression_markers = (
+            "testE300ShortNamesKeepDatabaseCpAndBinaryParameters",
+            "testE300NameCaseVariantsMapToDatabaseComponents",
+            "imported.getPhase(0).getComponent(i).getCpA()",
+            "imported.getPhase(0).getComponent(i).getComponentName()",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
+
+    def test_erosion_prediction_guide_matches_source_and_regression(self):
+        guide = EROSION_GUIDE.read_text(encoding="utf-8")
+        source = EROSION_SOURCE.read_text(encoding="utf-8")
+        java_test = EROSION_TEST.read_text(encoding="utf-8")
+
+        for forbidden in (
+            "System.out",
+            "System.err",
+            "straight_pipe",
+            'applySandLoadDefaults("cased_perforated")',
+            "getDescription()",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, guide)
+
+        guide_markers = (
+            "LogManager.getLogger(ErosionScreeningExample.class)",
+            "logger.info(",
+            'calc.applySandLoadDefaults("ohgp_complete", 1200.0, 0.0, 850.0)',
+            'ErosionPredictionCalculator.getSandLoadDefaults("ohgp_complete")',
+            "defaults.getLiquidPpmWt()",
+            "defaults.getGasPpmWt()",
+            "defaults.getParticleSizeMicrons()",
+            "calc.calcMaxVelocityForCorrosionProtection(true, true)",
+            "./mvnw -Dtest=ErosionPredictionCalculatorTest test",
+            "screening implementation, not a standards-conformance certificate",
+        )
+        for marker in guide_markers:
+            with self.subTest(guide_marker=marker):
+                self.assertIn(marker, guide)
+
+        source_markers = (
+            'case "straight":',
+            "public static SandLoadDefaults getSandLoadDefaults(String completionType)",
+            "public void applySandLoadDefaults(String completionType",
+            "public double calcMaxVelocityForCorrosionProtection("
+            "boolean corrosionInhibited, boolean sandPresent)",
+            'return new String[] {"natural", "natural_failure", "sas", '
+            '"ohgp_incomplete", "ohgp_complete"}',
+            'inputs.put("sandRate_kgday", sandRate)',
+            'result.put("riskLevel", riskLevel)',
+        )
+        for marker in source_markers:
+            with self.subTest(source_marker=marker):
+                self.assertIn(marker, source)
+
+        regression_markers = (
+            "testApiRP14E_erosionalVelocity",
+            "testDNV_sandErosion_elbow",
+            "testGeometryFactors",
+            "testToJsonNotNull",
+            "testRemainingWallThickness",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
 
     def test_frozen_scope_exists(self):
         self.assertEqual(38, len(SCOPE_PAGES))
@@ -175,6 +357,41 @@ class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
                     page.read_text(encoding="utf-8")
                 )
                 self.assertIsNone(unsupported.search(remove_fenced_code(body)))
+
+    def test_standards_landing_page_uses_extensionless_published_routes(self):
+        _title, _description, body = parse_front_matter(
+            STANDARDS_LANDING_PAGE.read_text(encoding="utf-8")
+        )
+        rendered = remove_fenced_code(body)
+        destinations = re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", rendered)
+        internal_targets = []
+        for target in destinations:
+            parsed = urlsplit(target.strip().strip("<>"))
+            if parsed.scheme or parsed.netloc or target.startswith("#"):
+                continue
+            internal_targets.append(target)
+
+        self.assertEqual(9, len(internal_targets))
+        for target in internal_targets:
+            parsed = urlsplit(target.strip().strip("<>"))
+            candidates = target_candidates(STANDARDS_LANDING_PAGE, target)
+            destination = next(
+                (candidate for candidate in candidates if candidate.is_file()), None
+            )
+            with self.subTest(target=target):
+                self.assertEqual("", Path(unquote(parsed.path)).suffix)
+                self.assertIsNotNone(destination)
+                if parsed.fragment and destination is not None:
+                    target_source = remove_fenced_code(
+                        destination.read_text(encoding="utf-8")
+                    )
+                    headings = re.findall(
+                        r"^#{1,6}\s+(.+?)\s*$", target_source, re.MULTILINE
+                    )
+                    self.assertIn(
+                        unquote(parsed.fragment),
+                        {heading_slug(heading) for heading in headings},
+                    )
 
     def test_relative_source_links_resolve(self):
         markdown_link = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")

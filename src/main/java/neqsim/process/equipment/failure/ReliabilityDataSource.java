@@ -388,9 +388,9 @@ public class ReliabilityDataSource implements Serializable {
    * Loads reliability data from resources.
    */
   /** Supplementary CSV resource paths loaded after the primary files. */
-  private static final String[] SUPPLEMENTARY_CSVS = { "/reliabilitydata/iogp_equipment.csv",
+  private static final String[] SUPPLEMENTARY_CSVS = {"/reliabilitydata/iogp_equipment.csv",
       "/reliabilitydata/ieee493_equipment.csv", "/reliabilitydata/generic_literature.csv",
-      "/reliabilitydata/oreda_equipment.csv" };
+      "/reliabilitydata/oreda_equipment.csv"};
 
   private void loadData() {
     if (dataLoaded) {

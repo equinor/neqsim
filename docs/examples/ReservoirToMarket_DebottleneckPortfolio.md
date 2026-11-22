@@ -343,6 +343,8 @@ axis.set_title("Composable reservoir-to-market evidence chain", fontsize=13)
 plt.show()
 ```
 
+![Result figure from cell 8](figures/ReservoirToMarket_DebottleneckPortfolio_cell_8_output_1.png)
+
 ## 4. Configure the simulator-facing evaluator
 
 The objective is the completed model's wet-feed rate. The direct equipment constraint is sampled
@@ -687,6 +689,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 18](figures/ReservoirToMarket_DebottleneckPortfolio_cell_18_output_1.png)
+
 ## 8. Prove repeatability and Java serialization
 
 The same immutable `StudyResult[]` is ranked again. Rank, identity, and delta must be exactly
@@ -856,4 +860,3 @@ Canonical dependency-13 acceptance workflow completed
 ```
 
 </details>
-

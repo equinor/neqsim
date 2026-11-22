@@ -1,0 +1,62 @@
+{
+  "mode": "station",
+  "formations": [
+    {
+      "name": "A",
+      "ph": 6.5,
+      "reference_c": 80,
+      "reference_pressure_bara": 1.01325,
+      "alkalinity_mmol_kg_water": 8,
+      "silica_mg_sio2_kg_water": 300,
+      "ions_mol_kg_water": {
+        "Na": 1.4,
+        "K": 0.025,
+        "Ca": 0.045,
+        "Mg": 0.018,
+        "Ba": 0.001,
+        "Sr": 0.002,
+        "S(6)": 1e-05,
+        "Cl": 1.55098
+      }
+    },
+    {
+      "name": "B",
+      "ph": 7.5,
+      "reference_c": 80,
+      "reference_pressure_bara": 1.01325,
+      "alkalinity_mmol_kg_water": 4,
+      "silica_mg_sio2_kg_water": 52,
+      "ions_mol_kg_water": {
+        "Na": 0.56,
+        "K": 0.012,
+        "Ca": 0.018,
+        "Mg": 0.012,
+        "Ba": 2e-06,
+        "Sr": 0.0002,
+        "S(6)": 0.018,
+        "Cl": 0.592404
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Outlet sample",
+      "temperature_c": 25,
+      "pressure_bara": 2
+    },
+    {
+      "name": "Pressurized contact",
+      "temperature_c": 55,
+      "pressure_bara": 15,
+      "co2_fugacity_bar": 0.6,
+      "aqueous_solvent_water_fraction": 0.985
+    }
+  ],
+  "blend_steps": 4,
+  "additional_blends": [
+    [
+      0.4,
+      0.6
+    ]
+  ]
+}

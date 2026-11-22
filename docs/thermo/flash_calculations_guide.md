@@ -1,6 +1,6 @@
 ---
 title: "Flash Calculations Guide"
-description: "This guide provides comprehensive documentation of flash calculations available in NeqSim via the `ThermodynamicOperations` class. Flash calculations determine the equilibrium state of a thermodynamic..."
+description: "Guide to equilibrium flash calculations available through ThermodynamicOperations, including constraints, phase behavior, units, and validation boundaries."
 keywords: "flash, TPflash, PHflash, PSflash, TVflash, dew point, bubble point, phase envelope, cricondenbar, cricondentherm, VLE, phase equilibrium, ThermodynamicOperations"
 ---
 
@@ -104,6 +104,29 @@ System.out.println("Pressure: " + fluid.getPressure("bara") + " bara");
 
 The most common flash type. Given temperature and pressure, find phase split and compositions. NeqSim implements the classical Michelsen flash algorithm with stability analysis.
 
+With `SystemElectrolyteCPAstatoil`, keep the default TP-flash stability check enabled.
+For non-reactive brines with multiphase checking enabled, if the initial iteration
+has an aqueous split and the ordinary tangent-plane trials find no instability,
+the solver carries that estimate into the ion-aware multiphase analysis. This
+avoids seeding a trial phase from a single ion and allows the multiphase solver
+to assess additional phases. Phase discovery first uses a normalized molecular
+feed. The solver then restores the complete ionic inventory to the aqueous phase
+and re-equilibrates molecular partitioning under the resulting salt activity,
+with ions excluded from gas and oil. Refinement uses larger steps when a
+two-phase split has room for the correction after reserving the aqueous ion
+inventory. Large corrections and three-phase splits use damped steps. Hydrate
+checks use the conservative ion-restored fluid split during temperature
+iterations. An ordinary TP flash also retains that split if the bounded
+refinement fails to converge.
+
+For an already-equilibrated neutral two-phase endpoint containing at least 1 mol% water,
+TP flash can remove roundoff in the phase amounts by recovering the unique lever-rule
+fractions from the converged compositions and original feed. The correction is limited
+to $10^{-10}$ in either phase fraction, retains the phase set and compositions, and must
+improve component closure to $10^{-13}$ while preserving fugacity equality. This avoids
+amplifying small amount differences into discrepancies in extensive caloric properties.
+It adds no equilibrium iterations and does not change dry-fluid or trace-water flash paths.
+
 **Method signatures:**
 ```java
 void TPflash()
@@ -131,6 +154,18 @@ double liquidDensity = fluid.getPhase("oil").getDensity("kg/m3");
 fluid.setSolidPhaseCheck(true);
 ops.TPflash(true);  // Includes solid equilibrium
 ```
+
+Both `setSolidPhaseCheck(true)` and `setSolidPhaseCheck(name)` preserve the caller's
+`doMultiPhaseCheck()` setting. Enable `setMultiPhaseCheck(true)` separately when
+additional liquid phases are required. Solid storage allocation does not select a
+different fluid equilibrium mode. Code that previously relied on the solid setter
+implicitly enabling the fluid multiphase search must now enable it explicitly.
+
+Call `fluid.setSolidPhaseCheck(false)` to disable solid checking for all components,
+including those in cached phases. This is safe before any solid phase has been
+allocated and can be called repeatedly. Disabling preserves the existing phase
+count, phase fractions and component inventories; it does not run a flash or
+remove an existing solid phase.
 
 ---
 
@@ -236,7 +271,85 @@ for i in range(fluid.getNumberOfPhases()):
 **How it works internally:**
 1. `TPflash` first solves the standard two-phase problem
 2. If `doMultiPhaseCheck()` is true, `TPmultiflash` is invoked
-3. `TPmultiflash` performs additional stability analysis against all existing phases and adds/removes phases until Gibbs energy is minimized
+3. `TPmultiflash` performs additional stability analysis against existing phases and adds/removes phases to seek a lower-Gibbs equilibrium
+
+For an ordinary SRK or PR flash of a dry hydrocarbon/inert mixture with
+normalized, nonnegative overall mole fractions, a final single-phase result with component-balance error greater than `1e-10` is rechecked
+on a clone using a cold multiphase stability calculation. This addresses phase
+removal leaving the retained composition different from the overall feed
+(issue #4202). The recovered state must conserve the feed within `1e-10`, satisfy
+phase normalization and log-fugacity equality within `1e-8`, and have no higher
+Gibbs energy than the better homogeneous root at the conserved feed. A recovered
+two-phase split must strictly lower that Gibbs energy. A failed recovery throws
+an `IllegalStateException`; assigning the feed composition alone is not accepted
+as a stability repair. The user's multiphase setting is preserved. Balanced,
+phase-constrained, aqueous, reactive, ionic, solid, wax and specialized-model
+calculations retain their existing paths. These numerical checks do not establish
+experimental accuracy or prove global stability against every possible phase set.
+
+The synthetic incipient-vapor regression at 253.46685189059752 K and
+77.53775411226596 bara uses an independent high-precision SRK equation reference,
+$\beta_v = 3.508682096277057 \times 10^{-5}$. The stored scalar inputs and a
+standard-library Decimal reproduction are in
+`src/test/resources/neqsim/thermodynamicoperations/flashops/incipient-srk-reference/`.
+Six solutions at 60/80 digits and perturbed initial estimates agree. This replaces
+a legacy iterative reference while retaining the absolute $10^{-10}$ vapor-fraction
+tolerance and the material, fugacity, repeatability and algorithm-agreement checks.
+It qualifies the equations for this synthetic fixture, rather than measured accuracy.
+
+The recovery check is gated by actual removal of a negligible phase during that
+flash. Results without final phase removal skip all recovery component scans,
+cloning and extra EOS initialization; the added normal-path work is a reset and
+check of one boolean. Dry-hydrocarbon cleanup preserves the full feed inventory when the two-phase
+endpoint already fails the `1e-10` component-balance gate, preventing inventory
+drift across repeated recovery. Balanced endpoints retain the established trace-phase
+removal path, avoiding unnecessary numerical changes to ordinary calculations. Cleanup history is reset when the same flash operation is
+reused. The additional stability flash runs only when a collapsed endpoint fails
+the component-balance check. `TPflashEndpointRecoveryBenchmark` records warmed
+complete-flash elapsed and thread CPU timings, recovery counts and numerical
+snapshots for fresh recovery, unchanged and alternating nearby conditions; it retains invalid master results explicitly
+and makes no wall-clock assertions in CI.
+
+For an invalid collapsed endpoint, the first trial runs the multiphase stability
+and beta solver directly from the conserved homogeneous feed, avoiding another
+ordinary TP-flash iteration. A full cold TP flash remains the fallback if the
+direct trial fails the same conservation, normalization, fugacity and Gibbs
+acceptance gates. The direct result is ordered by density before final
+initialization to retain consistent gas/oil identity. Both trials run on a clone; timing improvements never relax
+the numerical tolerances.
+
+The legacy `calcCricondenBar()` iteration refreshes temperature derivatives with
+`init(2)` after each TP flash, because the flash may replace the phase state.
+It checks its temperature residual before
+forming a temperature correction, so an exactly zero residual cannot produce a
+`0/0` update and corrupt the temperature. This numerical guard does not change the
+legacy pressure-search algorithm or establish its accuracy as a phase-envelope maximum.
+
+For neutral, water-rich feeds with multiphase checking enabled, a final gas/oil
+split or single OIL endpoint is compared with a seeded oil/aqueous equilibrium
+when the overall water mole fraction is at least 5%. This also runs on the
+single-phase stability-return path: phase cleanup near a bubble point can remove
+an aqueous phase even after the stability analysis detected it. The trial runs
+on a clone and must conserve every component and satisfy phase normalization and
+log-fugacity equality within `1e-8`. It must lower Gibbs energy relative to a valid
+incumbent by more than `max(1e-6 J, 1e-8 abs(G))`. Phase-role locks, chemical,
+ionic, solid-check, and wax-check systems retain their existing paths. Dry feeds,
+already-aqueous endpoints, and genuine three-phase states do not run this trial.
+The bounded recovery does not prove global stability against every possible
+phase set.
+
+The public-API regression for issue #3955 retains water at all 81 points from
+11–31 °C and 1.8–5.0 bara. For its 3781.0149 kg/h pump inlet at 298.15 K and
+2.67 bara, compression to 19 bara gives approximately 2.824 kW and 298.669 K.
+The inlet EOS-volume estimate `Q * deltaP` is 2.829 kW. Using the separately
+volume-corrected physical density gives a different hydraulic estimate; the
+EOS volume is the consistent comparison for this enthalpy/entropy calculation.
+The regression also checks component balance, phase fugacities, repeated flashes,
+warm starts, and the pump entropy balance.
+
+When restarting a process from a saved fluid, run a TP flash before taking
+its inlet entropy if the saved phase split may have been computed with an older
+version; the pump's isentropic outlet depends on that inlet entropy.
 
 **When to use:** Any system containing water + hydrocarbons, glycol systems, methanol injection, or other mixtures where two liquid phases can coexist.
 
@@ -247,6 +360,8 @@ For robust three-phase detection in complex systems (sour gas, CO₂-rich stream
 - **Amplified K-value trials** — catch near-critical VLE instability near the cricondenbar where standard Wilson K-values converge to trivial solutions
 - **Pure-component stability trials** — catch LLE instability at temperatures well below the lightest component's critical temperature, where Wilson K-values are ineffective
 - **Cosine-similarity trivial-solution filtering** — rejects spurious two-phase results where both phases have nearly identical composition
+
+Wilson stability trials reject failed EOS initializations and nonfinite log-fugacity coefficients instead of interpreting skipped updates as convergence. Rejected trials leave the current phase set intact so the remaining stability trials can still test phase appearance.
 
 ```java
 // Sour gas system with potential three-phase split
@@ -353,6 +468,27 @@ Given pressure and total enthalpy, find temperature and phase split. Essential f
 - Heat exchanger design
 - Process streams after heating/cooling
 
+An empty stream with zero total enthalpy has no caloric temperature constraint.
+The standard PH flash preserves its temperature, pressure and zero inventory,
+so a zero-flow column connection retains a usable temperature template when
+flow resumes. Nonzero total enthalpy on an empty stream is rejected. A flowing
+stream can have a zero enthalpy target; its residual uses a finite normalization.
+Small nonzero inventories continue through the caloric solve.
+
+The standard caloric solve reuses the enthalpy residuals from two completed
+TP flashes to estimate the equilibrium caloric slope. When the residual is
+improving and that slope has a finite, physical sign and a bounded magnitude,
+a secant temperature correction avoids unnecessary full equilibrium evaluations.
+Other states retain the damped heat-capacity Newton correction. Both paths keep
+the existing 10 K trial-step bound, TP-failure backoff, iteration limit and
+nominal enthalpy residual tolerance; the acceleration adds no trial TP flash.
+
+The nominal stop criterion limits the combined magnitude of two consecutive
+relative enthalpy residuals to $10^{-8}$. To avoid repeated TP flashes on a
+numerical-noise plateau, the solver may stop after 15 iterations without improving
+the best residual, provided the **current** relative residual is finite and its
+magnitude is below $10^{-6}$. This relaxed check applies to the returned state.
+
 **Method signatures:**
 ```java
 void PHflash(double Hspec)                    // H in J
@@ -361,27 +497,81 @@ void PHflash(double Hspec, int type)          // type 0 = standard
 ```
 
 **Example - Joule-Thomson expansion:**
+
+<!-- flash-guide-example: ph-joule-thomson -->
 ```java
-SystemInterface fluid = new SystemSrkEos(350.0, 100.0);
-fluid.addComponent("methane", 1.0);
-fluid.setMixingRule("classic");
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
+/**
+ * Runs an isenthalpic methane expansion with the public PH-flash API.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
+public final class FlashCalculationsGuidePHExample {
+  private static final Logger logger =
+      LogManager.getLogger(FlashCalculationsGuidePHExample.class);
 
-// Store inlet enthalpy
-double inletH = fluid.getEnthalpy("J");
+  /** Prevent utility-class construction. */
+  private FlashCalculationsGuidePHExample() {}
 
-// Reduce pressure (isenthalpic process)
-fluid.setPressure(10.0, "bara");
+  /**
+   * Calculates the inlet and outlet state.
+   *
+   * @return inlet temperature, outlet temperature, inlet enthalpy, outlet enthalpy,
+   *     and outlet pressure
+   */
+  public static double[] run() {
+    SystemInterface fluid = new SystemSrkEos(350.0, 100.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
 
-// Find new temperature at same enthalpy
-ops.PHflash(inletH);
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.init(3);
 
-System.out.println("Outlet temperature: " + fluid.getTemperature("C") + " °C");
-// Demonstrates Joule-Thomson cooling
+    double inletTemperature = fluid.getTemperature("K");
+    double inletEnthalpy = fluid.getEnthalpy("J");
+
+    fluid.setPressure(10.0, "bara");
+    operations.PHflash(inletEnthalpy);
+    fluid.init(3);
+
+    double outletTemperature = fluid.getTemperature("K");
+    double outletEnthalpy = fluid.getEnthalpy("J");
+    logger.info(
+        "Isenthalpic expansion: {} K at 100 bara to {} K at {} bara",
+        inletTemperature,
+        outletTemperature,
+        fluid.getPressure("bara"));
+
+    return new double[] {
+      inletTemperature,
+      outletTemperature,
+      inletEnthalpy,
+      outletEnthalpy,
+      fluid.getPressure("bara")
+    };
+  }
+
+  /**
+   * Runs the example.
+   *
+   * @param args command-line arguments; not used
+   */
+  public static void main(String[] args) {
+    run();
+  }
+}
 ```
+
+The exact published class is compiled and executed by the documentation contract. It verifies
+finite positive temperatures, a 10 bara outlet, isenthalpic closure, and cooling for this stated
+methane case. The result is an equation-of-state example, not experimental validation.
 
 **With unit specification:**
 ```java
@@ -456,6 +646,10 @@ Given temperature and total volume, find pressure and phase split. Used for:
 - Fixed-volume vessel calculations
 - Constant volume processes
 
+Pressure trials retain the supplied component inventories when a negligible phase disappears.
+Removing a trial phase changes the active phase set without discarding matter from the closed
+vessel. Repeated TV flashes therefore do not accumulate trace-phase inventory losses.
+
 **Method signatures:**
 ```java
 void TVflash(double Vspec)                    // V in cm³
@@ -480,6 +674,20 @@ ops.TVflash(vesselVolume, "m3");
 
 System.out.println("New pressure: " + fluid.getPressure("bara") + " bara");
 ```
+
+A volume residual alone does not qualify the phase split. The quadratic-covolume UMR-PRU
+50-addition regression at 293.15 K and 0.998 m³ now selects gas plus oil. Independent
+fixed-$T,V,n$ Helmholtz evaluation lowers energy by 25.868 kJ relative to the former
+single-gas state and gives residual enthalpy $H^{res}=-534369.1023$ J. The regression
+checks that reference after subtracting the current ideal-gas enthalpy, so changes in
+ideal heat-capacity data do not alter the EOS reference. Pressure closure in every
+phase, component conservation, equal fugacity and nearby-temperature caloric differences
+are qualified in `CubicTvHelmholtzQualificationTest`. This is an equation-based check
+of this fixture, not experimental validation or a global stability proof.
+The addition history checks the actual initial inventory plus every supplied feed against
+the overall component amounts after each addition and the final phase amounts, retaining
+the original $10^{-10}$ mol absolute conservation gate. Pressure and residual-energy
+references and their acceptance tolerances are unchanged.
 
 ---
 
@@ -662,6 +870,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 
 // Initial state
+fluid.init(2);  // Initialize caloric derivatives before reading internal energy
 double V0 = fluid.getVolume("m3");
 double U0 = fluid.getInternalEnergy("J");
 
@@ -669,9 +878,95 @@ double U0 = fluid.getInternalEnergy("J");
 double V_new = V0 * 2.0;  // Volume doubles
 ops.VUflash(V_new, U0, "m3", "J");
 
-System.out.println("New T: " + fluid.getTemperature("C") + " °C");
-System.out.println("New P: " + fluid.getPressure("bara") + " bara");
+org.apache.logging.log4j.LogManager.getLogger("VU example").info("New T: {} C, new P: {} bara",
+    fluid.getTemperature("C"), fluid.getPressure("bara"));
 ```
+
+This example is executed by
+`VUCaloricStateQualificationTest.documentedExpansionUsesInitializedInternalEnergy`.
+
+`OptimizedVUflash` initializes caloric properties at level two after each TP
+flash and reuses that state in the next iteration. Volume, Cp and temperature/pressure
+derivatives require level two; the VU update does not consume composition-derivative
+matrices. Returned enthalpy and internal energy therefore refer to the final
+TP state, rather than caloric caches retained from a preceding iterate.
+
+The main solve keeps its update equations, damping, bounds and stopping
+criteria. If it has not found a new best volume/energy residual for 25
+iterations it stops, and it always returns its best iterate rather than its
+last one. If that iterate does not meet the acceptance criterion, the
+fallback stages run cheapest first:
+
+1. **Detached equilibrium recovery**: a two-variable Newton step on pressure
+   and temperature from the incoming state. Its slopes come from independent
+   cold TP equilibria, so they include changes in phase fractions and
+   composition. The system is left untouched unless the recovered state meets
+   the acceptance criterion. It iterates towards the polish tolerances, but if
+   it stalls at the TP-flash noise floor or reaches its iteration limit, the
+   best state is still accepted when it meets the criterion.
+2. **Constant-volume polish**: a bracketing pressure search for the volume,
+   nested in a secant search on temperature for the energy. It is the most
+   robust stage and the most expensive one (128 and 190 TP flashes in the
+   two failed three-phase separator solves measured below).
+
+Inner TP flashes retain the specified component inventory when a trace phase
+is removed. `wasEquilibriumRecoveryUsed()`, `getEquilibriumRecoveryFlashCount()`
+and `wasEquilibriumPolishUsed()` report which stage closed a solve. A zero
+count means the ordinary Newton solve closed it.
+
+`OptimizedVUflash` reuses one inner TP operation for every trial state. It
+discards that operation's cached second-order Newton solver before each trial
+(`Flash.discardSecondOrderSolver()`), so each inner result is independent of
+the previous trial. Without this, the first Newton step of a trial re-applied
+the previous trial's phase split. In a three-phase separator state this merged
+gas and oil into a higher-Gibbs-energy state, the VU iteration cycled between
+two- and three-phase states for all 100 iterations, and the fallbacks did the
+work the ordinary solve should have done (equinor/neqsim#5036).
+
+Solver reset and phase-stability recovery are separate concerns. A fresh inner
+TP flash must not depend on the preceding trial, while its stability analysis
+must still find the lowest-Gibbs phase topology. For methane-rich hydrocarbon
+feeds in an unconstrained cubic-EOS flash below 50 bar, strongly separated
+Wilson sums can trigger up to five supplementary tangent-plane trials. A
+non-trivial trial with negative reduced TPD supplies a liquid composition.
+The solver withdraws a feasible liquid amount from the feed and relaxes the
+material-balanced split with a fresh Gibbs-energy Newton solve. Near numerical
+resolution, the line search uses a decrease in the fugacity residual to
+distinguish steps with indistinguishable Gibbs energies. Only a
+distinct, normalized split with closed component balances, equal fugacities,
+and lower Gibbs energy supplies K-values to the ordinary TP iteration. This
+recovers the UMR-PRU methane/ethane/n-pentane/nC16 TV endpoint in a newly
+constructed TP flash.
+
+**Measurement behind the stage order (2026-11-16).** The cases were:
+
+- 118 TP-flash targets started 25–40 bar or 30–40 K away: a three-phase
+  hydrocarbon–water fluid, a gas condensate, an SRK-CPA water system and a
+  near-bubble-point oil;
+- a 300-step three-phase vessel trajectory with random inventory and energy
+  changes.
+
+Each configuration converged on every case, with the same accuracy. In the
+final configuration no fallback was needed:
+
+| Configuration | 118 offset cases | 300-step vessel run | Fallback stage runs |
+| --- | --- | --- | --- |
+| Before: polish first, no stagnation exit, stale inner Newton state | 9.8 s, worst 3.0 s | 6.3 s, worst 1.4 s | 18 |
+| After: inner solver discarded, stagnation exit, recovery first | 2.5 s, worst 0.16 s | 3.4 s, worst 0.13 s | 0 |
+
+With the stale inner state forced back in, running recovery before polish
+alone cut the 118 offset cases from 12.5 s to 7.6 s (worst 3.9 s to 0.94 s),
+and the polish was never needed.
+
+Applications requiring stricter volume/energy closure must check both residuals
+and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).
+`VUCaloricStateQualificationTest` checks independently configured SRK/PR,
+classical/HV gas, hydrocarbon-liquid and methanol/water cases, two finite-difference
+steps, inventory scaling and fresh/repeated/changed/returned targets. Its extensive
+native identities use the default $10^{-10}$ bound per mole, explicitly scaled
+with inventory; independent volume/energy derivative differences use a declared
+$10^{-5}$ mixed scale. These are numerical model checks, not experimental parameter
+qualification or a guarantee of strict VU convergence.
 
 ---
 
@@ -710,7 +1005,7 @@ The Q-function flashes use analytical thermodynamic derivatives computed via `in
 | TUflash | T, U | P | $\left(\frac{\partial U}{\partial P}\right)_T = -T\left(\frac{\partial V}{\partial T}\right)_P - P\left(\frac{\partial V}{\partial P}\right)_T$ |
 | TVflash | T, V | P | $\left(\frac{\partial V}{\partial P}\right)_T$ |
 | PVflash | P, V | T | $\left(\frac{\partial V}{\partial T}\right)_P$ |
-| VUflash | V, U | T, P | 2D Newton with $\frac{\partial U}{\partial T}$, $\frac{\partial U}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
+| VUflash | V, U | T, P | Damped T/P updates using a diagonal approximation; coupled-step and phase-transition qualification is tracked in [#4579](https://github.com/equinor/neqsim/issues/4579) and [#4583](https://github.com/equinor/neqsim/issues/4583) |
 | VHflash | V, H | T, P | 2D Newton with $\frac{\partial H}{\partial T}$, $\frac{\partial H}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
 | VSflash | V, S | T, P | 2D Newton with $\frac{\partial S}{\partial T}$, $\frac{\partial S}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
 
@@ -761,6 +1056,44 @@ Note the sign conventions used in NeqSim for thermodynamic derivatives:
 ### Bubble Point
 
 Calculate the bubble point (onset of vaporization) at a given temperature or pressure.
+
+Saturation calculations throw `IsNaNException` when no valid finite, positive solution is
+obtained or the solver reports a supercritical outcome. Pure-component domain checks can
+instead throw `IllegalStateException` before iteration: pressure saturation requires
+temperature below the component's critical temperature, and temperature saturation requires
+pressure below its critical pressure. Equality is rejected because a critical point is not
+a distinct vapor/liquid saturation pair. The derivative bubble-pressure, hydrocarbon
+dew-pressure and non-derivative bubble-temperature operations perform these checks before
+changing the fluid. The boolean bubble-pressure facade wraps the cause in `IsNaNException`;
+the hydrocarbon dew-pressure and bubble-temperature facades propagate `IllegalStateException`.
+Facade initialization can still change phase bookkeeping before a direct-operation check.
+These checks do not impose a pure-component threshold on mixtures. The three operations
+retain the existing bubble-pressure solver's SAFT exemption because database critical
+constants can differ from the selected SAFT model's critical point; this exemption is not
+a qualification of SAFT saturation or iterative supercritical-result handling.
+
+For a non-SAFT pure fluid, hydrocarbon dew pressure uses the same saturation-pressure
+solve as ordinary dew pressure and bubble pressure, then restores the dew-point phase
+fractions. This avoids a separate pure-fluid HC iteration returning an unconverged result.
+
+The domain checks do not qualify the iterative result below the critical limit. A current-master
+methane probe starting at 150 K and 99% of its critical pressure returned identical vapor and
+liquid volume roots; equal fugacity coefficients from that identical root do not establish
+saturation. Near-critical root recovery and post-iteration acceptance remain tracked in
+[#4076](https://github.com/equinor/neqsim/issues/4076). An exception leaves an unsolved in-place
+fluid, which must not be consumed as a valid result.
+
+A warm starting state can make
+the bubble-temperature iteration collapse to equal vapor and liquid compositions. For a
+nonreactive mixture with valid critical properties, the solver then tries one bounded
+restart from a Wilson bubble-temperature estimate. Wilson values only initialize the
+iteration; the selected EOS still determines the final equilibrium. A failed restart
+remains an error, so callers such as total condensers cannot silently use the trivial root.
+The non-derivative bubble-pressure solver similarly retries a trivial mixture root from
+half the Wilson pressure estimate. For nonreactive, water-free mixtures, the
+non-derivative dew-temperature solver can retry from the Wilson temperature estimate
+and two nearby lower temperatures (95% and 90% of the estimate). These bounded retries
+do not suppress exceptions or accept failed equilibrium calculations.
 
 **Temperature flash (find T at given P):**
 ```java
@@ -834,6 +1167,17 @@ System.out.println("Hydrocarbon dew point: " + gas.getTemperature("C") + " °C")
 
 Calculate the water dew point (onset of water condensation).
 
+The direct operation holds the feed gas composition fixed and solves water
+fugacity equilibrium with a pure incipient condensed phase. It requires positive
+water (or legacy MEG) content and positive finite absolute pressure, and throws
+if no finite equilibrium can be bracketed or converged. Use the multiphase
+operation for mixed aqueous phases. The GERG-water/ISO path uses an ice-based
+correlation below freezing; distinguish this from liquid-water and hydrate
+boundaries. See the [dew-point standards guide](../standards/dew_point_standards.md)
+for validated and extended ranges, failure handling, and the trace-water
+convergence correction.
+
+
 **Methods:**
 ```java
 void waterDewPointTemperatureFlash()
@@ -869,13 +1213,33 @@ void dewPointPressureFlashHC()
 
 ### Solid Phase Flash
 
-For systems with potential solid precipitation (wax, ice, hydrates).
+For systems with potential pure-component solid precipitation, such as sulfur or ice.
 
 ```java
 void TPSolidflash()
 void PHsolidFlash(double Hspec)
 void freezingPointTemperatureFlash()
 ```
+
+`TPSolidflash()` retains the components selected with `setSolidPhaseCheck(String)`.
+Without an enabled solid selection it checks all components. Its `SolidFlash1`
+solver supports one pure solid alongside the fluid phases and rejects multiple
+precipitating candidates with `UnsupportedOperationException` before adding a solid
+phase. See the [sulfur precipitation guide](../chemicalreactions/sulfur_deposition_analysis.md#2-tpsolidflash--sulfur-solubility-and-precipitation)
+for a selected-S8 example and component-balance checks.
+
+The empirical `ComponentSolid` model excludes methane using a large fugacity
+coefficient (`1e30`). The returned coefficient and stored coefficient are identical,
+so selecting methane cannot introduce an artificial zero-fugacity solid or destroy
+the fluid split. This exclusion is a model limitation, not a methane melting-curve
+prediction; do not use this model to assess cryogenic methane freezing.
+
+As a regression example, SRK with mixing rule 2 for 0.30 mol methane and 0.70 mol
+n-heptane at 333.15 K and 60 bara gives a gas fraction of approximately 0.09223165
+and an oil fraction of 0.90776835. Selecting methane for the solid check retains
+that gas/oil equilibrium with either fluid multiphase setting and conserves both
+component inventories. `SolidCheckFluidEquilibriumTest` exercises this case,
+nearby temperatures, repeated flashes and the separate `TPSolidflash()` route.
 
 **Example - Wax precipitation:**
 ```java
@@ -948,6 +1312,21 @@ SystemInterface TPgradientFlash(double height, double temperature)
 **Parameters:**
 - `height`: Depth in meters
 - `temperature`: Temperature at depth in Kelvin
+
+The solver advances through 20 finite height/temperature increments. Each increment
+matches component log fugacities with the gravitational chemical-potential change
+and enforces composition normalization. Its Jacobian uses derivatives of **log**
+fugacity coefficients directly; the derivatives must not be divided by the
+fugacity coefficient again. Newton steps preserve positive compositions and
+pressure, with a 50-iteration cap and explicit rejection of an unconverged or
+nonfinite result. Returned properties correspond to the final accepted state.
+
+The SRK and PR five-component reference in
+`TPgradientFlashTest.reservoirGasGradientMatchesIndependentReference` is reproduced
+independently with standard-library Python Decimal arithmetic at 60 and 80 digits
+in `src/test/resources/neqsim/thermodynamicoperations/flashops/gradient-cubic-reference/`.
+It qualifies the implemented 20-step discretization; it is not a continuous-depth
+integration or a thermal-diffusion (Soret) model.
 
 ---
 

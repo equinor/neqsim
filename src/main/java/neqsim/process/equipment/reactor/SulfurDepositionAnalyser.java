@@ -382,7 +382,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       reactionSummary.put("temperatureC", sys.getTemperature() - 273.15);
       reactionSummary.put("pressureBara", pressure);
 
-      String[] sulfurSpecies = { "H2S", "S8", "SO2", "SO3", "sulfuric acid", "S", "S2" };
+      String[] sulfurSpecies = {"H2S", "S8", "SO2", "SO3", "sulfuric acid", "S", "S2"};
       for (String sp : sulfurSpecies) {
         try {
           double ppm = outSys.getComponent(sp).getz() * 1e6;
@@ -405,9 +405,9 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * @param sys the thermo system
    */
   private void setHydrocarbonInert(GibbsReactor reactor, SystemInterface sys) {
-    String[] inertNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+    String[] inertNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
         "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "n-decane", "benzene", "toluene", "CO", "COS",
-        "argon" };
+        "argon"};
     for (String name : inertNames) {
       try {
         if (sys.getComponent(name) != null) {
@@ -1491,8 +1491,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
     // Heavy HC fraction (C3+) as proxy for "rich gas"
     double heavyHCFrac = 0.0;
-    String[] heavyHCs = { "propane", "i-butane", "n-butane", "i-pentane", "n-pentane", "n-hexane", "n-heptane",
-        "n-octane" };
+    String[] heavyHCs = {"propane", "i-butane", "n-butane", "i-pentane", "n-pentane", "n-hexane", "n-heptane",
+        "n-octane"};
     for (String hc : heavyHCs) {
       heavyHCFrac += getComponentMolFrac(sys, hc);
     }

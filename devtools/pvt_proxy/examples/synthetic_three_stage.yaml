@@ -1,0 +1,63 @@
+# Synthetic example: the reference IS a forward train with known conditions.
+# The calibration must recover those conditions (acceptance test 1: identical-process recovery).
+name: synthetic_three_stage_recovery
+
+standard_conditions: {temperature_K: 288.15, pressure_bara: 1.01325}
+feed: {pressure_bara: 120.0, temperature_C: 75.0, rate_kmol_h: 100.0}
+
+fluids:
+  id: synthetic_set_v1
+  template:
+    eos: srk
+    components:
+      - nitrogen
+      - CO2
+      - methane
+      - ethane
+      - propane
+      - i-butane
+      - n-butane
+      - i-pentane
+      - n-pentane
+      - n-hexane
+      - {name: C7, mw_kg_mol: 0.100, density_g_cm3: 0.745}
+      - {name: C10, mw_kg_mol: 0.142, density_g_cm3: 0.790}
+      - {name: C15, mw_kg_mol: 0.206, density_g_cm3: 0.830}
+      - {name: C25, mw_kg_mol: 0.350, density_g_cm3: 0.880}
+  base_fluids:
+    volatile_oil: {nitrogen: 0.005, CO2: 0.015, methane: 0.50, ethane: 0.08, propane: 0.06, i-butane: 0.012,
+                   n-butane: 0.025, i-pentane: 0.010, n-pentane: 0.012, n-hexane: 0.016,
+                   C7: 0.080, C10: 0.080, C15: 0.060, C25: 0.045}
+    condensate: {nitrogen: 0.006, CO2: 0.020, methane: 0.72, ethane: 0.08, propane: 0.045, i-butane: 0.010,
+                 n-butane: 0.015, i-pentane: 0.006, n-pentane: 0.007, n-hexane: 0.008,
+                 C7: 0.035, C10: 0.025, C15: 0.015, C25: 0.008}
+  methods:
+    - {type: explicit, fluids: [volatile_oil, condensate]}
+    - {type: mixing, endmembers: [volatile_oil, condensate], n: 4}
+
+reference:
+  type: forward
+  id: known_forward_train
+  stages:
+    - {name: hp, pressure_bara: 60.0, temperature_C: 55.0}
+    - {name: mp, pressure_bara: 15.0, temperature_C: 45.0}
+    - {name: lp, pressure_bara: 2.5, temperature_C: 35.0}
+
+proxy:
+  name: forward_pvt_proxy
+  min_pressure_step_bar: 0.5
+  # Rates alone determine the HP pressure and LP temperature here; they are started away from the
+  # known values (60 bara, 35 degC) and must be recovered. Freeing MP pressure or LP pressure as well
+  # creates a flat valley (other combinations give the same rates); the identifiability table flags it.
+  stages:
+    - {name: hp, pressure_bara: {value: 80.0, lower: 30.0, upper: 100.0}, temperature_C: 55.0}
+    - {name: mp, pressure_bara: 15.0, temperature_C: 45.0}
+    - {name: lp, pressure_bara: 2.5, temperature_C: {value: 45.0, lower: 20.0, upper: 60.0}}
+
+objective: {oil_weight: 2.0, gas_weight: 1.0, gor_weight: 0.0, loss: squared}
+
+optimizer: {method: lsq, seed: 1, local_maxiter: 100}
+
+acceptance: {oil_mape_pct: 0.5, gas_mape_pct: 0.5, oil_p90_abs_pct: 1.0}
+
+exports: [neqsim, e300, pvtsim, blackoil]

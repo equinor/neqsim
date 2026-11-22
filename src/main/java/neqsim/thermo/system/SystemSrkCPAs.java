@@ -65,7 +65,11 @@ public class SystemSrkCPAs extends SystemSrkCPA {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemSrkCPAs clone() {
     SystemSrkCPAs clonedSystem = null;
@@ -73,6 +77,7 @@ public class SystemSrkCPAs extends SystemSrkCPA {
       clonedSystem = (SystemSrkCPAs) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemSrkCPAs", ex);
     }
 
     return clonedSystem;

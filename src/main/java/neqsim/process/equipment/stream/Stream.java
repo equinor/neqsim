@@ -25,6 +25,7 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -49,7 +50,7 @@ public class Stream extends ProcessEquipmentBaseClass
    * temperature and in bara to the pressure.
    */
   private static final double CRICONDEN_ECHO_TOLERANCE = 1.0e-6;
-  /** Initial value for the deterministic criconden-envelope input fingerprint. */
+  /** Initial value for the criconden-envelope input fingerprint. */
   private static final long CRICONDEN_SIGNATURE_SEED = 1125899906842597L;
 
   /** Stable transaction identity retained by Java serialization. */
@@ -496,7 +497,18 @@ public class Stream extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void setFlowRate(double flowrate, String unit) {
-    getFluid().setTotalFlowRate(flowrate, unit);
+    SystemInterface fluid = getFluid();
+    if (!needRecalculation() && fluid.isInitialized() && flowrate == fluid.getFlowRate(unit)) {
+      return;
+    }
+    // setTotalFlowRate initializes phase information, even for a rate change below the
+    // scalar cache tolerance. The resulting phase split must be flashed before reuse.
+    lastComposition = null;
+    if (stream != null) {
+      stream.setFlowRate(flowrate, unit);
+    } else {
+      fluid.setTotalFlowRate(flowrate, unit);
+    }
   }
 
   /** {@inheritDoc} */
@@ -748,11 +760,12 @@ public class Stream extends ProcessEquipmentBaseClass
    * </p>
    *
    * <p>
-   * A single envelope contains both cricondenpoints. The result is therefore cached against a deterministic fingerprint
-   * of the complete EOS input used by the trace, so repeated {@link #CCT(String)} and {@link #CCB(String)} calls do not
-   * repeat the expensive envelope calculation. Temperature and pressure are part of the fingerprint because they seed
-   * the numerical trace. Composition, pseudo-component properties and EOS binary-interaction parameters are included to
-   * prevent stale reuse after direct mutation of the stream fluid.
+   * A single envelope contains both cricondenpoints. The result is therefore cached against a fingerprint of the EOS
+   * inputs inspected below, so repeated {@link #CCT(String)} and {@link #CCB(String)} calls do not repeat the expensive
+   * envelope calculation. Temperature and pressure are part of the fingerprint because they seed the numerical trace.
+   * Composition, pseudo-component properties, attractive-term types and coefficients, covolume mixing rules and EOS
+   * binary-interaction parameters in every allocated phase are included to prevent stale reuse after direct tuning of
+   * those inputs.
    * </p>
    *
    * <p>
@@ -837,14 +850,14 @@ public class Stream extends ProcessEquipmentBaseClass
           getClass().getSimpleName(), getName(), pointName, sourceTemperatureK, sourcePressureBara);
       return null;
     }
-    return new double[] { point[0], point[1] };
+    return new double[] {point[0], point[1]};
   }
 
   /**
-   * Calculate a deterministic fingerprint of every EOS input that can affect the traced envelope.
+   * Calculate a fingerprint of the stream state and phase-local EOS tuning inputs.
    *
    * @param system stream fluid to fingerprint
-   * @return exact criconden-envelope input fingerprint
+   * @return criconden-envelope input fingerprint
    */
   private long calculateCricondenInputSignature(SystemInterface system) {
     long signature = CRICONDEN_SIGNATURE_SEED;
@@ -856,27 +869,50 @@ public class Stream extends ProcessEquipmentBaseClass
 
     int componentCount = system.getNumberOfComponents();
     signature = updateCricondenInputSignature(signature, componentCount);
-    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
-      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
-      signature = updateCricondenInputSignature(signature, component.getComponentName());
-      signature = updateCricondenInputSignature(signature, component.getz());
-      signature = updateCricondenInputSignature(signature, component.getMolarMass());
-      signature = updateCricondenInputSignature(signature, component.getNormalLiquidDensity());
-      signature = updateCricondenInputSignature(signature, component.getTC());
-      signature = updateCricondenInputSignature(signature, component.getPC());
-      signature = updateCricondenInputSignature(signature, component.getAcentricFactor());
-    }
+    signature = updateCricondenInputSignature(signature, system.getMaxNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < system.getMaxNumberOfPhases(); phaseIndex++) {
+      if (system.getPhase(phaseIndex) == null) {
+        signature = updateCricondenInputSignature(signature, -1L);
+        continue;
+      }
+      signature = updateCricondenInputSignature(signature, system.getPhase(phaseIndex).getClass().getName());
+      for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+        ComponentInterface component = system.getPhase(phaseIndex).getComponent(componentIndex);
+        signature = updateCricondenInputSignature(signature, component.getComponentName());
+        signature = updateCricondenInputSignature(signature, component.getz());
+        signature = updateCricondenInputSignature(signature, component.getMolarMass());
+        signature = updateCricondenInputSignature(signature, component.getNormalLiquidDensity());
+        signature = updateCricondenInputSignature(signature, component.getTC());
+        signature = updateCricondenInputSignature(signature, component.getPC());
+        signature = updateCricondenInputSignature(signature, component.getAcentricFactor());
+        signature = updateCricondenInputSignature(signature, component.getAttractiveTermNumber());
+        AttractiveTermInterface attractiveTerm = component.getAttractiveTerm();
+        if (attractiveTerm != null) {
+          // Replacing a term may also replace coefficients not exposed by the indexed parameter API.
+          signature = updateCricondenInputSignature(signature, System.identityHashCode(attractiveTerm));
+          signature = updateCricondenInputSignature(signature, attractiveTerm.getClass().getName());
+          signature = updateCricondenInputSignature(signature, attractiveTerm.getm());
+          int parameterCount = attractiveTerm.getNumberOfParameters();
+          signature = updateCricondenInputSignature(signature, parameterCount);
+          for (int parameterIndex = 0; parameterIndex < parameterCount; parameterIndex++) {
+            signature = updateCricondenInputSignature(signature, attractiveTerm.getParameters(parameterIndex));
+          }
+        }
+      }
 
-    if (system.getPhase(0) instanceof PhaseEosInterface) {
-      EosMixingRulesInterface mixingRule = ((PhaseEosInterface) system.getPhase(0)).getEosMixingRule();
-      if (mixingRule != null) {
-        signature = updateCricondenInputSignature(signature, ((long) componentCount) * componentCount);
-        for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
-          for (int otherComponentIndex = 0; otherComponentIndex < componentCount; otherComponentIndex++) {
-            signature = updateCricondenInputSignature(signature,
-                mixingRule.getBinaryInteractionParameter(componentIndex, otherComponentIndex));
-            signature = updateCricondenInputSignature(signature,
-                mixingRule.getBinaryInteractionParameterT1(componentIndex, otherComponentIndex));
+      if (system.getPhase(phaseIndex) instanceof PhaseEosInterface) {
+        EosMixingRulesInterface mixingRule = ((PhaseEosInterface) system.getPhase(phaseIndex)).getEosMixingRule();
+        if (mixingRule != null) {
+          signature = updateCricondenInputSignature(signature, mixingRule.getClass().getName());
+          signature = updateCricondenInputSignature(signature, mixingRule.getBmixType());
+          signature = updateCricondenInputSignature(signature, ((long) componentCount) * componentCount);
+          for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+            for (int otherComponentIndex = 0; otherComponentIndex < componentCount; otherComponentIndex++) {
+              signature = updateCricondenInputSignature(signature,
+                  mixingRule.getBinaryInteractionParameter(componentIndex, otherComponentIndex));
+              signature = updateCricondenInputSignature(signature,
+                  mixingRule.getBinaryInteractionParameterT1(componentIndex, otherComponentIndex));
+            }
           }
         }
       }
@@ -974,7 +1010,12 @@ public class Stream extends ProcessEquipmentBaseClass
     return localSyst.getPressure();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Runs the bubble-point calculation on a state clone; no water-basis conversion is applied.
+   */
   @Override
   public double getTVP(double referenceTemperature, String unit, String returnUnit) {
     SystemInterface localSyst = getFluid().clone();
@@ -993,10 +1034,10 @@ public class Stream extends ProcessEquipmentBaseClass
    * Returns a {@link Standard_ASTM_D6377} evaluated for the current fluid at the given reference temperature.
    *
    * <p>
-   * A single {@code calculate()} populates every RVP variant, and the result depends only on the fluid and the
-   * reference temperature (the standard overrides temperature and pressure itself). The evaluated standard is therefore
-   * cached and reused until the fluid instance, its composition or the reference temperature changes, which removes the
-   * repeated bubble-point and vapor-fraction flashes when several RVP variants are read from the same stream.
+   * A single {@code calculate()} populates the direct RVP variants; water-free variants are evaluated lazily. The
+   * standard overrides temperature and pressure itself. The evaluated standard is therefore cached and reused until the
+   * fluid instance, its composition or the reference temperature changes, which removes the repeated bubble-point and
+   * vapor-fraction flashes when several RVP variants are read from the same stream.
    * </p>
    *
    * @param referenceTemperature the reference temperature, e.g. 37.8
@@ -1033,7 +1074,12 @@ public class Stream extends ProcessEquipmentBaseClass
     return standard;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Selects raw VPCR4 explicitly, even if an earlier call selected a correlated method.
+   */
   @Override
   public double getRVP(double referenceTemperature, String unit, String returnUnit) {
     Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);
@@ -1044,7 +1090,12 @@ public class Stream extends ProcessEquipmentBaseClass
     return standard.getValue("RVP", returnUnit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Delegates the method label to the standard; no external water saturation pressure is added.
+   */
   @Override
   public double getRVP(double referenceTemperature, String unit, String returnUnit, String rvpMethod) {
     Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);
@@ -1210,18 +1261,17 @@ public class Stream extends ProcessEquipmentBaseClass
     ArrayList<String[]> report = new ArrayList<String[]>();
     report.add(phases.toArray(new String[0]));
     report.add(
-        new String[] { "temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-            neqsim.util.unit.Units.getSymbol("temperature") });
-    report.add(new String[] { "pressure", Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-        neqsim.util.unit.Units.getSymbol("pressure") });
-    report.add(new String[] { "mass flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-        neqsim.util.unit.Units.getSymbol("mass flow") });
+        new String[] {"temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")});
+    report.add(new String[] {"pressure", Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")});
+    report.add(new String[] {"mass flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow")});
+    report.add(new String[] {"molar flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+        neqsim.util.unit.Units.getSymbol("molar flow")});
     report
-        .add(new String[] { "molar flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
-            neqsim.util.unit.Units.getSymbol("molar flow") });
-    report.add(
-        new String[] { "volume flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
-            neqsim.util.unit.Units.getSymbol("volume flow") });
+        .add(new String[] {"volume flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+            neqsim.util.unit.Units.getSymbol("volume flow")});
     return report;
   }
 

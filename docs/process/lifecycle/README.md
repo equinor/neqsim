@@ -3,7 +3,6 @@ title: Process Model Lifecycle Management
 description: This module provides infrastructure for managing the lifecycle of process models (digital twins) from concept through operation to archival.
 ---
 
-# Process Model Lifecycle Management
 
 This module provides infrastructure for managing the lifecycle of process models (digital twins) from concept through operation to archival.
 

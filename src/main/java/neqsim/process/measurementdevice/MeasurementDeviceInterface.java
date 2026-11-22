@@ -5,7 +5,6 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.alarm.AlarmEvent;
 import neqsim.process.alarm.AlarmState;
-import neqsim.process.measurementdevice.online.OnlineSignal;
 
 /**
  * MeasurementDeviceInterface interface.
@@ -35,13 +34,6 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * @return a double
    */
   public double getMeasuredValue(String unit);
-
-  /**
-   * getOnlineSignal.
-   *
-   * @return a {@link neqsim.process.measurementdevice.online.OnlineSignal} object
-   */
-  public OnlineSignal getOnlineSignal();
 
   /**
    * getMeasuredPercentValue.
@@ -105,22 +97,6 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * @param logging a boolean
    */
   public void setLogging(boolean logging);
-
-  /**
-   * getOnlineValue.
-   *
-   * @return a double
-   */
-  public default double getOnlineValue() {
-    return getOnlineSignal().getValue();
-  }
-
-  /**
-   * isOnlineSignal.
-   *
-   * @return a boolean
-   */
-  public boolean isOnlineSignal();
 
   /**
    * Associates an alarm configuration with the measurement device.

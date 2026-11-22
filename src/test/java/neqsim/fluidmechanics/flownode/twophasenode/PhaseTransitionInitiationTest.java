@@ -22,7 +22,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Single-phase liquid transitioning to two-phase (bubble nucleation)</li>
  * <li>Near-zero phase fraction handling</li>
  * </ul>
- * </p>
  */
 public class PhaseTransitionInitiationTest {
   @Test

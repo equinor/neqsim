@@ -1,8 +1,10 @@
 package neqsim.process.equipment.network;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+import static neqsim.util.util.ArrayUtils.copyMatrixArrayOrEmpty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,8 +30,8 @@ public final class TransientCompositionalPipeNetworkHistory implements Serializa
       Map<String, List<TransientSpeciesConservationReport>> edgeReports,
       Map<String, List<TransientSpeciesConservationReport>> junctionReports,
       List<TransientSpeciesConservationReport> networkReports) {
-    this.elapsedTimeSeconds = copy(elapsedTimeSeconds);
-    this.componentNames = copy(componentNames);
+    this.elapsedTimeSeconds = copyArrayOrEmpty(elapsedTimeSeconds);
+    this.componentNames = copyArrayOrEmpty(componentNames);
     this.nodeMassFractionHistory = copyProfiles(nodeMassFractionHistory);
     this.edgeReports = copyReports(edgeReports);
     this.junctionReports = copyReports(junctionReports);
@@ -52,12 +54,12 @@ public final class TransientCompositionalPipeNetworkHistory implements Serializa
 
   /** @return accepted-step end times in seconds */
   public double[] getElapsedTimeSeconds() {
-    return copy(elapsedTimeSeconds);
+    return copyArrayOrEmpty(elapsedTimeSeconds);
   }
 
   /** @return deterministic component-name order used by all arrays */
   public String[] getComponentNames() {
-    return copy(componentNames);
+    return copyArrayOrEmpty(componentNames);
   }
 
   /**
@@ -71,7 +73,7 @@ public final class TransientCompositionalPipeNetworkHistory implements Serializa
     if (values == null) {
       throw new IllegalArgumentException("No species history exists for node '" + nodeName + "'");
     }
-    return copy(values);
+    return copyMatrixArrayOrEmpty(values);
   }
 
   /**
@@ -166,7 +168,7 @@ public final class TransientCompositionalPipeNetworkHistory implements Serializa
   private static Map<String, double[][]> copyProfiles(Map<String, double[][]> profiles) {
     Map<String, double[][]> result = new LinkedHashMap<String, double[][]>();
     for (Map.Entry<String, double[][]> entry : profiles.entrySet()) {
-      result.put(entry.getKey(), copy(entry.getValue()));
+      result.put(entry.getKey(), copyMatrixArrayOrEmpty(entry.getValue()));
     }
     return Collections.unmodifiableMap(result);
   }
@@ -181,22 +183,4 @@ public final class TransientCompositionalPipeNetworkHistory implements Serializa
     return Collections.unmodifiableMap(result);
   }
 
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static String[] copy(String[] values) {
-    return values == null ? new String[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static double[][] copy(double[][] values) {
-    if (values == null) {
-      return new double[0][0];
-    }
-    double[][] result = new double[values.length][];
-    for (int index = 0; index < values.length; index++) {
-      result[index] = copy(values[index]);
-    }
-    return result;
-  }
 }

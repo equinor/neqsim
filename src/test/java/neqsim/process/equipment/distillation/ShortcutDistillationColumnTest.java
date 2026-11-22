@@ -13,6 +13,78 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 class ShortcutDistillationColumnTest {
 
+  /** Executes the shortcut-column Java example in the process simulation guide. */
+  @Test
+  void testDocumentedShortcutExample() {
+
+    // Feed: light hydrocarbons
+    SystemInterface feed = new SystemSrkEos(273.15 + 60.0, 15.0);
+    feed.addComponent("methane", 0.05);
+    feed.addComponent("ethane", 0.25);
+    feed.addComponent("propane", 0.35);
+    feed.addComponent("n-butane", 0.20);
+    feed.addComponent("n-pentane", 0.15);
+    feed.setMixingRule("classic");
+
+    Stream feedStream = new Stream("feed", feed);
+    feedStream.setFlowRate(10000.0, "kg/hr");
+    feedStream.run();
+
+    ShortcutDistillationColumn shortcut = new ShortcutDistillationColumn("Deethanizer", feedStream);
+    shortcut.setLightKey("ethane");
+    shortcut.setHeavyKey("propane");
+    shortcut.setLightKeyRecoveryDistillate(0.99);
+    shortcut.setHeavyKeyRecoveryBottoms(0.99);
+    shortcut.setRefluxRatioMultiplier(1.5);
+    shortcut.run();
+
+    double minimumStages = shortcut.getMinimumNumberOfStages();
+    double minimumReflux = shortcut.getMinimumRefluxRatio();
+    double actualStages = shortcut.getActualNumberOfStages();
+    int feedTrayFromTop = shortcut.getFeedTrayNumber();
+    double condenserDutyKW = shortcut.getCondenserDuty() / 1000.0;
+    double reboilerDutyKW = shortcut.getReboilerDuty() / 1000.0;
+    assertTrue(shortcut.isSolved());
+    assertTrue(Double.isFinite(minimumStages) && minimumStages > 0.0);
+    assertTrue(Double.isFinite(minimumReflux) && minimumReflux > 0.0);
+    assertTrue(Double.isFinite(actualStages) && actualStages >= minimumStages);
+    assertTrue(feedTrayFromTop > 0 && feedTrayFromTop <= Math.ceil(actualStages) + 1);
+    assertTrue(Double.isFinite(condenserDutyKW));
+    assertTrue(Double.isFinite(reboilerDutyKW));
+  }
+
+  /** Verifies Kirkbride against an independent material-balance calculation with unequal recoveries. */
+  @Test
+  void testKirkbrideUsesProductCompositionsAndRectifyingRatio() {
+    SystemInterface fluid = new SystemSrkEos(303.15, 20.0);
+    fluid.addComponent("ethane", 0.30);
+    fluid.addComponent("propane", 0.70);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("Asymmetric feed", fluid);
+    feed.setFlowRate(100.0, "kmol/hr");
+    feed.run();
+    ShortcutDistillationColumn column = new ShortcutDistillationColumn("Asymmetric column", feed);
+    column.setLightKey("ethane");
+    column.setHeavyKey("propane");
+    column.setLightKeyRecoveryDistillate(0.98);
+    column.setHeavyKeyRecoveryBottoms(0.95);
+    column.setRefluxRatioMultiplier(1.5);
+    column.run();
+
+    // On a 100 mol feed basis: D = 29.4 + 3.5, B = 0.6 + 66.5.
+    // Kirkbride uses normalized product mole fractions, not component recoveries.
+    double compositionRatio = (0.6 / 67.1) / (3.5 / 32.9);
+    double rectifyingToStripping = Math.pow((70.0 / 30.0) * compositionRatio * compositionRatio * (67.1 / 32.9), 0.206);
+    double rectifyingFraction = rectifyingToStripping / (1.0 + rectifyingToStripping);
+    assertTrue(column.isSolved());
+    assertTrue(Double.isFinite(column.getActualNumberOfStages()));
+    assertTrue(rectifyingFraction < 0.5, "This separation requires fewer rectifying than stripping stages");
+    assertEquals((int) Math.round(column.getActualNumberOfStages() * rectifyingFraction) + 1,
+        column.getFeedTrayNumber(), "Feed numbering is one-based from the top");
+    assertEquals(32.9, column.getDistillateStream().getFlowRate("kmol/hr"), 1.0e-8);
+    assertEquals(67.1, column.getBottomsStream().getFlowRate("kmol/hr"), 1.0e-8);
+  }
+
   @Test
   void testDeethanizer() {
     // Classic deethanizer: separate ethane (LK) from propane (HK)

@@ -1,0 +1,102 @@
+{
+  "components": [
+    "methane",
+    "ethane"
+  ],
+  "initialVolumeM3": 1017.3,
+  "calibration": {
+    "temperatureK": 400,
+    "pressureBara": 200,
+    "molarVolumeM3": 0.00016373744180083009,
+    "identifiedKij": 0.02
+  },
+  "laboratoryHoldoutTemperatureK": 420,
+  "laboratoryHoldout": [
+    {
+      "pressureBara": 200,
+      "molarVolumeM3": 0.00017484018919587977
+    },
+    {
+      "pressureBara": 150,
+      "molarVolumeM3": 0.00022966927885569418
+    },
+    {
+      "pressureBara": 100,
+      "molarVolumeM3": 0.00034255949177124155
+    },
+    {
+      "pressureBara": 50,
+      "molarVolumeM3": 0.0006882741126290615
+    }
+  ],
+  "initialMoles": [
+    5591696.009967578,
+    621299.5566630642
+  ],
+  "rows": [
+    {
+      "injectedMoles": [
+        0,
+        20000
+      ],
+      "producedMoles": [
+        89890.82907938867,
+        10109.170920611337
+      ],
+      "retainedMoles": [
+        5501805.180888189,
+        631190.3857424528
+      ],
+      "pressureBara": 197.09558568381075,
+      "surfaceGasVolumeM3": 2358.767569071723
+    },
+    {
+      "injectedMoles": [
+        10000,
+        0
+      ],
+      "producedMoles": [
+        89714.61549818297,
+        10285.384501817021
+      ],
+      "retainedMoles": [
+        5422090.565390006,
+        620905.0012406359
+      ],
+      "pressureBara": 193.98965746907962,
+      "surfaceGasVolumeM3": 2358.748015761754
+    },
+    {
+      "injectedMoles": [
+        0,
+        15000
+      ],
+      "producedMoles": [
+        89641.23485844622,
+        10358.765141553788
+      ],
+      "retainedMoles": [
+        5332449.33053156,
+        625546.236099082
+      ],
+      "pressureBara": 190.9725914590222,
+      "surfaceGasVolumeM3": 2358.739863337548
+    },
+    {
+      "injectedMoles": [
+        5000,
+        5000
+      ],
+      "producedMoles": [
+        89475.71409936127,
+        10524.285900638724
+      ],
+      "retainedMoles": [
+        5247973.616432198,
+        620021.9501984434
+      ],
+      "pressureBara": 187.8636957766591,
+      "surfaceGasVolumeM3": 2358.7214531134177
+    }
+  ]
+}

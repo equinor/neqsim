@@ -1,7 +1,7 @@
 ---
 name: neqsim-professional-reporting
 version: "1.0.0"
-description: "Engineering deliverable quality — the nine analytical-depth moves (contributor ranking, adjudicating the source document, quantitative rule-outs, robustness crossover, conservatism direction, discriminating test), results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, a PEPR/M1/root-cause problem-solving report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
+description: "Engineering deliverable quality - the nine analytical-depth moves, results.json schema, figure-discussion-results traceability, evidence matrices, assumptions/gaps registers, citations, KaTeX, units, executive-summary structure, AACE class. USE WHEN: producing a task report, a PEPR/M1/root-cause report, a notebook deliverable, or finalizing any engineering output that must read like a senior engineer's work."
 last_verified: "2026-07-09"
 ---
 
@@ -47,6 +47,41 @@ root-cause/problem-solving report. Record the score in `results.json`
 | 7 | **Name the cheapest discriminating test** | The single measurement or inspection that would confirm or refute the diagnosis, why it discriminates, and what each outcome would mean | A generic "further investigation is recommended" |
 | 8 | **Report what does not fit** | The observation that disagrees with the model, reported as a disagreement rather than smoothed over or omitted | Presenting only corroborating evidence |
 | 9 | **Convert qualitative asks into specifications** | "Effective oxygen exclusion" → a purity table with the consequence of each grade; "improve filtration" → a micron rating with the mechanism that sets it | Repeating the source's qualitative wording back |
+
+#### Write the moves into `results.json` — the report renders them
+
+The depth work has to reach the reader. `generate_report.py` emits an
+**Analytical Depth** section (Word and HTML) from these keys, turning a list of
+dicts into a numbered table and anything else into bullets:
+
+| `results.json` key | Move |
+|--------------------|------|
+| `contributor_ranking` | 1 — contributors on one basis |
+| `source_recommendation_assessment` | 2 — verdict per source recommendation |
+| `ruled_out` | 3 — quantitative rule-outs |
+| `robustness` | 5 — sensitivity and the crossover |
+| `conservatism` | 6 — direction of each conservatism |
+| `discriminating_test` | 7 — the cheapest discriminating test |
+| `evidence_against` | 8 — evidence that does not fit |
+
+```json
+"contributor_ranking": [
+  {"contributor": "Shell-side fouling", "share_pct": 62, "basis": "duty deficit vs design"},
+  {"contributor": "Seawater inlet temperature", "share_pct": 21, "basis": "duty deficit vs design"}
+],
+"ruled_out": [
+  {"hypothesis": "Tube leak", "test": "Chloride in condensate", "margin": "5 mg/l vs 250 mg/l threshold"}
+],
+"discriminating_test": {"test": "Single-point wall-thickness UT at the first bend",
+                        "decides": "Erosion vs fouling", "cost": "1 shift, no shutdown"},
+"depth_score": "7/9"
+```
+
+`devtools/validate_task_results.py` warns when a study that has figure
+discussion, uncertainty, or a risk register reports fewer than two of them —
+that combination means the task was past quick-answer scale and the depth work
+should exist. If the moves were not achievable, say which and why rather than
+leaving the keys out.
 
 ### Two further depth habits
 
@@ -154,6 +189,11 @@ pause and fill the missing source material before finalizing.
 - **Consistent within report** — pick one set (SI, °C/bara) and don't switch
 - **Standard conditions** — always disclaim Sm³ basis (15 °C / 1.01325 bara, or 20 °C, or 0 °C — they differ ~5%)
 - **Stream tables** — use standardized columns: name, T [°C], P [bara], ṁ [kg/h], xi [mol%]
+- **Tables: one value per cell.** Never write `"12.3 / 4.5"` or `"bias / MAE"` in a cell; give each quantity its own
+  column (or row) with the unit in the header and the same number of decimals down a column. Keep a table to at most
+  nine columns and split wide ones by topic (for example one table for pressure and one for temperature per well).
+  For results over several days or cases put the days in the columns and the quantities in the rows, mark the
+  calibration day `(cal)`, and use a separate table per quantity group. `validate_task_results.py` warns on both.
 
 ## Principle 4 — Citations
 
@@ -261,6 +301,39 @@ array (or an object wrapping `benchmarks`/`cases`). Each entry must carry:
 | `reference` / `source` / `benchmark` / `reference_value` | the independent reference |
 | `delta_pct` / `deviation_pct` / `status` / `neqsim_value` | the comparison result |
 | `status` (optional) | one of `PASS`, `FAIL`, `WARN`, `INFO` (any other value is rejected) |
+| `disposition` (optional) | why a `FAIL` stands, e.g. two published input sources disagree and nothing was tuned |
+
+A `FAIL` above 20% deviation is an ERROR ("model may need retuning") unless it carries a
+written `disposition`; then it is reported as a documented finding. Use it only when the
+deviation is not a model misfit: a conflict between two input sources, or a cross-check of
+an alternative model that the deliverable does not use. Still name the failure in
+`conclusions` (the gate looks for "fail", "discrepancy", "deviation").
+
+When the compared value comes from another simulator (OPM Flow, OLGA) write it as
+`calculated`, not `neqsim_value`: the column is then headed "Calculated value" rather than
+"NeqSim value". `benchmark_validation.value_label` overrides the heading explicitly.
+
+Figures are numbered in the order of `figure_captions` when the PNG names carry no numeric
+prefix (`fig01_`, `01_`); otherwise alphabetically. Write the captions in narrative order.
+
+**Report presentation conventions** (rendered by `devtools/task_template/step3_report/`):
+
+- A figure named in `figure_discussion[].figure` is shown inside that discussion entry, next
+  to its observation; only figures without a discussion stay in Results. Numbers follow
+  document order.
+- `{fig:fig02_pressure}` (file name, extension optional) in any prose field becomes a live
+  Word cross-reference (REF field) and an HTML link. Never type "Figure 3" by hand.
+- Mark the 5-10 decisive `key_results` with `"headline": true` (plus `label`, `unit`,
+  `decimals`, optional `group`), or list them in a top-level `headline_results` array. The
+  Results section then shows only those; the complete list moves to an appendix. A
+  `key_results` list of more than 15 unmarked rows raises a consistency WARNING.
+- `linked_results` entries print as "Label = value unit", never as raw snake_case keys.
+- Every number quoted in `executive_summary`, `conclusions` or a discussion should exist in
+  `results.json` (or be derived in the text); untraced numbers are listed in the report quality
+  appendix.
+- Equations are written to Word as editable equations when the LaTeX is supported (fractions,
+  scripts, roots, sums, Greek, text); otherwise as images. The HTML bundles KaTeX and works
+  offline. DOCX/PDF carry title, author, keywords, alt text on figures and a results.json hash.
 
 Both `TaskResultValidator` (Java) and `devtools/validate_task_results.py` (the CI
 gate) now check this structure, so a malformed benchmark block fails the gate
@@ -271,6 +344,63 @@ The community skill `neqsim-benchmark-reference-data` emits this block directly
 tier of the reference, whether the deviation is inside the reference's own
 uncertainty, and the three-graded-point check. Prefer it over hand-writing the
 block with pasted reference literals.
+
+## Principle 9a — Fluid tuning quality (any report that uses a tuned fluid)
+
+When a fluid was characterised or tuned to PVT data, the report must show **how
+good the tuning is**, not only that it was done. Required content: (1) per fluid,
+raw vs tuned vs lab for GOR, stock-tank density and saturation pressure with the
+tuned parameters and **bound flags** (a parameter pinned at its bound is a
+finding); (2) per-sample *prediction* error (Psat, GOR, STO, CME above/below Psat,
+DLE Rs/Bo, viscosity) with mean and worst case; (3) parity and CME/DLE overlay
+figures; (4) untuned or out-of-method fluids (gas cap, gas condensate) named and
+marked NOT TUNED, and lab inconsistencies flagged rather than fitted; (5) what of
+the tuning is carried into the downstream model; (6) every experiment row labelled
+`fit target` or `check (not fitted)`, the untuned "before" computed with the optimiser
+start values, and any process-level calibration (e.g. produced-gas heavy-end leaning)
+listed in the parameters with its bounds and its validation role (calibrated, hold-out,
+fitted separately). Put the numbers in
+`results.json` `tables` and `figure_captions`. A model that is validated against
+plant data but whose fluid quality is not shown is incomplete. Detailed recipe:
+`enterprise-process-notebook-workspace` (section "Fluid tuning quality is reported,
+always") and the community skills `neqsim-pvt-regression-characterization-factor`
+and `neqsim-pseudocomponent-split-characterization`.
+
+**Machine-readable block.** Put the quality data in a `pvt_tuning_quality` block of
+`results.json`; `devtools/validate_task_results.py` checks it (and warns when a task
+text says it tuned to PVT data but has no block), and the report generator turns it
+into three tables (before/after error, tuned parameters with bounds, excluded data).
+Schema (one entry per sample and experiment type, not per fluid average):
+
+```json
+"pvt_tuning_quality": {
+  "summary": "...", "eos": "...", "data_source": "...", "objective": "...",
+  "experiments": [{"sample": "810102", "type": "dew point", "metric": "error vs lab",
+                   "before": 43.4, "after": 8.2, "unit": "%"}],
+  "parameters": [{"name": "S", "initial": 0.5, "tuned": 0.98, "lower": 0.05, "upper": 0.98, "at_bound": true}],
+  "exclusions": [{"sample": "TE CME", "reason": "lab CME flat near 1.0 = run on separator liquid"}],
+  "figures": ["step2_analysis/figures/fig01_pvt_tuning_quality.png"]
+}
+```
+
+For gas condensate the experiment types are dew point, C7+ density, CME (average
+absolute deviation), CVD cumulative production and CVD Z; for oil they are Psat, GOR,
+STO density, CME above/below Psat, DLE Rs/Bo and viscosity. "Before" is the untuned
+template, so the tuning gain is visible. A lab experiment that is physically
+invalid for the fluid (for example a gas "CME" that stays at 1.0 because it was run
+on separator liquid) is listed under `exclusions`, never fitted. Reference example:
+the Troll A task (2026-10-06).
+
+## Principle 9c — Operating-data benchmark with hold-out windows (any plant model)
+
+A plant model is reported against measured data in a **benchmark** section next to the fluid-tuning section (both are standard). Required: (1) the windows
+(dates, role = calibration / hold-out, regime: line-up, rate level, season) and why each was chosen; (2) every compared quantity with its **class**:
+`by_construction` (an input, or closed by the allocation: export gas, produced water, anti-surge inlet flows), `calibrated` (a scalar fitted on the calibration window; name it and its value),
+`independent` (in no fit), `excluded` (a meter proved inconsistent with two others; give the evidence); (3) the tolerance of each quantity, set **before** the runs;
+(4) error per window in a quantity x window table, calibration vs hold-out, pass/fail, and the pass rate of the independent hold-out rows only; (5) mass and energy balance closure per window;
+(6) failing rows explained (cause hypothesis, evidence, what would discriminate), never hidden by a looser tolerance. Machine-readable: `benchmark_validation` in `results.json` with
+`windows`, `comparisons` (parameter, benchmark, neqsim, deviation_pct, class, window, tolerance, pass), `max_deviation_pct`, `all_within_tolerance`, `independent_holdout_pass_rate`.
+The `tables` array carries the quantity x window table; the parity / bar figure goes to `figure_captions`. Reference example: a platform well-to-export task (2026-10-19, private task folder).
 
 ## Principle 9b — Evidence Matrix for Safety Studies
 
@@ -330,7 +460,14 @@ workflow gaps were found.
   },
   "results": { "...": "..." },
   "figures": [ { "id": "fig_01", "path": "...", "caption": "...", "discussed_in": "...", "linked_results": [] } ],
-  "tables": [ { "id": "tbl_01", "path": "...", "caption": "..." } ],
+  "tables": [ { "title": "caption text", "headers": ["Year", "Utilisation [%]"], "rows": [[2026, 117]] } ],
+  "reproducibility": {
+    "summary": "where the scripts live and which README is the user guide",
+    "environment": ["interpreter", "JDK", "NeqSim version or checkout, incl. unreleased changes the run depends on"],
+    "steps": ["script 1 - what it writes", "script 2 - ...", "generate_report.py"],
+    "checks": ["values a rerun must reproduce, e.g. 2026 bottleneck inlet scrubber at 117 %"],
+    "what_if": ["where to edit to change an input, and which step to rerun from"]
+  },
   "uncertainty": { "method": "Monte Carlo n=10000", "P10": ..., "P50": ..., "P90": ... },
   "risks": [ { "id": "R1", "description": "...", "P": 3, "C": 4, "score": 12, "mitigation": "..." } ],
   "standards_applied": ["API 521-2020", "NORSOK Z-013"],
@@ -351,6 +488,12 @@ workflow gaps were found.
 
 ## Common Mistakes
 
+A model-based deliverable is not finished until a reader can rerun it. Emit
+`reproducibility` (rendered as the report appendix *Reproducing the Results*) and
+keep a task-root `README.md` with the same prerequisites, the exact command
+sequence, the check values a rerun must hit, and where to edit to change a case.
+Name any unreleased NeqSim change the results depend on.
+
 | Mistake                                          | Fix                                                                 |
 | ------------------------------------------------ | ------------------------------------------------------------------- |
 | "About 100 kg/hr" in a final report              | State value with sig figs and uncertainty                           |
@@ -362,7 +505,89 @@ workflow gaps were found.
 | No benchmark validation                          | Run hand check or compare to literature; report deviation %         |
 | Discussion that doesn't reference its figures    | Use `[fig_03]` cross-references in prose                            |
 
+## Word output — use the configured template
+
+For a formatting redesign or professional-presentation review, also load
+[neqsim-report-design-and-visual-qa](../neqsim-report-design-and-visual-qa/SKILL.md).
+Its opt-in `neqsim report-design` command creates a separate template-preserving
+Word revision and, with `--render`, a PDF plus every page preview. Inspect the
+rendered pages before claiming layout quality; XML checks alone cannot detect
+awkward breaks, dense tables or header collisions. A formatting pilot must leave
+the original report and technical evidence unchanged.
+
+The Word report is built from the template the user configured, so the
+deliverable carries their organisation's styles, fonts, headers and footers.
+Resolution: `generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` >
+the saved `report_template` in `~/.neqsim/task_defaults.json`
+(`neqsim --set-report-template "PATH"`) > built-in styling.
+
+- Do not pass `--no-template` or restyle the document away from the template
+  unless the user asks for it.
+- If the generator exits with a missing/invalid-template error, report that —
+  do not ship an unbranded report instead.
+- The scientific paper (`--paper`) keeps journal formatting and ignores the template.
+- An older task folder carries its own `generate_report.py`; prefer
+  `neqsim report <task folder>`, which always runs the current canonical
+  generator, over the stale vendored copy.
+
+### Page measure and captions (handled by the generator — do not fight it)
+
+A corporate `.dotx` is often **A4 landscape**, because it was built for forms.
+Left alone, that sets a 30-page report on a 9.5 in measure — about 140
+characters per line, twice the readable optimum — while every figure and table
+sized for a portrait page leaves a third of the width empty. The generator
+therefore normalises the body to **portrait** and caps the measure at 6.7 in,
+keeping the template's own styles, header, and footer. Override per study with
+`report.orientation: portrait | landscape | template` in `study_config.yaml`, or
+`--orientation VALUE`; `template` keeps whatever the template declares.
+
+The rest follows from the measure and needs nothing from the author:
+
+- Figures and tables are laid out across the full measure, and a tall figure is
+  scaled down so it still fits the printable height with its caption.
+- Figures, tables, and equations get numbered captions in Word's `Caption`
+  style, using `SEQ` fields, so the numbering survives an insertion and Word can
+  build the **List of Figures** and **List of Tables** placed after the contents.
+- A `tables[]` entry's `title` becomes a table caption, not a Heading 2 — a data
+  table does not belong in the table of contents.
+- Table header rows repeat across page breaks, rows are not split, numeric cells
+  are right-aligned, and a table with 7+ columns steps its type size down.
+- Headings carry keep-with-next, so none is stranded at the foot of a page.
+- Numbers are grouped with a non-breaking space per ISO 80000-1 and exact counts
+  are printed in full: `370 523`, never `3.705e+05`.
+
+## Report file names are the report title
+
+Report files are named after the study title, so a deliverable is identifiable
+outside its task folder: "Hydrate margin for the export line" produces
+`step3_report/Hydrate_margin_for_the_export_line.docx` and `.html` (paper:
+`..._Paper.docx`). Set `study.title` in `study_config.yaml`, or pass `--title`,
+before generating. Files written under an earlier title are deleted on
+regeneration — a superseded report must never sit beside the current one.
+
+## Title and task statement — the first thing the reader sees
+
+The report title is the **study** title, and the task is stated before any
+analysis. Both are resolved at run time, so nothing has to be edited in the
+generator:
+
+- **Title**: `--title` > `NEQSIM_REPORT_TITLE` > `study_config.yaml`
+  `study.title` > first `#` heading of `task_spec.md` > task folder name.
+  Set `study.title` (and optionally `study.author`, `study.classification`) —
+  a study left at `"[Title]"` degrades to a folder-name title.
+- **Task statement**: `results.json` `task_statement` / `objective` >
+  the `## Objective` section of `task_spec.md` > `"Study scope: <title>."`.
+  Write it as 2-4 sentences saying what was asked and what must be delivered;
+  it is rendered as a "Task" callout at the top of the report body, so a reader
+  who opens the document cold knows the question before the answer.
+- Scaffold prose left inside `[square brackets]` is treated as a placeholder and
+  never quoted — fill it or delete it.
+- Study-depth badges (task type, scale, mode, AACE class, FEL stage) come from
+  `study_config.yaml` `study.*`; values left at `auto` are simply not shown.
+
 ## Validation Checklist (RUN BEFORE FINALIZING)
+
+- [ ] **Every flow diagram (PFD/BFD/P&ID sketch/flow network) passed `neqsim pfd-check` and `pfd-layout-review` sign-off** (skill `neqsim-pfd-layout-review`); no figure with overlaps, labels on lines or missing arrowheads.
 
 **Depth (Principle 0) — check these first; they cannot be fixed by editing prose:**
 
@@ -387,7 +612,7 @@ workflow gaps were found.
 - [ ] Risk register with 5×5 scoring (Standard+ tasks)
 - [ ] Benchmark comparison ≤ 5% deviation OR justified
 - [ ] AACE class declared for cost numbers
-- [ ] `python devtools/consistency_checker.py` passes
+- [ ] `uv run --project devtools --locked devtools/consistency_checker.py` passes
 - [ ] Limitations section honest about model assumptions
 - [ ] Next-actions list at end (what would close the gaps)
 
@@ -436,6 +661,34 @@ curve at the operating pressure; do not quote the nearest row. The same trap
 applies to any monotonic property table used backwards (dew point, hydrate
 curve, wax appearance).
 
+## Document packages: structural rules for multi-report deliverables
+
+When several reports, registers or filled templates are produced as one package (for example a gate or
+design-basis package), these rules apply on top of the principles above. Each was a recurring cause of rework.
+
+1. **Depth minimums are structural, not editorial.** Per document type, define the minimum of numbered chapters,
+   tables, figures, registers and requirement-by-requirement rows. Encode it in the builder or the quality checker
+   (a count that fails the build), not in a reviewer's remark. A document that passes the layout checks but has fewer
+   chapters or tables than its type requires is not finished.
+2. **Authored chapters must be consumed by the builder.** Prose written as a separate input (sections file, chapter
+   JSON, hand-off) is worthless if the builder does not read it. After every build, compare the authored chapter list
+   with the headings of the produced document and fail on any authored chapter that is missing, empty or only in a
+   side file. Prefer one source per chapter; never paste text into the output after the build.
+3. **Verdict on the first page.** The first page after the cover carries the verdict (status, readiness, the three to
+   five headline numbers, the decisions asked for, the blocking open points), each traceable to a data source. A
+   reader must not have to reach chapter 8 to learn whether the package is usable.
+4. **No machine or tool-style wording in documents for human readers.** No schema names, field keys, file names,
+   `snake_case` identifiers, concept or case ids that are not defined in the document, tool or generator names,
+   "TO BE CONFIRMED"-style tokens without an owner, or serialized dictionaries. Translate to the reader's vocabulary;
+   keep identifiers in appendices that explain them. Scan the extracted text of the finished document for these
+   patterns as an automated check.
+5. **Table text size and over-printing.** Run an automated check of the rendered document: no table font below the
+   template minimum (about 8 pt at print size), no table wider than the text block, no text clipped or printed over
+   other text or drawings (title blocks, stamps, logos). Then view a first page, a table page and a figure page of
+   every document.
+6. **Machine-readable hand-offs, not scraping.** Every generator writes the structured results the next builder needs
+   (see `handoff/process_basis.json` of `process-study-report`). Downstream builders read the hand-off, not the Word file.
+
 ## Related Skills
 
 - [`neqsim-regression-baselines`](../neqsim-regression-baselines/SKILL.md) — locking baselines for traceability
@@ -443,3 +696,20 @@ curve, wax appearance).
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — citation lookup
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — risk-register schema
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — evidence matrix, rupture/PFP results, and source-term handoff reporting
+- [process-study-report](../process-study-report/SKILL.md) — complete process-study report package for a solved NeqSim model: engineering basis, all-stream tables per case, balances, BFD/PFD sheets, standards register and a fail-closed validation report (use it when the deliverable is a stream-table/PFD study rather than a narrative task report)
+
+
+## Equipment datasheet packages
+
+For mechanical sheets, render `MechanicalDatasheet` sections, sources and
+statuses. Present a basis and revision, process and mechanical design
+conditions, dimensions, materials, loads, weights, inspection and test basis,
+and a tag-linked connection schedule where the model exposes it. Keep
+equipment-specific holds visible where they affect the interpretation.
+
+When rendering equipment sheets, use the structured `EquipmentDatasheetGenerator`
+package as the data source. Show tag, document number and revision on each page
+and reconcile the complete set against the P&ID register. Keep every stream
+value labelled with its unit and case. Show dry, operating and test weights in
+separate fields, include their scope and basis, and preserve explicit holds.
+Present known subtotals with coverage counts whenever a project total is unavailable.

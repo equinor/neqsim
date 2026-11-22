@@ -31,7 +31,13 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   }
 
   /**
-   * Constructor for PhaseGENRTLmodifiedHV.
+   * Constructs the legacy activity-phase representation.
+   *
+   * <p>
+   * Superclass initialization reloads database parameter tables. For an explicit complete HV configuration, call
+   * {@link #setParams(PhaseInterface, double[][], double[][], double[][], String[][], double[][])} after construction.
+   * This preserves the separate legacy constructor behavior used by the Wong-Sandler adapter.
+   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -52,7 +58,13 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   }
 
   /**
-   * Constructor for PhaseGENRTLmodifiedHV.
+   * Constructs the legacy activity-phase representation.
+   *
+   * <p>
+   * Superclass initialization reloads database parameter tables. For an explicit complete HV configuration, call
+   * {@link #setParams(PhaseInterface, double[][], double[][], double[][], String[][], double[][])} after construction.
+   * This preserves the separate legacy constructor behavior used by the Wong-Sandler adapter.
+   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -74,6 +86,33 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     }
   }
 
+  /**
+   * Copies retained GE work state and binds the supplied detached HV parameters.
+   *
+   * <p>
+   * The matrices belong to the copied HV handler. This method does not reload a database or evaluate activity
+   * coefficients.
+   * </p>
+   *
+   * @param owner copied EOS phase
+   * @param alpha detached nonrandomness matrix
+   * @param dij detached directed temperature coefficients in kelvin
+   * @param dijT detached dimensionless temperature offsets
+   * @param rules detached pair activation choices
+   * @param kij detached classical binary interactions
+   * @return independent GE state bound to the copied parameter handler
+   */
+  public PhaseGENRTLmodifiedHV copyForHuronVidal(PhaseInterface owner, double[][] alpha, double[][] dij,
+      double[][] dijT, String[][] rules, double[][] kij) {
+    PhaseGENRTLmodifiedHV copy = (PhaseGENRTLmodifiedHV) super.clone();
+    copy.mixSelect = mixSelect.clone();
+    copy.mixRule = copy.mixSelect.getMixingRule(mixingRuleType.getValue());
+    copy.setParams(owner, alpha, dij, dijT, rules, kij);
+    copy.type = type;
+    copy.setProperties(owner);
+    return copy;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
@@ -92,7 +131,22 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     this.Dij = mixSelect.getHVDij();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Binds one complete explicit HV configuration without reloading a database.
+   *
+   * <p>
+   * All matrices must use the owning phase's component order and the same EOS-specific parameter convention. References
+   * remain live, matching handler tuning and detached-clone binding; callers must not mutate them during evaluation.
+   * Use this method after the legacy constructor when supplying source-qualified inputs directly.
+   * </p>
+   *
+   * @param phase owning cubic phase
+   * @param alpha directed dimensionless nonrandomness coefficients
+   * @param Dij directed energy coefficients in kelvin
+   * @param DijT directed dimensionless temperature offsets
+   * @param mixRule explicit HV or classical selection for each pair
+   * @param intparam ordinary classical coefficients for the owning EOS
+   */
   @Override
   public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT, String[][] mixRule,
       double[][] intparam) {
@@ -117,6 +171,15 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
     GE = 0.0;
+    boolean standard = type == 1;
+    for (int i = 0; standard && i < numberOfComponents; i++) {
+      standard = componentArray[i].getClass() == ComponentGENRTLmodifiedHV.class;
+    }
+    if (standard) {
+      GE = ComponentGENRTLmodifiedHV.excessGibbsSum(phase, componentArray, numberOfComponents, temperature, pressure,
+          pt, alpha, Dij, DijT, intparam, mixRuleString);
+      return R * phase.getTemperature() * phase.getNumberOfMolesInPhase() * GE;
+    }
     for (int i = 0; i < numberOfComponents; i++) {
       if (type == 0) {
         GE += phase.getComponent(i).getx() * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,

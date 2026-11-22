@@ -23,9 +23,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * </p>
  *
  * <p>
- * Because NeqSim does not currently model individual instrument tags per equipment, the "present" device set is
- * provided externally - either by the caller or, for a quick-look SAFE chart, defaulted to the standard set with
- * {@link #buildAssumingComplete(ProcessSystem)}.
+ * For this standalone equipment-category screen, the "present" device set is provided externally - either by the caller
+ * or, for a quick-look SAFE chart, defaulted to the standard set with {@link #buildAssumingComplete(ProcessSystem)}.
  * </p>
  *
  * @author ESOL
@@ -49,7 +48,9 @@ public class Api14cSafeChartBuilder implements Serializable {
     if (equipmentName == null || present == null) {
       throw new IllegalArgumentException("arguments must not be null");
     }
-    presentByEquipment.put(equipmentName, EnumSet.copyOf(present));
+    Set<Api14cDeviceType> copy = EnumSet.noneOf(Api14cDeviceType.class);
+    copy.addAll(present);
+    presentByEquipment.put(equipmentName, copy);
     return this;
   }
 
@@ -102,7 +103,7 @@ public class Api14cSafeChartBuilder implements Serializable {
         continue;
       }
       Set<Api14cDeviceType> required = Api14cSafetyAnalysisTable.getRequiredDevices(cat);
-      items.add(new Api14cSafeChartItem(unit.getName(), cat, required, required));
+      items.add(Api14cSafeChartItem.assumedTemplate(unit.getName(), cat, required));
     }
     return this;
   }
@@ -188,12 +189,12 @@ public class Api14cSafeChartBuilder implements Serializable {
    */
   public String toMarkdown() {
     StringBuilder sb = new StringBuilder();
-    sb.append("| Equipment | Category | Required | Present | Missing |\n");
-    sb.append("|---|---|---|---|---|\n");
+    sb.append("| Equipment | Category | Required | Present | Missing | Device basis |\n");
+    sb.append("|---|---|---|---|---|---|\n");
     for (Api14cSafeChartItem it : items) {
       List<String> row = it.toRow();
       sb.append("| ").append(row.get(0)).append(" | ").append(row.get(1)).append(" | ").append(row.get(2)).append(" | ")
-          .append(row.get(3)).append(" | ").append(row.get(4)).append(" |\n");
+          .append(row.get(3)).append(" | ").append(row.get(4)).append(" | ").append(it.getDeviceBasis()).append(" |\n");
     }
     return sb.toString();
   }

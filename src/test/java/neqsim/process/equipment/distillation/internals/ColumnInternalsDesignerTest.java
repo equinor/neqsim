@@ -36,8 +36,8 @@ public class ColumnInternalsDesignerTest {
 
     DistillationColumn column = new DistillationColumn("DePropanizer", 5, true, true);
     column.addFeedStream(feed, 3);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
     column.setMaxNumberOfIterations(50);
@@ -96,8 +96,8 @@ public class ColumnInternalsDesignerTest {
 
     DistillationColumn column = new DistillationColumn("DeProp", 3, true, true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
     column.run();
@@ -133,8 +133,8 @@ public class ColumnInternalsDesignerTest {
 
     DistillationColumn column = new DistillationColumn("PackedCol", 3, true, true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
     column.run();
@@ -175,8 +175,8 @@ public class ColumnInternalsDesignerTest {
 
     DistillationColumn column = new DistillationColumn("StructPacked", 3, true, true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
     column.run();

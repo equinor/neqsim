@@ -1,5 +1,7 @@
 package neqsim.process.util.fire;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
+
 /**
  * Dynamic relief valve (PSV) sizing for fire scenarios per API 521.
  *
@@ -39,16 +41,16 @@ public final class ReliefValveSizing {
   private ReliefValveSizing() {
   }
 
-  /** Gas constant [J/(mol*K)]. */
+  /** Gas constant on the kilomole basis [J/(kmol*K)]. */
   public static final double R_GAS = 8314.0;
 
   /** Standard API 520 orifice areas [in²]. */
-  public static final double[] STANDARD_ORIFICE_AREAS_IN2 = { 0.110, 0.196, 0.307, 0.503, 0.785, 1.287, 1.838, 2.853,
-      3.600, 4.340, 6.380, 11.05, 16.0, 26.0 };
+  public static final double[] STANDARD_ORIFICE_AREAS_IN2 = {0.110, 0.196, 0.307, 0.503, 0.785, 1.287, 1.838, 2.853,
+      3.600, 4.340, 6.380, 11.05, 16.0, 26.0};
 
   /** Standard API 520 orifice letter designations. */
-  public static final String[] STANDARD_ORIFICE_LETTERS = { "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q",
-      "R", "T" };
+  public static final String[] STANDARD_ORIFICE_LETTERS = {"D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q",
+      "R", "T"};
 
   /**
    * Result container for PSV sizing calculations.
@@ -143,6 +145,31 @@ public final class ReliefValveSizing {
   }
 
   /**
+   * Converts absolute set pressure and a fraction of gauge set pressure to absolute relieving pressure. Uses one
+   * standard atmosphere as the gauge reference.
+   * 
+   * @param setPressurePa absolute set pressure in Pa
+   * @param overpressureFraction fraction of gauge set pressure
+   * @return absolute relieving pressure in Pa
+   */
+  public static double relievingPressurePa(double setPressurePa, double overpressureFraction) {
+    return setPressurePa + (setPressurePa - ThermodynamicConstantsInterface.atm) * overpressureFraction;
+  }
+
+  /**
+   * Validates the pressure head required to size an orifice for a positive forward flow.
+   * 
+   * @param relievingPressurePa absolute inlet pressure in Pa
+   * @param backPressurePa absolute outlet pressure in Pa
+   */
+  private static void requireForwardPressure(double relievingPressurePa, double backPressurePa) {
+    if (!Double.isFinite(relievingPressurePa) || !Double.isFinite(backPressurePa) || backPressurePa < 0.0
+        || relievingPressurePa <= backPressurePa) {
+      throw new IllegalArgumentException("Positive relief demand requires finite forward differential pressure");
+    }
+  }
+
+  /**
    * Calculates the required PSV orifice area for gas/vapor service per API 520.
    *
    * <p>
@@ -175,7 +202,9 @@ public final class ReliefValveSizing {
     }
 
     // Relieving pressure (set pressure + overpressure)
-    double P1 = setPressure * (1.0 + overpressureFraction);
+    double P1 = relievingPressurePa(setPressure, overpressureFraction);
+
+    requireForwardPressure(P1, backPressure);
 
     // Back pressure ratio
     double backPressureFraction = backPressure / P1;
@@ -258,12 +287,15 @@ public final class ReliefValveSizing {
    * @param compressibility Compressibility factor Z
    * @param specificHeatRatio Cp/Cv ratio
    * @param dischargeCoefficient Discharge coefficient (typically 0.975)
-   * @return Mass flow capacity [kg/s]
+   * @return forward mass flow capacity [kg/s], zero when back pressure meets or exceeds relieving pressure
    */
   public static double calculateMassFlowCapacity(double orificeArea, double setPressure, double overpressureFraction,
       double backPressure, double temperature, double molecularWeight, double compressibility, double specificHeatRatio,
       double dischargeCoefficient) {
-    double P1 = setPressure * (1.0 + overpressureFraction);
+    double P1 = relievingPressurePa(setPressure, overpressureFraction);
+    if (backPressure >= P1) {
+      return 0.0;
+    }
     double k = specificHeatRatio;
 
     // Critical pressure ratio
@@ -281,7 +313,7 @@ public final class ReliefValveSizing {
 
     // Mass flow rate
     return dischargeCoefficient * orificeArea * P1 * C
-        * Math.sqrt(molecularWeight / (compressibility * R_GAS * temperature));
+        * Math.sqrt(molecularWeight / (compressibility * ThermodynamicConstantsInterface.R * temperature));
   }
 
   /**
@@ -325,8 +357,6 @@ public final class ReliefValveSizing {
       double specificHeatRatio, double compressibility, double heatCapacity, double blowdownTime) {
     // API 521 fire case: 21% overpressure for first PSV, 16% for additional
     double overpressureFraction = 0.21;
-    double relievingPressure = setPressure * (1.0 + overpressureFraction);
-
     // Estimate relieving temperature (assume some superheat from fire)
     // Simple estimate: T increases due to fire heat input during pressurization
     double deltaT = fireHeatInput * 60.0 / (initialMass * heatCapacity); // 1 minute heat-up
@@ -607,12 +637,12 @@ public final class ReliefValveSizing {
 
     double waterDensity = 999.0;
     double specificGravity = liquidDensity / waterDensity;
-    double relievingPressure = setPressure * (1.0 + overpressureFraction);
+    double relievingPressure = relievingPressurePa(setPressure, overpressureFraction);
+
+    requireForwardPressure(relievingPressure, backPressure);
 
     // Convert to US customary for API 520 equation
     double QGpm = volumeFlowRate * 15850.3; // m3/s to US gpm
-    double P1Psig = (relievingPressure - 101325.0) / 6894.76; // Pa to psig
-    double P2Psig = (backPressure - 101325.0) / 6894.76;
 
     // Discharge coefficient for liquid
     double kd = 0.65;
@@ -630,10 +660,7 @@ public final class ReliefValveSizing {
     // Viscosity correction factor (Kv) per API 520 Figure 37
     // Reynolds number approach: first assume Kv=1, size, then correct
     double kv = 1.0;
-    double dp = P1Psig - P2Psig;
-    if (dp <= 0) {
-      dp = 1.0;
-    }
+    double dp = (relievingPressure - backPressure) / 6894.76;
     double aInitial = QGpm / (38.0 * kd * kw * 1.0) * Math.sqrt(specificGravity / dp);
 
     if (viscosity > 0.0 && aInitial > 0.0) {
@@ -703,7 +730,9 @@ public final class ReliefValveSizing {
   public static double calculateTwoPhaseReliefArea(double massFlowRate, double setPressure, double overpressureFraction,
       double backPressure, double inletTemperature, double gasFraction, double gasDensity, double liquidDensity,
       double latentHeat, double liquidCp) {
-    double P0 = setPressure * (1.0 + overpressureFraction);
+    double P0 = relievingPressurePa(setPressure, overpressureFraction);
+
+    requireForwardPressure(P0, backPressure);
 
     // Omega parameter (Leung 1986)
     double vG = 1.0 / gasDensity;
@@ -728,8 +757,8 @@ public final class ReliefValveSizing {
     // Discharge coefficient for two-phase
     double kd = 0.85;
 
-    if (massFlux <= 0.0) {
-      return 0.0;
+    if (!Double.isFinite(massFlux) || massFlux <= 0.0) {
+      throw new IllegalArgumentException("Two-phase sizing requires a finite positive nozzle mass flux");
     }
     return massFlowRate / (kd * massFlux);
   }
@@ -742,32 +771,20 @@ public final class ReliefValveSizing {
    * Calculates fire heat input per API 521 Table 4 for wetted surface.
    *
    * <p>
-   * Uses Q = C1 * F * Aws^alpha where C1 and alpha depend on drainage and fire-fighting facilities.
+   * Uses Q = C1 * F * Aws^alpha with a fixed exponent of 0.82 and an environmental factor of one. The lower coefficient
+   * requires both adequate drainage and prompt firefighting.
    * </p>
    *
    * @param wettedAreaM2 Wetted surface area [m2]
    * @param hasDrainage true if adequate drainage exists
-   * @param hasFireFighting true if firefighting equipment available
+   * @param hasFireFighting true if prompt firefighting is credited in the scenario
    * @return Heat absorption rate [W]
    */
   public static double calculateAPI521FireHeatInput(double wettedAreaM2, boolean hasDrainage, boolean hasFireFighting) {
-    double awsFt2 = wettedAreaM2 * 10.7639; // m2 to ft2
-    double environmentFactor = 1.0;
-    if (hasDrainage && hasFireFighting) {
-      environmentFactor = 1.0;
-    } else if (!hasDrainage) {
-      environmentFactor = 1.0;
+    if (!Double.isFinite(wettedAreaM2) || wettedAreaM2 < 0.0) {
+      throw new IllegalArgumentException("Wetted area must be finite and non-negative");
     }
-
-    double qBtuHr;
-    if (hasDrainage) {
-      // API 521 adequate drainage: Q = 21000 * F * Aws^0.82
-      qBtuHr = 21000.0 * environmentFactor * Math.pow(awsFt2, 0.82);
-    } else {
-      // API 521 no drainage: Q = 34500 * F * Aws^0.82
-      qBtuHr = 34500.0 * environmentFactor * Math.pow(awsFt2, 0.82);
-    }
-
-    return qBtuHr * 0.29307107; // BTU/hr to W
+    double coefficient = hasDrainage && hasFireFighting ? 21000.0 : 34500.0;
+    return coefficient * Math.pow(wettedAreaM2 * 10.7639, 0.82) * 0.29307107;
   }
 }

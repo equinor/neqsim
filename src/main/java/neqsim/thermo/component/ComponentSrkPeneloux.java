@@ -36,7 +36,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     // attractiveParameter = new AttractiveTermSchwartzentruber(this);
     setAttractiveParameter(new AttractiveTermSrk(this));
 
-    double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157 };
+    double[] surfTensInfluenceParamtemp = {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
     this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
@@ -54,7 +54,11 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     super(number, TC, PC, M, a, moles);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentSrkPeneloux clone() {
     ComponentSrkPeneloux clonedComponent = null;
@@ -62,6 +66,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
       clonedComponent = (ComponentSrkPeneloux) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentSrkPeneloux", ex);
     }
 
     return clonedComponent;

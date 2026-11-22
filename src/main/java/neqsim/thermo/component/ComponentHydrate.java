@@ -22,7 +22,7 @@ public class ComponentHydrate extends Component {
   // double[][] emptyHydrateVapourPressureConstant = {{17.6025820786,
   // -6056.0650578668},{17.332, -6017.6}}; //fitted
   // Sloan (1990)
-  double[][] emptyHydrateVapourPressureConstant = { { 17.44, -6003.9 }, { 17.332, -6017.6 } };
+  double[][] emptyHydrateVapourPressureConstant = {{17.44, -6003.9}, {17.332, -6017.6}};
   // double[][] emptyHydrateVapourPressureConstant = {{ 17.5061457754,
   // -6030.6886435166},{17.332, -6017.6}}; //fitted (1990)
   int hydrateStructure = 0;
@@ -32,8 +32,8 @@ public class ComponentHydrate extends Component {
   double[][] cavprwat = new double[2][2]; // [structure][cavitytype]
   // double[] dGfHydrate = {-236539.2, -235614.0};
   // double[] dHfHydrate = {-292714.5, -292016.0};
-  double[] dGfHydrate = { -235557, -235614 };
-  double[] dHfHydrate = { -291786, -292016 };
+  double[] dGfHydrate = {-235557, -235614};
+  double[] dHfHydrate = {-291786, -292016};
   double[] reffug = new double[neqsim.thermo.ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private double sphericalCoreRadiusHydrate = 0.0;
   private double lennardJonesEnergyParameterHydrate = 0.0;

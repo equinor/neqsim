@@ -52,7 +52,11 @@ public class SystemDesmukhMather extends SystemEosGE {
     configureHybridEosGePhases(T, P, new PhaseSrkEos(), new PhaseDesmukhMather(), new PhaseSrkEos());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemDesmukhMather clone() {
     SystemDesmukhMather clonedSystem = null;
@@ -60,6 +64,7 @@ public class SystemDesmukhMather extends SystemEosGE {
       clonedSystem = (SystemDesmukhMather) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemDesmukhMather", ex);
     }
 
     return clonedSystem;

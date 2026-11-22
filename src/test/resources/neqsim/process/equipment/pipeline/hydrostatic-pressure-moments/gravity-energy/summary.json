@@ -1,0 +1,14 @@
+{
+  "source_base": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+  "source_blob": "6eea54142e2668717a7b756e1b252da6810a7e21",
+  "rows": 162,
+  "reference_digits": 80,
+  "relative_gate": "5e-13",
+  "maximum_relative_error": "7.087111935198039229073992724E-15",
+  "query_ns_min_median_max": [
+    6.31273,
+    17.53486,
+    75.625785
+  ],
+  "scope": "Explicit cross-sectional energy query only; no dynamic integration or evaporation claim"
+}

@@ -37,7 +37,7 @@ public class InflowPerformanceTest {
     InflowPerformance[] models = new InflowPerformance[] {
         InflowPerformance.linear(PRODUCTIVITY_INDEX, RESERVOIR_PRESSURE),
         InflowPerformance.vogel(PRODUCTIVITY_INDEX, RESERVOIR_PRESSURE),
-        InflowPerformance.composite(PRODUCTIVITY_INDEX, RESERVOIR_PRESSURE, BUBBLE_POINT) };
+        InflowPerformance.composite(PRODUCTIVITY_INDEX, RESERVOIR_PRESSURE, BUBBLE_POINT)};
     for (InflowPerformance ipr : models) {
       for (double fraction = 0.05; fraction < 1.0; fraction += 0.05) {
         double rate = ipr.absoluteOpenFlow() * fraction;

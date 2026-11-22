@@ -1,0 +1,7 @@
+{
+  "legacy_geometry_blob": "e62e0a03a8eeb92d9cbad04b109142501a0903a4",
+  "bytes_identical": true,
+  "serialized_bytes": 202,
+  "sha256": "157086d6bc2d9238d8081757cda0bf7134d51d5e0cb12d0f72652aaa9357e6c1",
+  "recipe": "Compile SerializationProbe.java with baseline and candidate GeometryCalculator.java into separate classpaths; compare outputs"
+}

@@ -11,7 +11,7 @@ public class VanEverdingenHurstAquiferTest {
   @Test
   public void testInfiniteActingPdMonotonic() {
     double prev = 0.0;
-    double[] tDs = { 0.005, 0.05, 0.5, 5.0, 50.0, 150.0, 500.0, 5000.0 };
+    double[] tDs = {0.005, 0.05, 0.5, 5.0, 50.0, 150.0, 500.0, 5000.0};
     for (double tD : tDs) {
       double pd = VanEverdingenHurstAquifer.infiniteActingPd(tD);
       Assertions.assertTrue(pd > prev, "P_D should increase with t_D at t_D = " + tD);
@@ -39,8 +39,8 @@ public class VanEverdingenHurstAquiferTest {
 
   @Test
   public void testCarterTracyInfluxIncreases() {
-    double[] tD = { 0.0, 10.0, 20.0, 40.0, 80.0, 160.0 };
-    double[] deltaP = { 0.0, 5.0, 12.0, 22.0, 35.0, 50.0 };
+    double[] tD = {0.0, 10.0, 20.0, 40.0, 80.0, 160.0};
+    double[] deltaP = {0.0, 5.0, 12.0, 22.0, 35.0, 50.0};
     double u = VanEverdingenHurstAquifer.aquiferConstant(0.20, 1.0e-4, 30.0, 3000.0, 180.0);
     double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(tD, deltaP, u, Double.POSITIVE_INFINITY);
     Assertions.assertEquals(0.0, we[0], 1.0e-12);
@@ -58,7 +58,7 @@ public class VanEverdingenHurstAquiferTest {
 
   @Test
   public void testAqutabExportFormat() {
-    double[] tD = { 1.0, 10.0, 100.0, 1000.0 };
+    double[] tD = {1.0, 10.0, 100.0, 1000.0};
     String aqutab = VanEverdingenHurstAquifer.exportAqutab(tD, Double.POSITIVE_INFINITY);
     Assertions.assertTrue(aqutab.startsWith("AQUTAB"), "Export should start with AQUTAB keyword");
     Assertions.assertTrue(aqutab.trim().endsWith("/"), "Table should be terminated with a slash");

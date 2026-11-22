@@ -1,7 +1,9 @@
 package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
@@ -130,8 +132,8 @@ public class FlowRateOptimizerTest {
     generator.setTableName("TestVLP");
 
     // Define operating envelope
-    double[] flowRates = { 5000, 10000, 15000, 20000 }; // kg/hr
-    double[] thpValues = { 60, 70, 80 }; // bara (outlet pressures)
+    double[] flowRates = {5000, 10000, 15000, 20000}; // kg/hr
+    double[] thpValues = {60, 70, 80}; // bara (outlet pressures)
 
     // Generate table
     LiftCurveTable table = generator.generateTable(flowRates, thpValues, "bara", "kg/hr");
@@ -149,9 +151,9 @@ public class FlowRateOptimizerTest {
   @Test
   public void testLiftCurveTableEclipseFormat() {
     // Create a simple table manually
-    double[] flowRates = { 1, 10, 20, 30 };
-    double[] thpValues = { 20, 40 };
-    double[][] bhpValues = { { 100, 120 }, { 110, 130 }, { 120, 140 }, { 130, Double.NaN } };
+    double[] flowRates = {1, 10, 20, 30};
+    double[] thpValues = {20, 40};
+    double[][] bhpValues = {{100, 120}, {110, 130}, {120, 140}, {130, Double.NaN}};
 
     LiftCurveTable table = new LiftCurveTable(flowRates, thpValues, bhpValues);
     table.setPressureUnit("bara");
@@ -168,9 +170,9 @@ public class FlowRateOptimizerTest {
 
   @Test
   public void testLiftCurveTableCSVFormat() {
-    double[] flowRates = { 1000, 5000, 10000 };
-    double[] thpValues = { 50, 60, 70 };
-    double[][] bhpValues = { { 80, 90, 100 }, { 85, 95, Double.NaN }, { 90, Double.NaN, Double.NaN } };
+    double[] flowRates = {1000, 5000, 10000};
+    double[] thpValues = {50, 60, 70};
+    double[][] bhpValues = {{80, 90, 100}, {85, 95, Double.NaN}, {90, Double.NaN, Double.NaN}};
 
     LiftCurveTable table = new LiftCurveTable(flowRates, thpValues, bhpValues);
 
@@ -184,9 +186,9 @@ public class FlowRateOptimizerTest {
 
   @Test
   public void testLiftCurveTableInterpolation() {
-    double[] flowRates = { 0, 100 };
-    double[] thpValues = { 0, 100 };
-    double[][] bhpValues = { { 100, 200 }, { 150, 250 } };
+    double[] flowRates = {0, 100};
+    double[] thpValues = {0, 100};
+    double[][] bhpValues = {{100, 200}, {150, 250}};
 
     LiftCurveTable table = new LiftCurveTable(flowRates, thpValues, bhpValues);
 
@@ -203,9 +205,9 @@ public class FlowRateOptimizerTest {
 
   @Test
   public void testLiftCurveTableWithNaNInterpolation() {
-    double[] flowRates = { 0, 100 };
-    double[] thpValues = { 0, 100 };
-    double[][] bhpValues = { { 100, 200 }, { 150, Double.NaN } };
+    double[] flowRates = {0, 100};
+    double[] thpValues = {0, 100};
+    double[][] bhpValues = {{100, 200}, {150, Double.NaN}};
 
     LiftCurveTable table = new LiftCurveTable(flowRates, thpValues, bhpValues);
 
@@ -292,9 +294,9 @@ public class FlowRateOptimizerTest {
 
   @Test
   public void testLiftCurveTableJson() {
-    double[] flowRates = { 1000, 2000 };
-    double[] thpValues = { 50, 60 };
-    double[][] bhpValues = { { 80, 90 }, { 85, Double.NaN } };
+    double[] flowRates = {1000, 2000};
+    double[] thpValues = {50, 60};
+    double[][] bhpValues = {{80, 90}, {85, Double.NaN}};
 
     LiftCurveTable table = new LiftCurveTable(flowRates, thpValues, bhpValues);
     table.setTableName("TestTable");
@@ -345,8 +347,8 @@ public class FlowRateOptimizerTest {
     assertEquals(2, compressors.size(), "Should have 2 compressors");
 
     // Generate process lift curve
-    double[] flowRates = { 30000, 50000, 70000 }; // kg/hr
-    double[] inletPressures = { 70, 80, 90 }; // bara
+    double[] flowRates = {30000, 50000, 70000}; // kg/hr
+    double[] inletPressures = {70, 80, 90}; // bara
 
     FlowRateOptimizer.ProcessLiftCurveTable liftCurve = optimizer.generateProcessLiftCurve(flowRates, "kg/hr",
         inletPressures, "bara");
@@ -445,7 +447,7 @@ public class FlowRateOptimizerTest {
 
     // Generate performance table to see the power profile
     FlowRateOptimizer.ProcessPerformanceTable perfTable = optimizer
-        .generateProcessPerformanceTable(new double[] { 30000, 40000, 50000, 60000, 70000 }, "kg/hr", 80.0, "bara");
+        .generateProcessPerformanceTable(new double[] {30000, 40000, 50000, 60000, 70000}, "kg/hr", 80.0, "bara");
 
     logger.info("\n" + perfTable.toFormattedString());
 
@@ -559,21 +561,17 @@ public class FlowRateOptimizerTest {
     optimizer.configureProcessCompressorCharts();
 
     // Generate lift curve
-    double[] flowRates = { 30000, 50000, 70000 };
-    double[] inletPressures = { 70, 80, 90 };
+    double[] flowRates = {30000, 50000, 70000};
+    double[] inletPressures = {70, 80, 90};
 
     FlowRateOptimizer.ProcessLiftCurveTable liftCurve = optimizer.generateProcessLiftCurve(flowRates, "kg/hr",
         inletPressures, "bara");
 
-    // Get Eclipse format
-    String eclipseFormat = liftCurve.toEclipseFormat();
-    logger.info(eclipseFormat);
-
-    // Verify format structure
-    assertTrue(eclipseFormat.contains("--"), "Should have comment markers");
-    assertTrue(eclipseFormat.contains("Flow"), "Should have flow header");
-    assertTrue(eclipseFormat.contains("THP"), "Should have THP header");
-    assertTrue(eclipseFormat.contains("BHP"), "Should have BHP header");
+    assertThrows(UnsupportedOperationException.class, liftCurve::toEclipseFormat);
+    String diagnostic = liftCurve.toFormattedString();
+    assertTrue(diagnostic.contains("Flow"));
+    assertFalse(diagnostic.contains("BHP"));
+    assertFalse(diagnostic.contains("VFPPROD"));
   }
 
   @Test
@@ -639,8 +637,8 @@ public class FlowRateOptimizerTest {
 
     // Define pressure grids - use achievable pressures based on design point
     // Design: Pin=80, Pout~176 at 50000 kg/hr
-    double[] inletPressures = { 70, 80, 90 }; // bara
-    double[] outletPressures = { 140, 160, 175 }; // bara - lower targets that are achievable
+    double[] inletPressures = {70, 80, 90}; // bara
+    double[] outletPressures = {140, 160, 175}; // bara - lower targets that are achievable
 
     // Generate capacity table (max flow for each pressure combination)
     FlowRateOptimizer.ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures,
@@ -682,8 +680,8 @@ public class FlowRateOptimizerTest {
     assertEquals(2, optimizer.getParallelThreads(), "Should have 2 threads");
 
     // Define pressure grids
-    double[] inletPressures = { 70, 80, 90 }; // bara
-    double[] outletPressures = { 140, 160, 175 }; // bara
+    double[] inletPressures = {70, 80, 90}; // bara
+    double[] outletPressures = {140, 160, 175}; // bara
 
     // Generate capacity table in parallel
     long startTime = System.currentTimeMillis();
@@ -732,19 +730,16 @@ public class FlowRateOptimizerTest {
     optimizer.setMaxFlowRate(80000.0);
 
     // Define pressure grids - use achievable pressures
-    double[] inletPressures = { 75, 85 }; // bara
-    double[] outletPressures = { 150, 170 }; // bara
+    double[] inletPressures = {75, 85}; // bara
+    double[] outletPressures = {150, 170}; // bara
 
     // Generate capacity table
     FlowRateOptimizer.ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures,
         outletPressures, "bara", 1.0);
 
-    // Get Eclipse format
-    String eclipse = table.toEclipseFormat();
-    logger.info(eclipse);
-
-    assertTrue(eclipse.contains("VFPPROD"), "Should have VFP table format");
-    assertTrue(eclipse.contains("Generated by NeqSim"), "Should have NeqSim header");
+    assertThrows(UnsupportedOperationException.class, table::toEclipseFormat);
+    assertTrue(table.toCsv().contains("InletPressure_bara"));
+    assertFalse(table.toFormattedString().contains("VFPPROD"));
   }
 
   @Test
@@ -761,7 +756,7 @@ public class FlowRateOptimizerTest {
 
     // Generate capacity curve at fixed inlet pressure = 80 bara
     // Use achievable outlet pressures
-    double[] outletPressures = { 140, 155, 170 };
+    double[] outletPressures = {140, 155, 170};
 
     FlowRateOptimizer.ProcessOperatingPoint[] curve = optimizer.generateCapacityCurve(80.0, outletPressures, "bara",
         1.0, "kg/hr");
@@ -824,7 +819,7 @@ public class FlowRateOptimizerTest {
     // Interstage Cooler
     neqsim.process.equipment.heatexchanger.Cooler interStageCooler = new neqsim.process.equipment.heatexchanger.Cooler(
         "Interstage Cooler", firstStageCompressor.getOutletStream());
-    interStageCooler.setOutTemperature(273.15 + 40.0);
+    interStageCooler.setOutletTemperature(273.15 + 40.0);
     process.add(interStageCooler);
 
     // Second Stage Compressor
@@ -841,6 +836,19 @@ public class FlowRateOptimizerTest {
   }
 
   // ============ Professional Lift Curve Generation Tests ============
+
+  /** Existing maps can be reused after a sweep has left the process at an invalid trial. */
+  @Test
+  public void chartSetupDoesNotRerunRejectedTrialWhenMapsAlreadyExist() {
+    ProcessSystem process = createTwoStageCompressionProcess();
+    FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed Stream", "2nd Stage Compressor");
+    optimizer.configureProcessCompressorCharts();
+    Stream feed = (Stream) process.getUnit("Feed Stream");
+    feed.setFlowRate(1.0e9, "kg/hr");
+    RuntimeException failure = assertThrows(RuntimeException.class, () -> process.run());
+    assertTrue(failure.getCause() instanceof Compressor.SpeedSolveException);
+    assertDoesNotThrow(() -> optimizer.configureProcessCompressorCharts());
+  }
 
   @Test
   public void testProfessionalLiftCurveGeneration() {
@@ -880,10 +888,10 @@ public class FlowRateOptimizerTest {
     // Print summary
     logger.info(result.getSummary());
 
-    // Print Eclipse format output
+    // Print process screening output
     if (result.getCapacityTable() != null) {
-      logger.info("\n--- Eclipse VFP Format ---");
-      String eclipseFormat = result.getCapacityTable().toEclipseFormat();
+      logger.info("\n--- Process Capacity Screening ---");
+      String eclipseFormat = result.getCapacityTable().toFormattedString();
       logger.info(eclipseFormat.substring(0, Math.min(500, eclipseFormat.length())) + "...");
     }
 

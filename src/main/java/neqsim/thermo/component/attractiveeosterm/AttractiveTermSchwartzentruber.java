@@ -39,7 +39,11 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     c = 1.0 - 1.0 / d;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermSchwartzentruber clone() {
     AttractiveTermSchwartzentruber attractiveTerm = null;
@@ -47,6 +51,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
       attractiveTerm = (AttractiveTermSchwartzentruber) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermSchwartzentruber", ex);
     }
 
     return attractiveTerm;

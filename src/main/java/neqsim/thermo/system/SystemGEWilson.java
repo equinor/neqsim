@@ -45,7 +45,11 @@ public class SystemGEWilson extends SystemEosGE {
     configureEosGePhases(T, P, new PhaseSrkEos(), new PhaseGEWilson());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemGEWilson clone() {
     SystemGEWilson clonedSystem = null;
@@ -53,6 +57,7 @@ public class SystemGEWilson extends SystemEosGE {
       clonedSystem = (SystemGEWilson) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemGEWilson", ex);
     }
 
     return clonedSystem;

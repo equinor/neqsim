@@ -1,5 +1,6 @@
 package neqsim.pvtsimulation.simulation;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
@@ -36,10 +37,10 @@ public class ConstantVolumeDepletionTest {
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(tempSystem);
     CVDsim.setTemperature(315.0);
-    CVDsim.setPressures(new double[] { 400, 300.0, 200.0, 150.0, 100.0, 50.0 });
+    CVDsim.setPressures(new double[] {400, 300.0, 200.0, 150.0, 100.0, 50.0});
     CVDsim.runCalc();
-    CVDsim.setTemperaturesAndPressures(new double[] { 313, 313, 313, 313 }, new double[] { 400, 300.0, 200.0, 100.0 });
-    double[][] expData = { { 0.95, 0.99, 1.0, 1.1 } };
+    CVDsim.setTemperaturesAndPressures(new double[] {313, 313, 313, 313}, new double[] {400, 300.0, 200.0, 100.0});
+    double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
     CVDsim.setExperimentalData(expData);
     assertEquals(1.0, CVDsim.getRelativeVolume()[4], 1.0e-6);
     assertTrue(CVDsim.validateMaterialBalance(0.02));
@@ -71,7 +72,7 @@ public class ConstantVolumeDepletionTest {
 
     ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(condensate);
     cvd.setTemperature(80.0, "C");
-    cvd.setPressures(new double[] { 120.0, 100.0, 80.0, 60.0, 40.0, 20.0 });
+    cvd.setPressures(new double[] {120.0, 100.0, 80.0, 60.0, 40.0, 20.0});
     cvd.runCalc();
 
     assertEquals(saturationReference.getSaturationPressure(), cvd.getSaturationPressure(), 0.05);
@@ -94,6 +95,39 @@ public class ConstantVolumeDepletionTest {
     assertTrue(maximumLiquidDropout > 0.5);
   }
 
+  /** Paired-state configuration replaces an earlier path and reproduces the isothermal depletion results. */
+  @Test
+  void testSetTemperaturesAndPressuresDefinesDepletionPath() {
+    SystemInterface gasCondensate = new SystemSrkEos(353.15, 200.0);
+    gasCondensate.addComponent("methane", 0.80);
+    gasCondensate.addComponent("ethane", 0.08);
+    gasCondensate.addComponent("propane", 0.05);
+    gasCondensate.addComponent("n-butane", 0.03);
+    gasCondensate.addComponent("n-hexane", 0.02);
+    gasCondensate.addComponent("n-octane", 0.02);
+    gasCondensate.setMixingRule("classic");
+    gasCondensate.init(0);
+    gasCondensate.init(1);
+
+    double[] path = {300.0, 250.0, 200.0, 150.0, 100.0};
+    ConstantVolumeDepletion reference = new ConstantVolumeDepletion(gasCondensate.clone());
+    reference.setTemperature(353.15, "K");
+    reference.setPressures(path.clone());
+    reference.runCalc();
+
+    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(gasCondensate);
+    cvd.setTemperature(353.15, "K");
+    cvd.setPressures(new double[] {400.0, 200.0});
+    cvd.setTemperaturesAndPressures(new double[] {353.15, 353.15, 353.15, 353.15, 353.15}, path);
+    cvd.runCalc();
+
+    assertArrayEquals(path, cvd.getPressures(), 0.0);
+    assertArrayEquals(reference.getLiquidRelativeVolume(), cvd.getLiquidRelativeVolume(), 1e-10);
+    assertArrayEquals(reference.getZgas(), cvd.getZgas(), 1e-10);
+    assertArrayEquals(reference.getCummulativeMolePercDepleted(), cvd.getCummulativeMolePercDepleted(), 1e-10);
+    assertTrue(cvd.validateMaterialBalance(0.02));
+  }
+
   @Test
   void testRunEclipseInput() {
     File file = new File("src/test/java/neqsim/pvtsimulation/simulation");
@@ -109,7 +143,7 @@ public class ConstantVolumeDepletionTest {
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(fluid1);
     CVDsim.setTemperature(90.0, "C");
-    CVDsim.setPressures(new double[] { 200.0, 154.0, 139.0, 127.0, 117.0, 108.0, 91.0, 82.0, 62.0, 38.0 });
+    CVDsim.setPressures(new double[] {200.0, 154.0, 139.0, 127.0, 117.0, 108.0, 91.0, 82.0, 62.0, 38.0});
     CVDsim.runCalc();
     CVDsim.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double gasdens = CVDsim.getThermoSystem().getPhase("gas").getDensity("kg/m3");
@@ -126,5 +160,58 @@ public class ConstantVolumeDepletionTest {
     oilFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
     assertEquals(oildens, oilFluid.getDensity("kg/m3"), 0.1);
+  }
+
+  /**
+   * The gas-density QC must use the gas molar mass of each depletion step, not phase 0 of the final cell state (#5209,
+   * reported by Patrick Mockridge).
+   */
+  @Test
+  void testGasDensityQcUsesStepGasMolarMass() {
+    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(leanCondensate());
+    cvd.setTemperature(80.0, "C");
+    double[] pressures = {120.0, 100.0, 80.0, 60.0, 40.0, 20.0};
+    cvd.setPressures(pressures);
+    cvd.runCalc();
+    assertTrue(cvd.getSaturationPressure() > pressures[0], "first step lies below the dew point");
+
+    // The first step is the original fluid flashed at that pressure; removing gas keeps the gas composition.
+    SystemInterface firstStep = leanCondensate();
+    firstStep.setTemperature(80.0, "C");
+    firstStep.setPressure(pressures[0]);
+    new ThermodynamicOperations(firstStep).TPflash();
+    firstStep.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    assertTrue(firstStep.hasPhaseType("gas") && firstStep.hasPhaseType("oil"));
+    double expected = firstStep.getPhase("gas").getDensity("kg/m3");
+
+    double[] qc = cvd.calculateGasDensityQC();
+    assertEquals(expected, qc[0], expected * 1e-3);
+    for (int i = 1; i < pressures.length; i++) {
+      assertTrue(qc[i] > 0.0 && qc[i] < qc[i - 1], "gas density falls with pressure at step " + i);
+    }
+  }
+
+  /**
+   * Builds the lean condensate used by the CVD QC regression test.
+   *
+   * @return a new SRK fluid with the classic mixing rule and multiphase check
+   */
+  private static SystemInterface leanCondensate() {
+    SystemInterface condensate = new SystemSrkEos(353.15, 200.0);
+    condensate.addComponent("nitrogen", 0.010);
+    condensate.addComponent("CO2", 0.020);
+    condensate.addComponent("methane", 0.760);
+    condensate.addComponent("ethane", 0.080);
+    condensate.addComponent("propane", 0.050);
+    condensate.addComponent("i-butane", 0.015);
+    condensate.addComponent("n-butane", 0.020);
+    condensate.addComponent("i-pentane", 0.010);
+    condensate.addComponent("n-pentane", 0.010);
+    condensate.addComponent("n-hexane", 0.010);
+    condensate.addComponent("n-heptane", 0.008);
+    condensate.addComponent("n-octane", 0.007);
+    condensate.setMixingRule("classic");
+    condensate.setMultiPhaseCheck(true);
+    return condensate;
   }
 }

@@ -16,9 +16,9 @@ You make PaperLab results rerunnable by an external reviewer.
 
 ## Loaded Skills
 
-- `paperlab_reproducibility_capsule`
-- `paperlab_notebook_regression_baselines`
-- `neqsim_in_writing`
+- `paperlab-reproducibility-capsule`
+- `paperlab-notebook-regression-baselines`
+- `neqsim-in-writing`
 
 ## Required Context
 

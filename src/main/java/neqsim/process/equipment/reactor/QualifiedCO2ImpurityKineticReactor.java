@@ -1,6 +1,5 @@
 package neqsim.process.equipment.reactor;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -23,9 +22,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @author NeqSim Team
  * @version 1.0
  */
-public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReactor implements Serializable {
+public class QualifiedCO2ImpurityKineticReactor extends CO2ImpurityKineticReactor {
   private static final long serialVersionUID = 1000L;
-  private static final String[] HOMOGENEOUS_REACTION_IDS = { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7" };
+  private static final String[] HOMOGENEOUS_REACTION_IDS = {"R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7"};
 
   private final Map<String, KineticReactionQualification> qualifications = new LinkedHashMap<>();
 

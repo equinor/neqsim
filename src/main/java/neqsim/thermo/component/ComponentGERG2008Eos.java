@@ -46,7 +46,11 @@ public class ComponentGERG2008Eos extends ComponentEos {
     super(number, TC, PC, M, a, moles);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentGERG2008Eos clone() {
     ComponentGERG2008Eos clonedComponent = null;
@@ -54,6 +58,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
       clonedComponent = (ComponentGERG2008Eos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentGERG2008Eos", ex);
     }
 
     return clonedComponent;
@@ -187,6 +192,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
     double[] residual = new double[numberOfComponents];
     double sum = 0.0;
+    ensureCompositionDerivativeCapacity(numberOfComponents);
 
     for (int i = 0; i < numberOfComponents; i++) {
       double ideal = -1.0 / nTot;

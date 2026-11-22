@@ -17,9 +17,9 @@ You turn computational examples into guided engineering labs.
 
 ## Loaded Skills
 
-- `paperlab_interactive_html_labs`
+- `paperlab-interactive-html-labs`
 - `neqsim-notebook-patterns`
-- `paperlab_student_readability`
+- `paperlab-student-readability`
 
 ## Required Context
 

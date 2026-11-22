@@ -343,6 +343,57 @@ class SchemaCatalogTest {
   }
 
   /**
+   * Coverage lint: every calculation tool must expose a hand-written input schema that mirrors its runner. A generic
+   * placeholder forces an agent to discover field names by trial and error, which is exactly what the MCP probe showed
+   * for run_relief before this gate existed. Orchestration/meta tools are listed explicitly so a new run_* tool cannot
+   * ship without a contract.
+   */
+  @Test
+  void testEveryCalculationToolHasDetailedInputSchema() {
+    java.util.Set<String> orchestrationTools = new java.util.HashSet<String>(java.util.Arrays.asList(
+        "run_operational_study", "run_agentic_engineering", "run_plugin", "run_process_loop", "run_capability"));
+    List<String> missing = new java.util.ArrayList<String>();
+    for (String toolName : SchemaCatalog.getToolNames()) {
+      boolean calculationTool = toolName.startsWith("run_") || "size_equipment".equals(toolName)
+          || "design_utilities".equals(toolName) || "calculate_standard".equals(toolName);
+      if (calculationTool && !orchestrationTools.contains(toolName)
+          && !SchemaCatalog.hasDetailedInputSchema(toolName)) {
+        missing.add(toolName);
+      }
+    }
+    assertTrue(missing.isEmpty(), "Calculation tools without a tool-specific input schema: " + missing);
+  }
+
+  @Test
+  void testReliefSchemaMirrorsRunnerFieldNames() {
+    JsonObject root = JsonParser.parseString(SchemaCatalog.reliefInputSchema()).getAsJsonObject();
+    JsonObject props = root.getAsJsonObject("properties");
+    for (String field : new String[] {"case", "massFlowRate_kg_s", "setPressure_bara", "temperature_K",
+        "molecularWeight_kg_mol", "volumeFlowRate_m3_s", "liquidDensity_kg_m3", "gasMassFraction", "wettedArea_m2"}) {
+      assertTrue(props.has(field), "run_relief schema missing " + field);
+    }
+    assertTrue(root.has("allOf"), "case-dependent required fields must be declared");
+    assertTrue(root.has("examples"));
+  }
+
+  @Test
+  void testSchemaCheckerAcceptsRunnerExampleAndRejectsGuess() {
+    JsonObject good = JsonParser.parseString("{\"case\":\"gas\",\"massFlowRate_kg_s\":10.0,\"setPressure_bara\":20.0,"
+        + "\"temperature_K\":320.0,\"molecularWeight_kg_mol\":0.0185}").getAsJsonObject();
+    assertTrue(SchemaChecker.checkToolInput("run_relief", good).isEmpty());
+
+    JsonObject guess = JsonParser.parseString("{\"case\":\"gas\",\"flowRate_kg_hr\":36000.0,\"setPressure_barg\":19.0}")
+        .getAsJsonObject();
+    List<String> violations = SchemaChecker.checkToolInput("run_relief", guess);
+    assertTrue(violations.toString().contains("massFlowRate_kg_s"), violations.toString());
+    assertTrue(violations.toString().contains("temperature_K"), violations.toString());
+
+    JsonObject sil = JsonParser.parseString("{\"claimedSIL\":2,\"pfdAvg\":0.005,\"components\":[]}").getAsJsonObject();
+    List<String> silViolations = SchemaChecker.checkToolInput("run_sil", sil);
+    assertTrue(silViolations.toString().contains("exactly one of"), silViolations.toString());
+  }
+
+  /**
    * Verifies that a schema includes the standard MCP output envelope fields.
    *
    * @param schema schema JSON string to inspect

@@ -15,6 +15,13 @@ NeqSim provides physics-based emission calculations for offshore oil & gas opera
 
 ---
 
+**Produced-water builder limitation:** `ProducedWaterDegassingSystem` uses the
+current database parameters. Optional tuning (`true`) is explicitly rejected;
+`setSalinity` stores metadata without a thermodynamic salt correction. Field-model
+uncertainty figures in this background material do not qualify that screening
+builder. Use the [supported-model guide](../process/equipment/util/produced_water_degassing.md)
+and its executable example for the current API.
+
 ## Quick Links
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 1.5rem 0;">

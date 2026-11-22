@@ -18,11 +18,13 @@ public class LBCViscosityMethod extends Viscosity {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
-  private static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
-  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = { 0.10230, 0.023364, 0.058533, -0.040758,
-      0.0093324 };
+  protected static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
+  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = {0.10230, 0.023364, 0.058533, -0.040758,
+      0.0093324};
 
   double[] denseContributionParameters = DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.clone();
+  /** Optional viscosity-only critical volumes, in cm3/mol and component order. */
+  private double[] criticalVolumeOverrides;
 
   /**
    * Constructor for LBCViscosityMethod.
@@ -37,13 +39,15 @@ public class LBCViscosityMethod extends Viscosity {
   @Override
   public double calcViscosity() {
     double volumeMixSum = 0.0;
-    double epsilonMixSum = 0.0;
+    double pseudoCriticalTemperature = 0.0;
+    double pseudoCriticalPressureAtm = 0.0;
+    double mixtureMolarMass = 0.0;
     double mixtureMolarMassSqrt = 0.0;
     double weightedGasViscosity = 0.0;
 
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       ComponentInterface component = phase.getPhase().getComponent(i);
-      double criticalVolume = getOrEstimateCriticalVolume(component);
+      double criticalVolume = getCriticalVolume(i);
       volumeMixSum += component.getx() * criticalVolume;
 
       double molarMass = component.getMolarMass() * 1000.0; // g/mol
@@ -51,12 +55,12 @@ public class LBCViscosityMethod extends Viscosity {
       double tr = phase.getPhase().getTemperature() / tc;
       double pc = component.getPC(); // bar
       double pcAtm = pc / 1.01325;
-      double temp2Epsilon = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
-
-      epsilonMixSum += component.getx() * Math.pow(temp2Epsilon, 6.0);
+      pseudoCriticalTemperature += component.getx() * tc;
+      pseudoCriticalPressureAtm += component.getx() * pcAtm;
+      mixtureMolarMass += component.getx() * molarMass;
 
       double temp2Gas = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
-      double lowPressureCorrelation = tr < 1.5 ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
+      double lowPressureCorrelation = useLowTemperatureBranch(tr) ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
           : 17.78e-5 / temp2Gas * Math.pow(4.58 * tr - 1.67, 5.0 / 8.0);
       lowPressureCorrelation *= 1.0e4; // cP -> micropoise
 
@@ -70,10 +74,13 @@ public class LBCViscosityMethod extends Viscosity {
 
     double pseudoCriticalVolume = volumeMixSum; // cm3/mol
     double critDens = pseudoCriticalVolume > 0.0 ? 1.0 / pseudoCriticalVolume : 0.0; // mol/cm3
-    double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
-    double reducedDensity = critDens > 0.0
-        ? phase.getPhase().getPhysicalProperties().getDensity() / phase.getPhase().getMolarMass() / critDens / 1.0e6
+    // Lohrenz, Bray and Clark (JPT 1964) and Eclipse E300 use pseudo-critical (Kay) mixing for the
+    // viscosity-reducing parameter: xi_m = Tpc^(1/6) / (M^(1/2) * Ppc^(2/3)), Tpc in K, Ppc in atm.
+    double epsilonMix = mixtureMolarMass > 0.0 && pseudoCriticalPressureAtm > 0.0
+        ? Math.pow(pseudoCriticalTemperature, 1.0 / 6.0)
+            / (Math.sqrt(mixtureMolarMass) * Math.pow(pseudoCriticalPressureAtm, 2.0 / 3.0))
         : 0.0;
+    double reducedDensity = critDens > 0.0 ? getMolarDensity() / critDens : 0.0;
 
     PhaseType phaseType = phase.getPhase().getType();
     double denseContribution = 0.0;
@@ -87,6 +94,25 @@ public class LBCViscosityMethod extends Viscosity {
     }
 
     return (denseContribution + lowPressureViscosityMicropoise) / 1.0e7;
+  }
+
+  /**
+   * Selects the Stiel-Thodos branch at a given reduced temperature.
+   *
+   * @param reducedTemperature absolute temperature divided by the component critical temperature
+   * @return whether to use the low-temperature branch
+   */
+  protected boolean useLowTemperatureBranch(double reducedTemperature) {
+    return reducedTemperature < 1.5;
+  }
+
+  /**
+   * Returns the molar density used by the dense-fluid contribution.
+   *
+   * @return molar density in mol/cm3
+   */
+  protected double getMolarDensity() {
+    return phase.getDensity() / phase.getPhase().getMolarMass() / 1.0e6;
   }
 
   private double selectReferenceViscosity(double weightedGasViscosity, double mixtureMolarMassSqrt) {
@@ -163,6 +189,63 @@ public class LBCViscosityMethod extends Viscosity {
    */
   public double[] getDenseContributionParameters() {
     return denseContributionParameters.clone();
+  }
+
+  /**
+   * Set viscosity-only critical volumes without changing thermodynamic component properties.
+   *
+   * <p>
+   * The E300 VCRITVIS keyword supplies these values independently of VCRIT. Without an override, the existing
+   * pure-component or TBP estimation route is retained. Adding or removing components after setting an override
+   * requires a new array in the updated component order.
+   *
+   * @param volumes positive finite critical volumes in cm3/mol, one per component; null clears overrides
+   * @throws IllegalArgumentException if the count or a volume is invalid
+   */
+  public void setCriticalVolumes(double[] volumes) {
+    if (volumes == null) {
+      criticalVolumeOverrides = null;
+      return;
+    }
+    if (volumes.length != phase.getPhase().getNumberOfComponents()) {
+      throw new IllegalArgumentException("LBC critical volumes require one value per component");
+    }
+    for (double volume : volumes) {
+      if (!Double.isFinite(volume) || volume <= 0.0) {
+        throw new IllegalArgumentException("LBC critical volumes must be finite and positive");
+      }
+    }
+    criticalVolumeOverrides = volumes.clone();
+  }
+
+  /**
+   * Return the actual critical volume used by the LBC mixture calculation for a component.
+   *
+   * @param componentIndex component index in the phase
+   * @return effective viscosity-only critical volume in cm3/mol
+   * @throws IllegalStateException if the component slate changed after an override was configured
+   */
+  public double getCriticalVolume(int componentIndex) {
+    if (criticalVolumeOverrides != null) {
+      if (criticalVolumeOverrides.length != phase.getPhase().getNumberOfComponents()) {
+        throw new IllegalStateException("Component slate changed after LBC critical volumes were configured");
+      }
+      return criticalVolumeOverrides[componentIndex];
+    }
+    return getOrEstimateCriticalVolume(phase.getPhase().getComponent(componentIndex));
+  }
+
+  /**
+   * Get a defensive array of all effective viscosity-only critical volumes in component order.
+   *
+   * @return actual LBC critical volumes in cm3/mol, including estimates when overrides are absent
+   */
+  public double[] getCriticalVolumes() {
+    double[] volumes = new double[phase.getPhase().getNumberOfComponents()];
+    for (int i = 0; i < volumes.length; i++) {
+      volumes[i] = getCriticalVolume(i);
+    }
+    return volumes;
   }
 
   /**
@@ -262,6 +345,7 @@ public class LBCViscosityMethod extends Viscosity {
   public LBCViscosityMethod clone() {
     LBCViscosityMethod method = (LBCViscosityMethod) super.clone();
     method.denseContributionParameters = denseContributionParameters.clone();
+    method.criticalVolumeOverrides = criticalVolumeOverrides == null ? null : criticalVolumeOverrides.clone();
     return method;
   }
 }

@@ -315,6 +315,13 @@ double cumOil = reservoir.getOilProductionTotal();
 
 ## Integration with Process Systems
 
+`SimpleReservoir.getInletStreams()` reports gas and water injectors, and
+`getOutletStreams()` reports gas, oil and water producers. Both return new lists
+containing the existing stream objects. The process graph uses these connections
+to run injectors before the reservoir and separately registered producers after
+it. This prevents the reservoir and its producer from flashing the same fluid
+concurrently during parallel execution.
+
 The reservoir can be integrated with surface facilities:
 
 ```

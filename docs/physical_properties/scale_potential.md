@@ -1,6 +1,6 @@
 ---
 title: Scale Potential Calculation in NeqSim
-description: Scale formation is a critical challenge in oil and gas production, water treatment, and geothermal systems. When water becomes supersaturated with certain minerals, precipitation (scaling) can occur o...
+description: "Guide to predicting mineral-scale saturation, precipitation risk, and mitigation workflows in oil, gas, water-treatment, and geothermal systems."
 ---
 
 ## Introduction

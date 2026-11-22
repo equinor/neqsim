@@ -48,7 +48,7 @@ public class TestSeparationTrain {
     Separator inletSeparator = new Separator("Inlet separator", wellStream);
 
     Heater liquidOutHeater = new Heater("liquidOutHeater", inletSeparator.getLiquidOutStream());
-    liquidOutHeater.setOutTemperature(273.15 + 55.0);
+    liquidOutHeater.setOutletTemperature(273.15 + 55.0);
 
     ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage Separator",
         liquidOutHeater.getOutletStream());
@@ -72,7 +72,7 @@ public class TestSeparationTrain {
     thirdStageMixer.addStream(secondStageSeparator.getGasOutStream());
 
     Cooler thirdSstageCoooler = new Cooler("thirdSstageCoooler", thirdStageMixer.getOutletStream());
-    thirdSstageCoooler.setOutTemperature(273.15 + 30.0);
+    thirdSstageCoooler.setOutletTemperature(273.15 + 30.0);
 
     ThreePhaseSeparator thirdStageScrubber = new ThreePhaseSeparator("Third stage gas resirc scrubber",
         thirdSstageCoooler.getOutletStream());
@@ -87,10 +87,10 @@ public class TestSeparationTrain {
     HPgasMixer.addStream(secondStageCompressor.getOutletStream());
 
     Cooler oilCooler = new Cooler("oilCooler", thirdStageSeparator.getLiquidOutStream());
-    oilCooler.setOutTemperature(273.15 + 30.0);
+    oilCooler.setOutletTemperature(273.15 + 30.0);
 
     Cooler inletGasCooler = new Cooler("inletGasCooler", HPgasMixer.getOutletStream());
-    inletGasCooler.setOutTemperature(273.15 + 30.0);
+    inletGasCooler.setOutletTemperature(273.15 + 30.0);
 
     Separator gasInletScrubber = new Separator("Gas scrubber inlet", inletGasCooler.getOutletStream());
 

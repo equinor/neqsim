@@ -75,7 +75,7 @@ class IntegratedSafetyChainTransientTest {
     separator.setInternalDiameter(2.2);
 
     Splitter gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 3);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0, 0.0 });
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0, 0.0});
 
     Stream processStream = new Stream("Process Stream", gasSplitter.getSplitStream(0));
 
@@ -120,7 +120,7 @@ class IntegratedSafetyChainTransientTest {
     esdLogic = new ESDLogic("ESD Level 1");
     esdLogic.addAction(new CloseValveAction(inletValve), 0.0);
     esdLogic.addAction(new CloseValveAction(hippsValve), 0.0);
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 0.0, 1.0 }), 0.5);
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 0.0, 1.0}), 0.5);
     esdLogic.addAction(new EnergizeESDValveAction(blowdownValve, 100.0), 0.5);
     esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0);
 

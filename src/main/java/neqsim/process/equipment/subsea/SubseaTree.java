@@ -289,11 +289,11 @@ public class SubseaTree extends TwoPortEquipment {
     productionMasterValve.setPercentValveOpening(pmvOpen ? 100.0 : 0.0);
 
     // Check if tree is open
-    if (!pmvOpen || !pwvOpen) {
-      // Tree closed - no flow
+    if (!pmvOpen || !pwvOpen || chokeOpening == 0.0) {
       SystemInterface outFluid = inStream.getFluid().clone();
-      // Set flow to zero or very low
+      outFluid.setEmptyFluid();
       outStream.setFluid(outFluid);
+      outStream.setCalculationIdentifier(id);
       setCalculationIdentifier(id);
       return;
     }
@@ -327,7 +327,7 @@ public class SubseaTree extends TwoPortEquipment {
   }
 
   /**
-   * Open tree for production.
+   * Open the production master and wing valves. The choke retains its current setting.
    */
   public void openForProduction() {
     pmvOpen = true;

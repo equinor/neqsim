@@ -27,12 +27,24 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
    */
   public Diffusivity(PhysicalProperties liquidPhase) {
     super(liquidPhase);
-    binaryDiffusionCoefficients = new double[liquidPhase.getPhase().getNumberOfComponents()][liquidPhase.getPhase()
-        .getNumberOfComponents()];
-    effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
   }
 
   /** {@inheritDoc} */
+  @Override
+  public void setPhase(PhysicalProperties properties) {
+    super.setPhase(properties);
+    int count = properties.getPhase().getNumberOfComponents();
+    if (binaryDiffusionCoefficients == null || binaryDiffusionCoefficients.length != count) {
+      binaryDiffusionCoefficients = new double[count][count];
+      effectiveDiffusionCoefficient = new double[count];
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public Diffusivity clone() {
     Diffusivity properties = null;
@@ -41,13 +53,13 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
       properties = (Diffusivity) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of Diffusivity", ex);
     }
     if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
       properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
       for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
-        if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
-          System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
-              this.binaryDiffusionCoefficients[i].length);
+        if (this.binaryDiffusionCoefficients[i] != null) {
+          properties.binaryDiffusionCoefficients[i] = this.binaryDiffusionCoefficients[i].clone();
         }
       }
     }
@@ -57,7 +69,18 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
     return properties;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Uses the Wesselingh-Krishna extension of Vignes interpolation. The limiting diffusivity of pair i/j in any third
+   * solvent is approximated by the geometric mean of the two binary infinite-dilution coefficients. The resulting
+   * weights sum to one, recovering binary Vignes interpolation and dimensional scale covariance. This empirical
+   * third-solvent approximation does not itself qualify multicomponent evaporation rates.
+   * </p>
+   *
+   * @throws IllegalStateException if an off-diagonal limiting coefficient is not finite and positive
+   */
   @Override
   public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -66,15 +89,21 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
       }
     }
 
-    // Vignes correlation
+    // Each unordered pair reads both original limiting directions before either direction is overwritten.
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-      for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-        if (i != j) {
-          binaryDiffusionCoefficients[i][j] = Math.pow(binaryDiffusionCoefficients[i][j],
-              liquidPhase.getPhase().getComponent(j).getx())
-              * Math.pow(binaryDiffusionCoefficients[j][i], liquidPhase.getPhase().getComponent(i).getx());
+      for (int j = i + 1; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
+        double forward = binaryDiffusionCoefficients[i][j];
+        double reverse = binaryDiffusionCoefficients[j][i];
+        if (!(forward > 0.0) || !Double.isFinite(forward) || !(reverse > 0.0) || !Double.isFinite(reverse)) {
+          throw new IllegalStateException(
+              "Liquid limiting diffusivities must be finite and positive for pair " + i + "/" + j);
         }
-        // System.out.println("diff liq " + binaryDiffusionCoefficients[i][j] );
+        double xi = liquidPhase.getPhase().getComponent(i).getx();
+        double xj = liquidPhase.getPhase().getComponent(j).getx();
+        double forwardWeight = 0.5 * (1.0 + xj - xi);
+        double mixed = Math.exp(forwardWeight * Math.log(forward) + (1.0 - forwardWeight) * Math.log(reverse));
+        binaryDiffusionCoefficients[i][j] = mixed;
+        binaryDiffusionCoefficients[j][i] = mixed;
       }
     }
     return binaryDiffusionCoefficients;
@@ -112,14 +141,9 @@ abstract class Diffusivity extends LiquidPhysicalPropertyMethod implements Diffu
   /** {@inheritDoc} */
   @Override
   public double getFickBinaryDiffusionCoefficient(int i, int j) {
-    double temp = (i == j) ? 1.0 : 0.0;
-    double nonIdealCorrection = temp + liquidPhase.getPhase().getComponent(i).getx()
-        * liquidPhase.getPhase().getComponent(i).getdfugdn(j) * liquidPhase.getPhase().getNumberOfMolesInPhase();
-    if (Double.isNaN(nonIdealCorrection)) {
-      nonIdealCorrection = 1.0;
+    if (i == j) {
+      return binaryDiffusionCoefficients[i][i];
     }
-
-    // shuld be divided by non ideality factor
-    return binaryDiffusionCoefficients[i][j] * nonIdealCorrection;
+    return binaryDiffusionCoefficients[i][j] * liquidPhase.getPhase().getReducedThermodynamicFactor(i, i, j);
   }
 }

@@ -1,0 +1,754 @@
+=== baseline-pass.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 135 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 145 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 87 source files with javac [debug release 17] to target/test-classes
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java uses or overrides a deprecated API.
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.141 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (report) @ neqsim ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.348 s
+[INFO] Finished at: 2026-11-06T21:11:27+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== red-regression.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 135 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 148 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 88 source files with javac [debug release 17] to target/test-classes
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java uses or overrides a deprecated API.
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 0.141 s <<< FAILURE! -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[ERROR] neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest.agreesWithIndependentPrescribedPressureGrid -- Time elapsed: 0.093 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Complete failed numerical comparisons ==> expected: <[]> but was: <[682:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 682:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 683:column1:actual=2500.0833270673265:reference=2500.0833270835415, 683:column3:actual=2500.0833270673265:reference=2500.0833270835415, 710:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 710:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 711:column1:actual=2500.0833270673265:reference=2500.0833270835415, 711:column3:actual=2500.0833270673265:reference=2500.0833270835415]>
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+	at neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest.checkReference(FetkovichAquiferPrecisionTest.java:103)
+	at neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest.agreesWithIndependentPrescribedPressureGrid(FetkovichAquiferPrecisionTest.java:32)
+
+[ERROR] neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest.remainsAccurateAcrossSmallExposureBoundaries -- Time elapsed: 0.025 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Complete failed numerical comparisons ==> expected: <[]> but was: <[582:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 582:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 583:column1:actual=2500.0833270673265:reference=2500.0833270835415, 583:column3:actual=2500.0833270673265:reference=2500.0833270835415, 606:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 606:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 607:column1:actual=2500.0833270673265:reference=2500.0833270835415, 607:column3:actual=2500.0833270673265:reference=2500.0833270835415]>
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+	at neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest.checkReference(FetkovichAquiferPrecisionTest.java:103)
+	at neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest.remainsAccurateAcrossSmallExposureBoundaries(FetkovichAquiferPrecisionTest.java:42)
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   FetkovichAquiferPrecisionTest.agreesWithIndependentPrescribedPressureGrid:32->checkReference:103 Complete failed numerical comparisons ==> expected: <[]> but was: <[682:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 682:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 683:column1:actual=2500.0833270673265:reference=2500.0833270835415, 683:column3:actual=2500.0833270673265:reference=2500.0833270835415, 710:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 710:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 711:column1:actual=2500.0833270673265:reference=2500.0833270835415, 711:column3:actual=2500.0833270673265:reference=2500.0833270835415]>
+[ERROR]   FetkovichAquiferPrecisionTest.remainsAccurateAcrossSmallExposureBoundaries:42->checkReference:103 Complete failed numerical comparisons ==> expected: <[]> but was: <[582:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 582:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 583:column1:actual=2500.0833270673265:reference=2500.0833270835415, 583:column3:actual=2500.0833270673265:reference=2500.0833270835415, 606:column1:actual=-2500.0833270673265:reference=-2500.0833270835415, 606:column2:actual=-2500.0833270673265:reference=-2500.0833270835415, 607:column1:actual=2500.0833270673265:reference=2500.0833270835415, 607:column3:actual=2500.0833270673265:reference=2500.0833270835415]>
+[INFO] 
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.805 s
+[INFO] Finished at: 2026-11-06T21:18:49+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.6.1:test (default-test) on project neqsim: There are test failures.
+[ERROR] 
+[ERROR] See /tmp/mbal55-repo/target/surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+
+
+=== green-focused.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 135 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 3665 source files with javac [debug release 17] to target/classes
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/thermo/phase/PhaseGE.java: Some input files use or override a deprecated API.
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/thermo/phase/PhaseGE.java: Recompile with -Xlint:deprecation for details.
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Some input files use unchecked or unsafe operations.
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 148 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 88 source files with javac [debug release 17] to target/test-classes
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java uses or overrides a deprecated API.
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.133 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.066 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (report) @ neqsim ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  36.231 s
+[INFO] Finished at: 2026-11-06T21:20:19+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== surrounding-tests.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (default-cli) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/tmp/mbal55-repo/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/tmp/mbal55-repo/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 135 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 148 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.187 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.076 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalanceTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.076 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirAquiferRefinementTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.106 s -- in neqsim.pvtsimulation.util.CompositionalReservoirAquiferRefinementTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirAquiferTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.09 s -- in neqsim.pvtsimulation.util.CompositionalReservoirAquiferTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirHistoryTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.74 s -- in neqsim.pvtsimulation.util.CompositionalReservoirHistoryTest
+[INFO] Running neqsim.pvtsimulation.util.IndependentGasLabTankTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 172.3 s -- in neqsim.pvtsimulation.util.IndependentGasLabTankTest
+[INFO] Running neqsim.pvtsimulation.util.PhaseWithdrawalReservoirHistoryTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.102 s -- in neqsim.pvtsimulation.util.PhaseWithdrawalReservoirHistoryTest
+[INFO] Running neqsim.pvtsimulation.util.PvtSeparatorPathTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.184 s -- in neqsim.pvtsimulation.util.PvtSeparatorPathTest
+[INFO] Running neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.774 s -- in neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 64, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (report) @ neqsim ---
+[INFO] Loading execution data file /tmp/mbal55-repo/target/jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 6476 classes
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (default-cli) @ neqsim ---
+[INFO] Loading execution data file /tmp/mbal55-repo/target/jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 6476 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  03:45 min
+[INFO] Finished at: 2026-11-06T21:25:05+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== all-pvt-verified.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (default-cli) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/tmp/mbal55-repo/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/tmp/mbal55-repo/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 135 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 156 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 151 source files with javac [debug release 17] to target/test-classes
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java uses or overrides a deprecated API.
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.PvtLabTestsDocumentationTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.823 s -- in neqsim.pvtsimulation.PvtLabTestsDocumentationTest
+[INFO] Running neqsim.pvtsimulation.PvtSimulationDocumentationTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.384 s -- in neqsim.pvtsimulation.PvtSimulationDocumentationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneMethodComparisonTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.669 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneMethodComparisonTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneMultiMethodBenchmarkTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.744 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneMultiMethodBenchmarkTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzerTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.876 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzerTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneValidationTest
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.522 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneValidationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreeningTest
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 s -- in neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreeningTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.DeBoerScreeningDocumentationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.130 s -- in neqsim.pvtsimulation.flowassurance.DeBoerScreeningDocumentationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculatorTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculatorTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculatorTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculatorTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ErosionSandLoadDefaultsTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in neqsim.pvtsimulation.flowassurance.ErosionSandLoadDefaultsTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.FlowAssuranceDocumentationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.668 s -- in neqsim.pvtsimulation.flowassurance.FlowAssuranceDocumentationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.HydrateRiskMapperTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.298 s -- in neqsim.pvtsimulation.flowassurance.HydrateRiskMapperTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibriumTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.031 s -- in neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibriumTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.PitzerScaleActivityModelTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in neqsim.pvtsimulation.flowassurance.PitzerScaleActivityModelTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ScaleKspLiteratureBenchmarkTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in neqsim.pvtsimulation.flowassurance.ScaleKspLiteratureBenchmarkTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ScalePredictionTest
+[INFO] Tests run: 24, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s -- in neqsim.pvtsimulation.flowassurance.ScalePredictionTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.144 s -- in neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerWaterGuardTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.114 s -- in neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerWaterGuardTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.WaxCurveCalculatorTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.814 s -- in neqsim.pvtsimulation.flowassurance.WaxCurveCalculatorTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionDepletionHistoryTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.039 s -- in neqsim.pvtsimulation.regression.PVTRegressionDepletionHistoryTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionDispatchTest
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.277 s -- in neqsim.pvtsimulation.regression.PVTRegressionDispatchTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionTest
+[INFO] Tests run: 23, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.678 s -- in neqsim.pvtsimulation.regression.PVTRegressionTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionWeightingTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.067 s -- in neqsim.pvtsimulation.regression.PVTRegressionWeightingTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.057 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.043 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalanceTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalanceTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalanceTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquiferTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquiferTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.relpermeability.RelativePermeabilityGeneratorTest
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in neqsim.pvtsimulation.reservoirproperties.relpermeability.RelativePermeabilityGeneratorTest
+[INFO] Running neqsim.pvtsimulation.simulation.ConstantMassExpansionOilPropertiesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.140 s -- in neqsim.pvtsimulation.simulation.ConstantMassExpansionOilPropertiesTest
+[INFO] Running neqsim.pvtsimulation.simulation.ConstantMassExpansionTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.569 s -- in neqsim.pvtsimulation.simulation.ConstantMassExpansionTest
+[INFO] Running neqsim.pvtsimulation.simulation.ConstantVolumeDepletionTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.609 s -- in neqsim.pvtsimulation.simulation.ConstantVolumeDepletionTest
+[INFO] Running neqsim.pvtsimulation.simulation.DensitySimTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in neqsim.pvtsimulation.simulation.DensitySimTest
+[INFO] Running neqsim.pvtsimulation.simulation.DifferentialLiberationTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.735 s -- in neqsim.pvtsimulation.simulation.DifferentialLiberationTest
+[INFO] Running neqsim.pvtsimulation.simulation.FixedCellFeasibleGibbsTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.727 s -- in neqsim.pvtsimulation.simulation.FixedCellFeasibleGibbsTest
+[INFO] Running neqsim.pvtsimulation.simulation.FixedCellInitialStateTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.999 s -- in neqsim.pvtsimulation.simulation.FixedCellInitialStateTest
+[INFO] Running neqsim.pvtsimulation.simulation.MultiStageSeparatorTestTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.264 s -- in neqsim.pvtsimulation.simulation.MultiStageSeparatorTestTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationPressureTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.388 s -- in neqsim.pvtsimulation.simulation.SaturationPressureTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationTemperatureSearchTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.057 s -- in neqsim.pvtsimulation.simulation.SaturationTemperatureSearchTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationTemperatureTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 17.22 s -- in neqsim.pvtsimulation.simulation.SaturationTemperatureTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationTemperatureTuningTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 22.31 s -- in neqsim.pvtsimulation.simulation.SaturationTemperatureTuningTest
+[INFO] Running neqsim.pvtsimulation.simulation.SeparatorTestTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.120 s -- in neqsim.pvtsimulation.simulation.SeparatorTestTest
+[INFO] Running neqsim.pvtsimulation.simulation.SlimTubeSimTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.38 s -- in neqsim.pvtsimulation.simulation.SlimTubeSimTest
+[INFO] Running neqsim.pvtsimulation.simulation.SolutionGasWaterRatioTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.310 s -- in neqsim.pvtsimulation.simulation.SolutionGasWaterRatioTest
+[INFO] Running neqsim.pvtsimulation.simulation.SolutionGasWaterRatioVerificationTest
+- Formation water (5+ wt% NaCl) can reduce Rsw by 30-50% compared to pure water
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.590 s -- in neqsim.pvtsimulation.simulation.SolutionGasWaterRatioVerificationTest
+[INFO] Running neqsim.pvtsimulation.simulation.SwellingTestTemperatureTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.072 s -- in neqsim.pvtsimulation.simulation.SwellingTestTemperatureTest
+[INFO] Running neqsim.pvtsimulation.simulation.SwellingTestTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.136 s -- in neqsim.pvtsimulation.simulation.SwellingTestTest
+[INFO] Running neqsim.pvtsimulation.simulation.ViscositySimTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.028 s -- in neqsim.pvtsimulation.simulation.ViscositySimTest
+[INFO] Running neqsim.pvtsimulation.simulation.WaxFractionSimTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.149 s -- in neqsim.pvtsimulation.simulation.WaxFractionSimTest
+[INFO] Running neqsim.pvtsimulation.util.BlackOilCorrelationsTest
+[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in neqsim.pvtsimulation.util.BlackOilCorrelationsTest
+[INFO] Running neqsim.pvtsimulation.util.BlackOilTableValidatorTest
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in neqsim.pvtsimulation.util.BlackOilTableValidatorTest
+[INFO] Running neqsim.pvtsimulation.util.CalibratedPvtModelTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.801 s -- in neqsim.pvtsimulation.util.CalibratedPvtModelTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirAquiferRefinementTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.718 s -- in neqsim.pvtsimulation.util.CompositionalReservoirAquiferRefinementTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirAquiferTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.10 s -- in neqsim.pvtsimulation.util.CompositionalReservoirAquiferTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirHistoryTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.43 s -- in neqsim.pvtsimulation.util.CompositionalReservoirHistoryTest
+[INFO] Running neqsim.pvtsimulation.util.CvdGasOnlyTailTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.117 s -- in neqsim.pvtsimulation.util.CvdGasOnlyTailTest
+[INFO] Running neqsim.pvtsimulation.util.CvdMaterialBalanceTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.131 s -- in neqsim.pvtsimulation.util.CvdMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.util.DeclineCurveAnalysisFitTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in neqsim.pvtsimulation.util.DeclineCurveAnalysisFitTest
+[INFO] Running neqsim.pvtsimulation.util.DeclineCurveAnalysisTest
+[INFO] Tests run: 28, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in neqsim.pvtsimulation.util.DeclineCurveAnalysisTest
+[INFO] Running neqsim.pvtsimulation.util.DepletionPvtHistoryGeneratorTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.059 s -- in neqsim.pvtsimulation.util.DepletionPvtHistoryGeneratorTest
+[INFO] Running neqsim.pvtsimulation.util.DryFixedCellPhaseTransitionTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.29 s -- in neqsim.pvtsimulation.util.DryFixedCellPhaseTransitionTest
+[INFO] Running neqsim.pvtsimulation.util.FixedCellDepletionHandoffTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.92 s -- in neqsim.pvtsimulation.util.FixedCellDepletionHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.GasPseudoCriticalPropertiesTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.016 s -- in neqsim.pvtsimulation.util.GasPseudoCriticalPropertiesTest
+[INFO] Running neqsim.pvtsimulation.util.GasPseudoPressureTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.078 s -- in neqsim.pvtsimulation.util.GasPseudoPressureTest
+[INFO] Running neqsim.pvtsimulation.util.IndependentGasLabTankTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 155.0 s -- in neqsim.pvtsimulation.util.IndependentGasLabTankTest
+[INFO] Running neqsim.pvtsimulation.util.NativeCceHandoffTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.439 s -- in neqsim.pvtsimulation.util.NativeCceHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.NativeDepletionHandoffTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.479 s -- in neqsim.pvtsimulation.util.NativeDepletionHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.PVTFluidStudyTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.542 s -- in neqsim.pvtsimulation.util.PVTFluidStudyTest
+[INFO] Running neqsim.pvtsimulation.util.PhaseWithdrawalReservoirHistoryTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.500 s -- in neqsim.pvtsimulation.util.PhaseWithdrawalReservoirHistoryTest
+[INFO] Running neqsim.pvtsimulation.util.PvtGasDensityConsistencyTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.039 s -- in neqsim.pvtsimulation.util.PvtGasDensityConsistencyTest
+[INFO] Running neqsim.pvtsimulation.util.PvtSeparatorPathTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.078 s -- in neqsim.pvtsimulation.util.PvtSeparatorPathTest
+[INFO] Running neqsim.pvtsimulation.util.RefinedCvdHandoffTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.153 s -- in neqsim.pvtsimulation.util.RefinedCvdHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.710 s -- in neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] Running neqsim.pvtsimulation.util.SaturationPressureCorrelationTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in neqsim.pvtsimulation.util.SaturationPressureCorrelationTest
+[INFO] Running neqsim.pvtsimulation.util.WaterPropertyCorrelationsTest
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in neqsim.pvtsimulation.util.WaterPropertyCorrelationsTest
+[INFO] Running neqsim.pvtsimulation.util.WetCceHandoffTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.641 s -- in neqsim.pvtsimulation.util.WetCceHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.WetDleHandoffTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.551 s -- in neqsim.pvtsimulation.util.WetDleHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.WetGasFixedCellHandoffTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.16 s -- in neqsim.pvtsimulation.util.WetGasFixedCellHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.ZFactorCorrelationsTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in neqsim.pvtsimulation.util.ZFactorCorrelationsTest
+[INFO] Running neqsim.pvtsimulation.util.parameterfitting.AsphalteneOnsetFittingTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.105 s -- in neqsim.pvtsimulation.util.parameterfitting.AsphalteneOnsetFittingTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 685, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (report) @ neqsim ---
+[INFO] Loading execution data file /tmp/mbal55-repo/target/jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 6476 classes
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (default-cli) @ neqsim ---
+[INFO] Loading execution data file /tmp/mbal55-repo/target/jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 6476 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  05:54 min
+[INFO] Finished at: 2026-11-06T21:44:10+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== java8-final.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0-Java8
+[INFO]   from pomJava8.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ neqsim ---
+[INFO] Copying 135 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.7.3:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0-Java8...
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 3665 source files with javac [debug target 1.8] to target/classes
+[WARNING] bootstrap class path not set in conjunction with -source 8
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/process/measurementdevice/MeasurementDeviceInterface.java: Some input files use or override a deprecated API.
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/process/measurementdevice/MeasurementDeviceInterface.java: Recompile with -Xlint:deprecation for details.
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Some input files use unchecked or unsafe operations.
+[INFO] /tmp/mbal55-repo/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 158 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 151 source files with javac [debug target 1.8] to target/test-classes
+[WARNING] bootstrap class path not set in conjunction with -source 8
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java uses or overrides a deprecated API.
+[INFO] /tmp/mbal55-repo/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.124 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.057 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  32.706 s
+[INFO] Finished at: 2026-11-06T21:44:50+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== spotless-publish-check.log ===
+
+
+=== documentation-publish-check.log ===
+Documentation search source audit passed: 835 Markdown pages and 1 standalone HTML page(s).
+
+
+=== pre-commit-publish.log ===
+Spotless Format (Java)...................................................Passed
+Build Engineering Capability Coverage....................................Passed
+- hook id: engineering-capability-coverage
+- duration: 1.74s
+
+{
+  "publicTypes": 3497,
+  "registeredCapabilities": 38,
+  "classifiedOperations": 30,
+  "supportedOperations": 30,
+  "internalOperations": 0,
+  "experimentalOperations": 0,
+  "deprecatedOperations": 0,
+  "registeredAnchors": 78,
+  "withSkillMention": 1365,
+  "withAgentMention": 1362,
+  "reviewRequired": 3338,
+  "domains": {
+    "api": {
+      "publicTypes": 1,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 1
+    },
+    "blackoil": {
+      "publicTypes": 8,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 8
+    },
+    "chemicalreactions": {
+      "publicTypes": 13,
+      "registeredAnchors": 0,
+      "withSkillMention": 2,
+      "reviewRequired": 13
+    },
+    "datapresentation": {
+      "publicTypes": 4,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 4
+    },
+    "fluidmechanics": {
+      "publicTypes": 132,
+      "registeredAnchors": 0,
+      "withSkillMention": 9,
+      "reviewRequired": 132
+    },
+    "integration": {
+      "publicTypes": 5,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 5
+    },
+    "mathlib": {
+      "publicTypes": 14,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 14
+    },
+    "mcp": {
+      "publicTypes": 81,
+      "registeredAnchors": 0,
+      "withSkillMention": 7,
+      "reviewRequired": 0
+    },
+    "physicalproperties": {
+      "publicTypes": 108,
+      "registeredAnchors": 3,
+      "withSkillMention": 1,
+      "reviewRequired": 105
+    },
+    "process": {
+      "publicTypes": 2345,
+      "registeredAnchors": 45,
+      "withSkillMention": 1142,
+      "reviewRequired": 2300
+    },
+    "pvtsimulation": {
+      "publicTypes": 95,
+      "registeredAnchors": 18,
+      "withSkillMention": 45,
+      "reviewRequired": 77
+    },
+    "standards": {
+      "publicTypes": 48,
+      "registeredAnchors": 0,
+      "withSkillMention": 36,
+      "reviewRequired": 48
+    },
+    "statistics": {
+      "publicTypes": 37,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 37
+    },
+    "thermo": {
+      "publicTypes": 416,
+      "registeredAnchors": 5,
+      "withSkillMention": 94,
+      "reviewRequired": 411
+    },
+    "thermodynamicoperations": {
+      "publicTypes": 128,
+      "registeredAnchors": 1,
+      "withSkillMention": 17,
+      "reviewRequired": 127
+    },
+    "util": {
+      "publicTypes": 62,
+      "registeredAnchors": 6,
+      "withSkillMention": 9,
+      "reviewRequired": 56
+    }
+  }
+}
+
+
+
+=== pre-push-publish.log ===
+Spotless Check (Java)....................................................Passed
+Documentation Search Coverage............................................Passed
+- hook id: documentation-search-check
+- duration: 2.66s
+
+Documentation search source audit passed: 835 Markdown pages and 1 standalone HTML page(s).
+
+
+
+=== scoped-checkstyle-publish.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (default-cli) @ neqsim ---
+[INFO] You have 0 Checkstyle violations.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.323 s
+[INFO] Finished at: 2026-11-06T21:41:38+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== scoped-spotbugs.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spotbugs:4.10.5.0:check (default-cli) > :spotbugs @ neqsim >>>
+[INFO] 
+[INFO] --- spotbugs:4.10.5.0:spotbugs (spotbugs) @ neqsim ---
+[INFO] Done SpotBugs Analysis....
+[INFO] Skipping com.github.spotbugs:spotbugs-maven-plugin:4.10.5.0:spotbugs report goal
+[INFO] 
+[INFO] <<< spotbugs:4.10.5.0:check (default-cli) < :spotbugs @ neqsim <<<
+[INFO] 
+[INFO] 
+[INFO] --- spotbugs:4.10.5.0:check (default-cli) @ neqsim ---
+[INFO] BugInstance size is 0
+[INFO] Error size is 0
+[INFO] No errors/warnings found
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  25.938 s
+[INFO] Finished at: 2026-11-06T21:38:14+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== private-javadoc-publish.log ===
+
+
+=== tooling-tests-final.log ===
+..................................................                       [100%]
+50 passed in 7.72s

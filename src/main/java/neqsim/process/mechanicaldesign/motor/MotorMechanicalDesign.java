@@ -98,8 +98,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
   /** Sound power limits for small motors in dB(A). */
   private static final double[][] NOISE_LIMITS_4P_50HZ = {
       // {maxPowerKW, soundPowerLevelDbA}
-      { 1.1, 73 }, { 2.2, 78 }, { 5.5, 83 }, { 11, 87 }, { 22, 90 }, { 37, 93 }, { 55, 95 }, { 90, 97 }, { 132, 99 },
-      { 200, 101 }, { 315, 103 }, { 500, 105 }, { 1000, 108 }, { 5000, 113 }, { 10000, 116 } };
+      {1.1, 73}, {2.2, 78}, {5.5, 83}, {11, 87}, {22, 90}, {37, 93}, {55, 95}, {90, 97}, {132, 99}, {200, 101},
+      {315, 103}, {500, 105}, {1000, 108}, {5000, 113}, {10000, 116}};
 
   // ============================================================================
   // ISO 10816-3 Vibration Severity Zones

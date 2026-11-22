@@ -209,7 +209,11 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
     thermoPropertyModelName = "SRK-CPA-EoS-AndersonReduced";
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkCPAandersonReduced clone() {
     PhaseSrkCPAandersonReduced clonedPhase = null;
@@ -245,6 +249,7 @@ public class PhaseSrkCPAandersonReduced extends PhaseSrkCPAs {
       clonedPhase.workOuterNs = 0;
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkCPAandersonReduced", ex);
     }
     return clonedPhase;
   }

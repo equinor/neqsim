@@ -1,7 +1,9 @@
 package neqsim.process.equipment.pipeline;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+import static neqsim.util.util.ArrayUtils.copyMatrixArrayOrEmpty;
+
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import com.google.gson.GsonBuilder;
@@ -37,6 +39,8 @@ public final class TwoFluidComponentConservationReport implements Serializable {
   private final double[] finalInventoryKg;
   private final double[] inletBoundaryMassKg;
   private final double[] outletBoundaryMassKg;
+  private final double[][] inletBoundaryPhaseMassKg;
+  private final double[][] outletBoundaryPhaseMassKg;
   private final double[] inventoryResidualKg;
   private final double[] relativeInventoryResidual;
   private final double maximumRelativeInventoryResidual;
@@ -71,6 +75,31 @@ public final class TwoFluidComponentConservationReport implements Serializable {
       double maximumInterphaseTransferResidualKg, double[][][] phaseMassFractionProfile, double minimumMassFraction,
       double maximumMassFraction, double maximumMassFractionSumError, double maximumPhaseMassSynchronizationErrorKg,
       double interphaseLatentHeatEnergyJ, boolean converged, String message) {
+    this(elapsedTimeSeconds, acceptedSubsteps, componentNames, initialInventoryKg, finalInventoryKg,
+        inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
+        maximumRelativeInventoryResidual, finalPhaseInventoryKg, interphaseTransferKg,
+        maximumInterphaseTransferResidualKg, phaseMassFractionProfile, minimumMassFraction, maximumMassFraction,
+        maximumMassFractionSumError, maximumPhaseMassSynchronizationErrorKg, interphaseLatentHeatEnergyJ,
+        legacyPhaseBoundaryMass(inletBoundaryMassKg), legacyPhaseBoundaryMass(outletBoundaryMassKg), converged,
+        message);
+  }
+
+  /**
+   * Create an immutable component-conservation snapshot with phase-resolved boundary transfers.
+   *
+   * @param inletBoundaryPhaseMassKg signed inlet component transfers in gas/oil/water order, kg
+   * @param outletBoundaryPhaseMassKg signed outlet component transfers in gas/oil/water order, kg
+   * @throws IllegalArgumentException if names or array dimensions are inconsistent, required numeric values are
+   * non-finite, or elapsed time/substep count is negative
+   */
+  public TwoFluidComponentConservationReport(double elapsedTimeSeconds, int acceptedSubsteps, String[] componentNames,
+      double[] initialInventoryKg, double[] finalInventoryKg, double[] inletBoundaryMassKg,
+      double[] outletBoundaryMassKg, double[] inventoryResidualKg, double[] relativeInventoryResidual,
+      double maximumRelativeInventoryResidual, double[][] finalPhaseInventoryKg, double[][] interphaseTransferKg,
+      double maximumInterphaseTransferResidualKg, double[][][] phaseMassFractionProfile, double minimumMassFraction,
+      double maximumMassFraction, double maximumMassFractionSumError, double maximumPhaseMassSynchronizationErrorKg,
+      double interphaseLatentHeatEnergyJ, double[][] inletBoundaryPhaseMassKg, double[][] outletBoundaryPhaseMassKg,
+      boolean converged, String message) {
     this.elapsedTimeSeconds = requireFiniteNonNegative(elapsedTimeSeconds, "elapsedTimeSeconds");
     if (acceptedSubsteps < 0) {
       throw new IllegalArgumentException("acceptedSubsteps must be non-negative");
@@ -82,6 +111,12 @@ public final class TwoFluidComponentConservationReport implements Serializable {
     this.finalInventoryKg = requireComponentValues(finalInventoryKg, "finalInventoryKg", componentCount);
     this.inletBoundaryMassKg = requireComponentValues(inletBoundaryMassKg, "inletBoundaryMassKg", componentCount);
     this.outletBoundaryMassKg = requireComponentValues(outletBoundaryMassKg, "outletBoundaryMassKg", componentCount);
+    this.inletBoundaryPhaseMassKg = requirePhaseComponentValues(inletBoundaryPhaseMassKg, "inletBoundaryPhaseMassKg",
+        componentCount);
+    this.outletBoundaryPhaseMassKg = requirePhaseComponentValues(outletBoundaryPhaseMassKg, "outletBoundaryPhaseMassKg",
+        componentCount);
+    requireBoundaryPhaseTotals(this.inletBoundaryPhaseMassKg, this.inletBoundaryMassKg, "inletBoundaryPhaseMassKg");
+    requireBoundaryPhaseTotals(this.outletBoundaryPhaseMassKg, this.outletBoundaryMassKg, "outletBoundaryPhaseMassKg");
     this.inventoryResidualKg = requireComponentValues(inventoryResidualKg, "inventoryResidualKg", componentCount);
     this.relativeInventoryResidual = requireComponentValues(relativeInventoryResidual, "relativeInventoryResidual",
         componentCount);
@@ -120,37 +155,85 @@ public final class TwoFluidComponentConservationReport implements Serializable {
 
   /** @return deterministic component order */
   public String[] getComponentNames() {
-    return copy(componentNames);
+    return copyArrayOrEmpty(componentNames);
   }
 
   /** @return total initial component inventories in kg */
   public double[] getInitialInventoryKg() {
-    return copy(initialInventoryKg);
+    return copyArrayOrEmpty(initialInventoryKg);
   }
 
   /** @return total final component inventories in kg */
   public double[] getFinalInventoryKg() {
-    return copy(finalInventoryKg);
+    return copyArrayOrEmpty(finalInventoryKg);
   }
 
   /** @return integrated inlet component masses in kg */
   public double[] getInletBoundaryMassKg() {
-    return copy(inletBoundaryMassKg);
+    return copyArrayOrEmpty(inletBoundaryMassKg);
   }
 
   /** @return integrated outlet component masses in kg */
   public double[] getOutletBoundaryMassKg() {
-    return copy(outletBoundaryMassKg);
+    return copyArrayOrEmpty(outletBoundaryMassKg);
+  }
+
+  /**
+   * Get integrated inlet component transfers for one hydrodynamic phase.
+   *
+   * @param phase phase identity
+   * @return defensive component array in the report's deterministic component order, kg
+   */
+  public double[] getInletBoundaryMassKg(Phase phase) {
+    return copyArrayOrEmpty(inletBoundaryPhaseMassKg[requirePhase(phase).index]);
+  }
+
+  /**
+   * Get integrated outlet component transfers for one hydrodynamic phase.
+   *
+   * <p>
+   * Positive values leave through the downstream boundary. Negative values enter from the explicit downstream donor.
+   * Opposite signs between phases therefore identify phase-countercurrent boundary transport without collapsing it to a
+   * net mixture transfer.
+   * </p>
+   *
+   * @param phase phase identity
+   * @return defensive component array in the report's deterministic component order, kg
+   */
+  public double[] getOutletBoundaryMassKg(Phase phase) {
+    return copyArrayOrEmpty(outletBoundaryPhaseMassKg[requirePhase(phase).index]);
+  }
+
+  /**
+   * Get one phase-resolved inlet component transfer.
+   *
+   * @param phase phase identity
+   * @param componentName NeqSim component name
+   * @return signed transferred mass in kg
+   */
+  public double getInletBoundaryMassKg(Phase phase, String componentName) {
+    return inletBoundaryPhaseMassKg[requirePhase(phase).index][componentIndex(componentName)];
+  }
+
+  /**
+   * Get one phase-resolved outlet component transfer.
+   *
+   * @param phase phase identity
+   * @param componentName NeqSim component name
+   * @return signed transferred mass in kg
+   */
+  public double getOutletBoundaryMassKg(Phase phase, String componentName) {
+    return outletBoundaryPhaseMassKg[requirePhase(phase).index][componentIndex(componentName)];
   }
 
   /** @return total component residuals {@code final - initial - inlet + outlet} in kg */
   public double[] getInventoryResidualKg() {
-    return copy(inventoryResidualKg);
+    return copyArrayOrEmpty(inventoryResidualKg);
   }
 
   /** @return defensive relative component-residual array */
   public double[] getRelativeInventoryResidual() {
-    return copy(relativeInventoryResidual);
+    return copyArrayOrEmpty(relativeInventoryResidual);
   }
 
   /** @return maximum absolute relative total-component residual */
@@ -197,7 +280,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
    * @return defensive component-by-cell profile
    */
   public double[][] getPhaseMassFractionProfile(Phase phase) {
-    return copy(phaseMassFractionProfile[phase.index]);
+    return copyMatrixArrayOrEmpty(phaseMassFractionProfile[phase.index]);
   }
 
   /**
@@ -208,7 +291,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
    * @return defensive cell mass-fraction profile
    */
   public double[] getPhaseMassFractionProfile(Phase phase, String componentName) {
-    return copy(phaseMassFractionProfile[phase.index][componentIndex(componentName)]);
+    return copyArrayOrEmpty(phaseMassFractionProfile[phase.index][componentIndex(componentName)]);
   }
 
   /** @return minimum non-empty-phase component mass fraction */
@@ -277,30 +360,42 @@ public final class TwoFluidComponentConservationReport implements Serializable {
     throw new IllegalArgumentException("Component '" + componentName + "' is not present in this report");
   }
 
-  private static String[] copy(String[] values) {
-    return values == null ? new String[0] : Arrays.copyOf(values, values.length);
+  private static Phase requirePhase(Phase phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("phase cannot be null");
+    }
+    return phase;
   }
 
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static double[][] copy(double[][] values) {
-    if (values == null) {
-      return new double[0][0];
+  private static double[][] legacyPhaseBoundaryMass(double[] totals) {
+    if (totals == null) {
+      return null;
     }
-    double[][] result = new double[values.length][];
-    for (int index = 0; index < values.length; index++) {
-      result[index] = copy(values[index]);
-    }
+    double[][] result = new double[PHASE_COUNT][totals.length];
+    result[Phase.GAS.index] = copyArrayOrEmpty(totals);
     return result;
+  }
+
+  private static void requireBoundaryPhaseTotals(double[][] phaseValues, double[] totals, String name) {
+    for (int component = 0; component < totals.length; component++) {
+      double phaseSum = 0.0;
+      double scale = Math.abs(totals[component]);
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        phaseSum += phaseValues[phase][component];
+        scale = Math.max(scale, Math.abs(phaseValues[phase][component]));
+      }
+      double tolerance = 32.0 * Math.ulp(Math.max(1.0, scale));
+      if (Math.abs(phaseSum - totals[component]) > tolerance) {
+        throw new IllegalArgumentException(name + " rows must sum to the total boundary component transfers");
+      }
+    }
   }
 
   private static String[] requireComponentNames(String[] values) {
     if (values == null || values.length == 0) {
       throw new IllegalArgumentException("componentNames must contain at least one name");
     }
-    String[] result = copy(values);
+    String[] result = copyArrayOrEmpty(values);
     Set<String> uniqueNames = new HashSet<String>();
     for (String value : result) {
       if (value == null || value.trim().isEmpty()) {
@@ -317,7 +412,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
     if (values == null || values.length != componentCount) {
       throw new IllegalArgumentException(name + " must contain one value per component");
     }
-    double[] result = copy(values);
+    double[] result = copyArrayOrEmpty(values);
     for (double value : result) {
       requireFinite(value, name);
     }
@@ -356,7 +451,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
         } else if (profile.length != cellCount) {
           throw new IllegalArgumentException("phaseMassFractionProfile must use one common cell count");
         }
-        result[phase][component] = copy(profile);
+        result[phase][component] = copyArrayOrEmpty(profile);
         for (double value : result[phase][component]) {
           requireFinite(value, "phaseMassFractionProfile");
         }

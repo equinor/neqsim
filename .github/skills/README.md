@@ -10,6 +10,12 @@ prompts skills folder; use `--vscode-scope workspace` only when a maintainer int
 generated workspace copy. PaperLab keeps its full canonical library under `neqsim-paperlab/skills/`;
 only the `@paperlab` gateway's public skills are exported for VS Code by default.
 
+## Code Maintenance
+
+Use `neqsim-code-health` to assess debt, `neqsim-safe-refactoring` to implement
+a bounded change, and `neqsim-code-review` for independent source review.
+See [the maintenance guide](../../docs/development/CODE_HEALTH.md).
+
 ## OpenAI Codex discovery without duplicate skills
 
 The repository tracks `.agents/skills` as a symbolic link to this directory. OpenAI Codex scans
@@ -21,7 +27,7 @@ skill tree or edit a second copy. The structural lint verifies both the link tar
 directory:
 
 ```bash
-python devtools/verify_skills_agents.py
+uv run --project devtools --locked devtools/verify_skills_agents.py
 git ls-files -s .agents/skills  # mode must be 120000
 ```
 
@@ -49,7 +55,7 @@ Codex repository path and symbolic-link behavior.
 Two complementary mechanisms exist:
 
 1. **Semantic search (preferred for new tasks).** Run
-   `python devtools/skill_search.py "<your task title>" --top 5`. The script
+   `uv run --project devtools --locked devtools/skill_search.py "<your task title>" --top 5`. The script
    ranks every SKILL.md by TF-IDF cosine similarity over the front-matter
    `description`. Add or sharpen a skill's `description` to improve recall.
 2. **Keyword index (`skill-index.json`).** A curated short-list mapping
@@ -58,7 +64,7 @@ Two complementary mechanisms exist:
    skills do not need exhaustive keyword entries — rely on `skill_search.py`
    to surface them.
 
-CI (`.github/workflows/skills_agents_lint.yml`) verifies that every skill has
+CI (`.github/workflows/ai-skills-and-agents-lint.yml`) verifies that every skill has
 valid YAML front-matter and that every entry in `skill-index.json` points to
 a skill that exists.
 
@@ -76,15 +82,18 @@ and point the tool at `~/.neqsim/export/generic/manifest.json` or the generated
 | `neqsim-api-patterns`                              | Core NeqSim API patterns — EOS selection, fluid creation, flash, property access, equipment setup                                             | All agents                                  |
 | `neqsim-capability-map`                            | Structured inventory of NeqSim capabilities by engineering discipline, gap identification                                                     | capability.scout, solve.task                |
 | `neqsim-ccs-hydrogen`                              | CO2 capture/transport/storage and hydrogen systems — phase behavior, impurity management, injection wells                                     | ccs.hydrogen                                |
+| `neqsim-choke-valve-practice`                      | Choke Cv/orifice/Cd conversion, operating-range, clean-up, sand and collapse-capacity screening, bean-up, Cv condition monitoring             | choke-valve, process.model, solve.task      |
 | `neqsim-controllability-operability`               | Operability — operating envelope mapping, turndown, control-valve sizing (ISA-75), startup/shutdown sequencing, recycle stability             | control.system, process.model, solve.task   |
 | `neqsim-distillation-design`                       | Distillation column design — solver selection, feed tray rules, convergence, internals sizing                                                 | process.model, solve.task                   |
 | `neqsim-dynamic-simulation`                        | Dynamic/transient simulation — runTransient, PID controllers, transmitters, depressurization                                                  | control.system, safety.depressuring         |
 | `neqsim-electrolyte-systems`                       | Electrolyte/brine chemistry — CPA electrolyte EOS, ions, scale risk, MEG/DEG injection                                                        | thermo.fluid, flow.assurance                |
+| `neqsim-pvt-fluid-study-report`                   | Complete sample-to-fluid PVT study report — QC, characterization, experiments, bounded calibration, hold-out validation, full parameters/BIPs and verified E300 handover | pvt-fluid-study-report, pvt-simulation |
 | `neqsim-eos-regression`                            | EOS parameter regression — kij tuning, PVT matching (CME, CVD), C7+ characterization                                                          | pvt.simulation, thermo.fluid                |
 | `neqsim-equipment-cost-estimation`                 | Equipment-level CAPEX — Turton/Peters/Ulrich correlations, CEPCI escalation, AACE class, bare-module → grass-roots stackup                    | solve.task, mechanical.design, field.development |
 | `neqsim-field-development`                         | Field development workflows — concept selection, tieback analysis, production forecasting, lifecycle management                               | field.development                           |
 | `neqsim-field-economics`                           | Oil & gas economics — NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation, Monte Carlo                                      | field.development, solve.task               |
 | `neqsim-flow-assurance`                            | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing                                                   | flow.assurance                              |
+| `neqsim-future-operation-study`                    | Future-operation synthesis — per-year strategy, equipment modification register, benchmark and design-basis deviation register                | field-development                           |
 | `neqsim-water-hammer`                              | Water/liquid hammer screening — fast valve closure, pump trip, STID route geometry, tagreader event windows, MCP runWaterHammer               | flow.assurance, process.model, plant.data   |
 | `neqsim-heat-integration`                          | Pinch analysis & HEN — composite curves, ΔTmin, MER, grand composite, retrofit diagnostics                                                    | process.model, solve.task                   |
 | `neqsim-input-validation`                          | Pre-simulation input validation — T, P, composition checks, component name verification                                                       | All simulation agents                       |
@@ -94,6 +103,11 @@ and point the tool at `~/.neqsim/export/generic/manifest.json` or the generated
 | `neqsim-pdf-ocr`                                   | OCR text extraction from scanned PDFs and P&IDs — OCRmyPDF, Tesseract, pytesseract, tag-pattern post-filtering                                | technical.reader, solve.task                |
 | `neqsim-physics-explanations`                      | Plain-language explanations of engineering phenomena for educational context                                                                  | All agents (educational mode)               |
 | `neqsim-plant-data`                                | Plant historian integration — tagreader API (PI/IP.21), tag mapping, digital twin loops, data quality                                         | plant.data                                  |
+| `neqsim-plant-layout-study`                        | Physical plant-layout workflow — onshore/offshore basis, process import, checked alternatives and report                                      | plant-layout-study                          |
+| `neqsim-plant-layout-geometry`                     | Explicit equipment/envelope geometry, orthogonal placement, 3D clash and access-reservation screening                                         | plant-layout-study, plant-layout-review     |
+| `neqsim-plant-layout-delivery`                     | Plot/deck drawings, coordinate/check schedules, optional CAD exchange and source-traceable report verification                                | plant-layout-study, plant-layout-review     |
+| `neqsim-pfd-layout-review`                         | Mandatory deterministic layout gate for every PFD/BFD/P&ID sketch/flow diagram (`neqsim pfd-check`, `PfdDiagram` builder), visual sign-off     | pfd-layout-review, process-study-report, flow-assurance-study-report, surf-design-study, utilities-design-report |
+| `professional-process-overview`                    | One-sheet A3 process flow diagram (colour + mono, ISO 5457/7200/10628-2 conventions, embedded fonts) and 16:9 slide from a NeqSim model (`neqsim process-overview`), detail sheets, structured graph, validation | process-study-report, solve.task, pfd-layout-review |
 | `neqsim-pid-process-operations`                    | P&ID-to-NeqSim operations — symbol interpretation, process graph extraction, tagreader mapping, valve-action steady/dynamic studies           | technical.reader, extract.process, plant.data, process.model, control.system, solve.task |
 | `neqsim-model-calibration-and-data-reconciliation` | Digital twin calibration and data reconciliation — bounded parameter tuning, steady-state windowing, residual diagnostics, validation metrics | plant.data, solve.task                      |
 | `neqsim-power-generation`                          | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration                                                       | process.model, solve.task                   |
@@ -105,10 +119,10 @@ and point the tool at `~/.neqsim/export/generic/manifest.json` or the generated
 | `neqsim-regression-baselines`                      | Regression baseline management — creating fixtures, regression tests, detecting accuracy drift                                                | neqsim.test                                 |
 | `neqsim-relief-flare-network`                      | Relief & flare design — PSV sizing API 520/521, fire heat input, flare radiation API 537, header back-pressure & Mach                         | safety.depressuring, mechanical.design      |
 | `neqsim-standards-lookup`                          | Industry standards lookup — equipment-to-standards mapping, CSV database queries, compliance tracking                                         | mechanical.design, solve.task, gas.quality  |
-| `neqsim-stid-retriever`                            | Engineering document retrieval — local dirs, manual upload, pluggable backends, relevance filtering                                           | technical.reader, solve.task                |
 | `neqsim-subsea-and-wells`                          | Subsea systems and well design — SURF cost estimation, casing design, tieback analysis                                                        | field.development, mechanical.design        |
 | `neqsim-technical-document-reading`                | Technical document reading — PDF/Word/Excel extraction, P&ID topology, vendor datasheets, image analysis                                      | technical.reader                            |
 | `neqsim-troubleshooting`                           | Troubleshooting playbook — flash non-convergence, recycle divergence, zero values, phase ID issues                                            | All simulation agents                       |
+| `neqsim-vfp-lift-curves`                           | VFPPROD/VFPINJ lift curve tables for Eclipse and OPM Flow — VfpTableBuilder, tubing/flowline/full-system lift models, rate cap, validation  | field.development, process.model            |
 | `neqsim-unisim-reader`                             | UniSim/HYSYS conversion — COM reader, component/EOS mapping, topology reconstruction, sub-flowsheets                                          | unisim.reader                               |
 | `neqsim-utilities-specification`                   | Utilities — steam HP/MP/LP, cooling water, instrument air, fuel gas, N₂, demin, refrigeration sizing & specs                                  | process.model, solve.task                   |
 
@@ -163,8 +177,9 @@ Every code example must work against NeqSim's actual API. Test by:
 **4. Register the skill:**
 
 - Add an entry to the **Skill Index** table in this README
-- Add a `<skill>` entry in `.github/copilot-instructions.md` under the `<skills>` section
-- Add a row to the **Skills Reference** table in `AGENTS.md`
+- Do **not** add it to `AGENTS.md` or `.github/copilot-instructions.md`: those are resent on
+  every model call and stay lean. VS Code lists skills from their frontmatter, and
+  `devtools/skill_search.py` indexes them; reference the skill from the agents that use it.
 
 **5. Submit a PR:**
 
@@ -316,7 +331,8 @@ neqsim skill list                          # community skills (catalog)
 1. Run `neqsim new-skill "name"` to scaffold
 2. Edit `.github/skills/neqsim-<name>/SKILL.md`
 3. Test all code patterns against the actual API
-4. Register in `copilot-instructions.md`, `AGENTS.md`, and this README
+4. Register in this README and in the agents that load it (not in `AGENTS.md` /
+   `copilot-instructions.md`, which are kept lean)
 5. Submit PR with `[Skill]` prefix
 
 ### Skill File Format
@@ -376,7 +392,7 @@ Run the CI cross-reference script to verify all skill references in agent files
 resolve to actual skill folders:
 
 ```bash
-python devtools/verify_agent_skill_refs.py
+uv run --project devtools --locked devtools/verify_agent_skill_refs.py
 ```
 
 This checks that:

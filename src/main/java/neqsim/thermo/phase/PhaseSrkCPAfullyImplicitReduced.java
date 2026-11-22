@@ -139,7 +139,11 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     thermoPropertyModelName = "SRK-CPA-EoS-FullyImplicit-Reduced";
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkCPAfullyImplicitReduced clone() {
     PhaseSrkCPAfullyImplicitReduced clonedPhase = null;
@@ -169,6 +173,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       clonedPhase.workNewtonNs = 0;
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkCPAfullyImplicitReduced", ex);
     }
     return clonedPhase;
   }

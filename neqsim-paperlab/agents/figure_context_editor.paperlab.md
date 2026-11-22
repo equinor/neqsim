@@ -19,7 +19,7 @@ You integrate approved figure context into `chapter.md` files.
 Load first:
 
 - `neqsim-paperlab/skills/figure-discussion/SKILL.md`
-- `neqsim-paperlab/skills/technical_figure_understanding/SKILL.md`
+- `neqsim-paperlab/skills/technical-figure-understanding/SKILL.md`
 
 ## Workflow
 

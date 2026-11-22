@@ -14,12 +14,13 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.chemicalreactions.chemicalequilibrium.ChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
 import neqsim.chemicalreactions.kinetics.Kinetics;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -33,6 +34,8 @@ import neqsim.thermo.system.SystemInterface;
 public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Dense linear algebra used by the element-balance calculation. */
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
 
@@ -60,6 +63,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   double[] bVector;
   int phase = 1;
   double[] chemRefPot;
+  /** LP estimate from the current initialization attempt; never reusable across phases or failed attempts. */
   double[] newMoles;
   double inertMoles = 0.0;
   ChemicalEquilibrium solver;
@@ -139,6 +143,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     chemRefPot = calcChemRefPot(phaseNum);
     elements = getAllElements();
     initCalc = null;
+    newMoles = null;
     Amatrix = null;
     try {
       initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
@@ -433,10 +438,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * @return element inventories followed by the reactive charge needed for total electroneutrality
    */
   public double[] calcBVector() {
-    Matrix tempA = new Matrix(Amatrix);
-    Matrix tempB = new Matrix(nVector, 1);
-    Matrix tempN = tempA.times(tempB.transpose()).transpose();
-    double[] conservedQuantities = tempN.getArray()[0];
+    double[] conservedQuantities = ALGEBRA.multiply(Amatrix, nVector);
     int reactivePhase = getReactivePhaseIndex();
     if (reactivePhase < 0) {
       reactivePhase = 0;
@@ -546,8 +548,8 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     for (int i = 0; i < components.length; i++) {
       double currentMoles = system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
           .getNumberOfMolesInPhase();
-      double targetMoles = Math.max(newMoles[i], 1e-45); // Ensure small positive value for
-      // numerical stability
+      // Keep the positive LP seed representable when applied as a delta to the current inventory.
+      double targetMoles = Math.max(newMoles[i], Math.max(1.0e-45, 2.0 * Math.ulp(currentMoles)));
       double delta = targetMoles - currentMoles;
 
       // Use addMolesChemReac(component, dn, 0) to ONLY change phase moles
@@ -620,7 +622,14 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     nVector = calcNVector();
     bVector = calcBVector();
 
+    if (getMaximumAbsoluteReactionLogResidual() <= REACTION_LOG_RESIDUAL_TOLERANCE
+        && Math.abs(getReactivePhaseChargeMoles()) <= REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES
+        && getMaximumAbsoluteElementBalanceResidual() <= ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES) {
+      return true;
+    }
+
     if (firsttime || type == 0) {
+      newMoles = null;
       try {
         calcInertMoles(phaseNum);
         if (initCalc != null) {

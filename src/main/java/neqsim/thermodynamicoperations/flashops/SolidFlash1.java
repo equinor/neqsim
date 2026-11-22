@@ -3,13 +3,20 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * SolidFlash1 class.
+ * Temperature-pressure flash with fluid phases and one pure solid phase.
+ *
+ * <p>
+ * The component solid-check flags select the allowed solids. Simultaneous precipitation of multiple selected components
+ * is unsupported because the equilibrium equations and phase storage represent one pure solid.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,6 +26,7 @@ public class SolidFlash1 extends TPflash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SolidFlash1.class);
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -209,7 +217,8 @@ public class SolidFlash1 extends TPflash {
     double[] oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
     // double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
     int iter = 0;
-    Matrix ans = new Matrix(system.getNumberOfPhases() - solidsNumber, 1);
+    double[] ans = new double[system.getNumberOfPhases() - solidsNumber];
+    double stepNorm;
     double Qold = 0;
     double betaReductionFactor = 1.0;
     double Qnew = 0;
@@ -225,16 +234,12 @@ public class SolidFlash1 extends TPflash {
         oldBeta[k] = system.getBeta(k);
       }
 
-      Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
-      Matrix betaMatrixOld = new Matrix(oldBeta, 1).transpose();
-      Matrix betaMatrixTemp = new Matrix(oldBeta, 1).transpose();
-      Matrix dQM = new Matrix(dQdbeta, 1);
-      Matrix dQdBM = new Matrix(Qmatrix);
+      double[] betaMatrix = oldBeta.clone();
 
       try {
-        ans = dQdBM.solve(dQM.transpose());
+        ans = ALGEBRA.solve(Qmatrix, dQdbeta);
       } catch (Exception ex) {
-        // ans = dQdBM.solve(dQM.transpose());
+        logger.debug("Solid-fraction solve failed; retaining the previous step", ex);
       }
       // dQdBM.print(10, 10);
       // logger.info("BetaStep: ");
@@ -243,7 +248,7 @@ public class SolidFlash1 extends TPflash {
       betaReductionFactor = 1.0;
       // logger.info("Oldbeta befor update");
       // betaMatrix.print(10, 10);
-      betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
+      double[] betaMatrixTemp = ALGEBRA.subtract(betaMatrix, ALGEBRA.scale(ans, betaReductionFactor));
       // logger.info("Beta before multiplying reduction Factoer");
       // betaMatrixTemp.print(10, 2);
 
@@ -251,28 +256,28 @@ public class SolidFlash1 extends TPflash {
       int minBetaTemIndex = 0;
 
       for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
-        if (betaMatrixTemp.get(k, 0) * FluidPhaseActiveDescriptors[k] < minBetaTem) {
-          minBetaTem = betaMatrixTemp.get(k, 0);
+        if (betaMatrixTemp[k] * FluidPhaseActiveDescriptors[k] < minBetaTem) {
+          minBetaTem = betaMatrixTemp[k];
           minBetaTemIndex = k;
         }
       }
 
       for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
         if ((minBetaTem < -1.0E-10)) {
-          betaReductionFactor = 1.0 + betaMatrixTemp.get(minBetaTemIndex, 0) / ans.get(minBetaTemIndex, 0);
+          betaReductionFactor = 1.0 + betaMatrixTemp[minBetaTemIndex] / ans[minBetaTemIndex];
         }
       }
       // logger.info("Reduction Factor " + betaReductionFactor);
-      betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
+      betaMatrixTemp = ALGEBRA.subtract(betaMatrix, ALGEBRA.scale(ans, betaReductionFactor));
 
       // logger.info("Beta after multiplying reduction Factoer");
       // betaMatrixTemp.print(10, 2);
 
-      betaMatrixOld = betaMatrix.copy();
-      betaMatrix = betaMatrixTemp.copy();
+      double[] betaMatrixOld = betaMatrix.clone();
+      betaMatrix = betaMatrixTemp.clone();
       boolean deactivatedPhase = false;
       for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
-        double currBeta = betaMatrix.get(k, 0);
+        double currBeta = betaMatrix[k];
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           // This used to be verified with abs(betamatrix.get(i,0)) < 1.0e-10
@@ -295,10 +300,10 @@ public class SolidFlash1 extends TPflash {
         do {
           iter2++;
           betaReductionFactor /= 2.0;
-          betaMatrixTemp = betaMatrixOld.minus(ans.times(betaReductionFactor));
+          betaMatrixTemp = ALGEBRA.subtract(betaMatrixOld, ALGEBRA.scale(ans, betaReductionFactor));
           betaMatrix = betaMatrixTemp;
           for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
-            system.setBeta(i, betaMatrix.get(i, 0));
+            system.setBeta(i, betaMatrix[i]);
             if (Math.abs(system.getBeta(i)) < 1.0e-10) {
               FluidPhaseActiveDescriptors[i] = 0;
             } else {
@@ -308,7 +313,11 @@ public class SolidFlash1 extends TPflash {
           Qnew = calcQ();
         } while (Qnew > Qold + 1.0e-10 && iter2 < 5);
       }
-    } while ((Math.abs(ans.norm1()) > 1e-7 && iter < 100) || iter < 2);
+      stepNorm = 0.0;
+      for (double value : ans) {
+        stepNorm += Math.abs(value);
+      }
+    } while ((Math.abs(stepNorm) > 1e-7 && iter < 100) || iter < 2);
   }
 
   /**
@@ -360,17 +369,38 @@ public class SolidFlash1 extends TPflash {
   @Override
   public void run() {
     int iter = 0;
+    solidsNumber = 0;
+    totalSolidFrac = 0.0;
 
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    if (!system.doSolidPhaseCheck()) {
+      system.setSolidPhaseCheck(true);
+    }
+    boolean[] selectedSolids = new boolean[system.getNumberOfComponents()];
+    for (int i = 0; i < system.getNumberOfComponents(); i++) {
+      selectedSolids[i] = system.getPhase(0).getComponent(i).doSolidCheck();
+    }
+    // Nested multiphase refinements also inspect the system flag, so the operation flag alone is insufficient.
     system.setSolidPhaseCheck(false);
-    ops.TPflash(false);
+    try {
+      ops.TPflash(false);
+    } finally {
+      system.setSolidPhaseCheck(true);
+      // Newly activated phase buffers must inherit the same selection as the feed phase.
+      for (PhaseInterface phase : system.getPhases()) {
+        if (phase != null) {
+          for (int i = 0; i < selectedSolids.length; i++) {
+            phase.getComponent(i).setSolidCheck(selectedSolids[i]);
+          }
+        }
+      }
+    }
     // system.display();
     FluidPhaseActiveDescriptors = new int[system.getNumberOfPhases()];
     for (int i = 0; i < FluidPhaseActiveDescriptors.length; i++) {
       FluidPhaseActiveDescriptors[i] = 1;
     }
 
-    system.setSolidPhaseCheck(true);
     if (checkAndAddSolidPhase() == 0) {
       system.init(1);
       return;
@@ -407,57 +437,66 @@ public class SolidFlash1 extends TPflash {
        */
     } while (Math.abs((beta - oldBeta) / beta) > 1e-6 && iter < 20);
 
-    for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
+    for (int i = system.getNumberOfPhases() - solidsNumber - 1; i >= 0; i--) {
       if (FluidPhaseActiveDescriptors[i] == 0) {
+        int removedPhaseIndex = system.getPhaseIndex(i);
         system.deleteFluidPhase(i);
+        // Keep the removed buffer addressable by phaseToSystem and subsequent flashes.
+        system.setPhaseIndex(system.getNumberOfPhases(), removedPhaseIndex);
       }
     }
     system.init(1);
   }
 
   /**
-   * checkAndAddSolidPhase.
+   * Check the selected components after a fluid-only flash and add a single stable pure solid.
    *
-   * @return a int
+   * @return the number of solid phases added, zero or one
+   * @throws UnsupportedOperationException if multiple selected components are predicted to precipitate
    */
   public int checkAndAddSolidPhase() {
-    double[] solidCandidate = new double[system.getPhases()[0].getNumberOfComponents()];
-
+    int candidateIndex = -1;
+    double candidateFraction = 0.0;
     for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-      if (system.getTemperature() > system.getPhase(0).getComponent(k).getTriplePointTemperature()) {
-        solidCandidate[k] = 0;
-      } else {
-        solidCandidate[k] = system.getPhase(0).getComponent(k).getz();
-        system.getPhases()[3].getComponent(k).setx(1.0);
-        for (int i = 0; i < system.getNumberOfPhases(); i++) {
-          // double e = system.getBeta(i)*
-          // system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
-          solidCandidate[k] -= system.getBeta(i) * system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3])
-              / system.getPhase(i).getComponent(k).getFugacityCoefficient();
+      if (!system.getPhase(0).getComponent(k).doSolidCheck()
+          || system.getTemperature() > system.getPhase(0).getComponent(k).getTriplePointTemperature()) {
+        continue;
+      }
+      // Each stability trial uses a normalized pure-component reference phase.
+      // Keep non-candidate solid components at trace fractions during fugacity evaluation.
+      for (int j = 0; j < system.getNumberOfComponents(); j++) {
+        system.getPhases()[3].getComponent(j).setx(j == k ? 1.0 : 1e-50);
+      }
+      double fraction = system.getPhase(0).getComponent(k).getz();
+      double solidFugacityCoefficient = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
+      for (int i = 0; i < system.getNumberOfPhases(); i++) {
+        fraction -= system.getBeta(i) * solidFugacityCoefficient
+            / system.getPhase(i).getComponent(k).getFugacityCoefficient();
+      }
+      if (fraction > 1e-20) {
+        if (candidateIndex >= 0) {
+          throw new UnsupportedOperationException("TPSolidflash does not support multiple solid phases: "
+              + system.getPhase(0).getComponent(candidateIndex).getName() + " and "
+              + system.getPhase(0).getComponent(k).getName() + ". Select a single solid component.");
         }
+        candidateIndex = k;
+        candidateFraction = fraction;
       }
     }
-    int oldSolidsNumber = solidsNumber;
-    solidsNumber = 0;
-    totalSolidFrac = 0;
-    for (int i = 0; i < solidCandidate.length; i++) {
-      if (solidCandidate[i] > 1e-20) {
-        system.getPhases()[3].getComponent(i).setx(1.0);
-        solidIndex = i;
-        solidsNumber++;
-        totalSolidFrac += solidCandidate[i];
-      } else {
-        system.getPhases()[3].getComponent(i).setx(0.0);
-      }
-    }
-    for (int i = oldSolidsNumber; i < solidsNumber; i++) {
-      system.setNumberOfPhases(system.getNumberOfPhases() + 1);
-      system.setPhaseIndex(system.getNumberOfPhases() - 1, 3);
-      system.setBeta(system.getNumberOfPhases() - 1, solidCandidate[solidIndex]);
-      // system.setBeta(system.getNumberOfPhases() - 2,
-      // system.getBeta(system.getNumberOfPhases() - 2) - solidCandidate[solidIndex]);
+    if (candidateIndex < 0) {
+      return 0;
     }
 
+    solidIndex = candidateIndex;
+    solidsNumber = 1;
+    totalSolidFrac = candidateFraction;
+    for (int i = 0; i < system.getNumberOfComponents(); i++) {
+      system.getPhases()[3].getComponent(i).setz(system.getPhase(0).getComponent(i).getz());
+      system.getPhases()[3].getComponent(i).setx(i == solidIndex ? 1.0 : 1e-50);
+    }
+    system.setNumberOfPhases(system.getNumberOfPhases() + 1);
+    system.setPhaseIndex(system.getNumberOfPhases() - 1, 3);
+    system.setBeta(system.getNumberOfPhases() - 1, candidateFraction);
     return solidsNumber;
   }
 

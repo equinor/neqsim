@@ -7,6 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -181,6 +185,93 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
+   * Reproduce the C6–C10+ report with nitrogen and H2S interleaved among nonzero species.
+   *
+   * @param includeZeros whether to register the two zero-amount species
+   * @return caller-owned fluid with classic EOS interactions
+   */
+  private static SystemInterface characterizedFeed(boolean includeZeros) {
+    SystemInterface fluid = new SystemSrkEos(353.15, 50.0);
+    String[] names = {"nitrogen", "CO2", "H2S", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane"};
+    double[] amounts = {0.0, 1.005, 0.0, 24.62, 2.704, 2.706, 1.309, 2.031, 2.047, 1.49};
+    for (int i = 0; i < names.length; i++) {
+      if (includeZeros || amounts[i] > 0.0) {
+        fluid.addComponent(names[i], amounts[i]);
+      }
+    }
+    fluid.addTBPfraction("C6", 3.176, 0.0853, 0.6649);
+    fluid.addTBPfraction("C7", 5.331, 0.0932, 0.7266);
+    fluid.addTBPfraction("C8", 7.796, 0.1051, 0.7607);
+    fluid.addTBPfraction("C9", 5.179, 0.1194, 0.7812);
+    fluid.addPlusFraction("C10+", 40.616, 0.268, 0.865);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    fluid.useVolumeCorrection(true);
+    return fluid;
+  }
+
+  /** Compare physical coordinates and both extrema, including all NaN branch breaks. */
+  @Test
+  void interleavedZeroSpeciesLeaveCharacterizedEnvelopeInvariant() {
+    SystemInterface padded = characterizedFeed(true);
+    SystemInterface reference = characterizedFeed(false);
+    ThermodynamicOperations actual = new ThermodynamicOperations(padded);
+    ThermodynamicOperations expected = new ThermodynamicOperations(reference);
+    actual.TPflash();
+    expected.TPflash();
+    padded.initProperties();
+    reference.initProperties();
+    actual.calcPTphaseEnvelope();
+    expected.calcPTphaseEnvelope();
+    for (String key : new String[] {"dewT", "dewP", "bubT", "bubP", "cricondenbar", "cricondentherm"}) {
+      assertContainsFinitePointsAndNoInfinities(expected.get(key));
+      assertArrayEquals(expected.get(key), actual.get(key), 1e-6, key);
+    }
+    assertEquals(15, padded.getNumberOfComponents());
+    assertEquals(0.0, padded.getComponent("nitrogen").getNumberOfmoles(), 0.0);
+    assertEquals(0.0, padded.getComponent("H2S").getNumberOfmoles(), 0.0);
+  }
+
+  /** Each phase retains its fitted pair value and the original fluid owns its full-size table. */
+  @Test
+  void removingSpeciesFromCloneRetainsPhaseSpecificFittedPairs() {
+    SystemInterface original = new SystemPrEos(300.0, 50.0);
+    original.addComponent("nitrogen", 0.0);
+    original.addComponent("CO2", 0.1);
+    original.addComponent("H2S", 0.0);
+    original.addComponent("methane", 0.9);
+    original.setMixingRule("classic");
+    int originalMethane = original.getComponent("methane").getComponentNumber();
+    int originalCo2 = original.getComponent("CO2").getComponentNumber();
+    // Snapshot the phase-specific calibration before cloning.
+    ((PhaseEosInterface) original.getPhase(0)).getEosMixingRule().setBinaryInteractionParameter(originalMethane,
+        originalCo2, 0.131);
+    ((PhaseEosInterface) original.getPhase(1)).getEosMixingRule().setBinaryInteractionParameter(originalMethane,
+        originalCo2, 0.179);
+    double[] expected = new double[original.getMaxNumberOfPhases()];
+    for (int p = 0; p < expected.length; p++) {
+      expected[p] = ((PhaseEosInterface) original.getPhase(p)).getEosMixingRule()
+          .getBinaryInteractionParameter(originalMethane, originalCo2);
+    }
+    assertEquals(0.131, expected[0], 0.0);
+    assertEquals(0.179, expected[1], 0.0);
+    SystemInterface reduced = original.clone();
+    reduced.removeComponent("nitrogen");
+    reduced.removeComponent("H2S");
+    for (int p = 0; p < original.getMaxNumberOfPhases(); p++) {
+      PhaseEosInterface phase = (PhaseEosInterface) reduced.getPhase(p);
+      int methane = reduced.getComponent("methane").getComponentNumber();
+      int co2 = reduced.getComponent("CO2").getComponentNumber();
+      assertEquals(expected[p], phase.getEosMixingRule().getBinaryInteractionParameter(methane, co2), 0.0);
+      assertEquals(reduced.getNumberOfComponents(), phase.getEosMixingRule().getBinaryInteractionParameters().length);
+      phase.getEosMixingRule().setBinaryInteractionParameter(methane, co2, -0.07);
+      assertEquals(expected[p], ((PhaseEosInterface) original.getPhase(p)).getEosMixingRule()
+          .getBinaryInteractionParameter(originalMethane, originalCo2), 0.0);
+    }
+  }
+
+  /**
    * Assert that an array contains finite physical points and no infinities. NaN values are allowed as branch-break
    * sentinels.
    *
@@ -309,9 +400,9 @@ public class PTPhaseEnvelopeMichelsenTest {
     testOps.calcPTphaseEnvelope();
 
     // All standard keys should return non-null
-    String[] keys = { "dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens", "bubS",
+    String[] keys = {"dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens", "bubS",
         "cricondentherm", "cricondenthermX", "cricondenthermY", "cricondenbar", "cricondenbarX", "cricondenbarY",
-        "criticalPoint1", "criticalPoint2" };
+        "criticalPoint1", "criticalPoint2"};
     for (String key : keys) {
       assertNotNull(testOps.get(key), "get(\"" + key + "\") should not be null");
     }
@@ -486,7 +577,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.1, 0.25, 0.5, 0.75, 0.9 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.25, 0.5, 0.75, 0.9});
 
     // Check that quality line data is accessible via get()
     double[] qT50 = testOps.get("qualityT_0.5");
@@ -521,7 +612,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.5 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.5});
 
     double[] volFrac = testOps.get("qualityVolFrac_0.5");
     double[] massFrac = testOps.get("qualityMassFrac_0.5");
@@ -557,7 +648,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.1, 0.5, 0.9 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.5, 0.9});
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
 
@@ -593,7 +684,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(true, new double[] { 0.25, 0.75 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(true, new double[] {0.25, 0.75});
 
     double[] qT25 = testOps.get("qualityT_0.25");
     double[] qT75 = testOps.get("qualityT_0.75");

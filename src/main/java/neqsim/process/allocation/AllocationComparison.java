@@ -44,8 +44,8 @@ public class AllocationComparison {
   private static final double FLOW_NOISE_FLOOR = 1.0e-6;
 
   /** Product categories used for owner-benefit comparison. */
-  private static final ProductType[] COMPARED_PRODUCTS = new ProductType[] { ProductType.GAS, ProductType.OIL,
-      ProductType.WATER };
+  private static final ProductType[] COMPARED_PRODUCTS = new ProductType[] {ProductType.GAS, ProductType.OIL,
+      ProductType.WATER};
 
   /** The per-method allocation results, in run order. */
   private final Map<AllocationMethod, ProductionAllocationResult> results;

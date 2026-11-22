@@ -18,6 +18,7 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.network.FieldWellNetworkProcessUnit;
 import neqsim.process.equipment.network.LoopedPipeNetwork;
 import neqsim.process.equipment.pipeline.Pipeline;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
@@ -380,6 +381,17 @@ public class ProcessAutomation {
    * @return true when the address resolves to a known INPUT variable, false otherwise (unknown or OUTPUT)
    */
   public boolean isWritableAddress(String address) {
+    return isAddressType(address, VariableType.INPUT);
+  }
+
+  /**
+   * Checks whether an exact address is declared with the requested variable type.
+   *
+   * @param address the dot-notation address, optionally area-qualified
+   * @param type the declared variable type to match
+   * @return true when the exact address is present with {@code type}
+   */
+  private boolean isAddressType(String address, VariableType type) {
     if (address == null || address.trim().isEmpty()) {
       return false;
     }
@@ -397,7 +409,7 @@ public class ProcessAutomation {
     }
     unitName = prefix + local.substring(0, dotIdx);
     try {
-      for (SimulationVariable v : getVariableList(unitName, VariableType.INPUT)) {
+      for (SimulationVariable v : getVariableList(unitName, type)) {
         if (address.equals(v.getAddress())) {
           return true;
         }
@@ -580,8 +592,19 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
-    if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      return getNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], unitOfMeasure);
+    if (unit instanceof AutomationAddressable && parts.length >= 2) {
+      return ((AutomationAddressable) unit).getAutomationValue(localAddress.substring(unitName.length() + 1),
+          unitOfMeasure);
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
+      return getFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], unitOfMeasure);
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "configuration".equals(parts[1])) {
+      return getFieldConfigurationProperty((FieldWellNetworkProcessUnit) unit, parts[2], unitOfMeasure);
+    }
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null && parts.length == 3) {
+      return getNetworkProperty(addressableNetwork, parts[1], parts[2], unitOfMeasure);
     }
 
     if (parts.length == 2) {
@@ -617,6 +640,9 @@ public class ProcessAutomation {
     if (address == null || address.trim().isEmpty()) {
       throw new IllegalArgumentException("Address must not be null or empty");
     }
+    if (!isWritableAddress(address) && isAddressType(address, VariableType.OUTPUT)) {
+      throw new IllegalArgumentException("Variable is read-only: " + address);
+    }
 
     // Separate area prefix if present
     String localAddress = address;
@@ -632,8 +658,25 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
-    if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      setNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], value, unitOfMeasure);
+    if (unit instanceof AutomationAddressable && parts.length >= 2) {
+      ((AutomationAddressable) unit).setAutomationValue(localAddress.substring(unitName.length() + 1), value,
+          unitOfMeasure);
+      this.dirty = true;
+      return;
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
+      setFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], value, unitOfMeasure);
+      this.dirty = true;
+      return;
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "configuration".equals(parts[1])) {
+      setFieldConfigurationProperty((FieldWellNetworkProcessUnit) unit, parts[2], value, unitOfMeasure);
+      this.dirty = true;
+      return;
+    }
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null && parts.length == 3) {
+      setNetworkProperty(addressableNetwork, parts[1], parts[2], value, unitOfMeasure);
       this.dirty = true;
       return;
     }
@@ -856,8 +899,31 @@ public class ProcessAutomation {
     List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
     boolean handledOutlets = false;
 
-    if (unit instanceof LoopedPipeNetwork) {
-      return enrichVariableMetadata(buildNetworkVariableList(unitName, (LoopedPipeNetwork) unit));
+    if (unit instanceof AutomationAddressable) {
+      return enrichVariableMetadata(((AutomationAddressable) unit).getAutomationVariables(unitName));
+    }
+
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null) {
+      List<SimulationVariable> networkVariables = buildNetworkVariableList(unitName, addressableNetwork);
+      if (unit instanceof FieldWellNetworkProcessUnit) {
+        FieldWellNetworkProcessUnit fieldUnit = (FieldWellNetworkProcessUnit) unit;
+        for (String selectorName : fieldUnit.getExclusiveRouteSelectorNames()) {
+          networkVariables.add(new SimulationVariable(unitName + ".route." + selectorName + ".selection",
+              "route." + selectorName + ".selection", VariableType.INPUT, "-",
+              "Exclusive route index; provenance: " + fieldUnit.getExclusiveRouteProvenance(selectorName)).withBounds(
+                  Double.valueOf(0.0), Double.valueOf(fieldUnit.getExclusiveRouteEdges(selectorName).size() - 1.0)));
+        }
+        for (String selectorName : fieldUnit.getRouteConfigurationSelectorNames()) {
+          networkVariables.add(new SimulationVariable(unitName + ".configuration." + selectorName + ".selection",
+              "configuration." + selectorName + ".selection", VariableType.INPUT, "-",
+              "Route configuration index; options: " + fieldUnit.getRouteConfigurationNames(selectorName)
+                  + "; provenance: " + fieldUnit.getRouteConfigurationProvenance(selectorName))
+              .withBounds(Double.valueOf(0.0),
+                  Double.valueOf(fieldUnit.getRouteConfigurationNames(selectorName).size() - 1.0)));
+        }
+      }
+      return enrichVariableMetadata(networkVariables);
     }
 
     // Universal equipment-level outputs
@@ -930,7 +996,7 @@ public class ProcessAutomation {
           "Compressor outlet pressure"));
       vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.INPUT,
           "", "Polytropic efficiency (fraction)"));
-      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.OUTPUT,
+      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.INPUT,
           "", "Isentropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
           "Compressor power consumption"));
@@ -1127,6 +1193,11 @@ public class ProcessAutomation {
         vars.add(
             new SimulationVariable(unitName + ".sink." + nodeName + ".nomination", "sink." + nodeName + ".nomination",
                 VariableType.INPUT, "kg/hr", "Sink mass nomination").withBounds(Double.valueOf(0.0), null));
+        if (node.isPressureFixed()) {
+          vars.add(new SimulationVariable(unitName + ".sink." + nodeName + ".pressure",
+              "sink." + nodeName + ".pressure", VariableType.INPUT, "bara", "Fixed sink delivery-pressure decision")
+              .withBounds(Double.valueOf(0.01), null));
+        }
       }
     }
 
@@ -1164,6 +1235,105 @@ public class ProcessAutomation {
   }
 
   /**
+   * Resolve an equipment item whose public automation surface is a looped network.
+   *
+   * @param unit process equipment candidate
+   * @return directly owned or field-coupler-wrapped network, otherwise {@code null}
+   */
+  private LoopedPipeNetwork getAddressableNetwork(ProcessEquipmentInterface unit) {
+    if (unit instanceof LoopedPipeNetwork) {
+      return (LoopedPipeNetwork) unit;
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit) {
+      return ((FieldWellNetworkProcessUnit) unit).getHydraulicNetwork();
+    }
+    return null;
+  }
+
+  /**
+   * Read one field-unit exclusive route selection.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param unitOfMeasure requested dimensionless unit
+   * @return zero-based selected route index
+   */
+  private double getFieldRouteProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route property: " + targetProperty[1]);
+    }
+    return unit.getExclusiveRouteSelection(targetProperty[0]);
+  }
+
+  /**
+   * Write one field-unit exclusive route selection.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param value zero-based selected route index
+   * @param unitOfMeasure requested dimensionless unit
+   */
+  private void setFieldRouteProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty, double value,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route property: " + targetProperty[1]);
+    }
+    unit.setExclusiveRouteSelection(targetProperty[0], value);
+  }
+
+  /**
+   * Read one field-unit multi-edge route configuration.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param unitOfMeasure requested dimensionless unit
+   * @return zero-based selected configuration index
+   */
+  private double getFieldConfigurationProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route-configuration property: " + targetProperty[1]);
+    }
+    return unit.getRouteConfigurationSelection(targetProperty[0]);
+  }
+
+  /**
+   * Write one field-unit multi-edge route configuration.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param value zero-based selected configuration index
+   * @param unitOfMeasure requested dimensionless unit
+   */
+  private void setFieldConfigurationProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty, double value,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route-configuration property: " + targetProperty[1]);
+    }
+    unit.setRouteConfigurationSelection(targetProperty[0], value);
+  }
+
+  /**
+   * Require a dimensionless route-selector unit.
+   *
+   * @param unitOfMeasure requested unit
+   */
+  private void requireDimensionlessUnit(String unitOfMeasure) {
+    if (unitOfMeasure != null && !unitOfMeasure.trim().isEmpty() && !"-".equals(unitOfMeasure)) {
+      throw new IllegalArgumentException("Exclusive route selection uses the dimensionless '-' unit");
+    }
+  }
+
+  /**
    * Read an internal looped-network address.
    *
    * @param network network
@@ -1192,8 +1362,17 @@ public class ProcessAutomation {
       if ("pressure".equals(property)) {
         return convertPressureFromPa(node.getPressure(), unit, "bara");
       }
-    } else if ("sink".equals(group) && "nomination".equals(property)) {
-      return convertMassRateFromKgS(network.getNode(target).getDemand(), unit, "kg/hr");
+    } else if ("sink".equals(group)) {
+      LoopedPipeNetwork.NetworkNode node = network.getNode(target);
+      if (node.getType() != LoopedPipeNetwork.NodeType.SINK) {
+        throw new IllegalArgumentException("Network node is not a sink: " + target);
+      }
+      if ("nomination".equals(property)) {
+        return convertMassRateFromKgS(node.getDemand(), unit, "kg/hr");
+      }
+      if ("pressure".equals(property) && node.isPressureFixed()) {
+        return convertPressureFromPa(node.getPressure(), unit, "bara");
+      }
     } else {
       LoopedPipeNetwork.NetworkPipe edge = network.getPipe(target);
       if ("edge".equals(group)) {
@@ -1253,9 +1432,19 @@ public class ProcessAutomation {
         node.setPressure(convertPressureToPa(value, unit, "bara"));
         return;
       }
-    } else if ("sink".equals(group) && "nomination".equals(property)) {
-      network.getNode(target).setDemand(convertMassRateToKgS(value, unit, "kg/hr"));
-      return;
+    } else if ("sink".equals(group)) {
+      LoopedPipeNetwork.NetworkNode node = network.getNode(target);
+      if (node.getType() != LoopedPipeNetwork.NodeType.SINK) {
+        throw new IllegalArgumentException("Network node is not a sink: " + target);
+      }
+      if ("nomination".equals(property)) {
+        node.setDemand(convertMassRateToKgS(value, unit, "kg/hr"));
+        return;
+      }
+      if ("pressure".equals(property) && node.isPressureFixed()) {
+        node.setPressure(convertPressureToPa(value, unit, "bara"));
+        return;
+      }
     } else {
       LoopedPipeNetwork.NetworkPipe edge = network.getPipe(target);
       if ("edge".equals(group) && "availability".equals(property)) {
@@ -1287,7 +1476,7 @@ public class ProcessAutomation {
     if (separator <= 0 || separator >= targetAndProperty.length() - 1) {
       throw new IllegalArgumentException("Network address must include target and property");
     }
-    return new String[] { targetAndProperty.substring(0, separator), targetAndProperty.substring(separator + 1) };
+    return new String[] {targetAndProperty.substring(0, separator), targetAndProperty.substring(separator + 1)};
   }
 
   private double convertMassRateFromKgS(double value, String unit, String defaultUnit) {
@@ -1773,9 +1962,29 @@ public class ProcessAutomation {
       if (idx < 0 || idx >= sf.length) {
         throw new IllegalArgumentException("Split factor index out of range for " + unit.getName() + ": " + property);
       }
+      if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+        throw new IllegalArgumentException("Split factor must be finite and between 0 and 1");
+      }
       double[] updated = sf.clone();
-      updated[idx] = value;
-      // Splitter renormalises the factors so they sum to 1.
+      if (updated.length == 1) {
+        updated[0] = 1.0;
+      } else {
+        double otherSum = 0.0;
+        for (int i = 0; i < updated.length; i++) {
+          if (i != idx) {
+            otherSum += updated[i];
+          }
+        }
+        double remaining = 1.0 - value;
+        updated[idx] = value;
+        for (int i = 0; i < updated.length; i++) {
+          if (i != idx) {
+            updated[i] = otherSum > 0.0 ? updated[i] * remaining / otherSum : remaining / (updated.length - 1);
+          }
+        }
+      }
+      // Preserve the requested factor exactly while proportionally rescaling the other
+      // outlets before Splitter performs its defensive normalisation.
       sp.setSplitFactors(updated);
       return;
     }
@@ -2077,7 +2286,44 @@ public class ProcessAutomation {
     default:
       break;
     }
+    if (property.startsWith(MOLE_FRACTION_PREFIX) && property.length() > MOLE_FRACTION_PREFIX.length()) {
+      return getStreamMoleFraction(stream, property.substring(MOLE_FRACTION_PREFIX.length()), uom);
+    }
     throw new IllegalArgumentException("Unknown stream property: " + property);
+  }
+
+  /** Prefix of the read-only stream property giving the overall mole fraction of one component. */
+  private static final String MOLE_FRACTION_PREFIX = "moleFraction_";
+
+  /**
+   * Returns the overall mole fraction of one component of a stream, for example the water content of a dried gas
+   * ({@code "contactor.gasOutStream.moleFraction_water"} with unit {@code "ppm"}).
+   *
+   * @param stream the stream
+   * @param componentName component name as used in the fluid, for example "water"
+   * @param uom "" or "fraction" for a mole fraction, "mol%" for percent, "ppm" or "ppmv" for parts per million
+   * @return the mole fraction in the requested unit
+   * @throws IllegalArgumentException if the stream has no fluid, the component is missing or the unit is unknown
+   */
+  private double getStreamMoleFraction(StreamInterface stream, String componentName, String uom) {
+    if (stream.getFluid() == null) {
+      throw new IllegalArgumentException("Stream has no fluid: " + stream.getName());
+    }
+    if (!stream.getFluid().hasComponent(componentName)) {
+      throw new IllegalArgumentException("Component not in stream " + stream.getName() + ": " + componentName);
+    }
+    double fraction = stream.getFluid().getComponent(componentName).getz();
+    String unit = uom == null ? "" : uom.trim();
+    if (unit.isEmpty() || "fraction".equalsIgnoreCase(unit) || "-".equals(unit)) {
+      return fraction;
+    }
+    if ("mol%".equalsIgnoreCase(unit) || "%".equals(unit)) {
+      return fraction * 100.0;
+    }
+    if ("ppm".equalsIgnoreCase(unit) || "ppmv".equalsIgnoreCase(unit) || "ppmmol".equalsIgnoreCase(unit)) {
+      return fraction * 1.0e6;
+    }
+    throw new IllegalArgumentException("Unknown unit for a mole fraction: " + uom + " (use fraction, mol% or ppm)");
   }
 
   /**

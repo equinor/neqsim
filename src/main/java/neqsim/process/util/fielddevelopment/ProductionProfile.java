@@ -960,7 +960,7 @@ public class ProductionProfile implements Serializable {
     double qi = Math.exp(intercept);
     double d = -slope;
 
-    return new double[] { qi, Math.max(0, d) };
+    return new double[] {qi, Math.max(0, d)};
   }
 
   /**
@@ -999,7 +999,7 @@ public class ProductionProfile implements Serializable {
       }
     }
 
-    return new double[] { bestQi, bestD, bestB };
+    return new double[] {bestQi, bestD, bestB};
   }
 
   /**
@@ -1030,7 +1030,7 @@ public class ProductionProfile implements Serializable {
     double qi = Math.pow(intercept, -1.0 / b);
     double d = slope * qi / (b * Math.pow(qi, -b));
 
-    return new double[] { Math.max(qi, 1), Math.max(0, d) };
+    return new double[] {Math.max(qi, 1), Math.max(0, d)};
   }
 
   /**
@@ -1060,7 +1060,7 @@ public class ProductionProfile implements Serializable {
     double qi = 1.0 / intercept;
     double d = slope * qi;
 
-    return new double[] { Math.max(qi, 1), Math.max(0, d) };
+    return new double[] {Math.max(qi, 1), Math.max(0, d)};
   }
 
   /**

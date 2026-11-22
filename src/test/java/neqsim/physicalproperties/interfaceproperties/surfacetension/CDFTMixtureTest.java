@@ -135,7 +135,7 @@ class CDFTMixtureTest {
 
     // Experimental: Weinaug & Katz (1943): at 277.6K (40F):
     // ~14 bar: sigma ~ 7.0 mN/m, ~34 bar: sigma ~ 4.0 mN/m, ~55 bar: sigma ~ 1.5 mN/m
-    double[] pressures = { 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0 };
+    double[] pressures = {10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0};
 
     for (double p : pressures) {
       try {
@@ -249,13 +249,13 @@ class CDFTMixtureTest {
   void testMixtureExperimentalComparison() {
     // Weinaug & Katz (1943) Table II: CH4/C3 at 277.6 K (40 degF)
     // Pressure (bar), Experimental IFT (mN/m) - approximate from their Table
-    double[][] expData = { { 13.8, 7.0 }, // ~200 psia
-        { 20.7, 5.5 }, // ~300 psia
-        { 27.6, 4.2 }, // ~400 psia
-        { 34.5, 3.2 }, // ~500 psia
-        { 41.4, 2.3 }, // ~600 psia
-        { 48.3, 1.6 }, // ~700 psia
-        { 55.2, 0.9 }, // ~800 psia
+    double[][] expData = {{13.8, 7.0}, // ~200 psia
+        {20.7, 5.5}, // ~300 psia
+        {27.6, 4.2}, // ~400 psia
+        {34.5, 3.2}, // ~500 psia
+        {41.4, 2.3}, // ~600 psia
+        {48.3, 1.6}, // ~700 psia
+        {55.2, 0.9}, // ~800 psia
     };
     double temperature = 277.6; // K (40 degF)
     double lambda = 0.65; // ~average of CH4 (0.80) and C3 (0.55)

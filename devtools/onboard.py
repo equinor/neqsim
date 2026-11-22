@@ -18,6 +18,12 @@ import subprocess
 import sys
 from datetime import datetime
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
@@ -487,7 +493,7 @@ def step_done(results):
         print("  1. Run the doctor:     neqsim doctor")
         print("  2. Create a task:      neqsim new-task \"My task\"")
         print("  3. Create a skill:     neqsim new-skill \"my-topic\"")
-        print("  4. Use an agent:       @solve.task JT cooling for rich gas")
+        print("  4. Use an agent:       @solve-task JT cooling for rich gas")
         print("  5. Read the docs:      AGENTS.md, CONTEXT.md, CONTRIBUTING.md")
     else:
         print("  Some steps had issues — see the [!!] items above.")

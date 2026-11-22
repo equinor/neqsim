@@ -62,6 +62,50 @@ pump.run();
 Do not use `setHeadCurve`, `setEfficiencyCurve`, or `setNPSHRequiredCurve`; those convenience
 methods are not part of the current `Pump` API.
 
+The default `PumpChart` evaluates operating status in the same reduced-flow coordinate
+($Q/N$) as its head and efficiency curves. The positive-head-slope check, high-flow
+boundary and best-efficiency-point comparison therefore follow the requested speed,
+not the reference-speed absolute flow. `checkSurge1(flow, head)` retains its legacy
+reference-speed interpretation; use `checkSurge2(flow, speed)` for a speed-specific check.
+These are curve-based diagnostics: the `SURGE` and `STONEWALL` labels are heuristics,
+not measured stability limits or an OEM-approved operating envelope. They neither
+prohibit speed extrapolation nor replace minimum stable flow, NPSH or driver constraints.
+This reduced-curve behavior does not change the alternative spline-map implementation.
+`PumpOperatingStatusTest` checks synthetic speed similarity, and
+`NetworkPumpOperatingStatusTest` exercises migration and restoration on one canonical
+network with mass balance, head, power and host-power checks.
+
+The alternative `PumpChartAlternativeMapLookupExtrapolate` uses a different formalism:
+efficiency is interpolated between speed curves at the **same absolute flow**, and outside
+the supplied speed range it uses the nearest curve's efficiency without flow scaling.
+Its speed-aware BEP and `OPTIMAL` diagnostic therefore scan that requested-speed efficiency
+surface, not an affinity-scaled first-curve BEP. The no-speed BEP remains the first supplied
+curve's reference diagnostic. Both use the existing bounded 51-point scan over the global
+tabulated flow range; the result is approximate and can include extrapolation from individual
+curves with narrower ranges. It is not an exact maximum or a qualified operating boundary.
+The scan is recomputed so replacing curves, adding curves or editing the existing mutable
+curve data cannot reuse a stale BEP. Head/efficiency interpolation, viscosity/NPSH formulas
+and the existing global-flow `SURGE`/`STONEWALL` heuristics are unchanged.
+`PumpChartAlternativeMapLookupExtrapolateTest` covers non-affine speed slices and curve
+updates; `NetworkPumpOperatingStatusTest` checks same-graph migration and restoration for
+both chart formalisms. Neither test establishes vendor-map or speed-range qualification.
+
+The alternative-map network regression uses pure water (SRK, classic mixing, 298.15 K,
+5 bara suction) and two synthetic speed curves with linear head and non-affine efficiency
+peaks. These asserted points retain the same pump and host; returning to the first point
+restores pressure and shaft power. Head is in metres and flow is actual inlet volume.
+
+| Speed (rpm) | Flow (m3/hr) | Head (m) | Diagnostic |
+| --- | --- | --- | --- |
+| 1000 | 40 | 160 | OPTIMAL |
+| 2000 | 40 | 360 | NORMAL |
+| 2000 | 60 | 340 | OPTIMAL |
+| 1500 | 50 | 250 | OPTIMAL |
+
+The test also checks mass balance, positive pressure/work, finite outlet temperature,
+hydraulic work divided by efficiency, and equality of edge demand and host shaft power.
+These are analytical/same-model consistency checks, not independent pump performance data.
+
 ### Specified discharge temperature
 
 Calling `setOutletTemperature(...)` selects the fixed-temperature mode. NeqSim performs a TP
@@ -77,6 +121,22 @@ pump.run();
 
 `setOutTemperature(double)` is deprecated. Use `setOutletTemperature(double)` for kelvin or
 `setOutletTemperature(double, String)` for an explicit unit.
+
+## Numerical bypass versus stable operating flow
+
+`Pump.setMinimumFlow(double)` sets a numerical low-flow bypass threshold in **kg/hr**,
+consistent with the process-equipment base contract. Below that threshold the standalone
+pump is inactive and reports zero shaft work; this is not a physical operating point or
+a minimum-flow recirculation model. The explicit-unit overload inherited from the base
+class may be used when configuring the threshold in another supported mass-flow unit.
+
+In a canonical `LoopedPipeNetwork`, `NetworkPipe.setPumpMinimumFlowKgS` is a separate
+minimum stable operating limit in **kg/s**. It produces an operating-limit residual,
+not a bypass command. Network evaluation preserves the backing pump's numerical
+threshold and rejects bypassed positive-flow results rather than accepting zero-power
+pressure rise. A stable-limit violation requires an explicit operating constraint even
+when the network converges. See the [SURF network guide](../../fielddevelopment/SURF_NETWORK_INTEGRATION.md)
+and `NetworkPumpMinimumFlowTest` for tested limit, bypass and recovery behavior.
 
 ## NPSH screening
 
@@ -133,11 +193,11 @@ purchased standard edition, project specification, and vendor documentation for 
 This Java 8 example runs a single-phase liquid pump with a vendor curve, checks NPSH, performs
 the API 610 screen, and exports the structured mechanical-design response. The inlet uses
 n-hexane so the actual-volume flow conversion is based on one stable liquid phase at the stated
-temperature and pressure.
+temperature and pressure. The example is silent and returns four finite, positive operating
+metrics so the published source can be executed as a documentation contract.
 
+<!-- pump-example: api-610-screen -->
 ```java
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator;
@@ -146,11 +206,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public final class PumpDesignExample {
-  private static final Logger logger = LogManager.getLogger(PumpDesignExample.class);
-
   private PumpDesignExample() {}
 
-  public static void main(String[] args) {
+  public static double[] run() {
     SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
     fluid.addComponent("n-hexane", 1.0);
     fluid.setMixingRule("classic");
@@ -189,9 +247,20 @@ public final class PumpDesignExample {
     PumpApi610DesignCalculator.AssessmentStatus status = assessment.getAssessmentStatus();
     String responseJson = design.getResponse().toJson();
 
-    logger.info("Power: {} kW; vendor head: {} m", powerKw, vendorHeadM);
-    logger.info("NPSHa: {} m; NPSHr: {} m", npshAvailableM, npshRequiredM);
-    logger.info("API 610 status: {}; response: {}", status, responseJson);
+    double[] metrics = {powerKw, vendorHeadM, npshAvailableM, npshRequiredM};
+    for (double value : metrics) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalStateException("Pump metric is not finite and positive");
+      }
+    }
+    if (status == null || responseJson == null || responseJson.trim().isEmpty()) {
+      throw new IllegalStateException("API 610 screening result is incomplete");
+    }
+    return metrics;
+  }
+
+  public static void main(String[] args) {
+    run();
   }
 }
 ```

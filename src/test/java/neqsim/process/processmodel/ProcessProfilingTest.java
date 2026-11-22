@@ -5,6 +5,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -69,6 +70,7 @@ public class ProcessProfilingTest {
   /**
    * Profile a large process with the built-in profiling API. Shows per-equipment time breakdown.
    */
+  @Tag("benchmark")
   @Test
   void profileLargeProcess() {
     logger.info("\n========== PROCESS PROFILING: Built-in Execution Profiler ==========\n");
@@ -103,6 +105,7 @@ public class ProcessProfilingTest {
    * -XX:StartFlightRecording=duration=30s,filename=neqsim_profile.jfr,settings=profile
    * </pre>
    */
+  @Tag("benchmark")
   @Test
   void profileWithJFR() throws Exception {
     logger.info("\n========== JFR PROFILING: Running 50 iterations ==========\n");
@@ -177,6 +180,7 @@ public class ProcessProfilingTest {
    * Micro-benchmark individual operations to identify the real CPU cost of each. This doesn't need JFR - it directly
    * measures TPflash, init() levels, etc.
    */
+  @Tag("benchmark")
   @Test
   void microBenchmarkThermodynamicOperations() {
     logger.info("\n========== MICRO-BENCHMARK: Thermodynamic Operations ==========\n");
@@ -281,6 +285,7 @@ public class ProcessProfilingTest {
    * Compare sequential vs optimized (hybrid/parallel) on process WITH Mixer and HeatExchanger. This was previously
    * always forced to sequential; now uses graph-based execution.
    */
+  @Tag("benchmark")
   @Test
   void benchmarkHybridExecution() {
     System.out.println("\n========== BENCHMARK: Hybrid Execution (Mixer + HX processes) ==========\n");
@@ -379,6 +384,7 @@ public class ProcessProfilingTest {
    * Thread CPU time profiling - measures actual CPU time vs wall-clock to detect serialization bottlenecks vs true
    * parallelism.
    */
+  @Tag("benchmark")
   @Test
   void measureCPUVsWallTime() {
     logger.info("\n========== CPU Time vs Wall-Clock Analysis ==========\n");
@@ -440,7 +446,7 @@ public class ProcessProfilingTest {
     sys.add(gasComp);
 
     Cooler gasCool = new Cooler("gas cooler", gasComp.getOutletStream());
-    gasCool.setOutTemperature(310.0);
+    gasCool.setOutletTemperature(310.0);
     sys.add(gasCool);
 
     // Liquid path: LP valve + separator
@@ -452,7 +458,7 @@ public class ProcessProfilingTest {
     sys.add(lpSep);
 
     Heater lpGasHeater = new Heater("LP gas heater", lpSep.getGasOutStream());
-    lpGasHeater.setOutTemperature(330.0);
+    lpGasHeater.setOutletTemperature(330.0);
     sys.add(lpGasHeater);
 
     // Heat exchange between gas and LP gas paths
@@ -480,7 +486,7 @@ public class ProcessProfilingTest {
       comp.setOutletPressure(150.0);
       sys.add(comp);
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
     }
 
@@ -507,7 +513,7 @@ public class ProcessProfilingTest {
     sys.add(gasComp);
 
     Cooler gasCool = new Cooler("gas cooler", gasComp.getOutletStream());
-    gasCool.setOutTemperature(310.0);
+    gasCool.setOutletTemperature(310.0);
     sys.add(gasCool);
 
     ThrottlingValve lpValve = new ThrottlingValve("LP valve", hpSep.getLiquidOutStream());
@@ -518,7 +524,7 @@ public class ProcessProfilingTest {
     sys.add(lpSep);
 
     Heater lpGasHeater = new Heater("LP gas heater", lpSep.getGasOutStream());
-    lpGasHeater.setOutTemperature(330.0);
+    lpGasHeater.setOutletTemperature(330.0);
     sys.add(lpGasHeater);
 
     HeatExchanger hx = new HeatExchanger("HX", gasCool.getOutletStream());
@@ -547,14 +553,14 @@ public class ProcessProfilingTest {
       sys.add(comp);
 
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
 
       Separator sep2 = new Separator("sep2-" + t, cool.getOutletStream());
       sys.add(sep2);
 
       Heater heater = new Heater("heat" + t, sep2.getGasOutStream());
-      heater.setOutTemperature(340.0);
+      heater.setOutletTemperature(340.0);
       sys.add(heater);
     }
 

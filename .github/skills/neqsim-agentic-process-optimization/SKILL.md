@@ -1,7 +1,7 @@
 ---
 name: neqsim-agentic-process-optimization
 version: "1.0.0"
-description: "Agentic, closed-loop optimization of large multi-area NeqSim ProcessModel plants using the newest automation, convergence-gating, and equipment-introspection APIs. USE WHEN: an agent must optimize a live full-plant flowsheet (operating setpoints, compressor pressures, heater temperatures, routing fractions) across one or more years/scenarios, with robust convergence handling, surge/RVP/spec constraints, and per-trial feasibility gating. Covers ProcessAutomation.getAdjustableParameters, ProcessModel.runUntilConverged + getConvergenceReportJson, RunStatus failure tracking, Compressor.getOperatingPoint surge margins, Standard_ASTM_D6377 RvpResult, ProcessSystem.copy parallel sweeps, and the rebuild-to-pick-up-new-NeqSim-functionality workflow. Complements neqsim-optimization-and-doe (built-in optimizer classes) and neqsim-platform-modeling (how the plant is built)."
+description: "Agentic closed-loop optimization of large multi-area NeqSim ProcessModel plants with convergence gating and equipment introspection. USE WHEN: an agent must optimize a live full-plant flowsheet (setpoints, compressor pressures, heater temperatures, routing fractions) across years/scenarios with surge/RVP/spec constraints and per-trial feasibility gating. Covers getAdjustableParameters, runUntilConverged, RunStatus, getOperatingPoint surge margins, RVP, copy() sweeps."
 last_verified: "2026-06-13"
 requires:
   java_packages:
@@ -135,6 +135,16 @@ Key rules:
   couple of settling `run()` passes.
 - **Twice-run is obsolete as a *gate*** — `runUntilConverged` drives convergence;
   the extra passes only damp slow recompression loops. Raise `max_iter`, not hacks.
+- **Bound every trial with the solver watchdog (opt-in, NeqSim releases after 3.26).** A trial that
+  never converges must not hang the optimizer: call `plant.setMaxRunTimeSeconds(120.0)`
+  (spans all areas and all passes of `runUntilConverged`) and
+  `plant.setStallDetection(8, 1e-3)` (no residual improvement for 8 iterations) once, and
+  call `plant.requestStop()` from a watchdog thread to cancel from outside. A tripped run
+  returns normally; read `status["terminationReason"]` (`TIMED_OUT` / `STALLED` / `STOPPED`),
+  `getRunStatus().getBudgetUnitName()` (unit that was running) and
+  `plant.getLastRunDiagnostics().toJson()`, and score the trial as infeasible. Cooperative
+  only: one unit that never returns cannot be interrupted. Default is off.
+  See `docs/process/processmodel/run_status.md`.
 - **Record everything.** Keep a list of `record` dicts → tornado/trace plots and
   `results.json` later. Report the **best feasible trial** (min objective among
   `feasible=True`), never the last `evaluate()` result — the final call can land
@@ -551,3 +561,21 @@ figure (observation → mechanism → implication → recommendation).
 - [ ] Did failed trials return a penalty (never crash the optimizer)?
 - [ ] Did you verify the new APIs are on the classpath (devtools or repackaged JAR)?
 - [ ] Java helpers (if any) compile on Java 8 — no `var`, `List.of`, `String.repeat`.
+
+## Restart decisions with a shared riser and host
+
+Use the [two-well restart study](../../../examples/production-decision/README.md)
+to compare a fixed platform choke with an opening trajectory. Inspect peak phase
+rates, well production, separator levels, suction flow and power separately on
+matched mesh, timestep and fluid cases. Check whether the largest load occurred
+before or after the control move. A completed simulation or a small component
+balance residual cannot establish that the peak is resolved. Ask for a paired
+pressure/phase-rate trace or a compressor map when that evidence would change
+the decision. For blind evaluation, give the agent only the challenge-mode MCP
+server and score its saved choice separately. Review `violation_evidence` for the fluid,
+mesh, timestep and host limit of each observed breach. A rejection on another configuration
+keeps the production ranking unresolved while preserving the completed trajectories' findings.
+
+For installed-equipment comparisons, verify the signed steady well-rate and choke-pressure residuals before starting the controllers. The [reference case](../../../examples/production-decision/README.md) solves both to 1e-10 in kg/s and bar so an initialization discrepancy cannot disable the native steady momentum correction. Keep event and handoff protocol identical across a ranking. A rejected coarse trajectory also blocks selection when the fine runs happen to complete.
+
+Use the same compressor map hash for both policies and every refinement. The optional native chart path computes the speed required by the export duty and checks the flow range and suction envelope. Record whether the chart came from a vendor or was constructed for a sensitivity case.

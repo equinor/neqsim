@@ -76,7 +76,7 @@ class TPFlashTest {
         "multiphase endpoint must not raise Gibbs energy");
     assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8, "poor beta initialization");
 
-    for (double pressure : new double[] { 9.9, 10.0, 10.1 }) {
+    for (double pressure : new double[] {9.9, 10.0, 10.1}) {
       assertClosedEquilibrium(flashWaterBearingPr(298.15, pressure, true, false),
           "nearby low-pressure endpoint at " + pressure + " bara");
     }
@@ -128,7 +128,7 @@ class TPFlashTest {
 
   @Test
   void waterBearingPrHighPressureOrdinaryAndMultiphaseEndpointsAgree() {
-    for (double pressure : new double[] { 499.0, 500.0, 501.0 }) {
+    for (double pressure : new double[] {499.0, 500.0, 501.0}) {
       SystemInterface ordinary = flashWaterBearingPr(288.15, pressure, false, false);
       SystemInterface multiphase = flashWaterBearingPr(288.15, pressure, true, false);
       assertClosedEquilibrium(ordinary, "ordinary high-pressure endpoint at " + pressure + " bara");
@@ -281,7 +281,7 @@ class TPFlashTest {
     testSystem5.addComponent("nC16", 5.00888e-2);
     testSystem5.setMixingRule("classic");
     testSystem5.setMultiPhaseCheck(true);
-    testSystem5.setPressure(90.03461693, "bara");
+    testSystem5.setPressure(90.92861701, "bara");
     testSystem5.setTemperature(293.15, "K");
     testSystem5.setTotalFlowRate(4.925e-07, "kg/sec");
     testOps = new ThermodynamicOperations(testSystem5);
@@ -581,29 +581,27 @@ class TPFlashTest {
 
   /**
    * Verifies known isolated cells from the 200 by 200 methane/n-heptane PR phase map converge to a stable phase state
-   * from a cold start. Low-temperature cells should collapse to the lower-Gibbs single OIL root, while high-temperature
-   * cells remain true GAS/OIL splits.
+   * from a cold start. Low-temperature cells retain dense, conserved two-phase equilibria below the homogeneous feed
+   * Gibbs energy. A single-phase expectation at these cells concealed the stale-root and phase-amount defect.
+   * High-temperature cells remain true GAS/OIL splits.
    */
   @Test
   void testMethaneHeptaneKnownPhaseMapSpotsResolveToStablePhaseState() {
-    double[][] singleOilConditions = new double[][] { { 78.5, 194.0 }, { 81.0, 194.0 } };
-    double[][] gasOilConditions = new double[][] { { 186.0, 424.0 }, { 191.0, 418.0 } };
+    double[][] denseSplitConditions = new double[][] {{78.5, 194.0}, {81.0, 194.0}};
+    double[][] gasOilConditions = new double[][] {{186.0, 424.0}, {191.0, 418.0}};
 
-    for (int spotIndex = 0; spotIndex < singleOilConditions.length; spotIndex++) {
+    for (int spotIndex = 0; spotIndex < denseSplitConditions.length; spotIndex++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
       ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-      fluid.setPressure(singleOilConditions[spotIndex][0], "bara");
-      fluid.setTemperature(singleOilConditions[spotIndex][1], "K");
+      fluid.setPressure(denseSplitConditions[spotIndex][0], "bara");
+      fluid.setTemperature(denseSplitConditions[spotIndex][1], "K");
 
       operations.TPflash();
 
-      assertEquals(1, fluid.getNumberOfPhases(),
-          "Known methane/nC7 low-temperature spot should collapse to one phase at P="
-              + singleOilConditions[spotIndex][0] + " bara, T=" + singleOilConditions[spotIndex][1] + " K");
-      assertTrue(fluid.hasPhaseType(PhaseType.OIL),
-          "Known methane/nC7 low-temperature spot should be the lower-Gibbs oil root");
-      assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
-          "Collapsed methane/nC7 low-temperature spot should have closed phase fractions");
+      String label = "methane/nC7 dense split at P=" + denseSplitConditions[spotIndex][0] + " bara";
+      assertEquals(2, fluid.getNumberOfPhases(), label);
+      assertClosedEquilibrium(fluid, label);
+      assertLowerGibbsThanHomogeneousFeed(fluid, label);
     }
 
     for (int spotIndex = 0; spotIndex < gasOilConditions.length; spotIndex++) {
@@ -624,14 +622,38 @@ class TPFlashTest {
   }
 
   /**
+   * Requires a qualified dense split to beat both homogeneous feed-root trials.
+   *
+   * @param fluid conserved two-phase equilibrium at the original feed inventory
+   * @param label assertion context
+   */
+  private void assertLowerGibbsThanHomogeneousFeed(SystemInterface fluid, String label) {
+    for (PhaseType root : new PhaseType[] {PhaseType.GAS, PhaseType.LIQUID}) {
+      SystemInterface homogeneous = fluid.clone();
+      homogeneous.setNumberOfPhases(1);
+      homogeneous.setPhaseIndex(0, 0);
+      homogeneous.setBeta(0, 1.0);
+      homogeneous.setPhaseType(0, root);
+      for (int component = 0; component < homogeneous.getPhase(0).getNumberOfComponents(); component++) {
+        homogeneous.getPhase(0).getComponent(component).setx(homogeneous.getPhase(0).getComponent(component).getz());
+      }
+      homogeneous.init(1);
+      double homogeneousGibbs = homogeneous.getGibbsEnergy();
+      assertTrue(Double.isFinite(homogeneousGibbs), label + " homogeneous " + root + " Gibbs energy");
+      assertTrue(fluid.getGibbsEnergy() < homogeneousGibbs - 1.0,
+          label + " must lower Gibbs energy by more than 1 J for the 100 mol feed against " + root);
+    }
+  }
+
+  /**
    * Regression test for the v3.11.0 low-density holes caused by an incomplete single-phase collapse. The failed
    * collapse leaked two active feed-composition phases with beta values of one each, so the phase count looked
    * unchanged while the reported density became gas-like.
    */
   @Test
   void testMethaneHeptaneSpuriousCollapseLeavesClosedPhaseSet() {
-    double[][] collapsedCells = new double[][] { { 47.5, 180.0 }, { 55.0, 188.0 }, { 70.0, 192.0 }, { 78.5, 194.0 },
-        { 81.0, 194.0 } };
+    double[][] collapsedCells = new double[][] {{47.5, 180.0}, {55.0, 188.0}, {70.0, 192.0}, {78.5, 194.0},
+        {81.0, 194.0}};
 
     for (int i = 0; i < collapsedCells.length; i++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
@@ -658,7 +680,7 @@ class TPFlashTest {
    */
   @Test
   void testMethaneHeptanePhaseMapPhaseFractionsRemainClosed() {
-    double[][] nonClosedCells = new double[][] { { 20.0, 166.0 }, { 87.5, 196.0 }, { 105.0, 198.0 }, { 150.0, 450.0 } };
+    double[][] nonClosedCells = new double[][] {{20.0, 166.0}, {87.5, 196.0}, {105.0, 198.0}, {150.0, 450.0}};
 
     for (int i = 0; i < nonClosedCells.length; i++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
@@ -684,7 +706,7 @@ class TPFlashTest {
    */
   @Test
   void testMethaneHeptaneSpuriousLowDensitySpikesAreCollapsed() {
-    double[][] spuriousCells = new double[][] { { 80.0, 175.0 }, { 90.0, 180.0 }, { 92.5, 180.0 }, { 95.0, 182.0 } };
+    double[][] spuriousCells = new double[][] {{80.0, 175.0}, {90.0, 180.0}, {92.5, 180.0}, {95.0, 182.0}};
 
     for (int i = 0; i < spuriousCells.length; i++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();

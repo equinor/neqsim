@@ -145,6 +145,23 @@ feed.setFlowRate(100.0, "m3/hr");       // Actual volume
 feed.run();
 ```
 
+### Zero throughput and restart
+
+For a fluid with an initialized phase state, `setFlowRate(0.0, unit)` clears the
+total and component amounts while preserving temperature, pressure, overall and
+phase compositions, phase identities, and normalized phase fractions. Repeating
+the request in molar, mass, or volume units keeps exact zero throughput and does
+not activate additional phases. This also applies after
+`getFluid().setTotalNumberOfMoles(0.0)` and to the underlying
+`SystemInterface.setTotalFlowRate` method.
+
+Zero throughput retains the last intensive state; it does not establish a new
+equilibrium after a pressure, temperature, or composition change. Restarting at
+positive flow restores component amounts from the stored overall composition.
+Call `run()` to establish the current equilibrium. A restart without a defined
+overall composition is rejected rather than assigning equal amounts to every
+component. No small substitute material flow is introduced.
+
 ### Setting Fluid/Composition
 
 ```java
@@ -408,6 +425,14 @@ double ccbPres = stream.CCB("bara");   // Pressure
 // Phase envelope visualization
 stream.phaseEnvelope();  // Opens plot window
 ```
+
+`CCT` and `CCB` share a cached envelope. Changes to temperature, pressure, composition,
+component critical properties, attractive-term selection or indexed coefficients, the
+covolume mixing rule, or binary interaction parameters trigger a new trace. EOS tuning
+inputs are checked in each allocated phase, including a liquid phase that is not currently
+active. Replacing an attractive-term object also invalidates the result. Custom attractive
+terms with more than three indexed coefficients should override `getNumberOfParameters()`
+so all coefficients participate in this check.
 
 ### Vapor Pressure
 

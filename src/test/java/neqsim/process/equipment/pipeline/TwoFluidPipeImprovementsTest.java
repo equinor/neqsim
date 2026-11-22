@@ -48,10 +48,10 @@ class TwoFluidPipeImprovementsTest {
       TimeIntegrator integrator = new TimeIntegrator();
 
       // Single-cell arrays for typical values
-      double[] gasVel = { 10.0 };
-      double[] liqVel = { 2.0 };
-      double[] gasSS = { 350.0 };
-      double[] liqSS = { 1200.0 };
+      double[] gasVel = {10.0};
+      double[] liqVel = {2.0};
+      double[] gasSS = {350.0};
+      double[] liqSS = {1200.0};
       double dx = 100.0;
 
       // Acoustic CFL timestep (standard)
@@ -151,12 +151,12 @@ class TwoFluidPipeImprovementsTest {
         return dUdt;
       };
 
-      double[] soundSpeeds = { 350.0, 350.0, 350.0 };
-      double[] mixtureDensities = { 100.0, 100.0, 100.0 };
-      double[] areas = { 1.0, 1.0, 1.0 };
-      double[] gasDensities = { 10.0, 10.0, 10.0 };
-      double[] oilDensities = { 800.0, 800.0, 800.0 };
-      double[] waterDensities = { 1000.0, 1000.0, 1000.0 };
+      double[] soundSpeeds = {350.0, 350.0, 350.0};
+      double[] mixtureDensities = {100.0, 100.0, 100.0};
+      double[] areas = {1.0, 1.0, 1.0};
+      double[] gasDensities = {10.0, 10.0, 10.0};
+      double[] oilDensities = {800.0, 800.0, 800.0};
+      double[] waterDensities = {1000.0, 1000.0, 1000.0};
 
       integrator.setIMEXProperties(soundSpeeds, mixtureDensities, areas, gasDensities, oilDensities, waterDensities,
           100.0, 50e5, true);
@@ -199,7 +199,7 @@ class TwoFluidPipeImprovementsTest {
     @Test
     @DisplayName("Negative phase mass is redistributed without changing total mass")
     void testMassPositivityPreservesInventoryAndVelocity() {
-      double[] state = { 8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0 };
+      double[] state = {8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0};
       double totalMassBefore = state[0] + state[1] + state[2];
 
       ConservativeStateLimiter.enforceThreePhaseMassPositivity(state, null);
@@ -216,8 +216,8 @@ class TwoFluidPipeImprovementsTest {
     @Test
     @DisplayName("Non-finite state reverts to finite previous state")
     void testNonFiniteStateUsesPreviousState() {
-      double[] previous = { 7.0, 2.0, 2.0, 14.0, 4.0, 4.0, 100.0 };
-      double[] state = { 8.0, Double.NaN, 3.0, 16.0, -2.0, Double.POSITIVE_INFINITY, 100.0 };
+      double[] previous = {7.0, 2.0, 2.0, 14.0, 4.0, 4.0, 100.0};
+      double[] state = {8.0, Double.NaN, 3.0, 16.0, -2.0, Double.POSITIVE_INFINITY, 100.0};
 
       ConservativeStateLimiter.enforceThreePhaseMassPositivity(state, previous);
 

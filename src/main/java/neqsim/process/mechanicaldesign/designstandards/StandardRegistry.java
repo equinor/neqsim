@@ -536,7 +536,7 @@ public final class StandardRegistry {
     sb.append("Available Design Standards:\n");
     sb.append("===========================\n\n");
 
-    String[] orgs = { "NORSOK", "ASME", "API", "DNV", "ISO", "ASTM", "EN", "PD" };
+    String[] orgs = {"NORSOK", "ASME", "API", "DNV", "ISO", "ASTM", "EN", "PD"};
     for (String org : orgs) {
       List<StandardType> standards = getStandardsByOrganization(org);
       if (!standards.isEmpty()) {

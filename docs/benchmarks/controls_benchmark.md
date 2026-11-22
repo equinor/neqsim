@@ -3,6 +3,14 @@ title: "Canonical Controls Benchmark"
 description: "Source-linked deterministic qualification of six NeqSim controller, protection, and actuator-coordination cases with transparent dynamic surrogate models."
 ---
 
+## Wellhead anti-slug control
+
+The [well-to-topside slug-control replay](well_to_topside_slug_control.md)
+compares open-loop and bounded wellhead-choke control at matched mean production.
+Both cases use identical separator pressure, total-liquid and oil/water-interface
+loops, and publish one-second replay samples. This is numerical reference
+evidence rather than experimental validation.
+
 The canonical controls benchmark gives NeqSim one reproducible CI suite for six
 dynamic control capabilities: level, pressure, cascade temperature, split-range
 capacity, anti-surge protection, and compressor speed/recycle coordination. It
@@ -27,11 +35,14 @@ ControlsBenchmarkSuite.CaseResult level = report.getCase("control_level_setpoint
 double levelIae = level.getMetrics().getIntegralAbsoluteError();
 ```
 
-`Report.getCases()` returns the uniformly sampled time, process-value, set-point,
-and controller-output vectors for every case. Each result also exposes
-`ControllerPerformanceMetrics`, the final relative error, process-value range,
-the case-specific acceptance detail, and the corresponding
-`AgentBenchmarkSuite` verdict.
+`Report.getCases()` returns an unmodifiable list of the six `CaseResult` objects
+in stable execution order. For each case, `getTimeSeconds()`, `getProcessValue()`,
+`getSetPoint()`, and `getControllerOutput()` return copies of the uniformly sampled
+trace arrays. `CaseResult.getMetrics()` exposes `ControllerPerformanceMetrics`;
+the case result also provides the final relative error, process-value range, and
+case-specific acceptance detail. `Report.getAgentBenchmarkReport()` returns the
+aggregate `AgentBenchmarkSuite` report. `Report.isPassed()` requires both all case
+acceptance checks and all agent benchmark comparisons to pass.
 
 ## Model and numerical contract
 
@@ -55,6 +66,13 @@ The anti-surge case uses `AntiSurgeDynamicBenchmark`, including a
 controller-disabled reference. All generic loops use proportional-only tuning so
 their steady offsets, output limits, and challenge response remain easy to
 audit.
+
+The recycle valve invokes its attached controller and advances its actuator once
+per sample. The surrogate gas path uses the previous **actual** valve position,
+and the output trace records the new actual position. Finite valve travel must
+therefore limit both the observed opening and the recycle contribution; a larger
+controller demand does not create extra recycle authority. The default valve has
+instantaneous travel, so the published reference values below are unchanged.
 
 | Stable ID | Case | Duration | Process-value/set-point view | Controller and challenge |
 |-----------|------|----------|------------------------------|--------------------------|

@@ -21,13 +21,19 @@ import neqsim.process.processmodel.ProcessSystem;
  * </p>
  *
  * <p>
- * DCS and SIS sizing follows typical I/O density rules:
+ * DCS and SIS sizing uses the following implementation assumptions:
  * </p>
  * <ul>
- * <li>DCS: ~64 AI channels per I/O card, ~16 cards per cabinet</li>
- * <li>SIS: ~32 channels per I/O card, ~8 cards per cabinet (redundant)</li>
- * <li>Marshalling: 1 cabinet per ~200 I/O channels</li>
+ * <li>DCS: 16 channels per I/O card, 16 cards per cabinet</li>
+ * <li>SIS: 8 channels per I/O card, 8 cards per cabinet</li>
+ * <li>Marshalling: 200 I/O channels per cabinet</li>
  * </ul>
+ * <p>
+ * Card counts and then cabinet counts are rounded up. The calculation retains a minimum of one DCS and one marshalling
+ * cabinet even at zero I/O, but returns zero SIS cabinets at zero safety I/O. Safety I/O here counts safety-related AI,
+ * DI and DO; the remaining counted I/O is assigned to DCS. These are preliminary sizing assumptions, not vendor
+ * hardware selection, redundancy allocation or functional-safety certification.
+ * </p>
  *
  * @author Even Solbraa
  * @version 1.0

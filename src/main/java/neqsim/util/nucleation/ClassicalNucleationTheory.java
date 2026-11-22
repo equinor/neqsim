@@ -1030,7 +1030,7 @@ public class ClassicalNucleationTheory {
     double lnSigma = Math.log(geometricStdDev);
     double d10 = d50 * Math.exp(-1.282 * lnSigma);
     double d90 = d50 * Math.exp(1.282 * lnSigma);
-    return new double[] { d10, d50, d90 };
+    return new double[] {d10, d50, d90};
   }
 
   /**

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.valve.choke.ChokeFlowCoefficient;
 import neqsim.process.mechanicaldesign.valve.choke.GilbertChokeFlow;
 import neqsim.process.mechanicaldesign.valve.choke.MultiphaseChokeFlow;
 import neqsim.process.mechanicaldesign.valve.choke.SachdevaChokeFlow;
@@ -162,6 +163,51 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
   }
 
   /**
+   * Sets the nominal (fully open) choke from a data-sheet flow coefficient and a discharge coefficient.
+   *
+   * <p>
+   * The orifice diameter is {@code D = sqrt(4 Cv A1 / (pi Cd))} (see {@link ChokeFlowCoefficient}), and the model uses
+   * the same Cd, so the capacity of the model equals the Cv. The Gilbert family has the discharge coefficient embedded
+   * in its correlation constant and ignores Cd; use Sachdeva when a Cd should take effect.
+   * </p>
+   *
+   * @param cv flow coefficient at full opening [US Cv], positive
+   * @param dischargeCoefficient discharge coefficient Cd [-], greater than zero and at most one
+   * @throws IllegalArgumentException if cv is not positive or Cd is outside (0, 1]
+   */
+  public void setChokeFlowCoefficient(double cv, double dischargeCoefficient) {
+    double diameter = ChokeFlowCoefficient.orificeDiameterFromCv(cv, dischargeCoefficient);
+    setChokeDiameter(diameter, "m");
+    setDischargeCoefficient(dischargeCoefficient);
+  }
+
+  /**
+   * Gets the flow coefficient equivalent to the nominal choke diameter and discharge coefficient.
+   *
+   * @param percentOpening valve opening [percent], 0 to 100
+   * @return equivalent Cv at the opening [US Cv], following the valve characteristic
+   */
+  public double getEquivalentCv(double percentOpening) {
+    double nominal = ChokeFlowCoefficient.cvFromOrificeDiameter(chokeDiameter,
+        Math.min(1.0, chokeModel.getDischargeCoefficient()));
+    return nominal * openingFraction(percentOpening);
+  }
+
+  /**
+   * Open flow-area fraction at an opening, following the valve characteristic so that the choke models and the Kv-based
+   * sizing methods respond to the same opening curve. The default linear characteristic gives
+   * {@code percentOpening / 100}.
+   *
+   * @param percentOpening valve opening [percent]
+   * @return open fraction of the nominal choke area [-], not below zero
+   */
+  private double openingFraction(double percentOpening) {
+    ValveCharacteristic characteristic = valveMechanicalDesign.getValveCharacterizationMethod();
+    double fraction = characteristic == null ? percentOpening / 100.0 : characteristic.getOpeningFactor(percentOpening);
+    return Math.max(0.0, fraction);
+  }
+
+  /**
    * Converts diameter to meters from various units.
    *
    * @param value the value to convert
@@ -209,7 +255,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     double P2 = valve.getOutletPressure() * 1e5; // bara to Pa
 
     // Apply opening adjustment to effective choke diameter
-    double effectiveDiameter = chokeDiameter * Math.sqrt(percentOpening / 100.0);
+    double effectiveDiameter = chokeDiameter * Math.sqrt(openingFraction(percentOpening));
     chokeModel.setChokeDiameter(effectiveDiameter);
 
     // Get comprehensive sizing results
@@ -258,7 +304,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     double percentOpening = valve.getPercentValveOpening();
 
     // Calculate effective diameter based on valve opening
-    double effectiveDiameter = chokeDiameter * Math.sqrt(percentOpening / 100.0);
+    double effectiveDiameter = chokeDiameter * Math.sqrt(openingFraction(percentOpening));
     chokeModel.setChokeDiameter(effectiveDiameter);
 
     double massFlow = chokeModel.calculateMassFlowRate(fluid, P1, P2);
@@ -284,7 +330,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     for (int i = 0; i < maxIterations; i++) {
       double openingMid = (openingLow + openingHigh) / 2.0;
 
-      double effectiveDiameter = chokeDiameter * Math.sqrt(openingMid / 100.0);
+      double effectiveDiameter = chokeDiameter * Math.sqrt(openingFraction(openingMid));
       chokeModel.setChokeDiameter(effectiveDiameter);
 
       SystemInterface fluid = inletStream.getThermoSystem();
@@ -319,7 +365,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     SystemInterface fluid = inletStream.getThermoSystem();
     double P1 = fluid.getPressure("Pa");
 
-    // Calculate target mass flow from Kv
+    // Apply the selected Kv to the effective throat area.
     double maxKv = valveMechanicalDesign.getValveCvMax() * 0.865;
     if (maxKv > 0) {
       double openingFraction = Math.min(1.0, actualKv / maxKv);
@@ -327,15 +373,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
       chokeModel.setChokeDiameter(effectiveDiameter);
     }
 
-    // For choke models, if we're in critical flow, P2 is the critical pressure
-    // Otherwise, we need flow rate info to determine P2
-    double gasQuality = chokeModel.calculateGasQuality(fluid);
-    double gamma = fluid.getGamma2();
-    double criticalRatio = chokeModel.calculateCriticalPressureRatio(gasQuality, gamma);
-
-    // Return critical pressure as a conservative estimate
-    // (actual P2 depends on downstream conditions)
-    return P1 * criticalRatio;
+    return chokeModel.calculateDownstreamPressure(fluid, P1, fluid.getFlowRate("kg/sec"));
   }
 
   /** {@inheritDoc} */

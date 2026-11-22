@@ -1,0 +1,584 @@
+{
+  "$comment": "Golden cases for devtools/agent_eval.py. routing: a user prompt must surface the expected agent handle / skill names within top-k via the same retrievers agents use. contracts: a results.json shape must pass, or fail on the named rule. Deterministic; no LLM.",
+  "routing": [
+    {"id": "code-health-maintenance", "prompt": "Assess NeqSim code health and maintainability, rank technical debt and dependency complexity hotspots, and plan a bounded maintenance backlog.", "expect_agent_top3": ["code-health"], "expect_skills_top5": ["neqsim-code-health"]},
+    {"id": "safe-source-refactoring", "prompt": "Refactor duplicate NeqSim source helpers behind stable APIs while preserving state ownership, physical results and calculation speed.", "expect_agent_top3": ["refactor"], "expect_skills_top5": ["neqsim-safe-refactoring"]},
+    {"id": "independent-source-code-review", "prompt": "Independently review a NeqSim source-code diff for API compatibility, state ownership and numerical performance regressions.", "expect_agent_top3": ["code-review"], "expect_skills_top5": ["neqsim-code-review"]},
+    {
+      "id": "separator-rag-layer-troubleshooting",
+      "prompt": "Troubleshoot a growing oil-water emulsion rag layer in a separator after a production increase; compare droplet coalescence and dispersed-water load using a dynamic study.",
+      "expect_agent_top3": ["emulsion-separation"],
+      "expect_skills_top5": ["neqsim-emulsion-separation"]
+    },
+    {
+      "id": "emulsion-screening-without-measurements",
+      "prompt": "Screen oil-water emulsion separation and densely packed zone capacity with no measured droplet sizes or coalescence times; start estimated and show sensitivity.",
+      "expect_agent_top3": ["emulsion-separation"],
+      "expect_skills_top5": ["neqsim-emulsion-separation"]
+    },
+    {
+      "id": "mercury-distribution-process-study",
+      "prompt": "Use the E300 fluid of the process study, convert it to UMR-PRU-MC and track where mercury ends up in the separation and recompression process; find where free liquid or solid mercury forms.",
+      "expect_agent_top3": ["mercury-distribution"],
+      "expect_skills_top5": ["neqsim-mercury-distribution-study"]
+    },
+    {
+      "id": "dry-gas-seal-conditioning",
+      "prompt": "Troubleshoot dry gas seal supply conditioning with regulator JT condensation, water and hydrocarbon dewpoint margin, API 692 and ISO 6368, startup and standby booster pressure",
+      "expect_agent_top3": [
+        "rotating-equipment"
+      ],
+      "expect_skills_top5": [
+        "neqsim-rotating-equipment-design"
+      ]
+    },
+    {
+      "id": "dry-gas-seal-vent-diagnosis",
+      "prompt": "Dry gas seal high primary vent leakage, buffer nitrogen flow and bearing separation gas differential pressure during compressor trip coastdown: distinguish vent restriction, process ingress and seal face damage",
+      "expect_agent_top3": [
+        "rotating-equipment"
+      ],
+      "expect_skills_top5": [
+        "neqsim-rotating-equipment-design"
+      ]
+    },
+    {
+      "id": "hydrate-export-line",
+      "prompt": "hydrate formation temperature for a wet gas export pipeline at 100 bara, MEG injection needed?",
+      "expect_agent_top3": ["flow-assurance", "hydrate-screening-agent", "flow-assurance-engineer-agent", "production-chemistry"],
+      "expect_skills_top5": ["neqsim-flow-assurance"]
+    },
+    {
+      "id": "three-stage-compression",
+      "prompt": "3-stage gas compression with intercooling from 5 to 150 bara for 50 MMSCFD, compressor power and discharge temperature",
+      "expect_agent_top3": ["process-model", "solve-process", "solve-task"],
+      "expect_skills_top5": ["neqsim-process-modeling", "neqsim-compressor-power-screening"]
+    },
+    {
+      "id": "process-study-report-pfd",
+      "prompt": "make a process study report with stream tables, balances and PFD and BFD drawings for my NeqSim model with two operating cases",
+      "expect_agent_top3": ["process-study-report", "solve-task", "process-model"],
+      "expect_skills_top5": ["process-study-report"]
+    },
+    {
+      "id": "pvt-fluid-study-report-e300",
+      "prompt": "Create a professional PVT and fluid characterization study report from sample laboratory analyses and QC through the frozen final model, all effective parameters and BIP matrix, with verified E300 export and fresh process replay.",
+      "expect_agent_top3": ["pvt-fluid-study-report"],
+      "expect_skills_top5": ["neqsim-pvt-fluid-study-report"]
+    },
+    {
+      "id": "pvt-characterization-report-samples",
+      "prompt": "Document PVT sample lineage, laboratory QC, recombination and heavy end characterization, compare untuned and calibrated EOS experiments, hold out measurements and hand over complete model parameters with E300 and a professional report.",
+      "expect_agent_top3": ["pvt-fluid-study-report"],
+      "expect_skills_top5": ["neqsim-pvt-fluid-study-report"]
+    },
+    {
+      "id": "cme-pvt",
+      "prompt": "constant mass expansion CME test at 100 C and saturation pressure for a reservoir fluid with C7+ characterization",
+      "expect_agent_top3": ["pvt-simulation"],
+      "expect_skills_top5": ["neqsim-eos-regression"]
+    },
+    {
+      "id": "psv-fire-case",
+      "prompt": "size a PSV for fire case on an HP separator per API 521 and check flare radiation",
+      "expect_agent_top3": ["safety-depressuring", "process-safety-agent"],
+      "expect_skills_top5": ["neqsim-relief-flare-network", "neqsim-process-safety"]
+    },
+    {
+      "id": "teg-dehydration",
+      "prompt": "TEG dehydration unit for 50 MMSCFD wet gas, water dew point spec -10 C, still vent BTEX emissions",
+      "expect_agent_top3": ["teg-dehydration-agent", "gas-treatment-agent", "process-model"],
+      "expect_skills_top5": ["neqsim-teg-dehydration-modeling"]
+    },
+    {
+      "id": "co2-pipeline-impurities",
+      "prompt": "CO2 pipeline dense phase transport with 2% N2 impurity, phase envelope and DNV-RP-F104 check",
+      "expect_agent_top3": ["ccs-hydrogen"],
+      "expect_skills_top5": ["neqsim-ccs-hydrogen"]
+    },
+    {
+      "id": "compressor-trip-rca",
+      "prompt": "compressor tripping on high vibration, trend increasing over two weeks, find root cause from historian data",
+      "expect_agent_top3": ["root-cause"],
+      "expect_skills_top5": ["neqsim-root-cause-analysis"]
+    },
+    {
+      "id": "tieback-npv",
+      "prompt": "subsea tieback vs standalone FPSO for 100 MMboe gas condensate, NPV and IRR on Norwegian tax regime",
+      "expect_agent_top3": ["field-development", "concept-selection-agent", "field-development-economics-agent"],
+      "expect_skills_top5": ["neqsim-field-development", "neqsim-field-economics", "neqsim-subsea-and-wells"]
+    },
+    {
+      "id": "water-hammer-esd",
+      "prompt": "ESD valve closes in 2 seconds on a liquid-filled line, water hammer surge pressure vs design pressure",
+      "expect_agent_top3": ["flow-assurance", "safety-depressuring", "piping-integrity-agent"],
+      "expect_skills_top5": ["neqsim-water-hammer"]
+    },
+    {
+      "id": "phase-envelope-plot",
+      "prompt": "plot the PT phase envelope, cricondenbar and cricondentherm for a rich gas",
+      "expect_agent_top3": ["thermo-fluid"],
+      "expect_skills_top5": ["neqsim-phase-envelope"]
+    },
+    {
+      "id": "unisim-convert",
+      "prompt": "convert this UniSim .usc gas plant case to a NeqSim model and compare results",
+      "expect_agent_top3": ["unisim-reader"],
+      "expect_skills_top5": ["neqsim-unisim-reader"]
+    },
+    {
+      "id": "pid-to-model",
+      "prompt": "read this P&ID PDF, extract equipment tags and piping, and build a NeqSim process from it",
+      "expect_agent_top3": ["technical-reader", "extract-process"],
+      "expect_skills_top5": ["neqsim-technical-document-reading", "neqsim-process-extraction", "neqsim-pid-process-operations"]
+    },
+    {
+      "id": "setup-task-root",
+      "prompt": "how do I set the folder where new tasks are created and the document root for my standards, and check that my NeqSim setup works",
+      "expect_agent_top3": ["solve-task"],
+      "expect_skills_top5": ["neqsim-setup"]
+    },
+    {
+      "id": "separator-recompression-model-build",
+      "prompt": "Build a reusable NeqSim ProcessSystem flowsheet for HP LP oil separation with gas recompression, intercooling, scrubber condensate recycles and produced water; validate stream topology and component mass balance",
+      "expect_agent_top3": [
+        "process-model",
+        "solve-process"
+      ],
+      "expect_skills_top5": [
+        "neqsim-process-modeling"
+      ]
+    },
+    {
+      "id": "multi-area-process-model-handoff",
+      "prompt": "Build a multi-area ProcessModel for oil and gas separation, compression and export with named streams, live outlet connections, battery limits and reusable model handoff",
+      "expect_agent_top3": [
+        "process-model",
+        "solve-process"
+      ],
+      "expect_skills_top5": [
+        "neqsim-process-modeling"
+      ]
+    },
+    {
+      "id": "process-recycle-failed-case",
+      "prompt": "NeqSim process flowsheet recycle convergence fails after a scenario; rebuild the base case, check balances and prevent stale outputs",
+      "expect_agent_top3": [
+        "process-model",
+        "solve-process"
+      ],
+      "expect_skills_top5": [
+        "neqsim-process-modeling"
+      ]
+    },
+    {
+      "id": "claus-sru",
+      "prompt": "Claus sulfur recovery unit with tail gas treatment and recycle, sulfur recovery efficiency and stack SO2",
+      "expect_agent_top3": ["gas-processing-refining", "process-model"],
+      "expect_skills_top5": ["neqsim-sulfur-recovery"]
+    },
+    {
+      "id": "amine-sweetening",
+      "prompt": "MDEA amine sweetening absorber and regenerator for CO2 and H2S removal, rich loading and reboiler duty",
+      "expect_agent_top3": ["gas-processing-refining", "process-model", "thermo-fluid"],
+      "expect_skills_top5": ["neqsim-acid-gas-treating"]
+    },
+    {
+      "id": "crude-assay-blend",
+      "prompt": "characterize two crude assays and blend them to a sulfur limit, then hydrotreating hydrogen demand",
+      "expect_agent_top3": ["gas-processing-refining", "thermo-fluid", "pvt-simulation"],
+      "expect_skills_top5": ["neqsim-refinery-crude-processing"]
+    },
+    {
+      "id": "packed-column-flooding",
+      "prompt": "packed column diameter, flooding margin and HETP for a rate-based absorber versus trays",
+      "expect_agent_top3": ["gas-processing-refining", "process-model", "mechanical-design"],
+      "expect_skills_top5": ["neqsim-column-internals-and-rate-based"]
+    },
+    {
+      "id": "formation-water-silica-study",
+      "prompt": "Study produced water compatibility when commingling gas, oil and three formation waters. Calculate silica and silicate scaling and barite versus blend ratio, and prepare a report.",
+      "expect_agent_top3": ["production-chemistry"],
+      "expect_skills_top5": ["neqsim-produced-water-compatibility"]
+    },
+    {
+      "id": "assay-based-water-blending-study",
+      "prompt": "Screen formation water commingling from water assays at measured pH, CO2 fugacity, temperature and pressure. Compare calcite, sulfate and silica saturation before reinjection.",
+      "expect_agent_top3": ["production-chemistry"],
+      "expect_skills_top5": ["neqsim-produced-water-compatibility"]
+    },
+    {
+      "id": "produced-water-train",
+      "prompt": "produced water hydrocyclone and gas flotation train to hit 30 mg/L oil in water",
+      "expect_agent_top3": ["gas-processing-refining", "production-chemistry"],
+      "expect_skills_top5": ["neqsim-produced-water-and-solids-separation"]
+    },
+    {
+      "id": "looped-network-quality",
+      "prompt": "looped gas gathering network with choke optimisation and a CO2 quality limit at the delivery point",
+      "expect_agent_top3": ["network-energy-systems", "field-development", "optimize"],
+      "expect_skills_top5": ["neqsim-pipeline-and-terminal-networks"]
+    },
+    {
+      "id": "surf-design-report",
+      "prompt": "design a four-well subsea tieback with water injection and produce the SURF design report with drawings",
+      "expect_agent_top3": ["surf-design-study"],
+      "expect_skills_top5": ["neqsim-surf-design-study"]
+    },
+    {
+      "id": "terminal-cargo-schedule",
+      "prompt": "crude oil terminal tank inventory and cargo nomination schedule with crude blending",
+      "expect_agent_top3": ["network-energy-systems", "field-development"],
+      "expect_skills_top5": ["neqsim-pipeline-and-terminal-networks"]
+    },
+    {
+      "id": "power-from-shore",
+      "prompt": "power from shore versus gas turbine drivers with CO2 tax, wind dispatch and energy bus balance",
+      "expect_agent_top3": ["network-energy-systems", "emissions-environmental", "utility-design"],
+      "expect_skills_top5": ["neqsim-energy-systems-and-electrification"]
+    },
+    {
+      "id": "host-tiein-capacity",
+      "prompt": "host facility tie-in capacity, well test matching and gas lift allocation for a satellite field",
+      "expect_agent_top3": ["network-energy-systems", "field-development"],
+      "expect_skills_top5": ["neqsim-integrated-production-and-lifecycle"]
+    },
+    {
+      "id": "capacity-increase-ideation",
+      "prompt": "ideas to increase capacity and accelerate production on an FPSO host: AICD completions, subsea separation, higher separator pressure and scrubber internals, ranked on scope, cost, emissions, HSE and value with a maturation pipeline",
+      "expect_agent_top3": ["capacity-increase-screening", "field-development", "network-energy-systems"],
+      "expect_skills_top5": ["neqsim-capacity-increase-screening"]
+    },
+    {
+      "id": "compressor-chart-extrapolation",
+      "prompt": "load vendor compressor chart, calibrate surge line and check the operating point does not extrapolate beyond stonewall",
+      "expect_agent_top3": ["rotating-equipment", "process-model", "mechanical-design", "enterprise-rotating-equipment-curves-agent"],
+      "expect_skills_top5": ["neqsim-rotating-equipment-design"]
+    },
+    {
+      "id": "pump-npsh-api610",
+      "prompt": "pump NPSH margin and API 610 screening for a booster pump",
+      "expect_agent_top3": ["rotating-equipment", "mechanical-design"],
+      "expect_skills_top5": ["neqsim-rotating-equipment-design"]
+    },
+    {
+      "id": "professional-pid-dexpi201-simulation",
+      "prompt": "prepare a professional P&ID drawing package with native DEXPI 2.0.1 from my NeqSim process model, add instrumentation and safeguards and bind final P&ID tags for steady-state and dynamic simulation tests",
+      "expect_agent_top3": ["engineering-deliverables"],
+      "expect_skills_top5": ["neqsim-pid-process-operations"]
+    },
+    {
+      "id": "engineering-design-loop",
+      "prompt": "engineering design loop with P&ID synthesis, DEXPI export and CFIHOS handover and change impact analysis",
+      "expect_agent_top3": ["engineering-deliverables", "process-model", "standards-review"],
+      "expect_skills_top5": ["neqsim-engineering-design-package"]
+    },
+    {
+      "id": "mpc-virtual-flow",
+      "prompt": "model predictive control step response model and virtual flow meter soft sensor",
+      "expect_agent_top3": ["control-system", "plant-data", "optimize"],
+      "expect_skills_top5": ["neqsim-advanced-control-mpc-and-virtual-sensing"]
+    },
+    {
+      "id": "process-superstructure",
+      "prompt": "process synthesis superstructure candidate flowsheet generation from feed to product",
+      "expect_agent_top3": ["optimize", "extract-process", "process-model"],
+      "expect_skills_top5": ["neqsim-process-synthesis-research"]
+    },
+    {
+      "id": "release-source-term",
+      "prompt": "time resolved leak source term for a 25 mm hole with flashing liquid, homogeneous equilibrium model",
+      "expect_agent_top3": ["safety-depressuring", "consequence-analysis"],
+      "expect_skills_top5": ["neqsim-release-source-terms"]
+    },
+    {
+      "id": "esd-test-open-drain",
+      "prompt": "ESD logic test run, open drain review and dynamic safety scenario with operational risk simulation",
+      "expect_agent_top3": ["safety-depressuring", "standards-review"],
+      "expect_skills_top5": ["neqsim-operational-risk-and-safety-validation"]
+    },
+    {
+      "id": "lng-rollover",
+      "prompt": "LNG tank ageing, boil-off gas and rollover risk during a ship voyage",
+      "expect_agent_top3": ["lng-value-chain", "process-model"],
+      "expect_skills_top5": ["neqsim-lng-liquefaction"]
+    },
+    {
+      "id": "flowsheet-bottleneck",
+      "prompt": "which equipment is the bottleneck in the flowsheet, utilization snapshot and capacity margin",
+      "expect_agent_top3": ["optimize", "optimize-processmodel", "process-model", "network-energy-systems"],
+      "expect_skills_top5": ["neqsim-capacity-and-utilization-analysis"]
+    },
+    {
+      "id": "psc-bid-break-even",
+      "prompt": "bid on an exploration block under a production sharing contract, break-even offered profit oil share and EMV",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-psc-bid-economics-screening"]
+    },
+    {
+      "id": "presalt-no-pvt-fluid",
+      "prompt": "Santos Basin pre-salt block with no PVT, CO2-rich associated gas analogue fluid and low base high cases",
+      "expect_agent_top3": ["frontier-block-bid-agent", "fluid-characterization-agent"],
+      "expect_skills_top5": ["neqsim-brazil-presalt-analogue-basis"]
+    },
+    {
+      "id": "anp-open-data",
+      "prompt": "Brazilian ANP open data production by well, bid round blocks and unit conversion",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-anp-open-data"]
+    },
+    {
+      "id": "brazil-gas-export-host-capacity",
+      "prompt": "Brazilian pre-salt block tie-back: gas export route and tariff status, CO2 removal for the ANP gas spec, wellhead net-back and host FPSO ullage with a compression limit",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-brazil-offshore-infrastructure-market"]
+    },
+    {
+      "id": "annex-xx-profit-oil-table",
+      "prompt": "ANP edital Annex XX Union profit oil share adjustment by Brent price band and rate per producer, effective share, break-even chance of discovery and P50 volume for EMV zero",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-psc-bid-economics-screening"]
+    },
+    {
+      "id": "apbo-firm-well",
+      "prompt": "APbo for an exploration prospect: firm well in APA 2027, chance of success, P90 P50 P10 volumes, EMV, tie-in to Asgard B or Heidrun with host ullage, development solution and valuation",
+      "expect_agent_top3": ["enterprise-exploration-opportunity-agent", "enterprise-area-development-agent", "enterprise-tie-in-solution-agent", "field-development"],
+      "expect_skills_top5": ["enterprise-prospect-risking", "neqsim-exploration-strategy-selection"]
+    },
+    {
+      "id": "exploration-strategy-plx",
+      "prompt": "exploration strategy: dedicated exploration well versus a PLX sidetrack from a planned producer, EMV and value of information",
+      "expect_agent_top3": ["enterprise-exploration-opportunity-agent", "field-development"],
+      "expect_skills_top5": ["neqsim-exploration-strategy-selection"]
+    },
+    {
+      "id": "pol-apbo-review",
+      "prompt": "Equinor review of a partner-operated APbo exploration well: EMV, break-even chance of success, risked volume and host alternatives",
+      "expect_agent_top3": ["enterprise-exploration-opportunity-agent", "enterprise-geox-agent", "enterprise-frontier-block-bid-agent"],
+      "expect_skills_top5": ["enterprise-prospect-risking"]
+    },
+    {
+      "id": "vpbo-discovery-host",
+      "prompt": "VPbo for a discovery: development solution, timing and host selection, tie-back to an existing platform with capacity per year, NPV and CO2 abatement cost",
+      "expect_agent_top3": ["enterprise-area-development-agent", "enterprise-exploration-opportunity-agent", "enterprise-area-development-value-agent", "field-development"],
+      "expect_skills_top5": ["enterprise-host-ullage-allocation", "enterprise-area-development-workflow"]
+    },
+    {
+      "id": "welldb-discovery-well-evidence",
+      "prompt": "what did the discovery well find: fluid type, contacts, MDT sampling and tests from the final well report and discovery evaluation in welldb for Nøkken, and which reports exist for the wellbore",
+      "expect_agent_top3": ["enterprise-welldb-agent", "enterprise-prospect-evidence-agent", "enterprise-geox-agent"],
+      "expect_skills_top5": ["enterprise-welldb-search-api"]
+    },
+    {
+      "id": "pepr-action-bottleneck",
+      "prompt": "PEPR action 80302027 bottleneck study for gas treatment, read the action and attachments, historian data and maintenance notifications, produce a work report",
+      "expect_agent_top3": ["enterprise-pepr-solve-task-agent", "enterprise-pepr-agent"],
+      "expect_skills_top5": ["enterprise-pepr-actions"]
+    },
+    {
+      "id": "bluelight-compressor-trip",
+      "prompt": "Blalys bluelight: third stage compressor tripped, find when production was lost, first-up alarm, root cause and restoration options",
+      "expect_agent_top3": ["enterprise-trip-investigation-agent", "enterprise-incident-response-agent", "root-cause"],
+      "expect_skills_top5": ["enterprise-trip-investigation", "neqsim-root-cause-analysis"]
+    },
+    {
+      "id": "m1-notification-triage",
+      "prompt": "M1 notification 48990782 drain valve replacement: triage, root cause and engineering assessment",
+      "expect_agent_top3": ["enterprise-m1-notification-agent", "enterprise-m1-intake-agent"],
+      "expect_skills_top5": ["enterprise-m1-notification"]
+    },
+    {
+      "id": "well-to-export-plant-model",
+      "prompt": "total well-to-export NeqSim process model with all wells, formation fluids from PVT, ProcessPilot benchmark against PDM and plant data",
+      "expect_agent_top3": ["enterprise-process-notebook-agent", "enterprise-reservoir-history-match-agent", "enterprise-well-production-routing-agent", "process-model"],
+      "expect_skills_top5": ["enterprise-process-notebook-workspace"]
+    },
+    {
+      "id": "reservoir-opm-open-data",
+      "prompt": "reservoir simulator in OPM Flow from open data: Sodir volumes, build grid, history match to production, forecast",
+      "expect_agent_top3": ["reservoir-simulator-agent", "reservoir-history-match-agent", "enterprise-reservoir-history-match-agent"],
+      "expect_skills_top5": ["neqsim-reservoir-model-builder", "neqsim-reservoir-history-match-forecast"]
+    },
+    {
+      "id": "levetidsprogram-fire-doors",
+      "prompt": "levetidsprogram for fire doors: ageing trend from SAP failure history, remaining life to 2040, retain or replace",
+      "expect_agent_top3": ["enterprise-life-extension-agent"],
+      "expect_skills_top5": ["enterprise-life-extension-assessment", "neqsim-ageing-life-extension-screening"]
+    },
+    {
+      "id": "hazop-prep-stid",
+      "prompt": "HAZOP preparation for the first stage separator from STID P&IDs, cause and effect, deviations quantified with NeqSim",
+      "expect_agent_top3": ["enterprise-stid-safety-study-agent", "safety-depressuring"],
+      "expect_skills_top5": ["enterprise-hazop-preparation", "neqsim-hazid-fmea-eta-fta"]
+    },
+    {
+      "id": "host-ullage-area-development",
+      "prompt": "area development: tie-in host evaluation against two platforms, host ullage per year, back-out of incumbents, strategy valuation",
+      "expect_agent_top3": ["enterprise-area-development-agent", "enterprise-host-ullage-agent", "enterprise-area-development-value-agent"],
+      "expect_skills_top5": ["enterprise-host-ullage-allocation", "enterprise-area-development-workflow"]
+    },
+    {
+      "id": "capacity-increase-host-ideas",
+      "prompt": "capacity increase screening for an FPSO: topside, subsea and well ideas ranked on scope, cost, emissions, HSE and value",
+      "expect_agent_top3": ["capacity-increase-screening", "enterprise-capacity-increase-screening-agent"],
+      "expect_skills_top5": ["neqsim-capacity-increase-screening"]
+    },
+    {
+      "id": "firewater-deluge-area",
+      "prompt": "fire water deluge coverage of a process area against NORSOK S-001, nozzles and monitors",
+      "expect_agent_top3": ["firewater-coverage-agent", "consequence-analysis"],
+      "expect_skills_top5": ["neqsim-firewater-deluge-design"]
+    },
+    {
+      "id": "production-chain-python",
+      "prompt": "Build a reusable Python NeqSim model from reservoir through production and injection wells, SURF templates PLEMs and daisy-chain manifolds, multiphase flowlines and risers, host process facilities, constrained steam cooling power utilities and downstream gas treatment and LNG.",
+      "expect_agent_top3": [
+        "network-energy-systems",
+        "reservoir-to-facility-screening-agent"
+      ],
+      "expect_skills_top5": [
+        "neqsim-production-system-modeling"
+      ]
+    },
+    {
+      "id": "production-chain-java",
+      "prompt": "Build the connected production system in Java from reservoir and wells through SURF, multiphase flowlines and risers to facilities, process utilities and downstream processing, preserving the same fluids, boundaries and constraints as the Python case.",
+      "expect_agent_top3": [
+        "network-energy-systems",
+        "reservoir-to-facility-screening-agent"
+      ],
+      "expect_skills_top5": [
+        "neqsim-production-system-modeling"
+      ]
+    },
+    {
+      "id": "transport-model-selection",
+      "prompt": "Select physical property models for viscosity, thermal conductivity, binary and effective diffusion in gas oil and aqueous phases.",
+      "expect_agent_top3": [
+        "thermo-fluid"
+      ],
+      "expect_skills_top5": [
+        "neqsim-api-patterns"
+      ]
+    },
+    {
+      "id": "three-phase-interfacial-model",
+      "prompt": "Calculate gas oil water interfacial tension for all three phase pairs and validate surface tension model units.",
+      "expect_agent_top3": [
+        "thermo-fluid"
+      ],
+      "expect_skills_top5": [
+        "neqsim-api-patterns"
+      ]
+    },
+    {
+      "id": "black-oil-exchange",
+      "prompt": "Build black-oil PVT tables Rs Rv Bo Bg from a compositional fluid and export Eclipse or CMG tables for reservoir simulation.",
+      "expect_agent_top3": [
+        "pvt-simulation",
+        "e300-fluid-agent"
+      ],
+      "expect_skills_top5": [
+        "neqsim-api-patterns"
+      ]
+    },
+    {
+      "id": "hv-mixing-parameters",
+      "prompt": "Inspect SRK and PR EOS Huron Vidal mixing rules with NRTL binary interaction parameters for water methanol and glycol.",
+      "expect_agent_top3": [
+        "thermo-fluid",
+        "pvt-simulation"
+      ],
+      "expect_skills_top5": [
+        "neqsim-eos-regression"
+      ]
+    },
+    {
+      "id": "process-utilities-design-report",
+      "prompt": "Develop a process utilities design report for an offshore plant from its process report: utility consumer register, simultaneous operating cases, generation distribution capacity, utility flow diagrams and standards evidence",
+      "expect_agent_top3": [
+        "utilities-design-report"
+      ],
+      "expect_skills_top5": [
+        "neqsim-utilities-design-report"
+      ]
+    },
+    {
+      "id": "onshore-utility-loss-report",
+      "prompt": "Prepare an onshore process utilities design report with instrument air nitrogen steam cooling water consumer loads, standby storage autonomy and utility loss scenarios",
+      "expect_agent_top3": [
+        "utilities-design-report"
+      ],
+      "expect_skills_top5": [
+        "neqsim-utilities-design-report"
+      ]
+    },
+    {
+      "id": "pid-quality-standards-review",
+      "prompt": "independent P&ID quality control: review native DEXPI drawings against source piping instrumentation sensing utility circuits and controlled ISO ISA standards, run pid-review and retain missing evidence as HOLD",
+      "expect_agent_top3": [
+        "pid-quality-review"
+      ],
+      "expect_skills_top5": [
+        "neqsim-pid-quality-review"
+      ]
+    }
+  ],
+  "contracts": [
+    {
+      "id": "minimal-quick-task-passes",
+      "expect": "pass",
+      "results": {
+        "key_results": {"outlet_temperature_C": -18.5, "pressure_drop_bar": 3.2},
+        "validation": {"mass_balance_error_pct": 0.01, "acceptance_criteria_met": true},
+        "approach": "SRK EOS with classic mixing rule; TPflash then initProperties before reading transport properties.",
+        "conclusions": "JT cooling brings the gas below the hydrate curve; inhibition is required."
+      }
+    },
+    {
+      "id": "missing-conclusions-fails",
+      "expect": "fail",
+      "fail_on": "conclusions",
+      "results": {
+        "key_results": {"outlet_temperature_C": -18.5},
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "SRK EOS."
+      }
+    },
+    {
+      "id": "key-results-must-be-object",
+      "expect": "fail",
+      "fail_on": "key_results",
+      "results": {
+        "key_results": [1, 2, 3],
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "SRK EOS.",
+        "conclusions": "Done."
+      }
+    },
+    {
+      "id": "benchmark-block-shape",
+      "expect": "fail",
+      "fail_on": "benchmark_validation",
+      "results": {
+        "key_results": {"density_kg_m3": 42.1},
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "SRK EOS.",
+        "conclusions": "Density matches NIST within 1%.",
+        "benchmark_validation": "NIST agrees"
+      }
+    },
+    {
+      "id": "uncertainty-percentile-order",
+      "expect": "fail",
+      "fail_on": "uncertainty",
+      "results": {
+        "key_results": {"npv_mnok": 3352.0},
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "Monte Carlo over NeqSim process model.",
+        "conclusions": "Positive expected value.",
+        "uncertainty": {"method": "Monte Carlo", "n_simulations": 200, "p10": 7086.0, "p50": 3352.0, "p90": -22.0}
+      }
+    }
+  ]
+}

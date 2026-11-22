@@ -49,7 +49,11 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
     return this.m;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermBaseClass clone() {
     AttractiveTermBaseClass attractiveTerm = null;
@@ -57,12 +61,10 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
       attractiveTerm = (AttractiveTermBaseClass) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermBaseClass", ex);
     }
-
-    // atSystem.out.println("m " + m);ractiveTerm.parameters = (double[])
-    // parameters.clone();
-    // System.arraycopy(parameters,0, attractiveTerm.parameters, 0,
-    // parameters.length);
+    attractiveTerm.parameters = parameters == null ? null : parameters.clone();
+    attractiveTerm.parametersSolid = parametersSolid == null ? null : parametersSolid.clone();
     return attractiveTerm;
   }
 
@@ -112,6 +114,12 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
   @Override
   public double getParameters(int i) {
     return parameters[i];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getNumberOfParameters() {
+    return parameters.length;
   }
 
   /**

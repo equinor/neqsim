@@ -58,14 +58,16 @@ paths never call it.
 
 ### Analytical derivative contract
 
-For the implemented GE reference states,
+For a generic aqueous GE solute, use the normalized activity
+$\gamma_i^*=\gamma_i/\gamma_i^{\infty,w}$ from the same model and interaction
+parameters at pure-water infinite dilution:
 
-$\phi_i=\frac{\gamma_i H_i}{P}$
+$\phi_i=\frac{\gamma_i^* H_i}{P}$
 
 for a Henry solute, or the corresponding solvent vapor-pressure expression.
 NeqSim therefore exposes the constant-composition analytical derivatives
 
-$\left(\frac{\partial\ln\phi_i}{\partial T}\right)_{P,\mathbf{x}}=\frac{\partial\ln\gamma_i}{\partial T}+\frac{\partial\ln H_i}{\partial T}$
+$\left(\frac{\partial\ln\phi_i}{\partial T}\right)_{P,\mathbf{x}}=\frac{\partial\ln\gamma_i}{\partial T}-\frac{\partial\ln\gamma_i^{\infty,w}}{\partial T}+\frac{\partial\ln H_i}{\partial T}$
 
 and
 
@@ -78,6 +80,16 @@ bar, so the pressure derivative is in 1/bar. The `-1/P` term is the derivative
 of the explicit fugacity-coefficient denominator; it is not a Poynting
 correction. The IAPWS reference remains defined at water saturation, and no
 pressure-dependent partial-molar-volume model is implied.
+
+NRTL evaluates the activity derivative analytically. Other GE models can use
+isolated fixed-composition differences for their activity term. Pitzer neutral
+molality activities do not use the generic symmetric-to-Henry normalization.
+The empirical Desmukh-Mather and Kent-Eisenberg paths retain their existing
+reference conventions; Desmukh-Mather additionally differentiates its existing
+water Poynting term. Their constant ionic fugacity coefficients have zero
+temperature and pressure derivatives. See the
+[integrated EOS/GE reference guide](henry_water_database.md#integrated-eos-gasoil-and-ge-liquid-references)
+for pure-fluid and multiphase behavior.
 
 ### Versioned coefficient family
 

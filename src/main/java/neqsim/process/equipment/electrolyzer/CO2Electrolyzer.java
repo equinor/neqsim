@@ -211,7 +211,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
 
   private SystemInterface createSystem(Map<String, Double> componentMoles, double temperature, double pressure) {
     SystemInterface system = inletStream != null ? inletStream.getThermoSystem().clone()
-        : new Fluid().create2(new String[] { "CO2" }, new double[] { 1e-12 }, "mole/sec");
+        : new Fluid().create2(new String[] {"CO2"}, new double[] {1e-12}, "mole/sec");
     system.setEmptyFluid();
     double totalMoles = 0.0;
     for (Map.Entry<String, Double> entry : componentMoles.entrySet()) {

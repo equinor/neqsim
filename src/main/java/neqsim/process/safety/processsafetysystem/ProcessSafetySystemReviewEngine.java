@@ -144,11 +144,11 @@ public class ProcessSafetySystemReviewEngine {
    */
   private void checkRoleAndInterfaces(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
     addRequiredBoolean(result, item, "PSS-10.1-ROLE", CLAUSE_10_1,
-        new String[] { "processSafetyRoleDefined", "roleDefined", "safetyFunctionDefined" },
+        new String[] {"processSafetyRoleDefined", "roleDefined", "safetyFunctionDefined"},
         "Process safety role and safety function are defined.",
         "Document the safety function, protected equipment, initiators, and executive actions.");
     addRequiredBoolean(result, item, "PSS-10.1-INTERFACES", CLAUSE_10_1,
-        new String[] { "interfacesDefined", "systemInterfacesDefined", "interfaceRegisterDocumented" },
+        new String[] {"interfacesDefined", "systemInterfacesDefined", "interfaceRegisterDocumented"},
         "Interfaces to PSD, PSV, SIF, alarms, utilities, and operations are defined.",
         "Add interface evidence from C&E, SRS, utility dependency matrices, and operating procedures.");
   }
@@ -161,23 +161,22 @@ public class ProcessSafetySystemReviewEngine {
    */
   private void checkSafetyLifecycle(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
     addRequiredBoolean(result, item, "PSS-LIFECYCLE-HAZID-HAZOP-LOPA", CLAUSE_LIFECYCLE,
-        new String[] { "hazidHazopLopaCompleted", "hazardAnalysisCompleted", "riskAssessmentCompleted",
-            "lopaCompleted" },
+        new String[] {"hazidHazopLopaCompleted", "hazardAnalysisCompleted", "riskAssessmentCompleted", "lopaCompleted"},
         "HAZID, HAZOP, LOPA, or equivalent hazard analysis evidence defines the demand basis.",
         "Attach HAZID/HAZOP/LOPA references that identify the scenario, consequence, demand frequency, and credited protection layers.");
     addRequiredBoolean(result, item, "PSS-LIFECYCLE-SRS", CLAUSE_LIFECYCLE,
-        new String[] { "srsDefinesRequiredFunctions", "srsDocumented", "srsReferenceDocumented",
-            "silRequirementsDocumented" },
+        new String[] {"srsDefinesRequiredFunctions", "srsDocumented", "srsReferenceDocumented",
+            "silRequirementsDocumented"},
         "SRS evidence defines the required safety function, SIL/PFD, response time, and proof-test basis.",
         "Link each safety function to an SRS entry with initiator, trip, final element, safe state, SIL/PFD, response time, and proof-test interval.");
     addRequiredBoolean(result, item, "PSS-LIFECYCLE-DESIGN-IMPLEMENTATION", CLAUSE_LIFECYCLE,
-        new String[] { "sisEsdFgsDesignImplemented", "safetySystemDesignImplemented", "designImplementationVerified",
-            "causeAndEffectImplemented" },
+        new String[] {"sisEsdFgsDesignImplemented", "safetySystemDesignImplemented", "designImplementationVerified",
+            "causeAndEffectImplemented"},
         "SIS, ESD, FGS, or PSD design implementation evidence is documented.",
         "Attach design implementation evidence such as C&E implementation, logic solver configuration, final-element data, and FGS/ESD/SIS architecture records.");
     addRequiredBoolean(result, item, "PSS-LIFECYCLE-VERIFY-TEST-OPERATE", CLAUSE_LIFECYCLE,
-        new String[] { "verificationTestingOperationConfirmed", "verificationPlanDocumented",
-            "proofTestProgramDocumented", "operationsMaintenancePlanDocumented" },
+        new String[] {"verificationTestingOperationConfirmed", "verificationPlanDocumented",
+            "proofTestProgramDocumented", "operationsMaintenancePlanDocumented"},
         "Verification, testing, and operational maintenance evidence is documented.",
         "Attach FAT/SAT, proof-test procedure and status, bypass/override controls, operations/maintenance plan, and live instrument-data status where available.");
   }
@@ -190,11 +189,11 @@ public class ProcessSafetySystemReviewEngine {
    */
   private void checkMeansOfProtection(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
     addRequiredBoolean(result, item, "PSS-10.3-PROTECTION-LAYERS", CLAUSE_10_3,
-        new String[] { "protectionLayersDocumented", "meansOfProtectionDocumented", "protectionStrategyDocumented" },
+        new String[] {"protectionLayersDocumented", "meansOfProtectionDocumented", "protectionStrategyDocumented"},
         "Means of protection are documented and linked to the hazard scenario.",
         "Document the credited layers: process design, PSD, PSV, SIF, alarms, operator action, and survivability.");
     addRequiredBoolean(result, item, "PSS-10.3-DESIGN-BASIS", CLAUSE_10_3,
-        new String[] { "designBasisDocumented", "scenarioBasisDocumented", "hazardBasisDocumented" },
+        new String[] {"designBasisDocumented", "scenarioBasisDocumented", "hazardBasisDocumented"},
         "Design and scenario basis are documented.",
         "Add cause, consequence, operating envelope, and scenario demand basis from the design review.");
   }
@@ -208,11 +207,11 @@ public class ProcessSafetySystemReviewEngine {
   private void checkProcessSafetyPrinciples(ProcessSafetySystemReviewItem item,
       ProcessSafetySystemReviewResult result) {
     addRequiredBoolean(result, item, "PSS-10.4.1-PRINCIPLES", CLAUSE_10_4_1,
-        new String[] { "processSafetyPrinciplesDocumented", "safeStateDefined", "failSafeStateDocumented" },
+        new String[] {"processSafetyPrinciplesDocumented", "safeStateDefined", "failSafeStateDocumented"},
         "Process safety principles, safe state, and fail-safe behavior are documented.",
         "Add documented safe-state and fail-safe behavior for the process safety function.");
     addRequiredBoolean(result, item, "PSS-10.4.1-BYPASS", CLAUSE_10_4_1,
-        new String[] { "bypassManagementDocumented", "overrideManagementDocumented", "impairmentManagementDocumented" },
+        new String[] {"bypassManagementDocumented", "overrideManagementDocumented", "impairmentManagementDocumented"},
         "Bypass, override, and impairment management are documented.",
         "Add bypass/override register controls, compensating measures, and approval evidence.");
   }
@@ -230,15 +229,15 @@ public class ProcessSafetySystemReviewEngine {
       return;
     }
     addRequiredBoolean(result, item, "PSS-10.4.2-SHUTDOWN-ACTION", CLAUSE_10_4_2,
-        new String[] { "shutdownActionDefined", "psdActionDefined", "executiveActionDefined" },
+        new String[] {"shutdownActionDefined", "psdActionDefined", "executiveActionDefined"},
         "Shutdown action is defined for the PSD function.",
         "Add C&E evidence showing initiator, trip, final element, and safe-state action.");
     addRequiredBoolean(result, item, "PSS-10.4.2-FAILSAFE", CLAUSE_10_4_2,
-        new String[] { "psdValveFailsSafe", "valveFailsSafe", "finalElementFailsSafe" },
+        new String[] {"psdValveFailsSafe", "valveFailsSafe", "finalElementFailsSafe"},
         "PSD valve or final element fails to the documented safe state.",
         "Document actuator fail action and energy-loss behavior for each PSD final element.");
     addRequiredBoolean(result, item, "PSS-10.4.2-ISOLATION", CLAUSE_10_4_2,
-        new String[] { "psdValveIsolationAdequate", "shutdownIsolationAdequate", "leakTightClassDocumented" },
+        new String[] {"psdValveIsolationAdequate", "shutdownIsolationAdequate", "leakTightClassDocumented"},
         "PSD valve isolation and leakage class are documented as adequate.",
         "Add valve specification, seat leakage class, and isolation philosophy evidence.");
   }
@@ -256,11 +255,11 @@ public class ProcessSafetySystemReviewEngine {
       return;
     }
     addRequiredBoolean(result, item, "PSS-10.4.3-SIZING-BASIS", CLAUSE_10_4_3,
-        new String[] { "psvSizingBasisDocumented", "reliefScenarioDocumented", "reliefLoadDocumented" },
+        new String[] {"psvSizingBasisDocumented", "reliefScenarioDocumented", "reliefLoadDocumented"},
         "PSV relief scenario and sizing basis are documented.",
         "Add relief load calculation, governing scenario, set pressure, protected volume, and relief route evidence.");
     addRequiredBoolean(result, item, "PSS-10.4.3-PROTECTED-EQUIPMENT", CLAUSE_10_4_3,
-        new String[] { "protectedEquipmentDocumented", "protectedEquipmentTagDocumented" },
+        new String[] {"protectedEquipmentDocumented", "protectedEquipmentTagDocumented"},
         "Protected equipment and pressure boundary are documented.",
         "Link each PSV to protected equipment and design pressure in the PSV list or relief register.");
     double requiredLoad = item.getDouble(Double.NaN, "requiredReliefLoadKgPerS", "reliefLoadKgPerS",
@@ -300,11 +299,11 @@ public class ProcessSafetySystemReviewEngine {
       return;
     }
     addRequiredBoolean(result, item, "PSS-10.4.4-ACTION", CLAUSE_10_4_4,
-        new String[] { "alarmActionDefined", "operatorActionDefined", "alarmResponseDefined" },
+        new String[] {"alarmActionDefined", "operatorActionDefined", "alarmResponseDefined"},
         "Alarm response and operator action are defined.",
         "Document alarm setpoint, operator response, time available, and consequence of no action.");
     addRequiredBoolean(result, item, "PSS-10.4.4-SETPOINT", CLAUSE_10_4_4,
-        new String[] { "alarmSetpointDocumented", "tripSetpointDocumented", "actionLimitDocumented" },
+        new String[] {"alarmSetpointDocumented", "tripSetpointDocumented", "actionLimitDocumented"},
         "Alarm or action setpoint is documented.",
         "Add alarm list or C&E evidence showing setpoint, priority, and response action.");
     compareTimes(result, item, "PSS-10.4.4-OPERATOR-TIME", CLAUSE_10_4_4, "operatorResponseTimeSeconds",
@@ -340,15 +339,15 @@ public class ProcessSafetySystemReviewEngine {
       return;
     }
     addRequiredBoolean(result, item, "PSS-10.4.6-CERTIFIED", CLAUSE_10_4_6,
-        new String[] { "logicSolverCertified", "logicSolverSuitable", "sisLogicSolverCertified" },
+        new String[] {"logicSolverCertified", "logicSolverSuitable", "sisLogicSolverCertified"},
         "Logic solver suitability and certification evidence are documented.",
         "Add SRS/vendor/IEC 61511 evidence showing logic solver suitability for the safety function.");
     addRequiredBoolean(result, item, "PSS-10.4.6-INDEPENDENCE", CLAUSE_10_4_6,
-        new String[] { "logicSolverIndependent", "independentFromControlSystem", "sisBpcsIndependenceDocumented" },
+        new String[] {"logicSolverIndependent", "independentFromControlSystem", "sisBpcsIndependenceDocumented"},
         "Logic solver independence from the control system is documented.",
         "Document independence between SIS/PSD logic and non-safety control functions.");
     addRequiredBoolean(result, item, "PSS-10.4.6-TESTED", CLAUSE_10_4_6,
-        new String[] { "causeAndEffectTested", "logicFunctionTested", "sifProofTested" },
+        new String[] {"causeAndEffectTested", "logicFunctionTested", "sifProofTested"},
         "Cause-and-effect or logic function test evidence is documented.",
         "Attach FAT/SAT/proof-test evidence for the logic solver and final elements.");
   }
@@ -400,14 +399,14 @@ public class ProcessSafetySystemReviewEngine {
    */
   private void checkUtilityDependencies(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
     addRequiredBoolean(result, item, "PSS-10.4.8-UTILITY-LIST", CLAUSE_10_4_8,
-        new String[] { "requiredUtilitiesIdentified", "utilityDependenciesIdentified", "utilityMatrixDocumented" },
+        new String[] {"requiredUtilitiesIdentified", "utilityDependenciesIdentified", "utilityMatrixDocumented"},
         "Required utilities and dependencies are identified.",
         "Add power, instrument air, hydraulics, nitrogen, communication, and HVAC dependency evidence.");
     Boolean utilityDependent = item.getBooleanObject("utilityDependent", "dependsOnUtility",
         "requiresUtilityForAction");
     if (Boolean.TRUE.equals(utilityDependent)) {
       addRequiredBoolean(result, item, "PSS-10.4.8-UTILITY-LOSS", CLAUSE_10_4_8,
-          new String[] { "failSafeOnUtilityLoss", "safeOnUtilityFailure", "utilityFailureSafeStateDocumented" },
+          new String[] {"failSafeOnUtilityLoss", "safeOnUtilityFailure", "utilityFailureSafeStateDocumented"},
           "Safety function reaches a safe state on loss of required utility.",
           "Document fail action, stored energy, UPS autonomy, or alternate utility capacity.");
     } else {
@@ -430,11 +429,11 @@ public class ProcessSafetySystemReviewEngine {
       return;
     }
     addRequiredBoolean(result, item, "PSS-10.4.9-PSD-INDEPENDENCE", CLAUSE_10_4_9,
-        new String[] { "psdIndependentFromControl", "psdIndependenceDocumented", "independentFromControlSystem" },
+        new String[] {"psdIndependentFromControl", "psdIndependenceDocumented", "independentFromControlSystem"},
         "PSD independence from normal process control is documented.",
         "Add PSD/BPCS independence evidence from the automation architecture and C&E matrix.");
     addRequiredBoolean(result, item, "PSS-10.4.9-PSD-MANUAL", CLAUSE_10_4_9,
-        new String[] { "manualShutdownAvailable", "manualInitiationDocumented", "manualPsdAvailable" },
+        new String[] {"manualShutdownAvailable", "manualInitiationDocumented", "manualPsdAvailable"},
         "Manual PSD initiation or equivalent manual action is documented.",
         "Document manual shutdown initiation points, operator access, and action effect.");
   }
@@ -447,8 +446,8 @@ public class ProcessSafetySystemReviewEngine {
    */
   private void checkSurvivability(ProcessSafetySystemReviewItem item, ProcessSafetySystemReviewResult result) {
     addRequiredBoolean(result, item, "PSS-10.4.10-SURVIVABILITY", CLAUSE_10_4_10,
-        new String[] { "survivabilityRequirementDocumented", "fireBlastSurvivabilityDocumented",
-            "survivabilityDocumented" },
+        new String[] {"survivabilityRequirementDocumented", "fireBlastSurvivabilityDocumented",
+            "survivabilityDocumented"},
         "Survivability requirement for the process safety function is documented.",
         "Add fire/blast/PFP/endurance requirement linked to the major accident scenario.");
     compareMinimum(result, item, "PSS-10.4.10-ENDURANCE", CLAUSE_10_4_10, "requiredSurvivabilityTimeMin",

@@ -1,6 +1,6 @@
 ---
 name: neqsim-plant-data
-description: "Connecting NeqSim process simulations to plant historian data via tagreader. USE WHEN: reading data from OSIsoft PI or Aspen IP.21 historians, building tag mappings for process equipment, comparing simulated vs measured values, running digital twin loops, integrating NeqSim models with operational data, or extracting event windows for water-hammer screening. Covers tagreader API, tag mapping patterns, data quality handling, mock data generation, model-vs-plant comparison workflows, and valve/pump transient snapshots."
+description: "Connecting NeqSim simulations to plant historian data via tagreader. USE WHEN: reading OSIsoft PI or Aspen IP.21 data, building equipment tag maps, comparing simulated vs measured values, running digital-twin loops, or extracting event windows for water-hammer screening. Covers tagreader API, tag mapping, data quality, mock data, model-vs-plant comparison and valve/pump transient snapshots."
 last_verified: "2026-07-04"
 ---
 
@@ -106,6 +106,19 @@ results = c.search("*COMP*", timeout=30)
 > resolved count** before `read()`. Also check the per-tag `::status`/quality
 > column — a value with bad quality (e.g. status 2) must not be trusted as a
 > current-operation input.
+
+> **Block suffixes select what a point returns.** On PI sources the same
+> instrument commonly exposes a family of blocks under
+> `<PREFIX>.<TAG>/<BLOCK>/PRIM`: `Meas1`/`Meas` = measured value,
+> `SPntOut` = setpoint, `ConOut` = controller output, `Manual` = mode,
+> `OutControl` = valve output/position demand, `Position` = valve position
+> feedback, and `Running`/`Start`/`Stop`/`PowerDemand` = motor status. Pick the
+> block deliberately — a "flow" or "power" point may be a status block that
+> holds a near-constant code rather than a measurement, so check
+> `series.nunique()` before trusting it. Prefix casing can differ between tags on
+> the same source, so search case-insensitively instead of hand-building names.
+> Site-specific source names, prefixes and suffix families are recorded in the
+> enterprise `enterprise-plant-data` skill.
 
 Returns a list of tuples: `[(tag_name, description), ...]`
 
@@ -516,6 +529,16 @@ address) during model build; the plant-data agent fills in the historian tags.
   when OK) so a bad tag is a warning, not a crash. `SimulationVariable` exposes
   `getAddress()`, `getType()`, `getDescription()` (no `getUnit()`).
 
+**Replaying a whole time series:** use
+`neqsim.process.operations.replay.ProcessReplay` instead of an ad-hoc loop. Build it with
+`ProcessReplay.fromTagMap(process, tagMap)` (INPUT bindings drive, BENCHMARK bindings are
+compared) or `ReplayBinding.input/output(...)`, run it on a `ReplayTimeSeries` (columns =
+historian tags; `ReplayTimeSeries.fromCsv(path)` reads a tagreader export with time in the first
+column) and read per-step status, residual bias/RMS per window, baseline-standardised residuals,
+CUSUM change points and CSV/JSON export from the `ReplayResult`. Bad rows are recorded, never
+thrown; warm start (default) carries state between rows, `setWarmStart(false)` copies the model
+per row. Guide: `docs/process/process_replay.md`.
+
 A runnable generator + round-trip verifier for a real plant (auto-discovers the
 addresses, writes `tag_map.json`, proves `applyFieldData` drives the model) is in the
 Kristin task: `generate_tag_map.py` + `verify_tag_map.py`.
@@ -891,6 +914,9 @@ folder and anyone can reproduce the analysis.
 | Timezone confusion | Specify `tz` parameter in `IMSClient` constructor |
 | Java type errors when passing plant values to NeqSim | Always use `float(value)` — Python numpy types don't auto-convert |
 | Model diverges with noisy plant data | Filter outliers and validate inputs before each `process.run()` |
+| Long read (hundreds of days of hourly data, several tags) returns an empty frame or `n=0` for some tags | The request timed out silently. Read in 60-90 day chunks per tag group, concat, and assert per-tag `n > 0` before using the column; do not treat `n=0` as "no data" |
+| A tag looks valid but never moves (`series.nunique() == 1`, e.g. a pressure stuck at one value) | Exclude constant tags from the basis and say so in the assumptions; a frozen instrument gives a false process "constant" |
+| Historian flow tag disagrees with the allocated/fiscal rate by a constant factor (e.g. 1/3.6) | Unit/basis difference (Sm3/h vs m3/h, per-train, uncorrected). Use the tag only for shares/ratios and take absolute rates from allocation (PDM); record the factor as a data gap |
 
 ## Root Cause Analysis Integration
 
@@ -966,3 +992,18 @@ result = json.loads(str(RootCauseRunner.run(json.dumps(rca_input))))
   report links each evidence item to the original historian tag
 - **Reproducibility**: always save the historian export CSV to
   `step1_scope_and_research/references/` so the analysis can be rerun offline
+
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+A steady NeqSim model has no time constants, and a historian trend has no thermodynamics. `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) joins them:
+
+- **Identification:** gain, time constant and delay, PID tuning and closed-loop disturbance from historian windows, with a usability verdict per result. Read raw windows with excitation; hourly averages do not resolve loop dynamics.
+- **Exception-stored data:** set `hold` on raw tags from exception-stored historians (a gap means "unchanged within the deadband") and on setpoints.
+- **Physics residuals:** `neqsim_bridge.automation_evaluator` reuses the `automation_address` values of the `OperationalTagMap`. `physics_residuals` compares each `BENCHMARK` tag with NeqSim at the same observed inputs. `two_residual_diagnosis` separates equipment change from instrument fault using two independent tags.
+- **Gain check:** `steady_gains` and `compare_gains` check identified gains against the model; a mismatch points to tag, unit or flow-basis errors first.
+
+Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
+## Coupled production restart holdout
+
+Use the [event measurement workflow](../../../examples/production-decision/README.md#comparing-a-held-out-restart-event) for measured manifold and separator pressure, arrival temperature, levels and riser phase rates. Record rate averaging windows and align point observations to the end of the physical step. Declare origin, instrument tag, units, source and a tolerance for every observation. Review the coverage as well as the error: an unpaired pressure or arrival-temperature sample cannot support model qualification.

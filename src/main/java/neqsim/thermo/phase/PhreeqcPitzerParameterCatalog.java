@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +95,87 @@ public final class PhreeqcPitzerParameterCatalog {
    */
   public int size(Family family) {
     return rows.get(family).size();
+  }
+
+  /**
+   * Reads a reviewed carbonate source definition without inferring zeros for other topologies.
+   *
+   * @param family interaction family
+   * @param species source species names, with H3O+ already mapped to H+
+   * @return explicit source coefficients or a declared source-defined six-term zero
+   * @throws IllegalArgumentException when neither an explicit nor a reviewed zero definition exists
+   */
+  double[] requireReactiveCarbonate(Family family, String... species) {
+    double[] coefficients = find(family, species);
+    if (coefficients != null) {
+      return coefficients;
+    }
+    if (!ReactiveCarbonateZeros.ROWS.get(family).contains(key(species))) {
+      throw new IllegalArgumentException(
+          "No reviewed reactive-carbonate definition for " + family + ":" + key(species));
+    }
+    return new double[6];
+  }
+
+  /**
+   * Loads the finite, version-pinned list of reviewed source-defined carbonate zeros.
+   *
+   * @return immutable source-zero definitions by family
+   * @throws IllegalStateException when the resource is missing, inconsistent, or invalid
+   */
+  private static Map<Family, Set<String>> loadReactiveCarbonateZeros() {
+    String resource = "/neqsim/thermo/phase/phreeqc/reactive-carbonate-source-zeros.csv";
+    InputStream stream = PhreeqcPitzerParameterCatalog.class.getResourceAsStream(resource);
+    if (stream == null) {
+      throw new IllegalStateException("Missing reviewed carbonate definitions " + resource);
+    }
+    EnumMap<Family, Set<String>> definitions = new EnumMap<Family, Set<String>>(Family.class);
+    for (Family family : Family.values()) {
+      definitions.put(family, new HashSet<String>());
+    }
+    boolean sourceVerified = false;
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        sourceVerified |= line.contains(SOURCE_COMMIT) && line.contains(SOURCE_BLOB);
+        if (line.startsWith("#") || line.trim().isEmpty() || line.startsWith("family,")) {
+          continue;
+        }
+        String[] columns = line.split(",", -1);
+        if (columns.length != 2) {
+          throw new IllegalArgumentException("Invalid reviewed carbonate definition " + line);
+        }
+        Family family = Family.valueOf(columns[0]);
+        String[] species = columns[1].split("\\|", -1);
+        if (species.length != family.speciesCount || getInstance().find(family, species) != null
+            || !definitions.get(family).add(key(species))) {
+          throw new IllegalArgumentException("Conflicting reviewed carbonate definition " + line);
+        }
+      }
+    } catch (IOException | IllegalArgumentException exception) {
+      throw new IllegalStateException("Could not load reviewed carbonate definitions", exception);
+    }
+    if (!sourceVerified) {
+      throw new IllegalStateException("Reviewed carbonate definitions do not identify the pinned source");
+    }
+    for (Family family : Family.values()) {
+      definitions.put(family, Collections.unmodifiableSet(definitions.get(family)));
+    }
+    return Collections.unmodifiableMap(definitions);
+  }
+
+  /**
+   * Lazy holder keeping carbonate definitions outside ordinary catalog and EOS startup.
+   *
+   * @author esol
+   * @version 1.0
+   */
+  private static final class ReactiveCarbonateZeros {
+    private static final Map<Family, Set<String>> ROWS = loadReactiveCarbonateZeros();
+
+    /** Prevents construction of the source-definition holder. */
+    private ReactiveCarbonateZeros() {
+    }
   }
 
   private static PhreeqcPitzerParameterCatalog load() {

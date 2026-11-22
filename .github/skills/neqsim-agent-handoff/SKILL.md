@@ -6,8 +6,8 @@ last_verified: "2026-07-04"
 
 # NeqSim Agent Handoff Schema
 
-When agents need to pass results to other agents (e.g., `@process.model` output
-feeding `@mechanical.design`), use these structured formats to ensure no
+When agents need to pass results to other agents (e.g., `@process-model` output
+feeding `@mechanical-design`), use these structured formats to ensure no
 information is lost.
 
 ## Handoff Principles
@@ -19,7 +19,7 @@ information is lost.
 
 ## Schema 1: Fluid Definition Handoff
 
-Pass from `@thermo.fluid` to any other agent:
+Pass from `@thermo-fluid` to any other agent:
 
 ```json
 {
@@ -43,7 +43,7 @@ Pass from `@thermo.fluid` to any other agent:
 
 ## Schema 2: Process Simulation Handoff
 
-Pass from `@process.model` to `@mechanical.design`, `@safety.depressuring`, etc.:
+Pass from `@process-model` to `@mechanical-design`, `@safety-depressuring`, etc.:
 
 ```json
 {
@@ -74,7 +74,7 @@ Pass from `@process.model` to `@mechanical.design`, `@safety.depressuring`, etc.
 
 ## Schema 3: Mechanical Design Handoff
 
-Pass from `@mechanical.design` to `@solve.task` for reporting:
+Pass from `@mechanical-design` to `@solve-task` for reporting:
 
 ```json
 {
@@ -96,7 +96,7 @@ Pass from `@mechanical.design` to `@solve.task` for reporting:
 
 ## Schema 4: Flow Assurance Handoff
 
-Pass from `@flow.assurance` to `@solve.task` or `@process.model`:
+Pass from `@flow-assurance` to `@solve-task` or `@process-model`:
 
 ```json
 {
@@ -115,7 +115,7 @@ Pass from `@flow.assurance` to `@solve.task` or `@process.model`:
 
 ## Schema 5: Safety Analysis Handoff
 
-Pass from `@safety.depressuring` to reporting:
+Pass from `@safety-depressuring` to reporting:
 
 ```json
 {
@@ -192,8 +192,8 @@ simulation agent to a mechanical design agent, or between task iterations.
   "schema": "neqsim-lifecycle-state",
   "version": "1.0",
   "handoff": {
-    "source_agent": "make a neqsim process simulation",
-    "target_agent": "run neqsim mechanical design",
+    "source_agent": "process-model",
+    "target_agent": "mechanical-design",
     "state_type": "ProcessSystemState | ProcessModelState",
     "state_name": "Gas Processing Base Case",
     "state_version": "1.0.0",

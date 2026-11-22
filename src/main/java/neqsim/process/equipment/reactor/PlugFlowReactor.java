@@ -205,7 +205,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /** Overall conversion of key component [-]. */
   private double overallConversion = 0.0;
 
-  /** Total heat duty [W] (positive = heat added, negative = heat removed). */
+  /** Isothermal net reaction heat release [W] (positive = exothermic, negative = endothermic). */
   private double heatDuty = 0.0;
 
   /** Total pressure drop [bar]. */
@@ -247,6 +247,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   public void run(UUID id) {
     thermodynamicStateEvaluationCount = 0;
     lastCatalystEffectivenessFactor = 1.0;
+    heatDuty = 0.0;
 
     if (reactions.isEmpty()) {
       logger.warn("PlugFlowReactor '{}': no reactions defined, passing through", getName());
@@ -352,9 +353,11 @@ public class PlugFlowReactor extends TwoPortEquipment {
         system.initProperties();
       }
 
+      // The final state entry integrates this step's reaction heat with the same
+      // stages and weights as the species balances, including shared reactants.
+      double[] state = packState(molFlows, currentT, currentP);
       if (integrationMethod == IntegrationMethod.RK4) {
         // RK4 integration
-        double[] state = packState(molFlows, currentT, currentP);
         double[] k1 = calculateDerivatives(system, state, nComp, totalArea, perimeter, compNames);
         double[] s2 = addScaled(state, k1, 0.5 * dz);
         double[] k2 = calculateDerivatives(system, s2, nComp, totalArea, perimeter, compNames);
@@ -373,7 +376,6 @@ public class PlugFlowReactor extends TwoPortEquipment {
 
       } else {
         // Euler integration
-        double[] state = packState(molFlows, currentT, currentP);
         double[] derivs = calculateDerivatives(system, state, nComp, totalArea, perimeter, compNames);
         for (int i = 0; i < state.length; i++) {
           state[i] += derivs[i] * dz;
@@ -382,6 +384,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
         currentT = state[nComp];
         currentP = state[nComp + 1];
       }
+      totalHeatDuty += state[nComp + 2];
 
       // Enforce non-negative molar flows and minimum pressure
       for (int i = 0; i < nComp; i++) {
@@ -417,7 +420,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
 
     // Calculate heat duty for isothermal mode
     if (energyMode == EnergyMode.ISOTHERMAL) {
-      heatDuty = calculateIsothermalHeatDuty(system, molFlows, compNames);
+      heatDuty = totalHeatDuty;
     }
 
     // Calculate residence time
@@ -440,19 +443,19 @@ public class PlugFlowReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate derivatives dF/dz, dT/dz, dP/dz for the state vector.
+   * Calculate derivatives dF/dz, dT/dz, dP/dz and isothermal reaction heat release dQ/dz.
    *
    * @param system thermodynamic system for property evaluation
-   * @param state packed state [F1..Fn, T, P]
+   * @param state packed state [F1..Fn, T, P, Q]
    * @param nComp number of components
    * @param totalArea total cross-sectional area of all tubes [m2]
    * @param perimeter tube perimeter [m] (single tube)
    * @param compNames component names
-   * @return derivative vector [dF1/dz..dFn/dz, dT/dz, dP/dz]
+   * @return derivative vector [dF1/dz..dFn/dz, dT/dz, dP/dz, dQ/dz], with dQ/dz in W/m
    */
   private double[] calculateDerivatives(SystemInterface system, double[] state, int nComp, double totalArea,
       double perimeter, String[] compNames) {
-    double[] derivs = new double[nComp + 2];
+    double[] derivs = new double[nComp + 3];
 
     if (thermodynamicCoupling == ThermodynamicCoupling.FULLY_COUPLED) {
       updateThermodynamicStateForResidual(system, state, nComp);
@@ -520,7 +523,10 @@ public class PlugFlowReactor extends TwoPortEquipment {
         derivs[nComp] = (-totalHeatGeneration * totalArea + heatTransfer) / sumFiCpi;
       }
     }
-    // ISOTHERMAL: dT/dz = 0 (handled by overriding T after integration)
+    // ISOTHERMAL: dT/dz = 0. Preserve the historical reaction-heat-release sign.
+    if (energyMode == EnergyMode.ISOTHERMAL) {
+      derivs[nComp + 2] = -totalHeatGeneration * totalArea;
+    }
 
     // Pressure drop: dP/dz
     if (catalystBed != null) {
@@ -660,44 +666,6 @@ public class PlugFlowReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate isothermal heat duty by summing reaction enthalpies over the reactor.
-   *
-   * @param system thermodynamic system
-   * @param molFlows current molar flows
-   * @param compNames component names
-   * @return heat duty [W]
-   */
-  private double calculateIsothermalHeatDuty(SystemInterface system, double[] molFlows, String[] compNames) {
-    double duty = 0.0;
-    for (KineticReaction rxn : reactions) {
-      // Estimate total moles reacted from change in key component
-      String firstReactant = null;
-      double firstCoeff = 1.0;
-      for (Map.Entry<String, Double> entry : rxn.getStoichiometry().entrySet()) {
-        if (entry.getValue() < 0) {
-          firstReactant = entry.getKey();
-          firstCoeff = entry.getValue();
-          break;
-        }
-      }
-      if (firstReactant != null) {
-        double initialMoles = 0.0;
-        double currentMoles = 0.0;
-        for (int i = 0; i < compNames.length; i++) {
-          if (compNames[i].equals(firstReactant)) {
-            initialMoles = inStream.getThermoSystem().getComponent(firstReactant).getNumberOfmoles();
-            currentMoles = molFlows[i];
-            break;
-          }
-        }
-        double molesReacted = initialMoles - currentMoles;
-        duty += -rxn.getHeatOfReaction() * molesReacted / Math.abs(firstCoeff);
-      }
-    }
-    return duty;
-  }
-
-  /**
    * Calculate mean residence time.
    *
    * @param system thermodynamic system
@@ -718,16 +686,16 @@ public class PlugFlowReactor extends TwoPortEquipment {
   }
 
   /**
-   * Pack molar flows, temperature, and pressure into a state vector.
+   * Pack molar flows, temperature, pressure and a zero initial heat increment into a state vector.
    *
    * @param molFlows molar flows [mol/s]
    * @param temperature temperature [K]
    * @param pressure pressure [bara]
-   * @return state vector [F1..Fn, T, P]
+   * @return state vector [F1..Fn, T, P, Q], with Q initially zero for this integration step [W]
    */
   private double[] packState(double[] molFlows, double temperature, double pressure) {
     int n = molFlows.length;
-    double[] state = new double[n + 2];
+    double[] state = new double[n + 3];
     System.arraycopy(molFlows, 0, state, 0, n);
     state[n] = temperature;
     state[n + 1] = pressure;
@@ -1168,16 +1136,23 @@ public class PlugFlowReactor extends TwoPortEquipment {
   }
 
   /**
-   * Get total heat duty.
+   * Get the integrated isothermal net reaction heat release.
    *
-   * @return heat duty in Watts (positive = heat added)
+   * <p>
+   * The historical convention is {@code -sum(heatOfReaction * extentFlow)}: positive for exothermic release and
+   * negative for endothermic absorption. Compensating external heat input has the opposite sign. This is the configured
+   * reaction enthalpy ledger, not an EOS inlet/outlet enthalpy difference. The value is zero outside isothermal mode;
+   * coolant jacket duty is not accumulated here.
+   * </p>
+   *
+   * @return net reaction heat release in W from the latest run
    */
   public double getHeatDuty() {
     return heatDuty;
   }
 
   /**
-   * Get total heat duty in specified unit.
+   * Get the isothermal reaction heat release in the specified unit, with the sign convention of {@link #getHeatDuty()}.
    *
    * @param unit "W", "kW", or "MW"
    * @return heat duty in specified unit

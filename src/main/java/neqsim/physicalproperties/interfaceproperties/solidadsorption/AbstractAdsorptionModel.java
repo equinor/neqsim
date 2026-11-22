@@ -1,6 +1,5 @@
 package neqsim.physicalproperties.interfaceproperties.solidadsorption;
 
-import java.io.Serializable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -21,7 +20,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  * @version 1.0
  */
-public abstract class AbstractAdsorptionModel implements AdsorptionInterface, Serializable {
+public abstract class AbstractAdsorptionModel implements AdsorptionInterface {
 
   /** Serialization version UID. */
   private static final long serialVersionUID = 1001L;

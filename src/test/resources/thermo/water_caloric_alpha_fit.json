@@ -1,0 +1,694 @@
+{
+  "issue": "https://github.com/equinor/neqsim/issues/3762",
+  "description": "Original NeqSim water alpha calibration; not Palma published parameters",
+  "alpha": "(1 + sum(c[j-1]*(1-sqrt(T/Tc))**j, j=1..5))**2",
+  "coefficients": [
+    0.6670190973128074,
+    -0.25656681951681287,
+    1.3687767086793399,
+    -3.1891110889699097,
+    5.218580308820144
+  ],
+  "fixed_parameters_SI": {
+    "R_J_mol_K": 8.314462618,
+    "Tc_K": 647.3,
+    "a0_Pa_m6_mol2": 0.12277,
+    "b_m3_mol": 1.4515e-05,
+    "association_energy_J_mol": 16655.0,
+    "association_volume": 0.0692,
+    "molar_mass_kg_mol": 0.018015,
+    "sites": 4,
+    "association_scheme": "4C",
+    "g": "1/(1-0.475*b/v)",
+    "ideal_cp_polynomial_J_mol_K": [
+      36.54003,
+      -0.034802404,
+      0.000116811,
+      -1.3e-07,
+      5.254448e-11
+    ]
+  },
+  "objective": "sum over training states of ((cp/cpref-1)/.02)^2 + ((rho/rhoref-1)/.01)^2 + (ln(fL/fV) at psat_ref/.02)^2",
+  "training_reference": [
+    {
+      "T_K": 278.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4205.043387789261,
+      "reference_rho_kg_m3": 999.9659820828508,
+      "reference_psat_Pa": 872.5751138417176
+    },
+    {
+      "T_K": 283.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4195.1639177678135,
+      "reference_rho_kg_m3": 999.7018369153752,
+      "reference_psat_Pa": 1228.1989306880644
+    },
+    {
+      "T_K": 288.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4188.465152247111,
+      "reference_rho_kg_m3": 999.1020028116991,
+      "reference_psat_Pa": 1705.7929160580275
+    },
+    {
+      "T_K": 293.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4184.055067057489,
+      "reference_rho_kg_m3": 998.2065434976557,
+      "reference_psat_Pa": 2339.318183336836
+    },
+    {
+      "T_K": 298.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4181.318830962121,
+      "reference_rho_kg_m3": 997.0470390177032,
+      "reference_psat_Pa": 3169.929338873217
+    },
+    {
+      "T_K": 303.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4179.823274039625,
+      "reference_rho_kg_m3": 995.6488633254289,
+      "reference_psat_Pa": 4246.970836833214
+    },
+    {
+      "T_K": 308.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4179.261516018714,
+      "reference_rho_kg_m3": 994.0327295825547,
+      "reference_psat_Pa": 5629.016106716513
+    },
+    {
+      "T_K": 313.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4179.418063149424,
+      "reference_rho_kg_m3": 992.215771287106,
+      "reference_psat_Pa": 7384.938073754585
+    },
+    {
+      "T_K": 318.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4180.145088748448,
+      "reference_rho_kg_m3": 990.2123185679193,
+      "reference_psat_Pa": 9594.998843610509
+    },
+    {
+      "T_K": 323.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4181.345362030072,
+      "reference_rho_kg_m3": 988.0344679481938,
+      "reference_psat_Pa": 12351.94583753626
+    },
+    {
+      "T_K": 328.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4182.959495087378,
+      "reference_rho_kg_m3": 985.6925083333022,
+      "reference_psat_Pa": 15762.10154625594
+    },
+    {
+      "T_K": 333.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4184.956223208122,
+      "reference_rho_kg_m3": 983.1952445303676,
+      "reference_psat_Pa": 19946.43430781579
+    }
+  ],
+  "independent_holdouts": [
+    {
+      "T_K": 280.65,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4199.635477402918,
+      "model_cp_J_kg_K": 4199.48392298522,
+      "base_cp_J_kg_K": 3527.7877792485197,
+      "relative_cp_error_percent": -0.003608751724137882,
+      "reference_rho_kg_m3": 999.8787899209904,
+      "model_untranslated_rho_kg_m3": 1017.6209662617225,
+      "base_untranslated_rho_kg_m3": 1017.0148826150484,
+      "density_change_from_base_percent": 0.05959437339950746
+    },
+    {
+      "T_K": 280.65,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4196.023600619534,
+      "model_cp_J_kg_K": 4199.1994505190605,
+      "base_cp_J_kg_K": 3527.417900466454,
+      "relative_cp_error_percent": 0.07568713147985129,
+      "reference_rho_kg_m3": 1000.314347253001,
+      "model_untranslated_rho_kg_m3": 1017.9391232232454,
+      "base_untranslated_rho_kg_m3": 1017.3351166914242,
+      "density_change_from_base_percent": 0.05937144230168112
+    },
+    {
+      "T_K": 280.65,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4180.32936806349,
+      "model_cp_J_kg_K": 4197.9620479983705,
+      "base_cp_J_kg_K": 3525.803712083654,
+      "relative_cp_error_percent": 0.42180121187553876,
+      "reference_rho_kg_m3": 1002.2397630138438,
+      "model_untranslated_rho_kg_m3": 1019.3382833954815,
+      "base_untranslated_rho_kg_m3": 1018.7433417361972,
+      "density_change_from_base_percent": 0.05839956296258553
+    },
+    {
+      "T_K": 280.65,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4161.5093396182865,
+      "model_cp_J_kg_K": 4196.4746986863765,
+      "base_cp_J_kg_K": 3523.8517283881256,
+      "relative_cp_error_percent": 0.8402085929548164,
+      "reference_rho_kg_m3": 1004.6229225845651,
+      "model_untranslated_rho_kg_m3": 1021.0539824067794,
+      "base_untranslated_rho_kg_m3": 1020.4700034849399,
+      "density_change_from_base_percent": 0.05722646622097205
+    },
+    {
+      "T_K": 290.65,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4186.0175627580875,
+      "model_cp_J_kg_K": 4187.054002882819,
+      "base_cp_J_kg_K": 3600.167353865226,
+      "relative_cp_error_percent": 0.02475957420611241,
+      "reference_rho_kg_m3": 998.68908484571,
+      "model_untranslated_rho_kg_m3": 1010.4801141382651,
+      "base_untranslated_rho_kg_m3": 1010.1578372379493,
+      "density_change_from_base_percent": 0.031903618269901735
+    },
+    {
+      "T_K": 290.65,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4183.091126542962,
+      "model_cp_J_kg_K": 4186.698744253068,
+      "base_cp_J_kg_K": 3599.732828830061,
+      "relative_cp_error_percent": 0.08624286684109084,
+      "reference_rho_kg_m3": 999.1047112126083,
+      "model_untranslated_rho_kg_m3": 1010.8118284272811,
+      "base_untranslated_rho_kg_m3": 1010.4906745910641,
+      "density_change_from_base_percent": 0.03178196932365207
+    },
+    {
+      "T_K": 290.65,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4170.3369352619,
+      "model_cp_J_kg_K": 4185.152181905947,
+      "base_cp_J_kg_K": 3597.8365386483993,
+      "relative_cp_error_percent": 0.3552529897231649,
+      "reference_rho_kg_m3": 1000.9423700904915,
+      "model_untranslated_rho_kg_m3": 1012.2702733949521,
+      "base_untranslated_rho_kg_m3": 1011.9540185781972,
+      "density_change_from_base_percent": 0.031251895930939355
+    },
+    {
+      "T_K": 290.65,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4154.9586918123,
+      "model_cp_J_kg_K": 4183.290373531317,
+      "base_cp_J_kg_K": 3595.543403454549,
+      "relative_cp_error_percent": 0.6818763752055368,
+      "reference_rho_kg_m3": 1003.2177297207248,
+      "model_untranslated_rho_kg_m3": 1014.0579349549059,
+      "base_untranslated_rho_kg_m3": 1013.7476000678295,
+      "density_change_from_base_percent": 0.03061263839794215
+    },
+    {
+      "T_K": 305.65,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4179.440962153288,
+      "model_cp_J_kg_K": 4179.039537611227,
+      "base_cp_J_kg_K": 3700.3552127352405,
+      "relative_cp_error_percent": -0.009604742492963503,
+      "reference_rho_kg_m3": 994.8668967660208,
+      "model_untranslated_rho_kg_m3": 999.6918047540395,
+      "base_untranslated_rho_kg_m3": 999.724982693297,
+      "density_change_from_base_percent": -0.0033187066275086607
+    },
+    {
+      "T_K": 305.65,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4177.06918502853,
+      "model_cp_J_kg_K": 4178.567949411157,
+      "base_cp_J_kg_K": 3699.81323302365,
+      "relative_cp_error_percent": 0.03588076510676608,
+      "reference_rho_kg_m3": 995.2657361361819,
+      "model_untranslated_rho_kg_m3": 1000.0449154728291,
+      "base_untranslated_rho_kg_m3": 1000.0779746144761,
+      "density_change_from_base_percent": -0.003305656407426305
+    },
+    {
+      "T_K": 305.65,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4166.701120252701,
+      "model_cp_J_kg_K": 4176.514033728576,
+      "base_cp_J_kg_K": 3697.4486690083954,
+      "relative_cp_error_percent": 0.2355079760383516,
+      "reference_rho_kg_m3": 997.0291441137119,
+      "model_untranslated_rho_kg_m3": 1001.5968516756295,
+      "base_untranslated_rho_kg_m3": 1001.6293929844398,
+      "density_change_from_base_percent": -0.0032488372484040795
+    },
+    {
+      "T_K": 305.65,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4154.130279634107,
+      "model_cp_J_kg_K": 4174.039263294604,
+      "base_cp_J_kg_K": 3694.590610651316,
+      "relative_cp_error_percent": 0.4792575658520537,
+      "reference_rho_kg_m3": 999.2125495739411,
+      "model_untranslated_rho_kg_m3": 1003.4978386396363,
+      "base_untranslated_rho_kg_m3": 1003.5297550306657,
+      "density_change_from_base_percent": -0.0031804130240731254
+    },
+    {
+      "T_K": 325.65,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4182.103212255193,
+      "model_cp_J_kg_K": 4182.022978352644,
+      "base_cp_J_kg_K": 3818.5446954688,
+      "relative_cp_error_percent": -0.0019185060357806982,
+      "reference_rho_kg_m3": 986.8834199083757,
+      "model_untranslated_rho_kg_m3": 985.0614977367886,
+      "base_untranslated_rho_kg_m3": 985.4596756712006,
+      "density_change_from_base_percent": -0.04040529960200878
+    },
+    {
+      "T_K": 325.65,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4180.055768562955,
+      "model_cp_J_kg_K": 4181.373796653269,
+      "base_cp_J_kg_K": 3817.8359405292654,
+      "relative_cp_error_percent": 0.031531351811775465,
+      "reference_rho_kg_m3": 987.2757804397667,
+      "model_untranslated_rho_kg_m3": 985.4456622778342,
+      "base_untranslated_rho_kg_m3": 985.8423553353666,
+      "density_change_from_base_percent": -0.04023899514821183
+    },
+    {
+      "T_K": 325.65,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4171.085876479815,
+      "model_cp_J_kg_K": 4178.547069930939,
+      "base_cp_J_kg_K": 3814.7461468110596,
+      "relative_cp_error_percent": 0.17887892199,
+      "reference_rho_kg_m3": 989.009995715597,
+      "model_untranslated_rho_kg_m3": 987.1331233921608,
+      "base_untranslated_rho_kg_m3": 987.5233512936019,
+      "density_change_from_base_percent": -0.039515815087298733
+    },
+    {
+      "T_K": 325.65,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4160.1653928381575,
+      "model_cp_J_kg_K": 4175.142358402772,
+      "base_cp_J_kg_K": 3811.0165212708994,
+      "relative_cp_error_percent": 0.36000889749232545,
+      "reference_rho_kg_m3": 991.1560791464484,
+      "model_untranslated_rho_kg_m3": 989.1980324746669,
+      "base_untranslated_rho_kg_m3": 989.5804739829464,
+      "density_change_from_base_percent": -0.03864683250470735
+    },
+    {
+      "T_K": 343.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4190.069993728337,
+      "model_cp_J_kg_K": 4192.929045257521,
+      "base_cp_J_kg_K": 3908.638374923123,
+      "relative_cp_error_percent": 0.0682339801832077,
+      "reference_rho_kg_m3": 977.764041839187,
+      "model_untranslated_rho_kg_m3": 971.922832108795,
+      "base_untranslated_rho_kg_m3": 972.5583800244967,
+      "density_change_from_base_percent": -0.06534804786584303
+    },
+    {
+      "T_K": 343.15,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4188.108638844098,
+      "model_cp_J_kg_K": 4192.097706499675,
+      "base_cp_J_kg_K": 3907.7557486754667,
+      "relative_cp_error_percent": 0.0952474732526909,
+      "reference_rho_kg_m3": 978.1610637878778,
+      "model_untranslated_rho_kg_m3": 972.3371996228608,
+      "base_untranslated_rho_kg_m3": 972.9702798279476,
+      "density_change_from_base_percent": -0.06506675673575435
+    },
+    {
+      "T_K": 343.15,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4179.510726667103,
+      "model_cp_J_kg_K": 4188.480460395935,
+      "base_cp_J_kg_K": 3903.9118210227753,
+      "relative_cp_error_percent": 0.21461205187489618,
+      "reference_rho_kg_m3": 979.9150841805813,
+      "model_untranslated_rho_kg_m3": 974.1562817870365,
+      "base_untranslated_rho_kg_m3": 974.7786300424365,
+      "density_change_from_base_percent": -0.06384508607588657
+    },
+    {
+      "T_K": 343.15,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4169.030462625134,
+      "model_cp_J_kg_K": 4184.129103887224,
+      "base_cp_J_kg_K": 3899.280072350077,
+      "relative_cp_error_percent": 0.36216193183158385,
+      "reference_rho_kg_m3": 982.083930674676,
+      "model_untranslated_rho_kg_m3": 976.3799811107233,
+      "base_untranslated_rho_kg_m3": 976.9894307767657,
+      "density_change_from_base_percent": -0.062380374530557336
+    },
+    {
+      "T_K": 353.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4196.75616662006,
+      "model_cp_J_kg_K": 4201.572769329122,
+      "base_cp_J_kg_K": 3955.1936193654365,
+      "relative_cp_error_percent": 0.11476965822727614,
+      "reference_rho_kg_m3": 971.7898038619794,
+      "model_untranslated_rho_kg_m3": 964.2343634231497,
+      "base_untranslated_rho_kg_m3": 964.9774281581186,
+      "density_change_from_base_percent": -0.0770033280868776
+    },
+    {
+      "T_K": 353.15,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4194.789874886338,
+      "model_cp_J_kg_K": 4200.623151006122,
+      "base_cp_J_kg_K": 3954.1969187763975,
+      "relative_cp_error_percent": 0.13906003146204604,
+      "reference_rho_kg_m3": 972.1929650923548,
+      "model_untranslated_rho_kg_m3": 964.6675466501792,
+      "base_untranslated_rho_kg_m3": 965.4076522327808,
+      "density_change_from_base_percent": -0.07666249391020674
+    },
+    {
+      "T_K": 353.15,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4186.171292468935,
+      "model_cp_J_kg_K": 4196.4937296939825,
+      "base_cp_J_kg_K": 3949.8592531064483,
+      "relative_cp_error_percent": 0.24658420556316063,
+      "reference_rho_kg_m3": 973.9735299801289,
+      "model_untranslated_rho_kg_m3": 966.568529248458,
+      "base_untranslated_rho_kg_m3": 967.2957752427135,
+      "density_change_from_base_percent": -0.07518341471851597
+    },
+    {
+      "T_K": 353.15,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4175.66733400663,
+      "model_cp_J_kg_K": 4191.531454313141,
+      "base_cp_J_kg_K": 3944.6390869535817,
+      "relative_cp_error_percent": 0.379918203189078,
+      "reference_rho_kg_m3": 976.1739295912276,
+      "model_untranslated_rho_kg_m3": 968.8908285955289,
+      "base_untranslated_rho_kg_m3": 969.6026392551781,
+      "density_change_from_base_percent": -0.07341261572844093
+    },
+    {
+      "T_K": 363.15,
+      "p_Pa": 100000.0,
+      "reference_cp_J_kg_K": 4205.208563975259,
+      "model_cp_J_kg_K": 4211.621948915342,
+      "base_cp_J_kg_K": 3998.6327228927908,
+      "relative_cp_error_percent": 0.15251050792164378,
+      "reference_rho_kg_m3": 965.3089828415624,
+      "model_untranslated_rho_kg_m3": 956.3919343838337,
+      "base_untranslated_rho_kg_m3": 957.2250125916944,
+      "density_change_from_base_percent": -0.0870305515319858
+    },
+    {
+      "T_K": 363.15,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4203.204708374661,
+      "model_cp_J_kg_K": 4210.541478434228,
+      "base_cp_J_kg_K": 3997.508988330254,
+      "relative_cp_error_percent": 0.17455181388024155,
+      "reference_rho_kg_m3": 965.7205826280739,
+      "model_untranslated_rho_kg_m3": 956.8452556735643,
+      "base_untranslated_rho_kg_m3": 957.6749251396361,
+      "density_change_from_base_percent": -0.08663372552548676
+    },
+    {
+      "T_K": 363.15,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4194.425002637926,
+      "model_cp_J_kg_K": 4205.846439541193,
+      "base_cp_J_kg_K": 3992.622419377415,
+      "relative_cp_error_percent": 0.2723004201072632,
+      "reference_rho_kg_m3": 967.5377398094954,
+      "model_untranslated_rho_kg_m3": 958.8338120906415,
+      "base_untranslated_rho_kg_m3": 959.6486803078898,
+      "density_change_from_base_percent": -0.08491318062219255
+    },
+    {
+      "T_K": 363.15,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4183.731818974273,
+      "model_cp_J_kg_K": 4200.211619943618,
+      "base_cp_J_kg_K": 3986.7500564362695,
+      "relative_cp_error_percent": 0.39390194406354606,
+      "reference_rho_kg_m3": 969.7818749992266,
+      "model_untranslated_rho_kg_m3": 961.2613654970228,
+      "base_untranslated_rho_kg_m3": 962.0584934945059,
+      "density_change_from_base_percent": -0.0828565001892767
+    },
+    {
+      "T_K": 373.15,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4213.60482855175,
+      "model_cp_J_kg_K": 4221.708691103847,
+      "base_cp_J_kg_K": 4038.1084480894056,
+      "relative_cp_error_percent": 0.19232611699095958,
+      "reference_rho_kg_m3": 958.770655755852,
+      "model_untranslated_rho_kg_m3": 948.8521194822919,
+      "base_untranslated_rho_kg_m3": 949.7558852406565,
+      "density_change_from_base_percent": -0.09515768971894989
+    },
+    {
+      "T_K": 373.15,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4204.5322926851,
+      "model_cp_J_kg_K": 4216.385093409294,
+      "base_cp_J_kg_K": 4032.6083368462673,
+      "relative_cp_error_percent": 0.2819053321296838,
+      "reference_rho_kg_m3": 960.6341347331858,
+      "model_untranslated_rho_kg_m3": 950.9346624077853,
+      "base_untranslated_rho_kg_m3": 951.8218434987216,
+      "density_change_from_base_percent": -0.09320873407099306
+    },
+    {
+      "T_K": 373.15,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4193.495051835643,
+      "model_cp_J_kg_K": 4210.005403290993,
+      "base_cp_J_kg_K": 4026.009323748322,
+      "relative_cp_error_percent": 0.3937133882660149,
+      "reference_rho_kg_m3": 962.933750081504,
+      "model_untranslated_rho_kg_m3": 953.4749738460546,
+      "base_untranslated_rho_kg_m3": 954.3423086856978,
+      "density_change_from_base_percent": -0.09088299153766632
+    },
+    {
+      "T_K": 398.15,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4250.106185590995,
+      "model_cp_J_kg_K": 4254.981419607306,
+      "base_cp_J_kg_K": 4130.743585372998,
+      "relative_cp_error_percent": 0.11470852264443554,
+      "reference_rho_kg_m3": 939.4152565188834,
+      "model_untranslated_rho_kg_m3": 927.9968509096548,
+      "base_untranslated_rho_kg_m3": 929.0289791198983,
+      "density_change_from_base_percent": -0.11109752585126698
+    },
+    {
+      "T_K": 398.15,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4239.710731375836,
+      "model_cp_J_kg_K": 4247.728924479162,
+      "base_cp_J_kg_K": 4123.345009499238,
+      "relative_cp_error_percent": 0.1891212304647949,
+      "reference_rho_kg_m3": 941.4379531655168,
+      "model_untranslated_rho_kg_m3": 930.3482133254051,
+      "base_untranslated_rho_kg_m3": 931.3598346065797,
+      "density_change_from_base_percent": -0.10861766243139837
+    },
+    {
+      "T_K": 398.15,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4227.123144282969,
+      "model_cp_J_kg_K": 4239.078810684724,
+      "base_cp_J_kg_K": 4114.512169657906,
+      "relative_cp_error_percent": 0.2828322240369108,
+      "reference_rho_kg_m3": 943.9282721192724,
+      "model_untranslated_rho_kg_m3": 933.2098649964594,
+      "base_untranslated_rho_kg_m3": 934.1970615535196,
+      "density_change_from_base_percent": -0.10567326720323234
+    },
+    {
+      "T_K": 423.15,
+      "p_Pa": 1000000.0,
+      "reference_cp_J_kg_K": 4305.37798574014,
+      "model_cp_J_kg_K": 4297.417407330067,
+      "base_cp_J_kg_K": 4217.05904410171,
+      "relative_cp_error_percent": -0.18489847898229828,
+      "reference_rho_kg_m3": 917.305442374362,
+      "model_untranslated_rho_kg_m3": 905.633641592429,
+      "base_untranslated_rho_kg_m3": 906.7288823712992,
+      "density_change_from_base_percent": -0.12079032665265332
+    },
+    {
+      "T_K": 423.15,
+      "p_Pa": 5000000.0,
+      "reference_cp_J_kg_K": 4292.639811821446,
+      "model_cp_J_kg_K": 4287.49818050829,
+      "base_cp_J_kg_K": 4207.014838935876,
+      "relative_cp_error_percent": -0.11977784157423121,
+      "reference_rho_kg_m3": 919.5574671453325,
+      "model_untranslated_rho_kg_m3": 908.3164663921194,
+      "base_untranslated_rho_kg_m3": 909.3877955244232,
+      "density_change_from_base_percent": -0.11780773148445389
+    },
+    {
+      "T_K": 423.15,
+      "p_Pa": 10000000.0,
+      "reference_cp_J_kg_K": 4277.325211778856,
+      "model_cp_J_kg_K": 4275.743565742456,
+      "base_cp_J_kg_K": 4195.1021870191125,
+      "relative_cp_error_percent": -0.03697745572501798,
+      "reference_rho_kg_m3": 922.3214983966589,
+      "model_untranslated_rho_kg_m3": 911.5719320054202,
+      "base_untranslated_rho_kg_m3": 912.6149539893873,
+      "density_change_from_base_percent": -0.11428938123440036
+    }
+  ],
+  "saturation_verification": [
+    {
+      "T_K": 278.15,
+      "reference_psat_Pa": 872.5751138417176,
+      "model_psat_Pa": 875.3943988061675,
+      "relative_psat_error_percent": 0.3230994008111665
+    },
+    {
+      "T_K": 280.65,
+      "reference_psat_Pa": 1037.008523409581,
+      "model_psat_Pa": 1040.0054334453628,
+      "relative_psat_error_percent": 0.28899569946911896
+    },
+    {
+      "T_K": 298.15,
+      "reference_psat_Pa": 3169.929338873217,
+      "model_psat_Pa": 3173.0671063462955,
+      "relative_psat_error_percent": 0.09898540748525253
+    },
+    {
+      "T_K": 305.65,
+      "reference_psat_Pa": 4895.8175437743375,
+      "model_psat_Pa": 4897.983818958179,
+      "relative_psat_error_percent": 0.044247465606561676
+    },
+    {
+      "T_K": 333.15,
+      "reference_psat_Pa": 19946.43430781579,
+      "model_psat_Pa": 19942.94125315735,
+      "relative_psat_error_percent": -0.017512175883338532
+    },
+    {
+      "T_K": 353.15,
+      "reference_psat_Pa": 47414.474030165016,
+      "model_psat_Pa": 47445.40251505432,
+      "relative_psat_error_percent": 0.06523004951952682
+    },
+    {
+      "T_K": 373.15,
+      "reference_psat_Pa": 101417.9966599509,
+      "model_psat_Pa": 101655.7188856326,
+      "relative_psat_error_percent": 0.23439846330111092
+    },
+    {
+      "T_K": 398.15,
+      "reference_psat_Pa": 232238.1519458818,
+      "model_psat_Pa": 233461.44866484174,
+      "relative_psat_error_percent": 0.526742358527299
+    },
+    {
+      "T_K": 423.15,
+      "reference_psat_Pa": 476164.53796975827,
+      "model_psat_Pa": 480238.19552955136,
+      "relative_psat_error_percent": 0.855514687667025
+    }
+  ],
+  "steam_preservation_verification": [
+    {
+      "T_K": 298.0,
+      "P_bar": 0.001,
+      "reference_cp_J_kg_K": 1865.2826758030076,
+      "model_cp_J_kg_K": 1864.114976776443,
+      "base_cp_J_kg_K": 1864.1143098429006,
+      "cp_change_from_base_percent": 3.577750242733657e-05,
+      "relative_cp_error_percent": -0.06260171939150849
+    },
+    {
+      "T_K": 373.0,
+      "P_bar": 0.1,
+      "reference_cp_J_kg_K": 1905.7685749863642,
+      "model_cp_J_kg_K": 1942.9788706595855,
+      "base_cp_J_kg_K": 1942.9637069601217,
+      "cp_change_from_base_percent": 0.0007804417246459749,
+      "relative_cp_error_percent": 1.9525086183923124
+    },
+    {
+      "T_K": 423.0,
+      "P_bar": 1.0,
+      "reference_cp_J_kg_K": 1984.7341361261183,
+      "model_cp_J_kg_K": 2112.580563171321,
+      "base_cp_J_kg_K": 2112.5397721975614,
+      "cp_change_from_base_percent": 0.0019308973159493092,
+      "relative_cp_error_percent": 6.441488797826511
+    },
+    {
+      "T_K": 473.0,
+      "P_bar": 1.0,
+      "reference_cp_J_kg_K": 1975.3895433183345,
+      "model_cp_J_kg_K": 2035.2300490008863,
+      "base_cp_J_kg_K": 2035.233169706522,
+      "cp_change_from_base_percent": -0.00015333405931627908,
+      "relative_cp_error_percent": 3.029301531182016
+    }
+  ],
+  "test_reference_csv": "water_caloric_alpha_iapws95_reference.csv",
+  "test_reference_row_count": 53,
+  "repository_parameters_loaded": true,
+  "max_holdout_abs_cp_error_percent": 0.8402085929548164,
+  "fit_report": {
+    "cost": 5.347692331740485,
+    "evaluations": 22,
+    "success": true,
+    "message": "`xtol` termination condition is satisfied."
+  },
+  "reference_implementation": {
+    "name": "iapws.IAPWS95",
+    "version": "1.5.5",
+    "license": "GPLv3; used as a numerical oracle only, no source copied"
+  },
+  "optimizer": {
+    "name": "scipy.optimize.least_squares",
+    "scipy_version": "1.17.0",
+    "initial_coefficients": [
+      0.67359,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "diff_step": 1e-05,
+    "xtol": 1e-11,
+    "ftol": 1e-11,
+    "gtol": 1e-08,
+    "max_nfev": 2500
+  },
+  "sources": [
+    "https://iapws.org/technical-guidance/release/IAPWS-95",
+    "https://path.web.ua.pt/publications/acs.iecr.7b03522.pdf",
+    "https://doi.org/10.1021/acs.jced.0c00649"
+  ]
+}

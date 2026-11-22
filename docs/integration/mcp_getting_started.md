@@ -268,7 +268,7 @@ Use this to:
 
 | Problem | Solution |
 |---|---|
-| Server doesn't start | Check JDK 17+ is installed: `java -version` |
+| Server doesn't start | Check JDK 21+ is installed: `java -version` |
 | "Component not found" | Use `searchComponents` to find the correct name |
 | Zero density/viscosity | The flash may not have converged — check `provenance.converged` |
 | Slow batch calculations | Reduce case count (max 500) or use `getPropertyTable` for uniform sweeps |

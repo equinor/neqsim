@@ -1,6 +1,6 @@
 ---
 title: "Thermodynamic Documentation Set"
-description: "This folder collects topic-specific documentation for using NeqSim's thermodynamic, PVT, and physical property capabilities. Each page is intended to be self-contained while pointing to related guides..."
+description: "Navigation guide to NeqSim thermodynamic, PVT, phase-equilibrium, and physical-property documentation and related engineering workflows."
 ---
 
 This folder collects topic-specific documentation for using NeqSim's thermodynamic, PVT, and physical property capabilities. Each page is intended to be self-contained while pointing to related guides so you can jump directly to the workflows you need.
@@ -36,17 +36,25 @@ thermo/
 
 ### Core Guides
 
+- [Component Reference List](component_list): Searchable NeqSim component names, aliases, CAS numbers, and equation-of-state availability.
+- [Reservoir Fluid Classification](fluid_classification): Screen reservoir fluids using C7+, GOR, and phase-envelope classification routes.
+- [Reading Fluid Properties](reading_fluid_properties): Initialize and read thermodynamic and transport properties with explicit units and API boundaries.
+- [CPA Water Caloric Alpha](cpa_water_caloric): Opt-in liquid-water heat-capacity improvement, IAPWS-95 calibration, thermodynamic consistency and validation limits.
+- [Homogeneous-equilibrium Acoustic Speed](equilibrium_sound_speed): Explicit isentropic EOS-density derivative for single-phase and vapor-liquid fluids, with closure, step convergence and phase-boundary diagnostics; distinct from legacy phase averaging.
 - [Thermodynamic Models Guide](thermodynamic_models): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
 - [Experimental Solid Helmholtz Models](solid_helmholtz_models): **Pure solid-state and freezing-point workflows** for solid argon and para-hydrogen, with explicit units, validity ranges, structured convergence diagnostics, and opt-in limitations.
-- [Mercury Thermodynamics](mercury_thermodynamics): **Mercury-focused workflow** for SRK-TwuCoon-Statoil-EOS, TPflash setup, INTER-table usage, and thesis-linked correlation guidance.
+- [Mercury Thermodynamics](mercury_thermodynamics): **Mercury-focused workflow** for SRK-TwuCoon-Statoil-EOS, UMR-PRU-MC with the mercury calculator parameters and a separate mercury phase, TPflash setup, INTER-table usage, and thesis-linked correlation guidance.
 - [Søreide-Whitson Model](SoreideWhitsonModel): **Gas solubility in brine** - Modified Peng-Robinson EoS with salinity-dependent alpha function for water. Essential for produced water emission calculations and used in **NeqSimLive**. Includes mathematical formulation, salt type coefficients, validation data, and literature references.
 - [Fluid Creation Guide](fluid_creation_guide): **Comprehensive guide** to creating fluids in NeqSim, including all available equations of state, mixing rules, and model selection guidelines.
 - [Mixing Rules Guide](mixing_rules_guide): **Detailed documentation** on mixing rules, including mathematical formulations, binary interaction parameters, and usage examples for different applications.
 - [Flash Calculations Guide](flash_calculations_guide): **Comprehensive documentation** of flash calculations available via ThermodynamicOperations, including TP, PH, PS, VU flashes, saturation calculations, and hydrate equilibria.
 - [Reactive Flash](reactive_flash): **Simultaneous chemical and phase equilibrium** using the Modified RAND method. Covers reactive TP and PH flash for systems with gas-phase reactions, ionic equilibria, and multiphase reactive systems.
+- [Reaction Model Audit](reaction_model_audit): **Read-only provenance and compatibility diagnostics** for active reaction sets, concentration bases, stored parameters, and model-specific validation declarations.
 - [Hydrate Models Guide](hydrate_models): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
 - [Electrolyte CPA Model](ElectrolyteCPAModel): **Detailed documentation** of the electrolyte CPA model, including Fürst electrostatic contributions, validation data, and usage examples.
 - [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance): **Dataset and safety reference** for Pitzer equation conventions, source/licensing comparisons, mixed-ion coverage diagnostics, and parameter-adoption gates.
+- [CO2-ion Furst Layer Ablation](co2_divalent_furst_ablation): **Diagnostic/HOLD** — controlled no-fit CaCl2/MgCl2 screen of the Furst CO2-ion contribution; not a production parameter qualification.
+- [Pitzer Hydrate Equilibrium](pitzer_hydrate_equilibrium): CO2/chloride-brine hydrate onset temperatures, pressures and curves, explicit neutral interaction inputs, and reference-state and temperature limits.
 - [Electrolyte VLE and VLLE Phase Boundaries](electrolyte_phase_boundaries): **Bracketed saturation API** for Pitzer and electrolyte-EOS gas, oil and aqueous phase appearance with balance, charge, fugacity and topology diagnostics.
 
 ### Database Documentation
@@ -56,8 +64,11 @@ thermo/
 
 ### Reference Documentation
 
+- [Henry-Law Reference States and Aqueous Gas-Solubility Evidence](henry_law_reference): Pure-water correlations, GE/Pitzer standard-state mapping, provenance, and validation boundaries.
+- [Empirical Solid Fugacity References](empirical_solid_fugacity): Liquid and sublimation-pressure reference choices, density units, domain checks, and solid-selection behavior.
 - [Mathematical Models](mathematical_models): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
 - [GERG-2008 and EOS-CG](gerg2008_eoscg): Detailed guide to the reference equations of state for natural gas and CCS applications.
+- [EOS-CG CO2/SO2 Mixture](eoscg_co2_so2): Executable mixture flash with phase densities, pressure closure, component balances, and a bounded numerical validation range.
 
 ### Acid Gas and Sour Fluid Modeling
 

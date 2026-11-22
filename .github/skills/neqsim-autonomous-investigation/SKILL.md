@@ -1,7 +1,7 @@
 ---
 name: neqsim-autonomous-investigation
 version: "1.1.0"
-description: "Autonomous investigation loop for operational and engineering anomalies — turns an agent from 'told what to look for' into 'discovers relationships and hypotheses on its own'. USE WHEN: solving a PEPR action, root-cause, or operational study where the symptom, driver, or important relationships are NOT given up front. Runs an observe -> hypothesize -> predict -> test -> discriminate loop, using neqsim.process.diagnostics.RelationshipGraph for unsupervised lead-lag relationship discovery across historian tags, then hands the discovered relationships to neqsim-root-cause-analysis. Anchors on neqsim.process.diagnostics classes."
+description: "Autonomous observe-hypothesize-predict-test-discriminate loop for operational anomalies. USE WHEN: solving a PEPR action, root-cause or operational study where the symptom, driver or important relationships are NOT given up front. Uses neqsim.process.diagnostics.RelationshipGraph for lead-lag relationship discovery across historian tags, then hands off to neqsim-root-cause-analysis."
 last_verified: "2026-07-19"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.automation]
@@ -110,6 +110,20 @@ for r in edges:
   (upstream -> downstream in the flowsheet) is a candidate common-cause or
   instrument artifact, not a direct cause.
 
+## External (non-historian) candidate signals: weather
+
+`RelationshipGraph` only sees what is in the historian data set you hand it.
+For outdoor/topside equipment, ambient temperature, wind, or sea state can be
+a driver that is not tagged anywhere in the plant historian. Before concluding
+"no cause found" for an anomaly on weather-exposed equipment, pull the
+historical weather for the site and event window with the community
+`neqsim-weather-data` skill (`WeatherDataService.get_historical`) and add it as
+an extra column to the data handed to `RelationshipGraph.analyze(...)`, exactly
+like any other tag. A lead-lag edge from an ambient-temperature or wind-speed
+series into the anomalous tag is then a discovered candidate cause, to be
+hypothesised and tested like any other `RelationshipGraph` finding — not
+asserted from correlation alone.
+
 ## Auto-detect the symptom — `AnomalyScanner`
 
 You should not have to be told the symptom either. `AnomalyScanner` (in
@@ -200,6 +214,21 @@ neqsim-process-safety / discipline   (consequence, if the cause is a hazard)
   whole chain (anomaly scan -> symptom inference -> relationship discovery ->
   topology classification -> Bayesian scoring) so the agent only supplies data +
   flowsheet.
+
+## Periodic oscillation on a gas node (compressor suction / separator pressure)
+
+Lessons from a solved export-compressor-inlet oscillation study (cross-spectral workflow, Python on the historian pull):
+
+1. **Characterise before explaining:** hourly Welch band power (3-10 min), amplitude-envelope coefficient of variation (about 0.52 = Rayleigh = noise-driven lightly damped mode; about 0.1-0.2 = limit cycle), peak width (Q, damping ratio), harmonics (nonlinear limiter or burst valve).
+2. **Cross-spectrum against the pressure, not time-domain correlation:** coherence and phase at the peak for every covered tag (60 s grid for sparse on-change tags). Convention: scipy `csd(ref, y)` angle > 0 means y leads ref. Check the UTC offset of the pull before matching an operator's local-time window.
+3. **Limit signature:** a driver speed anti-phase (about 180 deg, coherence above 0.8) with suction pressure, a flat-topped current/temperature, and a pinned gas-generator speed or exhaust/CDP temperature mean the machine is on a power limit: speed droops with load, flow stiffness is cut, and no pressure controller has authority. Quantify with a band-passed log regression `d ln m / d ln N`, `d ln m / d ln P1`.
+4. **Time constant test:** node time constant `tau = V * d(rho)/dP / (dm/dP)` (NeqSim SRK for `d(rho)/dP`); if it is much shorter than the period, a slower element (liquid inventory, riser transport, integrators, anti-surge recycle) closes the loop.
+5. **Phasor mass budget:** `F_in = m_out + V rho' dP/dt` at the peak frequency for a range of V; its phase against P gives the delay of a feedback path (`tau_d = (180 deg - phase) / (360 deg * f)` for negative feedback). It is a consistency test, not proof; state it that way.
+6. **Anti-surge on one train:** a mean valve position of several percent with a mass-versus-volume flow discrepancy (IOC net flow vs transmitter volume times NeqSim density) indicates permanent recycle that costs power on a power-limited machine.
+
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+After `RelationshipGraph` proposes lead-lag pairs, quantify the strongest candidates with `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet): identified gain, time constant and delay with a usability verdict. Where a NeqSim model of the unit exists, add physics residuals so the investigation separates equipment change from instrument fault. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
 
 ## Limitations
 

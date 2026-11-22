@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -992,7 +993,7 @@ public class ProductionOptimizer {
    * config = OptimizationConfig(50000.0, 200000.0) \
    *     .tolerance(100.0) \
    *     .maxIterations(50) \
-   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+   *     .searchMode(SearchMode.BINARY_FEASIBILITY)
    * }</pre>
    */
   public static final class OptimizationConfig {
@@ -1000,6 +1001,7 @@ public class ProductionOptimizer {
     private double upperBound;
     private double tolerance = 1e-3;
     private int maxIterations = 30;
+    private int selectedPointReplays = 1;
     private String rateUnit = "kg/hr";
     private double defaultUtilizationLimit = DEFAULT_UTILIZATION_LIMIT;
     private double utilizationMarginFraction = 0.0;
@@ -1068,11 +1070,31 @@ public class ProductionOptimizer {
     }
 
     /**
+     * Requires consecutive fresh process solves before accepting the selected point or a fallback as feasible.
+     *
+     * <p>
+     * Search probes are unchanged. Use more than one replay for stateful processes near a hard capacity limit; each
+     * additional replay costs one full process solve. The default is one replay.
+     * </p>
+     *
+     * @param replays number of consecutive selected-point solves, from 1 to 10
+     * @return this config for method chaining
+     */
+    public OptimizationConfig selectedPointReplays(int replays) {
+      if (replays < 1 || replays > 10) {
+        throw new IllegalArgumentException("Selected-point replays must be between 1 and 10");
+      }
+      this.selectedPointReplays = replays;
+      return this;
+    }
+
+    /**
      * Sets whether to reject simulation results that are physically invalid.
      *
      * <p>
      * When enabled (default), the optimizer will mark operating points as infeasible if any equipment reports invalid
-     * simulation results (e.g., negative power in compressors, NaN values, etc.).
+     * simulation results (e.g., negative power in compressors, NaN values, etc.). Failed compressor pressure-target
+     * solves are always rejected, independently of this optional validation.
      * </p>
      *
      * @param reject true to reject invalid simulations
@@ -2181,11 +2203,11 @@ public class ProductionOptimizer {
    *
    * <pre>{@code
    * ProductionOptimizer optimizer = new ProductionOptimizer();
-   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).searchMode(SearchMode.BINARY_FEASIBILITY)
    *     .tolerance(100.0);
    *
    * OptimizationResult result = optimizer.optimize(process, feedStream, config, null, null);
-   * System.out.println("Optimal: " + result.getOptimalRate() + " " + result.getRateUnit());
+   * logger.info("Optimal: {} {}", result.getOptimalRate(), result.getRateUnit());
    * }</pre>
    *
    * <p>
@@ -2195,12 +2217,21 @@ public class ProductionOptimizer {
    * <pre>{@code
    * optimizer = ProductionOptimizer()
    * config = OptimizationConfig(50000.0, 200000.0) \
-   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE) \
+   *     .searchMode(SearchMode.BINARY_FEASIBILITY) \
    *     .tolerance(100.0)
    *
    * result = optimizer.optimize(process, feed_stream, config, None, None)
    * print(f"Optimal: {result.getOptimalRate():.0f} {result.getRateUnit()}")
    * }</pre>
+   *
+   * <p>
+   * Score-based searches require an explicit objective to maximize throughput. A null or empty objective list has zero
+   * objective score; use binary feasibility for monotonic throughput searches without a custom objective. Before
+   * returning, the selected decision vector is reapplied and solved without using cached evidence. The result and live
+   * process therefore describe the same operating point. If that replay is physically infeasible, previously feasible
+   * search points are replayed in deterministic best-first order and only a freshly verified fallback can be returned.
+   * A failed final solve throws rather than returning stale evidence.
+   * </p>
    *
    * @param process the process model to evaluate (must not be null)
    * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
@@ -2362,19 +2393,153 @@ public class ProductionOptimizer {
       throw new IllegalArgumentException("Binary and golden-section searches support only one decision variable");
     }
 
+    OptimizationResult selected;
     if (variables.size() == 1 && config.searchMode == SearchMode.BINARY_FEASIBILITY) {
-      return binaryFeasibilitySearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+      selected = binaryFeasibilitySearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (variables.size() == 1 && config.searchMode == SearchMode.GOLDEN_SECTION_SCORE) {
+      selected = goldenSectionSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (config.searchMode == SearchMode.NELDER_MEAD_SCORE) {
+      selected = nelderMeadSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (config.searchMode == SearchMode.GRADIENT_DESCENT_SCORE) {
+      selected = gradientDescentSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else {
+      selected = particleSwarmSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
     }
-    if (variables.size() == 1 && config.searchMode == SearchMode.GOLDEN_SECTION_SCORE) {
-      return goldenSectionSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+
+    double[] selectedPoint = new double[variables.size()];
+    for (int i = 0; i < variables.size(); i++) {
+      selectedPoint[i] = selected.getDecisionVariables().get(variables.get(i).getName());
     }
-    if (config.searchMode == SearchMode.NELDER_MEAD_SCORE) {
-      return nelderMeadSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    // Search algorithms commonly finish at a rejected probe or a cached point. Fresh consecutive solves also catch
+    // stateful equipment whose first replay is feasible but whose next replay exceeds a capacity limit.
+    Evaluation verified = replayCandidate(process, variables, config, safeObjectives, safeConstraints, selectedPoint,
+        selected.getRateUnit(), iterationHistory);
+    double[] verifiedPoint = selectedPoint;
+    if (selected.isFeasible() && !isFeasible(verified)) {
+      VerifiedSelection fallback = replayFeasibleSearchPoint(process, variables, config, safeObjectives,
+          safeConstraints, selectedPoint, iterationHistory);
+      if (fallback != null) {
+        verifiedPoint = fallback.point;
+        verified = fallback.evaluation;
+      } else {
+        // Candidate recovery leaves mutable equipment at its last probe. Restore the selected point once more so an
+        // infeasible result and the live process still describe the same exact decision vector.
+        verified = replayCandidate(process, variables, config, safeObjectives, safeConstraints, selectedPoint,
+            selected.getRateUnit(), iterationHistory);
+      }
     }
-    if (config.searchMode == SearchMode.GRADIENT_DESCENT_SCORE) {
-      return gradientDescentSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    return toResult(verifiedPoint[0], selected.getRateUnit(), selected.getIterations(), verified, iterationHistory);
+  }
+
+  /**
+   * Replay earlier feasible search points after the selected point proves non-repeatable.
+   *
+   * <p>
+   * Search evidence is only a proposal: every fallback is applied to the live process and fully solved again. Binary
+   * throughput searches prefer the greatest recorded rate, while score searches prefer the greatest penalized score.
+   * The bounded retry set contains only points already visited by the configured search.
+   * </p>
+   *
+   * @param process mutable process to replay
+   * @param variables manipulated variables in deterministic order
+   * @param config optimization configuration
+   * @param objectives configured objectives
+   * @param constraints configured constraints
+   * @param selectedPoint point whose replay was infeasible
+   * @param iterationHistory complete search history, extended with replay evidence
+   * @return verified fallback, or {@code null} when no recorded feasible point replays successfully
+   */
+  private VerifiedSelection replayFeasibleSearchPoint(ProcessSystem process, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
+      double[] selectedPoint, List<IterationRecord> iterationHistory) {
+    List<IterationRecord> candidates = iterationHistory.stream().filter(IterationRecord::isFeasible)
+        .collect(Collectors.toList());
+    if (config.searchMode == SearchMode.BINARY_FEASIBILITY) {
+      candidates.sort((left, right) -> Double.compare(right.getRate(), left.getRate()));
+    } else {
+      candidates.sort((left, right) -> Double.compare(right.getScore(), left.getScore()));
     }
-    return particleSwarmSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+
+    for (IterationRecord candidate : candidates) {
+      double[] point = decisionVector(candidate, variables);
+      if (point == null || sameDecisionVector(point, selectedPoint)) {
+        continue;
+      }
+      Evaluation replayed = replayCandidate(process, variables, config, objectives, constraints, point,
+          candidate.getRateUnit(), iterationHistory);
+      boolean feasible = isFeasible(replayed);
+      if (feasible) {
+        return new VerifiedSelection(point, replayed);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Solves one decision vector repeatedly without the search cache, stopping at the first infeasible observation.
+   *
+   * @param process mutable process to solve
+   * @param variables manipulated variables in deterministic order
+   * @param config optimization configuration
+   * @param objectives configured objectives
+   * @param constraints configured constraints
+   * @param point decision vector to replay
+   * @param rateUnit unit for the history records
+   * @param iterationHistory search and replay evidence
+   * @return the last fresh evaluation, feasible only if all required replays passed
+   */
+  private Evaluation replayCandidate(ProcessSystem process, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
+      double[] point, String rateUnit, List<IterationRecord> iterationHistory) {
+    Evaluation evaluation = null;
+    for (int replay = 0; replay < config.selectedPointReplays; replay++) {
+      evaluation = evaluateCandidateInternal(process, variables, config, objectives, constraints, point);
+      boolean feasible = isFeasible(evaluation);
+      recordIteration(iterationHistory, point[0], rateUnit, evaluation, feasible);
+      if (!feasible) {
+        break;
+      }
+    }
+    return evaluation;
+  }
+
+  private double[] decisionVector(IterationRecord record, List<ManipulatedVariable> variables) {
+    double[] point = new double[variables.size()];
+    Map<String, Double> decisions = record.getDecisionVariables();
+    for (int i = 0; i < variables.size(); i++) {
+      Double value = decisions.get(variables.get(i).getName());
+      if (value == null || Double.isNaN(value.doubleValue()) || Double.isInfinite(value.doubleValue())) {
+        return null;
+      }
+      point[i] = value.doubleValue();
+    }
+    return point;
+  }
+
+  private boolean sameDecisionVector(double[] left, double[] right) {
+    if (left.length != right.length) {
+      return false;
+    }
+    for (int i = 0; i < left.length; i++) {
+      if (Double.doubleToLongBits(left[i]) != Double.doubleToLongBits(right[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean isFeasible(Evaluation evaluation) {
+    return evaluation.utilizationWithinLimits() && evaluation.hardOk();
+  }
+
+  private static final class VerifiedSelection {
+    private final double[] point;
+    private final Evaluation evaluation;
+
+    private VerifiedSelection(double[] point, Evaluation evaluation) {
+      this.point = point;
+      this.evaluation = evaluation;
+    }
   }
 
   /**
@@ -2844,7 +3009,7 @@ public class ProductionOptimizer {
       // Simple case: linear combination
       for (int i = 0; i < gridSize; i++) {
         double w1 = (double) i / (gridSize - 1);
-        combinations.add(new double[] { 1.0 - w1, w1 });
+        combinations.add(new double[] {1.0 - w1, w1});
       }
     } else {
       // General case: recursive simplex grid
@@ -3207,6 +3372,16 @@ public class ProductionOptimizer {
     boolean simulationValid = true;
     List<String> validationErrors = new ArrayList<>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof Compressor) {
+        Compressor compressor = (Compressor) unit;
+        if (compressor.isSolveSpeed() && compressor.getCompressorChart().isUseCompressorChart()
+            && !compressor.isSpeedSolveConverged()) {
+          // A missed pressure target is a failed solve, even when capacity analysis is enabled or optional
+          // output validation is disabled. Envelope constraints cannot certify an unconverged calculation.
+          return failedCompressorEvaluation(decisionVariables, "compressorSpeedSolve",
+              "Speed solve did not converge for " + compressor.getName());
+        }
+      }
       if (!unit.isSimulationValid()) {
         // If equipment has capacity constraints enabled, let the constraint system
         // handle envelope violations through high utilization rather than rejecting
@@ -3342,10 +3517,20 @@ public class ProductionOptimizer {
     int iteration = 0;
     String unit = variable.getUnit() != null ? variable.getUnit() : config.rateUnit;
 
+    // Keep the lower bracket endpoint as verified search evidence. Near a capacity boundary, interior points may
+    // become infeasible on replay; the supplied feasible endpoint must remain available for conservative recovery.
+    Evaluation lowerEvaluation = evaluateCandidate(process, variables, config, objectives, constraints,
+        new double[] {low}, cache);
+    boolean lowerFeasible = isFeasible(lowerEvaluation);
+    recordIteration(iterationHistory, low, unit, lowerEvaluation, lowerFeasible);
+    if (lowerFeasible) {
+      bestResult = toResult(low, unit, iteration, lowerEvaluation, iterationHistory);
+    }
+
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
       double candidateValue = 0.5 * (low + high);
       Evaluation evaluation = evaluateCandidate(process, variables, config, objectives, constraints,
-          new double[] { candidateValue }, cache);
+          new double[] {candidateValue}, cache);
       boolean feasible = evaluation.utilizationWithinLimits() && evaluation.hardOk();
       recordIteration(iterationHistory, candidateValue, unit, evaluation, feasible);
       if (feasible) {
@@ -3358,8 +3543,8 @@ public class ProductionOptimizer {
     }
 
     if (bestResult == null) {
-      Evaluation evaluation = evaluateCandidate(process, variables, config, objectives, constraints,
-          new double[] { low }, cache);
+      Evaluation evaluation = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {low},
+          cache);
       recordIteration(iterationHistory, low, unit, evaluation,
           evaluation.utilizationWithinLimits() && evaluation.hardOk());
       bestResult = toResult(low, unit, iteration, evaluation, iterationHistory);
@@ -3384,10 +3569,8 @@ public class ProductionOptimizer {
     double c = high - phi * (high - low);
     double d = low + phi * (high - low);
 
-    Evaluation evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { c },
-        cache);
-    Evaluation evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { d },
-        cache);
+    Evaluation evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {c}, cache);
+    Evaluation evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {d}, cache);
     recordIteration(iterationHistory, c, unit, evalC, evalC.utilizationWithinLimits() && evalC.hardOk());
     recordIteration(iterationHistory, d, unit, evalD, evalD.utilizationWithinLimits() && evalD.hardOk());
 
@@ -3413,7 +3596,7 @@ public class ProductionOptimizer {
         c = d;
         evalC = evalD;
         d = low + phi * (high - low);
-        evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { d }, cache);
+        evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {d}, cache);
         recordIteration(iterationHistory, d, unit, evalD, evalD.utilizationWithinLimits() && evalD.hardOk());
 
         // Track best feasible solution
@@ -3427,7 +3610,7 @@ public class ProductionOptimizer {
         d = c;
         evalD = evalC;
         c = high - phi * (high - low);
-        evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { c }, cache);
+        evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {c}, cache);
         recordIteration(iterationHistory, c, unit, evalC, evalC.utilizationWithinLimits() && evalC.hardOk());
 
         // Track best feasible solution
@@ -3892,7 +4075,7 @@ public class ProductionOptimizer {
       OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       double[] candidate, Map<String, Evaluation> cache) {
     if (config.enableCaching) {
-      String cacheKey = buildVectorCacheKey(candidate, config);
+      String cacheKey = buildVectorCacheKey(candidate);
       Evaluation cached = cache.get(cacheKey);
       if (cached != null) {
         return cached;
@@ -3914,21 +4097,48 @@ public class ProductionOptimizer {
       variable.apply(process, bounded);
       decisions.put(variable.getName(), bounded);
     }
-    process.run();
+    try {
+      process.run();
+    } catch (RuntimeException exception) {
+      Throwable cause = exception;
+      while (cause != null) {
+        if (cause instanceof Compressor.SpeedSolveException) {
+          return failedCompressorEvaluation(decisions, "compressorSpeedSolve", cause.getMessage());
+        }
+        if (cause instanceof Compressor.ChartOperatingPointException) {
+          return failedCompressorEvaluation(decisions, "compressorChartOperatingPoint", cause.getMessage());
+        }
+        if (cause == cause.getCause()) {
+          break;
+        }
+        cause = cause.getCause();
+      }
+      throw exception;
+    }
     return evaluateProcess(process, config, objectives, constraints, decisions);
   }
 
-  private String buildVectorCacheKey(double[] candidate, OptimizationConfig config) {
-    // Use a minimum bucket size to avoid excessive cache entries while
-    // maintaining enough precision to distinguish meaningfully different
-    // candidates.
-    // When tolerance is very small, use the value itself with limited precision.
-    double bucketSize = Math.max(config.tolerance, 0.1);
+  /**
+   * Rejects a failed compressor calculation without evaluating stale downstream results or user callbacks.
+   *
+   * @param decisions exact attempted decision vector
+   * @param constraintName failed compressor acceptance gate
+   * @param diagnostic compressor failure diagnostic
+   * @return infeasible evaluation with an explicit hard convergence constraint
+   */
+  private Evaluation failedCompressorEvaluation(Map<String, Double> decisions, String constraintName,
+      String diagnostic) {
+    ConstraintStatus status = new ConstraintStatus(constraintName, ConstraintSeverity.HARD, -1.0, 0.0, diagnostic);
+    return new Evaluation(9.99, null, Collections.emptyList(), Collections.singletonList(status),
+        Collections.emptyMap(), decisions, false, false, Double.NEGATIVE_INFINITY);
+  }
+
+  private String buildVectorCacheKey(double[] candidate) {
+    // A convergence tolerance is not an evidence-equivalence tolerance. Nearby points can straddle a hard limit,
+    // and each cached evaluation retains the exact decisions that produced it.
     StringBuilder key = new StringBuilder();
     for (double value : candidate) {
-      // Use bucket-based rounding for cache keys
-      long bucket = Math.round(value / bucketSize);
-      key.append(bucket).append("|");
+      key.append(Double.doubleToLongBits(value)).append("|");
     }
     return key.toString();
   }

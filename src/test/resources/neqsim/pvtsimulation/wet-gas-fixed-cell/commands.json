@@ -1,0 +1,379 @@
+{
+  "final-suite-exit.json": {
+    "command": [
+      "./mvnw",
+      "-q",
+      "org.jacoco:jacoco-maven-plugin:prepare-agent",
+      "-Dtest=AsphalteneMethodComparisonTest,AsphalteneMultiMethodBenchmarkTest,AsphalteneOnsetFittingTest,AsphalteneStabilityAnalyzerTest,AsphalteneValidationTest,BlackOilCorrelationsTest,BlackOilTableValidatorTest,CO2CorrosionAnalyzerTest,CalibratedPvtModelTest,CompositionalReservoirAquiferRefinementTest,CompositionalReservoirAquiferTest,CompositionalReservoirHistoryTest,ConstantMassExpansionOilPropertiesTest,ConstantMassExpansionTest,ConstantVolumeDepletionTest,CvdGasOnlyTailTest,CvdMaterialBalanceTest,DeBoerAsphalteneScreeningTest,DeBoerScreeningDocumentationTest,DeclineCurveAnalysisFitTest,DeclineCurveAnalysisTest,DensitySimTest,DepletionPvtHistoryGeneratorTest,DifferentialLiberationTest,DryFixedCellPhaseTransitionTest,EmulsionViscosityCalculatorTest,ErosionPredictionCalculatorTest,ErosionSandLoadDefaultsTest,FetkovichAquiferTest,FixedCellDepletionHandoffTest,FixedCellFeasibleGibbsTest,FixedCellInitialStateTest,FlowAssuranceDocumentationTest,GasMaterialBalanceTest,GasPseudoCriticalPropertiesTest,GasPseudoPressureTest,GeneralizedMaterialBalanceTest,HydrateRiskMapperTest,HydrocarbonScrubberSaturationPressureStabilityTest,MultiMineralScaleEquilibriumTest,MultiStageSeparatorTestTest,NativeCceHandoffTest,NativeDepletionHandoffTest,OilMaterialBalanceTest,PVTFluidStudyTest,PVTRegressionDepletionHistoryTest,PVTRegressionDispatchTest,PVTRegressionTest,PVTRegressionWeightingTest,PhaseWithdrawalReservoirHistoryTest,PitzerScaleActivityModelTest,PvtGasDensityConsistencyTest,PvtLabTestsDocumentationTest,PvtSeparatorPathTest,PvtSimulationDocumentationTest,RefinedCvdHandoffTest,RelativePermeabilityGeneratorTest,ReservoirHistoryEnsembleTest,SaturationPressureCorrelationTest,SaturationPressureTest,SaturationTemperatureSearchTest,SaturationTemperatureTest,SaturationTemperatureTuningTest,ScaleKspLiteratureBenchmarkTest,ScalePredictionTest,SeparatorTestTest,SlimTubeSimTest,SolutionGasWaterRatioTest,SolutionGasWaterRatioVerificationTest,SurfCooldownAnalyzerTest,SurfCooldownAnalyzerWaterGuardTest,SwellingTestTemperatureTest,SwellingTestTest,VanEverdingenHurstAquiferTest,ViscositySimTest,WaterPropertyCorrelationsTest,WaxCurveCalculatorTest,WaxFractionSimTest,WetCceHandoffTest,WetDleHandoffTest,WetGasFixedCellHandoffTest,ZFactorCorrelationsTest",
+      "test",
+      "org.jacoco:jacoco-maven-plugin:report"
+    ],
+    "exit": 0,
+    "elapsedSeconds": 248.4660049749982
+  },
+  "surrounding-exit.json": {
+    "exit": 0
+  },
+  "focused-exit.json": {
+    "exit": 0
+  },
+  "final-static-exits.json": [
+    {
+      "name": "final-java8",
+      "command": [
+        "java",
+        "-m",
+        "jdk.compiler/com.sun.tools.javac.Main",
+        "--release",
+        "8",
+        "-classpath",
+        "/tmp/mbal44-repo/target/test-classes:/tmp/mbal44-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal44/java8-classes",
+        "/tmp/mbal44-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+        "/tmp/mbal44-repo/src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java",
+        "/tmp/mbal44-repo/src/test/java/neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.java"
+      ],
+      "exit": 0,
+      "seconds": 1.3095419739984209
+    },
+    {
+      "name": "final-javadoc",
+      "command": [
+        "java",
+        "-m",
+        "jdk.javadoc/jdk.javadoc.internal.tool.Main",
+        "--release",
+        "8",
+        "-quiet",
+        "-private",
+        "-Xdoclint:all",
+        "-classpath",
+        "/tmp/mbal44-repo/target/test-classes:/tmp/mbal44-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal44/javadoc",
+        "/tmp/mbal44-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+        "/tmp/mbal44-repo/src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java",
+        "/tmp/mbal44-repo/src/test/java/neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.java"
+      ],
+      "exit": 0,
+      "seconds": 1.3684062180000183
+    },
+    {
+      "name": "final-checkstyle",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-Dcheckstyle.includes=**/ConstantVolumeDepletion.java,**/DepletionPvtHistoryGenerator.java,**/WetGasFixedCellHandoffTest.java",
+        "-Dcheckstyle.includeTestSourceDirectory=true",
+        "checkstyle:check"
+      ],
+      "exit": 0,
+      "seconds": 4.339434812001855
+    },
+    {
+      "name": "final-spotbugs",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-candidate-strict.xml",
+        "-Dspotbugs.onlyAnalyze=neqsim.pvtsimulation.simulation.ConstantVolumeDepletion*,neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator*",
+        "spotbugs:check"
+      ],
+      "exit": 1,
+      "seconds": 27.755710137997085
+    }
+  ],
+  "strict-static-exits.json": [
+    {
+      "name": "base-strict",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-base-strict.xml",
+        "-Dspotbugs.onlyAnalyze=neqsim.pvtsimulation.simulation.ConstantVolumeDepletion*,neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator*",
+        "spotbugs:check"
+      ],
+      "exit": 1,
+      "seconds": 29.889942711000913
+    },
+    {
+      "name": "candidate-strict",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-candidate-strict.xml",
+        "-Dspotbugs.onlyAnalyze=neqsim.pvtsimulation.simulation.ConstantVolumeDepletion*,neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator*",
+        "spotbugs:check"
+      ],
+      "exit": 1,
+      "seconds": 29.827414086001227
+    }
+  ],
+  "base-checkstyle.json": {
+    "command": [
+      "./mvnw",
+      "-q",
+      "-f",
+      "pom-base-strict.xml",
+      "-Dcheckstyle.includes=**/ConstantVolumeDepletion.java,**/DepletionPvtHistoryGenerator.java",
+      "checkstyle:check"
+    ],
+    "exit": 0,
+    "seconds": 5.793879336000828,
+    "baseWarnings": 6,
+    "candidateWarnings": 6,
+    "signaturesEqual": true
+  },
+  "final-gates.json": [
+    {
+      "name": "direct-apply",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 2.185412584000005
+    },
+    {
+      "name": "stable-direct-apply",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 1.9666314700007206
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 0,
+      "seconds": 1.257869346998632
+    },
+    {
+      "name": "precommit",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "--with",
+        "pre-commit",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 3.860515995998867
+    },
+    {
+      "name": "direct-check",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 2.027963879001618
+    },
+    {
+      "name": "docs",
+      "command": [
+        "python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 1.9154347619987675
+    },
+    {
+      "name": "inventory-check",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.444858803999523
+    },
+    {
+      "name": "prepush",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "--with",
+        "pre-commit",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 4.399144709001121
+    }
+  ],
+  "publication-gates.json": [
+    {
+      "gate": "stable-apply",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 2.426173469000787
+    },
+    {
+      "gate": "inventory",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 0,
+      "seconds": 1.6832925230010005
+    },
+    {
+      "gate": "spotless-check",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 2.1995521640019433
+    },
+    {
+      "gate": "docs-search",
+      "command": [
+        "python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 2.044360316998791
+    },
+    {
+      "gate": "inventory-fresh",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.479305550998106
+    },
+    {
+      "gate": "tooling",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "python",
+        "-m",
+        "unittest",
+        "devtools.test_engineering_coverage",
+        "devtools.test_capability_search",
+        "devtools.test_skill_search",
+        "devtools.test_engineering_coverage_workflow"
+      ],
+      "exit": 1,
+      "seconds": 0.17227343100239523
+    }
+  ],
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "localJavaRuntime": "17.0.20",
+    "baseCommit": "69de066ea61b559b7df727117e4a5a83352633fa"
+  },
+  "toolingTest": {
+    "command": [
+      "uv",
+      "run",
+      "--project",
+      "devtools",
+      "--locked",
+      "--group",
+      "test",
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "devtools/test_engineering_coverage.py",
+      "devtools/test_capability_search.py",
+      "devtools/test_skill_search.py",
+      "devtools/test_engineering_coverage_workflow.py"
+    ],
+    "exit": 0,
+    "summary": "41 passed in 9.07s"
+  },
+  "initialHookFailures": {
+    "precommit": "exit1: Maven bootstrap exports were not inherited in the new shell; spotless plugin prefix resolution failed. Inventory hook also modified generated inventory on first invocation. Bootstrapped final invocations passed.",
+    "precommitVersionCommand": [
+      "uv",
+      "run",
+      "--project",
+      "devtools",
+      "--locked",
+      "--with",
+      "pre-commit",
+      "pre-commit",
+      "--version"
+    ],
+    "precommitVersion": "4.7.0"
+  },
+  "baseline": {
+    "command": [
+      "./mvnw",
+      "-q",
+      "-Dtest=FixedCellDepletionHandoffTest",
+      "test"
+    ],
+    "exit": 0,
+    "tests": 6,
+    "seconds": 28.08,
+    "probeRepeatByteIdentical": true
+  },
+  "bootstrap": "eval \"$(python3 <work-with-neqsim skill>/scripts/prepare_maven.py)\"",
+  "referenceCommands": [
+    "python3 independent_reference.py > reference.json",
+    "python3 independent_reference.py > reference-repeat.json",
+    "python3 -O independent_reference.py > reference-optimized.json"
+  ],
+  "referenceExits": [
+    0,
+    0,
+    0
+  ]
+}

@@ -90,12 +90,12 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     // double inletPressure = feedStream.getPressure();
 
     Cooler inletCooler = new Cooler("inlet well stream cooler", feedStream);
-    inletCooler.setOutTemperature(inletSepTemperature + 273.15);
+    inletCooler.setOutletTemperature(inletSepTemperature + 273.15);
 
     inletSeparator = new Separator("Inlet separator", inletCooler.getOutletStream());
 
     Cooler gasCooler = new Cooler("separator gas cooler", inletSeparator.getGasOutStream());
-    gasCooler.setOutTemperature(gasScrubberTemperature + 273.15);
+    gasCooler.setOutletTemperature(gasScrubberTemperature + 273.15);
 
     oilPump = new Pump("liquid pump", inletSeparator.getLiquidOutStream());
     oilPump.setOutletPressure(liquidPumpPressure);
@@ -118,7 +118,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     glycolMixer.addStream(glycolFeedStream);
 
     Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler", glycolMixer.getOutletStream());
-    mixerAfterCooler.setOutTemperature(glycolScrubberTemperature + 273.15);
+    mixerAfterCooler.setOutletTemperature(glycolScrubberTemperature + 273.15);
 
     glycolScrubber = new Separator("Water dew point control scrubber", mixerAfterCooler.getOutletStream());
 
@@ -126,7 +126,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     secondStageCompressor.setOutletPressure(secondStageOutPressure);
 
     secondStageAfterCooler = new Cooler("second stage after cooler", secondStageCompressor.getOutletStream());
-    secondStageAfterCooler.setOutTemperature(exportGasTemperature + 273.15);
+    secondStageAfterCooler.setOutletTemperature(exportGasTemperature + 273.15);
 
     getOperations().add(inletCooler);
     getOperations().add(inletSeparator);

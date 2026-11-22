@@ -1,0 +1,29 @@
+[
+  {
+    "nodes": 51,
+    "boundaryVolume_m3": 0.005502010695986802,
+    "storedVolume_m3": 0.005552384606887578,
+    "physicalResidual_m3": 5.037391090077607e-05,
+    "predictedDiscretizationDefect_m3": 5.037391090076833e-05,
+    "physicalTolerance_m3": 1e-09,
+    "physicalConservation": "FAIL"
+  },
+  {
+    "nodes": 101,
+    "boundaryVolume_m3": 0.0055026631537908694,
+    "storedVolume_m3": 0.0055278494235073495,
+    "physicalResidual_m3": 2.518626971648001e-05,
+    "predictedDiscretizationDefect_m3": 2.5186269716445432e-05,
+    "physicalTolerance_m3": 1e-09,
+    "physicalConservation": "FAIL"
+  },
+  {
+    "nodes": 201,
+    "boundaryVolume_m3": 0.005502826508517772,
+    "storedVolume_m3": 0.005515419338593615,
+    "physicalResidual_m3": 1.2592830075842769e-05,
+    "predictedDiscretizationDefect_m3": 1.2592830075815643e-05,
+    "physicalTolerance_m3": 1e-09,
+    "physicalConservation": "FAIL"
+  }
+]

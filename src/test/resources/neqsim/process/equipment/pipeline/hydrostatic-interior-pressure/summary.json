@@ -1,0 +1,333 @@
+{
+  "production_head": "04473d528649e43130168f258bdc717aa3715ca9",
+  "comparison_master": "aec17276c6af57c0b0be56e8c302893bc623fb5f",
+  "conservation_source_git_blob": "a650f29dec85b3ea40aa023258320108847a2919",
+  "runtime": "OpenJDK 17.0.20",
+  "java_compatibility": "pomJava8 compile and fixture --release 8; no local Java 8 JVM execution",
+  "force_cases": 720,
+  "work_cases": 48,
+  "focused_junit_methods": 85,
+  "slow_richgas_methods": 5,
+  "slow_richgas_wall_seconds": 177.7,
+  "physical_pressure_ramp_seconds": 120,
+  "pressure_ramp_meshes": [
+    12,
+    24
+  ],
+  "phase_acceleration_error_gate_m_s2": 1e-10,
+  "mixture_force_residual_gate_N_m": 1e-08,
+  "max_acceleration_error_m_s2": 2.31976798881e-11,
+  "max_mixture_force_residual_N_m": 1.42968747951e-10,
+  "max_pressure_work_error_W": 2.59233274846e-08,
+  "unmodified_master_regression": "FAIL rise/smooth/12 cells/pure oil; acceleration error 0.0032325841882565446 m/s2",
+  "scope": "instantaneous common-pressure force/work identities and historical prescribed-pressure-ramp regression; no retained-pool or evaporation-time qualification",
+  "unmodified_master_full_ramp_test": {
+    "tests": 1,
+    "meshes": [
+      12,
+      24
+    ],
+    "physical_seconds_each": 120,
+    "wall_seconds": 118.336,
+    "failures": 0,
+    "errors": 0
+  },
+  "rhs_timing": {
+    "protocol": "10000 warmup calls; 7 batches of 1000 calls per case; two forks per source; master/head/head/master; -Xbatch -Xms256m -Xmx256m",
+    "final_samples": 448,
+    "rows": [
+      {
+        "terrain": "flat",
+        "gas_fraction": 1.0,
+        "cells": 12,
+        "master_median_us": 13.388354499999998,
+        "head_median_us": 13.4020315,
+        "ratio": 1.0010215594455616
+      },
+      {
+        "terrain": "flat",
+        "gas_fraction": 1.0,
+        "cells": 24,
+        "master_median_us": 11.461051999999999,
+        "head_median_us": 14.261408500000002,
+        "ratio": 1.2443367764145912
+      },
+      {
+        "terrain": "flat",
+        "gas_fraction": 1.0,
+        "cells": 96,
+        "master_median_us": 48.695460499999996,
+        "head_median_us": 48.4281345,
+        "ratio": 0.9945102480343112
+      },
+      {
+        "terrain": "flat",
+        "gas_fraction": 1.0,
+        "cells": 192,
+        "master_median_us": 111.9812625,
+        "head_median_us": 99.1875065,
+        "ratio": 0.8857509219455353
+      },
+      {
+        "terrain": "flat",
+        "gas_fraction": 0.35,
+        "cells": 12,
+        "master_median_us": 46.333811,
+        "head_median_us": 40.540557,
+        "ratio": 0.8749670300161583
+      },
+      {
+        "terrain": "flat",
+        "gas_fraction": 0.35,
+        "cells": 24,
+        "master_median_us": 88.6321115,
+        "head_median_us": 83.5517325,
+        "ratio": 0.9426801537950499
+      },
+      {
+        "terrain": "flat",
+        "gas_fraction": 0.35,
+        "cells": 96,
+        "master_median_us": 368.3431815,
+        "head_median_us": 350.7885255,
+        "ratio": 0.9523415747007657
+      },
+      {
+        "terrain": "flat",
+        "gas_fraction": 0.35,
+        "cells": 192,
+        "master_median_us": 765.1950915,
+        "head_median_us": 938.23075,
+        "ratio": 1.2261327345432926
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 1.0,
+        "cells": 12,
+        "master_median_us": 15.379512000000002,
+        "head_median_us": 13.397003000000002,
+        "ratio": 0.871094154352882
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 1.0,
+        "cells": 24,
+        "master_median_us": 15.044205000000002,
+        "head_median_us": 18.3243185,
+        "ratio": 1.2180316939313176
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 1.0,
+        "cells": 96,
+        "master_median_us": 60.235158,
+        "head_median_us": 59.3418015,
+        "ratio": 0.985168852715552
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 1.0,
+        "cells": 192,
+        "master_median_us": 147.01037050000002,
+        "head_median_us": 92.63123949999999,
+        "ratio": 0.6301000343373734
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 0.35,
+        "cells": 12,
+        "master_median_us": 50.815149,
+        "head_median_us": 41.5575495,
+        "ratio": 0.8178181175853682
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 0.35,
+        "cells": 24,
+        "master_median_us": 91.675834,
+        "head_median_us": 81.4847715,
+        "ratio": 0.8888358899467443
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 0.35,
+        "cells": 96,
+        "master_median_us": 370.9439195,
+        "head_median_us": 324.6038345,
+        "ratio": 0.8750752268362766
+      },
+      {
+        "terrain": "original",
+        "gas_fraction": 0.35,
+        "cells": 192,
+        "master_median_us": 792.596352,
+        "head_median_us": 794.4580094999999,
+        "ratio": 1.0023488090694617
+      }
+    ],
+    "claim": "descriptive shared-runner RHS-only observation; no throughput qualification"
+  },
+  "junit_reports": [
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeEnergyTransportTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.009"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPressureInterpolationTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.018"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTotalEnergyContractTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.006"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquationsTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.03"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReportTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.03"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.562"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.HydrostaticPressureReconstructionTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.186"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.088"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "tests": "13",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "2.962"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "177.737"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "4.729"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.164"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidThermalFaceFluxTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.005"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidVariableAreaPressureRegressionTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.018"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.MultiphaseHydrostaticForceQualificationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.396"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidDynamicConservationTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.02"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidIndependentPhaseFluxTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.008"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.023"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.026"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidClosedBoundaryMomentumTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "2.919"
+    }
+  ],
+  "selected_method_total": 122
+}

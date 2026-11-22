@@ -422,7 +422,7 @@ public class AmineSystem implements java.io.Serializable {
    * substantially off. Prefer {@link #getCO2PartialPressure()} for design work.
    * </p>
    *
-   * @return CO2 partial pressure in bara, or {@link Double#NaN} if the flash fails
+   * @return CO2 partial pressure in bara, or {@link Double#NaN} if the flash or CO2 property read fails
    */
   public double getCO2PartialPressureRigorous() {
     if (!initialized || system == null) {
@@ -438,7 +438,8 @@ public class AmineSystem implements java.io.Serializable {
     try {
       return system.getPhase(0).getComponent("CO2").getx() * system.getPressure();
     } catch (Exception e) {
-      return 0.0;
+      logger.error("Rigorous CO2 partial-pressure read failed", e);
+      return Double.NaN;
     }
   }
 

@@ -318,8 +318,8 @@ golden fixture and a Proteus connection fixture. Documentation completeness and 
 
 ```bash
 ./mvnw -Dtest=EngineeringCompilerFoundationTest test
-python -m unittest devtools.test_render_engineering_pid devtools.test_engineering_documentation -v
-python devtools/verify_notebooks.py examples/notebooks/dexpi_pid_visualization.ipynb
+uv run --project devtools --locked --group test python -m unittest devtools.test_render_engineering_pid devtools.test_engineering_documentation -v
+uv run --project devtools --locked devtools/verify_notebooks.py examples/notebooks/dexpi_pid_visualization.ipynb
 ```
 
 For package release, also run the repository pre-commit hooks and the complete Maven test/Javadoc matrix.

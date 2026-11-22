@@ -207,7 +207,7 @@ public class NewtonRhapson implements java.io.Serializable {
     NewtonRhapson test = new NewtonRhapson();
     test.setOrder(3);
 
-    double[] constants = new double[] { -0.003058, -0.01806, -0.266, -0.2999 };
+    double[] constants = new double[] {-0.003058, -0.01806, -0.266, -0.2999};
     test.setConstants(constants);
 
     System.out.println("val : " + test.funkValue(-0.0));

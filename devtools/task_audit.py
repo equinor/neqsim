@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-task_audit.py - Quality dashboard for task_solve/ folders.
+task_audit.py - Quality dashboard for solved task folders.
 
-Scans all task folders and reports:
+Scans every configured task root (see task_roots.py: --task-root,
+NEQSIM_TASK_ROOT, the saved `neqsim --set-task-root` value, then
+<repo>/task_solve) and reports:
   - Tasks missing results.json
   - Tasks with empty/template-only notes.md
   - Tasks without executed notebooks (no cell outputs)
@@ -13,6 +15,7 @@ Usage:
     python devtools/task_audit.py
     python devtools/task_audit.py --verbose
     python devtools/task_audit.py --json  # machine-readable output
+    python devtools/task_audit.py --task-root "D:/tasks"
 """
 import os
 import sys
@@ -22,8 +25,16 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from task_roots import (  # noqa: E402
+    add_task_root_argument,
+    describe,
+    duplicate_task_folders,
+    resolve_task_roots,
+)
+from task_roots import find_task_folders as find_task_folders_in_roots  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TASK_SOLVE_DIR = REPO_ROOT / "task_solve"
 TASK_LOG_FILE = REPO_ROOT / "docs" / "development" / "TASK_LOG.md"
 
 # Folders to skip
@@ -31,14 +42,8 @@ SKIP_FOLDERS = {"TASK_TEMPLATE"}
 
 
 def find_task_folders():
-    """Find all task folders (exclude TASK_TEMPLATE)."""
-    folders = []
-    if not TASK_SOLVE_DIR.exists():
-        return folders
-    for entry in sorted(TASK_SOLVE_DIR.iterdir()):
-        if entry.is_dir() and entry.name not in SKIP_FOLDERS:
-            folders.append(entry)
-    return folders
+    """Find all task folders across every configured task root."""
+    return find_task_folders_in_roots(resolve_task_roots())
 
 
 def check_results_json(task_dir):
@@ -271,24 +276,34 @@ def print_report(audits, verbose=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Quality audit for task_solve/ folders")
+    parser = argparse.ArgumentParser(description="Quality audit for solved task folders")
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Show detailed per-task results")
     parser.add_argument("--json", action="store_true",
                         help="Output machine-readable JSON")
+    add_task_root_argument(parser)
     args = parser.parse_args()
 
-    folders = find_task_folders()
+    roots = resolve_task_roots(args.task_root)
+    folders = find_task_folders_in_roots(roots)
     if not folders:
-        print("No task folders found in {}".format(TASK_SOLVE_DIR))
+        print("No task folders found in {}".format(describe(roots)))
         sys.exit(1)
 
     audits = [audit_task(f) for f in folders]
+    duplicates = duplicate_task_folders(roots)
 
     if args.json:
-        print(json.dumps(audits, indent=2))
+        print(json.dumps({"roots": [str(r) for r in roots],
+                          "duplicates": {name: [str(p) for p in paths]
+                                         for name, paths in duplicates.items()},
+                          "tasks": audits}, indent=2))
     else:
+        print("Task roots: {}".format(describe(roots)))
         print_report(audits, verbose=args.verbose)
+        if duplicates:
+            print("\n>>> {} task folder(s) exist in more than one root and will "
+                  "diverge. Consolidate to a single root.".format(len(duplicates)))
 
 
 if __name__ == "__main__":

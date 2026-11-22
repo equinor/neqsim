@@ -1,0 +1,30 @@
+[
+  {
+    "dt_s": 1.0E-4,
+    "contactTime_s": 0.016067781044150353,
+    "inelasticImpactEnergy_J": 0.024357790695414393,
+    "totalVolume_m3": -3.0573952958277876E-6,
+    "normalizedCombinedError": 0.020823287582875608
+  },
+  {
+    "dt_s": 5.0E-5,
+    "contactTime_s": 0.016064480334088835,
+    "inelasticImpactEnergy_J": 0.024611594564582548,
+    "totalVolume_m3": -3.0539332380205268E-6,
+    "normalizedCombinedError": 0.010554096379380646
+  },
+  {
+    "dt_s": 2.5E-5,
+    "contactTime_s": 0.01606294746405089,
+    "inelasticImpactEnergy_J": 0.024741202463650195,
+    "totalVolume_m3": -3.0521531769229527E-6,
+    "normalizedCombinedError": 0.00530974854785172
+  },
+  {
+    "dt_s": 1.25E-5,
+    "contactTime_s": 0.01606220857645473,
+    "inelasticImpactEnergy_J": 0.024806470779256174,
+    "totalVolume_m3": -3.051258325212776E-6,
+    "normalizedCombinedError": 0.0026688781650200935
+  }
+]

@@ -43,19 +43,19 @@ public final class SulfurThermodynamics {
   private static final double MAX_VAPOUR_PRESSURE_TEMPERATURE_K = 1308.15;
 
   /** Sulfur vapour-pressure anchor temperatures [K]. */
-  private static final double[] VAPOUR_PRESSURE_TEMPERATURE_K = { 312.15, 331.95, 354.25, 380.05, 414.15, 459.15,
-      518.05, 601.15, 717.76, 768.15, 847.15, 917.15, 994.15, 1073.15, 1106.15, 1209.15, 1308.15 };
+  private static final double[] VAPOUR_PRESSURE_TEMPERATURE_K = {312.15, 331.95, 354.25, 380.05, 414.15, 459.15, 518.05,
+      601.15, 717.76, 768.15, 847.15, 917.15, 994.15, 1073.15, 1106.15, 1209.15, 1308.15};
 
   /** Sulfur vapour-pressure anchors [bar]. */
-  private static final double[] VAPOUR_PRESSURE_BAR = { 1.33322e-8, 1.33322e-7, 1.33322e-6, 1.33322e-5, 1.33322e-4,
+  private static final double[] VAPOUR_PRESSURE_BAR = {1.33322e-8, 1.33322e-7, 1.33322e-6, 1.33322e-5, 1.33322e-4,
       1.33322e-3, 1.33322e-2, 1.33322e-1, 1.01325, 2.02650, 5.06625, 10.1325, 20.2650, 40.5300, 50.6625, 101.325,
-      202.650 };
+      202.650};
 
   /** NIST-JANAF reference data for S2-S8. */
-  private static final SpeciesData[] SPECIES = { new SpeciesData(2, 128600.0, 228.165, 32.1),
+  private static final SpeciesData[] SPECIES = {new SpeciesData(2, 128600.0, 228.165, 32.1),
       new SpeciesData(3, 141500.0, 269.5, 57.8), new SpeciesData(4, 145800.0, 310.6, 70.0),
       new SpeciesData(5, 109400.0, 308.6, 89.5), new SpeciesData(6, 101900.0, 354.1, 111.6),
-      new SpeciesData(7, 113700.0, 407.7, 133.5), new SpeciesData(8, 100420.0, 430.31, 155.0) };
+      new SpeciesData(7, 113700.0, 407.7, 133.5), new SpeciesData(8, 100420.0, 430.31, 155.0)};
 
   /** Utility class; do not instantiate. */
   private SulfurThermodynamics() {

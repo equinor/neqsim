@@ -158,13 +158,21 @@ public class AgentBenchmarkSuite implements Serializable {
         double actual = submittedResults.get(id);
         double expected = problem.getExpectedValue();
         double tolerance = problem.getTolerancePct();
-        double deviationPct = expected != 0.0 ? Math.abs((actual - expected) / expected) * 100.0
-            : (actual == 0.0 ? 0.0 : 100.0);
+        // A zero expected value (closure errors, residuals) has no relative scale, so the
+        // tolerance is read as an absolute bound in the problem's own unit. Without this a
+        // conservation check can never pass, however small the residual.
+        double deviationPct;
+        if (expected != 0.0) {
+          deviationPct = Math.abs((actual - expected) / expected) * 100.0;
+        } else {
+          deviationPct = Math.abs(actual);
+        }
 
         boolean pass = deviationPct <= tolerance;
         String verdict = pass ? "PASS" : "FAIL";
-        String detail = String.format("Expected=%.6g, Actual=%.6g, Deviation=%.2f%%, Tol=%.1f%%", expected, actual,
-            deviationPct, tolerance);
+        String detail = expected != 0.0 ? String.format("Expected=%.6g, Actual=%.6g, Deviation=%.2f%%, Tol=%.1f%%",
+            expected, actual, deviationPct, tolerance)
+            : String.format("Expected=0 +/- %.3g %s, Actual=%.6g", tolerance, problem.getUnit(), actual);
 
         results.add(new ProblemResult(problem, actual, pass, verdict, detail));
         if (pass) {
@@ -218,37 +226,47 @@ public class AgentBenchmarkSuite implements Serializable {
     AgentBenchmarkSuite suite = new AgentBenchmarkSuite("NeqSim Standard Benchmark v1.0");
 
     // THERMO category — pure component properties
+    // Reference values regenerated with devtools/source_benchmark_references.py (CoolProp HEOS),
+    // which outranks the SRK cubic under test. Tolerances state what SRK can be held to at each
+    // state, not the reference uncertainty.
     suite.addProblem(new BenchmarkProblem("methane_density_300K_50bar", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Methane density at 300 K and 50 bar (SRK EOS)", "kg/m3", 33.5, 2.0, "NIST Chemistry WebBook"));
+        "Methane density at 300 K and 50 bar (SRK EOS)", "kg/m3", 34.972, 2.0,
+        "CoolProp HEOS (Setzmann & Wagner 1991) via devtools/source_benchmark_references.py"));
 
     suite.addProblem(new BenchmarkProblem("water_boiling_1atm", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Water normal boiling point at 1.01325 bar", "K", 373.15, 0.5, "NIST Chemistry WebBook"));
+        "Water normal boiling point at 1.01325 bar", "K", 373.12, 1.0,
+        "CoolProp HEOS (IAPWS-95); 1% band covers SRK without an association term"));
 
     suite.addProblem(new BenchmarkProblem("co2_density_310K_100bar", ProblemCategory.THERMO, Difficulty.BASIC,
-        "CO2 density at 310 K and 100 bar (SRK EOS)", "kg/m3", 628.6, 5.0, "NIST Chemistry WebBook"));
+        "CO2 density at 310 K and 100 bar - near-critical dense phase (SRK EOS)", "kg/m3", 685.77, 20.0,
+        "CoolProp HEOS (Span & Wagner 1996); 20% band is a gross-regression guard, not a target - "
+            + "SRK without volume translation underpredicts this density by about 14%"));
 
     // FLASH category — phase equilibrium
     suite.addProblem(new BenchmarkProblem("methane_ethane_flash_phase_count", ProblemCategory.FLASH, Difficulty.BASIC,
-        "Number of phases for 90/10 methane/ethane at 200 K, 30 bar", "phases", 1.0, 0.1,
-        "Expected single vapor phase"));
+        "Number of phases for 90/10 methane/ethane at 300 K, 30 bar", "phases", 1.0, 0.1,
+        "Single supercritical vapour phase - both components above their critical temperature"));
 
     suite.addProblem(new BenchmarkProblem("natural_gas_dewpoint", ProblemCategory.FLASH, Difficulty.INTERMEDIATE,
-        "Cricondentherm for 85/10/5 methane/ethane/propane mixture (SRK)", "K", 270.0, 3.0,
-        "SRK EOS phase envelope calculation"));
+        "Cricondentherm for 85/10/5 methane/ethane/propane mixture (SRK)", "K", 244.92, 3.0,
+        "CoolProp HEOS multi-fluid phase envelope via devtools/source_benchmark_references.py"));
 
     // PROCESS category — equipment simulation
     suite.addProblem(new BenchmarkProblem("separator_mass_balance", ProblemCategory.PROCESS, Difficulty.BASIC,
         "Mass balance closure for two-phase separator (feed = gas_out + liquid_out)", "%", 0.0, 0.1,
         "Conservation of mass"));
 
-    suite.addProblem(new BenchmarkProblem("compressor_polytropic_power", ProblemCategory.PROCESS,
-        Difficulty.INTERMEDIATE, "Polytropic compressor power for methane from 30 to 100 bar at 100 kg/hr", "kW", 22.0,
-        10.0, "Textbook polytropic compression"));
+    suite.addProblem(
+        new BenchmarkProblem("compressor_polytropic_power", ProblemCategory.PROCESS, Difficulty.INTERMEDIATE,
+            "Shaft power compressing methane from 30 to 100 bara at 100 kg/hr, 300 K inlet, "
+                + "isentropic efficiency 0.75",
+            "kW", 7.675, 5.0,
+            "CoolProp HEOS isentropic enthalpy rise / 0.75 via devtools/source_benchmark_references.py"));
 
     // PIPELINE category — pipe flow
     suite.addProblem(new BenchmarkProblem("gas_pipeline_pressure_drop", ProblemCategory.PIPELINE,
         Difficulty.INTERMEDIATE, "Pressure drop for 50 km, 20-inch gas pipeline at 100 bar inlet (Beggs-Brill)", "bar",
-        8.0, 15.0, "Beggs and Brill correlation"));
+        8.0, 15.0, "UNVERIFIED - no flow rate or composition declared"));
 
     // ECONOMICS category
     suite.addProblem(new BenchmarkProblem("simple_npv_10yr", ProblemCategory.ECONOMICS, Difficulty.BASIC,
@@ -258,7 +276,7 @@ public class AgentBenchmarkSuite implements Serializable {
     // SAFETY category
     suite.addProblem(new BenchmarkProblem("vessel_blowdown_50pct_time", ProblemCategory.SAFETY, Difficulty.INTERMEDIATE,
         "Time to reach 50% of initial pressure during vessel blowdown (100 bar, methane)", "seconds", 30.0, 25.0,
-        "Approximate depressurization model"));
+        "UNVERIFIED - no vessel volume or orifice size declared"));
 
     return suite;
   }

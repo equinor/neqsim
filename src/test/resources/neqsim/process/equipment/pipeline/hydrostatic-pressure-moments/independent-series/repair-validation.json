@@ -1,0 +1,99 @@
+{
+  "base": "ab66ca997b22cf965ee7d6d9f63a8fc7b8559d92",
+  "original_auditor_blob": "5febc6826c266e6ef9fc431cabc8017ba5b26269",
+  "baseline": {
+    "truncated_exit_code": 0,
+    "truncated_rows": 1,
+    "optimized_corrupt_exit_code": 0,
+    "optimized_rows": 222,
+    "optimized_error_D3": "1000000000.0000000411980163896359251084127063984686444790716859535247996787560433"
+  },
+  "guard_regressions": {
+    "methods": 2,
+    "corrupted_matrices": 88,
+    "end_to_end_mutations": 3,
+    "normal_exit": 0,
+    "optimized_exit": 0
+  },
+  "valid_audit": {
+    "rows": 222,
+    "normal_exit": 0,
+    "optimized_exit": 0,
+    "unchanged_byte_for_byte": [
+      "inputs.csv",
+      "native.csv",
+      "audit.csv",
+      "summary.json"
+    ]
+  },
+  "local_versions": "Python 3.12.14 / OpenJDK 17.0.20; embedded probe compiles --release8; no Java8 JVM execution claim",
+  "gates": [
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "coverage": "Source-regenerated inventory exactly matches master blob470bcd4ff9e40259c1c8c1fca8f032ee010839d0; not changed in this repair",
+  "reader_timing": {
+    "calls": 100,
+    "seconds": 0.12496335700052441,
+    "context": "One shared-runner sample; file parsing+input/phase validation only, not a production simulation benchmark"
+  },
+  "CI": "Both existing Python3.11/3.13 jobs invoke normal and optimized guard suites with JDK17; hosted results pending",
+  "documentation_impact": "Existing public protocol and CI routes updated; no physics/API/default change"
+}

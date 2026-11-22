@@ -9,17 +9,20 @@ import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example showing flow regime detection for various multiphase models.
  */
 public class FlowRegimeDetectionExample {
+  private static final Logger logger = LogManager.getLogger(FlowRegimeDetectionExample.class);
 
   public static void main(String[] args) {
-    System.out.println("================================================================");
-    System.out.println("  Flow Regime Detection Comparison");
-    System.out.println("  1 km horizontal pipeline, 300 mm diameter");
-    System.out.println("================================================================\n");
+    logger.info("================================================================");
+    logger.info("  Flow Regime Detection Comparison");
+    logger.info("  1 km horizontal pipeline, 300 mm diameter");
+    logger.info("================================================================\n");
 
     double length = 1000.0;
     double diameter = 0.3;
@@ -28,31 +31,31 @@ public class FlowRegimeDetectionExample {
     double temperature = 40.0;
 
     // Test pure gas
-    System.out.println("============================================================");
-    System.out.println("  PURE GAS (Single Phase)");
-    System.out.println("============================================================");
+    logger.info("============================================================");
+    logger.info("  PURE GAS (Single Phase)");
+    logger.info("============================================================");
     testFlowRegimes(createPureGasFluid(temperature, pressure), 20.0, length, diameter, roughness, temperature,
         pressure);
 
     // Test two-phase at different flow rates
-    System.out.println("\n============================================================");
-    System.out.println("  TWO-PHASE (Gas + Oil) at Various Flow Rates");
-    System.out.println("============================================================");
+    logger.info("\n============================================================");
+    logger.info("  TWO-PHASE (Gas + Oil) at Various Flow Rates");
+    logger.info("============================================================");
     double[] flowRates = { 1.0, 5.0, 20.0, 60.0, 100.0 };
     for (double flowRate : flowRates) {
-      System.out.printf("%nFlow Rate: %.0f kg/s%n", flowRate);
-      System.out.println("----------------------------");
+      logger.info("{}", String.format("%nFlow Rate: %.0f kg/s", flowRate));
+      logger.info("----------------------------");
       testFlowRegimes(createTwoPhaseFluid(temperature, pressure), flowRate, length, diameter, roughness, temperature,
           pressure);
     }
 
     // Test three-phase
-    System.out.println("\n============================================================");
-    System.out.println("  THREE-PHASE (Gas + Oil + Water) at Various Flow Rates");
-    System.out.println("============================================================");
+    logger.info("\n============================================================");
+    logger.info("  THREE-PHASE (Gas + Oil + Water) at Various Flow Rates");
+    logger.info("============================================================");
     for (double flowRate : flowRates) {
-      System.out.printf("%nFlow Rate: %.0f kg/s%n", flowRate);
-      System.out.println("----------------------------");
+      logger.info("{}", String.format("%nFlow Rate: %.0f kg/s", flowRate));
+      logger.info("----------------------------");
       testFlowRegimes(createThreePhaseFluid(temperature, pressure), flowRate, length, diameter, roughness, temperature,
           pressure);
     }
@@ -76,9 +79,9 @@ public class FlowRegimeDetectionExample {
       pipe.setNumberOfIncrements(20);
       pipe.run();
 
-      System.out.printf("  Beggs-Brill:  %s%n", pipe.getFlowRegime());
+      logger.info("{}", String.format("  Beggs-Brill:  %s", pipe.getFlowRegime()));
     } catch (Exception e) {
-      System.out.printf("  Beggs-Brill:  Error - %s%n", e.getMessage());
+      logger.error("Beggs-Brill calculation failed: {}", e.getMessage(), e);
     }
 
     // Drift-Flux (TransientPipe)
@@ -105,10 +108,10 @@ public class FlowRegimeDetectionExample {
           String regime = section.getFlowRegime().toString();
           regimeCounts.merge(regime, 1, Integer::sum);
         }
-        System.out.printf("  Drift-Flux:   %s%n", formatRegimeCounts(regimeCounts));
+        logger.info("{}", String.format("  Drift-Flux:   %s", formatRegimeCounts(regimeCounts)));
       }
     } catch (Exception e) {
-      System.out.printf("  Drift-Flux:   Error - %s%n", e.getMessage());
+      logger.error("Drift-Flux calculation failed: {}", e.getMessage(), e);
     }
 
     // Two-Fluid (TwoFluidPipe)
@@ -133,10 +136,10 @@ public class FlowRegimeDetectionExample {
         for (PipeSection.FlowRegime regime : regimes) {
           regimeCounts.merge(regime.toString(), 1, Integer::sum);
         }
-        System.out.printf("  Two-Fluid:    %s%n", formatRegimeCounts(regimeCounts));
+        logger.info("{}", String.format("  Two-Fluid:    %s", formatRegimeCounts(regimeCounts)));
       }
     } catch (Exception e) {
-      System.out.printf("  Two-Fluid:    Error - %s%n", e.getMessage());
+      logger.error("Two-Fluid calculation failed: {}", e.getMessage(), e);
     }
   }
 

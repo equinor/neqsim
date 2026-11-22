@@ -6,14 +6,18 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -28,6 +32,41 @@ public abstract class Flash extends BaseOperation {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Flash.class);
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
+
+  /**
+   * Euclidean norm for a stability trial, preserving the legacy non-finite recovery semantics.
+   *
+   * <p>
+   * Stability analysis inspects the residual before a solve has validated it. Trace-component trial states can produce
+   * a NaN residual; returning NaN keeps the convergence and worsening comparisons false so successive substitution can
+   * recover on the next iteration instead of aborting the flash through strict linear-algebra input validation.
+   * </p>
+   *
+   * @param vector residual vector to measure
+   * @return the overflow-safe Euclidean norm, or NaN when any entry is NaN
+   */
+  static double stabilityResidualNorm(double[] vector) {
+    double norm = 0.0;
+    for (double value : vector) {
+      norm = Math.hypot(norm, value);
+    }
+    return norm;
+  }
+
+  /**
+   * Sum of absolute values, summed in index order like Jama's column-matrix norm1.
+   *
+   * @param vector values to sum
+   * @return the 1-norm of the vector, NaN if any entry is NaN
+   */
+  private static double oneNorm(double[] vector) {
+    double sum = 0.0;
+    for (double value : vector) {
+      sum += Math.abs(value);
+    }
+    return sum;
+  }
 
   SystemInterface system;
   SystemInterface minimumGibbsEnergySystem;
@@ -73,6 +112,33 @@ public abstract class Flash extends BaseOperation {
       return Double.MAX_VALUE;
     }
     return Math.exp(value);
+  }
+
+  /**
+   * Normalizes non-negative stability weights without overflowing their sum.
+   *
+   * @param phase trial phase receiving the normalized composition
+   * @param weights finite trial weights in component order
+   * @throws IllegalStateException if the trial has invalid weights or no positive weight
+   */
+  static void normalizeStabilityTrial(neqsim.thermo.phase.PhaseInterface phase, double[] weights) {
+    double largestWeight = 0.0;
+    for (double weight : weights) {
+      if (!Double.isFinite(weight) || weight < 0.0) {
+        throw new IllegalStateException("Invalid stability trial weight");
+      }
+      largestWeight = Math.max(largestWeight, weight);
+    }
+    if (!(largestWeight > 0.0)) {
+      throw new IllegalStateException("Stability trial has no positive weight");
+    }
+    double scaledSum = 0.0;
+    for (double weight : weights) {
+      scaledSum += weight / largestWeight;
+    }
+    for (int component = 0; component < weights.length; component++) {
+      phase.getComponent(component).setx((weights[component] / largestWeight) / scaledSum);
+    }
   }
 
   /**
@@ -153,7 +219,22 @@ public abstract class Flash extends BaseOperation {
 
   int lowestGibbsEnergyPhase = 0;
   SysNewtonRhapsonTPflash secondOrderSolver;
-  /** Set true to do solid phase check and calculations */
+
+  /**
+   * Discards the cached second-order TP solver, so that the next run of this operation seeds its Newton stage from the
+   * system's current phase split rather than from the split of its previous run.
+   *
+   * <p>
+   * Within one run the cached solver carries the accepted Newton step from call to call. Across runs its unknowns
+   * describe the previous flash, at another pressure, temperature or phase pair. An outer flash that re-runs one inner
+   * TP operation at many states, and needs each inner result to be independent of the previous one, calls this first.
+   * </p>
+   */
+  void discardSecondOrderSolver() {
+    secondOrderSolver = null;
+  }
+
+  /** Set true to do solid phase check and calculations. */
   protected boolean solidCheck = false;
   protected boolean stabilityCheck = false;
   protected boolean findLowestGibbsPhaseIsChecked = false;
@@ -165,7 +246,8 @@ public abstract class Flash extends BaseOperation {
    */
   public int findLowestGibbsEnergyPhase() {
     if (!findLowestGibbsPhaseIsChecked) {
-      minimumGibbsEnergySystem = system.clone();
+      // Trial system for the tangent-plane analysis: only its thermodynamic state is used.
+      minimumGibbsEnergySystem = system.cloneThermoOnly();
       minimumGibbsEnergySystem.init(0);
       if (minimumGibbsEnergySystem.getTotalNumberOfMoles() < 1e-20) {
         minimumGibbsEnergySystem.setTotalNumberOfMoles(1.0);
@@ -184,19 +266,80 @@ public abstract class Flash extends BaseOperation {
   }
 
   /**
+   * Checks for a low-pressure hydrocarbon feed where a trace heavy tail can be hidden by a methane-rich homogeneous
+   * reference.
+   *
+   * <p>
+   * This gate is deliberately narrow. It requires at least four active hydrocarbon or inert components, a methane-rich
+   * feed, at least one mole percent of components whose critical temperature is well above the system temperature, and
+   * a broad critical-temperature span. The supplementary tangent-plane trials still have to establish a negative
+   * tangent-plane distance before a split is accepted.
+   * </p>
+   *
+   * @return true when the feed qualifies for the low-pressure high-volatility stability retry
+   */
+  private boolean isLowPressureHighVolatilityHydrocarbonFeed() {
+    double pressureBar = system.getPressure();
+    if (!(pressureBar > 0.0 && pressureBar < 50.0) || system.doMultiPhaseCheck() || solidCheck
+        || system.doSolidPhaseCheck() || system.getHydrateCheck() || system.isMultiphaseWaxCheck()
+        || system.isForcePhaseTypes() || !system.allowPhaseShift()
+        || !system.isImplementedCompositionDeriativesofFugacity() || !(system.getPhase(0) instanceof PhaseEosInterface)
+        || !(Math.abs(pressureBar - system.getPhase(1).getPressure()) < 1.0e-5)) {
+      return false;
+    }
+
+    int activeComponents = 0;
+    double methaneFraction = 0.0;
+    double condensableFraction = 0.0;
+    double minimumCriticalTemperature = Double.POSITIVE_INFINITY;
+    double maximumCriticalTemperature = Double.NEGATIVE_INFINITY;
+    double temperatureK = system.getTemperature();
+
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (feedFraction <= 1.0e-8) {
+        continue;
+      }
+      if ((!component.isHydrocarbon() && !component.isInert()) || component.getIonicCharge() != 0
+          || component.isIsIon()) {
+        return false;
+      }
+
+      activeComponents++;
+      if ("methane".equalsIgnoreCase(component.getComponentName())) {
+        methaneFraction += feedFraction;
+      }
+      double criticalTemperature = component.getTC();
+      if (Double.isFinite(criticalTemperature) && criticalTemperature > 0.0) {
+        minimumCriticalTemperature = Math.min(minimumCriticalTemperature, criticalTemperature);
+        maximumCriticalTemperature = Math.max(maximumCriticalTemperature, criticalTemperature);
+        if (criticalTemperature > temperatureK + 80.0) {
+          condensableFraction += feedFraction;
+        }
+      }
+    }
+
+    return activeComponents >= 4 && methaneFraction >= 0.5 && condensableFraction >= 1.0e-2
+        && maximumCriticalTemperature - minimumCriticalTemperature >= 300.0;
+  }
+
+  /**
    * Retry stability analysis with amplified Wilson K-values using an independent system clone. Called when the standard
    * stability analysis declares the system stable, to catch near-critical instability (e.g. near the cricondenbar where
    * Wilson K values approach 1 and standard trials converge to trivial solutions).
    *
    * <p>
-   * Runs at moderate-to-high pressure, or below 50 bar for feeds containing more than one mole percent hydrogen, and
-   * only proceeds when the Wilson K-value sums or tangent-plane result indicate an ambiguous phase boundary. The
-   * existing K-value-spread and non-physical-state rollback gates avoid false positives in clearly single-phase
-   * systems.
+   * Runs at moderate-to-high pressure, or below 50 bar for feeds containing more than one mole percent hydrogen or a
+   * narrowly qualified methane-rich hydrocarbon feed with a condensable heavy tail. It only proceeds when the Wilson
+   * K-value sums, tangent-plane result, or strongly separated low-pressure Wilson trial indicate a missed phase
+   * boundary. The existing tangent-plane acceptance and non-physical-state rollback gates avoid false positives in
+   * clearly single-phase systems.
    *
+   * @param lowPressureHighVolatilityFeed whether the feed qualifies for the low-pressure hydrocarbon search
    * @return true if instability was found (K-values on system are updated)
    */
-  private boolean amplifiedKStabilityRetry() {
+  private boolean amplifiedKStabilityRetry(boolean lowPressureHighVolatilityFeed) {
     int numComp = system.getPhase(0).getNumberOfComponents();
     double tempK = system.getTemperature();
     double presBar = system.getPressure();
@@ -226,10 +369,11 @@ public abstract class Flash extends BaseOperation {
     }
 
     // Most supplementary retries target moderate-to-high-pressure near-critical VLE. Hydrogen
-    // binaries can have equally difficult, highly asymmetric boundaries below 50 bar, so retain
-    // the later Wilson-sum and TPD screens for hydrogen-bearing feeds instead of rejecting them
-    // only on pressure.
-    if (system.getPressure() < 50.0 && !hydrogenRichFeed) {
+    // binaries and narrowly qualified methane-rich feeds with a condensable heavy tail can have
+    // equally difficult, highly asymmetric boundaries below 50 bar, so retain the later
+    // tangent-plane screens instead of rejecting them only on pressure.
+    boolean needsLowPressureHydrocarbonRetry = presBar < 50.0 && !hydrogenRichFeed;
+    if (needsLowPressureHydrocarbonRetry && !lowPressureHighVolatilityFeed) {
       return false;
     }
 
@@ -264,7 +408,8 @@ public abstract class Flash extends BaseOperation {
     // result is genuinely uncertain. Wilson K is only an approximation — the actual
     // EOS K-values can differ significantly for asymmetric systems.
     boolean tmNearZero = (Math.abs(tm[0]) < 0.1 || Math.abs(tm[1]) < 0.1);
-    if (!trivialSolution && !nearBubblePoint && !nearDewPoint && !tmNearZero) {
+    if (needsLowPressureHydrocarbonRetry ? !(sumwVapor > 2.4 && sumwLiquid > 2.4)
+        : !trivialSolution && !nearBubblePoint && !nearDewPoint && !tmNearZero) {
       return false;
     }
     // Skip retry for near-pure component systems: for a single component,
@@ -303,7 +448,7 @@ public abstract class Flash extends BaseOperation {
     // When Wilson K ≈ 1 for all components (near-critical), simple amplification
     // of ln(K) ≈ 0 produces trivial initial guesses. In this case, use
     // heavy/light component weighting to generate non-trivial trial compositions.
-    boolean useCompositionPerturbation = wilsonKNearUnity || trivialSolution;
+    boolean useCompositionPerturbation = wilsonKNearUnity || trivialSolution || needsLowPressureHydrocarbonRetry;
 
     // Number of trials: 2 standard (amplified K vapor/liquid) + 2 perturbation
     // (heavy-enriched / light-enriched) when near-critical or trivial solution
@@ -421,7 +566,7 @@ public abstract class Flash extends BaseOperation {
       int maxiter = 100;
       int accelInterval = 5;
       double err;
-      Matrix f = new Matrix(numComp, 1);
+      double[] f = new double[numComp];
       double fNorm = 1e10;
       double fNormOld;
       boolean converged = false;
@@ -437,10 +582,10 @@ public abstract class Flash extends BaseOperation {
         }
         fNormOld = fNorm;
         for (int i = 0; i < numComp; i++) {
-          f.set(i, 0, Math.sqrt(Wi[i])
-              * (Math.log(Wi[i]) + testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient() - d[i]));
+          f[i] = Math.sqrt(Wi[i])
+              * (Math.log(Wi[i]) + testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient() - d[i]);
         }
-        fNorm = f.norm2();
+        fNorm = stabilityResidualNorm(f);
         if (fNorm > fNormOld && iter > 3) {
           if (iter > 10) {
             break;
@@ -492,7 +637,7 @@ public abstract class Flash extends BaseOperation {
           testSystem.getPhase(1).getComponent(i).setx(Wi[i] / sumwTrial);
         }
 
-        if (f.norm1() < 1e-6 && err < 1e-6) {
+        if (oneNorm(f) < 1e-6 && err < 1e-6) {
           converged = true;
           break;
         }
@@ -540,6 +685,12 @@ public abstract class Flash extends BaseOperation {
         }
         double cos = dot / (Math.sqrt(nW) * Math.sqrt(nF) + 1e-100);
         if (cos < 0.9999) {
+          if (needsLowPressureHydrocarbonRetry) {
+            if (seedLowPressureHydrocarbonSplit(testSystem.getPhase(1).getMolarComposition())) {
+              return true;
+            }
+            continue;
+          }
           // Found genuine instability — set K-values on the system
           for (int i = 0; i < numComp; i++) {
             double xTrial = testSystem.getPhase(1).getComponent(i).getx();
@@ -555,6 +706,77 @@ public abstract class Flash extends BaseOperation {
       }
     }
     return false;
+  }
+
+  /**
+   * Converts an unstable liquid trial into a feasible, converged seed for the ordinary TP iteration.
+   *
+   * <p>
+   * Using the normalized trial directly as {@code K = z / xTrial} fixes the Rachford–Rice root at beta = 1. The
+   * unnormalized tangent-plane weights can instead put every K below unity. Withdraw a quarter of the maximum feasible
+   * amount of the liquid trial from the feed and relax that interior split using a fresh Gibbs-energy Newton solver.
+   * Allow a decrease in the fugacity residual to guide Newton steps once Gibbs-energy changes are at floating-point
+   * resolution. Only transfer K-values from a distinct, balanced, lower-Gibbs equilibrium.
+   * </p>
+   *
+   * @param trialComposition normalized composition of the unstable liquid trial
+   * @return true if the converged candidate supplied K-values
+   */
+  private boolean seedLowPressureHydrocarbonSplit(double[] trialComposition) {
+    double[] feed = system.getzvector();
+    double maximumLiquidFraction = 1.0;
+    for (int component = 0; component < feed.length; component++) {
+      if (!(feed[component] > 2.0e-15) || !(trialComposition[component] > 0.0)) {
+        return false;
+      }
+      maximumLiquidFraction = Math.min(maximumLiquidFraction, feed[component] / trialComposition[component]);
+    }
+    double liquidFraction = 0.25 * maximumLiquidFraction;
+    double vaporFraction = 1.0 - liquidFraction;
+    if (liquidFraction <= phaseFractionMinimumLimit) {
+      return false;
+    }
+
+    try {
+      SystemInterface candidate = system.cloneThermoOnly();
+      candidate.init(0);
+      candidate.init(1);
+      double referenceGibbs = Math.min(candidate.getPhase(0).getGibbsEnergy(), candidate.getPhase(1).getGibbsEnergy());
+      candidate.setBeta(vaporFraction);
+      for (int component = 0; component < feed.length; component++) {
+        double liquidComposition = trialComposition[component];
+        candidate.getPhase(1).getComponent(component).setx(liquidComposition);
+        candidate.getPhase(0).getComponent(component)
+            .setx((feed[component] - liquidFraction * liquidComposition) / vaporFraction);
+      }
+      candidate.init(1);
+      SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(candidate, 2, feed.length);
+      for (int step = 0; step < 24; step++) {
+        double change = solver.solveWithResidualFallback();
+        if (!Double.isFinite(change)) {
+          return false;
+        }
+        if (change < 1.0e-12) {
+          break;
+        }
+      }
+      solver.initForSeedValidation();
+      double candidateGibbs = candidate.getGibbsEnergy();
+      if (!Double.isFinite(candidateGibbs) || !Double.isFinite(referenceGibbs)
+          || candidateGibbs >= referenceGibbs - Math.abs(referenceGibbs) * 1.0e-8
+          || !TPflash.isBalancedEquilibriumCandidate(candidate)) {
+        return false;
+      }
+      for (int component = 0; component < feed.length; component++) {
+        double k = candidate.getPhase(0).getComponent(component).getK();
+        system.getPhase(0).getComponent(component).setK(k);
+        system.getPhase(1).getComponent(component).setK(k);
+      }
+      return true;
+    } catch (Exception ex) {
+      logger.debug("Low-pressure hydrocarbon stability seed did not converge: {}", ex.getMessage());
+      return false;
+    }
   }
 
   /**
@@ -580,8 +802,8 @@ public abstract class Flash extends BaseOperation {
     double[] error = new double[2];
     tm = new double[2];
     double[] alpha = null;
-    Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
-    Matrix df = null;
+    double[] f = new double[system.getPhases()[0].getNumberOfComponents()];
+    double[][] df = null;
     // Reduced from 100 - Wilson K-value initialization converges faster
     int maxiterations = 50;
     // Acceleration interval reduced from 7 to 5 for faster convergence
@@ -663,10 +885,10 @@ public abstract class Flash extends BaseOperation {
           }
           fNormOld = fNorm;
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-            f.set(i, 0, Math.sqrt(Wi[j][i])
-                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
+            f[i] = Math.sqrt(Wi[j][i])
+                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]);
           }
-          fNorm = f.norm2();
+          fNorm = stabilityResidualNorm(f);
           if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % accelerateInterval != 0) {
             if (iterations > 10) {
               break;
@@ -710,8 +932,8 @@ public abstract class Flash extends BaseOperation {
         } else {
           if (!secondOrderStabilityAnalysis) {
             alpha = new double[system.getPhases()[0].getNumberOfComponents()];
-            df = new Matrix(system.getPhases()[0].getNumberOfComponents(),
-                system.getPhases()[0].getNumberOfComponents());
+            df = new double[system.getPhases()[0].getNumberOfComponents()][system.getPhases()[0]
+                .getNumberOfComponents()];
             secondOrderStabilityAnalysis = true;
           }
 
@@ -726,18 +948,18 @@ public abstract class Flash extends BaseOperation {
           }
 
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-            f.set(i, 0, Math.sqrt(Wi[j][i])
-                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
+            f[i] = Math.sqrt(Wi[j][i])
+                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]);
             for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
               double kronDelt = (i == k) ? 1.5 : 0.0;
-              df.set(i, k,
-                  kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));
+              df[i][k] = kronDelt
+                  + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k);
             }
           }
 
-          Matrix dx = df.solve(f).times(-1.0);
+          double[] dx = ALGEBRA.scale(ALGEBRA.solve(df, f), -1.0);
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-            Wi[j][i] = Math.pow((alpha[i] + dx.get(i, 0)) / 2.0, 2.0);
+            Wi[j][i] = Math.pow((alpha[i] + dx[i]) / 2.0, 2.0);
             logWi[i] = Math.log(Wi[j][i]);
             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
@@ -751,10 +973,10 @@ public abstract class Flash extends BaseOperation {
 
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
           deltalogWi[i] = logWi[i] - oldlogw[i];
-          clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
+        normalizeStabilityTrial(clonedSystem.getPhase(j), Wi[j]);
         olderror = error[j];
-      } while ((f.norm1() > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
+      } while ((oneNorm(f) > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
           || (iterations % accelerateInterval) == 0 || iterations < 3);
 
       if (iterations >= maxiterations) {
@@ -1149,6 +1371,10 @@ public abstract class Flash extends BaseOperation {
         recordTangentPlaneDistances();
       }
     }
+    if (tm[0] > tmLimit && tm[1] > tmLimit && shouldRetainIonicPhaseEstimate()) {
+      recordStabilityOutcome("deferred to ionic multiphase stability");
+      return false;
+    }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
         || system.getPhase(0).getNumberOfComponents() == 1) {
       // Standard analysis declares stable. Try supplementary stability trials.
@@ -1171,9 +1397,12 @@ public abstract class Flash extends BaseOperation {
       } catch (Exception ignored) {
         preTrialKvector = null;
       }
-      // Amplified K-value trials catch near-critical VLE instability (near cricondenbar)
-      if ((tm[0] < 0.5 || tm[1] < 0.5 || ambiguousStability) && !system.getModelName().contains("CPA")) {
-        retryFoundInstability = amplifiedKStabilityRetry();
+      // Amplified K-value trials catch near-critical VLE instability (near cricondenbar) and
+      // narrowly qualified low-pressure high-volatility hydrocarbon splits.
+      boolean lowPressureHighVolatilityFeed = isLowPressureHighVolatilityHydrocarbonFeed();
+      if ((tm[0] < 0.5 || tm[1] < 0.5 || ambiguousStability || lowPressureHighVolatilityFeed)
+          && !system.getModelName().contains("CPA")) {
+        retryFoundInstability = amplifiedKStabilityRetry(lowPressureHighVolatilityFeed);
       }
       // Pure-component trials catch LLE instability (Wilson K fails at T << Tc).
       // Skip when standard stability analysis gives a clear "stable" verdict
@@ -1266,6 +1495,35 @@ public abstract class Flash extends BaseOperation {
     }
 
     return stable;
+  }
+
+  /**
+   * Preserves an interior aqueous split for the ion-aware multiphase flash.
+   *
+   * <p>
+   * The ordinary tangent-plane trials have not established an instability of the homogeneous reference. For
+   * non-reactive electrolyte CPA, the supplementary pure-component trials can treat ions as independent species,
+   * replacing a useful two-phase estimate with K-values that do not respect aqueous ion confinement. Continue the
+   * two-phase iteration from the current estimate so that the multiphase solver can assess additional phases and
+   * restore the conserved ion inventory. The existing homogeneous and specialized flash paths retain their
+   * phase-selection logic.
+   * </p>
+   *
+   * @return true when the current estimate is an interior aqueous split with multiphase checking enabled
+   */
+  private boolean shouldRetainIonicPhaseEstimate() {
+    if (!(system instanceof SystemElectrolyteCPAstatoil) || !system.doMultiPhaseCheck() || system.isChemicalSystem()
+        || !system.hasIons() || system.isForcePhaseTypes() || !system.allowPhaseShift() || solidCheck
+        || system.doSolidPhaseCheck() || system.getHydrateCheck() || system.isMultiphaseWaxCheck()
+        || system.getNumberOfPhases() != 2) {
+      return false;
+    }
+    PhaseType first = system.getPhase(0).getType();
+    PhaseType second = system.getPhase(1).getType();
+    double beta = system.getBeta();
+    double minimumBeta = 1.1 * phaseFractionMinimumLimit;
+    return (first == PhaseType.AQUEOUS) != (second == PhaseType.AQUEOUS) && beta > minimumBeta
+        && beta < 1.0 - minimumBeta;
   }
 
   /** {@inheritDoc} */

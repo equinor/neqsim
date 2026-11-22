@@ -1,89 +1,75 @@
 package neqsim.process.safety;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.UUID;
+
+import java.io.StringWriter;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.JavaCompiler;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.equipment.valve.BlowdownValve;
-import neqsim.process.equipment.valve.ESDValve;
-import neqsim.process.equipment.valve.RuptureDisk;
-import neqsim.process.equipment.valve.SafetyValve;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.logic.LogicState;
-import neqsim.process.logic.action.ActivateBlowdownAction;
-import neqsim.process.logic.action.TripValveAction;
-import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.logic.hipps.HIPPSLogic;
 import neqsim.process.logic.sis.VotingLogic;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * Compiles and executes the exact complete Java program in the process safety overview.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
 class ProcessSafetyOverviewDocumentationTest {
+  private static final Path GUIDE = Paths.get("docs", "process", "safety", "README.md");
+  private static final String MARKER = "<!-- process-safety-overview-example: esd-sequence -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+
+  @TempDir
+  Path temporaryDirectory;
+
+  /**
+   * Verifies that the marked pressure-protection and ESD quick start is literal executable source.
+   *
+   * @throws Exception if the guide source cannot be compiled or executed
+   */
   @Test
-  void documentedSafetyEquipmentUsesStreamInputsAndExplicitUnits() throws Exception {
-    Stream feed = createFeed();
+  void processSafetyOverviewQuickStartCompilesAndRunsFromGuide() throws Exception {
+    String source = markedExampleSource();
 
-    SafetyValve safetyValve = new SafetyValve("PSV-100", feed);
-    safetyValve.setPressureSpec(75.0);
-    safetyValve.setFullOpenPressure(82.5);
-    safetyValve.setBlowdown(7.0);
-    safetyValve.setOutletPressure(1.5, "bara");
+    assertFalse(source.contains("System.out"));
+    assertFalse(source.contains("System.err"));
+    assertTrue(source.contains("public final class ProcessSafetyOverviewQuickStart"));
+    assertTrue(source.contains("new SafetyValve("));
+    assertTrue(source.contains("new RuptureDisk("));
+    assertTrue(source.contains("new TripValveAction("));
+    assertTrue(source.contains("new ActivateBlowdownAction("));
+    assertTrue(source.contains("esdLogic.execute(timeStepSeconds);"));
+    assertTrue(source.contains("inletIsolation.runTransient(timeStepSeconds, calculationId);"));
+    assertTrue(source.contains("blowdownValve.runTransient(timeStepSeconds, calculationId);"));
 
-    RuptureDisk ruptureDisk = new RuptureDisk("RD-100", feed);
-    ruptureDisk.setBurstPressure(85.0);
-    ruptureDisk.setFullOpenPressure(89.25);
-    ruptureDisk.setOutletPressure(1.5, "bara");
-
-    assertSame(feed, safetyValve.getInletStream());
-    assertSame(feed, ruptureDisk.getInletStream());
-    assertEquals(69.75, safetyValve.getBlowdownPressure(), 1.0e-9);
-    assertEquals(85.0, ruptureDisk.getBurstPressure(), 0.0);
-    assertSame(StreamInterface.class,
-        SafetyValve.class.getConstructor(String.class, StreamInterface.class).getParameterTypes()[1]);
-    assertSame(StreamInterface.class,
-        RuptureDisk.class.getConstructor(String.class, StreamInterface.class).getParameterTypes()[1]);
-  }
-
-  @Test
-  void documentedEsdSequenceClosesIsolationAndOpensBlowdown() {
-    Stream feed = createFeed();
-
-    ESDValve inletIsolation = new ESDValve("ESD-XV-100", feed);
-    inletIsolation.setStrokeTime(2.0);
-    inletIsolation.setCv(500.0);
-    inletIsolation.setOutletPressure(75.0, "bara");
-    inletIsolation.setCalculateSteadyState(false);
-    inletIsolation.energize();
-
-    BlowdownValve blowdownValve = new BlowdownValve("BDV-100", feed);
-    blowdownValve.setOpeningTime(2.0);
-    blowdownValve.setCv(100.0);
-    blowdownValve.setOutletPressure(1.5, "bara");
-    blowdownValve.setCalculateSteadyState(false);
-
-    ESDLogic esdLogic = new ESDLogic("ESD level 1");
-    esdLogic.addAction(new TripValveAction(inletIsolation), 0.0);
-    esdLogic.addAction(new ActivateBlowdownAction(blowdownValve), 0.0);
-    esdLogic.activate();
-
-    UUID calculationId = UUID.randomUUID();
-    double timeStepSeconds = 0.5;
-    for (int step = 0; step < 20 && !esdLogic.isComplete(); step++) {
-      esdLogic.execute(timeStepSeconds);
-      inletIsolation.runTransient(timeStepSeconds, calculationId);
-      blowdownValve.runTransient(timeStepSeconds, calculationId);
+    try (URLClassLoader loader = compile("ProcessSafetyOverviewQuickStart", source)) {
+      Class<?> example = loader.loadClass("ProcessSafetyOverviewQuickStart");
+      example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
     }
-
-    assertEquals(LogicState.COMPLETED, esdLogic.getState());
-    assertTrue(inletIsolation.hasTripCompleted());
-    assertTrue(inletIsolation.getPercentValveOpening() <= 1.0);
-    assertTrue(blowdownValve.isActivated());
-    assertTrue(blowdownValve.getPercentValveOpening() > 90.0);
   }
 
+  /**
+   * Verifies that the overview names the current HIPPS logic types.
+   *
+   * @throws Exception if a documented constructor or method is absent
+   */
   @Test
   void hippsDocumentationNamesTheCurrentLogicTypes() throws Exception {
     assertSame(VotingLogic.class,
@@ -92,15 +78,48 @@ class ProcessSafetyOverviewDocumentationTest {
     assertSame(void.class, HIPPSLogic.class.getMethod("update", double[].class).getReturnType());
   }
 
-  private static Stream createFeed() {
-    SystemInterface fluid = new SystemSrkEos(298.15, 80.0);
-    fluid.addComponent("methane", 0.95);
-    fluid.addComponent("ethane", 0.05);
-    fluid.setMixingRule("classic");
+  /**
+   * Extracts the uniquely marked Java fence.
+   *
+   * @return exact published Java source
+   * @throws Exception if the guide cannot be read
+   */
+  private static String markedExampleSource() throws Exception {
+    String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
+    int markerPosition = markdown.indexOf(MARKER);
+    assertTrue(markerPosition >= 0, "Missing marker: " + MARKER);
+    assertEquals(markerPosition, markdown.lastIndexOf(MARKER), "Marker must be unique: " + MARKER);
 
-    Stream feed = new Stream("safety feed", fluid);
-    feed.setFlowRate(1000.0, "kg/hr");
-    feed.run();
-    return feed;
+    Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
+    assertTrue(fence.find(), "Missing Java fence after marker: " + MARKER);
+    assertTrue(fence.group(1).contains("public final class ProcessSafetyOverviewQuickStart"));
+    return fence.group(1);
+  }
+
+  /**
+   * Compiles one Java 8 documentation source and returns its class loader.
+   *
+   * @param className public class name
+   * @param source exact Java source
+   * @return class loader for the compiled source
+   * @throws Exception if the source or class output cannot be created
+   */
+  private URLClassLoader compile(String className, String source) throws Exception {
+    Path classes = Files.createDirectories(temporaryDirectory.resolve(className));
+    Path javaFile = classes.resolve(className + ".java");
+    Files.write(javaFile, source.getBytes(StandardCharsets.UTF_8));
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "A JDK is required to validate documentation examples");
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    StringWriter diagnostics = new StringWriter();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
+          .call();
+      assertTrue(successful, diagnostics.toString());
+    }
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }

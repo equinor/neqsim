@@ -1,7 +1,5 @@
 package neqsim.process.equipment.compressor.driver;
 
-import java.io.Serializable;
-
 /**
  * Abstract base class for driver curve implementations.
  *
@@ -13,7 +11,7 @@ import java.io.Serializable;
  * @author NeqSim Development Team
  * @version 1.0
  */
-public abstract class DriverCurveBase implements DriverCurve, Serializable {
+public abstract class DriverCurveBase implements DriverCurve {
 
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;

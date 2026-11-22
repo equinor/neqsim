@@ -26,6 +26,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiLayoutConfig` | Configurable layout parameters (spacing, fonts, colors, feature toggles) |
 | `DexpiMetadata` | Shared constants for `GenericAttribute` names used by both reader and writer |
 | `DexpiSimulationBuilder` | High-level builder: DEXPI XML to runnable `ProcessSystem` |
+| `Dexpi201DynamicBindingReader` | Fail-closed native DEXPI 2.0.1 identity check and executable binding restore |
 | `DexpiTopologyResolver` | Nozzle/connection graph, topological sort, cycle detection |
 | `DexpiEquipmentFactory` | Converts DEXPI placeholders to real NeqSim equipment with sizing |
 | `DexpiMappingLoader` | Thread-safe cached loader for equipment mapping `.properties` files |
@@ -34,6 +35,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiStream` | Lightweight piping segment with DEXPI class, line number, and fluid code |
 | `DexpiProcessUnit` | Imported equipment with original DEXPI class and mapped `EquipmentEnum` |
 | `DexpiInstrumentInfo` | Instrument metadata (tag, type, function letter) |
+| `DexpiActuatingFunctionInfo` | Immutable source-order actuating-function identity, reference, and resolved-target provenance |
 | `DexpiConnectionInfo` | Immutable source-order material-connection evidence and endpoint resolution |
 
 ---
@@ -105,6 +107,9 @@ DexpiXmlReader.ImportResult result =
     DexpiXmlReader.readWithDiagnostics(xmlFile.toFile(), template);
 ProcessSystem process = result.getProcessSystem();
 List<DexpiInstrumentInfo> instruments = result.getInstruments();
+List<DexpiInstrumentationLoopInfo> instrumentationLoops = result.getInstrumentationLoops();
+List<DexpiActuatingFunctionInfo> actuatingFunctions = result.getActuatingFunctions();
+List<DexpiInformationFlowInfo> informationFlows = result.getInformationFlows();
 List<DexpiConnectionInfo> connections = result.getConnections();
 
 for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
@@ -139,24 +144,149 @@ evidence. Valid source references resolve against the complete non-catalogue doc
 including equipment nozzles and actuating functions. The reader never promotes measurement-only or
 incomplete source content into closed-loop control intent.
 
+`DexpiXmlReader.readInstruments(...)` also reads native DEXPI 2.0.1 Plant
+`Object` records typed as `ProcessInstrumentationFunction` or
+`ProcessSafetyFunction`. It retains the exact native function number as the tag,
+splits an alphabetic ISA-style prefix only for convenient category/function
+metadata, and reads a nested native actuating-function number when present. It
+does not infer loop membership, safety credit or executable control intent. This
+is a bounded instrument-inventory intake path: the existing runnable equipment,
+piping and topology reconstruction remains the documented Proteus-compatible
+supported subset, not a claim of full native DEXPI 2.0.1 process-model import.
+
+For native 2.0.1 `Object` records, the same structured import now retains the relationships emitted
+by the NeqSim controlled profile. `ProcessSignalGeneratingFunction/SensingLocation` becomes resolved
+measuring evidence, `SignalLineFunction/Source/Target` becomes exact source-target evidence, and
+`ActuatingFunction/Systems/OperatedValveReference/Valve` becomes exact final-element evidence. The
+records preserve native IDs and owning function tags; they do not invent a controller, process
+attachment, actuator, fail action, or safeguard classification.
+
+### Executable native DEXPI 2.0.1 binding intake
+
+Use `Dexpi201DynamicBindingReader` when a controlled native 2.0.1 P&ID, governed engineering model,
+and the companion `neqsim_pid_simulation_bindings.v1` artifact must be restored for a dynamic test.
+The DEXPI file proves the drawing-side identities and relationships. The binding artifact proves the
+explicit runtime names, Java types, project revision, P&ID fingerprint, and executable-topology
+fingerprint. Neither artifact is silently substituted for the other.
+
+```java
+Dexpi201DynamicBindingReader.Result intake =
+    Dexpi201DynamicBindingReader.read(
+        Paths.get("plant-pid.dexpi.xml"),
+        engineeringProject,
+        pidDesignModel,
+        Files.readString(Paths.get("pid-simulation-bindings.json")));
+
+PidSimulationSession session = new PidSimulationSession(
+    engineeringProject, pidDesignModel, intake.getBindings());
+DynamicSafetyScenarioResult result = session.runDynamicScenario(
+    scenario, Collections.singletonList("SDV-101"));
+```
+
+The intake accepts only the exact DEXPI 2.0.1 Plant profile and a conformant file. It then requires
+one exact native function for each bound measurement/controller, a resolved sensing location for
+each bound measurement, one exact physical object for each bound runtime equipment name, and an
+exact actuation-to-final-element relationship for each bound operated valve. Every functional
+connection declared by the governed P&ID must appear as the same native source-target tag pair.
+Duplicate, missing, unresolved, type-incompatible, stale-revision, stale-P&ID, or stale-runtime
+identities fail before a scenario can run.
+
+This path deliberately does not reconstruct an arbitrary third-party process model from a drawing,
+and it does not infer controller tuning, ranges, setpoints, alarm/trip limits, valve fail state, SIL,
+voting, thermodynamic state, or missing geometry. Those remain explicit model inputs and reviewed
+engineering decisions. `DexpiSimulationBuilder` remains a compatibility/scaffolding path; its
+category-based auto-instrument renaming is not the production binding contract.
+
+### Governed professional-package intake and semantic comparison
+
+`ProfessionalPidPackageReader.read(project, packageDirectory)` reopens the complete professional
+package rather than asking each caller to coordinate the four intake steps manually. It first verifies
+the SHA-256 and size of every `package-manifest.json` entry and rejects missing, changed, duplicate,
+path-escaping or unlisted files. It then restores `pid-design-model.json`, verifies
+`pid-simulation-bindings.json` against the caller-restored executable project, assesses the exact
+`plant.dexpi.xml`, and retains both the supported-subset import diagnostics and the native tag/signal/
+actuation verification evidence.
+
+The ordinary `read(...)` path is evidence-preserving: an incomplete native proposal projection or
+unsupported import remains a stable package-level diagnostic and sets `hasImportLosses()`. Use
+`readStrict(...)` only when that supported intake must fail closed on every such diagnostic. The
+reader never treats an intact package manifest as semantic equivalence.
+
+After exporting the restored canonical model and bindings to a new directory,
+`ProfessionalPidPackageReader.compare(first, second)` compares the canonical P&ID, revision-bound
+bindings, verified native relationships and supported import evidence. It returns `EQUIVALENT` only
+when those supported semantics match and neither intake reports a loss. Byte-level DEXPI and package
+manifest fingerprints remain separate evidence. Unknown or unsupported source content is not silently
+promoted to a round-trip pass.
+
+This controlled package path is bidirectional for the documented NeqSim professional-package subset.
+It is not arbitrary vendor DEXPI-to-process reconstruction and does not preserve unknown external
+extensions that the supported reader cannot represent. Those remain explicit diagnostics and require
+an owning #2899/#1332 semantic extension before qualification.
+
+`ImportResult.getActuatingFunctions()` exposes source-ordered `ActuatingFunction` and
+`ActuatingElectricalFunction` occurrences as immutable `DexpiActuatingFunctionInfo` records. Each
+record retains the explicit source kind, ID, component class, function number, enclosing
+`ProcessInstrumentationFunction` identity, `FinalControlElementID`, and `is located in` identity,
+together with resolution flags and resolved XML element names. For each resolved final-element and
+location target, it also preserves the source object's explicit `ComponentClass`, `ComponentName`,
+and `TagName`; absent source metadata remains an empty string. Missing and unresolved references
+remain visible without invented target metadata. The API does not classify final-element type,
+infer control intent, identify a safeguard or SIS function, or alter live simulation topology.
+
+`ImportResult.getInformationFlows()` exposes the corresponding source-ordered
+`MeasuringLineFunction` and `SignalLineFunction` evidence as immutable
+`DexpiInformationFlowInfo` records. Each record retains its source ID and component class, logical
+start and end IDs, whether those references resolve, and their resolved XML element names. For each
+resolved logical source, logical target, and process attachment, the record also preserves the source
+object's explicit `ComponentClass`, `ComponentName`, and `TagName`; absent source metadata and
+unresolved references remain empty strings without invented values. Measuring lines additionally
+retain explicit attachment identity and resolution; signal lines retain the source
+`SignalConveyingTypeSpecialization`. Missing and unresolved references remain present beside the
+diagnostics, so Java and JPype callers do not need to reparse XML or invent endpoints. These records
+do not create live transmitters or controllers, infer control-loop intent, verify a loop, or classify
+safety-instrumented or safeguard functions.
+
+`ImportResult.getInstrumentationLoops()` exposes each source
+`InstrumentationLoopFunction` as an immutable, source-ordered
+`DexpiInstrumentationLoopInfo`. The record retains the loop ID, component class, explicit loop
+number, and every direct `is a collection including` occurrence in source order. Membership
+evidence preserves duplicate, blank, and unresolved references together with resolution status and
+the resolved XML element name. For each resolved member, it also preserves the source object's
+explicit `ComponentClass`, `ComponentName`, and `TagName`; absent source metadata and unresolved
+references remain empty strings without invented values. It does not infer control intent, verify
+functional completeness, construct executable control topology, or classify SIS or safeguard
+functions.
+
 The same result also preserves every source `Connection` in document order, including parallel
 connections between the same endpoints. Each immutable `DexpiConnectionInfo` retains the owning
-piping-network segment, `FromID` and `ToID` direction, the resolved endpoint element names, and
-resolution status. Missing source IDs receive deterministic evidence-only identities; missing,
-duplicate, self-referential, or unresolved source references remain explicit diagnostics. This
-inventory does not infer connectivity or rewire the returned `ProcessSystem`.
+piping-network segment identity and its explicit `ComponentClass`, `ComponentName`, and
+`TagName`, plus `FromID` and `ToID` direction, the resolved endpoint element names, resolution
+status, and each resolved endpoint object's own explicit `ComponentClass`, `ComponentName`, and
+`TagName`. Endpoint metadata is kept separate from segment and owner metadata; absent or unresolved
+values remain empty without fallback or invented values. Missing source IDs receive deterministic
+evidence-only identities; missing, duplicate, self-referential, or unresolved source references
+remain explicit diagnostics. This inventory does not derive segment metadata, infer connectivity, or
+rewire the returned `ProcessSystem`.
 
 For resolved nozzle endpoints, the same record exposes only explicit source ownership: the nearest
 ancestor `Equipment` or `PipingComponent` identity and XML element name. Direct equipment or
-piping-component endpoints own themselves. Orphaned nozzles and owner elements without source IDs
-remain deterministic warnings; the reader does not derive ownership from coordinates, tags,
-stream order, or simulation state.
+piping-component endpoints own themselves. For each resolved owner, the connection occurrence also
+preserves the owner's explicit `ComponentClass`, `ComponentName`, and `TagName`; absent source
+metadata remains an empty string. Orphaned nozzles and owner elements without source IDs remain
+deterministic warnings; unresolved owners receive no invented metadata. The reader does not derive
+ownership or owner metadata from coordinates, endpoint tags, stream order, simulation state, or
+class heuristics.
 
 `ImportResult.getConnectionEndpoints()` provides a distinct endpoint inventory in first-reference
-order. Each immutable `DexpiConnectionEndpointInfo` records the resolved element and explicit owner
-evidence plus the incoming and outgoing connection-evidence IDs in source order. Counts retain every
-occurrence, including parallel connections. Blank endpoint references remain findings and are omitted
-from this keyed inventory; unresolved non-empty IDs remain visible.
+order. Each immutable `DexpiConnectionEndpointInfo` separately records the resolved XML element
+name, the endpoint object's own explicit `ComponentClass`, `ComponentName`, and `TagName`, its
+explicit owner identity and XML element name, and the owner's explicit class, name, and tag. A direct
+equipment or piping-component endpoint may therefore carry the same source values in both roles, but
+the reader never copies or infers one role from the other. Incoming and outgoing connection-evidence
+IDs remain in source order, and counts retain every occurrence, including parallel connections. Blank
+endpoint references remain findings and are omitted from this keyed inventory; unresolved non-empty
+IDs remain visible with empty endpoint and owner provenance.
 
 `getIncidenceRole()` classifies only this directed source evidence: zero incoming and one outgoing
 is `SOURCE`; one incoming and zero outgoing is `SINK`; one of each is `PASS_THROUGH`; one
@@ -169,8 +299,15 @@ branch or fitting, create live process connectivity, or establish process intent
 `ImportResult.getConnectionComponents()` groups non-empty endpoint identities by weak connectivity
 through explicit material-connection references. Components are ordered by their first endpoint;
 their endpoint IDs retain first-reference order and their connection-evidence IDs retain source
-order, including parallel occurrences. Each immutable `DexpiConnectionComponentInfo` also lists
-source, sink, potential multi-connection, and unresolved endpoints from the endpoint evidence.
+order, including parallel occurrences. `getEndpoints()` exposes the corresponding complete immutable
+`DexpiConnectionEndpointInfo` records in first-reference order, and `getConnections()` exposes
+the complete immutable `DexpiConnectionInfo` occurrences in source order. Reader-produced records
+therefore keep endpoint resolution, incidence, explicit endpoint and owner provenance, segment
+provenance, direction, one-sided references, and parallel occurrences available locally without a
+join against the global inventories. `hasCompleteEvidence()` distinguishes this projection from
+legacy values created with the older constructor; legacy object lists are empty while all existing
+identity and subset evidence remains unchanged. Each immutable `DexpiConnectionComponentInfo` also
+lists source, sink, potential multi-connection, and unresolved endpoints from the endpoint evidence.
 A connection with one non-empty endpoint remains visible as a singleton component. A connection
 with two blank endpoint references remains diagnostic evidence and is not assigned invented nodes.
 This grouping is a document-review aid, not proof that the grouped references form a hydraulically
@@ -180,28 +317,78 @@ continuous line or executable process network.
 of explicit non-empty material-connection endpoint references. A group is reported when it has more
 than one endpoint, or when a singleton endpoint has an explicit self-reference. Cycle groups are
 ordered by their first endpoint; endpoint IDs retain first-reference order and internal connection
-IDs retain source order, including parallel occurrences. Each immutable
-`DexpiConnectionCycleInfo` links to its owning weak connection component, keeps unresolved endpoint
-IDs visible, and separately lists source-ordered connection occurrences entering and leaving the
-cyclic group. Boundary lists preserve parallel references and exclude connections whose source or
-target identity is blank. `getBoundaryConnections()` additionally preserves the overall source order
+IDs retain source order, including parallel occurrences. `getEndpoints()` exposes the corresponding
+immutable `DexpiConnectionEndpointInfo` records in first-reference order, including incidence role,
+resolution state, resolved XML element name, and Equipment/PipingComponent ownership. This lets Java
+and JPype reviewers inspect complete cycle-local endpoint evidence without joining against the global
+endpoint inventory. `getConnections()` exposes the corresponding immutable
+`DexpiConnectionInfo` records in the same order, including source connection and owning
+`PipingNetworkSegment` identities, endpoint resolution, resolved element names, and explicit
+Equipment/PipingComponent ownership. Each immutable `DexpiConnectionCycleInfo` retains its owning
+weak connection-component ID and, for reader-produced values, exposes the exact complete immutable
+`DexpiConnectionComponentInfo` from the global component inventory through
+`getConnectionComponent()`. This keeps the component's endpoint, connection, incidence, resolution,
+and provenance evidence local to the cycle without copying or re-resolving it.
+`hasConnectionComponentEvidence()` distinguishes that projection from legacy values constructed
+through the older overloads; their getter returns `null` while the component ID and all existing
+cycle evidence remain unchanged. The cycle also keeps unresolved endpoint IDs visible and separately
+lists source-ordered connection occurrences entering and leaving the cyclic group. Boundary lists preserve parallel
+references and exclude connections whose source or target identity is blank.
+`getBoundaryConnections()` additionally preserves the overall source order
 across incoming and outgoing occurrences. Each immutable `DexpiConnectionCycleBoundaryInfo` records
-the connection ID, direction relative to the cyclic group, explicit internal and external endpoint
-identities, whether each endpoint resolves, and the resolved endpoint element and Equipment/PipingComponent owner
-identities already present in the endpoint inventory. Missing or unresolved owner evidence remains an empty field.
-This avoids inferring boundary orientation or ownership by joining separate inventories while retaining parallel and
-unresolved source evidence.
-It does not identify a hydraulic recycle, enumerate elementary paths, assert convergence behavior,
-repair or rewire topology, or establish process intent.
+the connection evidence ID, original source connection ID, owning `PipingNetworkSegment` ID,
+direction relative to the cyclic group, explicit internal and external endpoint identities, whether
+each endpoint resolves, and the resolved endpoint element and Equipment/PipingComponent owner
+identities already present in the endpoint inventory. Reader-produced records also expose the
+complete immutable source objects through `getConnection()`, `getInternalEndpoint()`, and
+`getExternalEndpoint()`. Java and JPype callers can therefore inspect connection direction,
+endpoint resolution and ownership, full source-ordered incidence lists, and incidence roles locally;
+`hasCompleteEvidence()` distinguishes that projection from legacy values built with the older
+constructors. Legacy object getters return `null` while their existing scalar evidence remains
+unchanged. Missing source, segment, endpoint, or owner evidence remains an empty field. This avoids
+joining separate inventories or inferring boundary orientation, provenance, or ownership while
+retaining parallel and unresolved source evidence. It does not identify a hydraulic recycle,
+enumerate elementary paths, assert convergence behavior, repair or rewire topology, or establish
+process intent.
 
-`toJson()` includes `instrumentCount`, `connectionCount`, `connectionEndpointCount`,
-`connectionComponentCount`, `connectionCycleCount`, and the ordered connection, endpoint,
-component, and directed-cycle inventories, including incidence roles, review subsets, and explicit
-cycle-boundary occurrences, alongside the process-unit count and findings. Python callers through
-JPype use the same
-`ImportResult.getInstruments()`, `ImportResult.getConnections()`,
-`ImportResult.getConnectionEndpoints()`, `ImportResult.getConnectionComponents()`, and
-`ImportResult.getConnectionCycles()` getters; there is no separate Python reconstruction model.
+`ImportResult.getConnectionCycleTransitions()` provides a global source-ordered inventory of
+connection occurrences crossing directed-cycle boundaries. Each immutable
+`DexpiConnectionCycleTransitionInfo` contains the complete `DexpiConnectionInfo`, complete
+from/to `DexpiConnectionEndpointInfo` records, optional from/to cycle IDs, and an `ENTERING`,
+`LEAVING`, or `BETWEEN_CYCLES` classification. Reader-produced values also expose the exact
+immutable cycle objects from `ImportResult.getConnectionCycles()` through `getFromCycle()` and
+`getToCycle()`. They also expose the exact boundary objects already present in those cycles through
+`getFromCycleBoundary()` and `getToCycleBoundary()`, and the exact immutable owning
+`DexpiConnectionComponentInfo` objects through `getFromCycleComponent()` and
+`getToCycleComponent()`. An entering transition carries only the target cycle's component and
+`INCOMING` boundary, a leaving transition carries only the source cycle's component and
+`OUTGOING` boundary, and a between-cycle transition carries both component and boundary pairs.
+Corresponding evidence markers distinguish this reader projection from values created with the
+ID-only legacy constructor, whose cycle, component, and boundary object getters return `null`
+while scalar cycle IDs remain unchanged. A connection from one cyclic strongly connected group to
+another appears once with both cycle IDs, both complete cycle objects, both exact owning components,
+and both directional boundary objects; callers do not need to scan or join the cycle or component
+inventories. Parallel occurrences remain distinct, unresolved non-empty endpoints
+remain visible, and connections with a blank endpoint stay in the global connection and diagnostic
+evidence because a transition cannot assign them to a cycle. `toJson()` includes the cycle- and
+boundary-evidence markers and nested from/to cycle and boundary objects when present. This
+exact-once inventory remains source-reference evidence only; it does not prove hydraulic continuity,
+identify a physical recycle, enumerate paths, or alter simulation topology.
+
+`toJson()` includes `instrumentCount`, `instrumentationLoopCount`,
+`actuatingFunctionCount`, `informationFlowCount`, `connectionCount`,
+`connectionEndpointCount`, `connectionComponentCount`, `connectionCycleCount`,
+`connectionCycleTransitionCount`, and the ordered instrumentation-loop, actuating-function, information-flow, connection, endpoint,
+component, directed-cycle, and cycle-transition inventories, including reference resolution,
+incidence roles, review subsets, complete component- and cycle-local endpoint and connection
+occurrences, explicit cycle-boundary occurrences, and exact-once transitions with nested connection, endpoint,
+cycle, exact owning-component, and directional boundary evidence, alongside the process-unit count and findings. Python callers through JPype use the same
+`ImportResult.getInstruments()`, `ImportResult.getInstrumentationLoops()`,
+`ImportResult.getActuatingFunctions()`, `ImportResult.getInformationFlows()`,
+`ImportResult.getConnections()`, `ImportResult.getConnectionEndpoints()`,
+`ImportResult.getConnectionComponents()`, `ImportResult.getConnectionCycles()`, and
+`ImportResult.getConnectionCycleTransitions()` getters; there is no separate Python reconstruction
+model.
 
 `INFO` entries carry provenance and do not make `hasLosses()` true by themselves. `WARNING` and
 `ERROR` entries do. The diagnostic sequence and JSON are deterministic for the same XML and template.
@@ -753,30 +940,84 @@ process.run();
 
 The builder performs these steps internally:
 
-1. **Topology resolution** — `DexpiTopologyResolver` parses `<Equipment>`, `<Nozzle>` and
-   `<Connection>` elements into a directed graph, collapses inline piping components (valves,
-   reducers) into equipment-level edges, and produces a topological ordering via Kahn's algorithm.
-   The resolver also detects cycles and logs warnings when cyclic dependencies are found;
-   `ResolvedTopology.hasCycle()` can be queried programmatically.
-2. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
+1. **Profile check** — Native DEXPI 2.x files (root element `Model`) are rejected with a
+   `DexpiXmlReaderException` that names the supported route. They are never silently turned into a
+   feed-only process.
+2. **Topology resolution** — `DexpiTopologyResolver` parses `<Equipment>`, `<Nozzle>` and
+   `<Connection>` elements and produces an upstream-to-downstream ordering via Kahn's algorithm.
+3. **Flowsheet graph** — `DexpiFlowsheetGraph` builds the material-flow graph used for simulation.
+   In-line throttling valves that carry an `OperatingPressureValue` become `ThrottlingValve` units,
+   including valves that sit inside a `PipingNetworkSegment` and are connected through their own
+   nozzles. Tees, reducers, strainers and isolation valves without an operating pressure are
+   collapsed as pass-through items. Branches through pressure-safety devices, rupture disks and
+   blinds are excluded, because they carry no flow at normal operation.
+4. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
    `dexpi_piping_component_mapping.properties` from the classpath to translate DEXPI ComponentClass
    strings (e.g. `CentrifugalCompressor`) into `EquipmentEnum` values.
-3. **Equipment instantiation** — `DexpiEquipmentFactory` creates real NeqSim equipment from the
+5. **Equipment instantiation** — `DexpiEquipmentFactory` creates real NeqSim equipment from the
    mapped enum, applying sizing attributes such as `InsideDiameter`, `TangentToTangentLength`,
    `DesignPressure`, `ValveCv` and `Orientation`. Distillation columns are instantiated with
    `NumberOfTrays` and `FeedTray` attributes when present. Column subtypes are detected from the
    DEXPI class name: absorbers (class containing "absorb") are created without condenser or
    reboiler, and strippers (class containing "strip") without a condenser.
-4. **Stream wiring** — The builder walks the topology in upstream-to-downstream order, connecting
-   outlet streams of upstream equipment to inlets of downstream equipment.
-5. **Auto-instrumentation** — When enabled, `DynamicProcessHelper.instrumentAndControl()` adds
+6. **Port-aware stream wiring** — Each connection leaves the correct outlet of its source unit.
+   For separators the outlet is resolved from, in order: the `PortRole` attribute that
+   `DexpiXmlWriter` writes on every nozzle (`GasOutlet`, `LiquidOutlet`, `OilOutlet`,
+   `WaterOutlet`), the downstream unit type (compressor or expander implies gas, pump implies
+   liquid), the vertical nozzle position (Proteus is Y-up, so the highest outlet is gas), and
+   document order. Splitters get one branch per outgoing connection, with split factors taken from
+   the exported branch `OperatingFlowValue` when all are present. Mixers receive every incoming
+   connection; other units with several inlets are fed through an inlet mixer.
+7. **Recycle closure** — When only loops remain, the builder tears the connection into the unit
+   with the most upstream units already built, inserts a tear stream at the source operating state,
+   and closes the loop with a `Recycle`.
+8. **Operating specifications** — `OperatingPressureValue` on compressors, pumps and throttling
+   valves becomes the outlet pressure, and `OperatingTemperatureValue` on heaters and coolers
+   becomes the outlet temperature. Units such as `bara`, `barg`, `kPa`, `MPa`, `psia`, `C`, `K`
+   and `F` are converted. Operating values take precedence over design values.
+9. **Auto-instrumentation** — When enabled, `DynamicProcessHelper.instrumentAndControl()` adds
    transmitters and PID controllers to separators, compressors and heat exchangers. DEXPI
    instrument tags are matched to auto-generated transmitters by category prefix (e.g. `PT-` for
    pressure transmitters) and the auto-generated names are **renamed** to the actual DEXPI tag
    names. Controller tags are derived by replacing the function letter (e.g. `PT-100` to `PC-100`).
-6. **Namespace-aware parsing** — The builder supports an optional `setNamespaceAware(true)` flag
+10. **Namespace-aware parsing** — The builder supports an optional `setNamespaceAware(true)` flag
    for DEXPI documents that use XML namespaces. When enabled, the underlying DOM parser and
    equipment factory use namespace-aware element resolution.
+
+### Build diagnostics and round-trip fidelity
+
+`DexpiSimulationBuilder.getDiagnostics()` returns every judgement the last `build()` made, each with
+a severity, a stable code, the DEXPI element id, and a message:
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `DEXPI_BUILD_SPECIFICATION_MISSING` | WARNING | A compressor, pump, valve, heater or cooler has no operating outlet value; set it before `run()` |
+| `DEXPI_BUILD_ADDITIONAL_FEED` | WARNING | A unit without an upstream connection received its own copy of the builder feed |
+| `DEXPI_BUILD_SPLIT_FACTORS_ASSUMED` | WARNING | Branch flows were not available, so an equal split was assumed |
+| `DEXPI_BUILD_RECYCLE_TEAR` | INFO | A loop was torn at the named connection and closed with a `Recycle` |
+| `DEXPI_BUILD_INLET_MIXER` | INFO | Several connections enter a non-mixer unit and were combined |
+| `DEXPI_BUILD_PASS_THROUGH` | INFO | A piping item or unsupported unit was collapsed |
+| `DEXPI_BUILD_NO_FLOW_BRANCH_EXCLUDED` | INFO | A safety-device or blind branch was excluded from the steady-state flowsheet |
+| `DEXPI_BUILD_CONNECTION_UNRESOLVED` | INFO | A connection ends off-page or at an unknown item |
+
+A model exported with `DexpiXmlWriter.write(...)` and rebuilt with the same fluid template and
+feed reproduces the source flowsheet: separator outlets, in-line valves, all mixer inlets,
+splitter branches and factors, outlet specifications, and recycle loops.
+`DexpiSimulationRoundTripTest` pins this for a recycle train, a three-phase separator with a
+three-way splitter, and a legacy file without port roles. DEXPI carries no fluid composition, so
+the fluid template is always a separate input. A third-party P&ID normally lacks operating data;
+the builder still connects the flowsheet and reports each specification you must add.
+
+```java
+DexpiSimulationBuilder builder = new DexpiSimulationBuilder(new File("plant.xml"))
+    .setFluidTemplate(fluid).setFeedPressure(60.0, "bara")
+    .setFeedTemperature(70.0, "C").setFeedFlowRate(50000.0, "kg/hr");
+ProcessSystem process = builder.build();
+for (DexpiSimulationBuilder.BuildDiagnostic diagnostic : builder.getDiagnostics()) {
+  System.out.println(diagnostic);
+}
+process.run();
+```
 
 ### Sizing attributes
 

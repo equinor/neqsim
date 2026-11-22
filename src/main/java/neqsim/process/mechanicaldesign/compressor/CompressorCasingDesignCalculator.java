@@ -309,6 +309,18 @@ public class CompressorCasingDesignCalculator implements Serializable {
   /** List of design issues/warnings. */
   private List<String> designIssues = new ArrayList<String>();
 
+  /** Clears properties until the selected material has been loaded successfully. */
+  private void invalidateMaterialProperties() {
+    smysMPa = Double.NaN;
+    smtsMPa = Double.NaN;
+    allowableStressMPa = Double.NaN;
+    materialDensity = Double.NaN;
+    thermalExpansionCoeff = Double.NaN;
+    elasticModulusGPa = Double.NaN;
+    materialIsNaceCompliant = false;
+    materialType = "UNLOADED";
+  }
+
   // ============================================================================
   // Constructor
   // ============================================================================
@@ -342,6 +354,9 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * <li>If barrel: calculate outer/inner barrel sizing</li>
    * <li>Perform NACE MR0175 compliance check</li>
    * </ol>
+   *
+   * @throws IllegalArgumentException if the selected casing grade is not registered
+   * @throws IllegalStateException if material data cannot be loaded
    */
   public void calculate() {
     appliedStandards.clear();
@@ -375,100 +390,43 @@ public class CompressorCasingDesignCalculator implements Serializable {
   // ============================================================================
 
   /**
-   * Update material properties from grade lookup using built-in data tables.
+   * Update material properties from the CompressorCasingMaterials database table.
    *
    * <p>
    * Looks up SMYS, SMTS, allowable stress, density, thermal expansion, and elastic modulus for the specified material
-   * grade from ASME II Part D data.
+   * grade from the bundled ASME II Part D screening data. Unknown grades fail explicitly.
    * </p>
    */
   private void updateMaterialProperties() {
-    // Built-in material data per ASME II Part D
-    // Map: grade -> {SMYS_MPa, SMTS_MPa, AllowableStress_MPa, MaxTempC, MinTempC,
-    // Density, ThermalExpCoeff, ElasticModulus_GPa, isNACE, materialType}
-    if ("SA-516-70".equals(materialGrade)) {
-      smysMPa = 260.0;
-      smtsMPa = 485.0;
-      allowableStressMPa = 138.0;
-      materialDensity = 7850.0;
-      thermalExpansionCoeff = 1.17e-5;
-      elasticModulusGPa = 200.0;
-      materialIsNaceCompliant = false;
-      materialType = "CarbonSteel";
-    } else if ("SA-516-60".equals(materialGrade)) {
-      smysMPa = 220.0;
-      smtsMPa = 415.0;
-      allowableStressMPa = 118.0;
-      materialDensity = 7850.0;
-      thermalExpansionCoeff = 1.17e-5;
-      elasticModulusGPa = 200.0;
-      materialIsNaceCompliant = false;
-      materialType = "CarbonSteel";
-    } else if ("SA-266-Gr2".equals(materialGrade)) {
-      smysMPa = 250.0;
-      smtsMPa = 485.0;
-      allowableStressMPa = 138.0;
-      materialDensity = 7850.0;
-      thermalExpansionCoeff = 1.17e-5;
-      elasticModulusGPa = 200.0;
-      materialIsNaceCompliant = false;
-      materialType = "CarbonSteelForging";
-    } else if ("SA-266-Gr4".equals(materialGrade)) {
-      smysMPa = 310.0;
-      smtsMPa = 550.0;
-      allowableStressMPa = 157.0;
-      materialDensity = 7850.0;
-      thermalExpansionCoeff = 1.17e-5;
-      elasticModulusGPa = 200.0;
-      materialIsNaceCompliant = false;
-      materialType = "CarbonSteelForging";
-    } else if ("SA-350-LF2".equals(materialGrade)) {
-      smysMPa = 250.0;
-      smtsMPa = 485.0;
-      allowableStressMPa = 138.0;
-      materialDensity = 7850.0;
-      thermalExpansionCoeff = 1.17e-5;
-      elasticModulusGPa = 200.0;
-      materialIsNaceCompliant = false;
-      materialType = "LowAlloyForging";
-    } else if ("SA-182-F316L".equals(materialGrade)) {
-      smysMPa = 170.0;
-      smtsMPa = 485.0;
-      allowableStressMPa = 110.0;
-      materialDensity = 8000.0;
-      thermalExpansionCoeff = 1.60e-5;
-      elasticModulusGPa = 193.0;
-      materialIsNaceCompliant = true;
-      materialType = "AusteniticSS";
-    } else if ("SA-182-F304L".equals(materialGrade)) {
-      smysMPa = 170.0;
-      smtsMPa = 485.0;
-      allowableStressMPa = 110.0;
-      materialDensity = 8000.0;
-      thermalExpansionCoeff = 1.73e-5;
-      elasticModulusGPa = 193.0;
-      materialIsNaceCompliant = true;
-      materialType = "AusteniticSS";
-    } else if ("SA-182-F22".equals(materialGrade)) {
-      smysMPa = 310.0;
-      smtsMPa = 515.0;
-      allowableStressMPa = 147.0;
-      materialDensity = 7850.0;
-      thermalExpansionCoeff = 1.23e-5;
-      elasticModulusGPa = 207.0;
-      materialIsNaceCompliant = false;
-      materialType = "CrMoForging";
-    } else if ("Inconel-718".equals(materialGrade)) {
-      smysMPa = 1035.0;
-      smtsMPa = 1241.0;
-      allowableStressMPa = 230.0;
-      materialDensity = 8190.0;
-      thermalExpansionCoeff = 1.30e-5;
-      elasticModulusGPa = 211.0;
-      materialIsNaceCompliant = true;
-      materialType = "NickelAlloy";
+    invalidateMaterialProperties();
+    String grade = materialGrade == null ? "" : materialGrade.trim();
+    if (grade.isEmpty()) {
+      throw new IllegalArgumentException("Compressor casing material grade must not be empty");
     }
-    // Default SA-516-70 properties are used if grade not matched
+    String query = "SELECT * FROM CompressorCasingMaterials WHERE UPPER(MaterialGrade)=UPPER('"
+        + grade.replace("'", "''") + "')";
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet row = database.getResultSet(query)) {
+      if (!row.next()) {
+        throw new IllegalArgumentException("No compressor casing material data for grade " + grade);
+      }
+      smysMPa = row.getDouble("SMYS_MPa");
+      smtsMPa = row.getDouble("SMTS_MPa");
+      allowableStressMPa = row.getDouble("AllowableStress_MPa");
+      materialDensity = row.getDouble("Density_kg_m3");
+      thermalExpansionCoeff = row.getDouble("ThermalExpansion_perC");
+      elasticModulusGPa = row.getDouble("ElasticModulus_GPa");
+      materialIsNaceCompliant = row.getBoolean("NACECompliant");
+      materialType = row.getString("MaterialType");
+      materialGrade = row.getString("MaterialGrade");
+      if (!(smysMPa > 0.0) || !(smtsMPa > 0.0) || !(allowableStressMPa > 0.0) || !(materialDensity > 0.0)
+          || !(elasticModulusGPa > 0.0)) {
+        throw new IllegalStateException("Invalid compressor casing material data for grade " + grade);
+      }
+    } catch (java.sql.SQLException ex) {
+      throw new IllegalStateException("Unable to load compressor casing material " + grade, ex);
+    }
 
     // Apply temperature derating for allowable stress
     // ASME II Part D Table 1A: Approximate derating at elevated T
@@ -545,8 +503,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
    */
   private double roundUpToStandardThickness(double thicknessMm) {
     // Standard plate thicknesses in mm (metric preferred series)
-    double[] standardThicknesses = { 6.0, 8.0, 10.0, 12.0, 12.7, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
-        35.0, 38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0 };
+    double[] standardThicknesses = {6.0, 8.0, 10.0, 12.0, 12.7, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
+        35.0, 38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0};
 
     for (double stdThk : standardThicknesses) {
       if (stdThk >= thicknessMm) {
@@ -653,8 +611,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     // ASME B16.5 pressure-temperature ratings at ambient (carbon steel group 1.1)
     // Classes and their ambient pressure ratings [barg]
-    int[] classes = { 150, 300, 600, 900, 1500, 2500 };
-    double[] ratingsAtAmbientBarg = { 19.6, 51.1, 102.1, 153.0, 255.0, 425.0 };
+    int[] classes = {150, 300, 600, 900, 1500, 2500};
+    double[] ratingsAtAmbientBarg = {19.6, 51.1, 102.1, 153.0, 255.0, 425.0};
 
     // Temperature derating factor (approximate Group 1.1 materials)
     double tempDeratingFactor = 1.0;
@@ -820,7 +778,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     // Determine bolt size and count
     // Start with M24 (24mm) and iterate if needed
-    double[] standardBoltSizes = { 16.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
+    double[] standardBoltSizes = {16.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
 
     // Bolt pitch should be 2.5-4 x bolt diameter per API 617
     double minPitchFactor = 2.5;
@@ -1363,12 +1321,13 @@ public class CompressorCasingDesignCalculator implements Serializable {
   }
 
   /**
-   * Sets the material grade.
+   * Sets the material grade and clears properties until the next successful calculation.
    *
    * @param materialGrade material grade (e.g., "SA-516-70", "SA-182-F316L")
    */
   public void setMaterialGrade(String materialGrade) {
     this.materialGrade = materialGrade;
+    invalidateMaterialProperties();
   }
 
   /**

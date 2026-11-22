@@ -70,7 +70,11 @@ public class SystemSrkCPAstatoilAndersonMixing extends SystemSrkCPAstatoil {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemSrkCPAstatoilAndersonMixing clone() {
     SystemSrkCPAstatoilAndersonMixing clonedSystem = null;
@@ -78,6 +82,7 @@ public class SystemSrkCPAstatoilAndersonMixing extends SystemSrkCPAstatoil {
       clonedSystem = (SystemSrkCPAstatoilAndersonMixing) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemSrkCPAstatoilAndersonMixing", ex);
     }
     return clonedSystem;
   }

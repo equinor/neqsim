@@ -24,6 +24,42 @@ class OperationalStudyRunnerTest {
     assertEquals("success", result.get("status").getAsString());
     assertEquals("runOperationalStudy", result.get("tool").getAsString());
     assertTrue(result.getAsJsonArray("actions").size() >= 6);
+    assertEquals(1048576, result.get("maxRequestBytes").getAsInt());
+    assertTrue(result.get("screeningOnly").getAsBoolean());
+    assertTrue(!result.get("plantWritePerformed").getAsBoolean());
+    assertTrue(result.get("advisoryBoundary").getAsString().contains("do not write to plant systems"));
+  }
+
+  /**
+   * Verifies stable fail-closed errors for malformed and unsupported requests.
+   */
+  @Test
+  void malformedAndUnknownRequestsFailClosed() {
+    JsonObject malformed = JsonParser.parseString(OperationalStudyRunner.run("{not-json")).getAsJsonObject();
+    assertEquals("error", malformed.get("status").getAsString());
+    assertEquals("JSON_PARSE_ERROR", malformed.get("code").getAsString());
+    assertTrue(malformed.get("screeningOnly").getAsBoolean());
+
+    JsonObject unknown = JsonParser.parseString(OperationalStudyRunner.run("{\"action\":\"notAnAction\"}"))
+        .getAsJsonObject();
+    assertEquals("error", unknown.get("status").getAsString());
+    assertEquals("UNKNOWN_ACTION", unknown.get("code").getAsString());
+    assertTrue(!unknown.get("plantWritePerformed").getAsBoolean());
+  }
+
+  /**
+   * Verifies the explicit UTF-8 request-size admission bound.
+   */
+  @Test
+  void oversizedRequestFailsClosed() {
+    String padding = new String(new char[1048577]).replace('\0', 'x');
+    String json = "{\"action\":\"getSchema\",\"padding\":\"" + padding + "\"}";
+    JsonObject result = JsonParser.parseString(OperationalStudyRunner.run(json)).getAsJsonObject();
+
+    assertEquals("error", result.get("status").getAsString());
+    assertEquals("REQUEST_TOO_LARGE", result.get("code").getAsString());
+    assertTrue(result.get("message").getAsString().contains("1048576 UTF-8 bytes"));
+    assertTrue(result.get("screeningOnly").getAsBoolean());
   }
 
   /**

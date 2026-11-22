@@ -10,10 +10,19 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 import skill_search  # noqa: E402
+
+
+def _isolated(root: Path):
+    """Point installed-skill and plugin lookups at empty temp dirs."""
+    return mock.patch.dict(os.environ, {
+        "NEQSIM_SKILLS_HOME": str(root / "no_installed_skills"),
+        "NEQSIM_AGENT_PLUGINS_HOME": str(root / "no_plugins"),
+    })
 
 
 def _write(path: Path, name: str, desc: str) -> None:
@@ -42,7 +51,7 @@ class LoadSkillsTest(unittest.TestCase):
         return skills_root
 
     def test_sibling_only_skill_indexed_and_no_duplicate(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, _isolated(Path(tmp)):
             skills_root = self._build_workspace(Path(tmp))
             skills = skill_search._load_skills(skills_root)
             names = [s[0] for s in skills]
@@ -55,7 +64,7 @@ class LoadSkillsTest(unittest.TestCase):
             self.assertIn(".github", kept[2])
 
     def test_missing_skills_root_does_not_crash(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, _isolated(Path(tmp)):
             # No neqsim/.github/skills, no siblings — must return [] not raise.
             fake = Path(tmp) / "neqsim" / ".github" / "skills"
             self.assertEqual(skill_search._load_skills(fake), [])

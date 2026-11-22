@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.model.ResultProvenance;
@@ -24,6 +25,9 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.WaterPhaseBoundaryResult;
+import neqsim.thermodynamicoperations.WaterPhaseBoundaryResult.BoundaryResult;
 
 /**
  * Stateless flow assurance runner for MCP integration.
@@ -39,10 +43,12 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 public class FlowAssuranceRunner {
 
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  /** Strict JSON for boundary results: unavailable numerical fields remain explicit nulls. */
+  private static final Gson BOUNDARY_GSON = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 
-  private static final List<String> SUPPORTED_ANALYSES = Collections
-      .unmodifiableList(Arrays.asList("hydrateRiskMap", "waxAppearance", "asphalteneStability", "CO2Corrosion",
-          "scalePrediction", "erosion", "pipelineCooldown", "emulsionViscosity", "demulsifierDoseOptimization"));
+  private static final List<String> SUPPORTED_ANALYSES = Collections.unmodifiableList(
+      Arrays.asList("hydrateRiskMap", "waxAppearance", "asphalteneStability", "CO2Corrosion", "scalePrediction",
+          "erosion", "pipelineCooldown", "emulsionViscosity", "demulsifierDoseOptimization", "waterPhaseBoundaries"));
 
   /**
    * Private constructor — all methods are static.
@@ -123,22 +129,166 @@ public class FlowAssuranceRunner {
       case "demulsifierDoseOptimization":
         data = runDemulsifierDoseOptimization(input);
         break;
+      case "waterPhaseBoundaries":
+        data = runWaterPhaseBoundaries(input);
+        if (!data.get("complete").getAsBoolean()) {
+          result.addProperty("status", "partial");
+        }
+        break;
       default:
         return errorJson("UNKNOWN_ANALYSIS", "Not implemented: " + analysis, "");
       }
 
       result.add("data", data);
 
+      List<String> unresolved = collectUnresolvedResults(analysis, data);
+      if (!unresolved.isEmpty()) {
+        return errorJson("RESULT_NOT_AVAILABLE",
+            analysis + " produced no usable result: " + String.join("; ", unresolved),
+            "For hydrateRiskMap the fluid must contain 'water' (use model 'CPA' for polar systems); check that "
+                + "pressure_bara/temperature_C or profilePoints are inside the hydrate-forming range. "
+                + "An unavailable value is reported as an error rather than as LOW risk.",
+            data);
+      }
+
       ResultProvenance provenance = new ResultProvenance();
       provenance.setCalculationType("flow assurance: " + analysis);
-      provenance.setConverged(true);
+      boolean converged = !"waterPhaseBoundaries".equals(analysis) || data.get("complete").getAsBoolean();
+      provenance.setConverged(converged);
+      if ("waterPhaseBoundaries".equals(analysis)) {
+        provenance.setThermodynamicModel(data.get("model").getAsString());
+        provenance.setMixingRule(data.get("mixingRule").getAsString());
+        provenance.addLimitation(data.get("explanation").getAsString());
+      }
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      if (data.has("failureReasons")) {
+        for (JsonElement reason : data.getAsJsonArray("failureReasons")) {
+          provenance.addLimitation(reason.getAsString());
+        }
+      }
       result.add("provenance", GSON.toJsonTree(provenance));
 
-      return GSON.toJson(result);
+      return "waterPhaseBoundaries".equals(analysis) ? BOUNDARY_GSON.toJson(result) : GSON.toJson(result);
     } catch (Exception e) {
       return errorJson("FLOW_ASSURANCE_ERROR", "Analysis failed: " + e.getMessage(),
           "Check input parameters for " + analysis);
+    }
+  }
+
+  /**
+   * Calculates the three CPA boundaries while retaining inhibitors and characterized oil components.
+   *
+   * @param input CPA fluid specification with explicit absolute pressure
+   * @return independent liquid-water, ice and hydrate outcomes, including partial failures
+   */
+  private static JsonObject runWaterPhaseBoundaries(JsonObject input) {
+    if (!input.has("pressure_bara")) {
+      throw new IllegalArgumentException("waterPhaseBoundaries requires explicit pressure_bara");
+    }
+    JsonObject configured = input.deepCopy();
+    if (!configured.has("model")) {
+      configured.addProperty("model", "CPA");
+    }
+    if (!"CPA".equalsIgnoreCase(configured.get("model").getAsString())) {
+      throw new IllegalArgumentException("waterPhaseBoundaries requires Statoil CPA with mixing rule 10");
+    }
+    SystemInterface fluid = createFluidFromInput(configured);
+    if (input.has("pressure_bara")) {
+      fluid.setPressure(input.get("pressure_bara").getAsDouble());
+    }
+    if (input.has("temperature_C")) {
+      fluid.setTemperature(input.get("temperature_C").getAsDouble() + 273.15);
+    }
+    if (fluid.getMixingRule().getValue() != 10) {
+      throw new IllegalArgumentException("waterPhaseBoundaries requires CPA mixing rule 10");
+    }
+    if (input.has("tbpFractions")) {
+      for (JsonElement fraction : input.getAsJsonArray("tbpFractions")) {
+        addWaterBoundaryFraction(fluid, fraction.getAsJsonObject(), false);
+      }
+    }
+    if (input.has("plusFraction")) {
+      addWaterBoundaryFraction(fluid, input.getAsJsonObject("plusFraction"), true);
+    }
+    // New JSON-defined fractions require the same CPA rule after all components have been added.
+    fluid.setMixingRule(10);
+    WaterPhaseBoundaryResult comparison = new ThermodynamicOperations(fluid).cpaWaterPhaseBoundaryTemperatures();
+    JsonObject data = new JsonObject();
+    data.addProperty("model", comparison.getModel());
+    data.addProperty("mixingRule", comparison.getMixingRule());
+    data.addProperty("pressure_bara", comparison.getPressureBara());
+    data.addProperty("waterMoleFraction", comparison.getWaterMoleFraction());
+    data.add("moleFractions", GSON.toJsonTree(comparison.getMoleFractions()));
+    data.addProperty("complete", comparison.isComplete());
+    data.addProperty("explanation", comparison.getExplanation());
+    data.add("liquidWater", waterBoundaryJson(comparison.getLiquidWater()));
+    data.add("ice", waterBoundaryJson(comparison.getIce()));
+    data.add("hydrate", waterBoundaryJson(comparison.getHydrate()));
+    JsonArray reasons = new JsonArray();
+    for (BoundaryResult boundary : new BoundaryResult[] {comparison.getLiquidWater(), comparison.getIce(),
+        comparison.getHydrate()}) {
+      if (!boundary.isConverged()) {
+        reasons.add(boundary.getStatus().name() + ": " + boundary.getDiagnostic());
+      }
+    }
+    data.add("failureReasons", reasons);
+    return data;
+  }
+
+  /**
+   * Adds an explicitly characterized oil fraction without extracting a gas-only feed.
+   *
+   * @param fluid receiving CPA fluid
+   * @param fraction named fraction with mole fraction, kg/mol molar mass and g/cm3 density
+   * @param plus true to add a plus fraction, false to add a TBP fraction
+   */
+  private static void addWaterBoundaryFraction(SystemInterface fluid, JsonObject fraction, boolean plus) {
+    String name = fraction.get("name").getAsString();
+    double amount = fraction.get("moleFraction").getAsDouble();
+    double molarMass = fraction.get("molarMass_kg_mol").getAsDouble();
+    double density = fraction.get("density_g_cm3").getAsDouble();
+    if (!Double.isFinite(amount) || amount < 0.0 || !Double.isFinite(molarMass) || molarMass <= 0.0
+        || !Double.isFinite(density) || density <= 0.0) {
+      throw new IllegalArgumentException(
+          "Oil fractions require finite nonnegative moleFraction and positive " + "molarMass_kg_mol and density_g_cm3");
+    }
+    if (plus) {
+      fluid.addPlusFraction(name, amount, molarMass, density);
+    } else {
+      fluid.addTBPfraction(name, amount, molarMass, density);
+    }
+  }
+
+  /**
+   * Serializes one boundary without publishing non-finite numbers as usable temperatures.
+   *
+   * @param boundary boundary-specific calculation outcome
+   * @return JSON with status, reference and nullable numerical fields
+   */
+  private static JsonObject waterBoundaryJson(BoundaryResult boundary) {
+    JsonObject result = new JsonObject();
+    result.addProperty("status", boundary.getStatus().name());
+    result.addProperty("converged", boundary.isConverged());
+    result.addProperty("phaseReference", boundary.getPhaseReference());
+    result.addProperty("diagnostic", boundary.getDiagnostic());
+    addFiniteProperty(result, "temperature_C", boundary.getTemperatureC());
+    addFiniteProperty(result, "residual", boundary.getResidual());
+    addFiniteProperty(result, "waterActivity", boundary.getWaterActivity());
+    return result;
+  }
+
+  /**
+   * Adds a finite numeric property or JSON null for an unavailable value.
+   *
+   * @param object receiving JSON object
+   * @param name property name
+   * @param value finite value or a non-finite unavailable marker
+   */
+  private static void addFiniteProperty(JsonObject object, String name, double value) {
+    if (Double.isFinite(value)) {
+      object.addProperty(name, value);
+    } else {
+      object.add(name, JsonNull.INSTANCE);
     }
   }
 
@@ -580,7 +730,7 @@ public class FlowAssuranceRunner {
         fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
     fluid.setMixingRule(mixingRule);
     fluid.setMultiPhaseCheck(true);
     return fluid;
@@ -682,6 +832,53 @@ public class FlowAssuranceRunner {
   }
 
   /**
+   * Detects analyses whose headline result is unavailable (NaN, UNKNOWN) so the tool fails loudly.
+   *
+   * @param analysis analysis name
+   * @param data analysis data block
+   * @return reasons the result is unusable; empty when the headline result is valid
+   */
+  private static List<String> collectUnresolvedResults(String analysis, JsonObject data) {
+    List<String> reasons = new java.util.ArrayList<String>();
+    if ("hydrateRiskMap".equals(analysis)) {
+      boolean allUnknown = data.has("unknownPointCount") && data.has("totalPoints")
+          && data.get("unknownPointCount").getAsInt() >= data.get("totalPoints").getAsInt();
+      if (allUnknown) {
+        if (data.has("failureReasons")) {
+          for (JsonElement reason : data.getAsJsonArray("failureReasons")) {
+            reasons.add(reason.getAsString());
+          }
+        } else {
+          reasons.add("no hydrate temperature could be computed at any profile point");
+        }
+      }
+    } else if ("waxAppearance".equals(analysis)) {
+      if (isNaN(data, "waxAppearanceTemperature_C")) {
+        reasons.add("wax appearance temperature is NaN (no wax-forming components or non-converged wax flash)");
+      }
+    }
+    return reasons;
+  }
+
+  /**
+   * Checks whether a numeric JSON field is missing, NaN or serialized as the string "NaN".
+   *
+   * @param data JSON object
+   * @param field field name
+   * @return true when the field is absent or not a finite number
+   */
+  private static boolean isNaN(JsonObject data, String field) {
+    if (!data.has(field) || data.get(field).isJsonNull()) {
+      return true;
+    }
+    try {
+      return !Double.isFinite(data.get(field).getAsDouble());
+    } catch (RuntimeException e) {
+      return true;
+    }
+  }
+
+  /**
    * Creates a standard error JSON string.
    *
    * @param code the error code
@@ -690,6 +887,19 @@ public class FlowAssuranceRunner {
    * @return the error JSON string
    */
   private static String errorJson(String code, String message, String remediation) {
+    return errorJson(code, message, remediation, null);
+  }
+
+  /**
+   * Creates a standard error JSON string, optionally carrying the partial data that led to the error.
+   *
+   * @param code the error code
+   * @param message the error message
+   * @param remediation the fix suggestion
+   * @param partialData partial analysis data to include for diagnosis, or null
+   * @return the error JSON string
+   */
+  private static String errorJson(String code, String message, String remediation, JsonObject partialData) {
     JsonObject error = new JsonObject();
     error.addProperty("status", "error");
     JsonArray errors = new JsonArray();
@@ -699,6 +909,9 @@ public class FlowAssuranceRunner {
     err.addProperty("remediation", remediation);
     errors.add(err);
     error.add("errors", errors);
+    if (partialData != null) {
+      error.add("partialData", partialData);
+    }
     return GSON.toJson(error);
   }
 }

@@ -48,7 +48,7 @@ public class MasstransferMeOH {
     Stream waterSaturatedFeedGas = new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     neqsim.thermo.system.SystemInterface feedMeOH = feedGas.clone();
-    feedMeOH.setMolarComposition(new double[] { 0.0, 0.0, 1.0 });
+    feedMeOH.setMolarComposition(new double[] {0.0, 0.0, 1.0});
 
     Stream MeOHFeed = new Stream("lean TEG to absorber", feedMeOH);
     MeOHFeed.setFlowRate(680.5, "kg/hr");

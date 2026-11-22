@@ -93,6 +93,26 @@ Engineering context:
   metallic brick stoppers as impact protection and identifies trim capacity and design Cv as key
   selection inputs.
 
+## Consistent sizing and pressure inversion
+
+Run the inlet stream at the design conditions before `valve.autoSize(1.0, 100.0)`.
+With no safety margin and full opening, the resulting Cv must reproduce the
+design flow through `calculateMolarFlow()`, including on a second valve with an
+independent copy of the initialized inlet and the same sizing settings.
+Autosizing retains the flashed phase state; resetting a rich-gas stream's flow
+through an initialization routine can change its density and invalidate the Cv.
+
+The outlet-pressure solver and `getOutletPressure()` return absolute bar.
+Steady and transient valve execution convert that result into the configured
+pressure unit before applying it. Setting a design pressure in `barg` or `kPa`
+therefore gives the same physical result as setting it in `bara`.
+These consistency guarantees do not make pressure unique on a choked-flow
+plateau: when capacity limiting is enabled, an additional downstream boundary
+condition is needed at the limiting flow.
+
+See [Cv, Kv, and valve opening](equipment/valves.md#cv-kv-and-valve-opening)
+for the initialization and unit conventions.
+
 ## Design Standards Reference
 
 | Standard       | Description                                                          |
@@ -378,12 +398,14 @@ sizing method object:
 | $x_T$ | `setxT(double)` | 0.137 | Pressure drop ratio factor at choked flow. Typical values: globe valve 0.69-0.80, butterfly 0.25-0.50, ball 0.15-0.25 |
 | $F_L$ | `setFL(double)` | 1.0 | Liquid pressure recovery factor |
 | $F_D$ | `setFD(double)` | 1.0 | Valve style modifier |
+| Choked-flow capacity limit | `setAllowChoked(boolean)` | `true` | Caps gas flow at the configured $F_\gamma x_T$ limit; the legacy `default` sizing strategy instead defaults to `false` |
 
 ```java
 // Access the sizing method and configure parameters
 mechDesign.setValveSizingStandard("IEC 60534");
 mechDesign.getValveSizingMethod().setxT(0.75);  // Globe valve typical value
 mechDesign.getValveSizingMethod().setFL(0.90);   // Liquid recovery factor
+valve.setAllowChoked(true);                      // Set explicitly for this service
 ```
 
 ### Computing and Retrieving Cv/Kv

@@ -105,7 +105,7 @@ class ConstraintActivityAnalyzerTest {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = createEvaluator(fixture);
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     int evaluationsAfterSampling = evaluator.getEvaluationCount();
 
     ConstraintScale near = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 500.0,
@@ -178,7 +178,7 @@ class ConstraintActivityAnalyzerTest {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = createEvaluator(fixture);
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     List<ConstraintScale> scales = Arrays.asList(
         ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 500.0, "basis"),
         ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(1), 500.0, "basis"),
@@ -203,7 +203,7 @@ class ConstraintActivityAnalyzerTest {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = createEvaluator(fixture);
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     ConstraintScale near = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 500.0, "basis");
     ConstraintScale spare = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(1), 500.0, "basis");
     ConstraintScale violated = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(2), 500.0, "basis");
@@ -227,7 +227,7 @@ class ConstraintActivityAnalyzerTest {
     ProcessModelSimulationEvaluator changedEvaluator = createEvaluator(fixture);
     changedEvaluator.getConstraints().get(0).setUpperBound(1060.0);
     ProcessModelSimulationEvaluator.SensitivityQualityResult changedResult = changedEvaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     assertThrows(IllegalArgumentException.class, () -> ConstraintActivityAnalyzer.assess(changedResult,
         Arrays.asList(near, ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(1), 500.0, "basis"),
             ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(2), 500.0, "basis"),
@@ -239,7 +239,7 @@ class ConstraintActivityAnalyzerTest {
     unitlessEvaluator.addObjective("feed", model -> fixture.feed.getFlowRate("kg/hr"));
     unitlessEvaluator.addConstraintUpperBound("unitless", model -> fixture.feed.getFlowRate("kg/hr"), 1100.0);
     ProcessModelSimulationEvaluator.SensitivityQualityResult unitlessResult = unitlessEvaluator
-        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
     assertThrows(IllegalArgumentException.class,
         () -> ConstraintScale.fromSnapshot(unitlessResult.getConstraintSnapshots().get(0), 100.0, "basis"));
   }

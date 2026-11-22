@@ -5,9 +5,9 @@
 Can the MCP surface deterministically apply NeqSim's existing engineering-result rules, preserve structured findings and
 fail closed on malformed result JSON without presenting the validator as new scientific evidence?
 
-This increment targets a **qualified software contract**. Phase 0 inventory 1.23 deliberately keeps
-`validateResults=CONFIRMED_GAP` until this prerequisite merges and a later atomic promotion updates every inventory and
-protocol view together.
+Phase 0 inventory 1.42 retains this bounded behavior as **`CONTRACT_TESTED`** after merged PR #3406 established the
+prerequisite Java and packaged-MCP qualification and merged PRs #3416/#3421 restored the capability-response transport
+contract. The classification changes no production validator behavior or schema.
 
 ## Authoritative behavior
 
@@ -42,10 +42,10 @@ component, total-mass, enthalpy or facility-wide closure from a canonical `Proce
 ## Acceptance evidence
 
 - `EngineeringValidatorTest` covers clean, warning-only, blocking, nested and malformed inputs.
-- `test_validate_results_protocol.py` repeats those boundaries through the real packaged STDIO server and proves that
-  the inventory remains conservative at 1.23 / 20 explicit + 21 contract-tested + 30 confirmed gaps.
-- `test_mcp_server.py` retains the broad real-protocol `validateResults` call.
-- `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP contracts before the comprehensive suite.
+- `tests/protocol/test_validate_results_protocol.py` repeats those boundaries through the real packaged STDIO server and proves that
+  inventory 1.42 records 20 explicit + 42 contract-tested + 9 confirmed gaps.
+- `tests/protocol/test_mcp_server.py` retains the broad real-protocol `validateResults` call.
+- `ai-mcp-protocol-qualification.yml` runs the focused Java and packaged-MCP contracts before the comprehensive suite.
 
 The contract requires deterministic findings, fail-closed malformed JSON, standard envelope fields, no mutation, and
 successful focused plus comprehensive protocol checks. The one production compatibility change is intentional:

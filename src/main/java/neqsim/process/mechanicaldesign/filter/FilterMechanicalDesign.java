@@ -461,8 +461,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @return selected nominal diameter in mm
    */
   private double selectNominalNozzleDiameterMm(double requiredDiameterMm) {
-    double[] nominalDiametersMm = { 15.0, 20.0, 25.0, 40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0,
-        400.0, 450.0, 500.0, 600.0, 750.0, 900.0, 1050.0, 1200.0 };
+    double[] nominalDiametersMm = {15.0, 20.0, 25.0, 40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0,
+        400.0, 450.0, 500.0, 600.0, 750.0, 900.0, 1050.0, 1200.0};
     if (requiredDiameterMm <= 0.0) {
       return 0.0;
     }

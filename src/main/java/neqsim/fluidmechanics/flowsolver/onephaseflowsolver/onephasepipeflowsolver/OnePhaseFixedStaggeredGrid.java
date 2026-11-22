@@ -9,7 +9,9 @@ package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolv
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
 import neqsim.mathlib.generalmath.BandedLinearSystemSolver;
 import neqsim.mathlib.generalmath.TDMAsolve;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
@@ -25,7 +27,7 @@ import neqsim.fluidmechanics.flowsolver.NoAxialDispersion;
 public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OnePhaseFixedStaggeredGrid.class);
 
@@ -43,9 +45,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private static final double SPECIES_COUPLING_TOLERANCE = 1.0e-10;
   private static final double THERMODYNAMIC_COMPOSITION_TOLERANCE = 1.0e-10;
 
-  Matrix diffMatrix;
+  DMatrixRMaj diffMatrix;
   int iter = 0;
-  Matrix[] diff4Matrix;
+  DMatrixRMaj[] diff4Matrix;
   double[][] xNew;
   protected double[] oldMass;
   protected double[] oldComp;
@@ -86,7 +88,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     oldMass = new double[nodes];
     oldComp = new double[nodes];
     oldImpuls = new double[nodes];
-    diff4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    diff4Matrix = new DMatrixRMaj[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
     oldEnergy = new double[nodes];
     oldVelocity = new double[nodes];
     oldDensity = new double[nodes];
@@ -177,7 +179,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     axialDispersionModel = model;
   }
 
-  /** @return selected non-null physical axial-dispersion model */
+  /**
+   * Get the currently selected non-null physical axial-dispersion model.
+   *
+   * @return selected non-null physical axial-dispersion model
+   */
   public AxialDispersionModel getAxialDispersionModel() {
     return axialDispersionModel;
   }
@@ -217,18 +223,21 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int i = 0; i < numberOfNodes - 1; i++) {
         // setting temperatures
         pipe.getNode(i).init();
-        pipe.getNode(i + 1).getBulkSystem()
-            .setTemperature((4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
-                * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature()
-                    - pipe.getNode(i).getBulkSystem().getPhases()[0].getTemperature())
-                / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()
-                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
-                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass() * pipe.getNode(i + 1).getVelocity()
-                    * pipe.getNode(i + 1).getGeometry().getDiameter()
-                    * pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getDensity())
-                + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient() * dpdx)
-                * (pipe.getNode(i + 1).getGeometry().getNodeLength() + pipe.getNode(i).getGeometry().getNodeLength())
-                * 0.5 + pipe.getNode(i).getBulkSystem().getTemperature());
+        // Integrate wall heat exchange with frozen cell properties. An explicit temperature step
+        // overshoots the ambient at low throughput, where a cell spans many thermal lengths.
+        double length = 0.5
+            * (pipe.getNode(i + 1).getGeometry().getNodeLength() + pipe.getNode(i).getGeometry().getNodeLength());
+        double heatCapacity = pipe.getNode(i).getBulkSystem().getPhase(0).getCp("J/kgK");
+        double heatTransferNumber = 4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0) * length
+            / (heatCapacity * pipe.getNode(i + 1).getVelocity() * pipe.getNode(i + 1).getGeometry().getDiameter()
+                * pipe.getNode(i + 1).getBulkSystem().getPhase(0).getDensity());
+        double exchangedFraction = -Math.expm1(-heatTransferNumber);
+        double inletTemperature = pipe.getNode(i).getBulkSystem().getTemperature();
+        double ambientTemperature = pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature();
+        double jtChange = pipe.getNode(i + 1).getBulkSystem().getPhase(0).getJouleThomsonCoefficient() * dpdx * length;
+        double meanAttenuation = heatTransferNumber == 0.0 ? 1.0 : exchangedFraction / heatTransferNumber;
+        pipe.getNode(i + 1).getBulkSystem().setTemperature(inletTemperature
+            + exchangedFraction * (ambientTemperature - inletTemperature) + jtChange * meanAttenuation);
         if (pipe.getNode(i + 1).getBulkSystem().getTemperature() < 10.5) {
           pipe.getNode(i + 1).getBulkSystem().setTemperature(10.5);
         }
@@ -1092,10 +1101,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           do {
             iter++;
             setImpulsMatrixTDMA();
-            Matrix solOld = solMatrix.copy();
+            DMatrixRMaj solOld = solMatrix.copy();
             d = TDMAsolve.solve(a, b, c, r);
-            solMatrix = new Matrix(d, 1).transpose();
-            diffMatrix = solMatrix.minus(solOld);
+            solMatrix = new DMatrixRMaj(d.length, 1, true, d);
+            diffMatrix = new DMatrixRMaj(d.length, 1);
+            CommonOps_DDRM.subtract(solMatrix, solOld, diffMatrix);
             // if(dynamic) solMatrix.print(10,10);
 
             // System.out.println("diff1: ");
@@ -1104,7 +1114,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             // diffMatrix.norm1()/solMatrix.norm1());
             initVelocity(iter);
 
-            diff = Math.abs(diffMatrix.norm1() / solMatrix.norm1());
+            diff = Math.abs(NormOps_DDRM.normP1(diffMatrix) / NormOps_DDRM.normP1(solMatrix));
             if (diff > maxDiff) {
               maxDiff = diff;
             }
@@ -1117,14 +1127,15 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
               // System.out.println("iter: " +iter);
               setMassConservationMatrixTDMA();
               d = TDMAsolve.solve(a, b, c, r);
-              Matrix sol2Old = sol2Matrix.copy();
+              DMatrixRMaj sol2Old = sol2Matrix.copy();
               // sol2Matrix.print(10,10);
-              sol2Matrix = new Matrix(d, 1).transpose();
-              diffMatrix = sol2Matrix.minus(sol2Old);
+              sol2Matrix = new DMatrixRMaj(d.length, 1, true, d);
+              diffMatrix = new DMatrixRMaj(d.length, 1);
+              CommonOps_DDRM.subtract(sol2Matrix, sol2Old, diffMatrix);
               // System.out.println("diff2:
               // "+diffMatrix.norm1()/sol2Matrix.norm1());
               initPressure(iter);
-              diff = Math.abs(diffMatrix.norm1() / sol2Matrix.norm1());
+              diff = Math.abs(NormOps_DDRM.normP1(diffMatrix) / NormOps_DDRM.normP1(sol2Matrix));
               if (diff > maxDiff) {
                 maxDiff = diff;
               }
@@ -1138,15 +1149,16 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         iter = 0;
         do {
           iter++;
-          Matrix sol3Old = sol3Matrix.copy();
+          DMatrixRMaj sol3Old = sol3Matrix.copy();
           setEnergyMatrixTDMA();
           d = TDMAsolve.solve(a, b, c, r);
-          sol3Matrix = new Matrix(d, 1).transpose();
-          diffMatrix = sol3Matrix.minus(sol3Old);
+          sol3Matrix = new DMatrixRMaj(d.length, 1, true, d);
+          diffMatrix = new DMatrixRMaj(d.length, 1);
+          CommonOps_DDRM.subtract(sol3Matrix, sol3Old, diffMatrix);
           // System.out.println("diff3: " + diffMatrix.norm1() / sol3Matrix.norm1());
           initTemperature(iter);
 
-          diff = Math.abs(diffMatrix.norm1() / sol3Matrix.norm1());
+          diff = Math.abs(NormOps_DDRM.normP1(diffMatrix) / NormOps_DDRM.normP1(sol3Matrix));
           if (diff > maxDiff) {
             maxDiff = diff;
           }
@@ -1159,11 +1171,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           iter++;
           for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); p++) {
             setComponentConservationMatrix(p);
-            Matrix sol4Old = sol4Matrix[p].copy();
+            DMatrixRMaj sol4Old = sol4Matrix[p].copy();
             xNew[p] = TDMAsolve.solve(a, b, c, r);
-            sol4Matrix[p] = new Matrix(xNew[p], 1).transpose();
-            diff4Matrix[p] = sol4Matrix[p].minus(sol4Old);
-            diff = Math.abs(diff4Matrix[p].norm1() / (sol4Matrix[p].norm1()));
+            sol4Matrix[p] = new DMatrixRMaj(xNew[p].length, 1, true, xNew[p]);
+            diff4Matrix[p] = new DMatrixRMaj(xNew[p].length, 1);
+            CommonOps_DDRM.subtract(sol4Matrix[p], sol4Old, diff4Matrix[p]);
+            diff = Math.abs(NormOps_DDRM.normP1(diff4Matrix[p]) / NormOps_DDRM.normP1(sol4Matrix[p]));
             if (diff > maxDiff) {
               maxDiff = diff;
             }
@@ -1578,7 +1591,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           + "zero or non-finite";
     }
 
-    double[] normalizedPerturbations = { 1.0e-5, 1.0e-6, 1.0e-7 };
+    double[] normalizedPerturbations = {1.0e-5, 1.0e-6, 1.0e-7};
     double[] massRelativeErrors = new double[normalizedPerturbations.length];
     double[] momentumRelativeErrors = new double[normalizedPerturbations.length];
     double[] jacobianDirection = multiplyCoupledBandedJacobian(jacobian, direction);
@@ -1714,8 +1727,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   private String calculateRepeatedNodeStateDetail(double[][] first, double[][] repeated) {
-    String[] labels = { "phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow", "volumetricFlow", "Reynolds",
-        "frictionFactor", "componentMoles" };
+    String[] labels = {"phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow", "volumetricFlow", "Reynolds",
+        "frictionFactor", "componentMoles"};
     double[] maximumRelativeDrift = new double[labels.length];
     int[] maximumDriftNode = new int[labels.length];
     for (int node = 0; node < first.length; node++) {

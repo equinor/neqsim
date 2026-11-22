@@ -23,6 +23,7 @@ public class HydrateRiskMapperTest extends neqsim.NeqSimTest {
     fluid.addComponent("ethane", 0.05);
     fluid.addComponent("propane", 0.03);
     fluid.addComponent("CO2", 0.02);
+    fluid.addComponent("water", 0.05);
     fluid.setMixingRule("classic");
 
     HydrateRiskMapper mapper = new HydrateRiskMapper(fluid);
@@ -39,16 +40,45 @@ public class HydrateRiskMapperTest extends neqsim.NeqSimTest {
 
     assertNotNull(profile);
     assertTrue(profile.getPoints().size() == 6, "Should have 6 risk points");
+    assertTrue(profile.getFailureReasons().isEmpty(), "Wet gas must converge: " + profile.getFailureReasons());
+    assertTrue(profile.getUnknownPointCount() == 0);
 
-    // At high temperatures, risk should be low
+    // At 60 C the line is far above the hydrate curve; at 4 C and 75 bara it is inside it
     HydrateRiskMapper.RiskPoint firstPoint = profile.getPoints().get(0);
-    assertTrue(firstPoint.riskLevel == RiskLevel.LOW || firstPoint.riskLevel == RiskLevel.MEDIUM,
-        "At 60°C, risk should be low or medium");
+    assertTrue(firstPoint.riskLevel == RiskLevel.LOW, "At 60°C, risk should be low but was " + firstPoint.riskLevel);
+    assertTrue(!Double.isNaN(firstPoint.hydrateTemperatureC));
+    HydrateRiskMapper.RiskPoint lastPoint = profile.getPoints().get(5);
+    assertTrue(lastPoint.riskLevel == RiskLevel.CRITICAL, "At 4°C, 75 bara the line is in the hydrate region");
+    assertTrue(profile.getOverallRisk() == RiskLevel.CRITICAL);
+    assertTrue(profile.getCriticalPointCount() >= 1);
 
     String json = profile.toJson();
     assertNotNull(json);
     assertFalse(json.isEmpty());
     assertTrue(json.contains("riskLevel"), "JSON should contain risk levels");
+    assertTrue(json.contains("unknownPointCount"));
+  }
+
+  @Test
+  public void testDryGasIsUnknownNotLow() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 10.0, 80.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+
+    HydrateRiskMapper mapper = new HydrateRiskMapper(fluid);
+    mapper.addProfilePoint(0.0, 80.0, 20.0);
+    mapper.addProfilePoint(10.0, 75.0, 10.0);
+
+    HydrateRiskMapper.RiskProfile profile = mapper.calculate();
+
+    // No water: there is no hydrate equilibrium to compare against, so the result must not be reported as safe.
+    assertTrue(profile.getOverallRisk() == RiskLevel.UNKNOWN, "was " + profile.getOverallRisk());
+    assertTrue(profile.getUnknownPointCount() == 2);
+    assertTrue(Double.isNaN(profile.getMinimumSubcoolingC()));
+    assertFalse(profile.getFailureReasons().isEmpty());
+    assertTrue(profile.getFailureReasons().get(0).contains("water"));
+    assertTrue(profile.toJson().contains("failureReasons"));
   }
 
   @Test
@@ -56,6 +86,7 @@ public class HydrateRiskMapperTest extends neqsim.NeqSimTest {
     SystemInterface fluid = new SystemSrkEos(273.15 + 10.0, 80.0);
     fluid.addComponent("methane", 0.90);
     fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("water", 0.02);
     fluid.setMixingRule("classic");
 
     HydrateRiskMapper mapper = new HydrateRiskMapper(fluid);
@@ -93,6 +124,7 @@ public class HydrateRiskMapperTest extends neqsim.NeqSimTest {
     fluid.addComponent("methane", 0.85);
     fluid.addComponent("ethane", 0.10);
     fluid.addComponent("propane", 0.05);
+    fluid.addComponent("water", 0.02);
     fluid.setMixingRule("classic");
 
     HydrateRiskMapper mapper = new HydrateRiskMapper(fluid);
@@ -102,5 +134,6 @@ public class HydrateRiskMapperTest extends neqsim.NeqSimTest {
     HydrateRiskMapper.RiskProfile profile = mapper.calculate();
 
     assertNotNull(profile.getOverallRisk());
+    assertTrue(profile.getOverallRisk() != RiskLevel.UNKNOWN, profile.getFailureReasons().toString());
   }
 }

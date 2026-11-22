@@ -8,31 +8,81 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Immutable time-series evidence and verdict from one dynamic protection scenario. */
+/**
+ * Immutable time-series evidence and verdict from one dynamic protection scenario.
+ *
+ * @author ESOL
+ * @version 1.0
+ */
 public final class DynamicSafetyScenarioResult implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  /** Time history and deadline verdict for one response criterion. */
+  /**
+   * Time history and evaluation-policy verdict for one response criterion.
+   *
+   * @author ESOL
+   * @version 1.0
+   */
   public static final class CriterionResult implements Serializable {
     private static final long serialVersionUID = 1000L;
     private final DynamicScenarioCriterion criterion;
     private final List<Double> timeSeconds = new ArrayList<Double>();
     private final List<Double> values = new ArrayList<Double>();
     private Double firstSatisfiedSeconds;
+    private Double firstViolationSeconds;
+    private int monitoredSampleCount;
+    private Double monitoredMinimum;
+    private Double monitoredMaximum;
+    private boolean windowStartObserved;
+    private boolean windowEndObserved;
 
+    /**
+     * Creates an empty accumulator for one observation definition.
+     *
+     * @param criterion controlled observation definition
+     */
     CriterionResult(DynamicScenarioCriterion criterion) {
       this.criterion = criterion;
     }
 
+    /**
+     * Records one finite observation supplied by the scenario runner.
+     *
+     * @param relativeTimeSeconds event-relative physical time in seconds
+     * @param value observed scalar in the declared unit
+     */
     void sample(double relativeTimeSeconds, double value) {
       timeSeconds.add(Double.valueOf(relativeTimeSeconds));
       values.add(Double.valueOf(value));
       if (firstSatisfiedSeconds == null && relativeTimeSeconds >= 0.0 && criterion.isSatisfied(value)) {
         firstSatisfiedSeconds = Double.valueOf(relativeTimeSeconds);
       }
+      double windowTolerance = Math.min(1.0e-9, criterion.getDeadlineSeconds() * 1.0e-6);
+      if (criterion.getEvaluationMode() == DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS
+          && relativeTimeSeconds >= -windowTolerance
+          && relativeTimeSeconds <= criterion.getDeadlineSeconds() + windowTolerance) {
+        monitoredSampleCount++;
+        monitoredMinimum = monitoredMinimum == null ? Double.valueOf(value)
+            : Double.valueOf(Math.min(monitoredMinimum.doubleValue(), value));
+        monitoredMaximum = monitoredMaximum == null ? Double.valueOf(value)
+            : Double.valueOf(Math.max(monitoredMaximum.doubleValue(), value));
+        windowStartObserved |= Math.abs(relativeTimeSeconds) <= windowTolerance;
+        windowEndObserved |= Math.abs(relativeTimeSeconds - criterion.getDeadlineSeconds()) <= windowTolerance;
+        if (firstViolationSeconds == null && !criterion.isSatisfied(value)) {
+          firstViolationSeconds = Double.valueOf(relativeTimeSeconds);
+        }
+      }
     }
 
+    /**
+     * Evaluates the selected policy using the available physical observations.
+     *
+     * @return whether reach or complete-window sampled bounds pass
+     */
     public boolean isPassed() {
+      if (criterion.getEvaluationMode() == DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS) {
+        return windowStartObserved && windowEndObserved && monitoredSampleCount > 0 && firstViolationSeconds == null;
+      }
       return firstSatisfiedSeconds != null
           && firstSatisfiedSeconds.doubleValue() <= criterion.getDeadlineSeconds() + 1.0e-9;
     }
@@ -42,6 +92,12 @@ public final class DynamicSafetyScenarioResult implements Serializable {
       return firstSatisfiedSeconds;
     }
 
+    /** @return first sampled bound violation in the observation window, or null */
+    public Double getFirstViolationSeconds() {
+      return firstViolationSeconds;
+    }
+
+    /** @return controlled observation definition */
     DynamicScenarioCriterion getCriterion() {
       return criterion;
     }
@@ -53,28 +109,56 @@ public final class DynamicSafetyScenarioResult implements Serializable {
       result.put("values", new ArrayList<Double>(values));
       result.put("firstSatisfiedSeconds", firstSatisfiedSeconds);
       result.put("passed", Boolean.valueOf(isPassed()));
+      if (criterion.getEvaluationMode() == DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS) {
+        result.put("firstViolationSeconds", firstViolationSeconds);
+        result.put("monitoredSampleCount", Integer.valueOf(monitoredSampleCount));
+        result.put("monitoredMinimum", monitoredMinimum);
+        result.put("monitoredMaximum", monitoredMaximum);
+        result.put("windowStartObserved", Boolean.valueOf(windowStartObserved));
+        result.put("windowEndObserved", Boolean.valueOf(windowEndObserved));
+        result.put("observationCoverage", "SAMPLED_ONLY_NO_INTERPOLATION");
+      }
       return result;
     }
   }
 
   private final String scenarioId;
   private final String scenarioName;
+  private final DynamicSafetyScenario.ExecutionTarget executionTarget;
   private final Map<String, CriterionResult> criterionResults;
   private final Map<String, String> finalLogicStates;
   private final Map<String, Map<String, Object>> logicEvidence;
   private final List<String> errors;
   private final boolean steadyStateConverged;
+  private final String timingPolicy;
+  private final double triggerTimeSeconds;
+  private final double requestedDurationSeconds;
+  private final double completedDurationSeconds;
+  private final List<Double> physicalStepSeconds;
+  private final List<String> requirementIds;
+  private final List<String> equipmentTags;
 
-  DynamicSafetyScenarioResult(String scenarioId, String scenarioName, Map<String, CriterionResult> criterionResults,
+  DynamicSafetyScenarioResult(String scenarioId, String scenarioName,
+      DynamicSafetyScenario.ExecutionTarget executionTarget, Map<String, CriterionResult> criterionResults,
       Map<String, String> finalLogicStates, Map<String, Map<String, Object>> logicEvidence, List<String> errors,
-      boolean steadyStateConverged) {
+      boolean steadyStateConverged, String timingPolicy, double triggerTimeSeconds, double requestedDurationSeconds,
+      double completedDurationSeconds, List<Double> physicalStepSeconds, List<String> requirementIds,
+      List<String> equipmentTags) {
     this.scenarioId = scenarioId;
     this.scenarioName = scenarioName;
+    this.executionTarget = executionTarget;
     this.criterionResults = Collections.unmodifiableMap(new LinkedHashMap<String, CriterionResult>(criterionResults));
     this.finalLogicStates = Collections.unmodifiableMap(new LinkedHashMap<String, String>(finalLogicStates));
     this.logicEvidence = Collections.unmodifiableMap(new LinkedHashMap<String, Map<String, Object>>(logicEvidence));
     this.errors = Collections.unmodifiableList(new ArrayList<String>(errors));
     this.steadyStateConverged = steadyStateConverged;
+    this.timingPolicy = timingPolicy;
+    this.triggerTimeSeconds = triggerTimeSeconds;
+    this.requestedDurationSeconds = requestedDurationSeconds;
+    this.completedDurationSeconds = completedDurationSeconds;
+    this.physicalStepSeconds = Collections.unmodifiableList(new ArrayList<Double>(physicalStepSeconds));
+    this.requirementIds = Collections.unmodifiableList(new ArrayList<String>(requirementIds));
+    this.equipmentTags = Collections.unmodifiableList(new ArrayList<String>(equipmentTags));
   }
 
   public boolean isPassed() {
@@ -98,9 +182,49 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     return criterionResults;
   }
 
+  /** @return process container used to execute the scenario */
+  public DynamicSafetyScenario.ExecutionTarget getExecutionTarget() {
+    return executionTarget == null ? DynamicSafetyScenario.ExecutionTarget.PROCESS_SYSTEM : executionTarget;
+  }
+
   /** @return structured evidence keyed by protection-logic name */
   public Map<String, Map<String, Object>> getLogicEvidence() {
     return logicEvidence;
+  }
+
+  /** @return execution policy used by the scenario runner */
+  public String getTimingPolicy() {
+    return timingPolicy;
+  }
+
+  /** @return accepted physical-step durations in execution order, seconds */
+  public List<Double> getPhysicalStepSeconds() {
+    return physicalStepSeconds;
+  }
+
+  /** @return configured initiating-event boundary, seconds from scenario start */
+  public double getTriggerTimeSeconds() {
+    return triggerTimeSeconds;
+  }
+
+  /** @return requested scenario duration, seconds */
+  public double getRequestedDurationSeconds() {
+    return requestedDurationSeconds;
+  }
+
+  /** @return physical time advanced by the isolated process, seconds */
+  public double getCompletedDurationSeconds() {
+    return completedDurationSeconds;
+  }
+
+  /** @return controlled requirement identifiers verified by the scenario */
+  public List<String> getRequirementIds() {
+    return requirementIds;
+  }
+
+  /** @return ordered equipment and instrument tags exercised by the scenario */
+  public List<String> getEquipmentTags() {
+    return equipmentTags;
   }
 
   public Map<String, Object> toMap() {
@@ -108,7 +232,15 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     result.put("schemaVersion", "dynamic_safety_scenario_result.v2");
     result.put("scenarioId", scenarioId);
     result.put("scenarioName", scenarioName);
+    result.put("executionTarget", getExecutionTarget().name());
     result.put("steadyStateConverged", Boolean.valueOf(steadyStateConverged));
+    result.put("timingPolicy", timingPolicy);
+    result.put("triggerTimeSeconds", Double.valueOf(triggerTimeSeconds));
+    result.put("requestedDurationSeconds", Double.valueOf(requestedDurationSeconds));
+    result.put("completedDurationSeconds", Double.valueOf(completedDurationSeconds));
+    result.put("physicalStepSeconds", new ArrayList<Double>(physicalStepSeconds));
+    result.put("requirementIds", new ArrayList<String>(requirementIds));
+    result.put("equipmentTags", new ArrayList<String>(equipmentTags));
     Map<String, Object> criteria = new LinkedHashMap<String, Object>();
     for (Map.Entry<String, CriterionResult> entry : criterionResults.entrySet()) {
       criteria.put(entry.getKey(), entry.getValue().toMap());

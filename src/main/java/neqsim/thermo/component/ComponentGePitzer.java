@@ -2,8 +2,10 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
+import neqsim.thermo.phase.PitzerAttenuation;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PitzerElectrostaticMixing;
+import neqsim.thermo.phase.PitzerMegParameters;
 
 /**
  * Component class for the Pitzer model.
@@ -62,6 +64,33 @@ public class ComponentGePitzer extends ComponentGE {
   }
 
   /**
+   * Keeps the database reference on the molality scale used by Pitzer activities.
+   *
+   * @param temperature temperature in K
+   * @return molality reference in bar kg/mol, or the finite unsupported limit
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(double temperature) {
+    double coefficient = getHenryCoef(temperature);
+    return isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
+  /**
+   * Differentiates the Pitzer molality activity without a symmetric-to-Henry activity normalization.
+   *
+   * @param phase owning Pitzer phase
+   * @return d(ln phi)/dT in 1/K
+   */
+  @Override
+  public double fugcoefDiffTemp(PhaseInterface phase) {
+    if (Math.abs(getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(getComponentName())) {
+      dfugdt = getLnActivityTemperatureDerivative(phase) + getLnHenryCoefficientTemperatureDerivative(phase);
+      return dfugdt;
+    }
+    return super.fugcoefDiffTemp(phase);
+  }
+
+  /**
    * Returns the Pitzer molality-scale Henry reference.
    *
    * <p>
@@ -77,6 +106,9 @@ public class ComponentGePitzer extends ComponentGE {
    */
   @Override
   protected double getEffectiveHenryCoefficient(PhaseInterface phase) {
+    if (isActiveMegSolute(phase)) {
+      return PitzerMegParameters.henryReference(this, phase.getTemperature());
+    }
     if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
       return super.getEffectiveHenryCoefficient(phase);
     }
@@ -94,6 +126,13 @@ public class ComponentGePitzer extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   protected double getLnHenryCoefficientTemperatureDerivative(PhaseInterface phase) {
+    if (isActiveMegSolute(phase)) {
+      double t = phase.getTemperature();
+      double dt = 1.0e-3 * t;
+      double upper = Math.log(PitzerMegParameters.henryReference(this, t + dt));
+      double lower = Math.log(PitzerMegParameters.henryReference(this, t - dt));
+      return (upper - lower) / (2.0 * dt);
+    }
     if (!IapwsHenryLaw.isSupportedSpecies(getComponentName()) || !phase.hasComponent("water")) {
       return super.getLnHenryCoefficientTemperatureDerivative(phase);
     }
@@ -104,6 +143,19 @@ public class ComponentGePitzer extends ComponentGE {
       return 0.0;
     }
     return IapwsHenryLaw.getLnHenryCoefficientTemperatureDerivative(getComponentName(), phase.getTemperature());
+  }
+
+  /**
+   * Tests whether this component is MEG handled by the neutral Pitzer MEG dataset.
+   *
+   * @param phase aqueous phase
+   * @return {@code true} for MEG in a water-containing phase with active neutral interactions
+   */
+  private boolean isActiveMegSolute(PhaseInterface phase) {
+    if (!neutralPitzerInteractionsActive || !phase.hasComponent("water")) {
+      return false;
+    }
+    return PitzerMegParameters.isMeg(this);
   }
 
   /**
@@ -122,43 +174,6 @@ public class ComponentGePitzer extends ComponentGE {
   @Override
   protected boolean isHenryCoefficientCapped(double henryCoefficient) {
     return super.isHenryCoefficientCapped(henryCoefficient) || isHydrocarbon() || isIsTBPfraction();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean isHydrocarbon() {
-    return super.isHydrocarbon() || hasHydrocarbonFormula();
-  }
-
-  /**
-   * Check the database molecular formula for a pure hydrocarbon.
-   *
-   * <p>
-   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}. The
-   * formula check keeps Pitzer aqueous-reference and parameter-topology decisions independent of that initialization
-   * detail.
-   * </p>
-   *
-   * @return {@code true} when the formula contains carbon and hydrogen only
-   */
-  private boolean hasHydrocarbonFormula() {
-    String formula = getFormulae();
-    if (formula == null || formula.isEmpty()) {
-      return false;
-    }
-    boolean carbon = false;
-    boolean hydrogen = false;
-    for (int index = 0; index < formula.length(); index++) {
-      char character = formula.charAt(index);
-      if (character == 'C') {
-        carbon = true;
-      } else if (character == 'H') {
-        hydrogen = true;
-      } else if (!Character.isDigit(character)) {
-        return false;
-      }
-    }
-    return carbon && hydrogen;
   }
 
   /** {@inheritDoc} */
@@ -217,7 +232,7 @@ public class ComponentGePitzer extends ComponentGE {
     double Aphi = debyeHuckelAphi(temperature) / 3.0;
     double b = 1.2;
     // Pitzer DH function: F = -Aphi * [sqrtI/(1+b*sqrtI) + (2/b)*ln(1+b*sqrtI)]
-    double fDH = -Aphi * (sqrtI / (1.0 + b * sqrtI) + (2.0 / b) * Math.log(1.0 + b * sqrtI));
+    double fDH = -Aphi * (sqrtI / (1.0 + b * sqrtI) + (2.0 / b) * Math.log1p(b * sqrtI));
 
     // Z = sum of m_i * |z_i| over all ions (needed for C term)
     double Zsum = 0.0;
@@ -252,28 +267,20 @@ public class ComponentGePitzer extends ComponentGE {
       boolean isTwoTwo = Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5;
 
       double x1 = alpha1 * sqrtI;
-      double g1 = 0.0;
-      double gp1 = 0.0;
-      if (x1 > 1e-12) {
-        g1 = 2.0 * (1.0 - (1.0 + x1) * Math.exp(-x1)) / (x1 * x1);
-        gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
-      }
+      double g1 = PitzerAttenuation.value(x1);
+      double gp1 = PitzerAttenuation.scaledDerivative(x1);
       double Bval = beta0 + beta1 * g1;
       // B'(I) = dB/dI for the F-term (Pitzer 1991 Eq. 8-2-8)
-      double Bprime = (I > 1e-12) ? beta1 * gp1 / I : 0.0;
+      double Bprime = (I > 0.0) ? beta1 * gp1 / I : 0.0;
 
       if (isTwoTwo || pitz.isNonTwoTwoBeta2Active()) {
         double beta2val = pitz.getBeta2ij(componentNumber, j, temperature);
         if (Math.abs(beta2val) > 1e-20) {
           double x2 = pitz.getPitzerAlpha2(componentNumber, j) * sqrtI;
-          double g2 = 0.0;
-          double gp2 = 0.0;
-          if (x2 > 1e-12) {
-            g2 = 2.0 * (1.0 - (1.0 + x2) * Math.exp(-x2)) / (x2 * x2);
-            gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
-          }
+          double g2 = PitzerAttenuation.value(x2);
+          double gp2 = PitzerAttenuation.scaledDerivative(x2);
           Bval += beta2val * g2;
-          if (I > 1e-12) {
+          if (I > 0.0) {
             Bprime += beta2val * gp2 / I;
           }
         }
@@ -350,6 +357,24 @@ public class ComponentGePitzer extends ComponentGE {
       }
     }
 
+    // The target can also be the opposite-sign member of a ternary interaction.
+    // Its derivative contains each same-sign pair once: m_j * m_k * psi_jkM.
+    // The loop above covers only targets belonging to that same-sign pair.
+    for (int j = 0; j < numberOfComponents; j++) {
+      double chargej = phase.getComponent(j).getIonicCharge();
+      if (chargej * charge >= 0.0 || Math.abs(chargej) < 0.5) {
+        continue;
+      }
+      for (int k = j + 1; k < numberOfComponents; k++) {
+        double chargek = phase.getComponent(k).getIonicCharge();
+        if (chargek * charge >= 0.0 || Math.abs(chargek) < 0.5) {
+          continue;
+        }
+        sum += phase.getComponent(j).getMolality(phase) * phase.getComponent(k).getMolality(phase)
+            * pitz.getPsiijk(j, k, componentNumber, temperature);
+      }
+    }
+
     // ln(gamma_M) = z_M^2 * F + binary/mixing terms
     double F = fDH + fBprime + fEthetaPrime;
     lngamma = charge * charge * F + sum + phreeqcCommonIonContribution;
@@ -392,14 +417,14 @@ public class ComponentGePitzer extends ComponentGE {
     double alpha1 = Math.abs(firstCharge) >= 1.5 && Math.abs(secondCharge) >= 1.5 ? 1.4 : 2.0;
     double x1 = alpha1 * squareRootIonicStrength;
     double derivative = 0.0;
-    if (x1 > 1.0e-12 && ionicStrength > 1.0e-12) {
-      double gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
+    if (ionicStrength > 0.0) {
+      double gp1 = PitzerAttenuation.scaledDerivative(x1);
       derivative = phase.getBeta1ij(first, second, temperature) * gp1 / ionicStrength;
     }
     double beta2Value = phase.getBeta2ij(first, second, temperature);
     double x2 = phase.getPitzerAlpha2(first, second) * squareRootIonicStrength;
-    if (Math.abs(beta2Value) > 1.0e-20 && x2 > 1.0e-12 && ionicStrength > 1.0e-12) {
-      double gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
+    if (Math.abs(beta2Value) > 1.0e-20 && ionicStrength > 0.0) {
+      double gp2 = PitzerAttenuation.scaledDerivative(x2);
       derivative += beta2Value * gp2 / ionicStrength;
     }
     return derivative;

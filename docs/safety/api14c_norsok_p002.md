@@ -18,8 +18,7 @@ Classes live under `neqsim.process.safety.api14c`,
 
 ## API 14C SAFE chart
 
-The Safety Analysis Function Evaluation (SAFE) chart lists every process
-component and the protective devices API RP 14C requires for it. Declare the
+The equipment screen lists recognized process components and the protective device types in NeqSim’s screening table. Declare the
 devices actually installed, then build the chart against a `ProcessSystem`:
 
 ```java
@@ -41,9 +40,28 @@ String json = chart.toJson();
 
 `buildAssumingComplete(process)` enumerates the equipment and assumes full
 device coverage — useful to generate the SAFE-chart skeleton before populating
-the installed devices. Device types come from `Api14cDeviceType` (PSH, PSL, LSH,
+the installed devices. Markdown and JSON identify these rows as `ASSUMED_TEMPLATE`.
+The legacy `isComplete()` accessor measures row completeness, including on a template. Device types come from `Api14cDeviceType` (PSH, PSL, LSH,
 LSL, TSH, TSL, USV, SDV, BDV, PSV, FSV, FIRE, GAS) and equipment categories from
 `Api14cEquipmentCategory` (e.g. `PRESSURE_VESSEL`).
+
+## Linking relief and shutdown evidence to project equipment
+
+Add an `Api14cDeviceDeclaration` through `EngineeringProject.addApi14cDevice` for each documented
+equipment tag, device type, device tag and evidence reference. Supply a sequence ID for a shutdown function.
+The engineering calculation report and DEXPI package calculation file include an `apiRp14cProtectionReview`
+row for each non-stream unit. Unclassified equipment is marked for review. Generated P&ID proposals do
+not enter the declared device list.
+
+| Function | Evidence in the equipment row |
+| --- | --- |
+| PSV | Matching protected equipment and PSV tags link to the installed-device screen, including API 520 area and piping checks for each credible API 521 relief demand. |
+| Shutdown device or sensor | Matching protected equipment and sequence ID link to the initiating cause, actions, final positions, requirements, and dynamic verification status. A missing, wrong-equipment or ambiguous link stays unresolved. |
+| Device without a declaration | The screening device type appears in `undeclaredDeviceTypes`. Review applicability and document omissions in the project safety analysis. |
+
+The trace shows what the project has declared, calculated and simulated. It still requires a component-specific
+safety analysis, review of justified deviations and independent verification of installation and proof-test records.
+The offshore export regression in `NorsokOffshoreEngineeringBuilderTest` exercises the complete package path.
 
 ## NORSOK P-002 process-design compliance
 

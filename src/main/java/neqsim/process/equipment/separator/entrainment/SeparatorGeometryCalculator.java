@@ -306,6 +306,67 @@ public class SeparatorGeometryCalculator implements Serializable {
   }
 
   /**
+   * Calculates the residence time of the lower liquid layer (typically water below the oil-water interface) in a
+   * horizontal vessel with constant effective length.
+   *
+   * <p>
+   * $$ t = \frac{A(h)\,L_{eff}}{Q} \cdot 60 $$
+   * </p>
+   *
+   * @param diameter vessel internal diameter [m]
+   * @param layerHeight height of the layer surface above the vessel bottom, for example the interface height [m]
+   * @param effectiveLength effective settling length [m]
+   * @param volumeFlowM3PerHour volume flow through the layer [m3/h]
+   * @return residence time [min], or {@code Double.POSITIVE_INFINITY} if the flow is not positive
+   */
+  public static double calcLayerResidenceTimeMinutes(double diameter, double layerHeight, double effectiveLength,
+      double volumeFlowM3PerHour) {
+    if (volumeFlowM3PerHour <= 0.0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return calcSegmentArea(diameter, layerHeight) * effectiveLength / volumeFlowM3PerHour * 60.0;
+  }
+
+  /**
+   * Calculates the residence time of the upper (oil) layer between the interface and a liquid surface level in a
+   * horizontal vessel.
+   *
+   * @param diameter vessel internal diameter [m]
+   * @param interfaceHeight oil-water interface height above the vessel bottom [m]
+   * @param liquidLevelHeight oil surface (for example normal liquid level) height above the bottom [m]
+   * @param effectiveLength effective settling length [m]
+   * @param volumeFlowM3PerHour oil volume flow [m3/h]
+   * @return residence time [min]; zero if the interface is at or above the liquid level
+   */
+  public static double calcUpperLayerResidenceTimeMinutes(double diameter, double interfaceHeight,
+      double liquidLevelHeight, double effectiveLength, double volumeFlowM3PerHour) {
+    if (volumeFlowM3PerHour <= 0.0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    double area = calcSegmentArea(diameter, liquidLevelHeight) - calcSegmentArea(diameter, interfaceHeight);
+    return Math.max(area, 0.0) * effectiveLength / volumeFlowM3PerHour * 60.0;
+  }
+
+  /**
+   * Back-calculates the effective settling length of a horizontal vessel from a vendor hold-up time at a known layer
+   * height, so that later residence times at other levels use the same effective volume.
+   *
+   * @param diameter vessel internal diameter [m]
+   * @param layerHeight layer surface height used by the vendor hold-up [m]
+   * @param holdupMinutes vendor hold-up time [min]
+   * @param volumeFlowM3PerHour volume flow used by the vendor [m3/h]
+   * @return effective length [m], or 0 if the layer area is zero
+   */
+  public static double calcEffectiveLengthFromHoldup(double diameter, double layerHeight, double holdupMinutes,
+      double volumeFlowM3PerHour) {
+    double area = calcSegmentArea(diameter, layerHeight);
+    if (area <= 0.0) {
+      return 0.0;
+    }
+    return holdupMinutes / 60.0 * volumeFlowM3PerHour / area;
+  }
+
+  /**
    * Calculates the Souders-Brown K-factor for the current gas velocity and phase properties.
    *
    * <p>

@@ -112,6 +112,24 @@ Compressor,Reciprocating,Critical,5.71e-5,17513,120,IEEE493-2007,High
 - Lines starting with `#` are comments
 - The first non-comment line should contain column headers (optional but recommended)
 
+### Unavailable measurements
+
+`OREDADataImporter` preserves an empty numeric cell or `-` as an unavailable
+measurement (`Double.NaN`), rather than a measured zero. Failure-rate and time
+accessors propagate that value. Malformed numeric cells also become `NaN` and
+produce a warning; the record and its other valid measurements are retained.
+`ReliabilityRecord.getAvailability()` returns
+`NaN` when MTBF or MTTR is unavailable, nonfinite or negative, or when both are
+zero. A measured MTTR of zero with a positive finite MTBF still gives availability
+of 1.0; a measured zero failure rate remains zero.
+
+The record's `toMap()` represents unavailable or nonfinite numeric values as
+`null`, so JSON consumers can distinguish unknown reliability from perfect
+availability. Consumers must check that their required measurements are finite
+before using them in a risk or availability calculation. Earlier versions
+converted blank cells and `-` to zero and reported availability of 1.0 for zero
+MTBF and MTTR; imported results containing those markers should be recalculated.
+
 ### Units
 
 | Parameter | Unit |
@@ -169,21 +187,28 @@ importer.addEquipmentData(
 );
 ```
 
-### Method 3: Using ProcessEquipmentReliability
+### Method 3: Using a Reliability Data Record
 
+Use `ReliabilityDataSource.ReliabilityData` to hold descriptive MTBF/MTTR data.
+This does not change equipment operation or activate a failure scenario.
+The values below are illustrative assumptions, not licensed OREDA observations.
+
+<!-- doc-test: reliability-record -->
 ```java
-import neqsim.process.safety.risk.ProcessEquipmentReliability;
+import neqsim.process.equipment.failure.ReliabilityDataSource.ReliabilityData;
 
-// Create reliability data object
-ProcessEquipmentReliability reliability = new ProcessEquipmentReliability("HP Pump");
-reliability.setFailureRate(1.83e-4);  // failures per hour
-reliability.setMTBF(5464);            // hours
-reliability.setMTTR(24);              // hours
-reliability.setDataSource("OREDA-2015");
-
-// Attach to process equipment
-pump.setReliabilityData(reliability);
+ReliabilityData reliability = new ReliabilityData("Pump", "Centrifugal", 5464.0, 24.0);
+reliability.setSource("Illustrative assumptions");
+reliability.setNotes("Replace with qualified service-specific data before a reliability study.");
+double availability = reliability.getAvailability(); // MTBF / (MTBF + MTTR)
+double failuresPerMillionHours = reliability.getFailureRate(); // 1e6 / MTBF
+double failuresPerHour = failuresPerMillionHours / 1.0e6;
 ```
+
+`ProcessEquipmentReliability` and `pump.setReliabilityData(...)` are not
+implemented APIs. For an operating failure scenario, use the existing
+`EquipmentFailureMode` framework separately. Its application changes equipment
+behavior and should not be confused with storing reliability assumptions.
 
 ---
 

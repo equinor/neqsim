@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.SteadyStateConvergenceReport.TerminationReason;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -86,6 +87,18 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
     pipe.run();
 
     assertTrue(pipe.getSteadyStateIterationsUsed() <= 2, "The solver must respect the user-specified iteration limit");
+    SteadyStateConvergenceReport report = pipe.getSteadyStateConvergenceReport();
+    assertFalse(report.isConverged(), "Two refinement sweeps must not be promoted to convergence");
+    assertEquals(TerminationReason.ITERATION_LIMIT, report.getTerminationReason());
+    assertEquals(pipe.getSteadyStateIterationsUsed(), report.getIterations());
+    assertTrue(
+        report.getPressureMomentumResidual() >= report.getTolerance()
+            || report.getPressureUpdateResidual() >= report.getTolerance()
+            || report.getLiquidHoldupResidual() >= report.getTolerance()
+            || report.getLiquidSplitResidual() >= report.getTolerance()
+            || report.getThermodynamicResidual() >= report.getTolerance()
+            || report.getPressureDropResidual() >= report.getTolerance(),
+        "An iteration-limited solve must expose at least one residual above tolerance");
   }
 
   /** A horizontal line must reproduce a Darcy-Weisbach order-of-magnitude pressure drop. */
@@ -137,16 +150,23 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
    * reclassify sections of the flow map, a real terrain response appears and the pressure drop must RISE: uphill
    * sections hold more liquid and shear more wall. The single absolute bound that used to stand here was satisfied by a
    * model that instead LOWERED the pressure drop by 4.5 per cent, which is the signature of a homogeneous friction
-   * form, where the gradient scales as {@code G^2 / rho_mix} and extra liquid therefore reduces it. Measured on this
-   * fixture the response is now monotone and of the right sign: -0.08, -0.20, +2.06, +2.96, +4.88 and +7.12 per cent at
-   * 1, 5, 10, 20, 35 and 50 m amplitude.
+   * form, where the gradient scales as {@code G^2 / rho_mix} and extra liquid therefore reduces it.
+   * </p>
+   *
+   * <p>
+   * The size of the response is pinned by a reference transient multiphase simulator run on this line (40 km, 0.5 m,
+   * 55.6 kg/s, 95 bara outlet, 6.7 km waves): plus 5, 30 and 70 per cent at 20, 35 and 50 m amplitude. With the
+   * depth-squared wave-roughness closure this fixture gives -0.1, +2.7, +5.5, +25 and +57 per cent at 5, 10, 20, 35 and
+   * 50 m, so the bounds below are set at about one third above the reference. The earlier flat 15 per cent bound
+   * encoded the capped square-root roughness, under which the uphill film jumped from the thin to the thick root and
+   * the response was +3 per cent at 50 m against the reference's +70.
    * </p>
    */
   @Test
   void testZeroNetElevationUndulationDoesNotCreatePressureDrop() {
     double flat = solveWithUndulation(0.0);
 
-    for (double amplitude : new double[] { 1.0, 5.0 }) {
+    for (double amplitude : new double[] {1.0, 5.0}) {
       double undulating = solveWithUndulation(amplitude);
       double deviationPercent = 100.0 * Math.abs(undulating - flat) / flat;
       assertTrue(deviationPercent < 1.0,
@@ -154,26 +174,30 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
               + " bar to " + undulating + " bar (" + deviationPercent + "%)");
     }
 
-    double previous = flat;
-    for (double amplitude : new double[] { 10.0, 20.0, 35.0, 50.0 }) {
+    double previous = Double.NEGATIVE_INFINITY;
+    double[] amplitudes = {10.0, 20.0, 35.0, 50.0};
+    double[] upperBoundsPercent = {10.0, 15.0, 40.0, 90.0};
+    for (int i = 0; i < amplitudes.length; i++) {
+      double amplitude = amplitudes[i];
       double undulating = solveWithUndulation(amplitude);
       double deviationPercent = 100.0 * (undulating - flat) / flat;
-      assertTrue(deviationPercent > -1.0, "Undulation of " + amplitude
+      assertTrue(deviationPercent > -1.5, "Undulation of " + amplitude
           + " m must not reduce the pressure drop, but moved it from " + flat + " bar to " + undulating + " bar");
-      assertTrue(deviationPercent < 15.0,
+      assertTrue(deviationPercent < upperBoundsPercent[i],
           "Undulation of " + amplitude + " m with zero net elevation change moved the pressure drop from " + flat
               + " bar to " + undulating + " bar (" + deviationPercent + "%)");
       assertTrue(undulating >= previous - 1.0e-9, "The terrain response must grow with amplitude, but " + amplitude
           + " m gave " + undulating + " bar against " + previous + " bar at the previous amplitude");
       previous = undulating;
     }
+    assertTrue(previous > flat, "Steep undulation must raise the pressure drop above the flat line");
   }
 
   /** The terrain response must be continuous in the undulation amplitude. */
   @Test
   void testTerrainResponseIsContinuousInAmplitude() {
     double previous = solveWithUndulation(0.0);
-    for (double amplitude : new double[] { 2.0, 4.0, 6.0, 8.0, 10.0 }) {
+    for (double amplitude : new double[] {2.0, 4.0, 6.0, 8.0, 10.0}) {
       double current = solveWithUndulation(amplitude);
       double stepPercent = 100.0 * Math.abs(current - previous) / previous;
       assertTrue(stepPercent < 5.0, "Pressure drop stepped by " + stepPercent

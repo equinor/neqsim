@@ -1,0 +1,24 @@
+{
+  "baseline": {
+    "ComponentGENRTLmodifiedHV.getGamma": 2122200,
+    "PhaseEos.molarVolume": 530750,
+    "PhaseEos.molarVolumeAnalytical": 3050,
+    "PhaseEos.solveCubic": 3050,
+    "PhaseEos.dFdV": 2478700,
+    "PhaseEos.init": 540802,
+    "TPflash.runInternal": 3050,
+    "TPmultiflash.run": 3050,
+    "PhaseGENRTLmodifiedHV.getExcessGibbsEnergy": 530550
+  },
+  "candidate": {
+    "ComponentGENRTLmodifiedHV.getGamma": 2122200,
+    "PhaseEos.molarVolume": 530750,
+    "PhaseEos.molarVolumeAnalytical": 3050,
+    "PhaseEos.solveCubic": 3050,
+    "PhaseEos.dFdV": 2478700,
+    "PhaseEos.init": 540802,
+    "TPflash.runInternal": 3050,
+    "TPmultiflash.run": 3050,
+    "PhaseGENRTLmodifiedHV.getExcessGibbsEnergy": 530550
+  }
+}

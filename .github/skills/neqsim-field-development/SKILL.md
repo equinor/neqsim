@@ -24,6 +24,27 @@ economics, and risk assessment.
 | Operations | — | DETAILED | ±10% | History matching, debottlenecking, optimization |
 | Late Life | — | DETAILED | ±20% | IOR/EOR, recompletion, decommissioning cost |
 
+### Gate Packages: Verdict Versus Full Deliverable Set
+
+- **A gate verdict is not a gate package.** A readiness verdict (ready/review/not_ready) answers
+  "can we go to the gate". A full package answers "here is every product the gate requires, with
+  an owner and a status". When the user asks to "deliver according to DG1" (or any gate), build a
+  product register: one row per required product, a status from a fixed taxonomy (Evidenced /
+  Partly evidenced / Draft for review / Owner action / Not applicable - confirm), the evidence
+  path and the owning role. Never label the result as gate approval; the readiness label stays
+  at most "ready for owner review".
+- **Build a concept long list before capacity sizing.** Development concepts (FPSO, tie-back,
+  subsea-to-shore, phased, joint development) are different from capacity variants of one concept
+  (e.g. 100/150/180 kbbl/d). Screen the long list first, record why concepts are dropped, then size
+  the kept concepts. Capacity variants alone do not satisfy a concept-screening product.
+- **StudyClass is not an AACE class or gate status.** A screening study class (A/B/C) says how
+  deep the work went; the cost estimate carries its own AACE class (5 to 1); the gate carries its
+  own readiness. Report all three separately.
+- **Placeholder sources stay placeholders.** Fiscal, tariff or price inputs marked as examples
+  must be labelled as such in the package and listed as owner actions.
+- Company gate product lists and governance live in enterprise skills (for Equinor:
+  `enterprise-field-development-decision-gate`, `gate_package.py`); keep them out of this repo.
+
 ### Workflow Orchestration
 
 ```java
@@ -208,6 +229,29 @@ double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(tD, deltaP, 
 
 See the `neqsim-production-optimization` skill for the full surveillance workflow.
 
+For radial input conversion, use inner reservoir radius in metres. Compressibility
+is 1/Pa for `dimensionlessTime` and 1/bar for `aquiferConstant`: ctBar=1e5*ctPa.
+Physical zeros are distinct from invalid inputs or an unrepresentable positive
+conversion; do not turn a conversion exception into a zero-support scenario.
+
+For radial support, the infinite-acting pressure/analytic derivative use a
+qualified mathematical spectral kernel. The finite-radius maximum-policy option
+remains an unqualified transient approximation, despite sharing the improved
+infinite branch. Preserve its explicit zero-time/finite-radius limitations in
+`docs/pvtsimulation/reservoir_material_balance.md#aquifer-influx`; do not use it
+as independently validated bounded radial support or equate it with segregated
+Fetkovich coupling. Carter–Tracy timestep convergence does not remove its intrinsic
+approximation error. Mathematical references are not measured field acceptance. The current
+`infinite-radial/initialization65/` fixture records initialization-only identity,
+concurrent first fallback and cold/warm/deferred runtime tradeoffs. Its parent
+`optimization64/` retains the positive-tail correction and complete numerical
+boundary controls. The current `scaling66/` receipt qualifies normalized CT
+arithmetic across scales, analytic step/ramp limits, signed cumulative projection
+and explicit invalid/unrepresentable histories. Its bounded numerical controls
+do not admit finite-annulus physics. Preserve all historical receipts at their
+exact revisions; current CT values are checked against original independent
+criteria rather than claimed bit-identical to the earlier recurrence evaluation.
+
 ### Injection Strategy (Voidage Replacement)
 
 ```java
@@ -373,6 +417,45 @@ analyzer.setFluid(reservoirFluid);
 TiebackReport report = analyzer.analyze();
 ```
 
+### Host impact of a tie-in on a benchmarked host model
+
+When the host already has a benchmarked NeqSim `ProcessModel`, assess the tie-in on a
+reproducible copy of that model:
+
+1. Record the baseline model version, operating window and constraint basis. If the host package
+   and workspace require incompatible NeqSim JARs, use separate Python processes with explicit
+   classpaths and exchange inputs/results; do not mix those JARs in one JVM.
+2. Use the tie-in fluid's own composition and PVT evidence with compatible EOS, mixing rules and
+   component definitions. If only host-fluid data are available, label that fluid as a surrogate
+   and quantify the sensitivity. Recombine oil, gas, water and lift gas on a molar basis; document
+   standard-volume reference conditions, GOR and water-cut definitions, and verify them by flashing
+   the reconstructed fluid. Initialize compositions before reading mole fractions.
+3. Connect the additional `Stream` to the intended inlet `Mixer` using the host model's supported
+   extension point. Include each external feed exactly once in total and component balances and
+   check the energy balance. An unaccounted feed requires a boundary-accounting correction, not a
+   change that hides a residual. Preserve the baseline for comparison.
+4. Run plateau, mid-life and late-life points over the relevant benchmark windows. Report both
+   absolute and incremental compressor power, separator utilisation, export oil and produced water
+   against documented limits. Identify constraints already exceeded in the baseline separately
+   from those introduced by the tie-in; do not assume a universal utilisation threshold.
+
+### Evaluate tubing and line back-pressure during depletion
+
+Use the coupled reservoir inflow and tubing/flowline outflow response to determine feasible rates
+as reservoir pressure, water cut, GOR, gas lift and host pressure change. Bubble point alone does
+not define a minimum flowing bottom-hole pressure or a recovery ceiling. Establish flow/no-flow
+conditions from the available reservoir pressure and the required pressure at the same datum.
+
+Reuse the current VFP generation and import/export APIs (see `MultiScenarioVFPGenerator` and
+`neqsim-subsea-and-wells`), checking units, datum depth, axis definitions, feasible points and the
+reservoir simulator's table format. Compare gas-lift and injection scenarios on the same basis.
+If a VFP table causes convergence trouble, inspect interpolation, operating branches and control
+switching. Do not force BHP versus rate to be monotonic just to obtain convergence. The
+[OPM VFP consistency guidance](https://opm.github.io/opm-flow-editor-support/keywords/VFPCHK.html)
+discusses crossing curves at adjacent tubing-head pressures, a different check from monotonicity
+with rate. Preserve the original table and validate any justified conditioning against the
+hydraulic model before using it for recovery or economic conclusions.
+
 ### Subsea System Configuration
 
 ```java
@@ -445,3 +528,20 @@ class, search the source to confirm:
 - UK UKCS: 30% ring-fence CT + 10% supplementary charge = 40% marginal rate
 - Generic: Configurable via `GenericTaxModel`
 - Always use `CashFlowEngine` with the correct country code
+
+### Staged-option VPbo / DG1 screening for an unappraised HPHT discovery (lessons from Afrodite PL293)
+
+- Value the decision as a staged option (stop / commit now / mature to DG2 then develop only if positive); an at-break-even project (NPV about 0 at P50) still has positive EMV when maturation is cheap, so state EMV of maturing, not just P50 NPV.
+- Host life is a cost, not a constraint: price the years the profile outlives the host plan (host-alive cost, PV) and report a COP-shift curve; ullage rarely discriminates, host life and cost do.
+- Reservoir-model need is a value-of-information question: EVPI on volume vs EVSI of a sidetrack vs its net cost, with the well-count rule (about 45 % of volume over a 4-year plateau).
+- Cluster upside: report the share of nearby discovered gas that must be tied in for NPV > 0, not a single NPV.
+- Report break-even gas price from the model by bisection, never a rounded literal; keep literals out of narrative strings (derive them from the results dict).
+- HPHT dew point: do not trust `dewPointPressureFlash` (wrong root at 168 C); use a TP-flash bisection and CCE dropout. `TiebackAnalyzer` rejects shallow hosts through its water-depth gate; screen those hosts with the explicit pipe model.
+
+### Qualification output retention
+
+Keep required regression inputs, compact independent references and reproduction
+scripts in Git. Store bulky generated qualification histories and repeated
+before/after matrices outside the checkout, preserving full outputs, hashes and
+public provenance. The radial fixture README documents restoration for PR #4924.
+Do not re-add its archived run outputs during campaign continuation.

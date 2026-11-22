@@ -26,6 +26,16 @@
  * (Gilbert, Baxendell, Ros, Achong)</li>
  * </ul>
  *
+ * <h2>Choke Practice Helpers</h2>
+ * <ul>
+ * <li>{@link neqsim.process.mechanicaldesign.valve.choke.ChokeFlowCoefficient} - Cv, orifice diameter and discharge
+ * coefficient conversions and observed Cv from measurements</li>
+ * <li>{@link neqsim.process.mechanicaldesign.valve.choke.ChokeOperatingEnvelope} - operating-range, clean-up,
+ * collapse-capacity, noise and opening-speed screening</li>
+ * <li>{@link neqsim.process.mechanicaldesign.valve.choke.ChokeConditionMonitor} - erosion, plugging, seat-leak and
+ * stuck-stem detection from observed versus theoretical Cv</li>
+ * </ul>
+ *
  * <h2>Usage Example</h2>
  *
  * <pre>

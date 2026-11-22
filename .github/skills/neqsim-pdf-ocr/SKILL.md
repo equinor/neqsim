@@ -146,14 +146,14 @@ text_by_page = extract_text(pdf, force_ocr=True, dpi=400, psm=11)
 
 ```powershell
 # Extract text to JSON
-python devtools/pdf_ocr.py step1_scope_and_research/references/datasheet.pdf `
+uv run --project devtools --locked devtools/pdf_ocr.py step1_scope_and_research/references/datasheet.pdf `
     --json step1_scope_and_research/datasheet_text.json
 
 # P&ID preset (400 DPI, sparse PSM, force OCR, print tags)
-python devtools/pdf_ocr.py references/PID-001.pdf --pid
+uv run --project devtools --locked devtools/pdf_ocr.py references/PID-001.pdf --pid
 
 # Add searchable layer for archival
-python devtools/pdf_ocr.py scanned.pdf --add-text-layer --output scanned_ocr.pdf
+uv run --project devtools --locked devtools/pdf_ocr.py scanned.pdf --add-text-layer --output scanned_ocr.pdf
 ```
 
 ## Common Mistakes
@@ -211,5 +211,5 @@ remediation message if they're missing — never silently produces empty results
 ## Related Skills
 
 - [`neqsim-technical-document-reading`](../neqsim-technical-document-reading/SKILL.md) — text-based PDFs, Word, Excel, image analysis with `view_image`
-- [`neqsim-stid-retriever`](../neqsim-stid-retriever/SKILL.md) — fetch the documents in the first place
+- `enterprise-stid-document-retrieval` (enterprise skill) — fetch the documents in the first place
 - [`neqsim-process-extraction`](../neqsim-process-extraction/SKILL.md) — convert extracted text into NeqSim JSON

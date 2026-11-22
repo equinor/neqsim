@@ -122,7 +122,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
   public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
     // Default chart conditions if not specified
-    double[] defaultConditions = new double[] { 25.0, 50.0, 50.0, molecularWeight };
+    double[] defaultConditions = new double[] {25.0, 50.0, 50.0, molecularWeight};
     addMapAtMW(molecularWeight, defaultConditions, speed, flow, head, flowPolyEff, polyEff);
   }
 
@@ -162,9 +162,9 @@ public class CompressorChartMWInterpolation extends CompressorChart {
   public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head, double[] flowPolyEff,
       double[] polyEff) {
     // Default chart conditions if not specified
-    double[] defaultConditions = new double[] { 25.0, 50.0, 50.0, molecularWeight };
-    addMapAtMW(molecularWeight, defaultConditions, new double[] { speed }, new double[][] { flow },
-        new double[][] { head }, new double[][] { flowPolyEff }, new double[][] { polyEff });
+    double[] defaultConditions = new double[] {25.0, 50.0, 50.0, molecularWeight};
+    addMapAtMW(molecularWeight, defaultConditions, new double[] {speed}, new double[][] {flow}, new double[][] {head},
+        new double[][] {flowPolyEff}, new double[][] {polyEff});
   }
 
   /**

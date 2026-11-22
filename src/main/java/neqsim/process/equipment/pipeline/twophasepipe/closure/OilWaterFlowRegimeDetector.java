@@ -43,7 +43,7 @@ import java.io.Serializable;
  * @author Even Solbraa
  * @version 1.0
  */
-public class OilWaterFlowRegimeDetector implements Serializable {
+public class OilWaterFlowRegimeDetector implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 1L;
 
@@ -129,6 +129,20 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * Default constructor.
    */
   public OilWaterFlowRegimeDetector() {
+  }
+
+  /**
+   * Copy the configured closure for an independent section or rejected-step snapshot.
+   *
+   * @return detector with the same empirical settings
+   */
+  @Override
+  public OilWaterFlowRegimeDetector clone() {
+    try {
+      return (OilWaterFlowRegimeDetector) super.clone();
+    } catch (CloneNotSupportedException exception) {
+      throw new AssertionError(exception);
+    }
   }
 
   /**

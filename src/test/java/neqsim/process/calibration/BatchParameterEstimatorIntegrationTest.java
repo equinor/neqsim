@@ -68,7 +68,7 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     // temperature changes with pressure ratio, producing observations at different
     // operating points for the same efficiency.
     double trueEfficiency = 0.75;
-    double[] dischargePressures = { 50.0, 60.0, 70.0, 80.0, 90.0 };
+    double[] dischargePressures = {50.0, 60.0, 70.0, 80.0, 90.0};
     double[] measuredTemps = new double[dischargePressures.length];
 
     for (int i = 0; i < dischargePressures.length; i++) {
@@ -180,7 +180,7 @@ class BatchParameterEstimatorIntegrationTest extends neqsim.NeqSimTest {
     double trueT2 = 273.15 + 70.0;
 
     // Use different heater2 outlet pressures to create data diversity
-    double[] heater2Pressures = { 40.0, 45.0, 50.0, 55.0 };
+    double[] heater2Pressures = {40.0, 45.0, 50.0, 55.0};
     double[] mixerTemps = new double[heater2Pressures.length];
 
     for (int i = 0; i < heater2Pressures.length; i++) {

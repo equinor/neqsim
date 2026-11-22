@@ -48,8 +48,8 @@ class IntegratedProductionTest {
    */
   @Test
   void testDeliverabilityCurveInterpolation() {
-    WellDeliverabilityCurve curve = WellDeliverabilityCurve.fromArrays(new double[] { 40.0, 90.0, 140.0 },
-        new double[] { 3000.0, 1500.0, 0.0 });
+    WellDeliverabilityCurve curve = WellDeliverabilityCurve.fromArrays(new double[] {40.0, 90.0, 140.0},
+        new double[] {3000.0, 1500.0, 0.0});
     assertEquals(2250.0, curve.rateAt(65.0), 1.0e-6);
     assertEquals(750.0, curve.rateAt(115.0), 1.0e-6);
     assertEquals(0.0, curve.rateAt(140.0), RATE_TOL);
@@ -160,7 +160,7 @@ class IntegratedProductionTest {
     double aofp = 3000.0;
     WellDeliverabilityCurve truth = WellDeliverabilityCurve.fromVogel(aofp, pr);
     WellTestMatcher matcher = new WellTestMatcher();
-    double[] testP = new double[] { 160.0, 120.0, 80.0 };
+    double[] testP = new double[] {160.0, 120.0, 80.0};
     for (int i = 0; i < testP.length; i++) {
       matcher.addTestPoint(truth.rateAt(testP[i]), testP[i]);
     }

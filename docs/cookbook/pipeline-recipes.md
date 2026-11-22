@@ -483,20 +483,33 @@ over 4–12 MSm3/d, `TwoFluidPipe` reproduces the rate exponent in ΔP and respo
 heating, while `PipeBeggsAndBrills` sits 30–60% above it because its two-phase friction multiplier
 is an extrapolation at this liquid loading. Local liquid holdup at low
 rate is still dominated by single terrain trap sections, so valley inventory is indicative rather
-than a design number. **The three-phase free-water case does not converge** - with 15 m3/hr of free
-water the solve is wall-clock limited, so always check
-`isSteadyStateConverged()` on a water-bearing line.
+than a design number. **The historical three-phase free-water case remains unqualified.** The
+earlier 73.8 km solve with 15 m3/hr of free water was wall-clock limited. Its complete input fixture
+is not available in the repository, so the recent pressure-boundary and oil/water-split corrections
+have not been assessed on that exact line. Always check `isSteadyStateConverged()` on a water-bearing
+line. A separate, reproducible 3 km uphill gas/oil/water case now converges with all three phases
+present and each phase mass flux checked against independent local equilibrium flashes; this does
+not replace qualification of the historical export line.
 See [Known limitations](../wiki/two_fluid_model#known-limitations).
 
 **Always check the steady-state outcome** — `run()` does not throw when the solve fails:
 
 ```python
 pipe.run()
-if not pipe.isSteadyStateConverged():
-    if pipe.isSteadyStatePressureFloorLimited():
-        raise RuntimeError("Line cannot deliver this rate at this inlet pressure")
-    raise RuntimeError("Steady state did not converge")
+steady = pipe.getSteadyStateConvergenceReport()
+if not steady.isConverged():
+    raise RuntimeError(
+        f"Steady state stopped at {steady.getTerminationReason()}; "
+        f"liquid-split residual={steady.getLiquidSplitResidual():.3e}"
+    )
 ```
+
+The report also exposes pressure-momentum, pressure-update, total-holdup,
+thermodynamic-property, and pressure-drop residuals. `getMassFluxResidual()` checks the maximum
+relative total phase mass-flux error against `getMassFluxTolerance()` (1e-8). Its `CONVERGED`
+result includes the mandatory final flash, holdup/oil-water resweep, and mass-flux check of the
+final section state; an iteration-, wall-clock-, or pressure-floor-limited profile remains
+explicitly non-converged.
 
 > **Further Reading**: See [TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial) for comprehensive examples including slug visualization and transient analysis.
 
@@ -860,6 +873,33 @@ outlet = pipe.getOutletStream()
 print(f"Computed outlet mass flow: {outlet.getFlowRate('kg/sec'):.2f} kg/s")
 ```
 
+For a conservative transient restart, start the ramp from the accepted inlet-face traction rather
+than the first cell-centre pressure. The latter can differ by a hydrostatic half-cell head on an
+inclined line. The connected inlet fluid supplies the default reservoir; use
+`setInletBoundaryFluid(fluid)` to isolate the restart source even when it has the same composition
+and temperature. The isolated reservoir is flashed once per new ramp pressure and reused across
+internal solver stages; a live connected stream is deliberately not cached.
+
+```python
+pipe.closeInlet()
+pipe.closeOutlet()
+for _ in range(settle_steps):
+    pipe.runTransient(dt, run_id)
+
+p0_pa = pipe.getInletFacePressure("Pa")
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE)
+pipe.setInletBoundaryFluid(inlet.getFluid())
+for step in range(1, ramp_steps + 1):
+    pipe.setInletPressure(p0_pa + (target_pa - p0_pa) * step / ramp_steps)
+    pipe.runTransient(dt, run_id)
+```
+
+This boundary resolves signed mass, component and enthalpy transport from acoustic compatibility.
+It is not a valve-area, choke or independently validated surge model; retain unfiltered pressure
+traces and mesh/time refinement for every declared restart window.
+`getPressureInletFlashCount()` can be logged to verify the one-flash-per-ramp-pressure performance
+safeguard when an isolated reservoir is configured.
+
 ### Boundary Condition Summary Table
 
 | Configuration | Inlet BC | Outlet BC | Flow | Inlet P | Outlet P |
@@ -885,6 +925,10 @@ pipe.setLength(10000)
 pipe.setDiameter(0.25)
 pipe.setNumberOfSections(100)
 pipe.setOutletPressure(30.0, "bara")
+# Compressible pressure response: without these two lines the pressure profile is rebuilt
+# from steady friction/gravity and does not rise as mass accumulates behind the closed outlet.
+pipe.setEnableCoupledPressureMomentum(True)
+pipe.setEnableInterfacialPressure(True)
 
 # Initialize with normal flow
 pipe.run()
@@ -1352,3 +1396,30 @@ print(f"Total flow: {export.getOutletStream().getFlowRate('kg/hr'):.0f} kg/hr")
 - **[Pipeline Network Example](../examples/LoopedPipelineNetworkExample)** - Complex network modeling
 - **[Dynamic Simulation Guide](../simulation/dynamic_simulation_guide)** - Transient simulation concepts
 - **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Complete reference
+
+
+### Qualifying a liquid-rich slug transient
+
+For a controlled gas/oil slug study, the opt-in shared force balance provides a mechanical
+steady initialization consistent with its transient wall and interphase forces. Select
+`setSharedSlugForceBalanceEnabled(true)`, `setEnableInterfacialPressure(true)` and
+`setEnableCoupledPressureMomentum(true)` before `run()`. These options deliberately change
+slug holdup and pressure loss; retain the default configuration when reproducing historical
+correlation-based results. Check convergence, completed physical time, mass conservation,
+outlet backflow and pressure-correction diagnostics. See the
+[model contract and qualification evidence](../process/TWOFLUIDPIPE_MODEL#opt-in-shared-slug-force-balance).
+
+
+During enabled transient slug tracking, `TwoFluidPipe` observes terrain-zone liquid volume
+from conserved oil/water mass and phase densities using
+`LiquidAccumulationTracker.observeConservativeAccumulation(TwoFluidSection[], double)`.
+No additional option is required. Repeated observations do not add holdup or damp velocity,
+and terrain-marker emission leaves measured inventory unchanged. The legacy `TransientPipe`
+empirical path is preserved. See the
+[observation contract](../process/TWOFLUIDPIPE_MODEL#conservative-terrain-accumulation-observation).
+
+For the public 600 s Tengesdal Test 3 comparison, pressure is sampled at the upstream inlet
+(`getPressureProfile()[0]`), not the physical riser base. Preserve that sample and the original
+amplitude/period gates when comparing revisions. Inspect liquid accumulation, discharge and
+fallback together with the sticky pressure limiter; successful bookkeeping alone does not
+qualify the experimental cycle.

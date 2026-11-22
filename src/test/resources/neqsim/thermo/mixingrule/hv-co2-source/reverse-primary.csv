@@ -1,0 +1,63 @@
+source,table,row,T_K,P_MPa_raw,xCO2,U_xCO2_k2,U_relative_percent_k2,temperature_uncertainty,pressure_uncertainty,pressure_status,P_bara,source_sCPA_deviation_percent,source_Duan_deviation_percent
+Lipinski2021,A1,1,288.170,0.49948,0.0040,0.0002,5.002,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,4.99480,,
+Lipinski2021,A1,2,288.219,0.60390,0.0047,0.0002,4.696,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,6.03900,,
+Lipinski2021,A1,3,288.213,0.70222,0.0056,0.0003,5.148,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,7.02220,,
+Lipinski2021,A1,4,288.226,0.80377,0.0063,0.0003,4.268,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,8.03770,,
+Lipinski2021,A1,5,288.232,0.90201,0.0068,0.0003,4.044,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,9.02010,,
+Lipinski2021,A1,6,288.218,1.0.0180,0.0076,0.0003,4.182,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,unresolved_original_two_decimal_points,,,
+Lipinski2021,A1,7,288.341,1.50218,0.0115,0.0004,3.737,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,15.02180,,
+Lipinski2021,A1,8,288.244,2.00692,0.0148,0.0006,3.940,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,20.06920,,
+Lipinski2021,A1,9,288.245,3.00527,0.0204,0.0008,3.686,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,30.05270,,
+Lipinski2021,A1,10,288.245,4.00375,0.0246,0.0009,3.594,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,40.03750,,
+Lipinski2021,A1,11,288.261,5.00929,0.0280,0.0010,3.604,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,50.09290,,
+Lipinski2021,A2,12,293.288,0.50013,0.0035,0.0002,5.918,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,5.00130,,
+Lipinski2021,A2,13,293.296,0.60432,0.0041,0.0002,4.151,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,6.04320,,
+Lipinski2021,A2,14,293.314,0.70312,0.0049,0.0003,6.182,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,7.03120,,
+Lipinski2021,A2,15,293.315,0.80243,0.0055,0.0003,5.193,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,8.02430,,
+Lipinski2021,A2,16,293.303,0.90190,0.0062,0.0002,3.314,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,9.01900,,
+Lipinski2021,A2,17,293.362,1.00330,0.0069,0.0003,3.763,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,10.03300,,
+Lipinski2021,A2,18,293.305,1.50295,0.0103,0.0004,3.880,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,15.02950,,
+Lipinski2021,A2,19,293.307,2.00047,0.0130,0.0004,3.117,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,20.00470,,
+Lipinski2021,A2,20,293.320,3.00050,0.0170,0.0006,3.334,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,30.00500,,
+Lipinski2021,A2,21,293.317,4.00540,0.0215,0.0006,2.899,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,40.05400,,
+Lipinski2021,A2,22,293.322,5.00079,0.0247,0.0008,3.109,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,50.00790,,
+Lipinski2021,A3,23,298.122,0.50006,0.0032,0.0002,6.658,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,5.00060,,
+Lipinski2021,A3,24,298.137,0.60229,0.0040,0.0002,6.078,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,6.02290,,
+Lipinski2021,A3,25,298.145,0.70124,0.0047,0.0003,6.222,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,7.01240,,
+Lipinski2021,A3,26,298.161,0.80192,0.0051,0.0003,6.157,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,8.01920,,
+Lipinski2021,A3,27,298.154,0.90176,0.0058,0.0004,6.554,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,9.01760,,
+Lipinski2021,A3,28,298.162,1.00143,0.0062,0.0003,5.133,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,10.01430,,
+Lipinski2021,A3,29,298.163,1.49948,0.0088,0.0005,6.120,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,14.99480,,
+Lipinski2021,A3,30,298.137,2.00118,0.0115,0.0007,5.813,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,20.01180,,
+Lipinski2021,A3,31,298.143,3.00088,0.0158,0.0008,5.170,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,30.00880,,
+Lipinski2021,A3,32,298.174,4.00231,0.0199,0.0011,5.711,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,40.02310,,
+Lipinski2021,A3,33,298.182,5.00264,0.0231,0.0012,5.229,0.045/0.085 K; k=2; two sensors,0.005 MPa; k=1.73,valid,50.02640,,
+Ahmadi2018,6,1,300.95,2.071,0.01099,0.00011,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,20.710,16.0,7.1
+Ahmadi2018,6,2,300.95,4.782,0.02032,0.00017,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,47.820,5.7,4.5
+Ahmadi2018,6,3,300.95,7.837,0.02335,0.00023,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,78.370,-5.2,-1.4
+Ahmadi2018,6,4,300.95,19.445,0.02696,0.00028,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,194.450,-2.9,1.8
+Ahmadi2018,6,5,300.95,34.753,0.02960,0.00034,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,347.530,-2.8,0.6
+Ahmadi2018,6,6,307.79,1.292,0.00601,0.00011,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,12.920,14.3,3.8
+Ahmadi2018,6,7,307.79,1.310,0.00601,0.00011,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,13.100,13.2,2.6
+Ahmadi2018,6,8,307.79,2.243,0.00974,0.00012,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,22.430,10.6,3.0
+Ahmadi2018,6,9,307.79,3.380,0.01384,0.00014,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,33.800,8.7,4.5
+Ahmadi2018,6,10,307.79,4.594,0.01704,0.00017,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,45.940,4.0,2.8
+Ahmadi2018,6,11,307.79,5.543,0.01931,0.00017,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,55.430,2.2,3.1
+Ahmadi2018,6,12,307.79,7.143,0.02228,0.00022,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,71.430,0.4,3.4
+Ahmadi2018,6,13,307.79,12.231,0.02414,0.00025,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,122.310,-3.5,3.4
+Ahmadi2018,6,14,307.79,19.236,0.02589,0.00027,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,192.360,-3.8,3.6
+Ahmadi2018,6,15,322.62,2.991,0.00961,0.00011,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,29.910,11.4,4.0
+Ahmadi2018,6,16,322.62,4.778,0.01279,0.00012,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,47.780,0.0,-4.1
+Ahmadi2018,6,17,322.62,5.486,0.01493,0.00013,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,54.860,4.3,1.8
+Ahmadi2018,6,18,322.62,8.667,0.01959,0.00020,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,86.670,1.1,2.4
+Ahmadi2018,6,19,322.62,20.727,0.02394,0.00025,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,207.270,-2.8,4.2
+Ahmadi2018,6,20,322.62,40.349,0.02708,0.00031,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,403.490,-4.6,2.3
+Ahmadi2018,6,21,373.39,3.515,0.00697,0.00011,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,35.150,24.41,13.21
+Ahmadi2018,6,22,373.39,7.941,0.01286,0.00013,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,79.410,15.57,8.01
+Ahmadi2018,6,23,373.39,19.34,0.02112,0.00022,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,193.40,8.69,8.33
+Ahmadi2018,6,24,373.39,42.077,0.02578,0.00025,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,420.770,-1.08,2.01
+Ahmadi2018,6,25,423.48,2.631,0.00327,0.00011,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,26.310,14.3,-3.8
+Ahmadi2018,6,26,423.48,5.109,0.00665,0.00011,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,51.090,12.4,-3.4
+Ahmadi2018,6,27,423.48,9.772,0.01170,0.00012,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,97.720,7.1,-5.2
+Ahmadi2018,6,28,423.48,19.549,0.02063,0.00019,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,195.490,8.3,1.9
+Ahmadi2018,6,29,423.48,40.690,0.02839,0.00032,,Uc=0.17 K; combined; Appendix A1,Uc=0.068 MPa; combined; Appendix A4,valid,406.900,-2.6,-3.2

@@ -25,6 +25,15 @@ public class EOSCGCorrelationBackend {
     model.PressureEOSCG(temperature, density, composition, p, z);
   }
 
+  /**
+   * Get the analytical isothermal slope from the preceding pressure evaluation.
+   *
+   * @return pressure slope in kPa per mol/L
+   */
+  double pressureSlope() {
+    return model.dPdDsave;
+  }
+
   public void molarMass(double[] composition, doubleW mm) {
     validateSetup();
     model.MolarMassEOSCG(composition, mm);

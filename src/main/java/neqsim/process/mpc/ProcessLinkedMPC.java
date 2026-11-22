@@ -48,9 +48,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * // Auto-identify model
  * mpc.identifyModel(60.0); // 60s sample time
  *
- * // Configure tuning
- * mpc.setPredictionHorizon(20);
- * mpc.setControlHorizon(5);
+ * // Tune the local gain calculation
  * mpc.setMoveSuppressionWeight("valve", 0.1);
  *
  * // Run control step
@@ -106,6 +104,15 @@ public class ProcessLinkedMPC implements Serializable {
   /** Last calculated MV moves. */
   private double[] lastMoves;
 
+  /** Optional measured step-response model for constrained horizon optimization. */
+  private HorizonResponseModel horizonModel;
+
+  /** Result of the latest horizon solve, including unsuccessful solver status. */
+  private HorizonPlan lastHorizonPlan;
+
+  /** Measurements for the plan awaiting application. */
+  private double[] pendingInputs;
+
   /** Whether to use nonlinear prediction. */
   private boolean useNonlinearPrediction = false;
 
@@ -156,6 +163,7 @@ public class ProcessLinkedMPC implements Serializable {
     ManipulatedVariable mv = new ManipulatedVariable(equipmentName + "." + propertyName,
         processSystem.getUnit(equipmentName), propertyName);
     mv.setBounds(minValue, maxValue);
+    discardPendingHorizonMove();
     manipulatedVariables.add(mv);
     return mv;
   }
@@ -189,12 +197,14 @@ public class ProcessLinkedMPC implements Serializable {
     ControlledVariable cv = new ControlledVariable(equipmentName + "." + propertyName,
         processSystem.getUnit(equipmentName), propertyName);
     cv.setSetpoint(setpoint);
+    discardPendingHorizonMove();
     controlledVariables.add(cv);
     return cv;
   }
 
   /**
-   * Add a controlled variable with zone control.
+   * Add a controlled variable with zone control. The local move calculation uses zero tracking error inside the zone
+   * and targets the nearest boundary outside it.
    *
    * @param equipmentName the equipment name
    * @param propertyName the property name
@@ -238,6 +248,7 @@ public class ProcessLinkedMPC implements Serializable {
   public DisturbanceVariable addDV(String equipmentName, String propertyName) {
     DisturbanceVariable dv = new DisturbanceVariable(equipmentName + "." + propertyName,
         processSystem.getUnit(equipmentName), propertyName);
+    discardPendingHorizonMove();
     disturbanceVariables.add(dv);
     return dv;
   }
@@ -326,6 +337,7 @@ public class ProcessLinkedMPC implements Serializable {
    * @param sampleTimeSeconds sample time in seconds
    */
   public void setSampleTime(double sampleTimeSeconds) {
+    discardPendingHorizonMove();
     this.sampleTime = sampleTimeSeconds;
   }
 
@@ -344,6 +356,7 @@ public class ProcessLinkedMPC implements Serializable {
    * @param horizon number of samples
    */
   public void setPredictionHorizon(int horizon) {
+    discardPendingHorizonMove();
     this.predictionHorizon = horizon;
   }
 
@@ -362,6 +375,7 @@ public class ProcessLinkedMPC implements Serializable {
    * @param horizon number of samples
    */
   public void setControlHorizon(int horizon) {
+    discardPendingHorizonMove();
     this.controlHorizon = horizon;
   }
 
@@ -431,6 +445,7 @@ public class ProcessLinkedMPC implements Serializable {
    * @param sampleTimeSeconds the sample time in seconds
    */
   public void identifyModel(double sampleTimeSeconds) {
+    discardPendingHorizonMove();
     this.sampleTime = sampleTimeSeconds;
 
     // Create linearizer
@@ -473,7 +488,7 @@ public class ProcessLinkedMPC implements Serializable {
   }
 
   /**
-   * Check if the model has been identified.
+   * Check whether the local steady-gain model has been identified.
    *
    * @return true if model is available
    */
@@ -509,11 +524,91 @@ public class ProcessLinkedMPC implements Serializable {
   }
 
   /**
+   * Select constrained receding-horizon control using measured or supplied step responses. Supply every MV-to-CV and
+   * DV-to-CV path by its registered name, including explicit zero responses. Samples must lie on the controller time
+   * grid, starting at zero or one sample interval. The first prediction uses the response at one interval. Final
+   * coefficients are held. Configuration starts with steady input history.
+   *
+   * @param responses absolute output traces in configured engineering units
+   */
+  public void setHorizonResponses(StepResponse... responses) {
+    horizonModel = new HorizonResponseModel(manipulatedVariables, disturbanceVariables, controlledVariables, sampleTime,
+        responses);
+    lastHorizonPlan = null;
+    pendingInputs = null;
+    lastMoves = null;
+  }
+
+  /** Expire any unapplied horizon command after a change in the model configuration. */
+  private void discardPendingHorizonMove() {
+    if (horizonModel != null) {
+      pendingInputs = null;
+      lastMoves = null;
+    }
+  }
+
+  /**
+   * Return to the steady-gain control method. A steady model must have been identified before calculating.
+   */
+  public void clearHorizonResponses() {
+    horizonModel = null;
+    lastHorizonPlan = null;
+    pendingInputs = null;
+    lastMoves = null;
+  }
+
+  /**
+   * Get the immutable result of the latest horizon solve.
+   *
+   * @return scan result or null before solving
+   */
+  public HorizonPlan getLastHorizonPlan() {
+    return lastHorizonPlan;
+  }
+
+  /**
+   * Calculate the first absolute MV settings with a known disturbance trajectory. Row zero is the absolute input on the
+   * interval about to start. The last supplied row is held. An empty or null forecast holds the measured disturbances.
+   * A failed solve invalidates any preceding moves.
+   *
+   * @param futureAbsoluteDvs forecast by sample and disturbance, in registration order
+   * @return absolute MV settings for the first interval
+   * @throws IllegalStateException if no response model is configured or the solver cannot return a plan
+   */
+  public double[] calculate(double[][] futureAbsoluteDvs) {
+    if (horizonModel == null) {
+      throw new IllegalStateException("Configure step responses before supplying a disturbance preview");
+    }
+    lastMoves = null;
+    pendingInputs = null;
+    lastHorizonPlan = null;
+    updateMeasurements();
+    double[] inputs = new double[manipulatedVariables.size() + disturbanceVariables.size()];
+    for (int i = 0; i < manipulatedVariables.size(); i++) {
+      inputs[i] = manipulatedVariables.get(i).readValue();
+    }
+    for (int i = 0; i < disturbanceVariables.size(); i++) {
+      inputs[manipulatedVariables.size() + i] = disturbanceVariables.get(i).readValue();
+    }
+    lastHorizonPlan = horizonModel.plan(manipulatedVariables, controlledVariables, inputs, futureAbsoluteDvs,
+        predictionHorizon, controlHorizon, sampleTime);
+    if (!lastHorizonPlan.isSuccessful()) {
+      throw new IllegalStateException("Horizon solve failed: " + lastHorizonPlan.getStatus());
+    }
+    lastMoves = lastHorizonPlan.getFirstMove();
+    pendingInputs = inputs;
+    return lastMoves.clone();
+  }
+
+  /**
    * Calculate the next MV moves.
    *
    * @return array of MV move values
    */
   public double[] calculate() {
+    if (horizonModel != null) {
+      return calculate(null);
+    }
     if (!modelIdentified) {
       throw new IllegalStateException("Model not identified. Call identifyModel() first.");
     }
@@ -553,7 +648,8 @@ public class ProcessLinkedMPC implements Serializable {
 
       for (int j = 0; j < controlledVariables.size(); j++) {
         ControlledVariable cv = controlledVariables.get(j);
-        double error = cv.getSetpoint() - cv.readValue();
+        double measurement = cv.readValue();
+        double error = cv.getEffectiveSetpoint() - measurement;
         double gain = gains[j][i];
         double weight = cv.getWeight();
 
@@ -596,9 +692,30 @@ public class ProcessLinkedMPC implements Serializable {
       throw new IllegalStateException("No moves calculated. Call calculate() first.");
     }
 
+    double[] scanInputs = pendingInputs;
+    if (horizonModel != null) {
+      if (scanInputs == null) {
+        throw new IllegalStateException("Calculate a fresh horizon move before applying");
+      }
+      // Consume the request before actuation so a failed write cannot replay stale commands.
+      pendingInputs = null;
+      for (int i = 0; i < manipulatedVariables.size(); i++) {
+        ManipulatedVariable mv = manipulatedVariables.get(i);
+        double measured = mv.readValue();
+        double low = Math.max(mv.getMinValue(), measured + mv.getMinRateOfChange());
+        double high = Math.min(mv.getMaxValue(), measured + mv.getMaxRateOfChange());
+        if (measured != scanInputs[i] || !(lastMoves[i] >= low && lastMoves[i] <= high)) {
+          lastMoves = null;
+          throw new IllegalStateException("MV changed since the scan; recalculate before applying " + mv.getName());
+        }
+      }
+    }
     for (int i = 0; i < Math.min(lastMoves.length, manipulatedVariables.size()); i++) {
       ManipulatedVariable mv = manipulatedVariables.get(i);
       mv.writeValue(lastMoves[i]);
+    }
+    if (horizonModel != null) {
+      horizonModel.advance(scanInputs);
     }
   }
 

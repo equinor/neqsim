@@ -1,0 +1,150 @@
+{
+  "recordType": "executed-local-validation",
+  "date": "2026-09-07",
+  "sourceCommit": "3847d75fc9298b9677b2a39c91d886fa6bf92460",
+  "sourceTree": "436c7e5b35be79be388443b06fe720314edb7d7f",
+  "baselineCommit": "e8895a9f2a400a5a989622c6976440852f7b5089",
+  "scope": "Common capacity configuration, declared expected coverage, and convergence rejection. Not whole-plant qualification.",
+  "java": "OpenJDK 17.0.20 (current repository compiler release 17)",
+  "python": "3.12.13",
+  "maven": "3.9.16",
+  "tests": [
+    {
+      "class": "neqsim.process.equipment.capacity.CapacityConstraintCurrentValueTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.166
+    },
+    {
+      "class": "neqsim.process.equipment.capacity.EquipmentDesignDataTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 4.363
+    },
+    {
+      "class": "neqsim.process.processmodel.DesignCapacityConfigurationTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 1.498
+    },
+    {
+      "class": "neqsim.process.processmodel.JsonProcessBuilderTest",
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.785
+    },
+    {
+      "class": "neqsim.process.util.optimizer.PlantConstraintRegistryTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.027
+    },
+    {
+      "class": "neqsim.process.util.optimizer.PlantUtilizationSnapshotTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.036
+    },
+    {
+      "class": "neqsim.process.util.optimizer.ProcessModelOptimizationViewTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.332
+    },
+    {
+      "class": "neqsim.process.util.optimizer.ProcessModelSimulationEvaluatorTest",
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.547
+    },
+    {
+      "class": "neqsim.process.util.optimizer.ProcessModelThroughputOptimizerTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.132
+    },
+    {
+      "class": "neqsim.process.util.optimizer.UtilizationCoverageReportTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.014
+    }
+  ],
+  "totals": {
+    "tests": 146,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "mavenCommand": "./mvnw -B -Dtest=CapacityConstraintCurrentValueTest,EquipmentDesignDataTest,DesignCapacityConfigurationTest,JsonProcessBuilderTest,PlantConstraintRegistryTest,PlantUtilizationSnapshotTest,ProcessModelOptimizationViewTest,ProcessModelSimulationEvaluatorTest,ProcessModelThroughputOptimizerTest,UtilizationCoverageReportTest -DjavadocExecutable=<available-jdk-javadoc> test javadoc:javadoc",
+  "mavenBootstrap": "work-with-neqsim/scripts/prepare_maven.py, isolated settings/cache",
+  "javadoc": {
+    "status": "PASS",
+    "warningsReported": 100,
+    "note": "Repository-wide missing-comment warnings; build succeeded."
+  },
+  "jpype": {
+    "status": "PASS",
+    "jpype": "1.7.1",
+    "java": "17.0.20",
+    "shaftPowerKW": 135.32682624475623,
+    "powerUtilization": 0.13532682624475623,
+    "coverageRows": 5,
+    "snapshotSchema": "1.1",
+    "missingEvidenceRejected": true
+  },
+  "jpypeCommand": "python devtools/validate_plant_capacity_jpype.py --classpath-file target/plant-capacity-classpath.txt",
+  "classpathCommand": "./mvnw -B dependency:build-classpath -Dmdep.outputFile=target/plant-capacity-classpath.txt",
+  "formatting": {
+    "spotlessApply": "PASS",
+    "preCommitAllFiles": "PASS",
+    "prePushAllFiles": "PASS",
+    "documentationSearch": "PASS: 691 Markdown pages and 1 standalone HTML page"
+  },
+  "preFixReproduction": {
+    "scope": "Unchanged original ProcessModelOptimizationView and PlantUtilizationSnapshot implementations before fixes, with new regression tests injected.",
+    "tests": 3,
+    "expectedFailures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "methods": [
+      "failedCrossAreaSolveRejectsTheView",
+      "failedCrossAreaSolveNeverSamplesOptimizerObjectives",
+      "failedConvergenceCannotBeHiddenByAnEmptyRegistry"
+    ]
+  },
+  "benchmarkEvidence": [
+    "industrial-sm-baseline-e8895a9f.json.gz",
+    "industrial-sm-candidate-3847d75f.json.gz"
+  ],
+  "independentAgentReview": "Reported unit/provenance defects resolved; final read-only inspection found no outstanding findings. This is not accountable human maintainer/domain approval.",
+  "notEstablished": [
+    "full repository test suite",
+    "required hosted CI",
+    "accountable maintainer/domain approval",
+    "whole-plant industrial qualification",
+    "performance improvement",
+    "large 150+ unit/six-area acceptance",
+    "MCP parity"
+  ]
+}

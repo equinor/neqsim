@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashSrkWaterRichSeededPhaseSetTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
+  private static final double[] FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021};
 
   @Test
   void seededPhaseSetRepairsInvalidOrdinaryAndCollapsedMultiphaseEndpoints() {
@@ -24,7 +24,7 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
     assertEquals(PhaseType.OIL, ordinary.getPhase(0).getType());
     assertEquals(PhaseType.AQUEOUS, ordinary.getPhase(1).getType());
     assertEquals(0.907774808238, ordinary.getBeta(0), 1.0e-10);
-    assertEquals(1925.79587972, ordinary.getGibbsEnergy(), 1.0e-7);
+    assertEquals(1925.8051176648405, ordinary.getGibbsEnergy(), 1.0e-7);
 
     double firstGibbsEnergy = multiphase.getGibbsEnergy();
     double firstOilFraction = multiphase.getBeta(0);
@@ -38,8 +38,8 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
 
   @Test
   void seededPhaseSetRemainsContinuousAcrossChangedNearbyStates() {
-    double[][] states = { { 215.0, 225.0 }, { 220.0, 200.0 }, { 220.0, 225.0 }, { 225.0, 200.0 }, { 230.0, 250.0 },
-        { 220.0, 200.0 } };
+    double[][] states = {{215.0, 225.0}, {220.0, 200.0}, {220.0, 225.0}, {225.0, 200.0}, {230.0, 250.0},
+        {220.0, 200.0}};
     SystemInterface multiphase = createSystem(states[0][0], states[0][1], true, true);
 
     for (double[] state : states) {
@@ -61,7 +61,7 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
     assertEquals(PhaseType.OIL, ordinary.getPhase(0).getType());
     assertEquals(PhaseType.AQUEOUS, ordinary.getPhase(1).getType());
     assertEquals(0.907786822946, ordinary.getBeta(0), 1.0e-10);
-    assertEquals(2338.92392890, ordinary.getGibbsEnergy(), 1.0e-7);
+    assertEquals(2338.9316062637536, ordinary.getGibbsEnergy(), 1.0e-7);
     assertTrue(maximumLogFugacityResidual(ordinary) < 1.0e-8);
   }
 

@@ -1,13 +1,11 @@
 ---
 title: "Refinery Assay and TBP Cut Characterization"
-description: "Create mass- or volume-basis refinery assay cuts, ingest pre-binned TBP boundaries, and generate NeqSim pseudo-components with explicit units and mass closure."
+description: "Create refinery assay cuts from mass, volume, pre-binned TBP, or qualified D86 reference-point data with explicit units and mass closure."
 ---
-
-# Refinery Assay and TBP Cut Characterization
 
 `OilAssayCharacterisation` is the first refinery-specific assay entry point in NeqSim. It converts a pre-binned crude or petroleum-fraction assay into TBP pseudo-components that can be used by the existing thermodynamic and `ProcessSystem` APIs.
 
-This API is intentionally conservative. It handles **assay representation and pseudo-component generation**; it does not claim to replace a laboratory assay package or to convert ASTM D86/D1160 data to true boiling point (TBP).
+This API is intentionally conservative. It handles **assay representation and pseudo-component generation**. It can convert the seven literature-qualified ASTM D86 reference points to true boiling point (TBP) boundaries, but it does not replace a laboratory assay package, interpolate unqualified recovery points, or support ASTM D1160 conversion.
 
 ## Scope and unit contract
 
@@ -97,6 +95,280 @@ When molecular weight is not supplied, the inverse petroleum correlation first p
 
 The input is required to span 0 to 100 liquid-volume percent with strictly increasing yield and temperature boundaries. This is deliberate: the method represents a complete, already-TBP cut table and does not invent unmeasured light or residue tails.
 
+## Qualified ASTM D86 reference-point boundaries
+
+`addD86ReferencePointCutBoundariesCelsius(...)` accepts exactly seven D86 temperatures at 0, 10, 30, 50, 70, 90, and 95 liquid-volume percent recovery. It delegates each point to `RiaziDaubertDistillationConversion`, which implements the published Riazi–Daubert atmospheric D86-to-TBP correlation and rejects temperatures outside each point's published applicability range.
+
+The source worked example produces the following rounded atmospheric TBP boundaries:
+
+| Recovery (vol%) | D86 (degC) | Published TBP (degC) |
+| ---: | ---: | ---: |
+| 0 | 36.5 | 14.1 |
+| 10 | 54.1 | 33.4 |
+| 30 | 76.9 | 68.9 |
+| 50 | 101.5 | 101.6 |
+| 70 | 131.0 | 135.1 |
+| 90 | 171.0 | 180.5 |
+| 95 | 186.5 | 194.1 |
+
+The qualified correlation does not provide a 100 vol% point. The caller must therefore supply the 100 vol% terminal TBP boundary explicitly; it must be finite and greater than the converted 95 vol% boundary. With one specific gravity for each interval, the resulting liquid-volume fractions are 0.10, 0.20, 0.20, 0.20, 0.20, 0.05, and 0.05. All conversion and validation completes before any assay cut is added.
+
+This path intentionally does not support ASTM D1160, intermediate recovery-point interpolation, an inferred 100 vol% conversion, or an ASTM laboratory-compliance claim. The correlation source is M. R. Riazi and T. E. Daubert, “Analytical correlations interconvert distillation-curve types,” *Oil & Gas Journal* 84(34), 1986; public bibliographic record: [OSTI 5212509](https://www.osti.gov/biblio/5212509). No coefficients beyond the existing source-qualified NeqSim implementation are introduced here.
+
+## Auditable TBP cut-table export
+
+`exportTbpCutTable()` creates an immutable round-trip table from a complete assay. The table returns defensive copies of:
+
+- cumulative liquid-volume yield from 0 to 100 percent;
+- contiguous TBP boundaries in K or degC; and
+- one dimensionless specific gravity for each boiling interval.
+
+`getResolvedVolumeFractions()` recovers the normalized declared yields of a volume-basis assay. For a mass-basis assay, NeqSim applies the ideal-additive-volume identity $v_i=(w_i/SG_i)/\sum_j(w_j/SG_j)$ before accumulating volume percent. This is a basis conversion, not a temperature correction, excess-volume model, blend-contraction model, or distillation-curve fit.
+
+```java
+OilAssayCharacterisation.TbpCutTable table = assay.exportTbpCutTable();
+
+OilAssayCharacterisation copy = anotherSystem.getOilAssayCharacterisation();
+copy.addTBPCutBoundariesKelvin(
+    "RoundTrip",
+    table.getCumulativeVolumePercent(),
+    table.getBoilingPointKelvin(),
+    table.getSpecificGravity());
+```
+
+Export fails closed unless the assay is non-empty and every interval has positive yield, a density, a complete boiling range, and an exactly shared boundary with its neighbour. Gaps and overlaps are not interpolated or repaired. This preserves the input cut topology and makes mass/volume closure auditable; it is not a re-lumping or resampling algorithm.
+
+### Conservative adjacent-cut re-lumping
+
+After export, `TbpCutTable.relumpAdjacentCuts(...)` can combine complete adjacent intervals into a coarser table. Each argument is the positive number of source cuts assigned to one output lump, and the arguments must consume every source cut exactly once:
+
+```java
+OilAssayCharacterisation.TbpCutTable coarseTable =
+    table.relumpAdjacentCuts(1, 2, 2, 2);
+```
+
+The operation keeps the first and last TBP boundaries plus each boundary between requested lumps. It preserves cumulative liquid-volume yield exactly. For source-interval liquid-volume yields $v_i$ and specific gravities $SG_i$, each lump uses the ideal-volume-weighted value
+
+$$SG_{lump}=\frac{\sum_i v_i SG_i}{\sum_i v_i}$$
+
+so the implied mass $\sum_i v_iSG_i$ also closes exactly on the same ideal-additive-volume basis as the cut-table export. The returned table remains immutable and can be passed directly to `addTBPCutBoundariesKelvin(...)`.
+
+This is deliberately conservative adjacent whole-cut merging. It does not split a cut, interpolate or smooth a boundary, build an arbitrary target grid, average molecular weight or critical properties, or define how pseudo-component properties should be regenerated. Empty, incomplete, excessive, zero, or negative partitions fail before a table is returned.
+
+### Splitting a cut table at additional TBP boundaries
+
+`TbpCutTable.splitAtBoilingPointsKelvin(...)` and `splitAtBoilingPointsCelsius(...)` insert strictly increasing boundaries inside existing intervals. For a source interval bounded by $(T_L,V_L)$ and $(T_U,V_U)$, an inserted boundary at $T$ receives the transparent piecewise-linear cumulative liquid-volume yield
+
+$$V(T)=V_L+(V_U-V_L)\frac{T-T_L}{T_U-T_L}$$
+
+```java
+OilAssayCharacterisation.TbpCutTable finerTable =
+    table.splitAtBoilingPointsCelsius(150.0, 250.0, 350.0);
+```
+
+Each resulting subcut copies the source interval specific gravity. Consequently, total liquid-volume yield and implied mass remain closed on the same ideal-additive-volume basis used by export and adjacent re-lumping. Splitting and then re-lumping all subcuts from each source interval recovers the original table within floating-point precision.
+
+The interpolation is an explicit discretization assumption, not a fitted distillation correlation: it assumes uniform liquid-volume recovery with boiling temperature inside each already binned interval and constant interval specific gravity. It does not infer the measured intrainterval curve shape, interpolate density, add a D86/D1160 conversion, smooth data, extrapolate outside the source table, or estimate molecular weight, critical properties, or phase behavior. Empty, non-finite, unordered, exterior, duplicate, and already-existing boundaries fail before a table is returned.
+
+### Direct recovery and cut-point queries
+
+An exported `TbpCutTable` can be queried without rebuilding or mutating the assay.
+`getCumulativeVolumePercentAtBoilingPointKelvin(...)` and its Celsius counterpart return
+cumulative liquid-volume recovery at a boiling point. The inverse
+`getBoilingPointKelvinAtCumulativeVolumePercent(...)` and Celsius counterpart return the
+cut point for a recovery. Interval yield is available from
+`getLiquidVolumePercentBetweenBoilingPointsKelvin(...)` or the Celsius counterpart:
+
+```java
+double recoveredAt400K =
+    table.getCumulativeVolumePercentAtBoilingPointKelvin(400.0);
+double temperatureAt50Percent =
+    table.getBoilingPointCelsiusAtCumulativeVolumePercent(50.0);
+double middleDistillateYield =
+    table.getLiquidVolumePercentBetweenBoilingPointsCelsius(150.0, 350.0);
+```
+
+The forward and inverse queries use the same piecewise-linear cumulative-recovery
+assumption as conservative target-grid resampling. Exact table nodes remain exact, and
+near-node temperatures snap within the existing boiling-boundary tolerance. Partitioned
+interval yields therefore close to the complete table's 100 liquid-volume percent.
+
+These are bounded table queries, not new distillation or property correlations. They do
+not extrapolate, smooth measured data, convert ASTM D86 or D1160 curves, interpolate
+density or other properties, generate pseudo-components, or claim phase-behavior
+equivalence. Non-finite, exterior, reversed, and zero-width requests fail before a value
+is returned.
+
+### Bounded boiling-range density and API receipts
+
+`TbpCutTable.getBoilingRangePropertiesKelvin(...)` and its Celsius counterpart return an
+immutable property receipt for any positive interval inside the exported table:
+
+```java
+OilAssayCharacterisation.TbpBoilingRangeProperties diesel =
+    table.getBoilingRangePropertiesCelsius(180.0, 360.0);
+
+double dieselYieldVolumePercent = diesel.getLiquidVolumePercent();
+double dieselSpecificGravity = diesel.getAverageSpecificGravity();
+double dieselApiGravity = diesel.getApiGravity();
+double dieselDensityKgM3At60F = diesel.getDensityKgPerCubicMetreAt60F();
+double dieselMeanBoilingPointCelsius = diesel.getAverageBoilingPointCelsius();
+double dieselBoilingSpreadKelvin = diesel.getBoilingPointStandardDeviationKelvin();
+double dieselWatsonFactor = diesel.getWatsonCharacterizationFactor();
+```
+
+For the requested interval, every overlapping source cut contributes liquid-volume
+yield $\Delta V_i$ under the same piecewise-linear cumulative-recovery assumption used
+by direct queries and target-grid resampling. The receipt reports
+
+$$SG_{range}=\frac{\sum_i \Delta V_iSG_i}{\sum_i \Delta V_i}$$
+
+as well as both the denominator and the auditable numerator
+`getSpecificGravityWeightedLiquidVolumePercent()`. The latter is
+$\sum_i\Delta V_iSG_i$ with $\Delta V_i$ in liquid-volume percent; it is an
+ideal-additive-volume bookkeeping term, not a physical mass percentage. Partitioned
+receipts therefore close independently in liquid-volume yield and SG-weighted volume.
+
+API gravity uses the existing NeqSim SG60/60 convention
+$API=141.5/SG_{range}-131.5$, and density at 60 degF uses the already qualified water
+density of 999.016 kg/m3. The receipt does not temperature-correct density, model excess
+volume or contraction, smooth or extrapolate the distillation curve, convert D86/D1160
+data, generate pseudo-components, infer molecular weight or critical properties, or
+claim phase-behavior equivalence. Non-finite, exterior, reversed, and zero-width
+requests fail before a receipt is returned; near-node boundaries use the existing snap
+tolerance.
+
+### Bounded boiling-range temperature moments
+
+The same receipt exposes the auditable first boiling-temperature moment
+
+$$M_{T,V}=\sum_i \Delta V_i \overline{T}_i$$
+
+in K liquid-volume percent through
+`getLiquidVolumeWeightedBoilingPointKelvinPercent()`. With piecewise-linear cumulative
+recovery, liquid-volume density is uniform versus temperature inside each overlap, so
+$\overline{T}_i=(T_{\mathrm{lower},i}+T_{\mathrm{upper},i})/2$. The liquid-volume-weighted mean is
+
+$$\overline{T}_{V,\mathrm{range}}=\frac{M_{T,V}}{\sum_i \Delta V_i}$$
+
+and is available in K and degC. First moments, unlike means, close additively when a
+range is partitioned.
+
+The receipt also integrates the second raw moment exactly for every overlap:
+
+`M2 = sum[Delta V_i * (T_lower,i^2 + T_lower,i*T_upper,i + T_upper,i^2) / 3]`.
+
+`getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent()` reports `M2`
+in K squared liquid-volume percent. `getBoilingPointVarianceKelvinSquared()`
+evaluates `M2 / sum(Delta V_i) - average(T)^2`, and
+`getBoilingPointStandardDeviationKelvin()` reports its square root in K. Raw second
+moments close additively across a partition; variances and standard deviations do not.
+
+These spread descriptors describe the qualified piecewise-linear TBP distribution.
+They are not ASTM distillation reproducibility or experimental uncertainty and do not
+add a measured intrainterval curve.
+
+`getWatsonCharacterizationFactor()` combines that mean TBP with the receipt's average
+SG60/60 using NeqSim's existing convention
+$K_W=(1.8\overline{T}_{V,\mathrm{range}})^{1/3}/SG_{\mathrm{range}}$, where temperature is in K and the
+factor is dimensionless. This is a transparent descriptor under the table assumptions.
+It is not an ASTM mean-average or volumetric-average boiling point, and it does not
+integrate enthalpy or heat capacity, temperature-correct density, infer an
+intrainterval measured shape, or establish pseudo-component or phase equivalence.
+
+### Ideal-additive-volume mass-basis recovery
+
+The exported table also converts its liquid-volume curve to an auditable implied mass
+basis using only the caller-supplied interval SG60/60 values. The complete-table
+denominator is
+
+$$M_{total}=\sum_i \Delta V_i SG_i$$
+
+and a bounded range reports
+
+$$w_{range}=100\frac{\sum_i \Delta V_i SG_i}{M_{total}}$$
+
+through `getMassPercentBetweenBoilingPointsKelvin(...)`, its Celsius counterpart, and
+`TbpBoilingRangeProperties.getMassPercent()`. The unnormalized numerator remains
+available from `getSpecificGravityWeightedLiquidVolumePercent()`, while
+`getTotalSpecificGravityWeightedLiquidVolumePercent()` exposes the denominator.
+
+`getCumulativeMassPercentAtBoilingPointKelvin(...)` and its Celsius counterpart apply
+the same expression from the first table boundary to a requested cut point. The inverse
+`getBoilingPointKelvinAtCumulativeMassPercent(...)` and Celsius method interpolate
+inside the responsible source interval. Because interval SG is constant and
+liquid-volume recovery is piecewise linear, the forward and inverse calculations use
+one algebraically consistent model:
+
+```java
+double massRecoveredAt400K =
+    table.getCumulativeMassPercentAtBoilingPointKelvin(400.0);
+double cutPointAtHalfMass =
+    table.getBoilingPointCelsiusAtCumulativeMassPercent(50.0);
+double dieselMassPercent =
+    table.getMassPercentBetweenBoilingPointsCelsius(180.0, 360.0);
+```
+
+Exact source nodes and near-node temperatures retain the existing boundary snapping.
+Partitioned bounded mass yields sum to 100%, Kelvin/Celsius queries are equivalent, and
+the immutable source arrays are not changed. Non-finite, exterior, reversed, and
+zero-width boiling ranges and mass recoveries outside 0 to 100% fail closed.
+
+This is a transparent ideal-additive-volume basis conversion, not a measured
+weight-percent distillation curve. It introduces no dataset, fitted coefficient,
+density-temperature correction, excess-volume or contraction model, pseudo-component
+generation, molecular-weight or critical-property estimate, or phase-equivalence
+claim.
+
+### Conservative target-grid resampling
+
+`TbpCutTable.resampleAtBoilingPointsKelvin(...)` and
+`resampleAtBoilingPointsCelsius(...)` replace the complete boundary grid while keeping
+the source endpoints. The target may refine source intervals, combine them, or do both in
+one operation:
+
+```java
+OilAssayCharacterisation.TbpCutTable targetGrid =
+    table.resampleAtBoilingPointsCelsius(26.85, 126.85, 326.85, 426.85);
+```
+
+At each target boundary, cumulative liquid-volume yield uses the same piecewise-linear
+recovery assumption documented for cut splitting. For target interval (j), each
+overlapping source interval (i) contributes liquid-volume yield
+(Delta V_{ij}), and the reported specific gravity is
+
+$SG_j=\frac{\sum_i \Delta V_{ij}SG_i}{\sum_i \Delta V_{ij}}$
+
+This gives exact endpoint and total liquid-volume closure and conserves the
+ideal-additive implied mass (sum_i Delta V_iSG_i). A source-grid request is an
+identity operation; a finer grid copies source-interval SG across its subintervals; and
+a coarser or mixed grid reports the liquid-volume-weighted SG of all overlaps. The
+source table remains immutable.
+
+The method is a conservative bookkeeping transform, not a new distillation or property
+correlation. It assumes piecewise-linear cumulative recovery and constant SG within
+each source interval. It does not infer measured intrainterval shape, interpolate
+density with temperature, smooth or extrapolate the curve, average molecular weight or
+critical properties, or assert phase-behavior equivalence after recharacterization.
+Null, incomplete, non-finite, unordered, exterior, and endpoint-mismatched target grids
+fail before a table is returned.
+
+### Recharacterizing an exported or re-lumped table
+
+`addTBPCutTable(...)` attaches an immutable exported or re-lumped table to another assay without requiring callers to unpack its arrays:
+
+```java
+SystemInterface targetFluid = new SystemSrkEos(298.15, 1.01325);
+OilAssayCharacterisation targetAssay = targetFluid.getOilAssayCharacterisation();
+targetAssay.setTotalAssayMass(100.0);
+targetAssay.addTBPCutTable("Coarse", coarseTable);
+targetAssay.apply();
+```
+
+Re-ingestion preserves the table's liquid-volume yields, retained boiling boundaries, interval specific gravities, and the configured total assay mass. Pseudo-component molecular weight and other correlated properties are recalculated through NeqSim's existing petroleum-characterization path from each retained boiling interval and specific gravity. They are not copied or averaged from source subcuts. This makes the model boundary explicit: `addTBPCutTable(...)` is a deterministic recharacterization API, not an assertion that fine- and coarse-cut phase behavior is identical.
+
+The method adds no correlation, coefficient, or external dataset. Null tables and invalid prefixes fail before the target assay is mutated. Existing component-name collision checks remain active when `apply()` is called.
+
 ## Volume-basis conversion
 
 For cut volume fractions `v_i` and cut densities `rho_i`, NeqSim first calculates the normalized mass fraction
@@ -136,6 +408,362 @@ $$SG_{bulk}=\left(\sum_i\frac{w_i}{SG_i}\right)^{-1}$$
 where `w_i` is the resolved mass fraction and `SG_i` is the cut specific gravity. For volume-basis inputs this reduces to the volume-fraction-weighted cut density after normalization.
 
 These methods are screening calculations at the density reference condition represented by the inputs. They assume ideal additive liquid volumes and do not apply temperature correction, excess-volume, or blend-contraction models. They are not custody-transfer or certified blend-design calculations. The public validation and numerical error boundary are documented in [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation).
+
+## Complete TBP table blending
+
+`TbpCutTable.blendByMass(...)` combines two or more complete source TBP tables before
+recharacterization. The source masses must share one mass basis. For source `s`, the complete-table
+specific gravity is
+
+$$SG_s=\frac{1}{100}\sum_i \Delta V_{s,i}SG_{s,i}$$
+
+and its ideal additive liquid-volume contribution is proportional to `m_s / SG_s`. The output grid
+is the ordered union of all source boiling boundaries. At each boundary, NeqSim volume-weights the
+source cumulative recoveries; below a source initial boiling point its recovery is zero, and above
+its final boiling point its recovery is 100%. Output interval specific gravity is reconstructed from
+the source overlap volumes and their interval SG60/60 values.
+
+```java
+OilAssayCharacterisation.TbpCutTable blended =
+    OilAssayCharacterisation.TbpCutTable.blendByMass(
+        new OilAssayCharacterisation.TbpCutTable[] {lightTable, heavyTable},
+        new double[] {6000.0, 4000.0});
+
+OilAssayCharacterisation blendedAssay =
+    targetSystem.getOilAssayCharacterisation();
+blendedAssay.setTotalAssayMass(10000.0);
+blendedAssay.addTBPCutTable("Blend", blended);
+blendedAssay.apply();
+```
+
+The analytical regression uses two offset, two-cut curves with uniform source SG values 0.80 and
+1.00 at equal source mass. Their ideal source-volume fractions are 5/9 and 4/9. The union grid is
+300, 350, 400, 450, 500, and 550 K; the blended whole-assay SG is 8/9 and cumulative ideal-mass
+recovery at 450 K is 62.5%. The implementation closes liquid volume to 100% and ideal-additive
+mass to the bulk relation $SG_{blend}=\sum_s m_s/\sum_s(m_s/SG_s)$.
+
+This is a deterministic bookkeeping blend of caller-supplied TBP and SG60/60 evidence. It adds no
+external coefficient or dataset. It does not assert measured multi-crude distillation behavior,
+apply density-temperature correction or blend contraction, predict interactions or compatibility,
+or establish phase-equivalence after pseudo-component recharacterization. Those require separate
+experimental or thermodynamic validation.
+
+## Whole-assay blend screening
+
+`RefineryAssayBlend` combines already-resolved whole-assay properties on one explicit mass basis.
+Specific gravity uses ideal additive liquid volumes, while total sulfur and nitrogen use linear
+mass weighting:
+
+$SG_{blend}=\left(\sum_j\frac{x_j}{SG_j}\right)^{-1},\qquad
+S_{blend}=\sum_jx_jS_j,\qquad N_{blend}=\sum_jx_jN_j$
+
+Here `x_j` is the normalized source-assay mass fraction. Callers may supply bulk properties
+directly, or use `fromAssays(...)` to resolve complete density, sulfur, and nitrogen inputs from
+configured `OilAssayCharacterisation` instances before a result is returned. Property queries do
+not call `apply()`, create pseudo-components, or mutate the attached thermodynamic systems.
+
+```java
+RefineryAssayBlend densityBlend = RefineryAssayBlend.fromBulkProperties(
+    new double[] {60.0, 40.0},
+    new double[] {0.847, 0.771});
+
+double blendSpecificGravity = densityBlend.getSpecificGravity();
+double blendApi = densityBlend.getApiGravity();
+double blendDensityKgM3 = densityBlend.getDensityKgPerCubicMetreAt60F();
+```
+
+The two endpoint specific gravities above are published DOE/OEDI COA whole-crude values for samples
+50146 and 56337. They provide public endpoint evidence for an independently recomputable
+60/40 screening calculation; no measured property for that hypothetical blend is available or
+claimed. Source: [DOE/OEDI COA summary workbook](https://data.openei.org/submissions/23).
+
+All positive-mass sources must provide each property requested by the selected factory. Null,
+non-finite, negative, zero-total, length-mismatched, or incomplete positive-mass inputs fail closed.
+Zero-mass sources do not contribute. Returned normalized mass fractions are defensive copies.
+
+This is bulk bookkeeping, not a thermodynamic or empirical blend model. It does not predict
+temperature/pressure effects, excess volume or contraction, viscosity, cloud/pour point,
+asphaltene stability, phase equilibrium, TBP/pseudo-component compatibility, product
+specifications, or blend optimization.
+
+### Kinematic-viscosity blend screening
+
+`RefineryViscosityBlend` supplies a separate empirical Refutas screen for source viscosities
+already resolved at one common temperature. It transforms kinematic viscosity `nu` in cSt to a
+dimensionless viscosity blending number, mixes that number by normalized mass fraction, and
+applies the analytical inverse:
+
+$VBN_i=14.534\ln(\ln(\nu_i+0.8))+10.975$
+
+$VBN_{blend}=\sum_i x_iVBN_i$
+
+$\nu_{blend}=\exp\left(\exp\left(\frac{VBN_{blend}-10.975}{14.534}\right)\right)-0.8$
+
+The double logarithm requires every positive-mass source viscosity to be finite and greater than
+0.2 cSt. A zero-mass source is ignored and may leave its viscosity unresolved. The temperature is
+stored with the immutable result but is not used to extrapolate viscosity.
+
+Equal-viscosity sources are valid when their masses are supplied: blending three equal masses at
+20 cSt returns 20 cSt. Floating-point summation can put the blended VBN just outside the source
+interval, so the result is clamped to that interval after input and finiteness checks. This also
+preserves blends of nearly equal viscosities without rejecting valid recipes.
+
+```java
+RefineryViscosityBlend viscosityBlend = RefineryViscosityBlend.fromMassBasis(
+    new double[] {5000.0, 12000.0},
+    new double[] {550.0, 375.0},
+    50.0);
+
+double blendViscosityCSt = viscosityBlend.getKinematicViscosityCSt();
+double blendNumber = viscosityBlend.getViscosityBlendingNumber();
+double temperatureCelsius = viscosityBlend.getTemperatureCelsius();
+double[] massFractions = viscosityBlend.getMassFractions();
+double[] sourceBlendNumbers = viscosityBlend.getSourceViscosityBlendingNumbers();
+double directBlendNumber =
+    RefineryViscosityBlend.calculateViscosityBlendingNumber(550.0);
+double directViscosityCSt =
+    RefineryViscosityBlend.calculateKinematicViscosityCSt(directBlendNumber);
+
+RefineryViscosityBlend plannedBlend =
+    RefineryViscosityBlend.fromBinaryTargetKinematicViscosity(
+        550.0, 375.0, 418.68738293612904, 50.0);
+double[] plannedMassFractions = plannedBlend.getMassFractions();
+```
+
+For two distinct source viscosities, the target factory solves the unique mass fractions in VBN
+space:
+
+$x_1=\frac{VBN_{target}-VBN_2}{VBN_1-VBN_2}$
+
+$x_2=1-x_1$
+
+The target must lie inside the closed interval formed by the two source viscosities. Exact endpoint
+targets return a pure-source result. Equal-viscosity sources fail closed because their mass ratio is
+not uniquely determined.
+
+The equations and mass-weighting basis follow Centeno et al.,
+[DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028).
+The fixed binary example above is an independently recomputed arithmetic reference, not measured
+blend evidence. This API does not claim physical prediction accuracy, uncertainty, ASTM
+compliance, dynamic-viscosity conversion, viscosity-temperature extrapolation, non-Newtonian
+behavior, pressure correction, phase behavior, compatibility, multi-source or multi-property
+optimization, economics, or control.
+
+
+## Binary quality-constrained blend envelope
+
+`RefineryBinaryBlendEnvelope` combines the already-qualified bulk-property and viscosity
+screens for exactly two resolved sources. For first-source mass fraction `x`, API gravity,
+sulfur, nitrogen, and VBN are affine in `x`:
+
+$P_{blend}=xP_1+(1-x)P_2$
+
+For API gravity this follows from the ideal-additive-volume relation because
+$API=141.5/SG-131.5$. For viscosity, $P$ is VBN and the final value is obtained through the
+published Refutas inverse. The implementation intersects every inclusive property interval with
+$0\leq x\leq1$ and fails closed when the intersection is empty.
+
+```java
+RefineryBinaryBlendEnvelope envelope =
+    RefineryBinaryBlendEnvelope.fromQualityConstraints(
+        new double[] {0.847, 0.771},
+        new double[] {0.020, 0.005},
+        new double[] {0.0020, 0.0005},
+        new double[] {550.0, 375.0},
+        50.0,
+        35.56021251475798,
+        52.0278858625162,
+        0.014,
+        0.01,
+        411.7708156677767,
+        550.0);
+
+double minimumFirstFraction = envelope.getMinimumFirstSourceMassFraction();
+double maximumFirstFraction = envelope.getMaximumFirstSourceMassFraction();
+RefineryBinaryBlendEnvelope.Plan minimumCost = envelope.planMinimumCost(1.0, 2.0);
+double selectedFirstFraction = minimumCost.getFirstSourceMassFraction();
+double selectedCost = minimumCost.getUnitCostPerMass();
+double selectedApi = minimumCost.getAssayBlend().getApiGravity();
+double selectedViscosity = minimumCost.getViscosityBlend().getKinematicViscosityCSt();
+```
+
+The documented arithmetic case gives a closed first-source interval of 0.25-0.60. With source
+costs 1 and 2 per common mass unit, the unique minimum-cost endpoint is 0.60 and the blended unit
+cost is 1.40. Reversing the costs selects 0.25. Equal costs fail closed when the feasible interval
+contains more than one point; a single-point feasible interval remains valid.
+
+The specific-gravity endpoints 0.847 and 0.771 are preserved public DOE/OEDI assay values used by
+the existing bulk-blend qualification. The viscosities and quality values are arithmetic
+integration evidence, not measured blend data. The viscosity relation retains the Centeno et al.
+provenance, [DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028).
+
+This bounded analytical planner is not a generic optimizer. It does not predict excess volume,
+viscosity-temperature behavior, phase or asphaltene compatibility, measured product quality,
+uncertainty, nonlinear economics, multi-source feasibility, or control actions. Every source
+property must already be resolved on the documented basis, and costs must use one common
+currency-per-mass basis.
+
+## Multi-source linear blend optimization
+
+`RefineryLinearBlendOptimizer` extends the qualified binary envelope to two or more resolved
+sources. It minimizes a linear source cost on normalized, non-negative mass fractions:
+
+$$\min_x\sum_i c_i x_i,\qquad \sum_i x_i=1,\qquad x_i\geq0$$
+
+API gravity is affine in the fractions because ideal additive volume makes reciprocal specific
+gravity mass-linear. Sulfur and nitrogen are mass-linear. Viscosity constraints are linearized in
+the published Refutas VBN space at one explicit common temperature, then reconstructed through
+`RefineryViscosityBlend`.
+
+```java
+RefineryLinearBlendOptimizer.Result optimum =
+    RefineryLinearBlendOptimizer.optimizeMinimumCost(
+        new double[] {1.0, 2.0, 3.0},
+        new double[] {0.85, 0.80, 0.75},
+        new double[] {0.030, 0.010, 0.002},
+        new double[] {0.003, 0.001, 0.0002},
+        new double[] {600.0, 300.0, 50.0},
+        50.0,
+        30.0,
+        60.0,
+        0.015,
+        0.01,
+        50.0,
+        600.0);
+
+double[] sourceMassFractions = optimum.getSourceMassFractions();
+double unitCost = optimum.getUnitCostPerMass();
+double blendApi = optimum.getAssayBlend().getApiGravity();
+double blendViscosityCSt = optimum.getViscosityBlend().getKinematicViscosityCSt();
+
+RefineryLinearBlendOptimizer.QualityConstraintReceipt quality =
+    optimum.getQualityConstraintReceipt();
+double sulfurMargin = quality.getSulfurMargin();
+boolean sulfurConstraintIsBinding = quality.isSulfurBinding();
+```
+
+The documented analytical case selects source fractions 0.25, 0.75, and 0.0, with unit cost
+1.75 and sulfur exactly at the 0.015 mass-fraction limit. A binary regression reproduces the
+qualified `RefineryBinaryBlendEnvelope` endpoint. Input reversal preserves the physical optimum.
+An infeasible problem, invalid property, non-finite solver result, failed mass closure, or failed
+property reconstruction stops without returning a recipe.
+
+The optimizer uses NeqSim's existing Apache Commons Math simplex dependency. It returns one
+minimum-cost feasible vertex; it does not claim that the recipe is unique when costs or constraints
+are degenerate. Costs must share one currency-per-mass basis, source properties must already be
+resolved on their documented bases, and all viscosities must refer to the supplied common
+temperature.
+
+The SG/API, sulfur, and nitrogen rules retain the existing public DOE/OEDI assay provenance. The
+viscosity rule retains the Centeno et al. provenance,
+[DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028). The numerical examples
+are transparent arithmetic integration cases, not measured multi-crude blend data.
+
+This is a screening optimizer. It does not model excess volume, blend contraction,
+viscosity-temperature extrapolation, phase or asphaltene compatibility, uncertainty, nonlinear or
+integer economics, inventory, scheduling, control actions, or certified product compliance.
+
+### Optimization quality-constraint receipts
+
+Every successful result retains an immutable `QualityConstraintReceipt`. It reports the realized
+API gravity, sulfur and nitrogen mass fractions, Refutas-blended kinematic viscosity, the exact
+bounds used by the solve, and the common viscosity temperature. Lower/upper or upper-only margins
+are reported on the same basis as their properties. A constraint is marked binding when its margin
+is within the optimizer's documented numerical tolerance.
+
+The receipt is generated only after the optimizer reconstructs and validates the physical blend.
+Negative margins larger than tolerance therefore fail closed; tolerance-scale negative roundoff is
+reported as zero. This is auditable optimization evidence, not sensitivity or uncertainty analysis.
+It does not expose dual prices, predict nonlinear quality behavior, calibrate a plant, or certify a
+product specification.
+
+## Auditable blend-batch receipts
+
+`RefineryBlendBatch` scales a normalized mass-fraction recipe to one requested batch mass and
+returns immutable source mass and ideal-additive source-volume receipts. The source volumes retain
+the existing 60 degrees Fahrenheit basis:
+
+$V_i=\frac{m_i}{SG_i\rho_{w,60F}},\qquad
+V_{blend}=\sum_iV_i,\qquad
+SG_{blend}=\frac{m_{blend}}{V_{blend}\rho_{w,60F}}$
+
+Here $\rho_{w,60F}=999.016\ \mathrm{kg/m^3}$, matching `RefineryAssayBlend`. A recipe may be
+supplied directly or taken from a qualified `RefineryLinearBlendOptimizer.Result`; the latter
+also closes total cost from the optimizer's common currency-per-mass basis.
+
+```java
+RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(
+    10000.0,
+    new double[] {0.60, 0.40},
+    new double[] {0.847, 0.771});
+
+double[] sourceMassesKg = batch.getSourceMassesKg();
+double[] sourceVolumesM3At60F = batch.getSourceVolumesM3At60F();
+double totalVolumeM3At60F = batch.getTotalAdditiveVolumeM3At60F();
+double batchSpecificGravity = batch.getSpecificGravity();
+```
+
+Pair the qualified batch with unique caller identifiers when downstream evidence must be
+label-addressable:
+
+```java
+RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(
+    new String[] {"DOE/OEDI sample 50146", "DOE/OEDI sample 56337"},
+    batch);
+
+RefineryBlendSourceLedger.SourceReceipt first =
+    ledger.getSourceReceipt("DOE/OEDI sample 50146");
+double firstSourceMassKg = first.getMassKg();
+double firstSourceVolumeM3At60F = first.getAdditiveVolumeM3At60F();
+```
+
+The identifiers are caller metadata in exact batch-array order. They must be nonblank, free of
+surrounding whitespace, and unique. The ledger defensively preserves source order, mass fraction,
+mass, specific gravity, additive volume, and zero-contribution sources. It does not infer assay
+identity, query a source database, or attest provenance.
+
+The specific-gravity endpoints are the published DOE/OEDI COA values for samples 50146 and 56337
+from the [DOE/OEDI COA summary workbook](https://data.openei.org/submissions/23). The 60/40 receipt
+is transparent arithmetic integration evidence, not a measured multi-crude blend. It preserves the
+same ideal-additive-volume result as `RefineryAssayBlend`.
+
+The receipt and source ledger do not model blend contraction, temperature correction, tank gauging,
+viscosity extrapolation, phase or asphaltene compatibility, inventory or scheduling decisions,
+control actions, or certified product compliance. The ledger does not create tanks or thermodynamic
+streams.
+Zero-contribution sources need no fabricated specific gravity; every positive contribution fails
+closed unless its fraction and density basis are finite and valid.
+
+### Complete optimized blend-plan receipts
+
+Use `RefineryBlendOptimizationPlan.fromOptimization(...)` when one downstream record must retain
+the qualified optimizer result, scaled batch, quality-constraint evidence, exact source labels, and
+source costs together:
+
+```java
+RefineryBlendOptimizationPlan plan = RefineryBlendOptimizationPlan.fromOptimization(
+    new String[] {"DOE/OEDI sample 50146", "DOE/OEDI sample 56337"},
+    10000.0,
+    sourceSpecificGravities,
+    sourceCostsPerMass,
+    optimization);
+
+RefineryBlendOptimizationPlan.SourceCostReceipt first =
+    plan.getSourceCostReceipt("DOE/OEDI sample 50146");
+double firstSourceCost = first.getTotalCost();
+```
+
+Each ordered receipt copies the source index, identifier, mass fraction, mass, 60 degF specific
+gravity, ideal-additive volume, unit cost, and source total cost. The source-level cost closes to the
+optimizer unit cost and batch total cost. The plan exposes the original immutable
+`QualityConstraintReceipt`, preserves zero-contribution identity with zero mass, volume, and total
+cost, and fails closed on mismatched identifiers, gravities, costs, or cost closure.
+
+This composition layer does not re-solve the optimization or alter any property result. Source
+identifiers remain caller metadata, and the DOE/OEDI labels are public-data regression identifiers,
+not automatic provenance attestation. The plan does not add blend contraction, scheduling, or
+compliance logic; it also does not model temperature correction, tank gauging, control, phase
+compatibility, or thermodynamic stream creation.
 
 ## Per-cut UOP/Watson characterization factor
 
@@ -205,6 +833,19 @@ The [complete modeled-slate contract and provenance](refinery_big_hill_complete_
 2021 workbook values, the normalized C2-C4 allocation assumption, the blank sulfur/nitrogen screening
 assumptions, exact mass closure, and the boundary between reproducibility and property/process
 validation.
+
+## Constrained Sarir pseudo-component input
+
+`SarirAtmosphericAssay.create(...)` converts the public Sarir cumulative TBP evidence into 18
+volume-basis cuts while preserving the `70 degC-` and `550 degC+` terminal intervals as one-sided.
+The source does not publish cut density or molar-mass profiles, so both are required caller inputs.
+The factory accepts a profile only when it reconciles the reported 841.5 kg/m3 whole-crude density
+within 1.0 kg/m3 and the reported 0.2447 kg/mol average molar mass within 0.001 kg/mol.
+
+This capability makes the missing-property boundary executable instead of silently filling it.
+It does not resolve Sarir light-end composition, distribute whole-crude sulfur, or qualify
+fractionation yields. The [Sarir reference and input contract](refinery_sarir_atmospheric_reference)
+provide provenance, Java/JPype usage, and the process-validation stop boundary.
 
 ## Open-ended terminal boiling boundaries
 
@@ -281,34 +922,49 @@ The regression suite for this API currently verifies:
 
 These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122), qualify the DOE residue's Watson-derived representative temperature, qualify the DOE C2-C4 standard-component split, qualify the DOE C5-175 degF PIANO aggregate molar mass, and qualify linear assay sulfur and nitrogen bookkeeping over one complete DOE crude slate. They do **not** qualify temperature correction, contraction, generic molecular-weight or critical-property correlations, sulfur/nitrogen species or reactions, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
 
-## Refinery capability inventory after this increment
+## Refinery capability inventory on current master
 
-| Capability | Current NeqSim foundation | Campaign status |
+This inventory reconciles the original assay-foundation roadmap with the merged public APIs,
+reference cases, tests, and user guides. A capability is listed as *available* only for the
+documented contract and evidence boundary; availability does not turn a screening receipt into a
+yield predictor, plant calibration, design approval, or standards-compliance claim.
+
+| Capability | Current NeqSim foundation | Campaign status and evidence boundary |
 | --- | --- | --- |
-| Pre-binned crude/petroleum assay cuts | `OilAssayCharacterisation` | Foundation hardened in #3305 |
-| Mass- and volume-basis cut yields | Unit/basis-explicit assay API | Foundation hardened in #3305 |
-| Pre-binned cumulative TBP cut boundaries | `addTBPCutBoundariesCelsius/Kelvin` | Initial implementation in #3305 |
-| Open-ended terminal boiling limits | Unit-explicit one-sided `AssayCut` boundaries | DOE-qualified for metadata and fail-closed preparation |
-| Watson-derived terminal representative point | `withWatsonCharacterizationFactor(...)` | DOE-qualified for the Big Hill 1050 degF+ residue |
-| Composition-resolved standard light ends | `AssayCut.withStandardComponent(...)` | DOE-qualified for the Big Hill C2-C4 composition and mass/mole bookkeeping |
-| PIANO family/carbon-number molar mass | `calculatePianoMolarMassKgPerMol(...)` | DOE-qualified for the Big Hill C5-175 degF aggregate and explicit-molar-mass bookkeeping |
-| Per-cut UOP/Watson characterization factor | `AssayCut.getWatsonCharacterizationFactor()` | DOE-qualified for assay screening over 375-1050 degF |
-| Assay-carried total sulfur | `getBulkSulfurMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
-| Assay-carried total nitrogen | `getBulkNitrogenMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
-| Complete public reference slate | `DoeBigHillSweetAssay` | Reproducible modeled 2021 DOE composition; property and process validation remain separate gates |
-| TBP pseudo-component properties | Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing and related models | Existing; needs refinery-range independent validation |
-| Plus-fraction splitting/lumping | `Characterise`, plus-fraction and lumping models | Existing; refinery assay integration still to be qualified |
-| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API, per-cut Watson and linear sulfur/nitrogen bookkeeping qualified over frozen public matrices; broader stream properties remain open |
-| Rigorous distillation columns | `DistillationColumn`, `SimpleTray`, Naphtali-Sandholm solver, side-draw support | Existing foundation; broad-boiling atmospheric/vacuum refinery benchmark remains open |
-| Crude preheat/fired heater | General heater/heat-exchanger process equipment | Refinery workflow and fuel/emission integration remain open |
-| Product blending/specification optimization | Generic optimization/process facilities | Refinery property/blending framework remains open |
-| ASTM D86/D1160 to TBP conversion | No qualified refinery conversion API in this increment | Open; requires public correlation provenance and validation |
-| Atmospheric crude-unit benchmark | No campaign benchmark yet | Next high-value validation milestone |
-| Vacuum tower benchmark | No campaign benchmark yet | Open after atmospheric case |
-| Hydrotreating/reforming/FCC/hydrocracking | No campaign-qualified refinery conversion models | Deliberately later phase |
+| Pre-binned crude/petroleum assay cuts | `OilAssayCharacterisation` | Unit- and basis-explicit ingestion, export, closure, metadata, and public DOE/OEDI assay regressions are available. |
+| Cumulative TBP boundaries and table transformation | `AssayCut`, `TbpCutTable`, `addTBPCutBoundariesCelsius/Kelvin` | Split, adjacent re-lump, recovery/cut-point queries, conservative target-grid resampling, ideal-volume mass recovery, blend, and recharacterization are available with fail-closed bounds. |
+| Standard light ends, terminal cuts, and PIANO aggregation | `AssayCut.withStandardComponent(...)`, Watson terminal characterization, and `calculatePianoMolarMassKgPerMol(...)` | DOE Big Hill C2-C4, C5-175 degF, and 1050 degF+ evidence is regression protected; generic missing-property inference is not claimed. |
+| TBP pseudo-component properties and heavy-end handling | `Characterise`, selectable TBP models, plus-fraction splitting/lumping, and `PseudoComponentCombiner` | Existing petroleum-characterization paths are composable with assay tables; broader cross-EOS and refinery-range independent property validation remains open. |
+| Bulk and cut refinery properties | SG/API, Watson factor, sulfur, nitrogen, viscosity, boiling-range density/API, and temperature-moment receipts | Public bookkeeping and bounded-property regressions exist. Temperature correction, contraction, species-level contaminants, flash/pour/cloud-point correlation coverage, and uncertainty remain separate gates. |
+| ASTM D86 and TBP conversion | `Standard_ASTM_D86` with molar, recovered-liquid-volume, and empirical Riazi-Daubert/API conversion support | Atmospheric D86 calculation and documented conversion are available. A campaign-qualified ASTM D1160 workflow and D2887 implementation are not claimed. |
+| Crude and product blending | `RefineryAssayBlend`, `RefineryViscosityBlend`, `RefineryBinaryBlendEnvelope`, `RefineryLinearBlendOptimizer`, `RefineryBlendBatch`, and complete `TbpCutTable` blending | Ideal-volume SG/API, mass-linear sulfur/nitrogen, Refutas viscosity, bounded envelopes, linear cost/quality optimization, batch receipts, and table blending are available within documented assumptions. |
+| Atmospheric fractionation | DOE Big Hill qualification and `SarirAtmosphericFractionationCase` | Rigorous-column conservation, boiling-order, repeatability, and public Sarir plant/simulation comparison evidence are available. The Sarir case remains explicitly input-bounded and is not a plant calibration. |
+| Vacuum fractionation | `DoeBigHillVacuumFractionationCase` and `DoeBigHillVacuumReboilerTemperatureSensitivity` | A reproducible sub-atmospheric, caller-configured DOE Big Hill handoff with conservation/convergence checks and a composition-preserving connected temperature screen is available. The public assay does not provide a matched operating case, so independent plant-yield validation remains open. |
+| Side draws, pump-around, and side-stripper screens | `DistillationColumn`, `SarirAtmosphericPumparoundScreen`, and `SarirAtmosphericSideStripperContactScreen` | Generic side-draw/pump-around support and bounded Sarir screens are available. The contact screen is not a qualified multistage side stripper. |
+| Crude heating and fired-heater integration | `SarirAtmosphericCrudeHeatingCase`, `Heater`, and `FiredHeater` | A source-bounded preheat/furnace handoff with caller-owned duty, efficiency, fuel, and emissions assumptions is available; exchanger-network design and plant calibration are not claimed. |
+| Hydrotreating | `RefineryHydrotreating*Balance` and `RefineryHydrotreating*Receipt` families | Sulfur/nitrogen, hydrogen, recycle/purge, utility, emissions, heat-recovery, operating, intensity, and screening-economics receipts are available. They are stoichiometric/bookkeeping screens, not kinetic reactor or separator models. |
+| Catalytic reforming | `RefineryCatalyticReformingStoichiometricBalance`, `RefineryCatalyticReformingFeedBalance`, and `RefineryCatalyticReformingHydrogenRecoveryBalance` | Single- and multi-cut stoichiometric reforming plus explicit hydrogen recovery are available; octane, kinetics, catalyst, separator, and compressor predictions are excluded. |
+| Hydrocracking | `RefineryHydrocrackingYieldBalance` and `RefineryHydrocrackingHydrogenSupplyBalance` | Caller-owned conversion/selectivity, hydrogen demand, recovered-reformer-hydrogen offset, import/surplus, and closure receipts are available; kinetics, product properties, recycle, and fractionation are excluded. |
+| Fluid catalytic cracking | `RefineryFccYieldBalance` and `RefineryFccCokeRegeneratorBalance` | Caller-owned five-lump yield plus corrected coke-carbon, air, CO/CO2, oxygen, and dry-flue-gas closure are available; catalyst/riser kinetics, heat balance, wet flue gas, and emissions compliance are excluded. |
+| Delayed coking | `RefineryDelayedCokingYieldBalance` and `RefineryDelayedCokingUtilityBalance` | Caller-owned five-lump yield plus feed-basis duty, fuel, steam, mass, and useful-energy closure are available; kinetics, drum cycle, coke quality, fractionator, fired-equipment design, and safe operability are excluded. |
+| Energy, emissions, and economics | Fired-heater, hydrogen-utility/emissions, heat-recovery, operating-cost, and screening-economics receipts | Reusable bounded receipts exist, especially for hydrotreating and crude heating. A single facility-wide refinery balance and economic optimization benchmark remains open. |
+| Python accessibility | Public Java APIs through the standard NeqSim Python/JPype bridge | The merged classes are callable from Python through the Java API. Dedicated high-level Python wrappers and an executed end-to-end refinery notebook remain open. |
 
-## Next campaign step
+## Connected front-end increment and next campaign step
 
-The next dependency-ready process increment should advance the bounded DOE atmospheric integration
-case to this complete modeled slate and compare product yields and boiling ranges against independent
-public evidence before vacuum fractionation.
+The DOE Big Hill connected front-end now composes the complete modeled assay, explicit fired-heater
+receipt, qualified atmospheric fractionation, calculated atmospheric-bottoms handoff, and existing
+vacuum-fractionation case. The regression preserves one assay identity from crude feed through final
+products, checks component/mass and column energy closure, exposes product boiling ranges, and
+recomputes utility/emissions identities from caller-owned assumptions.
+
+The connected sensitivity overload is the Java prerequisite for the next dependency-ready validation:
+execute the same public API through Python/JPype and publish a rendered atmospheric/vacuum
+operating-sensitivity receipt without promoting the numerical settings to plant data.
+Do not mix Sarir operating or plant-yield evidence into the DOE case.
+Do not publish an unexecuted notebook, invent a matched vacuum-plant benchmark that the public
+source does not provide, or duplicate the existing
+column, assay, heater, or balance APIs. ASTM D1160 qualification, broader heavy-fluid property
+validation, nonlinear blend quality, conversion kinetics, and plant calibration remain separate
+evidence-gated increments.
+

@@ -2,6 +2,7 @@ package neqsim.process.equipment.distillation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -9,7 +10,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.distillation.internals.PackingHydraulicsCalculator;
@@ -41,6 +45,9 @@ import neqsim.util.validation.ValidationResult;
 public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+
+  /** Combined gas-liquid fluid models built during the current run, keyed by both component lists. */
+  private transient Map<String, SystemInterface> mixedSystemTemplates;
 
   /** Minimum finite gas diffusivity used when a physical-property model is unavailable. */
   private static final double MIN_GAS_DIFFUSIVITY = 1.0e-7;
@@ -513,9 +520,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Set the packing by name or alias.
    *
    * @param packingName packing name or alias from {@link PackingSpecificationLibrary}
+   * @throws IllegalArgumentException if the name is not registered
    */
   public void setPackingType(String packingName) {
-    this.packingSpecification = PackingSpecificationLibrary.getOrDefault(packingName);
+    this.packingSpecification = PackingSpecificationLibrary.require(packingName);
   }
 
   /**
@@ -927,7 +935,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    isSolved = false;
     validateRuntimeSetup();
+    // Model parameters may have been changed between runs, so combined-fluid templates live for one run.
+    mixedSystemTemplates = new HashMap<String, SystemInterface>();
     SystemInterface gasIn = gasInStream.getThermoSystem().clone();
     SystemInterface liquidIn = liquidInStream.getThermoSystem().clone();
     flashAndInitialize(gasIn);
@@ -1033,33 +1044,59 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Solve the counter-current profile by fixed-point liquid profile iteration.
+   * Solve the counter-current profile by fixed-point liquid profile iteration. Reject an exhausted or non-finite
+   * residual before publishing the profile.
    *
    * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
    * @return converged counter-current solution
+   * @throws IllegalStateException if a positive-height profile fails its convergence tolerance
    */
   private CounterCurrentSolution solveFixedPointProfile(SystemInterface gasIn, SystemInterface liquidIn) {
+    CounterCurrentSolution solution = iterateFixedPointProfile(gasIn, liquidIn);
+    if (packedHeight > 0.0
+        && (!Double.isFinite(lastConvergenceResidual) || lastConvergenceResidual > convergenceTolerance)) {
+      throw new IllegalStateException("Fixed-point packed column did not converge after " + lastIterationCount
+          + " iterations: residual " + lastConvergenceResidual + " exceeds tolerance " + convergenceTolerance
+          + ". Inspect the profile diagnostics; outlet streams have not been updated.");
+    }
+    acceptSolution(solution);
+    return solution;
+  }
+
+  /**
+   * Iterate a profile without publishing it. An exhausted profile may seed the EO solver, whose final solution is
+   * subject to its own residual acceptance test.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @return last profile, which is not necessarily converged
+   */
+  private CounterCurrentSolution iterateFixedPointProfile(SystemInterface gasIn, SystemInterface liquidIn) {
     resetColumnResidualDiagnostics();
     List<SystemInterface> liquidEntering = initializeLiquidProfile(liquidIn);
     SystemInterface previousGasOutlet = null;
     SystemInterface previousLiquidOutlet = null;
     CounterCurrentSolution solution = null;
     for (int iteration = 1; iteration <= maxIterations; iteration++) {
-      solution = runOneProfileIteration(gasIn, liquidIn, liquidEntering);
+      lastIterationCount = iteration;
+      try {
+        solution = runOneProfileIteration(gasIn, liquidIn, liquidEntering);
+      } catch (RuntimeException ex) {
+        lastConvergenceResidual = Double.POSITIVE_INFINITY;
+        throw new IllegalStateException("Fixed-point packed column failed at iteration " + iteration
+            + " before a valid thermodynamic profile was obtained. Outlet streams have not been updated.", ex);
+      }
       double residual = calculateOutletResidual(previousGasOutlet, solution.gasOutlet, previousLiquidOutlet,
           solution.liquidOutlet);
-      lastIterationCount = iteration;
       lastConvergenceResidual = residual;
       if (residual <= convergenceTolerance || packedHeight == 0.0) {
-        acceptSolution(solution);
         return solution;
       }
       previousGasOutlet = solution.gasOutlet.clone();
       previousLiquidOutlet = solution.liquidOutlet.clone();
       liquidEntering = updateLiquidProfile(liquidIn, solution.liquidLeavingSegments);
     }
-    acceptSolution(solution);
     return solution;
   }
 
@@ -1079,14 +1116,15 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    *
    * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
-   * @return equation-oriented counter-current solution
+   * @return converged equation-oriented counter-current solution
+   * @throws IllegalStateException if the final full-transfer residual exceeds its tolerance
    */
   private CounterCurrentSolution solveEquationOrientedProfile(SystemInterface gasIn, SystemInterface liquidIn) {
-    CounterCurrentSolution seed = solveFixedPointProfile(gasIn, liquidIn);
     List<String> components = getTransferComponentList(gasIn, liquidIn);
     if (components.isEmpty()) {
-      return seed;
+      return solveFixedPointProfile(gasIn, liquidIn);
     }
+    CounterCurrentSolution seed = iterateFixedPointProfile(gasIn, liquidIn);
     double[] unknowns = createColumnUnknowns(seed, components);
     ColumnResidualEvaluation evaluation = null;
     int totalIterations = 0;
@@ -1104,6 +1142,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     lastColumnEnergyBalanceResidual = evaluation.maxEnergyBalanceResidual;
     lastIterationCount = Math.max(1, totalIterations);
     lastConvergenceResidual = evaluation.norm;
+    if (!Double.isFinite(evaluation.norm) || evaluation.norm > columnResidualTolerance) {
+      throw new IllegalStateException("Equation-oriented packed column did not converge: residual " + evaluation.norm
+          + " exceeds tolerance " + columnResidualTolerance
+          + ". Inspect the column residual diagnostics; outlet streams have not been updated.");
+    }
     acceptSolution(evaluation.solution);
     return evaluation.solution;
   }
@@ -1152,7 +1195,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       if (best.norm <= columnResidualTolerance) {
         return best.withIterations(iteration);
       }
-      Matrix step = calculateColumnResidualStep(gasIn, liquidIn, components, unknowns, best, homotopyFactor);
+      DMatrixRMaj step = calculateColumnResidualStep(gasIn, liquidIn, components, unknowns, best, homotopyFactor);
       if (step == null) {
         return best.withIterations(iteration);
       }
@@ -1302,8 +1345,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param homotopyFactor continuation factor from zero to one
    * @return Newton step, or null if the least-squares solve fails
    */
-  private Matrix calculateColumnResidualStep(SystemInterface gasIn, SystemInterface liquidIn, List<String> components,
-      double[] unknowns, ColumnResidualEvaluation evaluation, double homotopyFactor) {
+  private DMatrixRMaj calculateColumnResidualStep(SystemInterface gasIn, SystemInterface liquidIn,
+      List<String> components, double[] unknowns, ColumnResidualEvaluation evaluation, double homotopyFactor) {
     int residualCount = evaluation.normalizedResiduals.length;
     int variableCount = unknowns.length;
     SparseJacobian sparseJacobian = new SparseJacobian(residualCount, variableCount);
@@ -1334,15 +1377,19 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       }
     }
     try {
-      Matrix jacobian = sparseJacobian.toDenseMatrix();
-      Matrix normalMatrix = jacobian.transpose().times(jacobian)
-          .plus(Matrix.identity(variableCount, variableCount).times(1.0e-10));
-      double[][] rhsValues = new double[residualCount][1];
-      for (int row = 0; row < residualCount; row++) {
-        rhsValues[row][0] = -evaluation.normalizedResiduals[row];
+      DMatrixRMaj jacobian = sparseJacobian.toDenseMatrix();
+      DMatrixRMaj normalMatrix = new DMatrixRMaj(variableCount, variableCount);
+      CommonOps_DDRM.multTransA(jacobian, jacobian, normalMatrix);
+      for (int variable = 0; variable < variableCount; variable++) {
+        normalMatrix.add(variable, variable, 1.0e-10);
       }
-      Matrix normalRhs = jacobian.transpose().times(new Matrix(rhsValues));
-      return normalMatrix.solve(normalRhs);
+      DMatrixRMaj rhsValues = new DMatrixRMaj(residualCount, 1);
+      for (int row = 0; row < residualCount; row++) {
+        rhsValues.set(row, 0, -evaluation.normalizedResiduals[row]);
+      }
+      DMatrixRMaj normalRhs = new DMatrixRMaj(variableCount, 1);
+      CommonOps_DDRM.multTransA(jacobian, rhsValues, normalRhs);
+      return solveDenseStep(normalMatrix, normalRhs);
     } catch (RuntimeException ex) {
       return null;
     }
@@ -1359,7 +1406,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param components active transfer components
    * @return bounded candidate unknowns
    */
-  private double[] applyColumnResidualStep(double[] unknowns, Matrix step, double damping, SystemInterface gasIn,
+  private double[] applyColumnResidualStep(double[] unknowns, DMatrixRMaj step, double damping, SystemInterface gasIn,
       SystemInterface liquidIn, List<String> components) {
     double[] candidate = unknowns.clone();
     for (int i = 0; i < candidate.length; i++) {
@@ -1932,7 +1979,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       if (best.norm <= segmentResidualTolerance) {
         return best;
       }
-      Matrix step = calculateResidualStep(gas, liquid, snapshot, components, unknowns, best);
+      DMatrixRMaj step = calculateResidualStep(gas, liquid, snapshot, components, unknowns, best);
       if (step == null) {
         return best;
       }
@@ -2044,10 +2091,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param evaluation current residual evaluation
    * @return Newton step, or null if the linear solve fails
    */
-  private Matrix calculateResidualStep(SystemInterface gas, SystemInterface liquid, TransportSnapshot snapshot,
+  private DMatrixRMaj calculateResidualStep(SystemInterface gas, SystemInterface liquid, TransportSnapshot snapshot,
       List<String> components, double[] unknowns, SegmentResidualEvaluation evaluation) {
     int dimension = unknowns.length;
-    double[][] jacobian = new double[dimension][dimension];
+    DMatrixRMaj jacobian = new DMatrixRMaj(dimension, dimension);
     for (int variable = 0; variable < dimension; variable++) {
       double step = residualVariableStep(unknowns, variable, components.size());
       double[] shifted = unknowns.clone();
@@ -2061,25 +2108,47 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
         actualStep = shifted[variable] - unknowns[variable];
       }
       if (Math.abs(actualStep) < 1.0e-20) {
-        jacobian[variable][variable] = 1.0;
+        jacobian.set(variable, variable, 1.0);
       } else {
         SegmentResidualEvaluation shiftedEvaluation = evaluateSegmentResidual(gas, liquid, snapshot, components,
             shifted, evaluation.iterations);
         for (int row = 0; row < dimension; row++) {
-          jacobian[row][variable] = (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row])
-              / actualStep;
+          jacobian.set(row, variable,
+              (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row]) / actualStep);
         }
       }
     }
-    double[][] rhsValues = new double[dimension][1];
+    DMatrixRMaj rhsValues = new DMatrixRMaj(dimension, 1);
     for (int row = 0; row < dimension; row++) {
-      rhsValues[row][0] = -evaluation.normalizedResiduals[row];
+      rhsValues.set(row, 0, -evaluation.normalizedResiduals[row]);
     }
     try {
-      return new Matrix(jacobian).solve(new Matrix(rhsValues));
+      return solveDenseStep(jacobian, rhsValues);
     } catch (RuntimeException ex) {
       return null;
     }
+  }
+
+  /**
+   * Solves a square Newton system using LU without adding a numerical rank threshold.
+   *
+   * @param jacobian square coefficient matrix
+   * @param residual right-hand-side column vector
+   * @return finite Newton step, or null if factorization or the solution fails
+   */
+  private DMatrixRMaj solveDenseStep(DMatrixRMaj jacobian, DMatrixRMaj residual) {
+    LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(jacobian.getNumRows());
+    if (!solver.setA(jacobian)) {
+      return null;
+    }
+    DMatrixRMaj step = new DMatrixRMaj(jacobian.getNumCols(), residual.getNumCols());
+    solver.solve(residual, step);
+    for (int row = 0; row < step.getNumRows(); row++) {
+      if (!Double.isFinite(step.get(row, 0))) {
+        return null;
+      }
+    }
+    return step;
   }
 
   /**
@@ -2093,7 +2162,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param components active transfer components
    * @return bounded candidate unknowns
    */
-  private double[] applyResidualStep(double[] unknowns, Matrix step, double damping, SystemInterface gas,
+  private double[] applyResidualStep(double[] unknowns, DMatrixRMaj step, double damping, SystemInterface gas,
       SystemInterface liquid, List<String> components) {
     double[] candidate = unknowns.clone();
     for (int i = 0; i < candidate.length; i++) {
@@ -2276,8 +2345,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     Map<String, Double> ratios = new LinkedHashMap<String, Double>();
     Map<String, Double> gasMolarEnthalpies = new LinkedHashMap<String, Double>();
     Map<String, Double> liquidMolarEnthalpies = new LinkedHashMap<String, Double>();
-    SystemInterface mixed = gas.clone();
-    addSystemComponents(mixed, liquid);
+    SystemInterface mixed = createMixedSystem(gas, liquid);
     mixed.setTemperature(snapshot.interfaceTemperatureK);
     mixed.setPressure(0.5 * (gas.getPressure() + liquid.getPressure()));
     PhaseInterface gasPhase;
@@ -2372,7 +2440,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       return scaleFilmCoefficient(baseCoefficient, diffusivity, referenceDiffusivity);
     }
     try {
-      Matrix resistanceMatrix = new Matrix(reducedDimension, reducedDimension);
+      DMatrixRMaj resistanceMatrix = new DMatrixRMaj(reducedDimension, reducedDimension);
       for (int row = 0; row < reducedDimension; row++) {
         double rowSum = 0.0;
         double referenceCoefficient = binaryFilmCoefficient(phase, row, reducedDimension, baseCoefficient,
@@ -2391,7 +2459,14 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
         resistanceMatrix.set(row, row,
             resistanceMatrix.get(row, row) + rowSum + moleFraction(phase, row) / referenceCoefficient);
       }
-      Matrix coefficientMatrix = resistanceMatrix.inverse();
+      DMatrixRMaj coefficientMatrix = new DMatrixRMaj(reducedDimension, reducedDimension);
+      LinearSolverDense<DMatrixRMaj> inverseSolver = LinearSolverFactory_DDRM.lu(reducedDimension);
+      if (!inverseSolver.setA(resistanceMatrix)) {
+        return scaleFilmCoefficient(baseCoefficient,
+            mixtureDiffusivityForComponent(phase, componentIndex, referenceDiffusivity, gasPhase),
+            referenceDiffusivity);
+      }
+      inverseSolver.invert(coefficientMatrix);
       double coefficient = coefficientMatrix.get(componentIndex, componentIndex);
       if (isFinitePositive(coefficient)) {
         return clamp(coefficient, baseCoefficient * 0.02, baseCoefficient * 50.0);
@@ -2834,8 +2909,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @return surface tension in N/m
    */
   private double estimateSurfaceTension(SystemInterface gas, SystemInterface liquid) {
-    SystemInterface mixed = gas.clone();
-    addSystemComponents(mixed, liquid);
+    SystemInterface mixed = createMixedSystem(gas, liquid);
     flashAndInitialize(mixed);
     try {
       if (mixed.hasPhaseType(PhaseType.GAS) && mixed.getNumberOfPhases() > 1) {
@@ -2852,6 +2926,64 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       return DEFAULT_SURFACE_TENSION;
     }
     return DEFAULT_SURFACE_TENSION;
+  }
+
+  /**
+   * Create a fluid holding the gas inventory plus every positive-mole liquid component.
+   *
+   * <p>
+   * Adding a component that the gas model does not contain reads its parameters from the component database and
+   * rebuilds the mixing-rule matrices. That is needed once per pair of component lists, not for every segment of every
+   * iteration, so the combined model is built on first use and later calls copy it and only set the temperature,
+   * pressure and component amounts of the current gas and liquid.
+   * </p>
+   *
+   * @param gas gas system supplying the thermodynamic model, temperature and pressure
+   * @param liquid liquid system whose positive-mole components are added
+   * @return new mixed system that the caller may modify
+   */
+  private SystemInterface createMixedSystem(SystemInterface gas, SystemInterface liquid) {
+    List<String> gasComponents = getComponentNames(gas);
+    List<String> liquidComponents = getComponentNames(liquid);
+    StringBuilder key = new StringBuilder(gas.getClass().getName()).append('|').append(gas.getMixingRuleName())
+        .append('|').append(gas.getMaxNumberOfPhases()).append('|').append(gasComponents).append('|');
+    double[] addedMoles = new double[liquidComponents.size()];
+    boolean addsComponent = false;
+    for (int i = 0; i < liquidComponents.size(); i++) {
+      addedMoles[i] = componentMoles(liquid, liquidComponents.get(i));
+      if (addedMoles[i] > 0.0) {
+        key.append(liquidComponents.get(i)).append(',');
+        addsComponent = addsComponent || !gasComponents.contains(liquidComponents.get(i));
+      }
+    }
+    if (mixedSystemTemplates == null) {
+      mixedSystemTemplates = new HashMap<String, SystemInterface>();
+    }
+    SystemInterface template = addsComponent ? mixedSystemTemplates.get(key.toString()) : null;
+    if (template == null) {
+      SystemInterface mixed = gas.clone();
+      addSystemComponents(mixed, liquid);
+      if (addsComponent) {
+        mixedSystemTemplates.put(key.toString(), mixed.clone());
+      }
+      return mixed;
+    }
+    SystemInterface mixed = template.clone();
+    double[] moles = new double[mixed.getNumberOfComponents()];
+    for (int i = 0; i < moles.length; i++) {
+      String component = mixed.getPhase(0).getComponent(i).getComponentName();
+      if (gas.getPhase(0).hasComponent(component)) {
+        moles[i] = gas.getPhase(0).getComponent(component).getNumberOfmoles();
+      }
+      int liquidIndex = liquidComponents.indexOf(component);
+      if (liquidIndex >= 0 && addedMoles[liquidIndex] > 0.0) {
+        moles[i] += addedMoles[liquidIndex];
+      }
+    }
+    mixed.setTemperature(gas.getTemperature());
+    mixed.setPressure(gas.getPressure());
+    mixed.setMolarFlowRates(moles);
+    return mixed;
   }
 
   /**
@@ -3871,15 +4003,15 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      *
      * @return dense matrix representation
      */
-    private Matrix toDenseMatrix() {
-      double[][] dense = new double[rows][columns];
+    private DMatrixRMaj toDenseMatrix() {
+      DMatrixRMaj dense = new DMatrixRMaj(rows, columns);
       for (Map.Entry<Integer, Map<Integer, Double>> rowEntry : values.entrySet()) {
         int row = rowEntry.getKey().intValue();
         for (Map.Entry<Integer, Double> columnEntry : rowEntry.getValue().entrySet()) {
-          dense[row][columnEntry.getKey().intValue()] = columnEntry.getValue().doubleValue();
+          dense.set(row, columnEntry.getKey().intValue(), columnEntry.getValue().doubleValue());
         }
       }
-      return new Matrix(dense);
+      return dense;
     }
   }
 

@@ -168,10 +168,11 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
    * Set the reflux ratio multiplier (R_actual / R_minimum). Default is 1.2.
    *
    * @param multiplier ratio of actual to minimum reflux (must be &gt; 1.0)
+   * @throws IllegalArgumentException if the multiplier is non-finite or not greater than one
    */
   public void setRefluxRatioMultiplier(double multiplier) {
-    if (multiplier <= 1.0) {
-      logger.warn("Reflux ratio multiplier should be > 1.0, got: " + multiplier);
+    if (!Double.isFinite(multiplier) || multiplier <= 1.0) {
+      throw new IllegalArgumentException("Reflux ratio multiplier must be finite and greater than 1.0: " + multiplier);
     }
     this.refluxRatioMultiplier = multiplier;
   }
@@ -218,6 +219,18 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    solved = false;
+    nActual = 0.0;
+    feedTrayNumber = 0;
+    condenserDuty = 0.0;
+    reboilerDuty = 0.0;
+    distillateStream = null;
+    bottomsStream = null;
+    // Recheck stored input for systems restored from older serialized configurations.
+    if (!Double.isFinite(refluxRatioMultiplier) || refluxRatioMultiplier <= 1.0) {
+      throw new IllegalArgumentException(
+          "Reflux ratio multiplier must be finite and greater than 1.0: " + refluxRatioMultiplier);
+    }
     if (feedStream == null) {
       throw new IllegalStateException("Feed stream not set for " + getName());
     }
@@ -330,15 +343,23 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
 
     double X = (rActual - rMin) / (rActual + 1.0);
     // Molokanov correlation (improved Gilliland)
-    double Y;
-    if (X >= 0.0 && X <= 1.0) {
-      Y = 1.0 - Math.exp((1.0 + 54.4 * X) / (11.0 + 117.2 * X) * (X - 1.0) / Math.sqrt(X));
-    } else {
-      Y = 0.5; // Fallback
+    if (!Double.isFinite(rActual) || !Double.isFinite(X) || X <= 0.0 || X > 1.0) {
+      throw new IllegalStateException(
+          "Operating reflux must be finite and above the calculated minimum reflux for " + getName());
+    }
+    double Y = 1.0 - Math.exp((1.0 + 54.4 * X) / (11.0 + 117.2 * X) * (X - 1.0) / Math.sqrt(X));
+    if (!Double.isFinite(Y) || Y < 0.0 || Y >= 1.0) {
+      throw new IllegalStateException("Gilliland stage count is not representable for " + getName()
+          + "; increase the operating reflux above minimum reflux.");
     }
 
     // Y = (N - Nmin) / (N + 1), solve for N
-    nActual = (Y + nMin) / (1.0 - Y);
+    double stages = (Y + nMin) / (1.0 - Y);
+    if (!Double.isFinite(stages) || stages <= 0.0 || stages > Integer.MAX_VALUE - 1.0) {
+      throw new IllegalStateException("Gilliland stage count exceeds the supported tray range for " + getName()
+          + "; increase the operating reflux above minimum reflux.");
+    }
+    nActual = stages;
 
     // ============================
     // 4. KIRKBRIDE — Feed Tray
@@ -346,16 +367,23 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     double zLK_F = zFeed[lkIdx];
     double zHK_F = zFeed[hkIdx];
     double B_over_D = computeBottomsToDistillateRatio(zFeed, alpha, numComponents, lkIdx, hkIdx);
-    double xHK_distillate = xHK_D * zHK_F;
-    double xLK_bottoms = xLK_B * zLK_F;
+    // Convert key amounts per feed mole to normalized product mole fractions.
+    double distillateFraction = 1.0 / (1.0 + B_over_D);
+    double bottomsFraction = B_over_D * distillateFraction;
+    double xHK_distillate = xHK_D * zHK_F / distillateFraction;
+    double xLK_bottoms = xLK_B * zLK_F / bottomsFraction;
 
     double kirkbrideRatio = 0.0;
     if (xLK_bottoms > 1.0e-15 && B_over_D > 1.0e-15) {
-      kirkbrideRatio = Math.pow((zHK_F / zLK_F) * (xLK_bottoms / xHK_distillate) * (B_over_D * B_over_D), 0.206);
+      // Kirkbride: N_rectifying / N_stripping; the composition ratio is squared.
+      double compositionRatio = xLK_bottoms / xHK_distillate;
+      kirkbrideRatio = Math.pow((zHK_F / zLK_F) * compositionRatio * compositionRatio * B_over_D, 0.206);
     }
 
-    double nRectifying = nActual / (1.0 + kirkbrideRatio);
-    double nStripping = nActual - nRectifying;
+    double nRectifying = nActual * kirkbrideRatio / (1.0 + kirkbrideRatio);
+    if (!Double.isFinite(nRectifying) || nRectifying < 0.0 || nRectifying > nActual) {
+      throw new IllegalStateException("Kirkbride feed tray is outside the calculated stage range for " + getName());
+    }
     feedTrayNumber = (int) Math.round(nRectifying) + 1;
 
     // ============================
@@ -712,7 +740,8 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
   }
 
   /**
-   * Get the optimal feed tray number from the top.
+   * Get the estimated feed tray number, one-based from the top. The Kirkbride rectifying-to-stripping stage ratio
+   * partitions the Gilliland stage count; the returned tray is the rounded rectifying count plus one.
    *
    * @return feed tray number
    */

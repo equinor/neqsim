@@ -12,6 +12,40 @@ For exporting a live `ProcessSystem` or `ProcessModel` to portable JSON, includi
 E300-characterized fluids, stream-specific fluids, recycle settings, and MCP checks, see
 [Process JSON Export and E300 Fluid Characterization](process_json_export_and_e300_fluids.md).
 
+## YAML files for ProcessSystem
+
+Use `ProcessSystem.fromYamlFile(path)` for a UTF-8 file or `ProcessSystem.fromYaml(text)`
+for a string. Both take one YAML document using the fields below. Named inlets, property units,
+fluid models, equipment construction and calculation results follow the JSON builder. Set
+`autoRun: true` to run the process when loading it. Inspect `SimulationResult.isSuccess()`
+before using the process. Parse errors carry `YAML_PARSE_ERROR` and file errors carry
+`YAML_READ_ERROR`. Duplicate keys and multiple documents are rejected.
+
+```yaml
+autoRun: true
+fluid:
+  model: SRK
+  temperature: 298.15
+  pressure: 50.0
+  components: {methane: 0.8, n-decane: 0.2}
+process:
+  - type: Stream
+    name: feed
+    properties:
+      flowRate: [240.0, kg/hr]
+  - type: Separator
+    name: inlet separator
+    inlet: feed
+  - type: ThrottlingValve
+    name: gas valve
+    inlet: inlet separator.gasOut
+    properties:
+      outletPressure: [15.0, bara]
+```
+
+Existing files written with `unit:` entries use the legacy instance method
+`loadProcessFromYaml(File)`. For new documents, use `type`, explicit equipment names and named inlets.
+
 ## Quick answer: is there a JSON verifier?
 
 Yes:
@@ -110,6 +144,64 @@ Common aliases accepted by the builder and validator:
 | Three-phase liquid outlets | `Separator.oilOut`, `Separator.oil`, `Separator.waterOut`, `Separator.water` |
 | Splitter/manifold | `Splitter.split0`, `Splitter.split1`, `Splitter.splitStream_0`, `Splitter.splitStream_1` |
 | Heat exchanger | `HX.outlet`, `HX.outlet0`, `HX.outlet1`, `HX.hx0`, `HX.hx1` |
+
+### Standalone sources and connected product streams
+
+A `Stream` without `inlet` or `inlets` is a standalone source. The builder clones the root
+`fluid` (or the named `fluidRef`) for that source, then applies its stream properties. A
+`Stream` with an `inlet` is different: it is a named product-stream wrapper around the resolved
+upstream outlet. It keeps that outlet's live fluid identity instead of creating an independent
+source fluid.
+
+The iterative wiring pass also resolves forward references once the referenced upstream outlet is
+available. Use `inlet` or `inlets` for physical process wiring. The optional root `connections`
+array records topology metadata for interchange and diagrams;
+it does not replace those wiring fields.
+
+This complete example creates an independent feed, cools it to 20 °C, and exposes the cooler outlet
+as the connected `Product` stream:
+
+<!-- connected-json-stream-example:start -->
+```json
+{
+  "fluid": {
+    "model": "SRK",
+    "temperature": 300.0,
+    "pressure": 50.0,
+    "components": {
+      "methane": 1.0
+    }
+  },
+  "autoRun": true,
+  "process": [
+    {
+      "type": "Stream",
+      "name": "Feed",
+      "properties": {
+        "flowRate": [1000.0, "kg/hr"]
+      }
+    },
+    {
+      "type": "Cooler",
+      "name": "Cooler",
+      "inlet": "Feed",
+      "properties": {
+        "outTemperature": [20.0, "C"]
+      }
+    },
+    {
+      "type": "Stream",
+      "name": "Product",
+      "inlet": "Cooler.outlet"
+    }
+  ]
+}
+```
+<!-- connected-json-stream-example:end -->
+
+After the build and run, `Feed` still owns its cloned source fluid, while `Product` and
+`Cooler.outlet` refer to the same live fluid. This makes `Product` suitable as the named inlet for
+subsequent equipment without duplicating the process state.
 
 ## 3.1 Supported equipment types
 
@@ -267,7 +359,75 @@ Supported normalized capacity properties are:
 | Separator / scrubber | `internalDiameter`, `separatorLength`, `designGasLoadFactor` |
 | Compressor | `ratedPower` in kW, `maxSpeed` |
 | Heater / cooler | `maxDesignDuty` in W, `maxDesignDutyKW`, `maxDesignDutyMW` |
-| Pump | `maxDesignPower`, `maxDesignVolumeFlow` |
+| Pump | `maxDesignPower` in kW, `maxDesignVolumeFlow` in actual m³/hr |
+
+The same normalized capacity values can be applied to an existing Java or JPype process with
+`ProcessSystem.applyDesignCapacities(Map<String, Map<String, Object>>)`. The multi-area
+`ProcessModel.applyDesignCapacities(...)` method requires `area::equipment` keys. Both return
+per-equipment `EquipmentDesignData.ApplyResult` reports; multi-area report names are also qualified.
+
+These map methods validate all targets and values before changing any design value. Unknown or
+ambiguous equipment, unsupported or empty property maps, non-numeric values, and values that are not
+finite and positive in native units cause `IllegalArgumentException`. Use exactly one heater duty
+unit key. A same-name custom constraint with incompatible units is also rejected before any area is
+changed: pump power requires kW, pump flow actual m³/hr (`m3/hr`), heater duty W, compressor speed
+RPM, and separator gas-load factor m/s. Keep differently based custom restrictions under separate
+constraint names. The multi-area method validates every area before applying any area, and rejects aliases
+that configure the same equipment instance twice. Keys address direct process units; nested modules
+are not expanded. Names containing `::` cannot be used in the multi-area map.
+
+For compatibility, **JSON building retains its advisory behavior**: missing and unsupported equipment
+are reported in `designDataApplied`, and the build can continue. If a custom pump power/flow, heater duty or compressor speed constraint
+has incompatible units, the JSON application preserves that override and adds an advisory `message`
+to its application report; the equipment design input is still applied. For supported positive inputs, JSON
+and the map methods use the same application utility and produce the same values and units. Supplied
+values replace prior values; omitted properties remain unchanged. Existing mechanical-design objects
+are preserved. Reapplying values refreshes cached pump power/flow, compressor speed and heater duty
+ratings while preserving existing constraint objects, enabled states, warning thresholds, provenance
+and unrelated limits. Compressor speed remains capped by an active chart maximum. These calls configure data only: they do not run, size, or qualify the process. The
+strict preflight prevents invalid-input partial updates, but unexpected equipment setter failures
+during application are propagated without rollback.
+
+Java (given an existing process containing `HP Sep`):
+
+```java
+Map<String, Object> separatorDesign = new LinkedHashMap<String, Object>();
+separatorDesign.put("internalDiameter", 2.0); // m
+separatorDesign.put("separatorLength", 6.0); // m
+Map<String, Map<String, Object>> capacities = new LinkedHashMap<String, Map<String, Object>>();
+capacities.put("HP Sep", separatorDesign);
+Map<String, EquipmentDesignData.ApplyResult> applied = process.applyDesignCapacities(capacities);
+```
+
+Python / JPype (given an existing model containing area `Separation` and unit `HP Sep`):
+
+```python
+from jpype import JClass
+
+LinkedHashMap = JClass("java.util.LinkedHashMap")
+separator_design = LinkedHashMap()
+separator_design.put("internalDiameter", 2.0)
+separator_design.put("separatorLength", 6.0)
+capacities = LinkedHashMap()
+capacities.put("Separation::HP Sep", separator_design)
+applied = model.applyDesignCapacities(capacities)
+report = applied.get("Separation::HP Sep").toJson().toString()
+```
+
+Pump `maxDesignPower` input is kW and `maxDesignVolumeFlow` is actual m³/hr. The shared
+application utility preserves the pump's native internal power convention; callers must not convert
+kW to W before passing `maxDesignPower`. The native pump power constraint now reports both current
+power and design rating in its declared kW unit; older versions reported W values under a kW label.
+The dimensionless utilization ratio is unchanged. Compressor native `power` is a normalized
+percentage of currently available power (including driver speed dependence), and now carries `%`
+instead of the former kW label. Its design value is 100%; use `compressor.getPower("kW")` for the
+physical demand and `ratedPower` for the configured rating in kW. The public
+`compressor.updatePowerConstraint(ratingKW)` method updates the driver and mechanical fallback
+rating while preserving the normalized 100% design and 110% overload values; it rejects invalid
+ratings and incompatible same-name power constraints. Existing explicit driver maximum-power
+settings and speed curves remain authoritative and are not rescaled by a rated-power change. Configuring these values does not establish complete
+constraint coverage or engineering feasibility; inspect the configured constraints and their enabled
+state after running the process.
 
 Large extracted process models can also include a richer `equipmentDesign` object. It is preserved in
 `SimulationResult.getMetadata()` and the builder applies the deterministic parts it understands:

@@ -265,7 +265,7 @@ public class IntegratedSafetySystemExample {
 
     // Splitter for process/blowdown routing
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -305,7 +305,7 @@ public class IntegratedSafetySystemExample {
     ESDController esdController = new ESDController("ESD-Logic-201", separatorPT, separatorTT, esdButton, esdInletValve,
         bdValveForESD);
 
-    FireDetectionSystem fireSystem = new FireDetectionSystem(new TemperatureTransmitter[] { fireTT1, fireTT2, fireTT3 },
+    FireDetectionSystem fireSystem = new FireDetectionSystem(new TemperatureTransmitter[] {fireTT1, fireTT2, fireTT3},
         2);
 
     // Print system configuration
@@ -549,7 +549,7 @@ public class IntegratedSafetySystemExample {
     esdButton.push();
 
     // Switch to blowdown routing
-    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 });
+    gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
 
     // Switch separator to transient mode
     separator.setCalculateSteadyState(false);
@@ -720,7 +720,7 @@ public class IntegratedSafetySystemExample {
     logger.info(">>> RESETTING SYSTEM FOR NEXT SCENARIO <<<\n");
     hippsValve.setPercentValveOpening(100.0);
     esdInletValve.setPercentValveOpening(100.0);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
     bdValve.reset();
     separator.setCalculateSteadyState(true);
     hippsController.reset();

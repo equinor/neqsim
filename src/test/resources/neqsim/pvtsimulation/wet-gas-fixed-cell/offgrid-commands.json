@@ -1,0 +1,553 @@
+{
+  "master-exits.json": [
+    {
+      "name": "apply",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 3.638284307999129
+    },
+    {
+      "name": "stable",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 2.3873717410024256
+    },
+    {
+      "name": "baseline",
+      "command": [
+        "./mvnw",
+        "-q",
+        "clean",
+        "-Dtest=FixedCellDepletionHandoffTest",
+        "test"
+      ],
+      "exit": 0,
+      "seconds": 116.54486849500245
+    }
+  ],
+  "master-probe-exits.json": [
+    {
+      "name": "compile",
+      "command": [
+        "java",
+        "-m",
+        "jdk.compiler/com.sun.tools.javac.Main",
+        "--release",
+        "8",
+        "-classpath",
+        "/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal45/baseline-probe-classes",
+        "/tmp/mbal45/head-resources/WetGasProbe.java"
+      ],
+      "exit": 0,
+      "seconds": 0.7421079569976428
+    },
+    {
+      "name": "run",
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/mbal45/baseline-probe-classes:/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "WetGasProbe",
+        "/tmp/mbal45/master-probe.json"
+      ],
+      "exit": 0,
+      "seconds": 1.5044528270009323
+    }
+  ],
+  "master-offgrid-exits.json": [
+    {
+      "command": [
+        "./mvnw",
+        "-q",
+        "spotless:apply"
+      ],
+      "exit": 0,
+      "seconds": 30.882650441002625
+    },
+    {
+      "command": [
+        "java",
+        "-m",
+        "jdk.compiler/com.sun.tools.javac.Main",
+        "--release",
+        "8",
+        "-classpath",
+        "/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal45/baseline-probe-classes",
+        "/tmp/mbal45/OffGridMasterProbe.java"
+      ],
+      "exit": 0,
+      "seconds": 1.0447486480006773
+    },
+    {
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/mbal45/baseline-probe-classes:/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "OffGridMasterProbe",
+        "/tmp/mbal45/offgrid.json",
+        "/tmp/mbal45/offgrid-master-results.json"
+      ],
+      "exit": 0,
+      "seconds": 2.3293787020011223
+    }
+  ],
+  "reference-exits.json": [
+    {
+      "name": "original-repeat",
+      "command": [
+        "python3",
+        "independent_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 2.24608843399983,
+      "sha256": "b81a1910cf8f37c9805d5c8a747e8a3e6681c8b34b7e32b770606c2732bf7376"
+    },
+    {
+      "name": "offgrid",
+      "command": [
+        "python3",
+        "offgrid_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 2.99480920300266,
+      "sha256": "4e9f0e0cce15c1b7cdf91f43f9a0517ef3ecbb839bd1be70680a4c0c89a4d19b"
+    },
+    {
+      "name": "offgrid-repeat",
+      "command": [
+        "python3",
+        "offgrid_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 2.9914738109982864,
+      "sha256": "4e9f0e0cce15c1b7cdf91f43f9a0517ef3ecbb839bd1be70680a4c0c89a4d19b"
+    },
+    {
+      "name": "offgrid-optimized",
+      "command": [
+        "python3",
+        "-O",
+        "offgrid_reference.py"
+      ],
+      "exit": 0,
+      "seconds": 4.137770323002769,
+      "sha256": "4e9f0e0cce15c1b7cdf91f43f9a0517ef3ecbb839bd1be70680a4c0c89a4d19b"
+    }
+  ],
+  "current-combination-exits.json": [
+    {
+      "name": "current-combination-apply",
+      "command": [
+        "./mvnw",
+        "-q",
+        "spotless:apply"
+      ],
+      "exit": 0,
+      "seconds": 3.160962545000075
+    },
+    {
+      "name": "current-combination-stable",
+      "command": [
+        "./mvnw",
+        "-q",
+        "spotless:apply"
+      ],
+      "exit": 0,
+      "seconds": 2.419555107000633
+    },
+    {
+      "name": "current-combination",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-Dtest=WetGasFixedCellHandoffTest,FixedCellInitialStateTest,FixedCellFeasibleGibbsTest,DryFixedCellPhaseTransitionTest,FixedCellDepletionHandoffTest",
+        "test"
+      ],
+      "exit": 0,
+      "seconds": 124.91082256299705
+    }
+  ],
+  "current-combination-tests.json": {
+    "classes": 5,
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "owned-exits.json": [
+    {
+      "name": "owned-apply",
+      "command": [
+        "./mvnw",
+        "-q",
+        "spotless:apply"
+      ],
+      "exit": 0,
+      "seconds": 3.306394844999886
+    },
+    {
+      "name": "owned-stable",
+      "command": [
+        "./mvnw",
+        "-q",
+        "spotless:apply"
+      ],
+      "exit": 0,
+      "seconds": 2.0911504789983155
+    },
+    {
+      "name": "owned-full-pvt",
+      "command": [
+        "./mvnw",
+        "-q",
+        "clean",
+        "org.jacoco:jacoco-maven-plugin:prepare-agent",
+        "-Dtest=AsphalteneMethodComparisonTest,AsphalteneMultiMethodBenchmarkTest,AsphalteneOnsetFittingTest,AsphalteneStabilityAnalyzerTest,AsphalteneValidationTest,BlackOilCorrelationsTest,BlackOilTableValidatorTest,CO2CorrosionAnalyzerTest,CalibratedPvtModelTest,CompositionalReservoirAquiferRefinementTest,CompositionalReservoirAquiferTest,CompositionalReservoirHistoryTest,ConstantMassExpansionOilPropertiesTest,ConstantMassExpansionTest,ConstantVolumeDepletionTest,CvdGasOnlyTailTest,CvdMaterialBalanceTest,DeBoerAsphalteneScreeningTest,DeBoerScreeningDocumentationTest,DeclineCurveAnalysisFitTest,DeclineCurveAnalysisTest,DensitySimTest,DepletionPvtHistoryGeneratorTest,DifferentialLiberationTest,DryFixedCellPhaseTransitionTest,EmulsionViscosityCalculatorTest,ErosionPredictionCalculatorTest,ErosionSandLoadDefaultsTest,FetkovichAquiferTest,FixedCellDepletionHandoffTest,FixedCellFeasibleGibbsTest,FixedCellInitialStateTest,FlowAssuranceDocumentationTest,GasMaterialBalanceTest,GasPseudoCriticalPropertiesTest,GasPseudoPressureTest,GeneralizedMaterialBalanceTest,HydrateRiskMapperTest,HydrocarbonScrubberSaturationPressureStabilityTest,MultiMineralScaleEquilibriumTest,MultiStageSeparatorTestTest,NativeCceHandoffTest,NativeDepletionHandoffTest,OilMaterialBalanceTest,PVTFluidStudyTest,PVTRegressionDepletionHistoryTest,PVTRegressionDispatchTest,PVTRegressionTest,PVTRegressionWeightingTest,PhaseWithdrawalReservoirHistoryTest,PitzerScaleActivityModelTest,PvtGasDensityConsistencyTest,PvtLabTestsDocumentationTest,PvtSeparatorPathTest,PvtSimulationDocumentationTest,RefinedCvdHandoffTest,RelativePermeabilityGeneratorTest,ReservoirHistoryEnsembleTest,SaturationPressureCorrelationTest,SaturationPressureTest,SaturationTemperatureSearchTest,SaturationTemperatureTest,SaturationTemperatureTuningTest,ScaleKspLiteratureBenchmarkTest,ScalePredictionTest,SeparatorTestTest,SlimTubeSimTest,SolutionGasWaterRatioTest,SolutionGasWaterRatioVerificationTest,SurfCooldownAnalyzerTest,SurfCooldownAnalyzerWaterGuardTest,SwellingTestTemperatureTest,SwellingTestTest,VanEverdingenHurstAquiferTest,ViscositySimTest,WaterPropertyCorrelationsTest,WaxCurveCalculatorTest,WaxFractionSimTest,WetCceHandoffTest,WetDleHandoffTest,WetGasFixedCellHandoffTest,ZFactorCorrelationsTest",
+        "test",
+        "org.jacoco:jacoco-maven-plugin:report"
+      ],
+      "exit": 0,
+      "seconds": 234.61350877699806
+    }
+  ],
+  "static-initial-exits.json": [
+    {
+      "name": "java8",
+      "command": [
+        "java",
+        "-m",
+        "jdk.compiler/com.sun.tools.javac.Main",
+        "--release",
+        "8",
+        "-classpath",
+        "/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal45/java8-classes",
+        "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+        "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java",
+        "/tmp/mbal45-repo/src/test/java/neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.java",
+        "/tmp/mbal45-repo/src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/OffGridMasterProbe.java"
+      ],
+      "exit": 0,
+      "seconds": 1.6977705179997429
+    },
+    {
+      "name": "javadoc",
+      "command": [
+        "java",
+        "-m",
+        "jdk.javadoc/jdk.javadoc.internal.tool.Main",
+        "--release",
+        "8",
+        "-quiet",
+        "-private",
+        "-Xdoclint:all",
+        "-classpath",
+        "/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal45/javadoc",
+        "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java",
+        "/tmp/mbal45-repo/src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java",
+        "/tmp/mbal45-repo/src/test/java/neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.java",
+        "/tmp/mbal45-repo/src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/OffGridMasterProbe.java"
+      ],
+      "exit": 0,
+      "seconds": 1.656207080999593
+    },
+    {
+      "name": "checkstyle",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-Dcheckstyle.includes=**/ConstantVolumeDepletion.java,**/DepletionPvtHistoryGenerator.java,**/WetGasFixedCellHandoffTest.java",
+        "-Dcheckstyle.includeTestSourceDirectory=true",
+        "checkstyle:check"
+      ],
+      "exit": 0,
+      "seconds": 4.837538480998774
+    },
+    {
+      "name": "parent-test-compile",
+      "command": [
+        "java",
+        "-m",
+        "jdk.compiler/com.sun.tools.javac.Main",
+        "--release",
+        "17",
+        "-g",
+        "-classpath",
+        "/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal45/parent-testclasses",
+        "/tmp/mbal45/parent-test-source/neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.java"
+      ],
+      "exit": 0,
+      "seconds": 1.1800606409997272
+    },
+    {
+      "name": "probe-static-compile",
+      "command": [
+        "java",
+        "-m",
+        "jdk.compiler/com.sun.tools.javac.Main",
+        "--release",
+        "17",
+        "-g",
+        "-classpath",
+        "/tmp/mbal45-repo/target/test-classes:/tmp/mbal45-repo/target/classes:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+        "-d",
+        "/tmp/mbal45-repo/target/test-classes",
+        "/tmp/mbal45-repo/src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/OffGridMasterProbe.java"
+      ],
+      "exit": 0,
+      "seconds": 0.9573356100008823
+    },
+    {
+      "name": "parent-test-static",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-parent-test-static.xml",
+        "spotbugs:check"
+      ],
+      "exit": 1,
+      "seconds": 1.235693957998592
+    },
+    {
+      "name": "candidate-test-static",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-candidate-test-static.xml",
+        "spotbugs:check"
+      ],
+      "exit": 1,
+      "seconds": 1.2388332839982468
+    },
+    {
+      "name": "candidate-main-static",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-candidate-main-static.xml",
+        "spotbugs:check"
+      ],
+      "exit": 1,
+      "seconds": 1.2518771140021272
+    }
+  ],
+  "static-corrected-exits.json": [
+    {
+      "name": "parent-test-static",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-parent-test-static.xml",
+        "spotbugs:check"
+      ],
+      "exit": 0,
+      "seconds": 27.81032688399864
+    },
+    {
+      "name": "candidate-test-static",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-candidate-test-static.xml",
+        "spotbugs:check"
+      ],
+      "exit": 0,
+      "seconds": 45.36556352299522
+    },
+    {
+      "name": "candidate-main-static",
+      "command": [
+        "./mvnw",
+        "-q",
+        "-f",
+        "pom-candidate-main-static.xml",
+        "spotbugs:check"
+      ],
+      "exit": 1,
+      "seconds": 31.093122336002125
+    }
+  ],
+  "gates.json": [
+    {
+      "name": "apply",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 29.51835859499988,
+      "changedJava": []
+    },
+    {
+      "name": "stable-apply",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 2.328779226001643,
+      "changedJava": []
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 0,
+      "seconds": 1.575765452995256
+    },
+    {
+      "name": "stage",
+      "command": [
+        "git",
+        "add",
+        "src/test/java/neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.java",
+        "src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell",
+        "src/main/resources/neqsim/mcp/engineering-coverage.json",
+        "docs/pvtsimulation/depletion_pvt_generation.md",
+        ".github/agents/pvt-simulation.agent.md",
+        ".github/skills/neqsim-eos-regression/SKILL.md",
+        "devtools/engineering_capabilities.json"
+      ],
+      "exit": 0,
+      "seconds": 0.06157063400314655
+    },
+    {
+      "name": "precommit",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "--with",
+        "pre-commit",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 4.195753157000581
+    },
+    {
+      "name": "spotless-check",
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 2.004644997003197
+    },
+    {
+      "name": "documentation-search",
+      "command": [
+        "python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 1.8212609490001341
+    },
+    {
+      "name": "inventory-fresh",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.7678966029998264
+    },
+    {
+      "name": "prepush",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "--with",
+        "pre-commit",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 4.684371758005
+    }
+  ],
+  "staticNote": "The first temporary POMs used a namespace prefix unsupported by the Maven POM reader and failed before analysis; the corrected invocations are authoritative. Strict unchanged-main findings still return exit1, not a clean pass.",
+  "tooling": {
+    "command": [
+      "uv",
+      "run",
+      "--project",
+      "devtools",
+      "--locked",
+      "--group",
+      "test",
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "devtools/test_engineering_coverage.py",
+      "devtools/test_capability_search.py",
+      "devtools/test_skill_search.py",
+      "devtools/test_engineering_coverage_workflow.py"
+    ],
+    "exit": 0,
+    "summary": "41 passed in 11.35s"
+  },
+  "bootstrap": "eval \"$(python3 <work-with-neqsim skill>/scripts/prepare_maven.py)\"",
+  "localRuntime": "Java17.0.20; Java8 API compilation only, hosted Java8 runtime not claimed.",
+  "java8ClassMajorVersions": {
+    "OffGridMasterProbe.class": 52,
+    "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion$1.class": 52,
+    "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion$FixedCellResult.class": 52,
+    "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.class": 52,
+    "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$Surface.class": 52,
+    "neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.class": 52,
+    "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$1.class": 52,
+    "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$NativeResult.class": 52,
+    "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$Result.class": 52,
+    "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.class": 52
+  },
+  "publicationFreeze": "Final repeat gate exits after this receipt was frozen are recorded in the exact-head issue ledger, preventing a self-referential receipt update."
+}

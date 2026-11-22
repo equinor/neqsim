@@ -9,10 +9,18 @@ import java.util.Set;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.safety.hazid.HAZOPTemplate;
 import neqsim.process.safety.hazid.HazopConsequenceAutoPopulator;
 
-/** Runs a traceable HAZOP preparation pass directly from a governed P&amp;ID proposal. */
+/**
+ * Runs a traceable HAZOP preparation pass for physical equipment directly from a governed P&amp;ID proposal. Numerical
+ * recycle, calculator and adjuster helpers are not physical HAZOP nodes.
+ */
 public final class PidHazopStudyRunner {
   private PidHazopStudyRunner() {
   }
@@ -30,12 +38,16 @@ public final class PidHazopStudyRunner {
     for (PidElement element : model.getElements()) {
       ids.add(element.getId());
     }
-    for (ProcessEquipmentInterface equipment : project.getProcessSystem().getUnitOperations()) {
-      if (equipment == null || equipment instanceof Stream) {
+    for (ProcessEquipmentInterface equipment : project.getEngineeringProcessSystem().getUnitOperations()) {
+      if (equipment == null || equipment instanceof Stream || equipment instanceof Recycle
+          || equipment instanceof Calculator || equipment instanceof Adjuster) {
         continue;
       }
       List<PidElement> safeguards = model.getElementsForEquipment(equipment.getName());
-      if (safeguards.isEmpty()) {
+      // Passive piping nodes remain real HAZOP boundaries without fabricated vessel nozzles.
+      boolean passivePiping = equipment instanceof ThrottlingValve || equipment instanceof Splitter
+          || equipment.getClass() == neqsim.process.equipment.mixer.Mixer.class;
+      if (safeguards.isEmpty() && !passivePiping) {
         findings.add(error(equipment.getName(), "No P&ID elements protect or control this HAZOP node."));
         continue;
       }
@@ -71,7 +83,12 @@ public final class PidHazopStudyRunner {
       row.put("consequence", deviation.consequence);
       row.put("catalogueSafeguard", deviation.safeguard);
       row.put("recommendation", deviation.recommendation);
-      row.put("creditedSafeguardTags", matchingSafeguards(safeguards, deviation.parameter));
+      List<String> credited = matchingSafeguards(safeguards, deviation.parameter);
+      row.put("creditedSafeguardTags", credited);
+      List<String> evidence = studyEvidence(safeguards, credited, deviation.guideWord.name());
+      if (!evidence.isEmpty()) {
+        row.put("quantifiedSafeguardEvidence", evidence);
+      }
       row.put("workshopDecision", "OPEN");
       deviations.add(row);
     }
@@ -81,18 +98,64 @@ public final class PidHazopStudyRunner {
     node.put("equipmentType", equipment.getClass().getSimpleName());
     node.put("designIntent", populated.getDesignIntent());
     node.put("pidElementTags", tags(safeguards));
+    List<String> inletTags = new ArrayList<String>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : equipment.getInletStreams()) {
+      inletTags.add(stream.getName());
+    }
+    List<String> outletTags = new ArrayList<String>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : equipment.getOutletStreams()) {
+      outletTags.add(stream.getName());
+    }
+    node.put("processInletStreamTags", inletTags);
+    node.put("processOutletStreamTags", outletTags);
     node.put("deviations", deviations);
     return node;
+  }
+
+  /**
+   * Returns the safety-study sentences of the credited safeguards that act in the direction of the guide word.
+   *
+   * @param elements safeguards of the node
+   * @param credited tags credited for the parameter
+   * @param guideWord HAZOP guide word
+   * @return evidence sentences from {@link PidSafetyStudies}
+   */
+  private static List<String> studyEvidence(List<PidElement> elements, List<String> credited, String guideWord) {
+    List<String> evidence = new ArrayList<String>();
+    boolean high = "MORE".equals(guideWord) || "HIGH".equals(guideWord);
+    boolean low = "LESS".equals(guideWord) || "NO".equals(guideWord) || "LOW".equals(guideWord);
+    for (PidElement element : elements) {
+      Object sentence = element.getAttributes().get(PidSafetyStudies.HAZOP_EVIDENCE);
+      if (sentence == null || !credited.contains(element.getTag())) {
+        continue;
+      }
+      String tag = element.getTag();
+      boolean highDevice = tag.contains("HH") || element.getType() == PidElementType.SAFETY_RELIEF_VALVE
+          || element.getType() == PidElementType.BLOWDOWN_VALVE;
+      boolean lowDevice = tag.contains("LL");
+      if (high && highDevice || low && lowDevice) {
+        evidence.add(String.valueOf(sentence));
+      }
+    }
+    return evidence;
   }
 
   private static List<String> matchingSafeguards(List<PidElement> elements, HAZOPTemplate.Parameter parameter) {
     List<String> tags = new ArrayList<String>();
     String variable = parameter.name();
     for (PidElement element : elements) {
+      if (parameter == HAZOPTemplate.Parameter.PRESSURE && (element.getType() == PidElementType.SAFETY_RELIEF_VALVE
+          || element.getType() == PidElementType.BLOWDOWN_VALVE)) {
+        tags.add(element.getTag());
+        continue;
+      }
       Object measured = element.getAttributes().get("measuredVariable");
       Object purpose = element.getAttributes().get("proposalPurpose");
+      String shortForm = parameter == HAZOPTemplate.Parameter.TEMPERATURE ? "-T-"
+          : parameter == HAZOPTemplate.Parameter.PRESSURE ? "-P-" : null;
       if ((measured != null && variable.equals(String.valueOf(measured)))
-          || (purpose != null && String.valueOf(purpose).contains(variable))) {
+          || (purpose != null && String.valueOf(purpose).contains(variable))
+          || (purpose != null && shortForm != null && String.valueOf(purpose).contains(shortForm))) {
         tags.add(element.getTag());
       }
     }

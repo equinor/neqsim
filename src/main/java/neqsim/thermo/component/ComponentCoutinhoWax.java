@@ -1,9 +1,6 @@
 package neqsim.thermo.component;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.phase.PhaseType;
 
 /**
  * Wax component model based on the Coutinho predictive UNIQUAC approach.
@@ -11,8 +8,8 @@ import neqsim.thermo.phase.PhaseType;
  * <p>
  * Implements the solid-liquid equilibrium model of Coutinho (1998, 2001) for wax precipitation in petroleum fluids. The
  * model uses the UNIQUAC local composition framework for the solid-phase activity coefficient, with predictive
- * interaction parameters derived from the Hildebrand-Scatchard regular solution theory and the Wilson equation for the
- * liquid phase.
+ * interaction parameters derived from pure-component sublimation energies and the shorter-chain interaction rule. The
+ * liquid reference is supplied by the selected equation of state.
  * </p>
  *
  * <p>
@@ -48,8 +45,6 @@ import neqsim.thermo.phase.PhaseType;
 public class ComponentCoutinhoWax extends ComponentSolid {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ComponentCoutinhoWax.class);
 
   /**
    * Coordination number for UNIQUAC model. Standard value is 10 as recommended by Abrams and Prausnitz (1975).
@@ -89,48 +84,10 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    */
   @Override
   public double fugcoef2(PhaseInterface phase1) {
-    try {
-      refPhase.setTemperature(phase1.getTemperature());
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+    if (!isWaxFormer()) {
+      return WaxModelCorrelations.solidFugacityCoefficient(this, phase1, 0.0);
     }
-    refPhase.setPressure(phase1.getPressure());
-    refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, PhaseType.LIQUID, 1.0);
-    refPhase.getComponent(0).fugcoef(refPhase);
-
-    double liquidPhaseFugacity = refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
-
-    double tempK = phase1.getTemperature();
-    double tfus = getTriplePointTemperature();
-    double deltaHf = getHeatOfFusion();
-
-    // Heat capacity difference solid-liquid (Coutinho, 2001, Eq. 4)
-    // DeltaCp_SL = 0.3033 * MW - 4.635e-4 * MW * T [cal/mol/K]
-    // converted to J/mol/K by multiplying by 4.184
-    double mw = getMolarMass() * 1000.0; // g/mol
-    double deltaCpSL = (0.3033 * mw - 4.635e-4 * mw * tempK) * 4.184; // J/(mol*K)
-
-    // Solid-liquid volume change (Poynting correction)
-    // At moderate pressures this is negligible - included for completeness
-    double liquidDensity = refPhase.getMolarVolume();
-    double solidDensity = liquidDensity * 0.9;
-    double deltaVSL = solidDensity - liquidDensity; // m3/mol
-    double refPressure = 1.0; // bara
-
-    // UNIQUAC solid-phase activity coefficient
-    double lnGammaSolid = calcLnGammaUNIQUAC(phase1);
-
-    // Solid fugacity: Eq. (1) from Coutinho (1998)
-    // ln(f_s) = ln(x * f_liq) - DH/(RT)*(1 - T/Tf) + DCp/R*(Tf/T - 1 - ln(Tf/T))
-    // - DV*(P - Pref)/(RT) + ln(gamma_s)
-    double thermTerm = -deltaHf / (R * tempK) * (1.0 - tempK / tfus);
-    double cpTerm = deltaCpSL / R * (tfus / tempK - 1.0 - Math.log(tfus / tempK));
-    double pvTerm = -deltaVSL * (phase1.getPressure() - refPressure) * 1e5 / (R * tempK);
-
-    SolidFug = getx() * liquidPhaseFugacity * Math.exp(thermTerm + cpTerm + pvTerm) * Math.exp(lnGammaSolid);
-
-    fugacityCoefficient = SolidFug / (phase1.getPressure() * getx());
-    return fugacityCoefficient;
+    return WaxModelCorrelations.solidFugacityCoefficient(this, phase1, calcLnGammaUNIQUAC(phase1));
   }
 
   /**
@@ -154,6 +111,10 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * @return The natural logarithm of the UNIQUAC activity coefficient.
    */
   public double calcLnGammaUNIQUAC(PhaseInterface phase1) {
+    if (!isWaxFormer()) {
+      return 0.0;
+    }
+    double[] fractions = WaxModelCorrelations.composition(phase1);
     int ncomp = phase1.getNumberOfComponents();
     double tempK = phase1.getTemperature();
 
@@ -175,7 +136,7 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     double sumXR = 0.0;
     double sumXQ = 0.0;
     for (int i = 0; i < ncomp; i++) {
-      double xi = phase1.getComponent(i).getx();
+      double xi = fractions[i];
       sumXR += xi * ri[i];
       sumXQ += xi * qi[i];
     }
@@ -183,7 +144,6 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     int iThis = getComponentNumber();
     double phiI = ri[iThis] / (sumXR > 0 ? sumXR : 1.0);
     double thetaI = qi[iThis] / (sumXQ > 0 ? sumXQ : 1.0);
-    double xI = phase1.getComponent(iThis).getx();
 
     // Combinatorial contribution (Staverman-Guggenheim)
     // ln(gamma_comb) = ln(Phi_i/x_i) + z/2 * q_i * ln(Theta_i/Phi_i)
@@ -194,34 +154,38 @@ public class ComponentCoutinhoWax extends ComponentSolid {
     }
 
     double lnGammaComb = 0.0;
-    if (xI > 1e-100 && phiI > 0 && thetaI > 0) {
+    if (phiI > 0 && thetaI > 0) {
       double sumXL = 0.0;
       for (int j = 0; j < ncomp; j++) {
-        sumXL += phase1.getComponent(j).getx() * li[j];
+        sumXL += fractions[j] * li[j];
       }
-      lnGammaComb = Math.log(phiI / xI) + Z_COORD / 2.0 * qi[iThis] * Math.log(thetaI / phiI) + li[iThis]
-          - phiI / xI * sumXL;
+      lnGammaComb = Math.log(phiI) + Z_COORD / 2.0 * qi[iThis] * Math.log(thetaI / phiI) + li[iThis] - phiI * sumXL;
     }
 
     // Residual contribution
     // ln(gamma_res) = q_i * [1 - ln(sum_j theta_j * tau_ji)
     // - sum_j (theta_j * tau_ij / sum_k theta_k * tau_kj)]
-    // tau_ij = exp(-lambda_ij / (R*T))
+    // tau_ij = exp(-(lambda_ij - lambda_jj) / (R*T)); tau_ii = 1
     // lambda_ij : interaction energy parameters from sublimation enthalpies
 
     // Calculate tau matrix
     double[][] tau = new double[ncomp][ncomp];
     for (int i = 0; i < ncomp; i++) {
       for (int j = 0; j < ncomp; j++) {
+        if (!phase1.getComponent(i).isWaxFormer() || !phase1.getComponent(j).isWaxFormer()) {
+          tau[i][j] = 1.0;
+          continue;
+        }
         double lambdaIJ = calcLambdaIJ(phase1, i, j);
-        tau[i][j] = Math.exp(-lambdaIJ / (R * tempK));
+        double lambdaJJ = calcLambdaIJ(phase1, j, j);
+        tau[i][j] = WaxModelCorrelations.coefficient(-(lambdaIJ - lambdaJJ) / (R * tempK), this, phase1);
       }
     }
 
     // Theta array
     double[] theta = new double[ncomp];
     for (int i = 0; i < ncomp; i++) {
-      theta[i] = phase1.getComponent(i).getx() * qi[i] / (sumXQ > 0 ? sumXQ : 1.0);
+      theta[i] = fractions[i] * qi[i] / (sumXQ > 0 ? sumXQ : 1.0);
     }
 
     // Residual term
@@ -253,20 +217,9 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * Calculates the UNIQUAC binary interaction parameter lambda_ij for the solid phase.
    *
    * <p>
-   * Following Coutinho (1998), the interaction parameters are estimated from the sublimation enthalpies using the
-   * geometric mean combining rule. For the solid phase, the interaction energy between molecules i and j is related to
-   * the geometric mean of their sublimation enthalpies:
-   * </p>
-   *
-   * <pre>
-   * lambda_ij = lambda_ji = -(2 / Z) * sqrt((DH_sub_i - RT) * (DH_sub_j - RT))
-   *     + (1 - alpha_ij) * (1 / Z) * ((DH_sub_i - RT) + (DH_sub_j - RT))
-   * </pre>
-   *
-   * <p>
-   * where alpha_ij is a non-randomness correction parameter. For equal chain molecules, lambda_ii = -(2/Z) * (DH_sub_i
-   * - RT). The deviation from the geometric mean rule is captured by the excess parameter alpha_ij which is zero for
-   * same-size molecules and increases with size difference.
+   * The pair energy is the self-interaction energy of the shorter-chain n-alkane: lambda_ij = lambda_ji =
+   * lambda_short,short. The self energy is -2/Z * (DH_sub - RT). See Coutinho et al., Fluid Phase Equilibria 233
+   * (2005), 28-33, Eq. 13, DOI 10.1016/j.fluid.2005.04.007.
    * </p>
    *
    * @param phase1 Current phase
@@ -275,32 +228,13 @@ public class ComponentCoutinhoWax extends ComponentSolid {
    * @return The UNIQUAC interaction parameter lambda_ij [J/mol]
    */
   public double calcLambdaIJ(PhaseInterface phase1, int comp1, int comp2) {
-    double tempK = phase1.getTemperature();
-
-    double dhSub1 = calcSublimationEnthalpy(phase1, comp1);
-    double dhSub2 = calcSublimationEnthalpy(phase1, comp2);
-
-    // Self-interaction
-    if (comp1 == comp2) {
-      return -2.0 / Z_COORD * (dhSub1 - R * tempK);
+    int shorter = phase1.getComponent(comp1).getMolarMass() <= phase1.getComponent(comp2).getMolarMass() ? comp1
+        : comp2;
+    double cohesiveEnergy = calcSublimationEnthalpy(phase1, shorter) - R * phase1.getTemperature();
+    if (!Double.isFinite(cohesiveEnergy) || cohesiveEnergy <= 0.0) {
+      throw new IllegalStateException("Invalid UNIQUAC solid cohesive energy");
     }
-
-    // Cross-interaction (modified Berthelot combining rule)
-    // Coutinho (1998) Eq. 8-9
-    double eps1 = dhSub1 - R * tempK;
-    double eps2 = dhSub2 - R * tempK;
-
-    if (eps1 < 0) {
-      eps1 = 0;
-    }
-    if (eps2 < 0) {
-      eps2 = 0;
-    }
-
-    // Geometric mean for unlike interactions
-    double lambdaIJ = -2.0 / Z_COORD * Math.sqrt(eps1 * eps2);
-
-    return lambdaIJ;
+    return -2.0 / Z_COORD * cohesiveEnergy;
   }
 
   /**
@@ -347,22 +281,8 @@ public class ComponentCoutinhoWax extends ComponentSolid {
       deltaHtrans = totalTransH - deltaHf;
     }
 
-    // Vaporization enthalpy (Morgan-Kobayashi, 1994)
-    // Using Pitzer 3-parameter correlation
-    double tc = comp.getTC();
-    if (tc < tempK + 1) {
-      tc = tempK + 100;
-    }
-    double x = 1.0 - tempK / tc;
-    double deltaHvap0 = 5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
-        - 13.166 * x + 0.4858 * x * x - 1.088 * x * x * x;
     double omega = 0.0520750 + 0.0448946 * cn - 0.000185397 * cn * cn;
-    double deltaHvap1 = 0.80022 * Math.pow(x, 0.3333) + 273.23 * Math.pow(x, 0.8333) + 465.08 * Math.pow(x, 1.2083)
-        - 638.51 * x - 145.12 * x * x - 74.049 * x * x * x;
-    double deltaHvap2 = 7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
-        + 839.89 * x + 160.05 * x * x - 50.711 * x * x * x;
-
-    double deltaHvap = R * tc * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2);
+    double deltaHvap = WaxModelCorrelations.vaporizationEnthalpy(tempK, comp.getTC(), omega);
 
     // Total sublimation enthalpy
     return deltaHvap + deltaHf + deltaHtrans;

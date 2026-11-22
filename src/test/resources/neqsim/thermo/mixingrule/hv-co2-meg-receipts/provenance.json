@@ -1,0 +1,32 @@
+{
+  "doi": "10.1021/acs.jced.7b00537",
+  "status": "quarantined",
+  "parameter_activation": false,
+  "manuscript_csv_sha256": "54f497616df014fd1fad05edee4bb36fe445f3602904470906feb956ab965b6e",
+  "author_standard_uncertainties": {
+    "relative_x": "0.026",
+    "T_K": "0.05",
+    "P_MPa": "0.04"
+  },
+  "archive_uncertainty": "compiler expanded 95% absolute mole fraction",
+  "missing": [
+    "final-publication reconciliation",
+    "reverse MEG partition",
+    "complete source-compatible HV and pure-component inputs"
+  ],
+  "primary_manuscript_url": "https://pure.hw.ac.uk/ws/files/16423174/Phase_Behavior_of_CO2_in_Monoethylene_Glycol_submitted_to_JCED.pdf",
+  "image_audit_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6574928348",
+  "prior_numeric_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6537188660",
+  "archive": {
+    "official_json": "https://trc.nist.gov/ThermoML/10.1021/acs.jced.7b00537.json",
+    "official_xml_md5": "332d247b732b334e9db14e090da2dbba",
+    "github_repository": "Syn-Sat/Surrogate_Modelling",
+    "commit": "b3f595195a61c0b9d6794c971f487f3c8180ca86",
+    "path": "ThermoML.v2020-09-30/10.1021/acs.jced.7b00537.xml",
+    "git_blob": "580c8ddf19348fab94de6b7c1879870a14925d4e",
+    "sha256": "d2621ba7acadf439e978cf6d13188e6dbc9492b043733df910c0070e965ee182",
+    "distribution_basis": "NIST publisher-permitted ThermoML archive: https://data.nist.gov/od/id/mds2-2422"
+  },
+  "model_boundary": "Source modeling is CPA-SRK72; no CPA interaction parameter is an HV tuple. No PDF or table artwork redistributed.",
+  "pressure_basis": "Source reported pressure; no gauge conversion or model input inferred"
+}

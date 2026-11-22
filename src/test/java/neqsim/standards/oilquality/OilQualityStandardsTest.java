@@ -2,6 +2,7 @@ package neqsim.standards.oilquality;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
@@ -281,6 +282,68 @@ public class OilQualityStandardsTest {
     double convertedT50 = standard.getValue("T50");
     assertTrue(Math.abs(convertedT50 - molarT50) > 0.1, "TBP_CONVERTED basis should change the reported T50");
     standard.setBasis(Standard_ASTM_D86.D86Basis.MOLAR);
+  }
+
+  /**
+   * Verifies the strict Standard_ASTM_D86 integration delegates published recovery points to the qualified converter
+   * while preserving the legacy curve at those breakpoints.
+   */
+  @Test
+  void testASTM_D86_qualifiedReferencePointIntegration() {
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(createLightOil());
+    standard.calculate();
+
+    double tbpT50C = Double.NaN;
+    double legacyD86T50C = Double.NaN;
+    double[][] tbpCurve = standard.getTBPCurve();
+    double[][] legacyD86Curve = standard.getD86Curve();
+    for (int i = 0; i < tbpCurve.length; i++) {
+      if (Math.abs(tbpCurve[i][0] - 50.0) < 1.0e-9) {
+        tbpT50C = tbpCurve[i][1];
+        legacyD86T50C = legacyD86Curve[i][1];
+        break;
+      }
+    }
+
+    assertTrue(!Double.isNaN(tbpT50C), "Simulated TBP-like T50 should be available");
+    double expectedD86T50C = RiaziDaubertDistillationConversion.convertTbpToD86C(tbpT50C, 50.0);
+    assertEquals(expectedD86T50C, standard.getQualifiedD86Temperature(50.0), 1.0e-10);
+    assertEquals(expectedD86T50C + 273.15, standard.getQualifiedD86Temperature(50.0, "K"), 1.0e-10);
+    assertEquals(expectedD86T50C, legacyD86T50C, 1.0e-10,
+        "Legacy interpolation must be unchanged at a published breakpoint");
+    assertThrows(IllegalArgumentException.class, () -> standard.getQualifiedD86Temperature(5.0));
+  }
+
+  /**
+   * Verifies the complete strict curve contains only the seven source rows, delegates every temperature, supports
+   * units, and returns defensive arrays.
+   */
+  @Test
+  void testASTM_D86_qualifiedReferenceCurve() {
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(createDiesel());
+    standard.calculate();
+
+    double[] recoveryPoints = {0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0};
+    double[][] curveC = standard.getQualifiedD86Curve();
+    double[][] curveK = standard.getQualifiedD86Curve("K");
+
+    assertEquals(recoveryPoints.length, curveC.length);
+    assertEquals(recoveryPoints.length, curveK.length);
+    for (int i = 0; i < recoveryPoints.length; i++) {
+      assertEquals(recoveryPoints[i], curveC[i][0], 0.0);
+      assertEquals(recoveryPoints[i], curveK[i][0], 0.0);
+      assertEquals(standard.getQualifiedD86Temperature(recoveryPoints[i]), curveC[i][1], 1.0e-10);
+      assertEquals(curveC[i][1] + 273.15, curveK[i][1], 1.0e-10);
+    }
+
+    curveC[0][0] = -1.0;
+    curveC[0][1] = Double.NaN;
+    double[][] secondCurve = standard.getQualifiedD86Curve();
+    assertEquals(0.0, secondCurve[0][0], 0.0);
+    assertEquals(standard.getQualifiedD86Temperature(0.0), secondCurve[0][1], 1.0e-10);
+
+    Standard_ASTM_D86 uncalculated = new Standard_ASTM_D86(createDiesel());
+    assertThrows(IllegalStateException.class, uncalculated::getQualifiedD86Curve);
   }
 
   /**

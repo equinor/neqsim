@@ -32,8 +32,8 @@ class MixerSplitterDocumentationTest {
 
   @Test
   void mixerExampleClosesBalancesAndReportsPressureMismatch() {
-    Stream richGas = createGasStream("rich gas", 300.0, 30.0, 5000.0, new double[] { 0.80, 0.15, 0.05 });
-    Stream leanGas = createGasStream("lean gas", 310.0, 32.0, 3000.0, new double[] { 0.95, 0.04, 0.01 });
+    Stream richGas = createGasStream("rich gas", 300.0, 30.0, 5000.0, new double[] {0.80, 0.15, 0.05});
+    Stream leanGas = createGasStream("lean gas", 310.0, 32.0, 3000.0, new double[] {0.95, 0.04, 0.01});
     double inletEnthalpyJ = richGas.getFluid().getEnthalpy("J") + leanGas.getFluid().getEnthalpy("J");
     double richMolarFlow = richGas.getFlowRate("mole/sec");
     double leanMolarFlow = leanGas.getFlowRate("mole/sec");
@@ -60,8 +60,8 @@ class MixerSplitterDocumentationTest {
 
   @Test
   void specifiedTemperatureAndStaticMixerExamplesUseCurrentApis() {
-    Stream richGas = createGasStream("rich gas", 300.0, 30.0, 5000.0, new double[] { 0.80, 0.15, 0.05 });
-    Stream leanGas = createGasStream("lean gas", 310.0, 30.0, 3000.0, new double[] { 0.95, 0.04, 0.01 });
+    Stream richGas = createGasStream("rich gas", 300.0, 30.0, 5000.0, new double[] {0.80, 0.15, 0.05});
+    Stream leanGas = createGasStream("lean gas", 310.0, 30.0, 3000.0, new double[] {0.95, 0.04, 0.01});
 
     Mixer specifiedTemperatureMixer = new Mixer("specified-temperature mixer");
     specifiedTemperatureMixer.addStream(richGas);
@@ -80,13 +80,13 @@ class MixerSplitterDocumentationTest {
 
   @Test
   void splitterExamplesNormalizeFactorsAndConserveSpecifiedFlows() {
-    Stream inlet = createGasStream("splitter inlet", 305.0, 30.0, 8000.0, new double[] { 0.90, 0.08, 0.02 });
+    Stream inlet = createGasStream("splitter inlet", 305.0, 30.0, 8000.0, new double[] {0.90, 0.08, 0.02});
     double inletMethaneFraction = inlet.getFluid().getMolarComposition()[0];
     double inletTemperatureK = inlet.getTemperature("K");
     double inletPressureBara = inlet.getPressure("bara");
 
     Splitter ratioSplitter = new Splitter("SP-100", inlet, 2);
-    ratioSplitter.setSplitFactors(new double[] { 7.0, 3.0 });
+    ratioSplitter.setSplitFactors(new double[] {7.0, 3.0});
     ratioSplitter.run();
 
     StreamInterface product = ratioSplitter.getSplitStream(0);
@@ -102,7 +102,7 @@ class MixerSplitterDocumentationTest {
     assertEquals(0.0, ratioSplitter.getMassBalance("kg/hr"), 1.0e-3);
 
     Splitter flowSplitter = new Splitter("distribution splitter", inlet, 2);
-    flowSplitter.setFlowRates(new double[] { 2500.0, Splitter.REMAINDER }, "kg/hr");
+    flowSplitter.setFlowRates(new double[] {2500.0, Splitter.REMAINDER}, "kg/hr");
     flowSplitter.run();
 
     StreamInterface fixedDemand = flowSplitter.getSplitStream(0);

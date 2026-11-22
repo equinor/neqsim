@@ -432,7 +432,7 @@ public class PTPhaseEnvelopeTest {
     fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
     // testOps = new ThermodynamicOperations(fluid);
     // testOps.TPflash();
-    // testOps.calcPTphaseEnvelope2();
+    // testOps.calcPTphaseEnvelope();
     // double[] dewPointPressures = testOps.get("dewP");
     // double[] dewPointTemperatures = testOps.get("dewT");
     // double[] bubblePointPressures = testOps.get("bubP");
