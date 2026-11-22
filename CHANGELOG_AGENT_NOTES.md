@@ -33,6 +33,23 @@
 
 ---
 
+## 2026-11-22 — `TwoFluidPipe` closure solves no longer repeated (run time only)
+
+- No API or result change: steady and transient profiles on the benchmark lines agree to the 13 digits printed, and the
+  pipeline test classes give the same outcomes before and after.
+- Changed run time (revision a2399c6, OpenJDK 21, one thread): three-phase flowline and riser steady `run()` 1.60 to 1.23 s
+  at 60 cells and 5.60 to 4.14 s at 120 cells; `run()` plus 60 x `runTransient(1.0, id)` 24.2 to 13.6 s; 20 km
+  gas-condensate line steady 4.00 to 3.73 s, with 60 x `runTransient(2.0, id)` 11.7 to 8.9 s.
+- How: a pressure march evaluates each cell's gradient once; `FlowRegimeDetector` and `SlugUnitModel` reuse their last
+  solution for bitwise identical arguments (`ExactArgumentMemo`); the holdup closure solves the stratified balance once
+  per cell; the slug-film balance hoists its per-unit constants; `SlugUnitModel.centralAngle` converges in at most 3 evaluations to within 4 ulp (was up
+  to 60 evaluations and 54 ulp).
+- New: `TwoFluidPipeTransientFlowlineBenchmark` (test classpath) next to `TwoFluidPipeThreePhaseFlowlineBenchmark`.
+- Equilibrium flashes are now the largest remaining cost of a `TwoFluidPipe` run; `PipeBeggsAndBrills` is unchanged.
+- Updated: `docs/process/TWOFLUIDPIPE_MODEL.md` ("Run time and where it goes"), `neqsim-flow-assurance` skill.
+
+---
+
 ## 2026-11-21 — PVT volume conventions in DL, CCE, separator test and `VOLUME_SHIFT_C7PLUS` (#5195)
 
 - Changed results: `DifferentialLiberation.getRelGasGravity()` is now relative to air (28.96546 g/mol, was 28.0);
