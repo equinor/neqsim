@@ -169,6 +169,21 @@ public class ChlorideSCCAssessment implements Serializable {
 
     String upperType = materialType.toUpperCase().trim();
 
+    if (isCarbonOrLowAlloySteel(upperType)) {
+      // Chloride SCC is a stainless-steel and nickel-alloy mechanism; carbon and low-alloy steels are not
+      // susceptible, so the austenitic limits must not be applied to them.
+      sccAcceptable = true;
+      riskLevel = "Not susceptible";
+      maxAllowableTemperatureC = Double.NaN;
+      maxAllowableChlorideMgL = Double.NaN;
+      temperatureMarginC = Double.NaN;
+      recommendedUpgrade = "";
+      notes.add("Carbon and low-alloy steels are not susceptible to chloride SCC; assess CO2 corrosion, sour cracking "
+          + "(ISO 15156-2) and pitting instead.");
+      evaluated = true;
+      return;
+    }
+
     if (upperType.contains("625") || upperType.contains("C276") || upperType.contains("C-276")
         || upperType.contains("INCONEL") || upperType.contains("HASTELLOY")) {
       evaluateNickelAlloy();
@@ -188,7 +203,7 @@ public class ChlorideSCCAssessment implements Serializable {
     if (oxygenPresent) {
       notes.add("WARNING: Dissolved oxygen present — reduces SCC threshold temperature by "
           + "approximately 20-30°C for austenitic grades.");
-      if ("316".contains(upperType) || "304".contains(upperType)) {
+      if (upperType.contains("316") || upperType.contains("304")) {
         maxAllowableTemperatureC -= 25.0;
         temperatureMarginC = temperatureC - maxAllowableTemperatureC;
         determineRisk();
@@ -196,6 +211,23 @@ public class ChlorideSCCAssessment implements Serializable {
     }
 
     evaluated = true;
+  }
+
+  /**
+   * Checks whether a material designation is a carbon or low-alloy steel, which is not susceptible to chloride SCC.
+   *
+   * @param upperType material designation in upper case
+   * @return true for carbon and low-alloy steels
+   */
+  static boolean isCarbonOrLowAlloySteel(String upperType) {
+    if (upperType.contains("STAINLESS") || upperType.contains("DUPLEX") || upperType.matches(".*\\b(13|22|25)CR.*")) {
+      return false;
+    }
+    return upperType.contains("CARBON") || upperType.equals("CS") || upperType.startsWith("CS ")
+        || upperType.contains("LOW ALLOY") || upperType.contains("LOW-ALLOY") || upperType.contains("C-MN")
+        || upperType.contains("CMN") || upperType.contains("A106") || upperType.contains("A333")
+        || upperType.contains("API 5L") || upperType.contains("API5L")
+        || upperType.matches(".*\\bX(42|52|60|65|70|80)\\b.*");
   }
 
   /**

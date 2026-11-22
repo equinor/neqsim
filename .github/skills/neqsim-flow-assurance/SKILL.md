@@ -1141,7 +1141,14 @@ bridge.run();                       // clones + flashes; does not mutate `fluid`
 double rate = bridge.getModel().getCorrectedCorrosionRate();  // mm/yr
 double pH   = bridge.getInSituPH();          // rigorous aqueous pH (getpH())
 double sr   = bridge.getFeCO3SaturationRatio();  // IAP/Ksp, or -1 if no Fe++/CO3--
+boolean suspect = bridge.isElectrolytePhaseSuspect(); // true -> correlation pH was used
 ```
+
+Gotcha (2026-11-22): the electrolyte CPA pH of CO2-saturated water is about 0.9 units high
+(4.84 vs about 3.9 at 25 C, 1 bar CO2), which gives non-conservative rates. The bridge falls back to
+the correlation pH when the aqueous phase is suspect (water < 0.7 mol frac) or pH is outside 2.5-10;
+check `isElectrolytePhaseSuspect()` and compare with the correlation pH. `ChlorideSCCAssessment`
+reports carbon and low-alloy steels as "Not susceptible" (they used to fall through to 316L).
 
 **FeCO3 film feedback (closes the corrosion↔scaling loop):** when the aqueous phase
 is supersaturated in siderite (SR>1), a protective film suppresses corrosion even

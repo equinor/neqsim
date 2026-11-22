@@ -229,7 +229,9 @@ O501), artificial lift, water handling, and GHG emissions. See
 ### Rigorous corrosion + scale coupling
 For an EOS-consistent CO2 corrosion rate from a brine composition, use
 `NorsokM506ElectrolyteBridge` (rigorous in-situ pH + FeCO3 film feedback into
-the legacy de Waard-Milliams screening model). For a per-segment corrosion+scale profile
+the legacy de Waard-Milliams screening model; check `isElectrolytePhaseSuspect()` —
+the electrolyte CPA pH of CO2 water runs high, so compare with the correlation pH).
+Chloride SCC does not apply to carbon steel: `ChlorideSCCAssessment` returns "Not susceptible". For a per-segment corrosion+scale profile
 along a line use `PipeSegmentIntegrity` (`fromPipe(PipeBeggsAndBrills)`). For
 scale: `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (induction time,
 growth regime), `BrineMixingScaleEvaluator` (seawater/formation-water

@@ -12,7 +12,12 @@ Choose the calculation that matches the basis of the study.
 - `NorsokM506CorrosionAssessment` is an immutable, unit-explicit result snapshot.
 - `NorsokM506CorrosionRate` remains available for legacy mutable workflows and parameter sweeps.
 - `NorsokM506ElectrolyteBridge` remains the route for obtaining an electrolyte-model pH and optional
-  FeCO3 saturation ratio from a brine.
+  FeCO3 saturation ratio from a brine. It finds the aqueous phase also when the flash labels a
+  water-rich phase as oil. If the aqueous phase is suspect (water mole fraction below 0.7) or the
+  electrolyte pH is outside 2.5-10, it falls back to the M-506 correlation pH and
+  `isElectrolytePhaseSuspect()` returns true (also in `toMap()`/`toJson()`). The electrolyte CPA pH of
+  CO2-saturated water is known to be high (about 4.8 at 25 C and 1 bar CO2, against about 3.9 from the
+  literature and the "acidgas" method), so compare with the correlation pH before relying on it.
 
 The kernel accepts only the unamended `NORSOK-M-506 2017` edition identifier. It evaluates the legacy de Waard-Milliams screening equations. Standards Norway identified
 that edition as current and under systematic review in May 2026; the catalog record was checked on
