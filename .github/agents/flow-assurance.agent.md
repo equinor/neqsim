@@ -111,7 +111,15 @@ Use `WaxCharacterise` from `neqsim.thermo.characterization`:
 // de Boer screening
 DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(fluid);
 // AsphalteneStabilityAnalyzer for detailed analysis
+
+// With a measured onset: calibrated solid model for the onset envelope, blends and gas injection
+AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil);
+model.calibrate(363.15, 250.0);
+double blendOnset = model.onsetPressures(blend, 363.15, 600.0, 20.0, 5.0).getUpperOnsetPressure();
 ```
+For commingling or gas injection, calibrate `AsphalteneSolidModel` on the host and evaluate each blend; do
+not tune interaction parameters against the database solid reference (wrong blend trend). See the
+`neqsim-flow-assurance` skill, section 3.
 
 ## Pipeline Hydraulics
 ```java
