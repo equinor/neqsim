@@ -22,10 +22,6 @@
   to 60 evaluations and 54 ulp).
 - New: `TwoFluidPipeTransientFlowlineBenchmark` (test classpath) next to `TwoFluidPipeThreePhaseFlowlineBenchmark`.
 - Equilibrium flashes are now the largest remaining cost of a `TwoFluidPipe` run; `PipeBeggsAndBrills` is unchanged.
-- `wellToTopsideSlugControl` receipt regenerated: with the default frozen-composition density update the regulated
-  separator pressure range is 8.5% lower than open loop (12.1% with the update off; 25% in the superseded table) and the
-  separator level ranges are larger. `PipelineRunnerWellToTopsideSlugControlTest` now requires the range change below -5%.
-  See `docs/benchmarks/well_to_topside_slug_control.md`.
 - Updated: `docs/process/TWOFLUIDPIPE_MODEL.md` ("Run time and where it goes"), `neqsim-flow-assurance` skill.
 
 ---

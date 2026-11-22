@@ -25,35 +25,23 @@ total-liquid and oil/water-interface loops.
   preconditioning.
 
 The coarse-mesh 90 s receipt requires less than 2% difference in mean
-production between the cases, a lower regulated liquid peak, a lower regulated
-separator pressure range, pipe phase-mass residual below `1e-8 kg`, and complete
-sampled series for choke opening, riser liquid rate, separator pressure, total
-liquid level and oil/water interface.
+production between the cases, a lower regulated liquid peak, pipe phase-mass
+residual below `1e-8 kg`, and complete sampled series for choke opening, riser
+liquid rate, separator pressure, total liquid level and oil/water interface.
 
 | Metric (analysis window) | Open loop | Regulated | Relative change |
 |---|---:|---:|---:|
-| Mean production (kg/s) | 18.0909 | 17.9027 | -1.04% |
-| Peak riser liquid rate (kg/s) | 14.3846 | 13.3406 | -7.26% |
-| Separator pressure range (bar) | 1.0068 | 0.9216 | -8.47% |
-| Total-liquid level range (m) | 0.01390 | 0.01591 | +14.49% |
-| Oil/water-interface range (m) | 0.00618 | 0.00725 | +17.39% |
-| Maximum pipe phase residual (kg) | 2.97e-11 | 2.44e-11 | — |
+| Mean production (kg/s) | 18.0989 | 17.9198 | -0.99% |
+| Peak riser liquid rate (kg/s) | 14.4430 | 13.2260 | -8.43% |
+| Separator pressure range (bar) | 2.3742 | 1.7804 | -25.01% |
+| Total-liquid level range (m) | 0.01920 | 0.01759 | -8.39% |
+| Oil/water-interface range (m) | 0.00497 | 0.00658 | +32.43% |
+| Maximum pipe phase residual (kg) | 2.50e-11 | 3.21e-11 | — |
 
-The regulated case trades separator level for riser liquid rate in this
-controller configuration: both the total-liquid level range and the
-oil/water-interface range are larger with the level controller acting on the
-choke. They are reported rather than hidden by retuning the common separator
-loops independently between cases. The complete series contains 91 samples per
-mode. The MCP replay completed in 32 s on a two-core cloud host.
-
-The table and the stored series were regenerated on 2026-11-22 with the
-frozen-composition density update that `TwoFluidPipe` applies by default when no
-model moves mass between gas and oil. With that update switched off the same
-replay gives a separator pressure range change of -12.08% and a liquid peak
-change of -7.63%, which are the values of the revision before the update was
-introduced. Earlier values of this table (separator pressure range 2.3742 to
-1.7804 bar, -25.01%) predate that update and other model changes made since
-they were recorded.
+The water-interface excursion is an explicit tradeoff in this controller
+configuration. It is reported rather than hidden by retuning the common
+separator loops independently between cases. The complete series contains 91
+samples per mode. The MCP replay completed in 67.8 s on the qualification host.
 
 ## Boundary qualification
 

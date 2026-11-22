@@ -53,8 +53,7 @@ class PipelineRunnerWellToTopsideSlugControlTest {
     JsonObject data = result.getAsJsonObject("data");
     assertTrue(data.get("meanProductionRelativeDifference").getAsDouble() < 0.02);
     assertTrue(data.get("liquidPeakRelativeChange").getAsDouble() < -0.02);
-    // The regulated range is 8.5% lower with the default frozen-composition density update (12.1% without it).
-    assertTrue(data.get("separatorPressureRangeRelativeChange").getAsDouble() < -0.05);
+    assertTrue(data.get("separatorPressureRangeRelativeChange").getAsDouble() < -0.10);
     assertTrue(data.getAsJsonObject("openLoop").get("maximumPipeResidual_kg").getAsDouble() < 1.0e-8);
     assertTrue(data.getAsJsonObject("regulated").get("maximumPipeResidual_kg").getAsDouble() < 1.0e-8);
     assertTrue(data.getAsJsonObject("openLoop").getAsJsonArray("timeSeries").size() >= 90);
