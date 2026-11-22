@@ -155,8 +155,8 @@ class MultiStageSeparatorTestTest {
   }
 
   /**
-   * Each stage row must report the oil of that stage, checked against an independent sequential flash of the same
-   * feed (#5208, reported by Patrick Mockridge). Before the fix every row carried the previous stage's oil density.
+   * Each stage row must report the oil of that stage, checked against an independent sequential flash of the same feed
+   * (#5208, reported by Patrick Mockridge). Before the fix every row carried the previous stage's oil density.
    */
   @Test
   void testStageOilPropertiesMatchIndependentFlash() {

@@ -58,8 +58,8 @@ public class ConstantMassExpansionTest {
   }
 
   /**
-   * The CME saturation state must be the single-phase saturated fluid, so its volume and compressibility are those
-   * of the whole cell and never of a trace incipient phase (#5209, reported by Patrick Mockridge).
+   * The CME saturation state must be the single-phase saturated fluid, so its volume and compressibility are those of
+   * the whole cell and never of a trace incipient phase (#5209, reported by Patrick Mockridge).
    */
   @Test
   void testSaturationStateIsSinglePhase() {

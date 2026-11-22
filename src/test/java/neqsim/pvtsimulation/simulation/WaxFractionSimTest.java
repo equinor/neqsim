@@ -131,8 +131,7 @@ public class WaxFractionSimTest {
     double meltingTemperature = fluid.getPhase(0).getComponent("nC20").getTriplePointTemperature();
     assertTrue(meltingTemperature > 305.0 && meltingTemperature < 315.0,
         "Pedersen melting temperature of nC20: " + meltingTemperature);
-    assertEquals(meltingTemperature,
-        fluid.getPhases()[5].getComponent("nC20").getTriplePointTemperature(), 1e-12);
+    assertEquals(meltingTemperature, fluid.getPhases()[5].getComponent("nC20").getTriplePointTemperature(), 1e-12);
   }
 
   /**

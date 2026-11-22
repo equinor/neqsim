@@ -163,8 +163,8 @@ public class ConstantVolumeDepletionTest {
   }
 
   /**
-   * The gas-density QC must use the gas molar mass of each depletion step, not phase 0 of the final cell state
-   * (#5209, reported by Patrick Mockridge).
+   * The gas-density QC must use the gas molar mass of each depletion step, not phase 0 of the final cell state (#5209,
+   * reported by Patrick Mockridge).
    */
   @Test
   void testGasDensityQcUsesStepGasMolarMass() {

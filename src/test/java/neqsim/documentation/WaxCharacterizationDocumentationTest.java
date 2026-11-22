@@ -85,8 +85,7 @@ class WaxCharacterizationDocumentationTest {
         + "public final class NamedParaffinWaxExample {\n" + "  public static double[] run() {\n" + snippet + "\n"
         + "    return waxMassFraction;\n" + "  }\n" + "}\n";
     try (URLClassLoader loader = compile("NamedParaffinWaxExample", source)) {
-      double[] waxMassFraction =
-          (double[]) loader.loadClass("NamedParaffinWaxExample").getMethod("run").invoke(null);
+      double[] waxMassFraction = (double[]) loader.loadClass("NamedParaffinWaxExample").getMethod("run").invoke(null);
       assertEquals(3, waxMassFraction.length);
       for (double fraction : waxMassFraction) {
         assertEquals(0.976, fraction, 5e-4);

@@ -202,8 +202,8 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
      * <p>
      * TBP and plus fractions are split into a non-wax part and a wax-forming {@code wax}-prefixed pseudo component.
      * Named components flagged as wax formers in the component database (the n-paraffins) are wax formers as a whole
-     * and are not split. They keep their database melting temperature and heat of fusion; where the database holds
-     * only its placeholder default (273.0 K and 6000 J/mol, currently nC15 and nC17 to nC24) they receive the Pedersen
+     * and are not split. They keep their database melting temperature and heat of fusion; where the database holds only
+     * its placeholder default (273.0 K and 6000 J/mol, currently nC15 and nC17 to nC24) they receive the Pedersen
      * correlations of this model instead (#5210).
      * </p>
      */
@@ -280,14 +280,14 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
      * fusion data in the component database.
      *
      * <p>
-     * A named wax former is a database component with the wax-former flag set that is neither a TBP nor a plus
-     * fraction and is not a {@code wax}-prefixed pseudo component created by this model. Database fusion data are kept
-     * where they exist. A component whose database values are the placeholder default
+     * A named wax former is a database component with the wax-former flag set that is neither a TBP nor a plus fraction
+     * and is not a {@code wax}-prefixed pseudo component created by this model. Database fusion data are kept where
+     * they exist. A component whose database values are the placeholder default
      * ({@value #DATABASE_DEFAULT_TRIPLE_POINT_TEMPERATURE} K and {@value #DATABASE_DEFAULT_HEAT_OF_FUSION} J/mol) gets
      * the correlated values, and keeps getting them on later calls so that the tuning multipliers
      * {@code parameterWaxTriplePointTemperature} and {@code parameterWaxHeatOfFusion} apply to it. The values are
-     * written to the component in every allocated phase, including an already created wax phase, so the result does
-     * not depend on whether {@code addSolidComplexPhase("wax")} was called before or after {@link #addTBPWax()}.
+     * written to the component in every allocated phase, including an already created wax phase, so the result does not
+     * depend on whether {@code addSolidComplexPhase("wax")} was called before or after {@link #addTBPWax()}.
      * </p>
      */
     private void addNamedWaxFormerProperties() {
@@ -305,8 +305,8 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         }
         correlatedNamedWaxFormers.add(component.getName());
         double triplePointTemperature = calcTriplePointTemperature(i);
-        double heatOfFusion = getParameterWaxHeatOfFusion()[0] * 0.1426 / 0.238845 * component.getMolarMass()
-            * 1000.0 * triplePointTemperature;
+        double heatOfFusion = getParameterWaxHeatOfFusion()[0] * 0.1426 / 0.238845 * component.getMolarMass() * 1000.0
+            * triplePointTemperature;
         for (PhaseInterface phase : phases) {
           if (phase == null || phase.getNumberOfComponents() <= i) {
             continue;
