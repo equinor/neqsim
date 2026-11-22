@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-11-22 — Chloride SCC for carbon steel; electrolyte pH bridge guard
+
+- Fixed: `ChlorideSCCAssessment` reported carbon and low-alloy steels (carbon steel, X65, API 5L ...) as at chloride SCC
+  risk via the 316L envelope; they are now "Not susceptible" with NaN limits (`isCarbonOrLowAlloySteel(String)`).
+  A reversed check meant "316" alone matched no 316 envelope.
+- Fixed: `NorsokM506ElectrolyteBridge` finds a water-rich phase typed as oil, and falls back to the M-506 correlation
+  pH when the aqueous phase is suspect (water < 0.7 mol frac) or the electrolyte pH is outside 2.5-10;
+  `isElectrolytePhaseSuspect()` (also in `toMap()`/`toJson()`).
+- Known issue: electrolyte CPA pH of CO2-saturated water is about 0.9 units high (non-conservative corrosion rates).
+- Updated: `docs/process/corrosion/chloride_scc_assessment.md`, `norsok_m506_corrosion_rate.md`,
+  `neqsim-flow-assurance` skill, `flow-assurance` agent.
+
+---
+
 ## 2026-11-21 — PVT volume conventions in DL, CCE, separator test and `VOLUME_SHIFT_C7PLUS` (#5195)
 
 - Changed results: `DifferentialLiberation.getRelGasGravity()` is now relative to air (28.96546 g/mol, was 28.0);
