@@ -106,7 +106,8 @@ class AsphalteneOnsetFlashTest {
     assertTrue(solidDrivingForce(450.0, onset - 0.2) > 0.0, "Lower pressure must be supersaturated");
     assertEquals(onset, input.getPressure(), 0.0);
     assertEquals(onset * 0.1, flash.getOnsetPressure("MPa"), 1e-12);
-    assertEquals(onset * 14.5038, flash.getOnsetPressure("psia"), 1e-10);
+    assertEquals(onset * 14.503773773, flash.getOnsetPressure("psia"), 1e-9);
+    assertThrows(IllegalArgumentException.class, () -> flash.getOnsetPressure("psi"));
     assertSame(input, flash.getThermoSystem());
     assertInventory(input);
   }

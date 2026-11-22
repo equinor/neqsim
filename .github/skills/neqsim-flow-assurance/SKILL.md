@@ -383,12 +383,50 @@ Gotchas:
 - Do not tune k_ij against the database solid reference to hit a measured onset: it needs negative
   asphaltene-methane values and then predicts that condensate stabilises the oil (wrong sign). Calibrate
   the solid reference instead (measured 2026-11-22, see `docs/pvtsimulation/flowassurance/asphaltene_modeling.md` section 9).
-- Pedersen correlations give omega = 2.5 at 1000 g/mol, which the EoS splits into its own liquid; check
-  `isAsphalteneLiquidSplitDetected()` and use omega 1.2-1.5 for the solid model.
-- `PedersenAsphalteneCharacterization.calculateOnsetPressure` and `AsphalteneOnsetFunction` now raise
-  `IllegalStateException` when the fluid is already unstable at the start pressure (they used to return the
-  start pressure or NaN). `BINARY_INTERACTION` fitting now applies the fitted value (before 2026-11-22 it
-  had no effect); `ASSOCIATION_PARAMETERS`/`COMBINED` need a CPA system.
+- Always check `isAsphalteneLiquidSplitDetected()`; if the EoS splits the asphaltene into its own liquid use
+  omega 1.2-1.5 for the solid model. (Before 2026-11-22 the Pedersen correlation gave omega = 2.5 at
+  1000 g/mol through a natural-log error; it now gives 1.18 at 1.10 g/cm3. Tc also gained its missing
+  density term and Pc its atm-to-bar conversion, so Pedersen onsets from before that date differ.)
+- `PedersenAsphalteneCharacterization.calculateOnsetPressure` raises `IllegalStateException` when the fluid
+  is already split at the start pressure. `AsphalteneOnsetFunction` (fitting) instead returns finite
+  penalties: the start pressure if already unstable, the minimum pressure if no onset is found.
+  `BINARY_INTERACTION` and `MOLAR_MASS` fits now act (both had no effect before 2026-11-22); `MOLAR_MASS`
+  holds the asphaltene mass and is cubic-only; `ASSOCIATION_PARAMETERS`/`COMBINED` need CPA, energies in J/mol.
+- `fitKijExponent` needs a blend/gas-injected fluid or another temperature; for the calibration fluid at
+  the calibration temperature it throws (the objective is flat there).
+
+### Detection, onset flashes and screening (changed 2026-11-22)
+
+- Asphaltene components: `AsphalteneComponents.isAsphaltene(name)` (contains "asphalten" or starts with
+  "asph_"); `addDistributedAsphaltene` now names slices `Asphaltene_1_PC`... from a mass-conserving gamma
+  split. Asphaltene-rich phase = more than 50 wt % asphaltene (was mol %).
+- `AsphalteneOnsetPressureFlash` also finds the lower onset (`getLowerOnsetPressure()`); unknown units
+  (including bare "psi") throw. `AsphalteneStabilityAnalyzer.calculateOnsetPressure(T, startP)` starts at
+  the given pressure; the envelope has 4 rows (T, upper, lower, bubble point at T); the assessment combines
+  SARA and thermodynamic risk.
+- De Boer boundaries are ordered (no-problem <= slight <= severe); `AsphalteneStabilityAnalyzer.deBoerScreening`
+  delegates to `DeBoerAsphalteneScreening`. Risk index for 350/150 bara at 750 kg/m3 is 200/120 = 1.667.
+
+### Flory-Huggins (`FloryHugginsAsphalteneModel`)
+
+```java
+FloryHugginsAsphalteneModel fh = new FloryHugginsAsphalteneModel(liveOil, 373.15);
+fh.setAsphalteneWeightFraction(0.03);
+fh.calibrateToOnsetPressure(373.15, 250.0); // with a measured onset; otherwise calibrateCorrelation(T) (heuristic prior)
+fh.setSolubilityParameterMethod(FloryHugginsAsphalteneModel.SolubilityParameterMethod.EOS); // optional
+double onset = fh.calculateOnsetPressure(373.15);
+```
+
+Onsets computed before 2026-11-22 are unreliable: the Newton solver for the solubility limit did not
+converge (phi of about 1e-19, residual about -45). The heuristic prior gives 12.4 % AARD, all
+under-predicted, on the 7 benchmark cases (2026-11-22); its fixed 0.35 MPa^0.5 margin sets the result.
+
+### SARA characterization with CPA resin
+
+`AsphalteneCharacterization.addAsphalteneComponents(fluid, nC7plus)` needs `setC7plusProperties` first,
+adds `asphaltene` and a `Resin_PC` pseudo-component (2B sites in SRK-CPA), and after
+`fluid.setMixingRule(10)` call `applyCrossAssociation(fluid)` to set the asphaltene-resin bond. Default
+asphaltene association volume is 0.005 (database value).
 
 ## 4. Pipeline Hydraulics
 

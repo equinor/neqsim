@@ -2,7 +2,9 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import java.util.List;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseType;
@@ -127,6 +129,9 @@ public class PedersenAsphalteneCharacterization {
   /** Binary interaction parameter adjustment for asphaltene-light components. */
   private double kijAdjustment = 0.0;
 
+  /** Gamma shape parameter for the distributed asphaltene split. */
+  private double distributionShape = 2.5;
+
   /**
    * Default constructor.
    */
@@ -215,15 +220,13 @@ public class PedersenAsphalteneCharacterization {
     double M = asphalteneMW;
     double rho = asphalteneDensity * 1000.0; // Convert to kg/m³
 
-    // Pedersen heavy oil correlation coefficients
-    // Tc = a0 + a1*ρ + a2*ln(M) + a3*M + a4/M
+    // Pedersen heavy-oil PR correlation (same coefficients as TBPfractionModel.PedersenTBPModelPRHeavyOil):
+    // Tc = a0*rho + a1*ln(M) + a2*M + a3/M, rho in g/cm3. Earlier versions dropped rho from the first term.
     double a0 = 9.13222e2;
     double a1 = 1.01134e1;
     double a2 = 4.54194e-2;
     double a3 = -1.3587e4;
-
-    // Apply Pedersen correlation
-    criticalTemperature = a0 + a1 * Math.log(M) + a2 * M + a3 / M;
+    criticalTemperature = a0 * rho / 1000.0 + a1 * Math.log(M) + a2 * M + a3 / M;
 
     // Alternative: use boiling point based correlation for heavy components
     // Tc = Tb * (1 + (1.242 + 0.0125 * Kw) / (0.567 + 0.0125 * Kw * Tbr))
@@ -250,14 +253,15 @@ public class PedersenAsphalteneCharacterization {
     double rho = asphalteneDensity;
 
     // Pedersen heavy oil correlation coefficients
-    // ln(Pc) = b0 + b1*ρ^b4 + b2/M + b3/M²
+    // ln(Pc [atm]) = b0 + b1*rho^b4 + b2/M + b3/M^2
     double b0 = 1.28155;
     double b1 = 1.26838;
     double b2 = 1.67106e2;
     double b3 = -8.10164e3;
     double b4 = 0.25;
 
-    double lnPc = b0 + b1 * Math.pow(rho, b4) + b2 / M + b3 / (M * M);
+    // The correlation gives Pc in atm; ln(1.01325) converts to bar, as in TBPfractionModel.
+    double lnPc = Math.log(1.01325) + b0 + b1 * Math.pow(rho, b4) + b2 / M + b3 / (M * M);
     criticalPressure = Math.exp(lnPc);
 
     // Ensure critical pressure is reasonable for heavy components
@@ -296,9 +300,10 @@ public class PedersenAsphalteneCharacterization {
           acentricFactor = (lnPbr - 5.92714 + 6.09649 / Tbr + 1.28862 * Math.log(Tbr) - 0.169347 * Math.pow(Tbr, 6.0))
               / (15.2518 - 15.6875 / Tbr - 13.4721 * Math.log(Tbr) + 0.43577 * Math.pow(Tbr, 6.0));
         } else {
-          // Edmister correlation for high Tbr
+          // Edmister correlation for high Tbr: omega = 3/7 * log10(Pc/Patm) / (Tc/Tb - 1) - 1.
+          // Earlier versions used the natural log, which made omega 2.3 times too large (it then hit the 2.5 cap).
           acentricFactor = (3.0 / 7.0)
-              * (Math.log(criticalPressure / 1.01325) / (criticalTemperature / boilingPoint - 1.0)) - 1.0;
+              * (Math.log10(criticalPressure / 1.01325) / (criticalTemperature / boilingPoint - 1.0)) - 1.0;
         }
       }
     }
@@ -355,8 +360,9 @@ public class PedersenAsphalteneCharacterization {
 
     // Preserve the boiling point used by the independent asphaltene characterization.
     int aspIndex = system.getPhase(0).getNumberOfComponents() - 1;
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      system.getPhase(i).getComponent(aspIndex).setNormalBoilingPoint(boilingPoint);
+    componentName = system.getPhase(0).getComponent(aspIndex).getComponentName();
+    for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+      phase.getComponent(aspIndex).setNormalBoilingPoint(boilingPoint);
     }
 
     logger.info("Added asphaltene to system: {} mol, MW={} g/mol, name={}", moles, asphalteneMW, componentName);
@@ -364,70 +370,75 @@ public class PedersenAsphalteneCharacterization {
   }
 
   /**
-   * Applies binary interaction parameters between the asphaltene pseudo-component and all lighter components in the
-   * system.
+   * Applies binary interaction parameters between every asphaltene pseudo-component and all non-asphaltene components
+   * in the system.
    *
    * <p>
-   * This method MUST be called AFTER setting the mixing rule and calling init(0), because it modifies the mixing rule's
-   * kij matrix. The kij values between asphaltene and light components (methane, ethane, etc.) are typically 0.05-0.15
-   * and are critical for correctly predicting the liquid-liquid phase split.
+   * This method MUST be called AFTER setting the mixing rule, because it modifies the mixing rule's kij matrix. The
+   * value for a component of molar mass M (g/mol) is
+   * </p>
+   *
+   * <pre>
+   * kij = (defaultKij + kijAdjustment) * (0.5 + exp(-(M - 16) / 165))
+   * </pre>
+   *
+   * <p>
+   * which is 1.5 times the base value for methane, about 1.2 times for C3, 1.0 times around C10 and approaches 0.5
+   * times for heavy components. Earlier versions used the same factors in steps at 50, 100 and 200 g/mol; the smooth
+   * form removes the jumps that made onset fitting non-smooth. Asphaltene-asphaltene pairs keep kij = 0 and water is
+   * left unchanged. The parameters are set in all allocated phases.
    * </p>
    *
    * @param system the thermodynamic system with asphaltene already added and mixing rule set
    * @param defaultKij default kij value for asphaltene-light component pairs (typical: 0.05-0.12)
    */
   public void applyAsphalteneKij(SystemInterface system, double defaultKij) {
-    int nComp = system.getPhase(0).getNumberOfComponents();
-    int aspIndex = -1;
-
-    // Find asphaltene component index
-    for (int i = 0; i < nComp; i++) {
-      String name = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-      if (name.contains("asphaltene")) {
-        aspIndex = i;
-        break;
-      }
-    }
-
-    if (aspIndex < 0) {
+    List<Integer> asphaltenes = AsphalteneComponents.indices(system);
+    if (asphaltenes.isEmpty()) {
       logger.warn("Asphaltene component not found in system - cannot set kij");
       return;
     }
-
+    int nComp = system.getPhase(0).getNumberOfComponents();
     double totalKijAdj = defaultKij + kijAdjustment;
-
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      neqsim.thermo.phase.PhaseInterface phaseObj = system.getPhase(phase);
-      if (phaseObj instanceof neqsim.thermo.phase.PhaseEosInterface) {
-        neqsim.thermo.phase.PhaseEosInterface eosPhase = (neqsim.thermo.phase.PhaseEosInterface) phaseObj;
+    for (PhaseInterface phaseObj : AsphalteneComponents.allPhases(system)) {
+      if (!(phaseObj instanceof PhaseEosInterface) || ((PhaseEosInterface) phaseObj).getEosMixingRule() == null) {
+        continue;
+      }
+      PhaseEosInterface eosPhase = (PhaseEosInterface) phaseObj;
+      for (int aspIndex : asphaltenes) {
         for (int j = 0; j < nComp; j++) {
-          if (j != aspIndex) {
-            double mwJ = system.getPhase(0).getComponent(j).getMolarMass() * 1000.0;
-            // Scale kij: larger for light components, smaller for heavy
-            double kijVal = totalKijAdj;
-            if (mwJ < 50.0) {
-              kijVal = totalKijAdj * 1.5; // Methane-asphaltene
-            } else if (mwJ < 100.0) {
-              kijVal = totalKijAdj * 1.2; // Ethane/propane-asphaltene
-            } else if (mwJ > 200.0) {
-              kijVal = totalKijAdj * 0.5; // Heavy-asphaltene
-            }
-            eosPhase.getEosMixingRule().setBinaryInteractionParameter(aspIndex, j, kijVal);
-            eosPhase.getEosMixingRule().setBinaryInteractionParameter(j, aspIndex, kijVal);
+          if (asphaltenes.contains(j) || "water".equalsIgnoreCase(phaseObj.getComponent(j).getComponentName())) {
+            continue;
           }
+          double kijVal = totalKijAdj * kijScaleFactor(system.getPhase(0).getComponent(j).getMolarMass() * 1000.0);
+          eosPhase.getEosMixingRule().setBinaryInteractionParameter(aspIndex, j, kijVal);
+          eosPhase.getEosMixingRule().setBinaryInteractionParameter(j, aspIndex, kijVal);
         }
       }
     }
-    logger.info("Applied asphaltene kij={} (base) to {} components", totalKijAdj, nComp - 1);
+    logger.info("Applied asphaltene kij={} (base) to {} asphaltene component(s)", totalKijAdj, asphaltenes.size());
+  }
+
+  /**
+   * Smooth molar-mass scaling of the asphaltene kij used by {@link #applyAsphalteneKij}.
+   *
+   * @param molarMass molar mass of the other component in g/mol
+   * @return multiplier of the base kij (1.5 for methane, approaching 0.5 for heavy components)
+   */
+  public static double kijScaleFactor(double molarMass) {
+    return 0.5 + Math.exp(-(Math.max(molarMass, 16.0) - 16.0) / 165.0);
   }
 
   /**
    * Adds multiple asphaltene pseudo-components with distributed molecular weights.
    *
    * <p>
-   * For more accurate modeling, the asphaltene can be represented as multiple pseudo-components with a distribution of
-   * molecular weights. This follows the same principle as C7+ characterization. Each component uses its independently
-   * calculated asphaltene critical properties and boiling point.
+   * The molecular weight follows a gamma distribution (Whitson) with mean equal to {@link #getAsphalteneMW()}, minimum
+   * {@code 0.5 * mean} and shape {@link #getDistributionShape()} (default 2.5). The distribution is cut into
+   * {@code numberOfComponents} slices of equal mole fraction; each slice becomes one pseudo-component with the mean
+   * molecular weight of its slice. This keeps both the total moles and the total mass (mean molecular weight) of the
+   * asphaltene, which the earlier fixed-range exponential split did not. Each component is characterized
+   * independently and named "Asphaltene_1", "Asphaltene_2", ... (the fluid adds a "_PC" suffix).
    * </p>
    *
    * <p>
@@ -437,7 +448,7 @@ public class PedersenAsphalteneCharacterization {
    *
    * @param system the thermodynamic system
    * @param totalMoles total moles of asphaltene
-   * @param numberOfComponents number of pseudo-components (typically 2-5)
+   * @param numberOfComponents number of pseudo-components (1-10, typically 2-5)
    */
   public void addDistributedAsphaltene(SystemInterface system, double totalMoles, int numberOfComponents) {
     if (numberOfComponents < 1) {
@@ -446,51 +457,107 @@ public class PedersenAsphalteneCharacterization {
     if (numberOfComponents > 10) {
       numberOfComponents = 10;
     }
-
     this.numberOfAsphaltenePseudoComponents = numberOfComponents;
 
-    // Define MW range for asphaltene distribution
-    double minMW = asphalteneMW * 0.5; // Lower bound
-    double maxMW = asphalteneMW * 2.0; // Upper bound
+    double[][] split = gammaSplit(asphalteneMW, 0.5 * asphalteneMW, distributionShape, numberOfComponents);
+    double[] componentMW = split[0];
+    double[] moleFraction = split[1];
 
-    // Use exponential distribution similar to Pedersen plus fraction model
-    double beta = Math.log(0.1) / (maxMW - minMW); // Distribution parameter
-
-    double[] componentMW = new double[numberOfComponents];
-    double[] componentMoles = new double[numberOfComponents];
-    double totalZ = 0.0;
-
-    // Calculate MW and relative amounts for each pseudo-component
     for (int i = 0; i < numberOfComponents; i++) {
-      double fraction = (i + 0.5) / numberOfComponents;
-      componentMW[i] = minMW + fraction * (maxMW - minMW);
-      componentMoles[i] = Math.exp(beta * (componentMW[i] - minMW));
-      totalZ += componentMoles[i];
-    }
-
-    // Normalize and add components
-    for (int i = 0; i < numberOfComponents; i++) {
-      componentMoles[i] = totalMoles * componentMoles[i] / totalZ;
-
-      // Create characterization for this pseudo-component
       PedersenAsphalteneCharacterization compChar = new PedersenAsphalteneCharacterization();
       compChar.setAsphalteneMW(componentMW[i]);
       compChar.setAsphalteneDensity(asphalteneDensity + 0.05 * (componentMW[i] - asphalteneMW) / asphalteneMW);
+      compChar.setTuningParameters(tcMultiplier, pcMultiplier, omegaMultiplier);
+      compChar.setTbMultiplier(tbMultiplier);
       compChar.characterize();
 
-      // Add to system with unique name (will get _PC suffix from addTBPfraction)
-      String compName = "Asph_" + (i + 1);
-      system.addTBPfraction(compName, componentMoles[i], componentMW[i] / 1000.0, compChar.getAsphalteneDensity(),
-          compChar.getCriticalTemperature(), compChar.getCriticalPressure(), compChar.getAcentricFactor());
+      String compName = "Asphaltene_" + (i + 1);
+      system.addTBPfraction(compName, totalMoles * moleFraction[i], componentMW[i] / 1000.0,
+          compChar.getAsphalteneDensity(), compChar.getCriticalTemperature(), compChar.getCriticalPressure(),
+          compChar.getAcentricFactor());
 
-      // Preserve the boiling point used to characterize this component.
       int compIndex = system.getPhase(0).getNumberOfComponents() - 1;
-      for (int j = 0; j < system.getNumberOfPhases(); j++) {
-        system.getPhase(j).getComponent(compIndex).setNormalBoilingPoint(compChar.getBoilingPoint());
+      for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+        phase.getComponent(compIndex).setNormalBoilingPoint(compChar.getBoilingPoint());
       }
     }
 
     logger.info("Added {} asphaltene pseudo-components, total {} mol", numberOfComponents, totalMoles);
+  }
+
+  /**
+   * Splits a gamma molecular-weight distribution into slices of equal mole fraction.
+   *
+   * @param meanMW mean molecular weight (g/mol), must exceed minMW
+   * @param minMW minimum molecular weight (g/mol), the gamma location parameter
+   * @param shape gamma shape parameter (alpha &gt; 0)
+   * @param numberOfSlices number of slices (&gt;= 1)
+   * @return array {molecularWeights, moleFractions}, each of length numberOfSlices; mole fractions sum to 1 and
+   *         sum(moleFraction * MW) equals meanMW
+   */
+  public static double[][] gammaSplit(double meanMW, double minMW, double shape, int numberOfSlices) {
+    if (!(meanMW > minMW) || !(minMW >= 0.0) || !(shape > 0.0) || numberOfSlices < 1) {
+      throw new IllegalArgumentException("Gamma split needs meanMW > minMW >= 0, shape > 0 and at least one slice");
+    }
+    double beta = (meanMW - minMW) / shape;
+    int nGrid = 20000;
+    double upper = beta * (shape + 40.0 * Math.sqrt(shape) + 40.0);
+    double h = upper / nGrid;
+    double[] cumulative = new double[nGrid + 1];
+    double[] cumulativeMass = new double[nGrid + 1];
+    for (int k = 1; k <= nGrid; k++) {
+      double x = (k - 0.5) * h;
+      double density = Math.exp((shape - 1.0) * Math.log(x) - x / beta);
+      cumulative[k] = cumulative[k - 1] + density * h;
+      cumulativeMass[k] = cumulativeMass[k - 1] + density * h * (minMW + x);
+    }
+    double total = cumulative[nGrid];
+    double[] mw = new double[numberOfSlices];
+    double[] fraction = new double[numberOfSlices];
+    int start = 0;
+    for (int i = 0; i < numberOfSlices; i++) {
+      double target = total * (i + 1) / numberOfSlices;
+      int end = i == numberOfSlices - 1 ? nGrid : start;
+      while (end < nGrid && cumulative[end] < target) {
+        end++;
+      }
+      double moles = cumulative[end] - cumulative[start];
+      double mass = cumulativeMass[end] - cumulativeMass[start];
+      fraction[i] = moles / total;
+      mw[i] = moles > 0.0 ? mass / moles : minMW;
+      start = end;
+    }
+    // Remove the small quadrature error so the mean molecular weight is reproduced exactly.
+    double mean = 0.0;
+    for (int i = 0; i < numberOfSlices; i++) {
+      mean += fraction[i] * mw[i];
+    }
+    for (int i = 0; i < numberOfSlices; i++) {
+      mw[i] = minMW + (mw[i] - minMW) * (meanMW - minMW) / (mean - minMW);
+    }
+    return new double[][] {mw, fraction};
+  }
+
+  /**
+   * Gets the gamma shape parameter used by {@link #addDistributedAsphaltene}.
+   *
+   * @return gamma shape parameter
+   */
+  public double getDistributionShape() {
+    return distributionShape;
+  }
+
+  /**
+   * Sets the gamma shape parameter used by {@link #addDistributedAsphaltene} (default 2.5; 1 is exponential, larger
+   * values give a narrower distribution).
+   *
+   * @param shape gamma shape parameter, must be positive
+   */
+  public void setDistributionShape(double shape) {
+    if (!(shape > 0.0)) {
+      throw new IllegalArgumentException("Distribution shape must be positive");
+    }
+    this.distributionShape = shape;
   }
 
   /**

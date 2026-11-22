@@ -55,7 +55,7 @@ public class DeBoerScreeningDocumentationTest extends NeqSimTest {
     assertFalse(javaFences.find(), "Guide must contain exactly one Java fence");
     assertTrue(source.contains("LogManager.getLogger"));
     assertTrue(source.contains("assert risk == DeBoerRisk.MODERATE_PROBLEM;"));
-    assertTrue(source.contains("assert Math.abs(riskIndex - 1.6) < 1.0e-12;"));
+    assertTrue(source.contains("assert Math.abs(riskIndex - 200.0 / 120.0) < 1.0e-9;"));
     assertFalse(source.contains("System.out"));
     assertFalse(source.contains("System.err"));
 

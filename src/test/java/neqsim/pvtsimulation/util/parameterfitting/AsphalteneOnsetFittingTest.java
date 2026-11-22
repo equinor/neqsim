@@ -247,9 +247,9 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  @DisplayName("Unstable start pressure is an error, not an onset")
-  void testUnstableStartThrows() {
-    assertThrows(IllegalStateException.class, () -> onsetWithMethaneKij(cubicOil(), 0.0));
+  @DisplayName("Unstable start pressure gives a finite penalty (the start pressure), not NaN or an exception")
+  void testUnstableStartReturnsStartPressure() {
+    assertEquals(600.0, onsetWithMethaneKij(cubicOil(), 0.0), 0.0);
   }
 
   @Test
@@ -260,5 +260,49 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     function.setFittingParams(0, 3000.0);
     function.setFittingParams(1, 0.01);
     assertThrows(IllegalStateException.class, () -> function.calcValue(new double[] {363.15}));
+  }
+
+  private static double onsetWithMolarMass(SystemInterface fluid, double molarMass) {
+    AsphalteneOnsetFunction function = new AsphalteneOnsetFunction();
+    function.setThermodynamicSystem(fluid);
+    function.setParameterType(AsphalteneOnsetFunction.FittingParameterType.MOLAR_MASS);
+    function.setPressureRange(600.0, 10.0, 10.0);
+    function.setFittingParams(0, molarMass);
+    return function.calcValue(new double[] {363.15});
+  }
+
+  @Test
+  @DisplayName("MOLAR_MASS conserves asphaltene mass and changes the onset on a cubic fluid")
+  void testMolarMassIsIdentifiable() {
+    SystemInterface fluid = cubicOil();
+    onsetWithMethaneKij(fluid, -0.06); // moves the onset inside the search range
+    int a = fluid.getPhase(0).getComponent("asphaltene").getComponentNumber();
+    double mass = fluid.getPhase(0).getComponent(a).getNumberOfmoles() * fluid.getPhase(0).getComponent(a).getMolarMass();
+    double light = onsetWithMolarMass(fluid, 600.0);
+    assertEquals(mass,
+        fluid.getPhase(0).getComponent(a).getNumberOfmoles() * fluid.getPhase(0).getComponent(a).getMolarMass(), 1e-12);
+    SystemInterface heavyFluid = cubicOil();
+    onsetWithMethaneKij(heavyFluid, -0.06);
+    double heavy = onsetWithMolarMass(heavyFluid, 2000.0);
+    assertTrue(Double.isFinite(light) && Double.isFinite(heavy));
+    assertTrue(Math.abs(light - heavy) > 1.0, "The onset must depend on the molar mass: " + light + " vs " + heavy);
+  }
+
+  @Test
+  @DisplayName("MOLAR_MASS is rejected for CPA asphaltene")
+  void testMolarMassRejectedForCpa() {
+    SystemInterface cpa = new SystemSrkCPAstatoil(363.15, 400.0);
+    cpa.addComponent("methane", 0.4);
+    cpa.addComponent("n-heptane", 0.55);
+    cpa.addComponent("asphaltene", 0.01);
+    cpa.setMixingRule(10);
+    assertThrows(IllegalStateException.class, () -> onsetWithMolarMass(cpa, 1000.0));
+  }
+
+  @Test
+  @DisplayName("No onset in range returns the minimum pressure, never NaN")
+  void testNoOnsetReturnsMinimumPressure() {
+    double onset = onsetWithMethaneKij(cubicOil(), -0.30);
+    assertTrue(Double.isFinite(onset));
   }
 }

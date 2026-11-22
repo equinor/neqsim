@@ -369,8 +369,9 @@ public class AsphalteneMultiMethodBenchmark {
         fhModel.setAsphalteneWeightFraction(asphaltenesFraction);
       }
 
-      // Calibrate the delta_L correlation to the actual system density
+      // Heuristic prior for the delta_L correlation (no measured data is used, so this stays a prediction)
       fhModel.calibrateCorrelation(reservoirTemperature);
+      result.details.put("calibration", "heuristic prior (0.35 MPa^0.5 stability margin, no measured data)");
 
       double onsetP = fhModel.calculateOnsetPressure(reservoirTemperature);
       result.onsetPressure = onsetP;
@@ -429,7 +430,9 @@ public class AsphalteneMultiMethodBenchmark {
         analyzer.setSARAFractions(saturates, aromatics, resins, asphaltenesFraction);
       }
 
-      double solidOnsetP = analyzer.calculateOnsetPressure(reservoirTemperature);
+      double solidOnsetP = reservoirPressure > 0.0
+          ? analyzer.calculateOnsetPressure(reservoirTemperature, reservoirPressure)
+          : analyzer.calculateOnsetPressure(reservoirTemperature);
 
       double bubbleP = analyzer.calculateBubblePointPressure();
       result.bubblePointPressure = bubbleP;

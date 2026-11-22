@@ -2044,6 +2044,17 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void setAssociationSites(int numberOfSites, String scheme) {
+    if (numberOfSites < 0) {
+      throw new IllegalArgumentException("Number of association sites must not be negative");
+    }
+    this.numberOfAssociationSites = numberOfSites;
+    this.orginalNumberOfAssociationSites = numberOfSites;
+    this.associationScheme = scheme;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void seta(double a) {
     logger.error("no method set a");
   }

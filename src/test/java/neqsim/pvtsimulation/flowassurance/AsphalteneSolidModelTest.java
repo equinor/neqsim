@@ -172,4 +172,10 @@ public class AsphalteneSolidModelTest {
     assertEquals(0.0964, model.getInteractionParameter("methane"), 0.001);
     assertEquals(0.0247, model.getInteractionParameter("n-hexane"), 0.001);
   }
+
+  @Test
+  void fitKijExponentRejectsTheCalibrationFluidAtTheCalibrationTemperature() {
+    AsphalteneSolidModel model = calibratedHost();
+    assertThrows(IllegalArgumentException.class, () -> model.fitKijExponent(fluid(0.0), T, 250.0, 600.0, 20.0));
+  }
 }

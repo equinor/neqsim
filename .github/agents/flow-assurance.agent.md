@@ -108,9 +108,10 @@ Use `WaxCharacterise` from `neqsim.thermo.characterization`:
 
 ## Asphaltene Screening
 ```java
-// de Boer screening
-DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(fluid);
-// AsphalteneStabilityAnalyzer for detailed analysis
+// de Boer screening (reservoir P, saturation P [bara], in-situ density [kg/m3]); boundaries are ordered
+DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(350.0, 150.0, 750.0);
+// AsphalteneStabilityAnalyzer for detailed analysis: start the onset search at reservoir pressure
+double onset = new AsphalteneStabilityAnalyzer(fluid).calculateOnsetPressure(373.15, 350.0);
 
 // With a measured onset: calibrated solid model for the onset envelope, blends and gas injection
 AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil);
@@ -119,7 +120,9 @@ double blendOnset = model.onsetPressures(blend, 363.15, 600.0, 20.0, 5.0).getUpp
 ```
 For commingling or gas injection, calibrate `AsphalteneSolidModel` on the host and evaluate each blend; do
 not tune interaction parameters against the database solid reference (wrong blend trend). See the
-`neqsim-flow-assurance` skill, section 3.
+`neqsim-flow-assurance` skill, section 3. Flory-Huggins onsets from before 2026-11-22 came from a
+non-converging solver; recompute them, and prefer `calibrateToOnsetPressure` over the heuristic
+`calibrateCorrelation` when an onset is measured.
 
 ## Pipeline Hydraulics
 ```java

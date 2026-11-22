@@ -811,4 +811,17 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     }
   }
 
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Not supported for this CPA variant: its site-fraction arrays are sized at construction.
+   * </p>
+   */
+  @Override
+  public void setAssociationSites(int numberOfSites, String scheme) {
+    throw new UnsupportedOperationException(
+        getClass().getSimpleName() + " does not support changing the number of association sites; use SRK-CPA");
+  }
 }
