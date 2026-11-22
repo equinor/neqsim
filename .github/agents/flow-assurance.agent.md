@@ -143,6 +143,12 @@ For transient pressure peaks against line ratings (shut-in, HIPPS, blocked outle
 report the substep envelope from `TwoFluidPipe.getLastIntervalPeakPressureProfile`
 with the pipe CFL at 0.25, and include one CFL and two mesh refinements. End-of-step
 profile samples can miss riser-base excursions (see `neqsim-dynamic-simulation`).
+Keep `setFrozenCompositionDensityUpdate(true)` (default) for these runs unless mass
+transfer or component transport is enabled, and state which was used.
+
+Screen a gas-oil-water flowline-riser for severe slugging with
+`evaluateSevereSluggingSystem(riserBase, 0.89, 0.0, true)` at the turndown rates and
+report `isLiquidMixtureBasis()`; the default call rejects three-phase systems.
 
 Before routing a mechanistic steady or transient study, read
 `docs/process/twofluidpipe-evidence-matrix.md`. Distinguish implemented,

@@ -16,7 +16,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * {@code run()} collapsed the pressure in the first step; the liquid film coefficient threw "Heat capacity, viscosity,
  * and thermal conductivity must be positive" because transport properties were never refreshed during the transient;
  * and an initial liquid level scaled each liquid phase to the full liquid volume, doubling the liquid inventory of a
- * gas/oil/water feed.
+ * gas/oil/water feed. A further test covers vapour-only venting: with a liquid level the orifice previously used
+ * mixture properties and removed every phase in proportion, about three times the real vapour rate, and the vent
+ * temperature came from a molar instead of a total enthalpy.
  * </p>
  *
  * @author Even Solbraa
@@ -96,5 +98,28 @@ public class VesselDepressurizationMultiLiquidTest {
     }
     double level = v.getLiquidLevel();
     assertTrue(level > 0.3 && level < 0.6, "liquid level fraction " + level);
+  }
+
+  /** A blowdown with a liquid level vents gas only: gas-phase orifice rate, no liquid drained, vent colder. */
+  @Test
+  void vapourOnlyDischargeWithLiquidLevel() {
+    Stream feed = feed(25.0);
+    VesselDepressurization v = vessel(feed, 0.45);
+    v.setHeatTransferType(VesselDepressurization.HeatTransferType.ADIABATIC);
+    assertTrue(v.isVapourOnlyDischarge());
+    VesselDepressurization.SimulationResult r = v.runSimulation(60.0, 5.0);
+    List<Double> level = r.getLiquidLevel();
+    double drop = level.get(0) - level.get(level.size() - 1);
+    assertTrue(drop < 0.02, "liquid must not drain through the blowdown valve, level drop " + drop);
+    double ventT = v.getVentTemperature();
+    assertTrue(ventT < r.getFinalTemperature(), "vent " + ventT + " K must be below vessel " + r.getFinalTemperature());
+
+    VesselDepressurization bulk = vessel(feed(25.0), 0.45);
+    bulk.setHeatTransferType(VesselDepressurization.HeatTransferType.ADIABATIC);
+    bulk.setVapourOnlyDischarge(false);
+    VesselDepressurization.SimulationResult rb = bulk.runSimulation(10.0, 5.0);
+    double gasRate = r.getMassFlowRate().get(1);
+    double bulkRate = rb.getMassFlowRate().get(1);
+    assertTrue(bulkRate > 2.0 * gasRate, "bulk mixture rate " + bulkRate + " vs gas-only rate " + gasRate);
   }
 }

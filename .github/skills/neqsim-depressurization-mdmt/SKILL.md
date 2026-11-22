@@ -455,6 +455,10 @@ charging overpressure with relief-demand flag).
   positive". With SRK-CPA and three phases each VU step is still slow (about 10 s per step on a
   2-core runner, measured 2026-11-21); use SRK for screening sweeps or `NonEquilibriumBlowdownModel`
   for the gas/liquid temperature split.
+- **`VesselDepressurization` vents vapour only when liquid is present** (since 2026-11-21,
+  `setVapourOnlyDischarge`, default true). Earlier versions used mixture Z/MW/gamma at the orifice and
+  removed all phases in proportion: about 3x the vapour rate, liquid drained through the BDV, and a vent
+  temperature from a molar enthalpy (30 K too warm). Re-run older two-phase blowdown results.
 - **Equilibrium blowdown with liquid present under-predicts gas cooling** — a single-temperature VU
   model pins the gas to the liquid temperature. For MDMT also run a dry-vessel (gas-only) case from
   the PSV set pressure or use `NonEquilibriumBlowdownModel`; in a 105 m³ separator study the
