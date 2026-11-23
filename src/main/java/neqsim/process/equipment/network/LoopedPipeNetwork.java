@@ -2727,22 +2727,23 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    *
    * <p>
    * The composition is used; pressure, temperature and rate are set from the tubing state and the element gas-lift
-   * rate. If not set, the gas phase of the network fluid at the injection conditions is used.
+   * rate. If not set, the gas phase of the network fluid at the injection conditions is used. The fluid is copied, so
+   * later changes to the passed object do not affect the network.
    * </p>
    *
    * @param liftGas lift-gas fluid with a mixing rule, or null to use the produced gas
    */
   public void setLiftGasFluid(SystemInterface liftGas) {
-    this.liftGasFluid = liftGas;
+    this.liftGasFluid = liftGas == null ? null : liftGas.clone();
   }
 
   /**
    * Get the lift-gas fluid used by rigorous gas-lifted tubing elements.
    *
-   * @return lift-gas fluid, or null when the produced gas phase is used
+   * @return copy of the lift-gas fluid, or null when the produced gas phase is used
    */
   public SystemInterface getLiftGasFluid() {
-    return liftGasFluid;
+    return liftGasFluid == null ? null : liftGasFluid.clone();
   }
 
   /**
@@ -4778,7 +4779,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       baseHeadLoss = calculateHeadLossChoke(pipe, fluid);
       break;
     case TUBING:
-      baseHeadLoss = calculateHeadLossTubing(pipe, fluid);
+      baseHeadLoss = calculateHeadLossTubingElement(pipe, fluid);
       break;
     case MULTIPHASE_PIPE:
       baseHeadLoss = calculatePipeHydraulicHeadLoss(pipe, fluid);
@@ -5340,15 +5341,15 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param fluid fluid properties
    * @return head loss in Pa (positive = pressure drop bottom-to-top)
    */
-  private double calculateHeadLossTubing(NetworkPipe pipe, SystemInterface fluid) {
+  private double calculateHeadLossTubingElement(NetworkPipe pipe, SystemInterface fluid) {
     TubingModel model = pipe.getTubingModel();
     if (model == TubingModel.SIMPLIFIED) {
       pipe.tubingModelStatus = "TUBING_SIMPLIFIED";
-      return calculateHeadLossTubingSimplified(pipe, fluid);
+      return calculateHeadLossTubing(pipe, fluid);
     }
     if (pipe.getFlowRate() < -1.0e-10) {
       pipe.tubingModelStatus = "TUBING_" + model.name() + "_REVERSE_FLOW_SIMPLIFIED";
-      return calculateHeadLossTubingSimplified(pipe, fluid);
+      return calculateHeadLossTubing(pipe, fluid);
     }
     if (model == TubingModel.VFP_TABLE) {
       return calculateHeadLossTubingVfp(pipe, fluid);
@@ -5365,10 +5366,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param pipe the tubing element
-   * @param fluid fluid properties
+   * @param fluid fluid properties, initialised by the caller
    * @return head loss in Pa (positive = pressure drop bottom-to-top)
    */
-  private double calculateHeadLossTubingSimplified(NetworkPipe pipe, SystemInterface fluid) {
+  private double calculateHeadLossTubing(NetworkPipe pipe, SystemInterface fluid) {
     double flowKgs = Math.abs(pipe.getFlowRate());
     double density = fluid.getDensity("kg/m3");
     double viscosity = fluid.getViscosity("kg/msec");
@@ -5428,7 +5429,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double flowKgs = Math.abs(pipe.getFlowRate());
     if (flowKgs < 1.0e-10) {
       pipe.tubingModelStatus = "TUBING_" + model.name() + "_ZERO_FLOW_STATIC";
-      return calculateHeadLossTubingSimplified(pipe, fluid);
+      return calculateHeadLossTubing(pipe, fluid);
     }
     try {
       NetworkNode bottom = nodes.get(pipe.getFromNode());
@@ -5472,7 +5473,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       logger.warn("Tubing correlation {} failed for {}, falling back to simplified model: {}", model, pipe.getName(),
           ex.getMessage());
       pipe.tubingModelStatus = "TUBING_" + model.name() + "_FALLBACK_SIMPLIFIED";
-      return calculateHeadLossTubingSimplified(pipe, fluid);
+      return calculateHeadLossTubing(pipe, fluid);
     }
   }
 
