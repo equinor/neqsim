@@ -87,9 +87,8 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
 
   /**
    * Sets explicit cross-association energy and volume between two components. Non-zero values switch the pair to the
-   * explicit-parameter branch (scheme type 1); zero for both restores the default Elliott combining rule
-   * sqrt(Delta_ii * Delta_jj). The arrays are rebuilt each time the mixing rule is set, so call this after
-   * {@code setMixingRule}.
+   * explicit-parameter branch (scheme type 1); zero for both restores the default Elliott combining rule sqrt(Delta_ii
+   * * Delta_jj). The arrays are rebuilt each time the mixing rule is set, so call this after {@code setMixingRule}.
    *
    * @param compnumb1 first component index
    * @param compnumb2 second component index

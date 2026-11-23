@@ -277,7 +277,8 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     SystemInterface fluid = cubicOil();
     onsetWithMethaneKij(fluid, -0.06); // moves the onset inside the search range
     int a = fluid.getPhase(0).getComponent("asphaltene").getComponentNumber();
-    double mass = fluid.getPhase(0).getComponent(a).getNumberOfmoles() * fluid.getPhase(0).getComponent(a).getMolarMass();
+    double mass = fluid.getPhase(0).getComponent(a).getNumberOfmoles()
+        * fluid.getPhase(0).getComponent(a).getMolarMass();
     double light = onsetWithMolarMass(fluid, 600.0);
     assertEquals(mass,
         fluid.getPhase(0).getComponent(a).getNumberOfmoles() * fluid.getPhase(0).getComponent(a).getMolarMass(), 1e-12);

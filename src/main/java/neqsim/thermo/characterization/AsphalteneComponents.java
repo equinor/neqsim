@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemInterface;
  * Shared helpers for recognising asphaltene pseudo-components and asphaltene-rich phases.
  *
  * <p>
- * All asphaltene code in NeqSim (onset flashes, Pedersen and SARA characterization, the solid model, parameter
- * fitting and the phase-type checks) uses these helpers so that a component or phase that one class treats as
- * asphaltene is treated the same way everywhere.
+ * All asphaltene code in NeqSim (onset flashes, Pedersen and SARA characterization, the solid model, parameter fitting
+ * and the phase-type checks) uses these helpers so that a component or phase that one class treats as asphaltene is
+ * treated the same way everywhere.
  * </p>
  *
  * <p>
@@ -21,8 +21,8 @@ import neqsim.thermo.system.SystemInterface;
  * {@code "asph_"} (the prefix used by older versions of
  * {@link PedersenAsphalteneCharacterization#addDistributedAsphaltene}). A phase is asphaltene-rich when asphaltene
  * components make up more than half of its <b>mass</b>. A mole-fraction test is not used because asphaltene
- * pseudo-components are 5-20 times heavier than the average oil molecule: a dense asphaltene-rich liquid can be
- * mostly asphaltene by mass but well under half by moles.
+ * pseudo-components are 5-20 times heavier than the average oil molecule: a dense asphaltene-rich liquid can be mostly
+ * asphaltene by mass but well under half by moles.
  * </p>
  *
  * @author esol
@@ -32,7 +32,8 @@ public final class AsphalteneComponents {
   /** Mass-fraction limit above which a phase counts as asphaltene-rich. */
   public static final double ASPHALTENE_RICH_MASS_FRACTION = 0.5;
 
-  private AsphalteneComponents() {}
+  private AsphalteneComponents() {
+  }
 
   /**
    * Tests whether a component name denotes an asphaltene pseudo-component.
@@ -90,8 +91,8 @@ public final class AsphalteneComponents {
    * Returns every allocated phase object of a fluid, including phases that are not present after the latest flash.
    *
    * <p>
-   * Component parameters (molar mass, association energy, interaction parameters) must be set on all of these, not
-   * only on the first {@code getNumberOfPhases()} phases, otherwise a later flash that creates a new phase uses stale
+   * Component parameters (molar mass, association energy, interaction parameters) must be set on all of these, not only
+   * on the first {@code getNumberOfPhases()} phases, otherwise a later flash that creates a new phase uses stale
    * database values.
    * </p>
    *
