@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-22"
+last_verified: "2026-11-23"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -389,6 +389,66 @@ Gotchas:
   `IllegalStateException` when the fluid is already unstable at the start pressure (they used to return the
   start pressure or NaN). `BINARY_INTERACTION` fitting now applies the fitted value (before 2026-11-22 it
   had no effect); `ASSOCIATION_PARAMETERS`/`COMBINED` need a CPA system.
+
+### Regular-solution model regressed to onset data (`FloryHugginsAsphalteneModel`)
+
+Needs no asphaltene component in the fluid: oil density from any EOS gives the oil solubility parameter
+(`delta_L = 0.017347 rho + 2.904`), and the asphaltene solubility parameter is the fitted quantity.
+
+```java
+FloryHugginsAsphalteneModel fh = new FloryHugginsAsphalteneModel(liveOil, 373.15);
+fh.setAsphalteneWeightFraction(0.03);                       // n-C7 asphaltenes, weight fraction
+double deltaA = fh.calibrateToOnsetPressure(373.15, 300.0); // one measured AOP (K, bara), reproduced exactly
+// or several temperatures: fits delta_a(Tref) and d(delta_a)/dT
+FloryHugginsAsphalteneModel.OnsetFitResult fit = fh.fitToOnsetData(new double[] {333.15, 353.15, 373.15},
+    new double[] {340.0, 318.0, 300.0});
+double upper = fh.calculateOnsetPressure(373.15, 500.0, 1.0);       // (T, start P, min P)
+double lower = fh.calculateLowerOnsetPressure(373.15, 500.0, 1.0);  // NaN if it does not redissolve
+```
+
+- Without onset data (`configureFromAPIGravity` + `configureFromSARA` + `calibrateCorrelation`) the result is a
+  screening estimate: `calibrateCorrelation` assumes a stability margin at reservoir conditions, it is not a fit.
+  Do not combine it with `calibrateToOnsetPressure`/`fitToOnsetData`.
+- The fitted `delta_a` is tied to the EOS density; recalibrate after retuning the fluid.
+- Choosing between calibrated models: `AsphalteneSolidModel` when the fluid has an asphaltene component and
+  blends/gas injection matter (k_ij carries the composition effect); `FloryHugginsAsphalteneModel` when only a
+  characterized oil without asphaltene component and AOP data at one or more temperatures exist;
+  `AsphalteneOnsetFitting` for CPA association parameters. No head-to-head accuracy comparison on measured
+  data has been made (2026-11-23); the Flory-Huggins regression is verified on synthetic onsets only.
+
+## 3b. Naphthenates and Organic Acid Soaps
+
+`NaphthenatePrecipitationModel` (`neqsim.pvtsimulation.flowassurance`): equilibrium of monoprotic naphthenic
+acids (TAN) and ARN tetraacids with calcium in produced water. pH is given (`setWaterPH`) or calculated from
+CO2 partial pressure and bicarbonate (`setCO2PartialPressure`), which captures the pH rise on depressurisation.
+
+```java
+NaphthenatePrecipitationModel m = new NaphthenatePrecipitationModel();
+m.setWaterCut(0.5);
+m.setOilDensity(850.0);                         // kg/m3
+m.setTotalAcidNumber(1.0);                      // mg KOH/g
+m.setAcidMolarMass(300.0);                      // g/mol
+m.setArnConcentration(10.0);                    // mg/kg oil
+m.setWaterComposition(1000.0, 10000.0, 500.0);  // Ca, Na, HCO3- mg/L
+m.setTemperature(333.15);
+m.setCO2PartialPressure(0.2);                   // bara, e.g. yCO2 * P of the separator gas
+m.run();
+m.getWaterPH(); m.getRisk();                    // NO_RISK, LOW_RISK, SOAP_RISK, ARN_DEPOSIT_RISK
+m.getPrecipitatedArnNaphthenate();              // kg/m3 oil
+m.getPrecipitatedCalciumSoap();                 // kg/m3 oil
+m.calculateArnOnsetPH(); m.calculateCalciumSoapOnsetPH();
+```
+
+- Defaults for log P, pKsp (soap) and pK (ARN) are engineering defaults anchored to typical onset pH, not
+  published constants. Uncalibrated results are for ranking and sensitivity; `isCalibrated()` is false and
+  the output carries a warning. State this in any report.
+- Calibrate with `NaphthenateModelFitting`: `addObservation(scenario, ObservationType, measured, stdDev)`,
+  `addFitParameter(Parameter)`, `solve()`, `applyTo(model)`. Observation types: `AQUEOUS_ORGANIC_ACID` (mg/L),
+  `PRECIPITATED_CALCIUM_SOAP` (kg/m3 oil), `PRECIPITATED_ARN_FRACTION`, `ARN_ONSET_PH`,
+  `CALCIUM_SOAP_ONSET_PH`, `WATER_PH`. pKa and log P are not separately identifiable from partition data:
+  fit one. `getStandardError` returns NaN for a parameter the data do not determine.
+- Equilibrium potential only (no kinetics or deposition rate); only calcium forms solids.
+- Guide: `docs/pvtsimulation/flowassurance/naphthenate_precipitation.md`.
 
 ## 4. Pipeline Hydraulics
 
@@ -1725,6 +1785,7 @@ model is enough and is cheap enough for Monte Carlo.
 | Hydrate | `hydrateFormationTemperature()` | CPA EOS + hydrate check | MEG, methanol, insulation, DEH |
 | Wax | `calcWAT()`, `WaxFractionSim` | Wax characterization | Pigging, inhibitor, insulation |
 | Asphaltene | de Boer screening | `AsphalteneSolidModel` calibrated to a measured onset; CPA flash at multiple P | Inhibitor, avoid P drop |
+| Naphthenate / soap | `NaphthenatePrecipitationModel` with default parameters (onset pH, risk class) | Same model with parameters regressed by `NaphthenateModelFitting` to bottle tests | Keep pH low (acid, CO2 back-pressure), naphthenate inhibitor |
 | Corrosion (CO2) | CO2 partial pressure | Standard flash | CRA, inhibitor, pH stabilization |
 | Slugging | Beggs & Brill flow regime | `PipeBeggsAndBrills` | Slug catcher, topside choking |
 | Scale | Ion activity product | Electrolyte-CPA | Scale inhibitor, pH control |

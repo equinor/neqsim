@@ -202,7 +202,7 @@ Just Above (ΔP = 10 bar):
 
 ### Physics-Based Calibration Results
 
-The `FloryHugginsAsphalteneModel` with `calibrateCorrelation()` was validated against 7 published onset pressure cases. The calibration uses the critical Flory-Huggins interaction parameter $\chi_c$ to set the solubility parameter correlation coefficient $A$ from first principles.
+The `FloryHugginsAsphalteneModel` with `calibrateCorrelation()` was validated against 7 published onset pressure cases. The calibration uses the critical Flory-Huggins interaction parameter $\chi_c$ and an assumed stability margin of 0.35 MPa$^{0.5}$ at reservoir conditions to set the solubility parameter correlation coefficient $A$; it does not use the measured onsets. When an onset measurement exists, use `calibrateToOnsetPressure` or `fitToOnsetData` instead (see [asphaltene modeling](asphaltene_modeling)), which reproduce the measurement by construction.
 
 ### Literature Comparison (7 Cases)
 

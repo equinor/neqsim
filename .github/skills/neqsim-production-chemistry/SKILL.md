@@ -1,7 +1,7 @@
 ---
 name: neqsim-production-chemistry
 description: "NeqSim workflows for selecting and dosing scale, corrosion, hydrate, wax and asphaltene inhibitors, scavengers, biocides, demulsifiers, antifoam and pH adjusters. Use for chemical cocktail compatibility, dose and performance, produced-water and formation-water blending, silica and silicate scaling, or chemical root-cause analysis."
-last_verified: "2026-09-07"
+last_verified: "2026-11-23"
 ---
 
 # Production Chemistry with NeqSim
@@ -254,6 +254,11 @@ double required = khi.getRequiredDoseWtPct();
 Calibrate with `setCoefficients(a, b, c)` against vendor rocking-cell data before quoting.
 
 ### 3.6 Wax and asphaltene inhibitors
+
+The threat itself (asphaltene onset pressure, naphthenate/soap onset pH and amounts) comes from
+`FloryHugginsAsphalteneModel`/`AsphalteneSolidModel` and `NaphthenatePrecipitationModel` in
+`neqsim.pvtsimulation.flowassurance`; see `neqsim-flow-assurance` sections 3 and 3b. Feed the onset
+pressure from a model calibrated to measured onsets into `setBaseAsphalteneOnsetPressureBara`.
 
 ```java
 import neqsim.process.chemistry.wax.WaxInhibitorPerformance;
