@@ -2726,8 +2726,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Set the lift-gas fluid mixed into rigorous gas-lifted tubing elements.
    *
    * <p>
-   * The composition is used; pressure, temperature and rate are set from the tubing state and the element gas-lift
-   * rate. If not set, the gas phase of the network fluid at the injection conditions is used.
+   * A clone is stored so later changes to the supplied fluid do not modify this network. The composition is used;
+   * pressure, temperature and rate are set from the tubing state and the element gas-lift rate. If not set, the gas
+   * phase of the network fluid at the injection conditions is used.
    * </p>
    *
    * @param liftGas lift-gas fluid with a mixing rule, or null to use the produced gas
@@ -2737,9 +2738,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the lift-gas fluid used by rigorous gas-lifted tubing elements.
+   * Get a copy of the lift-gas fluid used by rigorous gas-lifted tubing elements.
    *
-   * @return lift-gas fluid, or null when the produced gas phase is used
+   * <p>
+   * The returned fluid can be modified without changing this network's configured lift-gas fluid.
+   * </p>
+   *
+   * @return an independently mutable copy of the lift-gas fluid, or null when the produced gas phase is used
    */
   public SystemInterface getLiftGasFluid() {
     return liftGasFluid == null ? null : liftGasFluid.clone();
