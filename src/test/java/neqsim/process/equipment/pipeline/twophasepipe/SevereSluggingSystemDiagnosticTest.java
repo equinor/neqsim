@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic.Input;
 import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic.Result;
 import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic.Status;
+import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic.ThreePhaseBound;
 
 class SevereSluggingSystemDiagnosticTest {
   private static Input.Builder baseInput() {
@@ -175,6 +176,98 @@ class SevereSluggingSystemDiagnosticTest {
     }
     assertEquals(first.getStatus(), restored.getStatus());
     assertEquals(first.getCriticalTopPressurePa(), restored.getCriticalTopPressurePa(), 0.0);
+  }
+
+  @Test
+  void threePhaseBoundsBracketTheTwoPhaseCriterion() {
+    Input.Builder threePhase = baseInput().threePhase(true).oilDensityKgPerM3(800.0).waterDensityKgPerM3(1000.0);
+    Result result = SevereSluggingSystemDiagnostic.evaluate(threePhase.separatorPressurePa(1_200_000.0).build());
+
+    double oilOnly = SevereSluggingSystemDiagnostic
+        .evaluate(baseInput().liquidDensityKgPerM3(800.0).separatorPressurePa(1_200_000.0).build())
+        .getCriticalTopPressurePa();
+    double waterOnly = SevereSluggingSystemDiagnostic
+        .evaluate(baseInput().liquidDensityKgPerM3(1000.0).separatorPressurePa(1_200_000.0).build())
+        .getCriticalTopPressurePa();
+
+    assertEquals(Status.NOT_VALIDATED_THREE_PHASE, result.getStatus());
+    assertFalse(result.isApplicable());
+    assertFalse(result.isSevereSluggingPossible());
+    assertEquals(oilOnly, result.getCriticalTopPressureLowerBoundPa(), 1.0e-9);
+    assertEquals(waterOnly, result.getCriticalTopPressureUpperBoundPa(), 1.0e-9);
+    assertEquals(1_200_000.0, result.getEffectiveTopPressurePa(), 0.0);
+    assertEquals(ThreePhaseBound.INCONCLUSIVE, result.getThreePhaseBound());
+    assertTrue(Double.isNaN(result.getCriticalTopPressurePa()));
+  }
+
+  @Test
+  void threePhaseBoundsAgreeAwayFromTheBracket() {
+    Input.Builder threePhase = baseInput().threePhase(true).oilDensityKgPerM3(800.0).waterDensityKgPerM3(1000.0);
+
+    Result low = SevereSluggingSystemDiagnostic.evaluate(threePhase.separatorPressurePa(500_000.0).build());
+    Result high = SevereSluggingSystemDiagnostic.evaluate(threePhase.separatorPressurePa(1_500_000.0).build());
+    Result choked = SevereSluggingSystemDiagnostic
+        .evaluate(threePhase.separatorPressurePa(500_000.0).staticChokePressureDropPa(1_000_000.0).build());
+    // Order of the two densities must not matter
+    Result swapped = SevereSluggingSystemDiagnostic.evaluate(baseInput().threePhase(true).oilDensityKgPerM3(1000.0)
+        .waterDensityKgPerM3(800.0).separatorPressurePa(500_000.0).build());
+
+    assertEquals(ThreePhaseBound.UNSTABLE_FOR_BOTH_BOUNDS, low.getThreePhaseBound());
+    assertEquals(ThreePhaseBound.STABLE_FOR_BOTH_BOUNDS, high.getThreePhaseBound());
+    assertEquals(ThreePhaseBound.STABLE_FOR_BOTH_BOUNDS, choked.getThreePhaseBound());
+    assertEquals(low.getCriticalTopPressureLowerBoundPa(), swapped.getCriticalTopPressureLowerBoundPa(), 0.0);
+    assertEquals(low.getCriticalTopPressureUpperBoundPa(), swapped.getCriticalTopPressureUpperBoundPa(), 0.0);
+    assertEquals(Status.NOT_VALIDATED_THREE_PHASE, low.getStatus());
+    assertEquals(Status.NOT_VALIDATED_THREE_PHASE, high.getStatus());
+  }
+
+  @Test
+  void threePhaseBoundsNeedDensitiesAndTwoPhaseValidityGates() {
+    Result noDensities = SevereSluggingSystemDiagnostic.evaluate(baseInput().threePhase(true).build());
+    Result oneDensity = SevereSluggingSystemDiagnostic
+        .evaluate(baseInput().threePhase(true).oilDensityKgPerM3(800.0).build());
+    Result nonStratified = SevereSluggingSystemDiagnostic.evaluate(baseInput().threePhase(true).oilDensityKgPerM3(800.0)
+        .waterDensityKgPerM3(1000.0).flowlineStratified(false).build());
+    Result twoPhase = SevereSluggingSystemDiagnostic.evaluate(baseInput().build());
+
+    assertEquals(ThreePhaseBound.NOT_AVAILABLE, noDensities.getThreePhaseBound());
+    assertEquals(ThreePhaseBound.NOT_AVAILABLE, oneDensity.getThreePhaseBound());
+    assertEquals(ThreePhaseBound.NOT_AVAILABLE, nonStratified.getThreePhaseBound());
+    assertEquals(Status.NOT_VALIDATED_THREE_PHASE, nonStratified.getStatus());
+    assertTrue(Double.isNaN(noDensities.getCriticalTopPressureUpperBoundPa()));
+    assertEquals(ThreePhaseBound.NOT_AVAILABLE, twoPhase.getThreePhaseBound());
+    assertThrows(IllegalArgumentException.class, () -> baseInput().oilDensityKgPerM3(-800.0).build());
+  }
+
+  @Test
+  void extractsOilAndWaterDensitiesForThreePhaseRiser() {
+    TwoFluidSection[] sections = new TwoFluidSection[] {
+        section(100.0, 0.20, Math.toRadians(-2.0), 0.60, 0.40, PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
+        section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0)};
+    for (TwoFluidSection section : sections) {
+      section.setOilHoldup(0.75 * section.getLiquidHoldup());
+      section.setWaterHoldup(0.25 * section.getLiquidHoldup());
+      section.setOilDensity(780.0);
+      section.setWaterDensity(1020.0);
+    }
+
+    Input input = SevereSluggingSystemDiagnostic.fromSections(sections, 1, 0.89, 0.0);
+    Result result = SevereSluggingSystemDiagnostic.evaluate(input);
+
+    assertTrue(input.isThreePhase());
+    assertTrue(input.hasThreePhaseDensities());
+    assertEquals(780.0, input.getOilDensityKgPerM3(), 1.0e-9);
+    assertEquals(1020.0, input.getWaterDensityKgPerM3(), 1.0e-9);
+    assertEquals(Status.NOT_VALIDATED_THREE_PHASE, result.getStatus());
+    assertTrue(result.getCriticalTopPressureUpperBoundPa() > result.getCriticalTopPressureLowerBoundPa());
+    assertFalse(result.getThreePhaseBound() == ThreePhaseBound.NOT_AVAILABLE);
+
+    // The two-phase extraction test case has no oil-water split and therefore no bounds
+    assertFalse(SevereSluggingSystemDiagnostic.fromSections(
+        new TwoFluidSection[] {
+            section(100.0, 0.20, 0.0, 0.60, 0.40, PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
+            section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70, PipeSection.FlowRegime.SLUG, 200_000.0)},
+        1, 0.89, 0.0).hasThreePhaseDensities());
   }
 
   @SuppressWarnings("deprecation")

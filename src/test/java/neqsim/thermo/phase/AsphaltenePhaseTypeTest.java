@@ -308,9 +308,9 @@ public class AsphaltenePhaseTypeTest {
     // Create system with asphaltene component
     SystemInterface fluid = new SystemSrkCPAstatoil(350.0, 200.0);
 
-    fluid.addComponent("n-heptane", 0.45);
-    fluid.addComponent("nC10", 0.30);
-    fluid.addComponent("asphaltene", 0.25); // High asphaltene fraction
+    fluid.addComponent("n-heptane", 0.55);
+    fluid.addComponent("nC10", 0.40);
+    fluid.addComponent("asphaltene", 0.05); // about 25 wt% asphaltene
 
     fluid.setMixingRule("classic");
     fluid.init(0);
@@ -325,8 +325,18 @@ public class AsphaltenePhaseTypeTest {
 
     // The method should exist and return a boolean
     boolean isRich = phase.isAsphalteneRich();
-    // With 25% asphaltene, it should NOT be asphaltene-rich (need > 50%)
-    assertFalse(isRich, "Phase with 25% asphaltene should not be asphaltene-rich");
+    // With about 25 wt% asphaltene, it should NOT be asphaltene-rich (need > 50 wt%)
+    assertFalse(isRich, "Phase with 25 wt% asphaltene should not be asphaltene-rich");
+
+    // 25 mol% asphaltene (MW 750) is about 68 wt%: asphaltene-rich on the mass basis.
+    SystemInterface fluidMass = new SystemSrkCPAstatoil(350.0, 200.0);
+    fluidMass.addComponent("n-heptane", 0.45);
+    fluidMass.addComponent("nC10", 0.30);
+    fluidMass.addComponent("asphaltene", 0.25);
+    fluidMass.setMixingRule("classic");
+    fluidMass.init(0);
+    fluidMass.init(1);
+    assertTrue(fluidMass.getPhase(0).isAsphalteneRich(), "68 wt% asphaltene is asphaltene-rich by mass");
 
     // Create system with > 50% asphaltene
     SystemInterface fluid2 = new SystemSrkCPAstatoil(350.0, 200.0);

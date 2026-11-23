@@ -310,20 +310,35 @@ asphChar.setAsphalteneMW(1000.0);   // Average MW
 asphChar.setAsphalteneDensity(1.15);
 asphChar.addDistributedAsphaltene(heavyOil, 0.08, 3);
 
-// This creates 3 components: Asph_1_PC, Asph_2_PC, Asph_3_PC
-// with MW ranging from 0.5x to 2x the average MW
+// This creates 3 components: Asphaltene_1_PC, Asphaltene_2_PC, Asphaltene_3_PC
+// from a gamma MW distribution (mean = 1000, minimum = 500, shape 2.5) in equal-mole slices
 ```
+
+The split conserves both the asphaltene moles and its mean molecular weight (mass). Change the
+distribution width with `setDistributionShape(alpha)` (1 = exponential, larger = narrower);
+`PedersenAsphalteneCharacterization.gammaSplit(mean, min, alpha, n)` returns the slice molecular
+weights and mole fractions. Before 2026-11-22 the split used a fixed 0.5x-2x range with exponential
+weights, which did not keep the mean molecular weight, and named the components `Asph_1_PC`...; the
+shared asphaltene detection (`AsphalteneComponents.isAsphaltene`) still recognises the old names.
+Tuning multipliers set on the parent characterization are now passed to every slice.
 
 #### Typical Property Ranges
 
 Based on the Pedersen correlations, asphaltene components show these typical properties:
 
-| Property | Light Asphaltene (MW=500) | Medium (MW=750) | Heavy (MW=1500) |
-|----------|--------------------------|-----------------|-----------------|
-| Tc | 950-1000 K | 990-1010 K | 1040-1060 K |
-| Pc | 17-19 bar | 15-17 bar | 14-16 bar |
-| ω | 0.9-1.0 | 0.9-1.0 | 1.2-1.4 |
-| Tb | 700-800 K | 800-850 K | 900-950 K |
+| Property (density 1.10 g/cm3) | Light Asphaltene (MW=500) | Medium (MW=750) | MW=1000 | Heavy (MW=1500) |
+|----------|--------------------------|-----------------|---------|-----------------|
+| Tc | 1063 K | 1087 K | 1106 K | 1138 K |
+| Pc | 18.1 bar | 16.5 bar | 15.7 bar | 14.9 bar |
+| ω | 0.80 | 0.93 | 1.18 | 1.95 |
+| Tb | 759 K | 839 K | 897 K | 973 K |
+
+Values from `PedersenAsphalteneCharacterization.characterize()` (2026-11-22). Three correlation
+errors were fixed then: the critical-temperature term $a_0\rho$ had lost its density factor (Tc was
+about 90 K too low at 1.10 g/cm3 and did not respond to density), the critical-pressure correlation
+(which gives atm) was not converted to bar, and the Edmister acentric factor used the natural instead
+of the base-10 logarithm, so above about 900 g/mol omega hit the 2.5 cap. Onsets computed with
+Pedersen asphaltene components before that date are not comparable with current results.
 
 **Advantages:**
 - Uses standard cubic EOS (simpler than CPA)
@@ -359,8 +374,10 @@ $$\chi = \frac{V_a}{RT}(\delta_a - \delta_L)^2$$
 
 **Limitations:**
 - Regular solution approximation (no association)
-- The asphaltene solubility parameter is not known a priori to better than about 1 MPa$^{0.5}$, which moves the onset by hundreds of bar. Without onset data the result is a screening estimate
-- Regress to measured onset pressures when they exist (see "Calibration to measured onset pressures" below)
+- Default Lian et al. (1994) solubility parameter coefficients fail for live oils — calibrate to a measured onset with `calibrateToOnsetPressure()`, or use the heuristic prior `calibrateCorrelation()` (see below)
+- Requires tuning for specific oil types
+- Without measured onset data, the result is a screening estimate; the asphaltene solubility parameter is uncertain enough to move the predicted onset by hundreds of bar.
+- Regress to measured onset pressures when they exist (see "Calibration to measured onset pressures" below).
 
 #### Basic Usage
 
@@ -382,10 +399,13 @@ FloryHugginsAsphalteneModel fh =
 // Configure from API gravity (sets MW, solubility parameter, density, molar volume)
 fh.configureFromAPIGravity(30.0);
 
-// No onset data: stability-margin heuristic for the oil solubility parameter (see below)
+// No onset data: stability-margin heuristic (screening only)
 fh.calibrateCorrelation(373.15);
 
-// Upper onset pressure, scanning from 500 bara down to 50 bara
+// With a measured onset: fit delta_a so precipitation starts exactly there
+// fh.calibrateToOnsetPressure(373.15, 280.0);
+
+// Upper onset pressure in a requested window
 double onsetP = fh.calculateOnsetPressure(373.15, 500.0, 50.0);
 // Lower onset pressure, where the asphaltene redissolves below the bubble point (NaN if none)
 double lowerOnsetP = fh.calculateLowerOnsetPressure(373.15, 500.0, 1.0);
@@ -416,25 +436,30 @@ fh.configureFromSARA(0.45, 0.30, 0.15, 0.10);
 // Very high saturate fraction (>75% of sat+aro) worsens solvency
 ```
 
-The SARA correction is applied to the solubility parameter set before the first call, so calling
-`configureFromSARA` again replaces the correction instead of compounding it.
+#### Solving the solubility limit
 
-#### Oil solubility parameter and the stability-margin heuristic (`calibrateCorrelation`)
+The model compares the asphaltene in the oil with its solubility limit against a pure asphaltene
+phase, the non-trivial root of
 
-The oil solubility parameter is $\delta_L = A\rho + B$ with $A = 0.017347$ MPa$^{0.5}$/(kg/m$^3$) and
-$B = 2.904$ MPa$^{0.5}$. These defaults follow from the refractive-index relation
-$\delta = 52.042\,F_{RI} + 2.904$ (Wang and Buckley, 2001) and the one-third rule
-$F_{RI}/\rho \approx 1/3$ cm$^3$/g (Vargas and Chapman, 2010). Live oils with densities of
-600–750 kg/m$^3$ get $\delta_L \approx 13$–$16$ MPa$^{0.5}$.
+$$\ln\phi + (1 - r)(1 - \phi) + \chi (1 - \phi)^2 = 0, \qquad r = V_a/V_L$$
 
-With an asphaltene solubility parameter guessed from API gravity, the default correlation often
-predicts an oil that is unstable already at reservoir pressure. `calibrateCorrelation()` handles the
-case where no onset measurement exists by assuming the oil is stable at reservoir conditions:
+`calculateMaxDissolvedFraction` solves it in $u = \ln\phi$ with a bracketed search and excludes the
+trivial root $\phi = 1$; when no other root exists the asphaltene is fully miscible and 1 is
+returned. Before 2026-11-22 a Newton iteration started at $\phi = 0.01$ was used. For typical live
+oils ($\chi \approx 7$, $r \approx 7$, where no non-trivial root exists) it stopped at
+$\phi \approx 10^{-19}$ with a residual of about -45 and reported nearly all asphaltene as
+precipitated, so onsets from earlier versions are not reliable. The onset is now the highest pressure
+where any asphaltene exceeds its limit (earlier: more than 0.1 wt %).
 
-1. Flashes the fluid at the fluid pressure and the given temperature to get oil density and liquid molar volume $V_L$
-2. Computes $\chi_c = r(1 + 1/\sqrt{r})^2 / 2$ from the volume ratio $r = V_a / V_L$
-3. Converts to a critical solubility parameter gap $\Delta\delta_c$
-4. Sets $A$ so that $(\delta_A - \delta_L)$ is 0.35 MPa$^{0.5}$ below the critical gap at reservoir conditions
+#### Calibration
+
+**To a measured onset (`calibrateToOnsetPressure`).** Finds the asphaltene solubility parameter
+$\delta_A$ for which precipitation starts exactly at the measured pressure (bisection on
+$[\delta_L, \delta_L + 15]$ MPa$^{0.5}$). Use this whenever an onset measurement exists.
+
+The density-correlation defaults for $\delta_L = A\rho + B$ follow Wang and Buckley (2001) with
+the one-third rule. `configureFromSARA(...)` applies its correction idempotently; repeated calls
+replace rather than compound the correction.
 
 This is an assumption about the stability margin, not a fit to data: the 0.35 MPa$^{0.5}$ buffer
 fixes how far below reservoir pressure the onset falls. Use it for screening only, and do not
@@ -444,9 +469,9 @@ combine it with the data calibration below (the data calibration should use the 
 
 When asphaltene onset pressures (AOP) have been measured, regress the asphaltene solubility
 parameter instead of guessing it. For each measurement the fluid is flashed at the measured
-$(T, P_{onset})$, which gives $\delta_L$ and $V_L$; the Flory-Huggins equation is then solved in
-closed form for the $\delta_a$ that puts the solubility limit at the asphaltene content. No
-pressure scan is needed, so the calibration is exact for one point and fast for many.
+$(T, P_{onset})$, which gives $\delta_L$ and $V_L$; a bracketed solve finds the $\delta_a$ that
+places the precipitated fraction at the configured onset-detection threshold. A pressure scan is
+not needed for one-point calibration.
 
 <!-- fh-onset-calibration:start -->
 ```java
@@ -489,6 +514,24 @@ oil density from the equation of state, so it is specific to that fluid model: r
 retuning the EOS. The calibration and regression are covered by
 `FloryHugginsAsphalteneCalibrationTest`, which recovers known parameters from synthetic onsets; no
 comparison against measured multi-temperature AOP data has been made with this method yet.
+
+**Heuristic prior (`calibrateCorrelation`).** Uses no measured data. It flashes the fluid at its own
+pressure, finds the solubility-parameter gap at which the configured asphaltene content just reaches
+its limit in that oil, and sets the density-correlation coefficient $A$ so the actual gap is
+0.35 MPa$^{0.5}$ smaller. The predicted onset is where depressurisation lowers $\delta_L$ by
+0.35 MPa$^{0.5}$; the margin, not the physics, sets the result. The heuristic is intended for
+screening and has no effect with the EOS solubility-parameter method.
+
+#### Options
+
+| Option | Method | Default | Effect |
+|--------|--------|---------|--------|
+| Liquid solubility parameter | `setSolubilityParameterMethod(...)` | `DENSITY_CORRELATION` | `EOS` uses $\delta_L = \sqrt{-U^{res}/V}$ from the equation of state (cohesive energy density), which responds to composition and temperature, not only density. n-heptane at 25 C gives about 15 MPa$^{0.5}$ with SRK (literature 15.3). |
+| Live-oil basis | `setLiveOilBasis(boolean)` | `true` | The asphaltene weight fraction is of the whole fluid; below the bubble point it is scaled by total mass / oil mass, so the remaining oil is more concentrated. `false` keeps the fraction constant, as before 2026-11-22. |
+| Polydisperse asphaltene | `setNumberOfAsphalteneFractions(n)`, `setDistributionShape(alpha)` | 1, 2.5 | Gamma molecular-weight split (mean = asphaltene MW, minimum half of it); each fraction is compared with its own solubility limit (fractions do not interact, a simplification). |
+
+`configureFromSARA(...)` now scales the solubility parameter that was in place before the first SARA
+call, so repeated calls give the same value (earlier each call multiplied again).
 
 #### Precipitation Curves
 
@@ -611,15 +654,17 @@ pedersen.addAsphalteneToSystem(cubicFluid, 0.01);
 cubicFluid.setMixingRule("classic");
 cubicFluid.init(0);
 
-// Apply MW-scaled kij (1.5x for methane, 1.2x for ethane/propane, 0.5x for heavy)
+// Apply MW-scaled kij: base * (0.5 + exp(-(M - 16)/165)), i.e. 1.5x for methane,
+// about 1.2x for C3, about 1.0x around C10, towards 0.5x for heavy components (smooth, no steps)
 pedersen.applyAsphalteneKij(cubicFluid, 0.08);
 
 // Find onset pressure via pressure sweep
 double onset = pedersen.calculateOnsetPressure(cubicFluid, 500.0, 50.0);
 ```
 
-`calculateOnsetPressure` reports an onset only when an asphaltene-rich liquid (more than 50 mol %
-asphaltene) appears, with the multiphase check enabled during the search. If the fluid is already split at
+`calculateOnsetPressure` reports an onset only when an asphaltene-rich liquid (more than 50 wt %
+asphaltene; it was 50 mol % before 2026-11-22, which missed most asphaltene-rich liquids because
+asphaltene molecules are 5-20 times heavier than the oil average) appears, with the multiphase check enabled during the search. If the fluid is already split at
 the start pressure it raises `IllegalStateException`; a failed flash also raises. Before 2026-11-22 it
 counted any second liquid (including water) and returned the start pressure for an already-split fluid.
 The liquid-liquid route is very sensitive: in a test oil (MW 1200, density 1.15) the asphaltene was either
@@ -694,6 +739,10 @@ Further calibration:
 | Onset at a second temperature | `calibrateTemperature(T, P)` | effective solid enthalpy $h_s$ |
 | Onset of a blend or gas-injected oil | `fitKijExponent(fluid, T, P, Pmax, Pmin)` | exponent $e$ |
 
+`fitKijExponent` rejects the calibration fluid itself at the calibration temperature
+(`IllegalArgumentException`): there the model is re-anchored to the calibration onset for every
+exponent, so the objective carries no information.
+
 Measurement behind the recommendation (2026-11-22, NeqSim 3.29.0 classes with this change, synthetic
 live oil above, 90 C, host onset calibrated to 250 bara, condensate of 72 % methane): the calibrated model
 gives 258 and 282 bara for 10 and 30 mol % condensate with $e$ = 1 (253 and 262 bara with all
@@ -708,8 +757,9 @@ Requirements and checks:
 - One asphaltene component, cubic equation of state with the classic mixing rule set, water-free fluid.
 - `isAsphalteneLiquidSplitDetected()` returns true if the equation of state splits the asphaltene into its
   own liquid. The characterization is then too immiscible for the solid model: lower the asphaltene
-  acentric factor (1.2-1.5 works for M = 1000 g/mol) or the exponent. The Pedersen correlation gives
-  $\omega$ = 2.5 at 1000 g/mol, which splits.
+  acentric factor (1.2-1.5 works for M = 1000 g/mol) or the exponent. Before 2026-11-22 the Pedersen
+  correlation gave $\omega$ = 2.5 at 1000 g/mol (a natural-log error in the Edmister branch), which
+  split; it now gives 1.18 at 1.10 g/cm3. Check the flag for every characterization.
 - `OnsetResult.isUnstableAtMaximumPressure()` is true when the fluid already precipitates at the top of
   the range.
 

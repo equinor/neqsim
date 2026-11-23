@@ -752,6 +752,38 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Also re-allocates the site-fraction work arrays to the new number of sites. The composition-derivative array is
+   * re-sized to the requested number of components with {@link #resizeXsitedni(int)}; phases do this when components
+   * are added, so call {@code resizeXsitedni(phase.getNumberOfComponents())} after changing the number of sites of an
+   * existing component.
+   * </p>
+   */
+  @Override
+  public void setAssociationSites(int numberOfSites, String scheme) {
+    int numComp = xsitedni.length > 0 ? xsitedni[0].length : 0;
+    super.setAssociationSites(numberOfSites, scheme);
+    xsite = new double[numberOfSites];
+    xsiteOld = new double[numberOfSites];
+    xsitedV = new double[numberOfSites];
+    xsitedVdV = new double[numberOfSites];
+    xsitedVdVdV = new double[numberOfSites];
+    xsitedT = new double[numberOfSites];
+    xsitedTdV = new double[numberOfSites];
+    xsitedTdT = new double[numberOfSites];
+    xsitedni = new double[numberOfSites][numComp];
+    xsitednidT = null;
+    xsitednidV = null;
+    xsitednidnj = null;
+    for (int j = 0; j < numberOfSites; j++) {
+      xsite[j] = 1.0;
+      xsiteOld[j] = 1.0;
+    }
+  }
+
+  /**
    * Ensure that the xsitedni array has capacity for the specified number of components.
    *
    * @param numComp desired number of components

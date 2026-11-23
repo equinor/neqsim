@@ -158,6 +158,9 @@ Non-negotiables:
    `uv run --project devtools --locked devtools/generate_sources_md.py <task> --organize` for `SOURCES.md` + manifest.
    Search the optional document root (`neqsim documents PATTERN`, read-only) and run
    `neqsim fetch-docs <task>` before calling a standard, datasheet or P&ID unavailable.
+   **Always search the whole document root including every subfolder** (the command recurses;
+   a manual search must use a recursive listing, never just the top level) and try several
+   keyword variants (standard number, topic, vendor) before concluding a document is missing.
 3. Standard/Comprehensive: `capability_assessment.md`, `analysis.md`, skill + agent discovery
    (`devtools/skill_search.py`, `devtools/agent_search.py`), benchmark validation against
    independent data, Monte Carlo P10/P50/P90 + tornado, ISO 31000 risk register,

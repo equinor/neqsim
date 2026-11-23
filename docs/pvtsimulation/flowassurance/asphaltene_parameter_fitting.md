@@ -127,10 +127,21 @@ fitter.setInitialGuess(3500.0, 0.0);
 
 | Type | Parameters | Systems |
 |------|------------|---------|
-| `ASSOCIATION_PARAMETERS` | epsilon/R (K), kappa | CPA only; other systems raise `IllegalStateException` |
+| `ASSOCIATION_PARAMETERS` | association energy (J/mol), kappa | CPA only; other systems raise `IllegalStateException` |
 | `BINARY_INTERACTION` | asphaltene-methane k_ij | Cubic or CPA |
-| `MOLAR_MASS` | asphaltene molar mass (g/mol) | Cubic or CPA |
-| `COMBINED` | epsilon/R (K), asphaltene-methane k_ij | CPA only |
+| `MOLAR_MASS` | asphaltene molar mass (g/mol) | Cubic only; CPA raises `IllegalStateException` |
+| `COMBINED` | association energy (J/mol), asphaltene-methane k_ij | CPA only |
+
+Association energies are in J/mol, NeqSim's CPA unit (the database asphaltene has 3500 J/mol); earlier
+documentation called them epsilon/R in K. All parameters are set in every allocated phase, not only in the
+phases present after the last flash.
+
+`MOLAR_MASS` holds the asphaltene mass at its starting value, so the moles change as 1/M. For a TBP
+pseudo-component (for example `Asphaltene_PC` from `PedersenAsphalteneCharacterization`) Tc, Pc and omega are
+recalculated with the Pedersen asphaltene correlations; a database asphaltene keeps its critical and solid
+properties. Before 2026-11-22 only the molar mass was changed, which left a mole-based flash and hence the
+onset unchanged, so `MOLAR_MASS` fits had no effect. CPA asphaltene takes a and b from the database, so
+`MOLAR_MASS` is rejected there.
 
 Before 2026-11-22, `BINARY_INTERACTION` had no effect (the fitted value was never applied) and `COMBINED`
 ignored its second parameter. Fits made with those types before that date did not change the model.
@@ -214,12 +225,16 @@ Where:
 
 For each temperature, the onset pressure is found with `AsphalteneOnsetPressureFlash`:
 
-1. Starting at high pressure, where the fluid must be stable (otherwise `IllegalStateException`)
+1. Starting at high pressure (`setPressureRange`)
 2. Decreasing pressure in steps (`setPressureRange`)
 3. Detecting an asphaltene solid or asphaltene-rich phase
 4. Bisecting to the tolerance set with `fitter.getFunction().setPressureTolerance(...)` (default 0.5 bar)
 
-A flash failure raises an exception instead of being skipped. No onset in the range gives `NaN`.
+The lower-onset search is switched off during fitting. The function value is always finite, so the
+Levenberg-Marquardt Jacobian stays defined: when the fluid is already unstable at the start pressure the
+start pressure is returned, and when no onset is found down to the minimum pressure the minimum pressure is
+returned (earlier versions threw or returned `NaN`, which stopped the fit). A flash failure still raises an
+exception.
 
 ## Best Practices
 

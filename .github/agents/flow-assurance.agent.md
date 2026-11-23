@@ -69,6 +69,19 @@ DNV conformity.
 
 **Output requirement:** Include `standards_applied` array in results.json with code, scope, and status for each standard checked. Status must be PASS/FAIL/INFO/N/A.
 
+## Hydrate strategy gate (mandatory before choosing MEG)
+
+Do not select continuous MEG (or size a MEG loop) until you have checked the host: is there an MEG regeneration plant,
+an existing continuous MEG injection with spare capacity (storage, pumps, MEG line or umbilical service line), and what
+batch shut-in injection capability exists (tank, pump, supply route, disposal of used MEG)? Ask the user or read the host
+P&IDs/equipment lists; if unconfirmed record a data gap and treat continuous MEG as not available. If MEG is selected
+(continuous or batch), evaluate the host topside: utilisation of the existing capacity (regeneration, storage, pumps, MEG
+line/umbilical service line) or the installation required (regeneration package, storage, pumps, duty, power, space,
+weight, tie-in points, cost class). Then compare the
+non-continuous options with numbers: flowing margin and minimum rate, depressurisation, displacement/flush, insulation and
+cooldown (no-touch) time, and batch MEG/methanol/LDHI at shut-in and restart. Details: skill `neqsim-flow-assurance`,
+section "Host inhibitor-availability gate".
+
 ## Hydrate Prediction
 ```java
 SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 10, 100.0);
@@ -108,9 +121,10 @@ Use `WaxCharacterise` from `neqsim.thermo.characterization`:
 
 ## Asphaltene Screening
 ```java
-// de Boer screening
-DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(fluid, reservoirPressureBara, reservoirTemperatureK);
-// AsphalteneStabilityAnalyzer for detailed analysis
+// de Boer screening (reservoir P, saturation P [bara], in-situ density [kg/m3]); boundaries are ordered
+DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(350.0, 150.0, 750.0);
+// AsphalteneStabilityAnalyzer for detailed analysis: start the onset search at reservoir pressure
+double onset = new AsphalteneStabilityAnalyzer(fluid).calculateOnsetPressure(373.15, 350.0);
 
 // With a measured onset: calibrated solid model for the onset envelope, blends and gas injection
 AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil);
@@ -119,7 +133,8 @@ double blendOnset = model.onsetPressures(blend, 363.15, 600.0, 20.0, 5.0).getUpp
 ```
 For commingling or gas injection, calibrate `AsphalteneSolidModel` on the host and evaluate each blend; do
 not tune interaction parameters against the database solid reference (wrong blend trend). See the
-`neqsim-flow-assurance` skill, section 3.
+`neqsim-flow-assurance` skill, section 3. For onset data without an asphaltene component, use
+`FloryHugginsAsphalteneModel` and regress the measured onset pressures.
 With onset pressures but no asphaltene component in the fluid, regress `FloryHugginsAsphalteneModel`
 (`calibrateToOnsetPressure`, `fitToOnsetData`).
 
@@ -187,6 +202,14 @@ The evidence matrix now includes analytical interior hydrostatic well-balancing 
 including signed pressure work and transaction-safe diagnostics. Route that row only for static numerical
 initialization checks. It does not change the handoff requirement for a stationary two-density pool, terrain drainage,
 shutdown/restart, severe slugging, dynamic pigging, or field/commercial qualification.
+
+For riser-induced (severe) slugging questions use the two screens described in the
+`neqsim-flow-assurance` skill: `TwoFluidPipe.evaluateSevereSluggingSystem(riserBaseSection)`
+(Taitel stability margin on a solved profile) and `SevereSlugAnalyser` (lumped dynamic model
+that also gives the riser-base pressure swing). Report the status, the pressure margin or
+swing with units, and the applicability limits. For oil–water–gas systems, alongside the
+mixture-basis screen above, report the all-oil/all-water bracket (`getThreePhaseBound()` on the
+default call) as a bracket, not as a validated three-phase prediction. Details: `docs/process/severe-slug-analyser.md`.
 
 When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
 basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless

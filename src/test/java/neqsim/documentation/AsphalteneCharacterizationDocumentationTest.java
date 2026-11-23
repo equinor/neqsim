@@ -74,7 +74,6 @@ class AsphalteneCharacterizationDocumentationTest {
     assertFalse(markdown.contains("estimateResinMW"));
     assertFalse(markdown.contains("setAsphalteneMW"));
     assertFalse(markdown.contains("setResinMW"));
-    assertFalse(markdown.contains("setResinAsphalteneAssociationEnergy"));
     assertFalse(markdown.contains("getResinMW"));
     assertFalse(markdown.contains("getStabilityClassification"));
     assertFalse(markdown.contains("hasPhaseType(\"solid\")"));

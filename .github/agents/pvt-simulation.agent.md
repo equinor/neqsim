@@ -197,7 +197,10 @@ simulation in the external reservoir engine and preserve the PVT exchange contra
 ALWAYS read the actual class source to verify method signatures before using them. Do NOT assume API patterns — check constructors, method names, and parameter types.
 `neqsim.pvtsimulation.flowassurance` includes asphaltene screening:
 - `DeBoerAsphalteneScreening` — de Boer plot method
-- `AsphalteneStabilityAnalyzer` — stability analysis
+- `AsphalteneStabilityAnalyzer` — stability analysis (`calculateOnsetPressure(T, startP)` also gives the lower onset)
+- `FloryHugginsAsphalteneModel` — solubility model; `calibrateToOnsetPressure(T, P)` with a measured onset
+- `AsphalteneSolidModel` — calibrated solid model for envelopes, blends and gas injection
+- `PedersenAsphalteneCharacterization` / `AsphalteneCharacterization` — cubic and CPA (asphaltene + resin) characterization; see the `neqsim-flow-assurance` skill, section 3
 
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill

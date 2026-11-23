@@ -29,6 +29,30 @@
   `naphthenate_precipitation.md`; `neqsim-flow-assurance` and `neqsim-production-chemistry` skills; `flow-assurance`
   agent (also fixes a non-existent one-argument `DeBoerAsphalteneScreening` constructor in its example).
 
+## 2026-11-22 — Asphaltene model review fixes
+
+- Fixed: `FloryHugginsAsphalteneModel` solubility limit solved in ln(phi) with a bracketed search (the Newton
+  iteration did not converge and reported spurious onsets); onset is any precipitation (was > 0.1 wt %);
+  `calibrateCorrelation` rewritten as a documented heuristic prior; `configureFromSARA` idempotent. Added
+  `calibrateToOnsetPressure`, EOS solubility parameter, live-oil basis (default on), polydisperse split.
+  Migration: re-run FH onsets; the documented 22.4 % AARD table is withdrawn.
+- Fixed: `PedersenAsphalteneCharacterization` Tc density term, Pc atm-to-bar, Edmister log10 (omega no longer
+  2.5 at 1000 g/mol); smooth kij `kijScaleFactor`; kij on all phases and all split components; gamma split
+  named `Asphaltene_i`. Migration: Pedersen onsets shift.
+- Fixed: asphaltene-rich phase is > 50 wt % (was mol %); shared `AsphalteneComponents` helper; parameters set
+  on all allocated phases (SARA, Pedersen, fitting).
+- Fixed: De Boer boundaries ordered (risk index at 750 kg/m3 is 200/120); asphaltene multiplier doubles at 5 wt %;
+  `AsphalteneStabilityAnalyzer.deBoerScreening` delegates; onset from a given start pressure; envelope has
+  4 rows; assessment combines SARA and thermodynamic risk.
+- Added: lower onset in `AsphalteneOnsetPressureFlash`; strict unit getters (bare "psi" throws);
+  `PhaseCPAInterface.setCrossAssociationParameters`, `ComponentInterface.setAssociationSites`; SARA resin as
+  `Resin_PC` with asphaltene-resin cross-association (`applyCrossAssociation`); default association volume 0.005.
+- Fitting: finite penalties instead of NaN/exception; `MOLAR_MASS` conserves mass (cubic only).
+  `fitKijExponent` rejects the calibration fluid at the calibration temperature.
+- Updated: asphaltene docs (modeling, validation, CPA calculations, method comparison, De Boer, parameter
+  fitting, characterization, phase README, flow-assurance overview), `neqsim-flow-assurance` skill,
+  `flow-assurance` and `pvt-simulation` agents.
+
 ## 2026-11-22 — Stage oil properties, CCE/DL saturation state, named-paraffin wax (#5208, #5209, #5210)
 
 Reported by Patrick Mockridge.

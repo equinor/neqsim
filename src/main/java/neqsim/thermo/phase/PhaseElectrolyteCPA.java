@@ -1507,6 +1507,12 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
 
   /** {@inheritDoc} */
   @Override
+  public void setCrossAssociationParameters(int compnumb1, int compnumb2, double energy, double volume) {
+    cpaSelect.setCrossAssociationParameters(compnumb1, compnumb2, energy, volume);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double calcPressure() {
     gcpa = calc_g();
     // lngcpa =

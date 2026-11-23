@@ -187,7 +187,7 @@ public class AsphalteneStabilityAnalyzerTest {
     double[][] envelope = analyzer.generatePrecipitationEnvelope(449.0, 451.0, 5);
 
     assertNotNull(envelope);
-    assertEquals(3, envelope.length); // 3 arrays: temps, upper onset, lower onset
+    assertEquals(4, envelope.length); // temps, upper onset, lower onset, bubble point
     assertEquals(5, envelope[0].length); // 5 points
     for (double onset : envelope[1]) {
       assertTrue(Double.isFinite(onset) && onset > 1.0 && onset < 500.0);

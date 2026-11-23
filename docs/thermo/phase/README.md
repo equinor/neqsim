@@ -202,6 +202,11 @@ Additional phases appear only when the corresponding model and calculation are e
   `PhaseType.LIQUID_ASPHALTENE` after the selected characterization/equilibrium workflow. See
   [asphaltene characterization](../characterization/asphaltene_characterization). Density,
   viscosity, and phase fraction are calculated results, not fixed constants.
+  `PhaseInterface.isAsphalteneRich()` (and `PhaseSolid.isAsphaltenePhase()`) is true for those phase
+  types or when asphaltene components are more than 50 wt % of the phase. The test was 50 mol % before
+  2026-11-22; asphaltene molecules are much heavier than the oil average, so the mole basis missed
+  most asphaltene-rich liquids. Asphaltene components are recognised by
+  `neqsim.thermo.characterization.AsphalteneComponents.isAsphaltene(name)`.
 
 Do not infer a formation temperature from a phase object. Formation-temperature and stability
 calculations are separate operations with their own model assumptions and convergence behavior.

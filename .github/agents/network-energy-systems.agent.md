@@ -42,6 +42,7 @@ replace a requested rigorous stage with a screening surrogate without stating th
 | Request | Skill | Anchor classes |
 |---|---|---|
 | Steady looped network, choke or well setpoint optimisation | `neqsim-pipeline-and-terminal-networks` | `LoopedPipeNetwork`, `NetworkOptimizer` |
+| GAP-style well network: IPR + VLP correlation or VFPPROD table, gas lift at valve depth | `neqsim-pipeline-and-terminal-networks` | `LoopedPipeNetwork.TubingModel`, `addTubingVfp`, `calculateGasLiftResponse` |
 | Delivery quality (CO2, Wobbe, RVP) along a network | `neqsim-pipeline-and-terminal-networks` | `NetworkQualitySpecification`, `NetworkQualityEvaluator` |
 | Gas linepack, transient network response | `neqsim-pipeline-and-terminal-networks` | `TransientGasNetwork`, `GasLinepackState` |
 | Terminal tanks, cargo nominations, crude parcels | `neqsim-pipeline-and-terminal-networks` | `OilNetworkSchedule`, `CargoNomination` |
