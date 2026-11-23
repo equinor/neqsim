@@ -365,7 +365,7 @@ public class ComponentSolid extends ComponentSrk {
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.GAS, 1.0);
       refPhase.setMixingRule(null);
       // }
-    } catch (Exception ex) {
+    } catch (ReflectiveOperationException | RuntimeException ex) {
       logger.error("error occured", ex);
     }
   }
