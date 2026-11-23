@@ -359,8 +359,8 @@ $$\chi = \frac{V_a}{RT}(\delta_a - \delta_L)^2$$
 
 **Limitations:**
 - Regular solution approximation (no association)
-- Default Lian et al. (1994) solubility parameter coefficients fail for live oils — use `calibrateCorrelation()` (see below)
-- Requires tuning for specific oil types
+- The asphaltene solubility parameter is not known a priori to better than about 1 MPa$^{0.5}$, which moves the onset by hundreds of bar. Without onset data the result is a screening estimate
+- Regress to measured onset pressures when they exist (see "Calibration to measured onset pressures" below)
 
 #### Basic Usage
 
@@ -382,14 +382,18 @@ FloryHugginsAsphalteneModel fh =
 // Configure from API gravity (sets MW, solubility parameter, density, molar volume)
 fh.configureFromAPIGravity(30.0);
 
-// IMPORTANT: Calibrate the A coefficient using physics-based approach
-// This uses the Flory-Huggins critical chi condition to set A from first principles
+// No onset data: stability-margin heuristic for the oil solubility parameter (see below)
 fh.calibrateCorrelation(373.15);
 
-// Calculate onset pressure
+// Upper onset pressure, scanning from 500 bara down to 50 bara
 double onsetP = fh.calculateOnsetPressure(373.15, 500.0, 50.0);
-System.out.println("FH Onset Pressure: " + onsetP + " bar");
+// Lower onset pressure, where the asphaltene redissolves below the bubble point (NaN if none)
+double lowerOnsetP = fh.calculateLowerOnsetPressure(373.15, 500.0, 1.0);
 ```
+
+The onset is the pressure where the precipitated amount exceeds the onset detection threshold,
+0.1 wt% by default (`setOnsetDetectionThreshold`). If the oil is already unstable at the start
+pressure, the start pressure is returned.
 
 #### API Gravity Configuration
 
@@ -412,30 +416,79 @@ fh.configureFromSARA(0.45, 0.30, 0.15, 0.10);
 // Very high saturate fraction (>75% of sat+aro) worsens solvency
 ```
 
-#### Physics-Based Calibration (`calibrateCorrelation`)
+The SARA correction is applied to the solubility parameter set before the first call, so calling
+`configureFromSARA` again replaces the correction instead of compounding it.
 
-The default Lian et al. (1994) correlation coefficients ($A = 0.017347$, $B = 2.904$) were determined from dead oil measurements and produce liquid solubility parameters ($\delta_L \approx 13$–$15$ MPa$^{0.5}$) far below typical asphaltene values ($\delta_A \approx 19$–$23$ MPa$^{0.5}$) for live reservoir oils. This causes the model to trivially predict onset at the reservoir pressure itself.
+#### Oil solubility parameter and the stability-margin heuristic (`calibrateCorrelation`)
 
-The `calibrateCorrelation()` method resolves this by using the Flory-Huggins critical interaction parameter $\chi_c$ to set the $A$ coefficient from first principles:
+The oil solubility parameter is $\delta_L = A\rho + B$ with $A = 0.017347$ MPa$^{0.5}$/(kg/m$^3$) and
+$B = 2.904$ MPa$^{0.5}$. These defaults follow from the refractive-index relation
+$\delta = 52.042\,F_{RI} + 2.904$ (Wang and Buckley, 2001) and the one-third rule
+$F_{RI}/\rho \approx 1/3$ cm$^3$/g (Vargas and Chapman, 2010). Live oils with densities of
+600–750 kg/m$^3$ get $\delta_L \approx 13$–$16$ MPa$^{0.5}$.
 
-1. Flashes the fluid at reservoir P/T to get actual oil density and liquid molar volume $V_L$
+With an asphaltene solubility parameter guessed from API gravity, the default correlation often
+predicts an oil that is unstable already at reservoir pressure. `calibrateCorrelation()` handles the
+case where no onset measurement exists by assuming the oil is stable at reservoir conditions:
+
+1. Flashes the fluid at the fluid pressure and the given temperature to get oil density and liquid molar volume $V_L$
 2. Computes $\chi_c = r(1 + 1/\sqrt{r})^2 / 2$ from the volume ratio $r = V_a / V_L$
 3. Converts to a critical solubility parameter gap $\Delta\delta_c$
 4. Sets $A$ so that $(\delta_A - \delta_L)$ is 0.35 MPa$^{0.5}$ below the critical gap at reservoir conditions
 
+This is an assumption about the stability margin, not a fit to data: the 0.35 MPa$^{0.5}$ buffer
+fixes how far below reservoir pressure the onset falls. Use it for screening only, and do not
+combine it with the data calibration below (the data calibration should use the default $A$ and $B$).
+
+#### Calibration to measured onset pressures
+
+When asphaltene onset pressures (AOP) have been measured, regress the asphaltene solubility
+parameter instead of guessing it. For each measurement the fluid is flashed at the measured
+$(T, P_{onset})$, which gives $\delta_L$ and $V_L$; the Flory-Huggins equation is then solved in
+closed form for the $\delta_a$ that puts the solubility limit at the asphaltene content. No
+pressure scan is needed, so the calibration is exact for one point and fast for many.
+
+<!-- fh-onset-calibration:start -->
 ```java
-// After configureFromAPIGravity or manual parameter setup:
-fh.calibrateCorrelation(373.15);  // Pass reservoir temperature in Kelvin
+FloryHugginsAsphalteneModel fh = new FloryHugginsAsphalteneModel(fluid, 373.15);
+fh.setAsphalteneWeightFraction(0.03);   // n-C7 asphaltene content of the oil
+fh.setAsphalteneMW(750.0);
+fh.setAsphalteneDensity(1100.0);
 
-// The calibrated A coefficient now gives realistic onset predictions
-double onset = fh.calculateOnsetPressure(373.15, 500.0, 50.0);
-// Returns onset between bubble point and reservoir pressure
+// One measured onset: reproduced exactly
+double deltaA = fh.calibrateToOnsetPressure(373.15, 300.0);
+double onset = fh.calculateOnsetPressure(373.15, 500.0, 1.0);        // 300 bara
+double lowerOnset = fh.calculateLowerOnsetPressure(373.15, 500.0, 1.0);
+
+// Onsets at several temperatures: fits delta_a(T) = delta_a(Tref) + c (T - Tref)
+double[] temperatures = {333.15, 353.15, 373.15};
+double[] measuredOnsets = {340.0, 318.0, 300.0};
+FloryHugginsAsphalteneModel.OnsetFitResult fit = fh.fitToOnsetData(temperatures, measuredOnsets);
+double deltaRef = fit.getSolubilityParameter();          // MPa^0.5 at fit.getReferenceTemperature()
+double slope = fit.getTemperatureCoefficient();          // MPa^0.5/K
+double aad = fit.getAverageAbsoluteDeviation();          // bar, predicted vs measured onset
 ```
+<!-- fh-onset-calibration:end -->
 
-**When to use calibrateCorrelation:**
-- Always for live reservoir oil onset predictions
-- After `configureFromAPIGravity()` and/or `configureFromSARA()`
-- Not needed for dead oil dilution titration modeling (default coefficients are adequate)
+| Data available | Call | Fitted |
+|----------------|------|--------|
+| None | `configureFromAPIGravity`, `configureFromSARA`, `calibrateCorrelation` | Nothing (screening) |
+| One AOP | `calibrateToOnsetPressure(T, P)` | $\delta_a$ at $T$ |
+| AOP at one temperature, several samples | `fitToOnsetData` | $\delta_a$ (mean) |
+| AOP at two or more temperatures | `fitToOnsetData` | $\delta_a(T_{ref})$ and $d\delta_a/dT$ |
+
+The calibrated model is then used predictively at other pressures and temperatures, and for
+changed compositions (gas injection, commingling) by constructing the model on the new fluid and
+copying $\delta_a$ and its temperature coefficient with `setAsphalteneSolubilityParameter` and
+`setSolubilityParameterTemperatureDependence`. Without multi-temperature data the coefficient is
+zero by default; Hirschberg et al. (1984) used a relative decrease of $1.07\times10^{-3}$ per kelvin
+(about $-0.021$ MPa$^{0.5}$/K).
+
+The fitted $\delta_a$ absorbs errors in the asphaltene molar volume, the asphaltene content and the
+oil density from the equation of state, so it is specific to that fluid model: recalibrate after
+retuning the EOS. The calibration and regression are covered by
+`FloryHugginsAsphalteneCalibrationTest`, which recovers known parameters from synthetic onsets; no
+comparison against measured multi-temperature AOP data has been made with this method yet.
 
 #### Precipitation Curves
 
