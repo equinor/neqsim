@@ -576,7 +576,7 @@ public final class AsphalteneSolidModel implements java.io.Serializable {
    * @param minimumPressure bottom of the search range in bara
    * @return the fitted exponent (also set on the model)
    * @throws IllegalArgumentException if the fluid has the calibration composition and the temperature is within 0.5 K
-   *         of the calibration temperature
+   * of the calibration temperature
    */
   public double fitKijExponent(SystemInterface fluid, double temperature, double measuredOnsetPressure,
       double maximumPressure, double minimumPressure) {
@@ -657,9 +657,8 @@ public final class AsphalteneSolidModel implements java.io.Serializable {
       totalB += pb.getComponent(i).getNumberOfmoles();
     }
     for (int i = 0; i < pa.getNumberOfComponents(); i++) {
-      if (!pa.getComponent(i).getComponentName().equals(pb.getComponent(i).getComponentName())
-          || Math.abs(pa.getComponent(i).getNumberOfmoles() / totalA
-              - pb.getComponent(i).getNumberOfmoles() / totalB) > 1e-9) {
+      if (!pa.getComponent(i).getComponentName().equals(pb.getComponent(i).getComponentName()) || Math.abs(
+          pa.getComponent(i).getNumberOfmoles() / totalA - pb.getComponent(i).getNumberOfmoles() / totalB) > 1e-9) {
         return false;
       }
     }

@@ -99,8 +99,8 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
   public CPAMixingRulesInterface getCpaMixingRule();
 
   /**
-   * Sets explicit cross-association energy and volume between two associating components in this phase. Call after
-   * the mixing rule has been set; setting the mixing rule again resets the values to the combining rule.
+   * Sets explicit cross-association energy and volume between two associating components in this phase. Call after the
+   * mixing rule has been set; setting the mixing rule again resets the values to the combining rule.
    *
    * @param compnumb1 first component index
    * @param compnumb2 second component index
