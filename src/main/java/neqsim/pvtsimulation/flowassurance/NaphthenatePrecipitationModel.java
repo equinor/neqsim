@@ -201,6 +201,10 @@ public class NaphthenatePrecipitationModel implements Serializable {
   private double calciumSoapSaturationRatio = Double.NaN;
   /** Saturation ratio of the ARN calcium naphthenate before precipitation. */
   private double arnSaturationRatio = Double.NaN;
+  /** Saturation ratio of the calcium soap after precipitation. */
+  private double equilibriumCalciumSoapSaturationRatio = Double.NaN;
+  /** Saturation ratio of the ARN calcium naphthenate after precipitation. */
+  private double equilibriumArnSaturationRatio = Double.NaN;
   /** Precipitated calcium soap (mol CaA2). */
   private double precipitatedCalciumSoapMoles = 0.0;
   /** Precipitated ARN calcium naphthenate (mol Ca2A). */
@@ -234,6 +238,10 @@ public class NaphthenatePrecipitationModel implements Serializable {
     private double soapSaturation;
     /** Saturation ratio of the ARN salt at this state. */
     private double arnSaturation;
+    /** Saturation ratio of the calcium soap after precipitation. */
+    private double equilibriumSoapSaturation;
+    /** Saturation ratio of the ARN salt after precipitation. */
+    private double equilibriumArnSaturation;
 
     /**
      * Creates an empty speciation.
@@ -370,6 +378,8 @@ public class NaphthenatePrecipitationModel implements Serializable {
       equilibrium = calculateSpeciation(specifiedPH, true);
     }
     calciumSoapSaturationRatio = initial.soapSaturation;
+    equilibriumCalciumSoapSaturationRatio = equilibrium.equilibriumSoapSaturation;
+    equilibriumArnSaturationRatio = equilibrium.equilibriumArnSaturation;
     arnSaturationRatio = initial.arnSaturation;
     precipitatedCalciumSoapMoles = equilibrium.soapMoles;
     precipitatedArnMoles = equilibrium.arnMoles;
@@ -385,6 +395,18 @@ public class NaphthenatePrecipitationModel implements Serializable {
    * @throws IllegalStateException if a value is outside its physical range
    */
   private void validateInput() {
+    double[] values = {oilVolume, waterVolume, oilDensity, totalAcidNumber, acidMolarMass, arnConcentration,
+        arnMolarMass, calciumConcentration, sodiumConcentration, bicarbonateConcentration, temperature, pKa,
+        getLogPartitionCoefficient(), pKspCalciumSoap, pKArn, calciumSoapDissolutionEnthalpy, arnFormationEnthalpy,
+        phFromCO2 ? co2PartialPressure : specifiedPH};
+    for (double value : values) {
+      if (Double.isNaN(value) || Double.isInfinite(value)) {
+        throw new IllegalStateException("Input and parameter values must be finite numbers");
+      }
+    }
+    if (!Double.isNaN(userIonicStrength) && (userIonicStrength < 0.0 || Double.isInfinite(userIonicStrength))) {
+      throw new IllegalStateException("Ionic strength must be zero or positive");
+    }
     if (!(oilVolume > 0.0) || !(waterVolume > 0.0)) {
       throw new IllegalStateException("Oil and water volumes must be positive");
     }
@@ -477,21 +499,37 @@ public class NaphthenatePrecipitationModel implements Serializable {
         * Math.pow(gamma1 * naphthenatePerAcid * acidMoles, 2.0) / soapSolubilityProduct;
     state.arnSaturation = arnMoles / oilLitres * Math.pow(calciumMoles / waterLitres, 2.0) * arnDriving;
 
+    final double soapDriving = gamma2 * gamma1 * gamma1 * naphthenatePerAcid * naphthenatePerAcid
+        / soapSolubilityProduct;
     double soap = 0.0;
     double arn = 0.0;
     if (allowPrecipitation) {
-      for (int iteration = 0; iteration < 200; iteration++) {
-        double previousSoap = soap;
-        double previousArn = arn;
-        arn = solveArnPrecipitation(arnMoles, calciumMoles - soap, oilLitres, waterLitres, arnDriving);
-        soap = solveSoapPrecipitation(acidMoles, calciumMoles - 2.0 * arn, waterLitres,
-            gamma2 * gamma1 * gamma1 * naphthenatePerAcid * naphthenatePerAcid / soapSolubilityProduct);
-        if (Math.abs(soap - previousSoap) <= 1.0e-12 * Math.max(soap, 1.0e-30)
-            && Math.abs(arn - previousArn) <= 1.0e-12 * Math.max(arn, 1.0e-30)) {
-          break;
+      // The soap amount is solved for every trial ARN amount, so the two salts share the calcium consistently.
+      // The ARN saturation ratio falls monotonically with the ARN amount, also when calcium is limiting.
+      double upper = Math.min(arnMoles, calciumMoles / 2.0);
+      if (upper > 0.0 && coupledArnSaturation(0.0, arnMoles, acidMoles, calciumMoles, oilLitres, waterLitres,
+          arnDriving, soapDriving) > 1.0) {
+        double lower = 0.0;
+        for (int i = 0; i < 100; i++) {
+          double mid = 0.5 * (lower + upper);
+          if (coupledArnSaturation(mid, arnMoles, acidMoles, calciumMoles, oilLitres, waterLitres, arnDriving,
+              soapDriving) > 1.0) {
+            lower = mid;
+          } else {
+            upper = mid;
+          }
+          if (upper - lower <= 1.0e-15 * upper) {
+            break;
+          }
         }
+        arn = 0.5 * (lower + upper);
       }
+      soap = solveSoapPrecipitation(acidMoles, calciumMoles - 2.0 * arn, waterLitres, soapDriving);
     }
+    state.equilibriumSoapSaturation = soapSaturationAt(soap, acidMoles, calciumMoles - 2.0 * arn, waterLitres,
+        soapDriving);
+    state.equilibriumArnSaturation = arnSaturationAt(arn, arnMoles, calciumMoles - soap, oilLitres, waterLitres,
+        arnDriving);
     state.soapMoles = soap;
     state.arnMoles = arn;
     state.calcium = Math.max(0.0, calciumMoles - soap - 2.0 * arn) / waterLitres;
@@ -501,37 +539,23 @@ public class NaphthenatePrecipitationModel implements Serializable {
   }
 
   /**
-   * Solves the amount of ARN calcium naphthenate that brings the ARN salt to saturation.
+   * Calculates the ARN saturation ratio for a trial amount of precipitated ARN salt, with the calcium soap at
+   * equilibrium with the remaining calcium.
    *
+   * @param precipitated trial amount of precipitated ARN salt (mol)
    * @param arnMoles total ARN (mol)
-   * @param calciumMoles calcium available to ARN (mol)
+   * @param acidMoles total monoprotic acid (mol)
+   * @param calciumMoles total calcium (mol)
    * @param oilLitres oil volume (L)
    * @param waterLitres water volume (L)
-   * @param arnDriving activity and pH factor multiplying [H4A][Ca]^2 in the saturation ratio
-   * @return precipitated ARN salt (mol Ca2A)
+   * @param arnDriving activity and pH factor of the ARN saturation ratio
+   * @param soapDriving factor of the calcium soap saturation ratio
+   * @return ARN saturation ratio
    */
-  private static double solveArnPrecipitation(double arnMoles, double calciumMoles, double oilLitres,
-      double waterLitres, double arnDriving) {
-    double upper = Math.min(arnMoles, calciumMoles / 2.0);
-    if (!(upper > 0.0)) {
-      return 0.0;
-    }
-    double lower = 0.0;
-    if (arnSaturationAt(lower, arnMoles, calciumMoles, oilLitres, waterLitres, arnDriving) <= 1.0) {
-      return 0.0;
-    }
-    for (int i = 0; i < 200; i++) {
-      double mid = 0.5 * (lower + upper);
-      if (arnSaturationAt(mid, arnMoles, calciumMoles, oilLitres, waterLitres, arnDriving) > 1.0) {
-        lower = mid;
-      } else {
-        upper = mid;
-      }
-      if (upper - lower <= 1.0e-14 * upper) {
-        break;
-      }
-    }
-    return 0.5 * (lower + upper);
+  private static double coupledArnSaturation(double precipitated, double arnMoles, double acidMoles,
+      double calciumMoles, double oilLitres, double waterLitres, double arnDriving, double soapDriving) {
+    double soap = solveSoapPrecipitation(acidMoles, calciumMoles - 2.0 * precipitated, waterLitres, soapDriving);
+    return arnSaturationAt(precipitated, arnMoles, calciumMoles - soap, oilLitres, waterLitres, arnDriving);
   }
 
   /**
@@ -570,7 +594,7 @@ public class NaphthenatePrecipitationModel implements Serializable {
     if (soapSaturationAt(lower, acidMoles, calciumMoles, waterLitres, soapDriving) <= 1.0) {
       return 0.0;
     }
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 100; i++) {
       double mid = 0.5 * (lower + upper);
       if (soapSaturationAt(mid, acidMoles, calciumMoles, waterLitres, soapDriving) > 1.0) {
         lower = mid;
@@ -779,6 +803,46 @@ public class NaphthenatePrecipitationModel implements Serializable {
   public double getArnSaturationRatio() {
     requireSolved();
     return arnSaturationRatio;
+  }
+
+  /**
+   * Gets the saturation ratio of the calcium soap after precipitation. It is 1 when soap has precipitated and below 1
+   * otherwise.
+   *
+   * @return saturation ratio at equilibrium
+   */
+  public double getEquilibriumCalciumSoapSaturationRatio() {
+    requireSolved();
+    return equilibriumCalciumSoapSaturationRatio;
+  }
+
+  /**
+   * Gets the saturation ratio of the ARN calcium naphthenate after precipitation. It is 1 when ARN salt has
+   * precipitated and below 1 otherwise.
+   *
+   * @return saturation ratio at equilibrium
+   */
+  public double getEquilibriumArnSaturationRatio() {
+    requireSolved();
+    return equilibriumArnSaturationRatio;
+  }
+
+  /**
+   * Calculates the saturation ratio of the calcium soap at a trial water pH, without precipitation.
+   *
+   * @param pH trial water pH
+   * @return ion activity product divided by the solubility product
+   * @throws IllegalStateException if the input is not physically meaningful
+   */
+  public double calculateCalciumSoapSaturationRatio(double pH) {
+    validateInput();
+    double savedIonicStrength = ionicStrength;
+    ionicStrength = calculateIonicStrength();
+    try {
+      return calculateSpeciation(pH, false).soapSaturation;
+    } finally {
+      ionicStrength = savedIonicStrength;
+    }
   }
 
   /**

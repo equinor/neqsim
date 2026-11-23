@@ -97,6 +97,10 @@ String json = model.toJson();
 ```
 <!-- naphthenate-screening:end -->
 
+Calcium soap and ARN salt compete for the same calcium; the two are solved together, and
+`getEquilibriumCalciumSoapSaturationRatio()` / `getEquilibriumArnSaturationRatio()` are 1 for a salt
+that has precipitated. Non-finite input is rejected by `run()`.
+
 `getRisk()` returns `NO_RISK` (more than 0.5 pH units below every onset), `LOW_RISK` (within 0.5
 units), `SOAP_RISK` (calcium soap supersaturated) or `ARN_DEPOSIT_RISK` (ARN salt supersaturated).
 
@@ -160,6 +164,10 @@ field.run();
 <!-- naphthenate-fitting:end -->
 
 `addObservation` copies the scenario, so one model can be reused with changed conditions.
+
+`solve()` returns `false`, and `applyTo` throws, when the fitted model has no value for an observed
+quantity (for example an ARN onset pH for an oil without ARN), so a model is never marked as
+calibrated on data it cannot reproduce.
 
 Fit only parameters the data can determine:
 

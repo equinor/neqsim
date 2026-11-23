@@ -399,8 +399,8 @@ public class FloryHugginsAsphalteneModel {
    *
    * <p>
    * The equation always has the trivial root phi_a = 1 (pure asphaltene). The solubility limit is the smallest root,
-   * which is bracketed on a logarithmic grid and refined by bisection. If there is no root below one the asphaltene is
-   * completely miscible and 1.0 is returned.
+   * which lies below the first stationary point of the residual and is refined by bisection. If there is no root below
+   * one the asphaltene is completely miscible and 1.0 is returned.
    * </p>
    *
    * @param deltaLiquid solubility parameter of liquid phase (MPa^0.5)
@@ -436,29 +436,24 @@ public class FloryHugginsAsphalteneModel {
    * @return dissolved asphaltene volume fraction at saturation, or 1.0 when completely miscible
    */
   private static double solveDiluteRoot(double chi, double molarVolumeRatio) {
-    double upperLimit = 1.0 - 1.0e-6;
-    double low = 1.0e-300;
-    if (solubilityResidual(low, chi, molarVolumeRatio) >= 0.0) {
-      return low;
-    }
-    double high = low;
-    boolean bracketed = false;
-    // 0.05 decade steps resolve the root before the residual can turn back
-    for (double exponent = -299.95; exponent < 0.0; exponent += 0.05) {
-      high = Math.min(Math.pow(10.0, exponent), upperLimit);
-      if (solubilityResidual(high, chi, molarVolumeRatio) >= 0.0) {
-        bracketed = true;
-        break;
-      }
-      low = high;
-      if (high >= upperLimit) {
-        break;
-      }
-    }
-    if (!bracketed) {
+    // The residual rises from minus infinity to a local maximum at the smaller root of
+    // 2 chi phi^2 - (2 chi + 1 - r) phi + 1 = 0. A solubility limit exists only if the residual is not negative there.
+    if (!(chi > 0.0)) {
       return 1.0;
     }
-    for (int iter = 0; iter < 100; iter++) {
+    double linear = 2.0 * chi + 1.0 - molarVolumeRatio;
+    double discriminant = linear * linear - 8.0 * chi;
+    if (discriminant < 0.0 || linear <= 0.0) {
+      return 1.0;
+    }
+    // numerically stable form of the smaller root
+    double maximum = 2.0 / (linear + Math.sqrt(discriminant));
+    if (!(maximum < 1.0) || solubilityResidual(maximum, chi, molarVolumeRatio) < 0.0) {
+      return 1.0;
+    }
+    double low = 1.0e-300;
+    double high = maximum;
+    for (int iter = 0; iter < 2000; iter++) {
       double mid = Math.sqrt(low * high);
       if (solubilityResidual(mid, chi, molarVolumeRatio) >= 0.0) {
         high = mid;
@@ -542,31 +537,25 @@ public class FloryHugginsAsphalteneModel {
   }
 
   /**
-   * Checks whether the precipitated amount exceeds the onset detection threshold.
-   *
-   * @param pressure pressure (bara)
-   * @param temperature temperature (K)
-   * @return true when asphaltene precipitation is detectable, false when stable or when the flash failed
-   */
-  private boolean isPrecipitating(double pressure, double temperature) {
-    double precipitated = calculatePrecipitatedFraction(pressure, temperature);
-    return !Double.isNaN(precipitated) && precipitated > onsetDetectionThreshold;
-  }
-
-  /**
    * Refines a pressure where the precipitation state changes by bisection.
    *
    * @param stablePressure pressure where no precipitation is detected (bara)
    * @param unstablePressure pressure where precipitation is detected (bara)
    * @param temperature temperature (K)
-   * @return pressure of the transition (bara)
+   * @return pressure of the transition (bara); if a flash fails during refinement, the midpoint of the last bracket
    */
   private double bisectOnset(double stablePressure, double unstablePressure, double temperature) {
     double stable = stablePressure;
     double unstable = unstablePressure;
     for (int i = 0; i < 20 && Math.abs(stable - unstable) > 1.0e-3; i++) {
       double mid = (stable + unstable) / 2.0;
-      if (isPrecipitating(mid, temperature)) {
+      double precipitated = calculatePrecipitatedFraction(mid, temperature);
+      if (Double.isNaN(precipitated)) {
+        logger.warn("Flash failed at {} bara during onset refinement; onset known within {} bar", mid,
+            Math.abs(stable - unstable));
+        break;
+      }
+      if (precipitated > onsetDetectionThreshold) {
         unstable = mid;
       } else {
         stable = mid;
@@ -616,12 +605,19 @@ public class FloryHugginsAsphalteneModel {
     }
     double previousP = startPressure;
     double onsetP = Double.NaN;
+    boolean stableFound = false;
     for (double p = startPressure; p >= minPressure; p -= pressureSearchStep) {
-      if (isPrecipitating(p, temperature)) {
-        onsetP = previousP > p ? bisectOnset(previousP, p, temperature) : p;
+      double precipitated = calculatePrecipitatedFraction(p, temperature);
+      if (Double.isNaN(precipitated)) {
+        // a failed flash is neither stable nor unstable and must not bracket the onset
+        continue;
+      }
+      if (precipitated > onsetDetectionThreshold) {
+        onsetP = stableFound ? bisectOnset(previousP, p, temperature) : p;
         break;
       }
       previousP = p;
+      stableFound = true;
     }
 
     // If onset is found at very low pressure (near minP), it is likely a numerical artifact.
@@ -654,11 +650,16 @@ public class FloryHugginsAsphalteneModel {
     }
     double previousP = Double.NaN;
     for (double p = upperOnset - pressureSearchStep; p >= minPressure; p -= pressureSearchStep) {
-      if (isPrecipitating(p, temperature)) {
+      double precipitated = calculatePrecipitatedFraction(p, temperature);
+      if (Double.isNaN(precipitated)) {
+        // a failed flash is not evidence of redissolution
+        continue;
+      }
+      if (precipitated > onsetDetectionThreshold) {
         previousP = p;
       } else if (!Double.isNaN(previousP)) {
         return bisectOnset(p, previousP, temperature);
-      } else if (!Double.isNaN(calculatePrecipitatedFraction(p, temperature))) {
+      } else {
         // stable directly below the upper onset: no resolvable precipitation window
         return Double.NaN;
       }
@@ -677,8 +678,9 @@ public class FloryHugginsAsphalteneModel {
    *
    * @param temperature temperature of the measured onset (K)
    * @param onsetPressure measured upper onset pressure (bara)
-   * @return required asphaltene solubility parameter at {@code temperature} (MPa^0.5), or NaN when the flash fails or
-   * the oil would dissolve the asphaltene for any solubility parameter
+   * @return required asphaltene solubility parameter at {@code temperature} (MPa^0.5), or NaN when the flash fails, the
+   * oil would dissolve the asphaltene for any solubility parameter, or the asphaltene content is beyond the dilute
+   * solubility branch
    * @throws IllegalStateException if no fluid is set or the asphaltene weight fraction does not exceed the onset
    * detection threshold
    */
@@ -705,8 +707,10 @@ public class FloryHugginsAsphalteneModel {
     }
     double dilute = solveDiluteRoot(chi, molarVolumeRatio);
     if (Math.abs(dilute - phi) > 1.0e-6 * phi) {
+      // the asphaltene content is not on the dilute branch, so the precipitation calculation would not reproduce it
       logger.warn("Asphaltene content is beyond the dilute Flory-Huggins branch at P={} bara, T={} K", onsetPressure,
           temperature);
+      return Double.NaN;
     }
     double gap = Math.sqrt(chi * R_GAS * temperature / (asphaltMolarVolume * 1.0e-6)) / 1.0e3;
     return calculateLiquidSolubilityParameter(oilDensity) + gap;
@@ -784,7 +788,7 @@ public class FloryHugginsAsphalteneModel {
       sxx += (temperatures[i] - meanT) * (temperatures[i] - meanT);
       sxy += (temperatures[i] - meanT) * (required[i] - meanDelta);
     }
-    if (sxx > 1.0) {
+    if (sxx > 1.0e-8) {
       solubilityParameterTemperatureCoefficient = sxy / sxx;
     }
     asphalteneSolubilityParameter = meanDelta;

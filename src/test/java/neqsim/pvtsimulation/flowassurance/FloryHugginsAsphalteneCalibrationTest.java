@@ -71,6 +71,39 @@ class FloryHugginsAsphalteneCalibrationTest {
   }
 
   /**
+   * Close to the critical point the solubility limit is still found (chi = 2.455 at equal molar volumes has roots that
+   * a coarse grid misses).
+   */
+  @Test
+  void nearCriticalSolubilityLimitIsFound() {
+    FloryHugginsAsphalteneModel model = newModel();
+    double molarVolume = model.getAsphaltMolarVolume();
+    double chiTarget = 2.45542;
+    double gap = Math.sqrt(chiTarget * 8.314 * 373.15 / (molarVolume * 1.0e-6)) / 1.0e3;
+    double deltaLiquid = model.getAsphalteneSolubilityParameter() - gap;
+    double phi = model.calculateMaxDissolvedFraction(deltaLiquid, molarVolume, 373.15);
+    assertTrue(phi > 0.2 && phi < 0.29, "expected the dilute root near 0.28 but got " + phi);
+    double chi = model.calculateChiParameter(deltaLiquid, 373.15);
+    assertEquals(0.0, Math.log(phi) + chi * (1.0 - phi) * (1.0 - phi), 1.0e-9);
+  }
+
+  /**
+   * Two measurements one kelvin apart still give a fitted temperature coefficient.
+   */
+  @Test
+  void closeTemperaturesStillFitCoefficient() {
+    FloryHugginsAsphalteneModel truth = newModel();
+    truth.setAsphalteneSolubilityParameter(19.6);
+    truth.setSolubilityParameterTemperatureDependence(353.15, -0.02);
+    double[] temperatures = {353.15, 354.15};
+    double[] onsets = {truth.calculateOnsetPressure(353.15, 500.0, 1.0),
+        truth.calculateOnsetPressure(354.15, 500.0, 1.0)};
+    FloryHugginsAsphalteneModel fitted = newModel();
+    FloryHugginsAsphalteneModel.OnsetFitResult result = fitted.fitToOnsetData(temperatures, onsets);
+    assertEquals(-0.02, result.getTemperatureCoefficient(), 2.0e-3);
+  }
+
+  /**
    * Repeated SARA configuration must not accumulate the solubility parameter correction.
    */
   @Test

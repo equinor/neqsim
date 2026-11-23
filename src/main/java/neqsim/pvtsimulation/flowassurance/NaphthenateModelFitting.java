@@ -157,9 +157,11 @@ public class NaphthenateModelFitting {
    *
    * @param observation observation to evaluate
    * @param values trial values of the fitted parameters
-   * @return model value in the unit of the observation type
+   * @param extrapolateOnset true to return a parameter-dependent value above pH 14 when the calcium soap onset is not
+   * reached, so that the search has a slope towards parameters that give an onset
+   * @return model value in the unit of the observation type, NaN when the model has no value
    */
-  private double calculate(Observation observation, double[] values) {
+  private double calculate(Observation observation, double[] values, boolean extrapolateOnset) {
     NaphthenatePrecipitationModel model = observation.scenario;
     for (int i = 0; i < values.length; i++) {
       model.setParameter(fitParameters.get(i), values[i]);
@@ -168,7 +170,13 @@ public class NaphthenateModelFitting {
     case ARN_ONSET_PH:
       return model.calculateArnOnsetPH();
     case CALCIUM_SOAP_ONSET_PH:
-      return model.calculateCalciumSoapOnsetPH();
+      double onset = model.calculateCalciumSoapOnsetPH();
+      if (Double.isNaN(onset) && extrapolateOnset) {
+        double saturation = model.calculateCalciumSoapSaturationRatio(14.0);
+        // the saturation ratio rises by about two decades per pH unit
+        return saturation > 0.0 ? 14.0 - 0.5 * Math.log10(saturation) : Double.NaN;
+      }
+      return onset;
     default:
       break;
     }
@@ -197,9 +205,9 @@ public class NaphthenateModelFitting {
     double[] result = new double[observations.size()];
     for (int i = 0; i < result.length; i++) {
       Observation observation = observations.get(i);
-      double calculated = calculate(observation, values);
+      double calculated = calculate(observation, values, true);
       if (Double.isNaN(calculated)) {
-        // an onset that the trial parameters do not reach is penalised instead of stopping the search
+        // no model value at all (for example an ARN onset without ARN): large penalty, rejected after the search
         calculated = observation.measured + 100.0 * observation.standardDeviation;
       }
       result[i] = (calculated - observation.measured) / observation.standardDeviation;
@@ -245,7 +253,9 @@ public class NaphthenateModelFitting {
   /**
    * Runs the regression.
    *
-   * @return true when the fit completed with finite parameters
+   * @return true when the fit completed and the model gives a value for every observation; false when an observed
+   * quantity cannot be reproduced at all (for example an onset pH that the fitted model never reaches), in which case
+   * the result is not available and nothing can be applied
    * @throws IllegalStateException if no parameter is selected or there are fewer observations than parameters
    */
   public boolean solve() {
@@ -311,7 +321,12 @@ public class NaphthenateModelFitting {
     chiSquare = cost;
     calculatedValues = new double[observations.size()];
     for (int i = 0; i < calculatedValues.length; i++) {
-      calculatedValues[i] = calculate(observations.get(i), values);
+      calculatedValues[i] = calculate(observations.get(i), values, false);
+      if (Double.isNaN(calculatedValues[i])) {
+        logger.warn("Naphthenate model fit rejected: observation {} ({}) has no model value", i,
+            observations.get(i).type);
+        return false;
+      }
     }
     standardErrors = calculateStandardErrors(values, residual);
     solved = true;

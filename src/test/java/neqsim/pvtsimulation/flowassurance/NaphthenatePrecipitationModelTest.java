@@ -143,6 +143,62 @@ class NaphthenatePrecipitationModelTest {
   }
 
   /**
+   * Non-finite input is rejected instead of being reported as no risk.
+   */
+  @Test
+  void nonFiniteInputIsRejected() {
+    final NaphthenatePrecipitationModel nanAcid = referenceCase();
+    nanAcid.setTotalAcidNumber(Double.NaN);
+    nanAcid.setWaterPH(7.0);
+    assertThrows(IllegalStateException.class, () -> nanAcid.run());
+    final NaphthenatePrecipitationModel nanPH = referenceCase();
+    nanPH.setWaterPH(Double.NaN);
+    assertThrows(IllegalStateException.class, () -> nanPH.run());
+  }
+
+  /**
+   * With calcium limiting, the two salts share the calcium and both end at saturation.
+   */
+  @Test
+  void calciumLimitedCaseReachesEquilibrium() {
+    NaphthenatePrecipitationModel model = referenceCase();
+    model.setWaterCut(0.01);
+    model.setWaterComposition(100.0, 10000.0, 500.0);
+    model.setTotalAcidNumber(5.0);
+    model.setArnConcentration(20.0);
+    model.setWaterPH(9.0);
+    model.run();
+    assertTrue(model.getPrecipitatedCalciumSoap() > 0.0);
+    assertTrue(model.getPrecipitatedArnFraction() > 0.0);
+    assertEquals(1.0, model.getEquilibriumCalciumSoapSaturationRatio(), 1.0e-6);
+    assertEquals(1.0, model.getEquilibriumArnSaturationRatio(), 1.0e-6);
+    assertTrue(model.getFreeCalciumConcentration() < 100.0);
+  }
+
+  /**
+   * A soap onset that the starting parameters do not reach is still fitted, and an observation the model cannot
+   * reproduce makes the fit fail instead of marking a model as calibrated.
+   */
+  @Test
+  void fittingHandlesUnreachedOnset() {
+    NaphthenatePrecipitationModel lowAcid = referenceCase();
+    lowAcid.setTotalAcidNumber(0.01);
+    lowAcid.setArnConcentration(0.0);
+    assertTrue(Double.isNaN(lowAcid.calculateCalciumSoapOnsetPH()));
+    NaphthenateModelFitting fitting = new NaphthenateModelFitting();
+    fitting.addObservation(lowAcid, ObservationType.CALCIUM_SOAP_ONSET_PH, 9.0, 0.1);
+    fitting.addFitParameter(Parameter.PKSP_CALCIUM_SOAP);
+    assertTrue(fitting.solve());
+    assertEquals(9.0, fitting.getCalculatedValues()[0], 0.01);
+
+    final NaphthenateModelFitting impossible = new NaphthenateModelFitting();
+    impossible.addObservation(lowAcid, ObservationType.ARN_ONSET_PH, 6.0, 0.1);
+    impossible.addFitParameter(Parameter.PK_ARN);
+    assertFalse(impossible.solve());
+    assertThrows(IllegalStateException.class, () -> impossible.applyTo(referenceCase()));
+  }
+
+  /**
    * The JSON report holds results and flags uncalibrated parameters.
    */
   @Test
