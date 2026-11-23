@@ -69,6 +69,19 @@ DNV conformity.
 
 **Output requirement:** Include `standards_applied` array in results.json with code, scope, and status for each standard checked. Status must be PASS/FAIL/INFO/N/A.
 
+## Hydrate strategy gate (mandatory before choosing MEG)
+
+Do not select continuous MEG (or size a MEG loop) until you have checked the host: is there an MEG regeneration plant,
+an existing continuous MEG injection with spare capacity (storage, pumps, MEG line or umbilical service line), and what
+batch shut-in injection capability exists (tank, pump, supply route, disposal of used MEG)? Ask the user or read the host
+P&IDs/equipment lists; if unconfirmed record a data gap and treat continuous MEG as not available. If MEG is selected
+(continuous or batch), evaluate the host topside: utilisation of the existing capacity (regeneration, storage, pumps, MEG
+line/umbilical service line) or the installation required (regeneration package, storage, pumps, duty, power, space,
+weight, tie-in points, cost class). Then compare the
+non-continuous options with numbers: flowing margin and minimum rate, depressurisation, displacement/flush, insulation and
+cooldown (no-touch) time, and batch MEG/methanol/LDHI at shut-in and restart. Details: skill `neqsim-flow-assurance`,
+section "Host inhibitor-availability gate".
+
 ## Hydrate Prediction
 ```java
 SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 10, 100.0);
