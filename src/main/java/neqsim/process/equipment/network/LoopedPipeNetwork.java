@@ -21,9 +21,15 @@ import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.PipeGray;
+import neqsim.process.equipment.pipeline.PipeHagedornBrown;
+import neqsim.process.equipment.pipeline.PipeMukherjeeAndBrill;
+import neqsim.process.equipment.pipeline.Pipeline;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.VfpTable;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.Stream;
@@ -160,6 +166,32 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     /** Existing mechanistic two-fluid steady-state model; network transients are not implied. */
     TWO_FLUID
+  }
+
+  /**
+   * Vertical lift performance (VLP) model used by {@link NetworkElementType#TUBING} elements.
+   *
+   * <p>
+   * {@link #SIMPLIFIED} keeps the legacy homogeneous gravity plus Darcy friction model. The correlation options run the
+   * corresponding NeqSim multiphase pipe class over the tubing, flashing the fluid along the well, so liquid holdup and
+   * slip are included. With a rigorous model, gas lift is modelled by mixing the lift gas into the tubing at the
+   * injection depth instead of by the legacy fixed head-reduction factor. {@link #VFP_TABLE} interpolates an Eclipse
+   * VFPPROD table, which is how a well model prepared in another lift-curve tool is used in the network.
+   * </p>
+   */
+  public enum TubingModel {
+    /** Legacy homogeneous gravity plus Darcy-Weisbach friction model (default). */
+    SIMPLIFIED,
+    /** Beggs and Brill multiphase correlation ({@code PipeBeggsAndBrills}). */
+    BEGGS_BRILL,
+    /** Hagedorn and Brown vertical oil-well correlation ({@code PipeHagedornBrown}). */
+    HAGEDORN_BROWN,
+    /** Gray vertical gas/condensate-well correlation ({@code PipeGray}). */
+    GRAY,
+    /** Mukherjee and Brill inclined multiphase correlation ({@code PipeMukherjeeAndBrill}). */
+    MUKHERJEE_BRILL,
+    /** Interpolated Eclipse VFPPROD lift-curve table ({@code VfpTable}). */
+    VFP_TABLE
   }
 
   /**
@@ -642,6 +674,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     // Tubing parameters (for TUBING element type)
     private double tubingInclination = 90.0; // degrees from horizontal (90 = vertical)
     private int tubingSegments = 10; // number of discretization segments
+    private TubingModel tubingModel = TubingModel.SIMPLIFIED;
+    private VfpTable tubingVfpTable;
+    private double gasLiftInjectionDepthM = Double.NaN; // measured depth below tubing top; NaN = tubing bottom
+    private String tubingModelStatus = "NOT_RUN";
 
     // Multiphase pipe parameters (for MULTIPHASE_PIPE element type)
     private int multiphaseSegments = 10; // number of calculation segments
@@ -1679,6 +1715,94 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     /**
+     * Get the vertical lift performance model of this tubing element.
+     *
+     * @return tubing model, {@link TubingModel#SIMPLIFIED} by default
+     */
+    public TubingModel getTubingModel() {
+      return tubingModel;
+    }
+
+    /**
+     * Set the vertical lift performance model of this tubing element.
+     *
+     * @param model tubing model; {@link TubingModel#VFP_TABLE} also needs {@link #setTubingVfpTable(VfpTable)}
+     * @throws IllegalArgumentException if model is null
+     */
+    public void setTubingModel(TubingModel model) {
+      if (model == null) {
+        throw new IllegalArgumentException("Tubing model must not be null");
+      }
+      this.tubingModel = model;
+    }
+
+    /**
+     * Get the VFPPROD table used by a {@link TubingModel#VFP_TABLE} tubing element.
+     *
+     * @return the table, or null if none is set
+     */
+    public VfpTable getTubingVfpTable() {
+      return tubingVfpTable;
+    }
+
+    /**
+     * Set the VFPPROD table and switch the element to {@link TubingModel#VFP_TABLE}.
+     *
+     * @param table validated VFPPROD table (BHP as a function of gas rate, THP, WGR and GOR/OGR)
+     * @throws IllegalArgumentException if table is null
+     */
+    public void setTubingVfpTable(VfpTable table) {
+      if (table == null) {
+        throw new IllegalArgumentException("VFP table must not be null");
+      }
+      this.tubingVfpTable = table;
+      this.tubingModel = TubingModel.VFP_TABLE;
+    }
+
+    /**
+     * Get the gas-lift injection depth, measured from the tubing top (wellhead) along the tubing.
+     *
+     * @return injection depth in m, or NaN when lift gas enters at the tubing bottom
+     */
+    public double getGasLiftInjectionDepth() {
+      return gasLiftInjectionDepthM;
+    }
+
+    /**
+     * Set the gas-lift injection (operating valve) depth, measured from the tubing top along the tubing. Used only by
+     * rigorous tubing models; the tubing below this depth carries reservoir fluid only.
+     *
+     * @param depthM injection depth in m, between zero and the tubing length; NaN means the tubing bottom
+     * @throws IllegalArgumentException if depthM is negative or infinite
+     */
+    public void setGasLiftInjectionDepth(double depthM) {
+      if (!Double.isNaN(depthM) && (depthM < 0.0 || Double.isInfinite(depthM))) {
+        throw new IllegalArgumentException("Gas-lift injection depth must be finite and non-negative");
+      }
+      this.gasLiftInjectionDepthM = depthM;
+    }
+
+    /**
+     * Get the evidence of the last tubing evaluation, for example {@code TUBING_HAGEDORN_BROWN_GASLIFT},
+     * {@code TUBING_VFP_TABLE_EXTRAPOLATED} or {@code TUBING_GRAY_FALLBACK_SIMPLIFIED}.
+     *
+     * @return tubing model status
+     */
+    public String getTubingModelStatus() {
+      return tubingModelStatus;
+    }
+
+    /**
+     * Check whether this element is a tubing element with a correlation or table VLP model. For such elements gas lift
+     * is part of the VLP and the legacy fixed gas-lift head reduction is not applied.
+     *
+     * @return true for a tubing element with a non-simplified tubing model
+     */
+    public boolean usesRigorousTubingModel() {
+      return elementType == NetworkElementType.TUBING && tubingModel != TubingModel.SIMPLIFIED;
+    }
+
+    /**
      * Get number of multiphase pipe segments.
      *
      * @return number of segments
@@ -2400,6 +2524,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   private double maxResidual = 0.0;
   private boolean converged = false;
   private SystemInterface fluidTemplate;
+
+  /** Optional lift-gas composition for rigorous gas-lifted tubing; null uses the produced gas phase. */
+  private SystemInterface liftGasFluid;
   private double massBalanceError = 0.0;
 
   // Stream integration for ProcessSystem connectivity
@@ -2593,6 +2720,29 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    */
   public SystemInterface getFluidTemplate() {
     return fluidTemplate;
+  }
+
+  /**
+   * Set the lift-gas fluid mixed into rigorous gas-lifted tubing elements.
+   *
+   * <p>
+   * The composition is used; pressure, temperature and rate are set from the tubing state and the element gas-lift
+   * rate. If not set, the gas phase of the network fluid at the injection conditions is used.
+   * </p>
+   *
+   * @param liftGas lift-gas fluid with a mixing rule, or null to use the produced gas
+   */
+  public void setLiftGasFluid(SystemInterface liftGas) {
+    this.liftGasFluid = liftGas;
+  }
+
+  /**
+   * Get the lift-gas fluid used by rigorous gas-lifted tubing elements.
+   *
+   * @return lift-gas fluid, or null when the produced gas phase is used
+   */
+  public SystemInterface getLiftGasFluid() {
+    return liftGasFluid;
   }
 
   /**
@@ -2924,6 +3074,58 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     NetworkPipe element = addPipe(bottomNode, topNode, elementName, lengthM, diameterM);
     element.setElementType(NetworkElementType.TUBING);
     element.setTubingInclination(inclinationDeg);
+    return element;
+  }
+
+  /**
+   * Add a wellbore tubing element with a selected vertical lift performance correlation.
+   *
+   * <p>
+   * This is the network equivalent of a well model with a VLP correlation: the IPR element gives the inflow, this
+   * element gives the lift, and the Newton-Raphson solver finds the operating point together with the rest of the
+   * gathering network.
+   * </p>
+   *
+   * @param bottomNode bottomhole node name (higher pressure)
+   * @param topNode wellhead node name (lower pressure)
+   * @param elementName element name
+   * @param lengthM tubing measured length in meters
+   * @param diameterM tubing inner diameter in meters
+   * @param inclinationDeg inclination from horizontal (90 = vertical)
+   * @param model VLP model; use {@link #addTubingVfp} for {@link TubingModel#VFP_TABLE}
+   * @return the created element
+   * @throws IllegalArgumentException if model is null or {@link TubingModel#VFP_TABLE}
+   */
+  public NetworkPipe addTubing(String bottomNode, String topNode, String elementName, double lengthM, double diameterM,
+      double inclinationDeg, TubingModel model) {
+    if (model == TubingModel.VFP_TABLE) {
+      throw new IllegalArgumentException("Use addTubingVfp to add a VFP-table tubing element");
+    }
+    NetworkPipe element = addTubing(bottomNode, topNode, elementName, lengthM, diameterM, inclinationDeg);
+    element.setTubingModel(model);
+    return element;
+  }
+
+  /**
+   * Add a wellbore element whose bottomhole pressure is interpolated from an Eclipse VFPPROD table.
+   *
+   * <p>
+   * The trial mass rate is converted to standard gas rate, water-gas ratio and GOR/OGR with the network fluid flashed
+   * at standard conditions (15 &deg;C, 1.01325 bara); the bottomhole pressure is then read at the downstream (tubing
+   * head) node pressure. Inside the table the interpolation is multilinear. Outside the rate and THP axes the
+   * edge-segment slope is extrapolated linearly, so the Newton solver keeps a useful derivative; WGR and gas ratio are
+   * held at the nearest axis value. Either case is recorded in {@link NetworkPipe#getTubingModelStatus()}.
+   * </p>
+   *
+   * @param bottomNode bottomhole node name
+   * @param topNode wellhead node name
+   * @param elementName element name
+   * @param table validated VFPPROD table, for example from {@link VfpTable#fromFile(String)}
+   * @return the created element
+   */
+  public NetworkPipe addTubingVfp(String bottomNode, String topNode, String elementName, VfpTable table) {
+    NetworkPipe element = addTubing(bottomNode, topNode, elementName, 1.0, 0.1, 90.0);
+    element.setTubingVfpTable(table);
     return element;
   }
 
@@ -4614,11 +4816,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double density = fluid.getDensity("kg/m3");
 
       if (liftType == ArtificialLiftType.GAS_LIFT && pipe.getGasLiftRate() > 0) {
-        // Gas lift reduces hydrostatic head by lightening the fluid column
-        // Effective: reduces head loss by ~20-50% depending on GLR
-        double glr = pipe.getGasLiftRate() / Math.max(flowKgs, 1e-6);
-        double reductionFactor = Math.min(0.5, glr * 2.0); // up to 50% reduction
-        boostPa = Math.abs(baseHeadLoss) * reductionFactor;
+        if (!pipe.usesRigorousTubingModel()) {
+          // Legacy screening factor: gas lift reduces head loss by up to 50 % depending on GLR.
+          // Rigorous tubing models mix the lift gas into the VLP calculation instead.
+          double glr = pipe.getGasLiftRate() / Math.max(flowKgs, 1e-6);
+          double reductionFactor = Math.min(0.5, glr * 2.0);
+          boostPa = Math.abs(baseHeadLoss) * reductionFactor;
+        }
       } else if (pipe.getEspPower() > 0 && pipe.getEspEfficiency() > 0) {
         // ESP/jet pump/rod pump: dP_boost = Power * efficiency / Q_volumetric
         double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
@@ -5130,7 +5334,30 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Calculate head loss for wellbore tubing (VLP) element.
+   * Calculate head loss for wellbore tubing (VLP) element, dispatching on the element tubing model.
+   *
+   * @param pipe the tubing element
+   * @param fluid fluid properties
+   * @return head loss in Pa (positive = pressure drop bottom-to-top)
+   */
+  private double calculateHeadLossTubing(NetworkPipe pipe, SystemInterface fluid) {
+    TubingModel model = pipe.getTubingModel();
+    if (model == TubingModel.SIMPLIFIED) {
+      pipe.tubingModelStatus = "TUBING_SIMPLIFIED";
+      return calculateHeadLossTubingSimplified(pipe, fluid);
+    }
+    if (pipe.getFlowRate() < -1.0e-10) {
+      pipe.tubingModelStatus = "TUBING_" + model.name() + "_REVERSE_FLOW_SIMPLIFIED";
+      return calculateHeadLossTubingSimplified(pipe, fluid);
+    }
+    if (model == TubingModel.VFP_TABLE) {
+      return calculateHeadLossTubingVfp(pipe, fluid);
+    }
+    return calculateHeadLossTubingCorrelation(pipe, fluid);
+  }
+
+  /**
+   * Calculate head loss for wellbore tubing with the legacy simplified homogeneous model.
    *
    * <p>
    * Simplified multiphase vertical lift model with gravity and friction components: dP = dP_gravity + dP_friction = rho
@@ -5141,7 +5368,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param fluid fluid properties
    * @return head loss in Pa (positive = pressure drop bottom-to-top)
    */
-  private double calculateHeadLossTubing(NetworkPipe pipe, SystemInterface fluid) {
+  private double calculateHeadLossTubingSimplified(NetworkPipe pipe, SystemInterface fluid) {
     double flowKgs = Math.abs(pipe.getFlowRate());
     double density = fluid.getDensity("kg/m3");
     double viscosity = fluid.getViscosity("kg/msec");
@@ -5178,6 +5405,376 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     double totalLoss = gravityLoss + frictionLoss;
     return Math.signum(pipe.getFlowRate()) * totalLoss;
+  }
+
+  /**
+   * Calculate tubing head loss with a NeqSim multiphase correlation, including gas lift mixed in at the injection
+   * depth.
+   *
+   * <p>
+   * The reservoir fluid enters at the bottomhole node pressure and temperature. If gas lift is active the tubing is
+   * split at the injection depth: the lower section carries reservoir fluid only, the lift gas is mixed in, and the
+   * upper section carries the mixture. The lift gas is not added to downstream network elements; model it as a separate
+   * source at the wellhead if the flowline must carry it. On a calculation failure the simplified model is used and the
+   * fallback is recorded in {@link NetworkPipe#getTubingModelStatus()}.
+   * </p>
+   *
+   * @param pipe the tubing element, flowing bottom to top
+   * @param fluid physical fluid at the bottomhole node
+   * @return head loss in Pa (positive = pressure drop bottom-to-top)
+   */
+  private double calculateHeadLossTubingCorrelation(NetworkPipe pipe, SystemInterface fluid) {
+    TubingModel model = pipe.getTubingModel();
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    if (flowKgs < 1.0e-10) {
+      pipe.tubingModelStatus = "TUBING_" + model.name() + "_ZERO_FLOW_STATIC";
+      return calculateHeadLossTubingSimplified(pipe, fluid);
+    }
+    try {
+      NetworkNode bottom = nodes.get(pipe.getFromNode());
+      SystemInterface inletFluid = fluid.clone();
+      inletFluid.setPressure(bottom.getPressure() / 1.0e5, "bara");
+      inletFluid.setTemperature(bottom.getTemperature(), "K");
+      StreamInterface current = new Stream(pipe.getName() + "_vlpInlet", inletFluid);
+      current.setFlowRate(flowKgs * 3600.0, "kg/hr");
+      current.run();
+      double inletPressureBar = current.getPressure("bara");
+
+      double length = pipe.getLength();
+      double sinTheta = Math.sin(Math.toRadians(pipe.getTubingInclination()));
+      boolean gasLift = pipe.getArtificialLiftType() == ArtificialLiftType.GAS_LIFT && pipe.getGasLiftRate() > 0.0;
+      double lowerLength = length;
+      if (gasLift) {
+        double depth = pipe.getGasLiftInjectionDepth();
+        depth = Double.isNaN(depth) ? length : Math.min(depth, length);
+        lowerLength = length - depth;
+      }
+      if (lowerLength > 1.0e-6) {
+        current = runTubingSection(pipe, current, lowerLength, lowerLength * sinTheta, "_vlpLower");
+      }
+      if (gasLift) {
+        current = mixLiftGas(pipe, current, pipe.getGasLiftRate());
+        double upperLength = length - lowerLength;
+        if (upperLength > 1.0e-6) {
+          current = runTubingSection(pipe, current, upperLength, upperLength * sinTheta, "_vlpUpper");
+        }
+      }
+      double dPbar = inletPressureBar - current.getPressure("bara");
+
+      double density = fluid.getDensity("kg/m3");
+      double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+      pipe.setVelocity(flowKgs / Math.max(density * area, 1.0e-12));
+      pipe.setFlowRegime("VLP-" + model.name());
+      pipe.setOutletTemperature(current.getTemperature("K"));
+      pipe.tubingModelStatus = "TUBING_" + model.name() + (gasLift ? "_GASLIFT" : "");
+      return dPbar * 1.0e5;
+    } catch (Exception ex) {
+      logger.warn("Tubing correlation {} failed for {}, falling back to simplified model: {}", model, pipe.getName(),
+          ex.getMessage());
+      pipe.tubingModelStatus = "TUBING_" + model.name() + "_FALLBACK_SIMPLIFIED";
+      return calculateHeadLossTubingSimplified(pipe, fluid);
+    }
+  }
+
+  /**
+   * Run one tubing section with the correlation selected on the element.
+   *
+   * @param pipe tubing element holding diameter, roughness, segments and model
+   * @param inlet section inlet stream
+   * @param lengthM section length in m
+   * @param riseM section elevation gain in m (positive upward)
+   * @param suffix name suffix of the internal pipe
+   * @return section outlet stream
+   */
+  private StreamInterface runTubingSection(NetworkPipe pipe, StreamInterface inlet, double lengthM, double riseM,
+      String suffix) {
+    String name = pipe.getName() + suffix;
+    Pipeline section;
+    switch (pipe.getTubingModel()) {
+    case BEGGS_BRILL:
+      PipeBeggsAndBrills beggsBrill = new PipeBeggsAndBrills(name, inlet);
+      double sine = Math.max(-1.0, Math.min(1.0, riseM / lengthM));
+      beggsBrill.setAngle(Math.toDegrees(Math.asin(sine)));
+      section = beggsBrill;
+      break;
+    case HAGEDORN_BROWN:
+      section = new PipeHagedornBrown(name, inlet);
+      break;
+    case GRAY:
+      section = new PipeGray(name, inlet);
+      break;
+    case MUKHERJEE_BRILL:
+      section = new PipeMukherjeeAndBrill(name, inlet);
+      break;
+    default:
+      throw new IllegalStateException("No tubing correlation for model " + pipe.getTubingModel());
+    }
+    section.setLength(lengthM);
+    section.setDiameter(pipe.getDiameter());
+    section.setPipeWallRoughness(pipe.getRoughness());
+    section.setElevation(riseM);
+    int increments = (int) Math
+        .ceil(Math.max(1, pipe.getTubingSegments()) * lengthM / Math.max(pipe.getLength(), 1e-9));
+    section.setNumberOfIncrements(Math.max(1, increments));
+    section.run();
+    return section.getOutletStream();
+  }
+
+  /**
+   * Mix lift gas into a tubing stream at the stream pressure and temperature.
+   *
+   * @param pipe gas-lifted tubing element
+   * @param tubingStream tubing stream at the injection point
+   * @param liftKgs lift-gas mass rate in kg/s
+   * @return mixed stream
+   * @throws IllegalStateException if no lift-gas fluid is set and the tubing fluid has no gas phase
+   */
+  private StreamInterface mixLiftGas(NetworkPipe pipe, StreamInterface tubingStream, double liftKgs) {
+    SystemInterface gas;
+    if (liftGasFluid != null) {
+      gas = liftGasFluid.clone();
+    } else {
+      SystemInterface produced = tubingStream.getFluid().clone();
+      new ThermodynamicOperations(produced).TPflash();
+      if (!produced.hasPhaseType("gas")) {
+        throw new IllegalStateException(
+            "No gas phase at the injection point of " + pipe.getName() + "; call setLiftGasFluid(...)");
+      }
+      gas = produced.phaseToSystem("gas");
+    }
+    gas.setPressure(tubingStream.getPressure("bara"), "bara");
+    gas.setTemperature(tubingStream.getTemperature("K"), "K");
+    Stream liftStream = new Stream(pipe.getName() + "_liftGas", gas);
+    liftStream.setFlowRate(liftKgs * 3600.0, "kg/hr");
+    liftStream.run();
+    Mixer mixer = new Mixer(pipe.getName() + "_liftMixer");
+    mixer.addStream(tubingStream);
+    mixer.addStream(liftStream);
+    mixer.run();
+    return mixer.getOutletStream();
+  }
+
+  /**
+   * Calculate tubing head loss from the element VFPPROD table.
+   *
+   * @param pipe VFP tubing element, flowing bottom to top
+   * @param fluid physical fluid used to convert mass rate to standard rates
+   * @return head loss in Pa (bottomhole pressure minus tubing-head pressure)
+   */
+  private double calculateHeadLossTubingVfp(NetworkPipe pipe, SystemInterface fluid) {
+    VfpTable table = pipe.getTubingVfpTable();
+    if (table == null) {
+      throw new IllegalStateException("Tubing " + pipe.getName() + " uses VFP_TABLE but has no table");
+    }
+    double[] perKg = standardVolumesPerKg(fluid);
+    double flowKgs = Math.abs(pipe.getFlowRate());
+    double gasRate = flowKgs * 86400.0 * perKg[0];
+    double wgr = perKg[0] > 0.0 ? perKg[2] / perKg[0] : 0.0;
+    double gasRatio;
+    if ("GOR".equals(table.getGasRatioType())) {
+      gasRatio = perKg[1] > 0.0 ? perKg[0] / perKg[1] : Double.MAX_VALUE;
+    } else {
+      gasRatio = perKg[0] > 0.0 ? perKg[1] / perKg[0] : 0.0;
+    }
+    double thp = nodes.get(pipe.getToNode()).getPressure() / 1.0e5;
+    boolean[] adjusted = new boolean[1];
+    double wgrUsed = clampToAxis(table.getWaterRatioAxis(), wgr, adjusted);
+    double gasRatioUsed = clampToAxis(table.getGasRatioAxis(), gasRatio, adjusted);
+    double bhp = vfpInletPressureAlongRate(table, gasRate, thp, wgrUsed, gasRatioUsed, adjusted);
+    pipe.setFlowRegime("VLP-VFP_TABLE");
+    pipe.tubingModelStatus = adjusted[0] ? "TUBING_VFP_TABLE_EXTRAPOLATED" : "TUBING_VFP_TABLE";
+    return (bhp - thp) * 1.0e5;
+  }
+
+  /**
+   * Interpolate VFP BHP in rate, extrapolating linearly from the edge segment outside the rate axis.
+   *
+   * @param table VFPPROD table
+   * @param rate standard gas rate in Sm3/day
+   * @param thp tubing head pressure in bara
+   * @param wgr water-gas ratio inside the axis
+   * @param gasRatio gas ratio inside the axis
+   * @param adjusted set to true when extrapolating
+   * @return bottomhole pressure in bara
+   */
+  private static double vfpInletPressureAlongRate(VfpTable table, double rate, double thp, double wgr, double gasRatio,
+      boolean[] adjusted) {
+    double[] axis = table.getRateAxis("Sm3/day");
+    int edge = edgeSegment(axis, rate, adjusted);
+    if (edge < 0) {
+      return vfpInletPressureAlongThp(table, rate, thp, wgr, gasRatio, adjusted);
+    }
+    double low = vfpInletPressureAlongThp(table, axis[edge], thp, wgr, gasRatio, adjusted);
+    double high = vfpInletPressureAlongThp(table, axis[edge + 1], thp, wgr, gasRatio, adjusted);
+    return low + (rate - axis[edge]) * (high - low) / (axis[edge + 1] - axis[edge]);
+  }
+
+  /**
+   * Interpolate VFP BHP in THP, extrapolating linearly from the edge segment outside the THP axis.
+   *
+   * @param table VFPPROD table
+   * @param rate standard gas rate on the rate axis in Sm3/day
+   * @param thp tubing head pressure in bara
+   * @param wgr water-gas ratio inside the axis
+   * @param gasRatio gas ratio inside the axis
+   * @param adjusted set to true when extrapolating
+   * @return bottomhole pressure in bara
+   */
+  private static double vfpInletPressureAlongThp(VfpTable table, double rate, double thp, double wgr, double gasRatio,
+      boolean[] adjusted) {
+    double[] axis = table.getThpAxis("bara");
+    int edge = edgeSegment(axis, thp, adjusted);
+    if (edge < 0) {
+      return table.inletPressure(rate, thp, wgr, gasRatio, table.getAlq());
+    }
+    double low = table.inletPressure(rate, axis[edge], wgr, gasRatio, table.getAlq());
+    double high = table.inletPressure(rate, axis[edge + 1], wgr, gasRatio, table.getAlq());
+    return low + (thp - axis[edge]) * (high - low) / (axis[edge + 1] - axis[edge]);
+  }
+
+  /**
+   * Find the edge segment to extrapolate from when a value lies outside an axis.
+   *
+   * @param axis strictly increasing axis with at least two points
+   * @param value query value
+   * @param adjusted set to true when the value is outside the axis
+   * @return index of the lower point of the edge segment, or -1 when the value is inside the axis
+   * @throws IllegalArgumentException if an axis with one point is queried off its single value
+   */
+  private static int edgeSegment(double[] axis, double value, boolean[] adjusted) {
+    if (value >= axis[0] && value <= axis[axis.length - 1]) {
+      return -1;
+    }
+    if (axis.length < 2) {
+      throw new IllegalArgumentException("Cannot extrapolate a single-point VFP axis");
+    }
+    adjusted[0] = true;
+    return value < axis[0] ? 0 : axis.length - 2;
+  }
+
+  /**
+   * Hold a value at the nearest axis end.
+   *
+   * @param axis strictly increasing axis
+   * @param value query value
+   * @param adjusted set to true when the value is changed
+   * @return value inside the axis range
+   */
+  private static double clampToAxis(double[] axis, double value, boolean[] adjusted) {
+    double clamped = Math.max(axis[0], Math.min(axis[axis.length - 1], value));
+    if (clamped != value) {
+      adjusted[0] = true;
+    }
+    return clamped;
+  }
+
+  /**
+   * Standard-condition (15 &deg;C, 1.01325 bara) gas, oil and water volumes per kg of a fluid. Liquid volumes use phase
+   * mass over density so the volume translation applied to density is included.
+   *
+   * @param fluid fluid whose composition is converted
+   * @return {gas, oil, water} in Sm3/kg
+   */
+  private static double[] standardVolumesPerKg(SystemInterface fluid) {
+    SystemInterface standard = fluid.clone();
+    standard.setTemperature(288.15, "K");
+    standard.setPressure(1.01325, "bara");
+    new ThermodynamicOperations(standard).TPflash();
+    standard.initProperties();
+    double totalMass = 0.0;
+    double[] volumes = new double[3];
+    for (int i = 0; i < standard.getNumberOfPhases(); i++) {
+      neqsim.thermo.phase.PhaseInterface phase = standard.getPhase(i);
+      double mass = phase.getNumberOfMolesInPhase() * phase.getMolarMass();
+      totalMass += mass;
+      double volume = mass / phase.getDensity("kg/m3");
+      String type = phase.getPhaseTypeName();
+      if ("gas".equals(type)) {
+        volumes[0] += volume;
+      } else if ("aqueous".equals(type)) {
+        volumes[2] += volume;
+      } else {
+        volumes[1] += volume;
+      }
+    }
+    for (int i = 0; i < volumes.length; i++) {
+      volumes[i] /= totalMass;
+    }
+    return volumes;
+  }
+
+  /**
+   * Standard gas volume per kg of the standard-condition gas phase of a fluid, the lift-gas conversion basis.
+   *
+   * @param fluid lift-gas or produced fluid
+   * @return Sm3 gas per kg gas at 15 &deg;C and 1.01325 bara, or zero when there is no gas phase
+   */
+  private static double standardGasSm3PerKgOfGas(SystemInterface fluid) {
+    SystemInterface standard = fluid.clone();
+    standard.setTemperature(288.15, "K");
+    standard.setPressure(1.01325, "bara");
+    new ThermodynamicOperations(standard).TPflash();
+    standard.initProperties();
+    for (int i = 0; i < standard.getNumberOfPhases(); i++) {
+      if ("gas".equals(standard.getPhase(i).getPhaseTypeName())) {
+        return 1.0 / standard.getPhase(i).getDensity("kg/m3");
+      }
+    }
+    return 0.0;
+  }
+
+  /**
+   * Calculate the gas-lift performance response of one well in the solved network.
+   *
+   * <p>
+   * The network is re-solved for each lift-gas rate with the well's tubing in gas-lift mode, so back-pressure from the
+   * shared gathering system is included, unlike a single-well curve. The returned oil rates and the lift rates can be
+   * passed to {@code GasLiftPerformanceCurve(double[], double[])} for {@code GasLiftNetworkOptimizer}. The tubing lift
+   * settings are restored afterwards. Use a rigorous tubing model; the simplified model uses a screening factor.
+   * </p>
+   *
+   * @param tubingName name of the gas-lifted tubing element
+   * @param productionElementName element whose flow is the well production, for example the IPR element
+   * @param liftRatesSm3PerDay lift-gas rates in Sm3/day at 15 &deg;C and 1.01325 bara, strictly ascending
+   * @return stock-tank oil rate in Sm3/day for each lift rate (NaN where the network did not converge)
+   * @throws IllegalArgumentException if an element is missing or the rates are not strictly ascending
+   */
+  public double[] calculateGasLiftResponse(String tubingName, String productionElementName,
+      double[] liftRatesSm3PerDay) {
+    NetworkPipe tubing = pipes.get(tubingName);
+    if (tubing == null || pipes.get(productionElementName) == null) {
+      throw new IllegalArgumentException("Unknown element " + tubingName + " or " + productionElementName);
+    }
+    if (liftRatesSm3PerDay == null || liftRatesSm3PerDay.length == 0) {
+      throw new IllegalArgumentException("At least one lift rate is required");
+    }
+    for (int i = 0; i < liftRatesSm3PerDay.length; i++) {
+      if (liftRatesSm3PerDay[i] < 0.0 || (i > 0 && liftRatesSm3PerDay[i] <= liftRatesSm3PerDay[i - 1])) {
+        throw new IllegalArgumentException("Lift rates must be non-negative and strictly ascending");
+      }
+    }
+    SystemInterface liftGas = liftGasFluid != null ? liftGasFluid : fluidTemplate;
+    double liftGasSm3PerKg = standardGasSm3PerKgOfGas(liftGas);
+    if (!(liftGasSm3PerKg > 0.0)) {
+      throw new IllegalStateException("Cannot convert lift gas to standard volume; call setLiftGasFluid(...)");
+    }
+    double oilSm3PerKg = standardVolumesPerKg(fluidTemplate)[1];
+
+    ArtificialLiftType originalType = tubing.getArtificialLiftType();
+    double originalRate = tubing.getGasLiftRate();
+    double[] oilRates = new double[liftRatesSm3PerDay.length];
+    try {
+      tubing.setArtificialLiftType(ArtificialLiftType.GAS_LIFT);
+      for (int i = 0; i < liftRatesSm3PerDay.length; i++) {
+        tubing.setGasLiftRate(liftRatesSm3PerDay[i] / liftGasSm3PerKg / 86400.0);
+        run();
+        oilRates[i] = isConverged() ? getPipeFlowRate(productionElementName) * 24.0 * oilSm3PerKg : Double.NaN;
+      }
+    } finally {
+      tubing.setArtificialLiftType(originalType);
+      tubing.setGasLiftRate(originalRate);
+    }
+    return oilRates;
   }
 
   /**

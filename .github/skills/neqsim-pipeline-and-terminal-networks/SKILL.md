@@ -1,7 +1,7 @@
 ---
 name: neqsim-pipeline-and-terminal-networks
 description: "Guides agents through NeqSim pipeline and terminal networks. USE WHEN: users ask to solve a looped gathering/export network, optimize well and choke settings, apply nominations or quality limits, track gas linepack or transient composition, blend crude, or schedule terminal tanks and cargoes. Anchors: LoopedPipeNetwork, NetworkOptimizer, TransientGasNetwork, TransientCompositionalPipeNetwork, NetworkQualityProfile, OilNetworkSchedule."
-last_verified: "2026-11-16"
+last_verified: "2026-11-23"
 ---
 
 # Pipeline and Terminal Networks
@@ -29,6 +29,30 @@ stream Sm3/day conversion. Match provider metering/separator definitions first.
 Forward mode inverts THP; backward mode reports required BHP without mutating the
 inlet. Tables are range-limited and have no network balancing or thermal model.
 Synthetic tests qualify interpolation/software contracts, not field hydraulics.
+
+## Well VLP models in the network (GAP-style well modelling)
+
+A network well is an IPR element (`addWellIPR`, `addWellIPRVogel`, `addWellIPRFetkovich`)
+plus a tubing element. Select the tubing VLP with
+`addTubing(bottom, top, name, lengthM, idM, inclinationDeg, TubingModel.X)`:
+`HAGEDORN_BROWN` (vertical oil), `GRAY` (gas/condensate), `BEGGS_BRILL` or
+`MUKHERJEE_BRILL` (deviated multiphase). Use `addTubingVfp(bottom, top, name, VfpTable)`
+for an Eclipse VFPPROD lift curve (GAS rate, WGR, GOR/OGR, THP, METRIC).
+The default `SIMPLIFIED` model is homogeneous single-density Darcy and ignores gas
+liberation, so do not use it for oil wells below the bubble point. Always report
+`NetworkPipe.getTubingModelStatus()`: `*_FALLBACK_SIMPLIFIED` means the correlation
+failed at that point, and `TUBING_VFP_TABLE_EXTRAPOLATED` means the table was
+extrapolated linearly in rate/THP (WGR and gas ratio are held at the axis ends).
+With a correlation model, gas lift (`setArtificialLiftType(GAS_LIFT)`, `setGasLiftRate`
+kg/s, `setGasLiftInjectionDepth` m below the tubing top, `network.setLiftGasFluid`) is
+mixed into the tubing at the valve. The legacy up-to-50 % head-reduction factor is
+then not applied. The lift gas is not carried into downstream elements; add a wellhead
+source if the flowline must carry it. Use
+`calculateGasLiftResponse(tubing, iprElement, liftSm3d[])` to get oil Sm3/d with
+network back-pressure, then `new GasLiftPerformanceCurve(lift, oil)` for
+`GasLiftNetworkOptimizer`. Evidence: `LoopedPipeNetworkTubingModelTest` (network vs
+stand-alone `PipeHagedornBrown` within 0.5 bar; linear VFP table reproduced to 0.05 bar,
+2026-11-23). It is not benchmarked against GAP/PROSPER field cases.
 
 ## Well/SURF hydraulic fidelity
 

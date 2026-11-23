@@ -242,8 +242,75 @@ user-defined constraints must still be checked separately.
 
 ## Tubing VLP Model
 
-The tubing element models vertical lift performance (VLP) — the pressure
-drop in the production tubing due to gravity and friction:
+The tubing element models vertical lift performance (VLP), the pressure drop
+in the production tubing. Together with an IPR element it forms a well model:
+the Newton-Raphson solver finds the well operating point at the same time as
+the rest of the gathering network, which is the nodal-analysis approach used by
+commercial network tools.
+
+### Choosing the VLP model
+
+The model is set per tubing element with `TubingModel`:
+
+| `TubingModel` | Method | Typical use |
+|---------------|--------|-------------|
+| `SIMPLIFIED` (default) | Homogeneous gravity plus Darcy friction, below | Fast screening, single-phase wells |
+| `BEGGS_BRILL` | `PipeBeggsAndBrills` | General multiphase, deviated wells |
+| `HAGEDORN_BROWN` | `PipeHagedornBrown` | Vertical oil wells |
+| `GRAY` | `PipeGray` | Gas and condensate wells |
+| `MUKHERJEE_BRILL` | `PipeMukherjeeAndBrill` | Inclined multiphase wells |
+| `VFP_TABLE` | `VfpTable` (Eclipse VFPPROD) | Lift curves prepared in another tool or matched to well tests |
+
+The correlation models run the NeqSim multiphase pipe class along the tubing
+from the bottomhole node pressure and temperature, flashing the fluid in each
+segment, so liquid holdup and slip are included. If a correlation fails at a
+trial point, the element falls back to the simplified model for that
+evaluation. `NetworkPipe.getTubingModelStatus()` records the model actually used:
+
+- `TUBING_HAGEDORN_BROWN` or `TUBING_BEGGS_BRILL_GASLIFT`: the selected correlation ran.
+- `TUBING_GRAY_FALLBACK_SIMPLIFIED`: the correlation failed and the simplified model was used.
+- `TUBING_VFP_TABLE_EXTRAPOLATED`: the VFP lookup extrapolated outside the table.
+
+The status names the model, so the other correlations give the same forms.
+
+```java
+// Vertical oil well: reservoir -> IPR -> bottomhole -> Hagedorn-Brown tubing -> wellhead
+network.addSourceNode("reservoir", 220.0, 0.0);
+network.addJunctionNode("BH");
+network.addFixedPressureSinkNode("WH", 20.0);
+network.addWellIPR("reservoir", "BH", "ipr", 2.0e-6, false);
+network.addTubing("BH", "WH", "tubing",
+    2500.0,          // measured length [m]
+    0.1,             // tubing ID [m]
+    90.0,            // inclination [degrees from horizontal]
+    LoopedPipeNetwork.TubingModel.HAGEDORN_BROWN);
+network.run();
+String evidence = network.getPipe("tubing").getTubingModelStatus();
+```
+
+The test `LoopedPipeNetworkTubingModelTest` checks the solved operating point
+against a stand-alone `PipeHagedornBrown` run at the same rate and bottomhole
+pressure.
+
+### VFP table wells
+
+`addTubingVfp` uses an Eclipse VFPPROD table (`'GAS' 'WGR' 'GOR'|'OGR' 'THP'`,
+METRIC) as the well lift curve. The trial mass rate is converted to standard gas
+rate, water-gas ratio and GOR/OGR from the network fluid flashed at 15 °C and
+1.01325 bara. The table is then read at the tubing-head node pressure.
+
+Inside the table the interpolation is multilinear. Outside the rate and THP
+axes the edge segment is extrapolated linearly, so the solver still gets a
+useful derivative; WGR and gas ratio are held at the nearest axis value. Both
+cases set `TUBING_VFP_TABLE_EXTRAPOLATED`.
+
+```java
+VfpTable table = VfpTable.fromFile("well_A.vfp");
+network.addWellIPR("reservoir", "BH", "ipr", 3.0e-14, true);
+network.addTubingVfp("BH", "WH", "tubing", table);
+```
+
+### Simplified model
 
 $$\Delta P = \rho g L \sin\alpha + f \frac{L}{D} \frac{\rho v^2}{2}$$
 
@@ -253,25 +320,19 @@ Where:
 - $f$ = Darcy friction factor
 - $D$ = tubing internal diameter
 
-For deep wells, the tubing is divided into segments, each evaluated at
-local conditions (pressure-averaged density).
+The fluid density is taken at the upstream node, so the model does not account
+for gas liberation along the tubing. Use a correlation model for oil wells
+producing below the bubble point.
 
 **Parameters:**
 
 | Parameter | Setter on `NetworkPipe` | Unit | Description |
 |-----------|------------------------|------|-------------|
 | Inclination | `setTubingInclination(double)` | degrees | From horizontal |
-| Segments | `setTubingSegments(int)` | — | Number of integration segments |
-
-**Convenience method:**
-
-```java
-network.addTubing("tubing1", "bottomhole", "wellhead",
-    3000.0,          // measured depth [m]
-    0.1,             // tubing ID [m]
-    90.0,            // inclination [degrees from horizontal]
-    10);             // number of segments
-```
+| Segments | `setTubingSegments(int)` | — | Correlation integration segments |
+| VLP model | `setTubingModel(TubingModel)` | — | See table above |
+| VFP table | `setTubingVfpTable(VfpTable)` | — | Also selects `VFP_TABLE` |
+| Gas-lift depth | `setGasLiftInjectionDepth(double)` | m | Below tubing top; NaN = tubing bottom |
 
 ---
 
@@ -679,6 +740,34 @@ the well element's head loss. For example, gas lift reduces the effective
 hydrostatic gradient, while ESP/jet/rod pump add a direct pressure rise to the
 well's IPR resistance.
 
+The gas-lift boost is a screening factor (up to 50 % head-loss reduction). On a
+tubing element with a correlation `TubingModel` it is not used. Instead the lift
+gas is mixed into the tubing at the injection depth, and the upper tubing
+section is calculated with the reservoir fluid plus lift gas, so the optimum and
+the decline at excess lift gas follow from the correlation:
+
+```java
+SystemInterface liftGas = new SystemSrkEos(353.15, 100.0);
+liftGas.addComponent("methane", 0.9);
+liftGas.addComponent("ethane", 0.1);
+liftGas.setMixingRule("classic");
+network.setLiftGasFluid(liftGas);   // default: produced gas phase at the valve
+
+NetworkPipe tubing = network.getPipe("tubing");   // BEGGS_BRILL tubing
+tubing.setArtificialLiftType(LoopedPipeNetwork.ArtificialLiftType.GAS_LIFT);
+tubing.setGasLiftRate(1.0);                  // kg/s
+tubing.setGasLiftInjectionDepth(2000.0);     // m below tubing top
+network.run();
+
+// Gas-lift performance curve with network back-pressure, for GasLiftNetworkOptimizer
+double[] lift = {0.0, 50000.0, 100000.0};    // Sm3/day
+double[] oil = network.calculateGasLiftResponse("tubing", "ipr", lift);   // Sm3/day
+GasLiftPerformanceCurve curve = new GasLiftPerformanceCurve(lift, oil);
+```
+
+The lift gas is not added to downstream network elements. If the flowline must
+carry it, add it as a separate source at the wellhead.
+
 ---
 
 ## Water Handling
@@ -956,9 +1045,18 @@ void addChoke(String name, String fromNode, String toNode,
     double kv, double opening, double criticalPressureRatio)
 
 // Tubing (vertical lift performance)
-void addTubing(String name, String fromNode, String toNode,
-    double length_m, double diameter_m,
-    double inclination_deg, int segments)
+NetworkPipe addTubing(String bottomNode, String topNode, String name,
+    double length_m, double diameter_m, double inclination_deg)
+NetworkPipe addTubing(String bottomNode, String topNode, String name,
+    double length_m, double diameter_m, double inclination_deg,
+    TubingModel model)
+NetworkPipe addTubingVfp(String bottomNode, String topNode, String name,
+    VfpTable table)
+
+// Gas lift with rigorous tubing models
+void setLiftGasFluid(SystemInterface liftGas)
+double[] calculateGasLiftResponse(String tubingName,
+    String productionElementName, double[] liftRates_Sm3d)
 
 // Multiphase pipe using Beggs-Brill explicitly
 NetworkPipe addMultiphasePipe(String fromNode, String toNode,
