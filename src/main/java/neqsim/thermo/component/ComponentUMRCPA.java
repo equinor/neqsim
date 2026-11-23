@@ -811,7 +811,6 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     }
   }
 
-
   /**
    * {@inheritDoc}
    *

@@ -22,8 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Decrease pressure incrementally</li>
  * <li>At each pressure, perform a flash with solid phase check</li>
  * <li>Onset pressure is where solid asphaltene phase first appears</li>
- * <li>Optionally (default on) the search continues below the upper onset to find the lower onset, where the
- * precipitate re-dissolves (normally below the bubble point as gas leaves the oil)</li>
+ * <li>Optionally (default on) the search continues below the upper onset to find the lower onset, where the precipitate
+ * re-dissolves (normally below the bubble point as gas leaves the oil)</li>
  * </ol>
  *
  * <p>
@@ -69,10 +69,10 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   private double precipitatedFraction = 0.0;
 
   /** Lower onset pressure where the precipitate re-dissolves (bara), NaN if not found. */
-  private double lowerOnsetPressure = Double.NaN;
+  private volatile double lowerOnsetPressure = Double.NaN;
 
   /** Whether the search continues below the upper onset to locate the lower onset. */
-  private boolean searchLowerOnset = true;
+  private volatile boolean searchLowerOnset = true;
 
   /**
    * Constructor for AsphalteneOnsetPressureFlash.
@@ -279,26 +279,26 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
       throw new IllegalArgumentException("Pressure unit must not be null");
     }
     switch (unit.trim().toLowerCase(java.util.Locale.ROOT)) {
-      case "bara":
-      case "bar":
-        return bara;
-      case "barg":
-        return bara - 1.01325;
-      case "psia":
-        return bara * 14.503773773;
-      case "psig":
-        return bara * 14.503773773 - 14.695948775;
-      case "mpa":
-        return bara * 0.1;
-      case "kpa":
-        return bara * 100.0;
-      case "pa":
-        return bara * 1.0e5;
-      case "atm":
-        return bara / 1.01325;
-      default:
-        throw new IllegalArgumentException("Unsupported pressure unit '" + unit
-            + "'; use bara, barg, psia, psig, MPa, kPa, Pa or atm (plain 'psi' is ambiguous)");
+    case "bara":
+    case "bar":
+      return bara;
+    case "barg":
+      return bara - 1.01325;
+    case "psia":
+      return bara * 14.503773773;
+    case "psig":
+      return bara * 14.503773773 - 14.695948775;
+    case "mpa":
+      return bara * 0.1;
+    case "kpa":
+      return bara * 100.0;
+    case "pa":
+      return bara * 1.0e5;
+    case "atm":
+      return bara / 1.01325;
+    default:
+      throw new IllegalArgumentException("Unsupported pressure unit '" + unit
+          + "'; use bara, barg, psia, psig, MPa, kPa, Pa or atm (plain 'psi' is ambiguous)");
     }
   }
 
