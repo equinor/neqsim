@@ -351,8 +351,17 @@ public class ComponentSolid extends ComponentSrk {
         refPhase.addComponent("methane", 10.0, 10.0, 0);
         refPhase.getComponent("methane").setComponentName(componentName);
       }
-      refPhase.getComponent(componentName)
-          .setAttractiveTerm(phase.getComponent(componentName).getAttractiveTermNumber());
+      // The pure-liquid reference must be the same EOS component as in the fluid. A pseudo component
+      // that is not in the (temporary) database is built on a methane template above, so its critical
+      // properties are copied from the fluid; for database components this keeps tuned values consistent.
+      ComponentInterface fluidComponent = phase.getComponent(componentName);
+      ComponentInterface refComponent = refPhase.getComponent(componentName);
+      refComponent.setTC(fluidComponent.getTC());
+      refComponent.setPC(fluidComponent.getPC());
+      refComponent.setMolarMass(fluidComponent.getMolarMass());
+      refComponent.setNormalLiquidDensity(fluidComponent.getNormalLiquidDensity());
+      refComponent.setAcentricFactor(fluidComponent.getAcentricFactor());
+      refComponent.setAttractiveTerm(fluidComponent.getAttractiveTermNumber());
       refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, PhaseType.GAS, 1.0);
       refPhase.setMixingRule(null);
       // }

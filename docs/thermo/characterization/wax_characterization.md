@@ -422,6 +422,38 @@ to a relative change below 1e-6. Regression evidence: `WaxFractionSimTest`
 (`testNamedWaxFormerFeed`, `testNamedWaxFormerIsIndependentOfSetupOrder`,
 `testNamedWaxFormerFollowsTuningAndKeepsMeasuredData`).
 
+#### Pedersen split of TBP fractions
+
+`addTBPWax()` splits every TBP or plus fraction $i$ into a non-wax part and a wax-forming
+`wax`-prefixed pseudo component (Pedersen et al., 1991):
+
+$$\frac{z_i^{\mathrm{wax}}}{z_i} = 1 - (A + B M_i)\left(\frac{\rho_i - \rho_i^P}{\rho_i^P}\right)^C,
+\qquad \rho_i^P = 0.3915 + 0.0675 \ln M_i$$
+
+with $M_i$ in g/mol and densities in g/cm³. The defaults are $A = 1.074$, $B = 6.584\times10^{-6}$
+and $C = 0.1915$ (tuning parameters 0 to 2). The split has these properties:
+
+- **Paraffinic fractions.** A fraction that is not denser than the n-paraffin of the same molar
+  mass ($\rho_i \le \rho_i^P$, common for light condensates) is entirely wax forming. Before this
+  was handled, the negative base of the power gave NaN moles for both pseudo components.
+- **Bounded.** The wax fraction is limited to $[0, 1]$, so no split creates negative moles.
+- **Idempotent.** When the `wax` pseudo component already exists, the total of the pair is
+  re-split with the current parameters. Repeated calls, for example while tuning, give the same
+  split. Before this was fixed, each call moved more of the fraction into wax: 0.18 mol after the
+  first call and 0.40 mol after the third, for a 0.6 mol C20 fraction. `removeWax()` before
+  `addTBPWax()` is still supported but no longer needed. A TBP fraction added after an earlier
+  split is split on the next call.
+
+The wax phase built by `addSolidComplexPhase("wax")` copies molar mass, critical properties,
+acentric factor, wax-former flag, melting temperature and heat of fusion of every TBP and wax
+pseudo component from the fluid. The pure-liquid reference phase used for the solid fugacity also
+copies these properties from the fluid. Before this was fixed, a pseudo component that was not in
+the temporary database was built from a methane template that was not a wax former. As a result,
+calling `addSolidComplexPhase("wax")` without `createDatabase(true)` silently gave no
+characterized wax. For a heptane/C20 oil, the WAT came out at −112 °C (the n-heptane freezing
+onset) instead of 16.3 °C. `createDatabase(true)` is now optional for the wax phase, and both
+setups give the same WAT. Regression evidence: `PedersenWaxSplitTest`.
+
 For a present wax phase, `getPhaseFraction("wax", "mass")` returns the wax mass
 divided by the **total feed mass**, using phase mole fraction and molar masses:
 
