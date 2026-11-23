@@ -153,17 +153,17 @@ public class AsphalteneStabilityAnalyzer {
       // Below bubble point - dissolution risk, not deposition
       return AsphalteneRisk.LOW_RISK;
     }
-    DeBoerAsphalteneScreening screening =
-        new DeBoerAsphalteneScreening(reservoirPressure, saturationPressure, oilDensity);
+    DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(reservoirPressure, saturationPressure,
+        oilDensity);
     switch (screening.evaluateRisk()) {
-      case NO_PROBLEM:
-        return AsphalteneRisk.STABLE;
-      case SLIGHT_PROBLEM:
-        return AsphalteneRisk.LOW_RISK;
-      case MODERATE_PROBLEM:
-        return AsphalteneRisk.MODERATE_RISK;
-      default:
-        return AsphalteneRisk.HIGH_RISK;
+    case NO_PROBLEM:
+      return AsphalteneRisk.STABLE;
+    case SLIGHT_PROBLEM:
+      return AsphalteneRisk.LOW_RISK;
+    case MODERATE_PROBLEM:
+      return AsphalteneRisk.MODERATE_RISK;
+    default:
+      return AsphalteneRisk.HIGH_RISK;
     }
   }
 
@@ -245,8 +245,8 @@ public class AsphalteneStabilityAnalyzer {
   }
 
   /**
-   * Calculates the upper asphaltene onset pressure, searching down from a given start pressure (normally the
-   * reservoir pressure). The lower onset found by the same search is available from {@link #getLowerOnsetPressure()}.
+   * Calculates the upper asphaltene onset pressure, searching down from a given start pressure (normally the reservoir
+   * pressure). The lower onset found by the same search is available from {@link #getLowerOnsetPressure()}.
    *
    * @param temperature temperature (K)
    * @param startPressure pressure to start the downward search from (bara); must be undersaturated
@@ -354,10 +354,9 @@ public class AsphalteneStabilityAnalyzer {
    * Generates an asphaltene precipitation envelope.
    *
    * <p>
-   * For each temperature the search starts at the fluid's own pressure and finds the upper onset and, continuing
-   * down, the lower onset where the precipitate re-dissolves. The bubble point is calculated at the same temperature.
-   * Points where the search fails (for example because asphaltene is already precipitated at the start pressure) are
-   * NaN.
+   * For each temperature the search starts at the fluid's own pressure and finds the upper onset and, continuing down,
+   * the lower onset where the precipitate re-dissolves. The bubble point is calculated at the same temperature. Points
+   * where the search fails (for example because asphaltene is already precipitated at the start pressure) are NaN.
    * </p>
    *
    * @param minTemp minimum temperature (K)
@@ -463,8 +462,8 @@ public class AsphalteneStabilityAnalyzer {
     AsphalteneRisk overallRisk = combineRisks(saraRisk, thermodynamicRisk);
     report.append("   Basis: ").append(saraRisk == null ? "" : "SARA " + saraRisk.name())
         .append(saraRisk != null && thermodynamicRisk != null ? ", " : "")
-        .append(thermodynamicRisk == null ? "" : "thermodynamic " + thermodynamicRisk.name())
-        .append(" -> ").append(overallRisk.name()).append("\n");
+        .append(thermodynamicRisk == null ? "" : "thermodynamic " + thermodynamicRisk.name()).append(" -> ")
+        .append(overallRisk.name()).append("\n");
     switch (overallRisk) {
     case STABLE:
       report.append("   - No special measures required\n");

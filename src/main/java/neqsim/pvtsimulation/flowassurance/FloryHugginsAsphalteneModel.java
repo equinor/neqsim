@@ -253,8 +253,8 @@ public class FloryHugginsAsphalteneModel {
     double calibratedA = (asphalteneSolubilityParameter - targetGap - deltaRhoCoeffB) / state.density;
     if (calibratedA > 0.005 && calibratedA < 0.10) {
       deltaRhoCoeffA = calibratedA;
-      logger.info("FH heuristic prior: A={}, oilDensity={}, onsetGap={}, targetGap={}", deltaRhoCoeffA,
-          state.density, onsetGap, targetGap);
+      logger.info("FH heuristic prior: A={}, oilDensity={}, onsetGap={}, targetGap={}", deltaRhoCoeffA, state.density,
+          onsetGap, targetGap);
     } else {
       logger.warn("Calibrated A={} outside valid range [0.005, 0.10], keeping default", calibratedA);
     }
@@ -265,15 +265,14 @@ public class FloryHugginsAsphalteneModel {
    *
    * <p>
    * The liquid solubility parameter at the measured onset does not depend on delta_a, and the dissolved limit falls
-   * monotonically as delta_a moves away from delta_L, so delta_a is found by bisection on [delta_L, delta_L + 15].
-   * Any earlier SARA adjustment is replaced by the calibrated value.
+   * monotonically as delta_a moves away from delta_L, so delta_a is found by bisection on [delta_L, delta_L + 15]. Any
+   * earlier SARA adjustment is replaced by the calibrated value.
    * </p>
    *
    * @param temperature temperature of the measurement (K)
    * @param measuredOnsetPressure measured upper onset pressure (bara)
    * @return the calibrated asphaltene solubility parameter (MPa^0.5)
-   * @throws IllegalStateException if no system is set, the flash fails, or no delta_a in the range reproduces the
-   *         onset
+   * @throws IllegalStateException if no system is set, the flash fails, or no delta_a in the range reproduces the onset
    */
   public double calibrateToOnsetPressure(double temperature, double measuredOnsetPressure) {
     if (system == null) {
@@ -434,14 +433,12 @@ public class FloryHugginsAsphalteneModel {
   }
 
   /**
-   * Calculates the maximum dissolved asphaltene volume fraction (the solubility limit against a pure asphaltene
-   * phase).
+   * Calculates the maximum dissolved asphaltene volume fraction (the solubility limit against a pure asphaltene phase).
    *
    * <p>
-   * Solves ln(phi) + (1 - r)(1 - phi) + chi (1 - phi)^2 = 0 for the non-trivial root, with r = V_a / V_L. The
-   * equation is solved in u = ln(phi), which keeps very small solubilities accurate, and the trivial root phi = 1 is
-   * excluded explicitly. When the equation has no root below phi = 1 the asphaltene is fully miscible and 1 is
-   * returned.
+   * Solves ln(phi) + (1 - r)(1 - phi) + chi (1 - phi)^2 = 0 for the non-trivial root, with r = V_a / V_L. The equation
+   * is solved in u = ln(phi), which keeps very small solubilities accurate, and the trivial root phi = 1 is excluded
+   * explicitly. When the equation has no root below phi = 1 the asphaltene is fully miscible and 1 is returned.
    * </p>
    *
    * @param deltaLiquid liquid solubility parameter (MPa^0.5)
@@ -599,15 +596,15 @@ public class FloryHugginsAsphalteneModel {
    * Calculates the precipitated asphaltene mass fraction at given conditions.
    *
    * <p>
-   * The asphaltene present in the oil is the configured weight fraction; with the live-oil basis (default) it is
-   * scaled by total mass / oil-phase mass, so below the bubble point it rises as gas leaves the oil. Each asphaltene
-   * fraction precipitates the amount above its own solubility limit.
+   * The asphaltene present in the oil is the configured weight fraction; with the live-oil basis (default) it is scaled
+   * by total mass / oil-phase mass, so below the bubble point it rises as gas leaves the oil. Each asphaltene fraction
+   * precipitates the amount above its own solubility limit.
    * </p>
    *
    * @param pressure pressure (bara)
    * @param temperature temperature (K)
    * @return mass fraction of the oil that precipitates as asphaltene (0 = none); NaN if no system is set or the flash
-   *         fails
+   * fails
    */
   public double calculatePrecipitatedFraction(double pressure, double temperature) {
     if (system == null) {
@@ -648,7 +645,7 @@ public class FloryHugginsAsphalteneModel {
         continue;
       }
       if (precip > ONSET_THRESHOLD) {
-        if (p == startP) {
+        if (p >= startP) {
           logger.info("FH: asphaltene already unstable at the start pressure {} bara", startP);
           return startP;
         }
@@ -896,7 +893,8 @@ public class FloryHugginsAsphalteneModel {
   }
 
   /**
-   * Sets how the liquid solubility parameter is obtained (default {@link SolubilityParameterMethod#DENSITY_CORRELATION}).
+   * Sets how the liquid solubility parameter is obtained (default
+   * {@link SolubilityParameterMethod#DENSITY_CORRELATION}).
    *
    * @param method the method
    */
