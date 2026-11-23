@@ -10,8 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Regression tests for the Pedersen wax split of TBP fractions and for building the wax phase of
- * characterized pseudo components.
+ * Regression tests for the Pedersen wax split of TBP fractions and for building the wax phase of characterized pseudo
+ * components.
  *
  * @author Even Solbraa
  * @version 1.0

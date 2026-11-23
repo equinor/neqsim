@@ -236,14 +236,14 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
      * {@inheritDoc}
      *
      * <p>
-     * TBP and plus fractions are split into a non-wax part and a wax-forming {@code wax}-prefixed pseudo component using
-     * {@link #calcWaxFormerFraction(int)}. The split is idempotent: when a wax pseudo component already exists, the
-     * total moles of the pair are re-split with the current parameters, so repeated calls (for example during parameter
-     * tuning) do not move more and more of the fraction into wax. A TBP fraction added after an earlier split is split
-     * on the next call. Named components flagged as wax formers in the component database (the n-paraffins) are wax
-     * formers as a whole and are not split. They keep their database melting temperature and heat of fusion; where the
-     * database holds only its placeholder default (273.0 K and 6000 J/mol, currently nC15 and nC17 to nC24) they
-     * receive the Pedersen correlations of this model instead (#5210).
+     * TBP and plus fractions are split into a non-wax part and a wax-forming {@code wax}-prefixed pseudo component
+     * using {@link #calcWaxFormerFraction(int)}. The split is idempotent: when a wax pseudo component already exists,
+     * the total moles of the pair are re-split with the current parameters, so repeated calls (for example during
+     * parameter tuning) do not move more and more of the fraction into wax. A TBP fraction added after an earlier split
+     * is split on the next call. Named components flagged as wax formers in the component database (the n-paraffins)
+     * are wax formers as a whole and are not split. They keep their database melting temperature and heat of fusion;
+     * where the database holds only its placeholder default (273.0 K and 6000 J/mol, currently nC15 and nC17 to nC24)
+     * they receive the Pedersen correlations of this model instead (#5210).
      * </p>
      */
     @Override
