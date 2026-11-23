@@ -234,6 +234,12 @@ public class NaphthenatePrecipitationModel implements Serializable {
     private double soapSaturation;
     /** Saturation ratio of the ARN salt at this state. */
     private double arnSaturation;
+
+    /**
+     * Creates an empty speciation.
+     */
+    private Speciation() {
+    }
   }
 
   /**
