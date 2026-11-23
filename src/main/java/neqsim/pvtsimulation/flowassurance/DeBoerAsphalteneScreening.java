@@ -258,12 +258,11 @@ public class DeBoerAsphalteneScreening {
    * @return boundary undersaturation pressure (bar)
    */
   /**
-   * Returns the three undersaturation boundaries at a density, ordered so that
-   * no-problem &lt;= slight &lt;= severe.
+   * Returns the three undersaturation boundaries at a density, ordered so that no-problem &lt;= slight &lt;= severe.
    *
    * <p>
-   * The fitted quadratic for the no-problem boundary lies above the slight boundary for densities below about
-   * 800 kg/m3 (for example 98 bar against 90 bar at 700 kg/m3). Unordered, a point between the two curves skipped the
+   * The fitted quadratic for the no-problem boundary lies above the slight boundary for densities below about 800 kg/m3
+   * (for example 98 bar against 90 bar at 700 kg/m3). Unordered, a point between the two curves skipped the
    * SLIGHT_PROBLEM class and was reported as MODERATE_PROBLEM although it lay below the no-problem curve. The
    * no-problem boundary is therefore capped at the slight boundary; where the fitted curves cross, the slight-problem
    * band has zero width.

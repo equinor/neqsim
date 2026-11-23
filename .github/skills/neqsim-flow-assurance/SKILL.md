@@ -914,6 +914,24 @@ for (double qgMSm3d : gasRates) {
 > `getLastBoundaryPhasePressureForces()`. Those arrays qualify the external
 > boundary contract only, not a complete momentum residual or physical restart.
 >
+> **Two severe-slugging screens exist; pick by question.**
+> `pipe.evaluateSevereSluggingSystem(riserBaseSection)` is the quasi-steady Taitel
+> criterion on a solved `TwoFluidPipe` profile (stable/unstable, pressure margin in
+> Pa). `SevereSlugAnalyser` (`neqsim.process.measurementdevice.simpleflowregime`) is
+> a lumped dynamic model that also returns the riser-base pressure swing
+> (`getPressureAmplitude()` in bar, `getSlugValue()` dimensionless). Gotchas for the
+> analyser: flowline `angle` is the **downward** inclination in degrees and must be
+> positive; `usg` is defined at `getGasReferencePressure()` (1.0e5 Pa by default, the
+> stream pressure for stream-based constructors); pressures are absolute Pa;
+> statistics use the second half of `simulationTime`, which must cover at least one
+> cycle (order `(H + alpha*L)/usl`). The slug value is normalised by absolute
+> pressure, so at high pressure judge severity from the amplitude against the riser
+> head `rho_L*g*H`. Both tools lump or reject oil–water: the default Taitel call keeps
+> `NOT_VALIDATED_THREE_PHASE` and adds an all-oil/all-water bracket
+> (`getThreePhaseBound()`, `getCriticalTopPressureLowerBoundPa()` /
+> `...UpperBoundPa()`); report an `INCONCLUSIVE` bracket as inconclusive, never as
+> stable. See `docs/process/severe-slug-analyser.md`.
+>
 > **The coupled route is an opt-in four-part configuration.** For a pressure
 > outlet that physically permits phase fallback, use
 > `setEnableInterfacialPressure(true)`,

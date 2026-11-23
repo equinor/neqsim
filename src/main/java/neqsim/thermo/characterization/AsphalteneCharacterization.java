@@ -72,8 +72,8 @@ public class AsphalteneCharacterization {
   private double resinDensity = 1.0;
 
   /**
-   * CPA association energy for asphaltene self-association (J/mol, the unit NeqSim's CPA uses). The default matches
-   * the "asphaltene" entry in the component database.
+   * CPA association energy for asphaltene self-association (J/mol, the unit NeqSim's CPA uses). The default matches the
+   * "asphaltene" entry in the component database.
    */
   private double asphalteneAssociationEnergy = 3500.0;
 
@@ -242,17 +242,16 @@ public class AsphalteneCharacterization {
    * parameters of this object. The resin is added as a TBP pseudo-component "Resin" (named "Resin_PC" in the fluid)
    * whose critical properties come from the heavy-fraction correlations of {@link PedersenAsphalteneCharacterization}
    * at the resin molecular weight and density (molecular weight limited to 500-5000 g/mol). In a CPA fluid (SRK-CPA)
-   * the resin is made associating
-   * with a 2B scheme (one positive and one negative site). NeqSim's site-charge rules let only the positive site bond
-   * to the asphaltene's single 1A site (charge -1); with the default resin self-association energy of 0 the resin does
-   * not bond to itself, so it only bonds to asphaltene, through the cross-association set by
+   * the resin is made associating with a 2B scheme (one positive and one negative site). NeqSim's site-charge rules let
+   * only the positive site bond to the asphaltene's single 1A site (charge -1); with the default resin self-association
+   * energy of 0 the resin does not bond to itself, so it only bonds to asphaltene, through the cross-association set by
    * {@link #applyCrossAssociation(SystemInterface)}, which must be called after {@code setMixingRule(...)}.
    * </p>
    *
    * @param system the thermodynamic system to modify
    * @param totalC7plusMoles total moles of C7+ fraction to distribute
    * @throws IllegalStateException if the C7+ molecular weight has not been set with
-   *         {@link #setC7plusProperties(double, double)}
+   * {@link #setC7plusProperties(double, double)}
    */
   public void addAsphalteneComponents(SystemInterface system, double totalC7plusMoles) {
     if (!(mwC7plus > 0.0)) {
@@ -275,8 +274,8 @@ public class AsphalteneCharacterization {
     if (molesResin > 1e-10) {
       // Critical properties from the heavy-fraction correlations used for asphaltene (valid above the 1120 g/mol
       // limit of the fluid's automatic TBP model).
-      PedersenAsphalteneCharacterization resinProperties =
-          new PedersenAsphalteneCharacterization(mwResin, resinDensity, 0.0);
+      PedersenAsphalteneCharacterization resinProperties = new PedersenAsphalteneCharacterization(mwResin, resinDensity,
+          0.0);
       resinProperties.characterize();
       system.addTBPfraction("Resin", molesResin, resinProperties.getAsphalteneMW() / 1000.0, resinDensity,
           resinProperties.getCriticalTemperature(), resinProperties.getCriticalPressure(),

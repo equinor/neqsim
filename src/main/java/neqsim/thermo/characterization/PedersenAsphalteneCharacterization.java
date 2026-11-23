@@ -437,8 +437,8 @@ public class PedersenAsphalteneCharacterization {
    * {@code 0.5 * mean} and shape {@link #getDistributionShape()} (default 2.5). The distribution is cut into
    * {@code numberOfComponents} slices of equal mole fraction; each slice becomes one pseudo-component with the mean
    * molecular weight of its slice. This keeps both the total moles and the total mass (mean molecular weight) of the
-   * asphaltene, which the earlier fixed-range exponential split did not. Each component is characterized
-   * independently and named "Asphaltene_1", "Asphaltene_2", ... (the fluid adds a "_PC" suffix).
+   * asphaltene, which the earlier fixed-range exponential split did not. Each component is characterized independently
+   * and named "Asphaltene_1", "Asphaltene_2", ... (the fluid adds a "_PC" suffix).
    * </p>
    *
    * <p>
@@ -493,7 +493,7 @@ public class PedersenAsphalteneCharacterization {
    * @param shape gamma shape parameter (alpha &gt; 0)
    * @param numberOfSlices number of slices (&gt;= 1)
    * @return array {molecularWeights, moleFractions}, each of length numberOfSlices; mole fractions sum to 1 and
-   *         sum(moleFraction * MW) equals meanMW
+   * sum(moleFraction * MW) equals meanMW
    */
   public static double[][] gammaSplit(double meanMW, double minMW, double shape, int numberOfSlices) {
     if (!(meanMW > minMW) || !(minMW >= 0.0) || !(shape > 0.0) || numberOfSlices < 1) {
