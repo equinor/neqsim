@@ -1,5 +1,9 @@
 package neqsim.thermo.characterization;
 
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.component.ComponentSrkCPA;
+import neqsim.thermo.phase.PhaseCPAInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -58,14 +62,32 @@ public class AsphalteneCharacterization {
   /** Estimated molecular weight of resin fraction (g/mol). */
   private double mwResin = 800.0;
 
-  /** CPA association energy for asphaltene self-association (K). */
+  /** True when the asphaltene molecular weight was set explicitly and must not be replaced by the estimate. */
+  private boolean mwAsphalteneUserSet = false;
+
+  /** True when the resin molecular weight was set explicitly and must not be replaced by the estimate. */
+  private boolean mwResinUserSet = false;
+
+  /** Density of the resin pseudo-component (g/cm3). */
+  private double resinDensity = 1.0;
+
+  /**
+   * CPA association energy for asphaltene self-association (J/mol, the unit NeqSim's CPA uses). The default matches the
+   * "asphaltene" entry in the component database.
+   */
   private double asphalteneAssociationEnergy = 3500.0;
 
-  /** CPA association volume for asphaltene. */
-  private double asphalteneAssociationVolume = 0.05;
+  /** CPA association volume for asphaltene (dimensionless). The default matches the component database (0.005). */
+  private double asphalteneAssociationVolume = 0.005;
 
-  /** CPA association energy for asphaltene-resin cross-association (K). */
+  /** CPA asphaltene-resin cross-association energy (J/mol). */
   private double resinAsphalteneAssociationEnergy = 2500.0;
+
+  /**
+   * CPA resin self-association energy (J/mol). Default 0: following Li and Firoozabadi (2010), resins only
+   * cross-associate with asphaltenes ("capping" them) and do not self-associate.
+   */
+  private double resinSelfAssociationEnergy = 0.0;
 
   /** Critical CII value above which asphaltenes are unstable. */
   public static final double CII_STABLE_LIMIT = 0.7;
@@ -101,6 +123,9 @@ public class AsphalteneCharacterization {
    * @throws IllegalArgumentException if fractions don't sum to ~1.0
    */
   private void validateSARA() {
+    if (saturates < 0.0 || aromatics < 0.0 || resins < 0.0 || asphaltenes < 0.0) {
+      throw new IllegalArgumentException("SARA fractions must not be negative");
+    }
     double sum = saturates + aromatics + resins + asphaltenes;
     if (Math.abs(sum - 1.0) > 0.01) {
       throw new IllegalArgumentException("SARA fractions must sum to 1.0, got: " + sum);
@@ -186,7 +211,7 @@ public class AsphalteneCharacterization {
    * @return estimated asphaltene molecular weight (g/mol)
    */
   public double estimateAsphalteneMolecularWeight() {
-    if (mwC7plus > 0 && densityC7plus > 0) {
+    if (!mwAsphalteneUserSet && mwC7plus > 0 && densityC7plus > 0) {
       // Correlation based on C7+ properties
       // Asphaltene MW typically 5-10x the average C7+ MW
       double sgC7plus = densityC7plus / 1000.0; // Convert to specific gravity
@@ -201,7 +226,7 @@ public class AsphalteneCharacterization {
    * @return estimated resin molecular weight (g/mol)
    */
   public double estimateResinMolecularWeight() {
-    if (mwC7plus > 0 && densityC7plus > 0) {
+    if (!mwResinUserSet && mwC7plus > 0 && densityC7plus > 0) {
       // Resins are typically 2-4x the average C7+ MW
       double sgC7plus = densityC7plus / 1000.0;
       mwResin = mwC7plus * (1.5 + 2.5 * sgC7plus);
@@ -213,15 +238,26 @@ public class AsphalteneCharacterization {
    * Adds asphaltene and resin pseudo-components to a thermodynamic system.
    *
    * <p>
-   * This method adds characterized asphaltene and resin components with appropriate CPA parameters for association
-   * modeling.
+   * The asphaltene is the database component "asphaltene" (CPA scheme 1A) with the molecular weight and association
+   * parameters of this object. The resin is added as a TBP pseudo-component "Resin" (named "Resin_PC" in the fluid)
+   * whose critical properties come from the heavy-fraction correlations of {@link PedersenAsphalteneCharacterization}
+   * at the resin molecular weight and density (molecular weight limited to 500-5000 g/mol). In a CPA fluid (SRK-CPA)
+   * the resin is made associating with a 2B scheme (one positive and one negative site). NeqSim's site-charge rules let
+   * only the positive site bond to the asphaltene's single 1A site (charge -1); with the default resin self-association
+   * energy of 0 the resin does not bond to itself, so it only bonds to asphaltene, through the cross-association set by
+   * {@link #applyCrossAssociation(SystemInterface)}, which must be called after {@code setMixingRule(...)}.
    * </p>
    *
    * @param system the thermodynamic system to modify
    * @param totalC7plusMoles total moles of C7+ fraction to distribute
+   * @throws IllegalStateException if the C7+ molecular weight has not been set with
+   * {@link #setC7plusProperties(double, double)}
    */
   public void addAsphalteneComponents(SystemInterface system, double totalC7plusMoles) {
-    // Calculate moles of each SARA fraction (approximate using MW estimates)
+    if (!(mwC7plus > 0.0)) {
+      throw new IllegalStateException(
+          "Set the C7+ molecular weight and density with setC7plusProperties(...) before adding asphaltene components");
+    }
     double massC7plus = totalC7plusMoles * mwC7plus;
 
     double massAsphaltene = massC7plus * asphaltenes;
@@ -230,17 +266,62 @@ public class AsphalteneCharacterization {
     double molesAsphaltene = massAsphaltene / estimateAsphalteneMolecularWeight();
     double molesResin = massResin / estimateResinMolecularWeight();
 
-    // Add asphaltene pseudo-component
     if (molesAsphaltene > 1e-10) {
       system.addComponent("asphaltene", molesAsphaltene);
       configureAsphalteneParameters(system);
     }
 
-    // Add resin pseudo-component
     if (molesResin > 1e-10) {
-      system.addComponent("resin", molesResin);
+      // Critical properties from the heavy-fraction correlations used for asphaltene (valid above the 1120 g/mol
+      // limit of the fluid's automatic TBP model).
+      PedersenAsphalteneCharacterization resinProperties = new PedersenAsphalteneCharacterization(mwResin, resinDensity,
+          0.0);
+      resinProperties.characterize();
+      system.addTBPfraction("Resin", molesResin, resinProperties.getAsphalteneMW() / 1000.0, resinDensity,
+          resinProperties.getCriticalTemperature(), resinProperties.getCriticalPressure(),
+          resinProperties.getAcentricFactor());
       configureResinParameters(system);
     }
+  }
+
+  /**
+   * Returns the name of the resin pseudo-component in the fluid, or null if there is none.
+   *
+   * @param system the fluid
+   * @return resin component name or null
+   */
+  public static String findResinName(SystemInterface system) {
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      String name = system.getPhase(0).getComponent(i).getComponentName();
+      if (name.toLowerCase(java.util.Locale.ROOT).startsWith("resin")) {
+        return name;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Sets the asphaltene-resin cross-association energy and volume in every CPA phase of the fluid. Call this after
+   * {@code setMixingRule(...)}: setting the mixing rule again resets cross-association to the CR-1 combining rule.
+   *
+   * @param system a CPA fluid containing "asphaltene" and the resin pseudo-component
+   * @return true if the parameters were applied, false if the fluid is not CPA or a component is missing
+   */
+  public boolean applyCrossAssociation(SystemInterface system) {
+    String resinName = findResinName(system);
+    if (resinName == null || !system.getPhase(0).hasComponent("asphaltene")
+        || !(system.getPhase(0) instanceof PhaseCPAInterface)) {
+      return false;
+    }
+    int a = system.getPhase(0).getComponent("asphaltene").getComponentNumber();
+    int r = system.getPhase(0).getComponent(resinName).getComponentNumber();
+    for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+      if (phase instanceof PhaseCPAInterface) {
+        ((PhaseCPAInterface) phase).setCrossAssociationParameters(a, r, resinAsphalteneAssociationEnergy,
+            asphalteneAssociationVolume);
+      }
+    }
+    return true;
   }
 
   /**
@@ -250,25 +331,34 @@ public class AsphalteneCharacterization {
    */
   private void configureAsphalteneParameters(SystemInterface system) {
     int aspIndex = system.getPhase(0).getComponent("asphaltene").getComponentNumber();
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      system.getPhase(i).getComponent(aspIndex).setMolarMass(mwAsphaltene / 1000.0);
-      system.getPhase(i).getComponent(aspIndex).setAssociationEnergy(asphalteneAssociationEnergy);
-      system.getPhase(i).getComponent(aspIndex).setAssociationVolume(asphalteneAssociationVolume);
+    for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+      phase.getComponent(aspIndex).setMolarMass(mwAsphaltene / 1000.0);
+      phase.getComponent(aspIndex).setAssociationEnergy(asphalteneAssociationEnergy);
+      phase.getComponent(aspIndex).setAssociationVolume(asphalteneAssociationVolume);
     }
   }
 
   /**
-   * Configures CPA parameters for resin component in the system.
+   * Configures the resin pseudo-component: a 2B association scheme in SRK-CPA fluids, with the resin self-association
+   * energy and the asphaltene association volume.
    *
    * @param system the thermodynamic system
    */
   private void configureResinParameters(SystemInterface system) {
-    int resIndex = system.getPhase(0).getComponent("resin").getComponentNumber();
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      system.getPhase(i).getComponent(resIndex).setMolarMass(mwResin / 1000.0);
-      // Resins have weaker self-association but cross-associate with asphaltenes
-      system.getPhase(i).getComponent(resIndex).setAssociationEnergy(resinAsphalteneAssociationEnergy * 0.6);
-      system.getPhase(i).getComponent(resIndex).setAssociationVolume(asphalteneAssociationVolume);
+    String resinName = findResinName(system);
+    if (resinName == null || !(system.getPhase(0) instanceof PhaseCPAInterface)) {
+      return;
+    }
+    int resIndex = system.getPhase(0).getComponent(resinName).getComponentNumber();
+    for (PhaseInterface phase : AsphalteneComponents.allPhases(system)) {
+      ComponentInterface resin = phase.getComponent(resIndex);
+      if (!(resin instanceof ComponentSrkCPA)) {
+        continue;
+      }
+      resin.setAssociationSites(2, "2B");
+      ((ComponentSrkCPA) resin).resizeXsitedni(phase.getNumberOfComponents());
+      resin.setAssociationEnergy(resinSelfAssociationEnergy);
+      resin.setAssociationVolume(asphalteneAssociationVolume);
     }
   }
 
@@ -345,6 +435,7 @@ public class AsphalteneCharacterization {
 
   public void setMwAsphaltene(double mwAsphaltene) {
     this.mwAsphaltene = mwAsphaltene;
+    this.mwAsphalteneUserSet = true;
   }
 
   public double getMwResin() {
@@ -353,6 +444,7 @@ public class AsphalteneCharacterization {
 
   public void setMwResin(double mwResin) {
     this.mwResin = mwResin;
+    this.mwResinUserSet = true;
   }
 
   public double getAsphalteneAssociationEnergy() {
@@ -369,5 +461,59 @@ public class AsphalteneCharacterization {
 
   public void setAsphalteneAssociationVolume(double volume) {
     this.asphalteneAssociationVolume = volume;
+  }
+
+  /**
+   * Gets the asphaltene-resin cross-association energy (J/mol).
+   *
+   * @return cross-association energy
+   */
+  public double getResinAsphalteneAssociationEnergy() {
+    return resinAsphalteneAssociationEnergy;
+  }
+
+  /**
+   * Sets the asphaltene-resin cross-association energy (J/mol) used by {@link #applyCrossAssociation}.
+   *
+   * @param energy cross-association energy in J/mol
+   */
+  public void setResinAsphalteneAssociationEnergy(double energy) {
+    this.resinAsphalteneAssociationEnergy = energy;
+  }
+
+  /**
+   * Gets the resin self-association energy (J/mol).
+   *
+   * @return resin self-association energy
+   */
+  public double getResinSelfAssociationEnergy() {
+    return resinSelfAssociationEnergy;
+  }
+
+  /**
+   * Sets the resin self-association energy (J/mol). Default 0 (resins only cross-associate).
+   *
+   * @param energy resin self-association energy in J/mol
+   */
+  public void setResinSelfAssociationEnergy(double energy) {
+    this.resinSelfAssociationEnergy = energy;
+  }
+
+  /**
+   * Gets the resin pseudo-component density (g/cm3).
+   *
+   * @return resin density
+   */
+  public double getResinDensity() {
+    return resinDensity;
+  }
+
+  /**
+   * Sets the resin pseudo-component density (g/cm3), default 1.0.
+   *
+   * @param density resin density in g/cm3
+   */
+  public void setResinDensity(double density) {
+    this.resinDensity = density;
   }
 }

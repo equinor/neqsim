@@ -121,9 +121,10 @@ Use `WaxCharacterise` from `neqsim.thermo.characterization`:
 
 ## Asphaltene Screening
 ```java
-// de Boer screening
-DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(fluid);
-// AsphalteneStabilityAnalyzer for detailed analysis
+// de Boer screening (reservoir P, saturation P [bara], in-situ density [kg/m3]); boundaries are ordered
+DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(350.0, 150.0, 750.0);
+// AsphalteneStabilityAnalyzer for detailed analysis: start the onset search at reservoir pressure
+double onset = new AsphalteneStabilityAnalyzer(fluid).calculateOnsetPressure(373.15, 350.0);
 
 // With a measured onset: calibrated solid model for the onset envelope, blends and gas injection
 AsphalteneSolidModel model = new AsphalteneSolidModel(hostOil);
@@ -132,7 +133,9 @@ double blendOnset = model.onsetPressures(blend, 363.15, 600.0, 20.0, 5.0).getUpp
 ```
 For commingling or gas injection, calibrate `AsphalteneSolidModel` on the host and evaluate each blend; do
 not tune interaction parameters against the database solid reference (wrong blend trend). See the
-`neqsim-flow-assurance` skill, section 3.
+`neqsim-flow-assurance` skill, section 3. Flory-Huggins onsets from before 2026-11-22 came from a
+non-converging solver; recompute them, and prefer `calibrateToOnsetPressure` over the heuristic
+`calibrateCorrelation` when an onset is measured.
 
 ## Pipeline Hydraulics
 ```java
@@ -185,6 +188,14 @@ The evidence matrix now includes analytical interior hydrostatic well-balancing 
 including signed pressure work and transaction-safe diagnostics. Route that row only for static numerical
 initialization checks. It does not change the handoff requirement for a stationary two-density pool, terrain drainage,
 shutdown/restart, severe slugging, dynamic pigging, or field/commercial qualification.
+
+For riser-induced (severe) slugging questions use the two screens described in the
+`neqsim-flow-assurance` skill: `TwoFluidPipe.evaluateSevereSluggingSystem(riserBaseSection)`
+(Taitel stability margin on a solved profile) and `SevereSlugAnalyser` (lumped dynamic model
+that also gives the riser-base pressure swing). Report the status, the pressure margin or
+swing with units, and the applicability limits. For oil–water–gas systems, alongside the
+mixture-basis screen above, report the all-oil/all-water bracket (`getThreePhaseBound()` on the
+default call) as a bracket, not as a validated three-phase prediction. Details: `docs/process/severe-slug-analyser.md`.
 
 When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
 basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless

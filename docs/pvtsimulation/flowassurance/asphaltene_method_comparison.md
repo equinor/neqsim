@@ -232,7 +232,7 @@ for (String sampleName : needsDetailedAnalysis) {
     AsphalteneStabilityAnalyzer analyzer =
         new AsphalteneStabilityAnalyzer(fluid);
 
-    double onsetP = analyzer.calculateOnsetPressure();
+    double onsetP = analyzer.calculateOnsetPressure(373.15, 350.0);
 
     System.out.printf("Sample %s: Onset at %.1f bar%n",
                       sampleName, onsetP);
@@ -247,8 +247,9 @@ AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(fluid);
 
 // Generate precipitation boundary
 double[][] envelope = analyzer.generatePrecipitationEnvelope(
-    280.0, 420.0, 10.0  // Temperature range [K]
+    280.0, 420.0, 15  // Temperature range [K], number of points
 );
+// rows: temperature, upper onset, lower onset, bubble point
 
 // Define operating envelope with safety margin
 double safetyMargin = 20.0;  // bar below onset
@@ -283,8 +284,8 @@ for (double ratio : blendRatios) {
     AsphalteneStabilityAnalyzer analyzer =
         new AsphalteneStabilityAnalyzer(mixed);
 
-    double onsetP = analyzer.calculateOnsetPressure();
-    String deBoer = analyzer.deBoerScreening();
+    double onsetP = analyzer.calculateOnsetPressure(373.15, 350.0);
+    AsphalteneStabilityAnalyzer.AsphalteneRisk deBoer = analyzer.deBoerScreening(350.0, 150.0, 750.0);
 
     System.out.printf("%.0f%% Field B: Onset = %.1f bar, De Boer = %s%n",
                       ratio * 100, onsetP, deBoer);
@@ -353,7 +354,7 @@ double measuredAOP = 195.0;  // bar at 100°C
 // Initial CPA prediction
 AsphalteneStabilityAnalyzer analyzer =
     new AsphalteneStabilityAnalyzer(fluid);
-double predictedAOP = analyzer.calculateOnsetPressure();
+double predictedAOP = analyzer.calculateOnsetPressure(373.15, 350.0);
 
 // Calculate error
 double error = predictedAOP - measuredAOP;

@@ -121,19 +121,12 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   }
 
   /**
-   * Checks if this solid phase is predominantly asphaltene (&gt; 50 mol% asphaltene).
+   * Checks if this solid phase is predominantly asphaltene (more than 50 % of the phase mass).
    *
-   * @return true if phase contains majority asphaltene
+   * @return true if phase contains majority asphaltene by mass
    */
   public boolean isAsphaltenePhase() {
-    double asphalteneTotal = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      String name = getComponent(i).getComponentName().toLowerCase();
-      if (name.contains("asphaltene")) {
-        asphalteneTotal += getComponent(i).getx();
-      }
-    }
-    return asphalteneTotal > 0.5;
+    return neqsim.thermo.characterization.AsphalteneComponents.isAsphalteneRichByMass(this);
   }
 
   /**

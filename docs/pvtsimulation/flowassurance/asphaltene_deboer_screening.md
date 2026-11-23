@@ -64,7 +64,7 @@ public final class DeBoerScreeningExample {
 
     assert risk == DeBoerRisk.MODERATE_PROBLEM;
     assert Double.isFinite(riskIndex);
-    assert Math.abs(riskIndex - 1.6) < 1.0e-12;
+    assert Math.abs(riskIndex - 200.0 / 120.0) < 1.0e-9;
 
     logger.info(
         "De Boer screen: risk={}, index={}, undersaturation={} bar",
@@ -77,7 +77,8 @@ public final class DeBoerScreeningExample {
 <!-- deboer-screening-example:end -->
 
 For these inputs, $\Delta P = 200$ bar. The current implementation classifies the case as
-`MODERATE_PROBLEM` and returns a risk index of 1.6. The assertions, rather than a copied console
+`MODERATE_PROBLEM` and returns a risk index of 200/120 = 1.667 (the no-problem boundary at 750 kg/m3 is
+capped at the 120-bar slight-problem boundary, see below). The assertions, rather than a copied console
 transcript, are the maintained result contract.
 
 ## Interpreting the API
@@ -96,12 +97,26 @@ transcript, are the maintained result contract.
 These labels report position relative to the implemented boundary curves. They do not by
 themselves establish operating limits.
 
+### Boundary ordering
+
+The three boundaries are quadratic fits in density. The fitted no-problem curve lies above the
+slight-problem curve below about 800 kg/m3 (98 bar against 90 bar at 700 kg/m3). Before 2026-11 a
+point between the two curves skipped `SLIGHT_PROBLEM` and was reported as `MODERATE_PROBLEM` even
+though it was below the no-problem curve. `DeBoerAsphalteneScreening.boundaries(density)` now returns
+the boundaries ordered as no-problem <= slight <= severe: the no-problem boundary is capped at the
+slight boundary, so where the fitted curves cross, the slight-problem band has zero width.
+`evaluateRisk()`, `calculateRiskIndex()`, `generatePlotData(...)` and
+`AsphalteneStabilityAnalyzer.deBoerScreening(...)` (which now delegates to this class) all use the
+ordered boundaries.
+
 ### Risk index
 
 `calculateRiskIndex()` divides the actual undersaturation by the implementation's lower
 problem boundary for the supplied density. It is an implementation-specific screening ratio, not
 a probability or a universal severity scale. If `setAsphalteneContent(...)` is used, NeqSim
-applies an additional heuristic multiplier; document the supplied weight fraction and sensitivity
+applies an additional heuristic multiplier, 1 + (w - 0.02)/0.03 with a floor of 0.5, which leaves
+the index unchanged at 2 wt% and doubles it at 5 wt% (earlier versions divided by 0.05, giving 1.6
+at 5 wt% although the comment said "doubles"); document the supplied weight fraction and sensitivity
 when using that option.
 
 ### Thermodynamic-system constructor

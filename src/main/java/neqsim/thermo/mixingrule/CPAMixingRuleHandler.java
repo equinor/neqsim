@@ -86,6 +86,32 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
+   * Sets explicit cross-association energy and volume between two components. Non-zero values switch the pair to the
+   * explicit-parameter branch (scheme type 1); zero for both restores the default Elliott combining rule sqrt(Delta_ii
+   * * Delta_jj). The arrays are rebuilt each time the mixing rule is set, so call this after {@code setMixingRule}.
+   *
+   * @param compnumb1 first component index
+   * @param compnumb2 second component index
+   * @param energy cross-association energy in J/mol (0 restores the combining rule)
+   * @param volume cross-association volume, dimensionless (0 restores the combining rule)
+   * @throws IllegalStateException if the CPA mixing rule has not been set
+   */
+  public void setCrossAssociationParameters(int compnumb1, int compnumb2, double energy, double volume) {
+    if (cpaEpsCross == null || cpaBetaCross == null) {
+      throw new IllegalStateException("Set the CPA mixing rule before setting cross-association parameters");
+    }
+    cpaEpsCross[compnumb1][compnumb2] = energy;
+    cpaEpsCross[compnumb2][compnumb1] = energy;
+    cpaBetaCross[compnumb1][compnumb2] = volume;
+    cpaBetaCross[compnumb2][compnumb1] = volume;
+    // Scheme type 0 uses the Elliott rule sqrt(Delta_ii * Delta_jj), which ignores explicit cross parameters and is
+    // zero when one component does not self-associate. Type 1 uses the explicit (or CR-1) cross parameters.
+    int type = (Math.abs(energy) > 1e-10 || Math.abs(volume) > 1e-10) ? 1 : 0;
+    assosSchemeType[compnumb1][compnumb2] = type;
+    assosSchemeType[compnumb2][compnumb1] = type;
+  }
+
+  /**
    * getMixingRule.
    *
    * @param mr a int

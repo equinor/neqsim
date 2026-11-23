@@ -100,7 +100,24 @@ pressure.setPressureStep(25.0);
 pressure.run();
 double onsetPressure = pressure.getOnsetPressure();
 boolean pressureOnsetFound = pressure.isOnsetFound();
+double lowerOnset = pressure.getLowerOnsetPressure(); // NaN if the precipitate persists to the minimum
 ```
+
+After the upper onset, the search continues down to find the lower onset, where the precipitate
+re-dissolves (normally below the bubble point); `setSearchLowerOnset(false)` skips it. The fluid is
+left at the upper onset. `getPrecipitatedFraction()` sums every asphaltene component over all
+precipitate phases, evaluated one tolerance below the onset (earlier versions counted only the first
+asphaltene component, at the onset itself). `getOnsetPressure(unit)` accepts bara/bar, barg, psia,
+psig, MPa, kPa, Pa and atm and throws `IllegalArgumentException` for anything else, including the
+ambiguous `psi` (it used to return bara silently). `AsphalteneOnsetTemperatureFlash.getOnsetTemperature(unit)`
+likewise throws for units other than K, C, F, R; `setTemperatureTolerance(...)` sets the bisection
+tolerance (default 0.5 K).
+
+A phase counts as precipitate when it is an asphaltene, liquid-asphaltene or solid phase, or when
+asphaltene components are more than 50 wt % of it (`PhaseInterface.isAsphalteneRich()`, mass basis
+since 2026-11-22). Asphaltene components are those whose name contains "asphalten" or starts with
+"asph_" (`neqsim.thermo.characterization.AsphalteneComponents`), so split Pedersen components are
+recognised.
 
 ### AsphalteneOnsetTemperatureFlash
 
@@ -127,6 +144,23 @@ The direct onset methods propagate the same explicit characterization/search err
 screening and report a failed onset
 calculation as `Unavailable`, with its cause, rather than claiming no onset was found.
 
+Behaviour since 2026-11-22:
+
+- `deBoerScreening(Pres, Psat, density)` delegates to `DeBoerAsphalteneScreening` (NO_PROBLEM to
+  STABLE, SLIGHT to LOW_RISK, MODERATE to MODERATE_RISK, SEVERE to HIGH_RISK) instead of a separate
+  density-factor rule with different thresholds.
+- `calculateOnsetPressure(T, startP)` starts the search at a given pressure;
+  `calculateOnsetPressure(T)` starts at the fluid's own pressure. `comprehensiveAssessment` and
+  `AsphalteneMethodComparison` start at the reservoir pressure (they used the fluid pressure, which
+  could already be below the onset).
+- `comprehensiveAssessment` bases its recommendation on the higher of the SARA risk and the
+  thermodynamic risk (production path crossing the onset: HIGH, or SEVERE within 50 bar of reservoir
+  pressure; already precipitated at reservoir pressure: SEVERE). Earlier it used only SARA and
+  printed CII even when no SARA data had been set.
+- `generatePrecipitationEnvelope(Tmin, Tmax, n)` returns four rows: temperature, upper onset, lower
+  onset and the bubble point at each temperature (earlier the third row was the bubble point at the
+  fluid's own temperature, repeated).
+
 High-level API combining multiple analysis methods:
 
 ```java
@@ -134,23 +168,17 @@ import neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzer;
 
 // Create analyzer with fluid
 AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(fluid);
+analyzer.setSARAFractions(0.50, 0.30, 0.15, 0.05);
 
-// Configure conditions
-analyzer.setReservoirPressure(350.0);      // bar
-analyzer.setReservoirTemperature(373.15);  // K
-analyzer.setBubblePointPressure(150.0);    // bar
+// Quick screening (De Boer): reservoir P, saturation P [bara], in-situ density [kg/m3]
+AsphalteneStabilityAnalyzer.AsphalteneRisk screening = analyzer.deBoerScreening(350.0, 150.0, 750.0);
 
-// Quick screening (De Boer)
-String screening = analyzer.deBoerScreening();
-System.out.println("De Boer: " + screening);
+// Thermodynamic onset pressure, searched down from the reservoir pressure
+double onsetP = analyzer.calculateOnsetPressure(373.15, 350.0);
+double lowerOnsetP = analyzer.getLowerOnsetPressure();
 
-// Thermodynamic onset pressure
-double onsetP = analyzer.calculateOnsetPressure();
-System.out.println("CPA Onset Pressure: " + onsetP + " bar");
-
-// Comprehensive assessment
-String fullReport = analyzer.comprehensiveAssessment();
-System.out.println(fullReport);
+// Comprehensive assessment: reservoir P, T, wellhead P, T
+String fullReport = analyzer.comprehensiveAssessment(350.0, 373.15, 50.0, 320.0);
 ```
 
 ## Fluid Setup for CPA
@@ -211,11 +239,11 @@ AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(fluid);
 double[][] envelope = analyzer.generatePrecipitationEnvelope(
     280.0,   // Min temperature [K]
     400.0,   // Max temperature [K]
-    10.0     // Temperature step [K]
+    13       // Number of points
 );
 
-// envelope[0] = temperatures
-// envelope[1] = onset pressures
+// envelope[0] = temperatures, envelope[1] = upper onset, envelope[2] = lower onset,
+// envelope[3] = bubble point (NaN where the search fails)
 
 for (int i = 0; i < envelope[0].length; i++) {
     double T_C = envelope[0][i] - 273.15;
@@ -502,16 +530,16 @@ analyzer.setBubblePointPressure(150.0);
 
 // 3. Quick screening
 System.out.println("=== De Boer Screening ===");
-System.out.println(analyzer.deBoerScreening());
+System.out.println(analyzer.deBoerScreening(350.0, 150.0, 750.0));
 
 // 4. Calculate onset pressure
 System.out.println("\n=== CPA Onset Pressure ===");
-double onsetP = analyzer.calculateOnsetPressure();
+double onsetP = analyzer.calculateOnsetPressure(373.15, 350.0);
 System.out.println("Onset Pressure: " + onsetP + " bar");
 
 // 5. Generate envelope
 System.out.println("\n=== Precipitation Envelope ===");
-double[][] envelope = analyzer.generatePrecipitationEnvelope(300.0, 400.0, 20.0);
+double[][] envelope = analyzer.generatePrecipitationEnvelope(300.0, 400.0, 6);
 for (int i = 0; i < envelope[0].length; i++) {
     System.out.printf("T = %.1f K, P_onset = %.1f bar%n", 
                       envelope[0][i], envelope[1][i]);
@@ -519,7 +547,7 @@ for (int i = 0; i < envelope[0].length; i++) {
 
 // 6. Full report
 System.out.println("\n=== Comprehensive Assessment ===");
-System.out.println(analyzer.comprehensiveAssessment());
+System.out.println(analyzer.comprehensiveAssessment(350.0, 373.15, 50.0, 320.0));
 ```
 
 ## See Also
