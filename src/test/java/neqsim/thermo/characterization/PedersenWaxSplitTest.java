@@ -111,9 +111,13 @@ class PedersenWaxSplitTest extends neqsim.NeqSimTest {
     assertEquals(fluidComponent.getHeatOfFusion(), solidComponent.getHeatOfFusion(), 1e-9);
   }
 
-  /** WAT must not depend on whether createDatabase(true) was called before adding the wax phase. */
+  /**
+   * WAT must not depend on whether createDatabase(true) was called before adding the wax phase.
+   *
+   * @throws Exception if the WAT calculation fails
+   */
   @Test
-  void watIsIndependentOfTemporaryDatabase() {
+  void watIsIndependentOfTemporaryDatabase() throws Exception {
     double[] wat = new double[2];
     for (int k = 0; k < 2; k++) {
       SystemInterface fluid = oil(0.85);
