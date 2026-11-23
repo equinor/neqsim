@@ -112,7 +112,7 @@ public class FlowAssuranceScreen {
 ```
 
 For the stated De Boer inputs, the current implementation returns
-`MODERATE_PROBLEM` and a risk index of `1.6`. The hydrate and scale results are
+`MODERATE_PROBLEM` and a risk index of `200/120 = 1.667`. The hydrate and scale results are
 case-specific. Do not transfer them to another fluid or water analysis.
 
 The example intentionally lets calculation errors propagate. A failed equilibrium

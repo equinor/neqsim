@@ -37,7 +37,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
   private static final int MAX_ITERATIONS = 100;
 
   /** Temperature tolerance for convergence (K). */
-  private static final double TEMPERATURE_TOLERANCE = 0.5;
+  private volatile double temperatureTolerance = 0.5;
 
   /** Initial temperature step for search (K). */
   private double temperatureStep = 10.0;
@@ -153,7 +153,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     double mid;
     int bisectIter = 0;
 
-    while (Math.abs(stable - unstable) > TEMPERATURE_TOLERANCE && bisectIter < 20) {
+    while (Math.abs(stable - unstable) > temperatureTolerance && bisectIter < 60) {
       bisectIter++;
       mid = (stable + unstable) / 2.0;
       system.setTemperature(mid);
@@ -167,7 +167,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
       }
     }
 
-    if (Math.abs(stable - unstable) > TEMPERATURE_TOLERANCE) {
+    if (Math.abs(stable - unstable) > temperatureTolerance) {
       throw new IllegalStateException("Asphaltene temperature bracket did not converge");
     }
     return (stable + unstable) / 2.0;
@@ -193,7 +193,10 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
       return Double.NaN;
     }
 
-    switch (unit.toUpperCase()) {
+    if (unit == null) {
+      throw new IllegalArgumentException("Temperature unit must not be null");
+    }
+    switch (unit.trim().toUpperCase(java.util.Locale.ROOT)) {
     case "K":
     case "KELVIN":
       return onsetTemperature;
@@ -207,7 +210,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     case "RANKINE":
       return onsetTemperature * 1.8;
     default:
-      return onsetTemperature;
+      throw new IllegalArgumentException("Unsupported temperature unit '" + unit + "'; use K, C, F or R");
     }
   }
 
@@ -218,6 +221,16 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
    */
   public boolean isOnsetFound() {
     return onsetFound;
+  }
+
+  /**
+   * Sets the bisection tolerance on the onset temperature (default 0.5 K).
+   *
+   * @param tolerance tolerance in K, must be positive
+   */
+  public void setTemperatureTolerance(double tolerance) {
+    AsphalteneOnsetFlashSupport.requirePositive(tolerance, "Temperature tolerance");
+    this.temperatureTolerance = tolerance;
   }
 
   /**

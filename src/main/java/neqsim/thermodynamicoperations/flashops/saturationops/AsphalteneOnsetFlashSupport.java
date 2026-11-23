@@ -2,7 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import neqsim.thermo.characterization.AsphalteneComponents;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -81,8 +81,7 @@ final class AsphalteneOnsetFlashSupport {
   static boolean hasPrecipitate(SystemInterface system) {
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       PhaseInterface phase = system.getPhase(p);
-      if (phase.getType() != PhaseType.ASPHALTENE && phase.getType() != PhaseType.LIQUID_ASPHALTENE
-          && phase.getType() != PhaseType.SOLID && !phase.isAsphalteneRich()) {
+      if (!isPrecipitatePhase(phase)) {
         continue;
       }
       for (int c = 0; c < phase.getNumberOfComponents(); c++) {
@@ -96,12 +95,49 @@ final class AsphalteneOnsetFlashSupport {
   }
 
   /**
-   * Retain the established component-name convention independently of the machine locale.
+   * Tests whether a component name denotes an asphaltene.
    *
    * @param name component name
-   * @return true when the name identifies an asphaltene fraction
+   * @return true for asphaltene pseudo-components
    */
-  private static boolean isAsphaltene(String name) {
-    return name.toLowerCase(Locale.ROOT).contains("asphalten");
+  static boolean isAsphaltene(String name) {
+    return AsphalteneComponents.isAsphaltene(name);
+  }
+
+  /**
+   * Tests whether a phase holds precipitated asphaltene (an asphaltene, liquid-asphaltene or solid phase, or a phase
+   * that is asphaltene-rich by mass).
+   *
+   * @param phase the phase
+   * @return true if the phase is a precipitate phase
+   */
+  static boolean isPrecipitatePhase(PhaseInterface phase) {
+    return phase.getType() == PhaseType.ASPHALTENE || phase.getType() == PhaseType.LIQUID_ASPHALTENE
+        || phase.getType() == PhaseType.SOLID || phase.isAsphalteneRich();
+  }
+
+  /**
+   * Returns the fraction of the total asphaltene inventory (summed over all asphaltene components) that sits in
+   * precipitate phases.
+   *
+   * @param system flashed fluid
+   * @return precipitated fraction between 0 and 1
+   */
+  static double precipitatedFraction(SystemInterface system) {
+    double total = 0.0;
+    double precipitated = 0.0;
+    for (int c = 0; c < system.getPhase(0).getNumberOfComponents(); c++) {
+      if (!isAsphaltene(system.getPhase(0).getComponent(c).getComponentName())) {
+        continue;
+      }
+      total += system.getPhase(0).getComponent(c).getz() * system.getTotalNumberOfMoles();
+      for (int p = 0; p < system.getNumberOfPhases(); p++) {
+        PhaseInterface phase = system.getPhase(p);
+        if (isPrecipitatePhase(phase)) {
+          precipitated += phase.getComponent(c).getNumberOfMolesInPhase();
+        }
+      }
+    }
+    return total > 1e-20 ? Math.min(1.0, precipitated / total) : 0.0;
   }
 }

@@ -1,8 +1,8 @@
 package neqsim.pvtsimulation.flowassurance;
 
-import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.characterization.AsphalteneComponents;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -205,7 +205,7 @@ public final class AsphalteneSolidModel implements java.io.Serializable {
     String found = null;
     for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
       String name = fluid.getPhase(0).getComponent(i).getComponentName();
-      if (name.toLowerCase(Locale.ROOT).contains("asphalten")) {
+      if (AsphalteneComponents.isAsphaltene(name)) {
         if (found != null) {
           throw new IllegalArgumentException(
               "AsphalteneSolidModel supports one asphaltene component; found " + found + " and " + name);
@@ -273,8 +273,7 @@ public final class AsphalteneSolidModel implements java.io.Serializable {
       double size = fluid.getPhase(0).getComponent(k).getTC() / fluid.getPhase(0).getComponent(k).getPC();
       kij[k] = sizeAsymmetryKij(asphSize, size, kijExponent);
     }
-    for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-      PhaseInterface phase = fluid.getPhase(p);
+    for (PhaseInterface phase : AsphalteneComponents.allPhases(fluid)) {
       if (!(phase instanceof PhaseEosInterface)) {
         continue;
       }
@@ -576,10 +575,17 @@ public final class AsphalteneSolidModel implements java.io.Serializable {
    * @param maximumPressure top of the search range in bara
    * @param minimumPressure bottom of the search range in bara
    * @return the fitted exponent (also set on the model)
+   * @throws IllegalArgumentException if the fluid has the calibration composition and the temperature is within 0.5 K
+   * of the calibration temperature
    */
   public double fitKijExponent(SystemInterface fluid, double temperature, double measuredOnsetPressure,
       double maximumPressure, double minimumPressure) {
     requireCalibrated();
+    if (Math.abs(temperature - referenceTemperature) < 0.5 && sameComposition(fluid, referenceFluid)) {
+      throw new IllegalArgumentException("fitKijExponent needs a different fluid (a blend or gas-injected oil) or a "
+          + "different temperature: for the calibration fluid at " + referenceTemperature + " K the model is "
+          + "re-anchored to the calibration onset for every exponent, so the objective carries no information");
+    }
     final double ratio = 0.5 * (Math.sqrt(5.0) - 1.0);
     double a = 0.3;
     double b = 3.5;
@@ -629,6 +635,34 @@ public final class AsphalteneSolidModel implements java.io.Serializable {
       return 1.0e3 + (measured - minimumPressure);
     }
     return Math.abs(result.getUpperOnsetPressure() - measured);
+  }
+
+  /**
+   * Tests whether two fluids have the same components and overall mole fractions.
+   *
+   * @param a first fluid
+   * @param b second fluid
+   * @return true if component names and mole fractions agree to 1e-9
+   */
+  private static boolean sameComposition(SystemInterface a, SystemInterface b) {
+    PhaseInterface pa = a.getPhase(0);
+    PhaseInterface pb = b.getPhase(0);
+    if (pa.getNumberOfComponents() != pb.getNumberOfComponents()) {
+      return false;
+    }
+    double totalA = 0.0;
+    double totalB = 0.0;
+    for (int i = 0; i < pa.getNumberOfComponents(); i++) {
+      totalA += pa.getComponent(i).getNumberOfmoles();
+      totalB += pb.getComponent(i).getNumberOfmoles();
+    }
+    for (int i = 0; i < pa.getNumberOfComponents(); i++) {
+      if (!pa.getComponent(i).getComponentName().equals(pb.getComponent(i).getComponentName()) || Math.abs(
+          pa.getComponent(i).getNumberOfmoles() / totalA - pb.getComponent(i).getNumberOfmoles() / totalB) > 1e-9) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

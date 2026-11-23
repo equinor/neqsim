@@ -198,7 +198,7 @@ public class DeBoerAsphalteneScreening {
 
     // Calculate the "critical" undersaturation for this density
     // This is the undersaturation at which problems begin
-    double criticalDeltaP = calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
+    double criticalDeltaP = boundaries(inSituDensity)[0];
 
     if (criticalDeltaP <= 0) {
       criticalDeltaP = 50.0; // Minimum threshold
@@ -209,9 +209,8 @@ public class DeBoerAsphalteneScreening {
 
     // Adjust for asphaltene content if known
     if (asphalteneContent > 0) {
-      // Higher asphaltene content increases risk
-      // Typical adjustment: 5% asphaltenes doubles risk
-      double asphalteneMultiplier = 1.0 + (asphalteneContent - 0.02) / 0.05;
+      // Higher asphaltene content increases risk: 2 wt% leaves it unchanged and 5 wt% doubles it.
+      double asphalteneMultiplier = 1.0 + (asphalteneContent - 0.02) / 0.03;
       if (asphalteneMultiplier < 0.5) {
         asphalteneMultiplier = 0.5;
       }
@@ -230,9 +229,10 @@ public class DeBoerAsphalteneScreening {
     double deltaP = getUndersaturationPressure();
 
     // Calculate quadratic boundary values for this density
-    double severeThreshold = calculateBoundary(inSituDensity, SEVERE_A, SEVERE_B, SEVERE_C);
-    double slightThreshold = calculateBoundary(inSituDensity, SLIGHT_A, SLIGHT_B, SLIGHT_C);
-    double noProblemsThreshold = calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
+    double[] bounds = boundaries(inSituDensity);
+    double noProblemsThreshold = bounds[0];
+    double slightThreshold = bounds[1];
+    double severeThreshold = bounds[2];
 
     // Classify based on position relative to boundaries.
     // Use max(0, threshold) to avoid negative thresholds at extreme densities,
@@ -257,7 +257,30 @@ public class DeBoerAsphalteneScreening {
    * @param c constant term
    * @return boundary undersaturation pressure (bar)
    */
-  private double calculateBoundary(double density, double a, double b, double c) {
+  /**
+   * Returns the three undersaturation boundaries at a density, ordered so that no-problem &lt;= slight &lt;= severe.
+   *
+   * <p>
+   * The fitted quadratic for the no-problem boundary lies above the slight boundary for densities below about 800 kg/m3
+   * (for example 98 bar against 90 bar at 700 kg/m3). Unordered, a point between the two curves skipped the
+   * SLIGHT_PROBLEM class and was reported as MODERATE_PROBLEM although it lay below the no-problem curve. The
+   * no-problem boundary is therefore capped at the slight boundary; where the fitted curves cross, the slight-problem
+   * band has zero width.
+   * </p>
+   *
+   * @param density in-situ density (kg/m3)
+   * @return array {noProblem, slight, severe} in bar
+   */
+  public static double[] boundaries(double density) {
+    double severe = calculateBoundary(density, SEVERE_A, SEVERE_B, SEVERE_C);
+    double slight = calculateBoundary(density, SLIGHT_A, SLIGHT_B, SLIGHT_C);
+    double noProblem = calculateBoundary(density, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
+    noProblem = Math.min(noProblem, slight);
+    severe = Math.max(severe, slight);
+    return new double[] {noProblem, slight, severe};
+  }
+
+  private static double calculateBoundary(double density, double a, double b, double c) {
     return a * density * density + b * density + c;
   }
 
@@ -362,8 +385,9 @@ public class DeBoerAsphalteneScreening {
 
     // Boundary analysis
     result.append("DE BOER PLOT POSITION:\n");
-    double severeThreshold = calculateBoundary(inSituDensity, SEVERE_A, SEVERE_B, SEVERE_C);
-    double slightThreshold = calculateBoundary(inSituDensity, SLIGHT_A, SLIGHT_B, SLIGHT_C);
+    double[] plotBounds = boundaries(inSituDensity);
+    double severeThreshold = plotBounds[2];
+    double slightThreshold = plotBounds[1];
     result.append(String.format("  Severe problem boundary: %.1f bar%n", Math.max(0, severeThreshold)));
     result.append(String.format("  Slight problem boundary: %.1f bar%n", Math.max(0, slightThreshold)));
     result.append(String.format("  Current undersaturation: %.1f bar%n", getUndersaturationPressure()));
@@ -390,9 +414,10 @@ public class DeBoerAsphalteneScreening {
     for (int i = 0; i < numPoints; i++) {
       double density = minDensity + i * step;
       data[0][i] = density;
-      data[1][i] = Math.max(0, calculateBoundary(density, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C));
-      data[2][i] = Math.max(0, calculateBoundary(density, SLIGHT_A, SLIGHT_B, SLIGHT_C));
-      data[3][i] = Math.max(0, calculateBoundary(density, SEVERE_A, SEVERE_B, SEVERE_C));
+      double[] bounds = boundaries(density);
+      data[1][i] = Math.max(0, bounds[0]);
+      data[2][i] = Math.max(0, bounds[1]);
+      data[3][i] = Math.max(0, bounds[2]);
     }
 
     return data;

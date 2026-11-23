@@ -152,22 +152,47 @@ double estimatedResinMw = asphChar.estimateResinMolecularWeight();
 ### Asphaltene Association Parameters
 
 The characterization object exposes the asphaltene and resin molecular weights plus the
-asphaltene self-association energy and volume:
+asphaltene self-association and the asphaltene-resin cross-association parameters. Energies are in
+J/mol (the unit NeqSim's CPA uses); volumes are dimensionless.
 
 ```java
-asphChar.setMwAsphaltene(1700.0);
+asphChar.setMwAsphaltene(1700.0);   // an explicit value is never replaced by the C7+ estimate
 asphChar.setMwResin(800.0);
 asphChar.setAsphalteneAssociationEnergy(3500.0);
-asphChar.setAsphalteneAssociationVolume(0.05);
+asphChar.setAsphalteneAssociationVolume(0.005);      // default, matches the component database
+asphChar.setResinAsphalteneAssociationEnergy(2500.0); // asphaltene-resin cross-association
+asphChar.setResinSelfAssociationEnergy(0.0);          // default: resins do not self-associate
 
 double epsilon = asphChar.getAsphalteneAssociationEnergy();
 double kappa = asphChar.getAsphalteneAssociationVolume();
 ```
 
-The class applies its resin association treatment internally when
-`addAsphalteneComponents(system, totalC7plusMoles)` is used. It does not expose a separate
-public cross-association setter. Treat the default values as starting points and qualify or fit
-them against representative onset or precipitation data before engineering use.
+`addAsphalteneComponents(system, totalC7plusMoles)` requires `setC7plusProperties(...)` first
+(`IllegalStateException` otherwise; earlier versions silently added nothing). It adds:
+
+- the database component `asphaltene` (CPA scheme 1A) with the molecular weight and association
+  parameters above, set in every allocated phase;
+- a resin TBP pseudo-component `Resin_PC`, with critical properties from the Pedersen heavy-fraction
+  correlations at the resin molecular weight and `setResinDensity(...)` (default 1.0 g/cm3). Earlier
+  versions called `addComponent("resin", ...)`, which is not a database component.
+
+In an SRK-CPA fluid the resin gets a 2B association scheme. NeqSim's site-charge rules let only its
+positive site bond to the asphaltene's single 1A site, and with zero self-association energy the
+resin bonds only to asphaltene, as in Li and Firoozabadi (2010). The bond strength is the
+cross-association, which is set after the mixing rule:
+
+```java
+asphChar.setC7plusProperties(300.0, 900.0);
+asphChar.addAsphalteneComponents(fluid, 0.1);
+fluid.setMixingRule(10);
+asphChar.applyCrossAssociation(fluid); // after every setMixingRule call
+```
+
+`applyCrossAssociation` uses `PhaseCPAInterface.setCrossAssociationParameters(i, j, energy, volume)`,
+which switches the pair from the default Elliott rule (sqrt(Delta_ii Delta_jj), zero when one
+component does not self-associate) to explicit cross parameters. Setting the mixing rule again resets
+them. Treat the default values as starting points and qualify or fit them against representative onset
+or precipitation data before engineering use.
 
 ---
 

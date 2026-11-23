@@ -1931,11 +1931,14 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * </p>
    * <ul>
    * <li>The phase type is ASPHALTENE or LIQUID_ASPHALTENE, or</li>
-   * <li>The total mole fraction of asphaltene components exceeds 0.5</li>
+   * <li>Asphaltene components make up more than half of the phase <b>mass</b>.</li>
    * </ul>
    *
    * <p>
-   * Asphaltene components are identified by name containing "asphaltene" (case-insensitive).
+   * Asphaltene components are identified by
+   * {@link neqsim.thermo.characterization.AsphalteneComponents#isAsphaltene(String)} (name containing "asphalten" or
+   * starting with "asph_"). A mass basis is used because asphaltene pseudo-components are much heavier than the other
+   * oil components, so an asphaltene-rich liquid can be mostly asphaltene by mass but under half by moles.
    * </p>
    *
    * @return true if the phase is asphaltene-rich
@@ -1946,17 +1949,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
       return true;
     }
 
-    // Check for asphaltene components by name
-    double asphalteneFraction = 0.0;
-    for (int i = 0; i < getNumberOfComponents(); i++) {
-      ComponentInterface comp = getComponent(i);
-      String compName = comp.getComponentName();
-      if (compName != null && compName.toLowerCase().contains("asphaltene")) {
-        asphalteneFraction += comp.getx();
-      }
-    }
-
-    return asphalteneFraction > 0.5;
+    return neqsim.thermo.characterization.AsphalteneComponents.isAsphalteneRichByMass(this);
   }
 
   /**

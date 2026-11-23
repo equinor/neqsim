@@ -168,7 +168,7 @@ public class AsphalteneMethodComparison {
     cpaOnsetPressure = Double.NaN;
     String onsetFailure = null;
     try {
-      cpaOnsetPressure = cpaAnalyzer.calculateOnsetPressure(reservoirTemperature);
+      cpaOnsetPressure = cpaAnalyzer.calculateOnsetPressure(reservoirTemperature, reservoirPressure);
     } catch (IllegalArgumentException | IllegalStateException failure) {
       onsetFailure = failure.getMessage();
     }

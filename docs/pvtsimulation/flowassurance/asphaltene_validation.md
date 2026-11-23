@@ -200,36 +200,57 @@ Just Above (ΔP = 10 bar):
 
 ## Flory-Huggins Onset Pressure Validation
 
-### Physics-Based Calibration Results
+### Heuristic-Prior Results (re-measured 2026-11-22)
 
-The `FloryHugginsAsphalteneModel` with `calibrateCorrelation()` was validated against 7 published onset pressure cases. The calibration uses the critical Flory-Huggins interaction parameter $\chi_c$ to set the solubility parameter correlation coefficient $A$ from first principles.
+**Earlier numbers withdrawn.** The table previously shown here (5 of 7 cases detected, 22.4 % AARD)
+was produced by a Newton iteration for the Flory-Huggins solubility limit that did not converge: for
+typical live-oil values (chi of about 7, molar-volume ratio of about 7) it stopped at
+phi of about 1e-19 with a residual of -30 to -45 and reported almost all asphaltene as precipitated.
+The onsets it gave were artefacts of that solver. `FloryHugginsAsphalteneModel` now solves the
+equation in ln(phi) with a bracketed search that excludes the trivial root phi = 1 and returns
+"fully miscible" when no other root exists. `calibrateCorrelation()` was also rewritten: it used the
+liquid-liquid critical point chi_c, which is not the onset condition of this model (solubility against
+a pure asphaltene phase).
 
-### Literature Comparison (7 Cases)
+`calibrateCorrelation()` is a **heuristic prior that uses no measured data**: it sets the density
+correlation so that the oil at reservoir conditions is 0.35 MPa^0.5 short of its own onset. The
+predicted onset is therefore wherever depressurisation lowers delta_L by 0.35 MPa^0.5. Treat the
+agreement below as a consistency check of that heuristic, not as validation of the physics. When a
+measured onset exists, use `calibrateToOnsetPressure(T, P)`.
+
+Protocol (the slow test `AsphalteneMultiMethodBenchmarkTest.testFloryHugginsWithAPIGravityImprovesLiteraturePredictions`):
+synthetic SRK-CPA fluid per case (methane fraction from API gravity, ethane, propane, n-heptane,
+nC10, asphaltene), `configureFromAPIGravity`, `configureFromSARA`, `calibrateCorrelation` at
+reservoir temperature, onset search from reservoir pressure in 2-bar steps. Measured values are the
+`AsphalteneMultiMethodBenchmark.getLiteratureCases()` entries; their transcription from the cited
+papers has not been independently re-checked.
 
 | Case | Source | Predicted [bar] | Measured [bar] | Error [%] |
 |------|--------|-----------------|----------------|-----------|
-| Hirschberg (1984) | SPE-11202 | 284 | 360 | 21.0 |
-| De Boer (1995) | SPE-24987 | 501 | 580 | 13.7 |
-| Jamaluddin (2002) | SPE-74393 | 198 | 310 | 36.2 |
-| Hammami (2000) | Energy Fuels | 239 | 347 | 31.1 |
-| Hassi-Messaoud | Field data | 387 | 430 | 9.9 |
-| Burke (1990) | SPE | Not detected | 276 | — |
-| Akbarzadeh (2005) | SPE | Not detected | 200 | — |
+| Hirschberg North Sea | SPE-11202 | 348.7 | 360 | 3.1 |
+| De Boer Oil A | SPE-24987 | 554.6 | 580 | 4.4 |
+| Burke Prinos | SPE-18273 | 145.3 | 165 | 11.9 |
+| Jamaluddin Middle East | SPE-74393 | 263.2 | 310 | 15.1 |
+| Hammami live oil | SPE-58786 | 305.9 | 347 | 11.8 |
+| Hassi-Messaoud | Field data | 395.4 | 430 | 8.0 |
+| Akbarzadeh heavy oil | SPE-95514 | 104.4 | 155 | 32.6 |
 
-### Summary Statistics (5 Detected Cases)
+The previous table listed 276 bar (Burke) and 200 bar (Akbarzadeh) as measured values; the
+benchmark code holds 165 and 155 bar. The table above uses the code values.
+
+### Summary Statistics (7 Cases)
 
 | Metric | Value |
 |--------|-------|
-| Cases detected | 5 / 7 (71%) |
-| AAD | 84 bar |
-| AARD | 22.4% |
-| Bias | Consistently under-predicts |
+| Cases detected | 7 / 7 |
+| AAD | 32.8 bar |
+| AARD | 12.4 % |
+| Bias | -32.8 bar (every case under-predicted) |
 
 **Key Findings:**
-- The calibrated FH model detects onset in 5 of 7 cases
-- Best performance for light oils with high undersaturation (Hassi-Messaoud: 9.9% error)
-- Under-prediction bias complements De Boer's over-prediction tendency
-- Burke and Akbarzadeh cases not detected due to low API gravity / high asphaltene content
+- All seven cases give an onset below reservoir pressure, every one of them under-predicted.
+- The result depends on the fixed 0.35 MPa^0.5 margin; a different margin moves every prediction.
+- The heavy-oil case (Akbarzadeh) has the largest error.
 
 ## CPA Validation
 
@@ -298,9 +319,9 @@ mvn test -Dtest="AsphalteneOnsetFittingTest"
    - Decreasing risk with density
    - Minimal risk at bubble point conditions
 
-6. **Flory-Huggins with Calibration**: With `calibrateCorrelation()`, achieves 71% detection rate and 22.4% AARD on literature cases. Under-prediction bias complements De Boer's conservative tendency.
+6. **Flory-Huggins**: the earlier 71 % detection / 22.4 % AARD figures came from a non-converging solver and are withdrawn. With the corrected solver and the heuristic prior `calibrateCorrelation()`, the 7 benchmark cases give 12.4 % AARD, all under-predicted (2026-11-22); the prior uses no measured data and its 0.35 MPa^0.5 margin sets the result. With a measured onset, use `calibrateToOnsetPressure(T, P)`.
 
-7. **Recommendation**: Use De Boer for initial screening. Use calibrated Flory-Huggins for mechanistic onset pressure estimates. For detailed predictions, tune CPA model to experimental AOP data using `AsphalteneOnsetFitting`.
+7. **Recommendation**: Use De Boer for initial screening. Flory-Huggins with `calibrateCorrelation()` is a heuristic prior (12.4 % AARD, all under-predicted, on the 7 benchmark cases, 2026-11-22); with a measured onset use `calibrateToOnsetPressure(T, P)` or `AsphalteneSolidModel`. For detailed predictions, tune CPA model to experimental AOP data using `AsphalteneOnsetFitting`.
 
 ## References
 
