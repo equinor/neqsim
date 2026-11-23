@@ -260,10 +260,15 @@ named unit) and review `DEXPI_BUILD_ADDITIONAL_FEED` and
 control valves, resolves separator gas/liquid/water outlets from the
 `NeqSimPortAttributes` nozzle roles (with fallbacks), wires all mixer inlets,
 closes loops with `Recycle`, and applies exported outlet specifications. Segments
-marked `NormalFlow=false` (drain, flare, chemical, sampling runs) are excluded like
-PSV and blind branches. When the source is a vector PDF P&ID (e.g. a STID
+marked `NormalFlow=false` (drain, flare, chemical, sampling runs) and components
+with `NormalPosition=Closed` are excluded like PSV and blind branches; open blinds
+and off-page connectors linked on both sides pass flow. Side streams entering
+through other connectors need `addBoundaryFeed(connectorRef, fluid, rate, ...)`;
+otherwise they get a copy of the builder feed (`DEXPI_BUILD_ADDITIONAL_FEED`).
+When the source is a PDF P&ID (e.g. a STID
 drawing) rather than DEXPI, first extract `neqsim_pid_drawing_records.v1` with the
-community skill `neqsim-pid-pdf-to-dexpi`, review its overlay, then write DEXPI with
+community skill `neqsim-pid-pdf-to-dexpi` (vector or scanned, one or several
+stitched sheets), work through its review checklist, then write DEXPI with
 `PidDrawingRecordsDexpiWriter`; `DexpiXmlSvgRenderer` regenerates the sheet layout
 from that file (`PidDrawingRecordsDexpiWriterTest`). A
 NeqSim export rebuilt with the same fluid template reproduces the source results

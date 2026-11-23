@@ -69,6 +69,8 @@ public final class PidDrawingRecordsDexpiWriter {
   private static final String NAMESPACE = "http://sandbox.dexpi.org/xml";
   private static final double PT_TO_MM = 25.4 / 72.0;
   private static final String PROCESS_RGB = "0";
+  private static final Set<String> INLINE_KINDS = new HashSet<String>(
+      java.util.Arrays.asList("valve", "flange", "reducer", "blind"));
 
   private PidDrawingRecordsDexpiWriter() {
   }
@@ -237,6 +239,17 @@ public final class PidDrawingRecordsDexpiWriter {
     attribute(document, drawingAttributes, "SourcePage", text(source, "page"));
     attribute(document, drawingAttributes, "ReviewStatus",
         records.has("reviewStatus") ? records.get("reviewStatus").getAsString() : "REVIEW_REQUIRED");
+    JsonObject review = records.has("review") && records.get("review").isJsonObject()
+        ? records.getAsJsonObject("review")
+        : new JsonObject();
+    attribute(document, drawingAttributes, "ReviewedBy", text(review, "reviewer"));
+    attribute(document, drawingAttributes, "ReviewDate", text(review, "date"));
+    attribute(document, drawingAttributes, "ReviewCorrections", text(review, "correctionCount"));
+    JsonArray sheets = array(records, "sheets");
+    for (int i = 0; i < sheets.size(); i++) {
+      JsonObject sheetInfo = sheets.get(i).getAsJsonObject();
+      attribute(document, drawingAttributes, "Sheet" + (i + 1), text(sheetInfo, "drawingNumber"));
+    }
 
     Map<String, JsonObject> nodes = new LinkedHashMap<String, JsonObject>();
     for (JsonElement item : array(records, "nodes")) {
@@ -459,18 +472,22 @@ public final class PidDrawingRecordsDexpiWriter {
     }
 
     String previous = from;
-    int valveIndex = 0;
+    int itemIndex = 0;
     for (JsonElement item : array(edge, "inline_items")) {
       JsonObject inline = item.getAsJsonObject();
-      if (!"valve".equals(text(inline, "kind"))) {
+      String kind = text(inline, "kind");
+      if (!INLINE_KINDS.contains(kind)) {
         continue;
       }
-      valveIndex++;
-      String valveId = edgeId + "-V" + valveIndex;
-      appendValve(document, segment, inline, valveId, sheet);
-      connection(document, segment, previous, valveId + "-N1");
-      previous = valveId + "-N2";
-      result.count("valves");
+      itemIndex++;
+      String itemId = edgeId + "-" + kind.substring(0, 1).toUpperCase(Locale.ROOT) + itemIndex;
+      appendInlineItem(document, segment, inline, itemId, sheet);
+      connection(document, segment, previous, itemId + "-N1");
+      previous = itemId + "-N2";
+      result.count("valve".equals(kind) ? "valves" : kind + "s");
+      if ("closed".equalsIgnoreCase(text(inline, "normal_position"))) {
+        result.count("normallyClosedItems");
+      }
     }
     connection(document, segment, previous, to);
     result.count(normalFlow ? "pipeRuns" : "noFlowPipeRuns");
@@ -528,7 +545,7 @@ public final class PidDrawingRecordsDexpiWriter {
   private static void appendConnectorShape(Document document, Element parent, JsonObject node, Sheet sheet) {
     double[] box = bbox(node);
     double mid = (box[1] + box[3]) / 2.0;
-    double tip = Math.min(8.0, (box[2] - box[0]) / 4.0);
+    double tip = "box".equals(text(node, "shape")) ? 0.0 : Math.min(8.0, (box[2] - box[0]) / 4.0);
     double[][] outline = new double[][] {{box[0], box[1]}, {box[2] - tip, box[1]}, {box[2], mid},
         {box[2] - tip, box[3]}, {box[0], box[3]}, {box[0], box[1]}};
     polyline(document, parent, sheet, outline, 0.35, "signal".equals(text(node, "service")));
@@ -562,50 +579,119 @@ public final class PidDrawingRecordsDexpiWriter {
   }
 
   /**
-   * Appends an inline valve with two nozzles and a bow-tie symbol.
+   * Appends an inline piping item (valve, flange, reducer or blind) with two nozzles and its symbol.
+   *
+   * <p>
+   * Valves and blinds carry {@code NormalPosition} ({@code Open} or {@code Closed}) and, when read from the drawing,
+   * {@code LockingStatus} (LO, LC, CSO, CSC). A normally closed valve is drawn filled.
+   * </p>
    *
    * @param document target document
    * @param parent piping network segment
    * @param inline inline item record
-   * @param valveId DEXPI id of the valve
+   * @param itemId DEXPI id of the item
    * @param sheet coordinate conversion
    */
-  private static void appendValve(Document document, Element parent, JsonObject inline, String valveId, Sheet sheet) {
-    String componentClass = text(inline, "component_class").isEmpty() ? "CustomValve" : text(inline, "component_class");
-    if ("GenericValve".equals(componentClass)) {
-      componentClass = "CustomValve";
+  private static void appendInlineItem(Document document, Element parent, JsonObject inline, String itemId,
+      Sheet sheet) {
+    String kind = text(inline, "kind");
+    String componentClass = text(inline, "component_class");
+    if (componentClass.isEmpty() || "GenericValve".equals(componentClass)) {
+      componentClass = "valve".equals(kind) ? "CustomValve"
+          : "flange".equals(kind) ? "Flange" : "reducer".equals(kind) ? "ConcentricPipeReducer" : "SpectacleBlind";
     }
+    String position = text(inline, "normal_position");
+    boolean closed = "closed".equalsIgnoreCase(position);
     double x = number(inline, "x", 0.0);
     double y = number(inline, "y", 0.0);
     boolean horizontal = !"vertical".equals(text(inline, "orientation"));
     double half = Math.max(3.0, Math.min(8.0, number(inline, "gap", 10.0) / 2.0));
-    Element valve = child(document, parent, "PipingComponent");
-    valve.setAttribute("ID", valveId);
-    valve.setAttribute("ComponentClass", componentClass);
-    valve.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/" + componentClass);
-    position(document, valve, sheet.x(x), sheet.y(y));
-    double[][] bowtie = horizontal
-        ? new double[][] {{x - half, y - half * 0.6}, {x + half, y + half * 0.6}, {x + half, y - half * 0.6},
-            {x - half, y + half * 0.6}, {x - half, y - half * 0.6}}
-        : new double[][] {{x - half * 0.6, y - half}, {x + half * 0.6, y + half}, {x - half * 0.6, y + half},
-            {x + half * 0.6, y - half}, {x - half * 0.6, y - half}};
-    polyline(document, valve, sheet, bowtie, 0.35, false);
+    Element item = child(document, parent, "PipingComponent");
+    item.setAttribute("ID", itemId);
+    item.setAttribute("ComponentClass", componentClass);
+    item.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/" + componentClass);
+    position(document, item, sheet.x(x), sheet.y(y));
+    for (double[][] shape : symbol(kind, x, y, half, horizontal)) {
+      Element line = polyline(document, item, sheet, shape, 0.35, false);
+      if ("valve".equals(kind) && closed) {
+        line.setAttribute("Filled", "Solid");
+      }
+    }
+    if ("blind".equals(kind)) {
+      Element ring = circle(document, item, sheet.x(x), sheet.y(y), half * PT_TO_MM * 0.6);
+      if (closed) {
+        ring.setAttribute("Filled", "Solid");
+      }
+    }
     for (int k = 1; k <= 2; k++) {
       double sign = k == 1 ? -1.0 : 1.0;
-      Element nozzle = child(document, valve, "Nozzle");
-      nozzle.setAttribute("ID", valveId + "-N" + k);
+      Element nozzle = child(document, item, "Nozzle");
+      nozzle.setAttribute("ID", itemId + "-N" + k);
       nozzle.setAttribute("ComponentClass", "Nozzle");
       position(document, nozzle, sheet.x(horizontal ? x + sign * half : x), sheet.y(horizontal ? y : y + sign * half));
     }
     String tag = text(inline, "tag");
-    if (!tag.isEmpty()) {
-      text(document, valve, tag, sheet.x(x), sheet.y(y) + 3.0, 2.2, "CenterBottom");
+    String lock = text(inline, "locking");
+    String caption = tag + (lock.isEmpty() ? "" : (tag.isEmpty() ? "" : " ") + lock);
+    if (!caption.isEmpty()) {
+      text(document, item, caption, sheet.x(x), sheet.y(y) + 3.0, 2.2, "CenterBottom");
     }
-    Element attributes = genericSet(document, valve, "DexpiAttributes");
+    Element attributes = genericSet(document, item, "DexpiAttributes");
     attribute(document, attributes, DexpiMetadata.TAG_NAME, tag);
-    attribute(document, attributes, "PipingComponentNumberAssignmentClass", tag.isEmpty() ? valveId : tag);
-    Element provenance = genericSet(document, valve, "NeqSimDrawingRecords");
+    attribute(document, attributes, "PipingComponentNumberAssignmentClass", tag.isEmpty() ? itemId : tag);
+    attribute(document, attributes, DexpiFlowsheetGraph.NORMAL_POSITION,
+        position.isEmpty() ? "" : closed ? "Closed" : "Open");
+    attribute(document, attributes, "LockingStatus", lock);
+    Element provenance = genericSet(document, item, "NeqSimDrawingRecords");
     attribute(document, provenance, "ExtractionConfidence", text(inline, "confidence"));
+    attribute(document, provenance, "NormalPositionSource", text(inline, "position_source"));
+  }
+
+  /**
+   * Returns the polylines of an inline item symbol in source drawing units.
+   *
+   * @param kind valve, flange, reducer or blind
+   * @param x centre x
+   * @param y centre y
+   * @param half half the symbol length along the pipe
+   * @param horizontal true when the pipe runs horizontally
+   * @return polylines
+   */
+  private static List<double[][]> symbol(String kind, double x, double y, double half, boolean horizontal) {
+    List<double[][]> shapes = new ArrayList<double[][]>();
+    double w = half * 0.6;
+    if ("flange".equals(kind)) {
+      double g = Math.min(1.5, half / 3.0);
+      shapes.add(rotate(new double[][] {{-g, -w}, {-g, w}}, x, y, horizontal));
+      shapes.add(rotate(new double[][] {{g, -w}, {g, w}}, x, y, horizontal));
+    } else if ("reducer".equals(kind)) {
+      shapes.add(rotate(new double[][] {{-half, -w}, {half, -w * 0.5}, {half, w * 0.5}, {-half, w}, {-half, -w}}, x, y,
+          horizontal));
+    } else if ("blind".equals(kind)) {
+      shapes.add(rotate(new double[][] {{0.0, -w * 1.8}, {0.0, -w}}, x, y, horizontal));
+    } else {
+      shapes
+          .add(rotate(new double[][] {{-half, -w}, {half, w}, {half, -w}, {-half, w}, {-half, -w}}, x, y, horizontal));
+    }
+    return shapes;
+  }
+
+  /**
+   * Places a symbol defined along +x at (x, y), turned 90 degrees for vertical pipes.
+   *
+   * @param local symbol points with the pipe along +x
+   * @param x centre x
+   * @param y centre y
+   * @param horizontal true when the pipe runs horizontally
+   * @return placed points
+   */
+  private static double[][] rotate(double[][] local, double x, double y, boolean horizontal) {
+    double[][] placed = new double[local.length][];
+    for (int i = 0; i < local.length; i++) {
+      placed[i] = horizontal ? new double[] {x + local[i][0], y + local[i][1]}
+          : new double[] {x + local[i][1], y + local[i][0]};
+    }
+    return placed;
   }
 
   /**

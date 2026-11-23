@@ -96,6 +96,7 @@ public class DexpiSimulationBuilder {
   private boolean autoInstrument = false;
   private boolean namespaceAware = false;
   private final List<BuildDiagnostic> diagnostics = new ArrayList<>();
+  private final Map<String, BoundaryFeed> boundaryFeeds = new LinkedHashMap<>();
 
   /**
    * Creates a new simulation builder for the given DEXPI XML file.
@@ -183,6 +184,124 @@ public class DexpiSimulationBuilder {
   }
 
   /**
+   * Makes an off-page connector a boundary feed with its own fluid, rate and state.
+   *
+   * <p>
+   * The connector is found by DEXPI id, then by its connector reference or label (exact, then case-insensitive
+   * substring when that is unique). A side stream that enters the sheet through the connector then carries this feed
+   * instead of being dropped. The other inbound off-page connectors then carry the builder feed (the first one; any
+   * further one gets its own copy and a {@code DEXPI_BUILD_ADDITIONAL_FEED} warning). When every inbound stream has a
+   * boundary feed, the builder feed is not used.
+   * </p>
+   *
+   * @param connectorReference connector id, drawing reference or label text
+   * @param fluid fluid for the feed, or null to use the builder fluid template
+   * @param flowRate feed flow rate
+   * @param flowUnit flow rate unit
+   * @param pressure feed pressure
+   * @param pressureUnit pressure unit
+   * @param temperature feed temperature
+   * @param temperatureUnit temperature unit
+   * @return this builder for chaining
+   */
+  public DexpiSimulationBuilder addBoundaryFeed(String connectorReference, SystemInterface fluid, double flowRate,
+      String flowUnit, double pressure, String pressureUnit, double temperature, String temperatureUnit) {
+    Objects.requireNonNull(connectorReference, "connectorReference");
+    boundaryFeeds.put(connectorReference,
+        new BoundaryFeed(fluid, flowRate, flowUnit, pressure, pressureUnit, temperature, temperatureUnit));
+    return this;
+  }
+
+  /** State of one boundary feed entering through an off-page connector. */
+  private static final class BoundaryFeed {
+    final SystemInterface fluid;
+    final double flowRate;
+    final String flowUnit;
+    final double pressure;
+    final String pressureUnit;
+    final double temperature;
+    final String temperatureUnit;
+
+    /**
+     * Creates the feed state.
+     *
+     * @param fluid fluid or null
+     * @param flowRate flow rate
+     * @param flowUnit flow unit
+     * @param pressure pressure
+     * @param pressureUnit pressure unit
+     * @param temperature temperature
+     * @param temperatureUnit temperature unit
+     */
+    BoundaryFeed(SystemInterface fluid, double flowRate, String flowUnit, double pressure, String pressureUnit,
+        double temperature, String temperatureUnit) {
+      this.fluid = fluid;
+      this.flowRate = flowRate;
+      this.flowUnit = flowUnit;
+      this.pressure = pressure;
+      this.pressureUnit = pressureUnit;
+      this.temperature = temperature;
+      this.temperatureUnit = temperatureUnit;
+    }
+  }
+
+  /**
+   * Resolves boundary-feed references to connector ids.
+   *
+   * @param document parsed DEXPI document
+   * @return feed state by connector id
+   */
+  private Map<String, BoundaryFeed> resolveBoundaryFeeds(Document document) {
+    Map<String, BoundaryFeed> resolved = new LinkedHashMap<>();
+    if (boundaryFeeds.isEmpty()) {
+      return resolved;
+    }
+    List<Element> connectors = new ArrayList<>();
+    NodeList nodes = document.getElementsByTagName("PipeOffPageConnector");
+    for (int i = 0; i < nodes.getLength(); i++) {
+      connectors.add((Element) nodes.item(i));
+    }
+    for (Map.Entry<String, BoundaryFeed> feed : boundaryFeeds.entrySet()) {
+      String reference = feed.getKey().trim();
+      List<Element> exact = new ArrayList<>();
+      List<Element> partial = new ArrayList<>();
+      for (Element connector : connectors) {
+        List<String> names = new ArrayList<>();
+        names.add(connector.getAttribute("ID"));
+        names.add(getGenericAttribute(connector, "Label"));
+        names.add(getGenericAttribute(connector, "ContinuationSheet"));
+        NodeList references = connector.getElementsByTagName("ConnectorReference");
+        for (int i = 0; i < references.getLength(); i++) {
+          names.add(((Element) references.item(i)).getAttribute("DrawingName"));
+        }
+        boolean isExact = false;
+        boolean isPartial = false;
+        for (String name : names) {
+          if (name == null || name.isEmpty()) {
+            continue;
+          }
+          isExact |= name.equals(reference);
+          isPartial |= name.toUpperCase(java.util.Locale.ROOT).contains(reference.toUpperCase(java.util.Locale.ROOT));
+        }
+        if (isExact) {
+          exact.add(connector);
+        } else if (isPartial) {
+          partial.add(connector);
+        }
+      }
+      List<Element> match = exact.size() == 1 ? exact : exact.isEmpty() && partial.size() == 1 ? partial : null;
+      if (match == null) {
+        addDiagnostic(BuildDiagnostic.Severity.WARNING, "DEXPI_BUILD_BOUNDARY_FEED_UNRESOLVED", reference,
+            "boundary feed '" + reference + "' matches " + (exact.size() + partial.size())
+                + " off-page connectors; give the connector id or a unique label");
+        continue;
+      }
+      resolved.put(match.get(0).getAttribute("ID"), feed.getValue());
+    }
+    return resolved;
+  }
+
+  /**
    * Builds a runnable {@link ProcessSystem} from the DEXPI file.
    *
    * <p>
@@ -229,8 +348,9 @@ public class DexpiSimulationBuilder {
     for (Map.Entry<String, DexpiProcessUnit> entry : unitMap.entrySet()) {
       equipmentTypes.put(entry.getKey(), entry.getValue().getMappedEquipment());
     }
+    Map<String, BoundaryFeed> feeds = resolveBoundaryFeeds(document);
     DexpiFlowsheetGraph graph = DexpiFlowsheetGraph.extract(document, topology, equipmentTypes,
-        DexpiMappingLoader.loadPipingComponentMapping());
+        DexpiMappingLoader.loadPipingComponentMapping(), feeds.keySet());
     for (String note : graph.getNotes()) {
       String[] parts = note.split("\\|", 3);
       addDiagnostic(BuildDiagnostic.Severity.INFO, parts[0], parts[1], parts[2]);
@@ -239,9 +359,14 @@ public class DexpiSimulationBuilder {
       if (!unitMap.containsKey(node.getKey())) {
         Element element = node.getValue();
         String tag = getGenericAttribute(element, DexpiMetadata.TAG_NAME);
+        if (feeds.containsKey(node.getKey()) || graph.inboundConnectors.contains(node.getKey())) {
+          String label = getGenericAttribute(element, "Label");
+          tag = label != null ? label : getGenericAttribute(element, "ContinuationSheet");
+        }
         String name = tag != null ? tag : node.getKey();
+        boolean stream = feeds.containsKey(node.getKey()) || graph.inboundConnectors.contains(node.getKey());
         DexpiProcessUnit valve = new DexpiProcessUnit(name, element.getAttribute("ComponentClass"),
-            EquipmentEnum.ThrottlingValve, null, null);
+            stream ? EquipmentEnum.Stream : EquipmentEnum.ThrottlingValve, null, null);
         valve.setDexpiId(node.getKey());
         unitMap.put(node.getKey(), valve);
       }
@@ -271,6 +396,36 @@ public class DexpiSimulationBuilder {
       String id = pickNext(remaining, graph, created.keySet());
       remaining.remove(id);
       DexpiProcessUnit unit = unitMap.get(id);
+      BoundaryFeed boundary = feeds.get(id);
+      if (boundary != null) {
+        SystemInterface feedFluid = boundary.fluid != null ? boundary.fluid.clone() : fluid.clone();
+        Stream source = new Stream(uniqueName(unit.getName(), usedNames), feedFluid);
+        source.setFlowRate(boundary.flowRate, boundary.flowUnit);
+        source.setPressure(boundary.pressure, boundary.pressureUnit);
+        source.setTemperature(boundary.temperature, boundary.temperatureUnit);
+        processSystem.add(source);
+        created.put(id, source);
+        addDiagnostic(BuildDiagnostic.Severity.INFO, "DEXPI_BUILD_BOUNDARY_FEED", id,
+            "off-page connector '" + source.getName() + "' is a boundary feed");
+        continue;
+      }
+      if (graph.inboundConnectors.contains(id)) {
+        Stream source = new Stream(uniqueName(unit.getName(), usedNames), fluid.clone());
+        source.setFlowRate(feedFlowRate, feedFlowRateUnit);
+        source.setPressure(feedPressure, feedPressureUnit);
+        source.setTemperature(feedTemperature, feedTemperatureUnit);
+        processSystem.add(source);
+        created.put(id, source);
+        if (feedAssigned) {
+          addDiagnostic(BuildDiagnostic.Severity.WARNING, "DEXPI_BUILD_ADDITIONAL_FEED", id,
+              "inbound off-page connector has no boundary feed; it received its own copy of the builder feed");
+        } else {
+          addDiagnostic(BuildDiagnostic.Severity.INFO, "DEXPI_BUILD_BOUNDARY_FEED", id,
+              "off-page connector '" + source.getName() + "' carries the builder feed");
+        }
+        feedAssigned = true;
+        continue;
+      }
 
       List<StreamInterface> inlets = new ArrayList<>();
       for (DexpiFlowsheetGraph.Edge edge : graph.incoming(id)) {
