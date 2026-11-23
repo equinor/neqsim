@@ -42,6 +42,9 @@ final class DexpiFlowsheetGraph {
   static final String PORT_ATTRIBUTE_SET = "NeqSimPortAttributes";
   /** Generic attribute holding the process role of a nozzle. */
   static final String PORT_ROLE = "PortRole";
+
+  /** Generic attribute on a piping segment; {@code false} marks a run without flow in normal operation. */
+  static final String NORMAL_FLOW = "NormalFlow";
   /** Generic attribute holding the zero-based outlet index of a nozzle. */
   static final String PORT_INDEX = "PortIndex";
 
@@ -180,6 +183,11 @@ final class DexpiFlowsheetGraph {
     NodeList segments = document.getElementsByTagName("PipingNetworkSegment");
     for (int i = 0; i < segments.getLength(); i++) {
       Element segment = (Element) segments.item(i);
+      if ("false".equalsIgnoreCase(attributeValue(segment, NORMAL_FLOW))) {
+        graph.notes.add("DEXPI_BUILD_NO_FLOW_BRANCH_EXCLUDED|" + segment.getAttribute("ID")
+            + "|pipe run marked NormalFlow=false (drain, flare, utility) excluded from the steady-state flowsheet");
+        continue;
+      }
       for (Element connection : directChildren(segment, "Connection")) {
         String from = connection.getAttribute("FromID");
         String to = connection.getAttribute("ToID");

@@ -1,8 +1,8 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.9.0"
+version: "1.10.0"
 description: "Prepare professional P&ID drawing packages with native DEXPI 2.0.1 from a NeqSim process model, add traceable instrumentation and safeguards, and bind final P&ID tags to steady-state simulations and dynamic tests. Also interpret P&ID symbols, import process topology, link historian tags, evaluate valve/equipment changes and prepare water-hammer or blowdown/flare handoffs."
-last_verified: "2026-11-18"
+last_verified: "2026-11-23"
 requires:
   python_packages: [pandas]
 ---
@@ -259,7 +259,13 @@ named unit) and review `DEXPI_BUILD_ADDITIONAL_FEED` and
 `DEXPI_BUILD_SPLIT_FACTORS_ASSUMED`; never hide them. The builder keeps in-line
 control valves, resolves separator gas/liquid/water outlets from the
 `NeqSimPortAttributes` nozzle roles (with fallbacks), wires all mixer inlets,
-closes loops with `Recycle`, and applies exported outlet specifications. A
+closes loops with `Recycle`, and applies exported outlet specifications. Segments
+marked `NormalFlow=false` (drain, flare, chemical, sampling runs) are excluded like
+PSV and blind branches. When the source is a vector PDF P&ID (e.g. a STID
+drawing) rather than DEXPI, first extract `neqsim_pid_drawing_records.v1` with the
+community skill `neqsim-pid-pdf-to-dexpi`, review its overlay, then write DEXPI with
+`PidDrawingRecordsDexpiWriter`; `DexpiXmlSvgRenderer` regenerates the sheet layout
+from that file (`PidDrawingRecordsDexpiWriterTest`). A
 NeqSim export rebuilt with the same fluid template reproduces the source results
 (`DexpiSimulationRoundTripTest`). DEXPI carries no composition, so always supply
 the fluid template. Native DEXPI 2.x files are rejected explicitly; export
