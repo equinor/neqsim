@@ -2733,7 +2733,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param liftGas lift-gas fluid with a mixing rule, or null to use the produced gas
    */
   public void setLiftGasFluid(SystemInterface liftGas) {
-    this.liftGasFluid = liftGas;
+    this.liftGasFluid = liftGas == null ? null : liftGas.clone();
   }
 
   /**
@@ -2742,7 +2742,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @return lift-gas fluid, or null when the produced gas phase is used
    */
   public SystemInterface getLiftGasFluid() {
-    return liftGasFluid;
+    return liftGasFluid == null ? null : liftGasFluid.clone();
   }
 
   /**
@@ -5370,6 +5370,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    */
   private double calculateHeadLossTubingSimplified(NetworkPipe pipe, SystemInterface fluid) {
     double flowKgs = Math.abs(pipe.getFlowRate());
+    fluid.initPhysicalProperties("density");
+    fluid.initPhysicalProperties("viscosity");
     double density = fluid.getDensity("kg/m3");
     double viscosity = fluid.getViscosity("kg/msec");
 
