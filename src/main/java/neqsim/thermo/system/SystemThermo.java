@@ -896,6 +896,20 @@ public abstract class SystemThermo implements SystemInterface {
       if (getPhase(0).getComponent(i).isIsTBPfraction()) {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
         phaseArray[5].getComponent(i).setIsPlusFraction(true);
+        // A pseudo component is only in the temporary database after createDatabase(true); otherwise the
+        // solid component is created from a placeholder. Copy the characterization from the fluid so the wax
+        // phase does not depend on whether the database was created.
+        ComponentInterface fluidComponent = getPhase(0).getComponent(i);
+        ComponentInterface solidComponent = phaseArray[5].getComponent(i);
+        solidComponent.setMolarMass(fluidComponent.getMolarMass());
+        solidComponent.setNormalLiquidDensity(fluidComponent.getNormalLiquidDensity());
+        solidComponent.setTC(fluidComponent.getTC());
+        solidComponent.setPC(fluidComponent.getPC());
+        solidComponent.setAcentricFactor(fluidComponent.getAcentricFactor());
+        solidComponent.setIsTBPfraction(true);
+        solidComponent.setWaxFormer(fluidComponent.isWaxFormer());
+        solidComponent.setTriplePointTemperature(fluidComponent.getTriplePointTemperature());
+        solidComponent.setHeatOfFusion(fluidComponent.getHeatOfFusion());
       } else {
         phaseArray[5].addComponent(getPhase(0).getComponent(i).getName(), moles, moles, i);
         // A named component reads database fusion data; keep any wax-model properties already assigned to

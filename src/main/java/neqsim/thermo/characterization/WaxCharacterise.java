@@ -197,73 +197,87 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     }
 
     /**
+     * Pedersen wax-forming mole fraction of a TBP or plus fraction.
+     *
+     * <p>
+     * {@code z_wax / z_total = 1 - (A + B M)((rho - rhoP) / rhoP)^C}, with M in g/mol, rho the normal liquid density in
+     * g/cm3 and rhoP the n-paraffin density {@code 0.3915 + 0.0675 ln M}. A fraction that is not denser than the
+     * n-paraffin of the same molar mass is treated as entirely wax forming (the base of the power would otherwise be
+     * negative and the result NaN). The result is bounded to [0, 1] so that no split creates negative moles.
+     * </p>
+     *
+     * @param componentNumber index of the TBP, plus or wax pseudo component in phase 0
+     * @return wax-forming fraction of the total moles of that fraction, in [0, 1]
+     * @throws IllegalArgumentException if molar mass, density or model parameters are not finite and positive
+     */
+    public double calcWaxFormerFraction(int componentNumber) {
+      ComponentInterface component = thermoSystem.getPhase(0).getComponent(componentNumber);
+      double molarMass = component.getMolarMass() * 1000.0;
+      double density = component.getNormalLiquidDensity();
+      double paraffinDensity = calcParaffinDensity(componentNumber);
+      if (!Double.isFinite(molarMass) || molarMass <= 0.0 || !Double.isFinite(density) || density <= 0.0
+          || !Double.isFinite(paraffinDensity) || paraffinDensity <= 0.0) {
+        throw new IllegalArgumentException("Wax split requires positive molar mass and density for "
+            + component.getComponentName() + ": M=" + molarMass + " g/mol, rho=" + density + " g/cm3");
+      }
+      if (density <= paraffinDensity) {
+        return 1.0;
+      }
+      double nonWaxFraction = (parameterWax[0] + parameterWax[1] * molarMass)
+          * Math.pow((density - paraffinDensity) / paraffinDensity, parameterWax[2]);
+      if (!Double.isFinite(nonWaxFraction)) {
+        throw new IllegalArgumentException("Invalid Pedersen wax split parameters A=" + parameterWax[0] + ", B="
+            + parameterWax[1] + ", C=" + parameterWax[2] + " for " + component.getComponentName());
+      }
+      return Math.max(0.0, Math.min(1.0, 1.0 - nonWaxFraction));
+    }
+
+    /**
      * {@inheritDoc}
      *
      * <p>
-     * TBP and plus fractions are split into a non-wax part and a wax-forming {@code wax}-prefixed pseudo component.
-     * Named components flagged as wax formers in the component database (the n-paraffins) are wax formers as a whole
-     * and are not split. They keep their database melting temperature and heat of fusion; where the database holds only
-     * its placeholder default (273.0 K and 6000 J/mol, currently nC15 and nC17 to nC24) they receive the Pedersen
-     * correlations of this model instead (#5210).
+     * TBP and plus fractions are split into a non-wax part and a wax-forming {@code wax}-prefixed pseudo component
+     * using {@link #calcWaxFormerFraction(int)}. The split is idempotent: when a wax pseudo component already exists,
+     * the total moles of the pair are re-split with the current parameters, so repeated calls (for example during
+     * parameter tuning) do not move more and more of the fraction into wax. A TBP fraction added after an earlier split
+     * is split on the next call. Named components flagged as wax formers in the component database (the n-paraffins)
+     * are wax formers as a whole and are not split. They keep their database melting temperature and heat of fusion;
+     * where the database holds only its placeholder default (273.0 K and 6000 J/mol, currently nC15 and nC17 to nC24)
+     * they receive the Pedersen correlations of this model instead (#5210).
      * </p>
      */
     @Override
     public void addTBPWax() {
       addNamedWaxFormerProperties();
-      int numberOfCOmponents = thermoSystem.getPhase(0).getNumberOfComponents();
-      boolean hasWax = false;
-      for (int i = 0; i < numberOfCOmponents; i++) {
-        if (thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
-          hasWax = true;
-        }
-      }
-
-      for (int i = 0; i < numberOfCOmponents; i++) {
-        if (hasWax && thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
-          double A = parameterWax[0];
-          double B = parameterWax[1];
-          double C = parameterWax[2];
-          String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
-
-          double densityLocal = calcParaffinDensity(i);
-
-          double molesChange = thermoSystem.getPhase(0).getComponent(compName).getNumberOfmoles()
-              * (1.0 - (A + B * thermoSystem.getPhase(0).getComponent(compName).getMolarMass() * 1000.0)
-                  * Math.pow((thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity() - densityLocal)
-                      / densityLocal, C));
-
-          if (molesChange < 0) {
-            molesChange = 0.0;
+      PhaseInterface phase0 = thermoSystem.getPhase(0);
+      int numberOfComponents = phase0.getNumberOfComponents();
+      for (int i = 0; i < numberOfComponents; i++) {
+        ComponentInterface component = phase0.getComponent(i);
+        String name = component.getComponentName();
+        if (name.startsWith("wax")) {
+          String parentName = name.substring(3);
+          if (!phase0.hasComponent(parentName)) {
+            continue;
           }
-
-          thermoSystem.addComponent(compName, -molesChange);
-          thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(), molesChange);
+          double waxMoles = component.getNumberOfmoles();
+          double totalMoles = phase0.getComponent(parentName).getNumberOfmoles() + waxMoles;
+          double molesChange = totalMoles * calcWaxFormerFraction(i) - waxMoles;
+          thermoSystem.addComponent(parentName, -molesChange);
+          thermoSystem.addComponent(name, molesChange);
           for (int k = 0; k < thermoSystem.getNumberOfPhases(); k++) {
             thermoSystem.getPhase(k).getComponent(i).setWaxFormer(true);
             thermoSystem.getPhase(k).getComponent(i).setHeatOfFusion(calcHeatOfFusion(i));
             thermoSystem.getPhase(k).getComponent(i).setTriplePointTemperature(calcTriplePointTemperature(i));
           }
-        } else if (!hasWax && (thermoSystem.getPhase(0).getComponent(i).isIsTBPfraction()
-            || thermoSystem.getPhase(0).getComponent(i).isIsPlusFraction())) {
-          // double A = 1.074, B = 6.584e-4, C = 0.1915;
-          double A = parameterWax[0];
-
-          double B = parameterWax[1];
-          double C = parameterWax[2];
-          double densityLocal = calcParaffinDensity(i);
-          double molesChange = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles()
-              * (1.0 - (A + B * thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000.0) * Math.pow(
-                  (thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity() - densityLocal) / densityLocal,
-                  C));
-          // if(molesChange<0) molesChange=0.0;
-          // System.out.println("moles change " + molesChange);
-          thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getComponentName(), -molesChange);
-          thermoSystem.addTBPfraction("wax" + thermoSystem.getPhase(0).getComponent(i).getComponentName(), molesChange,
-              thermoSystem.getPhase(0).getComponent(i).getMolarMass(),
-              thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
+        } else if ((component.isIsTBPfraction() || component.isIsPlusFraction())
+            && !phase0.hasComponent("wax" + name)) {
+          double molesChange = component.getNumberOfmoles() * calcWaxFormerFraction(i);
+          thermoSystem.addComponent(name, -molesChange);
+          thermoSystem.addTBPfraction("wax" + name, molesChange, component.getMolarMass(),
+              component.getNormalLiquidDensity());
 
           int cNumb = thermoSystem.getPhase(0).getNumberOfComponents() - 1;
-          double waxPC = calcPCwax(cNumb, thermoSystem.getPhase(0).getComponent(i).getComponentName());
+          double waxPC = calcPCwax(cNumb, name);
 
           for (int k = 0; k < thermoSystem.getNumberOfPhases(); k++) {
             thermoSystem.getPhase(k).getComponent(cNumb).setWaxFormer(true);
@@ -338,9 +352,8 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
    * @return a {@link neqsim.thermo.characterization.WaxModelInterface} object
    */
   public WaxModelInterface getModel(String name) {
+    // PedersenWax is the only implemented model; every name returns it.
     this.name = name;
-    if (name.equals("PedersenWax")) {
-    }
     return new PedersenWaxModel();
   }
 
@@ -350,10 +363,8 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
    * @param name a {@link java.lang.String} object
    */
   public void setModel(String name) {
+    // PedersenWax is the only implemented model; every name selects it.
     this.name = name;
-    if (name.equals("PedersenWax")) {
-      model = new PedersenWaxModel();
-    }
     model = new PedersenWaxModel();
   }
 

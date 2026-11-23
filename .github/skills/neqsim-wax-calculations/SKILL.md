@@ -61,6 +61,8 @@ Notes:
 - Use plus-fraction names without `+`, for example `"C20"`, not `"C20+"`.
 - Call `characterisePlusFraction()` before `getWaxModel().addTBPWax()`.
 - Call `setWaxModelType("Won")`, `setWaxModelType("Wilson")`, or `setWaxModelType("Coutinho")` before `addSolidComplexPhase("wax")` if the default Pedersen model is not intended.
+- `addTBPWax()` is idempotent: re-calling it (for example after changing `setWaxParameter`) re-splits each TBP/`wax` pair from its total moles; `removeWax()` first is optional. A fraction with density at or below the Pedersen n-paraffin density `0.3915 + 0.0675 ln M` is split 100 % to wax (formerly NaN).
+- `createDatabase(true)` is optional for the wax phase: `addSolidComplexPhase("wax")` copies the pseudo components' characterization from the fluid (before the fix, omitting it silently gave methane-template solids and no characterized wax; see `PedersenWaxSplitTest`).
 - Keep the heavy-end basis traceable. Wax predictions are very sensitive to molar mass, density, and n-paraffin distribution.
 
 ### Named n-paraffin feeds
@@ -216,6 +218,8 @@ wax_weight_fractions = list(wax.getWaxWeightFractions())
 | No wax phase appears | Wax phase not added or wax check disabled | Add `addSolidComplexPhase("wax")`, enable `setMultiphaseWaxCheck(true)`, and rerun |
 | `NullPointerException: ... getPhases()[5] is null` from `calcWAT()` | `addSolidComplexPhase("wax")` was never called, so the wax phase slot does not exist | Follow the full setup order in "Wax Fluid Setup"; `addTBPWax()` alone does not create the phase |
 | `ArrayIndexOutOfBoundsException: Index -3` in `Characterise.characterisePlusFraction` | Plus-fraction name contains `+` (e.g. `"C36+"`) — the carbon number cannot be parsed | Drop the `+`: use `addPlusFraction("C36", ...)` |
+| WAT near the light-paraffin freezing point (e.g. about -112 C with n-heptane) on a characterized oil | NeqSim before the `PedersenWaxSplitTest` fix, wax phase added without `createDatabase(true)`: TBP wax pseudo components became non-wax methane templates | Update NeqSim, or call `createDatabase(true)` (with temporary tables) before `addSolidComplexPhase("wax")` |
+| `NaN` moles for `C*_PC` / `waxC*_PC` after `addTBPWax()` | NeqSim before the same fix: a fraction not denser than the Pedersen n-paraffin gave a negative power base | Update NeqSim; the fraction is now treated as entirely wax forming |
 | WAT is unrealistically low | Heavy-end characterization is too light or missing n-paraffins | Review TBP cuts, plus-fraction molar mass, density, and wax model parameters |
 | WAT calculation fails | Search range or initial fluid state is poor | Use `WaxCurveCalculator` over a broad temperature range and inspect failed flashes |
 | `calcWAT()` throws `molarVolumeAnalytical - compressibility factor is NaN`, or `WaxCurveCalculator` returns `NaN` WAT | Synthetic/hand-built heavy end with no n-paraffin distribution — the wax model has nothing physical to solve against | Do **not** substitute a guessed WAT. Report it as a lab-data gap and require a measured WAT/DSC or a real PVTsim/E300 characterization |
