@@ -270,7 +270,14 @@ drawing) rather than DEXPI, first extract `neqsim_pid_drawing_records.v1` with t
 community skill `neqsim-pid-pdf-to-dexpi` (vector or scanned, one or several
 stitched sheets), work through its review checklist, then write DEXPI with
 `PidDrawingRecordsDexpiWriter`; `DexpiXmlSvgRenderer` regenerates the sheet layout
-from that file (`PidDrawingRecordsDexpiWriterTest`). A
+from that file (`PidDrawingRecordsDexpiWriterTest`). The same skill's `safety.py`
+turns the records into a safeguard register (trip initiators, shutdown valves
+along each line, relief valves named on connectors). It runs PAHH/LAHH/LALL trip
+tests with `Detector`/`SafetyInstrumentedFunction`/`ESDLogic`/`ESDValve`, and
+blowdown and flare load with an MDMT check with `DepressurizationSimulator`. It
+drafts a HAZOP preparation worksheet, and reviewer corrections become revision
+clouds on the regenerated P&ID. Take set points and cause-and-effect links from
+the C&E chart, never from the drawing alone. A
 NeqSim export rebuilt with the same fluid template reproduces the source results
 (`DexpiSimulationRoundTripTest`). DEXPI carries no composition, so always supply
 the fluid template. Native DEXPI 2.x files are rejected explicitly; export

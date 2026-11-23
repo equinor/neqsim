@@ -117,6 +117,20 @@ until a named reviewer approves it against the controlled drawing revision. Scan
 with lower recall than vector PDFs. `PidDrawingRecordsDexpiWriterTest` covers this API, including
 boundary feeds, inline fittings and normally closed valves.
 
+The same records also feed instrumentation and safety studies; see `safety.py` in the community
+skill. It builds a safeguard register from the drawing: trip initiators, shutdown valves along each
+line, relief valves named on connectors, and flare and drain connections. The register is then tested
+with the existing NeqSim safety models:
+- `Detector` and `SafetyInstrumentedFunction` with voting, `ESDLogic` and `ESDValve` on a transient
+  `ThreePhaseSeparator`, for blocked-outlet and loss-of-inlet trips;
+- `DepressurizationSimulator` for blowdown, flare load and the minimum temperature against the design
+  minimum on the sheet.
+
+It also drafts a HAZOP preparation worksheet. Trip set points and cause-and-effect links are not on a
+P&ID and are supplied from the C&E chart, or recorded as assumptions. For evidence-grade ESD tests
+built from a C&E row, use [ESD dynamic testing](../safety/esd_testing_workflow.md).
+Reviewer corrections are drawn on the regenerated P&ID as revision clouds with a revision table.
+
 For SCD-like workflows, model the control content as live simulation objects rather than as a drawing
 file: transmitters, controller devices, signal connections, alarm/trip schedules, and operational
 scenarios. This matches the existing dynamic-simulation and operations APIs and allows the same
