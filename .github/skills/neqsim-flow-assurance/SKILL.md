@@ -167,6 +167,29 @@ for (int i = 0; i < pressures.length; i++) {
 }
 ```
 
+### Host inhibitor-availability gate (check BEFORE selecting an inhibitor strategy)
+
+A MEG (or methanol) dose that NeqSim calculates is only a strategy if the host can deliver it. Before choosing
+continuous MEG for a tie-back or export line, establish from host drawings, equipment lists and the operator:
+
+1. **MEG regeneration/reclamation plant** at the host or on the receiving route (lean MEG capacity, rich MEG handling,
+   water load, salt/solids handling). Without one, MEG is single-use and continuous injection is not a strategy.
+2. **Existing continuous MEG injection** that the new line can share (storage, injection pumps, a MEG line or umbilical
+   service line to the template, spare capacity in m3/h and storage days).
+3. **Batch (shut-in/restart) injection** capability: tank volume, pump, supply route (umbilical chemical line, riser-side
+   injection point), and where used MEG goes afterwards.
+
+If (1) and (2) are not confirmed, record a data gap and treat continuous MEG as **not available**; do not size a loop on
+it. **If MEG is selected anyway (continuous, or batch at shut-in), evaluate the host topside for it:** utilisation of the
+existing capacity (regeneration, storage, pumps, MEG line/umbilical service line) against the new demand, or the
+installation required when nothing exists (regeneration/reclamation package sized on lean MEG rate, rich MEG and water
+load, storage days, injection pumps, heater/reboiler duty and power, deck space, weight, utilities, tie-in points, rough
+cost class), and show it on the tie-in PFD/P&ID and in the host debottlenecking register. Screen the alternatives instead and report which host capability each one depends on: hydrate-free margin in flowing
+operation (including the minimum rate that keeps arrival temperature above the hydrate temperature, only relevant when
+free water is present), depressurisation to below the hydrate pressure at seabed temperature, displacement/flush with dead
+oil or diesel before a planned shut-in, insulation/heat tracing and cooldown (no-touch) time, and batch MEG/methanol/LDHI at
+shut-in and restart (volume from the water in place and the settle-out pressure). State the data needed to confirm each.
+
 ### Hydrate Inhibitor Dosing (MEG)
 
 ```java
