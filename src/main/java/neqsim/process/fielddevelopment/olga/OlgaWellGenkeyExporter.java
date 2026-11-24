@@ -17,9 +17,9 @@ import neqsim.process.equipment.reservoir.InflowPerformance;
  * <p>
  * This bridges two already-validated NeqSim pieces -- {@link InflowPerformance} (the liquid IPR model) and an
  * externally supplied trajectory (node coordinates and per-segment diameters, e.g. from a real deviation survey or a
- * synthetic trajectory generator) -- into the real OLGA keyword syntax the Petroleum Experts/Schlumberger OLGA
- * engine reads: {@code MATERIAL}, {@code WALL}, a {@code TABULAR} inflow-performance table, {@code GEOMETRY},
- * {@code PIPE} segments, {@code HEATTRANSFER}, and {@code RESERVOIRCONTACT}.
+ * synthetic trajectory generator) -- into the real OLGA keyword syntax the Petroleum Experts/Schlumberger OLGA engine
+ * reads: {@code MATERIAL}, {@code WALL}, a {@code TABULAR} inflow-performance table, {@code GEOMETRY}, {@code PIPE}
+ * segments, {@code HEATTRANSFER}, and {@code RESERVOIRCONTACT}.
  * </p>
  *
  * <h2>Validated against a real OLGA rule-check</h2>
@@ -30,12 +30,12 @@ import neqsim.process.equipment.reservoir.InflowPerformance;
  * (unit tests only assert substring presence, not validity within OLGA's own keyword hierarchy):
  * </p>
  * <ul>
- * <li>{@code TABULAR} and {@code WALL} nested inside the {@code FLOWPATH} instead of at case level
- * ("Unknown keyword type ... for FLOWPATH").</li>
+ * <li>{@code TABULAR} and {@code WALL} nested inside the {@code FLOWPATH} instead of at case level ("Unknown keyword
+ * type ... for FLOWPATH").</li>
  * <li>{@code POSITION LABEL=Bottomhole} referencing the wrong (last, not first) pipe.</li>
  * <li>{@code GEOMETRY} and {@code HEATTRANSFER} entirely missing ("Missing required keywords").</li>
- * <li>A bare {@code WALL ... MATERIAL=(STEEL)} reference with no matching {@code MATERIAL} declaration ("MATERIAL
- * with LABEL or NUMBER STEEL ... is not found") -- OLGA has no built-in material by that name.</li>
+ * <li>A bare {@code WALL ... MATERIAL=(STEEL)} reference with no matching {@code MATERIAL} declaration ("MATERIAL with
+ * LABEL or NUMBER STEEL ... is not found") -- OLGA has no built-in material by that name.</li>
  * </ul>
  * <p>
  * All are fixed and covered by regression tests; see {@code OlgaWellGenkeyExporterTest} for the specifics.
@@ -45,31 +45,29 @@ import neqsim.process.equipment.reservoir.InflowPerformance;
  * <p>
  * {@code xMetre}/{@code yMetre} are per-NODE coordinates (meters, OLGA's own elevation convention: {@code yMetre}
  * negative with depth), starting at the well's own origin (index 0, the deepest/reservoir-contact end).
- * {@code diameterMetre} is per-SEGMENT, so it has exactly one fewer entry than {@code xMetre}/{@code yMetre} --
- * segment {@code i} (1-indexed PIPE {@code i}) runs from node {@code i-1} to node {@code i} with diameter
+ * {@code diameterMetre} is per-SEGMENT, so it has exactly one fewer entry than {@code xMetre}/{@code yMetre} -- segment
+ * {@code i} (1-indexed PIPE {@code i}) runs from node {@code i-1} to node {@code i} with diameter
  * {@code diameterMetre[i-1]}.
  * </p>
  *
  * <h2>Deliberately out of scope</h2>
  * <p>
- * This class exports only what its real inputs actually determine. It does not fabricate a placeholder for data it
- * has no way to know:
+ * This class exports only what its real inputs actually determine. It does not fabricate a placeholder for data it has
+ * no way to know:
  * </p>
  * <ul>
- * <li><b>No choke valve / Cv table.</b> A well-specific choke restriction is not implied by an IPR or a trajectory;
- * a non-well-specific placeholder Cv table would misrepresent an actual choke restriction. Add a choke to the
- * embedding case separately once real Cv data is available.</li>
- * <li><b>No segment grading.</b> Each consecutive node pair becomes exactly one {@code PIPE} with
- * {@code NSEGMENT=1}. Provide more trajectory nodes for finer resolution; this class does not invent a grading
- * heuristic.</li>
- * <li><b>No fabricated GOR/WGR.</b> {@link InflowPerformance} models stock-tank liquid rate only and carries no
- * gas-oil or water-gas ratio. {@code GORST=}/{@code WGR=} are omitted from {@code RESERVOIRCONTACT} unless supplied
- * explicitly (they are optional overrides in OLGA's own genkey format; omitting them defers to the fluid file's own
+ * <li><b>No choke valve / Cv table.</b> A well-specific choke restriction is not implied by an IPR or a trajectory; a
+ * non-well-specific placeholder Cv table would misrepresent an actual choke restriction. Add a choke to the embedding
+ * case separately once real Cv data is available.</li>
+ * <li><b>No segment grading.</b> Each consecutive node pair becomes exactly one {@code PIPE} with {@code NSEGMENT=1}.
+ * Provide more trajectory nodes for finer resolution; this class does not invent a grading heuristic.</li>
+ * <li><b>No fabricated GOR/WGR.</b> {@link InflowPerformance} models stock-tank liquid rate only and carries no gas-oil
+ * or water-gas ratio. {@code GORST=}/{@code WGR=} are omitted from {@code RESERVOIRCONTACT} unless supplied explicitly
+ * (they are optional overrides in OLGA's own genkey format; omitting them defers to the fluid file's own
  * composition).</li>
- * <li><b>No assumed material properties.</b> {@link #setWall(double, String, String, double, double, double)}
- * requires a real conductivity/heat-capacity/density, not just a material name -- an earlier version of this class
- * accepted a bare name like {@code "STEEL"} and rule-checked as invalid because OLGA has no built-in material by
- * that name.</li>
+ * <li><b>No assumed material properties.</b> {@link #setWall(double, String, String, double, double, double)} requires
+ * a real conductivity/heat-capacity/density, not just a material name -- an earlier version of this class accepted a
+ * bare name like {@code "STEEL"} and rule-checked as invalid because OLGA has no built-in material by that name.</li>
  * </ul>
  *
  * <h2>Example usage</h2>
@@ -160,8 +158,8 @@ public final class OlgaWellGenkeyExporter {
    * @param xMetre per-node horizontal distance in meters, at least two entries
    * @param yMetre per-node vertical distance in meters, same length as {@code xMetre}
    * @param diameterMetre per-segment diameter in meters, exactly one fewer entry than {@code xMetre}
-   * @throws IllegalArgumentException if any array is null, lengths do not match the documented convention, fewer
-   * than two nodes are given, or any value is not finite or not positive where positivity is required
+   * @throws IllegalArgumentException if any array is null, lengths do not match the documented convention, fewer than
+   * two nodes are given, or any value is not finite or not positive where positivity is required
    */
   public void setTrajectory(double[] xMetre, double[] yMetre, double[] diameterMetre) {
     if (xMetre == null || yMetre == null || diameterMetre == null) {
@@ -200,10 +198,9 @@ public final class OlgaWellGenkeyExporter {
    *
    * @param inflowPerformance the inflow relationship, must not be null
    */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-      justification = "The exporter must read the caller's own live InflowPerformance state at toGenkeyText() "
-          + "time; InflowPerformance has no defensive-copy mechanism, and copying would silently diverge from "
-          + "the caller's model if it is updated after this setter is called")
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The exporter must read the caller's own live InflowPerformance state at toGenkeyText() "
+      + "time; InflowPerformance has no defensive-copy mechanism, and copying would silently diverge from "
+      + "the caller's model if it is updated after this setter is called")
   public void setInflowPerformance(InflowPerformance inflowPerformance) {
     if (inflowPerformance == null) {
       throw new IllegalArgumentException("inflowPerformance must not be null");
@@ -277,13 +274,13 @@ public final class OlgaWellGenkeyExporter {
   }
 
   /**
-   * Set the tubing wall's own thickness and a real material definition -- real, well-specific completion data. A
-   * real OLGA rule-check confirmed {@code WALL} (referencing a {@code MATERIAL}) is a required keyword for every
+   * Set the tubing wall's own thickness and a real material definition -- real, well-specific completion data. A real
+   * OLGA rule-check confirmed {@code WALL} (referencing a {@code MATERIAL}) is a required keyword for every
    * {@code PIPE} in this exporter's own installed OLGA version, so this class cannot validly omit it. There is no
-   * default for any of the five parameters: an earlier version of this method accepted only a bare material LABEL
-   * (e.g. {@code "STEEL"}) with no conductivity/capacity/density, which rule-checked as invalid ("MATERIAL with
-   * LABEL or NUMBER STEEL ... is not found") because OLGA has no built-in material by that name -- a real
-   * {@code MATERIAL} keyword with real properties must be declared, not assumed to already exist.
+   * default for any of the five parameters: an earlier version of this method accepted only a bare material LABEL (e.g.
+   * {@code "STEEL"}) with no conductivity/capacity/density, which rule-checked as invalid ("MATERIAL with LABEL or
+   * NUMBER STEEL ... is not found") because OLGA has no built-in material by that name -- a real {@code MATERIAL}
+   * keyword with real properties must be declared, not assumed to already exist.
    *
    * @param thickness wall thickness, must be positive and finite
    * @param thicknessUnit {@code "m"} or {@code "mm"}
@@ -291,8 +288,8 @@ public final class OlgaWellGenkeyExporter {
    * @param conductivity thermal conductivity in W/m-C, must be positive and finite
    * @param heatCapacity specific heat capacity in J/kg-C, must be positive and finite
    * @param density density in kg/m3, must be positive and finite
-   * @throws IllegalArgumentException if the thickness/conductivity/heatCapacity/density are not positive/finite,
-   * the thickness unit is not recognised, or the material label is null/blank
+   * @throws IllegalArgumentException if the thickness/conductivity/heatCapacity/density are not positive/finite, the
+   * thickness unit is not recognised, or the material label is null/blank
    */
   public void setWall(double thickness, String thicknessUnit, String materialLabel, double conductivity,
       double heatCapacity, double density) {
@@ -330,9 +327,9 @@ public final class OlgaWellGenkeyExporter {
 
   /**
    * Set the flowpath's own overall (lumped) heat-transfer coefficient and ambient temperature -- real, well- and
-   * environment-specific data. There is no default: a real OLGA rule-check confirmed {@code HEATTRANSFER} is a
-   * required keyword for a {@code FLOWPATH}, so this class cannot validly omit it, but it will not fabricate a
-   * value either -- the caller must supply a real overall coefficient and ambient temperature (e.g. from the same
+   * environment-specific data. There is no default: a real OLGA rule-check confirmed {@code HEATTRANSFER} is a required
+   * keyword for a {@code FLOWPATH}, so this class cannot validly omit it, but it will not fabricate a value either --
+   * the caller must supply a real overall coefficient and ambient temperature (e.g. from the same
    * completion/environment data used elsewhere in the study).
    *
    * @param overallCoefficient overall heat-transfer coefficient, must be positive and finite
@@ -340,8 +337,8 @@ public final class OlgaWellGenkeyExporter {
    * temperature DIFFERENCE, so a degree Celsius and a kelvin differ by the same amount)
    * @param ambientTemperature ambient temperature, must be finite
    * @param ambientTemperatureUnit {@code "C"} or {@code "K"}
-   * @throws IllegalArgumentException if the coefficient is not positive/finite, the ambient temperature is not
-   * finite, or either unit is not recognised
+   * @throws IllegalArgumentException if the coefficient is not positive/finite, the ambient temperature is not finite,
+   * or either unit is not recognised
    */
   public void setHeatTransfer(double overallCoefficient, String overallCoefficientUnit, double ambientTemperature,
       String ambientTemperatureUnit) {
@@ -368,8 +365,8 @@ public final class OlgaWellGenkeyExporter {
   /**
    * Set the {@code FLUID=} label referenced by this flowpath's {@code BRANCH} statement -- the label a PVT table
    * generator (e.g. {@link neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGenerator}) already
-   * produced. Optional: when never called, {@link #toGenkeyText()} emits a clearly marked {@code TODO} comment
-   * instead of a fabricated fluid reference, because a genkey flowpath is not valid OLGA input without a real one.
+   * produced. Optional: when never called, {@link #toGenkeyText()} emits a clearly marked {@code TODO} comment instead
+   * of a fabricated fluid reference, because a genkey flowpath is not valid OLGA input without a real one.
    *
    * @param label the PVT fluid label, must not be null or blank
    */
@@ -382,8 +379,8 @@ public final class OlgaWellGenkeyExporter {
 
   /**
    * Set an explicit gas-oil ratio override for {@code RESERVOIRCONTACT}. Optional: {@link InflowPerformance} models
-   * liquid rate only and carries no GOR of its own, so this is omitted from the output entirely unless supplied
-   * here -- never fabricated as zero.
+   * liquid rate only and carries no GOR of its own, so this is omitted from the output entirely unless supplied here --
+   * never fabricated as zero.
    *
    * @param gasOilRatio gas-oil ratio in Sm3/Sm3, must be finite and zero or greater
    * @throws IllegalArgumentException if the ratio is not finite or negative
@@ -530,8 +527,8 @@ public final class OlgaWellGenkeyExporter {
   }
 
   /**
-   * Build one {@code PIPE} statement per consecutive node pair, {@code NSEGMENT=1} throughout -- see this class's
-   * own Javadoc for why segment grading is deliberately out of scope.
+   * Build one {@code PIPE} statement per consecutive node pair, {@code NSEGMENT=1} throughout -- see this class's own
+   * Javadoc for why segment grading is deliberately out of scope.
    *
    * @param text the output being built
    * @param wallLabel the case-level {@code WALL} label every {@code PIPE} references
@@ -542,15 +539,14 @@ public final class OlgaWellGenkeyExporter {
       double dy = yMetre[i] - yMetre[i - 1];
       double segmentLength = Math.sqrt(dx * dx + dy * dy);
       if (segmentLength <= 0.0) {
-        throw new IllegalStateException(
-            "trajectory nodes " + (i - 1) + " and " + i + " coincide (zero-length segment); every PIPE needs a "
-                + "positive length");
+        throw new IllegalStateException("trajectory nodes " + (i - 1) + " and " + i
+            + " coincide (zero-length segment); every PIPE needs a " + "positive length");
       }
       text.append("PIPE ROUGHNESS=").append(formatNumber(pipeRoughnessMetre)).append(" m, LABEL=\"")
           .append(pipeLabel(i)).append("\", WALL=\"").append(wallLabel).append("\", NSEGMENT=1, LSEGMENT=(")
-          .append(formatNumber(segmentLength)).append(") m, XEND=").append(formatNumber(xMetre[i]))
-          .append(" m, YEND=").append(formatNumber(yMetre[i])).append(", ZEND=0 m, DIAMETER=")
-          .append(formatNumber(diameterMetre[i - 1])).append(" m\n");
+          .append(formatNumber(segmentLength)).append(") m, XEND=").append(formatNumber(xMetre[i])).append(" m, YEND=")
+          .append(formatNumber(yMetre[i])).append(", ZEND=0 m, DIAMETER=").append(formatNumber(diameterMetre[i - 1]))
+          .append(" m\n");
     }
   }
 
@@ -607,11 +603,11 @@ public final class OlgaWellGenkeyExporter {
    * locale would otherwise silently corrupt every numeric value this class writes.
    *
    * <p>
-   * Uses 8 decimal places uniformly, not the 4 an earlier version of this method used: pipe roughness is routinely
-   * 1e-5 to 1e-4 m, and 4 decimal places silently rounded every realistic roughness value straight to
-   * {@code 0.0000} -- a genuinely destructive, silent precision loss caught by this class's own rule-check
-   * validation, not by code review. 8 decimal places safely represents every quantity this class emits (pressures,
-   * rates, coordinates, diameters, and roughness alike) without magnitude-dependent branching.
+   * Uses 8 decimal places uniformly, not the 4 an earlier version of this method used: pipe roughness is routinely 1e-5
+   * to 1e-4 m, and 4 decimal places silently rounded every realistic roughness value straight to {@code 0.0000} -- a
+   * genuinely destructive, silent precision loss caught by this class's own rule-check validation, not by code review.
+   * 8 decimal places safely represents every quantity this class emits (pressures, rates, coordinates, diameters, and
+   * roughness alike) without magnitude-dependent branching.
    * </p>
    *
    * @param value the value to format
@@ -641,8 +637,8 @@ public final class OlgaWellGenkeyExporter {
   }
 
   /**
-   * Replace characters a genkey {@code TAG=}/{@code LABEL=} identifier cannot safely contain (whitespace, quotes)
-   * with underscores, so an arbitrary well label can never produce unparsable genkey text.
+   * Replace characters a genkey {@code TAG=}/{@code LABEL=} identifier cannot safely contain (whitespace, quotes) with
+   * underscores, so an arbitrary well label can never produce unparsable genkey text.
    *
    * @param label the raw well label
    * @return a tag-safe version of the label

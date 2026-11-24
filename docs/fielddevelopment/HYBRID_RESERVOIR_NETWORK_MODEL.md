@@ -1,6 +1,6 @@
 ---
-title: "Hybrid Reservoir, Well and Network Production Model"
-description: "Fast production-profile and network what-if model in NeqSim that takes the reservoir state from Eclipse or OPM Flow results and solves well rates from inflow performance, lift curves and network back-pressure. Covers ReservoirStateProxy, ScenarioReservoirState, HybridWell, GatheringNetwork, VfpTableLookup, CorrectedVlpProvider, FlowlineVlpProvider, MolarFeedAdapter, FacilityConstraints and HybridProductionModel."
+title: "Simulator-Derived Reservoir State with Well and Network Models"
+description: "Use Eclipse or OPM Flow reservoir-state tables with the canonical WellSystem and FieldWellNetworkCoupler path, or with the reduced-order hybrid tree model for fast profile studies."
 keywords: "hybrid model, reservoir proxy, Eclipse, OPM Flow, production profile, IPR, VLP, VFPPROD, lift curve, gathering network, choke, back-pressure, scenario interpolation, molar feed, facility capacity"
 ---
 
@@ -8,10 +8,11 @@ A production profile replayed from a reservoir simulator gives the same rate at 
 whatever the production network does. It cannot say what happens to the other wells when one well is choked, when
 the separator pressure changes or when a well is routed to another manifold.
 
-The hybrid model keeps the reservoir **state** from the simulator and solves the **rates** itself:
+The reservoir-state proxy keeps the reservoir **state** from the simulator and lets a NeqSim well/network model solve
+the **rates**:
 
 ```
-simulator results -> reservoir-state proxy -> inflow performance -> lift curve and network
+simulator results -> reservoir-state proxy -> WellSystem -> canonical field topology
                   -> well operating point -> component molar rates -> NeqSim network and process
 ```
 
@@ -20,7 +21,12 @@ volumes. Each well then produces what its inflow performance and tubing lift cur
 network node it is tied to, and the node pressures follow from the commingled rates through the flowlines and the
 riser. Wells and network are solved together, so a change anywhere moves the operating point of every well.
 
-All classes are in `neqsim.process.fielddevelopment.hybrid`, except the flowline lift model
+For production/injection fields, mixed hydraulic fidelity, loops, typed subsea equipment and host/process coupling,
+use `ReservoirStateWellBinding` with the existing `WellSystem`, `FieldNetworkTopology`, `LoopedPipeNetwork` and
+`FieldWellNetworkCoupler`. This is the canonical path. `GatheringNetwork` and `HybridProductionModel` remain a
+reduced-order, tree-only compatibility model for rapid profile studies; they are not a second canonical SURF graph.
+
+All reservoir-state and reduced-order classes are in `neqsim.process.fielddevelopment.hybrid`, except the flowline lift model
 `neqsim.process.fielddevelopment.reservoir.FlowlineVlpProvider`. The model is a proxy of the simulator runs it was
 built from; it does not replace the reservoir simulator.
 
@@ -30,11 +36,13 @@ built from; it does not replace the reservoir simulator.
 |---|---|---|
 | Reservoir state, one run | `ReservoirStateProxy` | Pressure, water cut, GOR, productivity index and optional composition against one cumulative volume. Linear interpolation; values are held outside the table and `isOutsideValidity()` reports it |
 | Reservoir state, several runs | `ScenarioReservoirState` | Blends the tables of several simulator runs on a second coordinate: cumulative injection or elapsed time |
+| Canonical well binding | `ReservoirStateWellBinding` | Applies pressure, linear oil PI and optional proxy composition to an existing `WellSystem` without replacing its inlet identity |
+| Canonical field solve | `FieldWellNetworkCoupler` + `FieldNetworkTopology` | Solves live production/injection wells on the same typed `LoopedPipeNetwork`, including per-edge hydraulic model selection |
 | Well | `HybridWell` | Inflow performance, tubing lift curve, rate target, fixed choke, minimum bottom-hole pressure, optional drainage unit shared with other wells |
 | Lift curve lookup | `VfpTableLookup` | Reads a METRIC `VFPPROD` table the way Eclipse and OPM Flow do: multilinear, linear extrapolation outside the axes; oil, liquid or gas rate basis |
 | Fast and full fidelity | `CorrectedVlpProvider` | A fast lift curve plus a pressure offset calibrated against a live model |
 | Live branch model | `FlowlineVlpProvider` | Chain of `PipeBeggsAndBrills` segments solved for the inlet pressure |
-| Network | `GatheringNetwork` | Tree of manifolds, flowlines and riser to one fixed-pressure boundary |
+| Reduced-order network | `GatheringNetwork` | Compatibility tree of manifolds, flowlines and riser to one fixed-pressure boundary |
 | Fluid | `MolarFeedAdapter` | Well rates to component molar rates, per well and commingled |
 | Capacities | `FacilityConstraints` | Oil, water, gas and liquid capacities of the receiving facility |
 | Solver | `HybridProductionModel` | Coupled well and network solve, time stepping, fidelity modes, capacity allocation |
@@ -44,7 +52,43 @@ Basis of the model: oil rate in Sm3/day, productivity index in Sm3 oil/(day bar)
 gas-oil ratio in Sm3/Sm3, pressures in bara. Every lift model handed to a well or a branch uses this basis
 (`VfpTableLookup.onOilBasis()` converts a table on another basis).
 
-## Quick start
+## Canonical topology workflow
+
+Build the typed production/injection topology as described in [Well and SURF Network Integration](SURF_NETWORK_INTEGRATION),
+then apply each proxy before the coupled solve. The binding owns no graph, solver or time integration:
+
+```java
+Stream reservoir = new Stream("W1 reservoir", reservoirFluid);
+WellSystem well = new WellSystem("W1", reservoir);
+well.setTubingLength(1800.0, "m");
+well.setTubingDiameter(0.12, "m");
+
+ReservoirStateWellBinding stateBinding =
+    new ReservoirStateWellBinding(stateA, well, new MolarFeedAdapter(recombinationFactory));
+FieldWellNetworkCoupler coupler = new FieldWellNetworkCoupler(topology);
+coupler.bindProductionWell("W1", well);
+
+stateBinding.apply();
+FieldWellNetworkCoupler.CouplingResult result = coupler.run();
+if (!result.isConverged()) {
+  throw new IllegalStateException(result.getMessage());
+}
+
+// Advance cumulative state explicitly, then reapply it before the next canonical solve.
+stateA.produce(oilSm3, waterSm3, gasSm3);
+stateA.inject(injectedWaterSm3, injectedGasSm3);
+stateA.elapse(days);
+stateBinding.apply();
+```
+
+The proxy PI is in Sm3 oil/(day bar). The binding selects the linear `WellSystem` production-index law; the older
+`Sm3/day/bar2` unit continues to select the squared-pressure law. With a `MolarFeedAdapter`, black-oil WCT/GOR or
+compositional proxy data updates the fluid on the same inlet `Stream` object. Without it, composition is retained.
+Check `isOutsideValidity()` separately; an internally converged network outside the simulator envelope is not a
+qualified prediction. The canonical binding and coupled-solve workflow is exercised by
+`ReservoirStateWellBindingTest`.
+
+## Reduced-order compatibility quick start
 
 ```java
 // Reservoir-state proxies post-processed from a reservoir simulator run (here: typed in).
@@ -85,7 +129,7 @@ model.setFacilityConstraints(
 List<HybridStepResult> profile = model.run(730.0, 30.4);
 ```
 
-This example is run by `HybridReservoirNetworkDocExamplesTest`.
+This compatibility example is run by `HybridReservoirNetworkDocExamplesTest`.
 
 ## Proxy tables from the simulator
 
@@ -223,9 +267,10 @@ black-oil simulation it recombines surface gas, stock-tank oil and water at the 
 (`RecombinationFluidFactory` on the OIL, WCT, GOR basis). With a compositional simulation the proxy carries the
 wellstream composition and its moles per stock-tank oil volume. The fluid goes straight into a NeqSim `Stream`.
 
-## Limitations
+## Reduced-order model limitations
 
-- Tree-shaped networks only. Use `LoopedPipeNetwork` for the hydraulics of a looped system.
+- `GatheringNetwork` is tree-shaped. Use the canonical `FieldNetworkTopology`/`LoopedPipeNetwork` path for production
+  and injection systems, loops, typed equipment, per-edge hydraulic fidelity and host coupling.
 - Oil-rate basis. Gas-condensate wells need a gas-rate basis.
 - One blending coordinate per proxy.
 - The capacity allocation is a ranking rule, not an optimum.

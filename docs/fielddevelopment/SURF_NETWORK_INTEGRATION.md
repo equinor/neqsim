@@ -558,6 +558,15 @@ clipping rate. A well below the configured rate threshold is reported as shut in
 an otherwise pressure-indeterminate zero-flow branch does not claim coupled
 convergence.
 
+Simulator-derived Eclipse/OPM Flow state tables join this same path through
+`ReservoirStateWellBinding`. The binding updates an existing production `WellSystem`
+with proxy pressure, linear oil productivity index and optional WCT/GOR or compositional
+fluid data while retaining its inlet stream identity. It owns no graph, hydraulics or
+time loop: apply it before `FieldWellNetworkCoupler.run()`, and advance cumulative
+production, injection and elapsed time explicitly on the `ReservoirStateModel`.
+`GatheringNetwork` remains a reduced-order tree compatibility model and must not replace
+this canonical topology for SURF design, mixed-fidelity hydraulics or injection coupling.
+
 Injection coupling fails closed when the well inlet and network fluid do not use the
 same thermodynamic model, mixing rule and component identity set. Production source
 fluids are registered on their canonical nodes so existing conservative component
