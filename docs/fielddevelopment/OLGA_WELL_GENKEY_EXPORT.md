@@ -144,7 +144,7 @@ public final class OlgaWellGenkeyExportExample {
 
 The generated text is an embeddable fragment. It is not a complete OLGA case and the
 example does not write a file. If a reviewed file is needed, use
-`writeGenkey(Path)` with an application-controlled destination.
+`writeTo(Path)` with an application-controlled destination.
 
 ## Synthetic trajectory governance
 
