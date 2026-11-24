@@ -266,7 +266,8 @@ The legacy `SeparatorTest` accepts all stages in one call:
 arrays from `getGOR`, `getBofactor` and `getGasGravity` (NaN for a stage without gas), and
 the stock-tank results from `getStockTankOilDensity()` (kg/m³, volume-corrected),
 `getStockTankOilAPIGravity()` and `getStockTankGasGravity()` (NaN when no gas is released at
-standard conditions). For named stages, reservoir-condition handling,
+standard conditions). The stock-tank flash equilibrates the liquid carried from the final
+separator stage at 288.15 K and 1.01325 bara. For named stages, reservoir-condition handling,
 stock-tank results, and cumulative GOR, prefer `MultiStageSeparatorTest`; see the
 [PVT simulation overview](README.md).
 
