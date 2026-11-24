@@ -110,4 +110,3 @@ public class OlgaWellGenkeyExporterGuideDocumentationTest extends neqsim.NeqSimT
     }
   }
 }
-
