@@ -1,8 +1,8 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.9.0"
+version: "1.10.0"
 description: "Prepare professional P&ID drawing packages with native DEXPI 2.0.1 from a NeqSim process model, add traceable instrumentation and safeguards, and bind final P&ID tags to steady-state simulations and dynamic tests. Also interpret P&ID symbols, import process topology, link historian tags, evaluate valve/equipment changes and prepare water-hammer or blowdown/flare handoffs."
-last_verified: "2026-11-18"
+last_verified: "2026-11-23"
 requires:
   python_packages: [pandas]
 ---
@@ -259,7 +259,25 @@ named unit) and review `DEXPI_BUILD_ADDITIONAL_FEED` and
 `DEXPI_BUILD_SPLIT_FACTORS_ASSUMED`; never hide them. The builder keeps in-line
 control valves, resolves separator gas/liquid/water outlets from the
 `NeqSimPortAttributes` nozzle roles (with fallbacks), wires all mixer inlets,
-closes loops with `Recycle`, and applies exported outlet specifications. A
+closes loops with `Recycle`, and applies exported outlet specifications. Segments
+marked `NormalFlow=false` (drain, flare, chemical, sampling runs) and components
+with `NormalPosition=Closed` are excluded like PSV and blind branches; open blinds
+and off-page connectors linked on both sides pass flow. Side streams entering
+through other connectors need `addBoundaryFeed(connectorRef, fluid, rate, ...)`;
+otherwise they get a copy of the builder feed (`DEXPI_BUILD_ADDITIONAL_FEED`).
+When the source is a PDF P&ID (e.g. a STID
+drawing) rather than DEXPI, first extract `neqsim_pid_drawing_records.v1` with the
+community skill `neqsim-pid-pdf-to-dexpi` (vector or scanned, one or several
+stitched sheets), work through its review checklist, then write DEXPI with
+`PidDrawingRecordsDexpiWriter`; `DexpiXmlSvgRenderer` regenerates the sheet layout
+from that file (`PidDrawingRecordsDexpiWriterTest`). The same skill's `safety.py`
+turns the records into a safeguard register (trip initiators, shutdown valves
+along each line, relief valves named on connectors). It runs PAHH/LAHH/LALL trip
+tests with `Detector`/`SafetyInstrumentedFunction`/`ESDLogic`/`ESDValve`, and
+blowdown and flare load with an MDMT check with `DepressurizationSimulator`. It
+drafts a HAZOP preparation worksheet, and reviewer corrections become revision
+clouds on the regenerated P&ID. Take set points and cause-and-effect links from
+the C&E chart, never from the drawing alone. A
 NeqSim export rebuilt with the same fluid template reproduces the source results
 (`DexpiSimulationRoundTripTest`). DEXPI carries no composition, so always supply
 the fluid template. Native DEXPI 2.x files are rejected explicitly; export
