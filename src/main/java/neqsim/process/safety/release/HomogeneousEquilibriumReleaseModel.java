@@ -33,17 +33,18 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
   /** @return numerical model version, including guarded phase, solid-risk and external evidence records */
   @Override
   public String getModelVersion() {
-    return "1.2.4";
+    return "1.2.5";
   }
 
   /** {@inheritDoc} */
   @Override
   public ReleaseModelEvidence getEvidence() {
-    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.4",
+    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.5",
         Arrays.asList("SHORT_ORIFICE", "EQUILIBRIUM_PHASE_TRANSFER", "MULTICOMPONENT_EOS"),
         Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "EXPERIMENTAL_INPUT_PHASE_MISMATCH",
             "MEASUREMENT_UNCERTAINTY_NOT_REPORTED", "DENSE_CO2_AMBIENT_SOLID_BEARING_PATH_UNSUPPORTED",
-            "DENSE_CO2_RESTRICTION_PLANE_SENSITIVITY_ONLY", "NO_ENGINEERING_QUALIFICATION"),
+            "DENSE_CO2_RESTRICTION_PLANE_SENSITIVITY_ONLY", "AVERAGE_FEED_COMPOSITION_PROXY",
+            "PUBLISHED_PHASE_FRACTIONS_MODEL_DERIVED", "NO_ENGINEERING_QUALIFICATION"),
         Arrays.asList(
             new ReleaseModelEvidence.Record("hem-component-energy-closure", ReleaseModelEvidence.Type.CONSERVATION,
                 "src/test/java/neqsim/process/safety/release/ReleaseFlowModelTest.java",
@@ -65,6 +66,15 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
                 "Six published dense single-fluid CO2 restriction cases with reported mass-flow uncertainty; "
                     + "executable evidence compares the choked restriction rate at a non-solid 0.6 MPa receiver, "
                     + "while the actual ambient-expanded source path remains fail-closed on dry-ice risk",
+                true),
+            new ReleaseModelEvidence.Record("richardson-natural-gas-propane-2006",
+                ReleaseModelEvidence.Type.EXPERIMENTAL,
+                "DOI 10.1205/psep.04298; "
+                    + "src/test/resources/neqsim/process/safety/release/richardson-natural-gas-propane-2006.csv",
+                "Twenty-seven published well-mixed natural-gas/commercial-propane choked-orifice cases with 1% "
+                    + "reported flow-measurement accuracy; executable evidence compares unity-coefficient HEM "
+                    + "rates, phase applicability and implied discharge coefficients while retaining the paper's "
+                    + "average feed composition and model-derived phase-fraction limitations",
                 true)));
   }
 

@@ -271,10 +271,31 @@ ApiEnvelope<FlashResult> envelope = FlashRunner.runTyped(request);
 The `neqsim-mcp-server/` project wraps these runners in Quarkus `@Tool`
 annotations. See `neqsim-mcp-server/README.md` for configuration and usage.
 
-### From Python (via jpype)
+### From Python (via neqsim-python)
 
+<!-- mcp-readme-example: python-flash-runner -->
 ```python
-import jpype
-FlashRunner = jpype.JClass("neqsim.mcp.runners.FlashRunner")
-result = FlashRunner.run('{"model":"SRK","temperature":{"value":25,"unit":"C"},...}')
+import json
+
+from neqsim import jneqsim
+
+FlashRunner = jneqsim.mcp.runners.FlashRunner
+
+request = {
+    "model": "SRK",
+    "temperature": {"value": 25.0, "unit": "C"},
+    "pressure": {"value": 50.0, "unit": "bara"},
+    "flashType": "TP",
+    "components": {"methane": 0.85, "ethane": 0.10, "propane": 0.05},
+    "mixingRule": "classic",
+}
+response = json.loads(str(FlashRunner.run(json.dumps(request))))
+
+assert response["status"] == "success"
+assert response["data"]["flash"]["numberOfPhases"] >= 1
 ```
+
+The dependency-free documentation contract in
+`docs/test_mcp_readme_documentation.py` parses this literal Python source. The
+equivalent JSON request and canonical response path are executed by
+`FlashRunnerTest.testTPFlash_simpleGas`.
