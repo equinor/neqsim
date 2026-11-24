@@ -53,4 +53,21 @@ class ForwardVlpProviderCollapseTest {
     assertTrue(Double.isNaN(provider.bottomHolePressure(1000.0, 5.0, 0.0, 0.0, 0.0)));
     assertTrue(provider.getCollapsedEvaluations() > 1);
   }
+
+  /** A forward model that jumps across the requested outlet pressure returns the jump location, not NaN. */
+  @Test
+  void aJumpAcrossTheTargetReturnsTheJumpLocation() {
+    ForwardVlpProvider provider = new ForwardVlpProvider(new ForwardVlpProvider.ForwardPressureModel() {
+      @Override
+      public double outletPressure(double rate, double inlet, double wr, double gr, double alq) {
+        return inlet < 30.0 ? inlet - 5.0 : inlet - 3.0;
+      }
+    }).setInletBounds(2.0, 450.0);
+    assertEquals(30.0, provider.bottomHolePressure(1000.0, 26.0, 0.0, 0.0, 0.0), 1.0e-3);
+    assertEquals(1, provider.getDiscontinuousRoots());
+    assertEquals(25.0, provider.bottomHolePressure(1000.0, 20.0, 0.0, 0.0, 0.0), 0.05);
+    assertEquals(1, provider.getDiscontinuousRoots());
+    provider.setBracketTolerance(0.0);
+    assertTrue(Double.isNaN(provider.bottomHolePressure(1000.0, 26.0, 0.0, 0.0, 0.0)));
+  }
 }
