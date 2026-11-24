@@ -6,51 +6,49 @@ import java.util.Locale;
 import java.util.function.ToDoubleFunction;
 
 /**
- * Generates a synthetic (not a specific well's real) wellbore deviation trajectory -- (MD, TVD) station arrays --
- * for use when no real Prosper model, SMDA record, or other real trajectory source exists for a well, interpolated
- * from a caller-supplied, depth-dependent statistics basis rather than a single generic textbook default or a bare
- * vertical pipe.
+ * Generates a synthetic (not a specific well's real) wellbore deviation trajectory -- (MD, TVD) station arrays -- for
+ * use when no real Prosper model, SMDA record, or other real trajectory source exists for a well, interpolated from a
+ * caller-supplied, depth-dependent statistics basis rather than a single generic textbook default or a bare vertical
+ * pipe.
  *
  * <h2>Why this exists</h2>
  * <p>
- * A well's wellbore geometry materially affects an OLGA transient multiphase result (slugging, terrain-induced
- * liquid accumulation are deviation-sensitive), so assuming a purely vertical well when no real survey exists is
- * not a neutral simplification -- it can be a materially worse approximation than a realistic deviated profile.
- * Real well populations typically show build rate and kickoff depth varying materially with total depth, so a
- * single fixed "representative" well shape is usually a poor match for the real population; this class instead
- * interpolates a depth-dependent build rate/kickoff-point from three depth tiers (shallow/medium/deep) that the
- * caller supplies, rather than hardcoding one fixed shape or any field-derived numbers in this public library
- * itself.
+ * A well's wellbore geometry materially affects an OLGA transient multiphase result (slugging, terrain-induced liquid
+ * accumulation are deviation-sensitive), so assuming a purely vertical well when no real survey exists is not a neutral
+ * simplification -- it can be a materially worse approximation than a realistic deviated profile. Real well populations
+ * typically show build rate and kickoff depth varying materially with total depth, so a single fixed "representative"
+ * well shape is usually a poor match for the real population; this class instead interpolates a depth-dependent build
+ * rate/kickoff-point from three depth tiers (shallow/medium/deep) that the caller supplies, rather than hardcoding one
+ * fixed shape or any field-derived numbers in this public library itself.
  * </p>
  *
  * <h2>Data governance -- no statistics are embedded in this class</h2>
  * <p>
  * This class deliberately ships with <strong>no default {@link Statistics} basis and no embedded field/well
- * data</strong>. {@code neqsim} is a public, open-source repository; the depth-tier statistics a real caller
- * would use (derived from a real well population) may be governed by that organization's own data-handling rules
- * and must not be published here. Every caller MUST construct and supply its own {@link Statistics} (three
- * {@link DepthTier} instances plus a default max inclination, optionally with its own {@code basisDescription}
- * provenance string) from whatever internally governed data source it has rights to use -- see this class's own
- * {@link Statistics} and {@link DepthTier} Javadoc. A small, clearly-labeled example basis for experimentation is
- * provided only in this class's own unit tests (round, invented numbers -- not derived from any real well).
+ * data</strong>. {@code neqsim} is a public, open-source repository; the depth-tier statistics a real caller would use
+ * (derived from a real well population) may be governed by that organization's own data-handling rules and must not be
+ * published here. Every caller MUST construct and supply its own {@link Statistics} (three {@link DepthTier} instances
+ * plus a default max inclination, optionally with its own {@code basisDescription} provenance string) from whatever
+ * internally governed data source it has rights to use -- see this class's own {@link Statistics} and {@link DepthTier}
+ * Javadoc. A small, clearly-labeled example basis for experimentation is provided only in this class's own unit tests
+ * (round, invented numbers -- not derived from any real well).
  * </p>
  *
  * <h2>What this is NOT</h2>
  * <ul>
- * <li>NOT a real well's actual trajectory. Every genkey or report built from this class's output MUST disclose
- * that plainly -- see {@link #syntheticTrajectoryWarning(Result)}, never silently presented as real geometry.</li>
+ * <li>NOT a real well's actual trajectory. Every genkey or report built from this class's output MUST disclose that
+ * plainly -- see {@link #syntheticTrajectoryWarning(Result)}, never silently presented as real geometry.</li>
  * <li>NOT a substitute for a real planned/as-drilled trajectory (SMDA, a real Prosper deviation survey, or a real
- * drilling-engineering well-planning tool) when one is available. Always prefer real data; use this class only when
- * no real trajectory source exists for the well in question.</li>
- * <li>NOT a full well-planning tool. It builds a simple, standard "build and hold" (or "build only", when the
- * target is reached before completing the full build) analytic circular-arc profile -- it does not model doglegs,
- * S-shaped profiles, or multi-target wells.</li>
+ * drilling-engineering well-planning tool) when one is available. Always prefer real data; use this class only when no
+ * real trajectory source exists for the well in question.</li>
+ * <li>NOT a full well-planning tool. It builds a simple, standard "build and hold" (or "build only", when the target is
+ * reached before completing the full build) analytic circular-arc profile -- it does not model doglegs, S-shaped
+ * profiles, or multi-target wells.</li>
  * </ul>
  *
  * <h2>Method</h2>
  * <p>
- * Standard "radius of curvature" analytic circular-arc geometry (unit-weight textbook directional-drilling
- * convention):
+ * Standard "radius of curvature" analytic circular-arc geometry (unit-weight textbook directional-drilling convention):
  * </p>
  *
  * <pre>
@@ -61,15 +59,15 @@ import java.util.function.ToDoubleFunction;
  * </pre>
  *
  * <p>
- * applied in up to three sections: a vertical section (0 to KOP, where MD == TVD), a build section (circular arc
- * from 0 to either the statistics basis's typical max inclination or a lower inclination if the target TVD is
- * reached first), and -- only if the target TVD has NOT yet been reached at the end of the full build -- a straight
- * tangent/hold section at constant inclination for the remaining TVD. An optional reservoir-contact length then
- * extends the well further, at the terminal inclination, WITHOUT requiring further net TVD gain -- this mirrors a
- * pattern commonly observed when characterizing a real well population: the full build arc alone often already
- * reaches a depth tier's own approximate target TVD well before exhausting that tier's own typical max inclination,
- * meaning a real well's extra MD beyond the build arc is often best modeled as a reservoir-contact/lateral section,
- * not as additional vertical-depth-seeking tangent length.
+ * applied in up to three sections: a vertical section (0 to KOP, where MD == TVD), a build section (circular arc from 0
+ * to either the statistics basis's typical max inclination or a lower inclination if the target TVD is reached first),
+ * and -- only if the target TVD has NOT yet been reached at the end of the full build -- a straight tangent/hold
+ * section at constant inclination for the remaining TVD. An optional reservoir-contact length then extends the well
+ * further, at the terminal inclination, WITHOUT requiring further net TVD gain -- this mirrors a pattern commonly
+ * observed when characterizing a real well population: the full build arc alone often already reaches a depth tier's
+ * own approximate target TVD well before exhausting that tier's own typical max inclination, meaning a real well's
+ * extra MD beyond the build arc is often best modeled as a reservoir-contact/lateral section, not as additional
+ * vertical-depth-seeking tangent length.
  * </p>
  *
  * @author NeqSim
@@ -77,13 +75,16 @@ import java.util.function.ToDoubleFunction;
  * @see neqsim.process.fielddevelopment.olga.OlgaWellGenkeyExporter
  */
 public final class SyntheticWellTrajectory {
-  /** Warning prefix mirroring {@code well-inflow-pi}'s own {@code [CHOKE WARNING]}/{@code [GEOMETRY WARNING]} convention. */
+  /**
+   * Warning prefix mirroring {@code well-inflow-pi}'s own {@code [CHOKE WARNING]}/{@code [GEOMETRY WARNING]}
+   * convention.
+   */
   public static final String SYNTHETIC_TRAJECTORY_WARNING_PREFIX = "[SYNTHETIC TRAJECTORY WARNING]";
 
   /**
    * Inclination is capped below 90 degrees to keep cos(inclination) bounded away from zero in the tangent-section
-   * formula ({@code md = remainingTvd / cos(inclination)}) -- an uncapped 90 degrees (or a caller-supplied value at
-   * or above it) would make that division blow up or divide by zero. 89.0 degrees still represents an effectively
+   * formula ({@code md = remainingTvd / cos(inclination)}) -- an uncapped 90 degrees (or a caller-supplied value at or
+   * above it) would make that division blow up or divide by zero. 89.0 degrees still represents an effectively
    * horizontal hold section (over 99.98% of unit length is still horizontal travel) while keeping the formula
    * numerically well-behaved.
    */
@@ -91,8 +92,8 @@ public final class SyntheticWellTrajectory {
 
   /**
    * A tangent/hold section longer than this, relative to the target TVD itself, is flagged as an explicit warning
-   * rather than silently returned -- it usually means the max-inclination/build-rate combination in use is a poor
-   * fit for this particular target TVD, not a normal result.
+   * rather than silently returned -- it usually means the max-inclination/build-rate combination in use is a poor fit
+   * for this particular target TVD, not a normal result.
    */
   private static final double LONG_TANGENT_WARNING_RATIO = 3.0;
 
@@ -130,18 +131,21 @@ public final class SyntheticWellTrajectory {
 
   /**
    * A depth-tier statistics basis -- the depth tiers, default max inclination, and a human-readable provenance
-   * description together, mirroring the ported Python module's own {@code statistics=} parameter (an
-   * already-loaded statistics dict). This class has <strong>no built-in instance</strong> -- every caller supplies
-   * its own, from whatever internally governed data source it has rights to use; see this class's own "Data
-   * governance" Javadoc section.
+   * description together, mirroring the ported Python module's own {@code statistics=} parameter (an already-loaded
+   * statistics dict). This class has <strong>no built-in instance</strong> -- every caller supplies its own, from
+   * whatever internally governed data source it has rights to use; see this class's own "Data governance" Javadoc
+   * section.
    */
   public static final class Statistics {
     /** The depth tiers to interpolate against (normally exactly three: shallow/medium/deep). */
     public final DepthTier[] depthTiers;
     /** The default max inclination (degrees) used when no override is given. */
     public final double defaultMaxInclinationDeg;
-    /** Human-readable provenance text for this basis, surfaced via {@link Result#basis} -- e.g. a genkey header
-     * comment. Must not be left generic/misleading about the data's real nature; see {@link #syntheticTrajectoryWarning(Result)}. */
+    /**
+     * Human-readable provenance text for this basis, surfaced via {@link Result#basis} -- e.g. a genkey header comment.
+     * Must not be left generic/misleading about the data's real nature; see
+     * {@link #syntheticTrajectoryWarning(Result)}.
+     */
     public final String basisDescription;
 
     /**
@@ -217,13 +221,13 @@ public final class SyntheticWellTrajectory {
   }
 
   /**
-   * Generate a synthetic (MD, TVD) wellbore trajectory for a given target TVD, with no reservoir-contact extension
-   * and the statistics basis's own default max inclination. See {@link #generateSyntheticTrajectory(double, double,
-   * Double, int, Statistics)} for the full set of options.
+   * Generate a synthetic (MD, TVD) wellbore trajectory for a given target TVD, with no reservoir-contact extension and
+   * the statistics basis's own default max inclination. See
+   * {@link #generateSyntheticTrajectory(double, double, Double, int, Statistics)} for the full set of options.
    *
    * @param targetTvdMetre target true vertical depth (m) the well must reach, must be positive
-   * @param statistics the depth-tier statistics basis to interpolate against -- every caller must supply its own;
-   * see this class's own "Data governance" Javadoc section
+   * @param statistics the depth-tier statistics basis to interpolate against -- every caller must supply its own; see
+   * this class's own "Data governance" Javadoc section
    * @return the generated trajectory
    * @throws SyntheticTrajectoryException if targetTvdMetre is not positive
    */
@@ -232,30 +236,29 @@ public final class SyntheticWellTrajectory {
   }
 
   /**
-   * Generate a synthetic (MD, TVD) wellbore trajectory for a given target TVD, grounded in a caller-supplied
-   * depth-tier statistics basis -- see this class's own Javadoc for the full method and rationale.
+   * Generate a synthetic (MD, TVD) wellbore trajectory for a given target TVD, grounded in a caller-supplied depth-tier
+   * statistics basis -- see this class's own Javadoc for the full method and rationale.
    *
-   * @param targetTvdMetre target true vertical depth (m) the well must reach (e.g. the reservoir datum depth);
-   * must be positive
+   * @param targetTvdMetre target true vertical depth (m) the well must reach (e.g. the reservoir datum depth); must be
+   * positive
    * @param reservoirContactLengthMetre optional additional MD (m) to extend the well beyond reaching
-   * {@code targetTvdMetre}, at the terminal inclination, representing a reservoir-contact/lateral section. Zero
-   * means stop exactly at {@code targetTvdMetre}. This is a SEPARATE concern from reaching {@code targetTvdMetre}
-   * itself -- see this class's own Javadoc for the reasoning. Must be zero or greater.
+   * {@code targetTvdMetre}, at the terminal inclination, representing a reservoir-contact/lateral section. Zero means
+   * stop exactly at {@code targetTvdMetre}. This is a SEPARATE concern from reaching {@code targetTvdMetre} itself --
+   * see this class's own Javadoc for the reasoning. Must be zero or greater.
    * @param maxInclinationDegOverride optional override for the maximum build inclination (degrees); {@code null}
    * defaults to {@code statistics}'s own {@link Statistics#defaultMaxInclinationDeg}. Capped at
    * {@link #MAX_SAFE_INCLINATION_DEG} regardless of the value given.
    * @param buildSectionNumStations number of (MD, TVD) stations to emit across the build section (including both
    * endpoints, minimum 2). Higher values give a smoother arc at the cost of a larger array.
-   * @param statistics the depth-tier statistics basis to interpolate against. This class ships with no built-in
-   * default -- every caller must supply its own, derived from whatever internally governed data source it has
-   * rights to use (production use), or a small fixture (testing); see this class's own "Data governance" Javadoc
-   * section and the ported Python module's own {@code statistics=} parameter, which this mirrors.
+   * @param statistics the depth-tier statistics basis to interpolate against. This class ships with no built-in default
+   * -- every caller must supply its own, derived from whatever internally governed data source it has rights to use
+   * (production use), or a small fixture (testing); see this class's own "Data governance" Javadoc section and the
+   * ported Python module's own {@code statistics=} parameter, which this mirrors.
    * @return the generated trajectory. May be a purely vertical profile (MD == TVD throughout, with an explanatory
-   * warning in {@link Result#warnings}) rather than a curved one, if {@code targetTvdMetre} is shallower than (or
-   * equal to) the depth tier's own interpolated kickoff-point depth -- that is the physically correct result in
-   * that case, not an error; always inspect {@link Result#warnings} rather than assuming a curved profile.
-   * @throws SyntheticTrajectoryException if targetTvdMetre is not positive, or reservoirContactLengthMetre is
-   * negative
+   * warning in {@link Result#warnings}) rather than a curved one, if {@code targetTvdMetre} is shallower than (or equal
+   * to) the depth tier's own interpolated kickoff-point depth -- that is the physically correct result in that case,
+   * not an error; always inspect {@link Result#warnings} rather than assuming a curved profile.
+   * @throws SyntheticTrajectoryException if targetTvdMetre is not positive, or reservoirContactLengthMetre is negative
    */
   public static Result generateSyntheticTrajectory(double targetTvdMetre, double reservoirContactLengthMetre,
       Double maxInclinationDegOverride, int buildSectionNumStations, Statistics statistics) {
@@ -269,8 +272,8 @@ public final class SyntheticWellTrajectory {
 
     List<String> warnings = new ArrayList<>();
 
-    double requestedMaxInclinationDeg =
-        maxInclinationDegOverride != null ? maxInclinationDegOverride : statistics.defaultMaxInclinationDeg;
+    double requestedMaxInclinationDeg = maxInclinationDegOverride != null ? maxInclinationDegOverride
+        : statistics.defaultMaxInclinationDeg;
     double effectiveMaxInclinationDeg = Math.min(requestedMaxInclinationDeg, MAX_SAFE_INCLINATION_DEG);
     if (effectiveMaxInclinationDeg < requestedMaxInclinationDeg) {
       warnings.add(String.format(Locale.ROOT,
@@ -279,7 +282,8 @@ public final class SyntheticWellTrajectory {
           SYNTHETIC_TRAJECTORY_WARNING_PREFIX, requestedMaxInclinationDeg, MAX_SAFE_INCLINATION_DEG));
     }
 
-    double buildRate = interpolateTierMetric(targetTvdMetre, statistics.depthTiers, tier -> tier.meanBuildRateDegPer30m);
+    double buildRate = interpolateTierMetric(targetTvdMetre, statistics.depthTiers,
+        tier -> tier.meanBuildRateDegPer30m);
     double kopMd = interpolateTierMetric(targetTvdMetre, statistics.depthTiers, tier -> tier.meanKopMdMetre);
 
     String basis = statistics.basisDescription;
@@ -360,9 +364,8 @@ public final class SyntheticWellTrajectory {
    * {@code [GEOMETRY WARNING]} convention.
    *
    * @param result the result from any {@code generateSyntheticTrajectory(...)} overload
-   * @return a single warning string, always non-empty regardless of whether {@code result.warnings} itself is
-   * empty -- a synthetic trajectory is always worth disclosing, not only when something unusual happened during
-   * its generation
+   * @return a single warning string, always non-empty regardless of whether {@code result.warnings} itself is empty --
+   * a synthetic trajectory is always worth disclosing, not only when something unusual happened during its generation
    */
   public static String syntheticTrajectoryWarning(Result result) {
     return SYNTHETIC_TRAJECTORY_WARNING_PREFIX + " this well's geometry is a SYNTHETIC TEMPLATE (" + result.basis
@@ -372,9 +375,9 @@ public final class SyntheticWellTrajectory {
   }
 
   /**
-   * Piecewise-linear interpolation of a tier metric against each tier's own {@code approxMeanTotalTvdMetre}, with
-   * flat extrapolation beyond the sampled range (never extrapolates a trend indefinitely beyond what the real data
-   * actually supports).
+   * Piecewise-linear interpolation of a tier metric against each tier's own {@code approxMeanTotalTvdMetre}, with flat
+   * extrapolation beyond the sampled range (never extrapolates a trend indefinitely beyond what the real data actually
+   * supports).
    *
    * @param targetTvdMetre the TVD to interpolate at
    * @param tiers the depth tiers to interpolate against

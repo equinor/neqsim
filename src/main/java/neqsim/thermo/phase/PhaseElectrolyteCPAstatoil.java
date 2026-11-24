@@ -7,6 +7,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentElectrolyteCPAstatoil;
+import neqsim.thermo.component.ComponentInterface;
 
 /**
  * PhaseElectrolyteCPAstatoil class.
@@ -17,6 +18,8 @@ import neqsim.thermo.component.ComponentElectrolyteCPAstatoil;
 public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  private boolean useMolalCarbonateChemistry;
 
   /**
    * Constructor for PhaseElectrolyteCPAstatoil.
@@ -46,6 +49,30 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
       throw new IllegalStateException("Unable to complete clone of PhaseElectrolyteCPAstatoil", ex);
     }
     return clonedPhase;
+  }
+
+  /**
+   * Set the pH convention selected by the owning electrolyte CPA fluid.
+   *
+   * @param enabled true to report activity-based pH on the carbonate reaction molality basis
+   */
+  public void setUseMolalCarbonateChemistry(boolean enabled) {
+    useMolalCarbonateChemistry = enabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getpH(String method) {
+    if (useMolalCarbonateChemistry && getType() == PhaseType.AQUEOUS && hasComponent("water") && hasComponent("H3O+")
+        && ("activity".equalsIgnoreCase(method) || "molality".equalsIgnoreCase(method))) {
+      ComponentInterface water = getComponent("water");
+      ComponentInterface hydronium = getComponent("H3O+");
+      double solventMass = water.getNumberOfMolesInPhase() * water.getMolarMass();
+      double molality = hydronium.getNumberOfMolesInPhase() / solventMass;
+      double activity = molality * getActivityCoefficient(hydronium.getComponentNumber(), water.getComponentNumber());
+      return activity > 0.0 && Double.isFinite(activity) ? -Math.log10(activity) : Double.NaN;
+    }
+    return super.getpH(method);
   }
 
   /** {@inheritDoc} */

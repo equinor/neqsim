@@ -113,15 +113,19 @@ public class OlgaWellGenkeyExporterTest {
   @Test
   void testSetTrajectoryRejectsWrongDiameterArrayLength() {
     OlgaWellGenkeyExporter exporter = new OlgaWellGenkeyExporter("WELL-1");
-    assertThrows(IllegalArgumentException.class, () -> exporter.setTrajectory(new double[] {0.0, 1.0, 2.0},
-        new double[] {0.0, -1.0, -2.0}, new double[] {0.1})); // needs 2 entries, not 1
+    assertThrows(IllegalArgumentException.class,
+        () -> exporter.setTrajectory(new double[] {0.0, 1.0, 2.0}, new double[] {0.0, -1.0, -2.0}, new double[] {0.1})); // needs
+                                                                                                                         // 2
+                                                                                                                         // entries,
+                                                                                                                         // not
+                                                                                                                         // 1
   }
 
   @Test
   void testSetTrajectoryRejectsNonFiniteCoordinates() {
     OlgaWellGenkeyExporter exporter = new OlgaWellGenkeyExporter("WELL-1");
-    assertThrows(IllegalArgumentException.class, () -> exporter.setTrajectory(new double[] {0.0, Double.NaN},
-        new double[] {0.0, -1.0}, new double[] {0.1}));
+    assertThrows(IllegalArgumentException.class,
+        () -> exporter.setTrajectory(new double[] {0.0, Double.NaN}, new double[] {0.0, -1.0}, new double[] {0.1}));
   }
 
   @Test

@@ -65,11 +65,12 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       String[] nameArray;
       dataSet.next();
       do {
+        String reacname = dataSet.getString("NAME");
         useReaction = Integer.parseInt(dataSet.getString("usereaction")) == 1;
-        if (useReaction) {
+        if (useReaction && (reactionDataSource != ChemicalReactionDataSource.MOLAL_CARBONATE
+            || ChemicalReactionDataSource.isCarbonateReaction(reacname))) {
           names.clear();
           stocCoef.clear();
-          String reacname = dataSet.getString("NAME");
           // System.out.println("name " +reacname );
           K[0] = Double.parseDouble(dataSet.getString("K1"));
           K[1] = Double.parseDouble(dataSet.getString("K2"));
