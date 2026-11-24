@@ -212,6 +212,11 @@ equation in ln(phi) with a bracketed search that excludes the trivial root phi =
 liquid-liquid critical point chi_c, which is not the onset condition of this model (solubility against
 a pure asphaltene phase).
 
+The heuristic prior is not fitted to those measured onsets. When onset data are available, use
+`calibrateToOnsetPressure` or `fitToOnsetData` instead (see
+[asphaltene modeling](asphaltene_modeling)); one-point calibration reproduces its input by
+construction, while multi-temperature fit quality must be assessed from its reported residuals.
+
 `calibrateCorrelation()` is a **heuristic prior that uses no measured data**: it sets the density
 correlation so that the oil at reservoir conditions is 0.35 MPa^0.5 short of its own onset. The
 predicted onset is therefore wherever depressurisation lowers delta_L by 0.35 MPa^0.5. Treat the

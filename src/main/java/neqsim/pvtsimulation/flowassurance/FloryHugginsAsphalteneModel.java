@@ -84,9 +84,6 @@ public class FloryHugginsAsphalteneModel {
   /** Gas constant in J/(mol K). */
   private static final double R_GAS = 8.314;
 
-  /** Precipitated mass fraction above which the oil counts as unstable in the onset search. */
-  private static final double ONSET_THRESHOLD = 1.0e-9;
-
   /** How the liquid solubility parameter is obtained. */
   public enum SolubilityParameterMethod {
     /** delta_L = A * rho + B from the oil-phase density (Lian et al., 1994). */
@@ -134,6 +131,18 @@ public class FloryHugginsAsphalteneModel {
 
   /** Reservoir temperature (K). */
   private double reservoirTemperature;
+
+  /** Reference temperature (K) for the asphaltene solubility parameter. */
+  private double solubilityParameterReferenceTemperature = 298.15;
+
+  /** Temperature coefficient of the asphaltene solubility parameter (MPa^0.5/K). */
+  private double solubilityParameterTemperatureCoefficient;
+
+  /** Precipitated weight fraction that defines the onset detection limit. */
+  private double onsetDetectionThreshold = 0.001;
+
+  /** Whether the asphaltene solubility parameter was calibrated to measured onset data. */
+  private boolean calibratedToOnsetData;
 
   /** Liquid solubility parameter method. */
   private SolubilityParameterMethod solubilityParameterMethod = SolubilityParameterMethod.DENSITY_CORRELATION;
@@ -186,6 +195,9 @@ public class FloryHugginsAsphalteneModel {
     // Solubility parameter: increases with API gravity (light paraffinic oils are poor asphaltene solvents).
     asphalteneSolubilityParameter = Math.max(19.5, Math.min(23.0, 19.0 + 0.06 * apiGravity));
     saraBaseSolubilityParameter = Double.NaN;
+    solubilityParameterTemperatureCoefficient = 0.0;
+    solubilityParameterReferenceTemperature = 298.15;
+    calibratedToOnsetData = false;
     asphalteneDensity = 1100.0;
     asphaltMolarVolume = (asphalteneMW / asphalteneDensity) * 1000.0; // cm3/mol
     configuredFromAPI = true;
@@ -233,14 +245,15 @@ public class FloryHugginsAsphalteneModel {
     }
     double low = 0.0;
     double high = 15.0;
-    state.deltaL = asphalteneSolubilityParameter - high;
+    double deltaAsphaltene = getAsphalteneSolubilityParameter(temperature);
+    state.deltaL = deltaAsphaltene - high;
     if (precipitatedFraction(state, temperature) <= 0.0) {
       logger.warn("No solubility-parameter gap up to 15 MPa^0.5 precipitates the asphaltene; keeping default A");
       return;
     }
     for (int i = 0; i < 100 && high - low > 1e-8; i++) {
       double mid = 0.5 * (low + high);
-      state.deltaL = asphalteneSolubilityParameter - mid;
+      state.deltaL = deltaAsphaltene - mid;
       if (precipitatedFraction(state, temperature) > 0.0) {
         high = mid;
       } else {
@@ -250,7 +263,7 @@ public class FloryHugginsAsphalteneModel {
     double onsetGap = 0.5 * (low + high);
     double stabilityBuffer = 0.35; // MPa^0.5
     double targetGap = onsetGap - stabilityBuffer;
-    double calibratedA = (asphalteneSolubilityParameter - targetGap - deltaRhoCoeffB) / state.density;
+    double calibratedA = (deltaAsphaltene - targetGap - deltaRhoCoeffB) / state.density;
     if (calibratedA > 0.005 && calibratedA < 0.10) {
       deltaRhoCoeffA = calibratedA;
       logger.info("FH heuristic prior: A={}, oilDensity={}, onsetGap={}, targetGap={}", deltaRhoCoeffA, state.density,
@@ -278,36 +291,254 @@ public class FloryHugginsAsphalteneModel {
     if (system == null) {
       throw new IllegalStateException("Set a thermodynamic system before calibrating to a measured onset");
     }
-    if (!(temperature > 0.0) || !(measuredOnsetPressure > 0.0)) {
+    if (!(temperature > 0.0) || Double.isInfinite(temperature) || !(measuredOnsetPressure > 0.0)
+        || Double.isInfinite(measuredOnsetPressure)) {
       throw new IllegalArgumentException("Temperature and onset pressure must be positive");
     }
     OilState state = oilState(measuredOnsetPressure, temperature);
     if (state == null) {
       throw new IllegalStateException("Flash failed at the measured onset pressure " + measuredOnsetPressure + " bara");
     }
+    double calibratedParameter = calculateRequiredSolubilityParameter(temperature, measuredOnsetPressure);
+    if (Double.isNaN(calibratedParameter)) {
+      throw new IllegalArgumentException(
+          "Onset at " + measuredOnsetPressure + " bara and " + temperature + " K cannot be reproduced by the model");
+    }
+    asphalteneSolubilityParameter = calibratedParameter;
+    solubilityParameterReferenceTemperature = temperature;
+    saraBaseSolubilityParameter = Double.NaN;
+    calibratedToOnsetData = true;
+    logger.info("FH calibrated to onset {} bara at {} K: delta_a={}", measuredOnsetPressure, temperature,
+        asphalteneSolubilityParameter);
+    return asphalteneSolubilityParameter;
+  }
+
+  /**
+   * Calculates the asphaltene solubility parameter that reproduces one measured onset pressure.
+   *
+   * @param temperature temperature of the measured onset (K)
+   * @param onsetPressure measured upper onset pressure (bara)
+   * @return required asphaltene solubility parameter (MPa^0.5), or NaN if the condition cannot be reproduced
+   * @throws IllegalStateException if no thermodynamic system is set or asphaltene content does not exceed the onset
+   * threshold
+   */
+  public double calculateRequiredSolubilityParameter(double temperature, double onsetPressure) {
+    if (system == null) {
+      throw new IllegalStateException("Thermodynamic system not set");
+    }
+    if (!(temperature > 0.0) || Double.isInfinite(temperature) || !(onsetPressure > 0.0)
+        || Double.isInfinite(onsetPressure)) {
+      throw new IllegalArgumentException("Temperature and onset pressure must be positive");
+    }
+    if (!(asphalteneWeightFraction > onsetDetectionThreshold)) {
+      throw new IllegalStateException("Asphaltene weight fraction must exceed the onset detection threshold");
+    }
+    OilState state = oilState(onsetPressure, temperature);
+    if (state == null || Double.isNaN(state.deltaL)) {
+      return Double.NaN;
+    }
     double low = state.deltaL;
     double high = state.deltaL + 15.0;
-    double original = asphalteneSolubilityParameter;
-    asphalteneSolubilityParameter = high;
-    if (precipitatedFraction(state, temperature) <= 0.0) {
-      asphalteneSolubilityParameter = original;
-      throw new IllegalStateException(
-          "No asphaltene solubility parameter up to delta_L + 15 MPa^0.5 gives precipitation at the measured onset");
+    if (precipitatedFraction(state, temperature, high) <= onsetDetectionThreshold) {
+      return Double.NaN;
     }
-    for (int i = 0; i < 100 && high - low > 1e-8; i++) {
+    for (int i = 0; i < 100 && high - low > 1.0e-8; i++) {
       double mid = 0.5 * (low + high);
-      asphalteneSolubilityParameter = mid;
-      if (precipitatedFraction(state, temperature) > 0.0) {
+      if (precipitatedFraction(state, temperature, mid) > onsetDetectionThreshold) {
         high = mid;
       } else {
         low = mid;
       }
     }
-    asphalteneSolubilityParameter = 0.5 * (low + high);
+    return 0.5 * (low + high);
+  }
+
+  /**
+   * Regresses the asphaltene solubility parameter and its temperature coefficient to onset measurements.
+   *
+   * @param temperatures temperatures of measured onsets (K)
+   * @param onsetPressures measured upper onset pressures (bara)
+   * @return fit result containing fitted parameters and pressure deviations
+   * @throws IllegalArgumentException if arrays are null, empty, unequal in length, or a point cannot be reproduced
+   * @throws IllegalStateException if the system is not set or the asphaltene weight fraction is below threshold
+   */
+  public OnsetFitResult fitToOnsetData(double[] temperatures, double[] onsetPressures) {
+    if (temperatures == null || onsetPressures == null || temperatures.length == 0
+        || temperatures.length != onsetPressures.length) {
+      throw new IllegalArgumentException("temperatures and onsetPressures must be non-empty and of equal length");
+    }
+    double[] required = new double[temperatures.length];
+    double meanTemperature = 0.0;
+    double meanParameter = 0.0;
+    double maximumPressure = 0.0;
+    for (int i = 0; i < temperatures.length; i++) {
+      required[i] = calculateRequiredSolubilityParameter(temperatures[i], onsetPressures[i]);
+      if (Double.isNaN(required[i])) {
+        throw new IllegalArgumentException(
+            "Onset at " + onsetPressures[i] + " bara and " + temperatures[i] + " K cannot be reproduced by the model");
+      }
+      meanTemperature += temperatures[i] / temperatures.length;
+      meanParameter += required[i] / temperatures.length;
+      maximumPressure = Math.max(maximumPressure, onsetPressures[i]);
+    }
+    double sumTemperatureSquares = 0.0;
+    double sumTemperatureParameter = 0.0;
+    for (int i = 0; i < temperatures.length; i++) {
+      double temperatureDelta = temperatures[i] - meanTemperature;
+      sumTemperatureSquares += temperatureDelta * temperatureDelta;
+      sumTemperatureParameter += temperatureDelta * (required[i] - meanParameter);
+    }
+    if (sumTemperatureSquares > 1.0e-8) {
+      solubilityParameterTemperatureCoefficient = sumTemperatureParameter / sumTemperatureSquares;
+    }
+    asphalteneSolubilityParameter = meanParameter;
+    solubilityParameterReferenceTemperature = meanTemperature;
     saraBaseSolubilityParameter = Double.NaN;
-    logger.info("FH calibrated to onset {} bara at {} K: delta_a={}", measuredOnsetPressure, temperature,
-        asphalteneSolubilityParameter);
-    return asphalteneSolubilityParameter;
+    calibratedToOnsetData = true;
+    double startPressure = Math.max(system.getPressure(), 1.25 * maximumPressure);
+    double[] predicted = new double[temperatures.length];
+    for (int i = 0; i < temperatures.length; i++) {
+      predicted[i] = calculateOnsetPressure(temperatures[i], startPressure, 1.0);
+    }
+    return new OnsetFitResult(asphalteneSolubilityParameter, meanTemperature, solubilityParameterTemperatureCoefficient,
+        temperatures, onsetPressures, required, predicted);
+  }
+
+  /**
+   * Immutable result of fitting the Flory-Huggins model to onset-pressure measurements.
+   *
+   * @author ESOL
+   * @version 1.0
+   */
+  public static class OnsetFitResult implements java.io.Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double solubilityParameter;
+    private final double referenceTemperature;
+    private final double temperatureCoefficient;
+    private final double[] temperatures;
+    private final double[] measuredOnsetPressures;
+    private final double[] requiredSolubilityParameters;
+    private final double[] predictedOnsetPressures;
+
+    /**
+     * Creates a fit result with defensive copies of all arrays.
+     *
+     * @param solubilityParameter fitted parameter at the reference temperature (MPa^0.5)
+     * @param referenceTemperature reference temperature (K)
+     * @param temperatureCoefficient temperature coefficient (MPa^0.5/K)
+     * @param temperatures measurement temperatures (K)
+     * @param measuredOnsetPressures measured onset pressures (bara)
+     * @param requiredSolubilityParameters parameters required to reproduce each measurement (MPa^0.5)
+     * @param predictedOnsetPressures predicted onset pressures (bara)
+     */
+    OnsetFitResult(double solubilityParameter, double referenceTemperature, double temperatureCoefficient,
+        double[] temperatures, double[] measuredOnsetPressures, double[] requiredSolubilityParameters,
+        double[] predictedOnsetPressures) {
+      this.solubilityParameter = solubilityParameter;
+      this.referenceTemperature = referenceTemperature;
+      this.temperatureCoefficient = temperatureCoefficient;
+      this.temperatures = temperatures.clone();
+      this.measuredOnsetPressures = measuredOnsetPressures.clone();
+      this.requiredSolubilityParameters = requiredSolubilityParameters.clone();
+      this.predictedOnsetPressures = predictedOnsetPressures.clone();
+    }
+
+    /**
+     * Gets the fitted solubility parameter at the reference temperature.
+     *
+     * @return solubility parameter (MPa^0.5)
+     */
+    public double getSolubilityParameter() {
+      return solubilityParameter;
+    }
+
+    /**
+     * Gets the reference temperature.
+     *
+     * @return reference temperature (K)
+     */
+    public double getReferenceTemperature() {
+      return referenceTemperature;
+    }
+
+    /**
+     * Gets the fitted temperature coefficient.
+     *
+     * @return temperature coefficient (MPa^0.5/K)
+     */
+    public double getTemperatureCoefficient() {
+      return temperatureCoefficient;
+    }
+
+    /**
+     * Gets the measured temperatures.
+     *
+     * @return measurement temperatures (K)
+     */
+    public double[] getTemperatures() {
+      return temperatures.clone();
+    }
+
+    /**
+     * Gets the measured onset pressures.
+     *
+     * @return onset pressures (bara)
+     */
+    public double[] getMeasuredOnsetPressures() {
+      return measuredOnsetPressures.clone();
+    }
+
+    /**
+     * Gets the parameters required to reproduce each measurement.
+     *
+     * @return required parameters (MPa^0.5)
+     */
+    public double[] getRequiredSolubilityParameters() {
+      return requiredSolubilityParameters.clone();
+    }
+
+    /**
+     * Gets onset pressures recalculated with the fitted parameters.
+     *
+     * @return predicted onset pressures (bara)
+     */
+    public double[] getPredictedOnsetPressures() {
+      return predictedOnsetPressures.clone();
+    }
+
+    /**
+     * Calculates the mean absolute deviation between predictions and measurements.
+     *
+     * @return average absolute deviation (bar), NaN if any prediction is NaN
+     */
+    public double getAverageAbsoluteDeviation() {
+      double sum = 0.0;
+      for (int i = 0; i < measuredOnsetPressures.length; i++) {
+        double deviation = Math.abs(predictedOnsetPressures[i] - measuredOnsetPressures[i]);
+        if (Double.isNaN(deviation)) {
+          return Double.NaN;
+        }
+        sum += deviation;
+      }
+      return sum / measuredOnsetPressures.length;
+    }
+
+    /**
+     * Calculates the maximum absolute deviation between predictions and measurements.
+     *
+     * @return maximum absolute deviation (bar), NaN if any prediction is NaN
+     */
+    public double getMaximumAbsoluteDeviation() {
+      double maximum = 0.0;
+      for (int i = 0; i < measuredOnsetPressures.length; i++) {
+        double deviation = Math.abs(predictedOnsetPressures[i] - measuredOnsetPressures[i]);
+        if (Double.isNaN(deviation)) {
+          return Double.NaN;
+        }
+        maximum = Math.max(maximum, deviation);
+      }
+      return maximum;
+    }
   }
 
   /**
@@ -343,6 +574,7 @@ public class FloryHugginsAsphalteneModel {
       factor *= 1.01;
     }
     asphalteneSolubilityParameter = saraBaseSolubilityParameter * factor;
+    calibratedToOnsetData = false;
   }
 
   /**
@@ -351,6 +583,9 @@ public class FloryHugginsAsphalteneModel {
    * @param step pressure step (bar)
    */
   public void setPressureSearchStep(double step) {
+    if (!(step > 0.0) || Double.isInfinite(step)) {
+      throw new IllegalArgumentException("Pressure search step must be positive and finite");
+    }
     this.pressureSearchStep = step;
   }
 
@@ -428,7 +663,20 @@ public class FloryHugginsAsphalteneModel {
    * @return chi
    */
   private double chi(double molarVolume, double deltaLiquid, double temperature) {
-    double deltaDiffPa = (asphalteneSolubilityParameter - deltaLiquid) * 1e3; // MPa^0.5 to Pa^0.5
+    return chi(molarVolume, deltaLiquid, temperature, getAsphalteneSolubilityParameter(temperature));
+  }
+
+  /**
+   * Calculates the Flory-Huggins interaction parameter for a specified asphaltene solubility parameter.
+   *
+   * @param molarVolume asphaltene molar volume (cm3/mol)
+   * @param deltaLiquid liquid solubility parameter (MPa^0.5)
+   * @param temperature temperature (K)
+   * @param deltaAsphaltene asphaltene solubility parameter at the given temperature (MPa^0.5)
+   * @return chi interaction parameter
+   */
+  private double chi(double molarVolume, double deltaLiquid, double temperature, double deltaAsphaltene) {
+    double deltaDiffPa = (deltaAsphaltene - deltaLiquid) * 1e3; // MPa^0.5 to Pa^0.5
     return molarVolume * 1e-6 * deltaDiffPa * deltaDiffPa / (R_GAS * temperature);
   }
 
@@ -458,23 +706,41 @@ public class FloryHugginsAsphalteneModel {
    * @return dissolved volume fraction limit between 0 and 1
    */
   static double solubilityLimit(double chi, double ratio) {
-    // g(u) = u + (1 - r)(1 - e^u) + chi (1 - e^u)^2, u = ln(phi) < 0. g -> -inf as u -> -inf and g ~ r u < 0 just
-    // below 0, so a non-trivial root exists only if g has a positive maximum; the solubility is the lower root.
-    double bestU = Double.NaN;
+    if (!(chi > 0.0) || !(ratio > 0.0) || Double.isInfinite(chi) || Double.isInfinite(ratio)) {
+      return 1.0;
+    }
+    // The stationary points satisfy 2*chi*phi^2 + (ratio - 1 - 2*chi)*phi + 1 = 0.
+    // Evaluating these points analytically avoids missing a narrow positive maximum near criticality.
+    double a = 2.0 * chi;
+    double b = ratio - 1.0 - 2.0 * chi;
+    double discriminant = b * b - 4.0 * a;
+    if (!(discriminant >= 0.0)) {
+      return 1.0;
+    }
+    double sqrtDiscriminant = Math.sqrt(discriminant);
+    double q = -0.5 * (b + Math.copySign(sqrtDiscriminant, b));
+    if (q == 0.0) {
+      return 1.0;
+    }
+    double[] stationaryPoints = {q / a, 1.0 / q};
+    double bestPhi = Double.NaN;
     double bestG = Double.NEGATIVE_INFINITY;
-    for (int k = 0; k <= 400; k++) {
-      double u = -Math.pow(10.0, -9.0 + 12.0 * k / 400.0);
-      double value = gSolubility(u, chi, ratio);
-      if (value > bestG) {
-        bestG = value;
-        bestU = u;
+    for (int i = 0; i < stationaryPoints.length; i++) {
+      double phi = stationaryPoints[i];
+      if (phi > 0.0 && phi < 1.0) {
+        double oneMinusPhi = 1.0 - phi;
+        double value = Math.log(phi) + (1.0 - ratio) * oneMinusPhi + chi * oneMinusPhi * oneMinusPhi;
+        if (value > bestG) {
+          bestG = value;
+          bestPhi = phi;
+        }
       }
     }
     if (!(bestG > 0.0)) {
       return 1.0;
     }
     double low = -1.0e3;
-    double high = bestU;
+    double high = Math.log(bestPhi);
     for (int i = 0; i < 200 && high - low > 1e-13 * Math.max(1.0, Math.abs(low)); i++) {
       double mid = 0.5 * (low + high);
       if (gSolubility(mid, chi, ratio) > 0.0) {
@@ -560,6 +826,18 @@ public class FloryHugginsAsphalteneModel {
    * @return precipitated mass fraction
    */
   private double precipitatedFraction(OilState state, double temperature) {
+    return precipitatedFraction(state, temperature, getAsphalteneSolubilityParameter(temperature));
+  }
+
+  /**
+   * Calculates precipitated mass fraction for a candidate asphaltene solubility parameter.
+   *
+   * @param state oil-phase state
+   * @param temperature temperature (K)
+   * @param deltaAsphaltene asphaltene solubility parameter (MPa^0.5)
+   * @return precipitated mass fraction
+   */
+  private double precipitatedFraction(OilState state, double temperature, double deltaAsphaltene) {
     if (Double.isNaN(state.deltaL)) {
       return Double.NaN;
     }
@@ -582,7 +860,8 @@ public class FloryHugginsAsphalteneModel {
     double precipitated = 0.0;
     for (int i = 0; i < mw.length; i++) {
       double molarVolume = numberOfAsphalteneFractions <= 1 ? asphaltMolarVolume : mw[i] / asphalteneDensity * 1000.0;
-      double phi = solubilityLimit(chi(molarVolume, state.deltaL, temperature), molarVolume / state.molarVolume);
+      double phi = solubilityLimit(chi(molarVolume, state.deltaL, temperature, deltaAsphaltene),
+          molarVolume / state.molarVolume);
       double maxMass = phi * asphalteneDensity / (phi * asphalteneDensity + (1.0 - phi) * state.density);
       double present = total * massShare[i];
       if (present > maxMass) {
@@ -622,9 +901,8 @@ public class FloryHugginsAsphalteneModel {
    * Calculates the upper asphaltene onset pressure.
    *
    * <p>
-   * Scans from the fluid's own pressure down to 1 bara in steps of {@link #setPressureSearchStep(double)} and bisects
-   * the first interval where any asphaltene precipitates. Onsets within two steps of the minimum pressure are treated
-   * as no onset.
+   * Scans from the fluid's pressure down to 1 bara and bisects the first interval where the precipitated fraction
+   * exceeds the configured onset threshold.
    * </p>
    *
    * @param temperature temperature (K)
@@ -635,41 +913,130 @@ public class FloryHugginsAsphalteneModel {
       logger.error("Thermodynamic system not set");
       return Double.NaN;
     }
-    double startP = system.getPressure();
-    double minP = 1.0;
-    double previousP = startP;
-    double onsetP = Double.NaN;
-    for (double p = startP; p >= minP; p -= pressureSearchStep) {
-      double precip = calculatePrecipitatedFraction(p, temperature);
-      if (Double.isNaN(precip)) {
-        continue;
-      }
-      if (precip > ONSET_THRESHOLD) {
-        if (p >= startP) {
-          logger.info("FH: asphaltene already unstable at the start pressure {} bara", startP);
-          return startP;
-        }
-        double high = previousP;
-        double low = p;
-        for (int i = 0; i < 30 && high - low > 1e-3; i++) {
-          double mid = (high + low) / 2.0;
-          double midPrecip = calculatePrecipitatedFraction(mid, temperature);
-          if (midPrecip > ONSET_THRESHOLD) {
-            low = mid;
-          } else {
-            high = mid;
-          }
-        }
-        onsetP = (high + low) / 2.0;
-        break;
-      }
-      previousP = p;
-    }
-    if (!Double.isNaN(onsetP) && onsetP < minP + 2 * pressureSearchStep) {
-      logger.info("FH onset at {} bar is near minimum search pressure - treating as no onset", onsetP);
+    return calculateOnsetPressure(temperature, system.getPressure(), 1.0);
+  }
+
+  /**
+   * Calculates the upper onset pressure in a requested pressure window.
+   *
+   * @param temperature temperature (K)
+   * @param startPressure highest pressure to scan (bara)
+   * @param minPressure lowest pressure to scan (bara)
+   * @return onset pressure (bara), or NaN if no onset is found
+   * @throws IllegalArgumentException if pressures are non-positive or the start pressure is below the minimum
+   */
+  public double calculateOnsetPressure(double temperature, double startPressure, double minPressure) {
+    if (system == null) {
+      logger.error("Thermodynamic system not set");
       return Double.NaN;
     }
-    return onsetP;
+    if (!(startPressure > 0.0) || !(minPressure > 0.0) || startPressure < minPressure) {
+      throw new IllegalArgumentException("Pressure window must be positive and startPressure must be >= minPressure");
+    }
+    double previousPressure = startPressure;
+    boolean previousWasStable = false;
+    for (double pressure = startPressure; pressure >= minPressure;) {
+      double precipitated = calculatePrecipitatedFraction(pressure, temperature);
+      if (Double.isNaN(precipitated)) {
+        previousWasStable = false;
+      } else if (precipitated > onsetDetectionThreshold) {
+        if (!previousWasStable) {
+          return pressure;
+        }
+        return bisectUpperOnset(previousPressure, pressure, temperature);
+      } else {
+        previousPressure = pressure;
+        previousWasStable = true;
+      }
+      if (pressure == minPressure) {
+        break;
+      }
+      pressure = Math.max(minPressure, pressure - pressureSearchStep);
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Calculates the lower onset pressure where precipitated asphaltene redissolves during depressurization.
+   *
+   * @param temperature temperature (K)
+   * @param startPressure highest pressure to scan (bara)
+   * @param minPressure lowest pressure to scan (bara)
+   * @return lower onset pressure (bara), or NaN if no upper onset or redissolution is found
+   */
+  public double calculateLowerOnsetPressure(double temperature, double startPressure, double minPressure) {
+    double upperOnset = calculateOnsetPressure(temperature, startPressure, minPressure);
+    if (Double.isNaN(upperOnset)) {
+      return Double.NaN;
+    }
+    double unstablePressure = upperOnset;
+    for (double pressure = Math.max(minPressure, upperOnset - pressureSearchStep); pressure >= minPressure;) {
+      double precipitated = calculatePrecipitatedFraction(pressure, temperature);
+      if (Double.isNaN(precipitated)) {
+        unstablePressure = Double.NaN;
+      } else if (precipitated > onsetDetectionThreshold) {
+        unstablePressure = pressure;
+      } else if (!Double.isNaN(unstablePressure)) {
+        return bisectLowerOnset(pressure, unstablePressure, temperature);
+      }
+      if (pressure == minPressure) {
+        break;
+      }
+      pressure = Math.max(minPressure, pressure - pressureSearchStep);
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Bisects an upper onset bracket with stable high pressure and unstable low pressure.
+   *
+   * @param stablePressure stable pressure (bara)
+   * @param unstablePressure unstable pressure (bara)
+   * @param temperature temperature (K)
+   * @return onset pressure (bara)
+   */
+  private double bisectUpperOnset(double stablePressure, double unstablePressure, double temperature) {
+    double high = stablePressure;
+    double low = unstablePressure;
+    for (int i = 0; i < 50 && high - low > 1.0e-3; i++) {
+      double middle = 0.5 * (high + low);
+      double precipitated = calculatePrecipitatedFraction(middle, temperature);
+      if (Double.isNaN(precipitated)) {
+        return Double.NaN;
+      }
+      if (precipitated > onsetDetectionThreshold) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    return 0.5 * (high + low);
+  }
+
+  /**
+   * Bisects a lower onset bracket with stable low pressure and unstable high pressure.
+   *
+   * @param stablePressure stable pressure (bara)
+   * @param unstablePressure unstable pressure (bara)
+   * @param temperature temperature (K)
+   * @return lower onset pressure (bara)
+   */
+  private double bisectLowerOnset(double stablePressure, double unstablePressure, double temperature) {
+    double low = stablePressure;
+    double high = unstablePressure;
+    for (int i = 0; i < 50 && high - low > 1.0e-3; i++) {
+      double middle = 0.5 * (high + low);
+      double precipitated = calculatePrecipitatedFraction(middle, temperature);
+      if (Double.isNaN(precipitated)) {
+        return Double.NaN;
+      }
+      if (precipitated > onsetDetectionThreshold) {
+        high = middle;
+      } else {
+        low = middle;
+      }
+    }
+    return 0.5 * (high + low);
   }
 
   /**
@@ -710,7 +1077,7 @@ public class FloryHugginsAsphalteneModel {
     for (int i = 0; i < numPoints; i++) {
       double p = maxPressure - i * step;
       results[0][i] = p;
-      results[2][i] = asphalteneSolubilityParameter;
+      results[2][i] = getAsphalteneSolubilityParameter(temperature);
       if (system != null) {
         OilState state = oilState(p, temperature);
         results[1][i] = state == null ? Double.NaN : state.deltaL;
@@ -723,8 +1090,8 @@ public class FloryHugginsAsphalteneModel {
    * Returns a summary map of model parameters and the onset pressure.
    *
    * @param temperature temperature (K)
-   * @param maxPressure maximum pressure (bara), not used by the onset search
-   * @param minPressure minimum pressure (bara), not used by the onset search
+   * @param maxPressure maximum pressure for onset search (bara)
+   * @param minPressure minimum pressure for onset search (bara)
    * @return results map
    */
   public Map<String, Object> getResultsMap(double temperature, double maxPressure, double minPressure) {
@@ -732,14 +1099,20 @@ public class FloryHugginsAsphalteneModel {
     results.put("model", "Flory-Huggins Regular Solution");
     results.put("asphaltene_MW_gmol", asphalteneMW);
     results.put("asphaltene_density_kgm3", asphalteneDensity);
-    results.put("asphaltene_solubility_parameter_MPa05", asphalteneSolubilityParameter);
+    results.put("asphaltene_solubility_parameter_MPa05", getAsphalteneSolubilityParameter(temperature));
+    results.put("asphaltene_solubility_parameter_reference_temperature_K", solubilityParameterReferenceTemperature);
+    results.put("asphaltene_solubility_parameter_temperature_coefficient_MPa05_per_K",
+        solubilityParameterTemperatureCoefficient);
+    results.put("calibrated_to_onset_data", calibratedToOnsetData);
     results.put("asphaltene_molar_volume_cm3mol", asphaltMolarVolume);
     results.put("asphaltene_weight_fraction", asphalteneWeightFraction);
+    results.put("onset_detection_threshold", onsetDetectionThreshold);
     results.put("solubility_parameter_method", solubilityParameterMethod.name());
     results.put("live_oil_basis", liveOilBasis);
     results.put("asphaltene_fractions", numberOfAsphalteneFractions);
     results.put("temperature_K", temperature);
-    results.put("onset_pressure_bara", calculateOnsetPressure(temperature));
+    results.put("onset_pressure_bara", calculateOnsetPressure(temperature, maxPressure, minPressure));
+    results.put("lower_onset_pressure_bara", calculateLowerOnsetPressure(temperature, maxPressure, minPressure));
     return results;
   }
 
@@ -759,6 +1132,7 @@ public class FloryHugginsAsphalteneModel {
    */
   public void setAsphaltMolarVolume(double asphaltMolarVolume) {
     this.asphaltMolarVolume = asphaltMolarVolume;
+    this.calibratedToOnsetData = false;
   }
 
   /**
@@ -771,6 +1145,17 @@ public class FloryHugginsAsphalteneModel {
   }
 
   /**
+   * Gets the asphaltene solubility parameter at a specified temperature.
+   *
+   * @param temperature temperature (K)
+   * @return solubility parameter at the requested temperature (MPa^0.5)
+   */
+  public double getAsphalteneSolubilityParameter(double temperature) {
+    return asphalteneSolubilityParameter
+        + solubilityParameterTemperatureCoefficient * (temperature - solubilityParameterReferenceTemperature);
+  }
+
+  /**
    * Sets the asphaltene solubility parameter. Any earlier SARA adjustment is discarded.
    *
    * @param asphalteneSolubilityParameter solubility parameter (MPa^0.5)
@@ -778,6 +1163,73 @@ public class FloryHugginsAsphalteneModel {
   public void setAsphalteneSolubilityParameter(double asphalteneSolubilityParameter) {
     this.asphalteneSolubilityParameter = asphalteneSolubilityParameter;
     this.saraBaseSolubilityParameter = Double.NaN;
+    this.calibratedToOnsetData = false;
+  }
+
+  /**
+   * Sets a linear temperature dependence for the asphaltene solubility parameter.
+   *
+   * @param referenceTemperature reference temperature (K)
+   * @param temperatureCoefficient temperature coefficient (MPa^0.5/K)
+   * @throws IllegalArgumentException if either value is not finite or the reference temperature is not positive
+   */
+  public void setSolubilityParameterTemperatureDependence(double referenceTemperature, double temperatureCoefficient) {
+    if (!(referenceTemperature > 0.0) || Double.isInfinite(referenceTemperature) || Double.isNaN(referenceTemperature)
+        || Double.isInfinite(temperatureCoefficient) || Double.isNaN(temperatureCoefficient)) {
+      throw new IllegalArgumentException("Reference temperature must be positive and both values must be finite");
+    }
+    this.solubilityParameterReferenceTemperature = referenceTemperature;
+    this.solubilityParameterTemperatureCoefficient = temperatureCoefficient;
+    this.calibratedToOnsetData = false;
+  }
+
+  /**
+   * Gets the reference temperature of the asphaltene solubility parameter.
+   *
+   * @return reference temperature (K)
+   */
+  public double getSolubilityParameterReferenceTemperature() {
+    return solubilityParameterReferenceTemperature;
+  }
+
+  /**
+   * Gets the temperature coefficient of the asphaltene solubility parameter.
+   *
+   * @return temperature coefficient (MPa^0.5/K)
+   */
+  public double getSolubilityParameterTemperatureCoefficient() {
+    return solubilityParameterTemperatureCoefficient;
+  }
+
+  /**
+   * Sets the precipitated weight fraction that defines onset detection.
+   *
+   * @param threshold onset detection threshold (weight fraction)
+   * @throws IllegalArgumentException if the threshold is negative or not finite
+   */
+  public void setOnsetDetectionThreshold(double threshold) {
+    if (!(threshold >= 0.0) || Double.isInfinite(threshold)) {
+      throw new IllegalArgumentException("Onset detection threshold must be non-negative and finite");
+    }
+    this.onsetDetectionThreshold = threshold;
+  }
+
+  /**
+   * Gets the precipitated weight fraction that defines onset detection.
+   *
+   * @return onset detection threshold (weight fraction)
+   */
+  public double getOnsetDetectionThreshold() {
+    return onsetDetectionThreshold;
+  }
+
+  /**
+   * Checks whether onset data have been fitted to the current model parameters.
+   *
+   * @return true if onset data have been calibrated and not invalidated by a later parameter change
+   */
+  public boolean isCalibratedToOnsetData() {
+    return calibratedToOnsetData;
   }
 
   /**
@@ -797,6 +1249,7 @@ public class FloryHugginsAsphalteneModel {
   public void setAsphalteneMW(double asphalteneMW) {
     this.asphalteneMW = asphalteneMW;
     this.asphaltMolarVolume = asphalteneMW / (asphalteneDensity / 1000.0);
+    this.calibratedToOnsetData = false;
   }
 
   /**
@@ -816,6 +1269,7 @@ public class FloryHugginsAsphalteneModel {
   public void setAsphalteneDensity(double asphalteneDensity) {
     this.asphalteneDensity = asphalteneDensity;
     this.asphaltMolarVolume = asphalteneMW / (asphalteneDensity / 1000.0);
+    this.calibratedToOnsetData = false;
   }
 
   /**
@@ -834,6 +1288,7 @@ public class FloryHugginsAsphalteneModel {
    */
   public void setAsphalteneWeightFraction(double asphalteneWeightFraction) {
     this.asphalteneWeightFraction = asphalteneWeightFraction;
+    this.calibratedToOnsetData = false;
   }
 
   /**
@@ -845,6 +1300,7 @@ public class FloryHugginsAsphalteneModel {
   public void setDeltaRhoCorrelation(double coeffA, double coeffB) {
     this.deltaRhoCoeffA = coeffA;
     this.deltaRhoCoeffB = coeffB;
+    this.calibratedToOnsetData = false;
   }
 
   /**
@@ -863,6 +1319,7 @@ public class FloryHugginsAsphalteneModel {
    */
   public void setSystem(SystemInterface system) {
     this.system = system.clone();
+    this.calibratedToOnsetData = false;
   }
 
   /**
@@ -903,6 +1360,7 @@ public class FloryHugginsAsphalteneModel {
       throw new IllegalArgumentException("Solubility parameter method must not be null");
     }
     this.solubilityParameterMethod = method;
+    this.calibratedToOnsetData = false;
   }
 
   /**
