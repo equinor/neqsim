@@ -89,6 +89,11 @@ class HomogeneousEquilibriumExternalBenchmarkTest extends neqsim.NeqSimTest {
         ReleaseBenchmarkApplicability.ExpectedPhase.MATERIAL_LIQUID);
     assertTrue(!liquidAssessment.isComparable());
     assertEquals(ReleaseBenchmarkApplicability.Status.EXPECTED_PHASE_ABSENT, liquidAssessment.getStatus());
+
+    ReleaseBenchmarkApplicability mixtureAssessment = ReleaseBenchmarkApplicability.assess(gasResult,
+        ReleaseBenchmarkApplicability.ExpectedPhase.GAS_LIQUID_MIXTURE);
+    assertTrue(!mixtureAssessment.isComparable());
+    assertEquals(ReleaseBenchmarkApplicability.Status.EXPECTED_PHASE_ABSENT, mixtureAssessment.getStatus());
   }
 
   /** Confirms the adverse result is surrounded by smooth, physically ordered numerical behavior. */
