@@ -11,6 +11,9 @@
  * <li>{@link neqsim.process.fielddevelopment.olga.OlgaWellGenkeyExporter} - Exports a well's liquid inflow
  * performance relationship and trajectory as OLGA GENKEY text (a case-level {@code TABULAR} keyword plus a well
  * network-component block).</li>
+ * <li>{@link neqsim.process.fielddevelopment.olga.SyntheticWellTrajectory} - Generates a synthetic (MD, TVD)
+ * wellbore deviation trajectory for use when no real survey exists, interpolated from a caller-supplied
+ * depth-tier statistics basis (this package ships no embedded well/field data of its own).</li>
  * </ul>
  *
  * <h2>Scope</h2>
