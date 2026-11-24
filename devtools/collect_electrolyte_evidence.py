@@ -59,6 +59,11 @@ ASSESSMENTS = (
     ("KClCO2OstwaldReferenceAssessmentTest",
      "kcl-co2-ostwald-yasunishi-yoshida1979-assessment.csv", 7,
      "co2_kcl_ostwald_yasunishi_yoshida1979.csv"),
+    ("CO2ChlorideSaltPairCurvatureAssessmentTest",
+     "co2-chloride-salt-pair-curvature-assessment.csv", 7,
+     ("co2_kcl_solubility_he_morse1993.csv",
+      "co2_kcl_ostwald_yasunishi_yoshida1979.csv",
+      "co2_water_nacl_solubility_liu2021.csv")),
     ("CO2BrineHydrateReferenceAssessmentTest",
      "co2-brine-hydrate-reference-assessment.csv", 12,
      "co2_brine_hydrate_phase_state_burgass2023.csv"),
@@ -158,7 +163,13 @@ def collect(root, output, selected, context, checkout_sha):
             source = SOURCE_DIR + producer + ".java"
             entry["producer_source"] = {"path": source, "sha256": digest(root / source)}
             entry["provenance"] = {"path": PROVENANCE, "sha256": digest(root / PROVENANCE)}
-            if fixture:
+            if isinstance(fixture, tuple):
+                entry["fixtures"] = [
+                    {"path": FIXTURE_DIR + name,
+                     "sha256": digest(root / FIXTURE_DIR / name)}
+                    for name in fixture
+                ]
+            elif fixture:
                 fixture_path = FIXTURE_DIR + fixture
                 entry["fixture"] = {"path": fixture_path,
                                     "sha256": digest(root / fixture_path)}
