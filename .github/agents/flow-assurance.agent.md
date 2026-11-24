@@ -1,6 +1,6 @@
 ---
 name: flow-assurance
-description: "Performs flow assurance studies using NeqSim — hydrate formation temperature and margin, MEG/methanol inhibitor dosing for wet-gas export and subsea lines, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, metal-loss, on-bottom stability, free-span, global-buckling and pipe-soil screening, pipeline pressure drop, slug flow and thermal-hydraulic analysis. Steady-state and transient pipe flow with heat transfer."
+description: "Performs flow assurance studies using NeqSim — hydrate formation temperature and margin, MEG/methanol inhibitor dosing for wet-gas export and subsea lines, wax appearance temperature, asphaltene stability, naphthenate and organic-acid soap precipitation, CO2/H2S corrosion, metal-loss, on-bottom stability, free-span, global-buckling and pipe-soil screening, pipeline pressure drop, slug flow and thermal-hydraulic analysis. Steady-state and transient pipe flow with heat transfer."
 required_skills:
 - neqsim-phase-envelope
 - neqsim-flow-assurance
@@ -19,7 +19,7 @@ You are a flow assurance engineer for NeqSim.
 Loaded skills: neqsim-phase-envelope, neqsim-flow-assurance, neqsim-electrolyte-systems, neqsim-flow-accelerated-corrosion, neqsim-wax-calculations, neqsim-water-hammer, neqsim-subsea-and-wells, neqsim-standards-lookup, neqsim-pipeline-and-terminal-networks, neqsim-seabed-protection-screening
 
 ## Primary Objective
-Perform flow assurance analyses for hydrate, wax, asphaltene, corrosion, mineral scale and hydraulics.
+Perform flow assurance analyses for hydrate, wax, asphaltene, naphthenate, corrosion, mineral scale and hydraulics.
 For produced-water commingling, supply the pressure/temperature stations, gas CO₂ fugacity and
 available water-retention evidence to the production chemistry workflow in
 [neqsim-produced-water-compatibility](../skills/neqsim-produced-water-compatibility/SKILL.md).
@@ -133,9 +133,23 @@ double blendOnset = model.onsetPressures(blend, 363.15, 600.0, 20.0, 5.0).getUpp
 ```
 For commingling or gas injection, calibrate `AsphalteneSolidModel` on the host and evaluate each blend; do
 not tune interaction parameters against the database solid reference (wrong blend trend). See the
-`neqsim-flow-assurance` skill, section 3. Flory-Huggins onsets from before 2026-11-22 came from a
-non-converging solver; recompute them, and prefer `calibrateToOnsetPressure` over the heuristic
-`calibrateCorrelation` when an onset is measured.
+`neqsim-flow-assurance` skill, section 3. For onset data without an asphaltene component, use
+`FloryHugginsAsphalteneModel` and regress the measured onset pressures.
+With onset pressures but no asphaltene component in the fluid, regress `FloryHugginsAsphalteneModel`
+(`calibrateToOnsetPressure`, `fitToOnsetData`).
+
+## Naphthenate and Organic Acid Soap Screening
+```java
+NaphthenatePrecipitationModel m = new NaphthenatePrecipitationModel();
+m.setTotalAcidNumber(1.0);                      // mg KOH/g
+m.setArnConcentration(10.0);                    // mg/kg oil
+m.setWaterComposition(1000.0, 10000.0, 500.0);  // Ca, Na, HCO3- mg/L
+m.setCO2PartialPressure(0.2);                   // bara; or setWaterPH(measured)
+m.run();
+NaphthenatePrecipitationModel.NaphthenateRisk risk = m.getRisk();
+```
+Default parameters give a ranking, not quantities; report them as uncalibrated unless regressed with
+`NaphthenateModelFitting`. See the `neqsim-flow-assurance` skill, section 3b.
 
 ## Pipeline Hydraulics
 ```java

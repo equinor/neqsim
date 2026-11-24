@@ -17,6 +17,7 @@ not as design certification.
 | Hydrates | [Hydrate models](../../thermo/hydrate_models) |
 | Wax fluid characterization | [Wax characterization](../../thermo/characterization/wax_characterization) |
 | Asphaltenes | [Asphaltene modeling](asphaltene_modeling) |
+| Naphthenates and organic acid soaps | [Naphthenate precipitation](naphthenate_precipitation) |
 | Sand erosion | [Erosion prediction](erosion_prediction) |
 | Emulsions | [Emulsion viscosity](emulsion_viscosity_calculator) |
 | High-salinity scale and treatment evidence | [Mineral-scale and chemical-treatment validation](../mineral_scale_chemical_treatment_validation) |
@@ -58,7 +59,7 @@ larger workflow. The calculators do not add that governance automatically.
 | Fast empirical screen | `DeBoerAsphalteneScreening` | Requires reservoir pressure, saturation pressure, and in-situ density |
 | CPA stability analysis | `AsphalteneStabilityAnalyzer` | See [CPA calculations](asphaltene_cpa_calculations) |
 | Compare available methods | `AsphalteneMethodComparison` or `AsphalteneMultiMethodBenchmark` | See [method comparison](asphaltene_method_comparison) |
-| Regular-solution model | `FloryHugginsAsphalteneModel` | Configure and calibrate for the fluid being studied |
+| Regular-solution model | `FloryHugginsAsphalteneModel` | Regress the asphaltene solubility parameter to measured onset pressures with `calibrateToOnsetPressure` or `fitToOnsetData`; screening estimate without onset data |
 | Refractive-index screen | `RefractiveIndexAsphalteneScreening` | Requires measured or estimated refractive-index inputs |
 | Cubic-EOS characterization | `PedersenAsphalteneCharacterization` | Adds characterized pseudo-components and supports binary-interaction tuning |
 | Calibrated onset envelope, blends, gas injection | `AsphalteneSolidModel` | Calibrate to a measured onset; see [solid model](asphaltene_modeling#9-calibrated-solid-model-asphaltenesolidmodel) |
