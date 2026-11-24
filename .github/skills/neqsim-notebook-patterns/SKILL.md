@@ -1,7 +1,7 @@
 ---
 name: neqsim-notebook-patterns
 description: "Jupyter notebook patterns for NeqSim. USE WHEN: creating or reviewing Jupyter notebooks that use NeqSim for process simulation, thermodynamics, or PVT analysis. Covers devtools workspace setup, class imports, notebook structure, visualization requirements, and results.json schema."
-last_verified: "2026-07-09"
+last_verified: "2026-11-20"
 ---
 
 # Jupyter Notebook Patterns for NeqSim
@@ -14,6 +14,9 @@ Task notebooks under `task_solve/` MUST load NeqSim through
 `devtools/neqsim_dev_setup.py`. This puts workspace Java classes from
 `target/classes` on the JVM classpath, so new or modified Java classes are
 available without copying a packaged JAR into the `neqsim` Python package.
+The workspace bootstrap resolves runtime dependencies through Maven, including
+when the main build produces a thin JAR. Remove `target/neqsim-dev-classpath.txt`
+after changing dependencies.
 
 ```python
 import os

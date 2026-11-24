@@ -7,7 +7,7 @@ Usage in any notebook::
     ns = neqsim_init(recompile=True)   # cell 1: start JVM
     ns = neqsim_classes(ns)            # cell 2: import classes
 
-    # Use classes from target/classes, with dependencies from target JAR or Maven classpath
+    # Use classes from target/classes, with dependencies from the Maven classpath
     fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0)
 
 Re-running the init cell after editing Java code will compile, restart
@@ -308,25 +308,8 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     if recompile or not _has_compiled_classes(classes_dir):
         _run_compile(root)
 
-    # The shade plugin produces the shaded JAR as the main artifact
-    # (neqsim-X.Y.Z.jar) and renames the original to original-neqsim-X.Y.Z.jar.
-    # Exclude original-*, -sources, -javadoc JARs.
-    all_jars = sorted(root.glob("target/neqsim-*.jar"))
-    shaded_jars = [
-        j for j in all_jars
-        if not j.name.startswith("original-")
-        and "-sources" not in j.name
-        and "-javadoc" not in j.name
-    ]
     classpath = [str(classes_dir), str(resources_dir)]
-    if shaded_jars:
-        # Use the existing shaded JAR for dependencies when available. Fresh
-        # NeqSim classes still come first from target/classes.
-        classpath.append(str(shaded_jars[-1]))
-    else:
-        # No package step required: target/classes supplies NeqSim classes and
-        # Maven supplies runtime dependency JARs directly.
-        classpath.extend(_build_dependency_classpath(root))
+    classpath.extend(_build_dependency_classpath(root))
     if extra_classpath:
         classpath.extend(extra_classpath)
 

@@ -14,12 +14,28 @@ sys.path.insert(0, str(HERE))
 
 import pvt_data
 import pvt_study
+import neqsim_dev_setup
 from pvt_data import PVTStudyError
 
 
 @pytest.fixture
 def study():
     return pvt_study.load_study(HERE / "pvt_examples/oil.yaml")
+
+
+def test_code_identity_tracks_runtime_dependencies_with_thin_jar(tmp_path, monkeypatch):
+    (tmp_path / "pom.xml").touch()
+    (tmp_path / "target").mkdir()
+    (tmp_path / "target" / "neqsim-1.0.jar").touch()
+    dependency = tmp_path / "dependency.jar"
+    dependency.write_bytes(b"first")
+    monkeypatch.setattr(pvt_study, "ROOT", tmp_path)
+    monkeypatch.setattr(pvt_study, "HERE", tmp_path)
+    monkeypatch.setattr(neqsim_dev_setup, "_build_dependency_classpath", lambda root: [str(dependency)])
+
+    original = pvt_study.code_identity()
+    dependency.write_bytes(b"second")
+    assert pvt_study.code_identity() != original
 
 
 def test_units_absolute_pressure_and_temperature():
