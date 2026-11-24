@@ -92,7 +92,8 @@ class HomogeneousEquilibriumRichardsonBenchmarkTest extends neqsim.NeqSimTest {
     }
     assertEquals(26, comparableCases);
     double meanAbsoluteCoefficientDifference = absoluteCoefficientDifferenceSum / comparableCases;
-    assertEquals(0.035358313303078676, meanAbsoluteCoefficientDifference, 1.0e-12);
+    // The mean accumulates small flash differences across supported JDKs.
+    assertEquals(0.035358313303078676, meanAbsoluteCoefficientDifference, 1.0e-10);
     assertEquals(0.09556420167548318, maximumAbsoluteCoefficientDifference, 1.0e-12);
     assertEquals(0.2460683265058093, maximumAbsoluteLiquidFractionDifference, 1.0e-12);
     assertEquals(0, withinMeasuredFlowUncertainty);
