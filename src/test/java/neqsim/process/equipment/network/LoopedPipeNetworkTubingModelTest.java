@@ -91,6 +91,36 @@ class LoopedPipeNetworkTubingModelTest {
     assertEquals(20.0, reference.getOutletStream().getPressure("bara"), 0.5);
   }
 
+  /** Simplified tubing calculates a finite operating point from initialized transport properties. */
+  @Test
+  void simplifiedTubingCalculatesOperatingPoint() {
+    LoopedPipeNetwork network = oilWell(oil(0.20), TubingModel.SIMPLIFIED);
+    network.run();
+
+    assertTrue(network.isConverged());
+    assertEquals("TUBING_SIMPLIFIED", network.getPipe("tubing").getTubingModelStatus());
+    assertTrue(network.getPipeFlowRate("ipr") > 0.0);
+    assertTrue(network.getNodePressure("BH") > 20.0 && network.getNodePressure("BH") < 220.0);
+  }
+
+  /** Lift-gas fluids are copied on input and output so callers cannot mutate network configuration. */
+  @Test
+  void liftGasFluidIsCopiedOnSetAndGet() {
+    SystemInterface liftGas = new SystemSrkEos(353.15, 100.0);
+    liftGas.addComponent("methane", 0.9);
+    liftGas.addComponent("ethane", 0.1);
+    liftGas.setMixingRule("classic");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("gas lift copy");
+    network.setLiftGasFluid(liftGas);
+    liftGas.addComponent("nitrogen", 0.1);
+
+    assertEquals(2, network.getLiftGasFluid().getNumberOfComponents());
+    SystemInterface returnedFluid = network.getLiftGasFluid();
+    returnedFluid.addComponent("nitrogen", 0.1);
+    assertEquals(2, network.getLiftGasFluid().getNumberOfComponents());
+  }
+
   /** Gas lift mixed in at the valve raises oil rate, and the network gas-lift response feeds the allocator. */
   @Test
   void rigorousGasLiftIncreasesProductionAndGivesResponseCurve() {
