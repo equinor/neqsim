@@ -10,6 +10,7 @@ on:
       - "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java"
       - "src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java"
       - "src/test/resources/neqsim/pvtsimulation/gas-lab-tank/**"
+      - "src/test/resources/neqsim/pvtsimulation/binary-tank/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
@@ -30,6 +31,7 @@ on:
       - "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java"
       - "src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java"
       - "src/test/resources/neqsim/pvtsimulation/gas-lab-tank/**"
+      - "src/test/resources/neqsim/pvtsimulation/binary-tank/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
@@ -76,6 +78,13 @@ jobs:
         run: >-
           uv run --project devtools --locked --group test python -m pytest -q -s
           devtools/test_reservoir_history_java.py
+
+      - name: Qualify independent binary two-phase reservoir chain
+        env:
+          NEQSIM_TEST_RESERVOIR_JAVA: "1"
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/pvtsimulation/binary-tank -p 'test_*.py' -v
+          uv run --project devtools --locked --group test python -m pytest -q -s devtools/test_binary_reservoir_java.py
 
       - name: Verify SRK local-flux receipts and rejection controls
         run: |
