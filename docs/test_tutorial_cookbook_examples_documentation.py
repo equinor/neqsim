@@ -300,7 +300,7 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
     def test_troubleshooting_python_examples_are_current_literal_source(self):
         page = TROUBLESHOOTING_GUIDE.read_text(encoding="utf-8")
         java_test = TROUBLESHOOTING_RUNTIME_TEST.read_text(encoding="utf-8")
-        python_fence = re.compile(r"```python\\n(?P<source>.*?)\\n```", re.DOTALL)
+        python_fence = re.compile(r"```python\n(?P<source>.*?)\n```", re.DOTALL)
 
         self.assertEqual(4, len(python_fence.findall(page)))
         for marker, required_tokens in TROUBLESHOOTING_EXAMPLES:
@@ -308,7 +308,7 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
                 self.assertEqual(1, page.count(marker))
                 marked_fence = re.search(
                     re.escape(marker)
-                    + r"\\n```python\\n(?P<source>.*?)\\n```",
+                    + r"\n```python\n(?P<source>.*?)\n```",
                     page,
                     re.DOTALL,
                 )
