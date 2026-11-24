@@ -54,6 +54,16 @@ absent candidate source rows without invoking a flash. See the
 public feed matrix, standard states and independent-validation requirements. Preserve the
 coverage failure; standalone binary screening is not a substitute for full-mixture qualification.
 
+A separate electrolyte CPA screening check used 50 °C and 44 bara, with
+1.50 mol/kg Na, 20 mmol/kg Ca, 0.10 mmol/kg Ba, and 0.10 mmol/kg sulfate in
+formation water. The sulfate-rich injection water contained 0.47 mol/kg Na,
+10 mmol/kg Ca, and 28 mmol/kg sulfate. Chloride balanced both feeds.
+NeqSim placed the first barite saturation crossing at 0.375% injection water
+by solvent mass, compared with 0.636% from PHREEQC 3.7.3 (`pitzer.dat`).
+At 10% injection water, barite SR was 13.25 in eCPA and 9.79 in PHREEQC.
+Gypsum and anhydrite stayed undersaturated across the sampled mixing range
+in both models. Use the spread when interpreting the synthetic benchmark.
+
 ## Architecture Overview
 
 ```
@@ -249,6 +259,17 @@ for i in range(1, len(table)):
 - Pressure correction via $\Delta V^\circ$ from COMPSALT `Vdelta` column
 - MEG-aware (temporarily replaces MEG with water for calculation)
 - Returns **saturation ratio** (SR = IAP/Ksp), where SR > 1 = supersaturated
+
+### Reactive calcite screening
+
+For CO₂-bearing carbonate brines, run the reactive flash before obtaining
+`getRelativeScalePotential("CaCO3")`. Use a PH flash at the new pressure for
+a pressure drop at constant enthalpy. The electrolyte CPA
+[molality carbonate option](../thermo/ElectrolyteCPAModel.md#molality-carbonate-chemistry-and-calcite-screening)
+provides a material-balanced example and a PHREEQC Pitzer speciation benchmark.
+Calcite saturation depends on the dissolved carbonate activity and the
+reported pH convention. The barite and sulfate routes use their respective
+aqueous activities and mineral solubility products.
 
 ### Dissolved-salt saturation diagnostics
 

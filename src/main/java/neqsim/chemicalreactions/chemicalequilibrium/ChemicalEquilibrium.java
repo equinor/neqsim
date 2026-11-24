@@ -432,14 +432,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * @return solvent mass in kilograms, lower bounded for logarithmic evaluation
    */
   private double calculateSolventWeight(PhaseInterface phase) {
-    double weight = 0.0;
-    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
-      ComponentInterface component = phase.getComponent(componentIndex);
-      if ("solvent".equalsIgnoreCase(component.getReferenceStateType())) {
-        weight += component.getNumberOfMolesInPhase() * component.getMolarMass();
-      }
+    if (!phase.hasComponent("water")) {
+      return MIN_MOLES;
     }
-    return Math.max(MIN_MOLES, weight);
+    ComponentInterface water = phase.getComponent("water");
+    return Math.max(MIN_MOLES, water.getNumberOfMolesInPhase() * water.getMolarMass());
   }
 
   /**

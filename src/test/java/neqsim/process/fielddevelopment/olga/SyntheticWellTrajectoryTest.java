@@ -7,14 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for {@link SyntheticWellTrajectory} -- the ported, equivalent Java class for
- * {@code agentic_flow_assurance}'s {@code well-inflow-pi} skill's own {@code synthetic_trajectory.py}.
+ * Tests for {@link SyntheticWellTrajectory} -- the ported, equivalent Java class for {@code agentic_flow_assurance}'s
+ * {@code well-inflow-pi} skill's own {@code synthetic_trajectory.py}.
  *
  * <p>
  * {@link SyntheticWellTrajectory} ships with no built-in {@code Statistics} basis (see its own "Data governance"
- * Javadoc section), so every test here constructs its own small, self-contained {@link
- * SyntheticWellTrajectory.Statistics} fixture with round, easy-to-hand-verify, INVENTED numbers -- not derived from
- * any real well or field -- mirroring the ported Python module's own test file's fixture values exactly.
+ * Javadoc section), so every test here constructs its own small, self-contained
+ * {@link SyntheticWellTrajectory.Statistics} fixture with round, easy-to-hand-verify, INVENTED numbers -- not derived
+ * from any real well or field -- mirroring the ported Python module's own test file's fixture values exactly.
  * </p>
  *
  * @author NeqSim
@@ -22,11 +22,9 @@ import org.junit.jupiter.api.Test;
  */
 public class SyntheticWellTrajectoryTest {
   private static final SyntheticWellTrajectory.Statistics FIXTURE_STATISTICS = new SyntheticWellTrajectory.Statistics(
-      new SyntheticWellTrajectory.DepthTier[] {
-          new SyntheticWellTrajectory.DepthTier("shallow", 10, 2.0, 200.0, 1000.0),
+      new SyntheticWellTrajectory.DepthTier[] {new SyntheticWellTrajectory.DepthTier("shallow", 10, 2.0, 200.0, 1000.0),
           new SyntheticWellTrajectory.DepthTier("medium", 10, 1.0, 400.0, 2000.0),
-          new SyntheticWellTrajectory.DepthTier("deep", 10, 0.5, 600.0, 3000.0),
-      },
+          new SyntheticWellTrajectory.DepthTier("deep", 10, 0.5, 600.0, 3000.0),},
       80.0,
       "Fixture statistics for unit testing only -- invented round numbers, not derived from any real well or field.");
 
@@ -180,8 +178,8 @@ public class SyntheticWellTrajectoryTest {
   void testConvenienceOverloadRequiresCallerSuppliedStatistics() {
     // The simple 2-arg overload still requires a Statistics argument -- there is no implicit default to fall back
     // to, by design.
-    SyntheticWellTrajectory.Result result =
-        SyntheticWellTrajectory.generateSyntheticTrajectory(2500.0, FIXTURE_STATISTICS);
+    SyntheticWellTrajectory.Result result = SyntheticWellTrajectory.generateSyntheticTrajectory(2500.0,
+        FIXTURE_STATISTICS);
     assertEquals("synthetic_template", result.provenance);
     assertEquals(2500.0, result.tvd[result.tvd.length - 1], 0.5);
   }
