@@ -18,6 +18,9 @@ public enum ChemicalReactionDataSource {
   /** Molality-standard-state reaction data used by the Pitzer electrolyte GE model. */
   PITZER("pitzer", "reactiondatapitzer", true),
 
+  /** Water and carbonate subset of the PHREEQC-derived molality data for aqueous electrolyte CPA. */
+  MOLAL_CARBONATE("molal-carbonate", "reactiondatapitzer", true),
+
   /** Apparent-equilibrium-constant data used by the Kent-Eisenberg model. */
   KENT_EISENBERG("kent-eisenberg", "reactiondatakenteisenberg", false);
 
@@ -54,6 +57,16 @@ public enum ChemicalReactionDataSource {
    */
   public String getDatabaseTableName() {
     return databaseTableName;
+  }
+
+  /**
+   * Identify the reactions in the aqueous carbonate subset.
+   *
+   * @param name database reaction name
+   * @return true for water autoprotolysis or either carbonate acid dissociation
+   */
+  public static boolean isCarbonateReaction(String name) {
+    return "waterreac".equals(name) || "CO2water".equals(name) || "carbonate".equals(name);
   }
 
   /**

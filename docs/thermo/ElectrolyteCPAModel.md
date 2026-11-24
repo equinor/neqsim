@@ -688,6 +688,64 @@ int aq = system.getPhaseNumberOfPhase("aqueous");
 double pH = -Math.log10(system.getPhase(aq).getComponent("H3O+").getx() * 55.5);
 ```
 
+### Molality carbonate chemistry and calcite screening
+
+For water-solvent brines with the water and carbonate reaction set, select
+`setUseMolalCarbonateChemistry(true)` before `chemicalReactionInit()`.
+It uses the existing PHREEQC-derived `REACTIONDATAPITZER.csv` rows for water
+autoprotolysis and the two carbonate dissociations, with the eCPA activity
+coefficients. The option selects these three reaction rows. Use the default
+reaction data for other chemistries such as sulfide and amine speciation. The
+option also reports `getpH()`, `getpH("activity")` and `getpH("molality")` on
+the reaction's molality standard state in the aqueous phase.
+
+```java
+SystemElectrolyteCPAstatoil fluid = new SystemElectrolyteCPAstatoil(323.15, 44.0);
+fluid.setUseMolalCarbonateChemistry(true);
+fluid.addComponent("water", 55.508);
+fluid.addComponent("Na+", 1.0);
+fluid.addComponent("Cl-", 1.01);
+fluid.addComponent("Ca++", 0.020);
+fluid.addComponent("HCO3-", 0.030);
+fluid.addComponent("CO2", 2.0);
+fluid.addComponent("methane", 20.0);
+fluid.chemicalReactionInit();
+fluid.createDatabase(true);
+fluid.setMixingRule(10);
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.initProperties();
+double inletEnthalpy = fluid.getEnthalpy();
+fluid.setPressure(3.0);
+ops.PHflash(inletEnthalpy);
+fluid.initProperties();
+double pH = fluid.getpH();
+double calciteSR = ops.getRelativeScalePotential("CaCO3");
+```
+
+For carbonate-only eCPA chemistry, TP and PH flashes couple reaction-adjusted
+species inventories to phase equilibrium. Both legacy and molality carbonate
+data take that path. The regression checks Na, Cl, Ca, methane, reactive C/H/O,
+and aqueous charge through the pressure drop with additional phase stability
+analysis both enabled and disabled.
+
+| Pressure, bara | NeqSim temperature, °C | NeqSim pH | PHREEQC pH | NeqSim calcite SR | PHREEQC calcite SR |
+|---:|---:|---:|---:|---:|---:|
+| 44 | 50.00 | 5.98 | 5.71 | 1.89 | 1.22 |
+| 15 | 47.35 | 6.38 | 6.12 | 4.70 | 2.92 |
+| 3 | 42.20 | 7.04 | 6.78 | 18.95 | 11.70 |
+
+The comparison uses PHREEQC 3.7.3 with its
+[`pitzer.dat`](https://github.com/phreeqc-dev/iphreeqc/blob/v3.7.3/database/pitzer.dat)
+database. Each reference is an aqueous speciation calculation at the NeqSim
+temperature and pressure, with charge-balanced pH, the same strong-ion totals
+per kg of aqueous water, and dissolved inorganic carbon of 0.079908, 0.050171,
+and 0.034770 mol/kg, respectively. The comparison qualifies the saturation
+classification on this case and gives the model spread in pH and saturation
+ratio. It is an aqueous speciation comparison at fixed states, with the gas
+partition and PH path supplied by NeqSim. The demonstrated envelope covers
+these synthetic carbonate states.
+
 ### In-situ pH — `getpH()` and the acid-gas fallback
 
 The recommended way to read the aqueous pH is `getpH()` on the aqueous phase (or
@@ -695,7 +753,7 @@ The recommended way to read the aqueous pH is `getpH()` on the aqueous phase (or
 
 | Method | Definition | Notes |
 |--------|-----------|-------|
-| `getpH()` / `getpH("activity")` | `-log10(γ_x · x_H3O+)` | default; mole-fraction activity, consistent with NeqSim's reaction K's |
+| `getpH()` / `getpH("activity")` | `-log10(a_H3O+)` | legacy eCPA uses mole-fraction activity. The molality carbonate option uses its reaction activity basis |
 | `getpH("molality")` | `-log10(γ_m · m_H3O+)` | IUPAC standard (mol H₃O⁺ / kg water) |
 | `getpH("molarity")` | `-log10([H3O+])` | mol/L, ignores activity coefficient |
 | `getpH("acidgas")` | carbonic/hydrosulfuric acid dissociation estimate | screening in-situ pH from dissolved CO₂/H₂S |

@@ -1523,8 +1523,8 @@ public abstract class SystemThermo implements SystemInterface {
     checkStability = val;
   }
 
-  /** Mark initialized chemical-reaction topology stale after a component identity change. */
-  private void markChemicalReactionStateStale() {
+  /** Invalidate initialized chemistry when the reaction basis or the component identities change. */
+  protected final void markChemicalReactionStateStale() {
     if (chemicalReactionOperations != null) {
       chemicalReactionStateStale = true;
     }
@@ -1534,7 +1534,7 @@ public abstract class SystemThermo implements SystemInterface {
   private void requireCurrentChemicalReactionState() {
     if (chemicalReactionStateStale) {
       throw new IllegalStateException(
-          "Chemical-reaction state is stale because component identities changed after chemicalReactionInit(). "
+          "Chemical-reaction state is stale because component identities or the reaction basis changed after chemicalReactionInit(). "
               + "Re-run chemicalReactionInit(), createDatabase(true), and setMixingRule(...) before the next reactive calculation.");
     }
   }

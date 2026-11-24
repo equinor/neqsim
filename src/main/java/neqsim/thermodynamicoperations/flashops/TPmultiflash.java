@@ -15,6 +15,7 @@ import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.MatrixFeatures_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionDataSource;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -2303,7 +2304,7 @@ public class TPmultiflash extends TPflash {
     // Hydrate and non-reactive electrolyte flashes select the aqueous phase containing the largest material amount of
     // aqueous components. Weighting by beta prevents a salt-free numerical phase at the phase-fraction floor from
     // replacing the material brine. Other reactive operations retain their established composition-only selection.
-    boolean useMaterialAqueousInventory = !system.isChemicalSystem() || isCoupledReactiveHydrateFlash();
+    boolean useMaterialAqueousInventory = !system.isChemicalSystem() || isCoupledReactiveInventoryFlash();
     int bestAqueousPhase = -1;
     double maxAqueousInventory = -1.0;
 
@@ -3038,7 +3039,7 @@ public class TPmultiflash extends TPflash {
    * @return {@code true} for coupled reactive hydrate inventory or restored non-reactive electrolyte inventory
    */
   private boolean shouldConfineIonsToAqueousPhase() {
-    return isCoupledReactiveHydrateFlash() && reactiveOverallFractions != null
+    return isCoupledReactiveInventoryFlash() && reactiveOverallFractions != null
         || !system.isChemicalSystem() && hasPositiveIonicOverallFraction();
   }
 
@@ -3127,12 +3128,27 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Return whether this flash owns coupled phase and reaction equilibrium for an electrolyte hydrate calculation.
+   * Return whether this flash owns the coupled phase and chemical inventory.
    *
-   * @return {@code true} for reactive hydrate flashes
+   * @return true for a coupled reactive route
    */
-  private boolean isCoupledReactiveHydrateFlash() {
-    return system.isChemicalSystem() && system.getHydrateCheck();
+  private boolean isCoupledReactiveInventoryFlash() {
+    return system.isChemicalSystem() && (system.getHydrateCheck() || supportsCoupledCarbonateFlash(system));
+  }
+
+  /**
+   * Identify the electrolyte CPA carbonate reaction set covered by the coupled inventory solve.
+   *
+   * @param fluid fluid with an initialized chemical topology
+   * @return true for the reactive electrolyte CPA carbonate route
+   */
+  static boolean supportsCoupledCarbonateFlash(SystemInterface fluid) {
+    if (fluid.getClass() != neqsim.thermo.system.SystemElectrolyteCPAstatoil.class || !fluid.isChemicalSystem()
+        || fluid.getHydrateCheck() || !fluid.hasIons() || !fluid.hasComponent("CO2") || !fluid.hasComponent("HCO3-")) {
+      return false;
+    }
+    return fluid.getChemicalReactionOperations().getReactionList().getChemicalReactionList().stream()
+        .allMatch(reaction -> ChemicalReactionDataSource.isCarbonateReaction(reaction.getName()));
   }
 
   /**
@@ -3222,7 +3238,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Preserve the established chemical-equilibrium iteration for non-hydrate multiphase calculations.
+   * Preserve the established chemical-equilibrium iteration for reaction sets outside the coupled inventory solve.
    *
    * @param aqueousPhase active aqueous phase index
    * @param initialise whether to request the chemical solver's initial-estimate stage
@@ -3345,7 +3361,7 @@ public class TPmultiflash extends TPflash {
     int aqueousPhaseNumber = 0;
     enhancedStabilityChecked = false;
     betaSolveStalled = false;
-    if (isCoupledReactiveHydrateFlash()) {
+    if (isCoupledReactiveInventoryFlash()) {
       initializeReactiveOverallInventory();
     }
     // logger.info("Starting multiphase-flash....");
@@ -3357,11 +3373,10 @@ public class TPmultiflash extends TPflash {
     double[] ionFreeOverallZ = null;
     double[] legacyIonicZ = null;
     boolean hasIons = system.hasIons();
-    boolean useIonFreeFlash = hasIons && (!system.isChemicalSystem() || isCoupledReactiveHydrateFlash());
+    boolean useIonFreeFlash = hasIons && (!system.isChemicalSystem() || isCoupledReactiveInventoryFlash());
 
-    // Hydrate and non-reactive electrolyte flashes stay on a normalized molecular basis until conservative ion
-    // restoration. Other reactive operations retain the established ion stripping/restoration path because their
-    // component inventories may be intentionally changed by specialized operations such as salt saturation.
+    // Coupled and non-reactive electrolyte flashes stay on a normalized molecular basis until conservative
+    // ion restoration. Other reaction sets use the legacy phase/reaction iteration.
     if (useIonFreeFlash) {
       ionFreeOverallZ = new double[system.getPhase(0).getNumberOfComponents()];
       double ionicFraction = 0.0;
@@ -3525,11 +3540,11 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // Reactive hydrate systems require the complete ionic inventory before chemical equilibrium is solved. The
+    // Coupled reactive systems require the complete ionic inventory before chemical equilibrium is solved. The
     // conservative restore transforms the ion-free phase fractions back to the full species basis.
     if (system.isChemicalSystem() && useIonFreeFlash && ionFreeOverallZ != null) {
       aqueousPhaseNumber = restoreIonsToAqueousPhase(ionFreeOverallZ);
-      if (isCoupledReactiveHydrateFlash()) {
+      if (isCoupledReactiveInventoryFlash()) {
         synchronizeReactiveOverallComposition();
       }
     }
@@ -3538,7 +3553,7 @@ public class TPmultiflash extends TPflash {
     // system.display();
     aqueousPhaseNumber = system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
     if (system.isChemicalSystem() && aqueousPhaseNumber >= 0) {
-      if (isCoupledReactiveHydrateFlash()) {
+      if (isCoupledReactiveInventoryFlash()) {
         solveReactiveAqueousEquilibrium(aqueousPhaseNumber, true);
       } else {
         solveLegacyAqueousEquilibrium(aqueousPhaseNumber, true);
@@ -3567,7 +3582,7 @@ public class TPmultiflash extends TPflash {
           if (aqueousPhaseNumber >= 0 && aqueousPhaseNumber < system.getNumberOfPhases()) {
             try {
               system.init(1);
-              if (isCoupledReactiveHydrateFlash()) {
+              if (isCoupledReactiveInventoryFlash()) {
                 chemdev = solveReactiveAqueousEquilibrium(aqueousPhaseNumber, initialiseChemistry);
               } else {
                 chemdev = solveLegacyAqueousEquilibrium(aqueousPhaseNumber, initialiseChemistry);
@@ -3600,7 +3615,7 @@ public class TPmultiflash extends TPflash {
               "diff " + diff + " temperaure " + system.getTemperature("C") + " pressure " + system.getPressure("bara"));
           diff = this.solveBeta();
         }
-        if (isCoupledReactiveHydrateFlash()) {
+        if (isCoupledReactiveInventoryFlash()) {
           diff = Math.max(diff, projectReactiveInventoryOntoCurrentPhases());
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
@@ -3895,7 +3910,7 @@ public class TPmultiflash extends TPflash {
 
     // A warm-started reactive flash can retain the existing phase topology, leaving multiPhaseTest false. Chemistry
     // still changes the overall species inventory, so couple it to the beta equations even when no new phase was found.
-    if (isCoupledReactiveHydrateFlash() && !multiPhaseTest && system.getNumberOfPhases() > 1
+    if (isCoupledReactiveInventoryFlash() && !multiPhaseTest && system.getNumberOfPhases() > 1
         && system.hasPhaseType(PhaseType.AQUEOUS)) {
       aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
       for (int outerIteration = 0; outerIteration < 100; outerIteration++) {
@@ -3912,7 +3927,7 @@ public class TPmultiflash extends TPflash {
 
     // Always leave a reactive multiphase flash on the phase-equilibrium projection of its final reaction-adjusted
     // species inventory. This is required after phase removal or bounded reruns, whose last operation can be chemistry.
-    if (isCoupledReactiveHydrateFlash() && system.getNumberOfPhases() > 1) {
+    if (isCoupledReactiveInventoryFlash() && system.getNumberOfPhases() > 1) {
       projectReactiveInventoryOntoCurrentPhases();
     }
 

@@ -436,7 +436,8 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   private double getReactionConcentration(SystemInterface system, PhaseInterface phase, ComponentInterface component) {
     if (system.getChemicalReactionConcentrationBasis() == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY
         && !"solvent".equalsIgnoreCase(component.getReferenceStateType())) {
-      return component.getMolality(phase);
+      ComponentInterface water = phase.getComponent("water");
+      return component.getNumberOfMolesInPhase() / (water.getNumberOfMolesInPhase() * water.getMolarMass());
     }
     return component.getx();
   }
