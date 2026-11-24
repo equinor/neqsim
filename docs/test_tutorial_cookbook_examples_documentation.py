@@ -1,5 +1,6 @@
 """Contracts for tutorials, cookbook, troubleshooting, and examples."""
 
+import ast
 import json
 from pathlib import Path
 import re
@@ -89,6 +90,47 @@ CO2_KINETICS_LINK_TARGETS = {
     **{asset: asset.name for asset in CO2_KINETICS_ASSETS[2:]},
 }
 TUTORIAL_INDEX = DOCS / "tutorials/index.md"
+
+TROUBLESHOOTING_GUIDE = DOCS / "troubleshooting/index.md"
+TROUBLESHOOTING_RUNTIME_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/troubleshooting/TroubleshootingDocumentationTest.java"
+)
+TROUBLESHOOTING_EXAMPLES = (
+    (
+        "<!-- troubleshooting-example: diagnostic-fluid -->",
+        (
+            "SystemSrkEos = jneqsim.thermo.system.SystemSrkEos",
+            "operations.TPflash()",
+            "fluid.initProperties()",
+            'fluid.getDensity("kg/m3")',
+        ),
+    ),
+    (
+        "<!-- troubleshooting-example: process-equipment -->",
+        (
+            "ProcessSystem = jneqsim.process.processmodel.ProcessSystem",
+            "process.run()",
+            'compressor.getPower("kW")',
+        ),
+    ),
+    (
+        "<!-- troubleshooting-example: recycle-configuration -->",
+        (
+            "Recycle = jneqsim.process.equipment.util.Recycle",
+            "recycle.setMaxIterations(50)",
+            "AccelerationMethod.WEGSTEIN",
+        ),
+    ),
+    (
+        "<!-- troubleshooting-example: phase-envelope -->",
+        (
+            "operations.calcPTphaseEnvelope()",
+            'operations.get("dewT")',
+            'operations.get("bubT")',
+        ),
+    ),
+)
 
 TASK_SOLVING_TUTORIAL = DOCS / "tutorials/solve-engineering-task.md"
 PYTHON_QUICKSTART = DOCS / "quickstart/python-quickstart.md"
@@ -254,6 +296,42 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
         ):
             with self.subTest(stale=stale):
                 self.assertNotIn(stale, page)
+
+    def test_troubleshooting_python_examples_are_current_literal_source(self):
+        page = TROUBLESHOOTING_GUIDE.read_text(encoding="utf-8")
+        java_test = TROUBLESHOOTING_RUNTIME_TEST.read_text(encoding="utf-8")
+        python_fence = re.compile(r"```python\n(?P<source>.*?)\n```", re.DOTALL)
+
+        self.assertEqual(4, len(python_fence.findall(page)))
+        for marker, required_tokens in TROUBLESHOOTING_EXAMPLES:
+            with self.subTest(marker=marker):
+                self.assertEqual(1, page.count(marker))
+                marked_fence = re.search(
+                    re.escape(marker)
+                    + r"\n```python\n(?P<source>.*?)\n```",
+                    page,
+                    re.DOTALL,
+                )
+                self.assertIsNotNone(marked_fence)
+                source = marked_fence.group("source")
+                ast.parse(source)
+                self.assertIn("from neqsim import jneqsim", source)
+                for forbidden in ("jNeqSim", "JClass(", "jpype"):
+                    self.assertNotIn(forbidden, source)
+                for token in required_tokens:
+                    self.assertIn(token, source)
+
+        for runtime_marker in (
+            "diagnosesFluidCompositionAndDensity",
+            "runsDocumentedProcessDiagnosis",
+            "configuresRecycleAndRunsPhaseEnvelope",
+            "operations.TPflash()",
+            "process.run()",
+            "AccelerationMethod.WEGSTEIN",
+            "envelopeOperations.calcPTphaseEnvelope()",
+        ):
+            with self.subTest(runtime_marker=runtime_marker):
+                self.assertIn(runtime_marker, java_test)
 
     def test_process_comparison_quickstart_matches_executable_regression(self):
         page = PROCESS_COMPARISON_PAGE.read_text(encoding="utf-8")
