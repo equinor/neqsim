@@ -1,7 +1,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
-import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkCPAs;
 
@@ -81,15 +80,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
    * @param enabled true to use the caloric water alpha, false to restore the legacy alpha
    */
   public void setUseCaloricWaterAlpha(boolean enabled) {
-    attractiveTermNumber = enabled ? 23 : 15;
-    setAttractiveTerm(attractiveTermNumber);
-    // Reference phases may already contain the other alpha, and clones can share those references.
-    // Invalidate the arrays instead of modifying reference-phase objects in place.
-    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      if (phaseArray[i] != null) {
-        phaseArray[i].setRefPhase((PhaseInterface[]) null);
-      }
-    }
+    setAttractiveTermAndInvalidateReferences(enabled ? 23 : 15);
   }
 
   /**

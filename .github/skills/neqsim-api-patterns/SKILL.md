@@ -1,7 +1,7 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim Java/Python API patterns for fluids, flashes, process equipment and units. USE WHEN: selecting EOS/mixing-rule selection and property retrieval, including viscosity, thermal conductivity, binary/effective diffusion, gas-oil-water interfacial tension and black-oil PVT table conversion. Follow linked references for exact model selection, initialization and tested examples."
-last_verified: "2026-11-19"
+last_verified: "2026-11-24"
 ---
 
 # NeqSim API Patterns
@@ -373,8 +373,12 @@ select `setUseCaloricWaterAlpha(true)`, then TP flash and initialize properties.
 The calibration changes the EOS alpha and its derivatives consistently; never
 patch Cp alone or fit water ideal-gas Cp to compensate for a liquid error.
 Caloric checks cover 5–150 °C and 1–100 bara (stable liquid); density qualification
-is 5–60 °C. Mixtures, electrolytes, hydrates and near-critical states need separate
-validation. See [CPA water caloric guidance](../../../docs/thermo/cpa_water_caloric.md)
+is 5–60 °C. For NaCl or KCl brines on `SystemElectrolyteCPAstatoil`, the same
+opt-in reduced Cp error in the 25–50 °C test cases. Use the reported composition
+bounds and distinguish the aqueous `getWaterDensity("kg/m3")` correlation from EOS
+density. For reactive brine initialize reactions before the database and mixing
+rule. Consult the documented limits for pH, hydrates and other mixtures. See
+[CPA water caloric guidance](../../../docs/thermo/cpa_water_caloric.md)
 for results, provenance and limitations. Legacy behavior remains the default.
 
 ## Process Equipment Patterns
