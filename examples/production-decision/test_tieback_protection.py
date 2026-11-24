@@ -2,8 +2,10 @@
 
 import copy
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
-from verify_tieback_protection import compare_protection
+from verify_tieback_protection import assess_protection_refinement, compare_protection
 
 
 class TestProtectionRefinement(unittest.TestCase):
@@ -46,3 +48,18 @@ class TestProtectionRefinement(unittest.TestCase):
         del self.fine["events"]["hipv_b_seated_s"]
         with self.assertRaisesRegex(ValueError, "seat feedback"):
             compare_protection(self.base, self.fine)
+
+    def test_finest_mesh_can_hold_a_previously_passing_screen(self):
+        def receipt(path, case, dt, cells, cfl):
+            data = copy.deepcopy(self.fine if dt == .125 else self.base)
+            data.update(case=case, mesh_cells=cells, pipe_cfl=cfl)
+            data["zones"][0]["peak_bara"] += {60: 0., 120: .36, 240: .96}[cells]
+            return data
+
+        with patch("verify_tieback_protection.load", side_effect=receipt):
+            comparisons = assess_protection_refinement(Path("receipts"), self.base)
+        self.assertEqual([(60, 60), (60, 120), (60, 60), (120, 240)],
+                         [(c["reference_cells"], c["cells"]) for c in comparisons])
+        self.assertTrue(all(c["within_tolerances"] for c in comparisons[:-1]))
+        self.assertFalse(comparisons[-1]["within_tolerances"])
+        self.assertAlmostEqual(.60, comparisons[-1]["route_peak_differences_bar"][0])
