@@ -31,8 +31,11 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         self.selected = {evidence.PACKAGE + self.producer}
         for producer, filename, rows, fixture in evidence.ASSESSMENTS:
             self.write(evidence.SOURCE_DIR + producer + ".java", "// reference producer\n")
-            if fixture:
-                self.write(evidence.FIXTURE_DIR + fixture, "reference,value\na,1\n")
+            fixtures = fixture if isinstance(fixture, tuple) else (fixture,)
+            for fixture_name in fixtures:
+                if fixture_name:
+                    self.write(evidence.FIXTURE_DIR + fixture_name,
+                               "reference,value\na,1\n")
         self.write(evidence.PROVENANCE, "Existing source and qualification boundaries.\n")
 
     def write(self, path, text):
@@ -87,12 +90,30 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 16)
+        self.assertEqual(manifest["selected_assessment_count"], 17)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
-                         [28, 10, 26, 20, 26, 78, 36, 18, 34, 48, 84, 7, 12, 57, 110, 110])
-        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 704)
+                         [28, 10, 26, 20, 26, 78, 36, 18, 34, 48, 84, 7, 7,
+                          12, 57, 110, 110])
+        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 711)
         self.assertEqual(manifest["assessments"][1]["fixture"]["basis"],
                          "inline reference values")
+
+    def test_multi_fixture_assessment_hashes_every_source(self):
+        producer, filename, rows, fixtures = evidence.ASSESSMENTS[12]
+        self.assertEqual(producer, "CO2ChlorideSaltPairCurvatureAssessmentTest")
+        self.assertEqual(rows, 7)
+        self.assertEqual(len(fixtures), 3)
+        self.report(producer=producer)
+        self.csv(filename=filename, rows=rows)
+        manifest, errors = self.collect({evidence.PACKAGE + producer})
+        self.assertEqual(errors, [])
+        item = manifest["assessments"][12]
+        self.assertTrue(manifest["selected_evidence_complete"])
+        self.assertEqual(
+            item["fixtures"],
+            [{"path": evidence.FIXTURE_DIR + fixture,
+              "sha256": evidence.digest(self.root / evidence.FIXTURE_DIR / fixture)}
+             for fixture in fixtures])
 
     def test_full_family_numerical_failure_retains_all_110_rows(self):
         producer, filename, rows, fixture = evidence.ASSESSMENTS[-2]
