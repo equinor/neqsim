@@ -35,6 +35,8 @@ class FlashRunnerTest {
     assertTrue(root.has("flash"));
     assertTrue(root.has("fluid"));
     assertTrue(root.has("data"));
+    JsonObject data = root.getAsJsonObject("data");
+    assertTrue(data.getAsJsonObject("flash").get("numberOfPhases").getAsInt() >= 1);
     assertTrue(root.has("provenance"));
     assertTrue(root.has("validation"));
     assertTrue(root.has("qualityGate"));
