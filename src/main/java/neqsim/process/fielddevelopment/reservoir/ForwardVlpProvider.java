@@ -42,6 +42,8 @@ public class ForwardVlpProvider implements VlpProvider {
   private int evaluations = 0;
   private double collapsedDropBar = Double.NaN;
   private int collapsedEvaluations = 0;
+  private double bracketToleranceBar = 1.0e-3;
+  private int discontinuousRoots = 0;
 
   /**
    * Creates a provider.
@@ -115,6 +117,34 @@ public class ForwardVlpProvider implements VlpProvider {
     return collapsedEvaluations;
   }
 
+  /**
+   * Sets the inlet pressure interval below which a bracketed root is accepted even when the outlet pressure does not
+   * meet the tolerance.
+   *
+   * <p>
+   * A forward model can jump across the requested outlet pressure, for example where a pipe correlation changes flow
+   * pattern. No inlet pressure then gives the outlet pressure within the tolerance and the search would end without a
+   * result. With a bracket narrower than this interval the jump location is returned as the root and counted in
+   * {@link #getDiscontinuousRoots()}.
+   * </p>
+   *
+   * @param bar inlet pressure interval in bar (0.001 by default); zero or negative disables the check
+   * @return this provider
+   */
+  public ForwardVlpProvider setBracketTolerance(double bar) {
+    this.bracketToleranceBar = bar;
+    return this;
+  }
+
+  /**
+   * Number of roots returned at a jump of the forward model instead of at a point that meets the pressure tolerance.
+   *
+   * @return count of roots located at a discontinuity
+   */
+  public int getDiscontinuousRoots() {
+    return discontinuousRoots;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double bottomHolePressure(double rate, double outletPressure, double waterRatio, double gasRatio, double alq) {
@@ -146,6 +176,10 @@ public class ForwardVlpProvider implements VlpProvider {
       }
       double next;
       if (!Double.isNaN(lo) && !Double.isNaN(hi)) {
+        if (bracketToleranceBar > 0.0 && hi - lo < bracketToleranceBar) {
+          discontinuousRoots++;
+          return 0.5 * (lo + hi);
+        }
         next = hi - fhi * (hi - lo) / (fhi - flo);
         if (!(next > lo && next < hi) || iter % 4 == 3) {
           next = 0.5 * (lo + hi);
