@@ -1270,6 +1270,21 @@ attempted steps and uses the stricter of that allocation and the configured
 summation and independent endpoint checks remain active. These runs do not
 satisfy the distinct experimental pressure-amplitude, period and cycle gates and
 do not qualify physical restart or coupled pigging.
+
+The 24 November 2026 qualification repair prevents the 600 s experimental gate from passing on a
+startup extremum. It uses only complete cycles from the final 300 s, requires two complete pressure
+and liquid-production cycles, cycle-to-cycle amplitude/period stability for both signals, agreement
+of their median periods and one-to-one repeatable pressure/liquid phase lock. It compares the source's
+38 s value with inlet-pressure period. The
+same invocation runs `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s` before asserting 15%
+pressure amplitude/period, 2% initial-hold-up and matched-production refinement bounds.
+
+All three current-master realizations reached 600 s with conservative, non-negative inventories but
+contained zero complete settled pressure and liquid cycles. The 16-cell runs retained initial
+flowline hold-up `0.328538684`; the 24-cell run retained `0.331462090` and recorded two rejected
+nonlinear attempts. Experimental amplitude, period, phase lock and amplitude/period refinement are
+unresolved. This is blocker evidence, not severe-slugging validation; conservative moving slug/film
+coupling remains the next physical dependency.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-22"
+last_verified: "2026-11-24"
 ---
 
 # Dynamic Simulation Guidance
@@ -16,11 +16,13 @@ live separator-pressure feedback is not yet qualified by the `#5036` evidence.
 For an explicitly selected unsplit `TwoFluidPipe` route, the accepted mass report exposes
 `getRejectedAttempts()` and `getModelEvaluations()`. A non-negative value is available for unsplit
 execution; -1 means the selected transient route does not publish that diagnostic. Do not infer
-nonlinear quality only from elapsed time or an enforced flux sign. The current sustained unsplit
-Tengesdal gate completes 600 s with zero rejects but remains a flat fixed point, with
-`1.945482e-4 Pa` pressure amplitude and no liquid-production cycle. Disabling steady consistency
-does not change it. Tracked-slug geometry and conservative slug-force integration are still rejected
-by this route; qualify that moving slug/film coupling before promoting the opt-in experimental gate.
+nonlinear quality only from elapsed time or an enforced flux sign. The sustained Tengesdal gate uses
+complete cycles from the final 300 s and runs `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s`.
+All current realizations reach 600 s but publish zero complete pressure and liquid-production cycles;
+the 24-cell case also records two rejected attempts. Experimental amplitude, inlet-pressure period,
+phase lock and amplitude/period refinement are unresolved. Tracked-slug geometry and conservative
+slug-force integration are still rejected by this route; qualify that moving slug/film coupling
+before promoting the opt-in experimental gate.
 
 ## Extend the existing unit operation
 

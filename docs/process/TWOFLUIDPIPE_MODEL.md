@@ -2997,6 +2997,33 @@ moving slug/film coupling is the demonstrated next physical dependency. The exec
 opt-in while it is known to fail. No threshold, nonlinear tolerance, inventory floor or accepted
 transport is changed to hide this negative evidence.
 
+#### Settled-cycle and refinement contract (24 November 2026)
+
+The opt-in 600 s experimental gate now evaluates only the final 300 s and cannot pass on a startup
+extremum. It reports the median peak-to-peak amplitude and period of complete inlet-pressure cycles,
+requires at least two complete pressure and liquid-production cycles, limits complete-cycle amplitude
+and period range to 20% of their medians for both signals, requires their median periods to agree
+within 10%, and requires a one-to-one, repeatable pressure/liquid median-upcrossing phase relation.
+The published 38 s target is compared with the inlet-pressure period documented by
+the source, not with a separately measured liquid-production interval.
+
+The same invocation executes the complete `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s`
+matrix before evaluating any assertion. Pressure amplitude and period must agree with the reference
+within 15%, initial flowline hold-up within 2%, and mean liquid feed is matched exactly. A non-finite
+metric is an explicit failed gate rather than an analysis exception.
+
+On current master base `15b5ab9f226c585aeeaa97e315685b21b74e43a2`, all three trajectories reached
+600 s and retained finite, non-negative phase inventories with relative phase/total closure below
+`1e-9`, but the settled window contained no complete pressure cycle and no complete liquid-production
+cycle on any discretization. Both 16-cell realizations remained at the same flat outlet rate around
+`1.95257848 kg/s` and initial flowline hold-up `0.328538684`; the 24-cell realization remained flat
+around the same matched mean production with hold-up `0.331462090` and recorded two rejected
+nonlinear attempts. Experimental amplitude, pressure period, phase lock and amplitude/period
+refinement are therefore unresolved.
+
+The gate is deliberately negative evidence. Conservative moving slug/film coupling remains the next
+physical dependency and is independently high risk; it is not bundled into this measurement repair.
+
 The gas execution fixture uses methane/ethane `0.8/0.2` mole fractions, SRK/classic mixing,
 300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Four cells with
 `0.1 s` nominal steps and eight/sixteen cells with `0.05 s` nominal steps now complete two
