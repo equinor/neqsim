@@ -23,6 +23,7 @@ sizing (`neqsim-relief-flare-network`).
 - Closed-loop SIF execution from live process signal through MooN voting and final element
 - Bow-tie analysis (top event with threats + barriers + consequences)
 - ALARP / risk-matrix scoring (5×5)
+- High-pressure well or flowline produced against a low-pressure system (PAHH/HIPPS credit, IVO+CC transient, STS0131 LOPA): load `neqsim-hp-lp-interface-overpressure`
 - Trapped-liquid fire rupture screening for blocked-in liquid-filled segments,
   including PFP demand and source-term handoff
 - Overpressure-protection study for a protected item — enumerate credible relief

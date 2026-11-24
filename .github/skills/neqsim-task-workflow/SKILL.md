@@ -877,6 +877,9 @@ progress.set_next_action("Create analysis artifact: 01_XXXX.ipynb or run_XXXX.py
      project root cannot be found
    - Follow the notebook structure from the `@solve-process` agent when creating
      notebooks.
+   - Author notebooks as percent-format `.py` files (`# %%` / `# %% [markdown]`) and convert them with
+     `devtools/py_to_notebook.py` (or build `.ipynb` with nbformat and submit to `neqsim_runner.AgentBridge`);
+     keep results in JSON files that the final assemble script reads, so rerunning the notebooks refreshes the report
    - Include clear markdown cells explaining each step in notebooks; for runner
      scripts, include concise printed output and comments only where they clarify
      non-obvious engineering logic.

@@ -129,6 +129,82 @@ public class PsvValveModel implements Serializable {
     if (!open) {
       return 0.0;
     }
+    return orificeMassFlow(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio, compressibility);
+  }
+
+  /**
+   * Calculates the relieving mass flow at full lift, independent of the latched open/closed state.
+   *
+   * <p>
+   * Intended for transient models whose right-hand side is evaluated at trial pressures (for example ODE solvers),
+   * where the hysteresis latch of {@link #update(double)} cannot be used. The relation is the API 520 compressible
+   * orifice flow with automatic critical/subcritical switching against the back pressure.
+   * </p>
+   *
+   * @param upstreamPressurePa upstream pressure in Pa absolute; must be positive
+   * @param upstreamTempK upstream temperature in K; must be positive
+   * @param molarMassKgPerMol fluid molar mass in kg/mol; must be positive
+   * @param heatCapacityRatio isentropic exponent (gamma = Cp/Cv); must be greater than one
+   * @param compressibility compressibility factor Z; must be positive
+   * @return full-lift relieving mass flow in kg/s
+   * @throws IllegalArgumentException if any argument is invalid
+   */
+  public double fullOpenMassFlowKgPerS(double upstreamPressurePa, double upstreamTempK, double molarMassKgPerMol,
+      double heatCapacityRatio, double compressibility) {
+    if (upstreamPressurePa <= 0.0 || upstreamTempK <= 0.0) {
+      throw new IllegalArgumentException("upstreamPressurePa and upstreamTempK must be positive");
+    }
+    if (molarMassKgPerMol <= 0.0) {
+      throw new IllegalArgumentException("molarMassKgPerMol must be positive");
+    }
+    if (heatCapacityRatio <= 1.0) {
+      throw new IllegalArgumentException("heatCapacityRatio must be greater than one");
+    }
+    if (compressibility <= 0.0) {
+      throw new IllegalArgumentException("compressibility must be positive");
+    }
+    return orificeMassFlow(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio, compressibility);
+  }
+
+  /**
+   * Calculates the relieving mass flow for a partially lifted valve, independent of the latched state.
+   *
+   * <p>
+   * The flow area is scaled linearly with the lift fraction (modulating or pilot-operated valves). The lift fraction is
+   * clamped to the range 0 to 1.
+   * </p>
+   *
+   * @param upstreamPressurePa upstream pressure in Pa absolute; must be positive
+   * @param upstreamTempK upstream temperature in K; must be positive
+   * @param molarMassKgPerMol fluid molar mass in kg/mol; must be positive
+   * @param heatCapacityRatio isentropic exponent (gamma = Cp/Cv); must be greater than one
+   * @param compressibility compressibility factor Z; must be positive
+   * @param liftFraction fraction of full lift, from 0 (closed) to 1 (fully open)
+   * @return relieving mass flow in kg/s
+   * @throws IllegalArgumentException if any argument other than the lift fraction is invalid
+   */
+  public double massFlowKgPerS(double upstreamPressurePa, double upstreamTempK, double molarMassKgPerMol,
+      double heatCapacityRatio, double compressibility, double liftFraction) {
+    double lift = Math.max(0.0, Math.min(1.0, liftFraction));
+    if (lift == 0.0) {
+      return 0.0;
+    }
+    return lift * fullOpenMassFlowKgPerS(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio,
+        compressibility);
+  }
+
+  /**
+   * Calculates the API 520 compressible orifice mass flow at full lift.
+   *
+   * @param upstreamPressurePa upstream pressure in Pa absolute
+   * @param upstreamTempK upstream temperature in K
+   * @param molarMassKgPerMol fluid molar mass in kg/mol
+   * @param heatCapacityRatio isentropic exponent (gamma = Cp/Cv)
+   * @param compressibility compressibility factor Z
+   * @return mass flow in kg/s
+   */
+  private double orificeMassFlow(double upstreamPressurePa, double upstreamTempK, double molarMassKgPerMol,
+      double heatCapacityRatio, double compressibility) {
     double gamma = heatCapacityRatio;
     double criticalRatio = Math.pow(2.0 / (gamma + 1.0), gamma / (gamma - 1.0));
     double pressureRatio = backPressurePa / upstreamPressurePa;

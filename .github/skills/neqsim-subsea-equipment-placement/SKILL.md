@@ -3,7 +3,7 @@ name: neqsim-subsea-equipment-placement
 calculation_basis: "screening"
 version: "0.1.0"
 description: "Constraint-based siting of subsea equipment and routes (drill centres, templates, manifolds, PLETs, tie-ins): screens and ranks sites against clearances, existing lines and crossings, exclusion zones, seabed slope, fishing exposure and well reach, and checks the route. USE WHEN: a tie-back or SURF study must decide where equipment goes, or defend a placement against map data, standards and installation constraints."
-last_verified: "2026-11-08"
+last_verified: "2026-11-24"
 requires:
   python_packages: []
   java_packages: []
@@ -160,9 +160,13 @@ Verified by `tests/test_limits.py`.
 
 Screening geometry on straight segments in a local frame: no obstacle-avoiding routing, no geohazard interpretation, no foundation, structural, dropped-object or trawl-load calculation, no installation or vessel analysis, no anti-collision, no probabilistic fishing or ship-impact assessment. Map data may be restricted, incomplete or shifted. The ranking weights are declared assumptions. Hand-offs: `neqsim-seabed-protection-screening` (burial, rock, crossings design scope), `neqsim-pipe-route-profile` (profiles), `neqsim-erd-reach-screening` and `neqsim-well-trajectory-anticollision` (wells), `neqsim-surf-design-study` (hydraulics and design checks), specialists for geotechnical, geohazard, installation and fishing-interaction work.
 
+## Illustrating the result
+
+3D and report figures of a layout: use `neqsim-asset-scene` (`asset_scene.subsea` for recognisable trees, PLET/PLEM, manifold, jumpers, flowline field joints, riser base/SSIV and umbilical) and keep the source register rule: every drawn element is SOURCED (drawing number, revision, page), DERIVED (results.json/model) or ASSUMED, and ASSUMED items are labelled `antatt/skjematisk` in the figure (`asset_scene.register.check_register`). Document-derived facts for this (slot positions, template headings and coordinates, line lengths, PLET/manifold scope) typically come from the design basis and the installation contractor's design basis, not from the equipment drawings.
+
 ## Related NeqSim Functionality
 
-Skills: `neqsim-surf-field-layout-design`, `neqsim-subsea-layout-geometry`, `neqsim-seabed-protection-screening`, `neqsim-pipe-route-profile`, `neqsim-bathymetry-profile-screening`, `neqsim-field-layout-import`, `neqsim-subsea-slot-tee-reuse-inventory`, `neqsim-step-out-screening`, `neqsim-tie-in-pipeline-concept`, `neqsim-erd-reach-screening`, `neqsim-jurisdiction-regulatory-basis`, `neqsim-surf-design-study`.
+Skills: `neqsim-surf-field-layout-design`, `neqsim-subsea-layout-geometry`, `neqsim-seabed-protection-screening`, `neqsim-pipe-route-profile`, `neqsim-bathymetry-profile-screening`, `neqsim-field-layout-import`, `neqsim-subsea-slot-tee-reuse-inventory`, `neqsim-step-out-screening`, `neqsim-tie-in-pipeline-concept`, `neqsim-erd-reach-screening`, `neqsim-jurisdiction-regulatory-basis`, `neqsim-surf-design-study`, `neqsim-asset-scene`.
 Agents: `subsea-equipment-placement-agent` (coordinator), `surf-layout-design-agent`, `subsea-layout-screening-agent`, `subsea-infrastructure-capacity-agent`, `export-tie-in-concept-agent`.
 
 ## Human Review Requirements
