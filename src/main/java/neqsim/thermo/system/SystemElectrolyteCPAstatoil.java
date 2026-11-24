@@ -38,6 +38,31 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
     this.useVolumeCorrection(true);
   }
 
+  /**
+   * Select the caloric-data-fitted water alpha for this electrolyte CPA system.
+   *
+   * <p>
+   * The default is legacy CPA. The selection can be made before or after component and reaction initialization. Apply
+   * the mixing rule after the last species is added. Reflash and initialize properties after switching alpha. The water
+   * attraction changes in all fluid phases and in their aqueous reference states. See docs/thermo/cpa_water_caloric.md
+   * for the brine comparison and property-specific validation limits.
+   * </p>
+   *
+   * @param enabled true to use the caloric water alpha, false to restore the legacy alpha
+   */
+  public void setUseCaloricWaterAlpha(boolean enabled) {
+    setAttractiveTermAndInvalidateReferences(enabled ? 23 : 15);
+  }
+
+  /**
+   * Report whether the caloric water alpha is selected.
+   *
+   * @return true if the caloric water alpha is selected
+   */
+  public boolean isUsingCaloricWaterAlpha() {
+    return attractiveTermNumber == 23;
+  }
+
   /** {@inheritDoc} */
   @Override
   public SystemElectrolyteCPAstatoil clone() {
