@@ -1,7 +1,7 @@
 ---
 name: neqsim-hp-lp-interface-overpressure
 version: "1.0.0"
-description: "Overpressure study of a high-pressure source (well, flowline, HP separator) produced against a low-pressure system: SIWHP versus depletion, packed-line inadvertent valve opening + choke collapse (IVO+CC) transient calibrated to an approved study, relief load versus PZV/flare, PAHH/HIPPS credit (TR3001 SR-26550/26553, API 521, API RP 14C E, P-002 7.4.3), STS0131 Req-15733 LOPA, SIL verification, mitigation ranking. USE WHEN: asked whether a high-pressure well can be produced into a low-pressure manifold, a spec break or PAHH setting is questioned, or an approved overpressure study must be re-used for a new fluid or source pressure."
+description: "Assess overpressure when a high-pressure well, flowline or separator feeds a low-pressure system. Covers shut-in and packed-line pressures, inadvertent valve opening with choke collapse (IVO+CC), relief and flare capacity, PAHH and HIPPS credit, LOPA, SIL verification and mitigation ranking. Use for HP/LP tie-ins, specification breaks, trip settings or reuse of an approved study with a new fluid or source pressure."
 last_verified: "2026-11-24"
 requires:
   java_packages: [neqsim.process.safety.overpressure, neqsim.process.safety.risk.sis, neqsim.process.safety.risk.fta, neqsim.process.safety.risk.eta, neqsim.process.safety.depressurization]
