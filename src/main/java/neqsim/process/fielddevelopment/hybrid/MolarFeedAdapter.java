@@ -59,34 +59,66 @@ public final class MolarFeedAdapter {
    * @throws IllegalStateException if the adapter has no route for the well
    */
   public SystemInterface wellFeed(HybridWell well) {
-    if (!(well.getOilRate() > 0.0)) {
+    return wellFeed(well.getState(), well.getOilRate(), well.getWaterRate(), well.getGasRate(), well.getGasLiftRate());
+  }
+
+  /**
+   * Builds a feed from a reservoir-state proxy and explicit surface rates.
+   *
+   * <p>
+   * This overload lets the proxy provide composition to the canonical {@code WellSystem} and field-network path without
+   * constructing a {@link HybridWell} or a second gathering graph.
+   * </p>
+   *
+   * @param state reservoir-state proxy at the current cumulative volumes
+   * @param oilRateSm3PerDay stock-tank oil rate in Sm3/day
+   * @param waterRateSm3PerDay produced-water rate in Sm3/day
+   * @param gasRateSm3PerDay total produced-gas rate including gas lift in Sm3/day
+   * @param gasLiftRateSm3PerDay gas-lift rate in Sm3/day
+   * @return fluid with composition and molar flow rate, or null when the oil rate is zero
+   * @throws IllegalArgumentException if state is null, a rate is negative or gas lift exceeds total gas
+   * @throws IllegalStateException if the adapter has no route for the state
+   */
+  public SystemInterface wellFeed(ReservoirStateModel state, double oilRateSm3PerDay, double waterRateSm3PerDay,
+      double gasRateSm3PerDay, double gasLiftRateSm3PerDay) {
+    if (state == null) {
+      throw new IllegalArgumentException("Reservoir state must not be null");
+    }
+    if (!Double.isFinite(oilRateSm3PerDay) || !Double.isFinite(waterRateSm3PerDay) || !Double.isFinite(gasRateSm3PerDay)
+        || !Double.isFinite(gasLiftRateSm3PerDay) || oilRateSm3PerDay < 0.0 || waterRateSm3PerDay < 0.0
+        || gasRateSm3PerDay < 0.0 || gasLiftRateSm3PerDay < 0.0 || gasLiftRateSm3PerDay > gasRateSm3PerDay) {
+      throw new IllegalArgumentException("Surface rates must be finite, non-negative and gas lift cannot exceed gas");
+    }
+    if (!(oilRateSm3PerDay > 0.0)) {
       return null;
     }
-    ReservoirStateModel state = well.getState();
-    if (state.hasComposition() && template != null && !Double.isNaN(state.getHydrocarbonMolesPerSm3())) {
-      return compositionalFeed(well);
+    if (state.hasComposition() && template != null && state.getHydrocarbonMolesPerSm3() > 0.0
+        && Double.isFinite(state.getHydrocarbonMolesPerSm3())) {
+      return compositionalFeed(state, oilRateSm3PerDay, waterRateSm3PerDay);
     }
     if (recombination == null) {
-      throw new IllegalStateException("Well " + well.getName()
+      throw new IllegalStateException("Reservoir state " + state.getName()
           + " has no composition in its state proxy and the adapter has no recombination factory");
     }
-    double waterCut = well.getWaterRate() / (well.getOilRate() + well.getWaterRate());
-    double gasOilRatio = (well.getGasRate() - well.getGasLiftRate()) / well.getOilRate();
-    return recombination.createWellStream(well.getOilRate(), waterCut, gasOilRatio, well.getGasLiftRate());
+    double waterCut = waterRateSm3PerDay / (oilRateSm3PerDay + waterRateSm3PerDay);
+    double gasOilRatio = (gasRateSm3PerDay - gasLiftRateSm3PerDay) / oilRateSm3PerDay;
+    return recombination.createWellStream(oilRateSm3PerDay, waterCut, gasOilRatio, gasLiftRateSm3PerDay);
   }
 
   /**
    * Builds the feed of a well from the composition of its state proxy.
    *
-   * @param well solved well with a composition in its state proxy
+   * @param state reservoir-state proxy with a composition
+   * @param oilRateSm3PerDay stock-tank oil rate in Sm3/day
+   * @param waterRateSm3PerDay produced-water rate in Sm3/day
    * @return fluid with composition and molar flow rate
    * @throws IllegalStateException if a component of the proxy is missing in the template
    */
-  private SystemInterface compositionalFeed(HybridWell well) {
-    ReservoirStateModel state = well.getState();
+  private SystemInterface compositionalFeed(ReservoirStateModel state, double oilRateSm3PerDay,
+      double waterRateSm3PerDay) {
     String[] names = state.getComponentNames();
     double[] z = state.getComposition();
-    double hydrocarbonMolesPerDay = well.getOilRate() * state.getHydrocarbonMolesPerSm3();
+    double hydrocarbonMolesPerDay = oilRateSm3PerDay * state.getHydrocarbonMolesPerSm3();
     int n = template.getPhase(0).getNumberOfComponents();
     double[] moles = new double[n];
     for (int k = 0; k < names.length; k++) {
@@ -95,11 +127,11 @@ public final class MolarFeedAdapter {
       }
       moles[template.getPhase(0).getComponent(names[k]).getComponentNumber()] += hydrocarbonMolesPerDay * z[k];
     }
-    if (well.getWaterRate() > 0.0) {
+    if (waterRateSm3PerDay > 0.0) {
       if (!template.getPhase(0).hasComponent("water")) {
         throw new IllegalStateException("Template fluid has no water component for the produced water");
       }
-      moles[template.getPhase(0).getComponent("water").getComponentNumber()] += well.getWaterRate()
+      moles[template.getPhase(0).getComponent("water").getComponentNumber()] += waterRateSm3PerDay
           * WATER_MOLES_PER_SM3;
     }
     return fromMolesPerDay(template, moles);
