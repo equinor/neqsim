@@ -1,5 +1,6 @@
 package neqsim.process.fielddevelopment.olga;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -93,7 +94,7 @@ import neqsim.process.equipment.reservoir.InflowPerformance;
  * @see neqsim.process.equipment.reservoir.WellFlow
  * @see neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGenerator
  */
-public class OlgaWellGenkeyExporter {
+public final class OlgaWellGenkeyExporter {
   /** Well label, used to derive the flowpath tag and as a comment header. */
   private final String wellLabel;
 
@@ -199,6 +200,10 @@ public class OlgaWellGenkeyExporter {
    *
    * @param inflowPerformance the inflow relationship, must not be null
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+      justification = "The exporter must read the caller's own live InflowPerformance state at toGenkeyText() "
+          + "time; InflowPerformance has no defensive-copy mechanism, and copying would silently diverge from "
+          + "the caller's model if it is updated after this setter is called")
   public void setInflowPerformance(InflowPerformance inflowPerformance) {
     if (inflowPerformance == null) {
       throw new IllegalArgumentException("inflowPerformance must not be null");
