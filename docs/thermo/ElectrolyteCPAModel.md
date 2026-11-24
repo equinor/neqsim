@@ -72,9 +72,20 @@ parameters when stale state is rejected.
 | **Base Class** | Extends `SystemFurstElectrolyteEos` |
 | **Phase Class** | `PhaseElectrolyteCPAstatoil` |
 | **Component Class** | `ComponentElectrolyteCPAstatoil` |
-| **Attractive Term** | Term 15 (Mathias-Copeman alpha function) |
+| **Attractive Term** | Legacy CPA alpha by default, with an opt-in caloric water alpha |
 | **Volume Correction** | Enabled by default |
 | **Fürst Parameters** | Uses `electrolyteCPA` parameter set |
+
+### Caloric water alpha for brine
+
+Enable `setUseCaloricWaterAlpha(true)` on `SystemElectrolyteCPAstatoil` to apply
+the pure-water caloric calibration to the cubic water attraction. At 10 wt%
+NaCl and 25 °C, it reduced the heat-capacity error from 13.3% to 1.8%. For
+aqueous NaCl or KCl density reporting, `getWaterDensity("kg/m3")` gives the
+empirical density benchmarked separately from the EOS density. See
+[CPA water caloric guidance](cpa_water_caloric.md#electrolyte-cpa-and-dissolved-salts)
+for the executable setup and the scope of caloric, density, activity, CO₂
+solubility, and pH comparisons.
 
 ### Ionic covolume selection and compatibility
 

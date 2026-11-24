@@ -607,6 +607,10 @@ ops.TPflash();
 
 `PhaseInterface` does not expose a general `getMeanIonicActivityCoefficient(...)` method. Activity and osmotic-coefficient access is model-specific; use the APIs and parameter-coverage checks documented in [Electrolyte CPA Model](ElectrolyteCPAModel.md) and [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance.md).
 
+For NaCl or KCl brine heat-capacity calculations, `SystemElectrolyteCPAstatoil`
+has an opt-in water alpha. See the [brine benchmarks and setup](cpa_water_caloric.md#electrolyte-cpa-and-dissolved-salts)
+for tested temperatures and salt concentrations.
+
 ### 7.3 Søreide-Whitson Model
 
 **Application:** Gas solubility in brine, produced water systems, sour gas with formation water

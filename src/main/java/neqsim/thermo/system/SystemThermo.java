@@ -5295,6 +5295,22 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
+  /**
+   * Set the system attraction selector for existing and future components and discard cached reference phases.
+   *
+   * @param selector attractive-term number
+   */
+  final void setAttractiveTermAndInvalidateReferences(int selector) {
+    attractiveTermNumber = selector;
+    setAttractiveTerm(selector);
+    // Reference phases can be shared by clones. Discard the array instead of modifying its phases.
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      if (phaseArray[i] != null) {
+        phaseArray[i].setRefPhase((PhaseInterface[]) null);
+      }
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public final void setBeta(double b) {
