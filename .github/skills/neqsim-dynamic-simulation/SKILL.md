@@ -20,9 +20,12 @@ nonlinear quality only from elapsed time or an enforced flux sign. The sustained
 complete cycles from the final 300 s and runs `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s`.
 All current realizations reach 600 s but publish zero complete pressure and liquid-production cycles;
 the 24-cell case also records two rejected attempts. Experimental amplitude, inlet-pressure period,
-phase lock and amplitude/period refinement are unresolved. Tracked-slug geometry and conservative
-slug-force integration are still rejected by this route; qualify that moving slug/film coupling
-before promoting the opt-in experimental gate.
+phase lock and amplitude/period refinement are unresolved. The route now accepts explicitly selected
+`CONSERVATIVE_LAGRANGIAN` marker geometry: it reconstructs faces from the current accepted marker and
+advances the tracker only after the nonlinear and conservation gates accept the substep. Rejected
+attempts leave marker age and position unchanged. Conservative subcell slug-force integration is
+still rejected, so this bounded geometry/face-flux contract does not promote the opt-in experimental
+gate.
 
 ## Extend the existing unit operation
 

@@ -2943,6 +2943,18 @@ configuration is not mutated. Long signed face, source, cell and momentum ledger
 summation; failed full-interval checks still reject the complete candidate instead of publishing
 a converged prefix.
 
+The bounded unsplit route also accepts explicitly selected
+`SlugTrackingMode.CONSERVATIVE_LAGRANGIAN` geometry. Each nonlinear attempt sees the last accepted
+marker reconstruction. Only a substep that passes the nonlinear and independent phase-conservation
+checks advances the cloned tracker, and the complete interval publishes that tracker atomically;
+retries and failed intervals cannot age or move the live marker. A closed, seeded three-phase case
+checks exact gas/oil/water inventory closure, rollback, four/eight-cell refinement and 0.01/0.005 s
+nominal steps over 0.01 s. Adjacent time grids agree within 0.02 m and the four/eight-cell endpoints
+within 0.04 m (less than one percent of the smallest 5 m cell). This is a short seeded-marker
+geometry/face-flux regression. The route still rejects conservative subcell slug-force integration,
+energy, phase change and changing composition; it does not qualify spontaneous slug initiation,
+settled severe-slugging cycles, restart or pigging.
+
 The public nitrogen/Crystex historical-grid execution now publishes the complete
 backward-Euler/pressure-interpolated interval with signed donor transport enabled:
 
@@ -2991,11 +3003,13 @@ but the published trajectory was a near-exact fixed point:
 
 Disabling the legacy steady-consistency correction after initialization on head
 `a4fe09de6929a6acd78b0f654f212eb53fbf03f2` reproduced every value above exactly, so that
-correction is not the owner of the flat unsplit response. The unsplit adapter deliberately rejects
-tracked-slug geometry and conservative slug-force integration; adding and qualifying conservative
-moving slug/film coupling is the demonstrated next physical dependency. The executable gate remains
-opt-in while it is known to fail. No threshold, nonlinear tolerance, inventory floor or accepted
-transport is changed to hide this negative evidence.
+correction is not the owner of the flat unsplit response. The unsplit adapter now accepts the bounded
+transactional conservative marker-geometry contract above, but deliberately rejects conservative
+subcell slug-force integration. The public gate also still disables tracking, so this increment does
+not alter its flat result. Enabling and qualifying the full marker/force combination is the
+demonstrated next physical dependency. The executable gate remains opt-in while it is known to fail.
+No threshold, nonlinear tolerance, inventory floor or accepted transport is changed to hide this
+negative evidence.
 
 #### Settled-cycle and refinement contract (24 November 2026)
 
