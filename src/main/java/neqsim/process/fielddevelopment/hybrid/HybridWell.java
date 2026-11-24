@@ -1,5 +1,6 @@
 package neqsim.process.fielddevelopment.hybrid;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.reservoir.InflowPerformance;
 import neqsim.process.fielddevelopment.reservoir.VlpProvider;
 
@@ -26,7 +27,7 @@ import neqsim.process.fielddevelopment.reservoir.VlpProvider;
  * @author ESOL
  * @version 1.0
  */
-public class HybridWell {
+public final class HybridWell {
   /** What limits the well rate at the current solution. */
   public enum ControlMode {
     /** The well is closed. */
@@ -74,6 +75,7 @@ public class HybridWell {
    * @param tubing tubing lift model on the oil rate, water cut and gas-oil ratio basis, giving the flowing bottom-hole
    * pressure at the well datum for a wellhead pressure
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The well is driven by the caller's state proxy, whose cumulative volumes the model advances")
   public HybridWell(String name, ReservoirStateModel state, VlpProvider tubing) {
     if (name == null || state == null || tubing == null) {
       throw new IllegalArgumentException("Well name, state proxy and tubing lift model must not be null");
@@ -98,6 +100,7 @@ public class HybridWell {
    *
    * @return state proxy
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Callers set and read the cumulative volumes on the well's live state proxy")
   public ReservoirStateModel getState() {
     return state;
   }
@@ -107,6 +110,7 @@ public class HybridWell {
    *
    * @param newState proxy from the new simulator run
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The replacement proxy becomes the live state that the model advances")
   public void refreshState(ReservoirStateModel newState) {
     if (newState == null) {
       throw new IllegalArgumentException("New state proxy must not be null");
@@ -123,6 +127,7 @@ public class HybridWell {
    * @param unit shared reservoir-state proxy, or null to use the well's own pressure
    * @return this well
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "A drainage unit is one state object shared by all wells that drain it")
   public HybridWell setDrainageUnit(ReservoirStateModel unit) {
     this.drainageUnit = unit;
     return this;
@@ -133,6 +138,7 @@ public class HybridWell {
    *
    * @return shared reservoir-state proxy, or null
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The model groups wells by the identity of their shared drainage unit")
   public ReservoirStateModel getDrainageUnit() {
     return drainageUnit;
   }
@@ -142,6 +148,7 @@ public class HybridWell {
    *
    * @return corrected tubing lift model
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Callers attach a reference model and read or set the correction on the live tubing model")
   public CorrectedVlpProvider getTubing() {
     return tubing;
   }

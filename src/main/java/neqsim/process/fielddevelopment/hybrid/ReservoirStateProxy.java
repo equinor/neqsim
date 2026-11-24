@@ -32,7 +32,7 @@ import neqsim.process.fielddevelopment.integrated.ReservoirDrive;
  * @author ESOL
  * @version 1.0
  */
-public class ReservoirStateProxy extends AbstractReservoirState implements ReservoirDrive {
+public final class ReservoirStateProxy extends AbstractReservoirState implements ReservoirDrive {
   private static final long serialVersionUID = 1000L;
   private final CumulativeQuantity abscissaQuantity;
   private final double[] abscissa;

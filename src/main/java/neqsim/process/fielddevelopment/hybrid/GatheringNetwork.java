@@ -1,5 +1,6 @@
 package neqsim.process.fielddevelopment.hybrid;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,7 +28,7 @@ import neqsim.process.fielddevelopment.reservoir.VlpProvider;
  * @author ESOL
  * @version 1.0
  */
-public class GatheringNetwork {
+public final class GatheringNetwork {
   /**
    * One branch of the network with its last solution.
    *
@@ -92,6 +93,7 @@ public class GatheringNetwork {
      *
      * @return corrected lift model
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The model calibrates and reads the correction on the live lift model of the branch")
     public CorrectedVlpProvider getLiftModel() {
       return liftModel;
     }

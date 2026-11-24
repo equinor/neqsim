@@ -21,7 +21,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  * @version 1.0
  */
-public class MolarFeedAdapter {
+public final class MolarFeedAdapter {
   private static final double WATER_MOLES_PER_SM3 = 1000.0 / 0.018015;
   private final VfpFluidFactory recombination;
   private final SystemInterface template;
@@ -40,7 +40,7 @@ public class MolarFeedAdapter {
    *
    * @param recombination fluid factory on the oil rate, water cut and gas-oil ratio basis, or null
    * @param template fluid with all components (including water), EOS and mixing rule, used for wells whose state proxy
-   * carries a composition; or null
+   * carries a composition; or null. A copy is kept, so later changes to the argument do not reach the adapter
    * @throws IllegalArgumentException if both arguments are null
    */
   public MolarFeedAdapter(VfpFluidFactory recombination, SystemInterface template) {
@@ -48,7 +48,7 @@ public class MolarFeedAdapter {
       throw new IllegalArgumentException("A recombination factory or a template fluid is needed");
     }
     this.recombination = recombination;
-    this.template = template;
+    this.template = template == null ? null : template.clone();
   }
 
   /**

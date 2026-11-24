@@ -1,5 +1,6 @@
 package neqsim.process.fielddevelopment.hybrid;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -50,7 +51,7 @@ import org.apache.logging.log4j.Logger;
  * @author ESOL
  * @version 1.0
  */
-public class HybridProductionModel {
+public final class HybridProductionModel {
   private static final Logger logger = LogManager.getLogger(HybridProductionModel.class);
 
   /** Fidelity of the lift and network models. */
@@ -113,6 +114,7 @@ public class HybridProductionModel {
    * @param name model name
    * @param network gathering network with wells
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The model solves the caller's network and must see routing and boundary changes made between steps")
   public HybridProductionModel(String name, GatheringNetwork network) {
     if (network == null) {
       throw new IllegalArgumentException("Network must not be null");
@@ -135,6 +137,7 @@ public class HybridProductionModel {
    *
    * @return network
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Events change wells, routing and boundary pressure on the live network between steps")
   public GatheringNetwork getNetwork() {
     return network;
   }

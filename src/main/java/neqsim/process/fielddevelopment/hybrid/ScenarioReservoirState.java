@@ -27,7 +27,7 @@ import java.util.List;
  * @author ESOL
  * @version 1.0
  */
-public class ScenarioReservoirState extends AbstractReservoirState {
+public final class ScenarioReservoirState extends AbstractReservoirState {
   private static final long serialVersionUID = 1000L;
   private final CumulativeQuantity secondaryQuantity;
   private final List<ReservoirStateProxy> scenarios = new ArrayList<ReservoirStateProxy>();

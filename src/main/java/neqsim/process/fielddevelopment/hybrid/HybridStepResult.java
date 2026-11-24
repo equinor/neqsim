@@ -356,19 +356,19 @@ public class HybridStepResult implements Serializable {
   /**
    * Gets the node pressures.
    *
-   * @return pressures in bara keyed by node name
+   * @return copy of the pressures in bara keyed by node name, in network order
    */
   public Map<String, Double> getNodePressures() {
-    return nodePressures;
+    return new LinkedHashMap<String, Double>(nodePressures);
   }
 
   /**
    * Gets the well results.
    *
-   * @return well results in network order
+   * @return copy of the list of well results, in network order
    */
   public List<WellResult> getWells() {
-    return wells;
+    return new ArrayList<WellResult>(wells);
   }
 
   /**

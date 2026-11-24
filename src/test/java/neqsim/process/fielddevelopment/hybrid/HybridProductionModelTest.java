@@ -405,6 +405,19 @@ class HybridProductionModelTest {
     assertTrue(Math.abs(single1 - single2) > 0.05);
   }
 
+  /** A result is a snapshot: changing a returned collection does not change the result. */
+  @Test
+  void resultCollectionsAreCopies() {
+    HybridStepResult result = new HybridProductionModel("field", network()).solve();
+    int nodes = result.getNodePressures().size();
+    int wells = result.getWells().size();
+    result.getNodePressures().clear();
+    result.getWells().clear();
+    assertEquals(nodes, result.getNodePressures().size());
+    assertEquals(wells, result.getWells().size());
+    assertTrue(nodes > 0 && wells == 3);
+  }
+
   /** A new simulator run replaces a well proxy without losing the cumulative volumes. */
   @Test
   void refreshedProxyKeepsCumulativeVolumes() {

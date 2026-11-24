@@ -17,7 +17,7 @@ import neqsim.process.fielddevelopment.reservoir.VlpProvider;
  * @author ESOL
  * @version 1.0
  */
-public class CorrectedVlpProvider implements VlpProvider {
+public final class CorrectedVlpProvider implements VlpProvider {
   private final VlpProvider surrogate;
   private VlpProvider reference;
   private double offsetBar = 0.0;
