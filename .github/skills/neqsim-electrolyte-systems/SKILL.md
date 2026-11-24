@@ -154,7 +154,8 @@ Before hand-rolling the flash, note these ready-made helpers (see the
   and flash first (otherwise carbonate/bicarbonate/pH speciation is missing and
   the SR is wrong).
 
-For the electrolyte CPA water–carbonate reaction set, select
+For electrolyte CPA carbonate brines containing a dissolved spectator ion
+such as sodium or chloride, select
 `setUseMolalCarbonateChemistry(true)` before chemistry initialization, then
 rebuild the mixing rule. Check conservative-ion balance and read pH on the
 selected basis before interpreting calcite SR. The

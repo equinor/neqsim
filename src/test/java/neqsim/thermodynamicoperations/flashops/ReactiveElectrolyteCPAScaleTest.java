@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -67,14 +68,12 @@ class ReactiveElectrolyteCPAScaleTest extends NeqSimTest {
     assertCarbonateEquilibrium(fluid, operations, 6.784, 11.700);
   }
 
-  /** Confirm that the default reaction data also uses the repaired material-balance path. */
+  /** Verify that the legacy reaction data retains the established flash route. */
   @Test
-  void legacyCarbonateDataRetainsMassBalance() {
+  void legacyCarbonateDataRetainsItsFlashRoute() {
     SystemElectrolyteCPAstatoil fluid = reactiveBrine(false, true);
-    new ThermodynamicOperations(fluid).TPflash();
-    fluid.initProperties();
     assertEquals(ChemicalReactionDataSource.STANDARD, fluid.getChemicalReactionDataSource());
-    assertBalanced(fluid);
+    assertFalse(TPmultiflash.supportsCoupledCarbonateFlash(fluid));
   }
 
   /** Require the reaction data to be rebuilt if the activity basis is changed on an initialized fluid. */

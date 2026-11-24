@@ -990,3 +990,50 @@ independent source holdouts, parameter covariance/sensitivity, Table A.24 and
 hydrate transfer, convergence, non-regression and timing. No empirical
 temperature offset, fitted coefficient, relaxed tolerance or hydrate
 qualification is introduced here.
+
+## He-Morse standard-state and temperature-covariance audit
+
+`CO2HeMorseStandardStateAuditTest` addresses the first remaining source
+dependency without changing the model. He and Morse (1993), DOI
+`10.1016/0016-7037(93)90137-L`, report molality-scale CO2 activity coefficients.
+The IUPAC-NIST SDS-62 compilation retains CO2 partial pressure, dissolved CO2
+molality and the activity coefficient at each KCl state. The source convention
+therefore implies, at fixed temperature,
+
+$$
+H^0(T)=\frac{p_{\mathrm{CO_2}}}
+{m_{\mathrm{CO_2}}\gamma_{\mathrm{CO_2}}}.
+$$
+
+The audit reconstructs one geometric-mean $H^0$ for each temperature directly
+from every printed row. Maximum absolute log residuals are 0.002234, 0.007976,
+0.003079, 0.004806 and 0.022633 at 273.15, 298.15, 323.15, 348.15 and 363.15 K,
+respectively. All are inside the compiled source's stated 4% relative
+activity-coefficient uncertainty. The corresponding $H^0$ values are 12.8011,
+29.3613, 51.3402, 74.8031 and 87.5786 atm kg/mol. This verifies that the
+retained columns are internally consistent with one temperature-specific
+molality standard state; it does not independently validate the pure-water
+anchor used to construct those activity coefficients.
+
+That distinction is material. Spycher and Pruess (2005), DOI
+`10.1016/j.gca.2005.01.015`, document that He and Morse combined saline Henry
+constants from their measurements with an infinite-dilution value adopted from
+Plummer and Busenberg (1982), and caution that inconsistencies in that anchor
+may explain deviations from other activity-coefficient sources. The present
+audit therefore preserves He-Morse as within-source shape evidence, not an
+absolute production calibration.
+
+He and Morse use the five-function temperature basis
+$1,T,T^2,1/T,\ln T$. On the five retained temperature blocks its design matrix
+has rank five, leaving zero residual degrees of freedom. A five-parameter law
+can interpolate the five block estimates but cannot provide a residual
+variance or identifiable covariance from this source alone. This is the
+numerical cause of the covariance blocker, not a request to relax a tolerance.
+An independent temperature family or a predeclared lower-dimensional physical
+temperature law is required before bounded calibration.
+
+The six-row retained report records the five reconstructed standard states and
+the rank/degree-of-freedom result. No coefficient, gauge, empirical temperature
+offset, production equation, solver tolerance or source value changes. Table
+A.24, Dholabhai/Burgass hydrate data, dense NaCl/KCl controls, divalent salts,
+Archer water activity and Burgass-Tohidi remain frozen holdouts.

@@ -723,11 +723,13 @@ double pH = fluid.getpH();
 double calciteSR = ops.getRelativeScalePotential("CaCO3");
 ```
 
-For carbonate-only eCPA chemistry, TP and PH flashes couple reaction-adjusted
-species inventories to phase equilibrium. Both legacy and molality carbonate
-data take that path. The regression checks Na, Cl, Ca, methane, reactive C/H/O,
-and aqueous charge through the pressure drop with additional phase stability
-analysis both enabled and disabled.
+For carbonate brines with the molality option enabled, TP and PH flashes couple
+reaction-adjusted species inventories to phase equilibrium. The coupled path
+requires a dissolved ion outside the carbonate reactions, such as sodium or
+chloride. The default reaction data and salt-free CO₂–water feeds use the
+established electrolyte CPA flash. The regression checks Na, Cl, Ca, methane,
+reactive C/H/O, and aqueous charge through the pressure drop with additional
+phase stability analysis both enabled and disabled.
 
 | Pressure, bara | NeqSim temperature, °C | NeqSim pH | PHREEQC pH | NeqSim calcite SR | PHREEQC calcite SR |
 |---:|---:|---:|---:|---:|---:|

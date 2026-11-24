@@ -3137,18 +3137,44 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Identify the electrolyte CPA carbonate reaction set covered by the coupled inventory solve.
+   * Identify the electrolyte CPA brines covered by the coupled molality carbonate solve.
    *
    * @param fluid fluid with an initialized chemical topology
    * @return true for the reactive electrolyte CPA carbonate route
    */
   static boolean supportsCoupledCarbonateFlash(SystemInterface fluid) {
-    if (fluid.getClass() != neqsim.thermo.system.SystemElectrolyteCPAstatoil.class || !fluid.isChemicalSystem()
-        || fluid.getHydrateCheck() || !fluid.hasIons() || !fluid.hasComponent("CO2") || !fluid.hasComponent("HCO3-")) {
+    if (fluid.getClass() != neqsim.thermo.system.SystemElectrolyteCPAstatoil.class
+        || fluid.getChemicalReactionDataSource() != ChemicalReactionDataSource.MOLAL_CARBONATE
+        || !fluid.isChemicalSystem() || fluid.getHydrateCheck() || !fluid.hasComponent("HCO3-")) {
       return false;
     }
-    return fluid.getChemicalReactionOperations().getReactionList().getChemicalReactionList().stream()
-        .allMatch(reaction -> ChemicalReactionDataSource.isCarbonateReaction(reaction.getName()));
+    // Reaction initialization also generates trace ions in fluids with no dissolved salt.
+    // Require an ion outside the carbonate reactions before committing to the aqueous brine topology.
+    ComponentInterface[] reactiveSpecies = fluid.getChemicalReactionOperations().getComponents();
+    PhaseInterface feedPhase = fluid.getPhase(0);
+    for (int i = 0; i < feedPhase.getNumberOfComponents(); i++) {
+      ComponentInterface component = feedPhase.getComponent(i);
+      if (component.isIsIon() && component.getz() > 1.0e-30 && !inReactionBasis(reactiveSpecies, i)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if a species participates in the active reaction basis.
+   *
+   * @param reactiveSpecies components in the active reaction basis
+   * @param componentNumber index of the species in the fluid
+   * @return true if the reaction solver can change the species
+   */
+  private static boolean inReactionBasis(ComponentInterface[] reactiveSpecies, int componentNumber) {
+    for (ComponentInterface reactiveComponent : reactiveSpecies) {
+      if (reactiveComponent.getComponentNumber() == componentNumber) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
