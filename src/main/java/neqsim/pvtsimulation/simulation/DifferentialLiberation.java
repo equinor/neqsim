@@ -10,7 +10,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * DifferentialLiberation class.
+ * Differential liberation PVT experiment.
+ *
+ * <p>
+ * The saturation volume used to normalize the depletion curve is the total corrected cell volume at the single-phase
+ * pressure bound of the final saturation bracket.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
