@@ -24,10 +24,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** Compiles and executes the complete OLGA well GENKEY export example published in the guide. */
 public class OlgaWellGenkeyExporterGuideDocumentationTest extends neqsim.NeqSimTest {
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -35,24 +34,16 @@ public class OlgaWellGenkeyExporterGuideDocumentationTest extends neqsim.NeqSimT
   @Test
   void olgaWellGenkeyExportExampleCompilesAndRunsWithAssertions() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    Path guidePath =
-        repositoryRoot.resolve("docs/fielddevelopment/OLGA_WELL_GENKEY_EXPORT.md");
-    String guide =
-        new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
-    String exporterSource =
-        new String(
-            Files.readAllBytes(
-                repositoryRoot.resolve(
-                    "src/main/java/neqsim/process/fielddevelopment/olga/"
-                        + "OlgaWellGenkeyExporter.java")),
-            StandardCharsets.UTF_8);
-    String trajectorySource =
-        new String(
-            Files.readAllBytes(
-                repositoryRoot.resolve(
-                    "src/main/java/neqsim/process/fielddevelopment/olga/"
-                        + "SyntheticWellTrajectory.java")),
-            StandardCharsets.UTF_8);
+    Path guidePath = repositoryRoot.resolve("docs/fielddevelopment/OLGA_WELL_GENKEY_EXPORT.md");
+    String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
+    String exporterSource = new String(
+        Files.readAllBytes(repositoryRoot
+            .resolve("src/main/java/neqsim/process/fielddevelopment/olga/" + "OlgaWellGenkeyExporter.java")),
+        StandardCharsets.UTF_8);
+    String trajectorySource = new String(
+        Files.readAllBytes(repositoryRoot
+            .resolve("src/main/java/neqsim/process/fielddevelopment/olga/" + "SyntheticWellTrajectory.java")),
+        StandardCharsets.UTF_8);
 
     assertTrue(guide.startsWith("---\ntitle: Export a well as OLGA GENKEY text"));
     assertTrue(guide.contains("format generator, not an OLGA simulator"));
@@ -86,9 +77,8 @@ public class OlgaWellGenkeyExporterGuideDocumentationTest extends neqsim.NeqSimT
     Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
     compile(compiler, javaSource);
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {temporaryDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName("OlgaWellGenkeyExportExample", true, loader);
       assertTrue(example.desiredAssertionStatus());
@@ -108,36 +98,16 @@ public class OlgaWellGenkeyExporterGuideDocumentationTest extends neqsim.NeqSimT
    * @throws Exception if source preparation or compilation fails
    */
   private void compile(JavaCompiler compiler, Path source) throws Exception {
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-classpath",
-            classPath,
-            "-d",
-            temporaryDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(source.toFile()))
-              .call();
-      assertTrue(
-          Boolean.TRUE.equals(successful),
-          "docs/fielddevelopment/OLGA_WELL_GENKEY_EXPORT.md: "
-              + diagnostics.getDiagnostics());
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful),
+          "docs/fielddevelopment/OLGA_WELL_GENKEY_EXPORT.md: " + diagnostics.getDiagnostics());
     }
   }
 }
+
