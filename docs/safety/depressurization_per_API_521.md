@@ -82,7 +82,13 @@ Use `SteadyFlareGasNetwork` when several fixed-opening devices discharge a commo
 one header. Supply absolute pressures in bara, open nozzle areas in m², gas molar mass in kg/mol
 and simultaneous relief demands in kg/s. Represent each inlet and tailpipe by its inside diameter,
 equivalent length including fittings, and Darcy friction factor. Supply the static pressure and a
-rated flow/pressure point for a quadratic tip characteristic.
+rated flow/pressure point for a quadratic tip characteristic. For supplied dry-gas rating
+points, pass a `SteadyFlareGasNetwork.TipCurve` to the alternative constructor. Its paired
+arrays give gas mass flow in kg/s and absolute tip-inlet pressure in bara at the modeled gas
+and outlet conditions. Flows start at zero and strictly increase. Pressures are positive and
+nondecreasing. The solver interpolates linearly for both simultaneous and pre-opening states
+and rejects cases beyond the last point. The zero-flow pressure sets the static backpressure,
+and the tagged JSON retains the supplied points under `tipCurve`.
 
 For a knockout drum installed between the common header pipe and tip, supply its tag and a
 dry-gas port-to-port rating with `setKnockoutPressureDrop`. The paired gas flows (kg/s) and

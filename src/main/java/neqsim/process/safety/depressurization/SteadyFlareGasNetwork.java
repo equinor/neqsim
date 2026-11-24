@@ -13,7 +13,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 /**
  * Simultaneous fixed-opening gas discharge through individual inlet lines, devices and tailpipes into one header and
  * one rated flare tip. Pipes use the horizontal isothermal Darcy pressure-squared relation at constant gas properties
- * and specified Darcy factor. The tip uses a supplied quadratic pressure characteristic up to its rated flow. The
+ * and specified Darcy factor. The tip uses a quadratic or tabulated pressure characteristic up to its rated flow. The
  * solution compares available capacity with demand; it does not prescribe the demand as the discharge.
  *
  * @author Even Solbraa
@@ -24,6 +24,7 @@ public final class SteadyFlareGasNetwork {
   private final String headerTag;
   private final String tipTag;
   private final GasLine header;
+  private final TipCurve tipCurve;
   private KnockoutLoss knockout;
   private final double staticBara;
   private final double ratedTipBara;
@@ -50,8 +51,49 @@ public final class SteadyFlareGasNetwork {
    */
   public SteadyFlareGasNetwork(String headerTag, Pipe header, String tipTag, double staticBara, double ratedTipBara,
       double ratedFlowKgS, double temperatureK, double molarMassKgMol, double z, double gamma) {
+    this(headerTag, header, tipTag, staticBara, ratedTipBara, ratedFlowKgS, null, temperatureK, molarMassKgMol, z,
+        gamma);
+  }
+
+  /**
+   * Build a common-gas network with a tabulated absolute tip-inlet pressure boundary at the modeled conditions.
+   *
+   * @param headerTag common header tag
+   * @param header horizontal common pipe from junction to tip
+   * @param tipTag tip tag
+   * @param tipCurve rated gas flow and absolute tip-inlet pressure points
+   * @param temperatureK isothermal gas temperature, K
+   * @param molarMassKgMol gas molar mass, kg/mol
+   * @param z constant gas compressibility
+   * @param gamma gas heat capacity ratio, greater than one
+   */
+  public SteadyFlareGasNetwork(String headerTag, Pipe header, String tipTag, TipCurve tipCurve, double temperatureK,
+      double molarMassKgMol, double z, double gamma) {
+    this(headerTag, header, tipTag, Objects.requireNonNull(tipCurve, "tip curve").pressureBara[0],
+        tipCurve.pressureBara[tipCurve.pressureBara.length - 1], tipCurve.flowKgS[tipCurve.flowKgS.length - 1],
+        tipCurve, temperatureK, molarMassKgMol, z, gamma);
+  }
+
+  /**
+   * Initialize the network on its selected tip basis.
+   *
+   * @param headerTag common header tag
+   * @param header horizontal common pipe from junction to tip
+   * @param tipTag tip tag
+   * @param staticBara absolute tip-inlet pressure at zero flow, bara
+   * @param ratedTipBara absolute tip-inlet pressure at maximum rated flow, bara
+   * @param ratedFlowKgS maximum characterized tip flow, kg/s
+   * @param tipCurve tabulated boundary, or null for the quadratic characteristic
+   * @param temperatureK isothermal gas temperature, K
+   * @param molarMassKgMol gas molar mass, kg/mol
+   * @param z constant gas compressibility
+   * @param gamma gas heat capacity ratio, greater than one
+   */
+  private SteadyFlareGasNetwork(String headerTag, Pipe header, String tipTag, double staticBara, double ratedTipBara,
+      double ratedFlowKgS, TipCurve tipCurve, double temperatureK, double molarMassKgMol, double z, double gamma) {
     this.headerTag = tag(headerTag);
     this.tipTag = tag(tipTag);
+    this.tipCurve = tipCurve;
     this.staticBara = positive(staticBara, "static pressure");
     this.ratedTipBara = positive(ratedTipBara, "rated tip pressure");
     this.ratedFlow = positive(ratedFlowKgS, "rated tip flow");
@@ -218,8 +260,30 @@ public final class SteadyFlareGasNetwork {
    * @param total trial gas flow, kg/s
    */
   private double tipPressure(double total) {
+    if (tipCurve != null) {
+      return interpolate(total, tipCurve.flowKgS, tipCurve.pressureBara);
+    }
     double fraction = total / ratedFlow;
     return staticBara + (ratedTipBara - staticBara) * fraction * fraction;
+  }
+
+  /**
+   * @param flow gas flow within the rated interval, kg/s
+   * @param flows increasing flow coordinates starting at zero, kg/s
+   * @param pressures paired pressures or pressure differences
+   * @return linearly interpolated pressure or pressure difference
+   */
+  private static double interpolate(double flow, double[] flows, double[] pressures) {
+    if (flow == 0.0) {
+      return pressures[0];
+    }
+    int point = Arrays.binarySearch(flows, flow);
+    if (point >= 0) {
+      return pressures[point];
+    }
+    int upper = -point - 1;
+    double fraction = (flow - flows[upper - 1]) / (flows[upper] - flows[upper - 1]);
+    return pressures[upper - 1] + fraction * (pressures[upper] - pressures[upper - 1]);
   }
 
   /**
@@ -326,6 +390,46 @@ public final class SteadyFlareGasNetwork {
     }
   }
 
+  /** Immutable dry-gas tip rating at the common gas conditions. */
+  public static final class TipCurve {
+    private final double[] flowKgS;
+    private final double[] pressureBara;
+
+    /**
+     * Construct a piecewise linear tip characteristic. The last point bounds the solution.
+     *
+     * @param flowKgS increasing gas mass flows starting at zero, kg/s
+     * @param pressureBara nondecreasing absolute tip-inlet pressures, bara
+     */
+    public TipCurve(double[] flowKgS, double[] pressureBara) {
+      if (flowKgS == null || pressureBara == null || flowKgS.length < 2 || flowKgS.length != pressureBara.length) {
+        throw new IllegalArgumentException("Supply at least two paired tip gas ratings");
+      }
+      this.flowKgS = flowKgS.clone();
+      this.pressureBara = pressureBara.clone();
+      if (this.flowKgS[0] != 0.0) {
+        throw new IllegalArgumentException("Tip curve must start at zero flow");
+      }
+      positive(this.pressureBara[0], "zero-flow tip pressure");
+      for (int i = 1; i < this.flowKgS.length; i++) {
+        if (!Double.isFinite(this.flowKgS[i]) || this.flowKgS[i] <= this.flowKgS[i - 1]
+            || !Double.isFinite(this.pressureBara[i]) || this.pressureBara[i] < this.pressureBara[i - 1]) {
+          throw new IllegalArgumentException("Require finite increasing flow and nondecreasing tip pressure");
+        }
+      }
+    }
+
+    /** @return copy of the gas mass-flow coordinates, kg/s */
+    public double[] getFlowKgS() {
+      return flowKgS.clone();
+    }
+
+    /** @return copy of the absolute tip-inlet pressures, bara */
+    public double[] getPressureBara() {
+      return pressureBara.clone();
+    }
+  }
+
   /** Frozen dry-gas knockout drum rating at the common gas conditions. */
   public static final class KnockoutLoss {
     public final String tag;
@@ -365,16 +469,7 @@ public final class SteadyFlareGasNetwork {
      * @return interpolated knockout pressure drop, bar
      */
     private double loss(double flow) {
-      if (flow == 0.0) {
-        return 0.0;
-      }
-      int point = Arrays.binarySearch(flowKgS, flow);
-      if (point >= 0) {
-        return dropBar[point];
-      }
-      int upper = -point - 1;
-      double fraction = (flow - flowKgS[upper - 1]) / (flowKgS[upper] - flowKgS[upper - 1]);
-      return dropBar[upper - 1] + fraction * (dropBar[upper] - dropBar[upper - 1]);
+      return interpolate(flow, flowKgS, dropBar);
     }
   }
 
@@ -526,6 +621,8 @@ public final class SteadyFlareGasNetwork {
     public final String headerTag;
     public final String tipTag;
     public final Pipe headerPipe;
+    /** Tabulated tip rating, or null when the quadratic characteristic is used. */
+    public final TipCurve tipCurve;
     /** Optional installed gas rating. The outlet connects directly to the tip at tipBara. */
     public final KnockoutLoss knockoutDrum;
     /** Common pipe outlet, also the drum inlet when a drum is installed, bara. */
@@ -549,6 +646,7 @@ public final class SteadyFlareGasNetwork {
       headerTag = network.headerTag;
       tipTag = network.tipTag;
       headerPipe = network.header.pipe;
+      tipCurve = network.tipCurve;
       knockoutDrum = network.knockout;
       headerOutletBara = network.headerOutletPressure(total);
       ratedTipBara = network.ratedTipBara;
