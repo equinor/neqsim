@@ -437,6 +437,14 @@ System.out.println("Station-A outage - Industry pressure: " +
 
 ## Advanced Features
 
+### Rigorous Gas-Lift Tubing
+
+For rigorous gas-lift tubing, `setLiftGasFluid` stores an independent copy of the supplied fluid and
+`getLiftGasFluid` returns an independent copy. Mutating either the caller's fluid or a fluid returned by
+the getter does not change the network configuration. Passing `null` retains the fallback to the network
+fluid's produced-gas phase. Only the lift-gas composition is taken from this fluid; the tubing state and
+element gas-lift rate determine pressure, temperature and injection rate.
+
 ### Loop Detection
 
 ```java

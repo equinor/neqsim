@@ -9,6 +9,26 @@
 
 ---
 
+## 2026-11-23 — Flory-Huggins asphaltene regression to onset data; naphthenate precipitation model
+
+- New: `FloryHugginsAsphalteneModel.calibrateToOnsetPressure(T, P)` and `fitToOnsetData(T[], P[])` regress the
+  asphaltene solubility parameter (and its temperature coefficient for two or more temperatures) to measured onset
+  pressures; `calculateRequiredSolubilityParameter`, `calculateOnsetPressure(T, startP, minP)`,
+  `calculateLowerOnsetPressure`, `setSolubilityParameterTemperatureDependence`, `setOnsetDetectionThreshold`.
+- Changed: `calculateMaxDissolvedFraction` returns the smallest root of the solubility equation by bracketing
+  (Newton could drift to the trivial root); a completely miscible case returns 1.0. `configureFromSARA`
+  no longer compounds its correction when called repeatedly. `getResultsMap` now scans the pressure window given
+  as arguments (it ignored them) and adds the lower onset. Migration: none for single calls; code that called
+  `configureFromSARA` more than once gets a different (correct) solubility parameter.
+- Docs: the default oil solubility-parameter coefficients are Wang and Buckley (2001) with the one-third rule, not
+  Lian et al. (1994). `calibrateCorrelation` is a stability-margin assumption, not a data fit.
+- New: `NaphthenatePrecipitationModel` and `NaphthenateModelFitting` (`neqsim.pvtsimulation.flowassurance`) for ARN
+  calcium naphthenate and calcium carboxylate soap equilibrium with specified or CO2-controlled pH. Default
+  parameters are engineering defaults; quantitative use needs regression to bottle-test data.
+- Updated: `docs/pvtsimulation/flowassurance/asphaltene_modeling.md`, `asphaltene_validation.md`, new
+  `naphthenate_precipitation.md`; `neqsim-flow-assurance` and `neqsim-production-chemistry` skills; `flow-assurance`
+  agent (also fixes a non-existent one-argument `DeBoerAsphalteneScreening` constructor in its example).
+
 ## 2026-11-22 — Asphaltene model review fixes
 
 - Fixed: `FloryHugginsAsphalteneModel` solubility limit solved in ln(phi) with a bracketed search (the Newton
