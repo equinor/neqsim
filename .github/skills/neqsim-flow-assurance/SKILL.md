@@ -24,7 +24,10 @@ conservation gates. Run `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s` befo
 refinement. The current matrix reaches 600 s but has zero complete settled pressure and liquid cycles
 on every discretization; the 24-cell run also records two rejected attempts. Treat the experimental
 metrics as unresolved, not passed by a startup extremum or enforced sign. Conservative moving
-slug/film coupling remains the next physical dependency; keep this gate opt-in until it passes.
+slug/film geometry is now accepted transactionally by the unsplit route and has closed-pipe
+four/eight-cell and one/two-step conservation checks. Conservative subcell slug-force integration,
+the full publication matrix with tracking enabled and the experimental cycle gates remain open;
+keep the gate opt-in until all of them pass.
 
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the
