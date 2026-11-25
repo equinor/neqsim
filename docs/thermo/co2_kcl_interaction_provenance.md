@@ -1134,3 +1134,70 @@ fit or ablation and tested on frozen Table A.24 mixed brine, Dholabhai and Burga
 Archer water activity, dense NaCl/KCl and Burgass-Tohidi controls. No empirical temperature offset, production
 coefficient, database row, solver tolerance or hydrate equation changes here.
 
+## Independent 323.15 K salt-pair transfer diagnostic
+
+`KClCO2SaltPairTransferAssessmentTest` tests the frozen reduced He-Morse
+curvature law against independent direct-solubility data before any production
+activation. It selects all nine Mousavi-Chapoy-Burgass KCl states at 323.15 K:
+four pressures at 10 mass percent KCl, three at 15 mass percent and two at 22
+mass percent. This temperature is inside the fitted 273.15--363.15 K He-Morse
+range. The other 17 KCl states at 373.15--423.15 K are excluded because using
+them would extrapolate the source law. The source fixture retains the article's
+CC BY 4.0 values and explicit salt-free aqueous CO2 mole-percent convention.
+No Table A.24, hydrate, divalent-salt or water-activity holdout is selected.
+
+The diagnostic evaluates the current electrolyte-CPA/Furst flash first, then
+applies only the exact first-order activity mapping at its calculated CO2
+fugacity:
+
+$$
+\Delta\ln\gamma_{\mathrm{CO_2}}=\zeta(T)m_{\mathrm{KCl}}^2,
+\qquad
+x_{\mathrm{CO_2},\mathrm{candidate}}
+=x_{\mathrm{CO_2},\mathrm{baseline}}
+ \exp[-\zeta(T)m_{\mathrm{KCl}}^2].
+$$
+
+At 323.15 K the frozen law gives
+$\zeta=-0.00902052\ \mathrm{kg^2\,mol^{-2}}$. KCl molality is reconstructed on
+exactly the same final-aqueous-water basis as the independent producer. The
+mapping is a tangent response, not a coupled flash, a refit, a pressure law or
+a transferable production coefficient. It does not change water activity,
+guest fugacity, phase equilibrium, the existing Furst block or any database
+row.
+
+The independent results are:
+
+| KCl mass percent | States | Baseline log-RMSE | Candidate log-RMSE | Baseline MAPE / % | Candidate MAPE / % |
+|---:|---:|---:|---:|---:|---:|
+| 10 | 4 | 0.08852 | 0.06905 | 8.277 | 6.421 |
+| 15 | 3 | 0.09912 | 0.05372 | 8.918 | 4.196 |
+| 22 | 2 | 0.05199 | 0.08046 | 4.863 | 8.249 |
+| All | 9 | 0.08578 | 0.06723 | 7.732 | 6.086 |
+
+The frozen law improves both lower-concentration groups and the aggregate, but
+fails the high-concentration transfer. At 22 mass percent (3.7833 mol/kg water)
+the current-model residuals of -3.49% and -6.23% reverse to +9.81% and +6.69%.
+Because the correction is constant within a concentration group, it cannot
+repair pressure-dependent residual structure. The numerical cause is therefore
+not a missing constant KCl curvature coefficient alone: direct superposition
+of the source-space quadratic term on the already nonlinear Furst response
+over-corrects the highest concentration.
+
+This result blocks default activation and an unqualified parameter update. The
+smallest defensible next model experiment is an opt-in coupled Helmholtz
+implementation of the already-audited composition kernel, evaluated jointly
+with the existing Furst response rather than added as an independent correction.
+It must preserve the frozen He-Morse coefficients and report whether the 22
+mass-percent reversal comes from thermodynamic coupling, double counting or a
+missing physically sourced high-ionic-strength dependence. Acceptance requires
+improvement without residual-sign reversal across the independent 10/15/22
+mass-percent family, exact composition/state derivatives, phase and fugacity
+closure, and no regression on pure water, NaCl, CaCl2/MgCl2, Archer water
+activity, Table A.24, Dholabhai and Burgass controls. If that experiment cannot
+remove the reversal without an extra coefficient, the precise missing evidence
+is an independent high-molality KCl temperature/concentration family capable of
+identifying a bounded saturation or ionic-strength law. No empirical
+temperature offset, invented pressure dependence, relaxed tolerance or hydrate
+qualification is introduced here.
+
