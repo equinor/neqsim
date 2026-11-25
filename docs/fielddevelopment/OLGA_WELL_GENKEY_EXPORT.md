@@ -3,8 +3,6 @@ title: Export a well as OLGA GENKEY text
 description: Build an auditable OLGA well FLOWPATH fragment from NeqSim inflow and trajectory data, including a tested synthetic-screening example.
 ---
 
-# Export a well as OLGA GENKEY text
-
 `OlgaWellGenkeyExporter` converts a liquid inflow-performance relationship and a
 well trajectory into an OLGA GENKEY fragment. It emits case-level `MATERIAL`,
 `WALL`, and `TABULAR` declarations followed by a
@@ -16,6 +14,23 @@ is still required to embed the fragment in a complete case, run OLGA's rule chec
 and qualify the model for its intended decision. An independent design review must
 confirm the fluid, geometry, thermal basis, material properties, discretisation, and
 well-deliverability inputs.
+
+## Maintained source and executable contract
+
+The example is maintained against the current
+[`OlgaWellGenkeyExporter`](../../src/main/java/neqsim/process/fielddevelopment/olga/OlgaWellGenkeyExporter.java),
+[`SyntheticWellTrajectory`](../../src/main/java/neqsim/process/fielddevelopment/olga/SyntheticWellTrajectory.java), and
+[`InflowPerformance`](../../src/main/java/neqsim/process/equipment/reservoir/InflowPerformance.java)
+sources. The
+[guide regression](../../src/test/java/neqsim/documentation/OlgaWellGenkeyExporterGuideDocumentationTest.java)
+extracts the complete Java fence, compiles it with Java 8 syntax, enables assertions,
+and executes its `main` method.
+
+Run the focused executable documentation gate from the repository root:
+
+```bash
+./mvnw -Dtest=OlgaWellGenkeyExporterGuideDocumentationTest test
+```
 
 ## Inputs that remain the caller's responsibility
 
