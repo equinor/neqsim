@@ -298,16 +298,14 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     pipe.setSignedDonorTransportEnabled(true);
     pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
     pipe.configureLagrangianSlugTracking(false, true, false);
-    LiquidAccumulationTracker.SlugCharacteristics characteristics =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics characteristics = new LiquidAccumulationTracker.SlugCharacteristics();
     characteristics.tailPosition = 18.0;
     characteristics.frontPosition = 24.0;
     characteristics.length = characteristics.frontPosition - characteristics.tailPosition;
     characteristics.holdup = 0.9;
-    characteristics.volume =
-        characteristics.length * pipe.getSectionSnapshots()[0].getArea() * characteristics.holdup;
-    LagrangianSlugTracker.SlugBubbleUnit original =
-        pipe.getLagrangianSlugTracker().initializeTerrainSlug(characteristics, pipe.getSectionSnapshots());
+    characteristics.volume = characteristics.length * pipe.getSectionSnapshots()[0].getArea() * characteristics.holdup;
+    LagrangianSlugTracker.SlugBubbleUnit original = pipe.getLagrangianSlugTracker()
+        .initializeTerrainSlug(characteristics, pipe.getSectionSnapshots());
     assertTrue(original != null);
     pipe.getLagrangianSlugTracker().setEnableTerrainSlugGeneration(false);
     pipe.setSharedSlugForceBalanceEnabled(true);
@@ -316,8 +314,8 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-9);
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
-    PreparedInterval interval =
-        pipe.prepareUnsplitTransient(0.1, maximumStep, solver, pipe.createUnsplitDensityModel());
+    PreparedInterval interval = pipe.prepareUnsplitTransient(0.1, maximumStep, solver,
+        pipe.createUnsplitDensityModel());
     assertEquals(0.1, interval.getEndTimeSeconds(), 0.0);
     assertEquals(0.0, pipe.getSimulationTime(), 0.0);
     assertEquals(0.0, original.age, 0.0);
