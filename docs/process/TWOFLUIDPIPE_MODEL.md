@@ -1044,10 +1044,10 @@ reclassifies 272 of 320 sections as stratified-wavy and moves the maximum holdup
 | Method | Default | Description |
 |--------|---------|-------------|
 | `setSeparatedFrictionModel(boolean)` | `true` | Charge each phase its own wall shear where the phases are separated |
-| `setAnnularFlowingDensityFriction(boolean)` | `true` | Charge the annular share of the wall friction at the flowing (no-slip) mixture density |
+| `setAnnularFlowingDensityFriction(boolean)` | `false` | Charge the annular share of the wall friction at the flowing (no-slip) mixture density |
 
 The friction gradient uses per-phase wall shear, `-dP/dx = (tau_wG*S_G + tau_wL*S_L)/A`, in stratified flow, the
-flowing-density mixture form in annular flow, and the holdup-weighted mixture correlation elsewhere. The holdup-weighted
+optional flowing-density mixture form in annular flow, and otherwise the holdup-weighted mixture correlation. The holdup-weighted
 form charges the whole perimeter with a holdup-weighted density; on a
 stratified line that over-predicts the pressure drop by a factor of about 2.3 at 41 per cent holdup, and because it
 scales as `G^2 / rho_mix` it also makes extra liquid *reduce* the gradient, which inverts the terrain response.
@@ -1058,7 +1058,7 @@ moved the export-line error from +1.4 to +14.7 per cent at 10 MSm3/d and pushed 
 
 **Annular friction.** In annular flow the liquid travels as a wall film and as droplets in the gas core. The
 holdup-weighted density $\rho_m = \alpha_G\rho_G + \alpha_L\rho_L$ charges every kilogram of liquid in the bore at the
-mixture velocity, although the film moves several times slower. The annular share of a section is therefore charged at
+mixture velocity, although the film moves several times slower. With `setAnnularFlowingDensityFriction(true)`, the annular share of a section is charged at
 the flowing density $\rho_f = G/j$, the total mass flux $G$ (kg/m²s) divided by the total volumetric flux $j$ (m/s):
 $-dP/dx|_f = f(\mathrm{Re}_f)\,\rho_f\,j^2/(2D)$. Without slip $\rho_f = \rho_m$ and nothing changes. The gravity term
 keeps $\rho_m$, and the holdup closure is unchanged. `setAnnularFlowingDensityFriction(false)` restores the
@@ -1089,8 +1089,15 @@ above OLGA on the three rich cases and within 1 per cent on the lean case. The a
 slip ratio that rises from 1.5 to 4 with gas velocity, while the slip of the total liquid in OLGA falls as more liquid
 is entrained. Do not quote the annular holdup of a rich low-pressure line as a design number.
 
-Serialized models written before this option load with the holdup-weighted density; newly constructed models use the
-flowing density.
+New pipes and models saved before this option use holdup-weighted friction by default. The historical
+73.8 km comparison used the earlier closure. Its full input is unavailable for replay.
+
+On the public 37 kg/s rich-gas line (39 cells, 0.25 s steps), a 60 s fixed-boundary replay with coupled
+pressure–momentum, interfacial pressure and the energy equation moved the inlet from 58.72 to 59.15 bara
+with holdup weighting and from 46.78 to 49.06 bara with flowing density. Maximum absolute pressure changes
+across all cells and times were 1.50 and 2.27 bar respectively. Both runs closed each phase to within
+4e-11 kg per step without a pressure limiter or coupled-solver failure. This configuration skips momentum
+calibration and uses its own transient wall friction. Its pressure profile drifts even with fixed boundaries.
 
 The steady stratified residual uses the calibrated depth-squared wave enhancement
 $f_i/f_G = 1 + 80(h_L/D)^2\min(U_{SG}/U_{SG,t}-1,4)$ above
@@ -1924,10 +1931,10 @@ split was flashed once at the stream pressure: on a 30 km, 355 mm lean gas-conde
 80 bara at the outlet the mean holdup was 0.021, 0.020, 0.017 and 0.009 for stream pressures of 90,
 100, 114 and 140 bara, and on a rich low-pressure line the solved inlet pressure moved by 1.6 bar
 between stream pressures of 30 and 90 bara. Both are now the same to four digits. A transient
-continued from that steady solution admits the same split for as long as the inlet stream keeps its
-temperature, pressure and composition; its flow rate may change. After any other change of the
-inlet stream the transient admits the split of the stream as it is flashed at its own pressure, so
-set that pressure to the pipe inlet pressure before changing the feed in a transient.
+continued from that steady solution flashes the connected feed at its temperature and current inlet-cell
+pressure. A rate change scales the admitted phase rates immediately. The split is cached until the cell
+pressure changes by more than one part per million or the feed temperature or composition changes beyond
+round-off tolerance. Replacing the feed object also refreshes the split.
 
 ### Compressible upstream-volume boundary
 

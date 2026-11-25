@@ -3,6 +3,8 @@ package neqsim.process.equipment.pipeline;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.stream.Stream;
@@ -164,10 +166,30 @@ class TwoFluidPipeAnnularFlowingFrictionTest {
   /** The solved inlet pressure of the rich gas line is within 8 per cent of OLGA, the earlier form is not. */
   @Test
   void richGasLineInletPressureFollowsOlga() {
+    Assertions.assertFalse(new TwoFluidPipe("default").isAnnularFlowingDensityFriction());
     double flowing = solveRichGasLine(true).getPressureProfile()[0] / 1.0e5;
     double holdupWeighted = solveRichGasLine(false).getPressureProfile()[0] / 1.0e5;
     Assertions.assertEquals(OLGA_INLET_PRESSURE, flowing, 0.08 * OLGA_INLET_PRESSURE);
     Assertions.assertTrue(holdupWeighted > 1.12 * OLGA_INLET_PRESSURE,
         "the hold-up weighted density over-predicts this line, got " + holdupWeighted + " bara");
+  }
+
+  /** Fixed-boundary, 60 s hand-off on the coupled momentum and energy path without steady momentum calibration. */
+  @Test
+  @Tag("slow")
+  void coupledEnergyReplayConservesPhaseMassWithFlowingFriction() {
+    TwoFluidPipe pipe = solveRichGasLine(true);
+    pipe.setEnableCoupledPressureMomentum(true);
+    pipe.setEnableInterfacialPressure(true);
+    for (int step = 0; step < 240; step++) {
+      pipe.runTransient(0.25, null);
+      TwoFluidMassBalanceReport balance = pipe.getLastMassBalanceReport();
+      Assertions.assertEquals(37.0 * 0.25, balance.getInletMassKg(Phase.TOTAL), 1.0e-9);
+      for (Phase phase : new Phase[] {Phase.GAS, Phase.OIL, Phase.WATER}) {
+        Assertions.assertEquals(0.0, balance.getResidualKg(phase), 1.0e-8);
+      }
+    }
+    Assertions.assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected());
+    Assertions.assertFalse(pipe.isTransientCoupledPressureMomentumCorrectionLimited());
   }
 }

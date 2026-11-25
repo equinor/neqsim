@@ -919,27 +919,20 @@ public class TwoFluidPipe extends Pipeline {
    * Charge the annular share of the wall friction at the flowing (no-slip) mixture density.
    *
    * <p>
-   * See {@link #setAnnularFlowingDensityFriction(boolean)} for the measurement behind the default.
+   * See {@link #setAnnularFlowingDensityFriction(boolean)} for the comparison supporting this option.
    * </p>
    */
-  private volatile boolean useFlowingDensityAnnularFriction = true;
+  private volatile boolean useFlowingDensityAnnularFriction;
 
-  /**
-   * Feed phase mass fractions (gas, oil, aqueous) of the last source-free steady solution, or null.
-   *
-   * <p>
-   * The steady solve evaluates the feed split at the inlet pressure it solves for. A transient continued from that
-   * solution must admit the same split, otherwise the first step changes the phase rates without any change of boundary
-   * condition.
-   * </p>
-   */
-  private double[] steadyFeedPhaseMassFractions = null;
-
-  /** Temperature, pressure and composition of the feed that {@link #steadyFeedPhaseMassFractions} belongs to. */
-  private double[] steadyFeedSignature = null;
+  /** Last feed object used for a transient inlet flash. A replacement can carry a different EOS or components. */
+  private transient SystemInterface splitFeed;
+  /** Temperature (K), inlet-cell pressure (Pa) and overall mole fractions at the last transient inlet flash. */
+  private transient double[] splitState;
+  /** Gas, oil and aqueous mass fractions at {@link #splitState}. */
+  private transient double[] splitFractions;
 
   /** Relative inlet pressure change above which the source-free feed split is evaluated again. */
-  private static final double SS_FEED_SPLIT_PRESSURE_TOLERANCE = 1.0e-6;
+  private static final double FEED_SPLIT_PRESSURE_TOLERANCE = 1.0e-6;
 
   /** Gravitational acceleration used in the steady energy balance, m/s2. */
   private static final double GRAVITY_ACCELERATION = 9.81;
@@ -1944,7 +1937,7 @@ public class TwoFluidPipe extends Pipeline {
         // do not depend on a pressure the pipe never sees. The snapshot above holds the rates before this update,
         // so the change is part of the thermodynamic residual.
         if (!includeMassTransfer
-            && Math.abs(P_inlet - sourceFreeSplitPressure) > SS_FEED_SPLIT_PRESSURE_TOLERANCE * P_inlet) {
+            && Math.abs(P_inlet - sourceFreeSplitPressure) > FEED_SPLIT_PRESSURE_TOLERANCE * P_inlet) {
           double[] feedPhaseMassFractions = sourceFreeFeedPhaseMassFractions(P_inlet);
           sourceFreeSplitPressure = P_inlet;
           sourceFreeOilMassFlow = massFlow * feedPhaseMassFractions[1];
@@ -2123,18 +2116,7 @@ public class TwoFluidPipe extends Pipeline {
     massFluxResidual = calculateSteadyMassFluxResidual(massFlow);
     ssConverged &= massFluxResidual < SS_MASS_FLUX_TOLERANCE;
 
-    // Keep the feed split this solution was solved with when it was evaluated away from the nominal pressure of the
-    // feed stream, so a transient continued from here admits the same phase rates.
-    steadyFeedPhaseMassFractions = null;
-    steadyFeedSignature = null;
-    SystemInterface feedFluid = getInletStream().getFluid();
-    if (!includeMassTransfer && referenceFluid != null && massFlow > 0.0 && Double.isFinite(sourceFreeSplitPressure)
-        && Math.abs(sourceFreeSplitPressure - feedFluid.getPressure("Pa")) > SS_FEED_SPLIT_PRESSURE_TOLERANCE
-            * sourceFreeSplitPressure) {
-      steadyFeedPhaseMassFractions = new double[] {localMDotGas[0] / massFlow, sourceFreeOilMassFlow / massFlow,
-          sourceFreeWaterMassFlow / massFlow};
-      steadyFeedSignature = feedSignature(feedFluid);
-    }
+    splitFeed = null;
 
     SteadyStateConvergenceReport.TerminationReason terminationReason;
     if (ssConverged) {
@@ -7220,8 +7202,7 @@ public class TwoFluidPipe extends Pipeline {
     ssMaxWallClockTime = candidate.ssMaxWallClockTime;
     useSeparatedFrictionModel = candidate.useSeparatedFrictionModel;
     useFlowingDensityAnnularFriction = candidate.useFlowingDensityAnnularFriction;
-    steadyFeedPhaseMassFractions = candidate.steadyFeedPhaseMassFractions;
-    steadyFeedSignature = candidate.steadyFeedSignature;
+    splitFeed = null;
     steadyConsistentTransient = candidate.steadyConsistentTransient;
     steadyConsistencyCalibrated = candidate.steadyConsistencyCalibrated;
     steadyCalibrationInletFlow = candidate.steadyCalibrationInletFlow;
@@ -9201,10 +9182,20 @@ public class TwoFluidPipe extends Pipeline {
     return face;
   }
 
-  /** Build a feed face using the supplied fluid; physical-property caches may be initialized on that fluid. */
+  /**
+   * Build a boundary face with the supplied donor properties and admitted phase split.
+   *
+   * @param cell adjacent physical cell
+   * @param massFlow total boundary mass flow in kg/s
+   * @param fluid donor fluid supplying intensive properties
+   * @return detached boundary face
+   */
   private TwoFluidSection createPrescribedInletFace(TwoFluidSection cell, double massFlow, SystemInterface fluid) {
     TwoFluidSection face = cell.clone();
-    double[] fractions = inletFeedPhaseMassFractions(fluid);
+    // Positive prescribed flow can use a detached copy of the connected feed during unsplit preparation.
+    // Pressure-reservoir faces pass zero here and carry the phase split of their own flashed donor.
+    double[] fractions = massFlow > 0.0 ? inletFeedPhaseMassFractions(getInletStream().getFluid())
+        : calculateInletPhaseMassFractions(fluid);
     String[] names = {"gas", "oil", "aqueous"};
     double[] densities = {cell.getGasDensity(), cell.getOilDensity(), cell.getWaterDensity()};
     double[] volumes = new double[3];
@@ -9399,51 +9390,74 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double[] sourceFreeFeedPhaseMassFractions(double inletPressurePa) {
     SystemInterface feed = getInletStream().getFluid();
-    if (referenceFluid != null) {
-      feed = feed.clone();
-      feed.setPressure(inletPressurePa / 1.0e5, "bara");
-      feed.setTemperature(sections[0].getTemperature(), "K");
-      new ThermodynamicOperations(feed).TPflash();
-    }
-    return calculateInletPhaseMassFractions(feed);
+    return referenceFluid == null ? calculateInletPhaseMassFractions(feed)
+        : flashFeedPhaseMassFractions(feed, inletPressurePa, sections[0].getTemperature());
   }
 
   /**
-   * Temperature, pressure and composition that identify a feed state independently of its flow rate.
+   * Flash an independent feed copy at its admission state.
    *
-   * @param fluid feed fluid
-   * @return temperature in K, pressure in Pa and the overall mole fraction of every component
-   */
-  private static double[] feedSignature(SystemInterface fluid) {
-    int components = fluid.getNumberOfComponents();
-    double[] signature = new double[components + 2];
-    signature[0] = fluid.getTemperature("K");
-    signature[1] = fluid.getPressure("Pa");
-    for (int component = 0; component < components; component++) {
-      signature[component + 2] = fluid.getComponent(component).getz();
-    }
-    return signature;
-  }
-
-  /**
-   * Phase mass fractions of the feed admitted at the inlet boundary.
-   *
-   * <p>
-   * A transient continued from a source-free steady solution admits the split that solution was solved with, which was
-   * evaluated at the solved inlet pressure. The stored split applies while the feed stream keeps the temperature,
-   * pressure and composition it had in that solve; its flow rate may change. Any other feed, and a pipe without such a
-   * steady solution, uses the phase split of the fluid as it is flashed.
-   * </p>
-   *
-   * @param feed fluid supplying the inlet boundary
+   * @param feed connected feed
+   * @param pressurePa admission pressure in Pa
+   * @param temperatureK admission temperature in K
    * @return gas, oil and aqueous mass fractions
    */
-  private double[] inletFeedPhaseMassFractions(SystemInterface feed) {
-    if (steadyFeedPhaseMassFractions != null && steadyFeedSignature != null && !includeMassTransfer
-        && feed == getInletStream().getFluid() && java.util.Arrays.equals(steadyFeedSignature, feedSignature(feed))) {
-      return steadyFeedPhaseMassFractions.clone();
+  private double[] flashFeedPhaseMassFractions(SystemInterface feed, double pressurePa, double temperatureK) {
+    SystemInterface local = feed.clone();
+    local.setPressure(pressurePa, "Pa");
+    local.setTemperature(temperatureK, "K");
+    new ThermodynamicOperations(local).TPflash();
+    return calculateInletPhaseMassFractions(local);
+  }
+
+  /**
+   * Check the intensive variables against the last flash, allowing for numerical noise in an upstream reflash.
+   *
+   * @param feed connected feed
+   * @param pressurePa inlet-cell pressure in Pa
+   * @return true if the cached split applies
+   */
+  private boolean matchesFeedSplit(SystemInterface feed, double pressurePa) {
+    if (splitFeed != feed || splitState == null || splitState.length != feed.getNumberOfComponents() + 2
+        || Math.abs(pressurePa - splitState[1]) > FEED_SPLIT_PRESSURE_TOLERANCE * pressurePa
+        || Math.abs(feed.getTemperature() - splitState[0]) > 1.0e-10 * splitState[0]) {
+      return false;
     }
-    return calculateInletPhaseMassFractions(feed);
+    for (int i = 0; i < feed.getNumberOfComponents(); i++) {
+      double z = splitState[i + 2];
+      if (Math.abs(feed.getComponent(i).getz() - z) > 1.0e-14 + 1.0e-10 * Math.abs(z)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Source-free prescribed feeds enter at the current inlet-cell pressure when a pressure boundary is set. A change in
+   * total rate scales all phase rates immediately. The changing cell pressure changes their split.
+   *
+   * @param feed connected inlet stream fluid
+   * @return gas, oil and aqueous mass fractions for read-only use
+   */
+  private double[] inletFeedPhaseMassFractions(SystemInterface feed) {
+    if (includeMassTransfer || referenceFluid == null || !(outletPressureSet || inletPressureSet)
+        || !(feed.getTotalNumberOfMoles() > 0.0)) {
+      return calculateInletPhaseMassFractions(feed);
+    }
+    double pressurePa = sections[0].getPressure();
+    if (!matchesFeedSplit(feed, pressurePa)) {
+      double[] fractions = flashFeedPhaseMassFractions(feed, pressurePa, feed.getTemperature());
+      double[] state = new double[feed.getNumberOfComponents() + 2];
+      state[0] = feed.getTemperature();
+      state[1] = pressurePa;
+      for (int i = 0; i < feed.getNumberOfComponents(); i++) {
+        state[i + 2] = feed.getComponent(i).getz();
+      }
+      splitState = state;
+      splitFractions = fractions;
+      splitFeed = feed;
+    }
+    return splitFractions;
   }
 
   /**
@@ -13196,8 +13210,8 @@ public class TwoFluidPipe extends Pipeline {
    * In OLGA the local friction gradient is 1.03 to 1.10 times the flowing-density value in all four cases, so the
    * flowing-density form is 3 to 7 per cent low on pressure drop where the hold-up weighted form is 21 to 33 per cent
    * high on the rich line. On the lean line it moves the pressure drop from 0.6 per cent high to 4.2 per cent low. The
-   * comparison is against another simulator, not against measurements, and the hold-up closure is unchanged. Models
-   * serialized before this option load with the hold-up weighted density.
+   * comparison is against another simulator, not against measurements, and the hold-up closure is unchanged. New pipes
+   * and models serialized before this option use the hold-up weighted density by default.
    * </p>
    *
    * @param enable true to charge annular friction at the flowing density, false to restore the hold-up weighted mixture

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Feed phase split of a steady solve with a prescribed outlet pressure.
@@ -51,6 +52,7 @@ class TwoFluidPipeFeedSplitPressureTest {
     pipe.setHeatTransferCoefficient(2.0);
     pipe.setSurfaceTemperature(5.0, "C");
     pipe.setOutletPressure(80.0, "bara");
+    pipe.setAnnularFlowingDensityFriction(true);
     pipe.run();
     Assertions.assertTrue(pipe.isSteadyStateConverged(), "the line must converge");
     return pipe;
@@ -93,5 +95,39 @@ class TwoFluidPipeFeedSplitPressureTest {
       pipe.runTransient(0.1, null);
     }
     Assertions.assertEquals(steadyGasFlow, pipe.getGasMassFlowProfile()[0], 1.0e-3 * steadyGasFlow);
+  }
+
+  /** Round-off in an upstream reflash must not switch the admitted gas back to its nominal-pressure value. */
+  @Test
+  void upstreamReflashPreservesSplit() {
+    TwoFluidPipe pipe = solve(140.0);
+    double steadyGas = pipe.getGasMassFlowProfile()[0];
+    pipe.runTransient(0.01, null);
+    Stream feed = (Stream) pipe.getInletStream();
+    feed.setTemperature(feed.getTemperature("K") + 1.0e-9, "K");
+    feed.setPressure(Math.nextUp(feed.getPressure("bara")), "bara");
+    feed.run();
+    pipe.runTransient(0.01, null);
+    Assertions.assertEquals(steadyGas, pipe.getGasMassFlowProfile()[0], 0.01);
+  }
+
+  /** A rate-only step moves the cell pressure. The admitted gas follows an independent flash at that pressure. */
+  @Test
+  void movingInletPressureUpdatesAdmittedGas() {
+    TwoFluidPipe pipe = solve(140.0);
+    Stream feed = (Stream) pipe.getInletStream();
+    double frozenFraction = pipe.getGasMassFlowProfile()[0] / feed.getFlowRate("kg/sec");
+    feed.setFlowRate(50.0, "kg/sec");
+    feed.run();
+    pipe.runTransient(0.1, null);
+    double cellPressure = pipe.getPressureProfile()[0];
+    SystemInterface expected = feed.getFluid().clone();
+    expected.setPressure(cellPressure, "Pa");
+    new ThermodynamicOperations(expected).TPflash();
+    double gas = expected.getPhase("gas").getFlowRate("kg/sec");
+    Assertions.assertTrue(Math.abs(gas - frozenFraction * 50.0) > 0.02, "pressure must change the split measurably");
+    pipe.runTransient(1.0e-5, null);
+    Assertions.assertEquals(gas, pipe.getGasMassFlowProfile()[0], 0.01);
+    Assertions.assertEquals(140.0, feed.getPressure("bara"), 1.0e-10);
   }
 }

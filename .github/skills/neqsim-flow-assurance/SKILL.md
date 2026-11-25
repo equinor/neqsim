@@ -875,10 +875,10 @@ for (double qgMSm3d : gasRates) {
 > stratified flow because its perimeters come from a circular-segment layer; annular flow,
 > whose film wets the whole perimeter, is not that geometry.
 >
-> **Annular friction is charged at the flowing (no-slip) density.** In annular flow the film
+> **Annular friction can use the flowing (no-slip) density.** In annular flow the film
 > moves several times slower than the mixture, so the holdup-weighted density over-charged the
 > wall by `rho_m / rho_f` (1.05 on a lean high-pressure line, 1.3 to 2.5 on a rich low-pressure
-> line). `setAnnularFlowingDensityFriction(false)` restores the holdup-weighted density.
+> line). Select `setAnnularFlowingDensityFriction(true)` for this comparison. Holdup weighting is the default.
 > Measured 2026-11-25 against OLGA 2025.1.0, same fluid, geometry and boundaries, inlet pressure
 > for a fixed outlet (OLGA / holdup-weighted / flowing density, bara): rich gas with 38 % liquid
 > by mass on 15.5 km x 285.7 mm with a 121 m riser and 13 bara at the outlet, 18 kg/s
@@ -894,8 +894,7 @@ for (double qgMSm3d : gasRates) {
 > 2026-11-25 it set the gas/liquid split carried down the line (lean line above: mean holdup
 > 0.021 to 0.009 for stream pressures of 90 to 140 bara). There is no need to iterate the stream
 > pressure to the solved inlet pressure for a steady solve. A transient continued from that
-> solution admits the same split while the stream keeps its temperature, pressure and
-> composition.
+> solution uses the current inlet-cell pressure and feed temperature and composition for the split.
 
 > **The historical 73.8 km comparison is not a public qualification basis.**
 > Its complete input and measurement package is unavailable in the repository,

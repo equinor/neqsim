@@ -31,29 +31,23 @@ liquid rate, separator pressure, total liquid level and oil/water interface.
 
 | Metric (analysis window) | Open loop | Regulated | Relative change |
 |---|---:|---:|---:|
-| Mean production (kg/s) | 18.0989 | 17.9198 | -0.99% |
-| Peak riser liquid rate (kg/s) | 14.4430 | 13.2260 | -8.43% |
-| Separator pressure range (bar) | 2.3742 | 1.7804 | -25.01% |
-| Total-liquid level range (m) | 0.01920 | 0.01759 | -8.39% |
-| Oil/water-interface range (m) | 0.00497 | 0.00658 | +32.43% |
-| Maximum pipe phase residual (kg) | 2.50e-11 | 3.21e-11 | — |
+| Mean production (kg/s) | 18.1120 | 17.9246 | -1.03% |
+| Peak riser liquid rate (kg/s) | 14.4868 | 13.3543 | -7.82% |
+| Separator pressure range (bar) | 1.0219 | 0.9289 | -9.10% |
+| Total-liquid level range (m) | 0.01390 | 0.01571 | +13.04% |
+| Oil/water-interface range (m) | 0.00618 | 0.00725 | +17.39% |
+| Maximum pipe phase residual (kg) | 2.85e-11 | 2.68e-11 | — |
 
-The water-interface excursion is an explicit tradeoff in this controller
-configuration. It is reported rather than hidden by retuning the common
-separator loops independently between cases. The complete series contains 91
-samples per mode. The MCP replay completed in 67.8 s on the qualification host.
+The regulated choke reduces pressure variation and peak riser liquid flow. The
+total-liquid level range increases by 13% and the oil/water-interface range by
+17% with the same separator controllers in both runs. The complete series contains 91
+samples per mode. The table and CSV are from the 0.25 s replay on 2026-11-25.
 
-The table and the CSV receipt are the values recorded when the study was added.
-Later builds do not reproduce them digit for digit. Measured 2026-11-25 on the
-same input, the separator pressure range is 1.024 bar open loop and 0.900 bar
-regulated (-12.1%) before the `TwoFluidPipe` feed split was flashed at the
-solved inlet pressure, and 1.022 and 0.929 bar (-9.1%) after it; mean production
-is 18.11 and 17.92 kg/s (-1.0%) and the peak riser liquid rate 14.48 and
-13.35 kg/s (-7.8%). The feed-split change adds 0.4% gas to the steady start.
-Both ranges are about 1 bar, so 0.03 bar moves their ratio by 3 points; the
-regression test requires a reduction of more than 5%. The study keeps the
-hold-up weighted annular friction it was qualified with
-(`setAnnularFlowingDensityFriction(false)`).
+The regression checks the separator pressure standard deviation over all one-second samples
+in the analysis window (23–90 s). At 0.25 s steps it falls from 0.323 to 0.292 bar. Halving
+the step gives 0.321 and 0.289 bar. Both runs exceed the required 0.02 bar absolute reduction.
+The full pressure range must also decrease. The study explicitly selects the holdup-weighted
+annular friction used for its original qualification.
 
 ## Boundary qualification
 

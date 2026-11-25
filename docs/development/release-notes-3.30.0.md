@@ -51,27 +51,26 @@ and [measurement devices](../process/equipment/measurement_devices.md#historian-
 
 ### `TwoFluidPipe`: annular wall friction and the feed split with a prescribed outlet pressure
 
-Steady `TwoFluidPipe` results change in two places
+This release updates the feed calculation and adds a steady annular friction option
 (issue [#5266](https://github.com/equinor/neqsim/issues/5266)). No method is removed or renamed.
 
-- **Annular wall friction is charged at the flowing (no-slip) mixture density.** Sections
+- **Optional flowing-density annular friction.** With `setAnnularFlowingDensityFriction(true)`, sections
   classified as annular return a lower friction gradient than before: about 5 per cent lower on
   a lean high-pressure gas-condensate line and 20 to 30 per cent lower on a low-pressure line
   with a large liquid mass fraction. Against OLGA 2025.1.0 on four cases the pressure drop is
   now 3 to 7 per cent below the reference, where it was 0.6 to 33 per cent above. Stratified,
   slug and dispersed sections are unchanged, as is the holdup closure.
-  `setAnnularFlowingDensityFriction(false)` restores the earlier holdup-weighted density.
+  New pipes and older saved models use the holdup-weighted density by default.
 - **With a prescribed outlet pressure the feed split is flashed at the solved inlet pressure.**
   The pressure of the inlet stream used to set the gas, oil and aqueous rates carried down the
   line; it is now only a starting value. Results change wherever the stream pressure differed
-  from the solved inlet pressure. A transient continued from the steady solution admits the same
-  split while the inlet stream keeps its temperature, pressure and composition.
+  from the solved inlet pressure. During a transient the connected feed uses the current inlet-cell pressure, feed temperature
+  and composition to set the admitted phase rates.
 
 Migration:
 
-- Rerun steady cases that contain annular sections and compare the pressure drop; a margin that
-  was sized on the earlier conservative result should be reviewed, because the new result is on
-  the low side of the reference.
+- When enabling flowing-density friction, compare both pressure drops. All four reference cases
+  fall on the low side of OLGA with the option enabled.
 - Outer loops that iterated the inlet stream pressure to the solved inlet pressure are no longer
   needed for a steady solve and can be removed; keeping them is harmless.
 - Serialized pipes written before this release load with the holdup-weighted density.
